@@ -27,7 +27,6 @@ package dr.app.simcoal;
 
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.Importer;
-import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.FlexibleTree;
@@ -42,7 +41,6 @@ import dr.stats.DiscreteStatistics;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.*;
 
 /**
@@ -58,7 +56,7 @@ public class Phylogeography {
 
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
-        String topLine = reader.readLine();
+        reader.readLine();
 
         String line = reader.readLine();
         while (line != null) {
@@ -67,7 +65,7 @@ public class Phylogeography {
             StringTokenizer tokens = new StringTokenizer(line, "\t");
             String id = tokens.nextToken();
             String fullName = tokens.nextToken();
-            String extra = tokens.nextToken();
+            tokens.nextToken();
             String latStr = tokens.nextToken();
             String longStr = tokens.nextToken();
 

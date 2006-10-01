@@ -28,7 +28,6 @@ package dr.app.simcoal;
 import dr.math.MultivariateFunction;
 import dr.math.MultivariateMinimum;
 import dr.math.ConjugateDirectionSearch;
-import dr.math.DifferentialEvolution;
 
 public class Notohara1990Function implements MultivariateFunction {
 
@@ -94,7 +93,7 @@ public class Notohara1990Function implements MultivariateFunction {
         double topRight = 8.0 * N1 * N2 * m*m;
         double denom = m + 4.0*((N1*m1*m1) + (N2*m2*m2));
 
-        double t = 0;
+        double t;
 
         if (pop0Count == 2) {
 

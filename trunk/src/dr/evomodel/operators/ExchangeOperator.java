@@ -31,8 +31,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.xml.*;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Implements branch exchange operations.

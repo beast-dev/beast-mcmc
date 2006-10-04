@@ -27,8 +27,6 @@ package dr.evolution.io;
 
 import dr.evolution.tree.Tree;
 
-import java.io.Writer;
-
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond

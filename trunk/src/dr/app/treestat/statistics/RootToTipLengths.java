@@ -28,8 +28,6 @@ package dr.app.treestat.statistics;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 
-import java.util.Arrays;
-
 /**
  *
  * @version $Id: RootToTipLengths.java,v 1.1 2005/09/28 13:50:56 rambaut Exp $

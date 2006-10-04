@@ -65,7 +65,7 @@ public class Property implements Attribute {
 			if (argument != null)
 				getter = c.getMethod(getterName.toString(), new Class[] {argument.getClass()});
 			else
-				getter = c.getMethod(getterName.toString(), null);
+				getter = c.getMethod(getterName.toString(), (Class [])null);
 		} catch (NoSuchMethodException e) { }
 		
 	}

@@ -391,6 +391,7 @@ public class BrowserLauncher {
 		if (browser != null) {
 			return browser;
 		}
+		// from here until browser is set to something it is null
 		switch (jvm) {
 			case MRJ_2_0:
 				try {
@@ -405,34 +406,28 @@ public class BrowserLauncher {
 					// me know.
 					return appleEvent;
 				} catch (IllegalAccessException iae) {
-					browser = null;
 					errorMessage = iae.getMessage();
-					return browser;
+					return null;
 				} catch (InstantiationException ie) {
-					browser = null;
 					errorMessage = ie.getMessage();
-					return browser;
+					return null;
 				} catch (InvocationTargetException ite) {
-					browser = null;
 					errorMessage = ite.getMessage();
-					return browser;
+					return null;
 				}
 			case MRJ_2_1:
 				File systemFolder;
 				try {
 					systemFolder = (File) findFolder.invoke(null, new Object[] { kSystemFolderType });
 				} catch (IllegalArgumentException iare) {
-					browser = null;
 					errorMessage = iare.getMessage();
-					return browser;
+					return null;
 				} catch (IllegalAccessException iae) {
-					browser = null;
 					errorMessage = iae.getMessage();
-					return browser;
+					return null;
 				} catch (InvocationTargetException ite) {
-					browser = null;
 					errorMessage = ite.getTargetException().getClass() + ": " + ite.getTargetException().getMessage();
-					return browser;
+					return null;
 				}
 				String[] systemFolderFiles = systemFolder.list();
 				// Avoid a FilenameFilter because that can't be stopped mid-list
@@ -455,18 +450,16 @@ public class BrowserLauncher {
 								return browser;
 							}
 						}
+					// exception must have been thrown before browser is assigned, so it is still null
 					} catch (IllegalArgumentException iare) {
-						browser = browser;
 						errorMessage = iare.getMessage();
 						return null;
 					} catch (IllegalAccessException iae) {
-						browser = null;
 						errorMessage = iae.getMessage();
-						return browser;
+						return null;
 					} catch (InvocationTargetException ite) {
-						browser = null;
 						errorMessage = ite.getTargetException().getClass() + ": " + ite.getTargetException().getMessage();
-						return browser;
+						return null;
 					}
 				}
 				browser = null;

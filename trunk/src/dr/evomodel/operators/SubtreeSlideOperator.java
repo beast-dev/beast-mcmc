@@ -32,8 +32,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.*;
 import dr.xml.*;
 import dr.math.MathUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import java.util.ArrayList;
 

@@ -28,7 +28,6 @@ package dr.app.tracer;
 import dr.gui.chart.Axis;
 import dr.gui.chart.JChart;
 import dr.gui.chart.Plot;
-import dr.util.Variate;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;

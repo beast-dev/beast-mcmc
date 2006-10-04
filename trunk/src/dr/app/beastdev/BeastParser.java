@@ -26,8 +26,6 @@
 package dr.app.beastdev;
 
 import dr.xml.*;
-//import dr.app.colouring.ColouringTest;
-import dr.evomodel.coalescent.structure.MetaPopulationModel;
 
 import java.util.Iterator;
 

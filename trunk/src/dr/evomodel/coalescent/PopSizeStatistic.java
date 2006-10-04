@@ -28,8 +28,6 @@ package dr.evomodel.coalescent;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 
-import java.util.Set;
-
 /**
  * A statistic that the population size at a particular time...
  *

@@ -29,16 +29,10 @@ import dr.evolution.coalescent.structure.ColouredTreeIntervals;
 import dr.evolution.coalescent.structure.StructuredCoalescent;
 import dr.evolution.coalescent.structure.StructuredIntervalList;
 import dr.evolution.colouring.ColourChangeMatrix;
-import dr.evolution.tree.Tree;
-import dr.evomodel.coalescent.ConstantPopulationModel;
-import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
 /**

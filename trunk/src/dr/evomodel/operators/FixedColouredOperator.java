@@ -25,7 +25,6 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.colouring.ColourSampler;
 import dr.evomodel.coalescent.structure.ColourSamplerModel;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.MCMCOperator;

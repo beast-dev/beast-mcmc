@@ -31,7 +31,6 @@ import java.util.Collections;
 
 import dr.evolution.tree.ColourChange;
 import dr.evolution.tree.Tree;
-import dr.stats.DiscreteStatistics;
 import dr.math.MathUtils;
 
 // This is probably redundant but is left in case it is needed as a comparison.

@@ -25,7 +25,6 @@
 
 package dr.app.treestat.statistics;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 
 /**

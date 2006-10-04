@@ -29,8 +29,6 @@ import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.xml.*;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * A generic operator for use with a sum-constrained vector parameter.

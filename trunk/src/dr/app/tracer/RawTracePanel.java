@@ -28,7 +28,6 @@ package dr.app.tracer;
 import dr.gui.chart.JChartPanel;
 import dr.gui.chart.LinearAxis;
 import dr.gui.chart.Plot;
-import dr.util.Variate;
 import org.virion.jam.framework.Exportable;
 
 import javax.swing.*;

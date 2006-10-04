@@ -25,12 +25,10 @@
 
 package dr.app.tracer;
 
-import dr.app.util.Utils;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 
 /**

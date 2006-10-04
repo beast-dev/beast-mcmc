@@ -32,10 +32,6 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.TimeScale;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.colouring.ColourChangeMatrix;
-import dr.util.HeapSort;
-import dr.math.MathUtils;
-
-import java.util.ArrayList;
 
 /**
  * This class provides the basic engine for coalescent simulation of a given demographic model over a given time period.

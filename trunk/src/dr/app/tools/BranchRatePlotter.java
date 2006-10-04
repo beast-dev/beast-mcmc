@@ -37,7 +37,6 @@ import dr.gui.tree.JTreeDisplay;
 import dr.gui.tree.JTreePanel;
 import dr.gui.tree.SquareTreePainter;
 import dr.stats.DiscreteStatistics;
-import dr.util.HeapSort;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +44,6 @@ import java.awt.print.PrinterJob;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
 

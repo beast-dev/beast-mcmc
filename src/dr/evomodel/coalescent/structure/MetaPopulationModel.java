@@ -29,11 +29,8 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Model;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Statistic;
-import dr.evolution.colouring.ColourChangeMatrix;
-import dr.evolution.colouring.TreeColouring;
 import dr.xml.*;
 import dr.evomodel.coalescent.DemographicModel;
-import dr.evomodel.tree.TreeModel;
 
 import java.util.*;
 

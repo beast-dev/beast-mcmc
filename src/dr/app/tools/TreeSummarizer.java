@@ -26,19 +26,14 @@
 package dr.app.tools;
 
 import dr.util.Version;
-import dr.util.HeapSort;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.Importer;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.util.TaxonList;
-import dr.stats.DiscreteStatistics;
-import dr.evomodel.tree.TreeTraceAnalysis;
 
 import java.io.*;
 import java.util.*;

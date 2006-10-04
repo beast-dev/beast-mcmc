@@ -479,8 +479,6 @@ public interface Plot {
 			this.yScale = yScale;
 			this.xOffset = xOffset;
 			this.yOffset = yOffset;
-
-			this.bounds = bounds;
 			
 			if (xData != null && yData != null && xData.getCount() > 0)
 				paintData(g2, xData, yData); 

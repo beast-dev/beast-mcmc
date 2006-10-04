@@ -28,8 +28,6 @@ package dr.inference.operators;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.xml.*;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * A generic random walk operator for use with a multi-dimensional parameters.

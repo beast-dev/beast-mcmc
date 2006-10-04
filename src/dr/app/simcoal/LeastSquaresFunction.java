@@ -28,7 +28,6 @@ package dr.app.simcoal;
 import dr.math.MultivariateFunction;
 import dr.math.MultivariateMinimum;
 import dr.math.ConjugateDirectionSearch;
-import dr.math.DifferentialEvolution;
 
 public class LeastSquaresFunction implements MultivariateFunction {
 

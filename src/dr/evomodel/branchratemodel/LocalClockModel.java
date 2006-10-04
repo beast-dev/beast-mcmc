@@ -30,8 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Taxa;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;

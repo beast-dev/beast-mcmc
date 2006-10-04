@@ -26,7 +26,6 @@
 package dr.evolution.coalescent.structure;
 
 import dr.evolution.coalescent.IntervalType;
-import dr.evolution.datatype.DataType;
 
 /**
  * @author Alexei

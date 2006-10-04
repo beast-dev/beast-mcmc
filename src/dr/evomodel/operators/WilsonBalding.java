@@ -36,8 +36,6 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Implements the unweighted wilson-balding brach swapping move.

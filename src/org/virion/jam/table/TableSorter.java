@@ -32,15 +32,9 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-
-import javax.swing.*;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.*;
 
 /**
  * TableSorter is a decorator for TableModels; adding sorting

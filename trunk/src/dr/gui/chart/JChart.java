@@ -385,23 +385,23 @@ public class JChart extends JPanel {
 		return ((yAxis.transform(value) - yAxis.transform(yAxis.getMinAxis())) * yScale) + yOffset;
 	}
 
-	/**
+	/*
 	*	Transform a drawing co-ordinate into a chart co-ordinate
-	 */
+	 * /
 	private double untransformX(double value) {
 	
 		return xAxis.untransform(
 						xAxis.transform(xAxis.getMinAxis()) + ((value - xOffset) / xScale)); 
-	}
+	}*/
 	
-	/**
+	/*
 	*	Transform a drawing co-ordinate into a chart co-ordinate
-	 */
+	 * /
 	private double untransformY(double value) {
 	
 		return yAxis.untransform(
 						yAxis.transform(yAxis.getMinAxis()) + ((value - yOffset) / yScale)); 
-	}
+	}*/
 
 	protected void paintLegend(Graphics2D g2)
 	{
@@ -594,12 +594,12 @@ public class JChart extends JPanel {
 		}
 	}
 
-	private Point2D currentPoint = null;
+//	private Point2D currentPoint = null;
 	
 	public class MMListener extends MouseMotionAdapter {
 	
 		public void mouseMoved(MouseEvent me) {
-			currentPoint = me.getPoint();
+//			currentPoint = me.getPoint();
 		}
 
 		public void mouseDragged(MouseEvent me) {
@@ -616,7 +616,7 @@ public class JChart extends JPanel {
 		Point2D start, finish;
 		
 		public void mouseExited(MouseEvent me) {
-			currentPoint = null;
+//			currentPoint = null;
 		}
 		
 		public void mousePressed(MouseEvent me) {

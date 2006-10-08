@@ -325,7 +325,6 @@ public class TreeSummarizer {
 
         String inputFileName = null;
         String outputFileName = null;
-        String outputTreeFileName = null;
 
         if (args.length == 0) {
             System.setProperty("com.apple.macos.useScreenMenuBar","true");

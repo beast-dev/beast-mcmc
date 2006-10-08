@@ -40,7 +40,7 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 	public static final String COMPOUND_PARAMETER = "compoundParameter";
 
 	public CompoundParameter(String name, Parameter[] parameters) {
-		this.name = name;
+//		this.name = name;
 		this.parameters = parameters;
 		dimension = 0;
 		for (int i =0; i < parameters.length; i++) {
@@ -51,7 +51,7 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 	}
 	
 	public CompoundParameter(String name) {
-		this.name = name;
+//		this.name = name;
 		dimension = 0;
 	}
 
@@ -248,5 +248,5 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 	private Parameter[] parameters = null;
 	private IntersectionBounds bounds = null;
 	private int dimension;
-	private String name;
+//	private String name;
 }

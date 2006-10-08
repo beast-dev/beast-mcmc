@@ -25,7 +25,6 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.colouring.ColourSampler;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -62,7 +61,6 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
 	private int mode = CoercableMCMCOperator.DEFAULT;
 
     private ColourSamplerModel colouringModel;
-    private ColourSampler colourSampler;
 
 	public ColouredSubtreeSlideOperator(TreeModel tree, ColourSamplerModel colouringModel, int weight, double size, boolean gaussian, boolean swapRates, boolean swapTraits, int mode) {
 		this.tree = tree;

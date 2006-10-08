@@ -148,8 +148,6 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 	private double getDxForMaxPValue(double maxPValue) {
 
 		double minRange = Double.MAX_VALUE;
-		int hpdIndex = 0;
-
 		int diff = (int)Math.round(maxPValue * (double)values.length);
 		for (int i =0; i <= (values.length - diff); i++) {
 			double minValue = values[indices[i]];
@@ -157,7 +155,6 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 			double range = Math.abs(maxValue - minValue);
 			if (range < minRange) {
 				minRange = range;
-				hpdIndex = i;
 			}
 		}
 		return minRange;

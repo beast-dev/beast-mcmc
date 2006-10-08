@@ -202,19 +202,19 @@ public class AttributeRule implements XMLSyntaxRule {
 			}
 			if (c == Double.class) {
 				try {
-					double d = Double.parseDouble((String)o);
+					Double.parseDouble((String)o);
 					return true;
 				} catch (NumberFormatException nfe) { return false; }
 			}
 			if (c == Integer.class) {
 				try {
-					int j = Integer.parseInt((String)o);
+					Integer.parseInt((String)o);
 					return true;
 				} catch (NumberFormatException nfe) { return false; }
 			}
 			if (c == Float.class) {
 				try {
-					double f = Float.parseFloat((String)o);
+					Float.parseFloat((String)o);
 					return true;
 				} catch (NumberFormatException nfe) { return false; }
 			}
@@ -223,7 +223,7 @@ public class AttributeRule implements XMLSyntaxRule {
 			}
 			if (c == Number.class) {
 				try {
-					double d = Double.parseDouble((String)o);
+					Double.parseDouble((String)o);
 					return true;
 				} catch (NumberFormatException nfe) { return false; }
 			}

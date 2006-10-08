@@ -142,9 +142,6 @@ public class HKY extends AbstractNucleotideModel
      */
     public void getTransitionProbabilities(double distance, double[] matrix)
     {
-        int i, j, k;
-        double temp;
-
         if (updateIntermediates) {
             calculateIntermediates();
         }

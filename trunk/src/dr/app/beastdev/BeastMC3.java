@@ -385,7 +385,6 @@ public class BeastMC3 {
 		}
 
 		File inputFile = null;
-		File outputDirectory = null;
 
 		if (args2.length > 0) {
 			inputFileName = args2[0];

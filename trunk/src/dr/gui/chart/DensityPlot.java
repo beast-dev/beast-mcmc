@@ -94,14 +94,8 @@ public class DensityPlot extends FrequencyPlot {
 	 */
 	protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
 
-		double lower = 0.0, upper = 0.0;
 		int n = xData.getCount();
-		
-		if (hasQuantiles) {
-			lower = raw.getQuantile(quantiles);
-			upper = raw.getQuantile(1.0 - quantiles);
-		}
-			
+					
 		g2.setStroke(lineStroke);
 		g2.setPaint(linePaint);
 		

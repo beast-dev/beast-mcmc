@@ -200,12 +200,12 @@ public class UnivariateMinimum
 	private static final double delta = 0.01; // Determines second trial point
 
 	// trim x to have a specified number of fractional digits
-	private double trim(double x, int fracDigits)
+	/*private double trim(double x, int fracDigits)
 	{
 		double m = Math.pow(10, fracDigits);
 
 		return Math.round(x*m)/m;
-	}
+	}*/
 
 	private double constrain(double x, boolean toMax, double min, double max)
 	{
@@ -393,7 +393,7 @@ public class UnivariateMinimum
 
 	private double minin(double a, double b, double fa , double fb, UnivariateFunction f, double tol)
 	{
-		double z, d = 0, e, m, p, q, r, t, u, v, w, fu, fv, fw, fz, tmp;
+		double z, d = 0, e, m, p, q, r, u, v, w, fu, fv, fw, fz, tmp;
 
 		if (tol <= 0)
 		{

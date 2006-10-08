@@ -70,7 +70,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 		
 		this.categoryCount = substitutionModels.size();
 		
-		stateCount = ((SubstitutionModel)substitutionModels.elementAt(0)).getDataType().getStateCount();
+//		stateCount = ((SubstitutionModel)substitutionModels.elementAt(0)).getDataType().getStateCount();
 		
 		this.muParameter = muParameter;
 		addParameter(muParameter);
@@ -369,8 +369,6 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 	/** mutation rate parameter */
 	private Parameter muParameter;
 	
-	private boolean ratesKnown;
-	
 	private Vector substitutionModels;
 	
 	/** class size parameters */
@@ -378,5 +376,5 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 	
 	private int categoryCount;
 			
-	private int stateCount;
+//	private int stateCount;
 }

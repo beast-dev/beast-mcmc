@@ -66,7 +66,6 @@ public class JTraceChart extends JChart {
 
 			this.states = new double[values.length];
 			
-			int k = 0;
 			double ix = stateStart;
 			for (int j = 0; j < values.length; j++) {
 				this.states[j] = ix;

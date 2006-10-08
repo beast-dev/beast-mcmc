@@ -213,7 +213,7 @@ public class LeastSquaresClockTree extends SimpleTree {
 	private int nodeCount;
 	private double[] nodeValues;
 	private Tree sourceTree;
-	private double mu, sumDist, sumTime;
+	private double mu;
 	private boolean optimizeMu;
 	private int muIndex;
 }

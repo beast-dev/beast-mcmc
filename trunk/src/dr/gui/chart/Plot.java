@@ -178,8 +178,6 @@ public interface Plot {
 		protected Paint markPaint = Color.black;
 		protected Paint markFillPaint = Color.black;
 		
-		private Rectangle2D bounds = null;
-		
 		private double xScale, yScale, xOffset, yOffset;
 
 		private String name;

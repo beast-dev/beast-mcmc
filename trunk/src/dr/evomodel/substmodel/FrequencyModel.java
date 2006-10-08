@@ -124,7 +124,6 @@ public class FrequencyModel extends AbstractModel {
 							
 			if (dataType == null) dataType = (DataType)xo.getChild(DataType.class);
 			
-			Codons codons = null;
 			if (xo.hasAttribute(GeneticCode.GENETIC_CODE)) {
 				String codeStr = xo.getStringAttribute(GeneticCode.GENETIC_CODE);
 				if (codeStr.equals(GeneticCode.UNIVERSAL.getName())) {

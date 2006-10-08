@@ -281,7 +281,7 @@ public class ChartLayout implements LayoutManager2 {
     public void layoutContainer(Container target) {
 		synchronized (target.getTreeLock()) {
 			Insets insets = target.getInsets();
-			Dimension d, dn, ds, de, dw;
+			Dimension d;
 			
 			d=target.getSize();
 			

@@ -198,8 +198,6 @@ public class NexusConverter {
 	//Main method
 	public static void main(String[] args) throws java.io.IOException {
 
-		boolean help = false;
-
 		printTitle();
 
 		Arguments arguments = new Arguments(

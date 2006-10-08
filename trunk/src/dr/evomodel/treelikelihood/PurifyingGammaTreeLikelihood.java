@@ -66,8 +66,6 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
     	
 		super(PURIFYING_GAMMA_TREE_LIKELIHOOD, patternList, treeModel);
 		
-		this.useAmbiguities = useAmbiguities;
-	
 		try {
 			this.siteModel = siteModel;
 			addModel(siteModel);
@@ -157,10 +155,7 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
                     updateAllNodes();
 
                 }
-            }
-
-			updateRates = true;
-			
+            }			
 		} else if (model == frequencyModel) {
 			
 			updateAllNodes();
@@ -185,7 +180,6 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
 	public void handleParameterChangedEvent(Parameter parameter, int index) {
 		if (parameter == substitutionRateParameter || parameter == halfLifeParameter) {
 				
-			updateRates = true;
 			updateAllNodes();
 		}
 	}
@@ -459,11 +453,6 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
 
     private double[] nodeTimes = null;
 
-	private boolean updateRates = false;
-	
-	private boolean useAmbiguities = false;
-	private boolean integrateAcrossCategories = false;
-	    			
 	/** the root partial likelihoods */
     protected double[] branchRates = null;
 

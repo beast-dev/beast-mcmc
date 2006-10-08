@@ -29,7 +29,7 @@ import java.text.DecimalFormat;
 
 public class LogAxis extends Axis.AbstractAxis {
 
-	private int extraMinorTickCount;
+//	private int extraMinorTickCount;
 	
 
 	/**

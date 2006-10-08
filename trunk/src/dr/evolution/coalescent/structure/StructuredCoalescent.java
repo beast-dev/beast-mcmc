@@ -32,8 +32,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.structure.MetaPopulationModel;
 
-import java.text.DecimalFormat;
-
 /**
  * @author Alexei Drummond
  * @author Gerton Lunter
@@ -62,7 +60,6 @@ public class StructuredCoalescent {
         Tree tree = treeColouring.getTree();
 
         double _totalIntegratedRate = 0.0;  /* debugging */
-        DecimalFormat df = new DecimalFormat("###.####");
 
         // include the probability of the leaf colouring
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {

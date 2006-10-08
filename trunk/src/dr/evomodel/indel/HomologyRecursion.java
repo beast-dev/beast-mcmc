@@ -53,8 +53,6 @@ public class HomologyRecursion {
     /** Length of incoming branches to each tree node.  Root is assumed to be infinity */
     private double[] iTau;
 
-    private Tree tree;
-
     /** Parameters of the TKF91 model */
     double iLambda;
     double iMu;

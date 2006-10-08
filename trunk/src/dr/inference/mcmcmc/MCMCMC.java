@@ -97,7 +97,6 @@ public class MCMCMC implements Runnable {
     }
 
     public void run() {
-        stopping = false;
         currentState = 0;
 
         timer.start();
@@ -460,7 +459,6 @@ public class MCMCMC implements Runnable {
 
     /** Requests that the MCMC chain stop prematurely. */
     public void pleaseStop() {
-        stopping = true;
         for (int i = 0; i < chains.length; i++) {
             chains[i].pleaseStop();
         }
@@ -490,7 +488,6 @@ public class MCMCMC implements Runnable {
 	private MCMCOptions mcmcOptions;
 	private MCMCMCOptions mcmcmcOptions;
 
-    private boolean stopping = false;
     private boolean showOperatorAnalysis = true;
     private dr.util.Timer timer = new dr.util.Timer();
     private int currentState = 0;

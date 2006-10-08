@@ -34,8 +34,6 @@ import java.awt.*;
 
 public class DemographicFrame extends AuxilaryFrame {
 	
-	private TracerFrame tracerFrame;
-	
 	private Variate xData;
 	private Variate yDataMean;
 	private Variate yDataMedian;
@@ -48,7 +46,6 @@ public class DemographicFrame extends AuxilaryFrame {
 	
 		super(tracerFrame);
 		
-		this.tracerFrame = tracerFrame;
 		demographicPlotPanel = new DemographicPlotPanel();
 
 		setContentsPanel(demographicPlotPanel);

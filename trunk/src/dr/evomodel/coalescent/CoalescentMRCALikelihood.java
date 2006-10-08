@@ -223,7 +223,6 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 		double logL = 0.0;
 
 		double currentTime = 0.0;
-		double intervalVal = 0.0;
 
 		DemographicFunction demoFunction = demoModel.getDemographicFunction();
 

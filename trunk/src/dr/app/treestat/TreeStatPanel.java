@@ -40,8 +40,6 @@ import java.awt.*;
 public class TreeStatPanel extends javax.swing.JPanel implements Exportable {
 
 	private JTabbedPane tabbedPane = new JTabbedPane(); 
-	private TreeStatFrame frame = null;
-	
 	private TaxonSetsPanel taxonSetsPanel;
 	//private CharactersPanel charactersPanel;
 	private StatisticsPanel statisticsPanel;
@@ -50,9 +48,6 @@ public class TreeStatPanel extends javax.swing.JPanel implements Exportable {
 	
 	/** Creates new form TreeStatPanel */
 	public TreeStatPanel(TreeStatFrame frame, TreeStatData treeStatData) {
-
-		this.frame = frame;
-	
 		taxonSetsPanel = new TaxonSetsPanel(frame, treeStatData);
 		//charactersPanel = new CharactersPanel(frame, treeStatData);
 		statisticsPanel = new StatisticsPanel(frame, treeStatData);

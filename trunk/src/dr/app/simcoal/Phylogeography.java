@@ -247,8 +247,6 @@ public class Phylogeography {
 
         DiffusionLikelihood lkl = new DiffusionLikelihood(tree, "latitude");
         double[] D = new double[1];
-        double[] Dbias = new double[2];
-
         double logL2 = lkl.optimize(D);
         System.out.println("latitude D=" + D[0] + " logL= " + logL2);
         //logL2 = lkl.optimize(Dbias);

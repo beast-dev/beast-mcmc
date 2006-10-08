@@ -306,7 +306,8 @@ public interface Matrix {
 		 * left half (excluding row 0 and column 0) initialized to the matrix to 
 		 * be inverted.  Upon completion the left half is reduced to an identity 
 		 * matrix and the right half is reduced to the inverse of the original matrix. 
-		 * The inversion routine initializes the right half of D to an identity matrix. 
+		 * The inversion routine initializes the right half of D to an identity matrix.
+		 * @fixme Shouldn't this throw an exception if matrix is singular? 
 		 */
 		public static void invert(MutableMatrix matrix) throws Matrix.NotSquareException {
 			
@@ -327,9 +328,9 @@ public interface Matrix {
 			int i;
 			int j;
 			int k;
-			int error;
+//			int error;
 
-			error = 0;
+//			error = 0;
 			int n2 = 2*n;
 
 			/* init the reduction matrix  */
@@ -348,7 +349,7 @@ public interface Matrix {
 				alpha = D[i][i];
 				if( alpha == 0.0 ) /* error - singular matrix */
 				{
-					error = 1;
+//					error = 1;
 					break;
 				}
 				else

@@ -113,7 +113,7 @@ public class Permutator implements Iterator {
 
 	public static void main (String [] args) {
 		for (Iterator i = new Permutator(args); i.hasNext(); ) {
-			final String [] a = (String []) i.next();
+			i.next();
 			System.out.println (i);
 		}
 	}

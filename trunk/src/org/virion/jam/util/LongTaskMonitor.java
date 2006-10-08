@@ -36,13 +36,11 @@ public class LongTaskMonitor {
     private ProgressMonitor progressMonitor;
     private Timer timer;
     private LongTask task;
-    private JComponent parent;
     private TaskListener listener;
 
     public LongTaskMonitor(LongTask task, JComponent parent, TaskListener listener) {
 
         this.task = task;
-        this.parent = parent;
         this.listener = listener;
 
         //Create a timer.

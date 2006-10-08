@@ -36,9 +36,6 @@ import java.io.StringWriter;
  * @version 
  */
 public class Utils {
-
-	
-	private static javax.swing.JFileChooser SAVE_FILE_CHOOSER = null;
         
 	public static String getLoadFileName(String message) {
 		java.io.File file = getLoadFile(message);

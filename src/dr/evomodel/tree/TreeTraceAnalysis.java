@@ -33,7 +33,6 @@ import dr.evolution.tree.Tree;
 import dr.util.FrequencySet;
 import dr.util.NumberFormatter;
 
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Set;
@@ -46,11 +45,6 @@ import java.util.Set;
  */
 public class TreeTraceAnalysis {
 	
-	private TreeTraceAnalysis(TreeTrace trace, int burnIn, boolean verbose) {
-
-        this(new TreeTrace[] {trace}, burnIn, verbose);
-	}
-
     public TreeTraceAnalysis(TreeTrace[] trace, int burnIn, boolean verbose) {
 
         this.trace = trace;
@@ -314,9 +308,9 @@ public class TreeTraceAnalysis {
 	/**
 	 * @return an analyses of the trees in a log file.
 	 */
-	private static TreeTraceAnalysis analyzeLogFile(String fileName, int burnin) throws IOException {
-		return analyzeLogFile(new Reader[] {new FileReader(fileName)}, burnin, true);
-	}
+	//private static TreeTraceAnalysis analyzeLogFile(String fileName, int burnin) throws IOException {
+	//	return analyzeLogFile(new Reader[] {new FileReader(fileName)}, burnin, true);
+	//}
 	
 	/**
 	 * @return an analyses of the trees in a log file.

@@ -134,7 +134,6 @@ public class GammaFunction
 		// Bhattacharjee GP (1970) The incomplete gamma integral.  Applied Statistics,
 		// 19: 285-287 (AS32)
 	
-		int i;
 		double p = alpha, g = ln_gamma_alpha;
 		double accurate = 1e-8, overflow = 1e30;
 		double factor, gin = 0, rn = 0, a = 0,b = 0,an = 0, dif = 0, term = 0;

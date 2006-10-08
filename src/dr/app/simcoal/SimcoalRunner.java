@@ -137,23 +137,11 @@ public class SimcoalRunner {
 
                 try {
                     while (in.ready()) {
-                        char c = (char)in.read();
-                        //System.out.print(c);
+                        in.read();
                     }
                 } catch (IOException e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
-
-                /*String line;
-                try {
-                    while ((line = reader.readLine())
-                              != null) {
-                        System.out.println(line);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                }
-*/
             }
         }).start();
 
@@ -163,7 +151,7 @@ public class SimcoalRunner {
 
         Process process = null;
         try {
-            String command = simcoalLocation + " " + fileName + " " + replicates;
+            //String command = simcoalLocation + " " + fileName + " " + replicates;
 
         String[] cmdArray = new String[] {simcoalLocation, fileName, replicates+""};
 

@@ -391,7 +391,6 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
                 }
             } else if (taxonSetRadio.isSelected()) {
                 TreeStatData.TaxonSet t = (TreeStatData.TaxonSet)taxonSetCombo.getSelectedItem();
-                Set set = new TreeSet();
                 Taxa taxa = new Taxa();
                 taxa.setId(t.name);
                 Iterator iter = t.taxa.iterator();

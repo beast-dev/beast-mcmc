@@ -88,8 +88,6 @@ public class BranchRatePlotter {
         BufferedReader reader = new BufferedReader(new FileReader(controlFile));
         String line = reader.readLine();
 
-        ArrayList ancestralRates = new ArrayList();
-
         int totalTrees = 0;
         int totalTreesUsed = 0;
         while (line != null) {
@@ -187,7 +185,7 @@ public class BranchRatePlotter {
                 }
                 //System.out.println(red + " " + green + " " + blue);
 
-                float lineThickness = relativeRate*6.0f;
+                //float lineThickness = relativeRate*6.0f;
 
                 if (rate > meanRate) {
                     targetTree.setNodeAttribute(node, "color", new Color(1.0f, 0.5f, 0.5f));

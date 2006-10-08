@@ -84,8 +84,6 @@ public interface Trace extends Identifiable {
 				reader = new BufferedReader(r);
 			}
 			
-			ArrayList names = new ArrayList();
-			
 			int statNum = -1;
 			
 			// Read through to first token

@@ -153,12 +153,6 @@ public class TransmissionSimulator {
 		};
 	};
 
-
-
-	/** The demographic models. */
-	private DemographicModel sourceDemographic = null;
-	private TransmissionDemographicModel transmissionModel = null;
-
 	/** The host tree. */
 	private Tree hostTree = null;
 

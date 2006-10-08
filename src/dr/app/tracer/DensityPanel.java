@@ -53,7 +53,6 @@ public class DensityPanel extends JPanel implements Exportable {
 	private JLabel messageLabel = new JLabel("No data loaded");
 	
 	private CombinedTraces combinedTraces = null;
-	private TraceList traceList = null;
 	private int[] traceIndices = null;
     private String xAxisTitle = "";
 	
@@ -155,7 +154,6 @@ public class DensityPanel extends JPanel implements Exportable {
 		// This shows the combined trace overlayed on each of the individuals
 	
 		this.combinedTraces = combinedTraces;
-		this.traceList = null;
 		this.traceIndices = traceIndices;
 		showIndividualCheckBox.setEnabled(true);
 		
@@ -211,7 +209,6 @@ public class DensityPanel extends JPanel implements Exportable {
 	public void setTraces(TraceList traceList, int[] traceIndices) {
 		
 		this.combinedTraces = null;
-		this.traceList = traceList;
 		this.traceIndices = traceIndices;
 		showIndividualCheckBox.setEnabled(false);
 		

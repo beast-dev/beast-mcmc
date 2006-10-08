@@ -44,7 +44,6 @@ public class HierarchicalGraphLayout implements GraphLayout {
 	 */
 	public void layoutGraph(JGraph graph) {
 
-		this.graph = graph;
 		graphModel = graph.getGraphModel();
 		
 		if (graphModel.getVertexCount() == 0) return;
@@ -348,6 +347,5 @@ public class HierarchicalGraphLayout implements GraphLayout {
 	private double sumWidth;
 	private double sumHeight;
 	
-	private JGraph graph;
 	private GraphModel graphModel;
 }

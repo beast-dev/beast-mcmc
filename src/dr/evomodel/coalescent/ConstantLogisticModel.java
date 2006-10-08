@@ -27,7 +27,6 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.ConstLogistic;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evoxml.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -124,7 +123,6 @@ public class ConstantLogisticModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			ExponentialGrowth model = null;
 			int units = XMLParser.Utils.getUnitsAttr(xo);
 				
 			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);

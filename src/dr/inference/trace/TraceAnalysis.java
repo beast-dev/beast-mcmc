@@ -355,10 +355,10 @@ public class TraceAnalysis {
 		stdErrorOfMean = Math.sqrt(varStat/samples);
 
 		// variance of statistic
-		variance = gammaStat[0];
+		//variance = gammaStat[0];
 
 		// standard error of variance
-		stdErrorOfVariance = Math.sqrt(varVarStat/samples);
+		//stdErrorOfVariance = Math.sqrt(varVarStat/samples);
 
 		// auto correlation time
 		ACT = update * varStat / gammaStat[0];
@@ -367,26 +367,27 @@ public class TraceAnalysis {
 		ESS = (update * statistic.length) / ACT;
 
 		// M
-		M = lag;
+		//M = lag;
 
 		// M(updates)
-		M_update = lag * update;
+		//M_update = lag * update;
 
 		// standard deviation of autocorrelation time
-		stdErrOfACT = (2.0* Math.sqrt(2.0*(2.0*(double) lag+1)/samples)*(varStat/gammaStat[0])*update);
+		//stdErrOfACT = (2.0* Math.sqrt(2.0*(2.0*(double) lag+1)/samples)*(varStat/gammaStat[0])*update);
 
 		//assymptotic std of correlation function
-		assStdOfCorrelationFunction = Math.sqrt(2.0*assVarCor/samples);
+		//assStdOfCorrelationFunction = Math.sqrt(2.0*assVarCor/samples);
 	}
 
 	private double stdErrorOfMean;
-	private double mean, median, variance;
+	private double mean, median;
+//	private double variance;
 	private int burnin = -1;
 	private double ACT, ESS;
-    private double stdErrorOfVariance;
-	private double M, M_update;
-	private double stdErrOfACT;
-	private double assStdOfCorrelationFunction;
+//    private double stdErrorOfVariance;
+//	private double M, M_update;
+//	private double stdErrOfACT;
+//	private double assStdOfCorrelationFunction;
 	private double cpdLower, cpdUpper, hpdLower, hpdUpper;
 	private static final int MAX_OFFSET = 1000;
 	private boolean correlation;

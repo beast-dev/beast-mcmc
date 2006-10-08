@@ -158,7 +158,6 @@ public class ContinuousTraitLikelihood {
 		double s2 = 0.0;
 		double sssContrast = 0.0;
 		double slogCV = 0.0;
-        double nv = 0.0, cl = 0.0;
         for (int i = 0; i < contrastTree.getInternalNodeCount(); i++) {
 			ContrastedTraitNode ctNode = (ContrastedTraitNode)contrastTree.getInternalNode(i);
 			double contrast = ctNode.getTraitContrasts()[0];
@@ -317,8 +316,7 @@ public class ContinuousTraitLikelihood {
 		
         // @todo find out what should be done with this variable
 		// the sum of the log of the contrast variances below this node
-        private double slContrastVariance = 0;
-		
+        // private double slContrastVariance = 0;	
 	}
 	
 	public static void main(String[] args) throws Exception {

@@ -103,8 +103,6 @@ public class DiffusionModel extends AbstractModel {
 		double D = diffusionRateParameter.getParameterValue(0);
 		double delta = MathUtils.nextGaussian();
 		
-		double Dtime = D * time;
-		
 		delta *= Math.sqrt(D * time);
 		delta += getBias()*time;
 	

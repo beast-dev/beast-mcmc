@@ -404,7 +404,8 @@ public class ConjugateGradientSearch extends MultivariateMinimum
 
 		}
 	}
-
+	
+/*
 	private void testStep(double f0, double s0, double f1, double s1, double step)
 	{
 		// f0  function value at x=0
@@ -436,7 +437,7 @@ public class ConjugateGradientSearch extends MultivariateMinimum
 			System.out.println("<<< NO sufficient decrease in slope");
 		}
 	}
-
+*/
 
 	private void conjugateGradientDirection(double[] sdir, double[] gvec, double[] gold,
 		boolean[] active)

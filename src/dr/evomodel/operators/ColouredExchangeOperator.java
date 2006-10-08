@@ -25,7 +25,6 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.colouring.ColourSampler;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.coalescent.structure.ColourSamplerModel;
@@ -60,7 +59,6 @@ public class ColouredExchangeOperator extends SimpleMCMCOperator {
 	private TreeModel tree;
 
     private ColourSamplerModel colouringModel;
-    private ColourSampler colourSampler;
 
 	public ColouredExchangeOperator(int mode, TreeModel tree, ColourSamplerModel colouringModel, int weight) {
 		this.mode = mode;

@@ -218,9 +218,9 @@ public interface UnrootedTree {
 			removeEdge(node2, nB);
 		}
 
-		/**
+		/*
 		 * Should be called from root node.
-		 */
+		 * /
 		private void traverse(NodeRef node, NodeRef from) {
 
 			int edgeCount = getNeighbourCount(node);
@@ -233,7 +233,7 @@ public interface UnrootedTree {
 					traverse(neighbour, node);
 				}
 			}
-		}
+		}*/
 
 		/**
 		 * Add an edge between the two nodes of the given length

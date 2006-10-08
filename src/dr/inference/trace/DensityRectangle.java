@@ -157,9 +157,9 @@ public class DensityRectangle {
 
         float red = (float)(density / maxDensity);
         float blue = 1.0f - red;
-        float green = Math.min(red, blue);//(0.5f - Math.abs(red-0.5f));
+        float green = Math.min(red, blue); //(0.5f - Math.abs(red-0.5f));
 
-        Color color = new Color(red, red, red);
+        Color color = new Color(red, green, blue);
         g2d.setColor(color);
         g2d.fill(targetRectangle);
 

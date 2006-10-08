@@ -53,8 +53,6 @@ public class RawTracePanel extends JPanel implements Exportable {
 						"Right", "Bottom-Left", "Bottom", "Bottom-Right" }
 	);
 	
-	private boolean sampleOnly = true;
-						
 	/** Creates new RawTracePanel */
 	public RawTracePanel() {
 

@@ -122,7 +122,7 @@ public class TestStatistic extends BooleanStatistic {
 				name = xo.getId();
 			}
 			Attribute attr = (Attribute)xo.getChild(Attribute.class);		
-			double testValue1, testValue2;
+			double testValue1;
 			
 			TestStatistic statistic;
 			

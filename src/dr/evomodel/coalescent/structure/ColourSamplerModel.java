@@ -31,9 +31,6 @@ import dr.evolution.colouring.ColourSampler;
 import dr.evolution.colouring.TreeColouring;
 import dr.evolution.colouring.StructuredColourSampler;
 import dr.evolution.util.Taxa;
-import dr.evolution.coalescent.structure.StructuredCoalescent;
-import dr.evolution.coalescent.structure.StructuredIntervalList;
-import dr.evolution.coalescent.structure.ColouredTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.xml.*;
@@ -221,6 +218,7 @@ public class ColourSamplerModel extends AbstractModel implements ModelListener, 
 
     };
 
+    /*  for debugging
     private Statistic debugMigrationEventStatistic = new Statistic.Abstract() {
 
         public String getStatisticName() {
@@ -250,7 +248,8 @@ public class ColourSamplerModel extends AbstractModel implements ModelListener, 
         }
 
     };
-
+ */
+    
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() { return COLOUR_SAMPLER_MODEL; }

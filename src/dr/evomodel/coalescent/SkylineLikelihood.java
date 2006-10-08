@@ -82,7 +82,6 @@ public class SkylineLikelihood extends CoalescentLikelihood {
 		double logL = 0.0;
 		
 		double currentTime = 0.0;
-		double intervalVal = 0.0;
 		
 		int popIndex=0;
 	

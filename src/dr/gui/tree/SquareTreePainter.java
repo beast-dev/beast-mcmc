@@ -431,7 +431,7 @@ public class SquareTreePainter implements TreePainter {
             //Double max = (Double)tree.getNodeAttribute(node, "nodeHeight.max");
 
             // plot height statistics as box plot
-            double meanX = convertX(mean.doubleValue());
+            //double meanX = convertX(mean.doubleValue());
             //double minX = convertX(min.doubleValue());
             //double maxX = convertX(max.doubleValue());
             double upperX = convertX(hpdUpper.doubleValue());
@@ -523,11 +523,7 @@ public class SquareTreePainter implements TreePainter {
 	private Rectangle2D[] nodeRectVert;
 	private Rectangle2D[] nodeRectHoriz;
 	
-    private Stroke whiskerStroke = new BasicStroke(0.5f);
-
 	private Color textColor = Color.black;
-	//private Color lineColor = Color.blue;
-
 	private Map yPositionMap = new HashMap();
 	private boolean rememberYPositions = false;
 	private double userDefinedHeight = -1.0;

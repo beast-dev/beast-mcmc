@@ -28,7 +28,6 @@ package org.virion.jam.util;
 public abstract class SimpleLongTask extends LongTask {
 
     boolean background = false;
-    private SwingWorker worker = null;
     public int current = 0;
     public int length = 1;
     public boolean pleaseStop = false;

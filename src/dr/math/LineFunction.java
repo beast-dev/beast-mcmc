@@ -267,7 +267,7 @@ public class LineFunction implements UnivariateFunction
 	private int lowerBoundParam, upperBoundParam;
 	private int dim;
 	private double lowerBound, upperBound;
-	private double[] s, d, x, min, max;
+	private double[] s, d, x;
 	private UnivariateMinimum um = null;
 
 	private void computeBounds()

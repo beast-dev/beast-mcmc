@@ -63,11 +63,11 @@ public class BeastDoc {
 		System.out.println("done.");
 	}
 
-	private final void setup() throws XMLParseException {
+//	private final void setup() throws XMLParseException {
 
 		// add all the XMLObject parsers you need
 
-	}
+//	}
 
 	public static void printTitle() {
 

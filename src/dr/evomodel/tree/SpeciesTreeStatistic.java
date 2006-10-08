@@ -51,8 +51,6 @@ public class SpeciesTreeStatistic extends BooleanStatistic implements TreeStatis
 		super(name);
 		this.speciesTree = speciesTree;
 		this.popTree = populationTree;
-		
-		speciesCount = speciesTree.getTaxonCount();
 	}
 	
 	public void setTree(Tree tree) { this.popTree = tree; }
@@ -142,7 +140,5 @@ public class SpeciesTreeStatistic extends BooleanStatistic implements TreeStatis
 	
 	private Tree speciesTree;
 	private Tree popTree;
-	
-	private int speciesCount;
 }
 

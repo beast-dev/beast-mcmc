@@ -56,7 +56,6 @@ public class IstvanOperator extends SimpleMCMCOperator {
 	private TKF91Likelihood likelihood;
 	private dr.evomodel.indel.IstvansProposal proposal = new dr.evomodel.indel.IstvansProposal();
 	private Alignment alignment;
-	private Alignment newAlignment;
 
 	int[][] iAlignment;
 	double[][][] iProbs;

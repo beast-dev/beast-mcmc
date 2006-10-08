@@ -334,8 +334,6 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
 	private double[] storedEval;
 	private double[][] Evec;
 	private double[][] storedEvec;
-	private double[][] m2;
-	private double[][] m3;
 	private double[][] Ievc;
 	private double[][] storedIevc;
 	private double[][] iexp;

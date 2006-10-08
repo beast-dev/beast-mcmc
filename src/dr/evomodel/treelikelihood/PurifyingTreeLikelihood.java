@@ -66,7 +66,6 @@ public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
     	
 		super(PURIFYING_TREE_LIKELIHOOD, patternList, treeModel);
 		
-		this.useAmbiguities = useAmbiguities;
 		this.useAveraging = useAveraging;
 	
 		try {
@@ -508,8 +507,6 @@ public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
 	
     private double[] nodeTimes = null;
 
-	private boolean useAmbiguities = false;
-	
 	// If true then the average of the two incoming branch lengths is used for rate function in internal branches (as opposed to longest)
 	private boolean useAveraging = true;
 	

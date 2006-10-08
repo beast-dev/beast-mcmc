@@ -73,7 +73,7 @@ public class SampleStateAndCategoryModel extends AbstractModel
 		
 		this.categoryCount = substitutionModels.size();
 		sitesInCategory = new int[categoryCount];
-		stateCount = ((SubstitutionModel)substitutionModels.elementAt(0)).getDataType().getStateCount();
+	//	stateCount = ((SubstitutionModel)substitutionModels.elementAt(0)).getDataType().getStateCount();
 		
 		this.muParameter = muParameter;
 		addParameter(muParameter);
@@ -228,7 +228,6 @@ public class SampleStateAndCategoryModel extends AbstractModel
 
 	public String toString(){
 		StringBuffer s = new StringBuffer();
-		int t = 0;
 		
 		for(int i = 0; i < categoryCount; i++){
 			s.append(String.valueOf(sitesInCategory[i]) + "\t");
@@ -354,11 +353,9 @@ public class SampleStateAndCategoryModel extends AbstractModel
 	
 	private Parameter categoriesParameter;
 		
-	private boolean ratesKnown;
-	
 	private Vector substitutionModels;
 	
 	private int categoryCount;
 			
-	private int stateCount;
+//	private int stateCount;
 }

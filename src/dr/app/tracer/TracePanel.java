@@ -40,9 +40,7 @@ import java.awt.*;
  */
 public class TracePanel extends javax.swing.JPanel implements Exportable {
 
-	private JTabbedPane tabbedPane = new JTabbedPane(); 
-	private JFrame parent = null;
-	
+	private JTabbedPane tabbedPane = new JTabbedPane();	
 	private SummaryStatisticsPanel summaryPanel;
 	private DensityPanel densityPanel;
 	private CorrelationPanel correlationPanel;
@@ -50,11 +48,9 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
 	
 	/** Creates new form TracePanel */
 	public TracePanel(JFrame parent) {
-
-		this.parent = parent;
 	
         Icon traceIcon = IconUtils.getIcon(TracerApp.class, "images/trace-small-icon.gif");
-        Icon frequencyIcon = IconUtils.getIcon(TracerApp.class, "images/frequency-small-icon.gif");
+        //Icon frequencyIcon = IconUtils.getIcon(TracerApp.class, "images/frequency-small-icon.gif");
         Icon densityIcon = IconUtils.getIcon(TracerApp.class, "images/density-small-icon.gif");
         Icon summaryIcon = IconUtils.getIcon(TracerApp.class, "images/summary-small-icon.png");
         Icon correlationIcon = IconUtils.getIcon(TracerApp.class, "images/correlation-small-icon.gif");

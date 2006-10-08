@@ -220,7 +220,7 @@ public class IstvansProposal {
 		// temporal variables in the dp recursion and stochastic traceback
 		double        iProposalLoglikelihood = 0.0;
 		// loglikelihood of the proposal, what else?
-		int           iTempint1, iTempint2;
+		int           iTempint1;
 		// temporal variables for counting gaps, iTempint1 is also used at child-sorting
 		double[][]    iScoring = new double[iProbs[0].length][iProbs[0][0].length];
 		//  scoring table for the dynamic programming

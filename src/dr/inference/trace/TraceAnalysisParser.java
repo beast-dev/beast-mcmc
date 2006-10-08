@@ -84,7 +84,6 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
 				formatter.setPadding(true);
 				formatter.setFieldWidth(14);
 			
-				boolean found = false;
 				for (int i =0; i < analysis.length; i++) {
 					if (analysis[i].getName().equals(statName)) {
 						double estimate = analysis[i].getMean();

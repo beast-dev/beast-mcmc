@@ -28,7 +28,6 @@ package dr.xml;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -46,7 +45,7 @@ public class XMLObject {
 	 */
 	public XMLObject(Element e, ObjectStore store) { 
 		this.element = e;
-		this.store = store;
+//		this.store = store;
 	}
 	
 	/**
@@ -408,11 +407,8 @@ public class XMLObject {
 	private Vector children = new Vector();
 	private Element element = null;	
 	
-	// this hashtable holds extra attributes 
-	private HashMap extraAttributes = null;
-	
 	private Object nativeObject;
 
 	// The objectStore representing the local scope of this element.
-	private ObjectStore store;
+//	private ObjectStore store;
 }

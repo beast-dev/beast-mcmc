@@ -384,7 +384,6 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 	{
 
 		boolean dim = false, ttl = false, fmt = false;
-		char ch;
 		String token;
 
 		do {
@@ -746,8 +745,6 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 		String[] lastToken = new String[1];
 		HashMap translationList = readTranslationList(taxonList, lastToken);
 
-		String token = lastToken[0];
-
 		boolean done = false;
 		do {
 
@@ -776,7 +773,6 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 	{
 		HashMap translationList = new HashMap();
 
-		boolean done = false;
 		String token = readToken(";");
 
 		if ( token.equalsIgnoreCase("TRANSLATE") ) {

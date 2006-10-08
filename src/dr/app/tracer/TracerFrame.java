@@ -448,7 +448,6 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 			} while (true);
 		}
 		
-		private int lengthOfTask = 0;
 		private int current = 0;
 		private String message;
 	};

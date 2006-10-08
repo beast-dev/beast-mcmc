@@ -257,8 +257,6 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
         };
     };
 
-    private int populationCount;
-
     private TreeModel treeModel = null;
     private MetaPopulationModel metaPopulationModel = null;
     private ColourSamplerModel colourSamplerModel = null;

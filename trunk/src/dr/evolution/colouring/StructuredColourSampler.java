@@ -243,7 +243,7 @@ public class StructuredColourSampler implements ColourSampler {
      * @param treeColouring
      * @param tree
      * @param colourChangeMatrix
-     * @param N
+     * @param mp
      * @return probability density
      */
     public double getProposalProbability(TreeColouring treeColouring, Tree tree, ColourChangeMatrix colourChangeMatrix, MetaPopulationModel mp) {
@@ -709,7 +709,7 @@ public class StructuredColourSampler implements ColourSampler {
 
 		// Make a result array and a current state
 		double[][] partials = new double[ topInterval-bottomInterval ][2];
-		double[] state = inState.clone();
+		double[] state = (double[]) inState.clone();
 		int curinterval = bottomInterval;
 
 		while (curinterval != topInterval) {

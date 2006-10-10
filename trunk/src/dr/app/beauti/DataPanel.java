@@ -253,7 +253,7 @@ public class DataPanel extends JPanel implements Exportable {
 			sequenceRenderer.setText(options.alignment.getSequence(0).getSequenceString());
 			int w = sequenceRenderer.getPreferredSize().width + 8;
 			dataTable.getColumnModel().getColumn(3).setPreferredWidth(w);
-		}
+        }
 
 		unitsCombo.setSelectedIndex(options.datesUnits);
 		directionCombo.setSelectedIndex(options.datesDirection);
@@ -432,34 +432,38 @@ public class DataPanel extends JPanel implements Exportable {
 
 			try {
 				if (orderRadio.isSelected()) {
-					int order = orderCombo.getSelectedIndex();
-					boolean fromLast = false;
-					if (order > 3) {
-						fromLast = true;
-						order = 8 - order - 1;
+                    options.guessDateFromOrder = true;
+					options.order = orderCombo.getSelectedIndex();
+                    options.fromLast = false;
+					if (options.order > 3) {
+						options.fromLast = true;
+						options.order = 8 - options.order - 1;
 					}
 
-					d = guessDateFromOrder(options.originalAlignment.getTaxonId(i), order, fromLast);
+					d = options.guessDateFromOrder(options.originalAlignment.getTaxonId(i), options.order, options.fromLast);
 				} else {
-					String prefix = prefixText.getText();
-					d = guessDateFromPrefix(options.originalAlignment.getTaxonId(i), prefix);
+                    options.guessDateFromOrder = false;
+					options.prefix = prefixText.getText();
+					d = options.guessDateFromPrefix(options.originalAlignment.getTaxonId(i), options.prefix);
 				}
 
 			} catch (NumberFormatException nfe) {
 			}
 
-			if (offsetCheck.isSelected()) {
-				double offset = offsetText.getValue().doubleValue();
+            options.offset = 0.0;
+            options.unlessLessThan = 0.0;
+            if (offsetCheck.isSelected()) {
+                options.offset = offsetText.getValue().doubleValue();
 				if (unlessCheck.isSelected()) {
-					double unless = unlessText.getValue().doubleValue();
-					double offset2 = offset2Text.getValue().doubleValue();
-					if (d < unless) {
-						d += offset2;
+					options.unlessLessThan = unlessText.getValue().doubleValue();
+					options.offset2 = offset2Text.getValue().doubleValue();
+					if (d < options.unlessLessThan) {
+						d += options.offset2;
 					} else {
-						d += offset;
+						d += options.offset;
 					}
 				} else {
-					d += offset;
+					d += options.offset;
 				}
 			}
 
@@ -472,98 +476,6 @@ public class DataPanel extends JPanel implements Exportable {
 
 		dataTableModel.fireTableDataChanged();
 		frame.dataChanged();
-	}
-
-	public double guessDateFromOrder(String label, int order, boolean fromLast) throws NumberFormatException {
-
-		String field = null;
-
-		if (fromLast) {
-			int count = 0;
-			int i = label.length() - 1;
-
-			char c = label.charAt(i);
-
-			do {
-				// first find a part of a number
-				while (!Character.isDigit(c) && c != '.') {
-					i--;
-					if (i < 0) break;
-					c = label.charAt(i);
-				}
-
-				if (i < 0) new NumberFormatException("Missing number field in taxon label");
-
-				int j = i + 1;
-
-				// now find the beginning of the number
-				while (Character.isDigit(c) || c == '.') {
-					i--;
-					if (i < 0) break;
-					c = label.charAt(i);
-				}
-
-				field = label.substring(i+1, j);
-
-				count++;
-
-			} while (count <= order);
-
-		} else {
-			int count = 0;
-			int i = 0;
-
-			char c = label.charAt(i);
-
-			do {
-				// first find a part of a number
-				while (!Character.isDigit(c) && c != '.') {
-					i++;
-					if (i == label.length()) break;
-					c = label.charAt(i);
-				}
-				int j = i;
-
-				if (i == label.length()) new NumberFormatException("Missing number field in taxon label");
-
-				// now find the beginning of the number
-				while (Character.isDigit(c) || c == '.') {
-					i++;
-					if (i == label.length()) break;
-					c = label.charAt(i);
-				}
-
-				field = label.substring(j, i);
-
-				count++;
-
-			} while (count <= order);
-		}
-
-		return Double.parseDouble(field);
-	}
-
-	public double guessDateFromPrefix(String label, String prefix) throws NumberFormatException {
-
-		int i = label.indexOf(prefix);
-
-		if (i == -1) new NumberFormatException("Missing prefix in taxon label");
-
-		i += prefix.length();
-		int j = i;
-
-		// now find the beginning of the number
-		char c = label.charAt(i);
-		while (i < label.length() && (Character.isDigit(c) || c == '.')) {
-			i++;
-			c = label.charAt(i);
-		}
-
-		if (i == j) new NumberFormatException("Missing field after prefix in taxon label");
-
-		String field = label.substring(j, i);
-
-		return Double.parseDouble(field);
 	}
 
 	public class ClearDatesAction extends AbstractAction {

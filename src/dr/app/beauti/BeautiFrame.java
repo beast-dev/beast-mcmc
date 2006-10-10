@@ -1,28 +1,11 @@
 /*
  * BeautiFrame.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * (c) 2002-2005 BEAST Development Core Team
  *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * This package may be distributed under the
+ * Lesser Gnu Public Licence (LGPL)
  */
-
 package dr.app.beauti;
 
 import dr.evolution.alignment.Patterns;
@@ -77,8 +60,8 @@ public class BeautiFrame extends DocumentFrame {
 
 		setTitle(title);
 
-		getSaveAction().setEnabled(false);
-		getSaveAsAction().setEnabled(false);
+//		getSaveAction().setEnabled(false);
+//		getSaveAsAction().setEnabled(false);
 
 //        getCutAction().setEnabled(false);
 //        getCopyAction().setEnabled(false);
@@ -207,7 +190,11 @@ public class BeautiFrame extends DocumentFrame {
 			Document doc = parser.build(file);
 			beautiOptions.parse(doc);
 
-			dataPanel.setOptions(beautiOptions);
+            if (beautiOptions.guessDates) {
+                beautiOptions.guessDates();
+            }
+
+            dataPanel.setOptions(beautiOptions);
 			taxaPanel.setOptions(beautiOptions);
 			modelPanel.setOptions(beautiOptions);
 			priorsPanel.setOptions(beautiOptions);
@@ -242,7 +229,7 @@ public class BeautiFrame extends DocumentFrame {
 		operatorsPanel.getOptions(beautiOptions);
 		mcmcPanel.getOptions(beautiOptions);
 
-		Document doc = beautiOptions.create();
+		Document doc = beautiOptions.create(false, true);
 
 		FileWriter fw = new FileWriter(file);
 

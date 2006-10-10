@@ -1,28 +1,11 @@
 /*
  * BeautiOptions.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * (c) 2002-2005 BEAST Development Core Team
  *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * This package may be distributed under the
+ * Lesser Gnu Public Licence (LGPL)
  */
-
 package dr.app.beauti;
 
 import dr.evolution.alignment.Alignment;
@@ -31,6 +14,7 @@ import dr.evolution.datatype.*;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
+import dr.evolution.util.Date;
 import dr.util.NumberFormatter;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -666,22 +650,21 @@ public class BeautiOptions {
 	/**
 	 * Read options from a file
 	 */
-	public Document create() {
+	public Document create(boolean includeData, boolean guessDates) {
 
 		Element root = new Element("beauti");
 		root.setAttribute("version", version);
 
-
 		Element dataElement = new Element("data");
 
-		dataElement.addContent(createChild("fileNameStem", fileNameStem));
+		//dataElement.addContent(createChild("fileNameStem", fileNameStem));
 
 		dataElement.addContent(createChild("datesUnits", datesUnits));
 		dataElement.addContent(createChild("datesDirection", datesDirection));
 		dataElement.addContent(createChild("translation", translation));
 		dataElement.addContent(createChild("userTree", userTree));
 
-		if (originalAlignment != null) {
+		if (includeData && originalAlignment != null) {
 			Element alignmentElement = new Element("alignment");
 			alignmentElement.addContent(createChild("dataType", originalAlignment.getDataType().getType()));
 			for (int i = 0; i < originalAlignment.getTaxonCount(); i++) {
@@ -698,7 +681,32 @@ public class BeautiOptions {
 			dataElement.addContent(alignmentElement);
 		}
 
+		dataElement.addContent(createChild("guessDates", guessDates));
+		dataElement.addContent(createChild("guessDateFromOrder", guessDateFromOrder));
+		dataElement.addContent(createChild("fromLast", fromLast));
+		dataElement.addContent(createChild("order", order));
+		dataElement.addContent(createChild("prefix", prefix));
+        dataElement.addContent(createChild("offset", offset));
+		dataElement.addContent(createChild("unlessLessThan", unlessLessThan));
+		dataElement.addContent(createChild("offset2", offset2));
+
 		root.addContent(dataElement);
+
+		Element taxaElement = new Element("taxa");
+
+		for (int i = 0; i < taxonSets.size(); i++) {
+			Taxa taxonSet = (Taxa)taxonSets.get(i);
+			Element taxonSetElement = new Element("taxonSet");
+			taxonSetElement.addContent(createChild("id", taxonSet.getId()));
+			for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
+				Element taxonElement = new Element("taxon");
+				taxonElement.addContent(createChild("id", taxonSet.getId()));
+				taxonSetElement.addContent(taxonElement);
+			}
+			taxaElement.addContent(taxonSetElement);
+		}
+
+		root.addContent(taxaElement);
 
 		Element modelElement = new Element("model");
 
@@ -724,7 +732,7 @@ public class BeautiOptions {
 
 		root.addContent(modelElement);
 
-		Element parametersElement = new Element("parameters");
+		Element priorsElement = new Element("priors");
 
 		Iterator iter = parameters.keySet().iterator();
 		while (iter.hasNext()) {
@@ -746,10 +754,10 @@ public class BeautiOptions {
 			e.addContent(createChild("gammaAlpha", parameter.gammaAlpha));
 			e.addContent(createChild("gammaBeta", parameter.gammaBeta));
 			e.addContent(createChild("gammaOffset", parameter.gammaOffset));
-			parametersElement.addContent(e);
+			priorsElement.addContent(e);
 		}
 
-		root.addContent(parametersElement);
+		root.addContent(priorsElement);
 
 		Element operatorsElement = new Element("operators");
 
@@ -772,12 +780,12 @@ public class BeautiOptions {
 		mcmcElement.addContent(createChild("chainLength", chainLength));
 		mcmcElement.addContent(createChild("logEvery", logEvery));
 		mcmcElement.addContent(createChild("echoEvery", echoEvery));
-		if (logFileName != null) mcmcElement.addContent(createChild("logFileName", logFileName));
-		if (treeFileName != null) mcmcElement.addContent(createChild("treeFileName", treeFileName));
-		mcmcElement.addContent(createChild("mapTreeLog", mapTreeLog));
-		if (mapTreeFileName != null) mcmcElement.addContent(createChild("mapTreeFileName", mapTreeFileName));
+		//if (logFileName != null) mcmcElement.addContent(createChild("logFileName", logFileName));
+		//if (treeFileName != null) mcmcElement.addContent(createChild("treeFileName", treeFileName));
+		//mcmcElement.addContent(createChild("mapTreeLog", mapTreeLog));
+		//if (mapTreeFileName != null) mcmcElement.addContent(createChild("mapTreeFileName", mapTreeFileName));
 		mcmcElement.addContent(createChild("substTreeLog", substTreeLog));
-		if (substTreeFileName != null) mcmcElement.addContent(createChild("substTreeFileName", substTreeFileName));
+		//if (substTreeFileName != null) mcmcElement.addContent(createChild("substTreeFileName", substTreeFileName));
 
 		root.addContent(mcmcElement);
 
@@ -820,125 +828,143 @@ public class BeautiOptions {
 		}
 
 		Element dataElement = root.getChild("data");
+		Element taxaElement = root.getChild("taxa");
 		Element modelElement = root.getChild("model");
-		Element parametersElement = root.getChild("parameters");
+		Element priorsElement = root.getChild("priors");
 		Element operatorsElement = root.getChild("operators");
 		Element mcmcElement = root.getChild("mcmc");
 
-		if (dataElement == null) {
-			throw new dr.xml.XMLParseException("Data element missing");
-		}
+		if (dataElement != null) {
+			//fileNameStem = getStringChild(dataElement, "fileNameStem", "untitled");
 
-		if (modelElement == null) {
-			throw new dr.xml.XMLParseException("Model element missing");
-		}
+			datesUnits = getIntegerChild(dataElement, "datesUnits", YEARS);
+			datesDirection = getIntegerChild(dataElement, "datesDirection", FORWARDS);
+			translation = getIntegerChild(dataElement, "translation", NONE);
+			userTree = getBooleanChild(dataElement, "userTree", false);
 
-		if (operatorsElement == null) {
-			throw new dr.xml.XMLParseException("Operators element missing");
-		}
+			int theUnits = 0;
+			if (datesUnits == YEARS) theUnits = Units.YEARS;
+			if (datesUnits == MONTHS) theUnits = Units.MONTHS;
+			if (datesUnits == DAYS) theUnits = Units.DAYS;
 
-		if (mcmcElement == null) {
-			throw new dr.xml.XMLParseException("MCMC element missing");
-		}
+			Element alignmentElement = dataElement.getChild("alignment");
+			if (alignmentElement != null) {
+				originalAlignment = new SimpleAlignment();
 
-		fileNameStem = getStringChild(dataElement, "fileNameStem", "untitled");
-
-		datesUnits = getIntegerChild(dataElement, "datesUnits", YEARS);
-		datesDirection = getIntegerChild(dataElement, "datesDirection", FORWARDS);
-		translation = getIntegerChild(dataElement, "translation", NONE);
-		userTree = getBooleanChild(dataElement, "userTree", false);
-
-		int theUnits = 0;
-		if (datesUnits == YEARS) theUnits = Units.YEARS;
-		if (datesUnits == MONTHS) theUnits = Units.MONTHS;
-		if (datesUnits == DAYS) theUnits = Units.DAYS;
-
-		Element alignmentElement = dataElement.getChild("alignment");
-		if (alignmentElement != null) {
-			originalAlignment = new SimpleAlignment();
-
-			int dataType = getIntegerChild(alignmentElement, "dataType", DataType.NUCLEOTIDES);
-			switch (dataType) {
-				case DataType.NUCLEOTIDES: originalAlignment.setDataType(Nucleotides.INSTANCE); break;
-				case DataType.AMINO_ACIDS: originalAlignment.setDataType(AminoAcids.INSTANCE); break;
-				case DataType.TWO_STATES: originalAlignment.setDataType(TwoStates.INSTANCE); break;
-				default: originalAlignment.setDataType(Nucleotides.INSTANCE);
-			}
-
-			Iterator iter = alignmentElement.getChildren("taxon").iterator();
-			while (iter.hasNext()) {
-				Element taxonElement = (Element)iter.next();
-
-				String id = getStringChild(taxonElement, "id", "");
-				Taxon taxon = new Taxon(id);
-
-				if (taxonElement.getChild("date") != null) {
-					double dateValue = getDoubleChild(taxonElement, "date", 0.0);
-
-					if (datesDirection == FORWARDS) {
-						taxon.setDate(dr.evolution.util.Date.createTimeSinceOrigin(dateValue, theUnits, 0.0));
-					} else {
-						taxon.setDate(dr.evolution.util.Date.createTimeAgoFromOrigin(dateValue, theUnits, 0.0));
-					}
+				int dataType = getIntegerChild(alignmentElement, "dataType", DataType.NUCLEOTIDES);
+				switch (dataType) {
+					case DataType.NUCLEOTIDES: originalAlignment.setDataType(Nucleotides.INSTANCE); break;
+					case DataType.AMINO_ACIDS: originalAlignment.setDataType(AminoAcids.INSTANCE); break;
+					case DataType.TWO_STATES: originalAlignment.setDataType(TwoStates.INSTANCE); break;
+					default: originalAlignment.setDataType(Nucleotides.INSTANCE);
 				}
-				String seqString = getStringChild(taxonElement, "sequence", "");
-				Sequence sequence = new Sequence(taxon, seqString);
 
-				originalAlignment.addSequence(sequence);
-			}
-			taxonList = originalAlignment;
-			alignment = originalAlignment;
-		}
+				Iterator iter = alignmentElement.getChildren("taxon").iterator();
+				while (iter.hasNext()) {
+					Element taxonElement = (Element)iter.next();
 
-		nucSubstitutionModel = getIntegerChild(modelElement, "nucSubstitutionModel", HKY);
-		aaSubstitutionModel = getIntegerChild(modelElement, "aaSubstitutionModel", BLOSUM_62);
-		gammaHetero = getBooleanChild(modelElement, "gammaHetero", false);
-		gammaCategories = getIntegerChild(modelElement, "gammaCategories", 5);
-		invarHetero = getBooleanChild(modelElement, "invarHetero", false);
-		codonHetero = getBooleanChild(modelElement, "codonHetero", false);
-		maximumTipHeight = getDoubleChild(modelElement, "maximumTipHeight", 0.0);
-		fixedSubstitutionRate = getBooleanChild(modelElement, "fixedSubstitutionRate", false);
-		hasSetFixedSubstitutionRate = getBooleanChild(modelElement, "hasSetFixedSubstitutionRate", false);
-		meanSubstitutionRate = getDoubleChild(modelElement, "meanSubstitutionRate", 1.0);
-		unlinkedSubstitutionModel = getBooleanChild(modelElement, "unlinkedSubstitutionModel", false);
-		unlinkedHeterogeneityModel = getBooleanChild(modelElement, "unlinkedHeterogeneityModel", false);
-		unlinkedFrequencyModel = getBooleanChild(modelElement, "unlinkedFrequencyModel", false);
+					String id = getStringChild(taxonElement, "id", "");
+					Taxon taxon = new Taxon(id);
 
-		clockModel = getIntegerChild(modelElement, "clockModel", clockModel);
+					if (taxonElement.getChild("date") != null) {
+						double dateValue = getDoubleChild(taxonElement, "date", 0.0);
 
-		// the old name was "coalescentModel" so try to read this first
-		nodeHeightPrior = getIntegerChild(modelElement, "coalescentModel", CONSTANT);
-		nodeHeightPrior = getIntegerChild(modelElement, "nodeHeightPrior", nodeHeightPrior);
-		// we don't allow no nodeHeightPrior in BEAUti so switch it to Yule:
-		if (nodeHeightPrior == NONE) nodeHeightPrior = YULE;
+						if (datesDirection == FORWARDS) {
+							taxon.setDate(dr.evolution.util.Date.createTimeSinceOrigin(dateValue, theUnits, 0.0));
+						} else {
+							taxon.setDate(dr.evolution.util.Date.createTimeAgoFromOrigin(dateValue, theUnits, 0.0));
+						}
+					}
+					String seqString = getStringChild(taxonElement, "sequence", "");
+					Sequence sequence = new Sequence(taxon, seqString);
 
-		parameterization = getIntegerChild(modelElement, "parameterization", GROWTH_RATE);
-		skylineGroupCount = getIntegerChild(modelElement, "skylineGroupCount", 10);
-		skylineModel = getIntegerChild(modelElement, "skylineModel", CONSTANT_SKYLINE);
-		fixedTree = getBooleanChild(modelElement, "fixedTree", false);
-
-		autoOptimize = getBooleanChild(operatorsElement, "autoOptimize", true);
-		Iterator iter = operators.keySet().iterator();
-		while (iter.hasNext()) {
-			String name = (String)iter.next();
-			Operator operator = (Operator)operators.get(name);
-			Element e = operatorsElement.getChild(name);
-			if (e == null) {
-				throw new dr.xml.XMLParseException("Operators element, " + name + " missing");
+					originalAlignment.addSequence(sequence);
+				}
+				taxonList = originalAlignment;
+				alignment = originalAlignment;
 			}
 
-			operator.tuning = getDoubleChild(e, "tuning", 1.0);
-			operator.weight = getIntegerChild(e, "weight", 1);
+			guessDates = getBooleanChild(dataElement, "guessDates", false);
+			guessDateFromOrder = getBooleanChild(dataElement, "guessDateFromOrder", false);
+			fromLast = getBooleanChild(dataElement, "fromLast", false);
+			order = getIntegerChild(dataElement, "order", 0);
+			prefix = getStringChild(dataElement, "prefix", "");
+			offset = getDoubleChild(dataElement, "offset", 0);
+			unlessLessThan = getDoubleChild(dataElement, "unlessLessThan", 0);
+			offset2 = getDoubleChild(dataElement, "offset2", 0);
 		}
 
-		if (parametersElement != null) {
-			iter = parameters.keySet().iterator();
+		if (taxaElement != null) {
+			Iterator iter = taxaElement.getChildren("taxonSet").iterator();
+			while (iter.hasNext()) {
+				Element taxonSetElement = (Element)iter.next();
+
+				String id = getStringChild(taxonSetElement, "id", "");
+				Taxa taxonSet = new Taxa(id);
+
+				Iterator iter2 = taxonSetElement.getChildren("taxon").iterator();
+				while (iter2.hasNext()) {
+					Element taxonElement = (Element)iter.next();
+					String taxonId = getStringChild(taxonElement, "id", "");
+					taxonSet.addTaxon(new Taxon(taxonId));
+				}
+				taxonSets.add(taxonSet);
+			}
+		}
+
+		if (modelElement != null) {
+			nucSubstitutionModel = getIntegerChild(modelElement, "nucSubstitutionModel", HKY);
+			aaSubstitutionModel = getIntegerChild(modelElement, "aaSubstitutionModel", BLOSUM_62);
+			gammaHetero = getBooleanChild(modelElement, "gammaHetero", false);
+			gammaCategories = getIntegerChild(modelElement, "gammaCategories", 5);
+			invarHetero = getBooleanChild(modelElement, "invarHetero", false);
+			codonHetero = getBooleanChild(modelElement, "codonHetero", false);
+			maximumTipHeight = getDoubleChild(modelElement, "maximumTipHeight", 0.0);
+			fixedSubstitutionRate = getBooleanChild(modelElement, "fixedSubstitutionRate", false);
+			hasSetFixedSubstitutionRate = getBooleanChild(modelElement, "hasSetFixedSubstitutionRate", false);
+			meanSubstitutionRate = getDoubleChild(modelElement, "meanSubstitutionRate", 1.0);
+			unlinkedSubstitutionModel = getBooleanChild(modelElement, "unlinkedSubstitutionModel", false);
+			unlinkedHeterogeneityModel = getBooleanChild(modelElement, "unlinkedHeterogeneityModel", false);
+			unlinkedFrequencyModel = getBooleanChild(modelElement, "unlinkedFrequencyModel", false);
+
+			clockModel = getIntegerChild(modelElement, "clockModel", clockModel);
+
+			// the old name was "coalescentModel" so try to read this first
+			nodeHeightPrior = getIntegerChild(modelElement, "coalescentModel", CONSTANT);
+			nodeHeightPrior = getIntegerChild(modelElement, "nodeHeightPrior", nodeHeightPrior);
+			// we don't allow no nodeHeightPrior in BEAUti so switch it to Yule:
+			if (nodeHeightPrior == NONE) nodeHeightPrior = YULE;
+
+			parameterization = getIntegerChild(modelElement, "parameterization", GROWTH_RATE);
+			skylineGroupCount = getIntegerChild(modelElement, "skylineGroupCount", 10);
+			skylineModel = getIntegerChild(modelElement, "skylineModel", CONSTANT_SKYLINE);
+			fixedTree = getBooleanChild(modelElement, "fixedTree", false);
+		}
+
+		if (operatorsElement != null) {
+			autoOptimize = getBooleanChild(operatorsElement, "autoOptimize", true);
+			Iterator iter = operators.keySet().iterator();
 			while (iter.hasNext()) {
 				String name = (String)iter.next();
-				Parameter parameter = (Parameter)parameters.get(name);
+				Operator operator = (Operator)operators.get(name);
 				Element e = operatorsElement.getChild(name);
 				if (e == null) {
 					throw new dr.xml.XMLParseException("Operators element, " + name + " missing");
+				}
+
+				operator.tuning = getDoubleChild(e, "tuning", 1.0);
+				operator.weight = getIntegerChild(e, "weight", 1);
+			}
+		}
+
+		if (priorsElement != null) {
+			Iterator iter = parameters.keySet().iterator();
+			while (iter.hasNext()) {
+				String name = (String)iter.next();
+				Parameter parameter = (Parameter)parameters.get(name);
+				Element e = priorsElement.getChild(name);
+				if (e == null) {
+					throw new dr.xml.XMLParseException("Priors element, " + name + " missing");
 				}
 
 				parameter.initial = getDoubleChild(e, "initial", 1.0);
@@ -959,16 +985,18 @@ public class BeautiOptions {
 			}
 		}
 
-		upgmaStartingTree = getBooleanChild(mcmcElement, "upgmaStartingTree", true);
-		chainLength = getIntegerChild(mcmcElement, "chainLength", 100000000);
-		logEvery = getIntegerChild(mcmcElement, "logEvery", 1000);
-		echoEvery = getIntegerChild(mcmcElement, "echoEvery", 1000);
-		logFileName = getStringChild(mcmcElement, "logFileName", null);
-		treeFileName = getStringChild(mcmcElement, "treeFileName", null);
-		mapTreeLog = getBooleanChild(mcmcElement, "mapTreeLog", false);
-		mapTreeFileName = getStringChild(mcmcElement, "mapTreeFileName", null);
-		substTreeLog = getBooleanChild(mcmcElement, "substTreeLog", false);
-		substTreeFileName = getStringChild(mcmcElement, "substTreeFileName", null);
+		if (mcmcElement != null) {
+			upgmaStartingTree = getBooleanChild(mcmcElement, "upgmaStartingTree", true);
+			chainLength = getIntegerChild(mcmcElement, "chainLength", 100000000);
+			logEvery = getIntegerChild(mcmcElement, "logEvery", 1000);
+			echoEvery = getIntegerChild(mcmcElement, "echoEvery", 1000);
+			logFileName = getStringChild(mcmcElement, "logFileName", null);
+			treeFileName = getStringChild(mcmcElement, "treeFileName", null);
+			mapTreeLog = getBooleanChild(mcmcElement, "mapTreeLog", false);
+			mapTreeFileName = getStringChild(mcmcElement, "mapTreeFileName", null);
+			substTreeLog = getBooleanChild(mcmcElement, "substTreeLog", false);
+			substTreeFileName = getStringChild(mcmcElement, "substTreeFileName", null);
+		}
 	}
 
 	private String getStringChild(Element element, String childName, String defaultValue) {
@@ -996,6 +1024,161 @@ public class BeautiOptions {
 		return false;
 	}
 
+    public void guessDates() {
+
+        for (int i = 0; i < originalAlignment.getTaxonCount(); i++) {
+            java.util.Date origin = new java.util.Date(0);
+
+            double d = 0.0;
+
+            try {
+                if (guessDateFromOrder) {
+                    fromLast = false;
+                    if (order > 3) {
+                        fromLast = true;
+                        order = 8 - order - 1;
+                    }
+
+                    d = guessDateFromOrder(originalAlignment.getTaxonId(i), order, fromLast);
+                } else {
+                    d = guessDateFromPrefix(originalAlignment.getTaxonId(i), prefix);
+                }
+
+            } catch (NumberFormatException nfe) {
+            }
+
+            if (offset > 0) {
+                if (unlessLessThan > 0) {
+                    if (d < unlessLessThan) {
+                        d += offset2;
+                    } else {
+                        d += offset;
+                    }
+                } else {
+                    d += offset;
+                }
+            }
+
+            Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
+            originalAlignment.getTaxon(i).setAttribute("date", date);
+        }
+
+        // adjust the dates to the current timescale...
+        timeScaleChanged();
+    }
+
+    public double guessDateFromOrder(String label, int order, boolean fromLast) throws NumberFormatException {
+
+        String field = null;
+
+        if (fromLast) {
+            int count = 0;
+            int i = label.length() - 1;
+
+            char c = label.charAt(i);
+
+            do {
+                // first find a part of a number
+                while (!Character.isDigit(c) && c != '.') {
+                    i--;
+                    if (i < 0) break;
+                    c = label.charAt(i);
+                }
+
+                if (i < 0) new NumberFormatException("Missing number field in taxon label");
+
+                int j = i + 1;
+
+                // now find the beginning of the number
+                while (Character.isDigit(c) || c == '.') {
+                    i--;
+                    if (i < 0) break;
+                    c = label.charAt(i);
+                }
+
+                field = label.substring(i+1, j);
+
+                count++;
+
+            } while (count <= order);
+
+        } else {
+            int count = 0;
+            int i = 0;
+
+            char c = label.charAt(i);
+
+            do {
+                // first find a part of a number
+                while (!Character.isDigit(c) && c != '.') {
+                    i++;
+                    if (i == label.length()) break;
+                    c = label.charAt(i);
+                }
+                int j = i;
+
+                if (i == label.length()) new NumberFormatException("Missing number field in taxon label");
+
+                // now find the beginning of the number
+                while (Character.isDigit(c) || c == '.') {
+                    i++;
+                    if (i == label.length()) break;
+                    c = label.charAt(i);
+                }
+
+                field = label.substring(j, i);
+
+                count++;
+
+            } while (count <= order);
+        }
+
+        return Double.parseDouble(field);
+    }
+
+    public double guessDateFromPrefix(String label, String prefix) throws NumberFormatException {
+
+        int i = label.indexOf(prefix);
+
+        if (i == -1) new NumberFormatException("Missing prefix in taxon label");
+
+        i += prefix.length();
+        int j = i;
+
+        // now find the beginning of the number
+        char c = label.charAt(i);
+        while (i < label.length() && (Character.isDigit(c) || c == '.')) {
+            i++;
+            c = label.charAt(i);
+        }
+
+        if (i == j) new NumberFormatException("Missing field after prefix in taxon label");
+
+        String field = label.substring(j, i);
+
+        return Double.parseDouble(field);
+    }
+
+    private final void timeScaleChanged() {
+
+        for (int i = 0; i < alignment.getTaxonCount(); i++) {
+            Date date = alignment.getTaxon(i).getDate();
+            double d = date.getTimeValue();
+
+            Date newDate = createDate(d, units, datesDirection == BACKWARDS, 0.0);
+
+            alignment.getTaxon(i).setDate(newDate);
+        }
+
+    }
+
+    private Date createDate(double timeValue, int units, boolean backwards, double origin) {
+        if (backwards) {
+            return Date.createTimeAgoFromOrigin(timeValue, units, origin);
+        } else {
+            return Date.createTimeSinceOrigin(timeValue, units, origin);
+        }
+    }
 	public class Parameter {
 
 		/**
@@ -1010,7 +1193,7 @@ public class BeautiOptions {
 			this.isNodeHeight = false;
 			this.isStatistic = false;
 			this.taxa = null;
-				this.priorType = NONE;
+			this.priorType = NONE;
 			this.initial = Double.NaN;
 			this.lower = Double.NaN;
 			this.upper = Double.NaN;
@@ -1173,7 +1356,7 @@ public class BeautiOptions {
 
 	}
 
-	public static final String version = "1.3";
+	public static final String version = "1.4";
 	public static final int YEARS = 0;
 	public static final int MONTHS = 1;
 	public static final int DAYS = 2;
@@ -1248,6 +1431,15 @@ public class BeautiOptions {
 	public double maximumTipHeight = 0.0;
 	public int translation = 0;
 	public boolean userTree = false;
+
+	public boolean guessDates = true;
+	public boolean guessDateFromOrder = true;
+	public boolean fromLast = false;
+	public int order = 0;
+	public String prefix;
+	public double offset = 0.0;
+	public double unlessLessThan = 0.0;
+	public double offset2 = 0.0;
 
 	// Model options
 	public int nucSubstitutionModel = HKY;

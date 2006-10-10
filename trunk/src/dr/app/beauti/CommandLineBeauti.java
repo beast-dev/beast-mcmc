@@ -67,11 +67,11 @@ public class CommandLineBeauti {
 			beautiOptions.parse(doc);
 
 		} catch (dr.xml.XMLParseException xpe) {
-			System.err.println("Error reading file: This may not be a BEAUti file");
+			System.err.println("Error reading file: This may not be a BEAUti Template file");
 			System.err.println(xpe.getMessage());
 			return false;
 		} catch (JDOMException e) {
-			System.err.println("Unable to open file: This may not be a BEAUti file");
+			System.err.println("Unable to open file: This may not be a BEAUti Template file");
 			System.err.println(e.getMessage());
 			return false;
 		}

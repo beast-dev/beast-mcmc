@@ -107,7 +107,6 @@ public class BeastMain {
 
         } catch (java.io.IOException ioe) {
             Logger.getLogger("dr.apps.beast").severe("File error: " + ioe.getMessage());
-            System.exit(1);
         } catch (org.xml.sax.SAXParseException spe) {
             if (spe.getMessage() != null && spe.getMessage().equals("Content is not allowed in prolog")) {
                 Logger.getLogger("dr.apps.beast").severe("Parsing error - the input file is not a valid XML file.");
@@ -115,11 +114,9 @@ public class BeastMain {
                 Logger.getLogger("dr.apps.beast").severe("Parsing error - poorly formed XML (possibly not an XML file):\n" +
                         spe.getMessage());
             }
-            System.exit(1);
         } catch (org.w3c.dom.DOMException dome) {
             Logger.getLogger("dr.apps.beast").severe("Parsing error - poorly formed XML:\n" +
                     dome.getMessage());
-            System.exit(1);
         } catch (dr.xml.XMLParseException pxe) {
             if (pxe.getMessage() != null && pxe.getMessage().equals("Unknown root document element, beauti")) {
                 Logger.getLogger("dr.apps.beast").severe("The file you just tried to run in BEAST is actually a BEAUti document.\n" +
@@ -134,7 +131,6 @@ public class BeastMain {
                         pxe.getMessage());
             }
 
-            System.exit(1);
         } catch (RuntimeException rex) {
             if (rex.getMessage() != null && rex.getMessage().startsWith("The initial model is invalid")) {
                 Logger.getLogger("dr.apps.beast").severe("The initial model is invalid because state has a zero likelihood.\n" +
@@ -151,13 +147,11 @@ public class BeastMain {
                 System.err.println("Fatal exception (email the authors)");
                 rex.printStackTrace(System.err);
             }
-            System.exit(1);
 
         } catch (Exception ex) {
             Logger.getLogger("dr.apps.beast").severe("Fatal exception (email the authors)");
             System.err.println("Fatal exception (email the authors)");
             ex.printStackTrace(System.err);
-            System.exit(1);
         }
     }
 
@@ -189,7 +183,7 @@ public class BeastMain {
 
         System.out.println("|       Alexei Drummond and Andrew Rambaut      ||");
         System.out.println("|              University of Oxford             ||");
-        System.out.println("|      http://evolve.zoo.ox.ac.uk/Beast/        ||");
+        System.out.println("|       http://evolve.zoo.ox.ac.uk/Beast/       ||");
         System.out.println("\\-----------------------------------------------\\|");
         System.out.println(" \\-----------------------------------------------\\");
     }

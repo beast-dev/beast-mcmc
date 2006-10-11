@@ -247,7 +247,7 @@ public class BayesianSkylineDialog {
  									"<em>Any other model will produce meaningless results.</em></html>");
 		label.setFont(label.getFont().deriveFont(((float)label.getFont().getSize() - 2)));
  		optionPanel.addSpanningComponent(label);
-		optionPanel.addSeperator();
+		optionPanel.addSeparator();
 
         if (treeFile != null) {
             fileNameText.setText(treeFile.getName());
@@ -259,11 +259,11 @@ public class BayesianSkylineDialog {
         panel.add(button, BorderLayout.EAST);
         optionPanel.addComponentWithLabel("Trees Log File: ", panel);
 
-        optionPanel.addSeperator();
+        optionPanel.addSeparator();
 
         optionPanel.addComponentWithLabel("Bayesian skyline variant: ", stepwiseLinearCombo);
 
-        optionPanel.addSeperator();
+        optionPanel.addSeparator();
 
         optionPanel.addLabel("Select the traces to use for the arguments:");
 
@@ -272,13 +272,13 @@ public class BayesianSkylineDialog {
 													argumentCombos[i]);
 		}
 
-		optionPanel.addSeperator();
+		optionPanel.addSeparator();
 
         optionPanel.addComponentWithLabel("Maximum time obtained from root height's:", maxHeightCombo);
 
         optionPanel.addComponentWithLabel("Select the trace of the root height:", rootHeightCombo);
 
-        optionPanel.addSeperator();
+        optionPanel.addSeparator();
         optionPanel.addComponentWithLabel("Number of bins:", binCountField);
 	}
 

@@ -328,7 +328,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
                 wholeTreeRadio.addItemListener(listener);
 
                 optionPanel.addSpanningComponent(wholeTreeRadio);
-                optionPanel.addSeperator();
+                optionPanel.addSeparator();
             }
 
             if (factory.allowsTaxonList()) {
@@ -337,7 +337,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
                 optionPanel.addSpanningComponent(taxonSetRadio);
                 optionPanel.addComponentWithLabel("Taxon Set: ", taxonSetCombo);
-                optionPanel.addSeperator();
+                optionPanel.addSeparator();
             }
 
             if (factory.allowsCharacter()) {
@@ -350,7 +350,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
                 if (factory.allowsCharacterState()) {
                     optionPanel.addComponentWithLabel("State: ", characterStateCombo);
                 }
-                optionPanel.addSeperator();
+                optionPanel.addSeparator();
             }
 
             if (factory.allowsCharacter()) { characterRadio.setSelected(true); }

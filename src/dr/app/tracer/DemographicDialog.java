@@ -193,7 +193,7 @@ public class DemographicDialog {
  									"<em>Any other model will produce meaningless results.</em></html>");
 		label.setFont(label.getFont().deriveFont(((float)label.getFont().getSize() - 2)));
  		optionPanel.addSpanningComponent(label);
-		optionPanel.addSeperator();
+		optionPanel.addSeparator();
 			
  		optionPanel.addLabel("Select the traces to use for the arguments:");
 
@@ -205,13 +205,13 @@ public class DemographicDialog {
 													argumentCombos[k]);
 		}
 		
-		optionPanel.addSeperator();
+		optionPanel.addSeparator();
 
         optionPanel.addComponentWithLabel("Maximum time obtained from root height's:", maxHeightCombo);
 
 		optionPanel.addComponentWithLabel("Select the trace of the root height:", rootHeightCombo);
 
-		optionPanel.addSeperator();
+		optionPanel.addSeparator();
 		optionPanel.addComponentWithLabel("Number of bins:", binCountField);
 	}
 		

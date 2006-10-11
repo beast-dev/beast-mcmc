@@ -30,6 +30,7 @@ import dr.app.util.Utils;
 import dr.util.Version;
 import dr.util.MessageLogHandler;
 import dr.xml.XMLParser;
+import dr.math.MathUtils;
 
 import java.io.*;
 import java.util.Iterator;
@@ -69,6 +70,7 @@ public class BeastMain {
             String fileName = inputFile.getName();
 
             FileReader fileReader = new FileReader(inputFile);
+            System.out.println(fileReader.getEncoding());
 
             XMLParser parser = new BeastParser(new String[] {fileName}, verbose);
 
@@ -181,7 +183,7 @@ public class BeastMain {
 
         System.out.println("|       Alexei Drummond and Andrew Rambaut      ||");
         System.out.println("|              University of Oxford             ||");
-        System.out.println("|      http://evolve.zoo.ox.ac.uk/Beast/        ||");
+        System.out.println("|       http://evolve.zoo.ox.ac.uk/Beast/       ||");
         System.out.println("\\-----------------------------------------------\\|");
         System.out.println(" \\-----------------------------------------------\\");
     }
@@ -220,6 +222,7 @@ public class BeastMain {
                 new Arguments.Option("verbose", "verbose XML parsing messages"),
                 new Arguments.Option("window", "provide a console window"),
                 new Arguments.Option("working", "change working directory to input file's directory"),
+                        new Arguments.LongOption("seed", "specify a random number generator seed"),
                 new Arguments.Option("help", "option to print this message")
             });
 
@@ -243,6 +246,12 @@ public class BeastMain {
         boolean verbose = arguments.hasOption("verbose");
         boolean window = arguments.hasOption("window");
         boolean working = arguments.hasOption("working");
+
+        long seed = MathUtils.getSeed();
+        if (arguments.hasOption("seed")) {
+            seed = arguments.getLongOption("seed");
+            MathUtils.setSeed(seed);
+        }
 
 //		if (System.getProperty("dr.app.beast.main.window", "false").toLowerCase().equals("true")) {
 //			window = true;
@@ -295,6 +304,11 @@ public class BeastMain {
 
         printTitle();
         printHeader();
+
+        System.out.println();
+        System.out.println("Random number seed: " + seed);
+        System.out.println();
+
         new BeastMain(inputFile, consoleApp, verbose);
     }
 }

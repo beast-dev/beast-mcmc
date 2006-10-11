@@ -43,36 +43,27 @@ public class TreeAnnotator {
 
     private final static Version version = new BeastVersion();
 
+    public final static int MAX_CLADE_CREDIBILITY = 0;
+    public final static int USER_TARGET_TREE = 1;
+
     public final static int KEEP_HEIGHTS = 0;
     public final static int MEAN_HEIGHTS = 1;
     public final static int MEDIAN_HEIGHTS = 2;
 
-    public TreeAnnotator(int burnin, int heightsOption, String targetTreeFileName, String inputFileName, String outputFileName) throws IOException {
-
-        MutableTree targetTree = null;
-        if (targetTreeFileName != null) {
-            NexusImporter importer = new NexusImporter(new FileReader(targetTreeFileName));
-            try {
-                targetTree = new FlexibleTree(importer.importNextTree());
-            } catch (Importer.ImportException e) {
-                System.err.println("Error Parsing Target Tree: " + e.getMessage());
-                return;
-            }
-        }
-
-        CladeSystem targetClades = new CladeSystem(targetTree);
-        targetClades.setAttributeNames(attributeNames);
+    public TreeAnnotator(int burnin, int heightsOption, int targetOption, String targetTreeFileName, String inputFileName, String outputFileName) throws IOException {
 
         System.out.println("Reading trees...");
 
-        int fileTotalTrees = 0;
+        CladeSystem cladeSystem = new CladeSystem();
+        cladeSystem.setAttributeNames(attributeNames);
+
         TreeImporter importer = new NexusImporter(new FileReader(inputFileName));
         try {
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
 
-                if (fileTotalTrees >= burnin) {
-                    targetClades.add(tree);
+                if (totalTrees >= burnin) {
+                    cladeSystem.add(tree);
 
                     totalTreesUsed += 1;
                 }
@@ -84,10 +75,34 @@ public class TreeAnnotator {
         }
 
         System.out.println("Total trees read: " + totalTrees);
-        System.out.println("Total trees summarized: " + totalTreesUsed);
+        if (burnin > 0) {
+            System.out.println("Ignoring first" + burnin + " trees.");
+        }
+
+        MutableTree targetTree = null;
+
+        if (targetOption == USER_TARGET_TREE) {
+            if (targetTreeFileName != null) {
+                System.out.println("Reading user specified target tree, " + targetTreeFileName);
+
+                importer = new NexusImporter(new FileReader(targetTreeFileName));
+                try {
+                    targetTree = new FlexibleTree(importer.importNextTree());
+                } catch (Importer.ImportException e) {
+                    System.err.println("Error Parsing Target Tree: " + e.getMessage());
+                    return;
+                }
+            } else {
+                System.err.println("No user target tree specified.");
+                return;
+            }
+        } else {
+            System.out.println("Finding maximum clade credibility tree...");
+            targetTree = new FlexibleTree(summarizeTrees( burnin, cladeSystem, inputFileName));
+        }
 
         System.out.println("Annotating target tree...");
-        annotateTree(targetClades, targetTree, heightsOption);
+        cladeSystem.annotateTree(targetTree, targetTree.getRoot(), null, heightsOption);
 
         System.out.println("Writing annotated tree....");
         if (outputFileName != null) {
@@ -97,26 +112,227 @@ public class TreeAnnotator {
             NexusExporter exporter = new NexusExporter(System.out);
             exporter.exportTree(targetTree);
         }
-        System.out.println("Finished.");
     }
 
-    private void annotateTree(CladeSystem cladeSystem, MutableTree targetTree, int heightsOption) {
-        Map clades = cladeSystem.getCladeMap();
-        Iterator iter = clades.keySet().iterator();
-        while (iter.hasNext()) {
-            Object key = iter.next();
-            CladeSystem.Clade clade = (CladeSystem.Clade)clades.get(key);
+    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName) throws IOException {
 
-            annotateNode(targetTree, clade, heightsOption);
+        Tree bestTree = null;
+        double bestScore = 0.0;
+
+        System.out.println("Analyzing " + totalTreesUsed + " trees...");
+        System.out.println("0              25             50             75            100");
+        System.out.println("|--------------|--------------|--------------|--------------|");
+
+        int stepSize = totalTrees / 60;
+        int counter = 0;
+        TreeImporter importer = new NexusImporter(new FileReader(inputFileName));
+        try {
+            while (importer.hasTree()) {
+                Tree tree = importer.importNextTree();
+
+                if (counter >= burnin) {
+                    double score = scoreTree(tree, cladeSystem);
+//                    System.out.println(score);
+                    if (score > bestScore) {
+                        bestTree = tree;
+                        bestScore = score;
+                    }
+                }
+                if (counter > 0 && counter % stepSize == 0) {
+                    System.out.print("*");
+                    System.out.flush();
+                }
+                counter ++;
+            }
+        } catch (Importer.ImportException e) {
+            System.err.println("Error Parsing Input Tree: " + e.getMessage());
+            return null;
         }
+        System.out.println();
+        System.out.println();
+        System.out.println("Best Sum Clade Support: " + bestScore);
+
+        return bestTree;
     }
 
-    private void annotateNode(MutableTree tree, CladeSystem.Clade clade, int heightsOption) {
-        NodeRef node = clade.node;
-        double posterior = ((double)clade.frequency) / totalTreesUsed;
-        tree.setNodeAttribute(node, "posterior", new Double(posterior));
+    private double scoreTree(Tree tree, CladeSystem cladeSystem) {
+        return cladeSystem.getSumCladeFrequency(tree, tree.getRoot(), null);
+    }
 
-        if (posterior >= 0.5) {
+    private class CladeSystem
+    {
+        //
+        // Public stuff
+        //
+
+        /**
+         */
+        public CladeSystem()
+        {
+        }
+
+        public void setAttributeNames(String[] attributeNames) {
+            this.attributeNames = attributeNames;
+        }
+
+        /** adds all the clades in the tree */
+        public void add(Tree tree)
+        {
+            if (taxonList == null) {
+                taxonList = tree;
+            }
+
+            // Recurse over the tree and add all the clades (or increment their
+            // frequency if already present). The root clade is not added.
+            addClades(tree, tree.getRoot(), null);
+        }
+
+        public Map getCladeMap() {
+            return cladeMap;
+        }
+
+        public Clade getClade(NodeRef node) {
+            return null;
+        }
+
+        private void addClades(Tree tree, NodeRef node, BitSet bits) {
+
+            if (tree.isExternal(node)) {
+
+                if (taxonList != null) {
+                    int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                    bits.set(index);
+                } else {
+                    bits.set(node.getNumber());
+                }
+            } else {
+
+                BitSet bits2 = new BitSet();
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                    NodeRef node1 = tree.getChild(node, i);
+
+                    addClades(tree, node1, bits2);
+                }
+
+                addClade(bits2, tree, node);
+
+                if (bits != null) {
+                    bits.or(bits2);
+                }
+            }
+        }
+
+        private void addClade(BitSet bits, Tree tree, NodeRef node) {
+            Clade clade = (Clade)cladeMap.get(bits);
+            if (clade == null) {
+                clade = new Clade(bits);
+                cladeMap.put(bits, clade);
+            }
+            clade.setFrequency(clade.getFrequency() + 1);
+
+            if (attributeNames != null) {
+                if (clade.attributeLists == null) {
+                    clade.attributeLists = new List[attributeNames.length];
+                    for (int i = 0; i < attributeNames.length; i++) {
+                        clade.attributeLists[i] = new ArrayList();
+                    }
+                }
+
+                clade.attributeLists[0].add(new Double(tree.getNodeHeight(node)));
+                for (int i = 0; i < attributeNames.length; i++) {
+                    Object value;
+                    if (attributeNames[i].equals("height")) {
+                        value = new Double(tree.getNodeHeight(node));
+                    } else if (attributeNames[i].equals("length")) {
+                        value = new Double(tree.getBranchLength(node));
+                    } else {
+                        value = tree.getAttribute(attributeNames[i]);
+                    }
+                    if (value != null) {
+                        clade.attributeLists[i].add(value);
+                    }
+                }
+            }
+        }
+
+        public double getSumCladeFrequency(Tree tree, NodeRef node, BitSet bits) {
+
+            double sumCladeFrequency = 0.0;
+
+            if (tree.isExternal(node)) {
+
+                if (taxonList != null) {
+                    int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                    bits.set(index);
+                } else {
+                    bits.set(node.getNumber());
+                }
+            } else {
+
+                BitSet bits2 = new BitSet();
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                    NodeRef node1 = tree.getChild(node, i);
+
+                    sumCladeFrequency += getSumCladeFrequency(tree, node1, bits2);
+                }
+
+                sumCladeFrequency += getCladeFrequency(bits2);
+
+                if (bits != null) {
+                    bits.or(bits2);
+                }
+            }
+
+            return sumCladeFrequency;
+        }
+
+        private double getCladeFrequency(BitSet bits) {
+            Clade clade = (Clade)cladeMap.get(bits);
+            if (clade == null) {
+                return 0.0;
+            }
+            return clade.getFrequency();
+        }
+
+        public void annotateTree(MutableTree tree, NodeRef node, BitSet bits, int heightsOption) {
+
+            if (tree.isExternal(node)) {
+
+                if (taxonList != null) {
+                    int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                    bits.set(index);
+                } else {
+                    bits.set(node.getNumber());
+                }
+            } else {
+
+                BitSet bits2 = new BitSet();
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                    NodeRef node1 = tree.getChild(node, i);
+
+                    annotateTree(tree, node1, bits2, heightsOption);
+                }
+
+                annotateNode(tree, node, bits2, heightsOption);
+
+                if (bits != null) {
+                    bits.or(bits2);
+                }
+            }
+        }
+
+        private void annotateNode(MutableTree tree, NodeRef node, BitSet bits, int heightsOption) {
+            Clade clade = (Clade)cladeMap.get(bits);
+            if (clade == null) {
+                return;
+            }
+
+            double posterior = ((double)clade.frequency) / totalTreesUsed;
+            tree.setNodeAttribute(node, "posterior", new Double(posterior));
+
             for (int i = 0; i < clade.attributeLists.length; i++) {
                 double[] values = new double[clade.attributeLists[i].size()];
                 if (values.length > 0) {
@@ -134,171 +350,64 @@ public class TreeAnnotator {
                             // keep the existing height
                         }
                     }
-                    annotateMeanAttribute(tree, node, attributeNames[i] + "_mean", values);
-                    annotateMedianAttribute(tree, node, attributeNames[i] + "_median", values);
-                    annotateHPDAttribute(tree, node, attributeNames[i] + "_95%_HPD", 0.95, values);
-                    annotateQuantileAttribute(tree, node, attributeNames[i] + "_95%_quantiles", 0.95, values);
-                    annotateRangeAttribute(tree, node, attributeNames[i] + "_range", values);
-                }
-            }
-        }
-    }
-
-    private void annotateMeanAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
-        double mean = DiscreteStatistics.mean(values);
-        tree.setNodeAttribute(node, label, new Double(mean));
-    }
-
-    private void annotateMedianAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
-        double median = DiscreteStatistics.median(values);
-        tree.setNodeAttribute(node, label, new Double(median));
-
-    }
-
-    private void annotateRangeAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
-        double min = DiscreteStatistics.min(values);
-        double max = DiscreteStatistics.max(values);
-        tree.setNodeAttribute(node, label, new Object[] { new Double(min), new Double(max) });
-    }
-
-    private void annotateQuantileAttribute(MutableTree tree, NodeRef node, String label, double quantile, double[] values) {
-        double lower = DiscreteStatistics.quantile(1.0 - (quantile / 2), values);
-        double upper = DiscreteStatistics.quantile(quantile / 2, values);
-        tree.setNodeAttribute(node, label, new Object[] { new Double(lower), new Double(upper) });
-    }
-
-    private void annotateHPDAttribute(MutableTree tree, NodeRef node, String label, double hpd, double[] values) {
-        int[] indices = new int[values.length];
-        HeapSort.sort(values, indices);
-
-        double minRange = Double.MAX_VALUE;
-        int hpdIndex = 0;
-
-        int diff = (int)Math.round(hpd * (double)values.length);
-        for (int i =0; i <= (values.length - diff); i++) {
-            double minValue = values[indices[i]];
-            double maxValue = values[indices[i+diff-1]];
-            double range = Math.abs(maxValue - minValue);
-            if (range < minRange) {
-                minRange = range;
-                hpdIndex = i;
-            }
-        }
-        double lower = values[indices[hpdIndex]];
-        double upper = values[indices[hpdIndex+diff-1]];
-        tree.setNodeAttribute(node, label, new Object[] { new Double(lower), new Double(upper) });
-    }
-
-    private class CladeSystem
-    {
-        //
-        // Public stuff
-        //
-
-        /**
-         * @param tree
-         */
-        public CladeSystem(Tree tree)
-        {
-            this.taxonList = tree;
-            addClades(tree, tree.getRoot(), null, false);
-        }
-
-        public void setAttributeNames(String[] attributeNames) {
-            this.attributeNames = attributeNames;
-        }
-
-        /** adds all the clades in the tree */
-        public void add(Tree tree)
-        {
-            if (taxonList == null) {
-                taxonList = tree;
-            }
-
-            // Recurse over the tree and add all the clades (or increment their
-            // frequency if already present). The root clade is not added.
-            addClades(tree, tree.getRoot(), null, true);
-        }
-
-        public Map getCladeMap() {
-            return cladeMap;
-        }
-
-        private void addClades(Tree tree, NodeRef node, BitSet bits, boolean collectAttributes) {
-
-            if (tree.isExternal(node)) {
-
-                if (taxonList != null) {
-                    int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-                    bits.set(index);
-                } else {
-                    bits.set(node.getNumber());
-                }
-            } else {
-
-                BitSet bits2 = new BitSet();
-                for (int i = 0; i < tree.getChildCount(node); i++) {
-
-                    NodeRef node1 = tree.getChild(node, i);
-
-                    addClades(tree, node1, bits2, collectAttributes);
-                }
-
-                if (collectAttributes) {
-                    addClade(bits2, tree, node);
-                } else {
-                    putClade(bits2, tree, node);
-                }
-
-                if (bits != null) {
-                    bits.or(bits2);
+                    //if (posterior >= 0.5) {
+                        annotateMeanAttribute(tree, node, attributeNames[i] + "_mean", values);
+                        annotateMedianAttribute(tree, node, attributeNames[i] + "_median", values);
+                        annotateHPDAttribute(tree, node, attributeNames[i] + "_95%_HPD", 0.95, values);
+                        //annotateQuantileAttribute(tree, node, attributeNames[i] + "_95%_quantiles", 0.95, values);
+                        annotateRangeAttribute(tree, node, attributeNames[i] + "_range", values);
+                    //}
                 }
             }
         }
 
-        private void putClade(BitSet bits, Tree tree, NodeRef node) {
-            Clade clade = (Clade)cladeMap.get(bits);
-            if (clade == null) {
-                clade = new Clade(node, bits);
-                cladeMap.put(bits, clade);
-            } else {
-                throw new IllegalArgumentException("Clade already put in CladeSystem");
-            }
+        private void annotateMeanAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
+            double mean = DiscreteStatistics.mean(values);
+            tree.setNodeAttribute(node, label, new Double(mean));
         }
 
-        private void addClade(BitSet bits, Tree tree, NodeRef node) {
-            Clade clade = (Clade)cladeMap.get(bits);
-            if (clade == null) {
-                return;
-            }
-            clade.setFrequency(clade.getFrequency() + 1);
+        private void annotateMedianAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
+            double median = DiscreteStatistics.median(values);
+            tree.setNodeAttribute(node, label, new Double(median));
 
-            if (clade.attributeLists == null) {
-                clade.attributeLists = new List[attributeNames.length];
-                for (int i = 0; i < attributeNames.length; i++) {
-                    clade.attributeLists[i] = new ArrayList();
-                }
-            }
+        }
 
-            clade.attributeLists[0].add(new Double(tree.getNodeHeight(node)));
-            for (int i = 0; i < attributeNames.length; i++) {
-                Object value;
-                if (attributeNames[i].equals("height")) {
-                    value = new Double(tree.getNodeHeight(node));
-                } else if (attributeNames[i].equals("length")) {
-                    value = new Double(tree.getBranchLength(node));
-                } else {
-                    value = tree.getAttribute(attributeNames[i]);
-                }
-                if (value != null) {
-                    clade.attributeLists[i].add(value);
+        private void annotateRangeAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
+            double min = DiscreteStatistics.min(values);
+            double max = DiscreteStatistics.max(values);
+            tree.setNodeAttribute(node, label, new Object[] { new Double(min), new Double(max) });
+        }
+
+        private void annotateQuantileAttribute(MutableTree tree, NodeRef node, String label, double quantile, double[] values) {
+            double lower = DiscreteStatistics.quantile(1.0 - (quantile / 2), values);
+            double upper = DiscreteStatistics.quantile(quantile / 2, values);
+            tree.setNodeAttribute(node, label, new Object[] { new Double(lower), new Double(upper) });
+        }
+
+        private void annotateHPDAttribute(MutableTree tree, NodeRef node, String label, double hpd, double[] values) {
+            int[] indices = new int[values.length];
+            HeapSort.sort(values, indices);
+
+            double minRange = Double.MAX_VALUE;
+            int hpdIndex = 0;
+
+            int diff = (int)Math.round(hpd * (double)values.length);
+            for (int i =0; i <= (values.length - diff); i++) {
+                double minValue = values[indices[i]];
+                double maxValue = values[indices[i+diff-1]];
+                double range = Math.abs(maxValue - minValue);
+                if (range < minRange) {
+                    minRange = range;
+                    hpdIndex = i;
                 }
             }
+            double lower = values[indices[hpdIndex]];
+            double upper = values[indices[hpdIndex+diff-1]];
+            tree.setNodeAttribute(node, label, new Object[] { new Double(lower), new Double(upper) });
         }
 
         class Clade {
-            public Clade(NodeRef node, BitSet bits) {
-                this.node = node;
+            public Clade(BitSet bits) {
                 this.bits = bits;
                 frequency = 0;
             }
@@ -327,7 +436,6 @@ public class TreeAnnotator {
             }
 
             int frequency;
-            NodeRef node;
             BitSet bits;
             List[] attributeLists = null;
         }
@@ -372,14 +480,15 @@ public class TreeAnnotator {
 
     public static void printUsage(Arguments arguments) {
 
-        arguments.printUsage("treeannotator", "[-burnin <burnin>] <target-tree-file-name> <input-file-name> [<output-file-name>]");
+        arguments.printUsage("treeannotator", "[-burnin <burnin>] [-heights <height_option>] [-target <target-tree-file-name>] <input-file-name> [<output-file-name>]");
         System.out.println();
         System.out.println("  Example: treeannotator test.trees out.txt");
-        System.out.println("  Example: treeannotator -burnin 10000 -target map.tree test.trees out.txt");
+        System.out.println("  Example: treeannotator -burnin 100 -heights mean test.trees out.txt");
+        System.out.println("  Example: treeannotator -burnin 100 -target map.tree test.trees out.txt");
         System.out.println();
     }
 
-//Main method
+    //Main method
     public static void main(String[] args) throws IOException {
 
         String targetTreeFileName = null;
@@ -403,7 +512,7 @@ public class TreeAnnotator {
                     "©2006 Andrew Rambaut & Alexei Drummond\n" +
                     "University of Oxford";
 
-            ConsoleApplication consoleApp = new ConsoleApplication(nameString, aboutString, icon);
+            ConsoleApplication consoleApp = new ConsoleApplication(nameString, aboutString, icon, true);
 
             printTitle();
 
@@ -414,10 +523,11 @@ public class TreeAnnotator {
             }
 
             int burnin = dialog.getBurnin();
+            int targetOption = dialog.getTargetOption();
             int heightsOption = dialog.getHeightsOption();
 
             targetTreeFileName = dialog.getTargetFileName();
-            if (targetTreeFileName == null) {
+            if (targetOption == USER_TARGET_TREE && targetTreeFileName == null) {
                 System.err.println("No target file specified");
                 return;
             }
@@ -435,13 +545,19 @@ public class TreeAnnotator {
             }
 
             try {
-                new TreeAnnotator(burnin, heightsOption, targetTreeFileName, inputFileName, outputFileName);
+                new TreeAnnotator(burnin, heightsOption, targetOption, targetTreeFileName, inputFileName, outputFileName);
 
             } catch (Exception ex) {
                 System.err.println("Exception: " + ex.getMessage());
             }
+
+            System.out.println("Finished - Quit program to exit.");
             while (true) {
-                Thread.yield();
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -449,8 +565,10 @@ public class TreeAnnotator {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[] {
+                        //new Arguments.StringOption("target", new String[] { "maxclade", "maxtree" }, false, "an option of 'maxclade' or 'maxtree'"),
                         new Arguments.StringOption("heights", new String[] { "keep", "median", "mean" }, false, "an option of 'keep', 'median' or 'mean'"),
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
+                        new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -482,25 +600,32 @@ public class TreeAnnotator {
             burnin = arguments.getIntegerOption("burnin");
         }
 
+        int target = MAX_CLADE_CREDIBILITY;
+        if (arguments.hasOption("target")) {
+            target = USER_TARGET_TREE;
+            targetTreeFileName = arguments.getStringOption("target");
+        }
+
+
         String[] args2 = arguments.getLeftoverArguments();
 
-        if (args2.length > 3) {
-            System.err.println("Unknown option: " + args2[3]);
+        if (args2.length > 2) {
+            System.err.println("Unknown option: " + args2[2]);
             System.err.println();
             printUsage(arguments);
             System.exit(1);
         }
 
-        if (args2.length == 3) {
-            targetTreeFileName = args2[0];
-            inputFileName = args2[1];
-            outputFileName = args2[2];
+        if (args2.length == 2) {
+            targetTreeFileName = null;
+            inputFileName = args2[0];
+            outputFileName = args2[1];
         } else {
             printUsage(arguments);
             System.exit(1);
         }
 
-        new TreeAnnotator(burnin, heights, targetTreeFileName, inputFileName, outputFileName);
+        new TreeAnnotator(burnin, heights, target, targetTreeFileName, inputFileName, outputFileName);
 
         System.exit(0);
     }

@@ -46,7 +46,7 @@ public class BeastMain {
         XMLParser parser = null;
 
         public BeastConsoleApp(String nameString, String aboutString, javax.swing.Icon icon) throws IOException {
-            super(nameString, aboutString, icon);
+            super(nameString, aboutString, icon, false);
         }
 
         public void doStop() {

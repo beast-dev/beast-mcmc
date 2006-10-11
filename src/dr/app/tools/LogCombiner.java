@@ -288,7 +288,7 @@ public class LogCombiner {
 					"©2006 Andrew Rambaut & Alexei Drummond\n" +
 					"University of Oxford";
 
-			ConsoleApplication consoleApp = new ConsoleApplication(nameString, aboutString, icon);
+			ConsoleApplication consoleApp = new ConsoleApplication(nameString, aboutString, icon, true);
 
 			printTitle();
 
@@ -319,8 +319,13 @@ public class LogCombiner {
 			} catch (Exception ex) {
 				System.err.println("Exception: " + ex.getMessage());
 			}
+            System.out.println("Finished - Quit program to exit.");
 			while (true) {
-				Thread.yield();
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 			}
 		} else {
 			printTitle();

@@ -132,22 +132,18 @@ public class ConsoleFrame extends DocumentFrame {
 					try {
 						Thread.sleep(100);
 					} catch(InterruptedException ie) {}
-                    StringBuffer input = new StringBuffer();
-                    boolean done = false;
+					String input = "";
 					do {
 						int available = pi.available();
 						if (available == 0) break;
 						byte b[]=new byte[available];
 						pi.read(b);
+						input = input + new String(b);
 
-                        String c = new String(b);
-                        input = input.append(c);
+					} while( !input.endsWith("\n") &&  !input.endsWith("\r\n") );
 
-                        done = (c.indexOf("\n") != -1 || c.indexOf("\r\n") != -1);
-                    } while( !done );
-
-                    if (input.length() > 0 && done) {
-                        SwingUtilities.invokeLater(new WriteText(input.toString()));
+					if (input.length() > 0) {
+						SwingUtilities.invokeLater(new WriteText(input));
 					}
 				}
 			} catch (IOException e) {
@@ -165,9 +161,7 @@ public class ConsoleFrame extends DocumentFrame {
 				textArea.append(text);
 
 				// Make sure the last line is always visible
-                //if (text.indexOf("\n") != -1 || text.indexOf("\r\n") != -1) {
 				textArea.setCaretPosition(textArea.getDocument().getLength());
-                //}
 
 				// Keep the text area down to a certain character size
 				int idealSize = 128000;
@@ -180,6 +174,5 @@ public class ConsoleFrame extends DocumentFrame {
 				setDirty();
 			}
 		};
-
 	}
 }

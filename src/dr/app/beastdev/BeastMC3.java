@@ -50,7 +50,7 @@ public class BeastMC3 {
 		XMLParser parser = null;
 
 		public BeastConsoleApp(String nameString, String aboutString, javax.swing.Icon icon) throws IOException {
-			super(nameString, aboutString, icon);
+			super(nameString, aboutString, icon, false);
 		}
 
 		public void doStop() {
@@ -59,8 +59,9 @@ public class BeastMC3 {
 				Thread thread = (Thread)iter.next();
 				// @todo should never use this method...
                 thread.stop();
-                // @todo who cares? - it works in this case!
-			}
+                // @todo who cares? - it is bad in complex multithreading applications but this is a really simple case.
+                // At the moment it works and when it doesn't we can implement a polling alternative.
+            }
 		}
 	};
 

@@ -33,6 +33,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
 import java.io.File;
 
 public class TreeAnnotatorDialog {
@@ -41,6 +43,7 @@ public class TreeAnnotatorDialog {
 	private OptionsPanel optionPanel;
 
     private WholeNumberField burninText = new WholeNumberField(0, Integer.MAX_VALUE);
+    private JComboBox summaryTreeCombo = new JComboBox(new String[] { "Maximum clade credibility", "User target tree" });
     private JComboBox nodeHeightsCombo = new JComboBox(new String[] { "Keep target heights", "Mean heights", "Median heights" });
 
 	private File targetFile = null;
@@ -60,11 +63,12 @@ public class TreeAnnotatorDialog {
         burninText.setColumns(12);
         burninText.setValue(0);
         optionPanel.addComponentWithLabel("Burnin: ", burninText);
+        optionPanel.addComponentWithLabel("Target tree type: ", summaryTreeCombo);
         optionPanel.addComponentWithLabel("Node heights: ", nodeHeightsCombo);
 
         optionPanel.addSeparator();
 
-        JButton targetFileButton = new JButton("Choose File...");
+        final JButton targetFileButton = new JButton("Choose File...");
 		final JTextField targetFileNameText = new JTextField("not selected", 16);
 
 		targetFileButton.addActionListener( new ActionListener() {
@@ -88,7 +92,7 @@ public class TreeAnnotatorDialog {
 		JPanel panel1 = new JPanel(new BorderLayout(0,0));
 		panel1.add(targetFileNameText, BorderLayout.CENTER);
 		panel1.add(targetFileButton, BorderLayout.EAST);
-		optionPanel.addComponentWithLabel("Target Tree File: ", panel1);
+		final JLabel label1 = optionPanel.addComponentWithLabel("Target Tree File: ", panel1);
 
 		JButton inputFileButton = new JButton("Choose File...");
 		final JTextField inputFileNameText = new JTextField("not selected", 16);
@@ -111,7 +115,20 @@ public class TreeAnnotatorDialog {
 			}});
 		inputFileNameText.setEditable(false);
 
-		JPanel panel2 = new JPanel(new BorderLayout(0,0));
+        label1.setEnabled(false);
+        targetFileNameText.setEnabled(false);
+        targetFileButton.setEnabled(false);
+
+        summaryTreeCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent itemEvent) {
+                boolean selected = summaryTreeCombo.getSelectedItem().equals("User target tree");
+                label1.setEnabled(selected);
+                targetFileNameText.setEnabled(selected);
+                targetFileButton.setEnabled(selected);
+            }
+        });
+        
+        JPanel panel2 = new JPanel(new BorderLayout(0,0));
 		panel2.add(inputFileNameText, BorderLayout.CENTER);
 		panel2.add(inputFileButton, BorderLayout.EAST);
 		optionPanel.addComponentWithLabel("Input Tree File: ", panel2);
@@ -166,6 +183,10 @@ public class TreeAnnotatorDialog {
         return burninText.getValue().intValue();
     }
 
+    public int getTargetOption() {
+        return summaryTreeCombo.getSelectedIndex();
+    }
+    
     public int getHeightsOption() {
         return nodeHeightsCombo.getSelectedIndex();
     }

@@ -28,12 +28,15 @@ public class BeautiApp extends MultiDocApplication {
      * In a departure from the standard UI, there is no "Open" command for this application
      * Instead, the user can create a New window, Import a NEXUS file and Apply a Template file.
      * None of these operations result in a file being associated with the DocumentFrame. All
-     * these actions are located in the BeautiFrame class.
-     * @return null
+     * these actions are located in the BeautiFrame class. This overriden method should never
+     * be called and throw a RuntimeException if it is.
+     * @return the action
      */
     public Action getOpenAction() {
-        return null;
+        throw new UnsupportedOperationException("getOpenAction is not supported");
     }
+
+
 
 	// Main entry point
 	static public void main(String[] args) {
@@ -75,7 +78,7 @@ public class BeautiApp extends MultiDocApplication {
 						"University of Oxford\n" +
 						"All Rights Reserved.";
 				String websiteURLString = "http://evolve.zoo.ox.ac.uk/beast/";
-				String helpURLString = "http://evolve.zoo.ox.ac.uk/beast/help/";
+				String helpURLString = "http://evolve.zoo.ox.ac.uk/beast/help/BEAUti/";
 
 				BeautiApp app = new BeautiApp(nameString, aboutString, icon,
 						websiteURLString, helpURLString);
@@ -84,7 +87,7 @@ public class BeautiApp extends MultiDocApplication {
                         return new BeautiFrame(nameString);
                     }
                 });
-
+                app.initialize();
                 app.doNew();
             } catch (Exception e) {
 				JOptionPane.showMessageDialog(new JFrame(), "Fatal exception: " + e,

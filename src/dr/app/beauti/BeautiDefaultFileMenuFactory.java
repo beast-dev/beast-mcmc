@@ -49,7 +49,7 @@ public class BeautiDefaultFileMenuFactory implements MenuFactory {
         menu.add(item);
 
         menu.addSeparator();
-        
+
         item = new JMenuItem(frame.getExportAction());
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
         menu.add(item);

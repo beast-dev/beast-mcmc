@@ -155,7 +155,6 @@ public class PriorsPanel extends JPanel implements Exportable {
 			treePriorPanel.addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
 		} else if (treePriorCombo.getSelectedIndex() == 4 ) { // bayesian skyline
             groupCountField.setColumns(6);
-            groupCountField.setValue(10);
             treePriorPanel.addComponentWithLabel("Number of groups:", groupCountField);
             treePriorPanel.addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
         }

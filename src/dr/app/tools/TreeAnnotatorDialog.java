@@ -27,6 +27,7 @@ package dr.app.tools;
 
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.components.WholeNumberField;
+import org.virion.jam.components.RealNumberField;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -43,6 +44,8 @@ public class TreeAnnotatorDialog {
 	private OptionsPanel optionPanel;
 
     private WholeNumberField burninText = new WholeNumberField(0, Integer.MAX_VALUE);
+	private RealNumberField limitText = new RealNumberField(0.0, 1.0);
+
     private JComboBox summaryTreeCombo = new JComboBox(new String[] { "Maximum clade credibility", "User target tree" });
     private JComboBox nodeHeightsCombo = new JComboBox(new String[] { "Keep target heights", "Mean heights", "Median heights" });
 
@@ -63,6 +66,11 @@ public class TreeAnnotatorDialog {
         burninText.setColumns(12);
         burninText.setValue(0);
         optionPanel.addComponentWithLabel("Burnin: ", burninText);
+
+		limitText.setColumns(12);
+		limitText.setValue(0.5);
+		optionPanel.addComponentWithLabel("Posterior probability limit: ", limitText);
+
         optionPanel.addComponentWithLabel("Target tree type: ", summaryTreeCombo);
         optionPanel.addComponentWithLabel("Node heights: ", nodeHeightsCombo);
 
@@ -127,7 +135,7 @@ public class TreeAnnotatorDialog {
                 targetFileButton.setEnabled(selected);
             }
         });
-        
+
         JPanel panel2 = new JPanel(new BorderLayout(0,0));
 		panel2.add(inputFileNameText, BorderLayout.CENTER);
 		panel2.add(inputFileButton, BorderLayout.EAST);
@@ -183,10 +191,14 @@ public class TreeAnnotatorDialog {
         return burninText.getValue().intValue();
     }
 
+	public double getPosteriorLimit() {
+		return limitText.getValue().doubleValue();
+	}
+
     public int getTargetOption() {
         return summaryTreeCombo.getSelectedIndex();
     }
-    
+
     public int getHeightsOption() {
         return nodeHeightsCombo.getSelectedIndex();
     }

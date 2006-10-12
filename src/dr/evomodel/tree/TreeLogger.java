@@ -142,14 +142,13 @@ public class TreeLogger extends MCLogger {
 			if (colourSamplerModel != null) {
 				colouring = colourSamplerModel.getTreeColouring();
 			}
-			BranchRateModel branchRates = null;
 
 			if (substitutions) {
 				Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
 						branchRateModel, null, null, null, buffer);
 			} else {
 				Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_TIME,
-						branchRates, rateLabel, colouring, colouringLabel, buffer);
+						branchRateModel, rateLabel, colouring, colouringLabel, buffer);
 			}
 
 			buffer.append(";");

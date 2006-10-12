@@ -805,7 +805,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 }
             }
 
-            if (branchRateController != null && rateLabel != null) {
+            if (branchRateController != null && rateLabel != null && !tree.isRoot(node)) {
                 double rate = branchRateController.getBranchRate(tree, node);
                 if (!hasAttribute) {
                     buffer.append("[&");
@@ -814,6 +814,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 }
                 buffer.append(rateLabel).append("=");
                 buffer.append(String.valueOf(rate));
+                hasAttribute = true;
             }
             if (hasAttribute) {
                 buffer.append("]");

@@ -323,25 +323,4 @@ public class BranchRatePlotter {
             annotateRates(targetTree, targetTree.getChild(node, i), timeTree, mutationTree);
         }
     }
-    private static double[] getHPDInterval(double proportion, double[] array, int[] indices) {
-
-        double returnArray[] = new double[2];
-        double minRange = Double.MAX_VALUE;
-        int hpdIndex = 0;
-
-        int diff = (int)Math.round(proportion * (double)array.length);
-        for (int i =0; i <= (array.length - diff); i++) {
-            double minValue = array[indices[i]];
-            double maxValue = array[indices[i+diff-1]];
-            double range = Math.abs(maxValue - minValue);
-            if (range < minRange) {
-                minRange = range;
-                hpdIndex = i;
-            }
-        }
-        returnArray[0] = array[indices[hpdIndex]];
-        returnArray[1] = array[indices[hpdIndex+diff-1]];
-        return returnArray;
-    }
-
 }

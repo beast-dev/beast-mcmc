@@ -39,10 +39,7 @@ import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.*;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
-import dr.inference.loggers.*;
-import dr.inference.ml.MLOptimizer;
 import dr.inference.model.Parameter;
-import dr.inference.operators.*;
 import dr.math.*;
 
 import java.io.*;
@@ -205,83 +202,6 @@ public class Coevolve {
             pairAlignment.addSequence(new Sequence(alignment.getTaxon(k),sequence.toString()));
         }
         return pairAlignment;
-    }
-
-    private void runModel(PatternList patternList, PrintWriter pw, Tree tree, SubstitutionModel substModel, Parameter betaParameter) {
-
-        Parameter muParameter = new Parameter.Default(1.0);
-        muParameter.setId("mu");
-
-        SiteModel siteModel = new GammaSiteModel(substModel, muParameter, null, 1, null);
-        TreeModel treeModel = new TreeModel(tree);
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patternList, treeModel, siteModel, null, false, true, false);
-        treeLikelihood.setId("likelihood");
-
-        OperatorSchedule opsched = new SimpleOperatorSchedule();
-        opsched.addOperator(new ScaleOperator(muParameter, false, 0.8, 1, CoercableMCMCOperator.DEFAULT));
-        opsched.addOperator(new ScaleOperator(betaParameter, false, 0.8, 1, CoercableMCMCOperator.DEFAULT));
-
-        LogFormatter formatter = new TabDelimitedFormatter(pw, false);
-        MLLogger logger = new MLLogger(treeLikelihood, formatter, 1);
-
-        NumberColumn col = (NumberColumn)betaParameter.getColumns()[0];
-        col.setLabel("Beta");
-        col.setSignificantFigures(8);
-        col.setMinimumWidth(12);
-        logger.addColumn(col);
-
-        col = (NumberColumn)betaParameter.getColumns()[1];
-        col.setLabel("Kappa");
-        col.setSignificantFigures(8);
-        col.setMinimumWidth(12);
-        logger.addColumn(col);
-
-        col = (NumberColumn)muParameter.getColumns()[0];
-        col.setLabel("Mu");
-        col.setSignificantFigures(8);
-        col.setMinimumWidth(12);
-        logger.addColumn(col);
-
-        col = (NumberColumn)treeLikelihood.getColumns()[0];
-        col.setLabel("lnL");
-        col.setDecimalPlaces(6);
-        col.setMinimumWidth(12);
-        logger.addColumn(col);
-
-        MCLogger logger2 = new MCLogger(formatter, 100);
-
-        col = (NumberColumn)betaParameter.getColumns()[0];
-        col.setLabel("Beta");
-        col.setSignificantFigures(8);
-        col.setMinimumWidth(12);
-        logger2.addColumn(col);
-
-        col = (NumberColumn)betaParameter.getColumns()[1];
-        col.setLabel("Kappa");
-        col.setSignificantFigures(8);
-        col.setMinimumWidth(12);
-        logger2.addColumn(col);
-
-        col = (NumberColumn)muParameter.getColumns()[0];
-        col.setLabel("Mu");
-        col.setSignificantFigures(8);
-        col.setMinimumWidth(12);
-        logger2.addColumn(col);
-
-        col = (NumberColumn)treeLikelihood.getColumns()[0];
-        col.setLabel("lnL");
-        col.setDecimalPlaces(6);
-        col.setMinimumWidth(12);
-        logger2.addColumn(col);
-
-        Logger[] loggerArray = new Logger[] { logger };
-
-        MLOptimizer optimizer = new MLOptimizer("optimizer1", 10000, treeLikelihood, opsched, loggerArray);
-
-        optimizer.chain();
-
-        //pw.write(betaParameter.getParameterValue(0)+"\n");
-        //pw.flush();
     }
 
     private void runModel2(PatternList patternList, PrintWriter pw, Tree tree, SubstitutionModel substModel, final Parameter betaParameter) {

@@ -113,20 +113,6 @@ public class XMLParser {
 	}
 	
 	public XMLObject getRoot() { return root; }
-		
-	//private void report(XMLObject xo, String prefix) {
-	//
-	//	System.out.println(prefix+xo.getName());
-	//
-	//	for (int i =0; i < xo.getChildCount(); i++) {
-	//		Object child = xo.getRawChild(i);
-	//		if (child instanceof XMLObject) {
-	//			report((XMLObject)child, prefix + "  ");
-	//		} else {
-	//			System.out.println(prefix + "  " + child.toString());
-	//		}
-	//	}
-	//}
 	
 	private Object convert(Element e, boolean run) throws XMLParseException {
 		

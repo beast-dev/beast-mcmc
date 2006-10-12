@@ -970,10 +970,6 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                     if (tipRecent < 0.0) return -1;
                     return 0;
                 }
-
-                public boolean equals(Object o1, Object o2) {
-                    return compare(o1, o2) == 0;
-                }
             };
         }
 
@@ -984,10 +980,6 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         public static boolean equal(Tree tree1, Tree tree2) {
 
             return uniqueNewick(tree1, tree1.getRoot()).equals(uniqueNewick(tree2, tree2.getRoot()));
-
-            //CladeSet clades1 = new CladeSet(tree1);
-            //CladeSet clades2 = new CladeSet(tree2, tree1);
-            //return clades1.equals(clades2);
         }
 
 

@@ -78,18 +78,6 @@ public abstract class Phylogeny {
 		return index;
 	}
 	
-	private void disposeLineage(int lineageIndex) {
-		// swap the dead lineage with the last one in the list
-		Lineage tmp = lineages[lineageIndex];
-		lineages[lineageIndex] = lineages[lineageCount - 1];
-		lineages[lineageIndex].setIndex(lineageIndex);
-		lineages[lineageCount - 1] = tmp;
-		lineages[lineageCount - 1].setIndex(lineageCount - 1);
-
-		lineageCount--;
-		availableSize++;
-	}
-	
 	/**
 	 * Override this to return a new class that implements the Lineage interface
 	 */

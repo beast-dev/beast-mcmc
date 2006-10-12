@@ -378,12 +378,6 @@ public class TreeAnnotator {
             tree.setNodeAttribute(node, label, new Object[] { new Double(min), new Double(max) });
         }
 
-        private void annotateQuantileAttribute(MutableTree tree, NodeRef node, String label, double quantile, double[] values) {
-            double lower = DiscreteStatistics.quantile(1.0 - (quantile / 2), values);
-            double upper = DiscreteStatistics.quantile(quantile / 2, values);
-            tree.setNodeAttribute(node, label, new Object[] { new Double(lower), new Double(upper) });
-        }
-
         private void annotateHPDAttribute(MutableTree tree, NodeRef node, String label, double hpd, double[] values) {
             int[] indices = new int[values.length];
             HeapSort.sort(values, indices);

@@ -44,6 +44,10 @@ import java.util.ArrayList;
  */
 public class OperatorsPanel extends JPanel implements Exportable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3456667023451785854L;
 	JScrollPane scrollPane = new JScrollPane();
 	JTable operatorTable = null;
 	OperatorTableModel operatorTableModel = null;
@@ -145,6 +149,10 @@ public class OperatorsPanel extends JPanel implements Exportable {
 
 	class OperatorTableModel extends AbstractTableModel {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -575580804476182225L;
 		String[] columnNames = { "Operates on", "Type", "Tuning", "Weight", "Description" };
 
 		public OperatorTableModel() {

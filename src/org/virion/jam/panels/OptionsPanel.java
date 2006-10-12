@@ -36,6 +36,10 @@ import java.awt.*;
  */
 public class OptionsPanel extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7217075209325630197L;
 	protected GridBagLayout gridbag = new GridBagLayout();
 	private final int hGap;
 	private final int vGap;

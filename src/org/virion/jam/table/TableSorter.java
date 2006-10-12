@@ -89,7 +89,12 @@ import java.util.List;
  */
 
 public class TableSorter extends AbstractTableModel {
-    protected TableModel tableModel;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2008453783405125906L;
+
+	protected TableModel tableModel;
 
     public static final int DESCENDING = -1;
     public static final int NOT_SORTED = 0;

@@ -157,6 +157,11 @@ public class MultiDocApplication extends Application {
 				// only exists in Java 1.4 and up
 				invisibleFrame = new AbstractFrame() {
 
+					/**
+					 * 
+					 */
+					private static final long serialVersionUID = -5780680156084747030L;
+
 					protected void initializeComponents() {
 						getSaveAction().setEnabled(false);
 						getSaveAsAction().setEnabled(false);

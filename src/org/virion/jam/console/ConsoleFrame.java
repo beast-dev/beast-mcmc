@@ -35,6 +35,10 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 
 public class ConsoleFrame extends DocumentFrame {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8676302091394927643L;
 	PipedInputStream piOut;
 	PipedInputStream piErr;
 	PipedOutputStream poOut;

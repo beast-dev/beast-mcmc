@@ -32,7 +32,11 @@ import java.awt.*;
 
 
 public class TableRenderer extends DefaultTableCellRenderer {
-    protected Color bg1 = new Color(0xED, 0xF3, 0xFE);
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5192213736012177536L;
+	protected Color bg1 = new Color(0xED, 0xF3, 0xFE);
     protected Color bg2 = Color.white;
     protected boolean striped;
 

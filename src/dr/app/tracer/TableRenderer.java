@@ -32,6 +32,10 @@ import java.awt.*;
 
 
 class TableRenderer extends DefaultTableCellRenderer { 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3815955688412224510L;
 	Color bg1 = Color.white;
 	Color bg2 = new Color(0xEE, 0xEE, 0xFF);
 	int alignment;

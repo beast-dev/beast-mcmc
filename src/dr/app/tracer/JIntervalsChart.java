@@ -36,6 +36,11 @@ import java.util.ArrayList;
 
 public class JIntervalsChart extends JChart {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8940887369520091972L;
+
 	private class Interval {
 		String name;
 		double value, upper, lower;

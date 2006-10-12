@@ -272,13 +272,23 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
     }
 
     private AbstractAction saveAction = new AbstractAction("Save") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -4540478663138470260L;
+
+		public void actionPerformed(ActionEvent ae) {
             // Do nothing.. This is just a dummy action - getSaveAction should be overriden to provide a proper action
         }
     };
 
     private AbstractAction saveAsAction = new AbstractAction("Save As...") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -1584673587355509882L;
+
+		public void actionPerformed(ActionEvent ae) {
             // Do nothing.. This is just a dummy action - getSaveAction should be overriden to provide a proper action
         }
     };
@@ -287,61 +297,111 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
     private Action exportAction = null;
 
     private AbstractAction printAction = new AbstractAction("Print...") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 7608963909000084240L;
+
+		public void actionPerformed(ActionEvent ae) {
             doPrint();
         }
     };
 
     protected AbstractAction closeWindowAction = new AbstractAction("Close") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -8653835282951538865L;
+
+		public void actionPerformed(ActionEvent ae) {
             doCloseWindow();
         }
     };
 
     private AbstractAction zoomWindowAction = new AbstractAction("Zoom Window") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -5303318185278668551L;
+
+		public void actionPerformed(ActionEvent ae) {
             doZoomWindow();
         }
     };
 
     private AbstractAction minimizeWindowAction = new AbstractAction("Minimize Window") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 4122140938271674271L;
+
+		public void actionPerformed(ActionEvent ae) {
             doMinimizeWindow();
         }
     };
 
     private AbstractAction cutAction = new AbstractAction("Cut") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -389065906967196702L;
+
+		public void actionPerformed(ActionEvent ae) {
             doCut();
         }
     };
 
     private AbstractAction copyAction = new AbstractAction("Copy") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 1150131467885279315L;
+
+		public void actionPerformed(ActionEvent ae) {
             doCopy();
         }
     };
 
     private AbstractAction pasteAction = new AbstractAction("Paste") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 7399738765663916935L;
+
+		public void actionPerformed(ActionEvent ae) {
             doPaste();
         }
     };
 
     private AbstractAction deleteAction = new AbstractAction("Delete") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 59368389446966562L;
+
+		public void actionPerformed(ActionEvent ae) {
             doDelete();
         }
     };
 
     private AbstractAction selectAllAction = new AbstractAction("Select All") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 378627540775330105L;
+
+		public void actionPerformed(ActionEvent ae) {
             doSelectAll();
         }
     };
 
     private AbstractAction findAction = new AbstractAction("Find...") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 1693178283344457760L;
+
+		public void actionPerformed(ActionEvent ae) {
             doFind();
         }
     };

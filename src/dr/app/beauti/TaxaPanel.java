@@ -49,6 +49,11 @@ import java.util.List;
 public class TaxaPanel extends JPanel implements Exportable {
 
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3138832889782090814L;
+
 	BeautiFrame frame = null;
 
 	BeautiOptions options = null;
@@ -320,6 +325,11 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	Action addTaxonSetAction = new AbstractAction("+") {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 20273987098143413L;
+
 		public void actionPerformed(ActionEvent ae) {
 			taxonSetCount ++;
 			currentTaxonSet = new Taxa("untitled" + taxonSetCount);
@@ -338,6 +348,11 @@ public class TaxaPanel extends JPanel implements Exportable {
 	};
 
 	Action removeTaxonSetAction = new AbstractAction("-") {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 6077578872870122265L;
 
 		public void actionPerformed(ActionEvent ae) {
 			int row = taxonSetsTable.getSelectedRow();
@@ -395,6 +410,11 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 
 	class TaxonSetsTableModel extends AbstractTableModel {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 3318461381525023153L;
 
 		public TaxonSetsTableModel() {
 		}
@@ -531,12 +551,22 @@ public class TaxaPanel extends JPanel implements Exportable {
 	}
 
 	Action includeTaxonAction = new AbstractAction("->") {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 7510299673661594128L;
+
 		public void actionPerformed(ActionEvent ae) {
 			includeSelectedTaxa();
 		}
 	};
 
 	Action excludeTaxonAction = new AbstractAction("<-") {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 449692708602410206L;
 
 		public void actionPerformed(ActionEvent ae) {
 			excludeSelectedTaxa();
@@ -545,6 +575,10 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	class TaxaTableModel extends AbstractTableModel {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -8027482229525938010L;
 		boolean included;
 
 		public TaxaTableModel(boolean included) {

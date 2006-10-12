@@ -42,6 +42,10 @@ import java.awt.*;
  */
 public class RawTracePanel extends JPanel implements Exportable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7158704446243557171L;
 	private JTraceChart traceChart = new JTraceChart(new LinearAxis(), new LinearAxis());
 	private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
 	private JLabel messageLabel = new JLabel("No data loaded");

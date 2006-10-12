@@ -34,6 +34,11 @@ import javax.swing.*;
  */
 public class ToolbarButton extends JButton implements ToolbarItem {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3072734406770545193L;
+
 	public ToolbarButton(ToolbarAction action) {
 		super(action);
 

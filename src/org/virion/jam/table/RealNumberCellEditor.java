@@ -35,7 +35,11 @@ import java.awt.event.ActionListener;
 
 public class RealNumberCellEditor extends DefaultCellEditor {
 
-    private RealNumberField editor;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -3571190667907978127L;
+	private RealNumberField editor;
 
     public RealNumberCellEditor(double minValue, double maxValue) {
         super(new RealNumberField(minValue, maxValue));

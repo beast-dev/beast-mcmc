@@ -97,7 +97,12 @@ public abstract class Application {
         Application.icon = icon;
 
         aboutAction = new AbstractAction("About " + nameString + "...") {
-            public void actionPerformed(ActionEvent ae) {
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = -5041909266347767945L;
+
+			public void actionPerformed(ActionEvent ae) {
                 doAbout();
             }
         };
@@ -252,25 +257,45 @@ public abstract class Application {
     }
 
     protected AbstractAction newAction = new AbstractAction("New") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -1521224399481196083L;
+
+		public void actionPerformed(ActionEvent ae) {
             doNew();
         }
     };
 
     protected AbstractAction openAction = new AbstractAction("Open...") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -4447260642111669429L;
+
+		public void actionPerformed(ActionEvent ae) {
             doOpen();
         }
     };
 
     protected AbstractAction pageSetupAction = new AbstractAction("Page Setup...") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 2066709411506589740L;
+
+		public void actionPerformed(ActionEvent ae) {
             doPageSetup();
         }
     };
 
     protected AbstractAction exitAction = new AbstractAction("Exit") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -4248102898807999282L;
+
+		public void actionPerformed(ActionEvent ae) {
             doQuit();
         }
     };
@@ -278,19 +303,34 @@ public abstract class Application {
     protected AbstractAction aboutAction = null;
 
     protected AbstractAction preferencesAction = new AbstractAction("Preferences...") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -6992111486368469010L;
+
+		public void actionPerformed(ActionEvent ae) {
             doPreferences();
         }
     };
 
     protected AbstractAction helpAction = new AbstractAction("Help...") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -3959121576921987360L;
+
+		public void actionPerformed(ActionEvent ae) {
             doHelp();
         }
     };
 
     protected AbstractAction websiteAction = new AbstractAction("Website...") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 837521123495914197L;
+
+		public void actionPerformed(ActionEvent ae) {
             doWebsite();
         }
     };

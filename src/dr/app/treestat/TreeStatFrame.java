@@ -43,7 +43,12 @@ import dr.app.treestat.statistics.TreeSummaryStatistic;
 
 public class TreeStatFrame extends DocumentFrame {
 
-    private TreeStatData treeStatData = null;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -1775448072034877658L;
+
+	private TreeStatData treeStatData = null;
 
     private JTabbedPane tabbedPane = new JTabbedPane();
 
@@ -341,13 +346,23 @@ public class TreeStatFrame extends DocumentFrame {
     }
 
       protected AbstractAction importTaxaAction = new AbstractAction("Import Taxa...") {
-          public void actionPerformed(java.awt.event.ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = -3185667996732228702L;
+
+		public void actionPerformed(java.awt.event.ActionEvent ae) {
               doImport();
           }
       };
 
       protected AbstractAction processTreeFileAction = new AbstractAction("Process Tree File...", gearIcon) {
-          public void actionPerformed(java.awt.event.ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = -8285433136692586532L;
+
+		public void actionPerformed(java.awt.event.ActionEvent ae) {
               doExport();
           }
       };

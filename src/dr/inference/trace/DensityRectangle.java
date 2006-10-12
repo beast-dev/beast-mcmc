@@ -231,7 +231,12 @@ public class DensityRectangle {
         frame.setSize(400,400);
         frame.getContentPane().add(
                 new JComponent() {
-                    public void paintComponent(Graphics g) {
+                    /**
+					 * 
+					 */
+					private static final long serialVersionUID = -4045142094590087910L;
+
+					public void paintComponent(Graphics g) {
 
                         Rectangle2D bounds = getBounds();
 

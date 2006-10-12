@@ -35,6 +35,11 @@ import java.util.ArrayList;
 
 public class JTraceChart extends JChart {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5031332572032604769L;
+
 	private static final int SAMPLE_POINTS = 1000;
 	
 	private boolean useSample = true;

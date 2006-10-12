@@ -36,6 +36,11 @@ import java.util.StringTokenizer;
 public class AboutBox extends AbstractFrame {
 
     /**
+	 * 
+	 */
+	private static final long serialVersionUID = -388880000949708859L;
+
+	/**
      * Creates an AboutBox with a given title, message and icon
      * and centers it over the parent component.
      */

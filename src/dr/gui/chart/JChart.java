@@ -37,6 +37,10 @@ import java.util.Vector;
 
 public class JChart extends JPanel {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7064065852204509247L;
 	protected Axis yAxis, xAxis;
 	private Vector plots = new Vector();
 	

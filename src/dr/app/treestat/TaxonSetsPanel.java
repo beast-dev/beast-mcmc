@@ -41,6 +41,10 @@ import java.util.ArrayList;
 public class TaxonSetsPanel extends JPanel implements Exportable {
 
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -9013475414423166476L;
 	TreeStatFrame frame = null;
 	TreeStatData treeStatData = null;
 	TreeStatData.TaxonSet selectedTaxonSet = null;
@@ -271,7 +275,12 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
       
   	Action addTaxonSetAction = new AbstractAction("+") {
   		
-  		public void actionPerformed(ActionEvent ae) {
+  		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1831933175582860833L;
+
+		public void actionPerformed(ActionEvent ae) {
 			TreeStatData.TaxonSet taxonSet = new TreeStatData.TaxonSet();
 			taxonSet.name = "untitled";
 			taxonSet.taxa = new ArrayList();
@@ -285,7 +294,12 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 
   	Action removeTaxonSetAction = new AbstractAction("-") {
   		
-  		public void actionPerformed(ActionEvent ae) {
+  		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -8662527333546044639L;
+
+		public void actionPerformed(ActionEvent ae) {
 			int saved = taxonSetsTable.getSelectedRow();
 			int row = taxonSetsTable.getSelectedRow();
 			if (row != -1) {
@@ -298,7 +312,12 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
   	};
 
   	Action includeTaxonAction = new AbstractAction("->") {  		
-  		public void actionPerformed(ActionEvent ae) {
+  		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -1875904513948242608L;
+
+		public void actionPerformed(ActionEvent ae) {
 			int saved = taxonSetsTable.getSelectedRow();
 			int[] rows = excludedTaxaTable.getSelectedRows();
 			ArrayList exclList = new ArrayList(treeStatData.allTaxa);
@@ -313,7 +332,12 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 
   	Action excludeTaxonAction = new AbstractAction("<-") {
   		
-  		public void actionPerformed(ActionEvent ae) {
+  		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 4523480086490780822L;
+
+		public void actionPerformed(ActionEvent ae) {
 			int saved = taxonSetsTable.getSelectedRow();
 			int[] rows = includedTaxaTable.getSelectedRows();
 			for (int i = rows.length - 1; i >= 0 ; i--) {
@@ -325,6 +349,11 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
   	};
   	
 	class TaxonSetsTableModel extends AbstractTableModel {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 219223813257870207L;
 
 		public TaxonSetsTableModel() {
 		}
@@ -358,6 +387,10 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 
 	class TaxaTableModel extends AbstractTableModel {
 		
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1559408662356843275L;
 		boolean included;
 		
 		public TaxaTableModel(boolean included) {

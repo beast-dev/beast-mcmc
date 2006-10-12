@@ -442,6 +442,11 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
 
 	class IncompatibleException extends Exception {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 8439923064799668934L;
+
 		public IncompatibleException(String name) {
 			super(name);
 		}

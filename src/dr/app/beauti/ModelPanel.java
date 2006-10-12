@@ -38,6 +38,10 @@ import javax.swing.*;
  */
 public class ModelPanel extends OptionsPanel implements Exportable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2778103564318492601L;
 	JComboBox nucSubstCombo = new JComboBox(new String[] {"HKY", "GTR"});
 	JComboBox aaSubstCombo = new JComboBox(new String[] {"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
 	JComboBox heteroCombo = new JComboBox(new String[] {"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});

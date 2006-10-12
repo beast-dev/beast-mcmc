@@ -33,7 +33,11 @@ import java.awt.*;
  */
 public class HTMLViewer extends JFrame {
 
-    private JEditorPane editorPane;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5299819488290992481L;
+	private JEditorPane editorPane;
 
     public HTMLViewer(String title, String html) {
         super(title);

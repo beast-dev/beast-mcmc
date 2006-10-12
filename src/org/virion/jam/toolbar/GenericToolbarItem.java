@@ -35,7 +35,12 @@ import java.awt.*;
  */
 public class GenericToolbarItem extends JPanel implements ToolbarItem {
 
-    public GenericToolbarItem(String title, String toolTipText, JComponent component) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4712398361392611891L;
+
+	public GenericToolbarItem(String title, String toolTipText, JComponent component) {
         setLayout(new BorderLayout());
         add(component, BorderLayout.NORTH);
 

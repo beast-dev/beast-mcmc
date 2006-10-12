@@ -34,6 +34,10 @@ import java.awt.*;
 
 public class DemographicFrame extends AuxilaryFrame {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1659884609305245738L;
 	private Variate xData;
 	private Variate yDataMean;
 	private Variate yDataMedian;

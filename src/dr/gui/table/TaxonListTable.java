@@ -36,6 +36,11 @@ import java.util.TreeSet;
 
 public class TaxonListTable extends JTable implements MutableTaxonListListener {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5706027520036473157L;
+
 	final static String TAXON_NAME = "Taxon";
 
 	TaxaTableModel taxaTableModel = null;
@@ -127,6 +132,10 @@ public class TaxonListTable extends JTable implements MutableTaxonListListener {
 
 	class TaxaTableModel extends AbstractTableModel {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 367162013042095775L;
 		String[] names = null;
 		TaxonList taxonList;
 

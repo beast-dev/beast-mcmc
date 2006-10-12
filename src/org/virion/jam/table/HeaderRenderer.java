@@ -34,7 +34,12 @@ import java.awt.*;
 
 public class HeaderRenderer extends DefaultTableCellRenderer {
 
-    public HeaderRenderer(int alignment, Insets insets) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6255996403186449235L;
+
+	public HeaderRenderer(int alignment, Insets insets) {
         setHorizontalAlignment(alignment);
         setOpaque(true);
 

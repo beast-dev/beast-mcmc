@@ -44,6 +44,11 @@ public class JTreeDisplay extends JComponent implements Printable,
 														MutableTreeListener, 
 														MutableTaxonListListener {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4845325190293249506L;
+
 	/** the tree */
 	protected Tree tree = null;
 	

@@ -41,6 +41,10 @@ import java.awt.*;
  */
 public class CorrelationPanel extends JPanel implements Exportable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1801169099710982488L;
 	private JChart correlationChart = new JChart(new LinearAxis(), new LinearAxis());
 	private JChartPanel chartPanel = new JChartPanel(correlationChart, null, "", "");
 	private JLabel messageLabel = new JLabel("No data loaded");

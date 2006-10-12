@@ -332,6 +332,11 @@ abstract class TwoColourSampler implements ColourSampler {
      
      class NoEventException extends Exception {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -6860022343065166240L;
+
      }
     /**
      * The probability density of being in state x in the time interval [0,t) and migrating to state y

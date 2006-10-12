@@ -37,6 +37,11 @@ import java.io.*;
  * @version			$Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class BeautiFrame extends DocumentFrame {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2114148696789612509L;
+
 	private BeastGenerator beautiOptions = new BeastGenerator();
 
 	private JTabbedPane tabbedPane = new JTabbedPane();
@@ -499,6 +504,11 @@ public class BeautiFrame extends DocumentFrame {
 	public Action getImportAction() { return importNexusAction; }
 
 	protected AbstractAction importNexusAction = new AbstractAction("Import NEXUS...") {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 2450459627280385426L;
+
 		public void actionPerformed(java.awt.event.ActionEvent ae) {
 			doImport();
 		}
@@ -508,6 +518,11 @@ public class BeautiFrame extends DocumentFrame {
 	public Action getExportAction() { return generateAction; }
 
 	protected AbstractAction generateAction = new AbstractAction("Generate BEAST File...", gearIcon) {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 3029953542322699748L;
+
 		public void actionPerformed(java.awt.event.ActionEvent ae) {
 			doGenerate();
 		}

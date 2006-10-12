@@ -41,6 +41,10 @@ import java.awt.*;
  */
 public class IntervalsPanel extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6835575541003219985L;
 	private JIntervalsChart intervalsChart = new JIntervalsChart(new LinearAxis());
 	private JChartPanel chartPanel = new JChartPanel(intervalsChart, null, "", "");
 	

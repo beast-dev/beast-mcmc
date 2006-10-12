@@ -47,6 +47,10 @@ import java.util.ArrayList;
  */
 public class PriorsPanel extends JPanel implements Exportable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2936049032365493416L;
 	JScrollPane scrollPane = new JScrollPane();
 	JTable priorTable = null;
 	PriorTableModel priorTableModel = null;
@@ -253,6 +257,10 @@ public class PriorsPanel extends JPanel implements Exportable {
 
 	class PriorTableModel extends AbstractTableModel {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -8864178122484971872L;
 		String[] columnNames = { "Parameter", "Prior", "Description" };
 
 		public PriorTableModel() {
@@ -368,6 +376,11 @@ public class PriorsPanel extends JPanel implements Exportable {
 
 	class DoubleRenderer extends TableRenderer {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -2614341608257369805L;
+
 		public DoubleRenderer(int alignment, Insets insets) {
 
 			super(true, alignment, insets);
@@ -388,6 +401,11 @@ public class PriorsPanel extends JPanel implements Exportable {
 	};
 
 	public class ButtonRenderer extends JButton implements TableCellRenderer {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -2416184092883649169L;
 
 		public ButtonRenderer(int alignment, Insets insets) {
 			setOpaque(true);
@@ -412,6 +430,10 @@ public class PriorsPanel extends JPanel implements Exportable {
 	};
 
 	public class ButtonEditor extends DefaultCellEditor {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 6372738480075411674L;
 		protected JButton button;
 		private String label;
 		private boolean isPushed;

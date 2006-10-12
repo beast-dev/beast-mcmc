@@ -40,7 +40,11 @@ import org.virion.jam.framework.Exportable;
 
 public class CharactersPanel extends JPanel implements Exportable {
 
-    TreeStatFrame frame = null;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1063807543195481382L;
+	TreeStatFrame frame = null;
     TreeStatData treeStatData = null;
     TreeStatData.Character selectedCharacter = null;
     TreeStatData.State selectedState = null;
@@ -335,7 +339,12 @@ public class CharactersPanel extends JPanel implements Exportable {
 
       Action addCharacterAction = new AbstractAction("Add") {
 
-          public void actionPerformed(ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = -2222139644754040949L;
+
+		public void actionPerformed(ActionEvent ae) {
             TreeStatData.Character character = new TreeStatData.Character();
             character.name = "untitled";
             character.states = new ArrayList();
@@ -349,7 +358,12 @@ public class CharactersPanel extends JPanel implements Exportable {
 
       Action removeCharacterAction = new AbstractAction("Remove") {
 
-          public void actionPerformed(ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = -6836455052115579291L;
+
+		public void actionPerformed(ActionEvent ae) {
             int saved = charactersTable.getSelectedRow();
             int row = charactersTable.getSelectedRow();
             if (row != -1) {
@@ -363,19 +377,34 @@ public class CharactersPanel extends JPanel implements Exportable {
 
       Action addStateAction = new AbstractAction("Add") {
 
-          public void actionPerformed(ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = -2304872597649350237L;
+
+		public void actionPerformed(ActionEvent ae) {
           }
       };
 
       Action removeStateAction = new AbstractAction("Remove") {
 
-          public void actionPerformed(ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = -6390058458520173491L;
+
+		public void actionPerformed(ActionEvent ae) {
           }
       };
 
       Action includeTaxonAction = new AbstractAction("->") {
 
-          public void actionPerformed(ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = 4577920870740752531L;
+
+		public void actionPerformed(ActionEvent ae) {
             int saved1 = charactersTable.getSelectedRow();
             int saved2 = statesTable.getSelectedRow();
             int[] rows = excludedTaxaTable.getSelectedRows();
@@ -392,7 +421,12 @@ public class CharactersPanel extends JPanel implements Exportable {
 
       Action excludeTaxonAction = new AbstractAction("<-") {
 
-          public void actionPerformed(ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = 7911132810956409390L;
+
+		public void actionPerformed(ActionEvent ae) {
             int saved1 = charactersTable.getSelectedRow();
             int saved2 = statesTable.getSelectedRow();
             int[] rows = includedTaxaTable.getSelectedRows();
@@ -407,7 +441,12 @@ public class CharactersPanel extends JPanel implements Exportable {
 
     class CharactersTableModel extends AbstractTableModel {
 
-        public CharactersTableModel() {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -3916166866378281436L;
+
+		public CharactersTableModel() {
         }
 
         public int getColumnCount() {
@@ -439,7 +478,11 @@ public class CharactersPanel extends JPanel implements Exportable {
 
     class StatesTableModel extends AbstractTableModel {
 
-        String[] columnNames = new String[] { "State", "Description" };
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -1912262346368463655L;
+		String[] columnNames = new String[] { "State", "Description" };
 
         public StatesTableModel() {
         }
@@ -482,7 +525,11 @@ public class CharactersPanel extends JPanel implements Exportable {
 
     class TaxaTableModel extends AbstractTableModel {
 
-        boolean included;
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 2786966293840685962L;
+		boolean included;
 
         public TaxaTableModel(boolean included) {
             this.included = included;

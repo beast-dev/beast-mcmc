@@ -40,6 +40,10 @@ import java.awt.*;
  */
 public class FrequencyPanel extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1676730878287464415L;
 	TraceList traceList = null;
 	int traceIndex = -1;
 	

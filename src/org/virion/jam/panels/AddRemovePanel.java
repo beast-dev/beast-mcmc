@@ -127,6 +127,11 @@ public abstract class AddRemovePanel extends JPanel {
     }
 
     class RowPanel extends JPanel {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 93543397412719454L;
+
 		RowPanel(final JPanel contents) {
 
 			setLayout(new GridBagLayout());
@@ -188,7 +193,12 @@ public abstract class AddRemovePanel extends JPanel {
     };
 
 	AbstractAction removeAction = new AbstractAction("-") {
-		  public void actionPerformed(ActionEvent ae) {
+		  /**
+		 * 
+		 */
+		private static final long serialVersionUID = -6380865684832718186L;
+
+		public void actionPerformed(ActionEvent ae) {
 		  }
 	  };
 

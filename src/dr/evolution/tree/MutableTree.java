@@ -38,6 +38,11 @@ import dr.evolution.util.MutableTaxonList;
 public interface MutableTree extends Tree, MutableTaxonList {
 
 	public class InvalidTreeException extends Exception {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1955744780140327882L;
+
 		public InvalidTreeException(String message) { super(message); }
 	};
 

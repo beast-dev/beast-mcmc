@@ -46,7 +46,12 @@ import java.util.ArrayList;
  */
 public class SearchPanel extends JPanel {
 
-    public SearchPanel(final String emptyLabel, final boolean searchAsYouType) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -1015809759551670821L;
+
+	public SearchPanel(final String emptyLabel, final boolean searchAsYouType) {
         this(emptyLabel, null, searchAsYouType);
     }
 

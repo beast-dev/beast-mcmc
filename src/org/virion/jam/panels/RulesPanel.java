@@ -46,7 +46,11 @@ import java.util.List;
 
 public class RulesPanel extends JPanel {
 
-    private Icon addIcon = null;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 3081143203405613644L;
+	private Icon addIcon = null;
 	private Icon addRolloverIcon = null;
 	private Icon addPressedIcon = null;
     private Icon removeIcon = null;
@@ -136,6 +140,11 @@ public class RulesPanel extends JPanel {
     };
 
     class RulePanel extends JPanel {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -483847847213880133L;
+
 		RulePanel(final DefaultRule rule) {
 
 			setLayout(new GridBagLayout());
@@ -210,7 +219,12 @@ public class RulesPanel extends JPanel {
     };
 
 	AbstractAction removeAction = new AbstractAction("-") {
-		  public void actionPerformed(ActionEvent ae) {
+		  /**
+		 * 
+		 */
+		private static final long serialVersionUID = 6660228111216748544L;
+
+		public void actionPerformed(ActionEvent ae) {
 		  }
 	  };
 

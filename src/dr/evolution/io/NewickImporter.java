@@ -47,6 +47,11 @@ import java.util.ArrayList;
 public class NewickImporter extends Importer implements TreeImporter { 
 
 	public class BranchMissingException extends ImportException {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 777435104809244693L;
+
 		public BranchMissingException() { super(); }
 		
 		public BranchMissingException(String msg) { 

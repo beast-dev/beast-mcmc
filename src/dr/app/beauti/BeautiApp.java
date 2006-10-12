@@ -8,22 +8,32 @@
  */
 package dr.app.beauti;
 
-import org.virion.jam.framework.SingleDocApplication;
+import org.virion.jam.framework.*;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 /**
  * @author			Andrew Rambaut
  * @author			Alexei Drummond
  * @version			$Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
  */
-public class BeautiApp extends SingleDocApplication {
+public class BeautiApp extends MultiDocApplication {
 	public BeautiApp(String nameString, String aboutString, Icon icon,
 	                 String websiteURLString, String helpURLString) {
-		super(nameString, aboutString, icon, websiteURLString, helpURLString);
-
-		setDocumentFrame(new BeautiFrame(nameString));
+		super(new BeautiMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
 	}
+
+    /**
+     * In a departure from the standard UI, there is no "Open" command for this application
+     * Instead, the user can create a New window, Import a NEXUS file and Apply a Template file.
+     * None of these operations result in a file being associated with the DocumentFrame. All
+     * these actions are located in the BeautiFrame class.
+     * @return null
+     */
+    public Action getOpenAction() {
+        return null;
+    }
 
 	// Main entry point
 	static public void main(String[] args) {
@@ -57,7 +67,7 @@ public class BeautiApp extends SingleDocApplication {
 					icon = new ImageIcon(url);
 				}
 
-				String nameString = "BEAUti";
+				final String nameString = "BEAUti";
 				String aboutString = "Bayesian Evolutionary Analysis Utility\n" +
 						"BEAST XML generation tool\n" +
 						"Version 1.4\n \n" +
@@ -69,7 +79,14 @@ public class BeautiApp extends SingleDocApplication {
 
 				BeautiApp app = new BeautiApp(nameString, aboutString, icon,
 						websiteURLString, helpURLString);
-			} catch (Exception e) {
+                app.setDocumentFrameFactory(new DocumentFrameFactory() {
+                    public DocumentFrame createDocumentFrame(Application app, MenuBarFactory menuBarFactory) {
+                        return new BeautiFrame(nameString);
+                    }
+                });
+
+                app.doNew();
+            } catch (Exception e) {
 				JOptionPane.showMessageDialog(new JFrame(), "Fatal exception: " + e,
 						"Please report this to the authors",
 						JOptionPane.ERROR_MESSAGE);

@@ -29,6 +29,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.*;
 
 /**
@@ -188,6 +189,44 @@ public class BeautiFrame extends DocumentFrame {
 	public final void mcmcChanged() {
 		setDirty();
 	}
+
+    public boolean requestClose() {
+        if (isDirty()) {
+            int option = JOptionPane.showConfirmDialog(this, "You have made changes but have not generated\na BEAST XML file. Do you wish to generate\nbefore closing this window?",
+                    "Unused changes",
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
+            if (option == JOptionPane.YES_OPTION) {
+                return doGenerate();
+            } else if (option == JOptionPane.CANCEL_OPTION || option == -1) {
+                return false;
+            }
+            return true;
+        }
+        return true;
+    }
+
+    public void doApplyTemplate() {
+        FileDialog dialog = new FileDialog(this,
+                "Apply Template",
+                FileDialog.LOAD);
+        dialog.setVisible(true);
+        if (dialog.getFile() != null) {
+            File file = new File(dialog.getDirectory(), dialog.getFile());
+            try {
+                readFromFile(file);
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open template file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to read template file: " + ioe,
+                        "Unable to read file",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
 	protected boolean readFromFile(File file) throws FileNotFoundException, IOException {
 		try {
@@ -442,7 +481,7 @@ public class BeautiFrame extends DocumentFrame {
 		getExportAction().setEnabled(true);
 	}
 
-	public final void doGenerate() {
+	public final boolean doGenerate() {
 
 		try {
 			beautiOptions.checkOptions();
@@ -450,7 +489,7 @@ public class BeautiFrame extends DocumentFrame {
 			JOptionPane.showMessageDialog(this, iae.getMessage(),
 					"Unable to generate file",
 					JOptionPane.ERROR_MESSAGE);
-			return;
+			return false;
 		}
 
 		FileDialog dialog = new FileDialog(this,
@@ -468,9 +507,12 @@ public class BeautiFrame extends DocumentFrame {
 				JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
 						"Unable to generate file",
 						JOptionPane.ERROR_MESSAGE);
+                return false;
 			}
 		}
 
+        clearDirty();
+        return true;
 	}
 
 	protected void generate(File file) throws IOException {
@@ -500,7 +542,61 @@ public class BeautiFrame extends DocumentFrame {
 		return exportable;
 	}
 
-	public boolean useImportAction() { return true; }
+    public boolean doSave() {
+       return doSaveAs();
+    }
+
+    public boolean doSaveAs() {
+        FileDialog dialog = new FileDialog(this,
+                "Save Template As...",
+                FileDialog.SAVE);
+
+        dialog.setVisible(true);
+        if (dialog.getFile() == null) {
+            // the dialog was cancelled...
+            return false;
+        }
+
+        File file = new File(dialog.getDirectory(), dialog.getFile());
+
+        try {
+            if (writeToFile(file)) {
+
+                clearDirty();
+            }
+        } catch (IOException ioe) {
+            JOptionPane.showMessageDialog(this, "Unable to save file: " + ioe,
+                    "Unable to save file",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+
+        return true;
+    }
+
+    public Action getOpenAction() {
+        return openTemplateAction;
+    }
+
+    private AbstractAction openTemplateAction = new AbstractAction("Apply Template...") {
+        public void actionPerformed(ActionEvent ae) {
+            doApplyTemplate();
+        }
+    };
+
+    public Action getSaveAction() {
+        return saveAsAction;
+    }
+
+    public Action getSaveAsAction() {
+        return saveAsAction;
+    }
+
+    private AbstractAction saveAsAction = new AbstractAction("Save Template As...") {
+        public void actionPerformed(ActionEvent ae) {
+            doSaveAs();
+        }
+    };
+
 	public Action getImportAction() { return importNexusAction; }
 
 	protected AbstractAction importNexusAction = new AbstractAction("Import NEXUS...") {
@@ -514,7 +610,6 @@ public class BeautiFrame extends DocumentFrame {
 		}
 	};
 
-	public boolean useExportAction() { return true; }
 	public Action getExportAction() { return generateAction; }
 
 	protected AbstractAction generateAction = new AbstractAction("Generate BEAST File...", gearIcon) {

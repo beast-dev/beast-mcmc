@@ -83,30 +83,6 @@ public class TreeStatData {
 		Document doc = new Document(root);
 		return doc;
 	}
-
-	private Element createChild(String name, String value) {
-		Element e = new Element(name);
-		e.setText(value);
-		return e;
-	}
-	
-	private Element createChild(String name, int value) {
-		Element e = new Element(name);
-		e.setText(Integer.toString(value));
-		return e;
-	}
-	
-	private Element createChild(String name, double value) {
-		Element e = new Element(name);
-		e.setText(Double.toString(value));
-		return e;
-	}
-	
-	private Element createChild(String name, boolean value) {
-		Element e = new Element(name);
-		e.setText(value?"true":"false");
-		return e;
-	}
 		
 	/**
 	 * Read options from a file
@@ -116,28 +92,7 @@ public class TreeStatData {
 		Element root = document.getRootElement();
 		if (!root.getName().equals("treeTracer")) {
 			throw new dr.xml.XMLParseException("This document does not appear to be a TreeTracer file");
-		}
-		
-		Element taxonSetsElement = root.getChild("taxonSets");
-		Element charactersElement = root.getChild("characters");
-		Element statisticsElement = root.getChild("statistics");
-	}
-
-	private String getStringChild(Element element, String childName) {
-		return element.getChildTextTrim(childName);
-	}
-	private int getIntegerChild(Element element, String childName) {
-		String value = element.getChildTextTrim(childName);
-		return Integer.parseInt(value);
-	}
-	private double getDoubleChild(Element element, String childName) {
-		String value = element.getChildTextTrim(childName);
-		return Double.parseDouble(value);
-	}
-	private boolean getBooleanChild(Element element, String childName) {
-		String value = element.getChildTextTrim(childName);
-		if (value.equals("true")) return true;
-		return false;
+		}		
 	}
 }
 

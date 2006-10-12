@@ -27,8 +27,6 @@ package org.virion.jam.app;
 
 import java.awt.*;
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 /**
  *
@@ -122,28 +120,4 @@ public class Utils {
 			} else return null;
 		}
 	}
-       
-	
-	/*public static void showExceptionDialog(JFrame parent, Throwable e, String title) {
-		
-		JOptionPane pane = new JOptionPane(e.getMessage(), JOptionPane.ERROR_MESSAGE);
-		JDialog dialog = pane.createDialog(parent, title);
-		dialog.show();
-	}
-
-	public static void showExceptionDialog(JFrame parent, Throwable e) {
-		
-		JExceptionDialog d = new JExceptionDialog(parent, true, "Exception", getStackTrace(e));	
-	}*/
-
-	/**
-	 * Return the stack trace of an exception as a string.
-	 */
-	private static String getStackTrace(Throwable e) {
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		e.printStackTrace(pw);
-		return sw.toString();
-	}
-
 }

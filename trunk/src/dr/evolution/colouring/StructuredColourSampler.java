@@ -1208,18 +1208,7 @@ public class StructuredColourSampler implements ColourSampler {
 
     }
 
-    private void prettyPrint(String label, int[] vec) {
-        System.out.print(label + "= (");
-        for (int i=0; i<vec.length; i++) {
-            System.out.print(vec[i] + ", ");
-
-        }
-        System.out.println(")");
-
-    }
-
-
-	// Testing code
+    // Testing code
 	static void testMatrix(double[] m, double[] r) {
 		if ( Math.abs( matrixEvolve(m,0)[0] - r[0]) > 1.0e-6 ) {
 			throw new Error("1");

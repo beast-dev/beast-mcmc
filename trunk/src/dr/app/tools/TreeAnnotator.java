@@ -52,6 +52,8 @@ public class TreeAnnotator {
 
 	public TreeAnnotator(int burnin, int heightsOption, double posteriorLimit, int targetOption, String targetTreeFileName, String inputFileName, String outputFileName) throws IOException {
 
+		this.posteriorLimit = posteriorLimit;
+		
 		System.out.println("Reading trees...");
 
 		CladeSystem cladeSystem = new CladeSystem();

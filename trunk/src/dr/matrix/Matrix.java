@@ -147,6 +147,10 @@ public interface Matrix {
 	 * The base matrix exception
 	 */
 	public class MatrixException extends Exception { 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -5904166681730282246L;
 		MatrixException() { super(); }
 		MatrixException(String  message) { super(message); }
 	}
@@ -154,12 +158,21 @@ public interface Matrix {
 	/**
 	 * Thrown when the matrix should be square but it's not
 	 */
-	public class NotSquareException extends MatrixException { }
+	public class NotSquareException extends MatrixException {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 5121968928197320497L; }
 	
 	/**
 	 * Thrown when the dimensions of a matrix are wrong
 	 */
 	public class WrongDimensionException extends MatrixException { 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -1799942797975356399L;
 		WrongDimensionException() { super(); }
 		WrongDimensionException(String message) { super(message); }
 	}

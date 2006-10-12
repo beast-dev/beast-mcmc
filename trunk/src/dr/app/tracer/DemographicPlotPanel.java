@@ -41,6 +41,10 @@ import java.awt.*;
  */
 public class DemographicPlotPanel extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1328273430736724376L;
 	private JChart demoChart = new JChart(new LinearAxis(Axis.AT_ZERO, Axis.AT_DATA), new LogAxis());
 	private JChartPanel chartPanel = new JChartPanel(demoChart, null, "", "");
 	

@@ -66,6 +66,10 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
 	// NEXUS specific ImportException classes
 	public static class MissingBlockException extends ImportException {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -6287423449717453999L;
 		public MissingBlockException() { super(); }
 		public MissingBlockException(String message) { super(message); }
 	};

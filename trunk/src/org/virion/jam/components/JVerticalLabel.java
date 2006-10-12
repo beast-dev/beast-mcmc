@@ -28,7 +28,11 @@ package org.virion.jam.components;
 import javax.swing.*;
 
 public class JVerticalLabel extends JLabel {
-    private boolean clockwise;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -6764453494358063524L;
+	private boolean clockwise;
 
     public JVerticalLabel(boolean clockwise) {
         super();

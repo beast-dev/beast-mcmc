@@ -87,6 +87,11 @@ public interface TaxonList extends Identifiable {
 	}
 
 	class MissingTaxonException extends Exception {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1864895946392309485L;
+
 		public MissingTaxonException(String message) { super(message); }
 	}
 }

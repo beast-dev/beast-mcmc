@@ -47,7 +47,11 @@ import java.util.*;
 public class StatisticsPanel extends OptionsPanel implements Exportable {
 
 
-    TreeStatFrame frame;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -8026203872020056264L;
+	TreeStatFrame frame;
     ArrayList availableStatistics = new ArrayList();
     TreeStatData treeStatData = null;
 
@@ -250,7 +254,12 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
     }
 
       Action includeStatisticAction = new AbstractAction("->") {
-          public void actionPerformed(ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = -7179224487959650620L;
+
+		public void actionPerformed(ActionEvent ae) {
             int[] indices = availableStatisticsTable.getSelectedRows();
             for (int i = indices.length-1; i >= 0; i--) {
                 TreeSummaryStatistic.Factory ssd = (TreeSummaryStatistic.Factory)availableStatistics.get(indices[i]);
@@ -265,7 +274,12 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
       };
 
       Action excludeStatisticAction = new AbstractAction("<-") {
-          public void actionPerformed(ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = -3904236403703620633L;
+
+		public void actionPerformed(ActionEvent ae) {
             int[] indices = includedStatisticsTable.getSelectedRows();
             for (int i = indices.length-1; i >= 0; i--) {
                 treeStatData.statistics.remove(indices[i]);
@@ -410,7 +424,12 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
     class AvailableStatisticsTableModel extends AbstractTableModel {
 
-        public AvailableStatisticsTableModel() {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 86401307035717809L;
+
+		public AvailableStatisticsTableModel() {
         }
 
         public int getColumnCount() {
@@ -441,7 +460,12 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
     class IncludedStatisticsTableModel extends AbstractTableModel {
 
-        public IncludedStatisticsTableModel() {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -7280629792388705376L;
+
+		public IncludedStatisticsTableModel() {
         }
 
         public int getColumnCount() {
@@ -474,7 +498,12 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
     class TreeSummaryStatisticLabel extends JLabel {
 
-        public TreeSummaryStatisticLabel(SummaryStatisticDescription statistic) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -5204925491148650874L;
+
+		public TreeSummaryStatisticLabel(SummaryStatisticDescription statistic) {
             setSummaryStatisticDescription(statistic);
             setVerticalAlignment(JLabel.TOP);
             setHorizontalAlignment(JLabel.LEFT);

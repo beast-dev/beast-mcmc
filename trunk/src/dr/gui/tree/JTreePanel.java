@@ -35,6 +35,10 @@ import java.util.ArrayList;
 
 public class JTreePanel extends JPanel {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 914666063619563914L;
 	public JTreePanel(JTreeDisplay treeDisplay) {
 
 		setOpaque(false);

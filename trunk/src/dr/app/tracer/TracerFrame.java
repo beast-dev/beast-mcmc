@@ -43,6 +43,11 @@ import java.util.ArrayList;
 
 public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4363988766941346563L;
+
 	private TracePanel tracePanel = null;
 	
 	private JTable traceTable = null;
@@ -634,7 +639,11 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 	} 	
 
 	class TraceTableModel extends AbstractTableModel {
-        final String[] columnNames = {"Log File", "States", "Burn-In"};
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 6427453279991909803L;
+		final String[] columnNames = {"Log File", "States", "Burn-In"};
 
 		public int getColumnCount() { return columnNames.length; }
 		public int getRowCount() {
@@ -672,7 +681,12 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
     };
 
     class StatisticTableModel extends AbstractTableModel {
-        final String[] columnNames = {"Statistic", "Mean", "ESS"};
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 342135920096954920L;
+
+		final String[] columnNames = {"Statistic", "Mean", "ESS"};
 
 		private DecimalFormat formatter = new DecimalFormat("0.###E0");
 		private DecimalFormat formatter2 = new DecimalFormat("####0.###");
@@ -721,13 +735,23 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
     };
 
     private AbstractAction importAction = new AbstractAction("Import...") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 1661830973125295154L;
+
+		public void actionPerformed(ActionEvent ae) {
             doImport();
         }
     };
 
     private AbstractAction exportAction = new AbstractAction("Export...") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 7979126121557678919L;
+
+		public void actionPerformed(ActionEvent ae) {
             doExport();
         }
     };
@@ -735,7 +759,12 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
     public Action getRemoveTraceAction() { return removeTraceAction; }
 
      private AbstractAction removeTraceAction = new AbstractAction() {
-          public void actionPerformed(ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = -2385301469117339728L;
+
+		public void actionPerformed(ActionEvent ae) {
               removeTraceList();
         }
     };
@@ -743,7 +772,12 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 	public Action getDemographicAction() { return demographicAction; }
 	
  	private AbstractAction demographicAction = new AbstractAction(AnalysisMenuFactory.DEMOGRAPHIC_RECONSTRUCTION) {
-  		public void actionPerformed(ActionEvent ae) {
+  		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 8039701184923188254L;
+
+		public void actionPerformed(ActionEvent ae) {
   			doDemographic();
   		}
   	};
@@ -751,7 +785,12 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
     public Action getBayesianSkylineAction() { return bayesianSkylineAction; }
 
      private AbstractAction bayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.BAYESIAN_SKYLINE_RECONSTRUCTION) {
-          public void actionPerformed(ActionEvent ae) {
+          /**
+		 * 
+		 */
+		private static final long serialVersionUID = 6186505542489655935L;
+
+		public void actionPerformed(ActionEvent ae) {
               doBayesianSkyline();
           }
       };

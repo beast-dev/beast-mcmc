@@ -34,6 +34,11 @@ import java.awt.*;
  *         Time: 12:18:09 AM
  */
 public class StatusBar extends StatusPanel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4128658862490277930L;
+
 	public StatusBar(String initialText) {
 		super(initialText);
 

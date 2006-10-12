@@ -34,6 +34,10 @@ package dr.app.tracer;
  */
  
 public class TraceException extends Exception { 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5235170425208949028L;
 	public TraceException() { super(); }
 	public TraceException(String message) { super(message); }
 }

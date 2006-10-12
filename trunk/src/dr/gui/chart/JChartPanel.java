@@ -34,6 +34,10 @@ import java.awt.print.Printable;
 
 public class JChartPanel extends JPanel implements Printable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -737128752110140264L;
 	public JChartPanel(JChart chart, String title, String xAxisTitle, String yAxisTitle) {
 
 		setOpaque(false);

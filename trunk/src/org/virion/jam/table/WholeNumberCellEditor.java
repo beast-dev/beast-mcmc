@@ -35,7 +35,11 @@ import java.awt.event.ActionListener;
 
 public class WholeNumberCellEditor extends DefaultCellEditor {
 
-    private WholeNumberField editor;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -276920549267528018L;
+	private WholeNumberField editor;
 
     public WholeNumberCellEditor(int minValue, int maxValue) {
         super(new WholeNumberField(minValue, maxValue));

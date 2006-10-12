@@ -41,6 +41,10 @@ import java.awt.*;
  */
 public class DensityPanel extends JPanel implements Exportable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1189450599644693628L;
 	private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
 	private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
 	

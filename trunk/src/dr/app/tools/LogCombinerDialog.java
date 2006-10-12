@@ -221,6 +221,11 @@ public class LogCombinerDialog {
 
 	Action addFileAction = new AbstractAction("+") {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 7602227478402204088L;
+
 		public void actionPerformed(ActionEvent ae) {
 
 			File file = Utils.getLoadFile("Select log file");
@@ -241,6 +246,11 @@ public class LogCombinerDialog {
 
 	Action removeFileAction = new AbstractAction("-") {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 5934278375005327047L;
+
 		public void actionPerformed(ActionEvent ae) {
 			int row = filesTable.getSelectedRow();
 			if (row != -1) {
@@ -258,6 +268,10 @@ public class LogCombinerDialog {
 
 
 	class FilesTableModel extends AbstractTableModel {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 4153326364833213013L;
 		private final String[] columns = { "File", "Burnin" };
 
 		public FilesTableModel() {

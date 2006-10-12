@@ -36,6 +36,10 @@ import java.text.DecimalFormat;
 
 public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 297818066005588509L;
 	static final String NAME_ROW = "name";
 	static final String MEAN_ROW = "mean";
 	static final String STDEV_ROW = "stdev of mean";	
@@ -209,6 +213,11 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 	} 	
       
 	class StatisticsModel extends AbstractTableModel {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 8646434743159874965L;
 
 		String[] rowNames = { MEAN_ROW, STDEV_ROW, MEDIAN_ROW, LOWER_ROW, UPPER_ROW, ACT_ROW, ESS_ROW };
 

@@ -145,13 +145,23 @@ public abstract class DocumentFrame extends AbstractFrame {
     }
 
     private AbstractAction saveAction = new AbstractAction("Save") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -7222084794535198182L;
+
+		public void actionPerformed(ActionEvent ae) {
             doSave();
         }
     };
 
     private AbstractAction saveAsAction = new AbstractAction("Save As...") {
-        public void actionPerformed(ActionEvent ae) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 201002809081635295L;
+
+		public void actionPerformed(ActionEvent ae) {
             doSaveAs();
         }
     };

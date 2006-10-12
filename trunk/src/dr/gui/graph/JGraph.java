@@ -30,6 +30,11 @@ import java.awt.*;
 
 public class JGraph extends JPanel {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7654094599593328169L;
+
 	public JGraph(GraphModel graphModel, GraphLayout graphLayout) {
 
 		this.graphModel = graphModel;

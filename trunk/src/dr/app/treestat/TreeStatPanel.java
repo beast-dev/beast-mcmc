@@ -39,6 +39,10 @@ import java.awt.*;
  */
 public class TreeStatPanel extends javax.swing.JPanel implements Exportable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2437334458007083790L;
 	private JTabbedPane tabbedPane = new JTabbedPane(); 
 	private TaxonSetsPanel taxonSetsPanel;
 	//private CharactersPanel charactersPanel;

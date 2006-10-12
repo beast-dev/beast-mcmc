@@ -281,10 +281,10 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 		switch (type) {
 			case COALESCENT:
 				like = - Math.log(demoFunction.getDemographic(timeOfThisCoal)) -
-								(binom.choose2(lineageCount)*intervalArea);
+								(Binomial.choose2(lineageCount)*intervalArea);
 				break;
 			case NEW_SAMPLE:
-				like = -(binom.choose2(lineageCount)*intervalArea);
+				like = -(Binomial.choose2(lineageCount)*intervalArea);
 				break;
 		}
 

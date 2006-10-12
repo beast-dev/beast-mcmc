@@ -31,6 +31,10 @@ package org.virion.jam.util;
 public class JExceptionDialog extends javax.swing.JDialog {
 
     /**
+	 * 
+	 */
+	private static final long serialVersionUID = -8119838072788647818L;
+	/**
      * Creates new form JExceptionDialog
      */
     public JExceptionDialog(java.awt.Frame parent, boolean modal, String title, String text) {

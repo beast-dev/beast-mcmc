@@ -40,7 +40,11 @@ import java.awt.*;
  *         Time: 9:38:58 AM
  */
 public class ActionPanel extends JPanel {
-    private JButton addButton;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1215905679910886770L;
+	private JButton addButton;
     private JButton removeButton;
     private JButton actionButton;
 

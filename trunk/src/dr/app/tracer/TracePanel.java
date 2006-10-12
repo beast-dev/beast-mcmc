@@ -40,6 +40,10 @@ import java.awt.*;
  */
 public class TracePanel extends javax.swing.JPanel implements Exportable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1281103719675241398L;
 	private JTabbedPane tabbedPane = new JTabbedPane();	
 	private SummaryStatisticsPanel summaryPanel;
 	private DensityPanel densityPanel;

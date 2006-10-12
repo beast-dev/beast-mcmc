@@ -60,7 +60,11 @@ import java.awt.event.FocusListener;
 public class WholeNumberField extends JTextField
         implements FocusListener, DocumentListener {
 
-    protected static char MINUS_CHAR = '-';
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 8722649343096959147L;
+	protected static char MINUS_CHAR = '-';
     protected EventListenerList changeListeners = new EventListenerList();
     protected int min;
     protected int max;
@@ -160,7 +164,12 @@ public class WholeNumberField extends JTextField
     };
 
     class WholeNumberFieldDocument extends PlainDocument {
-        public void insertString(int offs, String str, AttributeSet a)
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -7402118556792870084L;
+
+		public void insertString(int offs, String str, AttributeSet a)
                 throws BadLocationException {
 
             if (str == null) return;

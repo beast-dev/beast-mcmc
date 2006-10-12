@@ -42,7 +42,12 @@ import java.util.ArrayList;
  */
 public class Toolbar extends JToolBar {
 
-    public Toolbar() {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2217992951923854307L;
+
+	public Toolbar() {
         this(new ToolbarOptions(ToolbarOptions.ICON_AND_TEXT, false));
     }
 

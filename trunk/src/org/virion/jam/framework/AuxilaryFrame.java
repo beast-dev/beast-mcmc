@@ -29,7 +29,11 @@ import javax.swing.*;
 
 public class AuxilaryFrame extends AbstractFrame {
 
-    private DocumentFrame documentFrame;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -692455568800538993L;
+	private DocumentFrame documentFrame;
     private JPanel contentsPanel;
 
     public AuxilaryFrame(DocumentFrame documentFrame) {

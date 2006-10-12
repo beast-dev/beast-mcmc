@@ -40,7 +40,11 @@ import java.awt.event.*;
  */
 public class StatusPanel extends JPanel implements StatusListener {
 
-    public static final int NORMAL = 0;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1471152512792808760L;
+	public static final int NORMAL = 0;
     public static final int WORKING = 1;
     public static final int WARNING = 2;
     public static final int ERROR = 3;

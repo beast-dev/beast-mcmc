@@ -44,7 +44,11 @@ import javax.swing.table.TableModel;
 
 public class TableMap extends AbstractTableModel
         implements TableModelListener {
-    protected TableModel model;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -8555302241149759527L;
+	protected TableModel model;
 
     public TableModel getModel() {
         return model;

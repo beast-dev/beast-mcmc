@@ -32,6 +32,10 @@ public class Arguments {
 	public static final String ARGUMENT_CHARACTER = "-";
 	
 	public static class ArgumentException extends Exception {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 5325458323814191343L;
 		public ArgumentException() { super(); }
 		public ArgumentException(String message) { super(message); }
 	};

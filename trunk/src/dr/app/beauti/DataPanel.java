@@ -52,6 +52,10 @@ import java.util.GregorianCalendar;
  */
 public class DataPanel extends JPanel implements Exportable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5283922195494563924L;
 	JScrollPane scrollPane = new JScrollPane();
 	JTable dataTable = null;
 	DataTableModel dataTableModel = null;
@@ -479,6 +483,11 @@ public class DataPanel extends JPanel implements Exportable {
 	}
 
 	public class ClearDatesAction extends AbstractAction {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -7281309694753868635L;
+
 		public ClearDatesAction() {
 			super("Clear Dates");
 			setToolTipText("Use this tool to remove sampling dates from each taxon");
@@ -488,6 +497,11 @@ public class DataPanel extends JPanel implements Exportable {
 	};
 
 	public class GuessDatesAction extends AbstractAction {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 8514706149822252033L;
+
 		public GuessDatesAction() {
 			super("Guess Dates");
 			setToolTipText("Use this tool to guess the sampling dates from the taxon labels");
@@ -529,6 +543,10 @@ public class DataPanel extends JPanel implements Exportable {
 
 	class DataTableModel extends AbstractTableModel {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -6707994233020715574L;
 		String[] columnNames = { "Name", "Date", "Height", "Sequence" };
 
 		public DataTableModel() {

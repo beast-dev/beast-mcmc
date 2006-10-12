@@ -152,7 +152,12 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
     public Tree getCopy();
 
     public class MissingTaxonException extends Exception {
-        public MissingTaxonException(Taxon taxon) { super(taxon.getId()); }
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 8468656622238269963L;
+
+		public MissingTaxonException(Taxon taxon) { super(taxon.getId()); }
     }
 
     /**

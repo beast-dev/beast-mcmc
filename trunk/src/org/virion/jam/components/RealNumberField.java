@@ -60,7 +60,11 @@ import java.awt.event.FocusListener;
 public class RealNumberField extends JTextField
         implements FocusListener, DocumentListener {
 
-    protected static char MINUS = '-';
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -3341428810020647886L;
+	protected static char MINUS = '-';
     protected static char PERIOD = '.';
     protected EventListenerList changeListeners = new EventListenerList();
     protected double min;
@@ -175,7 +179,12 @@ public class RealNumberField extends JTextField
     };
 
     class RealNumberFieldDocument extends PlainDocument {
-        public void insertString(int offs, String str, AttributeSet a)
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -107398003544111035L;
+
+		public void insertString(int offs, String str, AttributeSet a)
                 throws BadLocationException {
 
             if (str == null) return;

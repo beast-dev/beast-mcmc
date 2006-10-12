@@ -39,6 +39,10 @@ import java.awt.event.ActionEvent;
  */
 public class MCMCPanel extends OptionsPanel implements Exportable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3710586474593827540L;
 	WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
 	WholeNumberField echoEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 	WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);

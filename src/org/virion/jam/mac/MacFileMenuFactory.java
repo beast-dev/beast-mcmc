@@ -1,5 +1,5 @@
 /*
- * MacFileMenuFactory.java
+ * BeautiMacFileMenuFactory.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *

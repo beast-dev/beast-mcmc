@@ -153,8 +153,6 @@ public class MultiDocApplication extends Application {
 		if (Utils.isMacOSX() &&
                 System.getProperty("apple.laf.useScreenMenuBar").equalsIgnoreCase("true")) {
 			if (invisibleFrame == null) {
-				// We use reflection here because the setUndecorated() method
-				// only exists in Java 1.4 and up
 				invisibleFrame = new AbstractFrame() {
 
 					/**
@@ -191,13 +189,7 @@ public class MultiDocApplication extends Application {
 					}
 				};
 				invisibleFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-				try {
-					Method mthd = invisibleFrame.getClass().getMethod("setUndecorated",
-						new Class[] {Boolean.TYPE});
-					mthd.invoke(invisibleFrame, new Object[] {Boolean.TRUE});
-				} catch (Exception ex) {
-					// Shouldn't happen
-				}
+                invisibleFrame.setUndecorated(true);
 				invisibleFrame.setSize(0, 0);
 				invisibleFrame.pack();
 			}

@@ -200,7 +200,6 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 			addComponent(fixedSubstitutionRateCheck);
 			addComponents(substitutionRateLabel, substitutionRateField);
 			substitutionRateField.setColumns(10);
-			substitutionRateField.setValue(1.0);
 
 			addSeparator();
         }

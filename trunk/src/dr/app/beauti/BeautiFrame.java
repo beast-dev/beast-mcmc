@@ -39,7 +39,7 @@ import java.io.*;
  */
 public class BeautiFrame extends DocumentFrame {
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 2114148696789612509L;
 
@@ -66,8 +66,8 @@ public class BeautiFrame extends DocumentFrame {
 
 		setTitle(title);
 
-//		getSaveAction().setEnabled(false);
-//		getSaveAsAction().setEnabled(false);
+        getOpenAction().setEnabled(false);
+		getSaveAction().setEnabled(false);
 
 //        getCutAction().setEnabled(false);
 //        getCopyAction().setEnabled(false);
@@ -298,7 +298,7 @@ public class BeautiFrame extends DocumentFrame {
 			try {
 				importFromFile(file);
 
-				// clearDirty();
+				setDirty();
 			} catch (FileNotFoundException fnfe) {
 				JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
 						"Unable to open file",
@@ -476,8 +476,8 @@ public class BeautiFrame extends DocumentFrame {
 		statusLabel.setText("Alignment: " + beautiOptions.alignment.getTaxonCount() + " taxa, " +
 				beautiOptions.alignment.getSiteCount() + " sites");
 
+        getOpenAction().setEnabled(true);
 		getSaveAction().setEnabled(true);
-		getSaveAsAction().setEnabled(true);
 		getExportAction().setEnabled(true);
 	}
 
@@ -600,11 +600,6 @@ public class BeautiFrame extends DocumentFrame {
 	public Action getImportAction() { return importNexusAction; }
 
 	protected AbstractAction importNexusAction = new AbstractAction("Import NEXUS...") {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 2450459627280385426L;
-
 		public void actionPerformed(java.awt.event.ActionEvent ae) {
 			doImport();
 		}
@@ -613,11 +608,6 @@ public class BeautiFrame extends DocumentFrame {
 	public Action getExportAction() { return generateAction; }
 
 	protected AbstractAction generateAction = new AbstractAction("Generate BEAST File...", gearIcon) {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 3029953542322699748L;
-
 		public void actionPerformed(java.awt.event.ActionEvent ae) {
 			doGenerate();
 		}

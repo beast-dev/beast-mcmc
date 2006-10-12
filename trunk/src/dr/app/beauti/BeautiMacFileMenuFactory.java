@@ -57,25 +57,55 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, MenuBarFactory.MENU_MASK));
         menu.add(item);
 
-        item = new JMenuItem(frame.getImportAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
-        menu.add(item);
+        if (frame instanceof BeautiFrame) {
+            item = new JMenuItem(frame.getImportAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+            menu.add(item);
 
-        menu.addSeparator();
+            menu.addSeparator();
 
-        item = new JMenuItem(((BeautiFrame)frame).getOpenAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
-        menu.add(item);
+            item = new JMenuItem(((BeautiFrame)frame).getOpenAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
+            menu.add(item);
 
-        item = new JMenuItem(frame.getSaveAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
-        menu.add(item);
+            item = new JMenuItem(frame.getSaveAsAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
+            menu.add(item);
 
-        menu.addSeparator();
+            menu.addSeparator();
 
-        item = new JMenuItem(frame.getExportAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
-        menu.add(item);
+            item = new JMenuItem(frame.getExportAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
+            menu.add(item);
+        } else {
+            // If the frame is not a BeautiFrame then create a dummy set of disabled menu options.
+            // At present the only situation where this may happen is in Mac OS X when no windows
+            // are open and the menubar is created by the hidden frame.
+
+            item = new JMenuItem("Import NEXUS...");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+            menu.addSeparator();
+
+            item = new JMenuItem("Apply Template...");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+            item = new JMenuItem("Save Template As...");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+            menu.addSeparator();
+
+            item = new JMenuItem("Generate BEAST File...");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+        }
 
         menu.addSeparator();
 

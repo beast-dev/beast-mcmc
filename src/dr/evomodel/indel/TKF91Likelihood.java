@@ -176,11 +176,6 @@ public class TKF91Likelihood extends AbstractModel implements Likelihood {
 		public double getDoubleValue() { return getLogLikelihood(); }
 	}
 
-	private class AlignmentColumn extends dr.inference.loggers.LogColumn.Abstract {
-		public AlignmentColumn(String label) { super(label); }
-		public String getFormattedValue() { return alignment.toString(); }
-	}
-
 	// **************************************************************
     // Identifiable IMPLEMENTATION
     // **************************************************************

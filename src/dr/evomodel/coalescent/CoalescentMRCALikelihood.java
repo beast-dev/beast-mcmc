@@ -645,6 +645,4 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 
 	private int intervalCount = 0;
 	private int storedIntervalCount = 0;
-
-	private Binomial binom = new Binomial();
 }

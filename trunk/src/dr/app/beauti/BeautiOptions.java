@@ -700,7 +700,7 @@ public class BeautiOptions {
 			taxonSetElement.addContent(createChild("id", taxonSet.getId()));
 			for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
 				Element taxonElement = new Element("taxon");
-				taxonElement.addContent(createChild("id", taxonSet.getId()));
+				taxonElement.addContent(createChild("id", taxonSet.getTaxon(j).getId()));
 				taxonSetElement.addContent(taxonElement);
 			}
 			taxaElement.addContent(taxonSetElement);
@@ -904,7 +904,7 @@ public class BeautiOptions {
 
 				Iterator iter2 = taxonSetElement.getChildren("taxon").iterator();
 				while (iter2.hasNext()) {
-					Element taxonElement = (Element)iter.next();
+					Element taxonElement = (Element)iter2.next();
 					String taxonId = getStringChild(taxonElement, "id", "");
 					taxonSet.addTaxon(new Taxon(taxonId));
 				}

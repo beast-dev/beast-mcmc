@@ -11,7 +11,6 @@ package dr.app.beauti;
 import org.virion.jam.framework.*;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 
 /**
  * @author			Andrew Rambaut

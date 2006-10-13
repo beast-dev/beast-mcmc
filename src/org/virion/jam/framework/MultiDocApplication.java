@@ -29,7 +29,6 @@ import org.virion.jam.mac.Utils;
 
 import javax.swing.*;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 

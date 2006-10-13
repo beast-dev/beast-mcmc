@@ -578,7 +578,9 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     private AbstractAction openTemplateAction = new AbstractAction("Apply Template...") {
-        public void actionPerformed(ActionEvent ae) {
+		private static final long serialVersionUID = 2450459627280385426L;
+
+		public void actionPerformed(ActionEvent ae) {
             doApplyTemplate();
         }
     };
@@ -592,7 +594,9 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     private AbstractAction saveAsAction = new AbstractAction("Save Template As...") {
-        public void actionPerformed(ActionEvent ae) {
+		private static final long serialVersionUID = 2424923366448459342L;
+
+		public void actionPerformed(ActionEvent ae) {
             doSaveAs();
         }
     };
@@ -600,6 +604,8 @@ public class BeautiFrame extends DocumentFrame {
 	public Action getImportAction() { return importNexusAction; }
 
 	protected AbstractAction importNexusAction = new AbstractAction("Import NEXUS...") {
+		private static final long serialVersionUID = 3217702096314745005L;
+
 		public void actionPerformed(java.awt.event.ActionEvent ae) {
 			doImport();
 		}
@@ -608,6 +614,8 @@ public class BeautiFrame extends DocumentFrame {
 	public Action getExportAction() { return generateAction; }
 
 	protected AbstractAction generateAction = new AbstractAction("Generate BEAST File...", gearIcon) {
+		private static final long serialVersionUID = -5329102618630268783L;
+
 		public void actionPerformed(java.awt.event.ActionEvent ae) {
 			doGenerate();
 		}

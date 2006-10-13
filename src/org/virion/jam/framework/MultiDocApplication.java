@@ -180,7 +180,7 @@ public class MultiDocApplication extends Application {
 					}
 
 					public boolean requestClose() {
-						return false;
+						return true;
 					}
 
 					public JComponent getExportableComponent() {

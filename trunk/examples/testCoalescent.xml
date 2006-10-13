@@ -115,7 +115,7 @@
 	<treeTraceAnalysis fileName="coalescentPrior_trees.log"/>
 
 
-	<mcmc id="mcmc2" chainLength="100000" verbose="false">
+	<mcmc id="mcmc2" chainLength="1000000" verbose="false">
 		<coalescentLikelihood idref="coalescent2"/>
 		<log id="logScreen" logEvery="5000">
 			<column dp="4">

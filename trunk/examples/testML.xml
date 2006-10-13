@@ -147,9 +147,9 @@
 			</column>
 		</log>
 		<logML fileName="testML.ML.tree">
-			<likelihood>
+			<ml>
 				<treeLikelihood idref="treeLikelihood"/>
-			</likelihood>
+			</ml>
 	 		<column label="MAPtree">
   				<treeModel idref="treeModel"/>
   			</column>

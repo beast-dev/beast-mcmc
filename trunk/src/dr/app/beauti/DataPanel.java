@@ -429,7 +429,9 @@ public class DataPanel extends JPanel implements Exportable {
 			return;
 		}
 
-		for (int i = 0; i < options.originalAlignment.getTaxonCount(); i++) {
+        options.guessDates = true;
+
+        for (int i = 0; i < options.originalAlignment.getTaxonCount(); i++) {
 			java.util.Date origin = new java.util.Date(0);
 
 			double d = 0.0;

@@ -50,7 +50,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -3138832889782090814L;
 
@@ -59,7 +59,6 @@ public class TaxaPanel extends JPanel implements Exportable {
 	BeautiOptions options = null;
 
 	private TaxonList taxa = null;
-	private List taxonSets = new ArrayList();
 	private JTable taxonSetsTable = null;
 	private TaxonSetsTableModel taxonSetsTableModel = null;
 
@@ -302,7 +301,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 		if (rows.length == 0) {
 			removeTaxonSetAction.setEnabled(false);
 		} else if (rows.length == 1) {
-			currentTaxonSet = (Taxa)taxonSets.get(rows[0]);
+			currentTaxonSet = (Taxa)options.taxonSets.get(rows[0]);
 			setCurrentTaxonSet(currentTaxonSet);
 			removeTaxonSetAction.setEnabled(true);
 		} else {
@@ -326,7 +325,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 	Action addTaxonSetAction = new AbstractAction("+") {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 20273987098143413L;
 
@@ -334,15 +333,14 @@ public class TaxaPanel extends JPanel implements Exportable {
 			taxonSetCount ++;
 			currentTaxonSet = new Taxa("untitled" + taxonSetCount);
 
-			taxonSets.add(currentTaxonSet);
-			Collections.sort(taxonSets);
+			options.taxonSets.add(currentTaxonSet);
+			Collections.sort(options.taxonSets);
 
 			taxonSetsTableModel.fireTableDataChanged();
 
-			int sel = taxonSets.indexOf(currentTaxonSet);
+			int sel = options.taxonSets.indexOf(currentTaxonSet);
 			taxonSetsTable.setRowSelectionInterval(sel, sel);
 
-			options.taxonSets.add(currentTaxonSet);
 			taxonSetChanged();
 		}
 	};
@@ -350,23 +348,26 @@ public class TaxaPanel extends JPanel implements Exportable {
 	Action removeTaxonSetAction = new AbstractAction("-") {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 6077578872870122265L;
 
 		public void actionPerformed(ActionEvent ae) {
 			int row = taxonSetsTable.getSelectedRow();
 			if (row != -1) {
-				TaxonList taxonSet = (TaxonList)taxonSets.remove(row);
-				options.taxonSets.remove(taxonSet);
+				options.taxonSets.remove(row);
 			}
 			taxonSetChanged();
 
 			taxonSetsTableModel.fireTableDataChanged();
 
-			if (row >= taxonSets.size()) row = taxonSets.size() - 1;
+			if (row >= options.taxonSets.size()) {
+				row = options.taxonSets.size() - 1;
+			}
 			if (row >= 0) {
 				taxonSetsTable.setRowSelectionInterval(row, row);
+			} else {
+				setCurrentTaxonSet(null);
 			}
 		}
 	};
@@ -412,7 +413,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 	class TaxonSetsTableModel extends AbstractTableModel {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 3318461381525023153L;
 
@@ -424,15 +425,16 @@ public class TaxaPanel extends JPanel implements Exportable {
 		}
 
 		public int getRowCount() {
-			return taxonSets.size();
+			if (options == null) return 0;
+			return options.taxonSets.size();
 		}
 
 		public Object getValueAt(int row, int col) {
-			return ((TaxonList)taxonSets.get(row)).getId();
+			return ((TaxonList)options.taxonSets.get(row)).getId();
 		}
 
 		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-			((Taxa)taxonSets.get(rowIndex)).setId(aValue.toString());
+			((Taxa)options.taxonSets.get(rowIndex)).setId(aValue.toString());
 			setTaxonSetTitle();
 		}
 
@@ -552,7 +554,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	Action includeTaxonAction = new AbstractAction("->") {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 7510299673661594128L;
 
@@ -564,7 +566,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 	Action excludeTaxonAction = new AbstractAction("<-") {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 449692708602410206L;
 
@@ -576,7 +578,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 	class TaxaTableModel extends AbstractTableModel {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -8027482229525938010L;
 		boolean included;

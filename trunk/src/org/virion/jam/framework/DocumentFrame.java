@@ -42,7 +42,7 @@ public abstract class DocumentFrame extends AbstractFrame {
 
     protected abstract void initializeComponents();
 
-    protected abstract boolean readFromFile(File file) throws FileNotFoundException, IOException;
+    protected abstract boolean readFromFile(File file) throws IOException;
 
     protected abstract boolean writeToFile(File file) throws IOException;
 
@@ -145,23 +145,13 @@ public abstract class DocumentFrame extends AbstractFrame {
     }
 
     private AbstractAction saveAction = new AbstractAction("Save") {
-        /**
-		 * 
-		 */
-		private static final long serialVersionUID = -7222084794535198182L;
-
-		public void actionPerformed(ActionEvent ae) {
+        public void actionPerformed(ActionEvent ae) {
             doSave();
         }
     };
 
     private AbstractAction saveAsAction = new AbstractAction("Save As...") {
-        /**
-		 * 
-		 */
-		private static final long serialVersionUID = 201002809081635295L;
-
-		public void actionPerformed(ActionEvent ae) {
+        public void actionPerformed(ActionEvent ae) {
             doSaveAs();
         }
     };

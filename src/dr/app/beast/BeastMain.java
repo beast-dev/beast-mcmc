@@ -155,53 +155,46 @@ public class BeastMain {
         }
     }
 
-    public static void printTitle() {
-
-        System.out.println("+-----------------------------------------------\\");
-
-        String versionString = "BEAST " + version.getVersionString() + " 2002-2006";
-        System.out.print("|");
-        int n = 47 - versionString.length();
+    public static void centreLine(String line, int pageWidth) {
+        int n = pageWidth - line.length();
         int n1 = n / 2;
-        int n2 = n1 + (n % 2);
         for (int i = 0; i < n1; i++) { System.out.print(" "); }
-        System.out.print(versionString);
-        for (int i = 0; i < n2; i++) { System.out.print(" "); }
-        System.out.println("|\\");
+        System.out.println(line);
+    }
 
-        System.out.println("| Bayesian Evolutionary Analysis Sampling Trees ||");
+    public static void printTitle() {
+        System.out.println();
+        centreLine("BEAST " + version.getVersionString() + ", 2002-2006", 60);
+        centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
+        centreLine("by", 60);
+        centreLine("Alexei J. Drummond and Andrew Rambaut", 60);
+        System.out.println();
+        centreLine("Department of Computer Science", 60);
+        centreLine("University of Auckland", 60);
+        centreLine("alexei@cs.auckland.ac.nz", 60);
+        System.out.println();
+        centreLine("Institute of Evolutionary Biology", 60);
+        centreLine("University of Edinburgh", 60);
+        centreLine("a.rambaut@ed.ac.uk", 60);
+        System.out.println();
 
-        String buildString = "BEAST Library: " + version.getBuildString();
-        System.out.print("|");
-        n = 47 - buildString.length();
-        n1 = n / 2;
-        n2 = n1 + (n % 2);
-        for (int i = 0; i < n1; i++) { System.out.print(" "); }
-        System.out.print(buildString);
-        for (int i = 0; i < n2; i++) { System.out.print(" "); }
-        System.out.println("||");
-
-        System.out.println("|       Alexei Drummond and Andrew Rambaut      ||");
-        System.out.println("|              University of Oxford             ||");
-        System.out.println("|       http://evolve.zoo.ox.ac.uk/Beast/       ||");
-        System.out.println("\\-----------------------------------------------\\|");
-        System.out.println(" \\-----------------------------------------------\\");
     }
 
     public static void printHeader() {
-        System.out.println(" +-----------------------------------------------+");
-        System.out.println(" | Components created by:                        |");
-        System.out.println(" |       Alexei Drummond                         |");
-        System.out.println(" |       Roald Forsberg                          |");
-        System.out.println(" |       Gerton Lunter                           |");
-        System.out.println(" |       Oliver Pybus                            |");
-        System.out.println(" |       Andrew Rambaut                          |");
-        System.out.println(" | Thanks to (for use of their code):            |");
-        System.out.println(" |       Korbinian Strimmer                      |");
-        System.out.println(" |       Oliver Pybus                            |");
-        System.out.println(" +-----------------------------------------------+");
-        System.out.println();
-
+        System.out.println("Downloads, Help & Resources:\n" +
+                "\thttp://evolve.zoo.ox.ac.uk/beast/\n" +
+                "\n" +
+                "Source code distributed under the GNU Lesser General Public License:\n" +
+                "\thttp://code.google.com/p/beast-mcmc/\n" +
+                "\n" +
+                "Additional programming & components created by:\n" +
+                "\tRoald Forsberg\n" +
+                "\tGerton Lunter\n" +
+                "\tSidney Markowitz\n" +
+                "\tOliver Pybus\n" +
+                "\n" +
+                "Thanks to (for use of their code):\n" +
+                "\tKorbinian Strimmer");
     }
 
     public static void printUsage(Arguments arguments) {
@@ -218,13 +211,13 @@ public class BeastMain {
 
 
         Arguments arguments = new Arguments(
-            new Arguments.Option[] {
-                new Arguments.Option("verbose", "verbose XML parsing messages"),
-                new Arguments.Option("window", "provide a console window"),
-                new Arguments.Option("working", "change working directory to input file's directory"),
+                new Arguments.Option[] {
+                        new Arguments.Option("verbose", "verbose XML parsing messages"),
+                        new Arguments.Option("window", "provide a console window"),
+                        new Arguments.Option("working", "change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "specify a random number generator seed"),
-                new Arguments.Option("help", "option to print this message")
-            });
+                        new Arguments.Option("help", "option to print this message")
+                });
 
         try {
             arguments.parseArguments(args);
@@ -267,9 +260,21 @@ public class BeastMain {
             javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 
             String nameString = "BEAST " + version.getVersionString();
-            String aboutString = "Bayesian Evolutionary Analysis Sampling Trees\n" +
-                                    version.getVersionString() + " ©2002-2006 Alexei Drummond & Andrew Rambaut\n" +
-                                    "University of Oxford";
+            String aboutString = "<html><center><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
+                    "Version " + version.getVersionString() + ", 2002-2006</p>" +
+                    "<p>by<br>" +
+                    "Alexei J. Drummond and Andrew Rambaut</p>" +
+                    "<p>Department of Computer Science, University of Auckland<br>" +
+                    "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
+                    "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
+                    "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
+                    "<p><a href=\"http://evolve.zoo.ox.ac.uk/beast/\">http://evolve.zoo.ox.ac.uk/beast/</a></p>" +
+                    "<p>Source code distributed under the GNU LGPL:<br>" +
+                    "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
+                    "<p>Additional programming by:<br>" +
+                    "Roald Forsberg, Gerton Lunter, Sidney Markowitz, Oliver Pybus</p>" +
+                    "<p>Thanks to Korbinian Strimmer for use of his code</p>" +
+                    "</center></html>";
 
             consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
         }

@@ -284,9 +284,17 @@ public class LogCombiner {
 			}
 
 			String nameString = "LogCombiner v1.4";
-			String aboutString = "LogCombiner v1.4\n" +
-					"©2006 Andrew Rambaut & Alexei Drummond\n" +
-					"University of Oxford";
+            final String versionString = "1.4";
+            String aboutString = "<html><center><p>Version " + versionString + ", 2006</p>" +
+                    "<p>by<br>" +
+                    "Andrew Rambaut and Alexei J. Drummond</p>" +
+                    "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
+                    "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
+                    "<p>Department of Computer Science, University of Auckland<br>" +
+                    "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
+                    "<p>Part of the BEAST package:<br>" +
+                    "<a href=\"http://evolve.zoo.ox.ac.uk/beast/\">http://evolve.zoo.ox.ac.uk/beast/</a></p>" +
+                    "</center></html>";
 
 			ConsoleApplication consoleApp = new ConsoleApplication(nameString, aboutString, icon, true);
 

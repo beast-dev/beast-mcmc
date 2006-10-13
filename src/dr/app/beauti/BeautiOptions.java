@@ -906,8 +906,11 @@ public class BeautiOptions {
 				while (iter2.hasNext()) {
 					Element taxonElement = (Element)iter2.next();
 					String taxonId = getStringChild(taxonElement, "id", "");
-					taxonSet.addTaxon(new Taxon(taxonId));
-				}
+                    int index = taxonList.getTaxonIndex(taxonId);
+                    if (index != -1) {
+                        taxonSet.addTaxon(taxonList.getTaxon(index));
+                    }
+                }
 				taxonSets.add(taxonSet);
 			}
 		}
@@ -1432,7 +1435,7 @@ public class BeautiOptions {
 	public int translation = 0;
 	public boolean userTree = false;
 
-	public boolean guessDates = true;
+	public boolean guessDates = false;
 	public boolean guessDateFromOrder = true;
 	public boolean fromLast = false;
 	public int order = 0;

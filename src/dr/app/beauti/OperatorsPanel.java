@@ -185,10 +185,12 @@ public class OperatorsPanel extends JPanel implements Exportable {
 		public void setValueAt(Object aValue, int row, int col) {
 			BeastGenerator.Operator op = (BeastGenerator.Operator)operators.get(row);
 			switch (col) {
-				case 2: op.tuning = ((Double)aValue).doubleValue(); break;
+				case 2:
+                    op.tuning = ((Double)aValue).doubleValue();
+                    op.tuningEdited = true;
+                    break;
 				case 3: op.weight = ((Integer)aValue).intValue(); break;
 			}
-
 			operatorsChanged();
 		}
 

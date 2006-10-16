@@ -260,7 +260,7 @@ public class BeautiOptions {
 			initialRate = round((meanDistance * 0.2) / initialRootHeight, 2);
 		}
 
-		double timeScaleMaximum = round(initialRootHeight * 100.0, 2);
+		double timeScaleMaximum = round(initialRootHeight * 1000.0, 2);
 
 		Iterator iter = ops.iterator();
 		while (iter.hasNext()) {
@@ -319,7 +319,29 @@ public class BeautiOptions {
 
 		selectOperators(ops);
 
-		return ops;
+        double initialRootHeight = 1;
+
+
+        if (fixedSubstitutionRate) {
+            double rate = meanSubstitutionRate;
+
+            if (alignment != null) {
+                initialRootHeight = meanDistance / rate;
+                initialRootHeight = round(initialRootHeight, 2);
+            }
+
+        } else {
+            if (maximumTipHeight > 0) {
+                initialRootHeight = maximumTipHeight * 10.0;
+            }
+        }
+
+        Operator op = getOperator("subtreeSlide");
+        if (!op.tuningEdited) {
+            op.tuning = initialRootHeight / 5.0;
+        }
+
+        return ops;
 	}
 
 	/**
@@ -768,6 +790,7 @@ public class BeautiOptions {
 			Operator operator = (Operator)operators.get(name);
 			Element e = new Element(name);
 			e.addContent(createChild("tuning", operator.tuning));
+            e.addContent(createChild("tuningEdited", operator.tuningEdited));
 			e.addContent(createChild("weight", (int)operator.weight));
 			operatorsElement.addContent(e);
 		}
@@ -956,6 +979,7 @@ public class BeautiOptions {
 				}
 
 				operator.tuning = getDoubleChild(e, "tuning", 1.0);
+                operator.tuningEdited = getBooleanChild(e, "tuningEdited", false);
 				operator.weight = getIntegerChild(e, "weight", 1);
 			}
 		}
@@ -1313,7 +1337,8 @@ public class BeautiOptions {
 			this.parameter2 = null;
 
 			this.type = operatorType;
-			this.tuning = tuning;
+            this.tuningEdited = false;
+            this.tuning = tuning;
 			this.weight = weight;
 		}
 
@@ -1325,8 +1350,8 @@ public class BeautiOptions {
 			this.parameter1 = parameter1;
 			this.parameter2 = parameter2;
 
-
 			this.type = operatorType;
+            this.tuningEdited = false;
 			this.tuning = tuning;
 			this.weight = weight;
 		}
@@ -1351,7 +1376,8 @@ public class BeautiOptions {
 		public final String description;
 
 		public final String type;
-		public double tuning;
+        public boolean tuningEdited;
+        public double tuning;
 		public double weight;
 
 		public final Parameter parameter1;

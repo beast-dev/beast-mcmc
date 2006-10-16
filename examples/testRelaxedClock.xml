@@ -283,7 +283,7 @@
 		</wilsonBalding>
 	</operators>
 	
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
 				<coalescentLikelihood idref="coalescent"/>
@@ -333,9 +333,40 @@
 		</property>
 	</report>
 	
+	<!--
+	To check that the program is working, the results are compared to previously
+	run results. The following are for a run of 10,000,000 steps:
+	
+	27.523033333333334 minutes 
+	
+	burnIn=1000000
+	maxState=10000000
+	
+	statistic                mean          hpdLower      hpdUpper      ESS           
+	posterior                -3927.81      -3936.95      -3919.67      4037.42       
+	ucld.mean                8.28472E-4    5.95169E-4    1.06184E-3    2306.96       
+	ucld.stdev               0.17435       1.06719E-5    0.41554       2874.44       
+	meanRate                 8.09909E-4    6.015E-4      1.03819E-3    2343.34       
+	coefficientOfVariation   0.15982       9.94436E-6    0.37834       2880.80       
+	covariance               -3.81803E-2   -0.36405      0.30941       8617.52       
+	constant.popSize         37.3524       16.7320       61.1342       4073.34       
+	hky.kappa                18.3053       11.7010       25.1850       7171.51       
+	treeModel.rootHeight     69.2953       54.2928       85.8209       2560.98       
+	treeLikelihood           -3855.78      -3862.64      -3849.29      7889.16       
+	coalescent               -72.0313      -77.6206      -66.4644      2383.69       
+	-->
+
     <traceAnalysis fileName="testRelaxedClock.log">
-        <expectation name="likelihood" value="-1815.75"/>
-        <expectation name="treeModel.rootHeight" value="6.42048E-2"/>
-        <expectation name="hky.kappa" value="32.8941"/>
+        <expectation name="posterior" value="-3927.81"/>
+        <expectation name="ucld.mean" value="8.28472E-4"/>
+        <expectation name="ucld.stdev" value="0.17435"/>
+        <expectation name="meanRate" value="8.09909E-4"/>
+        <expectation name="coefficientOfVariation" value="0.15982"/>
+        <expectation name="covariance" value="-3.81803E-2"/>
+	    <expectation name="constant.popSize" value="37.3524"/>
+        <expectation name="hky.kappa" value="18.3053"/>
+        <expectation name="treeModel.rootHeight" value="69.2953"/>
+        <expectation name="treeLikelihood" value="-3855.78"/>
+        <expectation name="skyline" value="-72.0313"/>
     </traceAnalysis>
 </beast>

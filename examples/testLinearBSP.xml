@@ -268,7 +268,7 @@
 		</wilsonBalding>
 	</operators>
 	
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
 				<generalizedSkyLineLikelihood idref="skyline"/>
@@ -316,13 +316,43 @@
 		</property>
 	</report>
 	
+	<!--
+	To check that the program is working, the results are compared to previously
+	run results. The following are for a run of 10,000,000 steps:
+	
+	28.816750000000003 minutes 
+
+	burnIn=1000000
+	maxState=10000000
+	
+	statistic                mean          hpdLower      hpdUpper      ESS           
+	posterior                -3871.10      -3881.61      -3860.95      4721.61       
+	siteModel.alpha          5.51712E-2    2.13416E-4    0.11406       4651.93       
+	clock.rate               9.49239E-4    7.11578E-4    1.2144E-3     4255.50       
+	skyline.popSize1         170.187       2.08625       665.087       3819.77       
+	skyline.popSize2         25.3325       3.34143       58.5913       5932.11       
+	skyline.popSize3         30.7127       2.70145       69.1501       4175.80       
+	skyline.popSize4         43.4442       7.83728       95.0857       4278.15       
+	skyline.popSize5         41.4378       6.58021E-2    92.0710       5199.70       
+	skyline.popSize6         26.5637       1.14988E-3    84.1920       5010.91       
+	skyline.groupSize1       3.62704       2             7             2868.41       
+	skyline.groupSize2       3.16154       1             7             2760.15       
+	skyline.groupSize3       3.17698       1             7             3161.85       
+	skyline.groupSize4       3.05666       1             7             2858.38       
+	skyline.groupSize5       2.97778       1             7             2357.23       
+	hky.kappa                21.5869       14.3331       30.2590       7510.18       
+	treeModel.rootHeight     70.3516       57.5277       84.4162       4609.41       
+	treeLikelihood           -3773.15      -3780.15      -3767.02      8063.27       
+	skyline                  -70.0447      -76.3047      -63.9497      3601.76       
+	-->
+	
     <traceAnalysis fileName="testLinearBSP.log">
-        <expectation name="likelihood" value="-3865.87"/>
-        <expectation name="clock.rate" value="9.44369E-4"/>
-        <expectation name="siteModel.alpha" value="5.47921E-2"/>
-        <expectation name="hky.kappa" value="21.7038"/>
-        <expectation name="treeModel.rootHeight" value="70.5279"/>
-        <expectation name="treeLikelihood" value="-3773.28"/>
-        <expectation name="skyline" value="-70.0434"/>
+        <expectation name="posterior" value="-3871.10"/>
+        <expectation name="clock.rate" value="9.49239E-4"/>
+        <expectation name="siteModel.alpha" value="5.51712E-2"/>
+        <expectation name="hky.kappa" value="21.5869"/>
+        <expectation name="treeModel.rootHeight" value="70.3516"/>
+        <expectation name="treeLikelihood" value="-3773.15"/>
+        <expectation name="skyline" value="-70.0447"/>
     </traceAnalysis>
 </beast>

@@ -251,7 +251,7 @@
 		</wilsonBalding>
 	</operators>
 	
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
 				<coalescentLikelihood idref="coalescent"/>
@@ -296,14 +296,32 @@
 		</property>
 	</report>
 	
+	<!--
+	To check that the program is working, the results are compared to previously
+	run results. The following are for a run of 10,000,000 steps:
+	
+	18.146116666666668 minutes 
+	
+	burnIn=1000000
+	maxState=10000000
+	
+	statistic                mean          hpdLower      hpdUpper      ESS           
+	posterior                -3928.71      -3936.77      -3921.22      6007.89       
+	clock.rate               8.04835E-4    6.14761E-4    9.9785E-4     4548.69       
+	constant.popSize         37.3762       17.5853       60.2203       6696.56       
+	hky.kappa                18.2782       11.9770       25.5550       8090.05       
+	treeModel.rootHeight     69.0580       57.6331       81.9754       5044.06       
+	treeLikelihood           -3856.59      -3863.13      -3850.89      8249.32       
+	coalescent               -72.1285      -77.1410      -67.2787      4393.94       
+	-->
+
     <traceAnalysis fileName="testStrictClock.log">
-        <expectation name="likelihood" value="-3845.00"/>
-        <expectation name="clock.rate" value="9.27025E-4"/>
-        <expectation name="siteModel.shape" value="5.4663E-2"/>
-        <expectation name="demo1.popSize" value="36.8616"/>
-        <expectation name="hky.kappa" value="21.7664"/>
-        <expectation name="treeModel.rootHeight" value="71.8520"/>
-        <expectation name="treeLikelihood" value="-3773.11"/>
-        <expectation name="coalescent" value="-71.8908"/>
+        <expectation name="posterior" value="-3928.71"/>
+        <expectation name="clock.rate" value="8.04835E-4"/>
+	    <expectation name="constant.popSize" value="37.3762"/>
+        <expectation name="hky.kappa" value="18.2782"/>
+        <expectation name="treeModel.rootHeight" value="69.0580"/>
+        <expectation name="treeLikelihood" value="-3856.59"/>
+        <expectation name="coalescent" value="-72.1285"/>
     </traceAnalysis>
 </beast>

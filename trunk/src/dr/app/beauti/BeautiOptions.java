@@ -57,6 +57,9 @@ public class BeautiOptions {
 		createParameter("skyline.popSize", "Bayesian Skyline population sizes", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
 		createParameter("yule.birthRate", "Yule speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("birthDeath.birthRate", "Birth-Death speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("birthDeath.deathRate", "Birth-Death speciation process death rate", BIRTH_RATE_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        //createParameter("birthDeath.samplingProportion", "Birth-Death speciation process sampling proportion", NONE, 1.0, 0.0, 1.0);
 
 		createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("uced.mean", "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -123,6 +126,9 @@ public class BeautiOptions {
 		createOperator("skyline.popSize", SCALE, 0.75, demoWeights * 5);
 		createOperator("skyline.groupSize", INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
 		createOperator("yule.birthRate", SCALE, 0.75, demoWeights);
+        createOperator("birthDeath.birthRate", SCALE, 0.75, demoWeights);
+        createOperator("birthDeath.deathRate", SCALE, 0.75, demoWeights);
+        //createOperator("birthDeath.samplingProportion", RANDOM_WALK, 0.75, demoWeights);
 
 		createOperator("clock.rate", SCALE, 0.75, rateWeights);
 		createOperator("uced.mean", SCALE, 0.75, rateWeights);
@@ -486,7 +492,11 @@ public class BeautiOptions {
 			params.add(getParameter("skyline.popSize"));
 		} else if (nodeHeightPrior == YULE) {
 			params.add(getParameter("yule.birthRate"));
-		}
+        } else if (nodeHeightPrior == BIRTH_DEATH) {
+            params.add(getParameter("birthDeath.birthRate"));
+            params.add(getParameter("birthDeath.deathRate"));
+            // at present we are not allowing the sampling of samplingProportion
+        }
 
 		params.add(getParameter("treeModel.rootHeight"));
 	}
@@ -649,6 +659,10 @@ public class BeautiOptions {
 			ops.add(getOperator("skyline.groupSize"));
 		} else if (nodeHeightPrior == YULE) {
 			ops.add(getOperator("yule.birthRate"));
+        } else if (nodeHeightPrior == BIRTH_DEATH) {
+            ops.add(getOperator("birthDeath.birthRate"));
+            ops.add(getOperator("birthDeath.deathRate"));
+            // at present we are not allowing the sampling of samplingProportion
 		}
 
 		ops.add(getOperator("treeModel.rootHeight"));
@@ -1407,6 +1421,7 @@ public class BeautiOptions {
 	public static final int EXPANSION = 3;
 	public static final int SKYLINE = 4;
 	public static final int YULE = 5;
+    public static final int BIRTH_DEATH = 6;
 	public static final int STRICT_CLOCK = 0;
 	public static final int UNCORRELATED_EXPONENTIAL = 1;
 	public static final int UNCORRELATED_LOGNORMAL = 2;
@@ -1485,7 +1500,8 @@ public class BeautiOptions {
 	public int parameterization = GROWTH_RATE;
 	public int skylineGroupCount = 10;
 	public int skylineModel = CONSTANT_SKYLINE;
-	public boolean fixedTree = false;
+    public double birthDeathSamplingProportion = 1.0;
+    public boolean fixedTree = false;
 	public int units = Units.SUBSTITUTIONS;
 	public boolean fixedSubstitutionRate = false;
 	public boolean hasSetFixedSubstitutionRate = false;

@@ -43,12 +43,12 @@ public class BirthDeathModel extends SpeciationModel {
 
 
     public BirthDeathModel(Parameter birthRateParameter, Parameter deathRateParameter, Parameter samplingProportionParameter, int units) {
-    
-		super(BIRTH_DEATH_MODEL, units);
 
-		this.birthRateParameter = birthRateParameter;
-		addParameter(birthRateParameter);
-		birthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        super(BIRTH_DEATH_MODEL, units);
+
+        this.birthRateParameter = birthRateParameter;
+        addParameter(birthRateParameter);
+        birthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.deathRateParameter = deathRateParameter;
         addParameter(deathRateParameter);
@@ -72,40 +72,121 @@ public class BirthDeathModel extends SpeciationModel {
     // functions that define a speciation model
     //
     public double logTreeProbability(int taxonCount) {
-        double b = getBirthRate();
-        double d = getDeathRate();
-        if (Math.abs(b - d) < 1e-20) {
-            return 0.0;
+        double lambda = getBirthRate();
+        double mu = getDeathRate();
+        if (Math.abs(lambda - mu) < 1e-20) {
+            return Double.NEGATIVE_INFINITY;
         } else {
-            return (taxonCount - 2.0) * Math.log(b);
+            return (taxonCount - 2.0) * Math.log(lambda);
         }
     }
 
-	//
-	// functions that define a speciation model
-	//
-	public double logNodeHeightProbability(double nodeHeight, double rootHeight) {
-		double lambda = getBirthRate();
+    //
+    // functions that define a speciation model
+    //
+    public double logNodeHeightProbability(double nodeHeight, double rootHeight) {
+        double lambda = getBirthRate();
         double mu = getDeathRate();
         double rho = getSamplingProportion();
 
+        if (lambda < mu) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        // It looks as if Yang and Rannala (1997) have the root time constrained to be 1.0. 
         double t1 = nodeHeight / rootHeight;
         double t0 = 1.0;
+//        double t1 = nodeHeight;
+//        double t0 = rootHeight;
 
         double lnP = 0.0;
 
         if (Math.abs(lambda - mu) < 1e-20) {
             lnP = Math.log (1.0 + rho * mu) - (2.0 * Math.log(1.0 + rho * mu * t1));
         } else {
-            double p0t = rho * (lambda - mu) / (rho * lambda + (lambda * (1.0 - rho) - mu) * Math.exp((mu - lambda) * t1) );
-            lnP = (Math.log(1.0 / rho) + 2.0 * Math.log(p0t) + (mu - lambda) * t1);
+            double p0t1 = rho * (lambda - mu) / (rho * lambda + (lambda * (1.0 - rho) - mu) * Math.exp((mu - lambda) * t1) );
+            lnP = (Math.log(1.0 / rho) + 2.0 * Math.log(p0t1) + (mu - lambda) * t1);
 
-            p0t =  rho *(lambda - mu) / (rho * lambda + (lambda * (1.0 - rho) - mu) * Math.exp((mu - lambda) * t0) );
-            lnP = lnP - (Math.log(1.0 - (1.0 / rho) * p0t * Math.exp((mu - lambda) * t0)));
+            double p0t0 =  rho *(lambda - mu) / (rho * lambda + (lambda * (1.0 - rho) - mu) * Math.exp((mu - lambda) * t0) );
+            lnP = lnP - (Math.log(1.0 - (1.0 / rho) * p0t0 * Math.exp((mu - lambda) * t0)));
         }
 
         return lnP;
-	}
+    }
+
+    /*
+     This is the original code from mcmc.c, part of the MrBayes program written
+     by John P. Huelsenbeck & Fredrik Ronquist. MrBayes is distributed under a
+     GNU GPL license - see original software for details.
+     
+    int LnBirthDeathPriorPr (Tree *t, MrBFlt *prob, MrBFlt sR, MrBFlt eR, MrBFlt sF)
+    {
+        int				i, j, nNodes;
+        MrBFlt			rootTime=0.0, *nt;
+        TreeNode		*p;
+
+        nt = (MrBFlt *)SafeMalloc((size_t) (t->nIntNodes) * sizeof(MrBFlt));
+        if (!nt)
+            {
+            printf ("\n   ERROR: Problem allocating nt\n");
+            return (ERROR);
+            }
+
+        // get the node times and put them into a vector
+        for (i=j=0; i<t->nIntNodes; i++)
+            {
+            p = t->intDownPass[i];
+            if (p->anc->anc != NULL)
+                nt[j++] = p->nodeDepth;
+            else
+                rootTime = p->nodeDepth;
+            }
+        nNodes = j;
+
+        // rescale all of the node times on the tree
+        for (i=0; i<nNodes; i++)
+            nt[i] /= rootTime;
+
+        // I think this is correct. It looks as if Yang and Rannala (1997)
+           have the root time constrained to be 1.0.
+        rootTime = 1.0;
+
+        / calculate probabilities of tree
+        if (AreDoublesEqual(sR,eR,ETA)==NO)
+            {
+            (*prob) = (numLocalTaxa - 2.0) * log(sR);
+            for (i=0; i<nNodes; i++)
+                (*prob) += LnP1 (nt[i], sR, eR, sF) - LnVt (rootTime, sR, eR, sF);
+            }
+        else
+            {
+            (*prob) = 0.0;
+            for (i=0; i<nNodes; i++)
+                (*prob) += log (1.0 + sF * eR) - (2.0 * log(1.0 + sF * eR * nt[i]));
+            }
+
+        free (nt);
+
+        return (NO_ERROR);
+    }
+
+    MrBFlt LnP1 (MrBFlt t, MrBFlt l, MrBFlt m, MrBFlt r)
+    {
+
+        MrBFlt		p0t;
+        p0t = r*(l-m) / (r*l + (l*(1.0-r)-m)*exp((m-l)*t) );
+        return (log(1.0/r) + 2.0*log(p0t) + (m-l)*t);
+
+    }
+
+    MrBFlt LnVt (MrBFlt t, MrBFlt l, MrBFlt m, MrBFlt r)
+    {
+        MrBFlt		p0t;
+        p0t = r*(l-m) / (r*l + (l*(1.0-r)-m)*exp((m-l)*t) );
+        return (log(1.0 - (1.0/r) * p0t * exp((m-l)*t)));
+
+    }
+    */
 
     /*
      This is the original code from mcmctree.c, part of the PAML package written
@@ -159,43 +240,43 @@ public class BirthDeathModel extends SpeciationModel {
 
     /**
      * Parses an element from an DOM document into a SpeciationModel. Recognises
-     * YuleModel.
+     * birthDeathModel.
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-	    
-	    public String getParserName() { return BIRTH_DEATH_MODEL; }
-	    
-	    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-		
-			int units = XMLParser.Utils.getUnitsAttr(xo);
-			
-			Parameter birthParameter = (Parameter)xo.getSocketChild(BIRTH_RATE);
+
+        public String getParserName() { return BIRTH_DEATH_MODEL; }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            int units = XMLParser.Utils.getUnitsAttr(xo);
+
+            Parameter birthParameter = (Parameter)xo.getSocketChild(BIRTH_RATE);
             Parameter deathParameter = (Parameter)xo.getSocketChild(DEATH_RATE);
             Parameter samplingParameter = (Parameter)xo.getSocketChild(SAMPLING_PROPORTION);
 
-			return new BirthDeathModel(birthParameter, deathParameter, samplingParameter, units);
-	    }
-	    
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return "The Yang & Rannala (1997) model of speciation.";
-		}
+            return new BirthDeathModel(birthParameter, deathParameter, samplingParameter, units);
+        }
 
-		public Class getReturnType() { return BirthDeathModel.class; }
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-	
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(BIRTH_RATE, new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-            new ElementRule(DEATH_RATE, new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-            new ElementRule(SAMPLING_PROPORTION, new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-			XMLUnits.SYNTAX_RULES[0]
-		};	
-	};
-    
+        public String getParserDescription() {
+            return "The Yang & Rannala (1997) model of speciation.";
+        }
+
+        public Class getReturnType() { return BirthDeathModel.class; }
+
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                new ElementRule(BIRTH_RATE, new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
+                new ElementRule(DEATH_RATE, new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
+                new ElementRule(SAMPLING_PROPORTION, new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
+                XMLUnits.SYNTAX_RULES[0]
+        };
+    };
+
 
     private final Parameter birthRateParameter;
     private final Parameter deathRateParameter;

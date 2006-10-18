@@ -99,7 +99,7 @@
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="branchRates">
 		<rate>
-			<parameter id="clock.rate" value="1.0"/>
+            <parameter id="clock.rate" value="4e-3"/>
 		</rate>
 	</strictClockBranchRates>
 	

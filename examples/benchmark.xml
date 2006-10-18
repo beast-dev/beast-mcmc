@@ -10,15 +10,15 @@ Benchmark results:
         10000000        -3,842.7260     69.6966         -3,771.7167     -71.0093
 
 	Native likelihood core
-	3.0GHz Quad Intel Xeon 5100 Java 1.5.0_06: 21.34 minutes
+	3.0GHz MacPro Quad Intel Xeon 5100 Java 1.5.0_06: 21.34 minutes
 	2.4GHz Opteron Java 1.5.0_06 (server VM): 26.45 minutes
-	2.5GHz Quad G5 Java 1.5.0_06: 29.65 minutes
+	2.5GHz PowerMac Quad G5 Java 1.5.0_06: 29.65 minutes
 	2.3GHz Xserve G5 Java 1.4.2_09: 39.22 minutes
 
 	Java likelihood core
-	3.0GHz Quad Intel Xeon 5100 Java 1.5.0_06: 47.12 minutes
+	3.0GHz MacPro Quad Intel Xeon 5100 Java 1.5.0_06: 46.86 minutes
 	2.4GHz Opteron Java 1.5.0_06 (server VM): 35.82 minutes
-	2.5GHz Quad G5 Java 1.5.0_06:  minutes
+	2.5GHz PowerMac Quad G5 Java 1.5.0_06: 52.46 minutes
 	2.3GHz Xserve G5 Java 1.4.2_09: 60.05 minutes
 -->
 

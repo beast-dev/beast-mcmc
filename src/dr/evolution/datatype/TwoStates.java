@@ -42,7 +42,7 @@ public class TwoStates extends DataType {
 	public static final int TYPE = TWO_STATES;
 	public static final TwoStates INSTANCE = new TwoStates();
 
-	public static final int ZERO_STATE = 0;
+    public static final int ZERO_STATE = 0;
 	public static final int ONE_STATE = 1;
 
 	public static final int UNKNOWN_STATE = 2;

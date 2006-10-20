@@ -229,7 +229,8 @@
 		<substitutionModel>
 			<hkyModel idref="hky"/>
 		</substitutionModel>
-	</siteModel>
+
+    </siteModel>
 	
 	<treeLikelihood id="treeLikelihood">
 		<patterns idref="patterns"/>

@@ -32,7 +32,7 @@ import dr.xml.*;
 
 /**
  * This class implements the Yang and Rannala (1997) birth-death speciation model.
- *@author Andrew Rambaut
+ * @author Andrew Rambaut
  */
 public class BirthDeathModel extends SpeciationModel {
 

@@ -49,23 +49,7 @@ public class AlignmentParser extends  AbstractXMLObjectParser {
 
         SimpleAlignment alignment = new SimpleAlignment();
 
-        DataType dataType = null;
-
-        if (xo.hasAttribute(DataType.DATA_TYPE)) {
-            String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
-
-            if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
-                dataType = Nucleotides.INSTANCE;
-            } else if (dataTypeStr.equals(HiddenNucleotides.DESCRIPTION)) {
-                dataType = HiddenNucleotides.INSTANCE;
-            } else if (dataTypeStr.equals(AminoAcids.DESCRIPTION)) {
-                dataType = AminoAcids.INSTANCE;
-            } else if (dataTypeStr.equals(Codons.DESCRIPTION)) {
-                dataType = Codons.UNIVERSAL;
-            } else if (dataTypeStr.equals(TwoStates.DESCRIPTION)) {
-                dataType = TwoStates.INSTANCE;
-            }
-        }
+        DataType dataType = DataTypeUtils.getDataType(xo);
 
         for (int i = 0; i < xo.getChildCount(); i++) {
 
@@ -145,7 +129,7 @@ public class AlignmentParser extends  AbstractXMLObjectParser {
             new StringAttributeRule(
                 DataType.DATA_TYPE,
                 "The data type",
-                new String[] { Nucleotides.DESCRIPTION, HiddenNucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
+                DataType.getRegisteredDataTypeNames(), false),
             new ElementRule(DataType.class)
             ),
         new ElementRule(Sequence.class, 1, Integer.MAX_VALUE)

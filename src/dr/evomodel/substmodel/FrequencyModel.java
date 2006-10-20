@@ -31,6 +31,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+import dr.evoxml.DataTypeUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -105,55 +106,7 @@ public class FrequencyModel extends AbstractModel {
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 				
 			FrequencyModel freqModel = null;
-			DataType dataType = null;
-				
-			if (xo.hasAttribute(DataType.DATA_TYPE)) {
-				String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
-				if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
-					dataType = Nucleotides.INSTANCE;
-				} else if (dataTypeStr.equals(HiddenNucleotides.DESCRIPTION)) {
-					dataType = HiddenNucleotides.INSTANCE;
-				} else if (dataTypeStr.equals(AminoAcids.DESCRIPTION)) {
-					dataType = AminoAcids.INSTANCE;
-				} else if (dataTypeStr.equals(Codons.DESCRIPTION)) {
-					dataType = Codons.UNIVERSAL;
-				} else if (dataTypeStr.equals(TwoStates.DESCRIPTION)) {
-					dataType = TwoStates.INSTANCE;
-				}
-			}
-							
-			if (dataType == null) dataType = (DataType)xo.getChild(DataType.class);
-			
-			if (xo.hasAttribute(GeneticCode.GENETIC_CODE)) {
-				String codeStr = xo.getStringAttribute(GeneticCode.GENETIC_CODE);
-				if (codeStr.equals(GeneticCode.UNIVERSAL.getName())) {
-					dataType = Codons.UNIVERSAL;
-				} else if (codeStr.equals(GeneticCode.VERTEBRATE_MT.getName())) {
-					dataType = Codons.VERTEBRATE_MT;
-				} else if (codeStr.equals(GeneticCode.YEAST.getName())) {
-					dataType = Codons.YEAST;
-				} else if (codeStr.equals(GeneticCode.MOLD_PROTOZOAN_MT.getName())) {
-					dataType = Codons.MOLD_PROTOZOAN_MT;
-				} else if (codeStr.equals(GeneticCode.INVERTEBRATE_MT.getName())) {
-					dataType = Codons.INVERTEBRATE_MT;
-				} else if (codeStr.equals(GeneticCode.CILIATE.getName())) {
-					dataType = Codons.CILIATE;
-				} else if (codeStr.equals(GeneticCode.ECHINODERM_MT.getName())) {
-					dataType = Codons.ECHINODERM_MT;
-				} else if (codeStr.equals(GeneticCode.EUPLOTID_NUC.getName())) {
-					dataType = Codons.EUPLOTID_NUC;
-				} else if (codeStr.equals(GeneticCode.BACTERIAL.getName())) {
-					dataType = Codons.BACTERIAL;
-				} else if (codeStr.equals(GeneticCode.ALT_YEAST.getName())) {
-					dataType = Codons.ALT_YEAST;
-				} else if (codeStr.equals(GeneticCode.ASCIDIAN_MT.getName())) {
-					dataType = Codons.ASCIDIAN_MT;
-				} else if (codeStr.equals(GeneticCode.FLATWORM_MT.getName())) {
-					dataType = Codons.FLATWORM_MT;
-				} else if (codeStr.equals(GeneticCode.BLEPHARISMA_NUC.getName())) {
-					dataType = Codons.BLEPHARISMA_NUC;
-				}
-			}
+			DataType dataType = DataTypeUtils.getDataType(xo);
 			
 			Parameter freqsParam = (Parameter)xo.getSocketChild(FREQUENCIES);
 			double[] frequencies = null;	
@@ -188,7 +141,7 @@ public class FrequencyModel extends AbstractModel {
 	
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 			new XORRule(
-				new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[] { Nucleotides.DESCRIPTION, HiddenNucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
+				new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", DataType.getRegisteredDataTypeNames(), false),
 				new ElementRule(DataType.class)
 				),
 			new ElementRule(FREQUENCIES, 

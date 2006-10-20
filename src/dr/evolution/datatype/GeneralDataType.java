@@ -39,9 +39,9 @@ public class GeneralDataType extends DataType implements Identifiable {
 
     public static final String GENERAL_DATA_TYPE = "generalDataType";
     public static final String DESCRIPTION = GENERAL_DATA_TYPE;
-    public static final int TYPE = GENERAL;
+    public static final int TYPE = GENERAL;    
 
-	/**
+    /**
 	 * Unlike the other standard data types, this general one has a public
 	 * constructor so multiple instances can be created.
 	 */

@@ -62,7 +62,7 @@ public class Codons extends DataType {
 	public static final Codons FLATWORM_MT = new Codons(GeneticCode.FLATWORM_MT);
 	public static final Codons BLEPHARISMA_NUC = new Codons(GeneticCode.BLEPHARISMA_NUC);
 
-	public static final int UNKNOWN_STATE = 64;
+    public static final int UNKNOWN_STATE = 64;
 	public static final int GAP_STATE = 65;
 
 	public static final String[] CODON_TRIPLETS = {
@@ -262,7 +262,7 @@ public class Codons extends DataType {
     /**
      * Takes non-canonical state and returns true if it represents stop codon
      * @param state
-     * @return
+     * @return true if the given state is a stop codon
      */
     public final boolean isStopCodon(int state) {
         return geneticCode.isStopCodon(stateMap[state]);

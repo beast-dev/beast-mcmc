@@ -37,8 +37,7 @@ package dr.evolution.datatype;
 	public static final String DESCRIPTION = "hiddenNucleotide";
 	public static final HiddenNucleotides INSTANCE = new HiddenNucleotides(2);
 
-		
-	public HiddenNucleotides(int numHiddenStates) {
+    public HiddenNucleotides(int numHiddenStates) {
 		hiddenStateCount = numHiddenStates;
 
         // @todo generalize this data type to allow more than two hidden states!

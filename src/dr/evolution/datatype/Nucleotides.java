@@ -47,7 +47,7 @@ public class Nucleotides extends DataType {
 	public static final int TYPE = NUCLEOTIDES;
 	public static final Nucleotides INSTANCE = new Nucleotides();
 
-	public static final int A_STATE = 0;
+    public static final int A_STATE = 0;
 	public static final int C_STATE = 1;
 	public static final int G_STATE = 2;
 	public static final int UT_STATE = 3;

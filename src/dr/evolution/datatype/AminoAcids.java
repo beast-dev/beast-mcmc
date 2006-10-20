@@ -52,7 +52,7 @@ public final class AminoAcids extends DataType
      */
     public static final AminoAcids INSTANCE = new AminoAcids();
 
-	/**
+    /**
      * This character represents the amino acid equivalent of a stop codon to cater for
      * situations arising from converting coding DNA to an amino acid sequence.
      */

@@ -155,10 +155,8 @@ public class SimpleCodons extends DataType {
 			Nucleotides.INSTANCE.isAmbiguousState(nuc3)) {
 			return UNKNOWN_STATE;
 		}
-	
-		int canonicalState = (nuc1 * 16) + (nuc2 * 4) + nuc3;
 
-		return canonicalState;
+        return (nuc1 * 16) + (nuc2 * 4) + nuc3;
 	}
 
 	/**
@@ -231,7 +229,7 @@ public class SimpleCodons extends DataType {
     /**
      * Takes non-canonical state and returns true if it represents stop codon
      * @param state
-     * @return
+     * @return true if the given state represents a stop codon
      */
     public final boolean isStopCodon(int state) {
         return geneticCode.isStopCodon(state);

@@ -25,6 +25,8 @@
 
 package dr.evomodel.speciation;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -48,7 +50,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 	//
 	// functions that define a speciation model
 	//
-	public abstract double logNodeHeightProbability(double nodeHeight, double rootHeight);
+	public abstract double logNodeProbability(Tree tree, NodeRef node);
 
 	// **************************************************************
     // Model IMPLEMENTATION

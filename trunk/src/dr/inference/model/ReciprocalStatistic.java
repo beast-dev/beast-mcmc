@@ -36,15 +36,14 @@ public class ReciprocalStatistic extends Statistic.Abstract {
 	
 	public static String RECIPROCAL_STATISTIC = "reciprocal";
     
-    private int dimension = 0;
     private Statistic statistic = null;
 
 	public ReciprocalStatistic(String name, Statistic statistic) {
 		super(name);
         this.statistic = statistic;
-	}
+    }
 		
-	public int getDimension() { return dimension; }
+	public int getDimension() { return statistic.getDimension(); }
 
 	/** @return mean of contained statistics */
 	public double getStatisticValue(int dim) {	

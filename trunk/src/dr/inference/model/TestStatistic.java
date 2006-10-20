@@ -115,10 +115,10 @@ public class TestStatistic extends BooleanStatistic {
 		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 		
-			String name;
+			String name = "";
 			if (xo.hasAttribute(NAME)) {
 				name = xo.getStringAttribute(NAME);
-			} else {
+			} else if (xo.hasId()){
 				name = xo.getId();
 			}
 			Attribute attr = (Attribute)xo.getChild(Attribute.class);		

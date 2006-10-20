@@ -118,8 +118,6 @@ public class BirthDeathModel extends SpeciationModel {
 		double expmlt0 = Math.exp((mu - lambda) * rootTime);
 		double term2 = 1.0 - p0tBD(lambda, mu, rho, expmlt0) / rho * expmlt0;
 		return Math.log(term1 * term1 * lambda / term2 * rho * expmlt1);
-
-//		return Math.log(term1 * term1 * lambda / term2 * rho * expmlt1);
 	}
 
 	private double p0tBD(double lambda, double mu, double rho, double expmlt) {

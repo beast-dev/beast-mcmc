@@ -41,26 +41,26 @@ import dr.xml.*;
  */
 public class GeneralSubstitutionModel extends AbstractSubstitutionModel 
 										implements dr.util.XHTMLable {
-	
+
 	public static final String GENERAL_SUBSTITUTION_MODEL = "generalSubstitutionModel";
 	public static final String DATA_TYPE = "dataType";
 	public static final String RATES = "rates";
 	public static final String RELATIVE_TO = "relativeTo";
 	public static final String FREQUENCIES = "frequencies";
 	public static final String NAME = "name";
-	
+
 	/** the rate which the others are set relative to */
-	private int ratesRelativeTo;
-	
+	protected int ratesRelativeTo;
+
 	/**
 	 * constructor
 	 *
 	 * @param dataType the data type
 	 */
 	public GeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter, int relativeTo) {
-	
+
 		super(GENERAL_SUBSTITUTION_MODEL, dataType, freqModel);
-	
+
 		ratesParameter = parameter;
 		if (ratesParameter != null) {
             addParameter(ratesParameter);
@@ -68,15 +68,27 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
         }
 		setRatesRelativeTo(relativeTo);
 	}
-	
+
+    /**
+     * constructor
+     *
+     * @param dataType the data type
+     */
+    protected GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {
+
+        super(name, dataType, freqModel);
+
+        setRatesRelativeTo(relativeTo);
+    }
+
 	protected void frequenciesChanged() {
 		// Nothing to precalculate
 	}
-	
+
 	protected void ratesChanged() {
 		// Nothing to precalculate
 	}
-	
+
 	protected void setupRelativeRates() {
 
         for (int i = 0; i < relativeRates.length; i++) {
@@ -86,9 +98,9 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 				relativeRates[i] = ratesParameter.getParameterValue(i);
 			} else {
 				relativeRates[i] = ratesParameter.getParameterValue(i-1);
-			} 
+			}
 		}
-    }
+	}
 
 	/**
 	 * set which rate the others are relative to
@@ -142,7 +154,7 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 				
-			Parameter ratesParameter = null;
+			Parameter ratesParameter;
 			
 			XMLObject cxo = (XMLObject)xo.getChild(FREQUENCIES);
 			FrequencyModel freqModel = (FrequencyModel)cxo.getChild(FrequencyModel.class);

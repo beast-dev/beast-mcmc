@@ -125,8 +125,26 @@ public class StringAttributeRule extends AttributeRule {
 		}
 		return false;
 	}
-	
-	/**
+
+    /**
+     * @return a string describing the rule.
+     */
+    public String ruleString() {
+        StringBuffer rule = new StringBuffer(super.ruleString());
+
+        if (validValues != null && validValues.size() > 0) {
+            rule.append(" from {");
+            rule.append(validValues.get(0));
+            for (int i = 1; i < validValues.size(); i++) {
+                rule.append(", ");
+                rule.append(validValues.get(i));
+            }
+        }
+        return rule.toString();
+    }
+
+
+    /**
 	 * @return a string describing the rule.
 	 */
 	public String htmlRuleString(XMLDocumentationHandler handler) {

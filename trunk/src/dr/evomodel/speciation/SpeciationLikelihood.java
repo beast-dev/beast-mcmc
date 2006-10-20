@@ -46,207 +46,204 @@ import dr.xml.*;
  */
 public class SpeciationLikelihood extends AbstractModel implements Likelihood, Units {
 
-	// PUBLIC STUFF
+    // PUBLIC STUFF
 
-	public static final String SPECIATION_LIKELIHOOD = "speciationLikelihood";
-	public static final String MODEL = "model";
-	public static final String TREE = "speciesTree";
+    public static final String SPECIATION_LIKELIHOOD = "speciationLikelihood";
+    public static final String MODEL = "model";
+    public static final String TREE = "speciesTree";
 
-	public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel) {
-		this(SPECIATION_LIKELIHOOD, tree, speciationModel);
-	}
+    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel) {
+        this(SPECIATION_LIKELIHOOD, tree, speciationModel);
+    }
 
-	public SpeciationLikelihood(String name, Tree tree, SpeciationModel speciationModel) {
+    public SpeciationLikelihood(String name, Tree tree, SpeciationModel speciationModel) {
 
-		super(name);
+        super(name);
 
-		this.tree = tree;
-		this.speciationModel = speciationModel;
-		if (tree instanceof TreeModel) {
-			addModel((TreeModel)tree);
-		}
-		if (speciationModel != null) {
-			addModel(speciationModel);
-		}
-	}
+        this.tree = tree;
+        this.speciationModel = speciationModel;
+        if (tree instanceof TreeModel) {
+            addModel((TreeModel)tree);
+        }
+        if (speciationModel != null) {
+            addModel(speciationModel);
+        }
+    }
 
-	// **************************************************************
+    // **************************************************************
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
-	protected final void handleModelChangedEvent(Model model, Object object, int index) {
-		likelihoodKnown = false;
-	}
+    protected final void handleModelChangedEvent(Model model, Object object, int index) {
+        likelihoodKnown = false;
+    }
 
-	// **************************************************************
+    // **************************************************************
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-	protected final void handleParameterChangedEvent(Parameter parameter, int index) { } // No parameters to respond to
+    protected final void handleParameterChangedEvent(Parameter parameter, int index) { } // No parameters to respond to
 
-	// **************************************************************
+    // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * Stores the precalculated state: in this case the intervals
-	 */
-	protected final void storeState() {
-		storedLikelihoodKnown = likelihoodKnown;
-		storedLogLikelihood = logLikelihood;
-	}
+    /**
+     * Stores the precalculated state: in this case the intervals
+     */
+    protected final void storeState() {
+        storedLikelihoodKnown = likelihoodKnown;
+        storedLogLikelihood = logLikelihood;
+    }
 
-	/**
-	 * Restores the precalculated state: that is the intervals of the tree.
-	 */
-	protected final void restoreState() {
-		likelihoodKnown = storedLikelihoodKnown;
-		logLikelihood = storedLogLikelihood;
-	}
+    /**
+     * Restores the precalculated state: that is the intervals of the tree.
+     */
+    protected final void restoreState() {
+        likelihoodKnown = storedLikelihoodKnown;
+        logLikelihood = storedLogLikelihood;
+    }
 
-	protected final void acceptState() { } // nothing to do
+    protected final void acceptState() { } // nothing to do
 
-	/**
-	 * Adopt the state of the model from source.
-	 */
-	protected final void adoptState(Model source) {
-		// all we need to do is force a recalculation of intervals
-		makeDirty();
-	}
+    /**
+     * Adopt the state of the model from source.
+     * @param source the source model
+     */
+    protected final void adoptState(Model source) {
+        // all we need to do is force a recalculation of intervals
+        makeDirty();
+    }
 
-	// **************************************************************
+    // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-	public final Model getModel() { return this; }
+    public final Model getModel() { return this; }
 
-	public final double getLogLikelihood() {
-		if (!likelihoodKnown) {
-			logLikelihood = calculateLogLikelihood();
-			likelihoodKnown = true;
-		}
-		return logLikelihood;
-	}
+    public final double getLogLikelihood() {
+        if (!likelihoodKnown) {
+            logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+        return logLikelihood;
+    }
 
-	public final void makeDirty() {
-		likelihoodKnown = false;
-	}
+    public final void makeDirty() {
+        likelihoodKnown = false;
+    }
 
-	/** 
-	 * Calculates the log likelihood of this set of coalescent intervals,
-	 * given a demographic model.
-	 */
-	public double calculateLogLikelihood() {
+    /**
+     * Calculates the log likelihood of this set of coalescent intervals,
+     * given a demographic model.
+     * @return the log likelihood
+     */
+    public double calculateLogLikelihood() {
 
-		double logL = 0.0;
-		double rootHeight = tree.getNodeHeight(tree.getRoot());
+        double logL = 0.0;
 
-		for (int j = 0; j < tree.getInternalNodeCount(); j++) {
+        for (int j = 0; j < tree.getInternalNodeCount(); j++) {
+            logL += speciationModel.logNodeProbability( tree, tree.getInternalNode(j));
+        }
 
-			logL += speciationModel.logNodeHeightProbability(
-					 	tree.getNodeHeight(tree.getInternalNode(j)),
-						rootHeight);
-
-		}
-
-		return logL;
-	}
+        return logL;
+    }
 
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * @return the log columns.
-	 */
-	public final dr.inference.loggers.LogColumn[] getColumns() {
-		return new dr.inference.loggers.LogColumn[] {
-			new LikelihoodColumn(getId())
-		};
-	}
+    /**
+     * @return the log columns.
+     */
+    public final dr.inference.loggers.LogColumn[] getColumns() {
+        return new dr.inference.loggers.LogColumn[] {
+                new LikelihoodColumn(getId())
+        };
+    }
 
-	private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-		public LikelihoodColumn(String label) { super(label); }
-		public double getDoubleValue() { return getLogLikelihood(); }
-	}
+    private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
+        public LikelihoodColumn(String label) { super(label); }
+        public double getDoubleValue() { return getLogLikelihood(); }
+    }
 
     // **************************************************************
     // Units IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * Sets the units these coalescent intervals are
-	 * measured in.
-	 */
-	public final void setUnits(int u)
-	{
-		speciationModel.setUnits(u);
-	}
+    /**
+     * Sets the units these coalescent intervals are
+     * measured in.
+     */
+    public final void setUnits(int u)
+    {
+        speciationModel.setUnits(u);
+    }
 
-	/**
-	 * Returns the units these coalescent intervals are
-	 * measured in.
-	 */
-	public final int getUnits()
-	{
-		return speciationModel.getUnits();
-	}
+    /**
+     * Returns the units these coalescent intervals are
+     * measured in.
+     */
+    public final int getUnits()
+    {
+        return speciationModel.getUnits();
+    }
 
-	// ****************************************************************
-	// Private and protected stuff
-	// ****************************************************************
+    // ****************************************************************
+    // Private and protected stuff
+    // ****************************************************************
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return SPECIATION_LIKELIHOOD; }
+        public String getParserName() { return SPECIATION_LIKELIHOOD; }
 
-		public Object parseXMLObject(XMLObject xo) {
+        public Object parseXMLObject(XMLObject xo) {
 
-			XMLObject cxo = (XMLObject)xo.getChild(MODEL);
-			SpeciationModel specModel = (SpeciationModel)cxo.getChild(SpeciationModel.class);
+            XMLObject cxo = (XMLObject)xo.getChild(MODEL);
+            SpeciationModel specModel = (SpeciationModel)cxo.getChild(SpeciationModel.class);
 
-			cxo = (XMLObject)xo.getChild(TREE);
-			TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
+            cxo = (XMLObject)xo.getChild(TREE);
+            TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
 
-			return new SpeciationLikelihood(treeModel, specModel);
-		}
+            return new SpeciationLikelihood(treeModel, specModel);
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element represents the likelihood of the tree given the demographic function.";
-		}
+        public String getParserDescription() {
+            return "This element represents the likelihood of the tree given the speciation.";
+        }
 
-		public Class getReturnType() { return Likelihood.class; }
+        public Class getReturnType() { return Likelihood.class; }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(MODEL, new XMLSyntaxRule[] {
-				new ElementRule(SpeciationModel.class)
-			}),
-			new ElementRule(TREE, new XMLSyntaxRule[] {
-				new ElementRule(TreeModel.class)
-			}),
-		};
-	};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                new ElementRule(MODEL, new XMLSyntaxRule[] {
+                        new ElementRule(SpeciationModel.class)
+                }),
+                new ElementRule(TREE, new XMLSyntaxRule[] {
+                        new ElementRule(TreeModel.class)
+                }),
+        };
+    };
 
 
 
-	// ****************************************************************
-	// Private and protected stuff
-	// ****************************************************************
+    // ****************************************************************
+    // Private and protected stuff
+    // ****************************************************************
 
-	/** The speciation model. */
-	SpeciationModel speciationModel = null;
+    /** The speciation model. */
+    SpeciationModel speciationModel = null;
 
-	/** The tree. */
-	Tree tree = null;
+    /** The tree. */
+    Tree tree = null;
 
-	private double logLikelihood;
-	private double storedLogLikelihood;
-	private boolean likelihoodKnown = false;
-	private boolean storedLikelihoodKnown = false;
+    private double logLikelihood;
+    private double storedLogLikelihood;
+    private boolean likelihoodKnown = false;
+    private boolean storedLikelihoodKnown = false;
 }

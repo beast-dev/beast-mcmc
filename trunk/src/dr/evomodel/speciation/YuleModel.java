@@ -25,6 +25,8 @@
 
 package dr.evomodel.speciation;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evoxml.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -66,12 +68,14 @@ public class YuleModel extends SpeciationModel{
 	//
 	// functions that define a speciation model
 	//
-	public double logNodeHeightProbability(double nodeHeight, double rootHeight) {
+	public double logNodeProbability(Tree tree, NodeRef node) {
+        if (tree.getRoot() == node) return 0.0;
+
+        double nodeHeight = tree.getNodeHeight(node);
+        double rootHeight = tree.getNodeHeight(tree.getRoot());
+    
 		double lambda = getBirthRate();
 		return Math.log((lambda * Math.exp(-lambda * nodeHeight)) / (1 - Math.exp(-lambda * rootHeight)));
-
-        // Here is the above rearranged.
-        // return Math.log(lambda) - (lambda * nodeHeight) - Math.log(1 - Math.exp(-lambda * rootHeight));
 	}
 
     // **************************************************************

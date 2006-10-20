@@ -99,7 +99,7 @@
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="branchRates">
 		<rate>
-            <parameter id="clock.rate" value="4e-3"/>
+			<parameter id="clock.rate" value="0.0040"/>
 		</rate>
 	</strictClockBranchRates>
 	
@@ -145,7 +145,7 @@
 		<uniformOperator weight="30">
 			<parameter idref="treeModel.internalNodeHeights"/>
 		</uniformOperator>
-		<subtreeSlide size="0.0154" gaussian="true" weight="15">
+		<subtreeSlide size="3.8" gaussian="true" weight="15">
 			<treeModel idref="treeModel"/>
 		</subtreeSlide>
 		<narrowExchange weight="15">

@@ -49,7 +49,7 @@ public class Patterns implements PatternList {
     protected int patternLength = 0;
 
     /** weights of each pattern */
-    protected int[] weights = new int[COUNT_INCREMENT];
+    protected double[] weights = new double[COUNT_INCREMENT];
 
     /** site patterns [pattern][taxon] */
     protected int[][] patterns = new int[COUNT_INCREMENT][];
@@ -132,7 +132,7 @@ public class Patterns implements PatternList {
                     !isAmbiguous(pattern) &&
                     !isUnknown(pattern) ) ) {
 
-                addPattern(pattern);
+                addPattern(pattern, 1.0);
             }
         }
 
@@ -167,16 +167,23 @@ public class Patterns implements PatternList {
 	                !isAmbiguous(pattern) &&
 	                !isUnknown(pattern) ) ) {
 
-	            addPattern(pattern);
+	            addPattern(pattern, patternList.getPatternWeight(i));
 	        }
 	    }
 
 	}
 
     /**
-     * adds a pattern to the pattern list
+     * adds a pattern to the pattern list with a default weight of 1
      */
     public void addPattern(int[] pattern) {
+        addPattern(pattern, 1.0);
+    }
+
+    /**
+     * adds a pattern to the pattern list
+     */
+    public void addPattern(int[] pattern, double weight) {
 
         if (patternLength == 0) {
             patternLength = pattern.length;
@@ -190,14 +197,14 @@ public class Patterns implements PatternList {
 
             if (comparePatterns(patterns[i], pattern)) {
 
-                weights[i] += 1;
+                weights[i] += weight;
                 return;
             }
         }
 
         if (patternCount == patterns.length) {
             int[][] newPatterns = new int[patternCount + COUNT_INCREMENT][];
-            int[] newWeights = new int[patternCount + COUNT_INCREMENT];
+            double[] newWeights = new double[patternCount + COUNT_INCREMENT];
             for (int i = 0; i < patternCount; i++) {
                 newPatterns[i] = patterns[i];
                 newWeights[i] = weights[i];
@@ -207,7 +214,7 @@ public class Patterns implements PatternList {
         }
 
         patterns[patternCount] = pattern;
-        weights[patternCount] = 1;
+        weights[patternCount] = weight;
         patternCount++;
     }
 

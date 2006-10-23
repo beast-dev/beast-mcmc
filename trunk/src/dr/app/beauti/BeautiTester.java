@@ -25,16 +25,16 @@
 
 package dr.app.beauti;
 
-import dr.evolution.util.Units;
-import dr.evolution.util.Date;
-import dr.evolution.util.TimeScale;
-import dr.evolution.io.NexusImporter;
-import dr.evolution.io.Importer;
-import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.ConvertAlignment;
-import dr.evolution.tree.Tree;
+import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.GeneticCode;
+import dr.evolution.io.Importer;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Date;
+import dr.evolution.util.TimeScale;
+import dr.evolution.util.Units;
 
 import java.io.*;
 
@@ -108,25 +108,28 @@ public class BeautiTester {
     }
 
     public void buildCodonModels(String key, BeastGenerator beautiOptions) {
-        beautiOptions.codonHetero = false;
+        beautiOptions.codonHeteroPattern = null;
         beautiOptions.unlinkedSubstitutionModel = false;
         beautiOptions.unlinkedHeterogeneityModel = false;
         buildHeteroModels(key+"", beautiOptions);
 
-        beautiOptions.codonHetero = true;
-        buildHeteroModels(key+"+C", beautiOptions);
+        beautiOptions.codonHeteroPattern = "123";
+        buildHeteroModels(key+"+C123", beautiOptions);
 
         beautiOptions.unlinkedSubstitutionModel = true;
         beautiOptions.unlinkedHeterogeneityModel = false;
-        buildHeteroModels(key+"+C^S", beautiOptions);
+        buildHeteroModels(key+"+C123^S", beautiOptions);
 
         beautiOptions.unlinkedSubstitutionModel = false;
         beautiOptions.unlinkedHeterogeneityModel = true;
-        buildHeteroModels(key+"+C^H", beautiOptions);
+        buildHeteroModels(key+"+C123^H", beautiOptions);
 
         beautiOptions.unlinkedSubstitutionModel = true;
         beautiOptions.unlinkedHeterogeneityModel = true;
-        buildHeteroModels(key+"+C^SH", beautiOptions);
+        buildHeteroModels(key+"+C123^SH", beautiOptions);
+
+        beautiOptions.codonHeteroPattern = "112";
+        buildHeteroModels(key+"+C112^SH", beautiOptions);
     }
 
     public void buildHeteroModels(String key, BeastGenerator beautiOptions) {

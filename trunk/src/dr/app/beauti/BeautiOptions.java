@@ -234,6 +234,7 @@ public class BeautiOptions {
 
 	/**
 	 * return an list of operators that are required
+     * @return the parameter list
 	 */
 	public ArrayList selectParameters() {
 
@@ -323,6 +324,7 @@ public class BeautiOptions {
 
 	/**
 	 * return an list of operators that are required
+     * @return the operator list
 	 */
 	public ArrayList selectOperators() {
 
@@ -349,7 +351,7 @@ public class BeautiOptions {
 
         Operator op = getOperator("subtreeSlide");
         if (!op.tuningEdited) {
-            op.tuning = initialRootHeight / 5.0;
+            op.tuning = initialRootHeight / 10.0;
         }
 
         return ops;
@@ -357,41 +359,38 @@ public class BeautiOptions {
 
 	/**
 	 * return a list of parameters that are required
+     * @param params the parameter list
 	 */
 	private void selectParameters(ArrayList params) {
 
 		if (alignment != null) {
 
+            if (partitionCount > 1) {
+                for (int i = 1; i <= partitionCount; i++) {
+                    params.add(getParameter("siteModel" + i + ".mu"));
+                }
+            }
+
 			boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
 
 			if (nucs) {
 				if (nucSubstitutionModel == HKY) {
-					if (unlinkedSubstitutionModel) {
-						params.add(getParameter("hky1.kappa"));
-						params.add(getParameter("hky2.kappa"));
-						params.add(getParameter("hky3.kappa"));
-					} else {
-						params.add(getParameter("hky.kappa"));
-					}
+                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                        for (int i = 1; i <= partitionCount; i++) {
+                            params.add(getParameter("hky" + i + ".kappa"));
+                        }
+                    } else {
+                        params.add(getParameter("hky.kappa"));
+                    }
 				} else if (nucSubstitutionModel == GTR) {
-					if (unlinkedSubstitutionModel) {
-						params.add(getParameter("gtr1.ac"));
-						params.add(getParameter("gtr1.ag"));
-						params.add(getParameter("gtr1.at"));
-						params.add(getParameter("gtr1.cg"));
-						params.add(getParameter("gtr1.gt"));
-
-						params.add(getParameter("gtr2.ac"));
-						params.add(getParameter("gtr2.ag"));
-						params.add(getParameter("gtr2.at"));
-						params.add(getParameter("gtr2.cg"));
-						params.add(getParameter("gtr2.gt"));
-
-						params.add(getParameter("gtr3.ac"));
-						params.add(getParameter("gtr3.ag"));
-						params.add(getParameter("gtr3.at"));
-						params.add(getParameter("gtr3.cg"));
-						params.add(getParameter("gtr3.gt"));
+                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                        for (int i = 1; i <= partitionCount; i++) {
+                            params.add(getParameter("gtr" + i + ".ac"));
+                            params.add(getParameter("gtr" + i + ".ag"));
+                            params.add(getParameter("gtr" + i + ".at"));
+                            params.add(getParameter("gtr" + i + ".cg"));
+                            params.add(getParameter("gtr" + i + ".gt"));
+                        }
 					} else {
 						params.add(getParameter("gtr.ac"));
 						params.add(getParameter("gtr.ag"));
@@ -404,29 +403,23 @@ public class BeautiOptions {
 
 			// if gamma do shape move
 			if (gammaHetero) {
-				if (nucs && unlinkedHeterogeneityModel) {
-					params.add(getParameter("siteModel1.alpha"));
-					params.add(getParameter("siteModel2.alpha"));
-					params.add(getParameter("siteModel3.alpha"));
+                if (partitionCount > 1 && unlinkedHeterogeneityModel) {
+                    for (int i = 1; i <= partitionCount; i++) {
+                        params.add(getParameter("siteModel" + i + ".alpha"));
+                    }
 				} else {
 					params.add(getParameter("siteModel.alpha"));
 				}
 			}
 			// if pinv do pinv move
 			if (invarHetero) {
-				if (nucs && unlinkedHeterogeneityModel) {
-					params.add(getParameter("siteModel1.pInv"));
-					params.add(getParameter("siteModel2.pInv"));
-					params.add(getParameter("siteModel3.pInv"));
+				if (partitionCount > 1 && unlinkedHeterogeneityModel) {
+                    for (int i = 1; i <= partitionCount; i++) {
+                        params.add(getParameter("siteModel" + i + ".pInv"));
+                    }
 				} else {
 					params.add(getParameter("siteModel.pInv"));
 				}
-			}
-
-			if (nucs && codonHetero) {
-				params.add(getParameter("siteModel1.mu"));
-				params.add(getParameter("siteModel2.mu"));
-				params.add(getParameter("siteModel3.mu"));
 			}
 
 			// if not fixed then do mutation rate move and up/down move
@@ -529,6 +522,7 @@ public class BeautiOptions {
 
 	/**
 	 * return a list of operators that are required
+     * @param ops the operator list
 	 */
 	private void selectOperators(ArrayList ops) {
 
@@ -537,65 +531,55 @@ public class BeautiOptions {
 			boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
 
 			if (nucs) {
-				if (nucSubstitutionModel == HKY) {
-					if (unlinkedSubstitutionModel) {
-						ops.add(getOperator("hky1.kappa"));
-						ops.add(getOperator("hky2.kappa"));
-						ops.add(getOperator("hky3.kappa"));
-					} else {
-						ops.add(getOperator("hky.kappa"));
-					}
-				} else if (nucSubstitutionModel == GTR) {
-					if (unlinkedSubstitutionModel) {
-						ops.add(getOperator("gtr1.ac"));
-						ops.add(getOperator("gtr1.ag"));
-						ops.add(getOperator("gtr1.at"));
-						ops.add(getOperator("gtr1.cg"));
-						ops.add(getOperator("gtr1.gt"));
-
-						ops.add(getOperator("gtr2.ac"));
-						ops.add(getOperator("gtr2.ag"));
-						ops.add(getOperator("gtr2.at"));
-						ops.add(getOperator("gtr2.cg"));
-						ops.add(getOperator("gtr2.gt"));
-
-						ops.add(getOperator("gtr3.ac"));
-						ops.add(getOperator("gtr3.ag"));
-						ops.add(getOperator("gtr3.at"));
-						ops.add(getOperator("gtr3.cg"));
-						ops.add(getOperator("gtr3.gt"));
-					} else {
-						ops.add(getOperator("gtr.ac"));
-						ops.add(getOperator("gtr.ag"));
-						ops.add(getOperator("gtr.at"));
-						ops.add(getOperator("gtr.cg"));
-						ops.add(getOperator("gtr.gt"));
-					}
-				}
+                if (nucSubstitutionModel == HKY) {
+                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                        for (int i = 1; i <= partitionCount; i++) {
+                            ops.add(getOperator("hky" + i + ".kappa"));
+                        }
+                    } else {
+                        ops.add(getOperator("hky.kappa"));
+                    }
+                } else if (nucSubstitutionModel == GTR) {
+                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                        for (int i = 1; i <= partitionCount; i++) {
+                            ops.add(getOperator("gtr" + i + ".ac"));
+                            ops.add(getOperator("gtr" + i + ".ag"));
+                            ops.add(getOperator("gtr" + i + ".at"));
+                            ops.add(getOperator("gtr" + i + ".cg"));
+                            ops.add(getOperator("gtr" + i + ".gt"));
+                        }
+                    } else {
+                        ops.add(getOperator("gtr.ac"));
+                        ops.add(getOperator("gtr.ag"));
+                        ops.add(getOperator("gtr.at"));
+                        ops.add(getOperator("gtr.cg"));
+                        ops.add(getOperator("gtr.gt"));
+                    }
+                }
 			}
 
-			// if gamma do shape move
-			if (gammaHetero) {
-				if (nucs && unlinkedHeterogeneityModel) {
-					ops.add(getOperator("siteModel1.alpha"));
-					ops.add(getOperator("siteModel2.alpha"));
-					ops.add(getOperator("siteModel3.alpha"));
-				} else {
-					ops.add(getOperator("siteModel.alpha"));
-				}
-			}
-			// if pinv do pinv move
-			if (invarHetero) {
-				if (nucs && unlinkedHeterogeneityModel) {
-					ops.add(getOperator("siteModel1.pInv"));
-					ops.add(getOperator("siteModel2.pInv"));
-					ops.add(getOperator("siteModel3.pInv"));
-				} else {
-					ops.add(getOperator("siteModel.pInv"));
-				}
-			}
+            // if gamma do shape move
+            if (gammaHetero) {
+                if (partitionCount > 1 && unlinkedHeterogeneityModel) {
+                    for (int i = 1; i <= partitionCount; i++) {
+                        ops.add(getOperator("siteModel" + i + ".alpha"));
+                    }
+                } else {
+                    ops.add(getOperator("siteModel.alpha"));
+                }
+            }
+            // if pinv do pinv move
+            if (invarHetero) {
+                if (partitionCount > 1 && unlinkedHeterogeneityModel) {
+                    for (int i = 1; i <= partitionCount; i++) {
+                        ops.add(getOperator("siteModel" + i + ".pInv"));
+                    }
+                } else {
+                    ops.add(getOperator("siteModel.pInv"));
+                }
+            }
 
-			if (nucs && codonHetero) {
+			if (partitionCount > 1) {
 				ops.add(getOperator("centeredMu"));
 				ops.add(getOperator("deltaMu"));
 			}
@@ -690,8 +674,11 @@ public class BeautiOptions {
 
 	/**
 	 * Read options from a file
-	 */
-	public Document create(boolean includeData, boolean guessDates) {
+     * @param includeData include a data block?
+     * @param guessDates guess dates?
+     * @return the Document
+     */
+    public Document create(boolean includeData, boolean guessDates) {
 
 		Element root = new Element("beauti");
 		root.setAttribute("version", version);
@@ -756,7 +743,7 @@ public class BeautiOptions {
 		modelElement.addContent(createChild("gammaHetero", gammaHetero));
 		modelElement.addContent(createChild("gammaCategories", gammaCategories));
 		modelElement.addContent(createChild("invarHetero", invarHetero));
-		modelElement.addContent(createChild("codonHetero", codonHetero));
+		modelElement.addContent(createChild("codonHeteroPattern", codonHeteroPattern));
 		modelElement.addContent(createChild("maximumTipHeight", maximumTipHeight));
 		modelElement.addContent(createChild("hasSetFixedSubstitutionRate", hasSetFixedSubstitutionRate));
 		modelElement.addContent(createChild("meanSubstitutionRate", meanSubstitutionRate));
@@ -831,14 +818,15 @@ public class BeautiOptions {
 
 		root.addContent(mcmcElement);
 
-		Document doc = new Document(root);
-		return doc;
+		return new Document(root);
 	}
 
 	private Element createChild(String name, String value) {
 		Element e = new Element(name);
-		e.setText(value);
-		return e;
+        if (value != null) {
+            e.setText(value);
+        }
+        return e;
 	}
 
 	private Element createChild(String name, int value) {
@@ -861,8 +849,10 @@ public class BeautiOptions {
 
 	/**
 	 * Read options from a file
-	 */
-	public void parse(Document document) throws dr.xml.XMLParseException {
+     * @param document the Document
+     * @throws dr.xml.XMLParseException if there is a problem with XML parsing
+     */
+    public void parse(Document document) throws dr.xml.XMLParseException {
 
 		Element root = document.getRootElement();
 		if (!root.getName().equals("beauti")) {
@@ -963,7 +953,8 @@ public class BeautiOptions {
 			gammaHetero = getBooleanChild(modelElement, "gammaHetero", false);
 			gammaCategories = getIntegerChild(modelElement, "gammaCategories", 5);
 			invarHetero = getBooleanChild(modelElement, "invarHetero", false);
-			codonHetero = getBooleanChild(modelElement, "codonHetero", false);
+            codonHeteroPattern = (getBooleanChild(modelElement, "codonHetero", false) ? "123": null);
+			codonHeteroPattern = getStringChild(modelElement, "codonHeteroPattern", null);
 			maximumTipHeight = getDoubleChild(modelElement, "maximumTipHeight", 0.0);
 			fixedSubstitutionRate = getBooleanChild(modelElement, "fixedSubstitutionRate", false);
 			hasSetFixedSubstitutionRate = getBooleanChild(modelElement, "hasSetFixedSubstitutionRate", false);
@@ -1047,7 +1038,7 @@ public class BeautiOptions {
 
 	private String getStringChild(Element element, String childName, String defaultValue) {
 		String value = element.getChildTextTrim(childName);
-		if (value == null) return defaultValue;
+		if (value == null || value.length() == 0) return defaultValue;
 		return value;
 	}
 
@@ -1223,10 +1214,10 @@ public class BeautiOptions {
 
 		/**
 		 * A constructor for "special" parameters which are not user-configurable
-		 * @param name
-		 * @param description
-		 */
-		public Parameter(String name, String description) {
+		 * @param name the name
+         * @param description the description
+         */
+        public Parameter(String name, String description) {
 			this.name = name;
 			this.description = description;
 			this.scale = NONE;
@@ -1405,26 +1396,31 @@ public class BeautiOptions {
 	public static final int FORWARDS = 0;
 	public static final int BACKWARDS = 1;
 	public static final int NONE = -1;
-	public static final int JC = 0;
+
+    public static final int JC = 0;
 	public static final int HKY = 1;
 	public static final int GTR = 2;
-	public static final int BLOSUM_62 = 0;
+
+    public static final int BLOSUM_62 = 0;
 	public static final int DAYHOFF = 1;
 	public static final int JTT = 2;
 	public static final int MT_REV_24 = 3;
 	public static final int CP_REV_45 = 4;
 	public static final int WAG = 5;
-	public static final int CONSTANT = 0;
+
+    public static final int CONSTANT = 0;
 	public static final int EXPONENTIAL = 1;
 	public static final int LOGISTIC = 2;
 	public static final int EXPANSION = 3;
 	public static final int SKYLINE = 4;
 	public static final int YULE = 5;
     public static final int BIRTH_DEATH = 6;
-	public static final int STRICT_CLOCK = 0;
+
+    public static final int STRICT_CLOCK = 0;
 	public static final int UNCORRELATED_EXPONENTIAL = 1;
 	public static final int UNCORRELATED_LOGNORMAL = 2;
-	public static final int GROWTH_RATE = 0;
+
+    public static final int GROWTH_RATE = 0;
 	public static final int DOUBLING_TIME = 1;
 	public static final int CONSTANT_SKYLINE = 0;
 	public static final int LINEAR_SKYLINE = 1;
@@ -1485,14 +1481,15 @@ public class BeautiOptions {
 	public double offset2 = 0.0;
 
 	// Model options
-	public int nucSubstitutionModel = HKY;
+    public int partitionCount = 1;
+    public int nucSubstitutionModel = HKY;
 	public int aaSubstitutionModel = BLOSUM_62;
 	public boolean gammaHetero = false;
 	public int gammaCategories = 4;
 	public boolean invarHetero = false;
-	public boolean codonHetero = false;
+	public String codonHeteroPattern = null;
 	public double meanSubstitutionRate = 1.0;
-	public boolean unlinkedSubstitutionModel = false;
+    public boolean unlinkedSubstitutionModel = false;
 	public boolean unlinkedHeterogeneityModel = false;
 	public boolean unlinkedFrequencyModel = false;
 	public int nodeHeightPrior = CONSTANT;

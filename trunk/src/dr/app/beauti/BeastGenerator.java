@@ -29,21 +29,30 @@ import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.*;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.coalescent.*;
-import dr.evomodel.operators.*;
+import dr.evomodel.operators.ExchangeOperator;
+import dr.evomodel.operators.SubtreeSlideOperator;
+import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
+import dr.evomodel.speciation.BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.YuleModel;
-import dr.evomodel.speciation.BirthDeathModel;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.tree.*;
+import dr.evomodel.tree.RateCovarianceStatistic;
+import dr.evomodel.tree.RateStatistic;
+import dr.evomodel.tree.TreeLogger;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evoxml.*;
-import dr.inference.distribution.*;
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.ExponentialMarkovModel;
+import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.loggers.Columns;
 import dr.inference.loggers.MCLogger;
 import dr.inference.model.*;
@@ -51,7 +60,10 @@ import dr.inference.operators.*;
 import dr.util.Attribute;
 
 import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * This class holds all the data for the current BEAUti Document
@@ -69,7 +81,7 @@ public class BeastGenerator extends BeautiOptions {
     /**
      * Checks various options to check they are valid. Throws IllegalArgumentExceptions with
      * descriptions of the problems.
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException if there is a problem with the current settings
      */
     public void checkOptions() throws IllegalArgumentException {
         Set ids = new HashSet();
@@ -100,10 +112,13 @@ public class BeastGenerator extends BeautiOptions {
             }
             ids.add(taxa.getId());
         }
+
+        getPartionCount(codonHeteroPattern);
     }
 
     /**
      * Generate a beast xml file from these beast options
+     * @param w the writer
      */
     public void generateXML(Writer w) {
 
@@ -125,8 +140,7 @@ public class BeastGenerator extends BeautiOptions {
 
         if (alignment != null) {
             writeAlignment(writer);
-            writePatternList(writer);
-
+            writePatternLists(writer);
         }
 
         writer.writeText("");
@@ -181,6 +195,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Generate a taxa block from these beast options
+     * @param writer the writer
      */
     public void writeTaxa(XMLWriter writer) {
 
@@ -230,6 +245,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Generate additional taxon sets
+     * @param writer the writer
      */
     public void writeTaxonSets(XMLWriter writer) {
 
@@ -254,6 +270,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Generate an alignment block from these beast options
+     * @param writer the writer
      */
     public void writeAlignment(XMLWriter writer) {
 
@@ -281,6 +298,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write a demographic model
+     * @param writer the writer
      */
     public void writeNodeHeightPriorModel(XMLWriter writer) {
         if (nodeHeightPrior == CONSTANT) {
@@ -504,19 +522,61 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Writes the pattern lists
+     * @param writer the writer
      */
-    public void writePatternList(XMLWriter writer) {
+    public void writePatternLists(XMLWriter writer) {
+
+        partitionCount = getPartionCount(codonHeteroPattern);
 
         writer.writeText("");
-        if (alignment.getDataType() == Nucleotides.INSTANCE && codonHetero) {
-            for (int i = 1; i <= 3; i++) { writePatternList(i, 3, writer); }
+        if (alignment.getDataType() == Nucleotides.INSTANCE && codonHeteroPattern != null && partitionCount > 1) {
+
+            if (codonHeteroPattern.equals("112")) {
+                writer.writeComment("The unique patterns for codon positions 1 & 2");
+                writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
+                        new Attribute[] {
+                                new Attribute.Default("id", "patterns1+2"),
+                        }
+                );
+                writePatternList(1, 3, writer);
+                writePatternList(2, 3, writer);
+                writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
+
+                writePatternList(3, 3, writer);
+
+            } else {
+                // pattern is 123
+                // write pattern lists for all three codon positions
+                for (int i = 1; i <= 3; i++) {
+                    writePatternList(i, 3, writer);
+                }
+
+            }
         } else {
+            partitionCount = 1;
             writePatternList(-1, 0, writer);
         }
     }
 
+    private int getPartionCount(String codonPattern) {
+
+        if (codonPattern == null || codonPattern.equals("111")) {
+            return 1;
+        }
+        if (codonPattern.equals("123")) {
+            return 3;
+        }
+        if (codonPattern.equals("112")) {
+            return 2;
+        }
+        throw new IllegalArgumentException("codonPattern must be one of '111', '112' or '123'");
+    }
+
     /**
      * Write a single pattern list
+     * @param writer the writer
+     * @param from from site
+     * @param every skip every
      */
     private void writePatternList(int from, int every, XMLWriter writer) {
 
@@ -554,6 +614,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write tree model XML block.
+     * @param writer the writer
      */
     private void writeTreeModel(XMLWriter writer) {
 
@@ -587,6 +648,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Writes the substitution model to XML.
+     * @param writer the writer
      */
     public void writeSubstitutionModel(XMLWriter writer) {
 
@@ -625,28 +687,29 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeCloseTag(dr.evomodel.substmodel.HKY.KAPPA);
                 writer.writeCloseTag(dr.evomodel.substmodel.HKY.HKY_MODEL);
 
-            } else
+            } else {
                 // Hasegawa Kishino and Yano 85 model
                 if (nucSubstitutionModel == HKY) {
-
                     if (unlinkedSubstitutionModel) {
-                        for (int i = 1; i <= 3; i++) {
+                        for (int i = 1; i <= partitionCount; i++) {
                             writeHKYModel(i, writer);
                         }
                     } else {
                         writeHKYModel(-1, writer);
                     }
-                } else
+                } else {
                     // General time reversible model
                     if (nucSubstitutionModel == GTR) {
                         if (unlinkedSubstitutionModel) {
-                            for (int i = 1; i <= 3; i++) {
+                            for (int i = 1; i <= partitionCount; i++) {
                                 writeGTRModel(i, writer);
                             }
                         } else {
                             writeGTRModel(-1, writer);
                         }
                     }
+                }
+            }
         } else {
             // Amino Acid model
             String aaModel = "";
@@ -672,6 +735,8 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the HKY model XML block.
+     * @param num the model number
+     * @param writer the writer
      */
     public void writeHKYModel(int num, XMLWriter writer) {
         String id = "hky";
@@ -713,6 +778,8 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the GTR model XML block.
+     * @param num the model number
+     * @param writer the writer
      */
     public void writeGTRModel(int num, XMLWriter writer) {
         String id = "gtr";
@@ -770,16 +837,17 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the site model XML block.
+     * @param writer the writer
      */
     public void writeSiteModel(XMLWriter writer) {
         if (alignment.getDataType() == Nucleotides.INSTANCE) {
-            if (codonHetero) {
-                for (int i = 1; i <= 3; i++) {
+            if (codonHeteroPattern != null) {
+                for (int i = 1; i <= partitionCount; i++) {
                     writeNucSiteModel(i, writer);
                 }
                 writer.println();
                 writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[] {new Attribute.Default("id", "allMus")});
-                for (int i = 1; i <= 3; i++) {
+                for (int i = 1; i <= partitionCount; i++) {
                     writer.writeTag(ParameterParser.PARAMETER,
                             new Attribute[] {new Attribute.Default("idref", "siteModel" + i + ".mu")}, true);
                 }
@@ -794,6 +862,8 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the nucleotide site model XML block.
+     * @param num the model number
+     * @param writer the writer
      */
     public void writeNucSiteModel(int num, XMLWriter writer) {
 
@@ -859,6 +929,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the AA site model XML block.
+     * @param writer the writer
      */
     public void writeAASiteModel(XMLWriter writer) {
 
@@ -891,6 +962,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the relaxed clock branch rates block.
+     * @param writer the writer
      */
     public void writeBranchRatesModel(XMLWriter writer) {
         if (clockModel == STRICT_CLOCK) {
@@ -995,6 +1067,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the prior on node heights (coalescent or speciational models)
+     * @param writer the writer
      */
     public void writeNodeHeightPrior(XMLWriter writer) {
         if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
@@ -1066,6 +1139,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the boolean likelihood
+     * @param writer the writer
      */
     public void writeBooleanLikelihood(XMLWriter writer) {
         writer.writeOpenTag(
@@ -1101,11 +1175,14 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the tree likelihood XML block.
+     * @param writer the writer
      */
     public void writeTreeLikelihood(XMLWriter writer) {
         boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
-        if (nucs && codonHetero) {
-            for (int i = 1; i <= 3; i++) { writeTreeLikelihood(i, writer); }
+        if (nucs && codonHeteroPattern != null) {
+            for (int i = 1; i <= partitionCount; i++) {
+                writeTreeLikelihood(i, writer);
+            }
         } else {
             writeTreeLikelihood(-1, writer);
         }
@@ -1113,6 +1190,8 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the tree likelihood XML block.
+     * @param num the likelihood number
+     * @param writer the writer
      */
     public void writeTreeLikelihood(int num, XMLWriter writer) {
 
@@ -1121,7 +1200,15 @@ public class BeastGenerator extends BeautiOptions {
                     TreeLikelihood.TREE_LIKELIHOOD,
                     new Attribute[] { new Attribute.Default("id", "treeLikelihood" + num) }
             );
-            writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[] { new Attribute.Default("idref", "patterns" + num) }, true);
+            if (codonHeteroPattern.equals("112") ) {
+                if (num == 1) {
+                    writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[] { new Attribute.Default("idref", "patterns1+2") }, true);
+                } else {
+                    writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[] { new Attribute.Default("idref", "patterns3") }, true);
+                }
+            } else {
+                writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[] { new Attribute.Default("idref", "patterns" + num) }, true);
+            }
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute[] { new Attribute.Default("idref", "treeModel") }, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL, new Attribute[] { new Attribute.Default("idref", "siteModel" + num) }, true);
         } else {
@@ -1144,6 +1231,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Generate tmrca statistics
+     * @param writer the writer
      */
     public void writeTMRCAStatistics(XMLWriter writer) {
 
@@ -1166,6 +1254,8 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the operator schedule XML block.
+     * @param operators the list of operators
+     * @param writer the writer
      */
     public void writeOperatorSchedule(ArrayList operators, XMLWriter writer) {
         writer.writeOpenTag(
@@ -1360,6 +1450,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the timer report block.
+     * @param writer the writer
      */
     public void writeTimerReport(XMLWriter writer) {
         writer.writeOpenTag("report");
@@ -1371,6 +1462,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the trace analysis block.
+     * @param writer the writer
      */
     public void writeTraceAnalysis(XMLWriter writer) {
         writer.writeTag(
@@ -1384,6 +1476,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the MCMC block.
+     * @param writer the writer
      */
     public void writeMCMC(XMLWriter writer) {
         writer.writeOpenTag(
@@ -1423,8 +1516,8 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeOpenTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default("id", "likelihood"));
 
         boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
-        if (nucs && codonHetero) {
-            for (int i = 1; i <= 3; i++) {
+        if (nucs && codonHeteroPattern != null) {
+            for (int i = 1; i <= partitionCount; i++) {
                 writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref", "treeLikelihood" + i), true);
             }
         } else {
@@ -1529,6 +1622,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the priors for each parameter
+     * @param writer the writer
      */
     private void writeParameterPriors(XMLWriter writer) {
         ArrayList parameters = selectParameters();
@@ -1546,6 +1640,8 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the priors for each parameter
+     * @param parameter the parameter
+     * @param writer the writer
      */
     private void writeParameterPrior(Parameter parameter, XMLWriter writer) {
         switch (parameter.priorType) {
@@ -1616,6 +1712,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the log
+     * @param writer the writer
      */
     private void writeScreenLog(XMLWriter writer) {
         if (alignment != null) {
@@ -1643,17 +1740,38 @@ public class BeastGenerator extends BeautiOptions {
 
         if (alignment != null) {
             boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
-            if (nucs && codonHetero) {
-                for (int i =1; i <= 3; i++) {
+            if (nucs && codonHeteroPattern != null) {
+                if (codonHeteroPattern.equals("112")) {
                     writer.writeOpenTag(Columns.COLUMN,
                             new Attribute[] {
-                                    new Attribute.Default(Columns.LABEL, "L(codon pos "+i+")"),
+                                    new Attribute.Default(Columns.LABEL, "L(codon pos 1+2)"),
                                     new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
                                     new Attribute.Default(Columns.WIDTH, "12")
                             }
                     );
-                    writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood" + i), true);
+                    writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood1"), true);
                     writer.writeCloseTag(Columns.COLUMN);
+                    writer.writeOpenTag(Columns.COLUMN,
+                            new Attribute[] {
+                                    new Attribute.Default(Columns.LABEL, "L(codon pos 3)"),
+                                    new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
+                                    new Attribute.Default(Columns.WIDTH, "12")
+                            }
+                    );
+                    writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood2"), true);
+                    writer.writeCloseTag(Columns.COLUMN);
+                } else if (codonHeteroPattern.equals("123")) {
+                    for (int i =1; i <= 3; i++) {
+                        writer.writeOpenTag(Columns.COLUMN,
+                                new Attribute[] {
+                                        new Attribute.Default(Columns.LABEL, "L(codon pos "+i+")"),
+                                        new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
+                                        new Attribute.Default(Columns.WIDTH, "12")
+                                }
+                        );
+                        writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood" + i), true);
+                        writer.writeCloseTag(Columns.COLUMN);
+                    }
                 }
             } else {
                 writer.writeOpenTag(Columns.COLUMN,
@@ -1696,6 +1814,8 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the log
+     * @param verbose write a verbose log
+     * @param writer the writer
      */
     private void writeLog(boolean verbose, XMLWriter writer) {
         if (alignment != null) {
@@ -1703,15 +1823,43 @@ public class BeastGenerator extends BeautiOptions {
         }
         if (verbose && alignment != null) {
             boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
-            if (nucs && codonHetero) {
-                for (int i = 1; i <= 3; i++) {
-                    writer.writeTag(ParameterParser.PARAMETER,
-                            new Attribute.Default("idref","siteModel" + i + ".mu"), true);
+            if (nucs) {
+                if (partitionCount > 1) {
+                    for (int i = 1; i <= partitionCount; i++) {
+                        writer.writeTag(ParameterParser.PARAMETER,
+                                new Attribute.Default("idref","siteModel" + i + ".mu"), true);
+                    }
+                }
+                if (nucSubstitutionModel == HKY) {
+                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                        for (int i = 1; i <= partitionCount; i++) {
+                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","hky" + i + ".kappa"), true);
+                        }
+                    } else {
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","hky.kappa"), true);
+                    }
+                } else if (nucSubstitutionModel == GTR) {
+                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                        for (int i = 1; i <= partitionCount; i++) {
+                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr" + i + ".ac"), true);
+                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr" + i + ".ag"), true);
+                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr" + i + ".at"), true);
+                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr" + i + ".cg"), true);
+                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr" + i + ".gt"), true);
+                        }
+                    } else {
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr.ac"), true);
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr.ag"), true);
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr.at"), true);
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr.cg"), true);
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr.gt"), true);
+                    }
                 }
             }
+
             if (gammaHetero) {
-                if (nucs && codonHetero && unlinkedHeterogeneityModel) {
-                    for (int i=1; i <=3; i++) {
+                if (partitionCount > 1 && unlinkedHeterogeneityModel) {
+                    for (int i = 1; i <= partitionCount; i++) {
                         writer.writeTag(ParameterParser.PARAMETER,
                                 new Attribute.Default("idref","siteModel" + i + ".alpha"), true);
                     }
@@ -1719,9 +1867,10 @@ public class BeastGenerator extends BeautiOptions {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","siteModel.alpha"), true);
                 }
             }
+
             if (invarHetero) {
-                if (nucs && codonHetero && unlinkedHeterogeneityModel) {
-                    for (int i=1; i <=3; i++) {
+                if (partitionCount > 1 && unlinkedHeterogeneityModel) {
+                    for (int i = 1; i <= partitionCount; i++) {
                         writer.writeTag(ParameterParser.PARAMETER,
                                 new Attribute.Default("idref","siteModel" + i + ".pInv"), true);
                     }
@@ -1781,43 +1930,6 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","birthDeath.deathRate"), true);
             }
 
-            if (nucs) {
-                if (nucSubstitutionModel == HKY) {
-                    if (unlinkedSubstitutionModel) {
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","hky1.kappa"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","hky2.kappa"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","hky3.kappa"), true);
-                    } else {
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","hky.kappa"), true);
-                    }
-                } else if (nucSubstitutionModel == GTR) {
-                    if (unlinkedSubstitutionModel) {
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr1.ac"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr1.ag"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr1.at"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr1.cg"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr1.gt"), true);
-
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr2.ac"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr2.ag"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr2.at"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr2.cg"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr2.gt"), true);
-
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr3.ac"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr3.ag"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr3.at"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr3.cg"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr3.gt"), true);
-                    } else {
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr.ac"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr.ag"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr.at"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr.cg"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","gtr.gt"), true);
-                    }
-                }
-            }
         }
 
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","treeModel.rootHeight"), true);
@@ -1829,8 +1941,8 @@ public class BeastGenerator extends BeautiOptions {
 
         if (alignment != null) {
             boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
-            if (nucs && codonHetero) {
-                for (int i =1; i <= 3; i++) {
+            if (nucs && partitionCount > 1) {
+                for (int i =1; i <= partitionCount; i++) {
                     writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood" + i), true);
                 }
             } else writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood"), true);
@@ -1846,6 +1958,8 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * fix a parameter
+     * @param id the id
+     * @param value the value
      */
     public void fixParameter(String id, double value) {
         Parameter parameter = (Parameter)parameters.get(id);
@@ -1856,6 +1970,8 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * write a parameter
+     * @param id the id
+     * @param writer the writer
      */
     public void writeParameter(String id, XMLWriter writer) {
         Parameter parameter = (Parameter)parameters.get(id);
@@ -1873,6 +1989,9 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * write a parameter
+     * @param id the id
+     * @param dimension the dimension
+     * @param writer the writer
      */
     public void writeParameter(String id, int dimension, XMLWriter writer) {
         Parameter parameter = (Parameter)parameters.get(id);
@@ -1888,6 +2007,12 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * write a parameter
+     * @param id the id
+     * @param dimension the dimension
+     * @param value the value
+     * @param lower the lower bound
+     * @param upper the upper bound
+     * @param writer the writer
      */
     public void writeParameter(String id, int dimension, double value, double lower, double upper, XMLWriter writer) {
         ArrayList attributes = new ArrayList();
@@ -1915,6 +2040,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Generate XML for the starting tree
+     * @param writer the writer
      */
     public void writeStartingTree(XMLWriter writer) {
         if (userTree) {
@@ -2008,6 +2134,8 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Generate XML for the user tree
+     * @param tree the user tree
+     * @param writer the writer
      */
     private void writeUserTree(Tree tree, XMLWriter writer) {
 
@@ -2025,6 +2153,9 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Generate XML for the node of a user tree.
+     * @param tree the user tree
+     * @param node the current node
+     * @param writer the writer
      */
     private void writeNode(Tree tree, NodeRef node, XMLWriter writer) {
 
@@ -2041,9 +2172,5 @@ public class BeastGenerator extends BeautiOptions {
         }
         writer.writeCloseTag("node");
     }
-
-    ;
-
-    ;
 }
 

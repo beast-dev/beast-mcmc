@@ -62,7 +62,7 @@ public abstract class DocumentFrame extends AbstractFrame {
                     JOptionPane.WARNING_MESSAGE);
 
             if (option == JOptionPane.YES_OPTION) {
-                return doSave();
+                return !doSave();
             } else if (option == JOptionPane.CANCEL_OPTION || option == -1) {
                 return false;
             }

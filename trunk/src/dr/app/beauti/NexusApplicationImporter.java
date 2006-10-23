@@ -361,16 +361,16 @@ public class NexusApplicationImporter extends NexusImporter {
 	{
 		boolean done = false;
 		
-		options.codonHetero = true;
+		options.codonHeteroPattern = null;
 
 		while (!done) {
 			String subcommand = readToken("=;");
 			if (match("ON", subcommand, 1)) {
 				String token = readToken(";");
 				if (match("TRUE", token, 1)) {
-					options.codonHetero = true;
+					options.codonHeteroPattern = "123";
 				} else if (match("FALSE", token, 1)) {
-					options.codonHetero = false;
+					options.codonHeteroPattern = null;
 				} else {
 					throw new BadFormatException("Unknown value, '" + token + "'");
 				}

@@ -276,4 +276,8 @@ public final class AminoAcids extends DataType
 	public boolean isStopState(final int state) {
 		return state == getStopState();
 	}
+
+    static {
+        registerDataType(AminoAcids.DESCRIPTION, AminoAcids.INSTANCE);
+    }
 }

@@ -347,8 +347,12 @@ public class TraceAnalysis {
 			varStat += (2.0*(gammaStat[lag]+gammaStat[lag+1]));
 			varVarStat += (2.0*(varGammaStat[lag] + varGammaStat[lag+1]));
 			assVarCor += (2.0*((gammaStat[lag] * gammaStat[lag]) + (gammaStat[lag+1] * gammaStat[lag+1])) / (gammaStat[0] * gammaStat[0]));
-			if (gammaStat[lag]+gammaStat[lag+1] < gammaStat[lag+2]+gammaStat[lag+3] ) break;
-			lag += 2;
+
+            // this early exit may be leading to over-confident estimates of the ESS
+            // so it has been removed at Benjamin Redelings suggestion
+            //if (gammaStat[lag]+gammaStat[lag+1] < gammaStat[lag+2]+gammaStat[lag+3] ) break;
+
+            lag += 2;
 		}
 
 		// standard error of mean

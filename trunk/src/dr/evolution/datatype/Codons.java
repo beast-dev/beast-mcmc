@@ -273,21 +273,4 @@ public class Codons extends DataType {
 	private GeneticCode geneticCode;
 	private int[] stateMap;
 	private int[] reverseMap;
-
-    static {
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.UNIVERSAL.getName(), Codons.UNIVERSAL);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.VERTEBRATE_MT.getName(), Codons.VERTEBRATE_MT);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.YEAST.getName(), Codons.YEAST);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.MOLD_PROTOZOAN_MT.getName(), Codons.MOLD_PROTOZOAN_MT);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.MYCOPLASMA.getName(), Codons.MYCOPLASMA);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.INVERTEBRATE_MT.getName(), Codons.INVERTEBRATE_MT);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.CILIATE.getName(), Codons.CILIATE);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.ECHINODERM_MT.getName(), Codons.ECHINODERM_MT);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.EUPLOTID_NUC.getName(), Codons.EUPLOTID_NUC);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.BACTERIAL.getName(), Codons.BACTERIAL);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.ALT_YEAST.getName(), Codons.ALT_YEAST);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.ASCIDIAN_MT.getName(), Codons.ASCIDIAN_MT);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.FLATWORM_MT.getName(), Codons.FLATWORM_MT);
-        registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.BLEPHARISMA_NUC.getName(), Codons.BLEPHARISMA_NUC);
-    }
 }

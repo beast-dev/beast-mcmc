@@ -54,7 +54,37 @@ public abstract class DataType
     protected int ambiguousStateCount;
 
     // this map contains all dataTypes in the class loader that have added themselves
-    static private Map registeredDataTypes = new Hashtable();
+    static private Map registeredDataTypes = null;
+
+    /**
+     * Due to some unpleasant interactions between static initializations in the
+     * different classes, I have changed this to a lazy initialization.
+     */
+    private static void lazyRegisterDataTypes() {
+        if (registeredDataTypes == null) {
+            registeredDataTypes = new Hashtable();
+            registerDataType(Nucleotides.DESCRIPTION, Nucleotides.INSTANCE);
+            registerDataType(AminoAcids.DESCRIPTION, AminoAcids.INSTANCE);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.UNIVERSAL.getName(), Codons.UNIVERSAL);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.VERTEBRATE_MT.getName(), Codons.VERTEBRATE_MT);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.YEAST.getName(), Codons.YEAST);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.MOLD_PROTOZOAN_MT.getName(), Codons.MOLD_PROTOZOAN_MT);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.MYCOPLASMA.getName(), Codons.MYCOPLASMA);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.INVERTEBRATE_MT.getName(), Codons.INVERTEBRATE_MT);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.CILIATE.getName(), Codons.CILIATE);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.ECHINODERM_MT.getName(), Codons.ECHINODERM_MT);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.EUPLOTID_NUC.getName(), Codons.EUPLOTID_NUC);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.BACTERIAL.getName(), Codons.BACTERIAL);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.ALT_YEAST.getName(), Codons.ALT_YEAST);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.ASCIDIAN_MT.getName(), Codons.ASCIDIAN_MT);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.FLATWORM_MT.getName(), Codons.FLATWORM_MT);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.BLEPHARISMA_NUC.getName(), Codons.BLEPHARISMA_NUC);
+            registerDataType(TwoStates.DESCRIPTION, TwoStates.INSTANCE);
+            registerDataType(HiddenNucleotides.DESCRIPTION, HiddenNucleotides.INSTANCE);
+            registerDataType(TwoStateCovarion.DESCRIPTION, TwoStateCovarion.INSTANCE);
+        }
+    }
+
 
     /**
      * Registers a data type with a (hopefully unique) name.
@@ -62,6 +92,7 @@ public abstract class DataType
      * @param dataType
      */
     public static void registerDataType(String name, DataType dataType) {
+        lazyRegisterDataTypes();
         registeredDataTypes.put(name,dataType);
 
     }
@@ -71,10 +102,12 @@ public abstract class DataType
      * @return the datatype with the given name
      */
     public static DataType getRegisteredDataTypeByName(String name) {
+        lazyRegisterDataTypes();
         return (DataType)registeredDataTypes.get(name);
     }
 
     public static String[] getRegisteredDataTypeNames() {
+        lazyRegisterDataTypes();
         Set set = registeredDataTypes.keySet();
         List keys = new ArrayList(set);
         String[] names = new String[keys.size()];

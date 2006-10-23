@@ -149,4 +149,8 @@ public class TwoStateCovarion extends DataType {
 //        return 0;  //To change body of implemented methods use File | Settings | File Templates.
           return TYPE;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    static {
+        registerDataType(TwoStateCovarion.DESCRIPTION, TwoStateCovarion.INSTANCE);
+    }
 }

@@ -192,13 +192,16 @@ public class BeautiFrame extends DocumentFrame {
 
     public boolean requestClose() {
         if (isDirty()) {
-            int option = JOptionPane.showConfirmDialog(this, "You have made changes but have not generated\na BEAST XML file. Do you wish to generate\nbefore closing this window?",
+            int option = JOptionPane.showConfirmDialog(this,
+                    "You have made changes but have not generated\n" +
+                    "a BEAST XML file. Do you wish to generate\n" +
+                    "before closing this window?",
                     "Unused changes",
                     JOptionPane.YES_NO_CANCEL_OPTION,
                     JOptionPane.WARNING_MESSAGE);
 
             if (option == JOptionPane.YES_OPTION) {
-                return doGenerate();
+                return !doGenerate();
             } else if (option == JOptionPane.CANCEL_OPTION || option == -1) {
                 return false;
             }

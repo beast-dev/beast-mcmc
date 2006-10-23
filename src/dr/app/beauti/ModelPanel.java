@@ -30,6 +30,7 @@ import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 /**
  * @author			Andrew Rambaut
@@ -38,296 +39,354 @@ import javax.swing.*;
  */
 public class ModelPanel extends OptionsPanel implements Exportable {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 2778103564318492601L;
-	JComboBox nucSubstCombo = new JComboBox(new String[] {"HKY", "GTR"});
-	JComboBox aaSubstCombo = new JComboBox(new String[] {"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
-	JComboBox heteroCombo = new JComboBox(new String[] {"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
+    /**
+     *
+     */
+    private static final long serialVersionUID = 2778103564318492601L;
+    JComboBox nucSubstCombo = new JComboBox(new String[] {"HKY", "GTR"});
+    JComboBox aaSubstCombo = new JComboBox(new String[] {"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
+    JComboBox heteroCombo = new JComboBox(new String[] {"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
 
-	JComboBox gammaCatCombo = new JComboBox(new String[] {"4", "5", "6", "7", "8", "9", "10"});
-	JLabel gammaCatLabel;
+    JComboBox gammaCatCombo = new JComboBox(new String[] {"4", "5", "6", "7", "8", "9", "10"});
+    JLabel gammaCatLabel;
 
-	JCheckBox codingCheck = new JCheckBox("Partition into codon positions");
-	JCheckBox substUnlinkCheck = new JCheckBox("Unlink substitution model across codon positions");
-	JCheckBox heteroUnlinkCheck = new JCheckBox("Unlink rate heterogeneity model across codon positions");
-	JCheckBox freqsUnlinkCheck = new JCheckBox("Unlink base frequencies across codon positions");
+    JComboBox codingCombo = new JComboBox(new String[] {
+            "Off",
+            "2 partitions: codon positions (1 + 2), 3",
+            "3 partitions: codon positions 1, 2, 3"});
+    JCheckBox substUnlinkCheck = new JCheckBox("Unlink substitution model across codon positions");
+    JCheckBox heteroUnlinkCheck = new JCheckBox("Unlink rate heterogeneity model across codon positions");
+    JCheckBox freqsUnlinkCheck = new JCheckBox("Unlink base frequencies across codon positions");
 
-	JCheckBox fixedSubstitutionRateCheck = new JCheckBox("Fix mean substitution rate");
-	JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
-	RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+    JButton setSRD06Button;
 
-	JComboBox clockModelCombo = new JComboBox(new String[] {
-	    "Strict Clock",
-	    "Relaxed Clock: Uncorrelated Exponential",
-		"Relaxed Clock: Uncorrelated Lognormal" });
+    JCheckBox fixedSubstitutionRateCheck = new JCheckBox("Fix mean substitution rate");
+    JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
+    RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY);
 
-	BeautiFrame frame = null;
+    JComboBox clockModelCombo = new JComboBox(new String[] {
+            "Strict Clock",
+            "Relaxed Clock: Uncorrelated Exponential",
+            "Relaxed Clock: Uncorrelated Lognormal" });
 
-	boolean warningShown = false;
-	boolean hasSetFixedSubstitutionRate = false;
+    BeautiFrame frame = null;
 
-	boolean settingOptions = false;
+    boolean warningShown = false;
+    boolean hasSetFixedSubstitutionRate = false;
 
-	boolean hasAlignment = false;
-	boolean isNucleotides = true;
+    boolean settingOptions = false;
 
-	public ModelPanel(BeautiFrame parent) {
+    boolean hasAlignment = false;
+    boolean isNucleotides = true;
 
-		super(12, 18);
+    public ModelPanel(BeautiFrame parent) {
 
-		this.frame = parent;
+        super(12, 18);
 
-		setOpaque(false);
+        this.frame = parent;
 
-		substUnlinkCheck.setOpaque(false);
-		substUnlinkCheck.setEnabled(false);
-		heteroUnlinkCheck.setOpaque(false);
-		heteroUnlinkCheck.setEnabled(false);
-		freqsUnlinkCheck.setOpaque(false);
-		freqsUnlinkCheck.setEnabled(false);
+        setOpaque(false);
 
-		java.awt.event.ItemListener listener = new java.awt.event.ItemListener() {
-			public void itemStateChanged(java.awt.event.ItemEvent ev) {
-				frame.modelChanged();
-			}
-		};
+        substUnlinkCheck.setOpaque(false);
+        substUnlinkCheck.setEnabled(false);
+        substUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>substitution model parameters.</html>");
 
-		nucSubstCombo.setOpaque(false);
-		nucSubstCombo.addItemListener(listener);
-		aaSubstCombo.setOpaque(false);
-		aaSubstCombo.addItemListener(listener);
+        heteroUnlinkCheck.setOpaque(false);
+        heteroUnlinkCheck.setEnabled(false);
+        heteroUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>rate heterogeneity model parameters.</html>");
 
-		heteroCombo.setOpaque(false);
-		heteroCombo.addItemListener(
-			new java.awt.event.ItemListener() {
-				public void itemStateChanged(java.awt.event.ItemEvent ev) {
+        freqsUnlinkCheck.setOpaque(false);
+        freqsUnlinkCheck.setEnabled(false);
+        freqsUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>nucleotide frequency parameters.</html>");
 
-					frame.modelChanged();
+        java.awt.event.ItemListener listener = new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                frame.modelChanged();
+            }
+        };
 
-					if (heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3) {
-						gammaCatLabel.setEnabled(true);
-						gammaCatCombo.setEnabled(true);
-					} else {
-						gammaCatLabel.setEnabled(false);
-						gammaCatCombo.setEnabled(false);
-					}
-				}
-			}
-		);
+        nucSubstCombo.setOpaque(false);
+        nucSubstCombo.addItemListener(listener);
+        nucSubstCombo.setToolTipText("<html>Select the type of nucleotide substitution model.</html>");
 
-		gammaCatCombo.setOpaque(false);
-		gammaCatCombo.addItemListener(listener);
+        aaSubstCombo.setOpaque(false);
+        aaSubstCombo.addItemListener(listener);
+        aaSubstCombo.setToolTipText("<html>Select the type of amino acid substitution model.</html>");
 
-		codingCheck.setOpaque(false);
-		codingCheck.addItemListener(
-			new java.awt.event.ItemListener() {
-				public void itemStateChanged(java.awt.event.ItemEvent ev) {
+        heteroCombo.setOpaque(false);
+        heteroCombo.setToolTipText("<html>Select the type of site-specific rate<br>heterogeneity model.</html>");
+        heteroCombo.addItemListener(
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
 
-					frame.modelChanged();
+                        frame.modelChanged();
 
-					if (codingCheck.isSelected()) {
-						substUnlinkCheck.setEnabled(true);
-						heteroUnlinkCheck.setEnabled(true);
-						freqsUnlinkCheck.setEnabled(true);
-					} else {
-						substUnlinkCheck.setEnabled(false);
-						substUnlinkCheck.setSelected(false);
-						heteroUnlinkCheck.setEnabled(false);
-						heteroUnlinkCheck.setSelected(false);
-						freqsUnlinkCheck.setEnabled(false);
-						freqsUnlinkCheck.setSelected(false);
-					}
-				}
-			}
-		);
+                        if (heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3) {
+                            gammaCatLabel.setEnabled(true);
+                            gammaCatCombo.setEnabled(true);
+                        } else {
+                            gammaCatLabel.setEnabled(false);
+                            gammaCatCombo.setEnabled(false);
+                        }
+                    }
+                }
+        );
 
-		substUnlinkCheck.addItemListener(listener);
-		heteroUnlinkCheck.addItemListener(listener);
-		freqsUnlinkCheck.addItemListener(listener);
+        gammaCatCombo.setOpaque(false);
+        gammaCatCombo.setToolTipText("<html>Select the number of categories to use for<br>the discrete gamma rate heterogeneity model.</html>");
+        gammaCatCombo.addItemListener(listener);
 
-		fixedSubstitutionRateCheck.setOpaque(false);
-		fixedSubstitutionRateCheck.addItemListener(
-			new java.awt.event.ItemListener() {
-				public void itemStateChanged(java.awt.event.ItemEvent ev) {
-					boolean fixed = fixedSubstitutionRateCheck.isSelected();
-					substitutionRateLabel.setEnabled(fixed);
-					substitutionRateField.setEnabled(fixed);
-					hasSetFixedSubstitutionRate = true;
-					frame.modelChanged();
-				}
-			}
-		);
+        codingCombo.setOpaque(false);
+        codingCombo.setToolTipText("<html>Select how to partition the codon positions.</html>");
+        codingCombo.addItemListener(
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
 
-		substitutionRateField.addKeyListener(new java.awt.event.KeyAdapter() {
-			public void keyTyped(java.awt.event.KeyEvent ev) {
-				frame.mcmcChanged();
-			}});
+                        frame.modelChanged();
+
+                        if (codingCombo.getSelectedIndex() != 0) { // codon position partitioning
+                            substUnlinkCheck.setEnabled(true);
+                            heteroUnlinkCheck.setEnabled(true);
+                            freqsUnlinkCheck.setEnabled(true);
+                        } else {
+                            substUnlinkCheck.setEnabled(false);
+                            substUnlinkCheck.setSelected(false);
+                            heteroUnlinkCheck.setEnabled(false);
+                            heteroUnlinkCheck.setSelected(false);
+                            freqsUnlinkCheck.setEnabled(false);
+                            freqsUnlinkCheck.setSelected(false);
+                        }
+                    }
+                }
+        );
+
+        substUnlinkCheck.addItemListener(listener);
+        heteroUnlinkCheck.addItemListener(listener);
+        freqsUnlinkCheck.addItemListener(listener);
+
+        setSRD06Button = new JButton(setSRD06Action);
+        setSRD06Button.setOpaque(false);
+        setSRD06Button.setToolTipText("<html>Sets the SRD06 model as described in<br>" +
+                "Shapiro, Rambaut & Drummond (2006) <i>MBE</i> <b>23</b>: 7-9.</html>");
+        fixedSubstitutionRateCheck.setOpaque(false);
+        fixedSubstitutionRateCheck.setToolTipText(
+                "<html>Select this option to fix the substitution rate<br>" +
+                        "rather than try to infer it. If this option is<br>" +
+                        "turned off then either the sequences should have<br>" +
+                        "dates or the tree should have sufficient calibration<br>" +
+                        "informations specified as priors.</html>");
+        fixedSubstitutionRateCheck.addItemListener(
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                        boolean fixed = fixedSubstitutionRateCheck.isSelected();
+                        substitutionRateLabel.setEnabled(fixed);
+                        substitutionRateField.setEnabled(fixed);
+                        hasSetFixedSubstitutionRate = true;
+                        frame.modelChanged();
+                    }
+                }
+        );
+
+        substitutionRateField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent ev) {
+                frame.mcmcChanged();
+            }});
+        substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
 
         clockModelCombo.setOpaque(false);
+        clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
         clockModelCombo.addItemListener(listener);
 
-		setupPanel();
-	}
+        setupPanel();
+    }
 
-	private void setupPanel() {
+    private void setupPanel() {
 
-		removeAll();
+        removeAll();
 
-		if (hasAlignment) {
-			if (isNucleotides) {
-				addComponentWithLabel("Substitution Model:", nucSubstCombo);
-			} else {
-				addComponentWithLabel("Substitution Model:", aaSubstCombo);
-			}
+        if (hasAlignment) {
+            if (isNucleotides) {
+                addComponentWithLabel("Substitution Model:", nucSubstCombo);
+            } else {
+                addComponentWithLabel("Substitution Model:", aaSubstCombo);
+            }
 
-			addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
-			gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+            addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+            gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
 
-			if (isNucleotides) {
-				addSeparator();
+            if (isNucleotides) {
+                addSeparator();
 
-				addComponent(codingCheck);
+                addComponentWithLabel("Partition into codon positions", codingCombo);
 
-				addComponent(substUnlinkCheck);
-				addComponent(heteroUnlinkCheck);
-		//		addComponent(freqsUnlinkCheck);
-			}
+                addComponent(substUnlinkCheck);
+                addComponent(heteroUnlinkCheck);
+                //		addComponent(freqsUnlinkCheck);
+                addComponent(setSRD06Button);
+            }
 
-			addSeparator();
+            addSeparator();
 
-			addComponent(fixedSubstitutionRateCheck);
-			addComponents(substitutionRateLabel, substitutionRateField);
-			substitutionRateField.setColumns(10);
+            addComponent(fixedSubstitutionRateCheck);
+            addComponents(substitutionRateLabel, substitutionRateField);
+            substitutionRateField.setColumns(10);
 
-			addSeparator();
+            addSeparator();
         }
 
-		addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
+        addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
         validate();
         repaint();
-	}
+    }
 
-	public void setOptions(BeautiOptions options) {
+    private void setSRD06Model() {
+        nucSubstCombo.setSelectedIndex(0);
+        heteroCombo.setSelectedIndex(1);
+        codingCombo.setSelectedIndex(1);
+        substUnlinkCheck.setSelected(true);
+        heteroUnlinkCheck.setSelected(true);
+    }
 
-		settingOptions = true;
+    public void setOptions(BeautiOptions options) {
 
-		if (options.alignment != null) {
-			hasAlignment = true;
-			if (options.alignment.getDataType() == dr.evolution.datatype.Nucleotides.INSTANCE) {
+        settingOptions = true;
 
-				if (options.nucSubstitutionModel == BeautiOptions.GTR) {
-					nucSubstCombo.setSelectedIndex(1);
-				} else {
-					nucSubstCombo.setSelectedIndex(0);
-				}
+        if (options.alignment != null) {
+            hasAlignment = true;
+            if (options.alignment.getDataType() == dr.evolution.datatype.Nucleotides.INSTANCE) {
 
-				isNucleotides = true;
-			} else {
+                if (options.nucSubstitutionModel == BeautiOptions.GTR) {
+                    nucSubstCombo.setSelectedIndex(1);
+                } else {
+                    nucSubstCombo.setSelectedIndex(0);
+                }
 
-				aaSubstCombo.setSelectedIndex(options.aaSubstitutionModel);
-				isNucleotides = false;
-			}
-		} else {
-			hasAlignment = false;
-		}
+                isNucleotides = true;
+            } else {
 
-		if (options.gammaHetero && !options.invarHetero) {
-			heteroCombo.setSelectedIndex(1);
-		} else if (!options.gammaHetero && options.invarHetero) {
-			heteroCombo.setSelectedIndex(2);
-		} else if (options.gammaHetero && options.invarHetero) {
-			heteroCombo.setSelectedIndex(3);
-		} else {
-			heteroCombo.setSelectedIndex(0);
-		}
+                aaSubstCombo.setSelectedIndex(options.aaSubstitutionModel);
+                isNucleotides = false;
+            }
+        } else {
+            hasAlignment = false;
+        }
 
-		gammaCatCombo.setSelectedIndex(options.gammaCategories - 4);
+        if (options.gammaHetero && !options.invarHetero) {
+            heteroCombo.setSelectedIndex(1);
+        } else if (!options.gammaHetero && options.invarHetero) {
+            heteroCombo.setSelectedIndex(2);
+        } else if (options.gammaHetero && options.invarHetero) {
+            heteroCombo.setSelectedIndex(3);
+        } else {
+            heteroCombo.setSelectedIndex(0);
+        }
 
-		codingCheck.setSelected(options.codonHetero);
-		substUnlinkCheck.setSelected(options.unlinkedSubstitutionModel);
-		heteroUnlinkCheck.setSelected(options.unlinkedHeterogeneityModel);
-		freqsUnlinkCheck.setSelected(options.unlinkedFrequencyModel);
+        gammaCatCombo.setSelectedIndex(options.gammaCategories - 4);
 
-		hasSetFixedSubstitutionRate = options.hasSetFixedSubstitutionRate;
-		if (!hasSetFixedSubstitutionRate) {
-			if (options.maximumTipHeight > 0.0) {
-				options.meanSubstitutionRate = 0.001;
-				options.fixedSubstitutionRate = false;
-			} else {
-				options.meanSubstitutionRate = 1.0;
-				options.fixedSubstitutionRate = true;
-			}
-		}
+        if (options.codonHeteroPattern == null) {
+            codingCombo.setSelectedIndex(0);
+        } else if (options.codonHeteroPattern.equals("112")) {
+            codingCombo.setSelectedIndex(1);
+        } else {
+            codingCombo.setSelectedIndex(2);
+        }
 
-		fixedSubstitutionRateCheck.setSelected(options.fixedSubstitutionRate);
-		substitutionRateField.setValue(options.meanSubstitutionRate);
-		substitutionRateField.setEnabled(options.fixedSubstitutionRate);
+        substUnlinkCheck.setSelected(options.unlinkedSubstitutionModel);
+        heteroUnlinkCheck.setSelected(options.unlinkedHeterogeneityModel);
+        freqsUnlinkCheck.setSelected(options.unlinkedFrequencyModel);
 
-		clockModelCombo.setSelectedIndex(options.clockModel);
+        hasSetFixedSubstitutionRate = options.hasSetFixedSubstitutionRate;
+        if (!hasSetFixedSubstitutionRate) {
+            if (options.maximumTipHeight > 0.0) {
+                options.meanSubstitutionRate = 0.001;
+                options.fixedSubstitutionRate = false;
+            } else {
+                options.meanSubstitutionRate = 1.0;
+                options.fixedSubstitutionRate = true;
+            }
+        }
 
-		setupPanel();
+        fixedSubstitutionRateCheck.setSelected(options.fixedSubstitutionRate);
+        substitutionRateField.setValue(options.meanSubstitutionRate);
+        substitutionRateField.setEnabled(options.fixedSubstitutionRate);
 
-		settingOptions = false;
+        clockModelCombo.setSelectedIndex(options.clockModel);
 
-		validate();
-		repaint();
-	}
+        setupPanel();
 
-	public void getOptions(BeautiOptions options) {
+        settingOptions = false;
 
-		// This prevents options be overwritten due to listeners calling
-		// this function (indirectly through modelChanged()) whilst in the
-		// middle of the setOptions() method.
-		if (settingOptions) return;
+        validate();
+        repaint();
+    }
 
-		if (nucSubstCombo.getSelectedIndex() == 1) {
-			options.nucSubstitutionModel = BeautiOptions.GTR;
-		} else {
-			options.nucSubstitutionModel = BeautiOptions.HKY;
-		}
-		options.aaSubstitutionModel = aaSubstCombo.getSelectedIndex();
+    public void getOptions(BeautiOptions options) {
 
-		if (heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3) {
-			options.gammaHetero = true;
-		} else {
-			options.gammaHetero = false;
-		}
+        // This prevents options be overwritten due to listeners calling
+        // this function (indirectly through modelChanged()) whilst in the
+        // middle of the setOptions() method.
+        if (settingOptions) return;
 
-		if (heteroCombo.getSelectedIndex() == 2 || heteroCombo.getSelectedIndex() == 3) {
-			options.invarHetero = true;
-		} else {
-			options.invarHetero = false;
-		}
+        if (nucSubstCombo.getSelectedIndex() == 1) {
+            options.nucSubstitutionModel = BeautiOptions.GTR;
+        } else {
+            options.nucSubstitutionModel = BeautiOptions.HKY;
+        }
+        options.aaSubstitutionModel = aaSubstCombo.getSelectedIndex();
 
-		options.gammaCategories = gammaCatCombo.getSelectedIndex() + 4;
+        if (heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3) {
+            options.gammaHetero = true;
+        } else {
+            options.gammaHetero = false;
+        }
 
-		options.codonHetero = codingCheck.isSelected();
-		options.unlinkedSubstitutionModel = substUnlinkCheck.isSelected();
-		options.unlinkedHeterogeneityModel = heteroUnlinkCheck.isSelected();
-		options.unlinkedFrequencyModel = freqsUnlinkCheck.isSelected();
+        if (heteroCombo.getSelectedIndex() == 2 || heteroCombo.getSelectedIndex() == 3) {
+            options.invarHetero = true;
+        } else {
+            options.invarHetero = false;
+        }
 
-		options.hasSetFixedSubstitutionRate = hasSetFixedSubstitutionRate;
-		options.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
-		options.meanSubstitutionRate = substitutionRateField.getValue().doubleValue();
+        options.gammaCategories = gammaCatCombo.getSelectedIndex() + 4;
 
-		boolean fixed = fixedSubstitutionRateCheck.isSelected();
-		if (!warningShown && !fixed && options.maximumTipHeight == 0.0) {
-			JOptionPane.showMessageDialog(frame,
-			        "You have chosen to sample substitution rates but all \n"+
-			        "the sequences have the same date. In order for this to \n"+
-			        "work, a strong prior is required on the substitution\n"+
-			        "rate or the root of the tree.",
-			        "Warning",
-			        JOptionPane.WARNING_MESSAGE);
-			warningShown = true;
-		}
+        if (codingCombo.getSelectedIndex() == 0) {
+            options.codonHeteroPattern = null;
+        } else if (codingCombo.getSelectedIndex() == 1) {
+            options.codonHeteroPattern = "112";
+        } else {
+            options.codonHeteroPattern = "123";
+        }
 
-		options.clockModel = clockModelCombo.getSelectedIndex();
-	}
+        options.unlinkedSubstitutionModel = substUnlinkCheck.isSelected();
+        options.unlinkedHeterogeneityModel = heteroUnlinkCheck.isSelected();
+        options.unlinkedFrequencyModel = freqsUnlinkCheck.isSelected();
+
+        options.hasSetFixedSubstitutionRate = hasSetFixedSubstitutionRate;
+        options.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
+        options.meanSubstitutionRate = substitutionRateField.getValue().doubleValue();
+
+        boolean fixed = fixedSubstitutionRateCheck.isSelected();
+        if (!warningShown && !fixed && options.maximumTipHeight == 0.0) {
+            JOptionPane.showMessageDialog(frame,
+                    "You have chosen to sample substitution rates but all \n"+
+                            "the sequences have the same date. In order for this to \n"+
+                            "work, a strong prior is required on the substitution\n"+
+                            "rate or the root of the tree.",
+                    "Warning",
+                    JOptionPane.WARNING_MESSAGE);
+            warningShown = true;
+        }
+
+        options.clockModel = clockModelCombo.getSelectedIndex();
+    }
 
     public JComponent getExportableComponent() {
-		return this;
-	}
+        return this;
+    }
+
+    private Action setSRD06Action = new AbstractAction("Use SRD06 Model") {
+        public void actionPerformed(ActionEvent actionEvent) {
+            setSRD06Model();
+        }
+    };
+
 }

@@ -199,8 +199,4 @@ package dr.evolution.datatype;
 	public String getDescription() { return "Hidden-state Nucleotides"; }	
 		
 	private int hiddenStateCount;
-
-    static {
-        registerDataType(HiddenNucleotides.DESCRIPTION, HiddenNucleotides.INSTANCE);
-    }
 }

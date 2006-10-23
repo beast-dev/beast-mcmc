@@ -190,7 +190,4 @@ public class Nucleotides extends DataType {
 		return TYPE;
 	}
 
-    static {
-        registerDataType(Nucleotides.DESCRIPTION, Nucleotides.INSTANCE);
-    }
 }

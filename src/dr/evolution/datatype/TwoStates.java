@@ -149,7 +149,4 @@ public class TwoStates extends DataType {
 		return TYPE;
 	}
 
-    static {
-        registerDataType(TwoStates.DESCRIPTION, TwoStates.INSTANCE);
-    }
 }

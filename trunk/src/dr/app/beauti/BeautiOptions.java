@@ -10,18 +10,23 @@ package dr.app.beauti;
 
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.AminoAcids;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
+import dr.evolution.datatype.TwoStates;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
-import dr.evolution.util.Date;
 import dr.util.NumberFormatter;
 import org.jdom.Document;
 import org.jdom.Element;
 
-import java.util.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author rambaut
@@ -1074,12 +1079,6 @@ public class BeautiOptions {
 
             try {
                 if (guessDateFromOrder) {
-                    fromLast = false;
-                    if (order > 3) {
-                        fromLast = true;
-                        order = 8 - order - 1;
-                    }
-
                     d = guessDateFromOrder(originalAlignment.getTaxonId(i), order, fromLast);
                 } else {
                     d = guessDateFromPrefix(originalAlignment.getTaxonId(i), prefix);

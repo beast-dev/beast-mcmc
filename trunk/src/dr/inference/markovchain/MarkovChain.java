@@ -288,6 +288,7 @@ public final class MarkovChain {
                 return Double.NEGATIVE_INFINITY;
             }
 
+
             logPosterior += logPrior;
         }
 

@@ -45,9 +45,16 @@ import java.io.*;
  */
 public class BeautiTester {
 
-	public BeautiTester() {
+    PrintWriter scriptWriter;
+
+    public BeautiTester() {
         BeastGenerator beautiOptions = createOptions();
 
+        try {
+            scriptWriter = new PrintWriter(new FileWriter("tests/run_script.sh"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         importFromFile("examples/Primates.nex", beautiOptions);
 
         buildNucModels("tests/pri_", beautiOptions);
@@ -58,7 +65,9 @@ public class BeautiTester {
 
         buildNucModels("tests/den_", beautiOptions);
         buildAAModels("tests/den_", beautiOptions);
-	}
+
+        scriptWriter.close();
+    }
 
     public BeastGenerator createOptions() {
 
@@ -206,7 +215,7 @@ public class BeautiTester {
         buildClockModels(key+"+XG", beautiOptions);
 
         beautiOptions.nodeHeightPrior = BeautiOptions.SKYLINE;
-        beautiOptions.skylineGroupCount = 5;
+        beautiOptions.skylineGroupCount = 3;
         beautiOptions.skylineModel = BeautiOptions.CONSTANT_SKYLINE;
         buildClockModels(key+"+SKC", beautiOptions);
 
@@ -237,6 +246,8 @@ public class BeautiTester {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        scriptWriter.println("beast " + fileName);
     }
 
     protected void importFromFile(String fileName, BeastGenerator beautiOptions) {

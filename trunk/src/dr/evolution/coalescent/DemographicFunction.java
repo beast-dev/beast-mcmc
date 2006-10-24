@@ -102,6 +102,11 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 	
 	public abstract class Abstract implements DemographicFunction
 	{
+        private static final double LARGE_POSITIVE_NUMBER = 1.0e50;
+        private static final double LARGE_NEGATIVE_NUMBER = -1.0e50;
+        private static final double INTEGRATION_PRECISION = 1.0e-5;
+        private static final double INTEGRATION_MAX_ITERATIONS = 50;
+
         // With the release of commons-maths 1.2 we will be able to use this...
         // RombergIntegrator numericalIntegrator;
         
@@ -124,69 +129,74 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 			return getIntensity(finish) - getIntensity(start);
 		}
 			
-		/**
-		 * Numerically estimates the integral between start and finish.
-		 */
-		public double getNumericalIntegral(double start, double finish) {
-
-			int slices = 99;
-			double[] intensities = new double[slices];
-
-			for (int i =0; i < intensities.length; i++) {
-				double time = start + (i*finish / (slices-1));
-				intensities[i] = 1.0 / getDemographic(time);
-			}
-			double integral = simpsonSum(intensities) * (finish-start);
-			return integral;
-		}
-        
         /**
-         * This function is copied from the numericalMethods library which is distributed under
-         * the following licence:
-         *
-         JTEM - Java Tools for Experimental Mathematics
-         Copyright (C) 2001 JTEM-Group
-
-         This program is free software; you can redistribute it and/or modify
-         it under the terms of the GNU General Public License as published by
-         the Free Software Foundation; either version 2 of the License, or
-         any later version.
-
-         This program is distributed in the hope that it will be useful,
-         but WITHOUT ANY WARRANTY; without even the implied warranty of
-         MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-         GNU General Public License for more details.
-
-         You should have received a copy of the GNU General Public License
-         along with this program; if not, write to the Free Software
-         Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-         *
-         * Computes Newton-Cotes formula using Simpson's rule.
-         * Order 5 method; integrates polynoms up to order 3 exactly.
-         * @param value table of legnth 1 + 2n with n>0, equally spaced interval of length one
-         * @return integral of tabled (equally spaced, interval length 1) function
+         * Returns the integral of 1/N(x) between start and finish, calling either the getAnalyticalIntegral or
+         * getNumericalIntegral function as appropriate.
          */
-        public static double simpsonSum(double[] value) {
+		public double getNumericalIntegral(double start, double finish) {
+        
+            double lastST = LARGE_NEGATIVE_NUMBER;
+            double lastS = LARGE_NEGATIVE_NUMBER;
 
-          if (value.length % 2 != 1) {
-            throw new IllegalArgumentException("length of array have to be odd");
-          }
+            assert(finish > start);
 
-          int n = value.length - 1;
+            for (int j = 1; j <= INTEGRATION_MAX_ITERATIONS; j++) {
+                // iterate doTrapezoid() until answer obtained
 
-          double mod0Sum = value[n];
-          double mod1Sum = 0;
+                double st = doTrapezoid(j, start, finish, lastST);
+                double s = (4.0 * st - lastST) / 3.0;
 
-          for (int i = 0; i < n; ) {
-            mod0Sum += value[i++];
-            mod1Sum += value[i++];
-          }
+                // If answer is within desired accuracy then return
+                if (Math.abs(s - lastS) < INTEGRATION_PRECISION * Math.abs(lastS)) {
+                    return s;
+                }
+                lastS = s;
+                lastST = st;
+            }
 
-          mod0Sum = 2 * mod0Sum - value[0] - value[n];
-
-          return (mod0Sum + 4 * mod1Sum) / 6 / (n / 2);
+            throw new RuntimeException("Too many iterations in getNumericalIntegral");
         }
 
+        /**
+         * Performs the trapezoid rule.
+         */
+        private double doTrapezoid(int n, double low, double high, double lastS) {
+
+            double s;
+
+            if (n == 1) {
+                // On the first iteration s is reset
+                double demoLow = getDemographic(low); // Value of N(x) obtained here
+                assert(demoLow > 0.0);
+
+                double demoHigh = getDemographic(high);
+                assert(demoHigh > 0.0);
+
+                s = 0.5 * (high - low) * ( (1.0 / demoLow) + (1.0 / demoHigh) );
+            } else {
+                int it=1;
+                for (int j = 1; j < n - 1; j++) {
+                    it *= 2;
+                }
+
+                double tnm = it;	// number of points
+                double del = (high - low) / tnm;	// width of spacing between points
+
+                double x = low + 0.5 * del;
+
+                double sum = 0.0;
+                for (int j = 1; j <= it; j++) {
+                    double demoX = getDemographic(x); // Value of N(x) obtained here
+                    assert(demoX > 0.0);
+
+                    sum += (1.0 / demoX);
+                    x += del;
+                }
+                s =  0.5 * (lastS + (high - low) * sum / tnm);	// New s uses previous s value
+            }
+
+            return s;
+        }
 
         // **************************************************************
 	    // UnivariateRealFunction IMPLEMENTATION

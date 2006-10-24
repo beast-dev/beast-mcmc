@@ -69,6 +69,8 @@ public final class MarkovChain {
         this.schedule = schedule;
         this.acceptor = acceptor;
         this.useCoercion = useCoercion;
+
+        currentScore = evaluate(likelihood, prior);
     }
 
     /**
@@ -101,7 +103,7 @@ public final class MarkovChain {
         }
 
         if (currentScore == Double.NEGATIVE_INFINITY) {
-            throw new RuntimeException("The initial model is invalid because it has zero likelihood!");
+            throw new IllegalArgumentException("The initial model is invalid because it has zero likelihood!");
         }
 
         pleaseStop = false;

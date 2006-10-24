@@ -26,14 +26,14 @@
 package dr.inference.mcmc;
 
 import dr.inference.loggers.Logger;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.prior.Prior;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
-import dr.inference.operators.OperatorSchedule;
-import dr.inference.operators.MCMCOperator;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
 import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorSchedule;
+import dr.inference.prior.Prior;
 import dr.util.Identifiable;
 import dr.util.NumberFormatter;
 import dr.xml.*;
@@ -80,7 +80,7 @@ public class MCMC implements Runnable, Identifiable {
 		while ((getChainLength() / stepsPerReport) > 1000) {
 			stepsPerReport *= 2;
 		}
-	}
+    }
 
     public MarkovChain getMarkovChain() {
         return mc;
@@ -363,7 +363,15 @@ public class MCMC implements Runnable, Identifiable {
 
 			mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, opsched, loggerArray);
 
-			return mcmc;
+            MarkovChain mc = mcmc.getMarkovChain();
+            double initialScore = mc.getCurrentScore();
+
+            if (initialScore == Double.NEGATIVE_INFINITY) {
+                throw new IllegalArgumentException("The initial model is invalid because it has zero likelihood!");
+            }
+
+
+            return mcmc;
 		}
 
 		//************************************************************************

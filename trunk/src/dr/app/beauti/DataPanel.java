@@ -53,7 +53,7 @@ import java.util.GregorianCalendar;
 public class DataPanel extends JPanel implements Exportable {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 5283922195494563924L;
 	JScrollPane scrollPane = new JScrollPane();
@@ -120,6 +120,7 @@ public class DataPanel extends JPanel implements Exportable {
 		scrollPane.setOpaque(false);
 
 		clearDatesAction.setEnabled(false);
+
 		guessDatesAction.setEnabled(false);
 		unitsCombo.setOpaque(false);
 		unitsCombo.setEnabled(false);
@@ -486,7 +487,7 @@ public class DataPanel extends JPanel implements Exportable {
 
 	public class ClearDatesAction extends AbstractAction {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -7281309694753868635L;
 
@@ -500,7 +501,7 @@ public class DataPanel extends JPanel implements Exportable {
 
 	public class GuessDatesAction extends AbstractAction {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 8514706149822252033L;
 
@@ -546,7 +547,7 @@ public class DataPanel extends JPanel implements Exportable {
 	class DataTableModel extends AbstractTableModel {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -6707994233020715574L;
 		String[] columnNames = { "Name", "Date", "Height", "Sequence" };

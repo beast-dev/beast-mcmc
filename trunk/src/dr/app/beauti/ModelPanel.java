@@ -89,7 +89,9 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
         substUnlinkCheck.setOpaque(false);
         substUnlinkCheck.setEnabled(false);
-        substUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>substitution model parameters.</html>");
+        substUnlinkCheck.setToolTipText("" +
+		        "<html>Gives each codon position partition different<br>" +
+		        "substitution model parameters.</html>");
 
         heteroUnlinkCheck.setOpaque(false);
         heteroUnlinkCheck.setEnabled(false);

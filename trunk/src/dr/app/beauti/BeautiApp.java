@@ -40,7 +40,8 @@ public class BeautiApp extends MultiDocApplication {
     // Main entry point
     static public void main(String[] args) {
 
-        if (args.length > 0) {
+
+        if (args.length > 1) {
 
             if (args.length != 3) {
                 System.err.println("Usage: beauti <input_file> <template_file> <output_file>");
@@ -55,6 +56,10 @@ public class BeautiApp extends MultiDocApplication {
 
         } else {
 
+	        if (args.length == 1 && args[0].equalsIgnoreCase("-developer")) {
+		        developer = true;
+	        }
+	        
             System.setProperty("com.apple.macos.useScreenMenuBar","true");
             System.setProperty("apple.laf.useScreenMenuBar","true");
 
@@ -104,4 +109,5 @@ public class BeautiApp extends MultiDocApplication {
         }
     }
 
+	public static boolean developer = false;
 }

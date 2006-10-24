@@ -27,16 +27,17 @@ package dr.app.beast;
 
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
-import dr.util.Version;
-import dr.util.MessageLogHandler;
-import dr.xml.XMLParser;
 import dr.math.MathUtils;
+import dr.util.MessageLogHandler;
+import dr.util.Version;
+import dr.xml.XMLParser;
+import org.virion.jam.util.IconUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.logging.*;
-
-import org.virion.jam.util.IconUtils;
 
 public class BeastMain {
 
@@ -66,8 +67,9 @@ public class BeastMain {
             return;
         }
 
+        String fileName = inputFile.getName();
+
         try {
-            String fileName = inputFile.getName();
 
             FileReader fileReader = new FileReader(inputFile);
             System.out.println(fileReader.getEncoding());
@@ -109,16 +111,19 @@ public class BeastMain {
             Logger.getLogger("dr.apps.beast").severe("File error: " + ioe.getMessage());
         } catch (org.xml.sax.SAXParseException spe) {
             if (spe.getMessage() != null && spe.getMessage().equals("Content is not allowed in prolog")) {
-                Logger.getLogger("dr.apps.beast").severe("Parsing error - the input file is not a valid XML file.");
+                Logger.getLogger("dr.apps.beast").severe("Parsing error - the input file, " + fileName + ", is not a valid XML file.");
             } else {
+                Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
                 Logger.getLogger("dr.apps.beast").severe("Parsing error - poorly formed XML (possibly not an XML file):\n" +
                         spe.getMessage());
             }
         } catch (org.w3c.dom.DOMException dome) {
+            Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
             Logger.getLogger("dr.apps.beast").severe("Parsing error - poorly formed XML:\n" +
                     dome.getMessage());
         } catch (dr.xml.XMLParseException pxe) {
             if (pxe.getMessage() != null && pxe.getMessage().equals("Unknown root document element, beauti")) {
+                Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
                 Logger.getLogger("dr.apps.beast").severe("The file you just tried to run in BEAST is actually a BEAUti document.\n" +
                         "Although this uses XML, it is not a format that BEAST understands.\n" +
                         "These files are used by BEAUti to save and load your settings so that\n" +
@@ -127,12 +132,13 @@ public class BeastMain {
                         "the button at the bottom right of the window.");
 
             } else {
-                Logger.getLogger("dr.apps.beast").severe("Parsing error - poorly formed BEAST file:\n" +
+                Logger.getLogger("dr.apps.beast").severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
                         pxe.getMessage());
             }
 
         } catch (RuntimeException rex) {
             if (rex.getMessage() != null && rex.getMessage().startsWith("The initial model is invalid")) {
+                Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
                 Logger.getLogger("dr.apps.beast").severe("The initial model is invalid because state has a zero likelihood.\n" +
                         "This may be because the initial, random tree is so large that it\n" +
                         "has an extremely bad likelihood which is being rounded to zero.\n" +
@@ -143,12 +149,14 @@ public class BeastMain {
                         "For more information go to <http://evolve.zoo.ox.ac.uk/beast/help/>.");
 
             } else {
+                Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
                 Logger.getLogger("dr.apps.beast").severe("Fatal exception (email the authors)");
                 System.err.println("Fatal exception (email the authors)");
                 rex.printStackTrace(System.err);
             }
 
         } catch (Exception ex) {
+            Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
             Logger.getLogger("dr.apps.beast").severe("Fatal exception (email the authors)");
             System.err.println("Fatal exception (email the authors)");
             ex.printStackTrace(System.err);

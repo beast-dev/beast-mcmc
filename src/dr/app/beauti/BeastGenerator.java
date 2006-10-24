@@ -301,6 +301,9 @@ public class BeastGenerator extends BeautiOptions {
      * @param writer the writer
      */
     public void writeNodeHeightPriorModel(XMLWriter writer) {
+
+        String initialPopSize = null;
+
         if (nodeHeightPrior == CONSTANT) {
 
             writer.writeComment("A prior assumption that the population size has remained constant");
@@ -386,24 +389,7 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeCloseTag(LogisticGrowthModel.LOGISTIC_GROWTH_MODEL);
 
-            writer.writeText("");
-            writer.writeComment("This is a simple constant population size coalescent model");
-            writer.writeComment("that is used to generate an initial tree for the chain.");
-            writer.writeOpenTag(
-                    ConstantPopulationModel.CONSTANT_POPULATION_MODEL,
-                    new Attribute[] {
-                            new Attribute.Default("id", "initialDemo"),
-                            new Attribute.Default("units", Units.Utils.getDefaultUnitName(units))
-                    }
-            );
-
-            writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
-            writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute[] {
-                            new Attribute.Default("idref", "logistic.popSize"),
-                    }, true);
-            writer.writeCloseTag(ConstantPopulationModel.POPULATION_SIZE);
-            writer.writeCloseTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL);
+            initialPopSize = "logistic.popSize";
 
         } else if (nodeHeightPrior == EXPANSION) {
             // generate an exponential prior tree
@@ -442,82 +428,76 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeCloseTag(ExpansionModel.EXPANSION_MODEL);
 
+            initialPopSize = "expansion.popSize";
+
+        } else if (nodeHeightPrior == YULE) {
             writer.writeText("");
-            writer.writeComment("This is a simple constant population size coalescent model");
-            writer.writeComment("that is used to generate an initial tree for the chain.");
+            writer.writeComment("A prior on the distribution node heights defined given");
+            writer.writeComment("a Yule speciation process (a pure birth process).");
             writer.writeOpenTag(
-                    ConstantPopulationModel.CONSTANT_POPULATION_MODEL,
+                    YuleModel.YULE_MODEL,
                     new Attribute[] {
-                            new Attribute.Default("id", "initialDemo"),
+                            new Attribute.Default("id", "yule"),
                             new Attribute.Default("units", Units.Utils.getDefaultUnitName(units))
                     }
             );
 
-            writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
-            writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute[] {
-                            new Attribute.Default("idref", "expansion.popSize"),
-                    }, true);
-            writer.writeCloseTag(ConstantPopulationModel.POPULATION_SIZE);
-            writer.writeCloseTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL);
-
-        } else { // (nodeHeightPrior == SKYLINE || nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH || nodeHeightPrior == NONE)
-            writer.writeComment("This is a simple constant population size coalescent model");
-            writer.writeComment("that is used to generate an initial tree for the chain.");
+            writer.writeOpenTag(YuleModel.BIRTH_RATE);
+            writeParameter("yule.birthRate", writer);
+            writer.writeCloseTag(YuleModel.BIRTH_RATE);
+            writer.writeCloseTag(YuleModel.YULE_MODEL);
+        } else if (nodeHeightPrior == BIRTH_DEATH) {
+            writer.writeText("");
+            writer.writeComment("A prior on the distribution node heights defined given");
+            writer.writeComment("a Birth-Death speciation process (Yang & Rannala, 1997).");
             writer.writeOpenTag(
-                    ConstantPopulationModel.CONSTANT_POPULATION_MODEL,
+                    BirthDeathModel.BIRTH_DEATH_MODEL,
                     new Attribute[] {
-                            new Attribute.Default("id", "initialDemo"),
+                            new Attribute.Default("id", "birthDeath"),
                             new Attribute.Default("units", Units.Utils.getDefaultUnitName(units))
                     }
             );
 
-            writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
-            writeParameter("initialDemo.popSize", 1, 100.0, Double.NaN, Double.NaN, writer);
-            writer.writeCloseTag(ConstantPopulationModel.POPULATION_SIZE);
-            writer.writeCloseTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL);
-
-            if (nodeHeightPrior == YULE) {
-                writer.writeText("");
-                writer.writeComment("A prior on the distribution node heights defined given");
-                writer.writeComment("a Yule speciation process (a pure birth process).");
-                writer.writeOpenTag(
-                        YuleModel.YULE_MODEL,
-                        new Attribute[] {
-                                new Attribute.Default("id", "yule"),
-                                new Attribute.Default("units", Units.Utils.getDefaultUnitName(units))
-                        }
-                );
-
-                writer.writeOpenTag(YuleModel.BIRTH_RATE);
-                writeParameter("yule.birthRate", writer);
-                writer.writeCloseTag(YuleModel.BIRTH_RATE);
-                writer.writeCloseTag(YuleModel.YULE_MODEL);
-            } else if (nodeHeightPrior == BIRTH_DEATH) {
-                writer.writeText("");
-                writer.writeComment("A prior on the distribution node heights defined given");
-                writer.writeComment("a Birth-Death speciation process (Yang & Rannala, 1997).");
-                writer.writeOpenTag(
-                        BirthDeathModel.BIRTH_DEATH_MODEL,
-                        new Attribute[] {
-                                new Attribute.Default("id", "birthDeath"),
-                                new Attribute.Default("units", Units.Utils.getDefaultUnitName(units))
-                        }
-                );
-
-                writer.writeOpenTag(BirthDeathModel.BIRTH_RATE);
-                writeParameter("birthDeath.birthRate", writer);
-                writer.writeCloseTag(BirthDeathModel.BIRTH_RATE);
-                writer.writeOpenTag(BirthDeathModel.DEATH_RATE);
-                writeParameter("birthDeath.deathRate", writer);
-                writer.writeCloseTag(BirthDeathModel.DEATH_RATE);
-                writer.writeOpenTag(BirthDeathModel.SAMPLING_PROPORTION);
-                // We are not sampling this parameter so use a fixed value
-                writeParameter("birthDeath.samplingProportion", 1, birthDeathSamplingProportion, Double.NaN, Double.NaN, writer);
-                writer.writeCloseTag(BirthDeathModel.SAMPLING_PROPORTION);
-                writer.writeCloseTag(BirthDeathModel.BIRTH_DEATH_MODEL);
-            }
+            writer.writeOpenTag(BirthDeathModel.BIRTH_RATE);
+            writeParameter("birthDeath.birthRate", writer);
+            writer.writeCloseTag(BirthDeathModel.BIRTH_RATE);
+            writer.writeOpenTag(BirthDeathModel.DEATH_RATE);
+            writeParameter("birthDeath.deathRate", writer);
+            writer.writeCloseTag(BirthDeathModel.DEATH_RATE);
+            writer.writeOpenTag(BirthDeathModel.SAMPLING_PROPORTION);
+            // We are not sampling this parameter so use a fixed value
+            writeParameter("birthDeath.samplingProportion", 1, birthDeathSamplingProportion, Double.NaN, Double.NaN, writer);
+            writer.writeCloseTag(BirthDeathModel.SAMPLING_PROPORTION);
+            writer.writeCloseTag(BirthDeathModel.BIRTH_DEATH_MODEL);
         }
+
+        if (nodeHeightPrior != CONSTANT && nodeHeightPrior != EXPONENTIAL) {
+            // If the node height prior is not one of these two then we need to simulate a
+            // random starting tree under a constant size coalescent.
+
+            writer.writeComment("This is a simple constant population size coalescent model");
+            writer.writeComment("that is used to generate an initial tree for the chain.");
+            writer.writeOpenTag(
+                    ConstantPopulationModel.CONSTANT_POPULATION_MODEL,
+                    new Attribute[] {
+                            new Attribute.Default("id", "initialDemo"),
+                            new Attribute.Default("units", Units.Utils.getDefaultUnitName(units))
+                    }
+            );
+
+            writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
+            if (initialPopSize != null) {
+                writer.writeTag(ParameterParser.PARAMETER,
+                        new Attribute[] {
+                                new Attribute.Default("idref", initialPopSize),
+                        }, true);
+            } else {
+                writeParameter("initialDemo.popSize", 1, 100.0, Double.NaN, Double.NaN, writer);
+            }
+            writer.writeCloseTag(ConstantPopulationModel.POPULATION_SIZE);
+            writer.writeCloseTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL);
+        }
+
     }
 
     /**
@@ -906,20 +886,30 @@ public class BeastGenerator extends BeautiOptions {
 
         if (gammaHetero) {
             writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default(GammaSiteModel.GAMMA_CATEGORIES, ""+gammaCategories));
-            if (num == -1 || num == 1 || unlinkedHeterogeneityModel) {
+            if (num == -1 || unlinkedHeterogeneityModel) {
                 writeParameter(id + ".alpha", writer);
             }  else {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref", "siteModel1.alpha"), true);
+                // multiple partitions but linked heterogeneity
+                if (num == 1) {
+                    writeParameter("siteModel.alpha", writer);
+                } else {
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref", "siteModel.alpha"), true);
+                }
             }
             writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
         }
 
         if (invarHetero) {
             writer.writeOpenTag(GammaSiteModel.PROPORTION_INVARIANT);
-            if (num == -1 || num == 1 || unlinkedHeterogeneityModel) {
+            if (num == -1 || unlinkedHeterogeneityModel) {
                 writeParameter(id + ".pInv", writer);
             }  else {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref", "siteModel1.pInv"), true);
+                // multiple partitions but linked heterogeneity
+                if (num == 1) {
+                    writeParameter("siteModel.pInv", writer);
+                } else {
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref", "siteModel.pInv"), true);
+                }
             }
             writer.writeCloseTag(GammaSiteModel.PROPORTION_INVARIANT);
         }

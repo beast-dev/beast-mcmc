@@ -97,7 +97,7 @@ public class BirthDeathModel extends SpeciationModel {
 		double rho = getSamplingProportion();
 
         // This is probably better done by including a test prior, if required
-//        if (lambda < mu) return Double.NEGATIVE_INFINITY;
+        if (lambda < mu) return Double.NEGATIVE_INFINITY;
 
 		return logPDF(nodeHeight, rootHeight, lambda, mu, rho);
 	}

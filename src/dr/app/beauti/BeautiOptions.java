@@ -54,7 +54,7 @@ public class BeautiOptions {
 		createParameter("logistic.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("logistic.growthRate", "coalescent logistic growth rate parameter", GROWTH_RATE_SCALE, 0.001, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("logistic.doublingTime", "coalescent doubling time parameter", TIME_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
-		createParameter("logistic.t50", "logistic shape parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+		createParameter("logistic.t50", "logistic shape parameter", T50_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("expansion.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("expansion.growthRate", "coalescent logistic growth rate parameter", GROWTH_RATE_SCALE, 0.001, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("expansion.doublingTime", "coalescent doubling time parameter", TIME_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
@@ -286,6 +286,11 @@ public class BeautiOptions {
 						param.uniformUpper = timeScaleMaximum;
 						param.initial = initialRootHeight;
 						break;
+                    case T50_SCALE:
+                        param.uniformLower = 0.0;
+                        param.uniformUpper = timeScaleMaximum;
+                        param.initial = initialRootHeight / 5.0;
+                        break;
 					case GROWTH_RATE_SCALE:
 						param.uniformLower = -growthRateMaximum;
 						param.uniformUpper = growthRateMaximum;
@@ -1436,7 +1441,8 @@ public class BeautiOptions {
 	public static final int SUBSTITUTION_RATE_SCALE = 3;
 	public static final int LOG_STDEV_SCALE = 4;
 	public static final int SUBSTITUTION_PARAMETER_SCALE = 5;
-	public static final String SCALE = "scale";
+    public static final int T50_SCALE = 6;
+    public static final String SCALE = "scale";
 	public static final String RANDOM_WALK = "randomWalk";
 	public static final String UP_DOWN = "upDown";
 	public static final String SCALE_ALL = "scaleAll";

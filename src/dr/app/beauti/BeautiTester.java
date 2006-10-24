@@ -48,16 +48,16 @@ public class BeautiTester {
 	public BeautiTester() {
         BeastGenerator beautiOptions = createOptions();
 
-        importFromFile("Examples/Primates.nex", beautiOptions);
+        importFromFile("examples/Primates.nex", beautiOptions);
 
-        buildNucModels("pri_", beautiOptions);
-        buildAAModels("pri_", beautiOptions);
+        buildNucModels("tests/pri_", beautiOptions);
+        buildAAModels("tests/pri_", beautiOptions);
 
-        importFromFile("Examples/Dengue4.env.nex", beautiOptions);
+        importFromFile("examples/Dengue4.env.nex", beautiOptions);
         beautiOptions.fixedSubstitutionRate = false;
 
-        buildNucModels("den_", beautiOptions);
-        buildAAModels("den_", beautiOptions);
+        buildNucModels("tests/den_", beautiOptions);
+        buildAAModels("tests/den_", beautiOptions);
 	}
 
     public BeastGenerator createOptions() {
@@ -129,7 +129,20 @@ public class BeautiTester {
         buildHeteroModels(key+"+C123^SH", beautiOptions);
 
         beautiOptions.codonHeteroPattern = "112";
-        buildHeteroModels(key+"+C112^SH", beautiOptions);
+	    buildHeteroModels(key+"+C112", beautiOptions);
+
+	    beautiOptions.unlinkedSubstitutionModel = true;
+	    beautiOptions.unlinkedHeterogeneityModel = false;
+	    buildHeteroModels(key+"+C112^S", beautiOptions);
+
+	    beautiOptions.unlinkedSubstitutionModel = false;
+	    beautiOptions.unlinkedHeterogeneityModel = true;
+	    buildHeteroModels(key+"+C112^H", beautiOptions);
+
+	    beautiOptions.unlinkedSubstitutionModel = true;
+	    beautiOptions.unlinkedHeterogeneityModel = true;
+	    buildHeteroModels(key+"+C112^SH", beautiOptions);
+
     }
 
     public void buildHeteroModels(String key, BeastGenerator beautiOptions) {

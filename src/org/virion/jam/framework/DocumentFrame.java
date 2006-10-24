@@ -66,7 +66,6 @@ public abstract class DocumentFrame extends AbstractFrame {
             } else if (option == JOptionPane.CANCEL_OPTION || option == -1) {
                 return false;
             }
-            return true;
         }
         return true;
     }

@@ -226,30 +226,32 @@ public class LogCombiner {
 		return outLine.toString();
 	}
 
-	public static void printTitle() {
+    public static void printTitle() {
+        System.out.println();
+        centreLine("LogCombiner v1.4, 2006", 60);
+        centreLine("MCMC Output Combiner", 60);
+        centreLine("by", 60);
+        centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
+        System.out.println();
+        centreLine("Institute of Evolutionary Biology", 60);
+        centreLine("University of Edinburgh", 60);
+        centreLine("a.rambaut@ed.ac.uk", 60);
+        System.out.println();
+        centreLine("Department of Computer Science", 60);
+        centreLine("University of Auckland", 60);
+        centreLine("alexei@cs.auckland.ac.nz", 60);
+        System.out.println();
+        System.out.println();
+    }
 
-		System.out.println("+-----------------------------------------------\\");
-		System.out.println("|              LogCombiner v1.4 2006            |\\");
-		System.out.println("|              MCMC Output Combiner             ||");
+    public static void centreLine(String line, int pageWidth) {
+        int n = pageWidth - line.length();
+        int n1 = n / 2;
+        for (int i = 0; i < n1; i++) { System.out.print(" "); }
+        System.out.println(line);
+    }
 
-		String versionString = "BEAST Library: " + version.getVersionString();
-		System.out.print("|");
-		int n = 47 - versionString.length();
-		int n1 = n / 2;
-		int n2 = n1 + (n % 2);
-		for (int i = 0; i < n1; i++) { System.out.print(" "); }
-		System.out.print(versionString);
-		for (int i = 0; i < n2; i++) { System.out.print(" "); }
-		System.out.println("||");
-
-		System.out.println("|       Andrew Rambaut and Alexei Drummond      ||");
-		System.out.println("|              University of Oxford             ||");
-		System.out.println("|      http://evolve.zoo.ox.ac.uk/beast/        ||");
-		System.out.println("\\-----------------------------------------------\\|");
-		System.out.println(" \\-----------------------------------------------\\");
-		System.out.println();
-	}
-
+ 
 	public static void printUsage(Arguments arguments) {
 
 		arguments.printUsage("logcombiner", "[-trees] [-decimal] [-burnin <burnin>] [-resample <frequency>] [-scale <scale>] <input-file-name1> [<input-file-name2> ...] <output-file-name>");

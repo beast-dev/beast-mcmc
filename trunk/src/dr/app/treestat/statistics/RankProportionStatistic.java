@@ -147,6 +147,8 @@ public class RankProportionStatistic extends AbstractTreeSummaryStatistic {
 			return "-";
 		}
 
+		public String getValueName() { return "The rank (k):"; }
+
 		public boolean allowsPolytomies() { return true; }
 
 		public boolean allowsNonultrametricTrees() { return true; }

@@ -89,6 +89,8 @@ public class IntervalKStatistic extends AbstractTreeSummaryStatistic {
 			return "-";
 		}
 
+		public String getValueName() { return "The number of lineaeges (k):"; }
+
 		public boolean allowsPolytomies() { return true; }
 
 		public boolean allowsNonultrametricTrees() { return true; }

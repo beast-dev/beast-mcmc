@@ -97,19 +97,20 @@ public class LogCombiner {
 				}
 
 				while (line != null && !line.trim().toUpperCase().startsWith("END;")) {
-					String[] parts = line.split("\\s");
-					if (parts.length < 5) {
+                    
+                    Pattern p = Pattern.compile("\\s*tree\\s+(\\S+)_(\\d+)\\s+(.*)\\s*=\\s*(.*)");
+                    Matcher m = p.matcher(line);
+
+					if (!m.matches() && m.groupCount() != 4) {
 						System.err.println("Parsing error at line " + lineCount + ", file " + inputFileNames[i] + ": tree missing?\r"+line);
 						return;
 					}
-					String stateString = parts[1];
-					String tree = parts[4];
+                    String stateString = m.group(2);
+                    int state = Integer.parseInt(stateString);
+                    String lnP = m.group(3);
+                    String tree = m.group(4);
 
-					parts = stateString.split("_");
-
-					int state = Integer.parseInt(parts[1]);
-
-					if (stateStep < 0 && state > 0) {
+                    if (stateStep < 0 && state > 0) {
 						stateStep = state;
 					}
 
@@ -123,7 +124,7 @@ public class LogCombiner {
 								tree = reformatNumbers(tree, convertToDecimal, useScale, scale);
 							}
 
-							outputStream.println("tree STATE_" + stateCount +" = [&R] " + tree);
+							outputStream.println("tree STATE_" + stateCount +" " + lnP + " = " + tree);
 						}
 					}
 

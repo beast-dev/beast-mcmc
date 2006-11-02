@@ -28,13 +28,13 @@ package dr.app.treestat;
 import dr.app.treestat.statistics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
+import org.virion.jam.components.RealNumberField;
+import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.TableRenderer;
 import org.virion.jam.table.TableSorter;
 import org.virion.jam.util.IconUtils;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.components.WholeNumberField;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -42,8 +42,11 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 
 public class StatisticsPanel extends OptionsPanel implements Exportable {
@@ -96,6 +99,8 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 		availableStatistics.add(RankProportionStatistic.FACTORY);
 		availableStatistics.add(IntervalKStatistic.FACTORY);
 		availableStatistics.add(LineageCountStatistic.FACTORY);
+        availableStatistics.add(LineageProportionStatistic.FACTORY);
+        availableStatistics.add(MRCAOlderThanStatistic.FACTORY);
 
 //		if (treeStatDataeeStatDatanull) {
 //			for (int i = 0; i < treeStatDataSets.size(); i++) {

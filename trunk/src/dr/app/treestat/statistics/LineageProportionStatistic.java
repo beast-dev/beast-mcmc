@@ -10,32 +10,33 @@ import dr.evolution.tree.Tree;
  *
  * @author Alexei Drummond
  */
-public class LineageCountStatistic extends AbstractTreeSummaryStatistic {
+public class LineageProportionStatistic extends AbstractTreeSummaryStatistic {
 
-	public LineageCountStatistic(double t) {
+	public LineageProportionStatistic(double t) {
 		this.t = t;
 	}
 
 	public double[] getSummaryStatistic(Tree tree) {
 
 		TreeIntervals intervals = new TreeIntervals(tree);
+        int tipCount = tree.getExternalNodeCount();
 
-		double totalTime = 0.0;
+        double totalTime = 0.0;
 		for (int i = 0; i < intervals.getIntervalCount(); i++) {
 			totalTime += intervals.getInterval(i);
 			if (totalTime > t) {
-				return new double[] { intervals.getLineageCount(i) };
+				return new double[] { ((double)intervals.getLineageCount(i)) / tipCount };
 			}
 		}
-		return new double[] { 1.0 };
+		return new double[] { 1.0 / tipCount };
 	}
 
 	public String getSummaryStatisticName() {
-        return "LineageCount(" + t + ")";
+        return "LineageProportion(" + t + ")";
     }
 
 	public String getSummaryStatisticDescription() {
-        return getSummaryStatisticName() + " is the number of lineages that exists in the genealogy at " +
+        return getSummaryStatisticName() + " is the proportion of lineages that exists in the genealogy at " +
             "time " + t + ".";
     }
 
@@ -48,15 +49,15 @@ public class LineageCountStatistic extends AbstractTreeSummaryStatistic {
 	public static final Factory FACTORY = new Factory() {
 
 		public TreeSummaryStatistic createStatistic(double value) {
-			return new LineageCountStatistic(value);
+			return new LineageProportionStatistic(value);
 		}
 
 		public String getSummaryStatisticName() {
-			return "LineageCount(t)";
+			return "LineageProportion(t)";
 		}
 
 		public String getSummaryStatisticDescription() {
-			return getSummaryStatisticName() + " is the number of lineages that exists in the genealogy at " +
+			return getSummaryStatisticName() + " is the proportion of lineages that exists in the genealogy at " +
 				"time t.";
 		}
 

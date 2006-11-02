@@ -10,9 +10,9 @@ import dr.evolution.tree.Tree;
  *
  * @author Alexei Drummond
  */
-public class LineageCountStatistic extends AbstractTreeSummaryStatistic {
+public class MRCAOlderThanStatistic extends AbstractTreeSummaryStatistic {
 
-	public LineageCountStatistic(double t) {
+	public MRCAOlderThanStatistic(double t) {
 		this.t = t;
 	}
 
@@ -24,18 +24,18 @@ public class LineageCountStatistic extends AbstractTreeSummaryStatistic {
 		for (int i = 0; i < intervals.getIntervalCount(); i++) {
 			totalTime += intervals.getInterval(i);
 			if (totalTime > t) {
-				return new double[] { intervals.getLineageCount(i) };
+				return new double[] { 1.0 };
 			}
 		}
-		return new double[] { 1.0 };
+		return new double[] { 0.0 };
 	}
 
 	public String getSummaryStatisticName() {
-        return "LineageCount(" + t + ")";
+        return "MRCAOlderThan(" + t + ")";
     }
 
 	public String getSummaryStatisticDescription() {
-        return getSummaryStatisticName() + " is the number of lineages that exists in the genealogy at " +
+        return getSummaryStatisticName() + " is 1 if the MRCA of the genealogy older than " +
             "time " + t + ".";
     }
 
@@ -48,7 +48,7 @@ public class LineageCountStatistic extends AbstractTreeSummaryStatistic {
 	public static final Factory FACTORY = new Factory() {
 
 		public TreeSummaryStatistic createStatistic(double value) {
-			return new LineageCountStatistic(value);
+			return new MRCAOlderThanStatistic(value);
 		}
 
 		public String getSummaryStatisticName() {
@@ -56,7 +56,7 @@ public class LineageCountStatistic extends AbstractTreeSummaryStatistic {
 		}
 
 		public String getSummaryStatisticDescription() {
-			return getSummaryStatisticName() + " is the number of lineages that exists in the genealogy at " +
+			return getSummaryStatisticName() + " is 1 if the MRCA of the genealogy older than " +
 				"time t.";
 		}
 

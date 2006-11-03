@@ -1540,7 +1540,7 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default(MCLogger.LOG_EVERY, logEvery+""),
                         new Attribute.Default(MCLogger.FILE_NAME, logFileName)
                 });
-        writeLog(true, writer);
+        writeLog(writer);
         writer.writeCloseTag(MCLogger.LOG);
 
         // write tree log to file
@@ -1804,10 +1804,9 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Write the log
-     * @param verbose write a verbose log
      * @param writer the writer
      */
-    private void writeLog(boolean verbose, XMLWriter writer) {
+    private void writeLog(XMLWriter writer) {
         if (alignment != null) {
             writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default("idref","posterior"), true);
         } else {

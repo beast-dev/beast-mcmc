@@ -308,8 +308,8 @@ public class TraceAnalysis {
 
 		int maxLag = MAX_OFFSET;
 		int samples = statistic.length;
-		if ((samples/3) < maxLag) {
-			maxLag = (samples/3);
+		if (samples-1 < maxLag) {
+			maxLag = samples-1;
 		}
 
 		double[] gammaStat = new double[maxLag];
@@ -393,7 +393,7 @@ public class TraceAnalysis {
 //	private double stdErrOfACT;
 //	private double assStdOfCorrelationFunction;
 	private double cpdLower, cpdUpper, hpdLower, hpdUpper;
-	private static final int MAX_OFFSET = 1000;
+	private static final int MAX_OFFSET = 2000;
 	private boolean correlation;
 	private String statName = null;
 	private int maxState;

@@ -1810,8 +1810,77 @@ public class BeastGenerator extends BeautiOptions {
     private void writeLog(boolean verbose, XMLWriter writer) {
         if (alignment != null) {
             writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default("idref","posterior"), true);
+        } else {
+            writer.writeTag(CompoundLikelihood.PRIOR, new Attribute.Default("idref","prior"), true);
         }
-        if (verbose && alignment != null) {
+        if (alignment != null) {
+            boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
+            if (nucs && partitionCount > 1) {
+                for (int i =1; i <= partitionCount; i++) {
+                    writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood" + i), true);
+                }
+            } else writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood"), true);
+        }
+        if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
+            writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default("idref", "speciation"), true);
+        } else if (nodeHeightPrior == SKYLINE) {
+            writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default("idref", "skyline"), true);
+        } else {
+            writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref","coalescent"), true);
+        }
+
+
+        if (!fixedSubstitutionRate) {
+            if (clockModel == STRICT_CLOCK) {
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","clock.rate"), true);
+            } else {
+                writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default("idref","meanRate"), true);
+            }
+        }
+
+        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","treeModel.rootHeight"), true);
+
+        for (int i = 0; i < taxonSets.size(); i++) {
+            TaxonList taxa = (TaxonList)taxonSets.get(i);
+            writer.writeTag("tmrcaStatistic", new Attribute[] { new Attribute.Default("idref", "tmrca(" + taxa.getId() + ")") }, true);
+        }
+
+        if (nodeHeightPrior == CONSTANT) {
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","constant.popSize"), true);
+        } else if (nodeHeightPrior == EXPONENTIAL) {
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","exponential.popSize"), true);
+            if (parameterization == GROWTH_RATE) {
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","exponential.growthRate"), true);
+            } else {
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","exponential.doublingTime"), true);
+            }
+        } else if (nodeHeightPrior == LOGISTIC) {
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","logistic.popSize"), true);
+            if (parameterization == GROWTH_RATE) {
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","logistic.growthRate"), true);
+            } else {
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","logistic.doublingTime"), true);
+            }
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","logistic.t50"), true);
+        } else if (nodeHeightPrior == EXPANSION) {
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","expansion.popSize"), true);
+            if (parameterization == GROWTH_RATE) {
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","expansion.growthRate"), true);
+            } else {
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","expansion.doublingTime"), true);
+            }
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","expansion.ancestralProportion"), true);
+        } else if (nodeHeightPrior == SKYLINE) {
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","skyline.popSize"), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","skyline.groupSize"), true);
+        } else if (nodeHeightPrior == YULE) {
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","yule.birthRate"), true);
+        } else if (nodeHeightPrior == BIRTH_DEATH) {
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","birthDeath.birthRate"), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","birthDeath.deathRate"), true);
+        }
+
+        if (alignment != null) {
             boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
             if (nucs) {
                 if (partitionCount > 1) {
@@ -1868,82 +1937,22 @@ public class BeastGenerator extends BeautiOptions {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","siteModel.pInv"), true);
                 }
             }
+        }
 
-            if (clockModel == STRICT_CLOCK) {
-                if (!fixedSubstitutionRate) {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","clock.rate"), true);
-                }
-            } else {
+        if (clockModel != STRICT_CLOCK) {
+            if (!fixedSubstitutionRate) {
                 if (clockModel == UNCORRELATED_EXPONENTIAL) {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","uced.mean"), true);
                 } else if (clockModel == UNCORRELATED_LOGNORMAL) {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","ucld.mean"), true);
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","ucld.stdev"), true);
                 }
-                writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default("idref","meanRate"), true);
-                writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default("idref","coefficientOfVariation"), true);
-                writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default("idref","covariance"), true);
             }
-
-            if (nodeHeightPrior == CONSTANT) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","constant.popSize"), true);
-            } else if (nodeHeightPrior == EXPONENTIAL) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","exponential.popSize"), true);
-                if (parameterization == GROWTH_RATE) {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","exponential.growthRate"), true);
-                } else {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","exponential.doublingTime"), true);
-                }
-            } else if (nodeHeightPrior == LOGISTIC) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","logistic.popSize"), true);
-                if (parameterization == GROWTH_RATE) {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","logistic.growthRate"), true);
-                } else {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","logistic.doublingTime"), true);
-                }
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","logistic.t50"), true);
-            } else if (nodeHeightPrior == EXPANSION) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","expansion.popSize"), true);
-                if (parameterization == GROWTH_RATE) {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","expansion.growthRate"), true);
-                } else {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","expansion.doublingTime"), true);
-                }
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","expansion.ancestralProportion"), true);
-            } else if (nodeHeightPrior == SKYLINE) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","skyline.popSize"), true);
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","skyline.groupSize"), true);
-            } else if (nodeHeightPrior == YULE) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","yule.birthRate"), true);
-            } else if (nodeHeightPrior == BIRTH_DEATH) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","birthDeath.birthRate"), true);
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","birthDeath.deathRate"), true);
-            }
-
+            writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default("idref","coefficientOfVariation"), true);
+            writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default("idref","covariance"), true);
         }
 
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","treeModel.rootHeight"), true);
 
-        for (int i = 0; i < taxonSets.size(); i++) {
-            TaxonList taxa = (TaxonList)taxonSets.get(i);
-            writer.writeTag("tmrcaStatistic", new Attribute[] { new Attribute.Default("idref", "tmrca(" + taxa.getId() + ")") }, true);
-        }
-
-        if (alignment != null) {
-            boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
-            if (nucs && partitionCount > 1) {
-                for (int i =1; i <= partitionCount; i++) {
-                    writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood" + i), true);
-                }
-            } else writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood"), true);
-        }
-        if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
-            writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default("idref", "speciation"), true);
-        } else if (nodeHeightPrior == SKYLINE) {
-            writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default("idref", "skyline"), true);
-        } else {
-            writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref","coalescent"), true);
-        }
     }
 
     /**

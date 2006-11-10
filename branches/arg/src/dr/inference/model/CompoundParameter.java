@@ -245,8 +245,8 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 	}
 	
 	
-	private Parameter[] parameters = null;
+	protected Parameter[] parameters = null;
 	private IntersectionBounds bounds = null;
-	private int dimension;
+	protected int dimension;
 //	private String name;
 }

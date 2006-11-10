@@ -97,6 +97,7 @@ public class BeastParser extends XMLParser {
 
 		addXMLObjectParser(dr.evomodel.coalescent.CoalescentSimulator.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.CoalescentLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.coalescent.VariableSizeCoalescentLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.CoalescentMRCALikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.SkylineLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.BayesianSkylineLikelihood.PARSER);
@@ -136,6 +137,7 @@ public class BeastParser extends XMLParser {
 
 		addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.treelikelihood.AdvancedTreeLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.treelikelihood.ARGLikelihood.PARSER);
 
 		addXMLObjectParser(dr.evomodel.sitemodel.GammaSiteModel.PARSER);
 
@@ -146,6 +148,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.branchratemodel.StrictClockBranchRates.PARSER);
 
 		addXMLObjectParser(dr.evomodel.tree.TreeModel.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.ARGModel.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.TreeShapeStatistic.PARSER);
@@ -162,7 +165,8 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.operators.ExchangeOperator.WIDE_EXCHANGE_PARSER);
 		addXMLObjectParser(dr.evomodel.operators.WilsonBalding.PARSER);
 		addXMLObjectParser(dr.evomodel.operators.SubtreeSlideOperator.PARSER);
-		addXMLObjectParser(dr.evomodel.operators.RateExchangeOperator.PARSER);
+		addXMLObjectParser(dr.evomodel.operators.ARGSubtreeSlideOperator.PARSER);
+		addXMLObjectParser(dr.evomodel.operators.AddRemoveARGEventOperator.PARSER);
 
 		addXMLObjectParser(dr.evomodel.indel.TKF91Likelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.indel.TKF91Model.PARSER);

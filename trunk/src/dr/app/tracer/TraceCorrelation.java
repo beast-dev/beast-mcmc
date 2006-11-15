@@ -62,37 +62,43 @@ public class TraceCorrelation extends TraceDistribution {
 			
 		double[] gammaStat = new double[maxLag];
 		double[] varGammaStat = new double[maxLag];
-  		double varStat;
-		double varVarStat;
-		double assVarCor;
+  		double varStat=0.0;
+		double varVarStat=0.0;
+		double assVarCor=1.0;
 		double del1, del2;
 			
-		for (int lag=0; lag < maxLag; lag++) {
+		for (int lag=0; lag < maxLag; lag++) 
+                {
 			for (int j = 0; j < samples-lag; j++) {
-    			del1=values[j] - mean;
-				del2=values[j + lag] - mean;
+			        del1 = values[j] - mean;
+				del2 = values[j + lag] - mean;
 				gammaStat[lag] += ( del1*del2 ); 
 				varGammaStat[lag] += (del1*del1*del2*del2);
 			}
 				
-			gammaStat[lag] /= ((double)samples);
+			gammaStat[lag] /= ((double)(samples-lag));
 			varGammaStat[lag] /= ((double) samples-lag);
 			varGammaStat[lag] -= (gammaStat[0] * gammaStat[0]);
+
+			if (lag==0) {
+			        varStat = gammaStat[0];
+				varVarStat = varGammaStat[0];
+			        assVarCor = 1.0;
+			}
+			else if (lag%2==0) 
+                        {
+			        // fancy stopping criterion :)
+  			        if (gammaStat[lag-1] + gammaStat[lag] > 0) {
+				        varStat    += 2.0*(gammaStat[lag-1] + gammaStat[lag]);
+					varVarStat += 2.0*(varGammaStat[lag-1] + varGammaStat[lag]);
+					assVarCor  += 2.0*((gammaStat[lag-1] * gammaStat[lag-1]) + (gammaStat[lag] * gammaStat[lag])) / (gammaStat[0] * gammaStat[0]);
+				}
+				// stop
+				else 
+				        maxLag=lag;
+			}
 		}
-					
-		varStat = gammaStat[0];
-		varVarStat = varGammaStat[0];
-		assVarCor = 1.0;
-		
-		int lag=1;
-		while ((lag < maxLag-3) && (gammaStat[lag] + gammaStat[lag+1] > 0)) {
-			varStat += (2.0*(gammaStat[lag]+gammaStat[lag+1]));
-			varVarStat += (2.0*(varGammaStat[lag] + varGammaStat[lag+1]));
-			assVarCor += (2.0*((gammaStat[lag] * gammaStat[lag]) + (gammaStat[lag+1] * gammaStat[lag+1])) / (gammaStat[0] * gammaStat[0]));
-			if (gammaStat[lag]+gammaStat[lag+1] < gammaStat[lag+2]+gammaStat[lag+3] ) break;
-			lag += 2;
-		}
-			
+
 		// standard error of mean
 		stdErrorOfMean = Math.sqrt(varStat/samples);
 		
@@ -103,7 +109,7 @@ public class TraceCorrelation extends TraceDistribution {
 		ESS = (stepSize * samples) / ACT;
 		
 		// standard deviation of autocorrelation time
-		stdErrOfACT = (2.0* Math.sqrt(2.0*(2.0*(double) lag+1)/samples)*(varStat/gammaStat[0])*stepSize);
+		stdErrOfACT = (2.0* Math.sqrt(2.0*(2.0*(double) (maxLag+1))/samples)*(varStat/gammaStat[0])*stepSize);
 	
 		isValid = true;
 	}

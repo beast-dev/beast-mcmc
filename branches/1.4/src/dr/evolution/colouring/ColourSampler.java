@@ -37,7 +37,7 @@ import dr.evomodel.coalescent.structure.MetaPopulationModel;
  */
 public interface ColourSampler {
 
-    TreeColouring sampleTreeColouring(Tree tree, ColourChangeMatrix colourChangeMatrix, MetaPopulationModel mp);
+    DefaultTreeColouring sampleTreeColouring(Tree tree, ColourChangeMatrix colourChangeMatrix, MetaPopulationModel mp);
 
     double getProposalProbability(TreeColouring treeColouring, Tree tree, ColourChangeMatrix colourChangeMatrix, MetaPopulationModel mp);
 

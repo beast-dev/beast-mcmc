@@ -26,10 +26,8 @@
 package dr.evomodel.coalescent.structure;
 
 import dr.evolution.alignment.Alignment;
-import dr.evolution.colouring.BasicColourSampler;
-import dr.evolution.colouring.ColourSampler;
-import dr.evolution.colouring.TreeColouring;
-import dr.evolution.colouring.StructuredColourSampler;
+import dr.evolution.colouring.*;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
@@ -43,7 +41,7 @@ import java.util.logging.Logger;
  * @version $Id: ColourSamplerModel.java,v 1.14 2006/09/11 09:33:01 gerton Exp $
  */
 
-public class ColourSamplerModel extends AbstractModel implements ModelListener, StatisticList {
+public class ColourSamplerModel extends AbstractModel implements TreeColouringProvider, ModelListener, StatisticList {
 
     public static final String COLOUR_SAMPLER_MODEL = "colourSamplerModel";
     public static final String STRUCTURED_SAMPLER = "structuredSampler";
@@ -76,8 +74,11 @@ public class ColourSamplerModel extends AbstractModel implements ModelListener, 
 
     }
 
+    public final TreeColouring getTreeColouring(Tree tree) {
+        return getTreeColouring();
+    }
 
-    public final TreeColouring getTreeColouring() {
+    public final DefaultTreeColouring getTreeColouring() {
         if (treeColouring == null) {
             sample();
         }
@@ -92,9 +93,9 @@ public class ColourSamplerModel extends AbstractModel implements ModelListener, 
      * Returns treeColouring and ensures that a proposal probability density has been assigned to it.
      * @return treeColouring
      */
-    public final TreeColouring getTreeColouringWithProbability() {
+    public final DefaultTreeColouring getTreeColouringWithProbability() {
 
-    	TreeColouring tc = getTreeColouring();
+    	DefaultTreeColouring tc = getTreeColouring();
 
     	if (tc.hasProbability()) {
     		return tc;
@@ -120,7 +121,7 @@ public class ColourSamplerModel extends AbstractModel implements ModelListener, 
      * Keeps the colouring, but reset its proposal probability (in response to a change in parameters)
      */
     public final void invalidateProposalProbability() {
-    	treeColouring = new TreeColouring( treeColouring );
+    	treeColouring = new DefaultTreeColouring( treeColouring );
     }
 
     /**
@@ -352,6 +353,7 @@ public class ColourSamplerModel extends AbstractModel implements ModelListener, 
     private final ColourSampler colourSampler;
     private final TreeModel treeModel;
 
-    private TreeColouring treeColouring = null;
-    private TreeColouring storedTreeColouring = null;
+    private DefaultTreeColouring treeColouring = null;
+    private DefaultTreeColouring storedTreeColouring = null;
+
 }

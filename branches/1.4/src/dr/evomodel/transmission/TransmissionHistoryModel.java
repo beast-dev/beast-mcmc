@@ -25,6 +25,10 @@
 
 package dr.evomodel.transmission;
 
+import dr.evolution.colouring.DefaultTreeColouring;
+import dr.evolution.colouring.TreeColouring;
+import dr.evolution.colouring.TreeColouringProvider;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evoxml.XMLUnits;
@@ -47,7 +51,7 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class TransmissionHistoryModel extends AbstractModel implements Units
+public class TransmissionHistoryModel extends AbstractModel implements TreeColouringProvider, Units
 {
 
     //
@@ -229,6 +233,14 @@ public class TransmissionHistoryModel extends AbstractModel implements Units
 
     public int getHostCount() {
         return hosts.size();
+    }
+
+    public TreeColouring getTreeColouring(Tree tree) {
+        DefaultTreeColouring treeColouring = new DefaultTreeColouring(getHostCount(), tree);
+
+        // @todo do tree colouring...
+        
+        return treeColouring;
     }
 
     //

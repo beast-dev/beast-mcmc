@@ -27,7 +27,9 @@ package dr.evolution.tree;
 
 import dr.evolution.colouring.BranchColouring;
 import dr.evolution.colouring.TreeColouring;
-import dr.evolution.util.*;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
 import dr.util.Attributable;
 import dr.util.Identifiable;
 
@@ -754,7 +756,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          * @param lengths What type of branch lengths: NO_BRANCH_LENGTHS, LENGTHS_AS_TIME, LENGTHS_AS_SUBSTITUTIONS
          * @param branchRateController An optional BranchRateController (or null)
          * @param rateLabel The label to use for rates in the tree (or null)
-         * @param colouring An option TreeColouring object (or null)
+         * @param colouring An optional TreeColouring object (or null)
          * @param colouringLabel The label for colourings in the tree (or null)
          * @param buffer The StringBuffer
          */

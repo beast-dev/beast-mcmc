@@ -107,8 +107,8 @@ public class BasicColourSampler implements ColourSampler {
      * Colours the tree probabilistically with the given migration rates
      * @param colourChangeMatrix the colour change rate parameters
      */
-    public TreeColouring sampleTreeColouring(Tree tree, ColourChangeMatrix colourChangeMatrix, MetaPopulationModel mp) {
-        TreeColouring colouring = new TreeColouring(2, tree);
+    public DefaultTreeColouring sampleTreeColouring(Tree tree, ColourChangeMatrix colourChangeMatrix, MetaPopulationModel mp) {
+        DefaultTreeColouring colouring = new DefaultTreeColouring(2, tree);
 
         double[] N = mp.getPopulationSizes(0);
         
@@ -264,7 +264,7 @@ public class BasicColourSampler implements ColourSampler {
      * Samples the colours on a tree branch, between node and its parent, conditional on the colour at these nodes.
      * @param node the node above which to sample changes
      */
-    private void sampleBranchColourings(TreeColouring colouring, Tree tree, NodeRef node, ColourChangeMatrix mm) {
+    private void sampleBranchColourings(DefaultTreeColouring colouring, Tree tree, NodeRef node, ColourChangeMatrix mm) {
 
         if (!tree.isRoot(node)) {
             NodeRef parent = tree.getParent(node);
@@ -275,7 +275,7 @@ public class BasicColourSampler implements ColourSampler {
             double childHeight = tree.getNodeHeight(node);
 
             // Sample migration events on this branch, as a list of ColourChange-s
-            BranchColouring history = sampleConditionalBranchColouring(parentColour,parentHeight,childColour,childHeight,mm);
+            DefaultBranchColouring history = sampleConditionalBranchColouring(parentColour,parentHeight,childColour,childHeight,mm);
 
             // Assign these migrations to the branch (attached to the child)
             colouring.setBranchColouring(node,history);
@@ -286,10 +286,10 @@ public class BasicColourSampler implements ColourSampler {
         }
     }
 
-    private BranchColouring sampleConditionalBranchColouring(int parentColour, double parentHeight,
+    private DefaultBranchColouring sampleConditionalBranchColouring(int parentColour, double parentHeight,
                                                              int childColour, double childHeight, ColourChangeMatrix mm) {
 
-        BranchColouring history = new BranchColouring(parentColour, childColour);
+        DefaultBranchColouring history = new DefaultBranchColouring(parentColour, childColour);
         int currentColour;
         double currentHeight;
         int iterationsLeft = maxIterations;

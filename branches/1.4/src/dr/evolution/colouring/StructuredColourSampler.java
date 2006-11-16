@@ -32,12 +32,11 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.structure.MetaPopulationModel;
 import dr.math.MathUtils;
 
-import java.util.TreeMap;
-import java.util.List;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
-
-import java.text.DecimalFormat;
+import java.util.List;
+import java.util.TreeMap;
 
 /**
  * @author Gerton Lunter
@@ -186,7 +185,7 @@ public class StructuredColourSampler implements ColourSampler {
      * @param colourChangeMatrix the colour change rate parameters
      */
 //    public TreeColouring sampleTreeColouring(Tree tree, ColourChangeMatrix colourChangeMatrix, double[] N) {
-        public TreeColouring sampleTreeColouring(Tree tree, ColourChangeMatrix colourChangeMatrix, MetaPopulationModel mp) {
+        public DefaultTreeColouring sampleTreeColouring(Tree tree, ColourChangeMatrix colourChangeMatrix, MetaPopulationModel mp) {
 
         //double[] N = mp.getPopulationSizes(0);
         	
@@ -195,7 +194,7 @@ public class StructuredColourSampler implements ColourSampler {
         // Build array of node indices, arranged by height
         computeIntervals( tree, mp );
 
-		TreeColouring colouring = new TreeColouring(2, tree);
+		DefaultTreeColouring colouring = new DefaultTreeColouring(2, tree);
 
 		// Calculate root partials, and those of all other nodes
 		logNodePartialsRescaling = 0.0;
@@ -809,12 +808,12 @@ public class StructuredColourSampler implements ColourSampler {
      * Requires the results from Felsenstein Backwards pruning, in nodePartials(EM)[] (see pruneEM())
      * Side effect: updates nodeColours[]
      */
-    private double sampleEM(Tree tree, NodeRef node, ColourChangeMatrix mm, MetaPopulationModel mp, TreeColouring colouring) {
+    private double sampleEM(Tree tree, NodeRef node, ColourChangeMatrix mm, MetaPopulationModel mp, DefaultTreeColouring colouring) {
 
         double[] forward;
 		double[] posterior;
 		int colour;
-		BranchColouring history = null;
+		DefaultBranchColouring history = null;
 		double logLikelihood = 0.0;
 
         if (tree.isRoot(node)) {
@@ -852,7 +851,7 @@ public class StructuredColourSampler implements ColourSampler {
 			// Start from parent, and sample colours for interval nodes
             colour = getColour( tree.getParent( node ) );
 			// Allocate event history
-			history = new BranchColouring(colour, colour);
+			history = new DefaultBranchColouring(colour, colour);
 			// Allocate posterior probabilities
 			posterior = new double[ colourCount ];
 
@@ -923,9 +922,9 @@ public class StructuredColourSampler implements ColourSampler {
 				double time,
 				double childHeight,
 				double[] matrixElements,
-				BranchColouring initialBranchColouring ) {
+				DefaultBranchColouring initialBranchColouring ) {
 
-    	BranchColouring history = new BranchColouring(parentColour, childColour);
+    	DefaultBranchColouring history = new DefaultBranchColouring(parentColour, childColour);
 
     	int iterations = 0;
     	int currentColour;

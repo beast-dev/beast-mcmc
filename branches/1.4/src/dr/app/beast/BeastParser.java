@@ -68,7 +68,6 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(UserInput.DOUBLE_PARSER);
 		addXMLObjectParser(UserInput.INTEGER_PARSER);
 
-
 		addXMLObjectParser(new dr.evoxml.GeneralDataTypeParser());
 		addXMLObjectParser(new dr.evoxml.AlignmentParser());
 		addXMLObjectParser(new dr.evoxml.SitePatternsParser());
@@ -85,8 +84,8 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(new dr.evoxml.DateParser());
         addXMLObjectParser(new dr.evoxml.DistanceMatrixParser());
 
-		addXMLObjectParser(new dr.xml.AttributeParser());
-		addXMLObjectParser(new dr.xml.AttributesParser());
+		addXMLObjectParser(new AttributeParser());
+		addXMLObjectParser(new AttributesParser());
 
 
         addXMLObjectParser(dr.evomodel.speciation.SpeciationLikelihood.PARSER);

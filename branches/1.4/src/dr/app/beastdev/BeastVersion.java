@@ -45,7 +45,7 @@ public class BeastVersion implements Version {
 	/**
 	 * Version string: assumed to be in format x.x.x
 	 */
-	private static String VERSION = "1.4 developmental";
+	private static String VERSION = "1.4.1 developmental";
 
 	/**
 	 * Build string: assumed to be in format projectname-#-#-#

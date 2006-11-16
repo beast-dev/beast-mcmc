@@ -128,7 +128,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.ColouredOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.FixedColouredOperator.PARSER);
 
-        // Transmission models
+        // TransmissionEvent models
         addXMLObjectParser(dr.evomodel.transmission.TransmissionLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.transmission.TransmissionDemographicModel.PARSER);
 		addXMLObjectParser(dr.evomodel.transmission.TransmissionHistoryModel.PARSER);

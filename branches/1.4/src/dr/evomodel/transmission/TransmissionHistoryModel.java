@@ -25,7 +25,6 @@
 
 package dr.evomodel.transmission;
 
-import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evoxml.XMLUnits;
@@ -34,11 +33,15 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
+
 /**
  * A model for defining a known transmission history. Times of transmission events
  * can optionally be obtained as parameters for sampling. In future it may be possible
  * to sample the direction of transmission where this is not known.
- * 
+ *
  * @version $Id: TransmissionHistoryModel.java,v 1.3 2005/04/11 11:25:50 alexei Exp $
  *
  * @author Alexei Drummond
@@ -46,158 +49,215 @@ import dr.xml.*;
  */
 public class TransmissionHistoryModel extends AbstractModel implements Units
 {
-	
-	//
-	// Public stuff
-	//
-	
-	public static String TRANSMISSION_HISTORY_MODEL = "transmissionHistory";
-	public static String TRANSMISSION = "transmission";
-	public static String DONOR = "donor";
-	public static String RECIPIENT = "recipient";
-	
 
-	/**
-	 * Construct model with default settings
-	 */
-	public TransmissionHistoryModel(int units) {
-	
-		this(TRANSMISSION_HISTORY_MODEL, units);
-	}
+    //
+    // Public stuff
+    //
 
-	/**
-	 * Construct model with default settings
-	 */
-	public TransmissionHistoryModel(String name, int units) {
-	
-		super(name);
-
-		setUnits(units);
-	}
-
-	private void addTransmission(Taxon donor, Taxon recipient, Date date) {
-	}
-	
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		// no submodels so nothing to do
-	}
-	
-	/**
-	 * Called when a parameter changes.
-	 */
-	public void handleParameterChangedEvent(Parameter parameter, int index) { 
-	}
+    public static String TRANSMISSION_HISTORY_MODEL = "transmissionHistory";
+    public static String TRANSMISSION = "transmission";
+    public static String DONOR = "donor";
+    public static String RECIPIENT = "recipient";
 
 
-	// *****************************************************************
-	// Interface ModelComponent
-	// *****************************************************************
-	
-	/**
-	 * Store current state
-	 */
-	protected void storeState() {
-	
-	}
-	
-	/**
-	 * Restore the stored state
-	 */
-	protected void restoreState() {
+    /**
+     * Construct model with default settings
+     */
+    public TransmissionHistoryModel(int units) {
 
-	}
+        this(TRANSMISSION_HISTORY_MODEL, units);
+    }
 
-	/**
-	 * accept the stored state
-	 */
-	protected void acceptState() {} // nothing to do
+    /**
+     * Construct model with default settings
+     */
+    public TransmissionHistoryModel(String name, int units) {
 
-	/**
-	 * Adopt the state of the model component from source.
-	 */
-	protected void adoptState(Model source) {}
-	
+        super(name);
+
+        setUnits(units);
+    }
+
+    private void addTransmission(Taxon donor, Taxon recipient, Parameter parameter) {
+        if (donor.equals(recipient)) {
+            throw new RuntimeException("Donor and recipient are the same, " + donor);
+        }
+
+        if (parameter != null) {
+            addParameter(parameter);
+        }
+
+        TransmissionEvent transmissionEvent = new TransmissionEvent(donor, recipient, parameter);
+        transmissionEvents.add(transmissionEvent);
+        if (!hosts.contains(donor)) {
+            hosts.add(donor);
+        }
+        if (!hosts.contains(recipient)) {
+            hosts.add(recipient);
+        }
+
+        Logger.getLogger("dr.evomodel").info( "Transmission from " + donor + " to " + recipient + " at " + parameter.getParameterValue(0));
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        // no submodels so nothing to do
+    }
+
+    /**
+     * Called when a parameter changes.
+     */
+    public void handleParameterChangedEvent(Parameter parameter, int index) {
+    }
+
+    public int getTransmissionEventCount() {
+        return transmissionEvents.size();
+    }
+
+    public TransmissionEvent getTransmissionEvent(int index) {
+        return (TransmissionEvent)transmissionEvents.get(index);
+    }
+
+    // *****************************************************************
+    // Interface ModelComponent
+    // *****************************************************************
+
+    /**
+     * Store current state
+     */
+    protected void storeState() {
+
+    }
+
+    /**
+     * Restore the stored state
+     */
+    protected void restoreState() {
+
+    }
+
+    /**
+     * accept the stored state
+     */
+    protected void acceptState() {} // nothing to do
+
     // **************************************************************
     // Units IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * Sets the units these coalescent intervals are 
-	 * measured in.
-	 */
-	public final void setUnits(int u)
-	{
-		units = u;
-	}
+    /**
+     * Sets the units these coalescent intervals are
+     * measured in.
+     */
+    public final void setUnits(int u)
+    {
+        units = u;
+    }
 
-	/**
-	 * Returns the units these coalescent intervals are 
-	 * measured in.
-	 */
-	public final int getUnits()
-	{
-		return units;
-	}
-	
-	private int units;
-	
-	/**
-	 * Parses an element from an DOM document into a ExponentialGrowth. 
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return TRANSMISSION_HISTORY_MODEL; }
-			
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			int units = XMLParser.Utils.getUnitsAttr(xo);
-			
-			TransmissionHistoryModel history = new TransmissionHistoryModel(units);
-			
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				XMLObject xoc = (XMLObject)xo.getChild(i);
-				if (xoc.getName().equals(TRANSMISSION)) {
-					Date date = (Date)xoc.getChild(Date.class);
-					Taxon donor = (Taxon)xoc.getSocketChild(DONOR);
-					Taxon recipient = (Taxon)xoc.getSocketChild(RECIPIENT);
-					history.addTransmission(donor, recipient, date);
-				}
-			}
-			
-			return history;
-		}
+    /**
+     * Returns the units these coalescent intervals are
+     * measured in.
+     */
+    public final int getUnits()
+    {
+        return units;
+    }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return "Defines a transmission history";
-		}
+    private int units;
 
-		public Class getReturnType() { return TransmissionHistoryModel.class; }
+    /**
+     * Parses an element from an DOM document into a ExponentialGrowth.
+     */
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-	
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			XMLUnits.UNITS_RULE,
-			new ElementRule(TRANSMISSION, 
-				new XMLSyntaxRule[] { 
-					new XORRule(
-						new ElementRule(Parameter.class),
-						new ElementRule(Date.class)),
-					new ElementRule(DONOR, 
-						new XMLSyntaxRule[] {new ElementRule(Taxon.class)}),
-					new ElementRule(RECIPIENT, 
-						new XMLSyntaxRule[] {new ElementRule(Taxon.class)})
-				}, 1, Integer.MAX_VALUE
-			)
-		};		
+        public String getParserName() { return TRANSMISSION_HISTORY_MODEL; }
 
-	};
-	
-	//
-	// protected stuff
-	//
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+            int units = XMLParser.Utils.getUnitsAttr(xo);
+
+            TransmissionHistoryModel history = new TransmissionHistoryModel(units);
+
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                XMLObject xoc = (XMLObject)xo.getChild(i);
+                if (xoc.getName().equals(TRANSMISSION)) {
+                    Taxon donor = (Taxon)xoc.getSocketChild(DONOR);
+                    Taxon recipient = (Taxon)xoc.getSocketChild(RECIPIENT);
+                    if (donor.equals(recipient)) {
+                        throw new XMLParseException("Donor and recipient in TransmissionHistoryModel are the same: " + donor);
+                    }
+
+                    // Date date = (Date)xoc.getChild(Date.class);
+                    Parameter parameter = (Parameter)xoc.getChild(Parameter.class);
+                    history.addTransmission(donor, recipient, parameter);
+                }
+            }
+
+            return history;
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "Defines a transmission history";
+        }
+
+        public Class getReturnType() { return TransmissionHistoryModel.class; }
+
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                XMLUnits.UNITS_RULE,
+                new ElementRule(TRANSMISSION,
+                        new XMLSyntaxRule[] {
+                                //new ElementRule(Date.class),
+                                new ElementRule(Parameter.class),
+                                new ElementRule(DONOR,
+                                        new XMLSyntaxRule[] {new ElementRule(Taxon.class)}),
+                                new ElementRule(RECIPIENT,
+                                        new XMLSyntaxRule[] {new ElementRule(Taxon.class)})
+                        }, 1, Integer.MAX_VALUE
+                )
+        };
+
+    };
+
+    public int getHostIndex(Taxon host) {
+            return hosts.indexOf(host);
+    }
+
+    public int getHostCount() {
+        return hosts.size();
+    }
+
+    //
+    // protected stuff
+    //
+    class TransmissionEvent {
+        Taxon donor;
+        Taxon recipient;
+        Parameter timeParameter = null;
+
+        public TransmissionEvent(Taxon donor, Taxon recipient, Parameter timeParameter) {
+            this.donor = donor;
+            this.recipient = recipient;
+            this.timeParameter = timeParameter;
+        }
+
+        public double getTransmissionTime() {
+            return timeParameter.getParameterValue(0);
+        }
+
+        public Taxon getDonor() {
+            return donor;
+        }
+
+        public Taxon getRecipient() {
+            return recipient;
+        }
+    }
+
+    private List transmissionEvents = new ArrayList();
+    private List hosts = new ArrayList();
 }

@@ -427,14 +427,6 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
     }
 
     // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
-
-    public org.w3c.dom.Element createElement(org.w3c.dom.Document d) {
-        throw new RuntimeException("createElement not implemented");
-    }
-
-    // **************************************************************
     // Units IMPLEMENTATION
     // **************************************************************
 
@@ -455,10 +447,6 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
     {
         return transmissionModel.getUnits();
     }
-
-    // ****************************************************************
-    // Private and protected stuff
-    // ****************************************************************
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 

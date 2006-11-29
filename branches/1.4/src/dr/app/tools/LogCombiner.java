@@ -261,10 +261,10 @@ public class LogCombiner {
 
     public static void printUsage(Arguments arguments) {
 
-        arguments.printUsage("logcombiner", "[-trees] [-decimal] [-burnin <burnin>] [-resample <frequency>] [-scale <scale>] <input-file-name1> [<input-file-name2> ...] <output-file-name>");
+        arguments.printUsage("logcombiner", "<input-file-name1> [<input-file-name2> ...] <output-file-name>");
         System.out.println();
-        System.out.println("  Example: loganalyser test1.log test2.log combined.log");
-        System.out.println("  Example: loganalyser -burnin 10000 test1.log test2.log combined.log");
+        System.out.println("  Example: logcombiner test1.log test2.log combined.log");
+        System.out.println("  Example: logcombiner -burnin 10000 test1.log test2.log combined.log");
         System.out.println();
 
     }

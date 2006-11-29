@@ -25,9 +25,11 @@
 
 package dr.evomodel.transmission;
 
+import dr.evolution.colouring.DefaultBranchColouring;
 import dr.evolution.colouring.DefaultTreeColouring;
 import dr.evolution.colouring.TreeColouring;
 import dr.evolution.colouring.TreeColouringProvider;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
@@ -38,7 +40,9 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -93,6 +97,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
 
         TransmissionEvent transmissionEvent = new TransmissionEvent(donor, recipient, parameter);
         transmissionEvents.add(transmissionEvent);
+        transmissionEventMap.put(recipient, transmissionEvent);
         if (!hosts.contains(donor)) {
             hosts.add(donor);
         }
@@ -119,6 +124,10 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
 
     public TransmissionEvent getTransmissionEvent(int index) {
         return (TransmissionEvent)transmissionEvents.get(index);
+    }
+
+    public TransmissionEvent getTransmissionEventToHost(Taxon recipient) {
+        return (TransmissionEvent)transmissionEventMap.get(recipient);
     }
 
     // *****************************************************************
@@ -228,7 +237,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
     };
 
     public int getHostIndex(Taxon host) {
-            return hosts.indexOf(host);
+        return hosts.indexOf(host);
     }
 
     public int getHostCount() {
@@ -238,9 +247,77 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
     public TreeColouring getTreeColouring(Tree tree) {
         DefaultTreeColouring treeColouring = new DefaultTreeColouring(getHostCount(), tree);
 
-        // @todo do tree colouring...
-        
+        createTreeColouring(tree, tree.getRoot(), treeColouring);
+
         return treeColouring;
+    }
+
+    private Taxon createTreeColouring(Tree tree, NodeRef node, DefaultTreeColouring treeColouring) {
+        Taxon parentHost = null;
+        Taxon childHost = null;
+
+        if (tree.isExternal(node)) {
+            childHost = (Taxon)tree.getNodeTaxon(node).getAttribute("host");
+            if (childHost == null) {
+                throw new RuntimeException("One or more of the viruses tree's taxa are missing the 'host' attribute");
+            }
+
+        } else {
+            Taxon h1 = createTreeColouring(tree, tree.getChild(node, 0), treeColouring);
+            Taxon h2 = createTreeColouring(tree, tree.getChild(node, 1), treeColouring);
+            if (h1 != h2) {
+                throw new RuntimeException("Two children have different hosts at coalescent event");
+            }
+
+            childHost = h1;
+        }
+
+        NodeRef parent = tree.getParent(node);
+        if (parent != null) {
+            double height0 = tree.getNodeHeight(node);
+            double height1 = tree.getNodeHeight(parent);
+
+            TransmissionEvent event = getTransmissionEventToHost(childHost);
+            DefaultBranchColouring branchColouring;
+
+            if (event != null && event.getTransmissionTime() < height1) {
+                if (event.getTransmissionTime() < height0) {
+                    throw new RuntimeException("Transmission event is before the node");
+                }
+
+                List hosts = new ArrayList();
+                List times = new ArrayList();
+
+                parentHost = childHost;
+
+                while (event != null && event.getTransmissionTime() < height1) {
+                    hosts.add(parentHost);
+                    times.add(new Double(event.getTransmissionTime()));
+
+                    parentHost = event.donor;
+
+                    event = getTransmissionEventToHost(parentHost);
+                }
+
+                int host1 = getHostIndex(childHost);
+                int host2 = getHostIndex(parentHost);
+                branchColouring = new DefaultBranchColouring(host2, host1);
+                for (int i = hosts.size() - 1; i >= 0; i--) {
+                    int host = getHostIndex((Taxon)hosts.get(i));
+                    double time = ((Double)times.get(i)).doubleValue();
+                    branchColouring.addEvent(host, time);
+                }
+
+            } else {
+                int host = getHostIndex(childHost);
+                branchColouring = new DefaultBranchColouring(host, host);
+                parentHost = childHost;
+            }
+
+            treeColouring.setBranchColouring(node, branchColouring);
+        }
+
+        return parentHost;
     }
 
     //
@@ -271,5 +348,6 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
     }
 
     private List transmissionEvents = new ArrayList();
+    private Map transmissionEventMap = new HashMap();
     private List hosts = new ArrayList();
 }

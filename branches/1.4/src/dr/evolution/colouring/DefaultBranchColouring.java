@@ -75,14 +75,14 @@ public class DefaultBranchColouring implements BranchColouring {
 		
 	}
 
-	void clear() {
+	public void clear() {
 		
 		colourChanges.clear();
 		changeHeights.clear();
 	
 	}
 
-	void reset( int parentColour, int childColour ) {
+	public void reset( int parentColour, int childColour ) {
 		
 		this.parentColour = parentColour;
 		this.childColour = childColour;
@@ -108,7 +108,7 @@ public class DefaultBranchColouring implements BranchColouring {
 	 * @param colour
 	 * @param time
 	 */
-	void addEvent( int colour, double time ) {
+	public void addEvent( int colour, double time ) {
 		
 		colourChanges.add( new Integer(colour) );
 		changeHeights.add( new Double(time) );
@@ -120,7 +120,7 @@ public class DefaultBranchColouring implements BranchColouring {
 	/**
 	 * Add a number of change events below the current child
 	 */
-	void addHistory( DefaultBranchColouring history ) {
+	public void addHistory( DefaultBranchColouring history ) {
 		
 		// require that my child colour is the new history's parent colour
 		if (childColour != history.parentColour) {

@@ -32,6 +32,15 @@ import javax.swing.*;
 import java.awt.*;
 
 
+/**
+ * DemographicFrame.java
+ *
+ * Title:			Tracer
+ * Description:		An application for analysing MCMC trace files.
+ * @author			Andrew Rambaut
+ * @author			Alexei Drummond
+ * @version			$Id: DemographicDialog.java,v 1.12 2005/07/11 14:07:25 rambaut Exp $
+ */
 public class DemographicFrame extends AuxilaryFrame {
 	
 	/**

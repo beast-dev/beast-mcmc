@@ -27,15 +27,31 @@ package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
+import dr.evolution.io.Importer;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.io.TreeImporter;
+import dr.evolution.tree.MutableTree;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 import dr.util.Version;
 import org.virion.jam.console.ConsoleApplication;
 
 import javax.swing.*;
 import java.io.*;
 import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ *
+ * @version $Id:$
+ */
 public class LogCombiner {
 
     private final static Version version = new BeastVersion();
@@ -49,9 +65,10 @@ public class LogCombiner {
         }
         System.out.println();
 
-        PrintStream outputStream = new PrintStream(new FileOutputStream(outputFileName));
+        PrintWriter writer = new PrintWriter(new FileOutputStream(outputFileName));
 
         boolean firstFile = true;
+        Tree firstTree = null;
         int stateCount = 0;
         int stateStep = -1;
 
@@ -90,60 +107,57 @@ public class LogCombiner {
                 System.out.println();
             }
 
-            BufferedReader reader = new BufferedReader(new FileReader(inputFile));
             if (treeFiles) {
-                int lineCount = 1;
 
-                String line = reader.readLine();
-                while (line != null && !line.trim().toUpperCase().startsWith("TREE")) {
-                    if (firstFile) {
-                        outputStream.println(line);
-                    }
-                    line = reader.readLine();
-                    lineCount++;
-                }
-
-                while (line != null && !line.trim().toUpperCase().startsWith("END;")) {
-
-                    Pattern p = Pattern.compile("\\s*tree\\s+(\\S+)_(\\d+)\\s+(.*)\\s*=\\s*(.*)");
-                    Matcher m = p.matcher(line);
-
-                    if (!m.matches() && m.groupCount() != 4) {
-                        System.err.println("Parsing error at line " + lineCount + ", file " + inputFileNames[i] + ": tree missing?\r"+line);
-                        return;
-                    }
-                    String stateString = m.group(2);
-                    int state = Integer.parseInt(stateString);
-                    String lnP = m.group(3);
-                    String tree = m.group(4);
-
-                    if (stateStep < 0 && state > 0) {
-                        stateStep = state;
+                TreeImporter importer = new NexusImporter(new FileReader(inputFile));
+                try {
+                    Tree tree = null;
+                    if (firstTree == null) {
+                        firstTree = importer.importNextTree();
+                        startLog(firstTree, writer);
+                        
+                        tree = firstTree;
+                    } else {
+                        tree = importer.importTree(firstTree);
                     }
 
-                    if (state >= burnin) {
-                        if (stateStep > 0) {
-                            stateCount += stateStep;
+                    while (tree != null) {
+                        String name = tree.getId();
+                        // split on underscore in STATE_xxxx
+                        String[] bits = name.split("_");
+                        int state = Integer.parseInt(bits[1]);
+
+                        if (stateStep < 0 && state > 0) {
+                            stateStep = state;
                         }
 
-                        if (resample < 0 || stateCount % resample == 0) {
-                            if (convertToDecimal || useScale) {
-                                tree = reformatNumbers(tree, convertToDecimal, useScale, scale);
+                        if (state >= burnin) {
+                            if (stateStep > 0) {
+                                stateCount += stateStep;
                             }
 
-                            outputStream.println("tree STATE_" + stateCount +" " + lnP + " = " + tree);
-                        }
-                    }
+                            if (resample < 0 || stateCount % resample == 0) {
+                                if (useScale) {
+                                   rescaleTree(tree, scale);
+                                }
 
-                    line = reader.readLine();
-                    lineCount++;
+                                writeTree(stateCount, tree, convertToDecimal, writer);
+                            }
+                        }
+                        tree = importer.importNextTree();
+                    }
+                } catch (Importer.ImportException e) {
+                    System.err.println("Error Parsing Input Tree: " + e.getMessage());
+                    return;
                 }
+
             } else {
+                BufferedReader reader = new BufferedReader(new FileReader(inputFile));
                 int lineCount = 1;
                 String line = reader.readLine();
                 if (firstFile) {
                     titles = line.split("\t");
-                    outputStream.println(line);
+                    writer.println(line);
                 } else {
                     String[] newTitles = line.split("\t");
                     if (newTitles.length != titles.length) {
@@ -173,7 +187,7 @@ public class LogCombiner {
                         }
 
                         if (resample < 0 || stateCount % resample == 0) {
-                            outputStream.print(stateCount);
+                            writer.print(stateCount);
                             for (int j = 1; j < parts.length; j++) {
                                 String value = parts[j];
 
@@ -186,9 +200,9 @@ public class LogCombiner {
                                 } else {
                                     value = reformatNumbers(value, convertToDecimal, false, 1.0);
                                 }
-                                outputStream.print("\t" + value);
+                                writer.print("\t" + value);
                             }
-                            outputStream.println();
+                            writer.println();
                         }
                     }
 
@@ -201,8 +215,122 @@ public class LogCombiner {
         }
 
         if (treeFiles) {
-            outputStream.println("end;");
+            stopLog(writer);
         }
+        writer.close();
+    }
+
+    private void rescaleTree(Tree tree, double scale) {
+        if (tree instanceof MutableTree) {
+            MutableTree mutableTree = (MutableTree)tree;
+
+            for (int i = 0; i < tree.getNodeCount(); i++) {
+                NodeRef node = tree.getNode(i);
+                if (node != tree.getRoot()) {
+                    double length = tree.getBranchLength(node);
+                    mutableTree.setBranchLength(node, length * scale);
+                }
+            }
+        } else {
+            throw new IllegalArgumentException("Tree not mutable");
+        }
+    }
+
+    private Map taxonMap = new HashMap();
+
+    private void startLog(Tree tree, PrintWriter writer) {
+
+        int taxonCount = tree.getTaxonCount();
+        writer.println("#NEXUS");
+        writer.println("");
+        writer.println("Begin taxa;");
+        writer.println("\tDimensions ntax=" + taxonCount + ";");
+        writer.println("\tTaxlabels");
+        for (int i = 0; i < taxonCount; i++) {
+            writer.println("\t\t" + tree.getTaxon(i).getId());
+        }
+        writer.println("\t\t;");
+        writer.println("End;");
+        writer.println("");
+        writer.println("Begin trees;");
+
+        // This is needed if the trees use numerical taxon labels
+        writer.println("\tTranslate");
+        for (int i = 0; i < taxonCount; i++) {
+            int k = i + 1;
+            Taxon taxon = tree.getTaxon(i);
+            taxonMap.put(taxon, new Integer(k));
+            if (k < taxonCount) {
+                writer.println("\t\t" + k + " " + taxon.getId() + ",");
+            } else {
+                writer.println("\t\t" + k + " " + taxon.getId());
+            }
+        }
+        writer.println("\t\t;");
+    }
+
+    private void writeTree(int state, Tree tree, boolean convertToDecimal, PrintWriter writer) {
+
+        StringBuffer buffer = new StringBuffer("tree STATE_");
+        buffer.append(state);
+        Double lnP = (Double)tree.getAttribute("lnP");
+        if (lnP != null) {
+            buffer.append(" [&lnP=").append(lnP).append("]");
+        }
+
+        buffer.append(" = [&R] ");
+
+        writeTree(tree, tree.getRoot(), taxonMap, convertToDecimal, buffer);
+
+        buffer.append(";");
+        writer.println(buffer.toString());
+    }
+
+    private void writeTree(Tree tree, NodeRef node, Map taxonMap, boolean convertToDecimal, StringBuffer buffer) {
+
+        NodeRef parent = tree.getParent(node);
+
+        if (tree.isExternal(node)) {
+            Taxon taxon = tree.getNodeTaxon(node);
+            buffer.append((Integer)taxonMap.get(taxon));
+        } else {
+            buffer.append("(");
+            writeTree(tree, tree.getChild(node, 0), taxonMap, convertToDecimal, buffer);
+            for (int i = 1; i < tree.getChildCount(node); i++) {
+                buffer.append(",");
+                writeTree(tree, tree.getChild(node, i), taxonMap, convertToDecimal, buffer);
+            }
+            buffer.append(")");
+        }
+
+        boolean hasAttribute = false;
+        Iterator iter = tree.getNodeAttributeNames(node);
+        while (iter != null && iter.hasNext()) {
+            String name = (String)iter.next();
+            Object value = tree.getNodeAttribute(node, name);
+
+            if (!hasAttribute) {
+                buffer.append("[&");
+                hasAttribute = true;
+            } else {
+                buffer.append(",");
+            }
+            buffer.append(name).append("=");
+        }
+
+        if (hasAttribute) {
+            buffer.append("]");
+        }
+
+        if (parent != null) {
+            buffer.append(":");
+            double length = tree.getBranchLength(node);
+            buffer.append(convertToDecimal ? decimalFormatter.format(length) : scientificFormatter.format(length));
+        }
+    }
+
+    private void stopLog(PrintWriter writer) {
+        writer.println("End;");
     }
 
     private static final DecimalFormat decimalFormatter = new DecimalFormat("#.############");
@@ -235,7 +363,7 @@ public class LogCombiner {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("LogCombiner v1.4, 2006", 60);
+        centreLine("LogCombiner v1.4.1, 2006", 60);
         centreLine("MCMC Output Combiner", 60);
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
@@ -292,8 +420,8 @@ public class LogCombiner {
                 icon = new javax.swing.ImageIcon(url);
             }
 
-            String nameString = "LogCombiner v1.4";
-            final String versionString = "1.4";
+            String nameString = "LogCombiner v1.4.1";
+            final String versionString = "1.4.1";
             String aboutString = "<html><center><p>Version " + versionString + ", 2006</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
@@ -311,7 +439,7 @@ public class LogCombiner {
 
             LogCombinerDialog dialog = new LogCombinerDialog(new JFrame());
 
-            if (!dialog.showDialog("LogCombiner v1.4")) {
+            if (!dialog.showDialog("LogCombiner v1.4.1")) {
                 return;
             }
 
@@ -335,6 +463,7 @@ public class LogCombiner {
 
             } catch (Exception ex) {
                 System.err.println("Exception: " + ex.getMessage());
+                ex.printStackTrace();
             }
             System.out.println("Finished - Quit program to exit.");
             while (true) {

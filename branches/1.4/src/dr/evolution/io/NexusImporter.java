@@ -288,10 +288,10 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 			TaxonList[] taxonList = new TaxonList[1];
 			taxonList[0] = null;
 			isReadingTreesBlock = startReadingTrees(taxonList);
-			translationList = readTranslationList(taxonList[0], lastToken);
-		}
+            if (!isReadingTreesBlock) return false;
 
-		if (!isReadingTreesBlock) return false;
+            translationList = readTranslationList(taxonList[0], lastToken);
+        }
 
 		if (nextTree == null) {
 			nextTree = readNextTree(translationList, lastToken);

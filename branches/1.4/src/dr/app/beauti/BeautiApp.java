@@ -59,7 +59,7 @@ public class BeautiApp extends MultiDocApplication {
 	        if (args.length == 1 && args[0].equalsIgnoreCase("-developer")) {
 		        developer = true;
 	        }
-	        
+
             System.setProperty("com.apple.macos.useScreenMenuBar","true");
             System.setProperty("apple.laf.useScreenMenuBar","true");
 
@@ -75,7 +75,7 @@ public class BeautiApp extends MultiDocApplication {
                 }
 
                 final String nameString = "BEAUti";
-                final String versionString = "1.4";
+                final String versionString = "1.4.1";
                 String aboutString = "<html><center><p>Bayesian Evolutionary Analysis Utility<br>" +
                         "Version " + versionString + ", 2003-2006</p>" +
                         "<p>by<br>" +

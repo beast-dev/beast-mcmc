@@ -68,7 +68,7 @@ public class LogCombiner {
         PrintWriter writer = new PrintWriter(new FileOutputStream(outputFileName));
 
         boolean firstFile = true;
-        Tree firstTree = null;
+        boolean firstTree = true;
         int stateCount = 0;
         int stateStep = -1;
 
@@ -111,17 +111,13 @@ public class LogCombiner {
 
                 TreeImporter importer = new NexusImporter(new FileReader(inputFile));
                 try {
-                    Tree tree = null;
-                    if (firstTree == null) {
-                        firstTree = importer.importNextTree();
-                        startLog(firstTree, writer);
-                        
-                        tree = firstTree;
-                    } else {
-                        tree = importer.importTree(firstTree);
-                    }
+                    while (importer.hasTree()) {
+	                    Tree tree = importer.importNextTree();
+	                    if (firstTree) {
+	                        startLog(tree, writer);
+		                    firstTree = false;
+	                    }
 
-                    while (tree != null) {
                         String name = tree.getId();
                         // split on underscore in STATE_xxxx
                         String[] bits = name.split("_");
@@ -144,7 +140,6 @@ public class LogCombiner {
                                 writeTree(stateCount, tree, convertToDecimal, writer);
                             }
                         }
-                        tree = importer.importNextTree();
                     }
                 } catch (Importer.ImportException e) {
                     System.err.println("Error Parsing Input Tree: " + e.getMessage());
@@ -259,7 +254,7 @@ public class LogCombiner {
         for (int i = 0; i < taxonCount; i++) {
             int k = i + 1;
             Taxon taxon = tree.getTaxon(i);
-            taxonMap.put(taxon, new Integer(k));
+            taxonMap.put(taxon.getId(), new Integer(k));
             if (k < taxonCount) {
                 writer.println("\t\t" + k + " " + taxon.getId() + ",");
             } else {
@@ -291,8 +286,12 @@ public class LogCombiner {
         NodeRef parent = tree.getParent(node);
 
         if (tree.isExternal(node)) {
-            Taxon taxon = tree.getNodeTaxon(node);
-            buffer.append((Integer)taxonMap.get(taxon));
+            String taxon = tree.getNodeTaxon(node).getId();
+	        Integer taxonNo = (Integer)taxonMap.get(taxon);
+	        if (taxonNo == null) {
+		        throw new IllegalArgumentException("Taxon, " + taxon + ", not recognized from first tree file");
+	        }
+            buffer.append(taxonNo);
         } else {
             buffer.append("(");
             writeTree(tree, tree.getChild(node, 0), taxonMap, convertToDecimal, buffer);
@@ -310,12 +309,12 @@ public class LogCombiner {
             Object value = tree.getNodeAttribute(node, name);
 
             if (!hasAttribute) {
-                buffer.append("[&");
+                buffer.append(":[&");
                 hasAttribute = true;
             } else {
                 buffer.append(",");
             }
-            buffer.append(name).append("=");
+            buffer.append(name).append("=").append(value);
         }
 
         if (hasAttribute) {
@@ -323,7 +322,9 @@ public class LogCombiner {
         }
 
         if (parent != null) {
-            buffer.append(":");
+	        if (!hasAttribute) {
+		        buffer.append(":");
+	        }
             double length = tree.getBranchLength(node);
             buffer.append(convertToDecimal ? decimalFormatter.format(length) : scientificFormatter.format(length));
         }

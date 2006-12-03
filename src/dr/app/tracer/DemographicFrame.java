@@ -32,10 +32,17 @@ import javax.swing.*;
 import java.awt.*;
 
 
+/**
+ * DemographicFrame.java
+ *
+ * @author			Andrew Rambaut
+ * @author			Alexei Drummond
+ * @version			$Id: DemographicDialog.java,v 1.12 2005/07/11 14:07:25 rambaut Exp $
+ */
 public class DemographicFrame extends AuxilaryFrame {
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1659884609305245738L;
 	private Variate xData;
@@ -45,15 +52,15 @@ public class DemographicFrame extends AuxilaryFrame {
 	private Variate yDataLower;
 
 	DemographicPlotPanel demographicPlotPanel = null;
-	
+
 	public DemographicFrame(TracerFrame tracerFrame) {
-	
+
 		super(tracerFrame);
-		
+
 		demographicPlotPanel = new DemographicPlotPanel();
 
 		setContentsPanel(demographicPlotPanel);
-	
+
 		getSaveAction().setEnabled(false);
 		getSaveAsAction().setEnabled(false);
 
@@ -66,7 +73,7 @@ public class DemographicFrame extends AuxilaryFrame {
 
 		getZoomWindowAction().setEnabled(false);
 	}
-	
+
 	public void initializeComponents() {
 
 		setSize(new java.awt.Dimension(640, 480));
@@ -83,23 +90,23 @@ public class DemographicFrame extends AuxilaryFrame {
 		this.yDataMedian = yDataMedian;
 		this.yDataUpper = yDataUpper;
 		this.yDataLower = yDataLower;
-		
+
 		demographicPlotPanel.setupPlot(title, xData, yDataMean, yDataMedian, yDataUpper, yDataLower,
                 timeMean, timeMedian, timeUpper, timeLower);
 		show();
 	}
-	
+
 	public boolean useExportAction() { return true; }
 
     public JComponent getExportableComponent() {
 		return demographicPlotPanel.getExportableComponent();
-	} 	
-      	
+	}
+
 	public void doCopy() {
-		java.awt.datatransfer.Clipboard clipboard = 
+		java.awt.datatransfer.Clipboard clipboard =
 			Toolkit.getDefaultToolkit().getSystemClipboard();
 
-		java.awt.datatransfer.StringSelection selection = 
+		java.awt.datatransfer.StringSelection selection =
 			new java.awt.datatransfer.StringSelection(this.toString());
 
 		clipboard.setContents(selection, selection);
@@ -109,7 +116,7 @@ public class DemographicFrame extends AuxilaryFrame {
 		StringBuffer buffer = new StringBuffer();
 
 		buffer.append("Time\tMean\tMedian\tUpper\tLower\n");
-		
+
 		for (int i = 0; i < xData.getCount(); i++) {
 			buffer.append(String.valueOf(xData.get(i)));
 			buffer.append("\t");
@@ -122,7 +129,7 @@ public class DemographicFrame extends AuxilaryFrame {
 			buffer.append(String.valueOf(yDataLower.get(i)));
 			buffer.append("\n");
 		}
-		
+
 		return buffer.toString();
 	}
 }

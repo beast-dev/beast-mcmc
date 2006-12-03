@@ -68,7 +68,6 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(UserInput.DOUBLE_PARSER);
 		addXMLObjectParser(UserInput.INTEGER_PARSER);
 
-
 		addXMLObjectParser(new dr.evoxml.GeneralDataTypeParser());
 		addXMLObjectParser(new dr.evoxml.AlignmentParser());
 		addXMLObjectParser(new dr.evoxml.SitePatternsParser());

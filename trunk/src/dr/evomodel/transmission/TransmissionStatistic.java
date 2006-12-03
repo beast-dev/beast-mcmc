@@ -47,150 +47,194 @@ import dr.xml.*;
  */
 public class TransmissionStatistic extends BooleanStatistic implements TreeStatistic {
 
-	// PUBLIC STUFF
+    // PUBLIC STUFF
 
-	public static final String TRANSMISSION_STATISTIC = "transmissionStatistic";
+    public static final String TRANSMISSION_STATISTIC = "transmissionStatistic";
 
-	public TransmissionStatistic(String name, Tree hostTree, Tree virusTree) {
+    public TransmissionStatistic(String name, TransmissionHistoryModel transmissionHistoryModel, Tree virusTree) {
 
-		super(name);
+        super(name);
 
-		this.hostTree = hostTree;
-		this.virusTree = virusTree;
+        this.transmissionHistoryModel = transmissionHistoryModel;
+        this.virusTree = virusTree;
 
-		setupHosts();
-	}
+        setupHosts();
+    }
 
-	private void setupHosts() {
+    public TransmissionStatistic(String name, Tree hostTree, Tree virusTree) {
 
-		hostCount = hostTree.getTaxonCount();
+        super(name);
 
-		donorHost = new int[hostCount];
-		donorHost[0] = -1;
-		transmissionTime = new double[hostCount];
-		transmissionTime[0] = Double.POSITIVE_INFINITY;
+        this.hostTree = hostTree;
+        this.virusTree = virusTree;
 
-		setupHosts(hostTree.getRoot());
-	}
+        setupHosts();
+    }
 
-	private int setupHosts(NodeRef node) {
+    private void setupHosts() {
 
-		int host;
+        if (transmissionHistoryModel != null) {
+            hostCount = transmissionHistoryModel.getHostCount();
 
-		if (hostTree.isExternal(node)) {
-			host = node.getNumber();
-		} else {
+        } else {
+            hostCount = hostTree.getTaxonCount();
+        }
 
-		// This traversal assumes that the first child is the donor
-		// and the second is the recipient
+        donorHost = new int[hostCount];
+        donorHost[0] = -1;
+        transmissionTime = new double[hostCount];
+        transmissionTime[0] = Double.POSITIVE_INFINITY;
 
-			int host1 = setupHosts(hostTree.getChild(node, 0));
-			int host2 = setupHosts(hostTree.getChild(node, 1));
+        if (transmissionHistoryModel != null) {
+            for (int i = 0; i < transmissionHistoryModel.getTransmissionEventCount(); i++) {
+                TransmissionHistoryModel.TransmissionEvent event = transmissionHistoryModel.getTransmissionEvent(i);
 
-			donorHost[host2] = host1;
-			transmissionTime[host2] = hostTree.getNodeHeight(node);
+                int host1 = transmissionHistoryModel.getHostIndex(event.getDonor());
+                int host2 = transmissionHistoryModel.getHostIndex(event.getRecipient());
 
-			host = host1;
-		}
+                donorHost[host2] = host1;
+                transmissionTime[host2] = event.getTransmissionTime();
+            }
+        } else {
+            setupHostsTree(hostTree.getRoot());
+        }
+    }
 
-		return host;
-	}
+    private int setupHostsTree(NodeRef node) {
 
-	public void setTree(Tree tree) { this.virusTree = tree; }
-	public Tree getTree() { return virusTree; }
+        int host;
 
-	public int getDimension() { return 1; }
+        if (hostTree.isExternal(node)) {
+            host = node.getNumber();
+        } else {
 
-	/**
-	 * @return true if the population tree is compatible with the species tree
-	 */
+            // This traversal assumes that the first child is the donor
+            // and the second is the recipient
+
+            int host1 = setupHostsTree(hostTree.getChild(node, 0));
+            int host2 = setupHostsTree(hostTree.getChild(node, 1));
+
+            donorHost[host2] = host1;
+            transmissionTime[host2] = hostTree.getNodeHeight(node);
+
+            host = host1;
+        }
+
+        return host;
+    }
+
+    public void setTree(Tree tree) { this.virusTree = tree; }
+    public Tree getTree() { return virusTree; }
+
+    public int getDimension() { return 1; }
+
+    /**
+     * @return true if the population tree is compatible with the species tree
+     */
     public boolean getBoolean(int dim) {
 
-		return (isCompatible(virusTree.getRoot()) != -1);
-	}
+        return (isCompatible(virusTree.getRoot()) != -1);
+    }
 
-	private int isCompatible(NodeRef node) {
+    private int isCompatible(NodeRef node) {
 
-		double height = virusTree.getNodeHeight(node);
-		int host;
+        double height = virusTree.getNodeHeight(node);
+        int host;
 
-		if (virusTree.isExternal(node)) {
-			Taxon hostTaxon = (Taxon)virusTree.getTaxonAttribute(node.getNumber(), "host");
-			host = hostTree.getTaxonIndex(hostTaxon);
+        if (virusTree.isExternal(node)) {
+            Taxon hostTaxon = (Taxon)virusTree.getTaxonAttribute(node.getNumber(), "host");
+            if (transmissionHistoryModel != null) {
+                host = transmissionHistoryModel.getHostIndex(hostTaxon);
+            } else {
+                host = hostTree.getTaxonIndex(hostTaxon);
+            }
 
-			if (height > transmissionTime[host]) return -1;
+            if (height > transmissionTime[host]) return -1;
 
-		} else {
+        } else {
 
-			// Tree should be bifurcating...
-			int host1 = isCompatible(virusTree.getChild(node, 0));
-			if (host1 == -1) return -1;
+            // Tree should be bifurcating...
+            int host1 = isCompatible(virusTree.getChild(node, 0));
+            if (host1 == -1) return -1;
 
-			int host2 = isCompatible(virusTree.getChild(node, 1));
-			if (host2 == -1) return -1;
+            int host2 = isCompatible(virusTree.getChild(node, 1));
+            if (host2 == -1) return -1;
 
-			if (host1 == -1 || host2 == -1);
-			while (height > transmissionTime[host1]) {
-				host1 = donorHost[host1];
-			}
+            if (host1 == -1 || host2 == -1);
+            while (height > transmissionTime[host1]) {
+                host1 = donorHost[host1];
+            }
 
-			while (height > transmissionTime[host2]) {
-				host2 = donorHost[host2];
-			}
+            while (height > transmissionTime[host2]) {
+                host2 = donorHost[host2];
+            }
 
-			if (host1 != host2) return -1;
+            if (host1 != host2) return -1;
 
-			host = host1;
-		}
+            host = host1;
+        }
 
-		return host;
-	}
+        return host;
+    }
 
-	// ****************************************************************
-	// Private and protected stuff
-	// ****************************************************************
+    // ****************************************************************
+    // Private and protected stuff
+    // ****************************************************************
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return TRANSMISSION_STATISTIC; }
+        public String getParserName() { return TRANSMISSION_STATISTIC; }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			String name = xo.getStringAttribute("name");
-			Tree hostTree = (Tree)xo.getSocketChild("hostTree");
-			Tree virusTree = (Tree)xo.getSocketChild("parasiteTree");
-			return new TransmissionStatistic(name, hostTree, virusTree);
-		}
+            String name = xo.getStringAttribute("name");
+            Tree virusTree = (Tree)xo.getSocketChild("parasiteTree");
 
-		public String getParserDescription() {
-			return "A statistic that returns true if the given parasite tree is compatible with the host tree.";
-		}
+            if (xo.getChild(TransmissionHistoryModel.class) != null) {
+                TransmissionHistoryModel history = (TransmissionHistoryModel)xo.getChild(TransmissionHistoryModel.class);
+                return new TransmissionStatistic(name, history, virusTree);
+            } else {
+                Tree hostTree = (Tree)xo.getSocketChild("hostTree");
+                return new TransmissionStatistic(name, hostTree, virusTree);
+            }
 
-		public Class getReturnType() { return Statistic.class; }
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public String getParserDescription() {
+            return "A statistic that returns true if the given parasite tree is compatible with the host tree.";
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new StringAttributeRule("name", "A name for this statistic for the purpose of logging"),
-			new ElementRule("hostTree",
-				new XMLSyntaxRule[] { new ElementRule(Tree.class) }),
-			new ElementRule("parasiteTree",
-				new XMLSyntaxRule[] { new ElementRule(Tree.class) })
-		};
-	};
+        public Class getReturnType() { return Statistic.class; }
 
-	/** The host tree. */
-	private Tree hostTree = null;
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-	/** The viruses tree. */
-	private Tree virusTree = null;
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                new StringAttributeRule("name", "A name for this statistic for the purpose of logging"),
+                new XORRule(
+                        new ElementRule("hostTree",
+                                new XMLSyntaxRule[] { new ElementRule(Tree.class) }),
+                        new ElementRule(TransmissionHistoryModel.class,
+                                "This describes the transmission history of the patients.")
+                ),
+                new ElementRule("parasiteTree",
+                        new XMLSyntaxRule[] { new ElementRule(Tree.class) })
+        };
+    };
 
-	/** The number of hosts. */
-	private int hostCount;
+    /** The host tree. */
+    private Tree hostTree = null;
 
-	/** The donor host for each recipient host (-1 for initial host). */
-	private int[] donorHost;
+    private TransmissionHistoryModel transmissionHistoryModel = null;
 
-	/** The time of transmission into this host (POSITIVE_INFINITY for initial host). */
-	private double[] transmissionTime;
+    /** The viruses tree. */
+    private Tree virusTree = null;
+
+    /** The number of hosts. */
+    private int hostCount;
+
+    /** The donor host for each recipient host (-1 for initial host). */
+    private int[] donorHost;
+
+    /** The time of transmission into this host (POSITIVE_INFINITY for initial host). */
+    private double[] transmissionTime;
 }

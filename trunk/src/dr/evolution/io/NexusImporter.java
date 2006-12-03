@@ -40,10 +40,14 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.util.Attributable;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.awt.*;
 
 /**
  * Class for importing NEXUS file format
@@ -67,7 +71,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 	// NEXUS specific ImportException classes
 	public static class MissingBlockException extends ImportException {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -6287423449717453999L;
 		public MissingBlockException() { super(); }
@@ -172,9 +176,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 		return readCalibrationBlock(taxonList);
 	}
 
-    // **************************************************************
-    // SequenceImporter IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// SequenceImporter IMPLEMENTATION
+	// **************************************************************
 
 	/**
 	 * importAlignment.
@@ -241,9 +245,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 		return importAlignment();
 	}
 
-    // **************************************************************
-    // TreeImporter IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// TreeImporter IMPLEMENTATION
+	// **************************************************************
 
 	private boolean isReadingTreesBlock = false;
 	private HashMap translationList = null;
@@ -288,10 +292,10 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 			TaxonList[] taxonList = new TaxonList[1];
 			taxonList[0] = null;
 			isReadingTreesBlock = startReadingTrees(taxonList);
+			if (!isReadingTreesBlock) return false;
+
 			translationList = readTranslationList(taxonList[0], lastToken);
 		}
-
-		if (!isReadingTreesBlock) return false;
 
 		if (nextTree == null) {
 			nextTree = readNextTree(translationList, lastToken);
@@ -490,8 +494,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
 						String token3 = readToken(";");
 						if (token3.equalsIgnoreCase("NUCLEOTIDE") ||
-							token3.equalsIgnoreCase("DNA") ||
-							token3.equalsIgnoreCase("RNA")) {
+								token3.equalsIgnoreCase("DNA") ||
+								token3.equalsIgnoreCase("RNA")) {
 
 							dataType = Nucleotides.INSTANCE;
 
@@ -573,13 +577,13 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 						Taxon taxon = sequence.getTaxon();
 						if (!taxon.getId().equals(token)) {
 							throw new UnknownTaxonException("Unknown taxon label: expecting '" +
-								taxon.getId() + "', found '" + token + "'");
+									taxon.getId() + "', found '" + token + "'");
 						}
 					}
 
 					StringBuffer buffer = new StringBuffer();
 					readSequenceLine(buffer, dataType, ";", gapCharacters, missingCharacters,
-										matchCharacters, firstSequence);
+							matchCharacters, firstSequence);
 					String seqString = buffer.toString();
 					sequence.appendSequenceString(seqString);
 					if (i == 0) {
@@ -640,7 +644,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
 				StringBuffer buffer = new StringBuffer();
 				readSequence(buffer, dataType, ";", siteCount, gapCharacters,
-								missingCharacters, matchCharacters, firstSequence);
+						missingCharacters, matchCharacters, firstSequence);
 				String seqString = buffer.toString();
 				if (seqString.length() != siteCount) {
 					throw new ShortSequenceException(sequence.getTaxon().getId());
@@ -825,79 +829,77 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 	}
 
 	private Tree readNextTree(HashMap translationList, String[] lastToken) throws ImportException, IOException
-    {
-        try {
-            Tree tree = null;
-            String token = lastToken[0];
+	{
+		try {
+			Tree tree = null;
+			String token = lastToken[0];
 
-            if ( token.equalsIgnoreCase("UTREE") || token.equalsIgnoreCase("TREE")) {
+			if ( token.equalsIgnoreCase("UTREE") || token.equalsIgnoreCase("TREE")) {
 
-                if (nextCharacter() == '*') {
-                    // Star is used to specify a default tree - ignore it
-                    readCharacter();
-                }
+				if (nextCharacter() == '*') {
+					// Star is used to specify a default tree - ignore it
+					readCharacter();
+				}
 
-                String token2 = readToken( "=;" );
+				String token2 = readToken( "=;" );
 
-                if (getLastDelimiter() != '=') {
-                    throw new BadFormatException("Missing label for tree'" + token2 + "' or missing '=' in TREE command of TREES block");
-                }
+				final String comment = getLastMetaComment();
+				clearLastMetaComment();
 
-                try {
+				if (getLastDelimiter() != '=') {
+					throw new BadFormatException("Missing label for tree'" + token2 + "' or missing '=' in TREE command of TREES block");
+				}
 
-                    if (nextCharacter() != '(') {
-                        throw new BadFormatException("Missing tree definition in TREE command of TREES block");
-                    }
+				try {
 
-                    // Save tree comment and attach it later
-                    final String comment = getLastMetaComment();
-                    clearLastMetaComment();
+					if (nextCharacter() != '(') {
+						throw new BadFormatException("Missing tree definition in TREE command of TREES block");
+					}
 
-                    FlexibleNode root = readInternalNode(translationList);
-                    tree = new FlexibleTree(root, false, true);
-                    tree.setId(token2);
+					// Save tree comment and attach it later
 
-                    if (getLastDelimiter() != ';') {
-                        throw new BadFormatException("Expecting ';' after tree, '" + token2 + "', TREE command of TREES block");
-                    }
+					FlexibleNode root = readInternalNode(translationList);
+					tree = new FlexibleTree(root, false, true);
+					tree.setId(token2);
 
-                    if  (comment != null) {
-                        // if '[W number]' (MrBayes), set weight attribute
-                        if( comment.matches("^W\\s+[\\+\\-]?[\\d\\.]+")) {
-                            tree.setAttribute("weight", new Float(comment.substring(2)) );
-                        } else {
-                            try {
-                                String[] pairs = metaCommentPairs(comment);
-                                for(int n = 0; n < pairs.length/2; ++n) {
-                                    tree.setAttribute(pairs[2*n], pairs[2*n+1]);
-                                }
-                            } catch(Importer.BadFormatException e) {
-                                 // set generic comment attribute
-                                tree.setAttribute("comment", comment);
-                            }
-                        }
-                    }
+					if (getLastDelimiter() != ';') {
+						throw new BadFormatException("Expecting ';' after tree, '" + token2 + "', TREE command of TREES block");
+					}
 
-                } catch (EOFException e) {
-                    // If we reach EOF we may as well return what we have?
-                    return tree;
-                }
+					if  (comment != null) {
+						// if '[W number]' (MrBayes), set weight attribute
+						if( comment.matches("^W\\s+[\\+\\-]?[\\d\\.]+")) {
+							tree.setAttribute("weight", new Float(comment.substring(2)) );
+						} else {
+							try {
+								parseMetaCommentPairs(comment, tree);
+							} catch(Importer.BadFormatException e) {
+								// set generic comment attribute
+								tree.setAttribute("comment", comment);
+							}
+						}
+					}
 
-                token = readToken(";");
-            } else if ( token.equalsIgnoreCase("ENDBLOCK") || token.equalsIgnoreCase("END") ) {
-                return null;
-            } else {
-                throw new BadFormatException("Unknown command '" + token + "' in TREES block");
-            }
+				} catch (EOFException e) {
+					// If we reach EOF we may as well return what we have?
+					return tree;
+				}
 
-            //added this to escape readNextTree loop correctly -- AJD
-            lastToken[0] = token;
+				token = readToken(";");
+			} else if ( token.equalsIgnoreCase("ENDBLOCK") || token.equalsIgnoreCase("END") ) {
+				return null;
+			} else {
+				throw new BadFormatException("Unknown command '" + token + "' in TREES block");
+			}
 
-            return tree;
+			//added this to escape readNextTree loop correctly -- AJD
+			lastToken[0] = token;
 
-        } catch (EOFException e) {
-            return null;
-        }
+			return tree;
+
+		} catch (EOFException e) {
+			return null;
+		}
 	}
 
 	/**
@@ -910,9 +912,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 		double length = 0.0;
 		FlexibleNode branch;
 
-        clearLastMetaComment();
+		clearLastMetaComment();
 
-        if (nextCharacter() == '(') {
+		if (nextCharacter() == '(') {
 			// is an internal node
 			branch = readInternalNode(translationList);
 
@@ -921,12 +923,12 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 			branch = readExternalNode(translationList);
 		}
 
-        if (getLastDelimiter() != ':') {
-            String label = readToken(",():;");
-            if (label.length() > 0) {
-                branch.setAttribute("label", label);
-            }
-        }
+		if (getLastDelimiter() != ':') {
+			String label = readToken(",():;");
+			if (label.length() > 0) {
+				branch.setAttribute("label", label);
+			}
+		}
 
 		if (getLastDelimiter() == ':') {
 			length = readDouble(",():;");
@@ -934,16 +936,16 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
 		branch.setLength(length);
 
-        if (getLastMetaComment() != null) {
-            // There was a meta-comment which should be in the form:
-            // \[&label[=value][,label[=value]>[,/..]]\]
-            String[] pairs = metaCommentPairs(getLastMetaComment());
-            for(int n = 0; n < pairs.length/2; ++n) {
-                labelNode(branch, pairs[2*n], pairs[2*n+1] != null ? pairs[2*n+1] : "true");
-            }
-
-            clearLastMetaComment();
-        }
+		if (getLastMetaComment() != null) {
+			// There was a meta-comment which should be in the form:
+			// \[&label[=value][,label[=value]>[,/..]]\]
+			try {
+				parseMetaCommentPairs(getLastMetaComment(), branch);
+			} catch(BadFormatException bfe) {
+				// ignore it
+			}
+			clearLastMetaComment();
+		}
 
 		return branch;
 	}
@@ -983,24 +985,24 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 		return node;
 	}
 
-    private void labelNode(FlexibleNode node, String label, String value) {
-        // Attempt to format the value as a number
-        Number number = null;
-        try {
-            number = Integer.valueOf(value);
-        } catch (NumberFormatException nfe1) {
-            try {
-                number = Double.valueOf(value);
-            } catch (NumberFormatException nfe2) {
-              //
-            }
-        }
-        if (number != null) {
-            node.setAttribute(label, number);
-        } else {
-            node.setAttribute(label, value);
-        }
-    }
+	private void labelNode(FlexibleNode node, String label, String value) {
+		// Attempt to format the value as a number
+		Number number = null;
+		try {
+			number = Integer.valueOf(value);
+		} catch (NumberFormatException nfe1) {
+			try {
+				number = Double.valueOf(value);
+			} catch (NumberFormatException nfe2) {
+				//
+			}
+		}
+		if (number != null) {
+			node.setAttribute(label, number);
+		} else {
+			node.setAttribute(label, value);
+		}
+	}
 
 	/**
 	 * Reads an external node in.
@@ -1156,37 +1158,90 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 		return dateArray;
 	}
 
-    private static String[] metaCommentPairs(String meta) throws Importer.BadFormatException {
-        String[] pairs = meta.split(",");
-        String[] result = new String[pairs.length*2];
+	static void parseMetaCommentPairs(String meta, Attributable item) throws Importer.BadFormatException {
+		// This regex should match key=value pairs, separated by commas
+		// This can match the following types of meta comment pairs:
+		// value=number, value="string", value={item1, item2, item3}
+		// (label must be quoted if it contains spaces (i.e. "my label"=label)
 
-        int j = 0;
-        for (int i = 0; i < pairs.length; i++) {
-            String pair = pairs[i];
-            String[] parts = pair.split("=");
-            if (parts.length == 1) {
-                String label = parts[0].trim();
+		Pattern pattern = Pattern.compile("(\"[^\"]*\"+|[^,=\\s]+)\\s*(=\\s*(\\{[^=}]*\\}|\"[^\"]*\"+|[^,]+))?");
+		Matcher matcher = pattern.matcher(meta);
 
-                if (label.length() == 0) {
-                    throw new Importer.BadFormatException("Badly formatted attribute: '"+pair+"'");
-                }
-                result[j++] = label;
-                result[j++] = null;
-            } else if (parts.length == 2) {
-                String label = parts[0].trim();
-                String value = parts[1].trim();
+		while (matcher.find()) {
+			String label = matcher.group(1);
+			if( label.charAt(0) == '\"' ) {
+				label = label.substring(1, label.length() - 1);
+			}
+			if (label == null || label.trim().length() == 0) {
+				throw new Importer.BadFormatException("Badly formatted attribute: '"+ matcher.group()+"'");
+			}
+			final String value = matcher.group(2);
+			if (value != null && value.trim().length() > 0) {
+				// there is a specified value so try to parse it
+				item.setAttribute(label, parseValue(value.substring(1)));
+			} else {
+				item.setAttribute(label, Boolean.TRUE);
+			}
+		}
+	}
 
-                if (label.length() == 0 || value.length() == 0) {
-                    throw new Importer.BadFormatException("Badly formatted attribute pair: '"+pair+"'");
-                }
-                result[j++] = label;
-                result[j++] = value;
-            } else {
-                throw new Importer.BadFormatException("Badly formatted attribute: '"+pair+"'");
-            }
-        }
-        return result;
-    }
+	/**
+	 * This method takes a string and tries to decode it returning the object
+	 * that best fits the data. It will recognize command delimited lists enclosed
+	 * in {..} and call parseValue() on each element. It will also recognize Boolean,
+	 * Integer and Double. If the value starts with a # then it will attempt to decode
+	 * the following integer as an RGB colour - see Color.decode(). If nothing else fits
+	 * then the value will be returned as a string but trimmed of leading and trailing
+	 * white space.
+	 * @param value the string
+	 * @return the object
+	 */
+	static Object parseValue(String value) {
+
+		value = value.trim();
+
+		if (value.startsWith("{")) {
+			// the value is a list so recursively parse the elements
+			// and return an array
+			String[] elements = value.substring(1, value.length() - 1).split(",");
+			Object[] values = new Object[elements.length];
+			for (int i = 0; i < elements.length; i++) {
+				values[i] = parseValue(elements[i]);
+			}
+			return values;
+		}
+
+		if (value.startsWith("#")) {
+			// I am not sure whether this is a good idea but
+			// I am going to assume that a # denotes an RGB colour
+			try {
+				return Color.decode(value.substring(1));
+			} catch (NumberFormatException nfe1) {
+				// not a colour
+			}
+		}
+
+		if (value.equalsIgnoreCase("TRUE") || value.equalsIgnoreCase("FALSE")) {
+			return Boolean.valueOf(value);
+		}
+
+		// Attempt to format the value as an integer
+		try {
+			return new Integer(value);
+		} catch (NumberFormatException nfe1) {
+			// not an integer
+		}
+
+		// Attempt to format the value as a double
+		try {
+			return new Double(value);
+		} catch (NumberFormatException nfe2) {
+			// not a double
+		}
+
+		// return the trimmed string
+		return value;
+	}
 
 
 	// private stuff
@@ -1200,61 +1255,61 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 	private String missingCharacters = "?";
 	private boolean isInterleaved = false;
 
-    public static void main(String[] args) throws IOException, ImportException {
+	public static void main(String[] args) throws IOException, ImportException {
 
-        if (args.length > 3) {
+		if (args.length > 3) {
 
-            int sampleFrequency = Integer.parseInt(args[1]);
-            boolean includeBranchLengths = Boolean.getBoolean(args[2]);
-            boolean isNexus = Boolean.getBoolean(args[3]);
+			int sampleFrequency = Integer.parseInt(args[1]);
+			boolean includeBranchLengths = Boolean.getBoolean(args[2]);
+			boolean isNexus = Boolean.getBoolean(args[3]);
 
-            NexusImporter nexusImporter = null;
+			NexusImporter nexusImporter = null;
 
-            BufferedReader reader = null;
+			BufferedReader reader = null;
 
-            if (isNexus) {
-                nexusImporter = new NexusImporter(new FileReader(args[0]));
-            } else {
-                reader = new BufferedReader(new FileReader(args[0]));
-            }
-
-
-            int index = 0;
-            int count = 0;
-            String line = null;
-            if (!isNexus) line = reader.readLine();
-            while (line != null || (isNexus && nexusImporter.hasTree())) {
-
-                Tree tree = null;
-                if (isNexus) {
-                    tree = nexusImporter.importNextTree();
-                } else {
-                    String treeString = line.substring(line.indexOf('(')).trim();
-
-                    java.io.Reader stringReader = new java.io.StringReader(treeString);
-                    NewickImporter importer = new NewickImporter(stringReader);
-                    tree = importer.importNextTree();
-                }
+			if (isNexus) {
+				nexusImporter = new NexusImporter(new FileReader(args[0]));
+			} else {
+				reader = new BufferedReader(new FileReader(args[0]));
+			}
 
 
-                if (index % sampleFrequency  == 0) {
-                    if (includeBranchLengths) {
-                        System.out.println(Tree.Utils.newick(tree));
-                    } else {
-                        System.out.println(Tree.Utils.newickNoLengths(tree));
-                        count +=1;
-                    }
-                }
-                index += 1;
-                if (!isNexus) line = reader.readLine();
-            }
-            System.out.println(count + " trees");
+			int index = 0;
+			int count = 0;
+			String line = null;
+			if (!isNexus) line = reader.readLine();
+			while (line != null || (isNexus && nexusImporter.hasTree())) {
 
-        } else {
-            System.err.println("usage: filterTrees <tree-file-name> <sample-frequency> <include-branch-lengths>");
-        }
+				Tree tree = null;
+				if (isNexus) {
+					tree = nexusImporter.importNextTree();
+				} else {
+					String treeString = line.substring(line.indexOf('(')).trim();
+
+					java.io.Reader stringReader = new java.io.StringReader(treeString);
+					NewickImporter importer = new NewickImporter(stringReader);
+					tree = importer.importNextTree();
+				}
 
 
-    }
+				if (index % sampleFrequency  == 0) {
+					if (includeBranchLengths) {
+						System.out.println(Tree.Utils.newick(tree));
+					} else {
+						System.out.println(Tree.Utils.newickNoLengths(tree));
+						count +=1;
+					}
+				}
+				index += 1;
+				if (!isNexus) line = reader.readLine();
+			}
+			System.out.println(count + " trees");
+
+		} else {
+			System.err.println("usage: filterTrees <tree-file-name> <sample-frequency> <include-branch-lengths>");
+		}
+
+
+	}
 
 }

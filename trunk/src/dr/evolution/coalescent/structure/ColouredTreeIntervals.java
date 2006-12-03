@@ -26,13 +26,11 @@
 package dr.evolution.coalescent.structure;
 
 import dr.evolution.coalescent.IntervalType;
-import dr.evolution.coalescent.structure.StructuredIntervalList;
-import dr.evolution.coalescent.structure.Event;
+import dr.evolution.colouring.BranchColouring;
+import dr.evolution.colouring.TreeColouring;
 import dr.evolution.tree.ColourChange;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.colouring.TreeColouring;
-import dr.evolution.colouring.BranchColouring;
 
 import java.util.ArrayList;
 import java.util.Collections;

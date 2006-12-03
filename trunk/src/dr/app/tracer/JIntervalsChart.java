@@ -35,19 +35,16 @@ import java.awt.geom.Line2D;
 import java.util.ArrayList;
 
 public class JIntervalsChart extends JChart {
-	
-	/**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 8940887369520091972L;
 
 	private class Interval {
 		String name;
 		double value, upper, lower;
 		boolean bold;
-				
+
 		Interval(String name, double value, double upper, double lower, boolean bold) {
-		
+
 			this.name = name;
 			this.value = value;
 			this.upper = upper;
@@ -57,22 +54,22 @@ public class JIntervalsChart extends JChart {
 	}
 
 	private ArrayList intervals = new ArrayList();
-	
+
 	public JIntervalsChart(Axis yAxis) {
 		super(new DiscreteAxis(true, true), yAxis);
 	}
-	
+
 	public void addIntervals(String name, double value, double upper, double lower, boolean bold) {
 	
 		intervals.add(new Interval(name, value, upper, lower, bold));
-		
+
 		xAxis.addRange(1, intervals.size());
 		yAxis.addRange(lower, upper);
 
 		recalibrate();
-		repaint();	
+		repaint();
 	}
-	
+
 	public void removeAllIntervals() {
 		intervals.clear();
 		xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
@@ -83,8 +80,8 @@ public class JIntervalsChart extends JChart {
 	}
 
 	protected void calibrate(Graphics2D g2, Dimension size) { }
-	
-	protected boolean hasContents() { 
+
+	protected boolean hasContents() {
 		return intervals.size() > 0;
 	}
 
@@ -93,16 +90,16 @@ public class JIntervalsChart extends JChart {
 		if (horizontalAxis) {
 			g2.setPaint(getAxisPaint());
 			g2.setStroke(getAxisStroke());
-			
+
 			int index = ((int)value) - 1;
 			Interval interval = (Interval)intervals.get(index);
 			String label = interval.name;
-			
+
 			double pos = transformX(value);
-			
+
 			Line2D line = new Line2D.Double(pos, getPlotBounds().getMaxY(), pos, getPlotBounds().getMaxY() + getMajorTickSize());
 			g2.draw(line);
-			
+
 			g2.setPaint(getLabelPaint());
 			double width = g2.getFontMetrics().stringWidth(label);
 			g2.drawString(label, (float)(pos - (width / 2)), (float)(getPlotBounds().getMaxY() + (getMajorTickSize() * 1.25) + getXTickLabelOffset()));
@@ -110,11 +107,11 @@ public class JIntervalsChart extends JChart {
 			super.paintMajorTick(g2, value, horizontalAxis);
 		}
 	}
-		
+
 	protected void paintContents(Graphics2D g2) {
-		
+
 		for (int i = 0; i < intervals.size(); i++) {
-					
+
 			Interval interval = (Interval)intervals.get(i);
 
 			float x = (float)transformX(i + 1);
@@ -122,7 +119,7 @@ public class JIntervalsChart extends JChart {
 			float xRight = (float)transformX(((double)i + 1) + 0.1);
 			float yUpper = (float)transformY(interval.upper);
 			float yLower = (float)transformY(interval.lower);
-			
+
 			GeneralPath path = new GeneralPath();
 			path.moveTo(xLeft , yUpper);
 			path.lineTo(xRight, yUpper);
@@ -130,16 +127,16 @@ public class JIntervalsChart extends JChart {
 			path.lineTo(x, yLower);
 			path.moveTo(xLeft , yLower);
 			path.lineTo(xRight, yLower);
-				
+
 			if (interval.bold) {
 				g2.setStroke(new BasicStroke(2.0f));
 			} else {
 				g2.setStroke(new BasicStroke(1.0f));
 			}
-			g2.setPaint(Color.black);			
+			g2.setPaint(Color.black);
 			g2.draw(path);
-		}		
-		
+		}
+
 	}
 
 }

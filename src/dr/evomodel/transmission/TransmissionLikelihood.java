@@ -54,431 +54,501 @@ import dr.xml.*;
  */
 public class TransmissionLikelihood extends AbstractModel implements Likelihood, Units {
 
-	// PUBLIC STUFF
+    // PUBLIC STUFF
 
-	public static final String TRANSMISSION_LIKELIHOOD = "transmissionLikelihood";
-	public static final String SOURCE_PATIENT = "sourcePatient";
+    public static final String TRANSMISSION_LIKELIHOOD = "transmissionLikelihood";
+    public static final String SOURCE_PATIENT = "sourcePatient";
 
-	public TransmissionLikelihood(Tree hostTree, Tree virusTree,
-									DemographicModel sourceDemographic,
-									TransmissionDemographicModel transmissionModel)
-				throws TaxonList.MissingTaxonException {
-		this(TRANSMISSION_LIKELIHOOD, hostTree, virusTree, sourceDemographic, transmissionModel);
-	}
+    public TransmissionLikelihood(Tree hostTree, Tree virusTree,
+                                  DemographicModel sourceDemographic,
+                                  TransmissionDemographicModel transmissionModel)
+            throws TaxonList.MissingTaxonException {
+        this(TRANSMISSION_LIKELIHOOD, hostTree, virusTree, sourceDemographic, transmissionModel);
+    }
 
-	public TransmissionLikelihood(String name, Tree hostTree, Tree virusTree,
-									DemographicModel sourceDemographic,
-									TransmissionDemographicModel transmissionModel)
-				throws TaxonList.MissingTaxonException {
+    public TransmissionLikelihood(String name, Tree hostTree, Tree virusTree,
+                                  DemographicModel sourceDemographic,
+                                  TransmissionDemographicModel transmissionModel)
+            throws TaxonList.MissingTaxonException {
 
-		super(name);
+        super(name);
 
-		this.hostTree = hostTree;
-		if (hostTree instanceof TreeModel) {
-			addModel((TreeModel)hostTree);
-		}
+        this.hostTree = hostTree;
+        if (hostTree instanceof TreeModel) {
+            addModel((TreeModel)hostTree);
+        }
 
-		this.virusTree = virusTree;
-		if (virusTree instanceof TreeModel) {
-			addModel((TreeModel)virusTree);
-		}
+        this.virusTree = virusTree;
+        if (virusTree instanceof TreeModel) {
+            addModel((TreeModel)virusTree);
+        }
 
-		this.sourceDemographic = sourceDemographic;
-		addModel(sourceDemographic);
+        this.sourceDemographic = sourceDemographic;
+        addModel(sourceDemographic);
 
-		this.transmissionModel = transmissionModel;
-		addModel(transmissionModel);
+        this.transmissionModel = transmissionModel;
+        addModel(transmissionModel);
 
-		for (int i = 0; i < virusTree.getExternalNodeCount(); i++) {
-			Taxon hostTaxon = (Taxon)virusTree.getTaxonAttribute(i, "host");
-			if (hostTaxon == null) throw new TaxonList.MissingTaxonException("One or more of the viruses tree's taxa are missing the 'host' attribute");
+        for (int i = 0; i < virusTree.getExternalNodeCount(); i++) {
+            Taxon hostTaxon = (Taxon)virusTree.getTaxonAttribute(i, "host");
+            if (hostTaxon == null) throw new TaxonList.MissingTaxonException("One or more of the viruses tree's taxa are missing the 'host' attribute");
 
-			int host = hostTree.getTaxonIndex(hostTaxon);
-			if (host == -1) throw new TaxonList.MissingTaxonException("One of the viruses tree's host attribute, " +
-					hostTaxon.getId() + ", was not found as a taxon in the host tree");
-		}
+            int host = hostTree.getTaxonIndex(hostTaxon);
+            if (host == -1) throw new TaxonList.MissingTaxonException("One of the viruses tree's host attribute, " +
+                    hostTaxon.getId() + ", was not found as a taxon in the host tree");
+        }
 
-		setupHosts();
-	}
+        setupHosts();
+    }
 
-	private void setupHosts() {
+    public TransmissionLikelihood(TransmissionHistoryModel transmissionHistoryModel, Tree virusTree,
+                                  DemographicModel sourceDemographic,
+                                  TransmissionDemographicModel transmissionModel)
+            throws TaxonList.MissingTaxonException {
+        this(TRANSMISSION_LIKELIHOOD, transmissionHistoryModel, virusTree, sourceDemographic, transmissionModel);
+    }
 
-		hostCount = hostTree.getTaxonCount();
+    public TransmissionLikelihood(String name, TransmissionHistoryModel transmissionHistoryModel, Tree virusTree,
+                                  DemographicModel sourceDemographic,
+                                  TransmissionDemographicModel transmissionModel)
+            throws TaxonList.MissingTaxonException {
 
-		intervals = new Intervals[hostCount];
-		for (int i = 0; i < hostCount; i++) {
-			// 3 times virusTree tip count will be enough events...
-			intervals[i] = new Intervals(virusTree.getExternalNodeCount() * 3);
-		}
-		donorHost = new int[hostCount];
-		donorHost[0] = -1;
-		transmissionTime = new double[hostCount];
-		transmissionTime[0] = Double.POSITIVE_INFINITY;
-		donorSize = new double[hostCount];
+        super(name);
 
-		setupHosts(hostTree.getRoot());
-	}
+        this.transmissionHistoryModel = transmissionHistoryModel;
+        addModel((TransmissionHistoryModel)transmissionHistoryModel);
 
-	private int setupHosts(NodeRef node) {
+        this.virusTree = virusTree;
+        if (virusTree instanceof TreeModel) {
+            addModel((TreeModel)virusTree);
+        }
 
-		int host;
+        this.sourceDemographic = sourceDemographic;
+        addModel(sourceDemographic);
 
-		if (hostTree.isExternal(node)) {
-			host = node.getNumber();
-		} else {
+        this.transmissionModel = transmissionModel;
+        addModel(transmissionModel);
 
-		// This traversal assumes that the first child is the donor
-		// and the second is the recipient
+        for (int i = 0; i < virusTree.getExternalNodeCount(); i++) {
+            Taxon hostTaxon = (Taxon)virusTree.getTaxonAttribute(i, "host");
+            if (hostTaxon == null) throw new TaxonList.MissingTaxonException("One or more of the viruses tree's taxa are missing the 'host' attribute");
 
-			int host1 = setupHosts(hostTree.getChild(node, 0));
-			int host2 = setupHosts(hostTree.getChild(node, 1));
+            int host = transmissionHistoryModel.getHostIndex(hostTaxon);
+            if (host == -1) throw new TaxonList.MissingTaxonException("One of the viruses tree's host attribute, " +
+                    hostTaxon.getId() + ", was not found as a taxon in the transmission history");
+        }
 
-			donorHost[host2] = host1;
-			transmissionTime[host2] = hostTree.getNodeHeight(node);
+        setupHosts();
+    }
 
-			host = host1;
-		}
+    private void setupHosts() {
 
-		return host;
-	}
+        if (transmissionHistoryModel != null) {
+            hostCount = transmissionHistoryModel.getHostCount();
 
-	// **************************************************************
+        } else {
+            hostCount = hostTree.getTaxonCount();
+        }
+
+        intervals = new Intervals[hostCount];
+        for (int i = 0; i < hostCount; i++) {
+            // 3 times virusTree tip count will be enough events...
+            intervals[i] = new Intervals(virusTree.getExternalNodeCount() * 3);
+        }
+        donorHost = new int[hostCount];
+        donorHost[0] = -1;
+        transmissionTime = new double[hostCount];
+        transmissionTime[0] = Double.POSITIVE_INFINITY;
+        donorSize = new double[hostCount];
+
+        if (transmissionHistoryModel != null) {
+            for (int i = 0; i < transmissionHistoryModel.getTransmissionEventCount(); i++) {
+                TransmissionHistoryModel.TransmissionEvent event = transmissionHistoryModel.getTransmissionEvent(i);
+
+                int host1 = transmissionHistoryModel.getHostIndex(event.getDonor());
+                int host2 = transmissionHistoryModel.getHostIndex(event.getRecipient());
+
+                donorHost[host2] = host1;
+                transmissionTime[host2] = event.getTransmissionTime();
+            }
+        } else {
+            setupHostsTree(hostTree.getRoot());
+        }
+    }
+
+    private int setupHostsTree(NodeRef node) {
+
+        int host;
+
+        if (hostTree.isExternal(node)) {
+            host = node.getNumber();
+        } else {
+
+            // This traversal assumes that the first child is the donor
+            // and the second is the recipient
+
+            int host1 = setupHostsTree(hostTree.getChild(node, 0));
+            int host2 = setupHostsTree(hostTree.getChild(node, 1));
+
+            donorHost[host2] = host1;
+            transmissionTime[host2] = hostTree.getNodeHeight(node);
+
+            host = host1;
+        }
+
+        return host;
+    }
+
+    // **************************************************************
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
-	protected final void handleModelChangedEvent(Model model, Object object, int index) {
-		if (model == virusTree) {
-			// treeModel has changed so recalculate the intervals
-		} else if (model == hostTree) {
-			// hosts treeModel has changed so recalculate the hosts and intervals
-		} else {
-			// demographicModel has changed so we don't need to recalculate the intervals
-		}
+    protected final void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == virusTree) {
+            // treeModel has changed so recalculate the intervals
+        } else if (model == hostTree) {
+            // hosts treeModel has changed so recalculate the hosts and intervals
+        } else if (model == transmissionHistoryModel) {
+            // transmissionHistoryModel has changed so recalculate the hosts and intervals
+        } else {
+            // demographicModel has changed so we don't need to recalculate the intervals
+        }
 
-		likelihoodKnown = false;
-	}
+        likelihoodKnown = false;
+    }
 
-	// **************************************************************
+    // **************************************************************
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-	protected final void handleParameterChangedEvent(Parameter parameter, int index) { } // No parameters to respond to
+    protected final void handleParameterChangedEvent(Parameter parameter, int index) { } // No parameters to respond to
 
-	// **************************************************************
+    // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * Stores the precalculated state: in this case the intervals
-	 */
-	protected final void storeState() {
-	}
+    /**
+     * Stores the precalculated state: in this case the intervals
+     */
+    protected final void storeState() {
+    }
 
-	/**
-	 * Restores the precalculated state: that is the intervals of the tree.
-	 */
-	protected final void restoreState() {
-		likelihoodKnown = false;
-	}
+    /**
+     * Restores the precalculated state: that is the intervals of the tree.
+     */
+    protected final void restoreState() {
+        likelihoodKnown = false;
+    }
 
-	protected final void acceptState() { } // nothing to do
-	protected final void adoptState(Model source) { }
+    protected final void acceptState() { } // nothing to do
+    protected final void adoptState(Model source) { }
 
-	// **************************************************************
+    // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-	public final Model getModel() { return this; }
+    public final Model getModel() { return this; }
 
-	public final double getLogLikelihood() {
-		if (!likelihoodKnown) {
-			logLikelihood = calculateLogLikelihood();
-			likelihoodKnown = true;
-		}
-		return logLikelihood;
-	}
+    public final double getLogLikelihood() {
+        if (!likelihoodKnown) {
+            logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+        return logLikelihood;
+    }
 
-	public final void makeDirty() {
-		likelihoodKnown = false;
-	}
+    public final void makeDirty() {
+        likelihoodKnown = false;
+    }
 
-	/**
-	 * Calculates the log likelihood of this set of coalescent intervals,
-	 * given a demographic model.
-	 */
-	public double calculateLogLikelihood() {
+    /**
+     * Calculates the log likelihood of this set of coalescent intervals,
+     * given a demographic model.
+     */
+    public double calculateLogLikelihood() {
 
-		makeDirty();
-		setupHosts();
-		for (int i = 0; i < hostCount; i++) {
-			intervals[i].resetEvents();
-			donorSize[i] = -1;
-		}
-		try {
-			setupIntervals(virusTree.getRoot());
-		} catch (IncompatibleException re) {
-			// register the compatibility failure
-			return Double.NEGATIVE_INFINITY;
-		}
+        makeDirty();
+        setupHosts();
+        for (int i = 0; i < hostCount; i++) {
+            intervals[i].resetEvents();
+            donorSize[i] = -1;
+        }
+        try {
+            setupIntervals(virusTree.getRoot());
+        } catch (IncompatibleException re) {
+            // register the compatibility failure
+            return Double.NEGATIVE_INFINITY;
+        }
 
-		/*
+        /*
 
-		if (intervalsKnown == false) {
+          if (intervalsKnown == false) {
 
-			if (!hostsKnown) {
-				setupHosts();
-				hostsKnown = true;
-			}
+              if (!hostsKnown) {
+                  setupHosts();
+                  hostsKnown = true;
+              }
 
-			for (int i = 0; i < hostCount; i++) {
-				intervals[i].resetEvents();
-				donorSize[i] = -1;
-			}
-			try {
-				setupIntervals(virusTree.getRoot());
+              for (int i = 0; i < hostCount; i++) {
+                  intervals[i].resetEvents();
+                  donorSize[i] = -1;
+              }
+              try {
+                  setupIntervals(virusTree.getRoot());
 
-				if (isCompatible(virusTree.getRoot()) == -1) {
-					System.out.println("compatibility failed!");
-					makeDirty();
-					// register the compatibility failure
-					return Double.NEGATIVE_INFINITY;
-				}
+                  if (isCompatible(virusTree.getRoot()) == -1) {
+                      System.out.println("compatibility failed!");
+                      makeDirty();
+                      // register the compatibility failure
+                      return Double.NEGATIVE_INFINITY;
+                  }
 
-				//System.out.println("intervals set up successfully!");
-				intervalsKnown = true;
-				savedHostTree = new FlexibleTree(hostTree);
-			} catch (IncompatibleException re) {
-				System.out.println("intervals setup failed!");
-				if (savedHostTree == null) {
-					throw new RuntimeException(re.getMessage());
-				} else {
-					makeDirty();
-					// register the compatibility failure
-					return Double.NEGATIVE_INFINITY;
-				}
-			}
-		}*/
+                  //System.out.println("intervals set up successfully!");
+                  intervalsKnown = true;
+                  savedHostTree = new FlexibleTree(hostTree);
+              } catch (IncompatibleException re) {
+                  System.out.println("intervals setup failed!");
+                  if (savedHostTree == null) {
+                      throw new RuntimeException(re.getMessage());
+                  } else {
+                      makeDirty();
+                      // register the compatibility failure
+                      return Double.NEGATIVE_INFINITY;
+                  }
+              }
+          }*/
 
-		for (int i = 0; i < hostCount; i++) {
-			donorSize[i] = -1;
-		}
+        for (int i = 0; i < hostCount; i++) {
+            donorSize[i] = -1;
+        }
 
-		DemographicFunction demoFunction = sourceDemographic.getDemographicFunction();
-		double logL = Coalescent.calculateLogLikelihood(intervals[0], demoFunction);
+        DemographicFunction demoFunction = sourceDemographic.getDemographicFunction();
+        double logL = Coalescent.calculateLogLikelihood(intervals[0], demoFunction);
 
-		for (int i = 1; i < hostCount; i++) {
-			double ds = getDonorSize(i);
-			demoFunction = transmissionModel.getDemographicFunction(transmissionTime[i], ds);
-			logL += Coalescent.calculateLogLikelihood(intervals[i], demoFunction);
+        for (int i = 1; i < hostCount; i++) {
+            double ds = getDonorSize(i);
+            demoFunction = transmissionModel.getDemographicFunction(transmissionTime[i], ds);
+            logL += Coalescent.calculateLogLikelihood(intervals[i], demoFunction);
 
-		}
+        }
 
-		return logL;
-	}
+        return logL;
+    }
 
-	private double getDonorSize(int host) {
-		if (donorSize[host] > 0.0) {
-			return donorSize[host];
-		}
+    private double getDonorSize(int host) {
+        if (donorSize[host] > 0.0) {
+            return donorSize[host];
+        }
 
-		DemographicFunction demoFunction;
+        DemographicFunction demoFunction;
 
-		if (donorHost[host] == 0) {
-			demoFunction = sourceDemographic.getDemographicFunction();
-		} else {
-			double ds = getDonorSize(donorHost[host]);
-			demoFunction = transmissionModel.getDemographicFunction(transmissionTime[host], ds);
-		}
+        if (donorHost[host] == 0) {
+            demoFunction = sourceDemographic.getDemographicFunction();
+        } else {
+            double ds = getDonorSize(donorHost[host]);
+            demoFunction = transmissionModel.getDemographicFunction(transmissionTime[host], ds);
+        }
 
-		donorSize[host] = demoFunction.getDemographic(transmissionTime[host]);
-		return donorSize[host];
-	}
+        donorSize[host] = demoFunction.getDemographic(transmissionTime[host]);
+        return donorSize[host];
+    }
 
-	private int setupIntervals(NodeRef node) throws IncompatibleException {
+    private int setupIntervals(NodeRef node) throws IncompatibleException {
 
-		double height = virusTree.getNodeHeight(node);
-		int host;
+        double height = virusTree.getNodeHeight(node);
+        int host;
 
-		if (virusTree.isExternal(node)) {
-			Taxon hostTaxon = (Taxon)virusTree.getTaxonAttribute(node.getNumber(), "host");
-			host = hostTree.getTaxonIndex(hostTaxon);
+        if (virusTree.isExternal(node)) {
+            Taxon hostTaxon = (Taxon)virusTree.getTaxonAttribute(node.getNumber(), "host");
 
-			intervals[host].addSampleEvent(height);
-		} else {
+            if (transmissionHistoryModel != null) {
+                host = transmissionHistoryModel.getHostIndex(hostTaxon);
+            } else {
+                host = hostTree.getTaxonIndex(hostTaxon);
+            }
 
-			// Tree should be bifurcating...
-			int host1 = setupIntervals(virusTree.getChild(node, 0));
-			int host2 = setupIntervals(virusTree.getChild(node, 1));
+            intervals[host].addSampleEvent(height);
+        } else {
 
-			while (height > transmissionTime[host1]) {
+            // Tree should be bifurcating...
+            int host1 = setupIntervals(virusTree.getChild(node, 0));
+            int host2 = setupIntervals(virusTree.getChild(node, 1));
 
-				double time = transmissionTime[host1];
+            while (height > transmissionTime[host1]) {
 
-				intervals[host1].addNothingEvent(time);
+                double time = transmissionTime[host1];
 
-				host1 = donorHost[host1];
+                intervals[host1].addNothingEvent(time);
 
-				intervals[host1].addSampleEvent(time);
-			}
+                host1 = donorHost[host1];
 
-			while (height > transmissionTime[host2]) {
+                intervals[host1].addSampleEvent(time);
+            }
 
-				double time = transmissionTime[host2];
+            while (height > transmissionTime[host2]) {
 
-				intervals[host2].addNothingEvent(time);
+                double time = transmissionTime[host2];
 
-				host2 = donorHost[host2];
+                intervals[host2].addNothingEvent(time);
 
-				intervals[host2].addSampleEvent(time);
-			}
+                host2 = donorHost[host2];
 
-			if (host1 != host2) {
-				throw new IncompatibleException("Virus tree is not compatible with transmission history");
-			}
+                intervals[host2].addSampleEvent(time);
+            }
 
-			host = host1;
-			intervals[host].addCoalescentEvent(height);
+            if (host1 != host2) {
+                throw new IncompatibleException("Virus tree is not compatible with transmission history");
+            }
 
-		}
+            host = host1;
+            intervals[host].addCoalescentEvent(height);
 
-		return host;
-	}
+        }
+
+        return host;
+    }
 
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * @return the log columns.
-	 */
-	public final dr.inference.loggers.LogColumn[] getColumns() {
-		return new dr.inference.loggers.LogColumn[] {
-			new LikelihoodColumn(getId())
-		};
-	}
+    /**
+     * @return the log columns.
+     */
+    public final dr.inference.loggers.LogColumn[] getColumns() {
+        return new dr.inference.loggers.LogColumn[] {
+                new LikelihoodColumn(getId())
+        };
+    }
 
-	private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-		public LikelihoodColumn(String label) { super(label); }
-		public double getDoubleValue() { return getLogLikelihood(); }
-	}
-
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
-
-	public org.w3c.dom.Element createElement(org.w3c.dom.Document d) {
-		throw new RuntimeException("createElement not implemented");
-	}
+    private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
+        public LikelihoodColumn(String label) { super(label); }
+        public double getDoubleValue() { return getLogLikelihood(); }
+    }
 
     // **************************************************************
     // Units IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * Sets the units these coalescent intervals are
-	 * measured in.
-	 */
-	public final void setUnits(int u)
-	{
-		transmissionModel.setUnits(u);
-	}
+    /**
+     * Sets the units these coalescent intervals are
+     * measured in.
+     */
+    public final void setUnits(int u)
+    {
+        transmissionModel.setUnits(u);
+    }
 
-	/**
-	 * Returns the units these coalescent intervals are
-	 * measured in.
-	 */
-	public final int getUnits()
-	{
-		return transmissionModel.getUnits();
-	}
+    /**
+     * Returns the units these coalescent intervals are
+     * measured in.
+     */
+    public final int getUnits()
+    {
+        return transmissionModel.getUnits();
+    }
 
-	// ****************************************************************
-	// Private and protected stuff
-	// ****************************************************************
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        public String getParserName() { return TRANSMISSION_LIKELIHOOD; }
 
-		public String getParserName() { return TRANSMISSION_LIKELIHOOD; }
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            DemographicModel demoModel0 = (DemographicModel)xo.getSocketChild(SOURCE_PATIENT);
+            TransmissionDemographicModel demoModel1 = (TransmissionDemographicModel)xo.getChild(TransmissionDemographicModel.class);
 
-			DemographicModel demoModel0 = (DemographicModel)xo.getSocketChild(SOURCE_PATIENT);
-			TransmissionDemographicModel demoModel1 = (TransmissionDemographicModel)xo.getChild(TransmissionDemographicModel.class);
-			Tree hostTree = (Tree)xo.getSocketChild("hostTree");
-			Tree virusTree = (Tree)xo.getSocketChild("parasiteTree");
+            Tree virusTree = (Tree)xo.getSocketChild("parasiteTree");
 
-			TransmissionLikelihood likelihood = null;
-			try {
-				likelihood = new TransmissionLikelihood(hostTree, virusTree, demoModel0, demoModel1);
-			} catch (TaxonList.MissingTaxonException e) {
-				throw new XMLParseException(e.toString());
-			}
-			return likelihood;
-		}
+            TransmissionLikelihood likelihood = null;
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            if (xo.getChild(TransmissionHistoryModel.class) != null) {
+                TransmissionHistoryModel history = (TransmissionHistoryModel)xo.getChild(TransmissionHistoryModel.class);
+                try {
+                    likelihood = new TransmissionLikelihood(history, virusTree, demoModel0, demoModel1);
+                } catch (TaxonList.MissingTaxonException e) {
+                    throw new XMLParseException(e.toString());
+                }
+            } else {
+                Tree hostTree = (Tree)xo.getSocketChild("hostTree");
+                try {
+                    likelihood = new TransmissionLikelihood(hostTree, virusTree, demoModel0, demoModel1);
+                } catch (TaxonList.MissingTaxonException e) {
+                    throw new XMLParseException(e.toString());
+                }
+            }
 
-		public String getParserDescription() {
-			return "This element represents a likelihood function for transmission.";
-		}
+            return likelihood;
+        }
 
-		public Class getReturnType() { return TransmissionLikelihood.class; }
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public String getParserDescription() {
+            return "This element represents a likelihood function for transmission.";
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(SOURCE_PATIENT, DemographicModel.class,
-				"This describes the demographic process for the source donor patient."),
-			new ElementRule(TransmissionDemographicModel.class,
-				"This describes the demographic process for the recipient patients."),
-			new ElementRule("hostTree",
-				new XMLSyntaxRule[] { new ElementRule(Tree.class) }),
-			new ElementRule("parasiteTree",
-				new XMLSyntaxRule[] { new ElementRule(Tree.class) })
-		};
-	};
+        public Class getReturnType() { return TransmissionLikelihood.class; }
 
-	class IncompatibleException extends Exception {
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 8439923064799668934L;
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                new ElementRule(SOURCE_PATIENT, DemographicModel.class,
+                        "This describes the demographic process for the source donor patient."),
+                new ElementRule(TransmissionDemographicModel.class,
+                        "This describes the demographic process for the recipient patients."),
+                new XORRule(
+                        new ElementRule("hostTree",
+                                new XMLSyntaxRule[] { new ElementRule(Tree.class) }),
+                        new ElementRule(TransmissionHistoryModel.class,
+                                "This describes the transmission history of the patients.")
+                ),
+                new ElementRule("parasiteTree",
+                        new XMLSyntaxRule[] { new ElementRule(Tree.class) })
+        };
+    };
 
-		public IncompatibleException(String name) {
-			super(name);
-		}
-	}
+    class IncompatibleException extends Exception {
+
+        /**
+         *
+         */
+        private static final long serialVersionUID = 8439923064799668934L;
+
+        public IncompatibleException(String name) {
+            super(name);
+        }
+    }
 
 
 
-	/** The demographic models. */
-	private DemographicModel sourceDemographic = null;
-	private TransmissionDemographicModel transmissionModel = null;
+    /** The demographic models. */
+    private DemographicModel sourceDemographic = null;
+    private TransmissionDemographicModel transmissionModel = null;
 
-	/** The host tree. */
-	private Tree hostTree = null;
+    /** The host tree. */
+    private Tree hostTree = null;
 
-	/** The viruses tree. */
-	private Tree virusTree = null;
+    private TransmissionHistoryModel transmissionHistoryModel = null;
 
-	/** The number of hosts. */
-	private int hostCount;
+    /** The viruses tree. */
+    private Tree virusTree = null;
 
-	/** The intervals for each host. */
-	private Intervals[] intervals;
+    /** The number of hosts. */
+    private int hostCount;
 
-	/** The donor host for each recipient host (-1 for initial host). */
-	private int[] donorHost;
+    /** The intervals for each host. */
+    private Intervals[] intervals;
 
-	/** The time of transmission into this host (POSITIVE_INFINITY for initial host). */
-	private double[] transmissionTime;
+    /** The donor host for each recipient host (-1 for initial host). */
+    private int[] donorHost;
 
-	/** The size of the donor population at time of transmission into recipient host. */
-	private double[] donorSize;
+    /** The time of transmission into this host (POSITIVE_INFINITY for initial host). */
+    private double[] transmissionTime;
 
-	private boolean likelihoodKnown = false;
-	private double logLikelihood;
+    /** The size of the donor population at time of transmission into recipient host. */
+    private double[] donorSize;
+
+    private boolean likelihoodKnown = false;
+    private double logLikelihood;
 }

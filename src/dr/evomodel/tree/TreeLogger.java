@@ -26,9 +26,9 @@
 package dr.evomodel.tree;
 
 import dr.evolution.colouring.TreeColouring;
+import dr.evolution.colouring.TreeColouringProvider;
+import dr.evolution.tree.BranchRateController;
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.structure.ColourSamplerModel;
 import dr.inference.loggers.*;
 import dr.inference.model.Likelihood;
 import dr.xml.*;
@@ -53,10 +53,10 @@ public class TreeLogger extends MCLogger {
 	public static final String SUBSTITUTIONS = "substitutions";
 
 	private Tree tree;
-	private BranchRateModel branchRateModel = null;
+	private BranchRateController branchRateProvider = null;
 	private String rateLabel;
 
-	private ColourSamplerModel colourSamplerModel = null;
+    private TreeColouringProvider treeColouringProvider = null;
 	private String colouringLabel;
 
 	private Likelihood likelihood = null;
@@ -69,24 +69,24 @@ public class TreeLogger extends MCLogger {
 	/**
 	 * Constructor
 	 */
-	public TreeLogger(Tree tree, BranchRateModel branchRateModel, String rateLabel,
-	                  ColourSamplerModel colourSamplerModel, String colouringLabel,
+	public TreeLogger(Tree tree, BranchRateController branchRateProvider, String rateLabel,
+                      TreeColouringProvider treeColouringProvider, String colouringLabel,
 	                  Likelihood likelihood, String likelihoodLabel,
 	                  LogFormatter formatter, int logEvery, boolean nexusFormat, boolean substitutions) {
 
 		super(formatter, logEvery);
 
 		this.nexusFormat = nexusFormat;
-		this.branchRateModel = branchRateModel;
+		this.branchRateProvider = branchRateProvider;
 		this.rateLabel = rateLabel;
 
-		this.colourSamplerModel = colourSamplerModel;
+        this.treeColouringProvider = treeColouringProvider;
 		this.colouringLabel = colouringLabel;
 
 		this.likelihood = likelihood;
 		this.likelihoodLabel = likelihoodLabel;
 
-		if (branchRateModel != null) {
+		if (this.branchRateProvider != null) {
 			this.substitutions = substitutions;
 		}
 		this.tree = tree;
@@ -138,18 +138,20 @@ public class TreeLogger extends MCLogger {
 
 			buffer.append(" = [&R] ");
 
-			TreeColouring colouring = null;
-			if (colourSamplerModel != null) {
-				colouring = colourSamplerModel.getTreeColouring();
-			}
-
 			if (substitutions) {
 				Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
-						branchRateModel, null, null, null, buffer);
+						branchRateProvider, null, null, null, buffer);
 			} else {
+                if (treeColouringProvider != null) {
+                    TreeColouring colouring = treeColouringProvider.getTreeColouring(tree);
+
 				Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_TIME,
-						branchRateModel, rateLabel, colouring, colouringLabel, buffer);
+						branchRateProvider, rateLabel, colouring, colouringLabel, buffer);
+                } else {
+                    Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_TIME,
+		                    branchRateProvider, rateLabel, null, null, buffer);
 			}
+            }
 
 			buffer.append(";");
 			logLine(buffer.toString());
@@ -198,9 +200,9 @@ public class TreeLogger extends MCLogger {
 				substitutions = xo.getStringAttribute(BRANCH_LENGTHS).equals(SUBSTITUTIONS);
 			}
 
-			BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
+			BranchRateController branchRateProvider = (BranchRateController)xo.getChild(BranchRateController.class);
 
-			ColourSamplerModel colourSamplerModel = (ColourSamplerModel)xo.getChild(ColourSamplerModel.class);
+            TreeColouringProvider treeColouringProvider = (TreeColouringProvider)xo.getChild(TreeColouringProvider.class);
 
 			Likelihood likelihood = (Likelihood)xo.getChild(Likelihood.class);
 
@@ -235,8 +237,10 @@ public class TreeLogger extends MCLogger {
 
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-			TreeLogger logger = new TreeLogger(tree, branchRateModel, rateLabel,
-					colourSamplerModel, colouringLabel, likelihood, likelihoodLabel,
+            TreeLogger logger = new TreeLogger(tree,
+                    branchRateProvider, rateLabel,
+                    treeColouringProvider, colouringLabel,
+                    likelihood, likelihoodLabel,
 					formatter, logEvery, nexusFormat, substitutions);
 
 			if (title != null) {
@@ -261,8 +265,8 @@ public class TreeLogger extends MCLogger {
 						"Whether to use the NEXUS format for the tree log"),
 				new StringAttributeRule(BRANCH_LENGTHS, "What units should the branch lengths be in", new String[] { TIME, SUBSTITUTIONS }, true),
 				new ElementRule(Tree.class, "The tree which is to be logged"),
-				new ElementRule(BranchRateModel.class, true),
-				new ElementRule(ColourSamplerModel.class, true),
+				new ElementRule(BranchRateController.class, true),
+                new ElementRule(TreeColouringProvider.class, true),
 				new ElementRule(Likelihood.class, true)
 		};
 

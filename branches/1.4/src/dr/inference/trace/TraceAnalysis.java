@@ -336,6 +336,7 @@ public class TraceAnalysis {
             gammaStat[lag] /= ((double)samples);
             varGammaStat[lag] /= ((double) samples-lag);
             varGammaStat[lag] -= (gammaStat[0] * gammaStat[0]);
+	        
             if (lag==0) {
                 varStat = gammaStat[0];
                 varVarStat = varGammaStat[0];

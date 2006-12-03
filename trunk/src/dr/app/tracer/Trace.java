@@ -38,33 +38,34 @@ public class Trace {
 
 	public static final int INITIAL_SIZE = 1000;
 	public static final int INCREMENT_SIZE = 1000;
-	
+
 	public Trace(String name) {
 
 		this.name = name;
 	}
-	
+
 	public Trace(String name, double[] values) {
 
 		this.values = new double[values.length];
+		valueCount = values.length;
 		System.arraycopy(values, 0, this.values, 0, values.length);
 	}
-	
+
 	/**
 	 * add a value
 	 */
 	public void add(double value) {
-	
+
 		if (valueCount == values.length) {
 			double[] newValues = new double[valueCount + INCREMENT_SIZE];
 			System.arraycopy(values, 0, newValues, 0, values.length);
 			values = newValues;
 		}
-		
+
 		values[valueCount] = value;
 		valueCount++;
 	}
-	
+
 	/**
 	 * add all the values in an array of doubles
 	 */
@@ -72,23 +73,24 @@ public class Trace {
 		for (int i = 0; i < values.length; i++) {
 			add(values[i]);
 		}
+		valueCount += values.length;
 	}
-	
+
 	public int getCount() { return valueCount; }
 	public double getValue(int index) { return values[index]; }
-	public void getValues(int start, double[] destination) { 
+	public void getValues(int start, double[] destination) {
 		System.arraycopy(values, start, destination, 0, valueCount - start);
 	}
-	public void getValues(int start, double[] destination, int offset) { 
+	public void getValues(int start, double[] destination, int offset) {
 		System.arraycopy(values, start, destination, offset, valueCount - start);
 	}
-	      
+
 	public String getName() { return name; }
-	
+
 	//************************************************************************
 	// private methods
 	//************************************************************************
-	
+
 	private double[] values = new double[INITIAL_SIZE];
 	private int valueCount = 0;
 	private String name;

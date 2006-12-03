@@ -93,7 +93,7 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
         // 1. choose a random node avoiding root
         ArrayList<NodeRef> potentialSubtrees = new ArrayList<NodeRef>();
         int numPotentialSubtrees = this.getSlideableSubtrees(tree, potentialSubtrees);
-        	System.err.println("Slide:\n"+tree.toGraphString());
+  //      	System.err.println("Slide:\n"+tree.toGraphString());
         i = potentialSubtrees.get(MathUtils.nextInt(numPotentialSubtrees));
         NodeRef iP = tree.getParent(i);
         
@@ -225,7 +225,7 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
 
             // 4.1 will the move change the topology
             if (tree.getNodeHeight(CiP) > newHeight) {
-            	System.err.println("Starting down-slide:\n"+tree.toGraphString());
+ //           	System.err.println("Starting down-slide:\n"+tree.toGraphString());
                 ArrayList<NodeRef[]> newChildren = new ArrayList<NodeRef[]>();
                 int possibleDestinations = intersectingEdges(tree, CiP, iP, newHeight, newChildren);
 
@@ -265,7 +265,7 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
                     tree.doubleRemoveChild(iP, CiP);
                     tree.doubleRemoveChild(newParent, newChild);
                     
-                    System.err.println("Down-slide disconnect:\n"+tree.toGraphString());
+ //                   System.err.println("Down-slide disconnect:\n"+tree.toGraphString());
                     if( tree.isBifurcation(newChild) ) 
                     	tree.doubleAddChild(iP, newChild);
                     else 
@@ -285,7 +285,7 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
                 	tree.doubleRemoveChild(iP,CiP);
                 	tree.doubleRemoveChild(PiP, iP);
                 	tree.doubleRemoveChild(newParent,newChild);
-                	System.err.println("Down-slide disconnect:\n"+tree.toGraphString());
+ //               	System.err.println("Down-slide disconnect:\n"+tree.toGraphString());
                 	if( tree.isBifurcation(newChild) )
                 		tree.doubleAddChild(iP, newChild);
                 	else
@@ -321,7 +321,7 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
                 System.err.println("oops      = "+((Node)oops).number+" "
                 		+tree.getNodeHeight(oops));
                 System.err.println("newHeight = "+newHeight);
-                System.err.println("After slide down:\n"+tree.toGraphString());
+  //              System.err.println("After slide down:\n"+tree.toGraphString());
 
                 try {
                     tree.endTreeEdit();
@@ -340,7 +340,7 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
             	}
                 logq = 0.0;
             }
-            System.err.println("After slide down:\n"+tree.toGraphString());
+  //          System.err.println("After slide down:\n"+tree.toGraphString());
             System.err.println("Sanity check in down-slide.");
             sanityCheck();
         }

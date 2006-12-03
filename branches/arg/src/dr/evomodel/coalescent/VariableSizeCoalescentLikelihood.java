@@ -245,7 +245,9 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 		}
 		// assumes a 1/theta prior
 		//logLikelihood = Math.log(1.0/Math.pow(lambda,n));
-
+        // Need a prior on total tree height.
+		double height = ((ARGModel)tree).getNodeHeight(    ((ARGModel)tree).getRoot() );
+		logL -=  height * 1.0;   // Exp(1)
 		// assumes a flat prior
 		//logL = Math.log(1.0/Math.pow(lambda,n-1));
 		System.err.println("COALESCENT PRIOR: end");

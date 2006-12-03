@@ -24,6 +24,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.xml.*;
 
+import java.text.Format;
 import java.util.logging.Logger;
 
 /**
@@ -205,11 +206,11 @@ public class ARGLikelihood extends AbstractARGLikelihood {
      */
     protected void restoreState() {
 
-        if (storePartials) {
-            likelihoodCore.restoreState();
-        } else {
+//        if (storePartials) {
+ //           likelihoodCore.restoreState();
+ //       } else {
             updateAllNodes();
-        }
+  //      }
 
         super.restoreState();
 
@@ -228,7 +229,8 @@ public class ARGLikelihood extends AbstractARGLikelihood {
         //NodeRef root = treeModel.getRoot(partition);
         ARGTree tree = new ARGTree(treeModel, partition);
         NodeRef root = tree.getRoot();
-        //System.err.println("Calc for:"+Tree.Utils.uniqueNewick(tree, root));
+ //       System.err.println("ARG:\n"+treeModel.toGraphString());
+  //      System.err.println("Calc for:"+Tree.Utils.uniqueNewick(tree, root));
 
         System.err.println("Starting tree likelihood");
         if (rootPartials == null) {
@@ -261,11 +263,16 @@ public class ARGLikelihood extends AbstractARGLikelihood {
         double logL = 0.0;
 
         for (int i = 0; i < patternCount; i++) {
+        	//System.err.printf("Pattern %2d:  %5.4f  %5.4f\n",i,patternLogLikelihoods[i],patternWeights[i]);
             logL += patternLogLikelihoods[i] * patternWeights[i];
         }
 
         if (Double.isNaN(logL)) {
-            throw new RuntimeException("Likelihood NaN");
+        	
+        	System.err.println("ARG:\n"+treeModel.toGraphString());
+        	System.err.println("ARG Tree:\n"+tree.toGraphString());
+        	System.err.println("likelihood for partition = "+this.partition);
+            throw new RuntimeException("Likelihood NaN");            
         }
 
         likelihoodCore.checkScaling();

@@ -44,8 +44,11 @@ public class ARGTree implements Tree {
 	  
 	  
 	  public String toGraphString() {
-		  if( true )
-			  return null;
+		  //if( true )
+		  //	  return null;
+		  int number = 1;
+		  for( Node node : nodeList ) 
+			  node.number = number++;
 		  StringBuffer sb = new StringBuffer();
 		  for(Node node: nodeList) {
 			  sb.append(node.number);
@@ -69,6 +72,7 @@ public class ARGTree implements Tree {
 				  sb.append(" "+node.taxon.toString());
 			  sb.append("\n");
 		  }
+		  sb.append("Root = "+((Node)getRoot()).number+"\n");
 		  return new String(sb);
 	  }
 	  
@@ -78,9 +82,11 @@ public class ARGTree implements Tree {
 		Node node = arg.new Node( ((Node)arg.getRoot()),partition,nodeList);
 				//.findPartitionTreeRoot(partition), partition);
 		// this.root = root
-		//System.err.println("Building tree: "+Tree.Utils.uniqueNewick(arg, node));
+		//System.err.println("Building tree: "+arg.toString());
 		//System.exit(-1);
 		//Node save = node;
+		
+		arg.checkBranchSanity();
 		
 		int i = 0;
 		int j = arg.externalNodeCount;
@@ -94,7 +100,7 @@ public class ARGTree implements Tree {
 //		System.err.println("root == node? "+(root == node));
 		node = root;
 		//System.err.println("Null rights 2 - "+checkForNullRights(node));
-		System.err.println("ARG->TREE3\n"+this.toGraphString());
+//		System.err.println("ARG->TREE3\n"+this.toGraphString());
 		//root = node;
 		//if( save != root ) {
 		//	System.err.println("Rerooted: "+Tree.Utils.uniqueNewick(this, node));

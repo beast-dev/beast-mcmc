@@ -129,11 +129,11 @@ public class ARGModel extends AbstractModel
             }
         } while(node != root);
         
-        System.err.println("Succeed in post-order");
+ //       System.err.println("Succeed in post-order");
 
-        ARGTree t = new ARGTree(this,0);
-        System.err.println(Tree.Utils.uniqueNewick(t, t.getRoot()));
-        System.err.println(this.toGraphString());
+ //       ARGTree t = new ARGTree(this,0);
+ //       System.err.println(Tree.Utils.uniqueNewick(t, t.getRoot()));
+ //       System.err.println(this.toGraphString());
        // System.exit(-1);
         
     }
@@ -614,6 +614,8 @@ public class ARGModel extends AbstractModel
      */
     protected void storeState() {
     	System.err.println("Storing state");
+    	this.checkBranchSanity();
+    	System.err.println("sane before operation");
         copyNodeStructure(storedNodes);
         //storedRootNumber = storedNodes.indexOf(root.getNumber();
         storedRootNumber = nodes.indexOf(root);
@@ -969,6 +971,33 @@ public class ARGModel extends AbstractModel
     	return Tree.Utils.newick(new ARGTree(this,partition));
         //return Tree.Utils.newick(this);
     }
+    
+    public void checkBranchSanity() {
+    	boolean plotted = false;
+    	for(Node node : nodes) {
+    		if( !node.isRoot() ) {
+    			double length1 = 0;
+    			double length2 = 0;
+    			if( node.leftParent != null )
+    				length1 = getNodeHeight(node.leftParent) - getNodeHeight(node);
+    			if( node.rightParent != null )
+    				length2 = getNodeHeight(node.rightParent) - getNodeHeight(node);
+    			if( String.valueOf(length1).equals("NaN") || String.valueOf(length2).equals("NaN") ) {
+    				if( !plotted ) {
+    					System.err.println(toGraphString());
+    					plotted = true;
+    				}
+    				System.err.println("Caught the NaN: node="+node.number+" ("+node.getHeight()+") lp="+node.leftParent.number+
+    						" ("+node.leftParent.getHeight()+") rp="+node.rightParent.number+
+    						" ("+node.rightParent.getHeight()+")");
+    				System.exit(-1);
+    			}
+    		}
+    	}
+    	
+    }
+    
+   
 
     /**
      * @return a string containing a newick representation of the tree
@@ -990,8 +1019,8 @@ public class ARGModel extends AbstractModel
 
     
     public String toGraphString() {
-    	if( true )
-    		return null;
+    //	if( true )
+    //		return null;
     	int cnt = 1;
     	for(Node node : nodes) {
     		node.number = cnt;

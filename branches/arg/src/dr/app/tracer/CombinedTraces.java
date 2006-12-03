@@ -35,7 +35,7 @@ package dr.app.tracer;
  * @version $Id: CombinedTraces.java,v 1.6 2005/07/11 14:07:25 rambaut Exp $
  */
  
-class CombinedTraces implements TraceList {
+public class CombinedTraces implements TraceList {
 
 	public CombinedTraces(String name, TraceList[] traceLists) throws TraceException {
 

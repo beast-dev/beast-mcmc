@@ -47,6 +47,7 @@ public class Trace {
 	public Trace(String name, double[] values) {
 
 		this.values = new double[values.length];
+		valueCount = values.length;
 		System.arraycopy(values, 0, this.values, 0, values.length);
 	}
 	
@@ -72,11 +73,13 @@ public class Trace {
 		for (int i = 0; i < values.length; i++) {
 			add(values[i]);
 		}
+		valueCount += values.length;
 	}
 	
 	public int getCount() { return valueCount; }
 	public double getValue(int index) { return values[index]; }
 	public void getValues(int start, double[] destination) { 
+		
 		System.arraycopy(values, start, destination, 0, valueCount - start);
 	}
 	public void getValues(int start, double[] destination, int offset) { 

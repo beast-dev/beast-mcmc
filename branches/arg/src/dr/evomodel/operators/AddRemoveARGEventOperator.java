@@ -52,22 +52,22 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 	private ARGModel arg = null;
     private double size = 1.0;
     private boolean gaussian = false;
-    private boolean swapRates;
-    private boolean swapTraits;
+ //   private boolean swapRates;
+ //   private boolean swapTraits;
 	private int mode = CoercableMCMCOperator.DEFAULT;
 	private VariableSizeCompoundParameter internalNodeParameters;
-	private int maxTips = 1;
+//	private int maxTips = 1;
 
 	public AddRemoveARGEventOperator(ARGModel arg, int weight, double size, boolean gaussian, 
 				boolean swapRates, boolean swapTraits, int mode, int maxTips, 
 				VariableSizeCompoundParameter param) {
 		this.arg = arg;
 		setWeight(weight);
-		this.maxTips = maxTips;
+//		this.maxTips = maxTips;
         this.size = size;
         this.gaussian = gaussian;
-        this.swapRates = swapRates;
-        this.swapTraits = swapTraits;
+//        this.swapRates = swapRates;
+//        this.swapTraits = swapTraits;
         this.internalNodeParameters = param;
 
 		this.mode = mode;
@@ -76,11 +76,10 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 	
 	
     /**
-     * Do a probablistic subtree slide move.
+     * Do a add/remove reassortment node operation
      * @return the log-transformed hastings ratio
      */
 	public double doOperation() throws OperatorFailedException {
-		//arg.toString();
 		System.err.println("Starting AddRemove Operation");
 		if( MathUtils.nextDouble() < 0.5 )
 			return AddOperation();
@@ -117,6 +116,14 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 		return count;
 	}
 	*/
+	
+	/*
+	 * Generates a list of all branches in the ARG, there each branch leads up the ARG from the saved nodes
+	 * 
+	 * Should return a deterministic function of # bifurcations and # reassortments
+	 * 
+	 */
+	
 	private int findPotentialReassortmentNodes(ArrayList<NodeRef> list) {
 		int count = 0;
 		int n = arg.getNodeCount();
@@ -131,6 +138,11 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 				}
 			}
 		}
+//		int check = arg.getNodeCount() + arg.getReassortmentNodeCount() - 1;
+//		if( check != count ) {
+//			System.err.println("What the fuck?");
+//			System.exit(-1);
+//		}
 		return count;
 	}
 	
@@ -141,7 +153,8 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 		for(int i=0; i<n; i++) {
 			Node node = (Node)arg.getNode(i);	
 			if( node.isReassortment() && (node.leftParent != root && node.rightParent != root) ) {
-				list.add(node);
+				if( list != null )
+					list.add(node);
 				count++;
 			}
 		}
@@ -150,57 +163,46 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 	
 	private double RemoveOperation() throws OperatorFailedException {
 		double logq = 0;
-		//if( true )
-		//	throw new OperatorFailedException("Do!!!");
+		
 		// 1. Draw reassortment node uniform randomly
-		//System.err.println("Hello?");
+		
 		ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
+		
 		int totalPotentials = findCurrentReassortmentNodes(potentialNodes);
 		if( totalPotentials == 0 )
 			throw new OperatorFailedException("No reassortment nodes to remove.");
-		System.err.println("Non-zero recNodes "+totalPotentials);
-		//if( true )
-		//	throw new OperatorFailedException("Do!!!");
 		Node recNode = (Node)potentialNodes.get(MathUtils.nextInt(totalPotentials));
-		logq -= Math.log(totalPotentials);
-		System.err.println("Start ARG\n"+arg.toGraphString());
+		logq += Math.log(totalPotentials);
+		
+		double reverseReassortmentSpan = 0;
+		double reverseBifurcationSpan  = 0;
+		
 		arg.beginTreeEdit();
 		boolean doneSomething = false;
 		Node recParent = recNode.leftParent;
-		Node recParent1 = null;
+		Node recChild = recNode.leftChild;
 		if( recNode.leftParent == recNode.rightParent ) { // Doubly linked.
-			//Node recParent = recNode.leftParent;
 			Node recGrandParent = recParent.leftParent;
-			Node recChild = recNode.leftChild;
 			
-			System.err.println("recNode    ="+recNode.number);
-			System.err.println("recParent  ="+recParent.number);
-			//System.err.println("recParent2 ="+recParent2.number);
-			if( arg.isRoot(recParent) ) {
-				arg.setRoot(recChild);
+			reverseReassortmentSpan = arg.getNodeHeight(recParent) - arg.getNodeHeight(recChild);
+			reverseBifurcationSpan  = arg.getNodeHeight(recGrandParent) - arg.getNodeHeight(recChild);
+			if( arg.isRoot(recParent) ) { // This case should never happen as double links 
+				arg.setRoot(recChild);    // to root can not be added or removed.
 			} else {
 			//Node recGrandParent = recParent1.leftParent; // And currently recParent must be a bifurcatio
-				System.err.println("recGrand   ="+recGrandParent.number);
-		
-				
+//				System.err.println("recGrand   ="+recGrandParent.number);
 				arg.doubleRemoveChild(recGrandParent, recParent);
 				arg.doubleRemoveChild(recNode,recChild);
 				if( recGrandParent.bifurcation )
 					arg.singleAddChild(recGrandParent,recChild);
 				else
 					arg.doubleAddChild(recGrandParent, recChild);
-				//if( arg.getChildCount(recGrandParent) == 1 ) // recParent was doubly linked
-				//	arg.addChild(recGrandParent,recChild);
 			}
-			System.err.println("removed doubly linked #"+recNode.number+"\n"+arg.toGraphString());
 			doneSomething = true;
-			//if( true )
-			//	System.exit(-1);
-				//throw new OperatorFailedException("Do!!!");
+			// There are not left/right choices to be made for doubly linked removals.
+			// End doubly linked.
 		} else { // Two different parents.
-//			//if( true )
-//			//	throw new OperatorFailedException("");
-			recParent1 = recNode.leftParent;
+			Node recParent1 = recNode.leftParent;
 			Node recParent2 = recNode.rightParent;
 		    if( (!recParent1.bifurcation && !recParent2.bifurcation) ||
 		    	(!recParent1.bifurcation && recParent2.isRoot()) ||
@@ -212,28 +214,33 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 							+ "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
 				}
 				throw new OperatorFailedException("Not reversible deletion.");
-				//System.err.println("How did I get here?");
-				//System.exit(-1);
 			}
-			if( !recParent1.bifurcation || recParent1.isRoot() ) { //|| MathUtils.nextDouble() < 0.5 ) {
+			if( !recParent1.bifurcation || recParent1.isRoot() ) { // One orientation is valid
 				recParent1 = recNode.rightParent;
 				recParent2 = recNode.leftParent;
+			} else if( recParent2.bifurcation && !recParent2.isRoot() ) { // Both orientations are valid
+				if( MathUtils.nextDouble() < 0.5 ) { // choose equally likely
+					recParent1 = recNode.rightParent;
+					recParent2 = recNode.leftParent;
+				}
+				logq += Math.log(2);
 			}
-			System.err.println("recNode    ="+recNode.number);
-			System.err.println("recParent1 ="+recParent1.number);
-			System.err.println("recParent2 ="+recParent2.number);
+//			System.err.println("recNode    ="+recNode.number);
+//			System.err.println("recParent1 ="+recParent1.number);
+//			System.err.println("recParent2 ="+recParent2.number);
 					
 			Node recGrandParent = recParent1.leftParent; // And currently recParent must be a bifurcatio
-			System.err.println("recGrand   ="+recGrandParent.number);
-			Node recChild = recNode.leftChild;
+//			System.err.println("recGrand   ="+recGrandParent.number);
+			//Node recChild = recNode.leftChild;
 			Node otherChild = recParent1.leftChild;
 			if( otherChild == recNode )
 				otherChild = recParent1.rightChild;
-			System.err.println("recChild   ="+recChild.number);
-			System.err.println("otherChild ="+otherChild.number);
-			if( otherChild == recChild ) { // Special case
-				
-			}
+//			System.err.println("recChild   ="+recChild.number);
+//			System.err.println("otherChild ="+otherChild.number);			
+			reverseReassortmentSpan = Math.min(arg.getNodeHeight(recParent1), arg.getNodeHeight(recParent2))
+					- arg.getNodeHeight(recChild);
+			reverseBifurcationSpan  = arg.getNodeHeight(recGrandParent) 
+					- Math.max(arg.getNodeHeight(recChild), arg.getNodeHeight(otherChild));
 			if( recGrandParent.bifurcation )
 				arg.singleRemoveChild(recGrandParent, recParent1);
 			else
@@ -245,9 +252,6 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 			else
 				arg.doubleRemoveChild(recParent2, recNode);
 			arg.doubleRemoveChild(recNode, recChild);
-//			//arg.doubleRemoveChild(recParent, recNode);
-			//arg.doubleRemoveChild(recNode, recChild);
-//			//arg.singleAddChild(recGrandParent,recChild);	
 			if( otherChild != recChild ) {
 				if( recGrandParent.bifurcation )
 					arg.singleAddChild(recGrandParent,otherChild);
@@ -272,6 +276,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 			System.err.println("End Remove Operator in sanity check");
 			doneSomething = true;
 			// Check for node height troubles
+			// TODO should be able to remove at some point
 			if( (recChild.getHeight() > recParent2.getHeight()) || 
 				(otherChild.getHeight() > recGrandParent.getHeight())	) {
 				try {
@@ -281,24 +286,15 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 				}
 				System.err.println("How did I get here?");
 				System.exit(-1);
-				//recParent = recParent1;
 			}
 			recParent = recParent1;
 		}
-		//recParent = recParent1;
-		//try {
-		//	arg.endTreeEdit();
-		//} catch (MutableTree.InvalidTreeException ite) {
-		//	System.exit(-1);
-		//}
-		//if( true )
-		//	throw new OperatorFailedException("Do!!!");
 		if( doneSomething ) {
-			System.err.println("Trying to remove "+recNode.number+" and "+recParent.number);
-		
+//			System.err.println("Trying to remove "+recNode.number+" and "+recParent.number);
+//		
 			arg.contractARGWithRecombinant(recNode, recParent, internalNodeParameters);
 		}
-		System.err.println("End ARG\n"+arg.toGraphString());
+//		System.err.println("End ARG\n"+arg.toGraphString());
 		arg.pushTreeSizeChangedEvent();
 		try {
 			arg.endTreeEdit();
@@ -306,66 +302,11 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 			throw new RuntimeException(ite.toString() + "\n" + arg.toString()
 					+ "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
 		}
-		
-/*
- * // 1. draw tip to remove uniform randomly over all removable tips ArrayList<NodeRef>
- * potentialSubtrees = getPotentialSubtreesToMerge(); int totalPotentials =
- * potentialSubtrees.size(); if( totalPotentials == 0 ) throw new
- * OperatorFailedException("Where does this text go?"); Node kNode =
- * (Node)potentialSubtrees.get(MathUtils.nextInt(totalPotentials)); logq -=
- * Math.log(totalPotentials); // 1 / # of tips to remove // Merge to it's
- * dupSister [TODO -- assumes never > 2 sisters, is this true? Node mergeTo =
- * kNode.dupSister; // potentialMerges.get(MathUtils.nextInt(totalPartners)); //
- * logq -= Math.log(totalPartners); // 1 / # of choices with which to merge
- *  // HOW TO HANDLE partitionSets?
- *  // Test to make sure that all tips in subtree have same bits set, TODO --
- * remove //BitSet tester = tree.andAllPartitionsInSubtree(kNode); //if(
- * test.cardinality) if( arg.equalPartitionsInSubtree(kNode) ) {
- * //System.err.println("All equal: "+Tree.Utils.uniqueNewick(tree, kNode)); }
- * else { System.err.println("All subtree partitions are not equal");
- * System.err.println(Tree.Utils.uniqueNewick(arg,arg.getRoot()));
- * this.checkAllPartitionLabels();
- * System.err.println(Tree.Utils.uniqueNewick(arg, kNode)); System.exit(-1); }
- * 
- * BitSet kBS = arg.getSubtreePartition(kNode); //System.err.println("Starting
- * tree: "+Tree.Utils.uniqueNewick(tree,tree.getRoot()));
- * //System.err.println("Starting partitions: ");
- * //this.checkAllPartitionLabels(); //System.err.println("Clipping subtree:
- * "+Tree.Utils.uniqueNewick(tree, kNode)); //System.err.println("With bitset
- * "+kBS.toString()); //System.exit(-1); arg.beginTreeEdit();
- * arg.setPartitionInSubtree(mergeTo, kBS); NodeRef pNR = arg.getParent(kNode); //
- * [TODO -- check to make sure pK is root if( arg.isRoot(pNR) ) {
- * //System.err.println("Clipping root's child"); //System.exit(-1); NodeRef
- * nkNR = arg.getChild(pNR,0); if( nkNR == kNode ) nkNR = arg.getChild(pNR,1);
- * arg.removeChild(pNR, kNode); arg.removeChild(pNR,nkNR); NodeRef c0NR =
- * arg.getChild(nkNR,0); NodeRef c1NR = arg.getChild(nkNR,1);
- * arg.removeChild(nkNR,c0NR); arg.removeChild(nkNR,c1NR);
- * arg.addChildSilent(pNR,c0NR); arg.addChildSilent(pNR, c1NR);
- * arg.removeOldHeightParameter( ((Node)nkNR).heightParameter,
- * internalNodeParameters); arg.contractNodesWithSubtree(pNR, kNode); } else {
- * NodeRef sNR = arg.getChild(pNR,0); if( sNR == kNode ) sNR =
- * arg.getChild(pNR,1); NodeRef nNR = arg.getParent(pNR); // pNR is removed and
- * nNR becomes new parent arg.removeChild(nNR, pNR); arg.addChildSilent(nNR,
- * sNR); arg.removeOldHeightParameter( ((Node)pNR).heightParameter,
- * internalNodeParameters); arg.contractNodesWithSubtree(arg.getRoot(), kNode);
- *  } // Unlink subtrees //System.err.println("where: "+ //
- * (kNode.dupSister==mergeTo)); mergeTo.dupSister = null;
- * mergeTo.clearLinkSister(); mergeTo.clearDupParent();
- * //arg.clearLinksInSubtree(mergeTo); //kNode.dupSister.dupSister = null;
- * //kNode.linkSister = null; //arg.cle
- * //arg.clearLinksInSubtree(kNode.dupSister);
- * 
- * //System.err.println("Resultant: "+arg.Utils.uniqueNewick(tree,
- * arg.getRoot())); //this.checkAllPartitionLabels();
- * //System.err.println("Attempting to copy [remove] ...."); //SimpleTree test =
- * new SimpleTree(tree); //System.err.println("Copy/remove success!");
- * 
- * arg.pushTreeSizeChangedEvent(); try { arg.endTreeEdit(); }
- * catch(MutableTree.InvalidTreeException ite) { throw new
- * RuntimeException(ite.toString()); } // System.err.println(arg.toString());
- * //checkAllHeights();
- *  // System.exit(-1); //System.err.println("Remove");
- */	return logq;
+		logq -= Math.log(reverseBifurcationSpan) - Math.log(reverseReassortmentSpan);
+		logq -= Math.log(arg.getNodeCount()+arg.getReassortmentNodeCount()-1);
+		logq -= Math.log(this.findPotentialAttachmentSisters(recChild, 
+				arg.getNodeHeight(recChild), null));
+		return -logq; // 1 / total potentials * 1 / 2 (if valid) * length1 * length2 * attachmentSisters
 	}
 	
 	private void checkAllHeights() {
@@ -528,18 +469,16 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 		int len = arg.getNodeCount();
 		for(int i=0; i<len; i++) {
 			Node nr = (Node)arg.getNode(i);
-		//	if( nr.parent != null && arg.getMinParentNodeHeight(nr) > min && nr != rec) {
 			if( !nr.isRoot() ) {
-				//&& arg.getMinParentNodeHeight(nr) > min ) {
-			//}
-			//if( true ) {
 				if( arg.getNodeHeight(nr.leftParent) > min ) {
 				// can add node somewhere between min and nr.parent
-					list.add(nr);
+					if( list != null )
+						list.add(nr);
 					count++;
 				}
 				if( nr.isReassortment() && arg.getNodeHeight(nr.rightParent) > min ) {
-					list.add(nr);
+					if( list !=null )
+						list.add(nr);
 					count++;
 				}
 			}
@@ -551,8 +490,8 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 	private double AddOperation() throws OperatorFailedException {
 		double logq = 0;
 
-//		System.err.println("Starting ARG\n" + arg.toGraphString());
-
+		// Draw potential places to add a reassortment node
+		
 		ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
 		int totalPotentials = findPotentialReassortmentNodes(potentialNodes);
 		if (totalPotentials == 0)
@@ -564,9 +503,12 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 		Node recParent  = recParentL;
 		if ((recParentL != recParentR) && MathUtils.nextDouble() > 0.5)
 			recParent = recParentR;
-		logq -= Math.log(totalPotentials);
+		logq += Math.log(totalPotentials);
+		
+		
 		double minHeight = arg.getNodeHeight(recNode); // Attachment must occur
-		// previous to this time
+													   // previous to this time
+		
 		ArrayList<NodeRef> attachments = new ArrayList<NodeRef>();
 		int totalAttachments = findPotentialAttachmentSisters(recNode,
 				minHeight, attachments);
@@ -577,7 +519,6 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 		Node sisParentL = sisNode.leftParent;
 		Node sisParentR = sisNode.rightParent;
 		Node sisParent = sisParentL;
-		//boolean isSisParentL = true;
 		if (sisParentL != sisParentR) {
 			if (arg.getNodeHeight(sisParentL) <= minHeight)
 				sisParent = sisParentR;
@@ -585,7 +526,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 					&& MathUtils.nextDouble() > 0.5)
 				sisParent = sisParentR;
 		}
-		logq -= Math.log(totalAttachments);
+		logq += Math.log(totalAttachments);
 
 		Node newBifurcation = arg.new Node(); 
 		Node newReassortment = arg.new Node();
@@ -599,7 +540,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 		double newLength = sisHeight + MathUtils.nextDouble() * totalLength;
 		newBifurcation.heightParameter = new Parameter.Default(newLength);
 		newBifurcation.setupHeightBounds();
-		logq -= Math.log(totalLength);
+		logq += Math.log(totalLength); // Uniform[spHeight, sisHeight]
 
 		double topHeight = newLength;
 		double recParentHeight = arg.getNodeHeight(recParent);
@@ -610,43 +551,38 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 		newLength = recHeight + MathUtils.nextDouble() * totalLength;
 		newReassortment.heightParameter = new Parameter.Default(newLength);
 		newReassortment.setupHeightBounds();
-		logq -= Math.log(totalLength);
+		logq += Math.log(totalLength); // Uniform[bifurcationHeight,recNodeHeight]
 
 		arg.beginTreeEdit();
 		if( sisParent.bifurcation )
 			arg.singleRemoveChild(sisParent, sisNode);
 		else
 			arg.doubleRemoveChild(sisParent, sisNode);
-	
-		//if (sisParentIsDoublyLinked && !sisParentIsReassortment)
-		//	arg.addChild(sisParent, sisNode);
 		if (sisNode != recNode) {
 			if( recParent.bifurcation )
 				arg.singleRemoveChild(recParent,recNode);
 			else
 				arg.doubleRemoveChild(recParent, recNode);
 		}
-
-//		System.err.println("Disconnected ARG\n"+arg.toGraphString());
-		
 		if( sisParent.bifurcation )
 			arg.singleAddChild(sisParent, newBifurcation);
 		else
 			arg.doubleAddChild(sisParent, newBifurcation);
-		
-		//arg.addChild(sisParent, newBifurcation);
-		//if (sisParentIsReassortment)
-		//	arg.addChild(sisParent, newBifurcation);
-		
 		if (sisNode != recNode)
-			arg.singleAddChild(newBifurcation, sisNode);
-		
+			arg.singleAddChild(newBifurcation, sisNode);		
 		arg.doubleAddChild(newReassortment, recNode);
 
 		BitSet bitLeft = new BitSet();
-		bitLeft.set(0);
 		BitSet bitRight = new BitSet();
-		bitRight.set(1);
+		if( MathUtils.nextDouble() < 0.5 ) {
+			bitLeft.set(0);
+			bitRight.set(1);
+		} else {
+			bitLeft.set(1);
+			bitRight.set(0);
+		}
+		logq += Math.log(2.0);
+		
 		if (sisNode != recNode) {
 			arg.addChildAsRecombinant(newBifurcation, recParent,
 					newReassortment, bitLeft, bitRight);
@@ -697,11 +633,20 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 		// if( times >= 4 )
 		// throw new OperatorFailedException("Do many tries!");
 		// System.err.println("Add a recomb node.");
-		int cnt = arg.getReassortmentNodeCount();
-		if (cnt > 20)
-			throw new OperatorFailedException("No more than X reassortments");
-		return logq;
+//		int cnt = arg.getReassortmentNodeCount();
+//		if (cnt > 20)
+//			throw new OperatorFailedException("No more than X reassortments");
+		
+		logq -= Math.log(findCurrentReassortmentNodes(null));
+		if( !(recNode.leftParent.isBifurcation() && recNode.rightParent.isRoot()) &&
+			!(recNode.rightParent.isBifurcation() && recNode.leftParent.isRoot()) )
+		logq -= Math.log(2.0);
+				
+		return -logq;
 	}
+	
+//	if( !recParent1.bifurcation || recParent1.isRoot() ) { // One orientation is valid
+		
 	
 	public void sanityCheck() {
 		int len = arg.getNodeCount();
@@ -724,6 +669,10 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 					System.err.println(arg.toGraphString());
 					System.exit(-1);
 				}
+			}
+			if( !node.isRoot() ) {
+				double d;
+				d = node.getHeight();
 			}
 		}
 	}

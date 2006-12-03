@@ -31,7 +31,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 
 
-class TableRenderer extends DefaultTableCellRenderer { 
+public class TableRenderer extends DefaultTableCellRenderer { 
 	/**
 	 * 
 	 */

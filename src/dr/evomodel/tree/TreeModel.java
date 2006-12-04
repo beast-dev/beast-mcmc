@@ -1264,7 +1264,9 @@ public class TreeModel extends AbstractModel
         public boolean isExternal()	{ return !hasChildren(); }
         public boolean isRoot() { return (parent == null); }
 
-        public String toString() { return taxon.getId(); }
+        public String toString() {
+	        return "node " + number + ", height=" + getHeight() + (taxon != null ? ": " + taxon.getId() : ""); 
+        }
     }
 
     /**

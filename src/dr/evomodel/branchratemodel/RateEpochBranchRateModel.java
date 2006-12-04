@@ -133,7 +133,7 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 			return new RateEpochBranchRateModel(epochTransitionTimes, rateParameters);
 		}
 
-		private class Epoch implements Comparable {
+		class Epoch implements Comparable {
 
 			private final double transitionTime;
 			private final Parameter parameter;

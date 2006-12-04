@@ -157,6 +157,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.clock.NDLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.clock.GDLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.branchratemodel.DiscretizedBranchRates.PARSER);
+        addXMLObjectParser(dr.evomodel.branchratemodel.LocalBranchRates.PARSER);
         addXMLObjectParser(dr.evomodel.branchratemodel.StrictClockBranchRates.PARSER);
 		addXMLObjectParser(dr.evomodel.branchratemodel.RateEpochBranchRateModel.PARSER);
         addXMLObjectParser(dr.evomodel.branchratemodel.DecayingRateModel.PARSER);
@@ -182,7 +183,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.operators.SubtreeSlideOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.RateExchangeOperator.PARSER);
 
-		addXMLObjectParser(dr.evomodel.indel.TKF91Likelihood.PARSER);
+        addXMLObjectParser(dr.evomodel.indel.TKF91Likelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.indel.TKF91Model.PARSER);
 		addXMLObjectParser(dr.evomodel.indel.IstvanOperator.PARSER);
 
@@ -203,6 +204,7 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.UNIFORM_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.EXPONENTIAL_PRIOR_PARSER);
+        addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.POISSON_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.NORMAL_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.LOG_NORMAL_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.GAMMA_PRIOR_PARSER);
@@ -238,6 +240,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.operators.SwapOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.DeltaExchangeOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.CenteredScaleOperator.PARSER);
+        addXMLObjectParser(dr.inference.operators.BitFlipOperator.PARSER);
 
 		addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());
 		addXMLObjectParser(new dr.inference.trace.TraceAnalysisParser());

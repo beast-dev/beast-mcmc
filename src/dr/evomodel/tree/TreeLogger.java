@@ -65,8 +65,8 @@ public class TreeLogger extends MCLogger {
 	private boolean nexusFormat = false;
 	public boolean usingRates = false;
 	public boolean substitutions = false;
-
-	/**
+    
+    /**
 	 * Constructor
 	 */
 	public TreeLogger(Tree tree, BranchRateController branchRateProvider, String rateLabel,
@@ -213,7 +213,7 @@ public class TreeLogger extends MCLogger {
 				logEvery = xo.getIntegerAttribute(LOG_EVERY);
 			}
 
-			PrintWriter pw = null;
+			PrintWriter pw;
 
 			if (fileName != null) {
 

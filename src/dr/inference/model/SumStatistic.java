@@ -36,21 +36,25 @@ import java.util.Vector;
  */
 public class SumStatistic extends Statistic.Abstract {
 	
-	public static String SUM_STATISTIC = "sum";
+	public static String SUM_STATISTIC = "sumStatistic";
     
     private int dimension = 0;
+    private boolean elementwise;
 
-	public SumStatistic(String name) {
+    public SumStatistic(String name, boolean elementwise) {
 		super(name);
-	}
+        this.elementwise = elementwise;
+    }
 	
 	public void addStatistic(Statistic statistic) {
-        if (dimension == 0) {
-            dimension = statistic.getDimension();
-        } else if (dimension != statistic.getDimension()) {
-            throw new IllegalArgumentException();
-        }
-		statistics.add(statistic);
+        if (!elementwise) {
+            if (dimension == 0) {
+                dimension = statistic.getDimension();
+            } else if (dimension != statistic.getDimension()) {
+                throw new IllegalArgumentException();
+            }
+        } else { dimension = 1; }
+        statistics.add(statistic);
 	}
 	
 	public int getDimension() { return dimension; }
@@ -64,8 +68,14 @@ public class SumStatistic extends Statistic.Abstract {
 		
 		for (int i = 0; i < statistics.size(); i++) {
 			statistic = (Statistic)statistics.get(i);
-			sum += statistic.getStatisticValue(dim);
-		}
+			if (elementwise) {
+                for (int j = 0; j < statistic.getDimension(); j++) {
+                    sum += statistic.getStatisticValue(j);
+                }
+            } else {
+                sum += statistic.getStatisticValue(dim);
+            }
+        }
 		
 		return sum;
 	}
@@ -76,9 +86,11 @@ public class SumStatistic extends Statistic.Abstract {
 		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			SumStatistic sumStatistic = new SumStatistic(SUM_STATISTIC);
-			
-			for (int i =0; i < xo.getChildCount(); i++) {
+
+            boolean elementwise = xo.getBooleanAttribute("elementwise");
+            SumStatistic sumStatistic = new SumStatistic(SUM_STATISTIC, elementwise);
+
+            for (int i =0; i < xo.getChildCount(); i++) {
 				Object child = xo.getChild(i);
 				if (child instanceof Statistic) {
 					sumStatistic.addStatistic((Statistic)child);
@@ -103,7 +115,8 @@ public class SumStatistic extends Statistic.Abstract {
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 		
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
+			    AttributeRule.newBooleanRule("elementwise", false),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
 		};		
 	};
 	

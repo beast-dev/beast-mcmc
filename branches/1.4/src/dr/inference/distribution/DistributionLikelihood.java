@@ -39,13 +39,13 @@ import org.w3c.dom.Element;
  * @version $Id: DistributionLikelihood.java,v 1.11 2005/05/25 09:35:28 rambaut Exp $
  */
 
-public class DistributionLikelihood extends AbstractDistributionLikelihood {	
-	
+public class DistributionLikelihood extends AbstractDistributionLikelihood {
+
 	public static final String DISTRIBUTION_LIKELIHOOD = "distributionLikelihood";
 
 	public static final String DISTRIBUTION = "distribution";
 	public static final String DATA = "data";
-	
+
 	public DistributionLikelihood(Distribution distribution) {
 		super(null);
         this.distribution = distribution;
@@ -63,19 +63,19 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         this.distribution = distributionModel;
         this.offset = 0.0;
 	}
-	
+
 	// **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
-	
+
 	/**
      * Calculate the log likelihood of the current state.
      * @return the log likelihood.
      */
 	public double calculateLogLikelihood() {
-		
+
 		double logL = 0.0;
-		
+
 		for (int i = 0; i < dataList.size(); i++) {
 			Statistic statistic = (Statistic)dataList.get(i);
 			for (int j = 0; j < statistic.getDimension(); j++) {
@@ -88,28 +88,28 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 	// **************************************************************
     // XMLElement IMPLEMENTATION
     // **************************************************************
-	
+
 	public Element createElement(Document d) {
 		throw new RuntimeException("Not implemented yet!");
 	}
-	
-	
+
+
 	/**
 	 * Reads a distribution likelihood from a DOM Document element.
 	 */
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
+
 		public String getParserName() { return DISTRIBUTION_LIKELIHOOD; }
-			
+
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-		
+
 			XMLObject cxo = (XMLObject)xo.getChild(DISTRIBUTION);
 			ParametricDistributionModel model = (ParametricDistributionModel)cxo.getChild(ParametricDistributionModel.class);
-		
+
 			DistributionLikelihood likelihood = new DistributionLikelihood(model);
-		
+
 			cxo = (XMLObject)xo.getChild(DATA);
-								
+
 				for (int j = 0; j < cxo.getChildCount(); j++) {
 					if (cxo.getChild(j) instanceof Statistic) {
 
@@ -118,26 +118,26 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 						throw new XMLParseException("illegal element in " + cxo.getName() + " element");
 					}
 				}
-			
+
 			return likelihood;
 		}
-		
+
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
+
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(DISTRIBUTION, 
+			new ElementRule(DISTRIBUTION,
 				new XMLSyntaxRule[] { new ElementRule(ParametricDistributionModel.class) }),
 			new ElementRule(DATA, new XMLSyntaxRule[] {new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )})
 		};
-		
-		public String getParserDescription() { 
+
+		public String getParserDescription() {
 			return "Calculates the likelihood of some data given some parametric or empirical distribution.";
 		}
-	
+
 		public Class getReturnType() { return Likelihood.class; }
 	};
 
@@ -189,7 +189,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         public String getParserDescription() {
             return "Calculates the prior probability of some data under a given uniform distribution.";
 		}
-	
+
 		public Class getReturnType() { return Likelihood.class; }
     };
 
@@ -205,7 +205,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             double mean = xo.getDoubleAttribute("mean");
             double offset = xo.getDoubleAttribute("offset");
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(mean), offset);
+            DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0/mean), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData( (Statistic)xo.getChild(j));

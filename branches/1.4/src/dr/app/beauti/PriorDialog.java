@@ -309,7 +309,7 @@ public class PriorDialog {
 			case BeautiOptions.EXPONENTIAL_PRIOR:
 				double exponentialMean = argumentFields[2].getValue().doubleValue();
 				offset = argumentFields[3].getValue().doubleValue();
-				distribution = new ExponentialDistribution(exponentialMean);
+				distribution = new ExponentialDistribution(1.0 / exponentialMean);
 				break;
 			case BeautiOptions.NORMAL_PRIOR:
 				double normalMean = argumentFields[4].getValue().doubleValue();

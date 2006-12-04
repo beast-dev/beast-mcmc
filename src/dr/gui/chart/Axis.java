@@ -45,6 +45,7 @@ public interface Axis {
 	static public final int AT_MINOR_TICK_PLUS=3;
 	static public final int AT_DATA=4;
 	static public final int AT_ZERO=5;
+    static public final int AT_VALUE=6;
 	
 	/**	
 	*	Set axis flags
@@ -85,6 +86,11 @@ public interface Axis {
 	*@return show label for last tick
 	*/
 	boolean getLabelLast();
+
+    /**
+    *	Manually set the axis range. Axis flags must be set to AT_VALUE for this to take effect.
+    */
+    void setManualRange(double minValue, double maxValue);
 	
 	/**	
 	*	Manually set the axis range and ticks
@@ -204,6 +210,9 @@ public interface Axis {
 		
 		// The value of the beginning and end of the axis
 		protected double minAxis, maxAxis;
+
+        // User defined axis range
+        protected double minValue, maxValue;
 		
 		// Flags to give automatic scaling and integer division
 		protected boolean isAutomatic=true, isDiscrete=false;
@@ -320,8 +329,18 @@ public interface Axis {
 				return labelLast;
 		}
 
+        /**
+        *	Manually set the axis range. Axis flags must be set to AT_VALUE for this to take effect.
+        */
+        public void setManualRange(double minValue, double maxValue) {
+            this.minValue = minValue;
+            this.maxValue = maxValue;
+
+            isCalibrated = false;
+		}
+
 		/**	
-		*	Manually set the axis range and ticks
+		*	Manually set the axis ticks
 		*/
 		public void setManualAxis(double minTick, double maxTick, 
 									double majorTick, double minorTick) {
@@ -410,10 +429,14 @@ public interface Axis {
 			
 			if (minAxisFlag==AT_ZERO ) {
 				minValue = 0;
+			} else if (minAxisFlag == AT_VALUE) {
+                minValue = this.minValue;
 			}
 
 			if (maxAxisFlag==AT_ZERO) {
 				maxValue = 0;
+            } else if (maxAxisFlag == AT_VALUE) {
+                maxValue = this.maxValue;
 			}
 				
 			double range = maxValue - minValue;
@@ -650,8 +673,14 @@ public interface Axis {
 				if (minTick<minData) { // in case minTick==minData
 					majorTickCount--;
 					minTick+=majorTick;
-					minAxis=minData;
 				}
+					minAxis=minData;
+            } else if (minAxisFlag==AT_VALUE) {
+                if (minTick<minValue) { // in case minTick==minValue
+                    majorTickCount--;
+                    minTick+=majorTick;
+                }
+                minAxis=minValue;
 			} else if (minAxisFlag==AT_ZERO) {
 				majorTickCount+=(int)(minTick/majorTick);
 				minTick=0;
@@ -686,8 +715,14 @@ public interface Axis {
 				if (maxTick>maxData) { // in case maxTick==maxData
 					majorTickCount--;
 					maxTick-=majorTick;
-					maxAxis=maxData;
 				}
+					maxAxis=maxData;
+            } else if (maxAxisFlag==AT_VALUE) {
+                if (maxTick>maxValue) { // in case maxTick==maxValue
+                    majorTickCount--;
+                    maxTick-=majorTick;
+                }
+                maxAxis=maxValue;
 			} else if (maxAxisFlag==AT_ZERO) {
 				majorTickCount+=(int)(-maxTick/majorTick);
 				maxTick=0;

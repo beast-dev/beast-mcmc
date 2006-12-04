@@ -46,6 +46,8 @@ public class ExponentialDistribution implements Distribution
 
 	/**
 	 * Constructor
+     *
+     * @param lambda the rate of the exponential distribution (1/mean)
 	 */
 	public ExponentialDistribution(double lambda) {
 		this.lambda = lambda;

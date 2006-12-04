@@ -143,6 +143,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
     public static final String UNIFORM_PRIOR = "uniformPrior";
     public static final String EXPONENTIAL_PRIOR = "exponentialPrior";
+    public static final String POISSON_PRIOR = "poissonPrior";
     public static final String NORMAL_PRIOR = "normalPrior";
     public static final String LOG_NORMAL_PRIOR = "logNormalPrior";
     public static final String GAMMA_PRIOR = "gammaPrior";
@@ -205,7 +206,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             double mean = xo.getDoubleAttribute("mean");
             double offset = xo.getDoubleAttribute("offset");
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(mean), offset);
+            DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0/mean), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData( (Statistic)xo.getChild(j));
@@ -231,6 +232,46 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public Class getReturnType() { return Likelihood.class; }
     };
+
+    /**
+         * A special parser that reads a convenient short form of priors on parameters.
+         */
+        public static XMLObjectParser POISSON_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+            public String getParserName() { return POISSON_PRIOR; }
+
+            public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+                double mean = xo.getDoubleAttribute("mean");
+                double offset = xo.getDoubleAttribute("offset");
+
+                DistributionLikelihood likelihood = new DistributionLikelihood(new PoissonDistribution(mean), offset);
+                for (int j = 0; j < xo.getChildCount(); j++) {
+                    if (xo.getChild(j) instanceof Statistic) {
+                        likelihood.addData( (Statistic)xo.getChild(j));
+                    } else {
+                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                    }
+                }
+
+                return likelihood;
+            }
+
+            public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+            private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                AttributeRule.newDoubleRule(MEAN),
+                AttributeRule.newDoubleRule(OFFSET),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
+        };
+
+            public String getParserDescription() {
+                return "Calculates the prior probability of some data under a given poisson distribution.";
+            }
+
+            public Class getReturnType() { return Likelihood.class; }
+        };
+
 
     /**
      * A special parser that reads a convenient short form of priors on parameters.

@@ -71,7 +71,8 @@ public class LinePlot extends Plot.AbstractPlot {
 		for (int i = 1; i < n; i++) {
 			x = transformX(xData.get(i));
 			y = transformY(yData.get(i));
-			if (x == Double.NEGATIVE_INFINITY || y == Double.NEGATIVE_INFINITY) {
+			if (x == Double.NEGATIVE_INFINITY || y == Double.NEGATIVE_INFINITY ||
+					Double.isNaN(x) || Double.isNaN(y)) {
 				failed = true;
 			} else if (failed) {
 				failed = false;

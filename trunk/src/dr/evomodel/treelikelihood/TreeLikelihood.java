@@ -55,6 +55,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String STORE_PARTIALS = "storePartials";
     public static final String USE_SCALING = "useScaling";
+    public static final String USE_RATE_NORMALIZATION = "useRateNormalization";
 
     /**
      * Constructor.
@@ -65,12 +66,14 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                               BranchRateModel branchRateModel,
                               boolean useAmbiguities,
                               boolean storePartials,
-                              boolean useScaling)
+                              boolean useScaling,
+                              boolean useRateNormalization)
     {
 
         super(TREE_LIKELIHOOD, patternList, treeModel);
 
         this.storePartials = storePartials;
+        this.useRateNormalization = useRateNormalization;
 
         try {
             this.siteModel = siteModel;
@@ -114,6 +117,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 //            likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
             Logger.getLogger("dr.evomodel").info( "  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             Logger.getLogger("dr.evomodel").info("  Partial likelihood scaling " + (useScaling ? "on." : "off."));
+            Logger.getLogger("dr.evomodel").info("  Rate normalization " + (useRateNormalization ? "on." : "off."));
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;
@@ -257,7 +261,17 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             }
         }
 
-        traverse(treeModel, root);
+        double normalizationFactor = 1.0;
+        if (useRateNormalization) {
+
+            double[] lengths = new double[] {0.0, 0.0};
+
+            treeLengths(treeModel, root, lengths);
+
+            normalizationFactor = lengths[0]/lengths[1];
+        }
+
+        traverse(treeModel, root, normalizationFactor);
 
         //********************************************************************
         // after traverse all nodes and patterns have been updated --
@@ -277,10 +291,32 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     }
 
     /**
+     *
+     * @param tree
+     * @param node
+     * @param lengths first length is tree length and second length is rate-weighted tree length
+     */
+    private final void treeLengths(Tree tree, NodeRef node, double[] lengths) {
+
+        if (!tree.isRoot(node)) {
+            NodeRef parent = tree.getParent(node);
+            double branchLength = tree.getNodeHeight(parent) - tree.getNodeHeight(node);
+
+            lengths[0] += branchLength;
+            lengths[1] += branchLength * branchRateModel.getBranchRate(tree, node);
+        }
+
+        int childCount = tree.getChildCount(node);
+        for (int i = 0; i < childCount; i++) {
+            treeLengths(tree, tree.getChild(node, i), lengths);
+        }
+    }
+
+    /**
      * Traverse the tree calculating partial likelihoods.
      * @return whether the partials for this node were recalculated.
      */
-    private final boolean traverse(Tree tree, NodeRef node) {
+    private final boolean traverse(Tree tree, NodeRef node, double scaleFactor) {
 
         boolean update = false;
 
@@ -292,10 +328,11 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         if (parent != null && updateNode[nodeNum]) {
 
 
-            double branchRate = branchRateModel.getBranchRate(tree, node);
+            double branchRate = scaleFactor * branchRateModel.getBranchRate(tree, node);
 
             // Get the operational time of the branch
             double branchTime = branchRate * ( tree.getNodeHeight(parent) - tree.getNodeHeight(node) );
+            
             if (branchTime < 0.0) {
                 throw new RuntimeException("Negative branch length: " + branchTime);
             }
@@ -320,10 +357,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            boolean update1 = traverse(tree, child1);
+            boolean update1 = traverse(tree, child1, scaleFactor);
 
             NodeRef child2 = tree.getChild(node, 1);
-            boolean update2 = traverse(tree, child2);
+            boolean update2 = traverse(tree, child2, scaleFactor);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
@@ -376,6 +413,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             boolean useAmbiguities = false;
             boolean storePartials = true;
             boolean useScaling = false;
+            boolean useRateNormalization = false;
             if (xo.hasAttribute(USE_AMBIGUITIES)) {
                 useAmbiguities = xo.getBooleanAttribute(USE_AMBIGUITIES);
             }
@@ -385,13 +423,18 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (xo.hasAttribute(USE_SCALING)) {
                 useScaling = xo.getBooleanAttribute(USE_SCALING);
             }
+
+            if (xo.hasAttribute(USE_RATE_NORMALIZATION)) {
+                useRateNormalization = xo.getBooleanAttribute(USE_RATE_NORMALIZATION);
+            }
+
             PatternList patternList = (PatternList)xo.getChild(PatternList.class);
             TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
             SiteModel siteModel = (SiteModel)xo.getChild(SiteModel.class);
 
             BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
 
-            return new TreeLikelihood(patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling);
+            return new TreeLikelihood(patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling, useRateNormalization);
         }
 
         //************************************************************************
@@ -410,6 +453,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
                 AttributeRule.newBooleanRule(STORE_PARTIALS, true),
                 AttributeRule.newBooleanRule(USE_SCALING, true),
+                AttributeRule.newBooleanRule(USE_RATE_NORMALIZATION, true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(SiteModel.class),
@@ -433,6 +477,12 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     private boolean storePartials = false;
 
     private boolean integrateAcrossCategories = false;
+
+    /**
+     * used to signify that the branch rates should be normalized
+     * to a weighted mean of one.
+     */
+    private boolean useRateNormalization = false;
 
     /** the categories for each site */
     protected int[] siteCategories = null;

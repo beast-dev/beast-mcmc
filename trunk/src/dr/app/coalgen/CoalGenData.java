@@ -208,8 +208,12 @@ public class CoalGenData {
 		
 		return demo;
 	}
-	
-	/**
+
+    public void reset() {
+        current = 0;
+    }
+
+    /**
 	 * Read options from a file
 	 */
 	public Document create() {

@@ -29,6 +29,7 @@ import dr.inference.model.Model;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.BranchRateController;
+import dr.evomodel.tree.TreeModel;
 
 /**
  * Date: Dec 13, 2004

@@ -39,49 +39,49 @@ import java.util.TreeSet;
  * @author Andrew Rambaut
  */
 public class ElementRule implements XMLSyntaxRule {
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
 	public ElementRule(Class type) {
 		this(type, null, null, 1, 1);
 	}
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
 	public ElementRule(Class type, boolean optional) {
 		this(type, null, null, (optional ? 0 : 1), 1);
 	}
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
 	public ElementRule(Class type, String description) {
 		this(type, description, null, 1, 1);
 	}
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
 	public ElementRule(Class type, int min, int max) {
 		this(type, null, null, min, max);
 	}
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
 	public ElementRule(Class type, String description, String example) {
 		this(type, description, example, 1, 1);
 	}
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
 	public ElementRule(Class type, String description, int min, int max) {
 		this(type, description, null, min, max);
 	}
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
@@ -93,9 +93,9 @@ public class ElementRule implements XMLSyntaxRule {
 		this.description = description;
 		this.example = example;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Creates a required element rule.
 	 */
@@ -103,7 +103,7 @@ public class ElementRule implements XMLSyntaxRule {
 		this.name = name;
 		this.rules = new XMLSyntaxRule[] { new ElementRule(type)};
 	}
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
@@ -112,7 +112,7 @@ public class ElementRule implements XMLSyntaxRule {
 		this.description = description;
 		this.rules = new XMLSyntaxRule[] { new ElementRule(type)};
 	}
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
@@ -124,7 +124,7 @@ public class ElementRule implements XMLSyntaxRule {
 		this.max = 1;
 		if (optional) this.min = 0;
 	}
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
@@ -135,7 +135,7 @@ public class ElementRule implements XMLSyntaxRule {
 		this.min = min;
 		this.max = max;
 	}
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
@@ -143,7 +143,7 @@ public class ElementRule implements XMLSyntaxRule {
 		this.name = name;
 		this.rules = rules;
 	}
-	
+
 	/**
 	 * Creates an element rule.
 	 */
@@ -154,7 +154,7 @@ public class ElementRule implements XMLSyntaxRule {
 		this.max = 1;
 		if (optional) this.min = 0;
 	}
-	
+
 	/**
 	 * Creates an element rule.
 	 */
@@ -164,7 +164,7 @@ public class ElementRule implements XMLSyntaxRule {
 		this.min = min;
 		this.max = max;
 	}
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
@@ -173,27 +173,38 @@ public class ElementRule implements XMLSyntaxRule {
 		this.rules = rules;
 		this.description = description;
 	}
-	
+
+	/**
+	 * Creates an element rule.
+	 */
+	public ElementRule(String name, XMLSyntaxRule[] rules, String description, int min, int max) {
+		this.name = name;
+		this.rules = rules;
+		this.description = description;
+		this.min = min;
+		this.max = max;
+	}
+
 	public Class getElementClass() { return c; }
-	
+
 	public String getDescription() {
 		return description;
 	}
-	
+
 	public boolean hasDescription() { return description != null; }
-	
+
 	public String getExample() {
 		return example;
 	}
-	
+
 	public boolean hasExample() { return example != null; }
-	
+
 
 	/**
 	 * @return true if the required attribute of the correct type is present.
 	 */
 	public boolean isSatisfied(XMLObject xo) {
-		
+
 		// first check if no matches and its optional
 		int nameCount = 0;
 		for (int i = 0; i < xo.getChildCount(); i++) {
@@ -202,9 +213,9 @@ public class ElementRule implements XMLSyntaxRule {
 				nameCount += 1;
 			}
 		}
-		
+
 		if (min == 0 && nameCount == 0) return true;
-		
+
 		// if !optional or nameCount > 0 then check if exactly one match exists
 		int matchCount = 0;
 		for (int i = 0; i < xo.getChildCount(); i++) {
@@ -213,10 +224,10 @@ public class ElementRule implements XMLSyntaxRule {
 				matchCount += 1;
 			}
 		}
-		
+
 		return (matchCount >= min && matchCount <= max);
 	}
-	
+
 	/**
 	 * @return a string describing the rule.
 	 */
@@ -231,7 +242,7 @@ public class ElementRule implements XMLSyntaxRule {
 			return buffer.toString();
 		}
 	}
-	
+
 	/**
 	 * @return a string describing the rule.
 	 */
@@ -241,12 +252,12 @@ public class ElementRule implements XMLSyntaxRule {
 			if (max > 1) {
 				html += " elements (";
 				if (min == 0) {
-					html += "zero"; 
-				} else if (min == 1) { 
-					html += "one"; 
+					html += "zero";
+				} else if (min == 1) {
+					html += "one";
 				} else if (min == max) {
-					html += "exactly " + min; 
-				}	
+					html += "exactly " + min;
+				}
 				if (max != min) {
 					if (max < Integer.MAX_VALUE) {
 						html += " to " + max;
@@ -263,12 +274,12 @@ public class ElementRule implements XMLSyntaxRule {
 				}
 			}
 			html += ")";
-			
+
 			if (hasDescription()) {
 				html += "<div class=\"description\">" + getDescription() + "</div>\n";
 			}
 			return html + "</div>\n";
-			
+
 		} else {
 			StringBuffer buffer = new StringBuffer("<div class=\"" + (min == 0 ? "optional" : "required") + "compoundrule\">Element named <span class=\"elemname\">" + name + "</span> containing:");
 			for (int i =0;i < rules.length; i++) {
@@ -280,10 +291,10 @@ public class ElementRule implements XMLSyntaxRule {
 			buffer.append("</div>\n");
 			return buffer.toString();
 		}
-	
-		
+
+
 	}
-	
+
 	/**
 	 * @return a string describing the rule.
 	 */
@@ -291,45 +302,45 @@ public class ElementRule implements XMLSyntaxRule {
 		return ruleString();
 	}
 
-	
+
 	public boolean isAttributeRule() { return false; }
-	
+
 	public String getName() { return name; }
-	
+
 	public XMLSyntaxRule[] getRules() { return rules; }
 
 	/**
 	 * @return true if the given object is compatible with the required class.
 	 */
 	private final boolean isCompatible(Object o) {
-		
+
 		if (rules != null) {
-			
+
 			if (o instanceof XMLObject) {
 				XMLObject xo = (XMLObject)o;
-				
+
 				if (xo.getName().equals(name)) {
 					for (int i =0; i < rules.length; i++) {
 						if (!rules[i].isSatisfied(xo)) {
 							return false;
 						}
 					}
-					
+
 					return true;
 				}
 			}
 		} else {
-			
+
 			if (c == null) {
 				return true;
 			}
-			
-			if (c.isInstance(o)) { 
-				return true; 
+
+			if (c.isInstance(o)) {
+				return true;
 			}
-			
+
 			if (o instanceof String) {
-				
+
 				if (c == Double.class) {
 					try {
 						Double.parseDouble((String)o);
@@ -349,7 +360,7 @@ public class ElementRule implements XMLSyntaxRule {
 					} catch (NumberFormatException nfe) { return false; }
 				}
 				if (c == Boolean.class) {
-					return (o.equals("true") || o.equals("false"));	
+					return (o.equals("true") || o.equals("false"));
 				}
 				if (c == Number.class) {
 					try {
@@ -359,41 +370,41 @@ public class ElementRule implements XMLSyntaxRule {
 				}
 			}
 		}
-				
+
 		return false;
 	}
-	
+
 	/**
 	 * @return a pretty name for a class.
 	 */
 	private final String getTypeName() {
-	
+
 		if (c == null) return "Object";
 		String name = c.getName();
 		return name.substring(name.lastIndexOf('.')+1);
 	}
-	
+
 	/**
 	 * @return a set containing the required types of this rule.
 	 */
-	public Set getRequiredTypes() { 
+	public Set getRequiredTypes() {
 		if (c != null) {
-			return Collections.singleton(c); 
+			return Collections.singleton(c);
 		} else {
 			Set set = new TreeSet(ClassComparator.INSTANCE);
-		
+
 			for (int i = 0; i < rules.length; i++) {
 				set.addAll(rules[i].getRequiredTypes());
 			}
 			return set;
 		}
 	}
-	
+
 	public int getMin() { return min; }
 	public int getMax() { return max; }
-	
+
 	public String toString() { return ruleString(); }
-		
+
 	private Class c = null;
 	private String name = null;
 	private XMLSyntaxRule[] rules = null;
@@ -403,5 +414,5 @@ public class ElementRule implements XMLSyntaxRule {
 
 	private String description = null;
 	private String example = null;
-	
+
 }

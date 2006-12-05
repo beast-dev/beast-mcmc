@@ -465,7 +465,7 @@ public class TreeAnnotator {
     int totalTrees = 0;
     int totalTreesUsed = 0;
     double posteriorLimit = 0.0;
-    String[] attributeNames = new String[] { "height", "rate" };
+    String[] attributeNames = new String[] { "height", "rate", "changed" };
     TaxonList taxa = null;
 
     public static void printTitle() {

@@ -29,10 +29,10 @@ import dr.evolution.util.Date;
 import dr.evolution.util.Units;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.DateCellEditor;
+import dr.gui.table.DateCellEditor;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableRenderer;
-import org.virion.jam.table.TableSorter;
+import dr.gui.table.TableSorter;
 import org.virion.jam.components.RealNumberField;
 
 import javax.swing.*;

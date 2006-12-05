@@ -28,6 +28,8 @@ package dr.app.beauti;
 import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.datatype.*;
 import dr.evolution.util.*;
+import dr.gui.table.TableSorter;
+import dr.gui.table.DateCellEditor;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;

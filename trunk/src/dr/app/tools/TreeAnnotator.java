@@ -134,6 +134,8 @@ public class TreeAnnotator {
         System.out.println("|--------------|--------------|--------------|--------------|");
 
         int stepSize = totalTrees / 60;
+        if (stepSize < 1) stepSize = 1;
+        
         int counter = 0;
         TreeImporter importer = new NexusImporter(new FileReader(inputFileName));
         try {
@@ -193,7 +195,8 @@ public class TreeAnnotator {
             }
 
             // Recurse over the tree and add all the clades (or increment their
-            // frequency if already present). The root clade is not added.
+            // frequency if already present). The root clade is added too (for
+            // annotation purposes).
             addClades(tree, tree.getRoot(), null);
         }
 

@@ -341,8 +341,8 @@ public class TreeLogger extends MCLogger {
 				new ElementRule(TreeColouringProvider.class, true),
 				new ElementRule(Likelihood.class, true),
 				new ElementRule(TreeAttributeProvider.class, 0, Integer.MAX_VALUE),
-				new ElementRule(NodeAttributeProvider.class, 1, Integer.MAX_VALUE),
-				new ElementRule(BranchAttributeProvider.class, 1, Integer.MAX_VALUE)
+				new ElementRule(NodeAttributeProvider.class, 0, Integer.MAX_VALUE),
+				new ElementRule(BranchAttributeProvider.class, 0, Integer.MAX_VALUE)
 		};
 
 		public String getParserDescription() {

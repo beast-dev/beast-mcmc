@@ -9,7 +9,7 @@ import dr.evolution.tree.NodeRef;
  */
 public interface NodeAttributeProvider {
 
-	String getAttributeLabel();
+	String getNodeAttributeLabel();
 
 	String getAttributeForNode(Tree tree, NodeRef node);
 }

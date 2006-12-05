@@ -9,7 +9,7 @@ import dr.evolution.tree.NodeRef;
  */
 public interface BranchAttributeProvider {
 
-	String getAttributeLabel();
+	String getBranchAttributeLabel();
 
 	String getAttributeForBranch(Tree tree, NodeRef node);
 }

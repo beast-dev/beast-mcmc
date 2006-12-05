@@ -28,6 +28,7 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.NodeAttributeProvider;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -41,7 +42,7 @@ import java.util.logging.Logger;
  *
  * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
-public class LocalBranchRates extends AbstractModel implements BranchRateModel  {
+public class LocalBranchRates extends AbstractModel implements BranchRateModel, NodeAttributeProvider {
 
     public static final String LOCAL_BRANCH_RATES = "localBranchRates";
     public static final String RATE_INDICATORS = "rateIndicator";
@@ -149,4 +150,21 @@ public class LocalBranchRates extends AbstractModel implements BranchRateModel  
     public final boolean isRateChangeOnBranchAbove(Tree tree, NodeRef node) {
         return (int)Math.round(((TreeModel)tree).getNodeTrait(node)) == 1;
     }
+
+	public String getNodeAttributeLabel() {
+		return "changed";
+	}
+
+	public String getAttributeForNode(Tree tree, NodeRef node) {
+		return (isRateChangeOnBranchAbove(tree, node) ? "1.0" : "0.0");
+	}
+
+	public String getBranchAttributeLabel() {
+		return "rate";
+	}
+
+	public String getAttributeForBranch(Tree tree, NodeRef node) {
+		return Double.toString(getBranchRate(tree, node));
+	}
+
 }

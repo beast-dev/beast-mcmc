@@ -8,7 +8,7 @@ import dr.evolution.tree.Tree;
  */
 public interface TreeAttributeProvider {
 
-	String getAttributeLabel();
+	String getTreeAttributeLabel();
 
 	String getAttributeForTree(Tree tree);
 }

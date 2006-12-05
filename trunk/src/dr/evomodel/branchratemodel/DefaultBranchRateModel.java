@@ -41,6 +41,14 @@ public final class DefaultBranchRateModel implements BranchRateModel {
         return 1.0;
     }
 
+	public String getBranchAttributeLabel() {
+		return "rate";
+	}
+
+	public String getAttributeForBranch(Tree tree, NodeRef node) {
+		return Double.toString(getBranchRate(tree, node));
+	}
+
     public void addModelListener(ModelListener listener) {
         // nothing to do
     }

@@ -128,6 +128,14 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
         return rates[node.getNumber()];
     }
 
+	public String getBranchAttributeLabel() {
+		return "rate";
+	}
+
+	public String getAttributeForBranch(Tree tree, NodeRef node) {
+		return Double.toString(getBranchRate(tree, node));
+	}
+
     /**
      * Traverse the tree calculating partial likelihoods.
      * @return whether the partials for this node were recalculated.

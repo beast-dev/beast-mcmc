@@ -97,6 +97,14 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 		throw new IllegalArgumentException("root node doesn't have a rate!");
 	}
 
+	public String getBranchAttributeLabel() {
+		return "rate";
+	}
+
+	public String getAttributeForBranch(Tree tree, NodeRef node) {
+		return Double.toString(getBranchRate(tree, node));
+	}
+
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
 		public String getParserName() { return RATE_EPOCH_BRANCH_RATES; }

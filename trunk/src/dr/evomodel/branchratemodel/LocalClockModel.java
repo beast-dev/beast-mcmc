@@ -193,6 +193,14 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
         return 1.0;
     }
 
+	public String getBranchAttributeLabel() {
+		return "rate";
+	}
+
+	public String getAttributeForBranch(Tree tree, NodeRef node) {
+		return Double.toString(getBranchRate(tree, node));
+	}
+
     private Parameter findRateParameter(Tree tree, NodeRef node, NodeRef targetNode) {
         if (tree.isExternal(node)) {
             // @todo Not done yet!

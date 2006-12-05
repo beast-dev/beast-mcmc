@@ -198,6 +198,14 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         return rates[rateCategory];
     }
 
+	public String getBranchAttributeLabel() {
+		return "rate";
+	}
+
+	public String getAttributeForBranch(Tree tree, NodeRef node) {
+		return Double.toString(getBranchRate(tree, node));
+	}
+
     /**
      * Calculates the actual rates corresponding to the category indices.
      */

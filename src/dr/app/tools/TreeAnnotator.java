@@ -89,7 +89,7 @@ public class TreeAnnotator {
             System.out.println("Ignoring first" + burnin + " trees.");
         }
 
-        MutableTree targetTree = null;
+        MutableTree targetTree;
 
         if (targetOption == USER_TARGET_TREE) {
             if (targetTreeFileName != null) {
@@ -256,6 +256,11 @@ public class TreeAnnotator {
                     } else {
                         value = tree.getNodeAttribute(node, attributeNames[i]);
                     }
+
+                    //if (value == null) {
+                    //    System.out.println("attribute " + attributeNames[i] + " is null.");
+                    //}
+
                     if (value != null) {
                         clade.attributeLists[i].add(value);
                     }
@@ -371,7 +376,6 @@ public class TreeAnnotator {
                                 annotateMeanAttribute(tree, node, attributeNames[i] + "_mean", values);
                                 annotateMedianAttribute(tree, node, attributeNames[i] + "_median", values);
                                 annotateHPDAttribute(tree, node, attributeNames[i] + "_95%_HPD", 0.95, values);
-                                //annotateQuantileAttribute(tree, node, attributeNames[i] + "_95%_quantiles", 0.95, values);
                                 annotateRangeAttribute(tree, node, attributeNames[i] + "_range", values);
                             }
                         }

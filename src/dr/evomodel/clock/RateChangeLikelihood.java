@@ -314,6 +314,15 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
     }
 
+     public String getBranchAttributeLabel() {
+        return "rate";
+    }
+
+    public String getAttributeForBranch(Tree tree, NodeRef node) {
+        return Double.toString(getBranchRate(tree, node));
+    }
+
+
     private double logLikelihood;
     private boolean likelihoodKnown = false;
 

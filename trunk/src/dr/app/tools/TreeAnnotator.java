@@ -348,35 +348,42 @@ public class TreeAnnotator {
 
             for (int i = 0; i < clade.attributeLists.length; i++) {
                 boolean isHeight = attributeNames[i].equals("height");
+                boolean isBoolean = attributeTypes[i].equals(Boolean.class);
 
                 if (!isTip || !isHeight) {
                     double[] values = new double[clade.attributeLists[i].size()];
                     if (values.length > 0) {
-                        double minValue = Double.MAX_VALUE;
-                        double maxValue = -Double.MAX_VALUE;
-                        for (int j = 0; j < clade.attributeLists[i].size(); j++) {
-                            values[j] = ((Double)clade.attributeLists[i].get(j)).doubleValue();
-                            if (values[j] < minValue) minValue = values[j];
-                            if (values[j] > maxValue) maxValue = values[j];
-                        }
-                        if (minValue < maxValue) {
-                            if (attributeNames[i].equals("height")) {
-                                if (heightsOption == MEAN_HEIGHTS) {
-                                    double mean = DiscreteStatistics.mean(values);
-                                    tree.setNodeHeight(node, mean);
-                                } else if (heightsOption == MEDIAN_HEIGHTS) {
-                                    double median = DiscreteStatistics.median(values);
-                                    tree.setNodeHeight(node, median);
-                                } else {
-                                    // keep the existing height
+                        if (!isBoolean) {
+                            double minValue = Double.MAX_VALUE;
+                            double maxValue = -Double.MAX_VALUE;
+                            for (int j = 0; j < clade.attributeLists[i].size(); j++) {
+                                values[j] = ((Double)clade.attributeLists[i].get(j)).doubleValue();
+                                if (values[j] < minValue) minValue = values[j];
+                                if (values[j] > maxValue) maxValue = values[j];
+                            }
+                            if (minValue < maxValue) {
+                                if (isHeight) {
+                                    if (heightsOption == MEAN_HEIGHTS) {
+                                        double mean = DiscreteStatistics.mean(values);
+                                        tree.setNodeHeight(node, mean);
+                                    } else if (heightsOption == MEDIAN_HEIGHTS) {
+                                        double median = DiscreteStatistics.median(values);
+                                        tree.setNodeHeight(node, median);
+                                    } else {
+                                        // keep the existing height
+                                    }
+                                }
+
+                                if (!filter) {
+                                    annotateMeanAttribute(tree, node, attributeNames[i] + "_mean", values);
+                                    annotateMedianAttribute(tree, node, attributeNames[i] + "_median", values);
+                                    annotateHPDAttribute(tree, node, attributeNames[i] + "_95%_HPD", 0.95, values);
+                                    annotateRangeAttribute(tree, node, attributeNames[i] + "_range", values);
                                 }
                             }
-
+                        } else {
                             if (!filter) {
-                                annotateMeanAttribute(tree, node, attributeNames[i] + "_mean", values);
-                                annotateMedianAttribute(tree, node, attributeNames[i] + "_median", values);
-                                annotateHPDAttribute(tree, node, attributeNames[i] + "_95%_HPD", 0.95, values);
-                                annotateRangeAttribute(tree, node, attributeNames[i] + "_range", values);
+                                annotateMeanAttribute(tree, node, attributeNames[i], values);
                             }
                         }
                     }
@@ -470,6 +477,7 @@ public class TreeAnnotator {
     int totalTreesUsed = 0;
     double posteriorLimit = 0.0;
     String[] attributeNames = new String[] { "height", "rate", "changed" };
+    Class[] attributeTypes = new Class[] { Double.class, Double.class, Boolean.class};
     TaxonList taxa = null;
 
     public static void printTitle() {

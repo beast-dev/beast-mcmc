@@ -157,7 +157,7 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
     }
 
     public String getAttributeForNode(Tree tree, NodeRef node) {
-        return (isRateChangeOnBranchAbove(tree, node) ? "1.0" : "0.0");
+        return (isRateChangeOnBranchAbove(tree, node) ? "1" : "0");
     }
 
     public String getBranchAttributeLabel() {

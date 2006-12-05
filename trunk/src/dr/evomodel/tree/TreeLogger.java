@@ -337,7 +337,7 @@ public class TreeLogger extends MCLogger {
 				new ElementRule(BranchRateController.class, true),
 				new ElementRule(TreeColouringProvider.class, true),
 				new ElementRule(Likelihood.class, true),
-				new ElementRule(TreeAttributeProvider.class, 1, Integer.MAX_VALUE),
+				new ElementRule(TreeAttributeProvider.class, 0, Integer.MAX_VALUE),
 				new ElementRule(NodeAttributeProvider.class, 1, Integer.MAX_VALUE),
 				new ElementRule(BranchAttributeProvider.class, 1, Integer.MAX_VALUE)
 		};

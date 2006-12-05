@@ -80,7 +80,8 @@ public class TreeLogger extends MCLogger {
 
 		this.treeAttributeProviders = treeAttributeProviders;
 		this.nodeAttributeProviders = nodeAttributeProviders;
-		this.branchAttributeProviders = branchAttributeProviders;
+
+        this.branchAttributeProviders = branchAttributeProviders;
 
 		if (this.branchRateProvider != null) {
 			this.substitutions = true;
@@ -146,8 +147,8 @@ public class TreeLogger extends MCLogger {
 			buffer.append(" = [&R] ");
 
 			if (substitutions) {
-				Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
-						branchRateProvider, null, null, buffer);
+                Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
+						branchRateProvider, nodeAttributeProviders, branchAttributeProviders, buffer);
 			} else {
 //				if (treeColouringProvider != null) {
 //					TreeColouring colouring = treeColouringProvider.getTreeColouring(tree);
@@ -263,13 +264,15 @@ public class TreeLogger extends MCLogger {
 					}
 				}
 			}
-
-			BranchRateController branchRateProvider = (BranchRateController)xo.getChild(BranchRateController.class);
+            BranchRateController branchRateProvider = null;
+			if (substitutions) {
+                branchRateProvider = (BranchRateController)xo.getChild(BranchRateController.class);
+            }
 			if (substitutions && branchRateProvider == null) {
 				throw new XMLParseException("To log trees in units of substitutions a BranchRateModel must be provided");
 			}
 
-			// logEvery of zero only displays at the end
+            // logEvery of zero only displays at the end
 			int logEvery = 1;
 
 			if (xo.hasAttribute(LOG_EVERY)) {

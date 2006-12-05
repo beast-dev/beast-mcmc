@@ -980,6 +980,17 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 			throw new BadFormatException("Missing closing ')' in tree in TREES block");
 		}
 
+        if (getLastMetaComment() != null) {
+            // There was a meta-comment which should be in the form:
+            // \[&label[=value][,label[=value]>[,/..]]\]
+            try {
+                parseMetaCommentPairs(getLastMetaComment(), node);
+            } catch(BadFormatException bfe) {
+                // ignore it
+            }
+            clearLastMetaComment();
+        }
+
 		// find the next delimiter
 		readToken(":(),;");
 		return node;

@@ -49,10 +49,6 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
 
     // The rate categories of each branch
 
-    // the index of the root node.
-    private int rootNodeNumber;
-    private int storedRootNodeNumber;
-
     double scaleFactor;
     TreeModel treeModel;
 
@@ -74,9 +70,6 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
 
         addParameter(rateIndicatorParameter);
         addParameter(ratesParameter);
-
-        rootNodeNumber = treeModel.getRoot().getNumber();
-        storedRootNodeNumber = rootNodeNumber;
 
         recalculateScaleFactor();
     }
@@ -116,12 +109,10 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
     }
 
     protected void storeState() {
-        storedRootNodeNumber = rootNodeNumber;
     }
 
     protected void restoreState() {
         recalculateScaleFactor();
-        rootNodeNumber = storedRootNodeNumber;
     }
 
     protected void acceptState() {
@@ -157,6 +148,11 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
     }
 
     public String getAttributeForNode(Tree tree, NodeRef node) {
+
+        if (tree.isRoot(node)) {
+            return "0";
+        }
+
         return (isRateChangeOnBranchAbove(tree, node) ? "1" : "0");
     }
 

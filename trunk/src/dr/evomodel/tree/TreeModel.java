@@ -1090,7 +1090,6 @@ public class TreeModel extends AbstractModel
             n1.traitParameter.setParameterValueQuietly(0, trait1);
             n2.traitParameter.setParameterValueQuietly(0, trait2);
         }
-
     }
 
 

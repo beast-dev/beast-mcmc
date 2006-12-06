@@ -359,7 +359,7 @@ public class TreeAnnotator {
 						double minValue = Double.MAX_VALUE;
 						double maxValue = -Double.MAX_VALUE;
 						for (int j = 0; j < clade.attributeLists[i].size(); j++) {
-							values[j] = ((Double)clade.attributeLists[i].get(j)).doubleValue();
+							values[j] = ((Number)clade.attributeLists[i].get(j)).doubleValue();
 							if (values[j] < minValue) minValue = values[j];
 							if (values[j] > maxValue) maxValue = values[j];
 						}

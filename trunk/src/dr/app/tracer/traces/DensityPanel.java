@@ -184,7 +184,7 @@ public class DensityPanel extends JPanel implements Exportable {
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;
                 }
-                DensityPlot plot = new DensityPlot(values, 50);
+                DensityPlot plot = new DensityPlot(values, 500);
                 plot.setName(name);
                 if (tl instanceof CombinedTraces) {
                     plot.setLineStyle(new BasicStroke(2.0f), paints[i]);

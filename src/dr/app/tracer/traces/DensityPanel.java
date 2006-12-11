@@ -5,6 +5,7 @@ import org.virion.jam.framework.Exportable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 /**
  * A panel that displays density plots of traces
@@ -31,8 +32,15 @@ public class DensityPanel extends JPanel implements Exportable {
 			Color.DARK_GRAY
 	};
 
-	private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
+    private int minimumBins = 100;
+
+    private ChartSetupDialog chartSetupDialog = null;
+
+	private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
 	private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
+
+    private JComboBox binsCombo = new JComboBox(
+        new Integer[] { 10, 20, 50, 100, 200, 500, 1000 });
 
 	private JCheckBox relativeDensityCheckBox = new JCheckBox("Relative density");
 	private JCheckBox solidCheckBox = new JCheckBox("Fill plot");
@@ -48,7 +56,7 @@ public class DensityPanel extends JPanel implements Exportable {
 	private int colourBy = COLOUR_BY_TRACE;
 
 	/** Creates new FrequencyPanel */
-	public DensityPanel() {
+	public DensityPanel(final JFrame frame) {
 
 		setOpaque(false);
 
@@ -59,7 +67,20 @@ public class DensityPanel extends JPanel implements Exportable {
 		toolBar.setOpaque(false);
 		toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
 		toolBar.setFloatable(false);
-		relativeDensityCheckBox.setOpaque(false);
+
+        JButton chartSetupButton = new JButton("Setup Axes");
+        toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
+        toolBar.add(chartSetupButton);
+
+        binsCombo.setOpaque(false);
+        binsCombo.setSelectedItem(100);
+        JLabel label = new JLabel("Bins:");
+        label.setFont(binsCombo.getFont());
+        label.setLabelFor(binsCombo);
+        toolBar.add(label);
+        toolBar.add(binsCombo);
+
+        relativeDensityCheckBox.setOpaque(false);
 		toolBar.add(relativeDensityCheckBox);
 
 		solidCheckBox.setOpaque(false);
@@ -67,7 +88,7 @@ public class DensityPanel extends JPanel implements Exportable {
 		toolBar.add(solidCheckBox);
 
 		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
-		JLabel label = new JLabel("Legend:");
+		label = new JLabel("Legend:");
 		label.setFont(relativeDensityCheckBox.getFont());
 		label.setLabelFor(legendCombo);
 		toolBar.add(label);
@@ -89,6 +110,30 @@ public class DensityPanel extends JPanel implements Exportable {
 		add(messageLabel, BorderLayout.NORTH);
 		add(toolBar, BorderLayout.SOUTH);
 		add(chartPanel, BorderLayout.CENTER);
+
+        chartSetupButton.addActionListener(
+                new java.awt.event.ActionListener() {
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        if (chartSetupDialog == null) {
+                            chartSetupDialog = new ChartSetupDialog(frame, true, false,
+                                    Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK, Axis.AT_ZERO, Axis.AT_MAJOR_TICK);
+                        }
+
+                        chartSetupDialog.showDialog(traceChart);
+                        validate();
+                        repaint();
+                    }
+                }
+        );
+
+        binsCombo.addItemListener(
+            new java.awt.event.ItemListener() {
+                public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                    minimumBins = (Integer)binsCombo.getSelectedItem();
+                    setupTraces(traceLists, traceIndices);
+                }
+            }
+        );
 
 		relativeDensityCheckBox.addItemListener(
 			new java.awt.event.ItemListener() {
@@ -142,8 +187,6 @@ public class DensityPanel extends JPanel implements Exportable {
 				public void itemStateChanged(java.awt.event.ItemEvent ev) {
 					colourBy = colourByCombo.getSelectedIndex();
 					setupTraces(traceLists, traceIndices);
-					validate();
-					repaint();
 				}
 			}
 		);
@@ -184,7 +227,7 @@ public class DensityPanel extends JPanel implements Exportable {
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;
                 }
-                DensityPlot plot = new DensityPlot(values, 500);
+                DensityPlot plot = new DensityPlot(values, minimumBins);
                 plot.setName(name);
                 if (tl instanceof CombinedTraces) {
                     plot.setLineStyle(new BasicStroke(2.0f), paints[i]);

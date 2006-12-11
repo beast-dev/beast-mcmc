@@ -15,8 +15,14 @@ import java.awt.*;
  */
 public class FrequencyPanel extends JPanel {
 
-	TraceList traceList = null;
-	int traceIndex = -1;
+    private TraceList traceList = null;
+    private int traceIndex = -1;
+
+    private int minimumBins = 50;
+
+    private JComboBox binsCombo = new JComboBox(
+        new Integer[] { 10, 20, 50, 100, 200, 500, 1000 });
+
 
 	private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
 	private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "Frequency");
@@ -28,9 +34,40 @@ public class FrequencyPanel extends JPanel {
 		setMinimumSize(new Dimension(300,150));
 		setLayout(new BorderLayout());
 		add(chartPanel, BorderLayout.CENTER);
+
+        JToolBar toolBar = new JToolBar();
+        toolBar.setOpaque(false);
+        toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
+        toolBar.setFloatable(false);
+
+        binsCombo.setOpaque(false);
+        binsCombo.setSelectedItem(100);
+        JLabel label = new JLabel("Bins:");
+        label.setFont(binsCombo.getFont());
+        label.setLabelFor(binsCombo);
+        toolBar.add(label);
+        toolBar.add(binsCombo);
+
+        add(toolBar, BorderLayout.SOUTH);
+
+        binsCombo.addItemListener(
+            new java.awt.event.ItemListener() {
+                public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                    minimumBins = (Integer)binsCombo.getSelectedItem();
+                    setupTrace(traceList, traceIndex);
+                }
+            }
+        );
 	}
 
-	public void setTrace(TraceList traceList, int traceIndex) {
+    public void setTrace(TraceList traceList, int traceIndex) {
+        this.traceList = traceList;
+        this.traceIndex = traceIndex;
+        setupTrace(traceList, traceIndex);
+    }
+
+
+    private void setupTrace(TraceList traceList, int traceIndex) {
 
 		this.traceList = traceList;
 		this.traceIndex = traceIndex;
@@ -45,7 +82,7 @@ public class FrequencyPanel extends JPanel {
 
 		double values[] = new double[traceList.getStateCount()];
 		traceList.getValues(traceIndex, values);
-		FrequencyPlot plot = new FrequencyPlot(values, 50);
+		FrequencyPlot plot = new FrequencyPlot(values, minimumBins);
 
 		TraceDistribution td = traceList.getDistributionStatistics(traceIndex);
 		if (td != null) {

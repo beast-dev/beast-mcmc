@@ -137,20 +137,38 @@ public class TemporalAnalysisFrame extends AuxilaryFrame {
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
 
-		buffer.append("Time\tMean\tMedian\tUpper\tLower\n");
+        java.util.List<TemporalAnalysisPlotPanel.AnalysisData> analyses = temporalAnalysisPlotPanel.getAnalysisData();
+        buffer.append("Time");
+        for (TemporalAnalysisPlotPanel.AnalysisData analysis : analyses) {
+            if (analysis.isDemographic) {
+                buffer.append("\t").append(analysis.title).append("\tMedian\tUpper\tLower");
+            } else {
+                buffer.append("\t").append(analysis.title);
+            }
+        }
+        buffer.append("\n");
 
-//		for (int i = 0; i < xData.getCount(); i++) {
-//			buffer.append(String.valueOf(xData.get(i)));
-//			buffer.append("\t");
-//			buffer.append(String.valueOf(yDataMean.get(i)));
-//			buffer.append("\t");
-//			buffer.append(String.valueOf(yDataMedian.get(i)));
-//			buffer.append("\t");
-//			buffer.append(String.valueOf(yDataUpper.get(i)));
-//			buffer.append("\t");
-//			buffer.append(String.valueOf(yDataLower.get(i)));
-//			buffer.append("\n");
-//		}
+        Variate timeScale = temporalAnalysisPlotPanel.getTimeScale();
+        for (int i = 0; i < timeScale.getCount(); i++) {
+            buffer.append(String.valueOf(timeScale.get(i)));
+
+            for (TemporalAnalysisPlotPanel.AnalysisData analysis : analyses) {
+                if (analysis.isDemographic) {
+                    buffer.append("\t");
+                    buffer.append(String.valueOf(analysis.yDataMean.get(i)));
+                    buffer.append("\t");
+                    buffer.append(String.valueOf(analysis.yDataMedian.get(i)));
+                    buffer.append("\t");
+                    buffer.append(String.valueOf(analysis.yDataUpper.get(i)));
+                    buffer.append("\t");
+                    buffer.append(String.valueOf(analysis.yDataLower.get(i)));
+                } else {
+                    buffer.append("\t");
+                    buffer.append(String.valueOf(analysis.yDataMean.get(i)));
+                }
+            }
+			buffer.append("\n");
+		}
 
 		return buffer.toString();
 	}

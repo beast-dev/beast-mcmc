@@ -6,7 +6,7 @@ import dr.util.Variate;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * A panel that displays demographic plot
@@ -25,9 +25,10 @@ public class TemporalAnalysisPlotPanel extends JPanel {
 	private JCheckBox solidIntervalCheckBox = new JCheckBox("Solid interval");
 
 	private ChartSetupDialog chartSetupDialog = null;
+    private Variate timeScale = null;
 
 
-	/** Creates new FrequencyPanel */
+    /** Creates new FrequencyPanel */
 	public TemporalAnalysisPlotPanel(final JFrame frame) {
 		setMinimumSize(new Dimension(300,150));
 		setLayout(new BorderLayout());
@@ -98,7 +99,10 @@ public class TemporalAnalysisPlotPanel extends JPanel {
 	                               double timeMean, double timeMedian,
 	                               double timeUpper, double timeLower) {
 
-		analysisData.add( new AnalysisData(title, xData, yDataMean, yDataMedian, yDataUpper, yDataLower,
+        if (timeScale == null) {
+            timeScale = xData;
+        }
+        analysisData.add( new AnalysisData(title, xData, yDataMean, yDataMedian, yDataUpper, yDataLower,
 				timeMean, timeMedian, timeUpper, timeLower));
 		updatePlots();
 
@@ -125,7 +129,15 @@ public class TemporalAnalysisPlotPanel extends JPanel {
 		repaint();
 	}
 
-	public void updatePlot(AnalysisData analysis) {
+    public Variate getTimeScale() {
+        return timeScale;
+    }
+
+    public java.util.List<AnalysisData> getAnalysisData() {
+        return analysisData;
+    }
+
+    public void updatePlot(AnalysisData analysis) {
 		if (solidIntervalCheckBox.isSelected()) {
 
 			AreaPlot areaPlot = new AreaPlot(analysis.xData, analysis.yDataUpper, analysis.xData, analysis.yDataLower);
@@ -199,12 +211,15 @@ public class TemporalAnalysisPlotPanel extends JPanel {
 	}
 
 	java.util.List<AnalysisData> analysisData = new ArrayList<AnalysisData>();
-	class AnalysisData {
+
+    class AnalysisData {
 		public AnalysisData(String title, Variate xData, Variate yDataMean, Variate yDataMedian, Variate yDataUpper, Variate yDataLower,
 		                    double timeMedian, double timeMean, double timeUpper, double timeLower) {
 
 			this.title = title;
-			this.xData = xData;
+            this.isDemographic = true;
+
+            this.xData = xData;
 			this.yDataMean = yDataMean;
 			this.yDataMedian = yDataMedian;
 			this.yDataUpper = yDataUpper;
@@ -217,13 +232,15 @@ public class TemporalAnalysisPlotPanel extends JPanel {
 
 		public AnalysisData(String title, Variate xData, Variate yDataMean) {
 			this.title = title;
+            this.isDemographic = false;
 			this.xData = xData;
 			this.yDataMean = yDataMean;
 		}
 
 		String title;
+        boolean isDemographic;
 
-		Variate xData = null;
+        Variate xData = null;
 		Variate yDataMean = null;
 		Variate yDataMedian = null;
 		Variate yDataUpper = null;
@@ -232,6 +249,6 @@ public class TemporalAnalysisPlotPanel extends JPanel {
 		double timeMedian = -1;
 		double timeMean = -1;
 		double timeUpper = -1;
-		double timeLower = -1;
+		double timeLower = -1;     
 	}
 }

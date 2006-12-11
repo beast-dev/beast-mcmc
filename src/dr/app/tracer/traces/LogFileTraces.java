@@ -36,7 +36,7 @@ public class LogFileTraces implements TraceList {
 
     /** @return the number of states excluding the burnin */
     public int getStateCount() {
-        return ((lastState - getBurnIn()) / stepSize) + 1;
+        return ((lastState - firstState - getBurnIn()) / stepSize) + 1;
     }
 
 	/** @return the size of the step between states */

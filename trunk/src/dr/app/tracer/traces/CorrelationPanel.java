@@ -6,6 +6,7 @@ import org.virion.jam.framework.Exportable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 /**
  * A panel that displays correlation plots of 2 traces
@@ -15,6 +16,8 @@ import java.awt.event.ActionListener;
  * @version $Id: CorrelationPanel.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
 public class CorrelationPanel extends JPanel implements Exportable {
+
+    private ChartSetupDialog chartSetupDialog = null;
 
     private JChart correlationChart = new JChart(new LinearAxis(), new LinearAxis());
     private JChartPanel chartPanel = new JChartPanel(correlationChart, null, "", "");
@@ -33,7 +36,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
     private String name2;
 
     /** Creates new CorrelationPanel */
-    public CorrelationPanel() {
+    public CorrelationPanel(final JFrame frame) {
 
         setOpaque(false);
         setMinimumSize(new Dimension(300,150));
@@ -46,6 +49,11 @@ public class CorrelationPanel extends JPanel implements Exportable {
         toolBar.setOpaque(false);
         toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
         toolBar.setFloatable(false);
+
+        JButton chartSetupButton = new JButton("Setup Axes");
+        toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
+        toolBar.add(chartSetupButton);
+
         sampleCheckBox.setOpaque(false);
         sampleCheckBox.setSelected(true);
         toolBar.add(sampleCheckBox);
@@ -61,6 +69,21 @@ public class CorrelationPanel extends JPanel implements Exportable {
         add(messageLabel, BorderLayout.NORTH);
         add(toolBar, BorderLayout.SOUTH);
         add(chartPanel, BorderLayout.CENTER);
+
+        chartSetupButton.addActionListener(
+                new java.awt.event.ActionListener() {
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        if (chartSetupDialog == null) {
+                            chartSetupDialog = new ChartSetupDialog(frame, true, true,
+                                    Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
+                        }
+
+                        chartSetupDialog.showDialog(correlationChart);
+                        validate();
+                        repaint();
+                    }
+                }
+        );
 
         ActionListener listener = new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent ev) {

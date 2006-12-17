@@ -191,7 +191,7 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
             }
 
             Logger.getLogger("dr.evomodel").info("Using random local clock (RLM) model.");
-            Logger.getLogger("dr.evomodel").info("  rates at change points are parameterized to be " + (ratesAreMultipliers ? "independent of parent rates." : " multipliers of parent rates."));
+            Logger.getLogger("dr.evomodel").info("  rates at change points are parameterized to be " + (ratesAreMultipliers ? " multipliers of parent rates." : "independent of parent rates."));
 
             return new RandomLocalClockModel(tree, rateIndicatorParameter, ratesParameter, ratesAreMultipliers);
         }

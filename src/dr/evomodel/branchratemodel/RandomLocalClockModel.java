@@ -46,15 +46,19 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
     public static final String LOCAL_BRANCH_RATES = "randomLocalClockModel";
     public static final String RATE_INDICATORS = "rateIndicator";
     public static final String RATES = "rates";
+    public static final String RATES_ARE_MULTIPLIERS = "ratesAreMultipliers";
 
     // The rate categories of each branch
 
     double scaleFactor;
     TreeModel treeModel;
+    private boolean ratesAreMultipliers = false;
 
-    public RandomLocalClockModel(TreeModel treeModel, Parameter rateIndicatorParameter, Parameter ratesParameter) {
+    public RandomLocalClockModel(TreeModel treeModel, Parameter rateIndicatorParameter, Parameter ratesParameter, boolean ratesAreMultipliers) {
 
         super(LOCAL_BRANCH_RATES);
+
+        this.ratesAreMultipliers = ratesAreMultipliers;
 
         if (rateIndicatorParameter.getDimension() != treeModel.getNodeCount() - 1) {
             throw new IllegalArgumentException("The rate category parameter must be of length nodeCount-1");
@@ -132,6 +136,9 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
             double rate;
             if (isRateChangeOnBranchAbove(tree, node)) {
                 rate = tree.getNodeRate(node);
+                if (ratesAreMultipliers) {
+                    rate *= getUnscaledBranchRate(tree, tree.getParent(node));
+                }
             } else {
                 rate = getUnscaledBranchRate(tree, tree.getParent(node));
             }
@@ -178,9 +185,15 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
             Parameter rateIndicatorParameter = (Parameter) xo.getSocketChild(RATE_INDICATORS);
             Parameter ratesParameter = (Parameter) xo.getSocketChild(RATES);
 
-            Logger.getLogger("dr.evomodel").info("Using random local clock (RLM) model.");
+            boolean ratesAreMultipliers = false;
+            if (xo.hasAttribute(RATES_ARE_MULTIPLIERS)) {
+                ratesAreMultipliers = xo.getBooleanAttribute(RATES_ARE_MULTIPLIERS);
+            }
 
-            return new RandomLocalClockModel(tree, rateIndicatorParameter, ratesParameter);
+            Logger.getLogger("dr.evomodel").info("Using random local clock (RLM) model.");
+            Logger.getLogger("dr.evomodel").info("  rates at change points are parameterized to be " + (ratesAreMultipliers ? "independent of parent rates." : " multipliers of parent rates."));
+
+            return new RandomLocalClockModel(tree, rateIndicatorParameter, ratesParameter, ratesAreMultipliers);
         }
 
         //************************************************************************
@@ -205,7 +218,8 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class),
                 new ElementRule(RATE_INDICATORS, Parameter.class, "The rate change indicators parameter", false),
-                new ElementRule(RATES, Parameter.class, "The rate changes parameter", false)
+                new ElementRule(RATES, Parameter.class, "The rate changes parameter", false),
+                AttributeRule.newBooleanRule(RATES_ARE_MULTIPLIERS, false)
         };
     };
 

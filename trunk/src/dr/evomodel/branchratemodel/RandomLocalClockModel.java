@@ -101,7 +101,6 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
         scaleFactor = timeTotal / branchTotal;
     }
 
-
     public void handleModelChangedEvent(Model model, Object object, int index) {
         recalculateScaleFactor();
         fireModelChanged();

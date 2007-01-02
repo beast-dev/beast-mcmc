@@ -248,7 +248,7 @@ public class TraceAnalysis {
 	 * @param reader the log file to report
 	 * @param burnin the number of states of burnin or if -1 then use 10%
 	 */
-	public static TraceAnalysis[] shortReport(String name, Reader reader, int burnin, boolean drawHeader) throws java.io.IOException {
+	public static TraceAnalysis[] shortReport(String name, Reader reader, int burnin, boolean drawHeader, boolean hpds) throws java.io.IOException {
 
 		TraceAnalysis[] analysis = analyzeLogFile(reader, burnin);
 
@@ -261,6 +261,10 @@ public class TraceAnalysis {
             System.out.print("file\t");
             for (int j = 0; j < analysis.length; j++) {
                 System.out.print(analysis[j].getName()+"\t");
+                if (hpds) {
+                    System.out.print(analysis[j].getName()+" hpdLower\t");
+                    System.out.print(analysis[j].getName()+" hpdUpper\t");
+                }
             }
             System.out.println("minESS\tchainLength");
         }
@@ -268,6 +272,10 @@ public class TraceAnalysis {
         System.out.print(name + "\t");
 		for (int j = 0; j < analysis.length; j++) {
 			System.out.print(analysis[j].getMean()+"\t");
+            if (hpds) {
+                System.out.print(analysis[j].getHPDLower()+"\t");
+                System.out.print(analysis[j].getHPDUpper()+"\t");                    
+            }
 			double ess = analysis[j].getEffectiveSampleSize();
             if (ess < minESS) {
                 minESS = ess;

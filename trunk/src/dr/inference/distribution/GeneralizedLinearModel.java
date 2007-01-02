@@ -13,18 +13,19 @@ import org.w3c.dom.Element;
  * Time: 11:01:02 AM
  * To change this template use File | Settings | File Templates.
  */
-public class GeneralizedLinearModel extends AbstractModel implements Likelihood {
-
+public abstract class GeneralizedLinearModel extends AbstractModel implements Likelihood {
 
     public static final String GLM_LIKELIHOOD = "glmLikelihood";
 
     public static final String DEPENDENT_VARIABLES = "dependentVariables";
     public static final String INDEPENDENT_VARIABLES = "independentVariables";
     public static final String BASIS_MATRIX = "basis";
+    public static final String FAMILY = "family";
+    public static final String LOGISTIC_REGRESSION = "logistic";
 
-    private Parameter dependentParam;
-    private Parameter independentParam;
-    private DesignMatrix designMatrix;
+    protected Parameter dependentParam;
+    protected Parameter independentParam;
+    protected DesignMatrix designMatrix;
 
     public GeneralizedLinearModel(Parameter dependentParam, Parameter independentParam,
                                   DesignMatrix designMatrix) {
@@ -71,26 +72,9 @@ public class GeneralizedLinearModel extends AbstractModel implements Likelihood 
         return super.toString() + ": " + getLogLikelihood();
     }
 
-    private double calculateLogLikelihood() {
-        // logLikelihood calculation for logistic regression
-        double logLikelihood = 0;
+    protected abstract double calculateLogLikelihood();
 
-        final int K = independentParam.getDimension();
-        final int N = dependentParam.getDimension();
-
-        for (int i = 0; i < N; i++) {
-            // for each "pseudo"-datum
-            double xBeta = 0;
-            for (int k = 0; k < K; k++) {
-                xBeta += designMatrix.getParameterValue(i, k) * independentParam.getParameterValue(k);
-            }
-
-            logLikelihood += dependentParam.getParameterValue(i) * xBeta
-                    - Math.log(1.0 + Math.exp(xBeta));
-
-        }
-        return logLikelihood;
-    }
+    protected abstract boolean confirmIndependentParameters();
 
     public void makeDirty() {
     }
@@ -153,7 +137,12 @@ public class GeneralizedLinearModel extends AbstractModel implements Likelihood 
                         "dim(" + DEPENDENT_VARIABLES + ") != dim(" + BASIS_MATRIX + " %*% " + INDEPENDENT_VARIABLES + ")"
                 );
 
-            return new GeneralizedLinearModel(dependentParam, independentParam, designMatrix);
+
+            String family = xo.getStringAttribute(FAMILY);
+            if (family.compareTo(LOGISTIC_REGRESSION) == 0)
+                return new LogisticRegression(dependentParam, independentParam, designMatrix);
+            else
+                throw new XMLParseException("Family '" + family + "' is not currently implemented");
 
         }
 
@@ -166,14 +155,13 @@ public class GeneralizedLinearModel extends AbstractModel implements Likelihood 
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newStringRule(FAMILY),
                 new ElementRule(DEPENDENT_VARIABLES,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(INDEPENDENT_VARIABLES,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(BASIS_MATRIX,
                         new XMLSyntaxRule[]{new ElementRule(DesignMatrix.class)})
-//                new ElementRule(COUNTS,
-//                        new XMLSyntaxRule[]{AttributeRule.newIntegerArrayRule("values", false),})
         };
 
         public String getParserDescription() {

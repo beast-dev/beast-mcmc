@@ -9,11 +9,9 @@
 
 package dr.evolution.coalescent;
 
-import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
-//import dr.evomodel.tree.VariableSizeTreeModel;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.ARGModel;
 import dr.inference.model.*;
@@ -27,12 +25,11 @@ import java.util.ArrayList;
 
 /**
  * A likelihood function for the coalescent. Takes a tree and a demographic model.
- *
+ * <p/>
  * Parts of this class were derived from C++ code provided by Oliver Pybus.
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- *
  * @version $Id: VariableSizeCoalescentLikelihood.java,v 1.1.1.1.2.2 2006/11/06 01:38:30 msuchard Exp $
  */
 public class VariableSizeCoalescentLikelihood extends AbstractModel implements Likelihood, Units {
@@ -44,8 +41,10 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 	public static final String MODEL = "model";
 	public static final String POPULATION_TREE = "populationTree";
 
-	/** Denotes an interval after which a coalescent event is observed
-	  * (i.e. the number of lineages is smaller in the next interval) */
+	/**
+	 * Denotes an interval after which a coalescent event is observed
+	 * (i.e. the number of lineages is smaller in the next interval)
+	 */
 	public static final int COALESCENT = 0;
 
 	/**
@@ -72,7 +71,7 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 		this.tree = tree;
 		this.demoModel = demoModel;
 		if (tree instanceof ARGModel) {
-			addModel((ARGModel)tree);
+			addModel((ARGModel) tree);
 		}
 		if (demoModel != null) {
 			addModel(demoModel);
@@ -87,23 +86,27 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 	}
 
 	// **************************************************************
-    // Extendable methods
-    // **************************************************************
+	// Extendable methods
+	// **************************************************************
 
 	/**
 	 * @return the node ref of the MRCA of this coalescent prior in the given tree.
 	 */
-	public NodeRef getMRCAOfCoalescent(Tree tree) { return tree.getRoot(); }
+	public NodeRef getMRCAOfCoalescent(Tree tree) {
+		return tree.getRoot();
+	}
 
 	/**
 	 * @return an array of noderefs that represent the MRCAs of subtrees to exclude from coalescent prior.
-	 * May return null if no subtrees should be excluded.
+	 *         May return null if no subtrees should be excluded.
 	 */
-	public NodeRef[] getExcludedMRCAs(Tree tree) { return null; }
+	public NodeRef[] getExcludedMRCAs(Tree tree) {
+		return null;
+	}
 
 	// **************************************************************
-    // ModelListener IMPLEMENTATION
-    // **************************************************************
+	// ModelListener IMPLEMENTATION
+	// **************************************************************
 
 	protected final void handleModelChangedEvent(Model model, Object object, int index) {
 		if (model == tree) {
@@ -117,14 +120,15 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 	}
 
 	// **************************************************************
-    // ParameterListener IMPLEMENTATION
-    // **************************************************************
+	// ParameterListener IMPLEMENTATION
+	// **************************************************************
 
-	protected final void handleParameterChangedEvent(Parameter parameter, int index) { } // No parameters to respond to
+	protected final void handleParameterChangedEvent(Parameter parameter, int index) {
+	} // No parameters to respond to
 
 	// **************************************************************
-    // Model IMPLEMENTATION
-    // **************************************************************
+	// Model IMPLEMENTATION
+	// **************************************************************
 
 	/**
 	 * Stores the precalculated state: in this case the intervals
@@ -154,7 +158,8 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 		}
 	}
 
-	protected final void acceptState() { } // nothing to do
+	protected final void acceptState() {
+	} // nothing to do
 
 	/**
 	 * Adopt the state of the model from source.
@@ -165,10 +170,12 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 	}
 
 	// **************************************************************
-    // Likelihood IMPLEMENTATION
-    // **************************************************************
+	// Likelihood IMPLEMENTATION
+	// **************************************************************
 
-	public final Model getModel() { return this; }
+	public final Model getModel() {
+		return this;
+	}
 
 	public double getLogLikelihood() {
 		if (!likelihoodKnown) {
@@ -189,11 +196,14 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 	 */
 	public double calculateLogLikelihood() {
 		System.err.print("COALESCENT PRIOR: Start");
+
+		if (true) return calculateAnalyticalLogLikelihood();
+
 		//System.err.println(tree.getExternalNodeCount()+" tips");
 		if (intervalsKnown == false) setupIntervals();
 
 		//if (demoModel == null) return calculateAnalyticalLogLikelihood();
-		if( true ) return calculateAnalyticalLogLikelihood();
+		if (true) return calculateAnalyticalLogLikelihood();
 
 		double logL = 0.0;
 		//double logL = calculateAnalyticalLogLikelihood();
@@ -205,12 +215,12 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 		for (int j = 0; j < intervalCount; j++) {
 
 			logL += calculateIntervalLikelihood(demoFunction, intervals[j], currentTime, lineageCounts[j],
-			getIntervalType(j));
+					getIntervalType(j));
 
 			// insert zero-length coalescent intervals
-			int diff = getCoalescentEvents(j)-1;
+			int diff = getCoalescentEvents(j) - 1;
 			for (int k = 0; k < diff; k++) {
-				logL += calculateIntervalLikelihood(demoFunction, 0.0, currentTime, lineageCounts[j]-k-1, COALESCENT);
+				logL += calculateIntervalLikelihood(demoFunction, 0.0, currentTime, lineageCounts[j] - k - 1, COALESCENT);
 			}
 
 			currentTime += intervals[j];
@@ -223,27 +233,13 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 		//System.err.println("What the hell?");
 		//System.exit(-1);
 		double lambda = getLambda();
-		int n = ((ARGModel)tree).getReassortmentNodeCount();
-		System.err.println("Prior for "+n+" reassortments.");
-		double logL = 0.0;
-		double p = 0.5;
-		if( n == 2 ) {
-			logL = 2;
-		} else
-		if( n == 3 ) {
-			logL = 5;
-		} else
-		if( n == 4 ) {
-			logL = 5;
-		} else
-		if( n == 5 ) {
-			logL = 3;
-		} else
-		if( n == 6 ) {
-			logL = 1;
-		} else {
-			logL = -10 + n*Math.log(p);
-		}
+		int n = ((ARGModel) tree).getReassortmentNodeCount();
+		System.err.println("Prior for " + n + " reassortments.");
+		double treeHeight = tree.getNodeHeight(tree.getRoot());
+		double logL = -lambda * treeHeight;
+		double p = 0.00000000000000005;
+		logL += n * Math.log(p);
+
 		// assumes a 1/theta prior
 		//logLikelihood = Math.log(1.0/Math.pow(lambda,n));
 
@@ -265,8 +261,7 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 	 * Returns the likelihood of a given interval,coalescent or otherwise.
 	 */
 	public final double calculateIntervalLikelihood(DemographicFunction demoFunction, double width, double timeOfPrevCoal,
-												int lineageCount, int type)
-	{
+	                                                int lineageCount, int type) {
 		//binom.setMax(lineageCount);
 
 		double timeOfThisCoal = width + timeOfPrevCoal;
@@ -275,11 +270,11 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 		double like = 0;
 		switch (type) {
 			case COALESCENT:
-				like = - Math.log(demoFunction.getDemographic(timeOfThisCoal)) -
-								(Binomial.choose2(lineageCount)*intervalArea);
+				like = -Math.log(demoFunction.getDemographic(timeOfThisCoal)) -
+						(Binomial.choose2(lineageCount) * intervalArea);
 				break;
 			case NEW_SAMPLE:
-				like = -(Binomial.choose2(lineageCount)*intervalArea);
+				like = -(Binomial.choose2(lineageCount) * intervalArea);
 				break;
 		}
 
@@ -293,7 +288,7 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 	 */
 	private final double getLambda() {
 		double lambda = 0.0;
-		for (int i= 0; i < getIntervalCount(); i++) {
+		for (int i = 0; i < getIntervalCount(); i++) {
 			lambda += (intervals[i] * lineageCounts[i]);
 		}
 		lambda /= 2;
@@ -320,8 +315,8 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 		int maxIntervalCount = tree.getNodeCount(); // 
 
 //		System.err.println("max l = "+maxIntervalCount);
-		
-		if ( (intervals == null) || (intervals.length != maxIntervalCount) ) {
+
+		if ((intervals == null) || (intervals.length != maxIntervalCount)) {
 			intervals = new double[maxIntervalCount];
 			lineageCounts = new int[maxIntervalCount];
 			storedIntervals = new double[maxIntervalCount];
@@ -332,23 +327,23 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 //		System.err.println("yo = "+indices[0]);
 		// start is the time of the first tip
 		int indicesLength = indices.length - 1;
-		double start = ((ComparableDouble)times.get(indices[indicesLength])).doubleValue();
+		double start = ((ComparableDouble) times.get(indices[indicesLength])).doubleValue();
 //		System.err.println("start = "+start);
 		int numLines = 1; // was 0
 //		int i = 0;
 		intervalCount = 0;
 		while (start > 0) {
-			
-			double finish = ((ComparableDouble)times.get(indices[indicesLength-1])).doubleValue();
+
+			double finish = ((ComparableDouble) times.get(indices[indicesLength - 1])).doubleValue();
 //			System.err.println("finish = "+finish);
 //			double next = finish;
-			int children = ((Integer)childs.get(indices[indicesLength])).intValue();
-			if( children == 2 )
+			int children = ((Integer) childs.get(indices[indicesLength])).intValue();
+			if (children == 2)
 				numLines++;
-			if( children == 1 )
+			if (children == 1)
 				numLines--;
-			if( children == 0 )
-			intervals[intervalCount] = start - finish;
+			if (children == 0)
+				intervals[intervalCount] = start - finish;
 			lineageCounts[intervalCount] = numLines;
 			start = finish;
 			intervalCount++;
@@ -405,26 +400,27 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 	private void printIntervals() {
 		System.err.println("DEBUG: Coalescent intervals");
 		int len = intervalCount;
-		for(int i=0; i<len; i++){
-			System.err.println(intervals[i]+" : "+lineageCounts[i]);
+		for (int i = 0; i < len; i++) {
+			System.err.println(intervals[i] + " : " + lineageCounts[i]);
 		}
 	}
 
 	/**
 	 * extract coalescent times and tip information into ArrayList times from tree.
-	 * @param node the node to start from
+	 *
+	 * @param node         the node to start from
 	 * @param excludeBelow an optional array of nodes to exclude (corresponding subtrees) from density.
 	 */
 	private final static void collectAllTimes(Tree tree, NodeRef node, NodeRef[] excludeBelow, ArrayList times, ArrayList childs) {
 
-		for(int i=0, n=tree.getNodeCount(); i<n; i++) {
+		for (int i = 0, n = tree.getNodeCount(); i < n; i++) {
 			NodeRef nr = tree.getNode(i);
 			times.add(new ComparableDouble(tree.getNodeHeight(nr)));
 			childs.add(new Integer(tree.getChildCount(nr)));
-			
+
 		}
 	}
-		
+
 //		times.add(new ComparableDouble(tree.getNodeHeight(node)));
 //		childs.add(new Integer(tree.getChildCount(node)));
 //
@@ -478,10 +474,10 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 	public final int getCoalescentEvents(int i) {
 
 		if (i >= intervalCount) throw new IllegalArgumentException();
-		if (i < intervalCount-1) {
-			return lineageCounts[i]-lineageCounts[i+1];
+		if (i < intervalCount - 1) {
+			return lineageCounts[i] - lineageCounts[i + 1];
 		} else {
-			return lineageCounts[i]-1;
+			return lineageCounts[i] - 1;
 		}
 	}
 
@@ -504,8 +500,8 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 	 */
 	public final double getTotalHeight() {
 
-		double height=0.0;
-		for (int j=0; j < intervalCount; j++) {
+		double height = 0.0;
+		for (int j = 0; j < intervalCount; j++) {
 			height += intervals[j];
 		}
 		return height;
@@ -536,42 +532,46 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 		return true;
 	}
 
-    // **************************************************************
-    // Loggable IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// Loggable IMPLEMENTATION
+	// **************************************************************
 
 	/**
 	 * @return the log columns.
 	 */
 	public final dr.inference.loggers.LogColumn[] getColumns() {
-		return new dr.inference.loggers.LogColumn[] {
-			new LikelihoodColumn(getId())
+		return new dr.inference.loggers.LogColumn[]{
+				new LikelihoodColumn(getId())
 		};
 	}
 
 	private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-		public LikelihoodColumn(String label) { super(label); }
-		public double getDoubleValue() { return getLogLikelihood(); }
+		public LikelihoodColumn(String label) {
+			super(label);
+		}
+
+		public double getDoubleValue() {
+			return getLogLikelihood();
+		}
 	}
 
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// XMLElement IMPLEMENTATION
+	// **************************************************************
 
 	public org.w3c.dom.Element createElement(org.w3c.dom.Document d) {
 		throw new RuntimeException("createElement not implemented");
 	}
 
-    // **************************************************************
-    // Units IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// Units IMPLEMENTATION
+	// **************************************************************
 
 	/**
 	 * Sets the units these coalescent intervals are
 	 * measured in.
 	 */
-	public final void setUnits(int u)
-	{
+	public final void setUnits(int u) {
 		demoModel.setUnits(u);
 	}
 
@@ -579,8 +579,7 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 	 * Returns the units these coalescent intervals are
 	 * measured in.
 	 */
-	public final int getUnits()
-	{
+	public final int getUnits() {
 		return demoModel.getUnits();
 	}
 
@@ -594,7 +593,9 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 			super("delta");
 		}
 
-		public int getDimension() { return 1; }
+		public int getDimension() {
+			return 1;
+		}
 
 		public double getStatisticValue(int i) {
 			throw new RuntimeException("Not implemented");
@@ -609,18 +610,21 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return COALESCENT_LIKELIHOOD; }
+		public String getParserName() {
+			return COALESCENT_LIKELIHOOD;
+		}
 
 		public Object parseXMLObject(XMLObject xo) {
-			
+
 			DemographicModel demoModel = null;
 			XMLObject cxo;
 			try {
-				cxo = (XMLObject)xo.getChild(MODEL);
-				demoModel = (DemographicModel)cxo.getChild(DemographicModel.class);
-			} catch (Exception e) {}  // [TODO -- how to do this right?
-			cxo = (XMLObject)xo.getChild(POPULATION_TREE);
-			ARGModel argModel = (ARGModel)cxo.getChild(ARGModel.class);
+				cxo = (XMLObject) xo.getChild(MODEL);
+				demoModel = (DemographicModel) cxo.getChild(DemographicModel.class);
+			} catch (Exception e) {
+			}  // [TODO -- how to do this right?
+			cxo = (XMLObject) xo.getChild(POPULATION_TREE);
+			ARGModel argModel = (ARGModel) cxo.getChild(ARGModel.class);
 
 			return new VariableSizeCoalescentLikelihood(argModel, demoModel);
 		}
@@ -633,21 +637,23 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 			return "This element represents the likelihood of the tree given the demographic function.";
 		}
 
-		public Class getReturnType() { return Likelihood.class; }
+		public Class getReturnType() {
+			return Likelihood.class;
+		}
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-		//	new ElementRule(MODEL, new XMLSyntaxRule[] {
-		//		new ElementRule(DemographicModel.class)
-		//	}),
-			new ElementRule(POPULATION_TREE, new XMLSyntaxRule[] {
-				new ElementRule(ARGModel.class)
-			}),
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				//	new ElementRule(MODEL, new XMLSyntaxRule[] {
+				//		new ElementRule(DemographicModel.class)
+				//	}),
+				new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
+						new ElementRule(ARGModel.class)
+				}),
 		};
 	};
-
-
 
 	// ****************************************************************
 	// Private and protected stuff
@@ -688,17 +694,25 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
 		};
 	};*/
 
-	/** The demographic model. */
+	/**
+	 * The demographic model.
+	 */
 	DemographicModel demoModel = null;
 
-	/** The tree. */
+	/**
+	 * The tree.
+	 */
 	Tree tree = null;
 
-	/** The widths of the intervals. */
+	/**
+	 * The widths of the intervals.
+	 */
 	double[] intervals;
 	private double[] storedIntervals;
 
-	/** The number of uncoalesced lineages within a particular interval. */
+	/**
+	 * The number of uncoalesced lineages within a particular interval.
+	 */
 	int[] lineageCounts;
 	private int[] storedLineageCounts;
 

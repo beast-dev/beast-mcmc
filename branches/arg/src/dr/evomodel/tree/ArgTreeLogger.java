@@ -25,12 +25,10 @@
 
 package dr.evomodel.tree;
 
-import dr.evolution.colouring.TreeColouring;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.structure.ColourSamplerModel;
 import dr.inference.loggers.LogFormatter;
-import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.MLLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Likelihood;
@@ -48,145 +46,148 @@ import java.io.PrintWriter;
  * @author Alexei Drummond
  * @version $Id: TreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
  */
-public class TreeLogger extends MCLogger {
+public class ArgTreeLogger extends TreeLogger {
 
-	public static final String LOG_TREE = "logTree";
-	public static final String NEXUS_FORMAT = "nexusFormat";
-	public static final String USING_RATES = "usingRates";
-	public static final String BRANCH_LENGTHS = "branchLengths";
-	public static final String TIME = "time";
-	public static final String SUBSTITUTIONS = "substitutions";
+	public static final String LOG_ARG = "logArgTree";
+//	public static final String NEXUS_FORMAT = "nexusFormat";
+//	public static final String USING_RATES = "usingRates";
+//	public static final String BRANCH_LENGTHS = "branchLengths";
+//	public static final String TIME = "time";
+	//	public static final String SUBSTITUTIONS = "substitutions";
+	public static final String PARTITION = "partition";
 
-	private Tree tree;
-	private BranchRateModel branchRateModel = null;
-	private String rateLabel;
-
-	private ColourSamplerModel colourSamplerModel = null;
-	private String colouringLabel;
-
-	private Likelihood likelihood = null;
-	private String likelihoodLabel;
-
-	private boolean nexusFormat = false;
-	public boolean usingRates = false;
-	public boolean substitutions = false;
+	//	private Tree tree;
+	private int partition;
+//	private BranchRateModel branchRateModel = null;
+//	private String rateLabel;
+//
+//	private ColourSamplerModel colourSamplerModel = null;
+//	private String colouringLabel;
+//
+//	private Likelihood likelihood = null;
+//	private String likelihoodLabel;
+//
+//	private boolean nexusFormat = false;
+//	public boolean usingRates = false;
+//	public boolean substitutions = false;
 
 	/**
 	 * Constructor
 	 */
-	public TreeLogger(Tree tree, BranchRateModel branchRateModel, String rateLabel,
-	                  ColourSamplerModel colourSamplerModel, String colouringLabel,
-	                  Likelihood likelihood, String likelihoodLabel,
-	                  LogFormatter formatter, int logEvery, boolean nexusFormat, boolean substitutions) {
+	public ArgTreeLogger(Tree tree, int partition, BranchRateModel branchRateModel, String rateLabel,
+	                     ColourSamplerModel colourSamplerModel, String colouringLabel,
+	                     Likelihood likelihood, String likelihoodLabel,
+	                     LogFormatter formatter, int logEvery, boolean nexusFormat, boolean substitutions) {
 
-		super(formatter, logEvery);
+		super(tree, branchRateModel, rateLabel, colourSamplerModel, colouringLabel, likelihood, likelihoodLabel, formatter, logEvery, nexusFormat, substitutions);
+//			super(formatter, logEvery);
 
-		this.nexusFormat = nexusFormat;
-		this.branchRateModel = branchRateModel;
-		this.rateLabel = rateLabel;
-
-		this.colourSamplerModel = colourSamplerModel;
-		this.colouringLabel = colouringLabel;
-
-		this.likelihood = likelihood;
-		this.likelihoodLabel = likelihoodLabel;
-
-		if (branchRateModel != null) {
-			this.substitutions = substitutions;
-		}
-		this.tree = tree;
+		this.partition = partition;
+//		this.nexusFormat = nexusFormat;
+//		this.branchRateModel = branchRateModel;
+//		this.rateLabel = rateLabel;
+//
+//		this.colourSamplerModel = colourSamplerModel;
+//		this.colouringLabel = colouringLabel;
+//
+//		this.likelihood = likelihood;
+//		this.likelihoodLabel = likelihoodLabel;
+//
+//		if (branchRateModel != null) {
+//			this.substitutions = substitutions;
+//		}
+//		this.tree = tree;
 	}
 
-	public void startLogging() {
+//	public void startLogging() {
+//
+//		if (nexusFormat) {
+//			int taxonCount = tree.getTaxonCount();
+//			logLine("#NEXUS");
+//			logLine("");
+//			logLine("Begin taxa;");
+//			logLine("\tDimensions ntax=" + taxonCount + ";");
+//			logLine("\tTaxlabels");
+//			for (int i = 0; i < taxonCount; i++) {
+//				logLine("\t\t" + tree.getTaxon(i).getId());
+//			}
+//			logLine("\t\t;");
+//			logLine("End;");
+//			logLine("");
+//			logLine("Begin trees;");
+//
+//			// This is needed if the trees use numerical taxon labels
+//			logLine("\tTranslate");
+//			for (int i = 0; i < taxonCount; i++) {
+//				int k = i + 1;
+//				if (k < taxonCount) {
+//					logLine("\t\t" + k + " " + tree.getTaxonId(i) + ",");
+//				} else {
+//					logLine("\t\t" + k + " " + tree.getTaxonId(i));
+//				}
+//			}
+//			logLine("\t\t;");
+//		}
+//	}
 
-		if (nexusFormat) {
-			int taxonCount = tree.getTaxonCount();
-			logLine("#NEXUS");
-			logLine("");
-			logLine("Begin taxa;");
-			logLine("\tDimensions ntax=" + taxonCount + ";");
-			logLine("\tTaxlabels");
-			for (int i = 0; i < taxonCount; i++) {
-				logLine("\t\t" + tree.getTaxon(i).getId());
-			}
-			logLine("\t\t;");
-			logLine("End;");
-			logLine("");
-			logLine("Begin trees;");
 
-			// This is needed if the trees use numerical taxon labels
-			logLine("\tTranslate");
-			for (int i = 0; i < taxonCount; i++) {
-				int k = i + 1;
-				if (k < taxonCount) {
-					logLine("\t\t" + k + " " + tree.getTaxonId(i) + ",");
-				} else {
-					logLine("\t\t" + k + " " + tree.getTaxonId(i));
-				}
-			}
-			logLine("\t\t;");
-		}
-	}
-
-	public void log(int state) {
-
-		if (logEvery <= 0 || ((state % logEvery) == 0)) {
-			StringBuffer buffer = new StringBuffer("tree STATE_");
-			buffer.append(state);
-			if (likelihood != null) {
-				buffer.append(" [&");
-				buffer.append(likelihoodLabel);
-				buffer.append("=");
-				buffer.append(likelihood.getLogLikelihood());
-				buffer.append("]");
-			}
-
-			buffer.append(additionalInfo());
-
-			buffer.append(" = [&R] ");
-
-			TreeColouring colouring = null;
-			if (colourSamplerModel != null) {
-				colouring = colourSamplerModel.getTreeColouring();
-			}
-
-			Tree printTree = getPrintTree();
-
-			if (substitutions) {
-				Tree.Utils.newick(printTree, printTree.getRoot(), false, Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
-						branchRateModel, null, null, null, buffer);
-			} else {
-				Tree.Utils.newick(printTree, printTree.getRoot(), false, Tree.Utils.LENGTHS_AS_TIME,
-						branchRateModel, rateLabel, colouring, colouringLabel, buffer);
-			}
-
-			buffer.append(";");
-			logLine(buffer.toString());
-		}
-	}
-
+	@Override
 	protected String additionalInfo() {
-		return "";
+		return " [&PARTITION=" + partition + "]";
 	}
 
+	@Override
 	protected Tree getPrintTree() {
-		return tree;
+		return new ARGTree((ARGModel) getTree(), partition);
 	}
 
-	protected Tree getTree() {
-		return tree;
-	}
+//	public void log(int state) {
+//
+//		if (logEvery <= 0 || ((state % logEvery) == 0)) {
+//			StringBuffer buffer = new StringBuffer("tree STATE_");
+//			buffer.append(state);
+//			if (likelihood != null) {
+//				buffer.append(" [&");
+//				buffer.append(likelihoodLabel);
+//				buffer.append("=");
+//				buffer.append(likelihood.getLogLikelihood());
+//				buffer.append("]");
+//			}
+//
+//			buffer.append(" [&PARTITION="+partition+"]");
+//
+//			buffer.append(" = [&R] ");
+//
+//			TreeColouring colouring = null;
+//			if (colourSamplerModel != null) {
+//				colouring = colourSamplerModel.getTreeColouring();
+//			}
+//
+//			Tree argTree = new ARGTree((ARGModel)tree,partition);
+//			//argTree.setAttribute("parition",partition);
+//			if (substitutions) {
+//				Tree.Utils.newick(argTree, argTree.getRoot(), false, Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
+//						branchRateModel, null, null, null, buffer);
+//			} else {
+//				Tree.Utils.newick(argTree, argTree.getRoot(), false, Tree.Utils.LENGTHS_AS_TIME,
+//						branchRateModel, rateLabel, colouring, colouringLabel, buffer);
+//			}
+//
+//			buffer.append(";");
+//			logLine(buffer.toString());
+//		}
+//	}
 
-	public void stopLogging() {
-
-		logLine("End;");
-		super.stopLogging();
-	}
+//	public void stopLogging() {
+//
+//		logLine("End;");
+//		super.stopLogging();
+//	}
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
 		public String getParserName() {
-			return LOG_TREE;
+			return LOG_ARG;
 		}
 
 		/**
@@ -194,7 +195,7 @@ public class TreeLogger extends MCLogger {
 		 */
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			Tree tree = (Tree) xo.getChild(Tree.class);
+			ARGModel tree = (ARGModel) xo.getChild(ARGModel.class);
 
 			String fileName = null;
 			String title = null;
@@ -234,6 +235,15 @@ public class TreeLogger extends MCLogger {
 				logEvery = xo.getIntegerAttribute(LOG_EVERY);
 			}
 
+			int partition = 0;
+
+			if (xo.hasAttribute(PARTITION)) {
+				partition = xo.getIntegerAttribute(PARTITION);
+			}
+
+			if (partition > tree.getMaxPartitionNumber())
+				throw new XMLParseException("ARGModel does not contain a partition #" + partition);
+
 			PrintWriter pw = null;
 
 			if (fileName != null) {
@@ -258,7 +268,7 @@ public class TreeLogger extends MCLogger {
 
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-			TreeLogger logger = new TreeLogger(tree, branchRateModel, rateLabel,
+			ArgTreeLogger logger = new ArgTreeLogger(tree, partition, branchRateModel, rateLabel,
 					colourSamplerModel, colouringLabel, likelihood, likelihoodLabel,
 					formatter, logEvery, nexusFormat, substitutions);
 
@@ -278,6 +288,7 @@ public class TreeLogger extends MCLogger {
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 				AttributeRule.newIntegerRule(LOG_EVERY),
+				AttributeRule.newIntegerRule(PARTITION),
 				new StringAttributeRule(FILE_NAME,
 						"The name of the file to send log output to. " +
 								"If no file name is specified then log is sent to standard output", true),
@@ -285,7 +296,7 @@ public class TreeLogger extends MCLogger {
 				AttributeRule.newBooleanRule(NEXUS_FORMAT, true,
 						"Whether to use the NEXUS format for the tree log"),
 				new StringAttributeRule(BRANCH_LENGTHS, "What units should the branch lengths be in", new String[]{TIME, SUBSTITUTIONS}, true),
-				new ElementRule(Tree.class, "The tree which is to be logged"),
+				new ElementRule(ARGModel.class, "The ARG which is to be logged"),
 				new ElementRule(BranchRateModel.class, true),
 				new ElementRule(ColourSamplerModel.class, true),
 				new ElementRule(Likelihood.class, true)
@@ -297,7 +308,7 @@ public class TreeLogger extends MCLogger {
 
 		public String getExample() {
 			return
-					"<!-- The " + getParserName() + " element takes a treeModel to be logged -->\n" +
+					"<!-- The " + getParserName() + " element takes an argTreeModel to be logged -->\n" +
 							"<" + getParserName() + " " + LOG_EVERY + "=\"100\" " + FILE_NAME + "=\"log.trees\" " + NEXUS_FORMAT + "=\"true\">\n" +
 							"	<treeModel idref=\"treeModel1\"/>\n" +
 							"</" + getParserName() + ">\n";

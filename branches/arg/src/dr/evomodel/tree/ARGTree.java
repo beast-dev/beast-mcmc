@@ -1,177 +1,194 @@
 package dr.evomodel.tree;
 
-import java.util.BitSet;
-import java.util.Iterator;
-import java.util.ArrayList;
-
 import dr.evolution.tree.MutableTreeListener;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.Tree.Utils;
-import dr.evomodel.tree.ARGModel;
-import dr.evomodel.tree.ARGModel.Node;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
-//import dr.evomodel.tree.TreeModel.Node;
-//import dr.evomodel.tree.TreeModel.NodeHeightBounds;
-import dr.inference.model.Parameter;
+import dr.evomodel.tree.ARGModel.Node;
 import dr.util.Attributable;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 public class ARGTree implements Tree {
-	
-	//NodeRef root;
-	
-	  protected Taxon[] taxaList;
-	  protected int taxaCount;
-	  
-	  /**
-	   * Constructor to represent complete ARG as a tree
-	   * @param arg
-	   */
-	  public ARGTree(ARGModel arg) {
-		  root = arg.new Node( (Node)arg.getRoot() );
-		 // int cnt = countReassortmentNodes(root);
-	  }
-	  
-	  
-	  /**
-	   * Constructor for specific partition tree
-	   * @param arg
-	   * @param partition
-	   */
-	
-	  ArrayList<Node> nodeList;
-	  
-	  
-	  public String toGraphString() {
-		  //if( true )
-		  //	  return null;
-		  int number = 1;
-		  for( Node node : nodeList ) 
-			  node.number = number++;
-		  StringBuffer sb = new StringBuffer();
-		  for(Node node: nodeList) {
-			  sb.append(node.number);
-			  if( node.leftParent != null )
-				  sb.append(" "+node.leftParent.number);
-			  else
-				  sb.append(" 0");
-			  if( node.rightParent != null )
-				  sb.append(" "+node.rightParent.number);
-			  else
-				  sb.append(" 0");
-			  if( node.leftChild != null )
-				  sb.append(" "+node.leftChild.number);
-			  else
-				  sb.append(" 0");
-			  if( node.rightChild != null )
-				  sb.append(" "+node.rightChild.number);
-			  else
-				  sb.append(" 0");
-			  if( node.taxon != null )
-				  sb.append(" "+node.taxon.toString());
-			  sb.append("\n");
-		  }
-		  sb.append("Root = "+((Node)getRoot()).number+"\n");
-		  return new String(sb);
-	  }
-	  
-	public ARGTree(ARGModel arg, int partition) {
+
+    //NodeRef root;
+
+    protected Taxon[] taxaList;
+    protected int taxaCount;
+
+    /**
+     * Constructor to represent complete ARG as a tree
+     *
+     * @param arg
+     */
+    public ARGTree(ARGModel arg) {
+        root = arg.new Node((Node) arg.getRoot());
+//		  root = arg.new Node( (Node)arg.getRoot() );
+        // int cnt = countReassortmentNodes(root);
+    }
+
+
+    /**
+     * Constructor for specific partition tree
+     *
+     * @param arg
+     * @param partition
+     */
+
+    ArrayList<Node> nodeList;
+
+
+    public String toGraphString() {
+        //if( true )
+        //	  return null;
+//		  int number = 1;
+//		  for( Node node : nodeList )
+//			  node.number = number++;
+        StringBuffer sb = new StringBuffer();
+        for (Node node : nodes) {
+            sb.append(node.number);
+            if (node.leftParent != null)
+                sb.append(" " + node.leftParent.number);
+            else
+                sb.append(" 0");
+            if (node.rightParent != null)
+                sb.append(" " + node.rightParent.number);
+            else
+                sb.append(" 0");
+            if (node.leftChild != null)
+                sb.append(" " + node.leftChild.number);
+            else
+                sb.append(" 0");
+            if (node.rightChild != null)
+                sb.append(" " + node.rightChild.number);
+            else
+                sb.append(" 0");
+            if (node.taxon != null)
+                sb.append(" " + node.taxon.toString());
+            sb.append("\n");
+        }
+        sb.append("Root = " + ((Node) getRoot()).number + "\n");
+        return new String(sb);
+    }
+
+    public ARGTree(ARGModel arg, int partition) {
 //		System.err.println("ARG->Tree\n"+arg.toGraphString());
-		nodeList = new ArrayList<Node>();
-		Node node = arg.new Node( ((Node)arg.getRoot()),partition,nodeList);
-				//.findPartitionTreeRoot(partition), partition);
-		// this.root = root
-		//System.err.println("Building tree: "+arg.toString());
-		//System.exit(-1);
-		//Node save = node;
-		
-		arg.checkBranchSanity();
-		
-		int i = 0;
-		int j = arg.externalNodeCount;
+        nodeList = new ArrayList<Node>();
+        Node node = arg.new Node(((Node) arg.getRoot()), partition, nodeList);
+        //.findPartitionTreeRoot(partition), partition);
+        // this.root = root
+        //System.err.println("Building tree: "+arg.toString());
+        //System.exit(-1);
+        //Node save = node;
 
-		//root = node;
-		//System.err.println("Null rights 1 = "+checkForNullRights(node));
+//		arg.checkBranchSanity();
+
+        int i = 0;
+        int j = arg.externalNodeCount;
+
+        //root = node;
+        //System.err.println("Null rights 1 = "+checkForNullRights(node));
 //		System.err.println("ARG->TREE1\n"+this.toGraphString());
-		node.stripOutDeadEnds();
+        node.stripOutDeadEnds();
 //		System.err.println("ARG->TREE2\n"+this.toGraphString());
-		root = node.stripOutSingleChildNodes(node);
+        root = node.stripOutSingleChildNodes(node);
 //		System.err.println("root == node? "+(root == node));
-		node = root;
-		//System.err.println("Null rights 2 - "+checkForNullRights(node));
+        node = root;
+        //System.err.println("Null rights 2 - "+checkForNullRights(node));
 //		System.err.println("ARG->TREE3\n"+this.toGraphString());
-		//root = node;
-		//if( save != root ) {
-		//	System.err.println("Rerooted: "+Tree.Utils.uniqueNewick(this, node));
-		//	System.exit(-1);
-		//}
-		
-		//Tree.Utils.uniqueNewick(this, root));
-	//	System.exit(-1);
-		System.err.println("root.number = "+root.number);
-		nodes = new Node[2*j-1];
+        //root = node;
+        //if( save != root ) {
+        //	System.err.println("Rerooted: "+Tree.Utils.uniqueNewick(this, node));
+        //	System.exit(-1);
+        //}
 
-		do {
-			node = (Node) Tree.Utils.postorderSuccessor(this, node);
-			//System.err.println("Ordering: "+Tree.Utils.uniqueNewick(this, node));
-			if (node.isExternal()) {
-				node.number = i;
+        //Tree.Utils.uniqueNewick(this, root));
+        //	System.exit(-1);
+//		System.err.println("root.number = "+root.number);
+        nodeCount = 2 * j - 1;
+        externalNodeCount = j;
+        internalNodeCount = j - 1;
+        nodes = new Node[nodeCount];
 
-				nodes[i] = node;
-				// storedNodes[i] = new Node();
-				// storedNodes[i].taxon = node.taxon;
-				// storedNodes[i].number = i;
 
-				i++;
-			} else {
-				node.number = j;
+        do {
+            node = (Node) Tree.Utils.postorderSuccessor(this, node);
+            //System.err.println("Ordering: "+Tree.Utils.uniqueNewick(this, node));
+            if (node.isExternal()) {
+                node.number = i;
 
-				nodes[j] = node;
-				// storedNodes[j] = new Node();
-				// storedNodes[j].number = j;
+                nodes[i] = node;
+                // storedNodes[i] = new Node();
+                // storedNodes[i].taxon = node.taxon;
+                // storedNodes[i].number = i;
 
-				j++;
-			}
-		} while (node != root);
+                i++;
+            } else {
+                node.number = j;
 
-		System.err.println("After: "+this.toString());
-		//System.err.println("Finished post-order on ARGTree");
-	}
-	
-	public boolean checkForNullRights(Node node) {
-		return node.checkForNullRights();
-	}
-	
+                nodes[j] = node;
+                // storedNodes[j] = new Node();
+                // storedNodes[j].number = j;
+
+                j++;
+            }
+        } while (node != root);
+
+//		System.err.println("After: "+this.toString());
+        //System.err.println("Finished post-order on ARGTree");
+    }
+
+    public boolean checkForNullRights(Node node) {
+        return node.checkForNullRights();
+    }
+
     // *****************************************************************
     // Interface Tree
     // *****************************************************************
 
     /**
-	 * Return the units that this tree is expressed in.
-	 */
-    public final int getUnits() { return units; }
+     * Return the units that this tree is expressed in.
+     */
+    public final int getUnits() {
+        return units;
+    }
 
     /**
      * Sets the units that this tree is expressed in.
      */
-    public final void setUnits(int units) { this.units = units; }
+    public final void setUnits(int units) {
+        this.units = units;
+    }
 
     /**
      * @return a count of the number of nodes (internal + external) in this
-     * tree.
+     *         tree.
      */
-    public final int getNodeCount() { return nodeCount; }
+    public final int getNodeCount() {
+        return nodeCount;
+    }
 
-    public final boolean hasNodeHeights() { return true; }
-    public final double getNodeHeight(NodeRef node) { 
-    	
-    	//System.err.println(Tree.Utils.uniqueNewick(this, node));
-    			//((Node)node))
-    	
-    	return ((Node)node).getHeight(); }
-    public final double getNodeHeightUpper(NodeRef node) { return ((Node)node).heightParameter.getBounds().getUpperLimit(0); }
-    public final double getNodeHeightLower(NodeRef node) { return ((Node)node).heightParameter.getBounds().getLowerLimit(0); }
+    public final boolean hasNodeHeights() {
+        return true;
+    }
+
+    public final double getNodeHeight(NodeRef node) {
+
+        //System.err.println(Tree.Utils.uniqueNewick(this, node));
+        //((Node)node))
+
+        return ((Node) node).getHeight();
+    }
+
+    public final double getNodeHeightUpper(NodeRef node) {
+        return ((Node) node).heightParameter.getBounds().getUpperLimit(0);
+    }
+
+    public final double getNodeHeightLower(NodeRef node) {
+        return ((Node) node).heightParameter.getBounds().getLowerLimit(0);
+    }
 
 
     /**
@@ -182,7 +199,7 @@ public class ARGTree implements Tree {
         if (!hasRates) {
             return 1.0;
         }
-        return ((Node)node).getRate();
+        return ((Node) node).getRate();
     }
 
     public Object getNodeAttribute(NodeRef node, String name) {
@@ -195,22 +212,39 @@ public class ARGTree implements Tree {
 
     public double getNodeTrait(NodeRef node) {
         if (!hasTraits) throw new IllegalArgumentException("Trait parameters have not been created");
-        return ((Node)node).getTrait();
+        return ((Node) node).getTrait();
     }
 
-    public final Taxon getNodeTaxon(NodeRef node) { return ((Node)node).taxon; }
-    public final boolean isExternal(NodeRef node) { return ((Node)node).isExternal(); }
-    public final boolean isRoot(NodeRef node) { return (node == root); }
+    public final Taxon getNodeTaxon(NodeRef node) {
+        return ((Node) node).taxon;
+    }
 
-    public final int getChildCount(NodeRef node) { 
-    	//System.err.println("Cn for "+((Node)node).number);
-    	return ((Node)node).getChildCount(); }
-    public final NodeRef getChild(NodeRef node, int i) { return ((Node)node).getChild(i); }
-    public final NodeRef getParent(NodeRef node) { 
-    	//System.err.println("Gimme!");
-    	return ((Node)node).leftParent; }
+    public final boolean isExternal(NodeRef node) {
+        return ((Node) node).isExternal();
+    }
 
-    public final boolean hasBranchLengths() { return true; }
+    public final boolean isRoot(NodeRef node) {
+        return (node == root);
+    }
+
+    public final int getChildCount(NodeRef node) {
+        //System.err.println("Cn for "+((Node)node).number);
+        return ((Node) node).getChildCount();
+    }
+
+    public final NodeRef getChild(NodeRef node, int i) {
+        return ((Node) node).getChild(i);
+    }
+
+    public final NodeRef getParent(NodeRef node) {
+        //System.err.println("Gimme!");
+        return ((Node) node).leftParent;
+    }
+
+    public final boolean hasBranchLengths() {
+        return true;
+    }
+
     public final double getBranchLength(NodeRef node) {
         NodeRef parent = getParent(node);
         if (parent == null) {
@@ -220,25 +254,39 @@ public class ARGTree implements Tree {
         return getNodeHeight(parent) - getNodeHeight(node);
     }
 
-    public final NodeRef getExternalNode(int i) { return nodes[i]; }
-    public final NodeRef getInternalNode(int i) { return nodes[i+externalNodeCount]; }
-    public final NodeRef getNode(int i) { return nodes[i]; }
+    public final NodeRef getExternalNode(int i) {
+        return nodes[i];
+    }
+
+    public final NodeRef getInternalNode(int i) {
+        return nodes[i + externalNodeCount];
+    }
+
+    public final NodeRef getNode(int i) {
+        return nodes[i];
+    }
 
     /**
      * Returns the number of external nodes.
      */
-    public final int getExternalNodeCount() { return externalNodeCount; }
+    public final int getExternalNodeCount() {
+        return externalNodeCount;
+    }
 
     /**
      * Returns the ith internal node.
      */
-    public final int getInternalNodeCount() { return internalNodeCount; }
+    public final int getInternalNodeCount() {
+        return internalNodeCount;
+    }
 
     /**
      * Returns the root node of this tree.
      */
-    public final NodeRef getRoot() { return root; }
-    
+    public final NodeRef getRoot() {
+        return root;
+    }
+
     // **************************************************************
     // TaxonList IMPLEMENTATION
     // **************************************************************
@@ -263,13 +311,13 @@ public class ARGTree implements Tree {
 //        return taxaList[taxonIndex];
 //    }
     public Taxon getTaxon(int taxonIndex) {
-        return ((Node)getExternalNode(taxonIndex)).taxon;
+        return ((Node) getExternalNode(taxonIndex)).taxon;
     }
-    
-    
+
+
     /**
      * @return the ID of the taxon of the ith external node. If it doesn't have
-     * a taxon, returns the ID of the node itself.
+     *         a taxon, returns the ID of the node itself.
      */
     public String getTaxonId(int taxonIndex) {
         Taxon taxon = getTaxon(taxonIndex);
@@ -301,11 +349,11 @@ public class ARGTree implements Tree {
     }
 
     /**
-     * @return an object representing the named attributed for the taxon of the given
-     * external node. If the node doesn't have a taxon then the nodes own attribute
-     * is returned.
      * @param taxonIndex the index of the taxon whose attribute is being fetched.
-     * @param name the name of the attribute of interest.
+     * @param name       the name of the attribute of interest.
+     * @return an object representing the named attributed for the taxon of the given
+     *         external node. If the node doesn't have a taxon then the nodes own attribute
+     *         is returned.
      */
     public final Object getTaxonAttribute(int taxonIndex, String name) {
         Taxon taxon = getTaxon(taxonIndex);
@@ -319,12 +367,27 @@ public class ARGTree implements Tree {
     // MutableTaxonList IMPLEMENTATION
     // **************************************************************
 
-    public int addTaxon(Taxon taxon) { throw new IllegalArgumentException("Cannot add taxon to a TreeModel"); }
-    public boolean removeTaxon(Taxon taxon) { throw new IllegalArgumentException("Cannot add taxon to a TreeModel"); }
-    public void setTaxonId(int taxonIndex, String id) { throw new IllegalArgumentException("Cannot set taxon id in a TreeModel"); }
-    public void setTaxonAttribute(int taxonIndex, String name, Object value) { throw new IllegalArgumentException("Cannot set taxon attribute in a TreeModel"); }
-    public void addMutableTreeListener(MutableTreeListener listener) {} // Do nothing at the moment
-    public void addMutableTaxonListListener(MutableTaxonListListener listener) {} // Do nothing at the moment
+    public int addTaxon(Taxon taxon) {
+        throw new IllegalArgumentException("Cannot add taxon to a TreeModel");
+    }
+
+    public boolean removeTaxon(Taxon taxon) {
+        throw new IllegalArgumentException("Cannot add taxon to a TreeModel");
+    }
+
+    public void setTaxonId(int taxonIndex, String id) {
+        throw new IllegalArgumentException("Cannot set taxon id in a TreeModel");
+    }
+
+    public void setTaxonAttribute(int taxonIndex, String name, Object value) {
+        throw new IllegalArgumentException("Cannot set taxon attribute in a TreeModel");
+    }
+
+    public void addMutableTreeListener(MutableTreeListener listener) {
+    } // Do nothing at the moment
+
+    public void addMutableTaxonListListener(MutableTaxonListListener listener) {
+    } // Do nothing at the moment
 
     // **************************************************************
     // Identifiable IMPLEMENTATION
@@ -354,7 +417,8 @@ public class ARGTree implements Tree {
 
     /**
      * Sets an named attribute for this object.
-     * @param name the name of the attribute.
+     *
+     * @param name  the name of the attribute.
      * @param value the new value of the attribute.
      */
     public void setAttribute(String name, Object value) {
@@ -364,8 +428,8 @@ public class ARGTree implements Tree {
     }
 
     /**
-     * @return an object representing the named attributed for this object.
      * @param name the name of the attribute of interest.
+     * @return an object representing the named attributed for this object.
      */
     public Object getAttribute(String name) {
         if (treeAttributes == null)
@@ -394,11 +458,13 @@ public class ARGTree implements Tree {
     /**
      * @return a string containing a newick representation of the tree
      */
-    public String toString() { return getNewick(); }
+    public String toString() {
+        return getNewick();
+    }
 
-    public Tree getCopy() { throw new UnsupportedOperationException("please don't call this function"); }
-
-	
+    public Tree getCopy() {
+        throw new UnsupportedOperationException("please don't call this function");
+    }
 
     // **************************************************************
     // Private inner classes
@@ -456,8 +522,7 @@ public class ARGTree implements Tree {
 //        	return false;
 //        }
 //        
-    
-   
+
 //        private boolean isBifurcatingOrExternal(int partition) {
 //        	// TODO protect against null errors at tips
 //        	if( isExternal() )
@@ -709,24 +774,36 @@ public class ARGTree implements Tree {
     // ***********************************************************************
 
 
-    /** root node */
+    /**
+     * root node
+     */
     protected Node root = null;
     protected int storedRootNumber;
 
-    /** list of internal nodes (including root) */
+    /**
+     * list of internal nodes (including root)
+     */
     protected Node[] nodes = null;
     protected Node[] storedNodes = null;
 
-    /** number of nodes (including root and tips) */
+    /**
+     * number of nodes (including root and tips)
+     */
     protected int nodeCount;
 
-    /** number of external nodes */
+    /**
+     * number of external nodes
+     */
     protected int externalNodeCount;
 
-    /** number of internal nodes (including root) */
+    /**
+     * number of internal nodes (including root)
+     */
     protected int internalNodeCount;
 
-    /** holds the units of the trees branches. */
+    /**
+     * holds the units of the trees branches.
+     */
     private int units = SUBSTITUTIONS;
 
     protected boolean inEdit = false;

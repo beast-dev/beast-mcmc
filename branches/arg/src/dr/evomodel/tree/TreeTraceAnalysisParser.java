@@ -33,21 +33,23 @@ import java.io.FileReader;
 import java.io.Reader;
 
 /**
- *
  * @author Alexei Drummond
  * @version $Id: TreeTraceAnalysisParser.java,v 1.6 2005/05/24 20:25:58 rambaut Exp $
  */
 public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
-		
-	public final static String TREE_TRACE_ANALYSIS = "treeTraceAnalysis";
-	public final static String BURN_IN = "burnIn";
-    public static final String FILE_NAME = "fileName";
 
-	public String getParserName() { return TREE_TRACE_ANALYSIS; }
-			
-	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-		try {
+    public final static String TREE_TRACE_ANALYSIS = "treeTraceAnalysis";
+    public final static String BURN_IN = "burnIn";
+    public static final String FILE_NAME = "fileName";
+    public static final String SHORT_REPORT = "shortReport";
+
+    public String getParserName() {
+        return TREE_TRACE_ANALYSIS;
+    }
+
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        try {
             Reader reader = null;
 
             String fileName = xo.getStringAttribute(FILE_NAME);
@@ -66,39 +68,51 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
             }
 
-			int burnin = -1;
-			if (xo.hasAttribute(BURN_IN)) {
-				// leaving the burnin attribute off will result in 10% being used
-				burnin = xo.getIntegerAttribute(BURN_IN);
-			}
-					
-			TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(new Reader[] {reader}, burnin, true);
-							
-			analysis.report();
-			
-			System.out.println();
-			System.out.flush();
-			
-			return analysis;
-		} catch (java.io.IOException ioe) {
-			throw new XMLParseException(ioe.getMessage());
-		}
-	}
-	
-	//************************************************************************
-	// AbstractXMLObjectParser implementation
-	//************************************************************************
-	
-	public String getParserDescription() {
-		return "Analyses and reports on a trace consisting of trees.";
-	}
-	
-	public Class getReturnType() { return TreeTraceAnalysis.class; }
-				
-	public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-	private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-		new StringAttributeRule(FILE_NAME, "name of a tree log file", "trees.log"),
-		AttributeRule.newIntegerRule(BURN_IN, true)
-	};
+            int burnin = -1;
+            if (xo.hasAttribute(BURN_IN)) {
+                // leaving the burnin attribute off will result in 10% being used
+                burnin = xo.getIntegerAttribute(BURN_IN);
+            }
+
+            TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(new Reader[]{reader}, burnin, true);
+
+            boolean shortReport = false;
+            if (xo.hasAttribute(SHORT_REPORT)) {
+                shortReport = xo.getBooleanAttribute(SHORT_REPORT);
+            }
+
+            if (shortReport)
+                analysis.shortReport(fileName, null, true);
+            else
+                analysis.report();
+
+            System.out.println();
+            System.out.flush();
+
+            return analysis;
+        } catch (java.io.IOException ioe) {
+            throw new XMLParseException(ioe.getMessage());
+        }
+    }
+
+    //************************************************************************
+    // AbstractXMLObjectParser implementation
+    //************************************************************************
+
+    public String getParserDescription() {
+        return "Analyses and reports on a trace consisting of trees.";
+    }
+
+    public Class getReturnType() {
+        return TreeTraceAnalysis.class;
+    }
+
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
+
+    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            new StringAttributeRule(FILE_NAME, "name of a tree log file", "trees.log"),
+            AttributeRule.newIntegerRule(BURN_IN, true)
+    };
 }

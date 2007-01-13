@@ -175,6 +175,9 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
     private void calculateGroupSizesHeightsAndEnds() {
 
         setupIntervals();
+        groupSizes.clear();
+        groupHeights.clear();
+        groupEnds.clear();
 
         int groupSize = 1;
         int nextPopSizeIndex = 0;

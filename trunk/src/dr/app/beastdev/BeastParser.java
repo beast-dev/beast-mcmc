@@ -37,12 +37,12 @@ import java.util.Iterator;
  */
 public class BeastParser extends XMLParser {
 
-	public BeastParser(String[] args)  throws XMLParseException {
+	public BeastParser(String[] args) {
 		super();
 		setup(args);
 	}
 
-	public BeastParser(String[] args, boolean verbose) throws XMLParseException {
+	public BeastParser(String[] args, boolean verbose) {
 		super(verbose);
 		setup(args);
 
@@ -55,13 +55,13 @@ public class BeastParser extends XMLParser {
 		}
 	}
 
-	private final void setup(String[] args) throws XMLParseException {
+	private void setup(String[] args) {
 
 		for (int i = 0; i < args.length; i++) {
 			storeObject(Integer.toString(i), args[i]);
 		}
 
-			// add all the XMLObject parsers you need
+	    // add all the XMLObject parsers you need
 
 		addXMLObjectParser(new PropertyParser());
 		addXMLObjectParser(UserInput.STRING_PARSER);
@@ -101,6 +101,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.coalescent.CoalescentMRCALikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.SkylineLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.BayesianSkylineLikelihood.PARSER);
+        addXMLObjectParser(dr.evomodel.coalescent.VariableSkylineLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.ConstantPopulationModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.ExponentialGrowthModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.CataclysmicDemographicModel.PARSER);
@@ -114,7 +115,6 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.coalescent.TwoEpochDemographicModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.ExponentialSawtoothModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.EmpiricalPiecewiseModel.PARSER);
-
 
         // Structured coalescent
         addXMLObjectParser(dr.evomodel.coalescent.structure.StructuredCoalescentLikelihood.PARSER);
@@ -165,7 +165,6 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(dr.evomodel.branchratemodel.RandomLocalClockModel.PARSER);
 
-
         addXMLObjectParser(dr.evomodel.tree.TreeModel.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
@@ -190,6 +189,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.indel.IstvanOperator.PARSER);
 
 		addXMLObjectParser(dr.inference.model.CompoundParameter.PARSER);
+        addXMLObjectParser(dr.inference.model.ExponentiatedParameter.PARSER);
 		addXMLObjectParser(dr.inference.model.CompoundLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.model.BooleanLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.DummyLikelihood.PARSER);

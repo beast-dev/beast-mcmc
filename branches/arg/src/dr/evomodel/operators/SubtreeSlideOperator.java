@@ -372,6 +372,6 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
 //			new ElementRule(ARGModel.class)
         };
-	};
+    };
 
 }

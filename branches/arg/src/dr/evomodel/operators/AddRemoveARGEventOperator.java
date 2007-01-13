@@ -829,6 +829,6 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
                 new ElementRule(ARGModel.class)//,
 //			new ElementRule(Parameter.class)
         };
-	};
+    };
 
 }

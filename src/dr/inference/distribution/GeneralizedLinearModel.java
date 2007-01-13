@@ -2,8 +2,8 @@ package dr.inference.distribution;
 
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.*;
+import dr.math.MultivariateFunction;
 import dr.xml.*;
-import numericalMethods.calculus.function.RealFunctionOfSeveralVariablesWithGradient;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -14,7 +14,8 @@ import org.w3c.dom.Element;
  * Time: 11:01:02 AM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class GeneralizedLinearModel extends AbstractModel implements Likelihood, RealFunctionOfSeveralVariablesWithGradient {
+public abstract class GeneralizedLinearModel extends AbstractModel implements Likelihood, MultivariateFunction {
+//		, RealFunctionOfSeveralVariablesWithGradient {
 
 	public static final String GLM_LIKELIHOOD = "glmLikelihood";
 
@@ -40,7 +41,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 		addParameter(dependentParam);
 	}
 
-	protected abstract double calculateLogLikelihoodAndGradient(double[] beta, double[] gradient);
+//	protected abstract double calculateLogLikelihoodAndGradient(double[] beta, double[] gradient);
 
 	protected abstract double calculateLogLikelihood(double[] beta);
 
@@ -55,7 +56,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 		addParameter(scaleParameter);
 	}
 
-	// **************************************************************
+/*	// **************************************************************
 	// RealFunctionOfSeveralVariablesWithGradient IMPLEMENTATION
 	// **************************************************************
 
@@ -72,11 +73,28 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 
 	public int getNumberOfVariables() {
 		return independentParam.getDimension();
+	}*/
+
+	// ************
+	//       Mutlivariate implementation
+	// ************
+
+
+	public double evaluate(double[] beta) {
+		return calculateLogLikelihood(beta);
 	}
 
-	//
-	//
-	//
+	public int getNumArguments() {
+		return independentParam.getDimension();
+	}
+
+	public double getLowerBound(int n) {
+		return independentParam.getBounds().getLowerLimit(n);
+	}
+
+	public double getUpperBound(int n) {
+		return independentParam.getBounds().getUpperLimit(n);
+	}
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
 

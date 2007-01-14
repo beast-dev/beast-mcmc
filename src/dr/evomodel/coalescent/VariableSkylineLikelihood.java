@@ -50,6 +50,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
     public static final String SKYLINE_LIKELIHOOD = "variableSkyLineLikelihood";
     public static final String POPULATION_SIZES = "populationSizes";
     public static final String INDICATOR_PARAMETER = "indicators";
+    public static final String LOG_SPACE = "logUnits";
 
     public static final String TYPE = "type";
     public static final String STEPWISE = "stepwise";
@@ -60,7 +61,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
     public static final int LINEAR_TYPE = 1;
     public static final int EXPONENTIAL_TYPE = 2;
 
-    public VariableSkylineLikelihood(Tree tree, Parameter popSizeParameter, Parameter indicatorParameter, int type) {
+    public VariableSkylineLikelihood(Tree tree, Parameter popSizeParameter, Parameter indicatorParameter, int type, boolean logSpace) {
         super(SKYLINE_LIKELIHOOD);
 
         this.popSizeParameter = popSizeParameter;
@@ -69,6 +70,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
         int paramDim1 = popSizeParameter.getDimension();
         int paramDim2 = indicatorParameter.getDimension();
         this.type = type;
+        this.logSpace = logSpace;
 
         if (paramDim1 != events) {
             throw new IllegalArgumentException("Dimension of population parameter must be the same as the number of internal nodes in the tree.");
@@ -201,6 +203,12 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
         groupSizes.add(groupSize);
         groupHeights.add(popSizeParameter.getParameterValue(nextPopSizeIndex));
         groupEnds.add(height);
+
+        if (logSpace) {
+            for (int i = 0; i < groupHeights.size(); i++) {
+                groupHeights.set(i, Math.exp(groupHeights.get(i)));
+            }
+        }
     }
 
     // ****************************************************************
@@ -251,9 +259,11 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
                     throw new XMLParseException("Unknown Bayesian Skyline type: " + xo.getStringAttribute(VariableSkylineLikelihood.TYPE));
             }
 
+            boolean logSpace = xo.getBooleanAttribute(LOG_SPACE);
+
             Logger.getLogger("dr.evomodel").info("Variable skyline plot: " + typeName + " control points");
 
-            return new VariableSkylineLikelihood(treeModel, param, param2, type);
+            return new VariableSkylineLikelihood(treeModel, param, param2, type, logSpace);
         }
 
         //************************************************************************
@@ -283,6 +293,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
                 new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
                         new ElementRule(TreeModel.class)
                 }),
+                AttributeRule.newBooleanRule(LOG_SPACE)
         };
     };
 
@@ -298,5 +309,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
     List<Double> groupEnds = new ArrayList<Double>();
 
     private final int type;
+
+    private boolean logSpace = false;
 
 }

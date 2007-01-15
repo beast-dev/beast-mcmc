@@ -37,12 +37,12 @@ import java.util.Iterator;
  */
 public class BeastParser extends XMLParser {
 
-	public BeastParser(String[] args)  throws XMLParseException {
+	public BeastParser(String[] args)  {
 		super();
 		setup(args);
 	}
 
-	public BeastParser(String[] args, boolean verbose) throws XMLParseException {
+	public BeastParser(String[] args, boolean verbose) {
 		super(verbose);
 		setup(args);
 
@@ -55,7 +55,7 @@ public class BeastParser extends XMLParser {
 		}
 	}
 
-	private final void setup(String[] args) throws XMLParseException {
+	private void setup(String[] args) {
 
 		for (int i = 0; i < args.length; i++) {
 			storeObject(Integer.toString(i), args[i]);
@@ -176,6 +176,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.model.JeffreysPriorLikelihood.PARSER);
 
 		addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.PARSER);
+        addXMLObjectParser(dr.inference.distribution.MixedDistributionLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.distribution.EmpiricalDistributionLikelihood.PARSER);
         addXMLObjectParser(dr.inference.distribution.UniformDistributionModel.PARSER);
 		addXMLObjectParser(dr.inference.distribution.ExponentialDistributionModel.PARSER);

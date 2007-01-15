@@ -189,13 +189,13 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.indel.IstvanOperator.PARSER);
 
 		addXMLObjectParser(dr.inference.model.CompoundParameter.PARSER);
-        addXMLObjectParser(dr.inference.model.ExponentiatedParameter.PARSER);
 		addXMLObjectParser(dr.inference.model.CompoundLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.model.BooleanLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.DummyLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.model.JeffreysPriorLikelihood.PARSER);
 
-		addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.PARSER);
+        addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.PARSER);
+		addXMLObjectParser(dr.inference.distribution.MixedDistributionLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.distribution.EmpiricalDistributionLikelihood.PARSER);
         addXMLObjectParser(dr.inference.distribution.UniformDistributionModel.PARSER);
 		addXMLObjectParser(dr.inference.distribution.ExponentialDistributionModel.PARSER);

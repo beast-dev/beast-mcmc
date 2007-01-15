@@ -29,6 +29,12 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
         this.distributions = distributions;
         this.data = data;
         this.indicators = indicators;
+
+        if (indicators.getDimension() == data.getDimension()-1) {
+            impliedOne = true;
+        } else if (indicators.getDimension() != data.getDimension()) {
+            throw new IllegalArgumentException();
+        }
     }
 
     // **************************************************************
@@ -45,7 +51,16 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
 
         for (int j = 0; j < data.getDimension(); j++) {
 
-            int index = (int)indicators.getStatisticValue(j);
+            int index;
+            if (impliedOne) {
+                if (j == 0) {
+                    index = 1;
+                } else {
+                    index = (int)indicators.getStatisticValue(j-1);
+                }
+            } else {
+                index = (int)indicators.getStatisticValue(j);
+            }
 
             logL += distributions[index].logPdf(data.getStatisticValue(j));
         }
@@ -83,8 +98,8 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
             XMLObject cxo1 = (XMLObject)xo.getChild(DISTRIBUTION1);
             ParametricDistributionModel model1 = (ParametricDistributionModel)cxo1.getChild(ParametricDistributionModel.class);
 
-            Statistic data = (Statistic)xo.getChild(DATA);
-            Statistic indicators = (Statistic)xo.getChild(INDICATORS);
+            Statistic data = (Statistic)((XMLObject)xo.getChild(DATA)).getChild(Statistic.class);
+            Statistic indicators = (Statistic)((XMLObject)xo.getChild(INDICATORS)).getChild(Statistic.class);
 
             ParametricDistributionModel[] models = new ParametricDistributionModel[] {model0, model1};
 
@@ -116,5 +131,6 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
     private ParametricDistributionModel[] distributions;
     private Statistic data;
     private Statistic indicators;
+    private boolean impliedOne = false;
 
 }

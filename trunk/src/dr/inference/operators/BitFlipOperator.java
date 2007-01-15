@@ -34,7 +34,7 @@ import dr.xml.*;
  *
  * @author Alexei Drummond
  *
- * @version $Id: DeltaExchangeOperator.java,v 1.18 2005/06/14 10:40:34 rambaut Exp $
+ * @version $Id$
  */
 public class BitFlipOperator extends SimpleMCMCOperator {
 	
@@ -52,12 +52,12 @@ public class BitFlipOperator extends SimpleMCMCOperator {
 	 * performs a delta exchange operation between two scalars in the vector
 	 * and return the hastings ratio.
 	 */
-	public final double doOperation() throws OperatorFailedException {
+	public final double doOperation() {
 
 
         int n = parameter.getDimension();
         double sum = 0.0;
-        double logq = 0.0;
+        double logq;
 
         for (int i = 0; i < n; i++) {
             sum += parameter.getParameterValue(i);

@@ -50,266 +50,271 @@ import java.io.PrintWriter;
  */
 public class TreeLogger extends MCLogger {
 
-    public static final String LOG_TREE = "logTree";
-    public static final String NEXUS_FORMAT = "nexusFormat";
-    public static final String USING_RATES = "usingRates";
-    public static final String BRANCH_LENGTHS = "branchLengths";
-    public static final String TIME = "time";
-    public static final String SUBSTITUTIONS = "substitutions";
+	public static final String LOG_TREE = "logTree";
+	public static final String NEXUS_FORMAT = "nexusFormat";
+	public static final String USING_RATES = "usingRates";
+	public static final String BRANCH_LENGTHS = "branchLengths";
+	public static final String TIME = "time";
+	public static final String SUBSTITUTIONS = "substitutions";
 
-    private Tree tree;
-    private BranchRateModel branchRateModel = null;
-    private String rateLabel;
+	private Tree tree;
+	private BranchRateModel branchRateModel = null;
+	private String rateLabel;
 
-    private ColourSamplerModel colourSamplerModel = null;
-    private String colouringLabel;
+	private ColourSamplerModel colourSamplerModel = null;
+	private String colouringLabel;
 
-    private Likelihood likelihood = null;
-    private String likelihoodLabel;
+	private Likelihood likelihood = null;
+	private String likelihoodLabel;
 
-    private boolean nexusFormat = false;
-    public boolean usingRates = false;
-    public boolean substitutions = false;
+	private boolean nexusFormat = false;
+	public boolean usingRates = false;
+	public boolean substitutions = false;
 
-    /**
-     * Constructor
-     */
-    public TreeLogger(Tree tree, BranchRateModel branchRateModel, String rateLabel,
-                      ColourSamplerModel colourSamplerModel, String colouringLabel,
-                      Likelihood likelihood, String likelihoodLabel,
-                      LogFormatter formatter, int logEvery, boolean nexusFormat, boolean substitutions) {
+	/**
+	 * Constructor
+	 */
+	public TreeLogger(Tree tree, BranchRateModel branchRateModel, String rateLabel,
+	                  ColourSamplerModel colourSamplerModel, String colouringLabel,
+	                  Likelihood likelihood, String likelihoodLabel,
+	                  LogFormatter formatter, int logEvery, boolean nexusFormat, boolean substitutions) {
 
-        super(formatter, logEvery);
+		super(formatter, logEvery);
 
-        this.nexusFormat = nexusFormat;
-        this.branchRateModel = branchRateModel;
-        this.rateLabel = rateLabel;
+		this.nexusFormat = nexusFormat;
+		this.branchRateModel = branchRateModel;
+		this.rateLabel = rateLabel;
 
-        this.colourSamplerModel = colourSamplerModel;
-        this.colouringLabel = colouringLabel;
+		this.colourSamplerModel = colourSamplerModel;
+		this.colouringLabel = colouringLabel;
 
-        this.likelihood = likelihood;
-        this.likelihoodLabel = likelihoodLabel;
+		this.likelihood = likelihood;
+		this.likelihoodLabel = likelihoodLabel;
 
-        if (branchRateModel != null) {
-            this.substitutions = substitutions;
-        }
-        this.tree = tree;
-    }
+		if (branchRateModel != null) {
+			this.substitutions = substitutions;
+		}
+		this.tree = tree;
+	}
 
-    public void startLogging() {
+	public void startLogging() {
 
-        if (nexusFormat) {
-            int taxonCount = tree.getTaxonCount();
-            logLine("#NEXUS");
-            logLine("");
-            logLine("Begin taxa;");
-            logLine("\tDimensions ntax=" + taxonCount + ";");
-            logLine("\tTaxlabels");
-            for (int i = 0; i < taxonCount; i++) {
-                logLine("\t\t" + tree.getTaxon(i).getId());
-            }
-            logLine("\t\t;");
-            logLine("End;");
-            logLine("");
-            logLine("Begin trees;");
+		if (nexusFormat) {
+			int taxonCount = tree.getTaxonCount();
+			logLine("#NEXUS");
+			logLine("");
+			logLine("Begin taxa;");
+			logLine("\tDimensions ntax=" + taxonCount + ";");
+			logLine("\tTaxlabels");
+			for (int i = 0; i < taxonCount; i++) {
+				logLine("\t\t" + tree.getTaxon(i).getId());
+			}
+			logLine("\t\t;");
+			logLine("End;");
+			logLine("");
+			logLine("Begin trees;");
 
-            // This is needed if the trees use numerical taxon labels
-            logLine("\tTranslate");
-            for (int i = 0; i < taxonCount; i++) {
-                int k = i + 1;
-                if (k < taxonCount) {
-                    logLine("\t\t" + k + " " + tree.getTaxonId(i) + ",");
-                } else {
-                    logLine("\t\t" + k + " " + tree.getTaxonId(i));
-                }
-            }
-            logLine("\t\t;");
-        }
-    }
-
-    public void log(int state) {
-
-        if (logEvery <= 0 || ((state % logEvery) == 0)) {
-            StringBuffer buffer = new StringBuffer("tree STATE_");
-            buffer.append(state);
-            if (likelihood != null) {
-                buffer.append(" [&");
-                buffer.append(likelihoodLabel);
-                buffer.append("=");
-                buffer.append(likelihood.getLogLikelihood());
-                buffer.append("]");
-            }
-
-            buffer.append(additionalInfo());
-
-            buffer.append(" = [&R] ");
-
-            TreeColouring colouring = null;
-            if (colourSamplerModel != null) {
-                colouring = colourSamplerModel.getTreeColouring();
-            }
-
-            Tree printTree = getPrintTree();
-
-            if (substitutions) {
-                Tree.Utils.newick(printTree, printTree.getRoot(), false, Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
-                        branchRateModel, null, null, null, buffer);
-            } else {
-                Tree.Utils.newick(printTree, printTree.getRoot(), false, Tree.Utils.LENGTHS_AS_TIME,
-                        branchRateModel, rateLabel, colouring, colouringLabel, buffer);
-            }
+			if (!useTaxonLabels()) {
+				// This is needed if the trees use numerical taxon labels
+				logLine("\tTranslate");
+				for (int i = 0; i < taxonCount; i++) {
+					int k = i + 1;
+					if (k < taxonCount) {
+						logLine("\t\t" + k + " " + tree.getTaxonId(i) + ",");
+					} else {
+						logLine("\t\t" + k + " " + tree.getTaxonId(i));
+					}
+				}
 
 
-            System.err.println(" out = " + Tree.Utils.newick(printTree));
-            System.err.println(buffer.toString());
+				logLine("\t\t;");
+			}
+		}
+	}
 
-            buffer.append(";");
-            logLine(buffer.toString());
-        }
-    }
+	public void log(int state) {
 
-    protected String additionalInfo() {
-        return "";
-    }
+		if (logEvery <= 0 || ((state % logEvery) == 0)) {
+			StringBuffer buffer = new StringBuffer("tree STATE_");
+			buffer.append(state);
+			if (likelihood != null) {
+				buffer.append(" [&");
+				buffer.append(likelihoodLabel);
+				buffer.append("=");
+				buffer.append(likelihood.getLogLikelihood());
+				buffer.append("]");
+			}
 
-    protected Tree getPrintTree() {
-        return tree;
-    }
+			buffer.append(additionalInfo());
 
-    protected Tree getTree() {
-        return tree;
-    }
+			buffer.append(" = [&R] ");
 
-    public void stopLogging() {
+			TreeColouring colouring = null;
+			if (colourSamplerModel != null) {
+				colouring = colourSamplerModel.getTreeColouring();
+			}
 
-        logLine("End;");
-        super.stopLogging();
-    }
+			Tree printTree = getPrintTree();
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+			if (substitutions) {
+				Tree.Utils.newick(printTree, printTree.getRoot(), useTaxonLabels(), Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
+						branchRateModel, null, null, null, buffer);
+			} else {
+				Tree.Utils.newick(printTree, printTree.getRoot(), useTaxonLabels(), Tree.Utils.LENGTHS_AS_TIME,
+						branchRateModel, rateLabel, colouring, colouringLabel, buffer);
+			}
 
-        public String getParserName() {
-            return LOG_TREE;
-        }
+			buffer.append(";");
+			logLine(buffer.toString());
+		}
+	}
 
-        /**
-         * @return an object based on the XML element it was passed.
-         */
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+	protected String additionalInfo() {
+		return "";
+	}
 
-            Tree tree = (Tree) xo.getChild(Tree.class);
+	protected Tree getPrintTree() {
+		return tree;
+	}
 
-            String fileName = null;
-            String title = null;
-            boolean nexusFormat = false;
+	protected Tree getTree() {
+		return tree;
+	}
 
-            String colouringLabel = "demes";
-            String rateLabel = "rate";
-            String likelihoodLabel = "lnP";
 
-            if (xo.hasAttribute(TITLE)) {
-                title = xo.getStringAttribute(TITLE);
-            }
+	protected boolean useTaxonLabels() {
+		return false;
+	}
 
-            if (xo.hasAttribute(FILE_NAME)) {
-                fileName = xo.getStringAttribute(FILE_NAME);
-            }
+	public void stopLogging() {
 
-            if (xo.hasAttribute(NEXUS_FORMAT)) {
-                nexusFormat = xo.getBooleanAttribute(NEXUS_FORMAT);
-            }
+		logLine("End;");
+		super.stopLogging();
+	}
 
-            boolean substitutions = false;
-            if (xo.hasAttribute(BRANCH_LENGTHS)) {
-                substitutions = xo.getStringAttribute(BRANCH_LENGTHS).equals(SUBSTITUTIONS);
-            }
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-            BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+		public String getParserName() {
+			return LOG_TREE;
+		}
 
-            ColourSamplerModel colourSamplerModel = (ColourSamplerModel) xo.getChild(ColourSamplerModel.class);
+		/**
+		 * @return an object based on the XML element it was passed.
+		 */
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
+			Tree tree = (Tree) xo.getChild(Tree.class);
 
-            // logEvery of zero only displays at the end
-            int logEvery = 1;
+			String fileName = null;
+			String title = null;
+			boolean nexusFormat = false;
 
-            if (xo.hasAttribute(LOG_EVERY)) {
-                logEvery = xo.getIntegerAttribute(LOG_EVERY);
-            }
+			String colouringLabel = "demes";
+			String rateLabel = "rate";
+			String likelihoodLabel = "lnP";
 
-            PrintWriter pw = null;
+			if (xo.hasAttribute(TITLE)) {
+				title = xo.getStringAttribute(TITLE);
+			}
 
-            if (fileName != null) {
+			if (xo.hasAttribute(FILE_NAME)) {
+				fileName = xo.getStringAttribute(FILE_NAME);
+			}
 
-                try {
-                    File file = new File(fileName);
-                    String name = file.getName();
-                    String parent = file.getParent();
+			if (xo.hasAttribute(NEXUS_FORMAT)) {
+				nexusFormat = xo.getBooleanAttribute(NEXUS_FORMAT);
+			}
 
-                    if (!file.isAbsolute()) {
-                        parent = System.getProperty("user.dir");
-                    }
+			boolean substitutions = false;
+			if (xo.hasAttribute(BRANCH_LENGTHS)) {
+				substitutions = xo.getStringAttribute(BRANCH_LENGTHS).equals(SUBSTITUTIONS);
+			}
+
+			BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+
+			ColourSamplerModel colourSamplerModel = (ColourSamplerModel) xo.getChild(ColourSamplerModel.class);
+
+			Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
+
+			// logEvery of zero only displays at the end
+			int logEvery = 1;
+
+			if (xo.hasAttribute(LOG_EVERY)) {
+				logEvery = xo.getIntegerAttribute(LOG_EVERY);
+			}
+
+			PrintWriter pw = null;
+
+			if (fileName != null) {
+
+				try {
+					File file = new File(fileName);
+					String name = file.getName();
+					String parent = file.getParent();
+
+					if (!file.isAbsolute()) {
+						parent = System.getProperty("user.dir");
+					}
 
 //					System.out.println("Writing log file to "+parent+System.getProperty("path.separator")+name);
-                    pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
-                } catch (FileNotFoundException fnfe) {
-                    throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
-                }
-            } else {
-                pw = new PrintWriter(System.out);
-            }
+					pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
+				} catch (FileNotFoundException fnfe) {
+					throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+				}
+			} else {
+				pw = new PrintWriter(System.out);
+			}
 
-            LogFormatter formatter = new TabDelimitedFormatter(pw);
+			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-            TreeLogger logger = new TreeLogger(tree, branchRateModel, rateLabel,
-                    colourSamplerModel, colouringLabel, likelihood, likelihoodLabel,
-                    formatter, logEvery, nexusFormat, substitutions);
+			TreeLogger logger = new TreeLogger(tree, branchRateModel, rateLabel,
+					colourSamplerModel, colouringLabel, likelihood, likelihoodLabel,
+					formatter, logEvery, nexusFormat, substitutions);
 
-            if (title != null) {
-                logger.setTitle(title);
-            }
+			if (title != null) {
+				logger.setTitle(title);
+			}
 
-            return logger;
-        }
+			return logger;
+		}
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newIntegerRule(LOG_EVERY),
-                new StringAttributeRule(FILE_NAME,
-                        "The name of the file to send log output to. " +
-                                "If no file name is specified then log is sent to standard output", true),
-                new StringAttributeRule(TITLE, "The title of the log", true),
-                AttributeRule.newBooleanRule(NEXUS_FORMAT, true,
-                        "Whether to use the NEXUS format for the tree log"),
-                new StringAttributeRule(BRANCH_LENGTHS, "What units should the branch lengths be in", new String[]{TIME, SUBSTITUTIONS}, true),
-                new ElementRule(Tree.class, "The tree which is to be logged"),
-                new ElementRule(BranchRateModel.class, true),
-                new ElementRule(ColourSamplerModel.class, true),
-                new ElementRule(Likelihood.class, true)
-        };
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				AttributeRule.newIntegerRule(LOG_EVERY),
+				new StringAttributeRule(FILE_NAME,
+						"The name of the file to send log output to. " +
+								"If no file name is specified then log is sent to standard output", true),
+				new StringAttributeRule(TITLE, "The title of the log", true),
+				AttributeRule.newBooleanRule(NEXUS_FORMAT, true,
+						"Whether to use the NEXUS format for the tree log"),
+				new StringAttributeRule(BRANCH_LENGTHS, "What units should the branch lengths be in", new String[]{TIME, SUBSTITUTIONS}, true),
+				new ElementRule(Tree.class, "The tree which is to be logged"),
+				new ElementRule(BranchRateModel.class, true),
+				new ElementRule(ColourSamplerModel.class, true),
+				new ElementRule(Likelihood.class, true)
+		};
 
-        public String getParserDescription() {
-            return "Logs a tree to a file";
-        }
+		public String getParserDescription() {
+			return "Logs a tree to a file";
+		}
 
-        public String getExample() {
-            return
-                    "<!-- The " + getParserName() + " element takes a treeModel to be logged -->\n" +
-                            "<" + getParserName() + " " + LOG_EVERY + "=\"100\" " + FILE_NAME + "=\"log.trees\" " + NEXUS_FORMAT + "=\"true\">\n" +
-                            "	<treeModel idref=\"treeModel1\"/>\n" +
-                            "</" + getParserName() + ">\n";
-        }
+		public String getExample() {
+			return
+					"<!-- The " + getParserName() + " element takes a treeModel to be logged -->\n" +
+							"<" + getParserName() + " " + LOG_EVERY + "=\"100\" " + FILE_NAME + "=\"log.trees\" " + NEXUS_FORMAT + "=\"true\">\n" +
+							"	<treeModel idref=\"treeModel1\"/>\n" +
+							"</" + getParserName() + ">\n";
+		}
 
-        public Class getReturnType() {
-            return MLLogger.class;
-        }
-    };
+		public Class getReturnType() {
+			return MLLogger.class;
+		}
+	};
 
 }

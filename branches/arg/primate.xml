@@ -6,219 +6,219 @@
 <!--       http://evolve.zoo.ox.ac.uk/beast/                                 -->
 <beast>
 
-    <!-- The list of taxa analyse (can also include dates/ages).                 -->
-    <!-- ntax=4                                                                  -->
-    <taxa id="taxa">
-        <taxon id="human"/>
-        <taxon id="orang"/>
-        <taxon id="s-mon"/>
-        <taxon id="lemur"/>
-    </taxa>
+	<!-- The list of taxa analyse (can also include dates/ages).                 -->
+	<!-- ntax=4                                                                  -->
+	<taxa id="taxa">
+		<taxon id="human"/>
+		<taxon id="orang"/>
+		<taxon id="s-mon"/>
+		<taxon id="lemur"/>
+	</taxa>
 
-    <!-- The sequence alignment (each sequence refers to a taxon above).         -->
-    <!-- ntax=4 nchar=888                                                        -->
-    <alignment id="alignment" dataType="nucleotide">
-        <sequence>
-            <taxon idref="human"/>
-            ATAGGGACAAGCGCATTTCTTCGATATGCACACAAACTCGCCACCCCAGTTTCCGACGACGTCCAAACCGGCTGCGAATTTTAAACCCAGCAACGAGCTTCTATAAACTGTCACCAAAAACTTACGAACATACCTCACCCTCACGAAAGTTTTAACAAAAACACATCACCACAACGACAAAATTCCTGATAGGTATAAACTCAAATATCGCGGAATATCTGAACAACCTCATGTCGCTTTTTCAGTCCCTTTGTCACAAAGCAGGTTTTCAGTACTTCTTCTGGTTCGTCATCTCCCTATTGATCTTTCCTCGCATCTTTCGTATTTCCTACTATTCCCAGGCTCAATAATACCTCGAACTTTTATCCTTTTCTACATTCGTCCTTACCTCCTCTCCTTCCTTCCTTACAAAACACAATACTTCCCTTTGTTCCCTTTGTAAATTTCAGAGTCTACTATCTGTACCAAACTAACATCTAACAACTACCTCCAACTCTAAAAAAGCACTCTTACCAAACCCATCACAACTCTATCAACCTAACCAAACTATCAACATGCCCTCTCCTAATTAAAAACATTGCCACACTAAACCTACACACCTCATCACCATTAACGCAAACTCCTCAGTCATATCTACTACACACCCTAACAATTTATCCCTCCCATAATCCAAAAACTCCATAAACACAAATTCGTAAATATAGTTTAAAAAAACACTAGATTGTGAATCCAGAAATAGAAGCTCAACCTTCTTATTTACCGAGAAAGTATGTATGAACTGCTAACTCTGCACCCGTATATAAAAATACGGCTATCTCACTTTTAAAGGATAGAAGTAATCCATTGGCCTTAGGAGCCAAAAAATTGGTGCAACTCCAAATAAAAGTA
-        </sequence>
-        <sequence>
-            <taxon idref="orang"/>
-            ATAGGAACAAGCGCATTCCTTCGATATGCACACAAACTCGCCACCCCAGCTTCCGACAACGCCCAAACCGGCTGCAGATTTTAAAACCAGCAACAAACTTCTATAAACCGACACCAAAAACTTACGAACACACCTCACCTTCACAAAGGTGTTAATAAAAGCATATCACCAAGACAACAAAACTCCTGAAGAGTGTAAACACAAATATCGCGAAGAATTTAAACACCCTCATGTCGCCCTTTCAGTCCCTTTGTCACAAAGCAGGTTTTCAGTACTTCTTCTGGTTCGTCATCTCCCTATTGATCTTTCTTCGCATCTTTCGTATTTCCTACTATTCCCAGGCCCAATAATACCTCGAACTTTTATCCTTTTCTACGTTCGTCACTTCCTCCTCTCCTTCCTCCCTTACAAAACACAATACCTCCCTCTGTTCCCTTTGTGAACTTCAGGGCCCACTATCTGTACCCCACCCGTCTACACCAGCCAACACCAACCCCCACCTACTATACCAACCAATAACCTCTCAACCCCTAAACCAAACACTATCCCCAAAACCAACACACTCTACCAAAATACACCCCCAATTCACATCCGCACACCCCCACCCCCCCTGCCCAGTCCATCCCATCACCCTCTCCTCCCAACACCCTAAGCCACCTTCCTCAAAATCCAAAACCCACACAACCGAAACAACGTAAATATAGTTTAACAAAACATTAGATTGTGAATCTAATAATAGGGCCCCACACCCCTTATTTACCGAGAAAGCTCACAAGAACTGCTAACTCTCACTCCATGTGTGACAACATGGCTTTCTCGCTTTTAAAGGATAACAGCTATCCCTTGGTCTTAGGATCCAAAAATTTGGTGCAACTCCAAATAAAAGTA
-        </sequence>
-        <sequence>
-            <taxon idref="s-mon"/>
-            ATAGGAACAAGCGTATTACTTCGATATGCACACAAATACGCCACTCCAGCTTCCGACGACGCCCGAACGGGTCAAGTTTTTTATAAATAGCAACAAGCTTCCATGTACCGCCATAAAAAACATACGAACATACAACACCCATACAGAAGCTCTAACTTAACAACAACCGCACGACAACAAAACTCTTGACGAATGCAAAATTAATTACAGCGTAATATCTAAACAAACTCATGTCGCTTTTTCAGTCCCTTTGTCACAAAGTAGGCTCTCGGTACTTCTTGTGGTTCATCATCTCCCTATTGATTCTTCCTCGCATCTTTCGTATTTCCTACTATACCCAGGCTCAGCGATACTTCGAACTTTTATCCTTTTCTGCATTTGCCCTTATCTCTTCTTGTTCCTTCCTTACAAGCTACAATATCTTACTTCGCTCTTTTTTCGAACTTCAGAGTCTACTATCTGTACCCCAGCAACTCGTTGTGACCAACATCAATCCAAAATTAGCAAACGTACCAACAATCTCCCAAATTTAAAAACACATCCTACCTTTACAATTAATAACCATTGTCTAGATATACCCCTAAAATAAATGAATATAAACCCTCGCCGATAACATAACCCCTAAAATCAAGACATCCTCTCACAACGCCAAACCCCCCTCTCATAACTCTACAAAATACACAATCACCAACACGTAATTATAGTTTAGCAAAACATTAGATTGTGAATCTAATAATAGAAGAATATACTTCTTAATTACCGAGAAAGTGCGCAAGAACTGCTAATTCATGCTCCAAGACTAACAACTTGGCTTCCTCACTTTTAAAGGATAGTAGTTATCCATTGGTCTTAGGAGCCAAAAAATTGGTGCAACTCCAAATAAAAGTA
-        </sequence>
-        <sequence>
-            <taxon idref="lemur"/>
-            ATAGGAACAAGCGCATTATTTCGATATGCACACAACCGCGACAACCCAGATTCCGACAACGCCCTAATAGGCTGAAGTTTTTAAAAATAGTAACAAGCTTCTATAAACCGACATCTCACACTTACGAACATACACCCCCTATACAAACGCATTACTTTTACGACAACATCAAAAGAAATAATCTGCTGATTAGTGTAAACACAATTATTGCGAAATATCTAAACACACTAATGTTGCCTTTTCAGTCCCTTTGTCACAAAGTAGGCTTTCGGTACTTCTTCCGGTTCGTCATCTCCCTATTGATTTCTCCTCGCATCTTTTGTATTTCCTACTATTCCCAGGATCAACAATACCTCGAACTTCTATTCTTTTCTACATTTGCCATTTCCTCTTCTTTTCTCTTTATCATAAAACACCATACCTCGCTTCGTTCCTTTTCCGAACTTCAGAGCCCACCATCTGTACCCCACTCACCCATACAAACCAACACCACTCTCCACCTAATATACAAATTAATAACCTCCCACCTTCAGAACTGAACGCCAATCTCATAACCAACACACCCCATCAAAGCACCCCTCCAACACAAACCCGCACACCTCCACCCCCCTCGTCTAGCTTACCACGTCATCCCTCCCTCTCAACACCTTAACTCACCTTCTCCCAAACGCACAATTCGCACACACAACGCCACGTAAATATAGTTTAACAAAACATCAGATTGTGAATCTGACAACAGAGGCTTACGCCCCTTATTTACCGAGAAAGCTCACAAGAACTGCTAACTCATGCCCCATGTCTGACAACATGGCTTTCTCACTTTTAAAGGATAACAGCTATCCATTGGTCTTAGGCCCCAAAAATTTGGTGCAACTCCAAATAAAAGTA
-        </sequence>
-    </alignment>
+	<!-- The sequence alignment (each sequence refers to a taxon above).         -->
+	<!-- ntax=4 nchar=888                                                        -->
+	<alignment id="alignment" dataType="nucleotide">
+		<sequence>
+			<taxon idref="human"/>
+			ATAGGGACAAGCGCATTTCTTCGATATGCACACAAACTCGCCACCCCAGTTTCCGACGACGTCCAAACCGGCTGCGAATTTTAAACCCAGCAACGAGCTTCTATAAACTGTCACCAAAAACTTACGAACATACCTCACCCTCACGAAAGTTTTAACAAAAACACATCACCACAACGACAAAATTCCTGATAGGTATAAACTCAAATATCGCGGAATATCTGAACAACCTCATGTCGCTTTTTCAGTCCCTTTGTCACAAAGCAGGTTTTCAGTACTTCTTCTGGTTCGTCATCTCCCTATTGATCTTTCCTCGCATCTTTCGTATTTCCTACTATTCCCAGGCTCAATAATACCTCGAACTTTTATCCTTTTCTACATTCGTCCTTACCTCCTCTCCTTCCTTCCTTACAAAACACAATACTTCCCTTTGTTCCCTTTGTAAATTTCAGAGTCTACTATCTGTACCAAACTAACATCTAACAACTACCTCCAACTCTAAAAAAGCACTCTTACCAAACCCATCACAACTCTATCAACCTAACCAAACTATCAACATGCCCTCTCCTAATTAAAAACATTGCCACACTAAACCTACACACCTCATCACCATTAACGCAAACTCCTCAGTCATATCTACTACACACCCTAACAATTTATCCCTCCCATAATCCAAAAACTCCATAAACACAAATTCGTAAATATAGTTTAAAAAAACACTAGATTGTGAATCCAGAAATAGAAGCTCAACCTTCTTATTTACCGAGAAAGTATGTATGAACTGCTAACTCTGCACCCGTATATAAAAATACGGCTATCTCACTTTTAAAGGATAGAAGTAATCCATTGGCCTTAGGAGCCAAAAAATTGGTGCAACTCCAAATAAAAGTA
+		</sequence>
+		<sequence>
+			<taxon idref="orang"/>
+			ATAGGAACAAGCGCATTCCTTCGATATGCACACAAACTCGCCACCCCAGCTTCCGACAACGCCCAAACCGGCTGCAGATTTTAAAACCAGCAACAAACTTCTATAAACCGACACCAAAAACTTACGAACACACCTCACCTTCACAAAGGTGTTAATAAAAGCATATCACCAAGACAACAAAACTCCTGAAGAGTGTAAACACAAATATCGCGAAGAATTTAAACACCCTCATGTCGCCCTTTCAGTCCCTTTGTCACAAAGCAGGTTTTCAGTACTTCTTCTGGTTCGTCATCTCCCTATTGATCTTTCTTCGCATCTTTCGTATTTCCTACTATTCCCAGGCCCAATAATACCTCGAACTTTTATCCTTTTCTACGTTCGTCACTTCCTCCTCTCCTTCCTCCCTTACAAAACACAATACCTCCCTCTGTTCCCTTTGTGAACTTCAGGGCCCACTATCTGTACCCCACCCGTCTACACCAGCCAACACCAACCCCCACCTACTATACCAACCAATAACCTCTCAACCCCTAAACCAAACACTATCCCCAAAACCAACACACTCTACCAAAATACACCCCCAATTCACATCCGCACACCCCCACCCCCCCTGCCCAGTCCATCCCATCACCCTCTCCTCCCAACACCCTAAGCCACCTTCCTCAAAATCCAAAACCCACACAACCGAAACAACGTAAATATAGTTTAACAAAACATTAGATTGTGAATCTAATAATAGGGCCCCACACCCCTTATTTACCGAGAAAGCTCACAAGAACTGCTAACTCTCACTCCATGTGTGACAACATGGCTTTCTCGCTTTTAAAGGATAACAGCTATCCCTTGGTCTTAGGATCCAAAAATTTGGTGCAACTCCAAATAAAAGTA
+		</sequence>
+		<sequence>
+			<taxon idref="s-mon"/>
+			ATAGGAACAAGCGTATTACTTCGATATGCACACAAATACGCCACTCCAGCTTCCGACGACGCCCGAACGGGTCAAGTTTTTTATAAATAGCAACAAGCTTCCATGTACCGCCATAAAAAACATACGAACATACAACACCCATACAGAAGCTCTAACTTAACAACAACCGCACGACAACAAAACTCTTGACGAATGCAAAATTAATTACAGCGTAATATCTAAACAAACTCATGTCGCTTTTTCAGTCCCTTTGTCACAAAGTAGGCTCTCGGTACTTCTTGTGGTTCATCATCTCCCTATTGATTCTTCCTCGCATCTTTCGTATTTCCTACTATACCCAGGCTCAGCGATACTTCGAACTTTTATCCTTTTCTGCATTTGCCCTTATCTCTTCTTGTTCCTTCCTTACAAGCTACAATATCTTACTTCGCTCTTTTTTCGAACTTCAGAGTCTACTATCTGTACCCCAGCAACTCGTTGTGACCAACATCAATCCAAAATTAGCAAACGTACCAACAATCTCCCAAATTTAAAAACACATCCTACCTTTACAATTAATAACCATTGTCTAGATATACCCCTAAAATAAATGAATATAAACCCTCGCCGATAACATAACCCCTAAAATCAAGACATCCTCTCACAACGCCAAACCCCCCTCTCATAACTCTACAAAATACACAATCACCAACACGTAATTATAGTTTAGCAAAACATTAGATTGTGAATCTAATAATAGAAGAATATACTTCTTAATTACCGAGAAAGTGCGCAAGAACTGCTAATTCATGCTCCAAGACTAACAACTTGGCTTCCTCACTTTTAAAGGATAGTAGTTATCCATTGGTCTTAGGAGCCAAAAAATTGGTGCAACTCCAAATAAAAGTA
+		</sequence>
+		<sequence>
+			<taxon idref="lemur"/>
+			ATAGGAACAAGCGCATTATTTCGATATGCACACAACCGCGACAACCCAGATTCCGACAACGCCCTAATAGGCTGAAGTTTTTAAAAATAGTAACAAGCTTCTATAAACCGACATCTCACACTTACGAACATACACCCCCTATACAAACGCATTACTTTTACGACAACATCAAAAGAAATAATCTGCTGATTAGTGTAAACACAATTATTGCGAAATATCTAAACACACTAATGTTGCCTTTTCAGTCCCTTTGTCACAAAGTAGGCTTTCGGTACTTCTTCCGGTTCGTCATCTCCCTATTGATTTCTCCTCGCATCTTTTGTATTTCCTACTATTCCCAGGATCAACAATACCTCGAACTTCTATTCTTTTCTACATTTGCCATTTCCTCTTCTTTTCTCTTTATCATAAAACACCATACCTCGCTTCGTTCCTTTTCCGAACTTCAGAGCCCACCATCTGTACCCCACTCACCCATACAAACCAACACCACTCTCCACCTAATATACAAATTAATAACCTCCCACCTTCAGAACTGAACGCCAATCTCATAACCAACACACCCCATCAAAGCACCCCTCCAACACAAACCCGCACACCTCCACCCCCCTCGTCTAGCTTACCACGTCATCCCTCCCTCTCAACACCTTAACTCACCTTCTCCCAAACGCACAATTCGCACACACAACGCCACGTAAATATAGTTTAACAAAACATCAGATTGTGAATCTGACAACAGAGGCTTACGCCCCTTATTTACCGAGAAAGCTCACAAGAACTGCTAACTCATGCCCCATGTCTGACAACATGGCTTTCTCACTTTTAAAGGATAACAGCTATCCATTGGTCTTAGGCCCCAAAAATTTGGTGCAACTCCAAATAAAAGTA
+		</sequence>
+	</alignment>
 
-    <patterns id="patterns1" from="1" to="445">
-        <alignment idref="alignment"/>
-    </patterns>
-    <patterns id="patterns2" from="445">
-        <alignment idref="alignment"/>
-    </patterns>
+	<patterns id="patterns1" from="1" to="445">
+		<alignment idref="alignment"/>
+	</patterns>
+	<patterns id="patterns2" from="445">
+		<alignment idref="alignment"/>
+	</patterns>
 
-    <constantSize id="constant" units="days">
-        <populationSize>
-            <parameter id="constant.popSize" value="1.0" lower="0.0"/>
-        </populationSize>
-    </constantSize>
+	<constantSize id="constant" units="days">
+		<populationSize>
+			<parameter id="constant.popSize" value="1.0" lower="0.0"/>
+		</populationSize>
+	</constantSize>
 
-    <!-- Generate a random starting tree under the coalescent process            -->
-    <coalescentTree id="startTree">
-        <taxa idref="taxa"/>
-        <constantSize idref="constant"/>
-    </coalescentTree>
-
-
-    <argTreeModel id="treeModel1">
-        <tree idref="startTree"/>
-        <rootHeight>
-            <parameter id="treeModel1.rootHeight"/>
-        </rootHeight>
-        <nodeHeights internalNodes="true">
-            <parameter id="treeModel1.internalNodeHeights"/>
-        </nodeHeights>
-        <nodeHeights internalNodes="true" rootNode="true">
-            <parameter id="treeModel1.allInternalNodeHeights"/>
-        </nodeHeights>
-    </argTreeModel>
+	<!-- Generate a random starting tree under the coalescent process            -->
+	<coalescentTree id="startTree">
+		<taxa idref="taxa"/>
+		<constantSize idref="constant"/>
+	</coalescentTree>
 
 
-    <variableSizeCoalescentLikelihood id="coalescent">
-        <model>
-            <constantSize idref="constant"/>
-        </model>
-        <populationTree>
-            <argTreeModel idref="treeModel1"/>
-        </populationTree>
-    </variableSizeCoalescentLikelihood>
-
-    <!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
-    <hkyModel id="hky">
-        <frequencies>
-            <frequencyModel dataType="nucleotide">
-                <alignment idref="alignment"/>
-                <frequencies>
-                    <parameter id="hky.frequencies" dimension="4"/>
-                </frequencies>
-            </frequencyModel>
-        </frequencies>
-        <kappa>
-            <parameter id="hky.kappa" value="2.0" lower="0.0"/>
-        </kappa>
-    </hkyModel>
-
-    <strictClockBranchRates id="branchRates">
-        <rate>
-            <parameter id="clock.rate" value="0.001"/>
-        </rate>
-    </strictClockBranchRates>
-
-    <!-- site model                                                              -->
-    <siteModel id="siteModel">
-        <substitutionModel>
-            <hkyModel idref="hky"/>
-        </substitutionModel>
-        <!--      <mutationRate>
-            <parameter id="siteModel.mu" value="1" lower="0.0"/>
-        </mutationRate>-->
-        <!--    <gammaShape gammaCategories="4">
-            <parameter id="siteModel.alpha" value="0.5" lower="0.0"/>
-        </gammaShape>-->
-    </siteModel>
-
-    <argTreeLikelihood id="treeLikelihood1">
-        <patterns idref="patterns1"/>
-        <argTreeModel idref="treeModel1"/>
-        <siteModel idref="siteModel"/>
-        <strictClockBranchRates idref="branchRates"/>
-    </argTreeLikelihood>
+	<argTreeModel id="treeModel1">
+		<tree idref="startTree"/>
+		<rootHeight>
+			<parameter id="treeModel1.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel1.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel1.allInternalNodeHeights"/>
+		</nodeHeights>
+	</argTreeModel>
 
 
-    <argTreeLikelihood id="treeLikelihood2">
-        <patterns idref="patterns2"/>
-        <argTreeModel idref="treeModel1"/>
-        <siteModel idref="siteModel"/>
-        <strictClockBranchRates idref="branchRates"/>
-    </argTreeLikelihood>
+	<variableSizeCoalescentLikelihood id="coalescent">
+		<model>
+			<constantSize idref="constant"/>
+		</model>
+		<populationTree>
+			<argTreeModel idref="treeModel1"/>
+		</populationTree>
+	</variableSizeCoalescentLikelihood>
+
+	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
+	<hkyModel id="hky">
+		<frequencies>
+			<frequencyModel dataType="nucleotide">
+				<alignment idref="alignment"/>
+				<frequencies>
+					<parameter id="hky.frequencies" dimension="4"/>
+				</frequencies>
+			</frequencyModel>
+		</frequencies>
+		<kappa>
+			<parameter id="hky.kappa" value="2.0" lower="0.0"/>
+		</kappa>
+	</hkyModel>
+
+	<strictClockBranchRates id="branchRates">
+		<rate>
+			<parameter id="clock.rate" value="0.001"/>
+		</rate>
+	</strictClockBranchRates>
+
+	<!-- site model                                                              -->
+	<siteModel id="siteModel">
+		<substitutionModel>
+			<hkyModel idref="hky"/>
+		</substitutionModel>
+		<!--      <mutationRate>
+					<parameter id="siteModel.mu" value="1" lower="0.0"/>
+				</mutationRate>-->
+		<!--    <gammaShape gammaCategories="4">
+					<parameter id="siteModel.alpha" value="0.5" lower="0.0"/>
+				</gammaShape>-->
+	</siteModel>
+
+	<argTreeLikelihood id="treeLikelihood1">
+		<patterns idref="patterns1"/>
+		<argTreeModel idref="treeModel1"/>
+		<siteModel idref="siteModel"/>
+		<strictClockBranchRates idref="branchRates"/>
+	</argTreeLikelihood>
 
 
-    <operators id="operators1">
+	<argTreeLikelihood id="treeLikelihood2">
+		<patterns idref="patterns2"/>
+		<argTreeModel idref="treeModel1"/>
+		<siteModel idref="siteModel"/>
+		<strictClockBranchRates idref="branchRates"/>
+	</argTreeLikelihood>
 
-        <addremoveARGEvent weight="10" gaussian="true" size="1.0" maxTips="2">
-            <argTreeModel idref="treeModel1"/>
-            <justInternalNodes>
-                <parameter idref="treeModel1.internalNodeHeights"/>
-            </justInternalNodes>
-            <internalAndRootNodes>
-                <parameter idref="treeModel1.allInternalNodeHeights"/>
-            </internalAndRootNodes>
-        </addremoveARGEvent>
 
-        <argSubtreeSlide weight="15" gaussian="true" size="1.0">
-            <argTreeModel idref="treeModel1"/>
-        </argSubtreeSlide>
+	<operators id="operators1">
 
-        <scaleOperator scaleFactor="0.75" adapt="true" weight="3">
-            <parameter idref="treeModel1.rootHeight"/>
-        </scaleOperator>
+		<addremoveARGEvent weight="10" gaussian="true" size="1.0" maxTips="2">
+			<argTreeModel idref="treeModel1"/>
+			<justInternalNodes>
+				<parameter idref="treeModel1.internalNodeHeights"/>
+			</justInternalNodes>
+			<internalAndRootNodes>
+				<parameter idref="treeModel1.allInternalNodeHeights"/>
+			</internalAndRootNodes>
+		</addremoveARGEvent>
 
-        <uniformOperator weight="20">
-            <parameter idref="treeModel1.internalNodeHeights"/>
-        </uniformOperator>
+		<argSubtreeSlide weight="15" gaussian="true" size="1.0">
+			<argTreeModel idref="treeModel1"/>
+		</argSubtreeSlide>
 
-        <tossPartitioningOperator>
-            <argTreeModel idref="treeModel1"/>
-        </tossPartitioningOperator>
+		<scaleOperator scaleFactor="0.75" adapt="true" weight="3">
+			<parameter idref="treeModel1.rootHeight"/>
+		</scaleOperator>
 
-        <upDownOperator scaleFactor="0.20" weight="3">
-            <up>
-                <parameter idref="clock.rate"/>
+		<uniformOperator weight="20">
+			<parameter idref="treeModel1.internalNodeHeights"/>
+		</uniformOperator>
 
-            </up>
-            <down>
-                <parameter idref="treeModel1.allInternalNodeHeights"/>
-            </down>
-        </upDownOperator>
-        <!--
-        <scaleOperator scaleFactor="0.85" adapt="true" weight="1">
-            <parameter idref="siteModel.mu"/>
-        </scaleOperator>-->
-        <!--
-        <scaleOperator scaleFactor="0.85" adapt="true" weight="1">
-            <parameter idref="siteModel.alpha"/>
-        </scaleOperator>-->
-        <scaleOperator scaleFactor="0.75" adapt="true" weight="3">
-            <parameter idref="clock.rate"/>
-        </scaleOperator>
+		<tossPartitioningOperator>
+			<argTreeModel idref="treeModel1"/>
+		</tossPartitioningOperator>
 
-        <scaleOperator scaleFactor="0.75" adapt="true" weight="1">
-            <parameter idref="hky.kappa"/>
-        </scaleOperator>
+		<upDownOperator scaleFactor="0.20" weight="3">
+			<up>
+				<parameter idref="clock.rate"/>
 
-    </operators>
+			</up>
+			<down>
+				<parameter idref="treeModel1.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
+		<!--
+				<scaleOperator scaleFactor="0.85" adapt="true" weight="1">
+					<parameter idref="siteModel.mu"/>
+				</scaleOperator>-->
+		<!--
+				<scaleOperator scaleFactor="0.85" adapt="true" weight="1">
+					<parameter idref="siteModel.alpha"/>
+				</scaleOperator>-->
+		<scaleOperator scaleFactor="0.75" adapt="true" weight="3">
+			<parameter idref="clock.rate"/>
+		</scaleOperator>
 
-    <mcmc id="mcmc1" chainLength="1000000" verbose="true" optimize="true">
-        <compoundLikelihood id="likelihood">
-            <argTreeLikelihood idref="treeLikelihood1"/>
-            <argTreeLikelihood idref="treeLikelihood2"/>
-            <variableSizeCoalescentLikelihood idref="coalescent"/>
-        </compoundLikelihood>
-        <operators idref="operators1"/>
-        <log id="log1" logEvery="100" fileName="primate-test.log">
-            <likelihood idref="treeLikelihood1"/>
-            <likelihood idref="treeLikelihood2"/>
-            <likelihood idref="coalescent"/>
-            <parameter idref="constant.popSize"/>
-            <parameter idref="treeModel1.rootHeight"/>
-            <parameter idref="hky.kappa"/>
-            <parameter idref="clock.rate"/>
-            <!--    <parameter idref="siteModel.mu"/>-->
-            <!--<parameter idref="siteModel.alpha"/>-->
-            <argTreeModel idref="treeModel1"/>
-        </log>
-        <logArgTree partition="0" logEvery="1000" nexusFormat="true" fileName="primate_p0.trees">
-            <treeModel idref="treeModel1"/>
-        </logArgTree>
-        <logArgTree partition="1" logEvery="1000" nexusFormat="true" fileName="primate_p1.trees">
-            <treeModel idref="treeModel1"/>
-        </logArgTree>
+		<scaleOperator scaleFactor="0.75" adapt="true" weight="1">
+			<parameter idref="hky.kappa"/>
+		</scaleOperator>
 
-    </mcmc>
+	</operators>
 
-    <traceAnalysis fileName="primate-test.log"/>
+	<mcmc id="mcmc1" chainLength="100000" verbose="true" optimize="true">
+		<compoundLikelihood id="likelihood">
+			<argTreeLikelihood idref="treeLikelihood1"/>
+			<argTreeLikelihood idref="treeLikelihood2"/>
+			<variableSizeCoalescentLikelihood idref="coalescent"/>
+		</compoundLikelihood>
+		<operators idref="operators1"/>
+		<log id="log1" logEvery="100" fileName="primate-test.log">
+			<likelihood idref="treeLikelihood1"/>
+			<likelihood idref="treeLikelihood2"/>
+			<likelihood idref="coalescent"/>
+			<parameter idref="constant.popSize"/>
+			<parameter idref="treeModel1.rootHeight"/>
+			<parameter idref="hky.kappa"/>
+			<parameter idref="clock.rate"/>
+			<!--    <parameter idref="siteModel.mu"/>-->
+			<!--<parameter idref="siteModel.alpha"/>-->
+			<argTreeModel idref="treeModel1"/>
+		</log>
+		<logArgTree partition="0" logEvery="1000" nexusFormat="true" fileName="primate_p0.trees">
+			<treeModel idref="treeModel1"/>
+		</logArgTree>
+		<logArgTree partition="1" logEvery="1000" nexusFormat="true" fileName="primate_p1.trees">
+			<treeModel idref="treeModel1"/>
+		</logArgTree>
 
-    <treeTraceAnalysis fileName="primate_p0.trees"/>
-    <treeTraceAnalysis fileName="primate_p1.trees"/>
+	</mcmc>
 
-    <treeTraceAnalysis fileName="primate_p0.trees" shortReport="true"/>
-    <treeTraceAnalysis fileName="primate_p1.trees" shortReport="true"/>
+	<traceAnalysis fileName="primate-test.log"/>
+
+	<treeTraceAnalysis fileName="primate_p0.trees"/>
+	<treeTraceAnalysis fileName="primate_p1.trees"/>
+
+	<treeTraceAnalysis fileName="primate_p0.trees" shortReport="true"/>
+	<treeTraceAnalysis fileName="primate_p1.trees" shortReport="true"/>
 
 
 </beast>

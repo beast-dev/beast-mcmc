@@ -35,7 +35,8 @@ public class CoalescentWithRecombinationLikelihood extends AbstractModel impleme
 
     public static final String COALESCENT_LIKELIHOOD = "variableSizeCoalescentLikelihood";
     public static final String ANALYTICAL = "analytical";
-    public static final String MODEL = "model";
+    public static final String COALESCENT_MODEL = "coalescentModel";
+	public static final String RECOMBINATION_MODEL = "recombinationModel";
     public static final String POPULATION_TREE = "populationTree";
 
     /**
@@ -57,21 +58,27 @@ public class CoalescentWithRecombinationLikelihood extends AbstractModel impleme
     public static final int NOTHING = 2;
 
 
-    public CoalescentWithRecombinationLikelihood(Tree tree, DemographicModel demoModel) {
-        this(COALESCENT_LIKELIHOOD, tree, demoModel, true);
+    public CoalescentWithRecombinationLikelihood(Tree tree,
+                                                 DemographicModel coalescentDemoModel,
+                                                 DemographicModel recombinationDemoModel) {
+        this(COALESCENT_LIKELIHOOD, tree, coalescentDemoModel, recombinationDemoModel, true);
     }
 
-    public CoalescentWithRecombinationLikelihood(String name, Tree tree, DemographicModel demoModel, boolean setupIntervals) {
+    public CoalescentWithRecombinationLikelihood(String name, Tree tree,
+                                                 DemographicModel coalescentDemoModel,
+                                                 DemographicModel recombinationDemoModel,
+                                                 boolean setupIntervals) {
 
         super(name);
 
         this.tree = tree;
-        this.demoModel = demoModel;
+        this.coalescentDemoModel = coalescentDemoModel;
+	    this.recombinationDemoModel = recombinationDemoModel;
         if (tree instanceof ARGModel) {
             addModel((ARGModel) tree);
         }
-        if (demoModel != null) {
-            addModel(demoModel);
+        if (coalescentDemoModel != null) {
+            addModel(coalescentDemoModel);
         }
         if (setupIntervals) setupIntervals();
 
@@ -196,17 +203,19 @@ public class CoalescentWithRecombinationLikelihood extends AbstractModel impleme
         if (intervalsKnown == false) setupIntervals();
 
 
-        if (demoModel == null) return calculateAnalyticalLogLikelihood();
+        if (coalescentDemoModel == null) return calculateAnalyticalLogLikelihood();
 
         double logL = 0.0;
 
         double currentTime = 0.0;
 
-        DemographicFunction demoFunction = demoModel.getDemographicFunction();
+        DemographicFunction coalescentDemoFunction = coalescentDemoModel.getDemographicFunction();
+	    DemographicFunction recombinationDemoFunction = recombinationDemoModel.getDemographicFunction();
 
         for (int j = 0; j < intervalCount; j++) {
 
-            logL += calculateIntervalLikelihood(demoFunction, intervals[j], currentTime, lineageCounts[j],
+            logL += calculateIntervalLikelihood(coalescentDemoFunction, recombinationDemoFunction, intervals[j],
+		            currentTime, lineageCounts[j],
                     getIntervalType(j));
 
             // insert zero-length coalescent intervals
@@ -251,36 +260,42 @@ public class CoalescentWithRecombinationLikelihood extends AbstractModel impleme
     /**
      * Returns the likelihood of a given *coalescent* interval
      */
-    public final double calculateIntervalLikelihood(DemographicFunction demoFunction, double width, double timeOfPrevCoal, int lineageCount) {
+    public final double calculateIntervalLikelihood(DemographicFunction coalescentDemoFunction,
+                                                    DemographicFunction recombinationDemoFunction,
+                                                    double width, double timeOfPrevCoal, int lineageCount) {
 
-        return calculateIntervalLikelihood(demoFunction, width, timeOfPrevCoal, lineageCount, COALESCENT);
+        return calculateIntervalLikelihood(coalescentDemoFunction, recombinationDemoFunction,
+		        width, timeOfPrevCoal, lineageCount, COALESCENT);
     }
 
     /**
      * Returns the likelihood of a given interval,coalescent or otherwise.
      */
-    public final double calculateIntervalLikelihood(DemographicFunction demoFunction, double width, double timeOfPrevCoal,
+    public final double calculateIntervalLikelihood(DemographicFunction coalescentDemoFunction,
+                                                    DemographicFunction recombinationDemoFunction,
+                                                    double width, double timeOfPrevCoal,
                                                     int lineageCount, int type) {
         //binom.setMax(lineageCount);
 
-        double recombinationWeight = -10;
+        double recombinationWeight = -10;    // todo get value from recombinationDemoModel
 
         double timeOfThisCoal = width + timeOfPrevCoal;
 //         System.err.printf("s: %7.6f   f: %7.6f,  %d, %d\n",timeOfPrevCoal,timeOfThisCoal,lineageCount, type);
 
-        double intervalAreaCoalescent = demoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
-        double intervalAreaRecombination = demoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
+        double intervalAreaCoalescent = coalescentDemoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
+        double intervalAreaRecombination = recombinationDemoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
         double like = 0;
         switch (type) {
             case COALESCENT:
-                like = -Math.log(demoFunction.getDemographic(timeOfThisCoal))
+                like = -Math.log(coalescentDemoFunction.getDemographic(timeOfThisCoal))
                         - (Binomial.choose2(lineageCount) * intervalAreaCoalescent);
                 break;
             case RECOMBINATION:
-                like = -Math.log(demoFunction.getDemographic(timeOfThisCoal))
+                like = -Math.log(recombinationDemoFunction.getDemographic(timeOfThisCoal))
                         - (Binomial.choose2(lineageCount) * intervalAreaRecombination)
                         + recombinationWeight;
                 break;
+            // todo probably need to add in a relative weight/rate function
         }
 
         return like;
@@ -336,13 +351,13 @@ public class CoalescentWithRecombinationLikelihood extends AbstractModel impleme
         while (start < end) {
             double finish = ((ComparableDouble) times.get(indices[index + 1])).doubleValue();
             if (finish > start) { // Avoid repeated intervals due to reassortment nodes
-                int children = ((Integer) childs.get(indices[index])).intValue();
+                int children = ((Integer)childs.get(indices[index]));
                 if (children == 2)
                     numLines--;
                 else if (children == 1)
                     numLines++;
-                else if (children == 0)
-                    ; // what about here   todo
+               /* else if (children == 0)
+                    ; // what about here*/  // todo
                 intervals[intervalCount] = finish - start;
                 lineageCounts[intervalCount] = numLines;
                 intervalCount++;
@@ -535,7 +550,7 @@ public class CoalescentWithRecombinationLikelihood extends AbstractModel impleme
      * measured in.
      */
     public final void setUnits(int u) {
-        demoModel.setUnits(u);
+        coalescentDemoModel.setUnits(u);
     }
 
     /**
@@ -543,7 +558,7 @@ public class CoalescentWithRecombinationLikelihood extends AbstractModel impleme
      * measured in.
      */
     public final int getUnits() {
-        return demoModel.getUnits();
+        return coalescentDemoModel.getUnits();
     }
 
     // ****************************************************************
@@ -579,17 +594,23 @@ public class CoalescentWithRecombinationLikelihood extends AbstractModel impleme
 
         public Object parseXMLObject(XMLObject xo) {
 
-            DemographicModel demoModel = null;
+            DemographicModel coalescentDemoModel = null;
             XMLObject cxo;
             try {
-                cxo = (XMLObject) xo.getChild(MODEL);
-                demoModel = (DemographicModel) cxo.getChild(DemographicModel.class);
+                cxo = (XMLObject) xo.getChild(COALESCENT_MODEL);
+                coalescentDemoModel = (DemographicModel) cxo.getChild(DemographicModel.class);
             } catch (Exception e) {
             }  // [TODO -- how to do this right?
+	        DemographicModel recombinationDemoModel= null;
+	        try {
+		        cxo = (XMLObject) xo.getChild(RECOMBINATION_MODEL);
+		        recombinationDemoModel = (DemographicModel) cxo.getChild(DemographicModel.class);
+	        }  catch (Exception e) {
+	        }
             cxo = (XMLObject) xo.getChild(POPULATION_TREE);
             ARGModel argModel = (ARGModel) cxo.getChild(ARGModel.class);
 
-            return new CoalescentWithRecombinationLikelihood(argModel, demoModel);
+            return new CoalescentWithRecombinationLikelihood(argModel, coalescentDemoModel, recombinationDemoModel);
         }
 
         //************************************************************************
@@ -624,9 +645,10 @@ public class CoalescentWithRecombinationLikelihood extends AbstractModel impleme
 
 
     /**
-     * The demographic model.
+     * The demographic models.
      */
-    DemographicModel demoModel = null;
+    DemographicModel coalescentDemoModel = null;
+	DemographicModel recombinationDemoModel = null;
 
     /**
      * The tree.

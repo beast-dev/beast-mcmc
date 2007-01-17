@@ -77,6 +77,7 @@ public class MathUtils {
 	
 	/** 
 	 * @return a sample according to an unnormalized probability distribution
+     * @param pdf array of unnormalized probabilities
 	 */
 	public static int randomChoicePDF(double[] pdf) {
 
@@ -99,8 +100,9 @@ public class MathUtils {
 	/**
 	 * @return a new double array where all the values sum to 1.
 	 * Relative ratios are preserved.
+     * @param array to normalize
 	 */
-	public static final double[] getNormalized(double[] array) {
+	public static double[] getNormalized(double[] array) {
 		double[] newArray = new double[array.length];
 		double total = getTotal(array);
 		for(int i = 0 ; i < array.length ; i++) {
@@ -111,10 +113,12 @@ public class MathUtils {
 		
 	
 	/**
-	 * @param end the index of the element after the last one to be included
+     * @param array entries to be summed
+     * @param start start position
+     * @param end the index of the element after the last one to be included
 	 * @return the total of a the values in a range of an array
 	 */
-	public static final double getTotal(double[] array, int start, int end) {
+	public static double getTotal(double[] array, int start, int end) {
 		double total = 0.0;
 		for(int i = start ; i < end; i++) {
 			total+=array[i];
@@ -124,88 +128,100 @@ public class MathUtils {
 
 	/**
 	 * @return the total of the values in an array
+     * @param array to sum over
 	 */
-	public static final double getTotal(double[] array) {
+	public static double getTotal(double[] array) {
 		return getTotal(array,0, array.length);
 
 	}
 
-    // ===================== Static access methods to the private random instance ===========
+    // ===================== (Synchronized) Static access methods to the private random instance ===========
 
     /** Access a default instance of this class, access is synchronized */
-    public static final long getSeed() {
+    public static long getSeed() {
         synchronized(random) {
             return random.getSeed();
         }
     }
     /** Access a default instance of this class, access is synchronized */
-    public static final void setSeed(long seed) {
+    public static void setSeed(long seed) {
         synchronized(random) {
             random.setSeed(seed);
         }
     }
     /** Access a default instance of this class, access is synchronized */
-    public static final byte nextByte() {
+    public static byte nextByte() {
         synchronized(random) {
             return random.nextByte();
         }
     }
     /** Access a default instance of this class, access is synchronized */
-    public static final boolean nextBoolean() {
+    public static boolean nextBoolean() {
         synchronized(random) {
             return random.nextBoolean();
         }
     }
     /** Access a default instance of this class, access is synchronized */
-    public static final void nextBytes(byte[] bs) {
+    public static void nextBytes(byte[] bs) {
         synchronized(random) {
             random.nextBytes(bs);
         }
     }
     /** Access a default instance of this class, access is synchronized */
-    public static final char nextChar() {
+    public static char nextChar() {
         synchronized(random) {
             return random.nextChar();
         }
     }
     /** Access a default instance of this class, access is synchronized */
-    public static final double nextGaussian() {
+    public static double nextGaussian() {
         synchronized(random) {
             return random.nextGaussian();
         }
     }
-    /** Access a default instance of this class, access is synchronized */
-    public static final double nextDouble() {
+
+    /** Access a default instance of this class, access is synchronized
+     * @return a pseudo random double precision floating point number in [01)
+     */
+    public static double nextDouble() {
         synchronized(random) {
             return random.nextDouble();
         }
     }
+
+    /**
+     * @return log of random variable in [0,1]
+     */
+    public static double randomLogDouble() {
+        return Math.log(nextDouble());
+    }
+
     /** Access a default instance of this class, access is synchronized */
-    public static final float nextFloat() {
+    public static float nextFloat() {
         synchronized(random) {
             return random.nextFloat();
         }
     }
     /** Access a default instance of this class, access is synchronized */
-    public static final long nextLong() {
+    public static long nextLong() {
         synchronized(random) {
             return random.nextLong();
         }
     }
     /** Access a default instance of this class, access is synchronized */
-    public static final short nextShort() {
+    public static short nextShort() {
         synchronized(random) {
             return random.nextShort();
         }
     }
     /** Access a default instance of this class, access is synchronized */
-    public static final int nextInt() {
+    public static int nextInt() {
         synchronized(random) {
             return random.nextInt();
         }
     }
     /** Access a default instance of this class, access is synchronized */
-    public static final int nextInt(int n) {
+    public static int nextInt(int n) {
         synchronized(random) {
             return random.nextInt(n);
         }
@@ -214,7 +230,7 @@ public class MathUtils {
     /**
      * Shuffles an array.
      */
-    public static final void shuffle(int[] array) {
+    public static void shuffle(int[] array) {
         synchronized(random) {
             random.shuffle(array);
         }
@@ -222,7 +238,7 @@ public class MathUtils {
     /**
      * Shuffles an array. Shuffles numberOfShuffles times
      */
-    public static final void shuffle(int[] array, int numberOfShuffles) {
+    public static void shuffle(int[] array, int numberOfShuffles) {
         synchronized(random) {
             random.shuffle(array, numberOfShuffles);
         }

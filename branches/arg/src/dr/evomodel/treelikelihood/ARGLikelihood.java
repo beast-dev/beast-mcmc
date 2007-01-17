@@ -15,21 +15,22 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.operators.TossPartitioningOperator;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.ARGModel;
 import dr.evomodel.tree.ARGTree;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.logging.Logger;
 
 /**
- * TreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
+ * ARGLikelihood - implements a Likelihood Function for sequences on an ancestral recombination graph.
  *
- * @author Andrew Rambaut
- * @author Alexei Drummond
+ * @author Marc Suchard
  * @version $Id: ARGLikelihood.java,v 1.3 2006/10/23 04:13:41 msuchard Exp $
  */
 
@@ -164,6 +165,13 @@ public class ARGLikelihood extends AbstractARGLikelihood {
                 updateAllNodes();
 
                 //      }
+            }
+            if (object instanceof TossPartitioningOperator.PartitionChangedEvent) {
+                TossPartitioningOperator.PartitionChangedEvent event =
+                        (TossPartitioningOperator.PartitionChangedEvent) object;
+                Parameter partitioning = event.getParameter();
+                // todo update only nodes below node of partitioning;
+                updateAllNodes();
             }
 
         } else if (model == branchRateModel) {

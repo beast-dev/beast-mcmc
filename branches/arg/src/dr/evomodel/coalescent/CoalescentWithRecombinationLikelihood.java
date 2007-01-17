@@ -24,15 +24,12 @@ import java.util.ArrayList;
 
 
 /**
- * A likelihood function for the coalescent. Takes a tree and a demographic model.
- * <p/>
- * Parts of this class were derived from C++ code provided by Oliver Pybus.
+ * A likelihood function for the coalescent with recombination. Takes a tree and a demographic model.
  *
- * @author Andrew Rambaut
- * @author Alexei Drummond
- * @version $Id: VariableSizeCoalescentLikelihood.java,v 1.1.1.1.2.2 2006/11/06 01:38:30 msuchard Exp $
+ * @author Marc Suchard
+ * @version $Id: CoalescentWithRecombinationLikelihood.java,v 1.1.1.1.2.2 2006/11/06 01:38:30 msuchard Exp $
  */
-public class VariableSizeCoalescentLikelihood extends AbstractModel implements Likelihood, Units {
+public class CoalescentWithRecombinationLikelihood extends AbstractModel implements Likelihood, Units {
 
     // PUBLIC STUFF
 
@@ -51,7 +48,7 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
      * Denotes an interval at the end of which a new sample addition is
      * observed (i.e. the number of lineages is larger in the next interval).
      */
-    public static final int NEW_SAMPLE = 1;
+    public static final int RECOMBINATION = 1;
 
     /**
      * Denotes an interval at the end of which nothing is
@@ -60,11 +57,11 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
     public static final int NOTHING = 2;
 
 
-    public VariableSizeCoalescentLikelihood(Tree tree, DemographicModel demoModel) {
+    public CoalescentWithRecombinationLikelihood(Tree tree, DemographicModel demoModel) {
         this(COALESCENT_LIKELIHOOD, tree, demoModel, true);
     }
 
-    public VariableSizeCoalescentLikelihood(String name, Tree tree, DemographicModel demoModel, boolean setupIntervals) {
+    public CoalescentWithRecombinationLikelihood(String name, Tree tree, DemographicModel demoModel, boolean setupIntervals) {
 
         super(name);
 
@@ -81,7 +78,7 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
         addStatistic(new DeltaStatistic());
     }
 
-    VariableSizeCoalescentLikelihood(String name) {
+    CoalescentWithRecombinationLikelihood(String name) {
         super(name);
     }
 
@@ -195,15 +192,13 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
      * given a demographic model.
      */
     public double calculateLogLikelihood() {
-//		System.err.print("COALESCENT PRIOR: Start");
-        //System.err.println(tree.getExternalNodeCount()+" tips");
+
         if (intervalsKnown == false) setupIntervals();
 
-        //if (demoModel == null) return calculateAnalyticalLogLikelihood();
-        if (true) return calculateAnalyticalLogLikelihood();
+
+        if (demoModel == null) return calculateAnalyticalLogLikelihood();
 
         double logL = 0.0;
-        //double logL = calculateAnalyticalLogLikelihood();
 
         double currentTime = 0.0;
 
@@ -215,13 +210,23 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
                     getIntervalType(j));
 
             // insert zero-length coalescent intervals
-            int diff = getCoalescentEvents(j) - 1;
+            // assume no zero-length coalescent intervals
+            /*           int diff = getCoalescentEvents(j) - 1;
             for (int k = 0; k < diff; k++) {
                 logL += calculateIntervalLikelihood(demoFunction, 0.0, currentTime, lineageCounts[j] - k - 1, COALESCENT);
-            }
+            }*/
 
             currentTime += intervals[j];
         }
+
+//        printIntervals();
+//        ARGModel arg = (ARGModel) tree;
+//        if (arg.getReassortmentNodeCount() > 0)   {
+//            System.err.println(arg.toGraphString());
+//            System.err.println("@@@ = "+intervalCount);
+//            System.exit(-1);
+//        }
+
 
         return logL;
     }
@@ -258,17 +263,23 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
                                                     int lineageCount, int type) {
         //binom.setMax(lineageCount);
 
-        double timeOfThisCoal = width + timeOfPrevCoal;
+        double recombinationWeight = -10;
 
-        double intervalArea = demoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
+        double timeOfThisCoal = width + timeOfPrevCoal;
+//         System.err.printf("s: %7.6f   f: %7.6f,  %d, %d\n",timeOfPrevCoal,timeOfThisCoal,lineageCount, type);
+
+        double intervalAreaCoalescent = demoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
+        double intervalAreaRecombination = demoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
         double like = 0;
         switch (type) {
             case COALESCENT:
-                like = -Math.log(demoFunction.getDemographic(timeOfThisCoal)) -
-                        (Binomial.choose2(lineageCount) * intervalArea);
+                like = -Math.log(demoFunction.getDemographic(timeOfThisCoal))
+                        - (Binomial.choose2(lineageCount) * intervalAreaCoalescent);
                 break;
-            case NEW_SAMPLE:
-                like = -(Binomial.choose2(lineageCount) * intervalArea);
+            case RECOMBINATION:
+                like = -Math.log(demoFunction.getDemographic(timeOfThisCoal))
+                        - (Binomial.choose2(lineageCount) * intervalAreaRecombination)
+                        + recombinationWeight;
                 break;
         }
 
@@ -295,100 +306,51 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
      */
     protected final void setupIntervals() {
 
-        double MULTIFURCATION_LIMIT = 1e-9;
-
         ArrayList times = new ArrayList();
         ArrayList childs = new ArrayList();
-        //System.err.println("Collecting times");
         collectAllTimes(tree, getMRCAOfCoalescent(tree), getExcludedMRCAs(tree), times, childs);
         int[] indices = new int[times.size()];
 
-        //System.err.println("Sorting times");
         HeapSort.sort(times, indices);
 
-        int maxIntervalCount = tree.getNodeCount(); //
+//        for (int i : indices)
+//            System.err.println(times.get(i).toString());
 
-//		System.err.println("max l = "+maxIntervalCount);
+        int maxIntervalCount = tree.getNodeCount();
 
-        if ((intervals == null) || (intervals.length != maxIntervalCount)) {
+        if (intervals == null || intervals.length != maxIntervalCount) {
             intervals = new double[maxIntervalCount];
             lineageCounts = new int[maxIntervalCount];
             storedIntervals = new double[maxIntervalCount];
             storedLineageCounts = new int[maxIntervalCount];
         }
 
-//		System.err.println("Start Processing");
-//		System.err.println("yo = "+indices[0]);
-        // start is the time of the first tip
-        int indicesLength = indices.length - 1;
-        double start = ((ComparableDouble) times.get(indices[indicesLength])).doubleValue();
-//		System.err.println("start = "+start);
-        int numLines = 1; // was 0
-//		int i = 0;
-        intervalCount = 0;
-        while (start > 0) {
+        // The following only works for strictly bifurcating trees nested in the ARG
 
-            double finish = ((ComparableDouble) times.get(indices[indicesLength - 1])).doubleValue();
-//			System.err.println("finish = "+finish);
-//			double next = finish;
-            int children = ((Integer) childs.get(indices[indicesLength])).intValue();
-            if (children == 2)
-                numLines++;
-            if (children == 1)
-                numLines--;
-            if (children == 0)
-                intervals[intervalCount] = start - finish;
-            lineageCounts[intervalCount] = numLines;
+
+        int index = 0;
+        double start = ((ComparableDouble) times.get(indices[index])).doubleValue(); // start at most recent time
+        double end = tree.getNodeHeight(getMRCAOfCoalescent(tree));                 // end at tMRCA
+        int numLines = tree.getExternalNodeCount();
+        intervalCount = 0;
+        while (start < end) {
+            double finish = ((ComparableDouble) times.get(indices[index + 1])).doubleValue();
+            if (finish > start) { // Avoid repeated intervals due to reassortment nodes
+                int children = ((Integer) childs.get(indices[index])).intValue();
+                if (children == 2)
+                    numLines--;
+                else if (children == 1)
+                    numLines++;
+                else if (children == 0)
+                    ; // what about here   todo
+                intervals[intervalCount] = finish - start;
+                lineageCounts[intervalCount] = numLines;
+                intervalCount++;
+            }
+            index++;
             start = finish;
-            intervalCount++;
-            indicesLength--;
         }
-//		System.err.println("intervalCount = "+intervalCount);	
-//			int lineagesRemoved = 0;
-//			int lineagesAdded = 0;
-//
-//			double finish = ((ComparableDouble)times.get(indices[i])).doubleValue();
-//			double next = finish;
-//
-//			while (Math.abs(next - finish) < MULTIFURCATION_LIMIT) {
-//				int children = ((Integer)childs.get(indices[i])).intValue();
-//				if (children == 0) {
-//					lineagesAdded += 1;
-//				} else {
-//					lineagesRemoved += (children - 1);
-//				}
-//				i += 1;
-//				if (i < times.size()) {
-//					next = ((ComparableDouble)times.get(indices[i])).doubleValue();
-//				} else break;
-//			}
-//			//System.out.println("time = " + finish + " removed = " + lineagesRemoved + " added = " + lineagesAdded);
-//			if (lineagesAdded > 0) {
-//
-//				if (intervalCount > 0 || ((finish - start) > MULTIFURCATION_LIMIT)) {
-//					intervals[intervalCount] = finish - start;
-//					lineageCounts[intervalCount] = numLines;
-//					intervalCount += 1;
-//				}
-//
-//				start = finish;
-//			}
-//			// add sample event
-//			numLines += lineagesAdded;
-//
-//			if (lineagesRemoved > 0) {
-//
-//				intervals[intervalCount] = finish - start;
-//				lineageCounts[intervalCount] = numLines;
-//				intervalCount += 1;
-//				start = finish;
-//			}
-//			// coalescent event
-//			numLines -= lineagesRemoved;
-        //}
         intervalsKnown = true;
-//		printIntervals();
-        //System.exit(-1);
     }
 
     private void printIntervals() {
@@ -397,6 +359,7 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
         for (int i = 0; i < len; i++) {
             System.err.println(intervals[i] + " : " + lineageCounts[i]);
         }
+        System.err.println("END DEBUG");
     }
 
     /**
@@ -407,34 +370,40 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
      */
     private final static void collectAllTimes(Tree tree, NodeRef node, NodeRef[] excludeBelow, ArrayList times, ArrayList childs) {
 
-        for (int i = 0, n = tree.getNodeCount(); i < n; i++) {
+        /*for (int i = 0, n = tree.getNodeCount(); i < n; i++) {
             NodeRef nr = tree.getNode(i);
             times.add(new ComparableDouble(tree.getNodeHeight(nr)));
             childs.add(new Integer(tree.getChildCount(nr)));
 
+        }*/
+
+        //       ARGModel.Node tmp = (ARGModel.Node) node;
+        //       if (tmp.taxon != null) {
+        //           System.err.println(tmp.taxon.getId()+" "+tree.getChildCount(node));
+        //       }
+
+
+        times.add(new ComparableDouble(tree.getNodeHeight(node)));
+        childs.add(new Integer(tree.getChildCount(node)));
+//        System.err.println(tree.getChildCount(node)) ;
+
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            NodeRef child = tree.getChild(node, i);
+            if (excludeBelow == null) {
+                collectAllTimes(tree, child, excludeBelow, times, childs);
+            } else {
+                // check if this subtree is included in the coalescent density
+                boolean include = true;
+                for (int j = 0; j < excludeBelow.length; j++) {
+                    if (excludeBelow[j].getNumber() == child.getNumber()) {
+                        include = false;
+                        break;
+                    }
+                }
+                if (include) collectAllTimes(tree, child, excludeBelow, times, childs);
+            }
         }
     }
-
-//		times.add(new ComparableDouble(tree.getNodeHeight(node)));
-//		childs.add(new Integer(tree.getChildCount(node)));
-//
-//		for (int i = 0; i < tree.getChildCount(node); i++) {
-//			NodeRef child = tree.getChild(node, i);
-//			if (excludeBelow == null) {
-//				collectAllTimes(tree, child, excludeBelow, times, childs);
-//			} else {
-//				// check if this subtree is included in the coalescent density
-//				boolean include = true;
-//				for (int j =0; j < excludeBelow.length; j++) {
-//					if (excludeBelow[j].getNumber() == child.getNumber()) {
-//						include = false;
-//						break;
-//					}
-//				}
-//				if (include) collectAllTimes(tree, child, excludeBelow, times, childs);
-//			}
-//		}
-    //}
 
 
     /**
@@ -484,7 +453,7 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
         int numEvents = getCoalescentEvents(i);
 
         if (numEvents > 0) return COALESCENT;
-        else if (numEvents < 0) return NEW_SAMPLE;
+        else if (numEvents < 0) return RECOMBINATION;
         else return NOTHING;
     }
 
@@ -620,7 +589,7 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
             cxo = (XMLObject) xo.getChild(POPULATION_TREE);
             ARGModel argModel = (ARGModel) cxo.getChild(ARGModel.class);
 
-            return new VariableSizeCoalescentLikelihood(argModel, demoModel);
+            return new CoalescentWithRecombinationLikelihood(argModel, demoModel);
         }
 
         //************************************************************************
@@ -628,7 +597,7 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
         //************************************************************************
 
         public String getParserDescription() {
-            return "This element represents the likelihood of the tree given the demographic function.";
+            return "This element represents the likelihood of the ancestral recombination graph given the demographic function.";
         }
 
         public Class getReturnType() {
@@ -653,40 +622,6 @@ public class VariableSizeCoalescentLikelihood extends AbstractModel implements L
     // Private and protected stuff
     // ****************************************************************
 
-/*	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-		public String getParserName() { return COALESCENT_LIKELIHOOD; }
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			DemographicModel demoModel = null;
-			if (xo.hasAttribute(MODEL)) {
-				demoModel = (DemographicModel)xo.getAttribute(MODEL);
-			}
-			TreeModel treeModel = (TreeModel)xo.getAttribute(TREE);
-			return new CoalescentLikelihood(treeModel, demoModel);
-		}
-
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-
-		public String getParserDescription() {
-			return "This element represents the likelihood of the tree given the demographic function.";
-		}
-
-		public Class getReturnType() { return Likelihood.class; }
-
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new XORRule(
-				new EnumAttributeRule(ANALYTICAL, new String[] { "constant" }),
-				new AttributeRule(MODEL, DemographicModel.class)
-			),
-			new AttributeRule(TREE, TreeModel.class)
-		};
-	};*/
 
     /**
      * The demographic model.

@@ -53,30 +53,26 @@ public class BitFlipOperator extends SimpleMCMCOperator {
 	 * and return the hastings ratio.
 	 */
 	public final double doOperation() {
-
-
-        int n = parameter.getDimension();
+        final int dim = parameter.getDimension();
         double sum = 0.0;
-        double logq;
-
-        for (int i = 0; i < n; i++) {
+       
+        for (int i = 0; i < dim; i++) {
             sum += parameter.getParameterValue(i);
         }
 
+        final int pos = MathUtils.nextInt(dim);
 
-        int pos = MathUtils.nextInt(parameter.getDimension());
-
-        int value = (int)parameter.getParameterValue(pos);
-
+        final int value = (int)parameter.getParameterValue(pos);
+        double logq;
         if (value == 0) {
             parameter.setParameterValue(pos, 1.0);
 
-            logq = -Math.log((n-sum) / (sum+1));
+            logq = -Math.log((dim - sum) / (sum+1));
 
         } else if (value == 1) {
             parameter.setParameterValue(pos, 0.0);
 
-            logq = -Math.log(sum / (n-sum-1) );
+            logq = -Math.log(sum / (dim - sum+1) );
 
         } else {
             throw new RuntimeException("expected 1 or 0");

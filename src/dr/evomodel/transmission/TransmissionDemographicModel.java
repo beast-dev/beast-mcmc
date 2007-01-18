@@ -63,7 +63,7 @@ public class TransmissionDemographicModel extends DemographicModel
 	 */
 	public TransmissionDemographicModel(int model, 
 										Parameter N0Parameter, Parameter N1Parameter, 
-										Parameter growthRateParameter, Parameter doublingTimeParameter, int units) {
+										Parameter growthRateParameter, Parameter doublingTimeParameter, Type units) {
 	
 		this(TRANSMISSION_MODEL, model, N0Parameter, N1Parameter, growthRateParameter, doublingTimeParameter, units);
 	}
@@ -73,7 +73,7 @@ public class TransmissionDemographicModel extends DemographicModel
 	 */
 	public TransmissionDemographicModel(String name, int model, 
 											Parameter N0Parameter, Parameter N1Parameter, 
-											Parameter growthRateParameter, Parameter doublingTimeParameter, int units) {
+											Parameter growthRateParameter, Parameter doublingTimeParameter, Type units) {
 	
 		super(name);
 		
@@ -169,7 +169,7 @@ public class TransmissionDemographicModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			int units = XMLParser.Utils.getUnitsAttr(xo);
+			Type units = XMLParser.Utils.getUnitsAttr(xo);
 			
 			int model = 0;
 			
@@ -279,7 +279,7 @@ public class TransmissionDemographicModel extends DemographicModel
 	
 	private abstract class TransmissionDemographicFunction extends DemographicFunction.Abstract
 	{
-		public TransmissionDemographicFunction(int units) { super(units); }
+		public TransmissionDemographicFunction(Type units) { super(units); }
 
 		public void setDonorSize(double donorSize) { this.donorSize = donorSize; }
 		public void setTransmissionTime(double transmissionTime) { this.transmissionTime = transmissionTime; }			
@@ -293,7 +293,7 @@ public class TransmissionDemographicModel extends DemographicModel
 	private class TransmissionExponentialGrowth extends TransmissionDemographicFunction
 	{
 		
-		public TransmissionExponentialGrowth(int units) { super(units); }
+		public TransmissionExponentialGrowth(Type units) { super(units); }
 				
 		public void setGrowthRate(double r) { this.r = r; }
 		public void setDoublingTime(double doublingTime) { 
@@ -347,7 +347,7 @@ public class TransmissionDemographicModel extends DemographicModel
 	private class TransmissionLogisticGrowth extends TransmissionDemographicFunction
 	{
 		
-		public TransmissionLogisticGrowth(int units) { super(units); }
+		public TransmissionLogisticGrowth(Type units) { super(units); }
 				
 		public void setGrowthRate(double r) { this.r = r; }
 		public void setDoublingTime(double doublingTime) { 

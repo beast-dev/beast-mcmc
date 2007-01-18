@@ -534,7 +534,7 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 	 * Sets the units these coalescent intervals are
 	 * measured in.
 	 */
-	public final void setUnits(int u)
+	public final void setUnits(Type u)
 	{
 		demoModel.setUnits(u);
 	}
@@ -543,7 +543,7 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 	 * Returns the units these coalescent intervals are
 	 * measured in.
 	 */
-	public final int getUnits()
+	public final Type getUnits()
 	{
 		return demoModel.getUnits();
 	}

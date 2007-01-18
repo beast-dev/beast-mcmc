@@ -30,6 +30,7 @@ import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TimeScale;
+import dr.evolution.util.Units;
 import dr.xml.*;
 
 /**
@@ -52,7 +53,7 @@ public class SimpleTreeParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        int units = XMLParser.Utils.getUnitsAttr(xo);
+        Units.Type units = XMLParser.Utils.getUnitsAttr(xo);
         boolean usingDates = false;
 
         if (xo.hasAttribute(USING_DATES)) {

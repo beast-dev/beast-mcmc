@@ -69,9 +69,10 @@ public class LogFileTraces implements TraceList {
 
 	/**
 	 * @return the trace for a given index
+     * @param index requested trace index
 	 */
 	public Trace getTrace(int index) {
-		return (Trace)traces.get(index);
+		return traces.get(index);
 	}
 
 	public void setBurnIn(int burnIn) {
@@ -118,7 +119,10 @@ public class LogFileTraces implements TraceList {
 
 	/**
 	 * Loads all the traces in a file
-	 */
+     * @param r trace contents
+     * @throws TraceException when trace contents is not valid
+     * @throws java.io.IOException low level problems with file
+     */
 	public void loadTraces(Reader r) throws TraceException, java.io.IOException {
 
 		TrimLineReader reader = new LogFileTraces.TrimLineReader(r);
@@ -201,7 +205,8 @@ public class LogFileTraces implements TraceList {
 
 	/**
 	 * Add a trace for a statistic of the given name
-	 */
+     * @param name trace name
+     */
 	private void addTrace(String name) {
 		traces.add(new Trace(name));
 	}
@@ -210,7 +215,9 @@ public class LogFileTraces implements TraceList {
 	 * Add a state number for these traces. This should be
 	 * called before adding values for each trace. The spacing
 	 * between stateNumbers should remain constant.
-	 */
+     * @param stateNumber
+     * @throws TraceException when state number is inconsistent
+     */
 	private void addState(int stateNumber) throws TraceException {
 		if (firstState < 0) {
 			firstState = stateNumber;
@@ -226,10 +233,12 @@ public class LogFileTraces implements TraceList {
 	}
 
 	/**
-	 * add a value for the ith trace
-	 */
-	private void addValue(int i, double value) {
-		getTrace(i).add(value);
+	 * add a value for the n'th trace
+     * @param nTrace trace index
+     * @param value next value
+     */
+	private void addValue(int nTrace, double value) {
+		getTrace(nTrace).add(value);
 	}
 
 	private final File file;
@@ -265,6 +274,6 @@ public class LogFileTraces implements TraceList {
         public int getLineNumber() { return lineNumber; }
 
         private int lineNumber = 0;
-    };
+    }
 }
 

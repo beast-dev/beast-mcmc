@@ -16,10 +16,14 @@ public interface TraceList {
 	/** @return the number of traces in this trace list */
 	int getTraceCount();
 
-	/** @return the index of the trace with the given name */
+	/** @return the index of the trace with the given name
+     *  @param name trace name
+     */
 	int getTraceIndex(String name);
 
-	/** @return the name of the trace with the given index */
+	/** @return the name of the trace with the given index
+     *  @param index trace ordinal index
+     */
 	String getTraceName(int index);
 
 	/** @return the burn-in for this trace list */

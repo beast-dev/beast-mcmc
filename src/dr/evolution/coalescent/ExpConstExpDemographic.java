@@ -41,7 +41,7 @@ public class ExpConstExpDemographic extends ExponentialGrowth {
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ExpConstExpDemographic(int units) {
+	public ExpConstExpDemographic(Type units) {
 	
 		super(units);
 	}

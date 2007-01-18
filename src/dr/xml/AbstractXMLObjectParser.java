@@ -36,16 +36,16 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 		
 		if (hasSyntaxRules()) {
 			XMLSyntaxRule[] rules = getSyntaxRules();
-			for (int i =0; i < rules.length; i++) {
-				if (!rules[i].isSatisfied(xo)) {
-					// System.err.println(this);
-					throw new XMLParseException("The '<" + getParserName() + 
-												">' element with id, '" + id + 
-												"', is incorrectly constructed.\nThe following was expected:\n" + 
-												rules[i].ruleString(xo));
-				}
-			}
-		}
+            for (XMLSyntaxRule rule : rules) {
+                if (!rule.isSatisfied(xo)) {
+                    // System.err.println(this);
+                    throw new XMLParseException("The '<" + getParserName() +
+                            ">' element with id, '" + id +
+                            "', is incorrectly constructed.\nThe following was expected:\n" +
+                            rule.ruleString(xo));
+                }
+            }
+        }
 		
 		try {
 			return parseXMLObject(xo);

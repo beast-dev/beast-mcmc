@@ -47,7 +47,7 @@ public class Date extends TimeScale implements Attribute {
      * @param backwards true if the time is earlier than the origin
      * @param origin the absolute origin at a Date.
      */
-    public Date(double time, int units, boolean backwards, java.util.Date origin) {
+    public Date(double time, Type units, boolean backwards, java.util.Date origin) {
         super(units, backwards, origin);
         this.time = time;
     }
@@ -57,7 +57,7 @@ public class Date extends TimeScale implements Attribute {
      * @param date the date
      * @param units the units
      */
-    public Date(java.util.Date date, int units) {
+    public Date(java.util.Date date, Type units) {
         super(units, false);
         initUsingDate(date);
     }
@@ -68,7 +68,7 @@ public class Date extends TimeScale implements Attribute {
      * @param units the units
      * @param origin the origin as a date
 	 */
-	public Date(java.util.Date date, int units, java.util.Date origin) {
+	public Date(java.util.Date date, Type units, java.util.Date origin) {
 		super(units, false, origin);
 		initUsingDate(date);
 	}
@@ -79,7 +79,7 @@ public class Date extends TimeScale implements Attribute {
      * @param units the units the time is measured in
      * @param backwards true of the time is earlier than the zero point.
      */
-	public Date(double time, int units, boolean backwards) {
+	public Date(double time, Type units, boolean backwards) {
 		super(units, backwards);
 		this.time = time;
 	}
@@ -88,7 +88,7 @@ public class Date extends TimeScale implements Attribute {
 	 * Constructor for time a relative to origin
 	 * @param origin the origin in given units from Jan 1st 1970
 	 */
-	private Date(double time, int units, boolean backwards, double origin) {
+	private Date(double time, Type units, boolean backwards, double origin) {
 		super(units, backwards, origin);
 		this.time = time;
 	}
@@ -100,7 +100,7 @@ public class Date extends TimeScale implements Attribute {
 	/**
 	 * Create an age representing the given age (time ago) in the given units
 	 */
-	public static Date createRelativeAge(double age, int units) {
+	public static Date createRelativeAge(double age, Type units) {
 		return new Date(age, units, true);
 	}
 	
@@ -109,7 +109,7 @@ public class Date extends TimeScale implements Attribute {
 	 * with an origin of the given date.
 	 * The age represents the number units back in time from the origin.
 	 */
-	public static Date createTimeAgoFromOrigin(double age, int units, java.util.Date origin) {
+	public static Date createTimeAgoFromOrigin(double age, Type units, java.util.Date origin) {
 		return new Date(age, units, true, origin);
 	}
 	
@@ -118,7 +118,7 @@ public class Date extends TimeScale implements Attribute {
 	 * with an origin as the given number of units since 1970.
 	 * The age represents the number units back in time from the origin.
 	 */
-	public static Date createTimeAgoFromOrigin(double age, int units, double origin) {
+	public static Date createTimeAgoFromOrigin(double age, Type units, double origin) {
 		return new Date(age, units, true, origin);
 	}
 	
@@ -127,7 +127,7 @@ public class Date extends TimeScale implements Attribute {
 	 * with an origin of the given date.
 	 * The age represents the number units back in time from the origin.
 	 */
-	public static Date createTimeSinceOrigin(double age, int units, java.util.Date origin) {
+	public static Date createTimeSinceOrigin(double age, Type units, java.util.Date origin) {
 		return new Date(age, units, false, origin);
 	}
 	
@@ -136,7 +136,7 @@ public class Date extends TimeScale implements Attribute {
 	 * with an origin as the given number of units since 1970.
 	 * The age represents the number units forwards in time from the origin.
 	 */
-	public static Date createTimeSinceOrigin(double age, int units, double origin) {
+	public static Date createTimeSinceOrigin(double age, Type units, double origin) {
 		return new Date(age, units, false, origin);
 	}
 		
@@ -144,7 +144,7 @@ public class Date extends TimeScale implements Attribute {
 	 * Create a date an sets units to Units.YEARS
 	 */
 	public static Date createDate(java.util.Date date) {
-		return new Date(date, Units.YEARS);
+		return new Date(date, Units.Type.YEARS);
 	}
 	
 	//************************************************************************
@@ -158,9 +158,9 @@ public class Date extends TimeScale implements Attribute {
 		double daysAhead = ((double)millisAhead)/MILLIS_PER_DAY;
 		
 		switch (units) {	
-			case Units.DAYS: time = daysAhead; break;
-			case Units.MONTHS: time = daysAhead / DAYS_PER_MONTH; break;
-			case Units.YEARS: time = daysAhead / DAYS_PER_YEAR; break;
+			case DAYS: time = daysAhead; break;
+			case MONTHS: time = daysAhead / DAYS_PER_MONTH; break;
+			case YEARS: time = daysAhead / DAYS_PER_YEAR; break;
 			default: throw new IllegalArgumentException();
 		}
 		

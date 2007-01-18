@@ -47,20 +47,22 @@ public class ConstantPopulation extends DemographicFunction.Abstract
 	
 	/**
 	 * Construct demographic model with default settings
-	 */
-	public ConstantPopulation(int units) {
+     * @param units
+     */
+	public ConstantPopulation(Type units) {
 	
 		super(units);
 	}
 
 	/**
-	 * returns initial population size.
+	 * @return initial population size.
 	 */
 	public double getN0() { return N0; }
 
 	/**
 	 * sets initial population size.
-	 */
+     * @param N0 new size
+     */
 	public void setN0(double N0) { this.N0 = N0; }
 
 		
@@ -70,15 +72,16 @@ public class ConstantPopulation extends DemographicFunction.Abstract
 	public double getIntensity(double t) { return t/getN0(); }
 	public double getInverseIntensity(double x) { return getN0()*x; }
 
-	/**
-	 * Calculates the integral 1/N(x) dx between start and finish. The
-	 * inherited function in DemographicFunction.Abstract calls a
-	 * numerical integrater which is unecessary.
-	 */
-	public double getIntegral(double start, double finish) {
-		return getIntensity(finish) - getIntensity(start);
-	}
-		
+    // same as abstract
+//	/**
+//	 * Calculates the integral 1/N(x) dx between start and finish. The
+//	 * inherited function in DemographicFunction.Abstract calls a
+//	 * numerical integrater which is unecessary.
+//	 */
+//	public double getIntegral(double start, double finish) {
+//		return getIntensity(finish) - getIntensity(start);
+//	}
+//
 	public int getNumArguments() {
 		return 1;
 	}

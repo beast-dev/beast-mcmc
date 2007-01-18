@@ -49,7 +49,7 @@ public abstract class IndelModel extends AbstractModel implements Units {
 	public IndelModel(String name) { 
 		super(name);
 		
-		units = Units.GENERATIONS;
+		units = Units.Type.GENERATIONS;
 	}
 
 	//
@@ -69,14 +69,14 @@ public abstract class IndelModel extends AbstractModel implements Units {
 	/**
 	 * Units in which time units are measured.
 	 */
-	private int units;
+	private Type units;
 
 	/**
 	 * sets units of measurement.
 	 *
 	 * @param u units
 	 */
-	public void setUnits(int u)
+	public void setUnits(Type u)
 	{
 		units = u;
 	}
@@ -84,7 +84,7 @@ public abstract class IndelModel extends AbstractModel implements Units {
 	/**
 	 * returns units of measurement.
 	 */
-	public int getUnits()
+	public Type getUnits()
 	{
 		return units;
 	}

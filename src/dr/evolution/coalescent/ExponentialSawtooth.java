@@ -37,7 +37,7 @@ public class ExponentialSawtooth extends ExponentialGrowth {
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ExponentialSawtooth(int units) {
+	public ExponentialSawtooth(Type units) {
 	
 		super(units);
 	}
@@ -154,7 +154,7 @@ public class ExponentialSawtooth extends ExponentialGrowth {
 		double offset = Double.parseDouble(args[3]);
 		
 	
-		ExponentialSawtooth est = new ExponentialSawtooth(0);
+		ExponentialSawtooth est = new ExponentialSawtooth(Type.SUBSTITUTIONS);
 		est.setN0(N0);
 		est.setGrowthRate(growthRate);
 		est.setWavelength(wavelength);

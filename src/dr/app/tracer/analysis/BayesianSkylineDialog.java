@@ -562,7 +562,7 @@ public class BayesianSkylineDialog {
 
 				// the age of the end of this group
 				double[][] groupTimes = new double[stateCount][];
-				int tips = 0;
+				//int tips = 0;
 				state = 0;
 
 				try {
@@ -570,7 +570,7 @@ public class BayesianSkylineDialog {
 						RootedTree tree = (RootedTree)importer.importNextTree();
 						IntervalList intervals = new Intervals(tree);
 						int intervalCount = intervals.getIntervalCount();
-						tips = tree.getExternalNodes().size();
+						//tips = tree.getExternalNodes().size();
 
 						// get the coalescent intervales only
 						groupTimes[state] = new double[groupSizeCount];

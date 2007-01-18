@@ -49,7 +49,7 @@ public class MCLogger implements Logger {
 	public static final String ECHO_EVERY = "echoEvery";	
 	public static final String TITLE = "title";
 	public static final String FILE_NAME = "fileName";
-	public static final String FORMAT = "format";	
+    public static final String FORMAT = "format";
 	public static final String TAB = "tab";	
 	public static final String HTML = "html";	
 	public static final String PRETTY = "pretty";	
@@ -64,7 +64,9 @@ public class MCLogger implements Logger {
 	
 	/**
 	 * Constructor. Will log every logEvery.
-	 */
+     * @param formatter
+     * @param logEvery  logging frequency
+     */
 	public MCLogger(LogFormatter formatter, int logEvery) {
 		
 		addFormatter(formatter);
@@ -89,11 +91,11 @@ public class MCLogger implements Logger {
 	public final void add(Loggable loggable) {
 	
 		LogColumn[] columns = loggable.getColumns();
-		
-		for (int i = 0; i < columns.length; i++) {
-			addColumn(columns[i]);
-		}
-	}
+
+        for (LogColumn column : columns) {
+            addColumn(column);
+        }
+    }
 
 	public final void addColumn(LogColumn column) {
 	
@@ -101,69 +103,70 @@ public class MCLogger implements Logger {
 	}
 
 	public final void addColumns(LogColumn[] columns) {
-	
-		for (int i = 0; i < columns.length; i++) {
-			addColumn(columns[i]);
-		}
-	}
+
+        for (LogColumn column : columns) {
+            addColumn(column);
+        }
+    }
 
 	public final int getColumnCount() { return columns.size(); }
 	
 	public final LogColumn getColumn(int index) { 
 	
-		return (LogColumn)columns.get(index);
+		return columns.get(index);
 	}
 	
 	public final String getColumnLabel(int index) { 
 	
-		return ((LogColumn)columns.get(index)).getLabel();
+		return columns.get(index).getLabel();
 	}
 	
 	public final String getColumnFormatted(int index) { 
 	
-		return ((LogColumn)columns.get(index)).getFormatted();
+		return columns.get(index).getFormatted();
 	}
 	
 	protected void logHeading(String heading) {
-		for (int i = 0; i < formatters.size(); i++) {	
-			((LogFormatter)formatters.get(i)).logHeading(heading);
-		}
-	}
+        for (LogFormatter formatter : formatters) {
+            formatter.logHeading(heading);
+        }
+    }
 	
 	protected void logLine(String line) {
-		for (int i = 0; i < formatters.size(); i++) {	
-			((LogFormatter)formatters.get(i)).logLine(line);
-		}
-	}
+        for (LogFormatter formatter : formatters) {
+            formatter.logLine(line);
+        }
+    }
 	
 	protected void logLabels(String[] labels) {
-		for (int i = 0; i < formatters.size(); i++) {	
-			((LogFormatter)formatters.get(i)).logLabels(labels);
-		}
-	}
+        for (LogFormatter formatter : formatters) {
+            formatter.logLabels(labels);
+        }
+    }
 	
 	protected void logValues(String[] values) {
-		for (int i = 0; i < formatters.size(); i++) {	
-			((LogFormatter)formatters.get(i)).logValues(values);
-		}
-	}
+        for (LogFormatter formatter : formatters) {
+            formatter.logValues(values);
+        }
+    }
 	
 	public void startLogging() {
 
-		for (int i = 0; i < formatters.size(); i++) {	
-			((LogFormatter)formatters.get(i)).startLogging(title);
-		}
-			
-		if (title != null) {
+        for (LogFormatter formatter : formatters) {
+            formatter.startLogging(title);
+        }
+
+        if (title != null) {
 			logHeading(title);
 		}
 			
 		if (logEvery > 0) {
-			String[] labels = new String[getColumnCount() + 1];
+            final int columnCount = getColumnCount();
+            String[] labels = new String[columnCount + 1];
 			
 			labels[0] = "state";
 			
-			for (int i = 0; i < getColumnCount(); i++) {
+			for (int i = 0; i < columnCount; i++) {
 				labels[i+1] = getColumnLabel(i);
 			}
 			
@@ -174,12 +177,13 @@ public class MCLogger implements Logger {
 	public void log(int state) {
 	
 		if (logEvery > 0 && (state % logEvery == 0)) {
-		
-			String[] values = new String[getColumnCount() + 1];
+
+            final int columnCount = getColumnCount();
+            String[] values = new String[columnCount + 1];
 			
 			values[0] = Integer.toString(state);
 			
-			for (int i = 0; i < getColumnCount(); i++) {
+			for (int i = 0; i < columnCount; i++) {
 				values[i+1] = getColumnFormatted(i);
 			}
 			
@@ -189,16 +193,66 @@ public class MCLogger implements Logger {
 	
 	public void stopLogging() {
 
-		for (int i = 0; i < formatters.size(); i++) {	
-			((LogFormatter)formatters.get(i)).stopLogging();
-		}
-	}
-			
-	public static XMLObjectParser PARSER = new LoggerParser();
+        for (LogFormatter formatter : formatters) {
+            formatter.stopLogging();
+        }
+    }
+
+    // directory where beast xml file resides
+    private static File masterBeastDirectory = null;
+
+    public static void setMasterDir(File fileName) {
+        masterBeastDirectory = fileName;
+    }
+
+    /**
+     * Allow a file relative to beast xml file with a prefix of ./
+     * @param xo log element
+     * @param parserName for error messages
+     * @return logger object
+     * @throws XMLParseException if file can't be created for some reason
+     */
+    protected static PrintWriter getLogFile(XMLObject xo, String parserName) throws XMLParseException {
+        if (xo.hasAttribute(FILE_NAME)) {
+
+            String fileName = xo.getStringAttribute(FILE_NAME);
+            
+            final boolean localFile = fileName.startsWith("./");
+            final boolean relative = masterBeastDirectory != null && localFile;
+            if( localFile ) {
+                fileName = fileName.substring(2);
+            }
+
+            final File file = new File(fileName);
+            final String name = file.getName();
+            String parent = file.getParent();
+
+            if (!file.isAbsolute()) {
+                if( relative ) {
+                    parent = masterBeastDirectory.getAbsolutePath();
+                } else {
+                    parent = System.getProperty("user.dir");
+                }
+            }
+            final File logFile = new File(parent, name);
+
+//	         System.out.println("Writing log file to "+parent+System.getProperty("path.separator")+name);
+            try {
+                return new PrintWriter(new FileOutputStream(logFile));
+            } catch (FileNotFoundException fnfe) {
+                throw new XMLParseException("File '" + logFile.getAbsolutePath() + "' can not be opened for " + parserName + " element.");
+            }
+
+        }
+        return new PrintWriter(System.out);
+    }
+
+    public static LoggerParser PARSER = new LoggerParser();
 	
 	public static class LoggerParser extends AbstractXMLObjectParser {
-	
-		public String getParserName() { return LOG; }
+
+
+        public String getParserName() { return LOG; }
 
         /**
          * @return an object based on the XML element it was passed.
@@ -208,31 +262,9 @@ public class MCLogger implements Logger {
 			// You must say how often you want to log
 			int logEvery = xo.getIntegerAttribute(LOG_EVERY);
 			
-			PrintWriter pw = null;
-			
-			if (xo.hasAttribute(FILE_NAME)) {
-				
-				String fileName = xo.getStringAttribute(FILE_NAME);
-				try {
-					File file = new File(fileName);
-					String name = file.getName();
-					String parent = file.getParent();
-					
-					if (!file.isAbsolute()) {
-						parent = System.getProperty("user.dir");
-					}
-				
-//					System.out.println("Writing log file to "+parent+System.getProperty("path.separator")+name);
-					pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
-				} catch (FileNotFoundException fnfe) {
-					throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
-				}
-				
-			} else {
-				pw = new PrintWriter(System.out);
-			}
-			
-			LogFormatter formatter = new TabDelimitedFormatter(pw);
+			PrintWriter pw = getLogFile(xo, getParserName());
+
+            LogFormatter formatter = new TabDelimitedFormatter(pw);
 			
 			MCLogger logger = new MCLogger(formatter, logEvery);
 								
@@ -264,8 +296,9 @@ public class MCLogger implements Logger {
 
 			return logger;
 		}
-				
-		//************************************************************************
+
+
+        //************************************************************************
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
 	
@@ -293,22 +326,21 @@ public class MCLogger implements Logger {
 	
 		public Class getReturnType() { return MLLogger.class; }
 		
-	};
+	}
 	
 	private String title = null;
 	
-	private ArrayList columns = new ArrayList();
+	private ArrayList<LogColumn> columns = new ArrayList<LogColumn>();
 	
 	protected int logEvery = 0;
 
-    public ArrayList getFormatters() {
+    public ArrayList<LogFormatter> getFormatters() {
         return formatters;
     }
 
-    public void setFormatters(ArrayList formatters) {
+    public void setFormatters(ArrayList<LogFormatter> formatters) {
         this.formatters = formatters;
     }
 
-    protected ArrayList formatters = new ArrayList();
-
+    protected ArrayList<LogFormatter> formatters = new ArrayList<LogFormatter>();
 }

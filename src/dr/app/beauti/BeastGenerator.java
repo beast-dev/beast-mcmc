@@ -230,7 +230,7 @@ public class BeastGenerator extends BeautiOptions {
                 Attribute[] attributes = new Attribute[] {
                         new Attribute.Default("value", date.getTimeValue()+""),
                         new Attribute.Default("direction", date.isBackwards() ? "backwards" : "forwards"),
-                        new Attribute.Default("units", Units.UNIT_NAMES[units][0])
+                        new Attribute.Default("units", Units.Utils.getDefaultUnitName(units))
                         /*,
                                                   new Attribute.Default("origin", date.getOrigin()+"")*/
                 };

@@ -28,6 +28,7 @@ package dr.app.beastdev;
 import dr.xml.*;
 
 import java.util.Iterator;
+import java.io.File;
 
 /**
  * @author Alexei Drummond
@@ -39,12 +40,12 @@ public class BeastParser extends XMLParser {
 
 	public BeastParser(String[] args) {
 		super();
-		setup(args);
+		setup(args, null);
 	}
 
-	public BeastParser(String[] args, boolean verbose) {
+	public BeastParser(String[] args, File masterDir, boolean verbose) {
 		super(verbose);
-		setup(args);
+		setup(args, masterDir);
 
 		if (verbose) {
 			Iterator iterator = getParsers();
@@ -55,7 +56,7 @@ public class BeastParser extends XMLParser {
 		}
 	}
 
-	private void setup(String[] args) {
+	private void setup(String[] args, File masterDir) {
 
 		for (int i = 0; i < args.length; i++) {
 			storeObject(Integer.toString(i), args[i]);
@@ -228,7 +229,10 @@ public class BeastParser extends XMLParser {
 
 		addXMLObjectParser(dr.inference.mcmc.MCMC.PARSER);
 		addXMLObjectParser(dr.inference.ml.MLOptimizer.PARSER);
-		addXMLObjectParser(dr.inference.loggers.MCLogger.PARSER);
+        
+        dr.inference.loggers.MCLogger.setMasterDir(masterDir);
+
+        addXMLObjectParser(dr.inference.loggers.MCLogger.PARSER);
 		addXMLObjectParser(dr.inference.loggers.MLLogger.ML_LOGGER_PARSER);
 		addXMLObjectParser(dr.evomodel.tree.TreeLogger.PARSER);
 		addXMLObjectParser(dr.inference.loggers.Columns.PARSER);

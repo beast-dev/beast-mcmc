@@ -243,7 +243,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 	}
 
 	public void setBurnIn(int index, int burnIn) {
-		LogFileTraces trace = (LogFileTraces)traceLists.get(index);
+		LogFileTraces trace = traceLists.get(index);
 		trace.setBurnIn(burnIn);
 		analyseTraceList(trace);
 		updateCombinedTraces();
@@ -369,7 +369,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 			public synchronized void remove(int index) {
 				jobs.remove(index);
 			}
-		};
+		}
 
 		private AnalysisStack<TraceList> analysisStack = new AnalysisStack<TraceList>();
 
@@ -684,15 +684,15 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 				traceList = combinedTraces;
 				switch (col) {
 					case 0: return traceList.getName();
-					case 1: return new Integer(traceList.getMaxState());
+					case 1: return traceList.getMaxState();
 					case 2: return "-";
 				}
 			} else {
 				traceList = traceLists.get(row);
 				switch (col) {
 					case 0: return traceList.getName();
-					case 1: return new Integer(traceList.getMaxState());
-					case 2: return new Integer(traceList.getBurnIn());
+					case 1: return traceList.getMaxState();
+					case 2: return traceList.getBurnIn();
 				}
 			}
 
@@ -701,7 +701,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 
 		public void setValueAt(Object value, int row, int col) {
 			if (col == 2) {
-				setBurnIn(row, ((Integer)value).intValue());
+				setBurnIn(row, (Integer) value);
 			}
 		}
 
@@ -710,12 +710,9 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 		}
 
 		public boolean isCellEditable(int row, int col) {
-			if (col == 2 && row < traceLists.size()) {
-				return true;
-			}
-			return false;
-		}
-	};
+            return col == 2 && row < traceLists.size();
+        }
+	}
 
 	class StatisticTableModel extends AbstractTableModel {
 		final String[] columnNames = {"Statistic", "Mean", "ESS"};

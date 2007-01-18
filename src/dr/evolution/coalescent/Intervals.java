@@ -25,6 +25,8 @@
 
 package dr.evolution.coalescent;
 
+import dr.evolution.util.Units;
+
 import java.util.Arrays;
 
 /**
@@ -182,13 +184,13 @@ public class Intervals implements IntervalList {
 		intervalsKnown = true;
 	}
 
-	private int units = dr.evolution.util.Units.GENERATIONS;
+	private Units.Type  units = Units.Type.GENERATIONS;
 
-	public final int getUnits() {
+	public final Units.Type getUnits() {
 		return units;
 	}
 
-	public final void setUnits(int units) {
+	public final void setUnits(Type units) {
 		this.units = units;
 	}
 

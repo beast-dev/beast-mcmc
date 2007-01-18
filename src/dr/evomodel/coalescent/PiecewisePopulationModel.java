@@ -53,7 +53,7 @@ public class PiecewisePopulationModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public PiecewisePopulationModel(Parameter N0Parameter, double[] epochLengths, boolean linear, int units) {
+	public PiecewisePopulationModel(Parameter N0Parameter, double[] epochLengths, boolean linear, Type units) {
 	
 		this(PIECEWISE_POPULATION, N0Parameter, epochLengths, linear, units);
 		
@@ -62,7 +62,7 @@ public class PiecewisePopulationModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public PiecewisePopulationModel(String name, Parameter N0Parameter,  double[] epochLengths, boolean linear, int units) {
+	public PiecewisePopulationModel(String name, Parameter N0Parameter,  double[] epochLengths, boolean linear, Type units) {
 	
 		super(name);
 		
@@ -130,7 +130,7 @@ public class PiecewisePopulationModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			int units = XMLParser.Utils.getUnitsAttr(xo);
+			Type units = XMLParser.Utils.getUnitsAttr(xo);
 				
 			XMLObject cxo = (XMLObject)xo.getChild(EPOCH_SIZES);
 			Parameter epochSizes = (Parameter)cxo.getChild(Parameter.class);

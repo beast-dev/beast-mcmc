@@ -356,14 +356,14 @@ public class TreeIntervals implements IntervalList {
 	/**
 	 * Return the units that this tree is expressed in.
 	 */
-	public final int getUnits() {
+	public final Type getUnits() {
 		return tree.getUnits();
 	} 
 
 	/**
 	 * Sets the units that this tree is expressed in.
 	 */
-	public final void setUnits(int units) {
+	public final void setUnits(Type units) {
 		throw new IllegalArgumentException("Can't set interval's units");
 	}
 

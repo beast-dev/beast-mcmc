@@ -105,13 +105,13 @@ public class CoalGenData {
             }
 
             if (demographicModel == 0) { // Constant Size
-                demo = new ConstantPopulation(Units.YEARS);
+                demo = new ConstantPopulation(Units.Type.YEARS);
             } else if (demographicModel == 1 || demographicModel == 2) { // Exponential Growth
-                demo = new ExponentialGrowth(Units.YEARS);
+                demo = new ExponentialGrowth(Units.Type.YEARS);
             } else if (demographicModel == 3 || demographicModel == 4) { // Logistic Growth
-                demo = new LogisticGrowth(Units.YEARS);
+                demo = new LogisticGrowth(Units.Type.YEARS);
             } else if (demographicModel == 5 || demographicModel == 6) { // Expansion Growth
-                demo = new Expansion(Units.YEARS);
+                demo = new Expansion(Units.Type.YEARS);
             }
         }
 

@@ -40,7 +40,7 @@ public class ExponentialGrowth extends ConstantPopulation {
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ExponentialGrowth(int units) {
+	public ExponentialGrowth(Type units) {
 	
 		super(units);
 	}

@@ -65,7 +65,7 @@ public class ExpConstExpDemographicModel extends DemographicModel
             Parameter growthRateParameter,
             Parameter timeParameter,
             Parameter relTimeParameter,
-            int units) {
+            Type units) {
 	
 		this(EXP_CONST_EXP_MODEL, N0Parameter, N1Parameter, growthRateParameter,  timeParameter, relTimeParameter, units);
 	}
@@ -73,7 +73,7 @@ public class ExpConstExpDemographicModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ExpConstExpDemographicModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter, Parameter relTimeParameter, int units) {
+	public ExpConstExpDemographicModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter, Parameter relTimeParameter, Type units) {
 	
 		super(name);
 		
@@ -144,7 +144,7 @@ public class ExpConstExpDemographicModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			int units = XMLParser.Utils.getUnitsAttr(xo);
+			Type units = XMLParser.Utils.getUnitsAttr(xo);
 			
 			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);

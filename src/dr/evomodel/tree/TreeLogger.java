@@ -63,7 +63,7 @@ public class TreeLogger extends MCLogger {
 	public boolean usingRates = false;
 	public boolean substitutions = false;
 
-	/**
+	/*
 	 * Constructor
 	 */
 	public TreeLogger(Tree tree, BranchRateController branchRateProvider,
@@ -185,7 +185,7 @@ public class TreeLogger extends MCLogger {
 
 			Tree tree = (Tree)xo.getChild(Tree.class);
 
-			String fileName = null;
+
 			String title = null;
 			boolean nexusFormat = false;
 
@@ -193,9 +193,10 @@ public class TreeLogger extends MCLogger {
 				title = xo.getStringAttribute(TITLE);
 			}
 
-			if (xo.hasAttribute(FILE_NAME)) {
-				fileName = xo.getStringAttribute(FILE_NAME);
-			}
+//            String fileName = null;
+//            if (xo.hasAttribute(FILE_NAME)) {
+//				fileName = xo.getStringAttribute(FILE_NAME);
+//			}
 
 			if (xo.hasAttribute(NEXUS_FORMAT)) {
 				nexusFormat = xo.getBooleanAttribute(NEXUS_FORMAT);
@@ -278,28 +279,28 @@ public class TreeLogger extends MCLogger {
 			if (xo.hasAttribute(LOG_EVERY)) {
 				logEvery = xo.getIntegerAttribute(LOG_EVERY);
 			}
-
-			PrintWriter pw;
-
-			if (fileName != null) {
-
-				try {
-					File file = new File(fileName);
-					String name = file.getName();
-					String parent = file.getParent();
-
-					if (!file.isAbsolute()) {
-						parent = System.getProperty("user.dir");
-					}
-
-//					System.out.println("Writing log file to "+parent+System.getProperty("path.separator")+name);
-					pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
-				} catch (FileNotFoundException fnfe) {
-					throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
-				}
-			} else {
-				pw = new PrintWriter(System.out);
-			}
+            PrintWriter pw = getLogFile(xo, getParserName());
+//			PrintWriter pw;
+//
+//			if (fileName != null) {
+//
+//				try {
+//					File file = new File(fileName);
+//					String name = file.getName();
+//					String parent = file.getParent();
+//
+//					if (!file.isAbsolute()) {
+//						parent = System.getProperty("user.dir");
+//					}
+//
+////					System.out.println("Writing log file to "+parent+System.getProperty("path.separator")+name);
+//					pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
+//				} catch (FileNotFoundException fnfe) {
+//					throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+//				}
+//			} else {
+//				pw = new PrintWriter(System.out);
+//			}
 
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
@@ -310,12 +311,12 @@ public class TreeLogger extends MCLogger {
 			BranchAttributeProvider[] branchAttributeProviders = new BranchAttributeProvider[baps.size()];
 			baps.toArray(branchAttributeProviders);
 
-			TreeLogger logger = new TreeLogger(tree,
-					branchRateProvider,
-					treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
-					formatter, logEvery, nexusFormat);
+            TreeLogger logger =
+                    new TreeLogger(tree, branchRateProvider,
+                                   treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
+                                   formatter, logEvery, nexusFormat);
 
-			if (title != null) {
+            if (title != null) {
 				logger.setTitle(title);
 			}
 

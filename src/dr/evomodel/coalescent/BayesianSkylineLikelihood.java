@@ -162,7 +162,7 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 
 		int subIndex = 0;
 
-		ConstantPopulation cp = new ConstantPopulation(Units.YEARS);
+		ConstantPopulation cp = new ConstantPopulation(Units.Type.YEARS);
 
 		for (int j = 0; j < intervalCount; j++) {
 

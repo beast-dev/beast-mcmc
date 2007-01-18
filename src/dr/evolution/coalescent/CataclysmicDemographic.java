@@ -44,7 +44,7 @@ public class CataclysmicDemographic extends ExponentialGrowth {
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public CataclysmicDemographic(int units) {
+	public CataclysmicDemographic(Type units) {
 	
 		super(units);
 	}

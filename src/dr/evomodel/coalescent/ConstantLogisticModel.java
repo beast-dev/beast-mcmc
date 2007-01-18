@@ -58,7 +58,7 @@ public class ConstantLogisticModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ConstantLogisticModel(Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, int units) {
+	public ConstantLogisticModel(Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units) {
 	
 		this(CONSTANT_LOGISTIC_MODEL, N0Parameter, N1Parameter, growthRateParameter, shapeParameter, alpha, units);
 	}
@@ -66,7 +66,7 @@ public class ConstantLogisticModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ConstantLogisticModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, int units) {
+	public ConstantLogisticModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units) {
 	
 		super(name);
 		
@@ -123,7 +123,7 @@ public class ConstantLogisticModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			int units = XMLParser.Utils.getUnitsAttr(xo);
+			Type units = XMLParser.Utils.getUnitsAttr(xo);
 				
 			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);

@@ -43,7 +43,7 @@ public class EmpiricalPiecewiseConstant extends DemographicFunction.Abstract {
 	 * time from the end of the last interval out to infinity. 
 	 * @param lag a lag to align the break points with the most recent sample time (must be positive)
 	 */
-	public EmpiricalPiecewiseConstant(double[] intervals, double[] popSizes, double lag, int units) {
+	public EmpiricalPiecewiseConstant(double[] intervals, double[] popSizes, double lag, Type units) {
 		super(units);
 		if (popSizes == null || intervals == null) { throw new IllegalArgumentException(); }
 		if (popSizes.length != intervals.length + 1) { throw new IllegalArgumentException(); }

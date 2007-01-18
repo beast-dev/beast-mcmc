@@ -59,7 +59,7 @@ public class LogisticGrowthModel extends DemographicModel
 	 * Construct demographic model with default settings
 	 */
 	public LogisticGrowthModel(Parameter N0Parameter, Parameter growthRateParameter, 
-								Parameter shapeParameter, double alpha, int units, 
+								Parameter shapeParameter, double alpha, Type units,
 								boolean usingGrowthRate) {
 	
 		this(LOGISTIC_GROWTH_MODEL, N0Parameter, growthRateParameter, shapeParameter, alpha, units, usingGrowthRate);
@@ -68,7 +68,7 @@ public class LogisticGrowthModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public LogisticGrowthModel(String name, Parameter N0Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, int units, boolean usingGrowthRate) {
+	public LogisticGrowthModel(String name, Parameter N0Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units, boolean usingGrowthRate) {
 	
 		super(name);
 		
@@ -121,7 +121,7 @@ public class LogisticGrowthModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			int units = XMLParser.Utils.getUnitsAttr(xo);
+			Type units = XMLParser.Utils.getUnitsAttr(xo);
 				
 			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);		

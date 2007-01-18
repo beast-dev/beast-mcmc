@@ -57,11 +57,16 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
     public static final String LINEAR = "linear";
     public static final String EXPONENTIAL = "exponential";
 
-    public static final int STEPWISE_TYPE = 0;
-    public static final int LINEAR_TYPE = 1;
-    public static final int EXPONENTIAL_TYPE = 2;
+    public enum Type {
+        STEPWISE,
+        LINEAR,
+        EXPONENTIAL
+    }
+//    public static final int STEPWISE_TYPE = 0;
+//    public static final int LINEAR_TYPE = 1;
+//    public static final int EXPONENTIAL_TYPE = 2;
 
-    public VariableSkylineLikelihood(Tree tree, Parameter popSizeParameter, Parameter indicatorParameter, int type, boolean logSpace) {
+    public VariableSkylineLikelihood(Tree tree, Parameter popSizeParameter, Parameter indicatorParameter, Type type, boolean logSpace) {
         super(SKYLINE_LIKELIHOOD);
 
         this.popSizeParameter = popSizeParameter;
@@ -100,7 +105,8 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
      */
     public synchronized double getLogLikelihood() {
 
-        setupIntervals();
+        //setupIntervals();
+        // calls setupIntervals anyway???
         calculateGroupSizesHeightsAndEnds();
 
         double logL = 0.0;
@@ -111,7 +117,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
 
         int subIndex = 0;
 
-        ConstantPopulation cp = new ConstantPopulation(Units.YEARS);
+        ConstantPopulation cp = new ConstantPopulation(Units.Type.YEARS);
 
         for (int j = 0; j < intervalCount; j++) {
 
@@ -150,28 +156,36 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
      *         interpolated between the two pop sizes at either end of the grouped interval.
      */
     private double getPopSize(int groupIndex, double midTime) {
-        if (type == VariableSkylineLikelihood.EXPONENTIAL_TYPE) {
-            throw new UnsupportedOperationException("Exponential Skyline Plot not implemented yet");
-        } else if (type == VariableSkylineLikelihood.LINEAR_TYPE) {
-
-            double startGroupPopSize = groupHeights.get(groupIndex);
-            double endGroupPopSize = groupHeights.get(groupIndex + 1);
-
-            double startGroupTime = 0.0;
-            if (groupIndex > 0) {
-                startGroupTime = groupEnds.get(groupIndex - 1);
+        switch( type ) {
+            case EXPONENTIAL:
+            {
+              throw new UnsupportedOperationException("Exponential Skyline Plot not implemented yet");
             }
-            double endGroupTime = groupEnds.get(groupIndex);
+            case LINEAR:
+            {
+                double startGroupPopSize = groupHeights.get(groupIndex);
+                double endGroupPopSize = groupHeights.get(groupIndex + 1);
 
-            // calculate the gradient
-            double m = (endGroupPopSize - startGroupPopSize) / (endGroupTime - startGroupTime);
+                double startGroupTime = 0.0;
+                if (groupIndex > 0) {
+                    startGroupTime = groupEnds.get(groupIndex - 1);
+                }
+                double endGroupTime = groupEnds.get(groupIndex);
 
-            // calculate the population size at midTime using linear interpolation
+                // calculate the gradient
+                double m = (endGroupPopSize - startGroupPopSize) / (endGroupTime - startGroupTime);
 
-            return (m * (midTime - startGroupTime)) + startGroupPopSize;
-        } else {
-            return groupHeights.get(groupIndex);
+                // calculate the population size at midTime using linear interpolation
+
+                return (m * (midTime - startGroupTime)) + startGroupPopSize;
+            }
+            case STEPWISE:
+            {
+              return groupHeights.get(groupIndex);
+            }
         }
+
+        return -1; // never reached
     }
 
     private void calculateGroupSizesHeightsAndEnds() {
@@ -232,36 +246,30 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
             cxo = (XMLObject) xo.getChild(POPULATION_TREE);
             TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
 
-            int type = VariableSkylineLikelihood.STEPWISE_TYPE;
-            String typeName = VariableSkylineLikelihood.LINEAR;
+            Type type = VariableSkylineLikelihood.Type.STEPWISE;
             if (xo.hasAttribute(VariableSkylineLikelihood.LINEAR) && !xo.getBooleanAttribute(VariableSkylineLikelihood.LINEAR))
             {
-                type = VariableSkylineLikelihood.STEPWISE_TYPE;
-                typeName = VariableSkylineLikelihood.STEPWISE;
+                type = VariableSkylineLikelihood.Type.STEPWISE;
             }
 
             if (xo.hasAttribute(VariableSkylineLikelihood.TYPE)) {
-                if (xo.getStringAttribute(VariableSkylineLikelihood.TYPE).equalsIgnoreCase(VariableSkylineLikelihood.STEPWISE))
+                final String s = xo.getStringAttribute(VariableSkylineLikelihood.TYPE);
+                if (s.equalsIgnoreCase(VariableSkylineLikelihood.STEPWISE))
                 {
-                    type = VariableSkylineLikelihood.STEPWISE_TYPE;
-                    typeName = VariableSkylineLikelihood.STEPWISE;
-                } else
-                if (xo.getStringAttribute(VariableSkylineLikelihood.TYPE).equalsIgnoreCase(VariableSkylineLikelihood.LINEAR))
+                    type = VariableSkylineLikelihood.Type.STEPWISE;
+                } else if (s.equalsIgnoreCase(VariableSkylineLikelihood.LINEAR))
                 {
-                    type = VariableSkylineLikelihood.LINEAR_TYPE;
-                    typeName = VariableSkylineLikelihood.LINEAR;
-                } else
-                if (xo.getStringAttribute(VariableSkylineLikelihood.TYPE).equalsIgnoreCase(VariableSkylineLikelihood.EXPONENTIAL))
+                    type = VariableSkylineLikelihood.Type.LINEAR;
+                } else if (s.equalsIgnoreCase(VariableSkylineLikelihood.EXPONENTIAL))
                 {
-                    type = VariableSkylineLikelihood.EXPONENTIAL_TYPE;
-                    typeName = VariableSkylineLikelihood.EXPONENTIAL;
+                    type = VariableSkylineLikelihood.Type.EXPONENTIAL;
                 } else
-                    throw new XMLParseException("Unknown Bayesian Skyline type: " + xo.getStringAttribute(VariableSkylineLikelihood.TYPE));
+                    throw new XMLParseException("Unknown Bayesian Skyline type: " + s);
             }
 
             boolean logSpace = xo.getBooleanAttribute(LOG_SPACE);
 
-            Logger.getLogger("dr.evomodel").info("Variable skyline plot: " + typeName + " control points");
+            Logger.getLogger("dr.evomodel").info("Variable skyline plot: " + type.toString() + " control points");
 
             return new VariableSkylineLikelihood(treeModel, param, param2, type, logSpace);
         }
@@ -308,8 +316,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
     List<Double> groupHeights = new ArrayList<Double>();
     List<Double> groupEnds = new ArrayList<Double>();
 
-    private final int type;
+    private final Type type;
 
     private boolean logSpace = false;
-
 }

@@ -224,7 +224,7 @@ public class BeastOptions {
 	
 	//Miscellaneous
 	
-	public int units = Units.SUBSTITUTIONS;
+	public Units.Type units = Units.Type.SUBSTITUTIONS;
 	public boolean usingDates = false;
 
 	/**

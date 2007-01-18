@@ -231,7 +231,7 @@ public class CommandLineBeauti {
 			if (beautiOptions.originalAlignment.getTaxonAttribute(i, "date") == null) {
 				java.util.Date origin = new java.util.Date(0);
 
-				dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.YEARS, origin);
+				dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
 				beautiOptions.originalAlignment.getTaxon(i).setAttribute("date", date);
 			}
 		}

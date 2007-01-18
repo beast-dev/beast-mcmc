@@ -112,17 +112,21 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                     tree.setRoot(iP);
                     //System.err.println("Creating new root!");
 
-                    // **********************************************
-                    // swap traits and rates so that root keeps it trait and rate values
-                    // **********************************************
+                    if( tree.hasNodeTraits() ) {
+                        // **********************************************
+                        // swap traits and rates so that root keeps it trait and rate values
+                        // **********************************************
 
-                    double rootNodeTrait = tree.getNodeTrait(newChild);
-                    tree.setNodeTrait(newChild, tree.getNodeTrait(iP));
-                    tree.setNodeTrait(iP, rootNodeTrait);
+                        double rootNodeTrait = tree.getNodeTrait(newChild);
+                        tree.setNodeTrait(newChild, tree.getNodeTrait(iP));
+                        tree.setNodeTrait(iP, rootNodeTrait);
+                    }
 
-                    double rootNodeRate = tree.getNodeRate(newChild);
-                    tree.setNodeRate(newChild, tree.getNodeRate(iP));
-                    tree.setNodeRate(iP, rootNodeRate);
+                    if( tree.hasRates() ) {
+                        double rootNodeRate = tree.getNodeRate(newChild);
+                        tree.setNodeRate(newChild, tree.getNodeRate(iP));
+                        tree.setNodeRate(iP, rootNodeRate);
+                    }
 
                     // **********************************************
 
@@ -187,17 +191,21 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                     tree.addChild(iP, newChild); tree.addChild(newParent, iP);
                     tree.setRoot(CiP);
 
-                    // **********************************************
-                    // swap traits and rates, so that root keeps it trait and rate values
-                    // **********************************************
+                    if( tree.hasNodeTraits() ) {
+                        // **********************************************
+                        // swap traits and rates, so that root keeps it trait and rate values
+                        // **********************************************
 
-                    double rootNodeTrait = tree.getNodeTrait(iP);
-                    tree.setNodeTrait(iP, tree.getNodeTrait(CiP));
-                    tree.setNodeTrait(CiP, rootNodeTrait);
+                        double rootNodeTrait = tree.getNodeTrait(iP);
+                        tree.setNodeTrait(iP, tree.getNodeTrait(CiP));
+                        tree.setNodeTrait(CiP, rootNodeTrait);
+                    }
 
-                    double rootNodeRate = tree.getNodeRate(iP);
-                    tree.setNodeRate(iP, tree.getNodeRate(CiP));
-                    tree.setNodeRate(CiP, rootNodeRate);
+                    if( tree.hasRates() ) {
+                        double rootNodeRate = tree.getNodeRate(iP);
+                        tree.setNodeRate(iP, tree.getNodeRate(CiP));
+                        tree.setNodeRate(CiP, rootNodeRate);
+                    }
 
                     // **********************************************
 

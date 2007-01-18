@@ -59,7 +59,7 @@ public class ExponentialGrowthModel extends DemographicModel
 	 * Construct demographic model with default settings
 	 */
 	public ExponentialGrowthModel(Parameter N0Parameter, Parameter growthRateParameter, 
-									int units, boolean usingGrowthRate) {
+									Type units, boolean usingGrowthRate) {
 	
 		this(EXPONENTIAL_GROWTH_MODEL, N0Parameter, growthRateParameter, units, usingGrowthRate);
 	}
@@ -68,7 +68,7 @@ public class ExponentialGrowthModel extends DemographicModel
 	 * Construct demographic model with default settings
 	 */
 	public ExponentialGrowthModel(String name, Parameter N0Parameter, Parameter growthRateParameter, 
-									int units, boolean usingGrowthRate) {
+									Type units, boolean usingGrowthRate) {
 	
 		super(name);
 		
@@ -113,7 +113,7 @@ public class ExponentialGrowthModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			int units = XMLParser.Utils.getUnitsAttr(xo);
+			Type units = XMLParser.Utils.getUnitsAttr(xo);
 			
 			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);

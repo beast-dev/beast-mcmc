@@ -34,57 +34,30 @@ package dr.evolution.util;
  * @author Andrew Rambaut
  */
 public interface Units {
-    
-	final int SUBSTITUTIONS = 0;
-	final int GENERATIONS = 1;
-	final int DAYS = 2;
-	final int MONTHS = 3;
-	final int YEARS = 4;
 
-    // array of unit names
-    // second dimension is to allow synonyms -- first element is default
-	String[][] UNIT_NAMES = {{"substitutions","mutations"}, {"generations"}, {"days"}, {"months"}, {"years"}};
+    public enum Type {
+       SUBSTITUTIONS, GENERATIONS, DAYS, MONTHS, YEARS
+    }
 
 	/**
-	 * Gets the units for this object.
+	 * @return the units for this object.
 	 */
-	int getUnits();
+	Type getUnits();
 
 	/**
 	 * Sets the units for this object.
-	 */
-	void setUnits(int units);
+     * @param units to use
+     */
+	void setUnits(Type units);
+
+    // array of unit names
+    // second dimension is to allow synonyms -- first element is default
+	public String[][] UNIT_NAMES = {{"substitutions","mutations"}, {"generations"}, {"days"}, {"months"}, {"years"}};
 
     public class Utils {
 
-        public static String getDefaultUnitName(int i) {
-            return UNIT_NAMES[i][0];
+        public static String getDefaultUnitName(Type i) {
+            return UNIT_NAMES[i.ordinal()][0];
         }
     }
 }
-
-/* might be better to go to something like this:
-
-public interface Units
-{
-	public static final UnitType EXPECTED_SUBSTITUTIONS = new UnitType("Expected Substitutions");
-	public static final UnitType GENERATIONS = new UnitType("Generations");
-	public static final UnitType DAYS = new UnitType("Days");
-	public static final UnitType MONTHS = new UnitType("Months");
-	public static final UnitType YEARS = new UnitType("Years");
-
-	UnitType getUnits();
-
-	void setUnits(UnitType units);
-
-	public class UnitType {
-	
-		private final String name;
-		
-		private UnitType(String name) { this.name = name; }
-		
-		public String toString() { return name; }
-	}
-}
-
-*/

@@ -175,7 +175,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
      * Sets the units these coalescent intervals are
      * measured in.
      */
-    public final void setUnits(int u)
+    public final void setUnits(Type u)
     {
         speciationModel.setUnits(u);
     }
@@ -184,7 +184,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
      * Returns the units these coalescent intervals are
      * measured in.
      */
-    public final int getUnits()
+    public final Type getUnits()
     {
         return speciationModel.getUnits();
     }

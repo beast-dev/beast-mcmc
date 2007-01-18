@@ -244,7 +244,7 @@ public class NewCoalescentLikelihood extends AbstractModel implements Likelihood
 	 * Sets the units these coalescent intervals are
 	 * measured in.
 	 */
-	public final void setUnits(int u)
+	public final void setUnits(Type u)
 	{
 		demoModel.setUnits(u);
 	}
@@ -253,7 +253,7 @@ public class NewCoalescentLikelihood extends AbstractModel implements Likelihood
 	 * Returns the units these coalescent intervals are
 	 * measured in.
 	 */
-	public final int getUnits()
+	public final Type getUnits()
 	{
 		return demoModel.getUnits();
 	}

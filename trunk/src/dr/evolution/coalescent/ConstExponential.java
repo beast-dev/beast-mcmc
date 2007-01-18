@@ -39,7 +39,7 @@ public class ConstExponential extends ExponentialGrowth {
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ConstExponential(int units) {
+	public ConstExponential(Type units) {
 	
 		super(units);
 	}

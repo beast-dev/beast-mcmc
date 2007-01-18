@@ -879,10 +879,10 @@ public class BeautiOptions {
 			translation = getIntegerChild(dataElement, "translation", NONE);
 			userTree = getBooleanChild(dataElement, "userTree", false);
 
-			int theUnits = 0;
-			if (datesUnits == YEARS) theUnits = Units.YEARS;
-			if (datesUnits == MONTHS) theUnits = Units.MONTHS;
-			if (datesUnits == DAYS) theUnits = Units.DAYS;
+			Units.Type theUnits = Units.Type.SUBSTITUTIONS;
+			if (datesUnits == YEARS) theUnits = Units.Type.YEARS;
+			if (datesUnits == MONTHS) theUnits = Units.Type.MONTHS;
+			if (datesUnits == DAYS) theUnits = Units.Type.DAYS;
 
 			Element alignmentElement = dataElement.getChild("alignment");
 			if (alignmentElement != null) {
@@ -1095,7 +1095,7 @@ public class BeautiOptions {
                 }
             }
 
-            Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
+            Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
             originalAlignment.getTaxon(i).setAttribute("date", date);
         }
 
@@ -1195,7 +1195,7 @@ public class BeautiOptions {
         return Double.parseDouble(field);
     }
 
-    private final void timeScaleChanged() {
+    private void timeScaleChanged() {
 
         for (int i = 0; i < alignment.getTaxonCount(); i++) {
             Date date = alignment.getTaxon(i).getDate();
@@ -1208,7 +1208,7 @@ public class BeautiOptions {
 
     }
 
-    private Date createDate(double timeValue, int units, boolean backwards, double origin) {
+    private Date createDate(double timeValue, Units.Type units, boolean backwards, double origin) {
         if (backwards) {
             return Date.createTimeAgoFromOrigin(timeValue, units, origin);
         } else {
@@ -1504,7 +1504,7 @@ public class BeautiOptions {
 	public int skylineModel = CONSTANT_SKYLINE;
     public double birthDeathSamplingProportion = 1.0;
     public boolean fixedTree = false;
-	public int units = Units.SUBSTITUTIONS;
+	public Units.Type units = Units.Type.SUBSTITUTIONS;
 	public boolean fixedSubstitutionRate = false;
 	public boolean hasSetFixedSubstitutionRate = false;
 	public int clockModel = STRICT_CLOCK;

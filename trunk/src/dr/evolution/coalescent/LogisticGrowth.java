@@ -38,7 +38,7 @@ public class LogisticGrowth extends ExponentialGrowth {
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public LogisticGrowth(int units) {
+	public LogisticGrowth(Type units) {
 	
 		super(units);
 	}

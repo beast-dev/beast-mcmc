@@ -56,7 +56,7 @@ public class ExponentialSawtoothModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ExponentialSawtoothModel( Parameter N0Parameter, Parameter growthRateParameter, Parameter wavelengthParameter, Parameter offsetParameter, int units) {
+	public ExponentialSawtoothModel( Parameter N0Parameter, Parameter growthRateParameter, Parameter wavelengthParameter, Parameter offsetParameter, Type units) {
 	
 		this(EXPONENTIAL_SAWTOOTH, N0Parameter, growthRateParameter, wavelengthParameter, offsetParameter, units);
 	}
@@ -64,7 +64,7 @@ public class ExponentialSawtoothModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ExponentialSawtoothModel(String name, Parameter N0Parameter, Parameter growthRateParameter, Parameter wavelengthParameter, Parameter offsetParameter, int units) {
+	public ExponentialSawtoothModel(String name, Parameter N0Parameter, Parameter growthRateParameter, Parameter wavelengthParameter, Parameter offsetParameter, Type units) {
 	
 		super(name);
 		
@@ -115,7 +115,7 @@ public class ExponentialSawtoothModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			int units = XMLParser.Utils.getUnitsAttr(xo);
+			Type units = XMLParser.Utils.getUnitsAttr(xo);
 			
 			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);

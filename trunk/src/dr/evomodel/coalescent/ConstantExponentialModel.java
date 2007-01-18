@@ -57,7 +57,7 @@ public class ConstantExponentialModel extends DemographicModel
 	 * Construct demographic model with default settings
 	 */
 	public ConstantExponentialModel(Parameter N0Parameter, Parameter timeParameter, 
-									Parameter growthRateParameter, int units, boolean usingGrowthRate) {
+									Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
 	
 		this(CONSTANT_EXPONENTIAL_MODEL, N0Parameter, timeParameter, growthRateParameter, units, usingGrowthRate);
 	}
@@ -66,7 +66,7 @@ public class ConstantExponentialModel extends DemographicModel
 	 * Construct demographic model with default settings
 	 */
 	public ConstantExponentialModel(String name, Parameter N0Parameter, Parameter timeParameter, 
-									Parameter growthRateParameter, int units, boolean usingGrowthRate) {
+									Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
 	
 		super(name);
 		
@@ -119,7 +119,7 @@ public class ConstantExponentialModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			int units = XMLParser.Utils.getUnitsAttr(xo);
+			Type units = XMLParser.Utils.getUnitsAttr(xo);
 				
 			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);

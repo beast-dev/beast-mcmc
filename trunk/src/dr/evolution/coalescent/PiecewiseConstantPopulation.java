@@ -41,7 +41,7 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
 	 * @param thetas the population sizes of each interval. The last population size represents the
 	 * time from the end of the last interval out to infinity. 
 	 */
-	public PiecewiseConstantPopulation(double[] intervals, double[] thetas, int units) {
+	public PiecewiseConstantPopulation(double[] intervals, double[] thetas, Type units) {
 		super(units);
 		if (thetas == null || intervals == null) { throw new IllegalArgumentException(); }
 		if (thetas.length != intervals.length + 1) { throw new IllegalArgumentException(); }

@@ -39,26 +39,38 @@ import java.util.ArrayList;
  */
 public interface Parameter extends Statistic
 {
-	/** @return the parameter's scalar value in the given dimension */
+	/** @return the parameter's scalar value in the given dimension
+     *  @param dim
+     */
 	double getParameterValue(int dim);
 
-    /**     * @return the parameter's values
+    /** @return the parameter's values
      */
     double[] getParameterValues();
 
-	/** sets the scalar value in the given dimension of this parameter */
+	/** sets the scalar value in the given dimension of this parameter
+     * @param dim
+     * @param value
+     */
 	void setParameterValue(int dim, double value);
 
-    /** sets the scalar value in the given dimensin of this parameter, without firing any events */
-    void setParameterValueQuietly(int i, double val); 
+    /** sets the scalar value in the given dimensin of this parameter to val, without firing any events
+     * @param dim
+     * @param value
+     */
+    void setParameterValueQuietly(int dim, double value);
 
 	/** @return the name of this parameter */
 	String getParameterName();
 
-	/** adds a parameter listener that is notified when this parameter changes. */
+	/** adds a parameter listener that is notified when this parameter changes.
+     * @param listener
+     */
 	void addParameterListener(ParameterListener listener);
 	
-	/** removes a parameter listener. */
+	/** removes a parameter listener.
+     * @param listener\
+     */
 	void removeParameterListener(ParameterListener listener);
 	
 	/** stores the state of this parameter for subsquent restore */
@@ -70,22 +82,29 @@ public interface Parameter extends Statistic
 	/** accepts the stored state of this parameter */
 	void acceptParameterValues();
 	
-	/** adopt the state of the source parameter */
+	/** adopt the state of the source parameter
+     * @param source
+     */
 	void adoptParameterValues(Parameter source);
 	
-	/** checks whether values in all dimensions are within their bounds */
+	/**
+     * @return true if values in all dimensions are within their bounds
+     * */
 	boolean isWithinBounds();
 	
 	/** 
      * Can be called before store is called. If it results in new
 	 * dimensions, then the value of the first dimension is copied into the new dimensions.
-	 */
+     * @param dim new dimention
+     */
 	public void setDimension(int dim);
 	
-	/** adds new bounds to this parameter */
+	/** Adds new bounds to this parameter
+     * @param bounds to add
+     */
 	void addBounds(Bounds bounds);
 	
-	/** returns the intersection of all bounds added to this parameter */
+	/** @return the intersection of all bounds added to this parameter */
 	Bounds getBounds();
 		
 	/**
@@ -104,18 +123,18 @@ public interface Parameter extends Statistic
 		
 		/**
 		 * Fired when a single dimension of the parameter has changed
-		 */
+         * @param index which dimention changed
+         */
 		public void fireParameterChangedEvent(int index) {
 			if (listeners != null) {
-				for (int i =0; i < listeners.size(); i++) {
-					ParameterListener listener = (ParameterListener)listeners.get(i);
-					listener.parameterChangedEvent(this, index);
-				}
-			}
+                for (ParameterListener listener : listeners) {
+                    listener.parameterChangedEvent(this, index);
+                }
+            }
 		}
 		
 		public void addParameterListener(ParameterListener listener) {
-			if (listeners == null) {listeners = new ArrayList();}
+			if (listeners == null) {listeners = new ArrayList<ParameterListener>();}
 			listeners.add(listener);
 		}
 		
@@ -195,13 +214,13 @@ public interface Parameter extends Statistic
 
 		public String toString() {
 			StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
-			buffer.append(getId()+"=[" + String.valueOf(getBounds().getLowerLimit(0)));
-			buffer.append("," + String.valueOf(getBounds().getUpperLimit(0)) + "]");
+            buffer.append(getId()).append("=[").append(String.valueOf(getBounds().getLowerLimit(0)));
+            buffer.append(",").append(String.valueOf(getBounds().getUpperLimit(0))).append("]");
 			
 			for (int i = 1; i < getDimension(); i++) {
-				buffer.append(", " + String.valueOf(getParameterValue(i)));
-				buffer.append("[" + String.valueOf(getBounds().getLowerLimit(i)));
-				buffer.append("," + String.valueOf(getBounds().getUpperLimit(i)) + "]");
+                buffer.append(", ").append(String.valueOf(getParameterValue(i)));
+                buffer.append("[").append(String.valueOf(getBounds().getLowerLimit(i)));
+                buffer.append(",").append(String.valueOf(getBounds().getUpperLimit(i))).append("]");
 			}
 			return buffer.toString();
 		}
@@ -212,8 +231,8 @@ public interface Parameter extends Statistic
 		
 		private boolean isValid = true;
 		
-		private ArrayList listeners;
-	};
+		private ArrayList<ParameterListener> listeners;
+	}
 	
 	
 	/**
@@ -296,7 +315,7 @@ public interface Parameter extends Statistic
 		public void setDimension(int dim) {
 			if (!hasBeenStored) {
 				double[] newValues = new double[dim];
-				for (int i =0; i < values.length; i++) {
+				for (int i = 0; i < values.length; i++) {
 					newValues[i] = values[i];
 				}
 				for (int i = values.length; i < newValues.length; i++) {
@@ -314,11 +333,11 @@ public interface Parameter extends Statistic
 
         /**
          * Sets the value of the parameter without firing a changed event.
-         * @param i
-         * @param val
+         * @param dim
+         * @param value
          */
-        public void setParameterValueQuietly(int i, double val) {
-            values[i] = val;
+        public void setParameterValueQuietly(int dim, double value) {
+            values[dim] = value;
         }
 
 		protected final void storeValues() {
@@ -375,16 +394,17 @@ public interface Parameter extends Statistic
 			}
 		}
 		
-		public DefaultBounds(ArrayList upperList, ArrayList lowerList) {
-			
-			if (upperList.size() != lowerList.size()) { 
+		public DefaultBounds(ArrayList<Double> upperList, ArrayList<Double> lowerList) {
+
+            final int length = upperList.size();
+            if (length != lowerList.size()) {
 				throw new IllegalArgumentException("upper and lower limits must be defined on the same number of dimensions.");
 			}
-			this.uppers = new double[upperList.size()];
-			this.lowers = new double[upperList.size()];
-			for (int i =0; i < uppers.length; i++) {
-				uppers[i] = ((Double)upperList.get(i)).doubleValue();
-				lowers[i] = ((Double)lowerList.get(i)).doubleValue();
+			uppers = new double[length];
+			lowers = new double[length];
+			for (int i = 0; i < uppers.length; i++) {
+				uppers[i] = upperList.get(i);
+				lowers[i] = lowerList.get(i);
 			}
 		}
 		
@@ -401,7 +421,6 @@ public interface Parameter extends Statistic
 		public double getLowerLimit(int i) { return lowers[i]; }
 		public int getBoundsDimension() { return uppers.length; }	
 	
-		double[] uppers, lowers;
+		private double[] uppers, lowers;
 	}
-	
 }

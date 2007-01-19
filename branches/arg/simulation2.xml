@@ -52,10 +52,10 @@
         </sequence>
     </alignment>
 
-    <patterns id="patterns1" from="1" to="501">
+    <patterns id="patterns1" from="1" to="500">
         <alignment idref="alignment"/>
     </patterns>
-    <patterns id="patterns2" from="500">
+    <patterns id="patterns2" from="501" to="1000">
         <alignment idref="alignment"/>
     </patterns>
 
@@ -180,6 +180,14 @@
         <tossPartitioningOperator>
             <argTreeModel idref="treeModel1"/>
         </tossPartitioningOperator>
+
+        <slidingPatternsOperator weight="3" windowSize="10">
+            <patterns idref="patterns1"/>
+            <patterns idref="patterns2"/>
+            <breakPoints>
+                <parameter id="breakPoints"/>
+            </breakPoints>
+        </slidingPatternsOperator>
 
         <!--       <upDownOperator scaleFactor="0.20" weight="3">
                       <up>

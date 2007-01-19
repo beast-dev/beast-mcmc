@@ -114,6 +114,7 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 
             if (j != iP && i != j &&             // can still occur if i is child of doubly-linked reassortment
                     (tree.getNodeHeight(j) < tree.getNodeHeight(iP)) && (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
+                // todo fix height check for cases where i and j get switched
                 break;
             }
             tries += 1;
@@ -210,10 +211,10 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 //            ARGModel.Node iNode = (ARGModel.Node) i;
 //            ARGModel.Node jNode = (ARGModel.Node) j;
 //            System.err.println("i = "+iNode.number+" : j = "+jNode.number);
-            tree.removeChild(iP, i);
-            tree.singleRemoveChild(jP, j);
-            tree.addChild(jP, i);
-            tree.singleAddChild(iP, j);
+            /* tree.removeChild(iP, i);
+           tree.singleRemoveChild(jP, j);
+           tree.addChild(jP, i);
+           tree.singleAddChild(iP, j);*/
         }
 
         try {

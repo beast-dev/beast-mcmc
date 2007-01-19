@@ -165,6 +165,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.WilsonBalding.PARSER);
         addXMLObjectParser(dr.evomodel.operators.SubtreeSlideOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.ARGSubtreeSlideOperator.PARSER);
+        addXMLObjectParser(dr.evomodel.operators.ARGExchangeOperator.NARROW_EXCHANGE_PARSER);
         addXMLObjectParser(dr.evomodel.operators.AddRemoveARGEventOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TossPartitioningOperator.PARSER);
 

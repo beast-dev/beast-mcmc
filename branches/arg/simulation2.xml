@@ -165,6 +165,10 @@
             <argTreeModel idref="treeModel1"/>
         </argSubtreeSlide>
 
+        <argNarrowExchange weight="15">
+            <argTreeModel idref="treeModel1"/>
+        </argNarrowExchange>
+
         <scaleOperator scaleFactor="0.75" adapt="true" weight="3">
             <parameter idref="treeModel1.rootHeight"/>
         </scaleOperator>

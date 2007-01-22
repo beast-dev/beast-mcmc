@@ -224,12 +224,13 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.model.SumStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.ReciprocalStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.NegateStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.NotStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.ExponentiationStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.ExpressionStatistic.PARSER);
 
 		addXMLObjectParser(dr.inference.mcmc.MCMC.PARSER);
 		addXMLObjectParser(dr.inference.ml.MLOptimizer.PARSER);
-        
+
         dr.inference.loggers.MCLogger.setMasterDir(masterDir);
 
         addXMLObjectParser(dr.inference.loggers.MCLogger.PARSER);

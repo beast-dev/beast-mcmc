@@ -376,7 +376,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             boolean useAmbiguities = false;
             boolean storePartials = true;
             boolean useScaling = false;
-            boolean useRateNormalization = false;
             if (xo.hasAttribute(USE_AMBIGUITIES)) {
                 useAmbiguities = xo.getBooleanAttribute(USE_AMBIGUITIES);
             }

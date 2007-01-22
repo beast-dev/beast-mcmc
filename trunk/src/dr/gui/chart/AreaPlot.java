@@ -126,7 +126,6 @@ public class AreaPlot extends Plot.AbstractPlot {
 		GeneralPath path = new GeneralPath();
 		path.moveTo((float)x0, (float)y0);
 		
-		boolean failed = false;
 		double x = x0;
 		double y = y0;
 		

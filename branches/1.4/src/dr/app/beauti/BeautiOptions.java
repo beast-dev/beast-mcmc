@@ -62,9 +62,9 @@ public class BeautiOptions {
 		createParameter("skyline.popSize", "Bayesian Skyline population sizes", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
 		createParameter("yule.birthRate", "Yule speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("birthDeath.birthRate", "Birth-Death speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("birthDeath.deathRate", "Birth-Death speciation process death rate", BIRTH_RATE_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
-        //createParameter("birthDeath.samplingProportion", "Birth-Death speciation process sampling proportion", NONE, 1.0, 0.0, 1.0);
+		createParameter("birthDeath.birthRate", "Birth-Death speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+		createParameter("birthDeath.deathRate", "Birth-Death speciation process death rate", BIRTH_RATE_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+		//createParameter("birthDeath.samplingProportion", "Birth-Death speciation process sampling proportion", NONE, 1.0, 0.0, 1.0);
 
 		createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("uced.mean", "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -131,9 +131,9 @@ public class BeautiOptions {
 		createOperator("skyline.popSize", SCALE, 0.75, demoWeights * 5);
 		createOperator("skyline.groupSize", INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
 		createOperator("yule.birthRate", SCALE, 0.75, demoWeights);
-        createOperator("birthDeath.birthRate", SCALE, 0.75, demoWeights);
-        createOperator("birthDeath.deathRate", SCALE, 0.75, demoWeights);
-        //createOperator("birthDeath.samplingProportion", RANDOM_WALK, 0.75, demoWeights);
+		createOperator("birthDeath.birthRate", SCALE, 0.75, demoWeights);
+		createOperator("birthDeath.deathRate", SCALE, 0.75, demoWeights);
+		//createOperator("birthDeath.samplingProportion", RANDOM_WALK, 0.75, demoWeights);
 
 		createOperator("clock.rate", SCALE, 0.75, rateWeights);
 		createOperator("uced.mean", SCALE, 0.75, rateWeights);
@@ -234,7 +234,7 @@ public class BeautiOptions {
 
 	/**
 	 * return an list of operators that are required
-     * @return the parameter list
+	 * @return the parameter list
 	 */
 	public ArrayList selectParameters() {
 
@@ -286,11 +286,11 @@ public class BeautiOptions {
 						param.uniformUpper = timeScaleMaximum;
 						param.initial = initialRootHeight;
 						break;
-                    case T50_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = timeScaleMaximum;
-                        param.initial = initialRootHeight / 5.0;
-                        break;
+					case T50_SCALE:
+						param.uniformLower = 0.0;
+						param.uniformUpper = timeScaleMaximum;
+						param.initial = initialRootHeight / 5.0;
+						break;
 					case GROWTH_RATE_SCALE:
 						param.uniformLower = -growthRateMaximum;
 						param.uniformUpper = growthRateMaximum;
@@ -329,7 +329,7 @@ public class BeautiOptions {
 
 	/**
 	 * return an list of operators that are required
-     * @return the operator list
+	 * @return the operator list
 	 */
 	public ArrayList selectOperators() {
 
@@ -337,65 +337,65 @@ public class BeautiOptions {
 
 		selectOperators(ops);
 
-        double initialRootHeight = 1;
+		double initialRootHeight = 1;
 
 
-        if (fixedSubstitutionRate) {
-            double rate = meanSubstitutionRate;
+		if (fixedSubstitutionRate) {
+			double rate = meanSubstitutionRate;
 
-            if (alignment != null) {
-                initialRootHeight = meanDistance / rate;
-                initialRootHeight = round(initialRootHeight, 2);
-            }
+			if (alignment != null) {
+				initialRootHeight = meanDistance / rate;
+				initialRootHeight = round(initialRootHeight, 2);
+			}
 
-        } else {
-            if (maximumTipHeight > 0) {
-                initialRootHeight = maximumTipHeight * 10.0;
-            }
-        }
+		} else {
+			if (maximumTipHeight > 0) {
+				initialRootHeight = maximumTipHeight * 10.0;
+			}
+		}
 
-        Operator op = getOperator("subtreeSlide");
-        if (!op.tuningEdited) {
-            op.tuning = initialRootHeight / 10.0;
-        }
+		Operator op = getOperator("subtreeSlide");
+		if (!op.tuningEdited) {
+			op.tuning = initialRootHeight / 10.0;
+		}
 
-        return ops;
+		return ops;
 	}
 
 	/**
 	 * return a list of parameters that are required
-     * @param params the parameter list
+	 * @param params the parameter list
 	 */
 	private void selectParameters(ArrayList params) {
 
 		if (alignment != null) {
 
-            if (partitionCount > 1) {
-                for (int i = 1; i <= partitionCount; i++) {
-                    params.add(getParameter("siteModel" + i + ".mu"));
-                }
-            }
+			if (partitionCount > 1) {
+				for (int i = 1; i <= partitionCount; i++) {
+					params.add(getParameter("siteModel" + i + ".mu"));
+				}
+			}
 
 			boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
 
 			if (nucs) {
 				if (nucSubstitutionModel == HKY) {
-                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
-                        for (int i = 1; i <= partitionCount; i++) {
-                            params.add(getParameter("hky" + i + ".kappa"));
-                        }
-                    } else {
-                        params.add(getParameter("hky.kappa"));
-                    }
+					if (partitionCount > 1 && unlinkedSubstitutionModel) {
+						for (int i = 1; i <= partitionCount; i++) {
+							params.add(getParameter("hky" + i + ".kappa"));
+						}
+					} else {
+						params.add(getParameter("hky.kappa"));
+					}
 				} else if (nucSubstitutionModel == GTR) {
-                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
-                        for (int i = 1; i <= partitionCount; i++) {
-                            params.add(getParameter("gtr" + i + ".ac"));
-                            params.add(getParameter("gtr" + i + ".ag"));
-                            params.add(getParameter("gtr" + i + ".at"));
-                            params.add(getParameter("gtr" + i + ".cg"));
-                            params.add(getParameter("gtr" + i + ".gt"));
-                        }
+					if (partitionCount > 1 && unlinkedSubstitutionModel) {
+						for (int i = 1; i <= partitionCount; i++) {
+							params.add(getParameter("gtr" + i + ".ac"));
+							params.add(getParameter("gtr" + i + ".ag"));
+							params.add(getParameter("gtr" + i + ".at"));
+							params.add(getParameter("gtr" + i + ".cg"));
+							params.add(getParameter("gtr" + i + ".gt"));
+						}
 					} else {
 						params.add(getParameter("gtr.ac"));
 						params.add(getParameter("gtr.ag"));
@@ -408,10 +408,10 @@ public class BeautiOptions {
 
 			// if gamma do shape move
 			if (gammaHetero) {
-                if (partitionCount > 1 && unlinkedHeterogeneityModel) {
-                    for (int i = 1; i <= partitionCount; i++) {
-                        params.add(getParameter("siteModel" + i + ".alpha"));
-                    }
+				if (partitionCount > 1 && unlinkedHeterogeneityModel) {
+					for (int i = 1; i <= partitionCount; i++) {
+						params.add(getParameter("siteModel" + i + ".alpha"));
+					}
 				} else {
 					params.add(getParameter("siteModel.alpha"));
 				}
@@ -419,9 +419,9 @@ public class BeautiOptions {
 			// if pinv do pinv move
 			if (invarHetero) {
 				if (partitionCount > 1 && unlinkedHeterogeneityModel) {
-                    for (int i = 1; i <= partitionCount; i++) {
-                        params.add(getParameter("siteModel" + i + ".pInv"));
-                    }
+					for (int i = 1; i <= partitionCount; i++) {
+						params.add(getParameter("siteModel" + i + ".pInv"));
+					}
 				} else {
 					params.add(getParameter("siteModel.pInv"));
 				}
@@ -495,11 +495,11 @@ public class BeautiOptions {
 			params.add(getParameter("skyline.popSize"));
 		} else if (nodeHeightPrior == YULE) {
 			params.add(getParameter("yule.birthRate"));
-        } else if (nodeHeightPrior == BIRTH_DEATH) {
-            params.add(getParameter("birthDeath.birthRate"));
-            params.add(getParameter("birthDeath.deathRate"));
-            // at present we are not allowing the sampling of samplingProportion
-        }
+		} else if (nodeHeightPrior == BIRTH_DEATH) {
+			params.add(getParameter("birthDeath.birthRate"));
+			params.add(getParameter("birthDeath.deathRate"));
+			// at present we are not allowing the sampling of samplingProportion
+		}
 
 		params.add(getParameter("treeModel.rootHeight"));
 	}
@@ -527,7 +527,7 @@ public class BeautiOptions {
 
 	/**
 	 * return a list of operators that are required
-     * @param ops the operator list
+	 * @param ops the operator list
 	 */
 	private void selectOperators(ArrayList ops) {
 
@@ -536,53 +536,53 @@ public class BeautiOptions {
 			boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
 
 			if (nucs) {
-                if (nucSubstitutionModel == HKY) {
-                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
-                        for (int i = 1; i <= partitionCount; i++) {
-                            ops.add(getOperator("hky" + i + ".kappa"));
-                        }
-                    } else {
-                        ops.add(getOperator("hky.kappa"));
-                    }
-                } else if (nucSubstitutionModel == GTR) {
-                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
-                        for (int i = 1; i <= partitionCount; i++) {
-                            ops.add(getOperator("gtr" + i + ".ac"));
-                            ops.add(getOperator("gtr" + i + ".ag"));
-                            ops.add(getOperator("gtr" + i + ".at"));
-                            ops.add(getOperator("gtr" + i + ".cg"));
-                            ops.add(getOperator("gtr" + i + ".gt"));
-                        }
-                    } else {
-                        ops.add(getOperator("gtr.ac"));
-                        ops.add(getOperator("gtr.ag"));
-                        ops.add(getOperator("gtr.at"));
-                        ops.add(getOperator("gtr.cg"));
-                        ops.add(getOperator("gtr.gt"));
-                    }
-                }
+				if (nucSubstitutionModel == HKY) {
+					if (partitionCount > 1 && unlinkedSubstitutionModel) {
+						for (int i = 1; i <= partitionCount; i++) {
+							ops.add(getOperator("hky" + i + ".kappa"));
+						}
+					} else {
+						ops.add(getOperator("hky.kappa"));
+					}
+				} else if (nucSubstitutionModel == GTR) {
+					if (partitionCount > 1 && unlinkedSubstitutionModel) {
+						for (int i = 1; i <= partitionCount; i++) {
+							ops.add(getOperator("gtr" + i + ".ac"));
+							ops.add(getOperator("gtr" + i + ".ag"));
+							ops.add(getOperator("gtr" + i + ".at"));
+							ops.add(getOperator("gtr" + i + ".cg"));
+							ops.add(getOperator("gtr" + i + ".gt"));
+						}
+					} else {
+						ops.add(getOperator("gtr.ac"));
+						ops.add(getOperator("gtr.ag"));
+						ops.add(getOperator("gtr.at"));
+						ops.add(getOperator("gtr.cg"));
+						ops.add(getOperator("gtr.gt"));
+					}
+				}
 			}
 
-            // if gamma do shape move
-            if (gammaHetero) {
-                if (partitionCount > 1 && unlinkedHeterogeneityModel) {
-                    for (int i = 1; i <= partitionCount; i++) {
-                        ops.add(getOperator("siteModel" + i + ".alpha"));
-                    }
-                } else {
-                    ops.add(getOperator("siteModel.alpha"));
-                }
-            }
-            // if pinv do pinv move
-            if (invarHetero) {
-                if (partitionCount > 1 && unlinkedHeterogeneityModel) {
-                    for (int i = 1; i <= partitionCount; i++) {
-                        ops.add(getOperator("siteModel" + i + ".pInv"));
-                    }
-                } else {
-                    ops.add(getOperator("siteModel.pInv"));
-                }
-            }
+			// if gamma do shape move
+			if (gammaHetero) {
+				if (partitionCount > 1 && unlinkedHeterogeneityModel) {
+					for (int i = 1; i <= partitionCount; i++) {
+						ops.add(getOperator("siteModel" + i + ".alpha"));
+					}
+				} else {
+					ops.add(getOperator("siteModel.alpha"));
+				}
+			}
+			// if pinv do pinv move
+			if (invarHetero) {
+				if (partitionCount > 1 && unlinkedHeterogeneityModel) {
+					for (int i = 1; i <= partitionCount; i++) {
+						ops.add(getOperator("siteModel" + i + ".pInv"));
+					}
+				} else {
+					ops.add(getOperator("siteModel.pInv"));
+				}
+			}
 
 			if (partitionCount > 1) {
 				ops.add(getOperator("centeredMu"));
@@ -653,10 +653,10 @@ public class BeautiOptions {
 			ops.add(getOperator("skyline.groupSize"));
 		} else if (nodeHeightPrior == YULE) {
 			ops.add(getOperator("yule.birthRate"));
-        } else if (nodeHeightPrior == BIRTH_DEATH) {
-            ops.add(getOperator("birthDeath.birthRate"));
-            ops.add(getOperator("birthDeath.deathRate"));
-            // at present we are not allowing the sampling of samplingProportion
+		} else if (nodeHeightPrior == BIRTH_DEATH) {
+			ops.add(getOperator("birthDeath.birthRate"));
+			ops.add(getOperator("birthDeath.deathRate"));
+			// at present we are not allowing the sampling of samplingProportion
 		}
 
 		ops.add(getOperator("treeModel.rootHeight"));
@@ -679,11 +679,11 @@ public class BeautiOptions {
 
 	/**
 	 * Read options from a file
-     * @param includeData include a data block?
-     * @param guessDates guess dates?
-     * @return the Document
-     */
-    public Document create(boolean includeData, boolean guessDates) {
+	 * @param includeData include a data block?
+	 * @param guessDates guess dates?
+	 * @return the Document
+	 */
+	public Document create(boolean includeData, boolean guessDates) {
 
 		Element root = new Element("beauti");
 		root.setAttribute("version", version);
@@ -719,7 +719,7 @@ public class BeautiOptions {
 		dataElement.addContent(createChild("fromLast", fromLast));
 		dataElement.addContent(createChild("order", order));
 		dataElement.addContent(createChild("prefix", prefix));
-        dataElement.addContent(createChild("offset", offset));
+		dataElement.addContent(createChild("offset", offset));
 		dataElement.addContent(createChild("unlessLessThan", unlessLessThan));
 		dataElement.addContent(createChild("offset2", offset2));
 
@@ -801,7 +801,7 @@ public class BeautiOptions {
 			Operator operator = (Operator)operators.get(name);
 			Element e = new Element(name);
 			e.addContent(createChild("tuning", operator.tuning));
-            e.addContent(createChild("tuningEdited", operator.tuningEdited));
+			e.addContent(createChild("tuningEdited", operator.tuningEdited));
 			e.addContent(createChild("weight", (int)operator.weight));
 			operatorsElement.addContent(e);
 		}
@@ -828,10 +828,10 @@ public class BeautiOptions {
 
 	private Element createChild(String name, String value) {
 		Element e = new Element(name);
-        if (value != null) {
-            e.setText(value);
-        }
-        return e;
+		if (value != null) {
+			e.setText(value);
+		}
+		return e;
 	}
 
 	private Element createChild(String name, int value) {
@@ -854,10 +854,10 @@ public class BeautiOptions {
 
 	/**
 	 * Read options from a file
-     * @param document the Document
-     * @throws dr.xml.XMLParseException if there is a problem with XML parsing
-     */
-    public void parse(Document document) throws dr.xml.XMLParseException {
+	 * @param document the Document
+	 * @throws dr.xml.XMLParseException if there is a problem with XML parsing
+	 */
+	public void parse(Document document) throws dr.xml.XMLParseException {
 
 		Element root = document.getRootElement();
 		if (!root.getName().equals("beauti")) {
@@ -943,11 +943,11 @@ public class BeautiOptions {
 				while (iter2.hasNext()) {
 					Element taxonElement = (Element)iter2.next();
 					String taxonId = getStringChild(taxonElement, "id", "");
-                    int index = taxonList.getTaxonIndex(taxonId);
-                    if (index != -1) {
-                        taxonSet.addTaxon(taxonList.getTaxon(index));
-                    }
-                }
+					int index = taxonList.getTaxonIndex(taxonId);
+					if (index != -1) {
+						taxonSet.addTaxon(taxonList.getTaxon(index));
+					}
+				}
 				taxonSets.add(taxonSet);
 			}
 		}
@@ -958,7 +958,7 @@ public class BeautiOptions {
 			gammaHetero = getBooleanChild(modelElement, "gammaHetero", false);
 			gammaCategories = getIntegerChild(modelElement, "gammaCategories", 5);
 			invarHetero = getBooleanChild(modelElement, "invarHetero", false);
-            codonHeteroPattern = (getBooleanChild(modelElement, "codonHetero", false) ? "123": null);
+			codonHeteroPattern = (getBooleanChild(modelElement, "codonHetero", false) ? "123": null);
 			codonHeteroPattern = getStringChild(modelElement, "codonHeteroPattern", null);
 			maximumTipHeight = getDoubleChild(modelElement, "maximumTipHeight", 0.0);
 			fixedSubstitutionRate = getBooleanChild(modelElement, "fixedSubstitutionRate", false);
@@ -994,7 +994,7 @@ public class BeautiOptions {
 				}
 
 				operator.tuning = getDoubleChild(e, "tuning", 1.0);
-                operator.tuningEdited = getBooleanChild(e, "tuningEdited", false);
+				operator.tuningEdited = getBooleanChild(e, "tuningEdited", false);
 				operator.weight = getIntegerChild(e, "weight", 1);
 			}
 		}
@@ -1066,163 +1066,171 @@ public class BeautiOptions {
 		return false;
 	}
 
-    public void guessDates() {
+	public void guessDates() {
 
-        for (int i = 0; i < originalAlignment.getTaxonCount(); i++) {
-            java.util.Date origin = new java.util.Date(0);
+		for (int i = 0; i < originalAlignment.getTaxonCount(); i++) {
+			java.util.Date origin = new java.util.Date(0);
 
-            double d = 0.0;
+			double d = 0.0;
 
-            try {
-                if (guessDateFromOrder) {
-                    d = guessDateFromOrder(originalAlignment.getTaxonId(i), order, fromLast);
-                } else {
-                    d = guessDateFromPrefix(originalAlignment.getTaxonId(i), prefix);
-                }
+			try {
+				if (guessDateFromOrder) {
+					d = guessDateFromOrder(originalAlignment.getTaxonId(i), order, fromLast);
+				} else {
+					d = guessDateFromPrefix(originalAlignment.getTaxonId(i), prefix);
+				}
 
-            } catch (NumberFormatException nfe) {
-            }
+			} catch (GuessDatesException gfe) {
+			}
 
-            if (offset > 0) {
-                if (unlessLessThan > 0) {
-                    if (d < unlessLessThan) {
-                        d += offset2;
-                    } else {
-                        d += offset;
-                    }
-                } else {
-                    d += offset;
-                }
-            }
+			if (offset > 0) {
+				if (unlessLessThan > 0) {
+					if (d < unlessLessThan) {
+						d += offset2;
+					} else {
+						d += offset;
+					}
+				} else {
+					d += offset;
+				}
+			}
 
-            Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
-            originalAlignment.getTaxon(i).setAttribute("date", date);
-        }
+			Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
+			originalAlignment.getTaxon(i).setAttribute("date", date);
+		}
 
-        // adjust the dates to the current timescale...
-        timeScaleChanged();
-    }
+		// adjust the dates to the current timescale...
+		timeScaleChanged();
+	}
 
-    public double guessDateFromOrder(String label, int order, boolean fromLast) throws NumberFormatException {
+	public double guessDateFromOrder(String label, int order, boolean fromLast) throws GuessDatesException {
 
-        String field = null;
+		String field = null;
 
-        if (fromLast) {
-            int count = 0;
-            int i = label.length() - 1;
+		if (fromLast) {
+			int count = 0;
+			int i = label.length() - 1;
 
-            char c = label.charAt(i);
+			char c = label.charAt(i);
 
-            do {
-                // first find a part of a number
-                while (!Character.isDigit(c) && c != '.') {
-                    i--;
-                    if (i < 0) break;
-                    c = label.charAt(i);
-                }
+			do {
+				// first find a part of a number
+				while (!Character.isDigit(c) && c != '.') {
+					i--;
+					if (i < 0) break;
+					c = label.charAt(i);
+				}
 
-                if (i < 0) new NumberFormatException("Missing number field in taxon label");
+				if (i < 0) throw new GuessDatesException("Missing number field in taxon label, " + label);
 
-                int j = i + 1;
+				int j = i + 1;
 
-                // now find the beginning of the number
-                while (Character.isDigit(c) || c == '.') {
-                    i--;
-                    if (i < 0) break;
-                    c = label.charAt(i);
-                }
+				// now find the beginning of the number
+				while (Character.isDigit(c) || c == '.') {
+					i--;
+					if (i < 0) break;
+					c = label.charAt(i);
+				}
 
-                field = label.substring(i+1, j);
+				field = label.substring(i+1, j);
 
-                count++;
+				count++;
 
-            } while (count <= order);
+			} while (count <= order);
 
-        } else {
-            int count = 0;
-            int i = 0;
+		} else {
+			int count = 0;
+			int i = 0;
 
-            char c = label.charAt(i);
+			char c = label.charAt(i);
 
-            do {
-                // first find a part of a number
-                while (!Character.isDigit(c) && c != '.') {
-                    i++;
-                    if (i == label.length()) break;
-                    c = label.charAt(i);
-                }
-                int j = i;
+			do {
+				// first find a part of a number
+				while (!Character.isDigit(c) && c != '.') {
+					i++;
+					if (i == label.length()) break;
+					c = label.charAt(i);
+				}
+				int j = i;
 
-                if (i == label.length()) new NumberFormatException("Missing number field in taxon label");
+				if (i == label.length()) throw new GuessDatesException("Missing number field in taxon label, " + label);
 
-                // now find the beginning of the number
-                while (Character.isDigit(c) || c == '.') {
-                    i++;
-                    if (i == label.length()) break;
-                    c = label.charAt(i);
-                }
+				// now find the beginning of the number
+				while (Character.isDigit(c) || c == '.') {
+					i++;
+					if (i == label.length()) break;
+					c = label.charAt(i);
+				}
 
-                field = label.substring(j, i);
+				field = label.substring(j, i);
 
-                count++;
+				count++;
 
-            } while (count <= order);
-        }
+			} while (count <= order);
+		}
 
-        return Double.parseDouble(field);
-    }
+		return Double.parseDouble(field);
+	}
 
-    public double guessDateFromPrefix(String label, String prefix) throws NumberFormatException {
+	public double guessDateFromPrefix(String label, String prefix) throws GuessDatesException {
 
-        int i = label.indexOf(prefix);
+		int i = label.indexOf(prefix);
 
-        if (i == -1) new NumberFormatException("Missing prefix in taxon label");
+		if (i == -1) throw new GuessDatesException("Missing prefix in taxon label, " + label);
 
-        i += prefix.length();
-        int j = i;
+		i += prefix.length();
+		int j = i;
 
-        // now find the beginning of the number
-        char c = label.charAt(i);
-        while (i < label.length() && (Character.isDigit(c) || c == '.')) {
-            i++;
-            c = label.charAt(i);
-        }
+		// now find the beginning of the number
+		char c = label.charAt(i);
+		while (i < label.length() - 1 && (Character.isDigit(c) || c == '.')) {
+			i++;
+			c = label.charAt(i);
+		}
 
-        if (i == j) new NumberFormatException("Missing field after prefix in taxon label");
+		if (i == j) throw new GuessDatesException("Missing field after prefix in taxon label, " + label);
 
-        String field = label.substring(j, i);
+		String field = label.substring(j, i + 1);
 
-        return Double.parseDouble(field);
-    }
+		double d;
 
-    private final void timeScaleChanged() {
+		try {
+			d = Double.parseDouble(field);
+		} catch (NumberFormatException nfe) {
+			throw new GuessDatesException("Badly formated date in taxon label, " + label);
+		}
 
-        for (int i = 0; i < alignment.getTaxonCount(); i++) {
-            Date date = alignment.getTaxon(i).getDate();
-            double d = date.getTimeValue();
+		return d;
+	}
 
-            Date newDate = createDate(d, units, datesDirection == BACKWARDS, 0.0);
+	private final void timeScaleChanged() {
 
-            alignment.getTaxon(i).setDate(newDate);
-        }
+		for (int i = 0; i < alignment.getTaxonCount(); i++) {
+			Date date = alignment.getTaxon(i).getDate();
+			double d = date.getTimeValue();
 
-    }
+			Date newDate = createDate(d, units, datesDirection == BACKWARDS, 0.0);
 
-    private Date createDate(double timeValue, int units, boolean backwards, double origin) {
-        if (backwards) {
-            return Date.createTimeAgoFromOrigin(timeValue, units, origin);
-        } else {
-            return Date.createTimeSinceOrigin(timeValue, units, origin);
-        }
-    }
+			alignment.getTaxon(i).setDate(newDate);
+		}
+
+	}
+
+	private Date createDate(double timeValue, int units, boolean backwards, double origin) {
+		if (backwards) {
+			return Date.createTimeAgoFromOrigin(timeValue, units, origin);
+		} else {
+			return Date.createTimeSinceOrigin(timeValue, units, origin);
+		}
+	}
 	public class Parameter {
 
 		/**
 		 * A constructor for "special" parameters which are not user-configurable
 		 * @param name the name
-         * @param description the description
-         */
-        public Parameter(String name, String description) {
+		 * @param description the description
+		 */
+		public Parameter(String name, String description) {
 			this.name = name;
 			this.description = description;
 			this.scale = NONE;
@@ -1346,8 +1354,8 @@ public class BeautiOptions {
 			this.parameter2 = null;
 
 			this.type = operatorType;
-            this.tuningEdited = false;
-            this.tuning = tuning;
+			this.tuningEdited = false;
+			this.tuning = tuning;
 			this.weight = weight;
 		}
 
@@ -1360,7 +1368,7 @@ public class BeautiOptions {
 			this.parameter2 = parameter2;
 
 			this.type = operatorType;
-            this.tuningEdited = false;
+			this.tuningEdited = false;
 			this.tuning = tuning;
 			this.weight = weight;
 		}
@@ -1385,8 +1393,8 @@ public class BeautiOptions {
 		public final String description;
 
 		public final String type;
-        public boolean tuningEdited;
-        public double tuning;
+		public boolean tuningEdited;
+		public double tuning;
 		public double weight;
 
 		public final Parameter parameter1;
@@ -1402,30 +1410,30 @@ public class BeautiOptions {
 	public static final int BACKWARDS = 1;
 	public static final int NONE = -1;
 
-    public static final int JC = 0;
+	public static final int JC = 0;
 	public static final int HKY = 1;
 	public static final int GTR = 2;
 
-    public static final int BLOSUM_62 = 0;
+	public static final int BLOSUM_62 = 0;
 	public static final int DAYHOFF = 1;
 	public static final int JTT = 2;
 	public static final int MT_REV_24 = 3;
 	public static final int CP_REV_45 = 4;
 	public static final int WAG = 5;
 
-    public static final int CONSTANT = 0;
+	public static final int CONSTANT = 0;
 	public static final int EXPONENTIAL = 1;
 	public static final int LOGISTIC = 2;
 	public static final int EXPANSION = 3;
 	public static final int SKYLINE = 4;
 	public static final int YULE = 5;
-    public static final int BIRTH_DEATH = 6;
+	public static final int BIRTH_DEATH = 6;
 
-    public static final int STRICT_CLOCK = 0;
+	public static final int STRICT_CLOCK = 0;
 	public static final int UNCORRELATED_EXPONENTIAL = 1;
 	public static final int UNCORRELATED_LOGNORMAL = 2;
 
-    public static final int GROWTH_RATE = 0;
+	public static final int GROWTH_RATE = 0;
 	public static final int DOUBLING_TIME = 1;
 	public static final int CONSTANT_SKYLINE = 0;
 	public static final int LINEAR_SKYLINE = 1;
@@ -1441,8 +1449,8 @@ public class BeautiOptions {
 	public static final int SUBSTITUTION_RATE_SCALE = 3;
 	public static final int LOG_STDEV_SCALE = 4;
 	public static final int SUBSTITUTION_PARAMETER_SCALE = 5;
-    public static final int T50_SCALE = 6;
-    public static final String SCALE = "scale";
+	public static final int T50_SCALE = 6;
+	public static final String SCALE = "scale";
 	public static final String RANDOM_WALK = "randomWalk";
 	public static final String UP_DOWN = "upDown";
 	public static final String SCALE_ALL = "scaleAll";
@@ -1487,23 +1495,23 @@ public class BeautiOptions {
 	public double offset2 = 0.0;
 
 	// Model options
-    public int partitionCount = 1;
-    public int nucSubstitutionModel = HKY;
+	public int partitionCount = 1;
+	public int nucSubstitutionModel = HKY;
 	public int aaSubstitutionModel = BLOSUM_62;
 	public boolean gammaHetero = false;
 	public int gammaCategories = 4;
 	public boolean invarHetero = false;
 	public String codonHeteroPattern = null;
 	public double meanSubstitutionRate = 1.0;
-    public boolean unlinkedSubstitutionModel = false;
+	public boolean unlinkedSubstitutionModel = false;
 	public boolean unlinkedHeterogeneityModel = false;
 	public boolean unlinkedFrequencyModel = false;
 	public int nodeHeightPrior = CONSTANT;
 	public int parameterization = GROWTH_RATE;
 	public int skylineGroupCount = 10;
 	public int skylineModel = CONSTANT_SKYLINE;
-    public double birthDeathSamplingProportion = 1.0;
-    public boolean fixedTree = false;
+	public double birthDeathSamplingProportion = 1.0;
+	public boolean fixedTree = false;
 	public int units = Units.SUBSTITUTIONS;
 	public boolean fixedSubstitutionRate = false;
 	public boolean hasSetFixedSubstitutionRate = false;

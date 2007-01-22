@@ -258,7 +258,7 @@ public class DataPanel extends JPanel implements Exportable {
 			sequenceRenderer.setText(options.alignment.getSequence(0).getSequenceString());
 			int w = sequenceRenderer.getPreferredSize().width + 8;
 			dataTable.getColumnModel().getColumn(3).setPreferredWidth(w);
-        }
+		}
 
 		unitsCombo.setSelectedIndex(options.datesUnits);
 		directionCombo.setSelectedIndex(options.datesDirection);
@@ -344,7 +344,7 @@ public class DataPanel extends JPanel implements Exportable {
 
 	public void guessDates() {
 
-		OptionsPanel optionPanel = new OptionsPanel();
+		OptionsPanel optionPanel = new OptionsPanel(12, 12);
 
 		optionPanel.addLabel("The date is given by a numerical field in the taxon label that is:");
 
@@ -430,18 +430,20 @@ public class DataPanel extends JPanel implements Exportable {
 			return;
 		}
 
-        options.guessDates = true;
+		options.guessDates = true;
 
-        for (int i = 0; i < options.originalAlignment.getTaxonCount(); i++) {
+		String warningMessage = null;
+
+		for (int i = 0; i < options.originalAlignment.getTaxonCount(); i++) {
 			java.util.Date origin = new java.util.Date(0);
 
 			double d = 0.0;
 
 			try {
 				if (orderRadio.isSelected()) {
-                    options.guessDateFromOrder = true;
+					options.guessDateFromOrder = true;
 					options.order = orderCombo.getSelectedIndex();
-                    options.fromLast = false;
+					options.fromLast = false;
 					if (options.order > 3) {
 						options.fromLast = true;
 						options.order = 8 - options.order - 1;
@@ -449,18 +451,19 @@ public class DataPanel extends JPanel implements Exportable {
 
 					d = options.guessDateFromOrder(options.originalAlignment.getTaxonId(i), options.order, options.fromLast);
 				} else {
-                    options.guessDateFromOrder = false;
+					options.guessDateFromOrder = false;
 					options.prefix = prefixText.getText();
 					d = options.guessDateFromPrefix(options.originalAlignment.getTaxonId(i), options.prefix);
 				}
 
-			} catch (NumberFormatException nfe) {
+			} catch (GuessDatesException gfe) {
+				warningMessage = gfe.getMessage();
 			}
 
-            options.offset = 0.0;
-            options.unlessLessThan = 0.0;
-            if (offsetCheck.isSelected()) {
-                options.offset = offsetText.getValue().doubleValue();
+			options.offset = 0.0;
+			options.unlessLessThan = 0.0;
+			if (offsetCheck.isSelected()) {
+				options.offset = offsetText.getValue().doubleValue();
 				if (unlessCheck.isSelected()) {
 					options.unlessLessThan = unlessText.getValue().doubleValue();
 					options.offset2 = offset2Text.getValue().doubleValue();
@@ -476,6 +479,12 @@ public class DataPanel extends JPanel implements Exportable {
 
 			Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
 			options.originalAlignment.getTaxon(i).setAttribute("date", date);
+		}
+
+		if (warningMessage != null) {
+			JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
+					"Error guessing dates",
+					JOptionPane.WARNING_MESSAGE);
 		}
 
 		// adjust the dates to the current timescale...

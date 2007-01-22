@@ -51,14 +51,14 @@ public class NegateStatistic extends Statistic.Abstract {
         
         return -statistic.getStatisticValue(dim);
 	}
-		
+
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 		
 		public String getParserName() { return NEGATE_STATISTIC; }
 		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			NegateStatistic negateStatistic = null;
+			NegateStatistic negateStatistic;
 			
             Object child = xo.getChild(0);
             if (child instanceof Statistic) {

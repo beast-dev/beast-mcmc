@@ -346,7 +346,7 @@ public class DataPanel extends JPanel implements Exportable {
 
 	public void guessDates() {
 
-		OptionsPanel optionPanel = new OptionsPanel();
+		OptionsPanel optionPanel = new OptionsPanel(12, 12);
 
 		optionPanel.addLabel("The date is given by a numerical field in the taxon label that is:");
 
@@ -434,6 +434,8 @@ public class DataPanel extends JPanel implements Exportable {
 
         options.guessDates = true;
 
+		String warningMessage = null;
+
         for (int i = 0; i < options.originalAlignment.getTaxonCount(); i++) {
 			java.util.Date origin = new java.util.Date(0);
 
@@ -456,7 +458,8 @@ public class DataPanel extends JPanel implements Exportable {
 					d = options.guessDateFromPrefix(options.originalAlignment.getTaxonId(i), options.prefix);
 				}
 
-			} catch (NumberFormatException nfe) {
+			} catch (GuessDatesException gfe) {
+				warningMessage = gfe.getMessage();
 			}
 
             options.offset = 0.0;
@@ -478,6 +481,12 @@ public class DataPanel extends JPanel implements Exportable {
 
 			Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
 			options.originalAlignment.getTaxon(i).setAttribute("date", date);
+		}
+
+		if (warningMessage != null) {
+			JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
+					"Error guessing dates",
+					JOptionPane.WARNING_MESSAGE);
 		}
 
 		// adjust the dates to the current timescale...

@@ -52,7 +52,7 @@ public class ExponentialDistribution implements Distribution
 	public ExponentialDistribution(double lambda) {
 		this.lambda = lambda;
 	}
-
+	
 	public double pdf(double x) { return pdf(x, lambda); }
 	public double logPdf(double x) { return logPdf(x, lambda); }
 	public double cdf(double x) { return cdf(x, lambda); }
@@ -61,7 +61,7 @@ public class ExponentialDistribution implements Distribution
 	public double variance() { return variance(lambda); }
 	
 	public final UnivariateFunction getProbabilityDensityFunction() { return pdfFunction; }
-
+	
 	private UnivariateFunction pdfFunction = new UnivariateFunction() {
 		public final double evaluate(double x) { return pdf(x); }
 		public final double getLowerBound() { return 0.0; }
@@ -72,7 +72,7 @@ public class ExponentialDistribution implements Distribution
 	/**
 	 * probability density function of the exponential distribution
 	 * (mean = 1/lambda)
-	 *
+	 * 
 	 * @param x argument
 	 * @param lambda parameter of exponential distribution
 	 *
@@ -84,9 +84,9 @@ public class ExponentialDistribution implements Distribution
 	}
 
 	/**
-	 * the natural log of the probability density function of the distribution
+	 * the natural log of the probability density function of the distribution 
 	 * (mean = 1/lambda)
-	 *
+	 * 
 	 * @param x argument
 	 * @param lambda parameter of exponential distribution
 	 *
@@ -99,7 +99,7 @@ public class ExponentialDistribution implements Distribution
 
 	/**
 	 * cumulative density function of the exponential distribution
-	 *
+	 * 
 	 * @param x argument
 	 * @param lambda parameter of exponential distribution
 	 *
@@ -123,7 +123,7 @@ public class ExponentialDistribution implements Distribution
 	{
 		return -(1.0/lambda)*Math.log(1.0-y);
 	}
-
+	
 	/**
 	 * mean of the exponential distribution
 	 *
@@ -147,7 +147,7 @@ public class ExponentialDistribution implements Distribution
 	{
 		return 1.0/(lambda*lambda);
 	}
-
+	
 	// Private
 
 	protected double lambda;

@@ -296,6 +296,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             // Get the operational time of the branch
             double branchTime = branchRate * ( tree.getNodeHeight(parent) - tree.getNodeHeight(node) );
+            
             if (branchTime < 0.0) {
                 throw new RuntimeException("Negative branch length: " + branchTime);
             }

@@ -1090,7 +1090,6 @@ public class TreeModel extends AbstractModel
             n1.traitParameter.setParameterValueQuietly(0, trait1);
             n2.traitParameter.setParameterValueQuietly(0, trait2);
         }
-
     }
 
 
@@ -1264,7 +1263,9 @@ public class TreeModel extends AbstractModel
         public boolean isExternal()	{ return !hasChildren(); }
         public boolean isRoot() { return (parent == null); }
 
-        public String toString() { return taxon.getId(); }
+        public String toString() {
+	        return "node " + number + ", height=" + getHeight() + (taxon != null ? ": " + taxon.getId() : ""); 
+        }
     }
 
     /**

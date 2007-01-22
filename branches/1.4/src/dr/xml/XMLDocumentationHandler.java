@@ -27,9 +27,7 @@ package dr.xml;
 
 import dr.math.MathUtils;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.*;
 
 public class XMLDocumentationHandler {
@@ -226,7 +224,7 @@ public class XMLDocumentationHandler {
 			} else {
 				if (level > 1) {
 					writer.println(spaces(level) + "&lt;" + randomParser.getParserName() +
-						" idref=\"" + randomParser.getParserName() + (MathUtils.nextInt(10)+1) + "\"/&gt;");
+							" idref=\"" + randomParser.getParserName() + (MathUtils.nextInt(10)+1) + "\"/&gt;");
 				} else {
 					outputExampleXML(writer, randomParser, level);
 				}
@@ -363,27 +361,27 @@ public class XMLDocumentationHandler {
 
 	class SetHash {
 
-	    private HashMap table;
+		private HashMap table;
 
-	    public SetHash() { table = new HashMap(); }
+		public SetHash() { table = new HashMap(); }
 
-	    public final void put(Object key, XMLObjectParser o) {
+		public final void put(Object key, XMLObjectParser o) {
 			Set set = (Set)table.get(key);
 
 			if (set != null) {
 			    set.add(o);
 			} else {
-			    TreeSet newSet = new TreeSet();
-			    newSet.add(o);
-			    table.put(key, newSet);
+				TreeSet newSet = new TreeSet();
+				newSet.add(o);
+				table.put(key, newSet);
 			}
-	    }
+		}
 
-	    public final Set keySet() { return table.keySet(); }
+		public final Set keySet() { return table.keySet(); }
 
-	    public final Object[] getArray(Object key) { return getSortedSet(key).toArray(); }
+		public final Object[] getArray(Object key) { return getSortedSet(key).toArray(); }
 
-	    public final SortedSet getSortedSet(Object key) { return (SortedSet)table.get(key); }
+		public final SortedSet getSortedSet(Object key) { return (SortedSet)table.get(key); }
 	}
 
 	class XMLObjectParserComparator implements Comparator {

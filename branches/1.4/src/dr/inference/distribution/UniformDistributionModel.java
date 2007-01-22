@@ -32,11 +32,7 @@ import dr.inference.model.*;
 /**
  * A class that acts as a model for normally distributed data.
  * @author Alexei Drummond
-<<<<<<< UniformDistributionModel.java
- * @version $Id: UniformDistributionModel.java,v 1.4 2005/06/27 21:18:40 rambaut Exp $
-=======
- * @version $Id: UniformDistributionModel.java,v 1.4 2005/06/27 21:18:40 rambaut Exp $
->>>>>>> 1.3
+ * $Id$
  */
 
 public class UniformDistributionModel extends AbstractModel implements ParametricDistributionModel {

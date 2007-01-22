@@ -931,21 +931,22 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 		}
 
 		if (getLastDelimiter() == ':') {
-			length = readDouble(",():;");
+            length = readDouble(",():;");
+
+            if (getLastMetaComment() != null) {
+                // There was a meta-comment which should be in the form:
+                // \[&label[=value][,label[=value]>[,/..]]\]
+                try {
+                    parseMetaCommentPairs(getLastMetaComment(), branch);
+                } catch(BadFormatException bfe) {
+                    // ignore it
+                }
+                clearLastMetaComment();
+            }
+
 		}
 
 		branch.setLength(length);
-
-		if (getLastMetaComment() != null) {
-			// There was a meta-comment which should be in the form:
-			// \[&label[=value][,label[=value]>[,/..]]\]
-			try {
-				parseMetaCommentPairs(getLastMetaComment(), branch);
-			} catch(BadFormatException bfe) {
-				// ignore it
-			}
-			clearLastMetaComment();
-		}
 
 		return branch;
 	}
@@ -980,8 +981,20 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 			throw new BadFormatException("Missing closing ')' in tree in TREES block");
 		}
 
+        readToken(":(),;");
+
+        if (getLastMetaComment() != null) {
+            // There was a meta-comment which should be in the form:
+            // \[&label[=value][,label[=value]>[,/..]]\]
+            try {
+                parseMetaCommentPairs(getLastMetaComment(), node);
+            } catch(BadFormatException bfe) {
+                // ignore it
+            }
+            clearLastMetaComment();
+        }
+
 		// find the next delimiter
-		readToken(":(),;");
 		return node;
 	}
 
@@ -1025,6 +1038,17 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 		} else {
 			taxon = new Taxon(label);
 		}
+
+        if (getLastMetaComment() != null) {
+            // There was a meta-comment which should be in the form:
+            // \[&label[=value][,label[=value]>[,/..]]\]
+            try {
+                parseMetaCommentPairs(getLastMetaComment(), node);
+            } catch(BadFormatException bfe) {
+                // ignore it
+            }
+            clearLastMetaComment();
+        }
 
 		node.setTaxon(taxon);
 		return node;

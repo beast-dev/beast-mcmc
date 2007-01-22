@@ -89,7 +89,7 @@ public class TreeAnnotator {
             System.out.println("Ignoring first" + burnin + " trees.");
         }
 
-        MutableTree targetTree = null;
+        MutableTree targetTree;
 
         if (targetOption == USER_TARGET_TREE) {
             if (targetTreeFileName != null) {
@@ -134,6 +134,8 @@ public class TreeAnnotator {
         System.out.println("|--------------|--------------|--------------|--------------|");
 
         int stepSize = totalTrees / 60;
+        if (stepSize < 1) stepSize = 1;
+
         int counter = 0;
         TreeImporter importer = new NexusImporter(new FileReader(inputFileName));
         try {
@@ -193,7 +195,8 @@ public class TreeAnnotator {
             }
 
             // Recurse over the tree and add all the clades (or increment their
-            // frequency if already present). The root clade is not added.
+            // frequency if already present). The root clade is added too (for
+            // annotation purposes).
             addClades(tree, tree.getRoot(), null);
         }
 
@@ -256,6 +259,11 @@ public class TreeAnnotator {
                     } else {
                         value = tree.getNodeAttribute(node, attributeNames[i]);
                     }
+
+                    //if (value == null) {
+                    //    System.out.println("attribute " + attributeNames[i] + " is null.");
+                    //}
+
                     if (value != null) {
                         clade.attributeLists[i].add(value);
                     }
@@ -343,37 +351,37 @@ public class TreeAnnotator {
 
             for (int i = 0; i < clade.attributeLists.length; i++) {
                 boolean isHeight = attributeNames[i].equals("height");
+                boolean isBoolean = attributeTypes[i].equals(Boolean.class);
 
-                if (!isTip || !isHeight) {
-                    double[] values = new double[clade.attributeLists[i].size()];
-                    if (values.length > 0) {
-                        double minValue = Double.MAX_VALUE;
-                        double maxValue = -Double.MAX_VALUE;
-                        for (int j = 0; j < clade.attributeLists[i].size(); j++) {
-                            values[j] = ((Double)clade.attributeLists[i].get(j)).doubleValue();
-                            if (values[j] < minValue) minValue = values[j];
-                            if (values[j] > maxValue) maxValue = values[j];
+                double[] values = new double[clade.attributeLists[i].size()];
+                if (values.length > 0) {
+                    double minValue = Double.MAX_VALUE;
+                    double maxValue = -Double.MAX_VALUE;
+                    for (int j = 0; j < clade.attributeLists[i].size(); j++) {
+                        values[j] = ((Number)clade.attributeLists[i].get(j)).doubleValue();
+                        if (values[j] < minValue) minValue = values[j];
+                        if (values[j] > maxValue) maxValue = values[j];
+                    }
+                    if (isHeight) {
+                        if (heightsOption == MEAN_HEIGHTS) {
+                            double mean = DiscreteStatistics.mean(values);
+                            tree.setNodeHeight(node, mean);
+                        } else if (heightsOption == MEDIAN_HEIGHTS) {
+                            double median = DiscreteStatistics.median(values);
+                            tree.setNodeHeight(node, median);
+                        } else {
+                            // keep the existing height
                         }
-                        if (minValue < maxValue) {
-                            if (attributeNames[i].equals("height")) {
-                                if (heightsOption == MEAN_HEIGHTS) {
-                                    double mean = DiscreteStatistics.mean(values);
-                                    tree.setNodeHeight(node, mean);
-                                } else if (heightsOption == MEDIAN_HEIGHTS) {
-                                    double median = DiscreteStatistics.median(values);
-                                    tree.setNodeHeight(node, median);
-                                } else {
-                                    // keep the existing height
-                                }
-                            }
+                    }
 
-                            if (!filter) {
-                                annotateMeanAttribute(tree, node, attributeNames[i] + "_mean", values);
-                                annotateMedianAttribute(tree, node, attributeNames[i] + "_median", values);
-                                annotateHPDAttribute(tree, node, attributeNames[i] + "_95%_HPD", 0.95, values);
-                                //annotateQuantileAttribute(tree, node, attributeNames[i] + "_95%_quantiles", 0.95, values);
-                                annotateRangeAttribute(tree, node, attributeNames[i] + "_range", values);
-                            }
+                    if (!filter) {
+                        annotateMeanAttribute(tree, node, attributeNames[i], values);
+                        if (!isBoolean && minValue < maxValue) {
+                            // Basically, if it is a boolean (0, 1) then we don't need the distribution information
+                            // Likewise if it doesn't vary.
+                            annotateMedianAttribute(tree, node, attributeNames[i] + "_median", values);
+                            annotateHPDAttribute(tree, node, attributeNames[i] + "_95%_HPD", 0.95, values);
+                            annotateRangeAttribute(tree, node, attributeNames[i] + "_range", values);
                         }
                     }
                 }
@@ -465,7 +473,8 @@ public class TreeAnnotator {
     int totalTrees = 0;
     int totalTreesUsed = 0;
     double posteriorLimit = 0.0;
-    String[] attributeNames = new String[] { "height", "rate" };
+    String[] attributeNames = new String[] { "height", "rate", "changed" };
+    Class[] attributeTypes = new Class[] { Double.class, Double.class, Boolean.class};
     TaxonList taxa = null;
 
     public static void printTitle() {

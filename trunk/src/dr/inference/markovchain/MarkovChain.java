@@ -57,6 +57,7 @@ public final class MarkovChain {
     private boolean useCoercion = true;
 
     private static final int FULL_EVALUTATION_STATES = 1000;
+	private static final int MAX_FAILURE_COUNTS = 10;
 
     public MarkovChain(Prior prior,
                        Likelihood likelihood,
@@ -108,6 +109,8 @@ public final class MarkovChain {
 
         pleaseStop = false;
         isStopped = false;
+
+	    int testFailureCount = 0;
 
         double[] logr = new double[] {0.0};
 
@@ -213,8 +216,14 @@ public final class MarkovChain {
                     if (Math.abs(testScore - oldScore) >  1e-6) {
                         System.err.println("State was not correctly restored after reject step.");
                         System.err.println("Likelihood before: " + oldScore + " Likelihood after: " + testScore);
+
+	                    testFailureCount ++;
                     }
+
+	                if (testFailureCount > MAX_FAILURE_COUNTS) {
+		                throw new RuntimeException("Too many test failures: stopping chain.");
                 }
+            }
             }
 
             if (!disableCoerce && mcmcOperator instanceof CoercableMCMCOperator) {

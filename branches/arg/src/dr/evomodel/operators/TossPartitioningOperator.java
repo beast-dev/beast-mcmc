@@ -45,6 +45,8 @@ throw new OperatorFailedException("out");         }*/
         int whichParameter = MathUtils.nextInt(numberParameters);
         Parameter partitioning = partitioningParameters.getParameter(whichParameter);
         int numberPartitions = partitioning.getDimension();
+	    //System.err.println("np = "+numberPartitions);
+	    //System.exit(-1);
         if (numberPartitions == 2) { // Just swap partitioning
             if (partitioning.getParameterValue(0) == 0) {
                 partitioning.setParameterValueQuietly(0, 1);
@@ -55,9 +57,9 @@ throw new OperatorFailedException("out");         }*/
             }
         } else { // There are more than just two possible partitioning
             // generate a uniform random draw from all possible partitionings
-            int[] permutation = MathUtils.permuted(numberParameters);
-            int cut = MathUtils.nextInt(numberParameters - 1);
-            for (int i = 0; i < numberParameters; i++) {
+            int[] permutation = MathUtils.permuted(numberPartitions);
+            int cut = MathUtils.nextInt(numberPartitions - 1);
+            for (int i = 0; i < numberPartitions; i++) {
                 if (i <= cut)
                     partitioning.setParameterValueQuietly(permutation[i], 0);
                 else

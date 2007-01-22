@@ -18,6 +18,8 @@ public class ARGTree implements Tree {
     protected Taxon[] taxaList;
     protected int taxaCount;
 
+	private Node initialRoot;
+
     /**
      * Constructor to represent complete ARG as a tree
      *
@@ -38,6 +40,11 @@ public class ARGTree implements Tree {
      */
 
     ArrayList<Node> nodeList;
+
+	public boolean wasRootTrimmed() {
+		return (root != initialRoot);
+//		return false;
+	}
 
 
     public String toGraphString() {
@@ -77,6 +84,7 @@ public class ARGTree implements Tree {
 //		System.err.println("ARG->Tree\n"+arg.toGraphString());
         nodeList = new ArrayList<Node>();
         Node node = arg.new Node(((Node) arg.getRoot()), partition, nodeList);
+	    initialRoot = node;
         //.findPartitionTreeRoot(partition), partition);
         // this.root = root
         //System.err.println("Building tree: "+arg.toString());

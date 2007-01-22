@@ -87,6 +87,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.xml.AttributeParser());
         addXMLObjectParser(new dr.xml.AttributesParser());
 
+	    addXMLObjectParser(dr.evolution.alignment.PartitionWithAttributes.PARSER);
+
 
         addXMLObjectParser(dr.evomodel.speciation.SpeciationLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.speciation.YuleModel.PARSER);
@@ -97,6 +99,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentSimulator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentWithRecombinationLikelihood.PARSER);
+	    addXMLObjectParser(dr.evomodel.hgt.HorizontalGeneTransferLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentMRCALikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.SkylineLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.BayesianSkylineLikelihood.PARSER);

@@ -28,6 +28,7 @@ import java.util.ArrayList;
 public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
     public static final String SUBTREE_SLIDE = "argSubtreeSlide";
+//	public static final String
     public static final String SWAP_RATES = "swapRates";
     public static final String SWAP_TRAITS = "swapTraits";
     private ARGModel tree = null;
@@ -363,6 +364,9 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
         if (tree.isBifurcationDoublyLinked(tree.getRoot()))
             throw new OperatorFailedException("invalid slide");
 
+	    // todo -- check all ARGTree.Roots
+	    if (!tree.validRoot())
+	        throw new OperatorFailedException("Roots are invalid");
 
         if (logq == Double.NEGATIVE_INFINITY)
             throw new OperatorFailedException("invalid slide");

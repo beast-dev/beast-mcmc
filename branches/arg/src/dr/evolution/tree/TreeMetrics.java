@@ -123,7 +123,7 @@ public class TreeMetrics {
 	
 	/**
 	 * Analyze trace
-	 * @param statistic an array of the statistic
+	 * @param trees statistic an array of the statistic
 	 * @param update the step size between instances of statistic
 	 */
 	private static void analyze(Tree[] trees, int update) {

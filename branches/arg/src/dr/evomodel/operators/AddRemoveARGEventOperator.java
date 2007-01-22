@@ -21,12 +21,11 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 
 /**
  * Implements the subtree slide move.
  *
- * @author Alexei Drummond
+ * @author Marc Suchard
  * @version $Id: AddRemoveARGEventOperator.java,v 1.18.2.4 2006/11/06 01:38:30 msuchard Exp $
  */
 public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
@@ -35,6 +34,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
     public static final String SWAP_RATES = "swapRates";
     public static final String SWAP_TRAITS = "swapTraits";
     public static final String MAX_VALUE = "maxTips";
+	public static final String SINGLE_PARTITION = "singlePartition";
 
     public static final String JUST_INTERNAL = "justInternalNodes";
     public static final String INTERNAL_AND_ROOT = "internalAndRootNodes";
@@ -42,6 +42,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
     private ARGModel arg = null;
     private double size = 1.0;
     private boolean gaussian = false;
+	private boolean singlePartition = false;
     //   private boolean swapRates;
     //   private boolean swapTraits;
     private int mode = CoercableMCMCOperator.DEFAULT;
@@ -52,7 +53,8 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
     public AddRemoveARGEventOperator(ARGModel arg, int weight, double size, boolean gaussian,
                                      boolean swapRates, boolean swapTraits, int mode, int maxTips,
                                      VariableSizeCompoundParameter param1,
-                                     VariableSizeCompoundParameter param2) {
+                                     VariableSizeCompoundParameter param2,
+                                     boolean singlePartition) {
         this.arg = arg;
         setWeight(weight);
 //		this.maxTips = maxTips;
@@ -62,6 +64,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 //        this.swapTraits = swapTraits;
         this.internalNodeParameters = param1;
         this.internalAndRootNodeParameters = param2;
+	    this.singlePartition = singlePartition;
 
         this.mode = mode;
     }
@@ -159,6 +162,8 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 
     private double RemoveOperation() throws OperatorFailedException {
         double logq = 0;
+
+//	    System.err.println("Starting remove ARG operation.");
 
         // 1. Draw reassortment node uniform randomly
 
@@ -272,8 +277,8 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 //			System.err.println("End Remove Operator in sanity check");
             doneSomething = true;
             // Check for node height troubles
-            // TODO should be able to remove at some point
-            if ((recChild.getHeight() > recParent2.getHeight()) ||
+
+            /*if ((recChild.getHeight() > recParent2.getHeight()) ||
                     (otherChild.getHeight() > recGrandParent.getHeight())) {
                 try {
                     arg.endTreeEdit();
@@ -282,7 +287,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
                 }
                 System.err.println("How did I get here?");
                 System.exit(-1);
-            }
+            }*/
             recParent = recParent1;
         }
         if (doneSomething) {
@@ -291,6 +296,8 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
             arg.contractARGWithRecombinant(recParent, recNode, internalNodeParameters, internalAndRootNodeParameters);
         }
 //		System.err.println("End ARG\n"+arg.toGraphString());
+
+
         arg.pushTreeSizeChangedEvent();
         try {
             arg.endTreeEdit();
@@ -298,10 +305,21 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
             throw new RuntimeException(ite.toString() + "\n" + arg.toString()
                     + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
         }
+
+//	    System.err.println("Checking remove validity.");
+
+	    // todo -- check all ARGTree.Roots
+	    if (!arg.validRoot())
+	        throw new OperatorFailedException("Roots are invalid");	    
+
         logq -= Math.log(reverseBifurcationSpan) - Math.log(reverseReassortmentSpan);
         logq -= Math.log(arg.getNodeCount() + arg.getReassortmentNodeCount() - 1);
         logq -= Math.log(this.findPotentialAttachmentSisters(recChild,
-                arg.getNodeHeight(recChild), null));
+                         arg.getNodeHeight(recChild), null));
+	    logq -= drawRandomPartitioning(null);
+
+//	    System.err.println("End remove ARG operation.");
+
         return -logq; // 1 / total potentials * 1 / 2 (if valid) * length1 * length2 * attachmentSisters
     }
 
@@ -372,16 +390,16 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
         return potentials;
     }*/
 
-    private int drawOnePartition(BitSet partitionSet) {
+    /*;private int drawOnePartition(BitSet partitionSet) {
         int draw = MathUtils.nextInt(partitionSet.cardinality());
 //		System.err.println("draw = "+draw);
         int result = partitionSet.nextSetBit(0);
         for (int i = 0; i < draw; i++)
             result = partitionSet.nextSetBit(result + 1);
         return result;
-    }
+    }*/
 
-    private BitSet bsTransportor = null;
+//    private BitSet bsTransportor = null;
     /*
           private ArrayList<NodeRef> getPotentialSubtreesToSplit() {
               ArrayList<NodeRef> potentials = new ArrayList<NodeRef>();
@@ -453,7 +471,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 //			NodeRef nr = arg.getNode(i);
 //			if( !arg.isRoot(nr) && (arg.getMinParentNodeHeight(nr) > min) ) {
 //				// Do not reroot and reattach only above current height
-//				// [TODO -- allow rerooting
+//
 //				potentials.add(nr);
 //			}
 //		}
@@ -487,17 +505,27 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
         int len = arg.getNumberOfPartitions();
         if (len == 2) {
             boolean first = MathUtils.nextBoolean();
+	        if (partitioning != null) {
             if (first)
                 partitioning.setParameterValueQuietly(0, 1.0);
             else
                 partitioning.setParameterValueQuietly(1, 1.0);
+	        }
             return Math.log(2);
         }
+	    if (singlePartition) {
+		    if (partitioning != null)
+		         partitioning.setParameterValueQuietly(MathUtils.nextInt(len),1.0);
+		    return Math.log(len);
+	    }
+	    
+
+
         int[] permutation = MathUtils.permuted(len);
         int cut = MathUtils.nextInt(len - 1);
         for (int i = 0; i < len; i++) {
             logq += Math.log(i + 1);
-            if (i > cut)
+            if (i > cut && partitioning != null)
                 partitioning.setParameterValue(permutation[i], 1.0);
         }
         logq += Math.log(len - 1);
@@ -508,6 +536,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
     private double AddOperation() throws OperatorFailedException {
         double logq = 0;
 
+//	    System.err.println("Starting add ARG operation. ... "+arg.getReassortmentNodeCount());
         // Draw potential places to add a reassortment node
 
         ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
@@ -603,7 +632,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
         VariableSizeParameter partitioning = new VariableSizeParameter(arg.getNumberOfPartitions());
 //        System.err.println("Create partitioning");
 
-        logq -= drawRandomPartitioning(partitioning);
+        logq += drawRandomPartitioning(partitioning);
 
 
         if (sisNode != recNode) {
@@ -628,11 +657,11 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
         // arg.expandNodesWithRecombinant(arg.getRoot(), recNR);
         // arg.expandNodesWithSubtree(arg.getRoot(), newSubtree);
         // arg.reconstructTrees();
-//		System.err.println("recNode   = " + recNode.number);
+//
+//		System.err.println("End ARG\n" + arg.toGraphString()); System.err.println("recNode   = " + recNode.number);
 //		System.err.println("recParent = " + recParent.number);
 //		System.err.println("sisNode   = " + sisNode.number);
 //		System.err.println("sisParent = " + sisParent.number);
-//		System.err.println("End ARG\n" + arg.toGraphString());
         //System.exit(-1);
 //		ARGTree tree = new ARGTree(arg);
         // System.err.println("Reassortment nodes =
@@ -651,12 +680,20 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 //		System.err.println("End Add Operator sanity check");
 
         arg.pushTreeSizeChangedEvent();
+
+
         try {
             arg.endTreeEdit();
         } catch (MutableTree.InvalidTreeException ite) {
             throw new RuntimeException(ite.toString() + "\n" + arg.toString()
                     + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
         }
+
+//	    System.err.println("Checking add validity.");
+	    // todo -- check all ARGTree.Roots
+	    if (!arg.validRoot())
+	        throw new OperatorFailedException("Roots are invalid");
+
         // System.err.println("Made it thru once!");
 
         // System.exit(-1);
@@ -673,6 +710,8 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
         if (!(recNode.leftParent.isBifurcation() && recNode.rightParent.isRoot()) &&
                 !(recNode.rightParent.isBifurcation() && recNode.leftParent.isRoot()))
             logq -= Math.log(2.0);
+
+//	    System.err.println("End add ARG operation.");
 
         return -logq;
     }
@@ -806,6 +845,8 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
             boolean swapRates = false;
             boolean swapTraits = false;
 
+	        boolean singlePartition = false;
+
             int mode = CoercableMCMCOperator.DEFAULT;
             if (xo.hasAttribute(AUTO_OPTIMIZE)) {
                 if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
@@ -814,6 +855,10 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
                     mode = CoercableMCMCOperator.COERCION_OFF;
                 }
             }
+
+	        if (xo.hasAttribute(SINGLE_PARTITION)) {
+		        singlePartition = xo.getBooleanAttribute(SINGLE_PARTITION);
+	        }
 
             if (xo.hasAttribute(SWAP_RATES)) {
                 swapRates = xo.getBooleanAttribute(SWAP_RATES);
@@ -843,7 +888,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
             double size = xo.getDoubleAttribute("size");
             boolean gaussian = xo.getBooleanAttribute("gaussian");
             return new AddRemoveARGEventOperator(treeModel, weight, size, gaussian, swapRates, swapTraits,
-                    mode, maxTips, parameter1, parameter2);
+                    mode, maxTips, parameter1, parameter2, singlePartition);
         }
 
         public String getParserDescription() {

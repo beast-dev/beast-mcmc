@@ -193,10 +193,10 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
             tree.addChild(jP, i);
             tree.addChild(iP, j);
         } else if (!iBifurcation && !jBifurcation) {
-            tree.singleRemoveChild(iP, i);
-            tree.singleRemoveChild(jP, j);
-            tree.singleAddChild(jP, i);
-            tree.singleAddChild(iP, j);
+//            tree.singleRemoveChild(iP, i);
+//            tree.singleRemoveChild(jP, j);
+//            tree.singleAddChild(jP, i);
+//            tree.singleAddChild(iP, j);
         } else {
             if (jBifurcation) {
                 // one reassortment; force i to be bifurcation and j to be reassortment

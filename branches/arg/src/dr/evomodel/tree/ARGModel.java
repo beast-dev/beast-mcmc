@@ -991,6 +991,7 @@ public class ARGModel extends AbstractModel
         while (destination.size() > nodes.size())
             destination.remove(0);
         int n = nodes.size();
+//	    System.err.println("node.size = "+n);
         for (int i = 0; i < n; i++) {
             //for( Node node0 : nodes ) {
             Node node0 = nodes.get(i);
@@ -1326,6 +1327,20 @@ public class ARGModel extends AbstractModel
 //        sb.append("Root = " + ((Node) getRoot()).number + "\n");
 //		sb.append("\n");
     }
+
+
+	public boolean validRoot() {
+		// todo -- there must be a way to some graph properties to do this check.
+		boolean valid = true;
+		for (int i=0; valid && i<maxNumberOfPartitions; i++) {
+			ARGTree argTree = new ARGTree(this,i);
+			if (argTree.wasRootTrimmed())
+				valid = false;
+		}
+		return valid;
+	}
+
+
 
     public String toGraphString() {
         //	if( true )

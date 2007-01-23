@@ -87,7 +87,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.xml.AttributeParser());
         addXMLObjectParser(new dr.xml.AttributesParser());
 
-	    addXMLObjectParser(dr.evolution.alignment.PartitionWithAttributes.PARSER);
+        addXMLObjectParser(dr.evolution.alignment.PartitionWithAttributes.PARSER);
 
 
         addXMLObjectParser(dr.evomodel.speciation.SpeciationLikelihood.PARSER);
@@ -99,7 +99,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentSimulator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentWithRecombinationLikelihood.PARSER);
-	    addXMLObjectParser(dr.evomodel.hgt.HorizontalGeneTransferLikelihood.PARSER);
+        addXMLObjectParser(dr.evomodel.hgt.HorizontalGeneTransferLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentMRCALikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.SkylineLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.BayesianSkylineLikelihood.PARSER);
@@ -179,6 +179,7 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(dr.inference.model.CompoundParameter.PARSER);
         addXMLObjectParser(dr.inference.model.CompoundLikelihood.PARSER);
+        addXMLObjectParser(dr.inference.model.ParallelCompoundLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.BooleanLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.DummyLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.JeffreysPriorLikelihood.PARSER);

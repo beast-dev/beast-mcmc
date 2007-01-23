@@ -52,7 +52,7 @@ public class SlidingPatternsOperator extends SimpleMCMCOperator implements Coerc
 
     }
 
-
+    //                http://www.google.com/search?client=safari&rls=en&q=The+week+renewal+add+a+friend&ie=UTF-8&oe=UTF-8
     public void addNewSitePatterns(SitePatterns addPatterns) {
         // todo need to implement for a variable number of partitions
     }

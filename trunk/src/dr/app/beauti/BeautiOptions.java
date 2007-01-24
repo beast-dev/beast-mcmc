@@ -236,9 +236,9 @@ public class BeautiOptions {
 	 * return an list of operators that are required
 	 * @return the parameter list
 	 */
-	public ArrayList selectParameters() {
+	public ArrayList<Parameter> selectParameters() {
 
-		ArrayList ops = new ArrayList();
+		ArrayList<Parameter> ops = new ArrayList<Parameter>() ;
 
 		selectParameters(ops);
 		selectStatistics(ops);
@@ -274,55 +274,53 @@ public class BeautiOptions {
 
 		double timeScaleMaximum = round(initialRootHeight * 1000.0, 2);
 
-		Iterator iter = ops.iterator();
-		while (iter.hasNext()) {
-			Parameter param = (Parameter)iter.next();
-			if (alignmentReset) param.priorEdited = false;
+        for (Parameter param : ops) {
+            if (alignmentReset) param.priorEdited = false;
 
-			if (!param.priorEdited) {
-				switch (param.scale) {
-					case TIME_SCALE:
-						param.uniformLower = 0.0;
-						param.uniformUpper = timeScaleMaximum;
-						param.initial = initialRootHeight;
-						break;
+            if (!param.priorEdited) {
+                switch (param.scale) {
+                    case TIME_SCALE:
+                        param.uniformLower = 0.0;
+                        param.uniformUpper = timeScaleMaximum;
+                        param.initial = initialRootHeight;
+                        break;
 					case T50_SCALE:
 						param.uniformLower = 0.0;
 						param.uniformUpper = timeScaleMaximum;
 						param.initial = initialRootHeight / 5.0;
 						break;
-					case GROWTH_RATE_SCALE:
-						param.uniformLower = -growthRateMaximum;
-						param.uniformUpper = growthRateMaximum;
-						break;
-					case BIRTH_RATE_SCALE:
-						param.uniformLower = 0.0;
-						param.uniformUpper = birthRateMaximum;
-						break;
-					case SUBSTITUTION_RATE_SCALE:
-						param.uniformLower = 0.0;
-						param.uniformUpper = substitutionRateMaximum;
-						param.initial = initialRate;
-						break;
-					case LOG_STDEV_SCALE:
-						param.uniformLower = 0;
-						param.uniformUpper = logStdevMaximum;
-						break;
-					case SUBSTITUTION_PARAMETER_SCALE:
-						param.uniformLower = 0.0;
-						param.uniformUpper = substitutionParameterMaximum;
-						break;
-				}
-				if (param.isNodeHeight) {
-					param.lower = maximumTipHeight;
-					param.uniformLower = maximumTipHeight;
-					param.uniformUpper = timeScaleMaximum;
-					param.initial = initialRootHeight;
-				}
-			}
-		}
+                    case GROWTH_RATE_SCALE:
+                        param.uniformLower = -growthRateMaximum;
+                        param.uniformUpper = growthRateMaximum;
+                        break;
+                    case BIRTH_RATE_SCALE:
+                        param.uniformLower = 0.0;
+                        param.uniformUpper = birthRateMaximum;
+                        break;
+                    case SUBSTITUTION_RATE_SCALE:
+                        param.uniformLower = 0.0;
+                        param.uniformUpper = substitutionRateMaximum;
+                        param.initial = initialRate;
+                        break;
+                    case LOG_STDEV_SCALE:
+                        param.uniformLower = 0;
+                        param.uniformUpper = logStdevMaximum;
+                        break;
+                    case SUBSTITUTION_PARAMETER_SCALE:
+                        param.uniformLower = 0.0;
+                        param.uniformUpper = substitutionParameterMaximum;
+                        break;
+                }
+                if (param.isNodeHeight) {
+                    param.lower = maximumTipHeight;
+                    param.uniformLower = maximumTipHeight;
+                    param.uniformUpper = timeScaleMaximum;
+                    param.initial = initialRootHeight;
+                }
+            }
+        }
 
-		alignmentReset = false;
+        alignmentReset = false;
 
 		return ops;
 	}
@@ -331,9 +329,9 @@ public class BeautiOptions {
 	 * return an list of operators that are required
 	 * @return the operator list
 	 */
-	public ArrayList selectOperators() {
+	public ArrayList<Operator> selectOperators() {
 
-		ArrayList ops = new ArrayList();
+		ArrayList<Operator> ops = new ArrayList<Operator>();
 
 		selectOperators(ops);
 
@@ -366,7 +364,7 @@ public class BeautiOptions {
 	 * return a list of parameters that are required
 	 * @param params the parameter list
 	 */
-	private void selectParameters(ArrayList params) {
+	private void selectParameters(ArrayList<Parameter> params) {
 
 		if (alignment != null) {
 
@@ -504,19 +502,19 @@ public class BeautiOptions {
 		params.add(getParameter("treeModel.rootHeight"));
 	}
 
-	private void selectStatistics(ArrayList params) {
+	private void selectStatistics(ArrayList<Parameter> params) {
 
 		if (taxonSets != null) {
 			for (int i = 0; i < taxonSets.size(); i++) {
-				TaxonList taxonSet = (TaxonList)taxonSets.get(i);
-				Parameter statistic = (Parameter)statistics.get(taxonSet);
-				if (statistic == null) {
-					statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
-					statistics.put(taxonSet, statistic);
-				}
-				params.add(statistic);
-			}
-		}
+				TaxonList taxonSet = taxonSets.get(i);
+                Parameter statistic = statistics.get(taxonSet);
+                if (statistic == null) {
+                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
+                    statistics.put(taxonSet, statistic);
+                }
+                params.add(statistic);
+            }
+        }
 	}
 
 	protected Parameter getParameter(String name) {
@@ -529,7 +527,7 @@ public class BeautiOptions {
 	 * return a list of operators that are required
 	 * @param ops the operator list
 	 */
-	private void selectOperators(ArrayList ops) {
+	private void selectOperators(ArrayList<Operator> ops) {
 
 		if (alignment != null) {
 
@@ -728,7 +726,7 @@ public class BeautiOptions {
 		Element taxaElement = new Element("taxa");
 
 		for (int i = 0; i < taxonSets.size(); i++) {
-			Taxa taxonSet = (Taxa)taxonSets.get(i);
+			Taxa taxonSet = taxonSets.get(i);
 			Element taxonSetElement = new Element("taxonSet");
 			taxonSetElement.addContent(createChild("id", taxonSet.getId()));
 			for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
@@ -767,9 +765,9 @@ public class BeautiOptions {
 
 		Element priorsElement = new Element("priors");
 
-		Iterator iter = parameters.keySet().iterator();
+		Iterator<String> iter = parameters.keySet().iterator();
 		while (iter.hasNext()) {
-			String name = (String)iter.next();
+			String name = iter.next();
 			Parameter parameter = (Parameter)parameters.get(name);
 			Element e = new Element(name);
 			e.addContent(createChild("initial", parameter.initial));
@@ -797,7 +795,7 @@ public class BeautiOptions {
 		operatorsElement.addContent(createChild("autoOptimize", autoOptimize));
 		iter = operators.keySet().iterator();
 		while (iter.hasNext()) {
-			String name = (String)iter.next();
+			String name = iter.next();
 			Operator operator = (Operator)operators.get(name);
 			Element e = new Element(name);
 			e.addContent(createChild("tuning", operator.tuning));
@@ -937,7 +935,7 @@ public class BeautiOptions {
 				Element taxonSetElement = (Element)iter.next();
 
 				String id = getStringChild(taxonSetElement, "id", "");
-				Taxa taxonSet = new Taxa(id);
+				final Taxa taxonSet = new Taxa(id);
 
 				Iterator iter2 = taxonSetElement.getChildren("taxon").iterator();
 				while (iter2.hasNext()) {
@@ -984,9 +982,9 @@ public class BeautiOptions {
 
 		if (operatorsElement != null) {
 			autoOptimize = getBooleanChild(operatorsElement, "autoOptimize", true);
-			Iterator iter = operators.keySet().iterator();
+			Iterator<String> iter = operators.keySet().iterator();
 			while (iter.hasNext()) {
-				String name = (String)iter.next();
+				String name = iter.next();
 				Operator operator = (Operator)operators.get(name);
 				Element e = operatorsElement.getChild(name);
 				if (e == null) {
@@ -1000,9 +998,9 @@ public class BeautiOptions {
 		}
 
 		if (priorsElement != null) {
-			Iterator iter = parameters.keySet().iterator();
+			Iterator<String> iter = parameters.keySet().iterator();
 			while (iter.hasNext()) {
-				String name = (String)iter.next();
+				String name = iter.next();
 				Parameter parameter = (Parameter)parameters.get(name);
 				Element e = priorsElement.getChild(name);
 				if (e == null) {
@@ -1474,7 +1472,7 @@ public class BeautiOptions {
 	// Data options
 	public TaxonList taxonList = null;
 	public SimpleAlignment originalAlignment = null;
-	public List taxonSets = new ArrayList();
+	public List<Taxa> taxonSets = new ArrayList<Taxa>();
 	public Alignment alignment = null;
 	public Tree tree = null;
 	public boolean alignmentReset = true;
@@ -1526,7 +1524,7 @@ public class BeautiOptions {
 	public String fileName = null;
 	public boolean autoOptimize = true;
 	public boolean performTraceAnalysis = false;
-	public HashMap parameters = new HashMap();
-	public HashMap statistics = new HashMap();
-	public HashMap operators = new HashMap();
+	public HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();
+	public HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
+	public HashMap<String, Operator> operators = new HashMap<String, Operator>();
 }

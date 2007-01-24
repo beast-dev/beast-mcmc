@@ -67,7 +67,7 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 	}
 
 	public final Model getModel(int i) { 
-		return (Model)models.get(i); 
+		return models.get(i);
 	}
 	
 	public final void addParameter(Parameter parameter) {
@@ -125,7 +125,7 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 
 	public final int getParameterCount() { return parameters.size(); }
 	
-	public final Parameter getParameter(int i ) { return (Parameter)parameters.get(i); }
+	public final Parameter getParameter(int i ) { return parameters.get(i); }
 
 	/**
 	 * @return the parameter of the component that is called name
@@ -195,11 +195,11 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 			for (int i = 0; i < models.size(); i++) {
 				getModel(i).storeModelState();
 			}
-			for (int i =0; i < parameters.size(); i++) {
-				((Parameter)parameters.get(i)).storeParameterValues();
-			}
-			
-			storeState();
+            for (Parameter parameter : parameters) {
+                parameter.storeParameterValues();
+            }
+
+            storeState();
 			isValidState = false;
 		}
 	}
@@ -286,7 +286,7 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 	 */
 	public Statistic getStatistic(int i) {
 		
-		return (Statistic)statistics.get(i);
+		return statistics.get(i);
 	}
 	
 	public final Statistic getStatistic(String name) {
@@ -335,9 +335,9 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 
 	protected Model.ListenerHelper listenerHelper = new Model.ListenerHelper();
 
-	private ArrayList models = new ArrayList();
-	private ArrayList parameters = new ArrayList();
-	private ArrayList statistics = new ArrayList();
+	private ArrayList<Model> models = new ArrayList<Model>();
+	private ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+	private ArrayList<Statistic> statistics = new ArrayList<Statistic>();
 	
 	private String name;
 }

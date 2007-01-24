@@ -57,14 +57,12 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
     public static final String LINEAR = "linear";
     public static final String EXPONENTIAL = "exponential";
 
+
     public enum Type {
         STEPWISE,
         LINEAR,
         EXPONENTIAL
     }
-//    public static final int STEPWISE_TYPE = 0;
-//    public static final int LINEAR_TYPE = 1;
-//    public static final int EXPONENTIAL_TYPE = 2;
 
     public VariableSkylineLikelihood(Tree tree, Parameter popSizeParameter, Parameter indicatorParameter, Type type, boolean logSpace) {
         super(SKYLINE_LIKELIHOOD);
@@ -78,10 +76,12 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
         this.logSpace = logSpace;
 
         if (paramDim1 != events) {
-            throw new IllegalArgumentException("Dimension of population parameter must be the same as the number of internal nodes in the tree.");
+            throw new IllegalArgumentException("Dimension of population parameter must be the same as the number of internal nodes in the tree. ("
+            + paramDim1 + " != " + events + ")");
         }
         if (paramDim2 != events - 1) {
-            throw new IllegalArgumentException("Dimension of indicator parameter must one less than the number of internal nodes in the tree.");
+            throw new IllegalArgumentException("Dimension of indicator parameter must one less than the number of internal nodes in the tree. ("
+            + paramDim2 + " != " + (events-1) + ")");
         }
 
         this.tree = tree;
@@ -105,16 +105,25 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
      */
     public synchronized double getLogLikelihood() {
 
-        //setupIntervals();
-        // calls setupIntervals anyway???
-        calculateGroupSizesHeightsAndEnds();
+       if( !intervalsKnown ) {
+//            System.out.println("**" + intervalsKnown);
+//            assert !intervalsKnown;
+            setupIntervals();
+           groupsValid = false;
+        }
+
+        if( ! groupsValid ) {
+          calculateGroupSizesHeightsAndEnds();
+        }
 
         double logL = 0.0;
 
         double currentTime = 0.0;
 
+        // index of current interval in the population function
         int groupIndex = 0;
 
+        // how many intervals precessed in the current group - tell when to switch to next group
         int subIndex = 0;
 
         ConstantPopulation cp = new ConstantPopulation(Units.Type.YEARS);
@@ -123,7 +132,8 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
 
             // set the population size to the size of the middle of the current interval
             cp.setN0(getPopSize(groupIndex, currentTime + (intervals[j] / 2.0)));
-            if (getIntervalType(j) == COALESCENT) {
+            final int iType = getIntervalType(j);
+            if (iType == COALESCENT) {
                 subIndex += 1;
                 if (subIndex >= groupSizes.get(groupIndex)) {
                     groupIndex += 1;
@@ -131,10 +141,10 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
                 }
             }
 
-            logL += calculateIntervalLikelihood(cp, intervals[j], currentTime, lineageCounts[j], getIntervalType(j));
+            logL += calculateIntervalLikelihood(cp, intervals[j], currentTime, lineageCounts[j], iType);
 
             // insert zero-length coalescent intervals
-            int diff = getCoalescentEvents(j) - 1;
+            final int diff = getCoalescentEvents(j) - 1;
             for (int k = 0; k < diff; k++) {
                 cp.setN0(getPopSize(groupIndex, currentTime));
                 logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j] - k - 1, COALESCENT);
@@ -152,8 +162,10 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
     }
 
     /**
-     * @return the pop size for the given time. If linear model is being used then this pop size is
+     * @return the population size for the given time. If linear model is being used then this pop size is
      *         interpolated between the two pop sizes at either end of the grouped interval.
+     * @param groupIndex time inside this group
+     * @param midTime given time
      */
     private double getPopSize(int groupIndex, double midTime) {
         switch( type ) {
@@ -189,8 +201,13 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
     }
 
     private void calculateGroupSizesHeightsAndEnds() {
-
-        setupIntervals();
+//        System.out.println(intervalsKnown);
+//        if( !intervalsKnown ) {
+////            System.out.println("**" + intervalsKnown);
+////            assert !intervalsKnown;
+//            setupIntervals();
+//       }
+        // need to do this only if demo model or indicator changed
         groupSizes.clear();
         groupHeights.clear();
         groupEnds.clear();
@@ -223,8 +240,33 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
                 groupHeights.set(i, Math.exp(groupHeights.get(i)));
             }
         }
+
+        groupsValid = true;
     }
 
+    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+           super.handleParameterChangedEvent(parameter,  index);
+//        if( parameter == indicatorParameter || parameter == popSizeParameter ) {
+           groupsValid = false;
+//        }
+    }
+
+    protected void storeState() {
+        super.storeState();
+        storeSizes.clear();  storeSizes.addAll(groupSizes);
+        storeHeights.clear();  storeHeights.addAll(groupHeights);
+        storeEnds.clear();   storeEnds.addAll(groupEnds);
+        storeValid = groupsValid;
+    }
+
+    protected  void restoreState() {
+        super.restoreState();
+        groupsValid = storeValid;
+        groupSizes.clear(); groupSizes.addAll(storeSizes);
+        groupHeights.clear(); groupHeights.addAll(storeHeights);
+        groupEnds.clear(); groupEnds.addAll(storeEnds);
+    }
+    
     // ****************************************************************
     // Private and protected stuff
     // ****************************************************************
@@ -312,10 +354,17 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
 
     private final Parameter indicatorParameter;
 
+    private boolean groupsValid = false;
+
     List<Integer> groupSizes = new ArrayList<Integer>();
     List<Double> groupHeights = new ArrayList<Double>();
     List<Double> groupEnds = new ArrayList<Double>();
 
+    private ArrayList<Integer> storeSizes = new ArrayList<Integer>();
+    private ArrayList<Double> storeHeights = new ArrayList<Double>();
+    private ArrayList<Double> storeEnds = new ArrayList<Double>();
+    private boolean storeValid;
+    
     private final Type type;
 
     private boolean logSpace = false;

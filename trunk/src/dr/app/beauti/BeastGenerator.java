@@ -53,6 +53,7 @@ import dr.evoxml.*;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.distribution.LogNormalDistributionModel;
+import dr.inference.distribution.UniformDistributionModel;
 import dr.inference.loggers.Columns;
 import dr.inference.loggers.MCLogger;
 import dr.inference.model.*;
@@ -84,14 +85,14 @@ public class BeastGenerator extends BeautiOptions {
      * @throws IllegalArgumentException if there is a problem with the current settings
      */
     public void checkOptions() throws IllegalArgumentException {
-        Set ids = new HashSet();
+        Set<String> ids = new HashSet<String>() ;
 
         ids.add("taxa");
         ids.add("alignment");
 
         if (taxonList != null) {
             for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-                Taxon taxon = (Taxon)taxonList.getTaxon(i);
+                Taxon taxon = taxonList.getTaxon(i);
                 if (ids.contains(taxon.getId())) {
                     throw new IllegalArgumentException("A taxon has the same id," + taxon.getId() +
                             "\nas another element (taxon, sequence, taxon set etc.):\nAll ids should be unique.");
@@ -103,7 +104,7 @@ public class BeastGenerator extends BeautiOptions {
         for (int i = 0; i < taxonSets.size(); i++) {
             TaxonList taxa = (TaxonList)taxonSets.get(i);
             if (taxa.getTaxonCount() < 2) {
-                throw new IllegalArgumentException("Taxon set, " + taxa.getId() + ", should contain\n"+
+                throw new IllegalArgumentException("Taxon set, " + taxa.getId() + ", should contain\n" +
                         "at least two taxa.");
             }
             if (ids.contains(taxa.getId())) {
@@ -178,7 +179,7 @@ public class BeastGenerator extends BeautiOptions {
             writeTMRCAStatistics(writer);
         }
 
-        ArrayList operators = selectOperators();
+        ArrayList<Operator> operators = selectOperators();
         writeOperatorSchedule(operators, writer);
         writer.writeText("");
         writeMCMC(writer);
@@ -254,7 +255,7 @@ public class BeastGenerator extends BeautiOptions {
             TaxonList taxa = (TaxonList)taxonSets.get(i);
             writer.writeOpenTag(
                     "taxa",
-                    new Attribute[] {
+                    new Attribute[]{
                             new Attribute.Default("id", taxa.getId())
                     }
             );
@@ -262,7 +263,7 @@ public class BeastGenerator extends BeautiOptions {
             for (int j = 0; j < taxa.getTaxonCount(); j++) {
                 Taxon taxon = taxa.getTaxon(j);
 
-                writer.writeTag("taxon", new Attribute[] { new Attribute.Default("idref", taxon.getId()) }, true);
+                writer.writeTag("taxon", new Attribute[]{new Attribute.Default("idref", taxon.getId())}, true);
             }
             writer.writeCloseTag("taxa");
         }
@@ -1230,14 +1231,14 @@ public class BeastGenerator extends BeautiOptions {
             TaxonList taxa = (TaxonList)taxonSets.get(i);
             writer.writeOpenTag(
                     "tmrcaStatistic",
-                    new Attribute[] {
+                    new Attribute[]{
                             new Attribute.Default("id", "tmrca(" + taxa.getId() + ")"),
                     }
             );
             writer.writeOpenTag("mrca");
-            writer.writeTag("taxa", new Attribute[] { new Attribute.Default("idref", taxa.getId()) }, true);
+            writer.writeTag("taxa", new Attribute[]{new Attribute.Default("idref", taxa.getId())}, true);
             writer.writeCloseTag("mrca");
-            writer.writeTag(TreeModel.TREE_MODEL, new Attribute[] { new Attribute.Default("idref", "treeModel") }, true);
+            writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
             writer.writeCloseTag("tmrcaStatistic");
         }
     }
@@ -1247,15 +1248,13 @@ public class BeastGenerator extends BeautiOptions {
      * @param operators the list of operators
      * @param writer the writer
      */
-    public void writeOperatorSchedule(ArrayList operators, XMLWriter writer) {
+    public void writeOperatorSchedule(ArrayList<Operator> operators, XMLWriter writer) {
         writer.writeOpenTag(
                 SimpleOperatorSchedule.OPERATOR_SCHEDULE,
                 new Attribute[] { new Attribute.Default("id", "operators") }
         );
 
-        Iterator iter = operators.iterator();
-        while (iter.hasNext()) {
-            Operator operator = (Operator)iter.next();
+        for (Operator operator : operators) {
             writeOperator(operator, writer);
         }
 
@@ -1615,10 +1614,10 @@ public class BeastGenerator extends BeautiOptions {
      * @param writer the writer
      */
     private void writeParameterPriors(XMLWriter writer) {
-        ArrayList parameters = selectParameters();
-        Iterator iter = parameters.iterator();
+        ArrayList<Parameter> parameters = selectParameters();
+        Iterator<Parameter> iter = parameters.iterator();
         while (iter.hasNext()) {
-            Parameter parameter = (Parameter)iter.next();
+            Parameter parameter = iter.next();
             if (parameter.priorType != NONE) {
                 if (parameter.priorType != UNIFORM_PRIOR || parameter.isNodeHeight) {
                     writeParameterPrior(parameter, writer);
@@ -2013,7 +2012,7 @@ public class BeastGenerator extends BeautiOptions {
      * @param writer the writer
      */
     public void writeParameter(String id, int dimension, double value, double lower, double upper, XMLWriter writer) {
-        ArrayList attributes = new ArrayList();
+        ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
         attributes.add(new Attribute.Default("id", id));
         if (dimension > 1) {
             attributes.add(new Attribute.Default("dimension", dimension + ""));
@@ -2030,7 +2029,7 @@ public class BeastGenerator extends BeautiOptions {
 
         Attribute[] attrArray = new Attribute[attributes.size()];
         for (int i =0; i < attrArray.length; i++) {
-            attrArray[i] = (Attribute)attributes.get(i);
+            attrArray[i] = attributes.get(i);
         }
 
         writer.writeTag(ParameterParser.PARAMETER, attrArray, true);
@@ -2094,7 +2093,31 @@ public class BeastGenerator extends BeautiOptions {
                         }
                 );
             }
-            writer.writeTag(TaxaParser.TAXA, new Attribute[] { new Attribute.Default("idref", "taxa") }, true);
+
+            Attribute[] taxaAttribute = new Attribute[]{new Attribute.Default("idref", "taxa")};
+            if( taxonSets.size() > 0 ) {
+                writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
+                writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
+                for (int i = 0; i < taxonSets.size(); i++) {
+                    TaxonList taxonSet = taxonSets.get(i);
+                    Parameter statistic = statistics.get(taxonSet);
+                    writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+
+                    writer.writeTag(TaxaParser.TAXA,  
+                            new Attribute[]{new Attribute.Default("idref", taxonSet.getId())}, true);
+                    if( statistic.isNodeHeight && statistic.priorType == UNIFORM_PRIOR ) {
+                        writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+                        writer.writeTag(UniformDistributionModel.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
+                        writer.writeTag(UniformDistributionModel.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
+                        writer.writeCloseTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+                    }
+                    writer.writeCloseTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+                }
+                writer.writeCloseTag(CoalescentSimulator.CONSTRAINED_TAXA);
+            } else {
+                writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
+            }
+
             writeInitialDemoModelRef(writer);
             writer.writeCloseTag(CoalescentSimulator.COALESCENT_TREE);
         }

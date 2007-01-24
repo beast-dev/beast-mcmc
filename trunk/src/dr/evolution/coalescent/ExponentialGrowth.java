@@ -39,26 +39,29 @@ public class ExponentialGrowth extends ConstantPopulation {
 
 	/**
 	 * Construct demographic model with default settings
-	 */
+     * @param units of time
+     */
 	public ExponentialGrowth(Type units) {
 	
 		super(units);
 	}
 
 	/**
-	 * returns growth rate.
+	 * @return growth rate.
 	 */
 	public final double getGrowthRate() { return r; }
 	
 	/**
-	 * sets growth rate.
-	 */
+	 * sets growth rate to r.
+     * @param r
+     */
 	public void setGrowthRate(double r) { this.r = r; }
 	
 	/**
 	 * An alternative parameterization of this model. This
 	 * function sets growth rate for a given doubling time.
-	 */
+     * @param doublingTime
+     */
 	public void setDoublingTime(double doublingTime) { 
 		setGrowthRate( Math.log(2) / doublingTime );
 	}

@@ -63,6 +63,6 @@ public interface Attribute {
 		private String name;
 		private Object value;
 		
-	};	
+	}
 }
 

@@ -42,9 +42,9 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 //		this.name = name;
         this.parameters = parameters;
         dimension = 0;
-        for (int i = 0; i < parameters.length; i++) {
-            dimension += parameters[i].getDimension();
-            parameters[i].addParameterListener(this);
+        for (Parameter parameter : parameters) {
+            dimension += parameter.getDimension();
+            parameter.addParameterListener(this);
         }
 
     }
@@ -136,20 +136,20 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     }
 
     protected final void storeValues() {
-        for (int i = 0; i < parameters.length; i++) {
-            parameters[i].storeParameterValues();
+        for (Parameter parameter : parameters) {
+            parameter.storeParameterValues();
         }
     }
 
     protected final void restoreValues() {
-        for (int i = 0; i < parameters.length; i++) {
-            parameters[i].restoreParameterValues();
+        for (Parameter parameter : parameters) {
+            parameter.restoreParameterValues();
         }
     }
 
     protected final void acceptValues() {
-        for (int i = 0; i < parameters.length; i++) {
-            parameters[i].acceptParameterValues();
+        for (Parameter parameter : parameters) {
+            parameter.acceptParameterValues();
         }
     }
 
@@ -162,12 +162,12 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     private Parameter findParameter(int dim, int[] outIndex) {
         int k = 0;
 
-        for (int j = 0; j < parameters.length; j++) {
-            if (dim < k + parameters[j].getDimension()) {
+        for (Parameter parameter : parameters) {
+            if (dim < k + parameter.getDimension()) {
                 outIndex[0] = dim - k;
-                return parameters[j];
+                return parameter;
             }
-            k += parameters[j].getDimension();
+            k += parameter.getDimension();
         }
 
         throw new IllegalArgumentException("index out of bound in compound parameter");
@@ -175,13 +175,14 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 
     public String toString() {
         StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
-        buffer.append("[" + String.valueOf(getBounds().getLowerLimit(0)));
-        buffer.append("," + String.valueOf(getBounds().getUpperLimit(0)) + "]");
+        final Bounds bounds = getBounds();
+        buffer.append("[").append(String.valueOf(bounds.getLowerLimit(0)));
+        buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
 
         for (int i = 1; i < getDimension(); i++) {
-            buffer.append(", " + String.valueOf(getParameterValue(i)));
-            buffer.append("[" + String.valueOf(getBounds().getLowerLimit(i)));
-            buffer.append("," + String.valueOf(getBounds().getUpperLimit(i)) + "]");
+            buffer.append(", ").append(String.valueOf(getParameterValue(i)));
+            buffer.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
+            buffer.append(",").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
         }
         return buffer.toString();
     }
@@ -230,12 +231,12 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     public void parameterChangedEvent(Parameter parameter, int index) {
 
         int dim = 0;
-        for (int i = 0; i < parameters.length; i++) {
-            if (parameter == parameters[i]) {
+        for (Parameter parameter1 : parameters) {
+            if (parameter == parameter1) {
                 fireParameterChangedEvent(dim + index);
                 break;
             }
-            dim += parameters[i].getDimension();
+            dim += parameter1.getDimension();
         }
     }
 
@@ -260,7 +261,6 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
         public int getBoundsDimension() {
             return getDimension();
         }
-
     }
 
 

@@ -69,7 +69,7 @@ public interface Parameter extends Statistic
 	void addParameterListener(ParameterListener listener);
 	
 	/** removes a parameter listener.
-     * @param listener\
+     * @param listener
      */
 	void removeParameterListener(ParameterListener listener);
 	

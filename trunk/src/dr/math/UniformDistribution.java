@@ -39,7 +39,7 @@ public class UniformDistribution implements Distribution
 	// Public stuff
 	//
 
-	/**
+	/*
 	 * Constructor
 	 */
 	public UniformDistribution(double lower, double upper) {
@@ -101,7 +101,7 @@ public class UniformDistribution implements Distribution
 	public static double cdf(double x, double lower, double upper) {
         if (x < lower) return 0.0;
         if (x > upper) return 1.0;
-        return 1.0 * ((x - lower) / (upper - lower));
+        return (x - lower) / (upper - lower);
 	}
 
 

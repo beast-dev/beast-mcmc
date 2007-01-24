@@ -1,0 +1,38 @@
+#summary This page outlines the main models featured in BEAST.
+
+= What can BEAST do? =
+
+*Constant rate molecular clock models.*
+This is the default model. The tree can be calibrated by specifying a mutation rate.
+
+*Variable rate (relaxed) molecular clock models.*
+Implements the uncorrelated relaxed clock models of Drummond, Ho, Phillips & Rambaut (2006, PLoS Biology) see below for full citation.
+
+*Divergence date estimates.*
+Dates of divergence for specific most recent common ancestors (MRCA) can be estimated.
+
+*Non-contemporaneous sequences (!TipDate) molecular clock models.*
+When the differences in the dates associated with the sequences comprise a significant proportion of the age of the entire tree, these dates can be incorporated into the model providing a source of information about the rate of substitution.
+
+*Substitution model heterogeneity across sites.*
+Different substitution models can be specified for different sets of sites. For example, each codon position can be allowed a different substitution matrix and gamma model of rate heterogeneity.
+
+*Flexible model specification.*
+The model-specification file format allows considerable flexibility. For example, it is possible to specify that each codon position has a different rate, a different degree of rate heterogeneity but the same transition/transversion ratio.
+
+*Range of substitution models.*
+Available substitution models include HKY and GTR for nucleotides, Blosum62, CPREV, JTT, MTREV, WAG and Dayhoff for amino acids and the model of Yang and Nielsen (1998) for codons.
+
+*Flexible choice of priors on parameters.*
+Any parameter can be given a prior. For example, the age of the root of the tree can be given an exponential prior with a given mean.
+
+*Coalescent models of population size and growth.*
+Various models of coalescent population growth can be used. At present, constant size and exponential growth are available but more will be added soon. These models basically act as priors on the ages of nodes in the tree but the parameters (population size and growth rate) can be sampled and estimated.
+
+*Multi-locus coalescent models.*
+Two unlinked genes can be given the same coalescent population model but a different substitution process and tree, allowing the production of multi-locus coalescent inference.
+
+*Local clock molecular clock models.*
+Allowing different clades in the tree to have different rates (or indeed, completely different substitution processes).
+
+

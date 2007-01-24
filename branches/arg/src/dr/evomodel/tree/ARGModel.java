@@ -135,7 +135,12 @@ public class ARGModel extends AbstractModel
 
     }
 
-    public VariableSizeCompoundParameter getPartitioningParameters() {
+	public void sendState(int toRank) {
+		super.sendState(toRank);
+		System.err.println("SEND: ARG string here.");
+	}
+
+	public VariableSizeCompoundParameter getPartitioningParameters() {
         return partitioningParameters;
     }
 

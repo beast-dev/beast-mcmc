@@ -234,6 +234,8 @@ public class ARGLikelihood extends AbstractARGLikelihood {
      * @return the log likelihood.
      */
     protected double calculateLogLikelihood() {
+	    sendState(0);
+	    System.exit(0);
 
 //        ARGTree argTree = new ARGTree(treeModel, 0);
 //        ARGModel tree = treeModel;
@@ -474,7 +476,16 @@ public class ARGLikelihood extends AbstractARGLikelihood {
         };
     };
 
-    // **************************************************************
+	/**
+	 * XML Serializer for parallelization
+	 *
+	 */
+
+//	public Element toXML() {
+//		Element likelihoodElement
+//	}
+
+	// **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
 

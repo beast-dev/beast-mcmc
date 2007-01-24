@@ -25,6 +25,7 @@
 
 package dr.inference.model;
 
+import dr.inference.parallel.MPISerializable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -91,8 +92,26 @@ public interface Parameter extends Statistic
 	/**
 	 * Abstract base class for parameters
 	 */
-	public abstract class Abstract extends Statistic.Abstract implements Parameter {
-		
+	public abstract class Abstract extends Statistic.Abstract
+			implements Parameter, MPISerializable {
+
+
+	// **************************************************************
+    // MPI IMPLEMENTATION
+    // **************************************************************
+
+
+		public void sendState(int toRank) {
+			System.err.println("SEND: Parameter Name: "+getParameterName());
+			System.err.println("SEND: Parameter ID  : "+getId());
+		}
+
+		public void receiveState() {
+			System.err.println("RECV: Parameter Name: "+getParameterName());
+			System.err.println("RECV: Parameter ID  : "+getId());
+			setParameterValueQuietly(0,0);
+		}
+
 		public int getDimension() { return 1; }
 		
 		/**

@@ -25,6 +25,7 @@
 
 package dr.inference.model;
 
+import dr.inference.parallel.MPISerializable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -38,7 +39,8 @@ import java.util.ArrayList;
  *
  * @version $Id: AbstractModel.java,v 1.13 2006/08/17 15:30:08 rambaut Exp $
  */
-public abstract class AbstractModel implements Model, ModelListener, ParameterListener, StatisticList {
+public abstract class AbstractModel implements Model, ModelListener,
+		ParameterListener, StatisticList, MPISerializable {
 	
 	public AbstractModel(String name) { 
 		this.name = name;
@@ -330,14 +332,37 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 	public Element createElement(Document d) {
 		throw new RuntimeException("Not implemented!");
 	}
-	
+
+
+	// **************************************************************
+    // MPI IMPLEMENTATION
+    // **************************************************************
+
+
+	public void sendState(int toRank) {
+
+		// Iterate through child models
+		for (Model model : models) {
+			((AbstractModel)model).sendState(toRank);
+		}
+		// Send current model parameters
+		for (Parameter parameter : parameters) {
+			((Parameter.Abstract)parameter).sendState(toRank);
+		}
+
+	}
+
+	public void receiveState() {
+
+	}
+
 	boolean isValidState = true;
 
 	protected Model.ListenerHelper listenerHelper = new Model.ListenerHelper();
 
-	private ArrayList models = new ArrayList();
-	private ArrayList parameters = new ArrayList();
-	private ArrayList statistics = new ArrayList();
+	private ArrayList<Model> models = new ArrayList();
+	private ArrayList<Parameter> parameters = new ArrayList();
+	private ArrayList<Statistic> statistics = new ArrayList();
 	
 	private String name;
 }

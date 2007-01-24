@@ -38,157 +38,140 @@ import java.util.ArrayList;
  */
 public class CompoundLikelihood implements Likelihood {
 
-    public static final String COMPOUND_LIKELIHOOD = "compoundLikelihood";
+	public static final String COMPOUND_LIKELIHOOD = "compoundLikelihood";
     public static final String POSTERIOR = "posterior";
     public static final String PRIOR = "prior";
     public static final String LIKELIHOOD = "likelihood";
 
-    public CompoundLikelihood() {
-    }
+	public CompoundLikelihood() { }
 
-    public void addLikelihood(Likelihood likelihood) {
+	public void addLikelihood(Likelihood likelihood) {
 
-        if (!likelihoods.contains(likelihood)) {
+		if ( !likelihoods.contains(likelihood) ) {
 
-            likelihoods.add(likelihood);
-            if (likelihood.getModel() != null) {
-                compoundModel.addModel(likelihood.getModel());
-            }
+			likelihoods.add(likelihood);
+			if (likelihood.getModel() != null) {
+				compoundModel.addModel(likelihood.getModel());
+			}
 
-        }
-    }
+		}
+	}
 
-    public int getLikelihoodCount() {
-        return likelihoods.size();
-    }
+	public int getLikelihoodCount() {
+		return likelihoods.size();
+	}
 
-    public final Likelihood getLikelihood(int i) {
-        return (Likelihood) likelihoods.get(i);
-    }
+	public final Likelihood getLikelihood(int i) {
+		return (Likelihood)likelihoods.get(i);
+	}
 
-    // **************************************************************
+	// **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-    public Model getModel() {
-        return compoundModel;
-    }
+	public Model getModel() { return compoundModel; }
 
-    public double getLogLikelihood() {
-        double logLikelihood = 0.0;
+	public double getLogLikelihood() {
+		double logLikelihood = 0.0;
 
-        for (int i = 0; i < likelihoods.size(); i++) {
-            double l = getLikelihood(i).getLogLikelihood();
+		for (int i = 0; i < likelihoods.size(); i++) {
+			double l = getLikelihood(i).getLogLikelihood();
 
-            // if the likelihood is zero then short cut the rest of the likelihoods
-            // This means that expensive likelihoods such as TreeLikelihoods should
-            // be put after cheap ones such as BooleanLikelihoods
-            if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
+			// if the likelihood is zero then short cut the rest of the likelihoods
+			// This means that expensive likelihoods such as TreeLikelihoods should
+			// be put after cheap ones such as BooleanLikelihoods
+			if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
 
-            logLikelihood += l;
-        }
+			logLikelihood += l;
+		}
 
-        return logLikelihood;
-    }
+		return logLikelihood;
+	}
 
-    //protected List<Likelihood> getLikelihoodList() { return likelihoods; }
+	public void makeDirty() {
 
-    public void makeDirty() {
+		for (int i = 0; i < likelihoods.size(); i++) {
+			getLikelihood(i).makeDirty();
+		}
+	}
 
-        for (int i = 0; i < likelihoods.size(); i++) {
-            getLikelihood(i).makeDirty();
-        }
-    }
+	public String toString() {
 
-    public String toString() {
+		return Double.toString(getLogLikelihood());
 
-        return Double.toString(getLogLikelihood());
-
-    }
+	}
 
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
 
-    /**
-     * @return the log columns.
-     */
-    public dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[]{
-                new LikelihoodColumn(getId())
-        };
-    }
+	/**
+	 * @return the log columns.
+	 */
+	public dr.inference.loggers.LogColumn[] getColumns() {
+		return new dr.inference.loggers.LogColumn[] {
+			new LikelihoodColumn(getId())
+		};
+	}
 
-    private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
+	private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
         public LikelihoodColumn(String label) {
             super(label);
-        }
+	}
 
         public double getDoubleValue() {
             return getLogLikelihood();
         }
     }
 
-    // **************************************************************
+	// **************************************************************
     // Identifiable IMPLEMENTATION
     // **************************************************************
 
-    private String id = null;
+	private String id = null;
 
-    public void setId(String id) {
-        this.id = id;
-    }
+	public void setId(String id) { this.id = id; }
 
-    public String getId() {
-        return id;
-    }
+	public String getId() { return id; }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() {
-            return COMPOUND_LIKELIHOOD;
-        }
+		public String getParserName() { return COMPOUND_LIKELIHOOD; }
 
-        public String[] getParserNames() {
-            return new String[]{getParserName(), "posterior", "prior", "likelihood"};
-        }
+        public String[] getParserNames() { return new String[] { getParserName(), "posterior", "prior", "likelihood" }; }
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CompoundLikelihood compoundLikelihood = new CompoundLikelihood();
+			CompoundLikelihood compoundLikelihood = new CompoundLikelihood();
 
-            for (int i = 0; i < xo.getChildCount(); i++) {
+			for (int i = 0; i < xo.getChildCount(); i++) {
                 if (xo.getChild(i) instanceof Likelihood) {
-                    compoundLikelihood.addLikelihood((Likelihood) xo.getChild(i));
+				    compoundLikelihood.addLikelihood((Likelihood)xo.getChild(i));
                 } else {
                     throw new XMLParseException("An element which is not a likelihood has been added to a " + COMPOUND_LIKELIHOOD + " element");
                 }
-            }
-            return compoundLikelihood;
-        }
+			}
+			return compoundLikelihood;
+		}
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
 
-        public String getParserDescription() {
-            return "A likelihood function which is simply the product of its component likelihood functions.";
-        }
+		public String getParserDescription() {
+			return "A likelihood function which is simply the product of its component likelihood functions.";
+		}
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE),
-        };
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+			new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE ),
+		};
 
-        public Class getReturnType() {
-            return CompoundLikelihood.class;
-        }
-    };
+		public Class getReturnType() { return CompoundLikelihood.class; }
+	};
 
-    private ArrayList likelihoods = new ArrayList();
-    private CompoundModel compoundModel = new CompoundModel("compoundModel");
+	private ArrayList likelihoods = new ArrayList();
+	private CompoundModel compoundModel = new CompoundModel("compoundModel");
 }
 

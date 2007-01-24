@@ -39,7 +39,8 @@ public class Expansion extends ExponentialGrowth {
 
 	/**
 	 * Construct demographic model with default settings
-	 */
+     * @param units of time
+     */
 	public Expansion(Type units) {
 	
 		super(units);

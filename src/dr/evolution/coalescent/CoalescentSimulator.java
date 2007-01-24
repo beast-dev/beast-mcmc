@@ -28,6 +28,7 @@ package dr.evolution.coalescent;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.MutableTree;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.TimeScale;
 import dr.util.HeapSort;
@@ -59,7 +60,7 @@ public class CoalescentSimulator {
 	 * @param taxa the set of taxa to simulate a coalescent tree between
 	 * @param demoFunction the demographic function to use
 	 */
-	public Tree simulateTree(TaxonList taxa, DemographicFunction demoFunction) {
+	public SimpleTree simulateTree(TaxonList taxa, DemographicFunction demoFunction) {
 
 		SimpleNode[] nodes = new SimpleNode[taxa.getTaxonCount()];
 		for (int i = 0; i < taxa.getTaxonCount(); i++) {

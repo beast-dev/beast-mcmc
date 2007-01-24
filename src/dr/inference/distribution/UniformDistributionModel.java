@@ -42,7 +42,7 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
 	public static final String LOWER = "lower";
 	public static final String UPPER = "upper";
 
-	/**
+	/*
 	 * Constructor.
 	 */
 	public UniformDistributionModel(Parameter lowerParameter, Parameter upperParameter) {

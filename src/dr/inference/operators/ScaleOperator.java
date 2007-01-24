@@ -26,6 +26,7 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
+import dr.inference.model.Bounds;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -42,10 +43,15 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 	public static final String SCALE_OPERATOR = "scaleOperator";
 	public static final String SCALE_ALL = "scaleAll";
 	public static final String SCALE_FACTOR = "scaleFactor";
+    private Parameter indicator;
+    private double indicatorOnProb;
 
-	public ScaleOperator(Parameter parameter, boolean scaleAll, double scale, int weight, int mode) {
+    public ScaleOperator(Parameter parameter, boolean scaleAll, double scale, int weight, int mode, Parameter indicator,
+                         double indicatorOnProb) {
 		this.parameter = parameter;
-		this.scaleAll = scaleAll;
+        this.indicator = indicator;
+        this.indicatorOnProb = indicatorOnProb;
+        this.scaleAll = scaleAll;
 		this.scaleFactor = scale;
 		this.weight = weight;
 		this.mode = mode;
@@ -59,34 +65,70 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 	 */
 	public final double doOperation() throws OperatorFailedException {
 		
-		double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0/scaleFactor) - scaleFactor)));
+		final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0/scaleFactor) - scaleFactor)));
 
 		double logq;
-		
-		if (scaleAll) {
+
+        final Bounds bounds = parameter.getBounds();
+        final int dim = parameter.getDimension();
+        if (scaleAll) {
 			// update all dimensions
+            // hasting ratio is dim-2 times of 1dim case. why?
 
-			logq = (parameter.getDimension() - 2) * Math.log(scale);
+            logq = (dim - 2) * Math.log(scale);
 
-			for (int i = 0; i < parameter.getDimension(); i++) {
+			for (int i = 0; i < dim; i++) {
 				parameter.setParameterValue(i, parameter.getParameterValue(i) * scale);
 			}
-			for (int i =0; i < parameter.getDimension(); i++) {
-				if (parameter.getParameterValue(i) < parameter.getBounds().getLowerLimit(i) || 
-					parameter.getParameterValue(i) > parameter.getBounds().getUpperLimit(i)) {
+            // why after changing? in the 1dim it is doen before?
+            for (int i = 0; i < dim; i++) {
+                final double parameterValue = parameter.getParameterValue(i);
+                if (parameterValue < bounds.getLowerLimit(i) || 
+					parameterValue > bounds.getUpperLimit(i)) {
 					throw new OperatorFailedException("proposed value outside boundaries");
 				}
 			}
 		} else {
-    		logq = - Math.log(scale);
+            // scale is chosen at uniform from an interval of length 1/scaleFactor, so pdf is 1/scaleFactor and
+            // hastings ratio is lg(1/scale) = -lg(scale)
+            logq = - Math.log(scale);
 
-			int index = MathUtils.nextInt(parameter.getDimension());
+			int index;
+            if( indicator != null ) {
+                final int idim = indicator.getDimension();
+                final boolean impliedOne = idim == dim - 1;
+                int[] loc = new int[idim];
+                int nLoc = 0;
+                final boolean takeOne = MathUtils.nextDouble() < indicatorOnProb;
+
+                if( impliedOne && takeOne ) {
+                    loc[nLoc] = 0;
+                    ++nLoc;
+                }
+                for (int i = 0; i < idim; i++) {
+                    final double value = indicator.getStatisticValue(i);
+                    if( takeOne == value > 0 ) {
+                        loc[nLoc] = i + (impliedOne ? 1 : 0);
+                        ++nLoc;
+                    }
+                }
+
+                if( nLoc > 0 ) {
+                    final int rand = MathUtils.nextInt(nLoc);
+                    index = loc[rand];
+                } else {
+                    throw new OperatorFailedException("no active indicators");
+                }
+
+                } else {
+                index = MathUtils.nextInt(dim);
+            }
 			
-			double oldValue = parameter.getParameterValue(index);
-            double newValue = scale * oldValue;
+			final double oldValue = parameter.getParameterValue(index);
+            final double newValue = scale * oldValue;
 				
-			if (newValue < parameter.getBounds().getLowerLimit(index) || 
-				newValue > parameter.getBounds().getUpperLimit(index)) {
+			if (newValue < bounds.getLowerLimit(index) ||
+				newValue > bounds.getUpperLimit(index)) {
 				throw new OperatorFailedException("proposed value outside boundaries");
 			}
 			
@@ -181,9 +223,18 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 				throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
 			}
 			
-			Parameter parameter = (Parameter)xo.getChild(Parameter.class);	
-			
-			return new ScaleOperator(parameter, scaleAll, scaleFactor, weight, mode);
+			Parameter parameter = (Parameter)xo.getChild(Parameter.class);
+
+            Parameter indicator = null;
+            final XMLObject cxo = (XMLObject) xo.getChild("indicator");
+            double indicatorOnProb = 1.0;
+            if( cxo != null ) {
+                indicator = (Parameter) cxo.getChild(Parameter.class);
+                 if( cxo.hasAttribute("pickoneprob") ) {
+                   indicatorOnProb = cxo.getDoubleAttribute("pickoneprob");
+                 }
+            }
+            return new ScaleOperator(parameter, scaleAll, scaleFactor, weight, mode, indicator, indicatorOnProb);
 		}
 		
 		//************************************************************************
@@ -208,7 +259,6 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 	
 	};
 
-
 	public String toString() { 
 		return "scaleOperator(" + parameter.getParameterName() + " [" + scaleFactor + ", " + (1.0/scaleFactor) + "]"; 
 	}
@@ -220,5 +270,4 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 	private double scaleFactor = 0.5;
 	private int mode = CoercableMCMCOperator.DEFAULT;
 	private int weight = 1;
-	
 }

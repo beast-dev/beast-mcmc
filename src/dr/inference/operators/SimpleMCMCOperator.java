@@ -114,6 +114,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
 	/**
 	 * Called by operate(), does the actual operation. 
 	 * @return the hastings ratio
+     * @throws OperatorFailedException
 	 */
 	public abstract double doOperation() throws OperatorFailedException;
 

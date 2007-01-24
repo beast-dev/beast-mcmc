@@ -76,13 +76,12 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
 		double logL = 0.0;
 
-		for (int i = 0; i < dataList.size(); i++) {
-			Statistic statistic = (Statistic)dataList.get(i);
-			for (int j = 0; j < statistic.getDimension(); j++) {
+        for (Statistic statistic : dataList) {
+            for (int j = 0; j < statistic.getDimension(); j++) {
                 logL += distribution.logPdf(statistic.getStatisticValue(j) - offset);
-			}
-		}
-		return logL;
+            }
+        }
+        return logL;
 	}
 
 	// **************************************************************

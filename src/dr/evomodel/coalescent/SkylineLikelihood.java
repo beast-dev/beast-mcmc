@@ -77,7 +77,7 @@ public class SkylineLikelihood extends CoalescentLikelihood {
 	 */
 	public double calculateLogLikelihood() {
 		
-		if (intervalsKnown == false) setupIntervals();
+		if (!intervalsKnown) setupIntervals();
 		
 		double logL = 0.0;
 		

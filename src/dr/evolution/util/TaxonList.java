@@ -77,8 +77,8 @@ public interface TaxonList extends Identifiable {
 			return taxa.getTaxonAttribute(index, name) != null;
 		}
 
-		public static Set getTaxonListIdSet(TaxonList taxa) {
-			Set taxaSet = new HashSet();
+		public static Set<String> getTaxonListIdSet(TaxonList taxa) {
+			Set<String> taxaSet = new HashSet<String>();
 			for (int i =0; i < taxa.getTaxonCount(); i++) {
 				taxaSet.add(taxa.getTaxonId(i));
 			}

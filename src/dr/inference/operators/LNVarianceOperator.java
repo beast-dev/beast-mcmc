@@ -45,7 +45,7 @@ public class LNVarianceOperator extends ScaleOperator {
 
     public LNVarianceOperator(LogNormalDistributionModel lnd, double scaleFactor, int weight, int mode) {
 
-        super(lnd.getSParameter(), false, scaleFactor, weight, mode);
+        super(lnd.getSParameter(), false, scaleFactor, weight, mode, null, 0.0);
         this.lnd = lnd;
     }
 

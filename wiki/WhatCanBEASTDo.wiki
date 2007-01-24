@@ -1,4 +1,5 @@
 #summary This page outlines the main models featured in BEAST.
+#labels Featured
 
 = What can BEAST do? =
 
@@ -34,5 +35,4 @@ Two unlinked genes can be given the same coalescent population model but a diffe
 
 *Local clock molecular clock models.*
 Allowing different clades in the tree to have different rates (or indeed, completely different substitution processes).
-
 

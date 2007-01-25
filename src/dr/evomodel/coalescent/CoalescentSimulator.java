@@ -62,10 +62,10 @@ public class CoalescentSimulator {
      * @param model the demographic model to use
      * @param rootHeight an optional root height with which to scale the whole tree
      */
-    public Tree simulateTree(Tree[] subtrees, DemographicModel model, double rootHeight) {
+    public SimpleTree simulateTree(Tree[] subtrees, DemographicModel model, double rootHeight) {
 
         SimpleNode[] roots = new SimpleNode[subtrees.length];
-        MutableTree tree = null;
+        SimpleTree tree = null;
 
         dr.evolution.util.Date mostRecent = null;
         for (int i = 0; i < subtrees.length; i++) {
@@ -140,10 +140,26 @@ public class CoalescentSimulator {
         final double lower;
         double upper;
 
-        TaxaConstraint(TaxonList taxons, UnivariateFunction u) {
+        TaxaConstraint(TaxonList taxons, ParametricDistributionModel p) {
             this.taxons = taxons;
-            lower = u.getLowerBound();
-            upper = u.getUpperBound();
+            // no constraint
+            //upper = -1;
+
+            if( p != null ) {
+                final UnivariateFunction univariateFunction = p.getProbabilityDensityFunction();
+                lower = univariateFunction.getLowerBound();
+                upper = univariateFunction.getUpperBound();
+//                if( lower == 0 && upper == Double.POSITIVE_INFINITY ) {
+//                     upper = -1;
+//                }
+            } else {
+                lower = 0;
+                upper = Double.POSITIVE_INFINITY;
+            }
+        }
+
+        public boolean realLimits() {
+            return lower != 0 || upper !=  Double.POSITIVE_INFINITY;
         }
     }
 
@@ -195,7 +211,6 @@ public class CoalescentSimulator {
                     TaxonList taxa = (TaxonList)constrainedTaxa.getChild(TaxonList.class);
                     List<TaxaConstraint> allc = new ArrayList<TaxaConstraint>();
 
-                    //XMLObject constraints = (XMLObject)constrainedTaxa.getChild("constraints");
                     for(int nc = 0; nc < constrainedTaxa.getChildCount(); ++nc) {
 
                         Object object = constrainedTaxa.getChild(nc);
@@ -206,13 +221,8 @@ public class CoalescentSimulator {
                                 TaxonList taxaSubSet = (TaxonList)constraint.getChild(TaxonList.class);
                                 ParametricDistributionModel dist =
                                         (ParametricDistributionModel) constraint.getChild(ParametricDistributionModel.class);
-                                final UnivariateFunction univariateFunction = dist.getProbabilityDensityFunction();
-                                if( univariateFunction.getLowerBound() == 0 &&
-                                        univariateFunction.getUpperBound() == Double.POSITIVE_INFINITY ) {
-                                    // ignore
-                                    continue;
-                                }
-                                allc.add(new TaxaConstraint(taxaSubSet, univariateFunction));
+
+                                allc.add(new TaxaConstraint(taxaSubSet, dist));
                             }
                         }
                     }
@@ -221,7 +231,10 @@ public class CoalescentSimulator {
                         taxonLists.add(taxa);
                     } else {
 
+                        // collect subtrees here
                         List<Tree> st = new ArrayList<Tree>();
+
+                        final String setsNotCOmpatibleMessage = "taxa sets not compatible";
 
                         while( allc.size() > 0 ) {
                             // pick a group of taxon-subsets where each is contained in the next
@@ -246,7 +259,7 @@ public class CoalescentSimulator {
                                                 next.add(j, allc.remove(k));
                                                 break;
                                             } else if( c != jtaxons.getTaxonCount() ) {
-                                               throw new XMLParseException("error taxa sets not compatible");
+                                               throw new XMLParseException(setsNotCOmpatibleMessage);
                                             } else if( j == next.size() ) {
                                                 next.add(allc.remove(k));
                                                 break;
@@ -255,7 +268,7 @@ public class CoalescentSimulator {
                                         baseConstraint = next.get(0).taxons;
 
                                     }  else {
-                                        throw new XMLParseException("error taxa sets not compatible");
+                                        throw new XMLParseException(setsNotCOmpatibleMessage);
                                     }
                                     --k;
                                 }
@@ -267,48 +280,52 @@ public class CoalescentSimulator {
                                 final TaxaConstraint ck = next.get(k);
                                 int intersectionSize = sizeOfIntersection(ckm1.taxons, ck.taxons);
                                 if( intersectionSize != ckm1.taxons.getTaxonCount() ) {
-                                    throw new XMLParseException("error taxa sets not compatible");
+                                    throw new XMLParseException(setsNotCOmpatibleMessage);
                                 }
                                 if( ckm1.upper > ck.upper ) {
                                    ckm1.upper = ck.upper;
                                 }
                             }
 
+                            // build tree for first subset
                             final TaxaConstraint taxaConstraint = next.get(0);
                             SimpleTree tree = simulator.simulateTree(taxaConstraint.taxons, demoModel);
-                            attemptToScaleTree(tree, (taxaConstraint.lower + taxaConstraint.upper)/2);
-                            if( next.size() == 1 ) {
-                                //attemptToScaleTree(tree, (taxaConstraint.lower + taxaConstraint.upper)/2);
+                            if( taxaConstraint.realLimits() ) {
+                               attemptToScaleTree(tree, (taxaConstraint.lower + taxaConstraint.upper)/2);
+                            }
 
-                                //final double height = tree.getNodeHeight(tree.getRoot());
-                            } else {
-                                // add trees incrementally
-                                for(int k = 1; k < next.size(); ++k) {
-                                    final TaxaConstraint constraintj = next.get(k);
-
-                                    // build tree for taxons in difference
-                                    final Taxa list = new Taxa();
-                                    for(int j = 0; j < constraintj.taxons.getTaxonCount(); ++j) {
-                                        Taxon taxonj = taxa.getTaxon(j);
-                                        if( tree.getTaxonIndex(taxonj) < 0 ) {
-                                            list.addTaxon(taxonj);
-                                        }
+                            // add more trees incrementally
+                            for(int k = 1; k < next.size(); ++k) {
+                                final TaxaConstraint constraintj = next.get(k);
+                                // build tree for taxons in difference
+                                final Taxa list = new Taxa();
+                                for(int j = 0; j < constraintj.taxons.getTaxonCount(); ++j) {
+                                    Taxon taxonj = taxa.getTaxon(j);
+                                    if( tree.getTaxonIndex(taxonj) < 0 ) {
+                                        list.addTaxon(taxonj);
                                     }
-                                    MutableTree tree1 = simulator.simulateTree(list, demoModel);
-                                    double low = Math.max(constraintj.lower,  tree.getNodeHeight(tree.getRoot()));
-                                    attemptToScaleTree(tree1, 0.75 * low + 0.25 * constraintj.upper);
+                                }
+
+                                MutableTree treeForRemaining = simulator.simulateTree(list, demoModel);
+                                if( constraintj.realLimits() ) {
+                                    double low = Math.max(constraintj.lower, tree.getNodeHeight(tree.getRoot()));
+                                    attemptToScaleTree(treeForRemaining, 0.75 * low + 0.25 * constraintj.upper);
 
                                     // combine the trees
                                     final SimpleNode newRoot = new SimpleNode();
                                     final SimpleNode node = new SimpleNode(tree, tree.getRoot());
                                     newRoot.addChild(node);
-                                    newRoot.addChild(new SimpleNode(tree1, tree1.getRoot()));
+                                    newRoot.addChild(new SimpleNode(treeForRemaining, treeForRemaining.getRoot()));
                                     newRoot.setHeight(0.5 * low + 0.5 * constraintj.upper);
                                     tree = new SimpleTree(newRoot);
+                                } else {
+                                    tree = simulator.simulateTree(new Tree[]{tree, treeForRemaining} , demoModel, -1);
                                 }
                             }
                             st.add(tree);
                         }
+
+                        // add a taxon list for remaining taxa
                         final Taxa list = new Taxa();
                         for(int j = 0; j < taxa.getTaxonCount(); ++j) {
                             Taxon taxonj = taxa.getTaxon(j);

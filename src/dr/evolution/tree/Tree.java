@@ -45,7 +45,7 @@ import java.util.*;
 public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 	/**
-	 * @return the index of root node of this tree.
+	 * @return root node of this tree.
 	 */
 	NodeRef getRoot();
 
@@ -57,16 +57,19 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 	/**
 	 * @return the ith node.
+     * @param i
 	 */
 	NodeRef getNode(int i);
 
 	/**
 	 * @return the ith internal node.
+     * @param i
 	 */
 	NodeRef getInternalNode(int i);
 
 	/**
 	 * @return the ith internal node.
+     * @param i
 	 */
 	NodeRef getExternalNode(int i);
 
@@ -84,6 +87,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 	/**
 	 * @return the taxon of this node.
+     * @param node
 	 */
 	Taxon getNodeTaxon(NodeRef node);
 
@@ -93,7 +97,8 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 	boolean hasNodeHeights();
 
 	/**
-	 * @return the height of the ith node in the tree (where the first n are internal).
+	 * @return the height of node in the tree.
+     * @param node
 	 */
 	double getNodeHeight(NodeRef node);
 
@@ -103,12 +108,14 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 	boolean hasBranchLengths();
 
 	/**
-	 * @return the length of the branch from the ith node in the tree to its parent.
+	 * @return the length of the branch from node to its parent.
+     * @param node
 	 */
 	double getBranchLength(NodeRef node);
 
 	/**
-	 * @return the rate of the ith node in the tree (where the first n are internal).
+	 * @return the rate of node in the tree.
+     * @param node
 	 */
 	double getNodeRate(NodeRef node);
 
@@ -127,21 +134,26 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 	/**
 	 * @return whether the node is external.
+     * @param node
 	 */
 	boolean isExternal(NodeRef node);
 
 	/**
 	 * @return whether the node is the root.
+     * @param node
 	 */
 	boolean isRoot(NodeRef node);
 
 	/**
-	 * @return the number of children of the ith node.
+	 * @return the number of children of node.
+     * @param node
 	 */
 	int getChildCount(NodeRef node);
 
 	/**
-	 * @return the jth child of the ith node
+	 * @return the jth child of node
+     * @param node
+     * @param j
 	 */
 	NodeRef getChild(NodeRef node, int j);
 
@@ -172,12 +184,12 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		public static final int LENGTHS_AS_SUBSTITUTIONS = 2;
 
 		/**
-		 * Return the number of leaves under this node.
+		 * Count number of leaves in subtree whose root is node.
 		 * @param tree
 		 * @param node
 		 * @return the number of leaves under this node.
 		 */
-		public static final int getLeafCount(Tree tree, NodeRef node) {
+		public static int getLeafCount(Tree tree, NodeRef node) {
 
 			int childCount = tree.getChildCount(node);
 			if (childCount == 0) return 1;
@@ -206,6 +218,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 		/**
 		 * @return true only if all tips have height 0.0
+         * @param tree
 		 */
 		public static boolean isUltrametric(Tree tree) {
 			for (int i = 0; i < tree.getExternalNodeCount(); i++) {
@@ -216,6 +229,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 		/**
 		 * @return true only if internal nodes have 2 children
+         * @param tree
 		 */
 		public static boolean isBinary(Tree tree) {
 			for (int i = 0; i < tree.getInternalNodeCount(); i++) {
@@ -226,10 +240,11 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 		/**
 		 * @return a set of strings which are the taxa of the tree.
+         * @param tree
 		 */
-		public static Set getLeafSet(Tree tree) {
+		public static Set<String> getLeafSet(Tree tree) {
 
-			HashSet leafSet = new HashSet();
+			HashSet<String> leafSet = new HashSet<String>();
 			int m = tree.getTaxonCount();
 
 			for (int i = 0; i < m; i++) {
@@ -242,12 +257,14 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		}
 
 		/**
-		 * Gets an array of booleans, true for the leaf nodes that are associated with
-		 * the taxa in taxa.
-		 */
-		public static Set getLeavesForTaxa(Tree tree, TaxonList taxa) throws MissingTaxonException {
+         * @return Set of taxaon names (id's) associated with the taxa in taxa.
+         * @param tree
+         * @param taxa
+         * @throws dr.evolution.tree.Tree.MissingTaxonException
+         */
+		public static Set<String> getLeavesForTaxa(Tree tree, TaxonList taxa) throws MissingTaxonException {
 
-			HashSet leafNodes = new HashSet();
+			HashSet<String> leafNodes = new HashSet<String>();
 			int m = taxa.getTaxonCount();
 			int n = tree.getExternalNodeCount();
 
@@ -278,9 +295,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		/**
 		 * Gets a set of taxa names (as strings) of the leaf nodes descended from the given node.
 		 */
-		public static Set getDescendantLeaves(Tree tree, NodeRef node) {
+		public static Set<String> getDescendantLeaves(Tree tree, NodeRef node) {
 
-			HashSet set = new HashSet();
+			HashSet<String> set = new HashSet<String>();
 			getDescendantLeaves(tree, node, set);
 			return set;
 		}
@@ -288,7 +305,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		/**
 		 * Gets a set of taxa names (as strings) of the leaf nodes descended from the given node.
 		 */
-		private static void getDescendantLeaves(Tree tree, NodeRef node, Set set) {
+		private static void getDescendantLeaves(Tree tree, NodeRef node, Set<String> set) {
 
 			if (tree.isExternal(node)) {
 				set.add(tree.getTaxonId(node.getNumber()));
@@ -300,7 +317,6 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 					getDescendantLeaves(tree, node1, set);
 				}
-
 			}
 		}
 
@@ -324,7 +340,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 			return mrca[0];
 		}
 
-		/**
+		/*
 		 * Private recursive function used by getCommonAncestorNode.
 		 */
 		private static int getCommonAncestorNode(Tree tree, NodeRef node,
@@ -398,7 +414,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 			return isMono[0];
 		}
 
-		/**
+		/*
 		 * Private recursive function used by isMonophyletic.
 		 */
 		private static boolean isMonophyletic(Tree tree, NodeRef node,
@@ -445,6 +461,8 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 		/**
 		 * @return the size of the largest clade with tips in the given range of times.
+         * @param tree
+         * @param range
 		 */
 		public static int largestClade(Tree tree, double range) {
 
@@ -831,7 +849,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 			} else {
 				StringBuffer buffer = new StringBuffer("(");
 
-				ArrayList subtrees = new ArrayList();
+				ArrayList<String> subtrees = new ArrayList<String>();
 				for (int i = 0; i < tree.getChildCount(node); i++) {
 					NodeRef child = tree.getChild(node, i);
 					subtrees.add(uniqueNewick(tree, child));
@@ -863,7 +881,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		private static SimpleNode rotateNodeByName(Tree tree, NodeRef node) {
 
 			if (tree.isExternal(node)) {
-				return  new SimpleNode(tree, node);
+				return new SimpleNode(tree, node);
 			} else {
 
 				SimpleNode parent = new SimpleNode(tree, node);
@@ -967,9 +985,5 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 			return uniqueNewick(tree1, tree1.getRoot()).equals(uniqueNewick(tree2, tree2.getRoot()));
 		}
-
-
-
 	}
-
 }

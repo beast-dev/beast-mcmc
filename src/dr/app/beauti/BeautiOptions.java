@@ -670,7 +670,7 @@ public class BeautiOptions {
 	}
 
 	private Operator getOperator(String name) {
-		Operator operator = (Operator)operators.get(name);
+		Operator operator = operators.get(name);
 		if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
 		return operator;
 	}
@@ -1473,7 +1473,8 @@ public class BeautiOptions {
 	public TaxonList taxonList = null;
 	public SimpleAlignment originalAlignment = null;
 	public List<Taxa> taxonSets = new ArrayList<Taxa>();
-	public Alignment alignment = null;
+    public List<Boolean> taxonSetsMono = new ArrayList<Boolean>();
+    public Alignment alignment = null;
 	public Tree tree = null;
 	public boolean alignmentReset = true;
 	public double meanDistance = 1.0;

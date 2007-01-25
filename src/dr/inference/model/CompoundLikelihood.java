@@ -63,7 +63,7 @@ public class CompoundLikelihood implements Likelihood {
 	}
 
 	public final Likelihood getLikelihood(int i) {
-		return (Likelihood)likelihoods.get(i);
+		return likelihoods.get(i);
 	}
 
 	// **************************************************************
@@ -167,7 +167,7 @@ public class CompoundLikelihood implements Likelihood {
 		public Class getReturnType() { return CompoundLikelihood.class; }
 	};
 
-	private ArrayList likelihoods = new ArrayList();
+	private ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
 	private CompoundModel compoundModel = new CompoundModel("compoundModel");
 }
 

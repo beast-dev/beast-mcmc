@@ -36,6 +36,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -92,9 +94,10 @@ public class TaxaPanel extends JPanel implements Exportable {
 		// Taxon Sets
 		taxonSetsTableModel = new TaxonSetsTableModel();
 		taxonSetsTable = new JTable(taxonSetsTableModel);
-		taxonSetsTable.getColumnModel().getColumn(0).setCellRenderer(
-				new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-		taxonSetsTable.getColumnModel().getColumn(0).setMinWidth(20);
+        final TableColumnModel model = taxonSetsTable.getColumnModel();
+        final TableColumn tableColumn0 = model.getColumn(0);
+        tableColumn0.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+		tableColumn0.setMinWidth(20);
 
 		taxonSetsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent evt) { taxonSetsTableSelectionChanged(); }
@@ -336,7 +339,9 @@ public class TaxaPanel extends JPanel implements Exportable {
 			options.taxonSets.add(currentTaxonSet);
 			Collections.sort(options.taxonSets);
 
-			taxonSetsTableModel.fireTableDataChanged();
+            options.taxonSetsMono.add(Boolean.FALSE);
+            
+            taxonSetsTableModel.fireTableDataChanged();
 
 			int sel = options.taxonSets.indexOf(currentTaxonSet);
 			taxonSetsTable.setRowSelectionInterval(sel, sel);
@@ -356,6 +361,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 			int row = taxonSetsTable.getSelectedRow();
 			if (row != -1) {
 				options.taxonSets.remove(row);
+                options.taxonSetsMono.remove(row);
 			}
 			taxonSetChanged();
 
@@ -421,7 +427,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 		}
 
 		public int getColumnCount() {
-			return 1;
+			return 2;
 		}
 
 		public int getRowCount() {
@@ -430,26 +436,82 @@ public class TaxaPanel extends JPanel implements Exportable {
 		}
 
 		public Object getValueAt(int row, int col) {
-			return ((TaxonList)options.taxonSets.get(row)).getId();
-		}
+            switch(col) {
+                case 0: return options.taxonSets.get(row).getId();
+                case 1: return options.taxonSetsMono.get(row);
+            }
+            return null;
+        }
 
 		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-			((Taxa)options.taxonSets.get(rowIndex)).setId(aValue.toString());
-			setTaxonSetTitle();
-		}
+            switch(columnIndex) {
+                case 0: {
+                    options.taxonSets.get(rowIndex).setId(aValue.toString());
+                    setTaxonSetTitle();
+                    break;
+                }
+                case 1: {
+                    break;
+                }
+            }
+        }
 
-		public boolean isCellEditable(int row, int col) {
+        public boolean isCellEditable(int row, int col) {
 			return true;
 		}
 
 		public String getColumnName(int column) {
-			return "Taxon Sets";
-		}
+			switch(column) {
+                case 0: return "Taxon Sets";
+                case 1: return "Mono";
+            }
+            return null;
+        }
 
-		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-	};
+		public Class getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
+        }
+	}
 
-	JPanel createAddRemoveButtonPanel(Action addAction, Icon addIcon, String addToolTip,
+//    class TaxonSetsTableModel extends AbstractTableModel {
+//
+//		/**
+//		 *
+//		 */
+//		private static final long serialVersionUID = 3318461381525023153L;
+//
+//		public TaxonSetsTableModel() {
+//		}
+//
+//		public int getColumnCount() {
+//			return 1;
+//		}
+//
+//		public int getRowCount() {
+//			if (options == null) return 0;
+//			return options.taxonSets.size();
+//		}
+//
+//		public Object getValueAt(int row, int col) {
+//			return options.taxonSets.get(row).getId();
+//		}
+//
+//		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+//			options.taxonSets.get(rowIndex).setId(aValue.toString());
+//			setTaxonSetTitle();
+//		}
+//
+//		public boolean isCellEditable(int row, int col) {
+//			return true;
+//		}
+//
+//		public String getColumnName(int column) {
+//			return "Taxon Sets";
+//		}
+//
+//		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
+//	}
+    JPanel createAddRemoveButtonPanel(Action addAction, Icon addIcon, String addToolTip,
 	                                  Action removeAction, Icon removeIcon, String removeToolTip, int axis) {
 
 		JPanel buttonPanel = new JPanel();
@@ -620,6 +682,6 @@ public class TaxaPanel extends JPanel implements Exportable {
 		}
 
 		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-	};
+	}
 
 }

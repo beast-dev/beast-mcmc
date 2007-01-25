@@ -44,10 +44,7 @@ import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.YuleModel;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.tree.RateCovarianceStatistic;
-import dr.evomodel.tree.RateStatistic;
-import dr.evomodel.tree.TreeLogger;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evoxml.*;
 import dr.inference.distribution.DistributionLikelihood;
@@ -1228,18 +1225,31 @@ public class BeastGenerator extends BeautiOptions {
 
         writer.writeText("");
         for (int i = 0; i < taxonSets.size(); i++) {
-            TaxonList taxa = (TaxonList)taxonSets.get(i);
+            TaxonList taxa = taxonSets.get(i);
             writer.writeOpenTag(
-                    "tmrcaStatistic",
+                    TMRCAStatistic.TMRCA_STATISTIC,
                     new Attribute[]{
                             new Attribute.Default("id", "tmrca(" + taxa.getId() + ")"),
                     }
             );
-            writer.writeOpenTag("mrca");
-            writer.writeTag("taxa", new Attribute[]{new Attribute.Default("idref", taxa.getId())}, true);
-            writer.writeCloseTag("mrca");
+            writer.writeOpenTag(TMRCAStatistic.MRCA);
+            writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default("idref", taxa.getId())}, true);
+            writer.writeCloseTag(TMRCAStatistic.MRCA);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
-            writer.writeCloseTag("tmrcaStatistic");
+            writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
+
+            if( taxonSetsMono.get(i) ) {
+                writer.writeOpenTag(
+                        MonophylyStatistic.MONOPHYLY_STATISTIC,
+                        new Attribute[]{
+                                new Attribute.Default("id", "monophyly(" + taxa.getId() + ")"),
+                        });
+                writer.writeOpenTag(MonophylyStatistic.MRCA);
+                writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default("idref", taxa.getId())}, true);
+                writer.writeCloseTag(MonophylyStatistic.MRCA);
+                writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
+                writer.writeCloseTag(MonophylyStatistic.MONOPHYLY_STATISTIC);
+            }
         }
     }
 
@@ -1614,6 +1624,22 @@ public class BeastGenerator extends BeautiOptions {
      * @param writer the writer
      */
     private void writeParameterPriors(XMLWriter writer) {
+        boolean first = true;
+        for(int k = 0; k < taxonSetsMono.size(); ++k) {
+            if( taxonSetsMono.get(k) ) {
+                if( first ) {
+                    writer.writeOpenTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
+                    first = false;
+                }
+                final String taxaRef = "monophyly(" + taxonSets.get(k).getId() + ")";
+                final Attribute.Default attr = new Attribute.Default("idref", taxaRef);
+                writer.writeTag(MonophylyStatistic.MONOPHYLY_STATISTIC, new Attribute[]{attr}, true);
+            }
+        }
+        if( ! first ) {
+          writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
+        }
+        
         ArrayList<Parameter> parameters = selectParameters();
         Iterator<Parameter> iter = parameters.iterator();
         while (iter.hasNext()) {

@@ -95,7 +95,7 @@ public class LogAnalyser {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("LogAnalyser v1.4, 2002-2006", 60);
+        centreLine("LogAnalyser v1.4.1, 2002-2007", 60);
         centreLine("MCMC Output analysis", 60);
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
@@ -118,7 +118,7 @@ public class LogAnalyser {
         System.out.println(line);
     }
 
- 
+
 	public static void printUsage(Arguments arguments) {
 
 		arguments.printUsage("loganalyser", "[-burnin <burnin>] [-short] [<input-file-name> [<output-file-name>]]");

@@ -532,9 +532,9 @@ public class TreeAnnotator {
                 icon = new javax.swing.ImageIcon(url);
             }
 
-            String nameString = "TreeAnnotator v1.4";
-            final String versionString = "1.4";
-            String aboutString = "<html><center><p>Version " + versionString + ", 2006</p>" +
+            String nameString = "TreeAnnotator v1.4.1";
+            final String versionString = "1.4.1";
+            String aboutString = "<html><center><p>Version " + versionString + ", 2006-2007</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +

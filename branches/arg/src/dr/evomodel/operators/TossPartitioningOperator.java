@@ -17,11 +17,17 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
     private ARGModel argModel;
     //private int numberPartitions;
 
-    private final static String OPERATOR_NAME = "tossPartitioningOperator";
+    public final static String OPERATOR_NAME = "tossPartitioningOperator";
+    public static final String TOSS_SIZE = "singleFlip";
+    public static final String IS_RECOMBINATION = "isRecombination";
+    private boolean isRecombination;
 
-    public TossPartitioningOperator(ARGModel arg) {
+
+    public TossPartitioningOperator(ARGModel arg, boolean singleFlip, boolean isRecombination) {
         argModel = arg;
         partitioningParameters = arg.getPartitioningParameters();
+        this.singleFlip = singleFlip;
+        this.isRecombination = isRecombination;
     }
 
     /**
@@ -33,20 +39,14 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
 
     @Override
     public final double doOperation() throws OperatorFailedException {
+        double logq = 0;
         int numberParameters = partitioningParameters.getNumParameters();
         if (numberParameters == 0)
             throw new OperatorFailedException("Must be atleast one reassortment.");
-        // Pick one
-        /* else     {
-if (true)
-
-throw new OperatorFailedException("out");         }*/
         // TODO update more than one at a time
         int whichParameter = MathUtils.nextInt(numberParameters);
         Parameter partitioning = partitioningParameters.getParameter(whichParameter);
         int numberPartitions = partitioning.getDimension();
-	    //System.err.println("np = "+numberPartitions);
-	    //System.exit(-1);
         if (numberPartitions == 2) { // Just swap partitioning
             if (partitioning.getParameterValue(0) == 0) {
                 partitioning.setParameterValueQuietly(0, 1);
@@ -55,7 +55,45 @@ throw new OperatorFailedException("out");         }*/
                 partitioning.setParameterValueQuietly(0, 0);
                 partitioning.setParameterValueQuietly(1, 1);
             }
-        } else { // There are more than just two possible partitioning
+        } else {
+            if (isRecombination)
+                logq += doRecombination(partitioning);
+            else
+                logq += doReassortment(partitioning);
+        }
+        argModel.fireModelChanged(new PartitionChangedEvent(partitioningParameters));
+        return logq;
+    }
+
+
+    private double doRecombination(Parameter partitioning) throws OperatorFailedException {
+        int numberPartitions = partitioning.getDimension();
+        double leftValue = MathUtils.nextInt(2);
+        double rightValue = 1.0 - leftValue;
+        int cut = MathUtils.nextInt(numberPartitions-1);
+        /*for (int i=0; i<numberPartitions; i++) {
+            if (i <= cut)
+                partitioning.setParameterValueQuietly(i,leftValue);
+            else
+                partitioning.setParameterValueQuietly(i,rightValue);
+
+        }*/
+        for (int i=0; i<=cut; i++)
+            partitioning.setParameterValueQuietly(i,leftValue);
+        for (int i=cut+1; i<numberPartitions; i++)
+            partitioning.setParameterValueQuietly(i,rightValue);
+        return 0;
+    }
+
+
+    private double doReassortment(Parameter partitioning) throws OperatorFailedException {
+        int numberPartitions = partitioning.getDimension();
+        if (singleFlip) {
+            /*int which = MathUtils.nextInt(numberPartitions);
+           if (partitioning)*/
+            throw new RuntimeException("Must implement single flips");
+
+        } else {
             // generate a uniform random draw from all possible partitionings
             int[] permutation = MathUtils.permuted(numberPartitions);
             int cut = MathUtils.nextInt(numberPartitions - 1);
@@ -65,9 +103,7 @@ throw new OperatorFailedException("out");         }*/
                 else
                     partitioning.setParameterValueQuietly(permutation[i], 1);
             }
-
         }
-        argModel.fireModelChanged(new PartitionChangedEvent(partitioningParameters));
         return 0;
     }
 
@@ -102,9 +138,20 @@ throw new OperatorFailedException("out");         }*/
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 //			int weight = xo.getIntegerAttribute(WEIGHT);
-//			Parameter parameter = (Parameter)xo.getChild(Parameter.class);	
+//			Parameter parameter = (Parameter)xo.getChild(Parameter.class);
+            boolean singleFlip = false;
+            boolean isRecombination = false;
+
+            if (xo.hasAttribute(TOSS_SIZE)) {
+                singleFlip = xo.getBooleanAttribute(TOSS_SIZE);
+            }
+
+            if (xo.hasAttribute(IS_RECOMBINATION)) {
+                isRecombination = xo.getBooleanAttribute(IS_RECOMBINATION);
+            }
+
             ARGModel arg = (ARGModel) xo.getChild(ARGModel.class);
-            return new TossPartitioningOperator(arg);
+            return new TossPartitioningOperator(arg,singleFlip,isRecombination);
         }
 
         //************************************************************************
@@ -133,6 +180,8 @@ throw new OperatorFailedException("out");         }*/
     public String toString() {
         return "tossPartitioningOperator(" + partitioningParameters.getParameterName() + ")";
     }
-	
+
+    private boolean singleFlip;
+
 
 }

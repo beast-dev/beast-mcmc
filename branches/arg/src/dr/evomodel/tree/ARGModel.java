@@ -159,7 +159,9 @@ public class ARGModel extends AbstractModel
     public static final String EDGE_FROM = "target";
     public static final String TAXON_NAME = "taxonName";
     public static final String EDGE_LENGTH = "len";
+    public static final String EDGE_PARTITIONS = "edgePartitions";
     public static final String IS_TIP = "isTip";
+    public static final String GRAPH_SIZE = "size=\"6,6\"";
 
     private String getNameOfNode(Node node) {
         if (node.taxon == null)
@@ -173,6 +175,20 @@ public class ARGModel extends AbstractModel
         edgeElement.setAttribute(EDGE_FROM, getNameOfNode(from));
         edgeElement.setAttribute(EDGE_TO, getNameOfNode(to));
         edgeElement.setAttribute(EDGE_LENGTH, Double.toString(getNodeHeight(from) - getNodeHeight(to)));
+        if (to.isReassortment()) {
+            double[] bits = to.partitioning.getParameterValues();
+            int length = bits.length;
+            StringBuilder sb = new StringBuilder();
+            boolean isLeft = (from == to.leftParent);
+            for (int i=0; i<length; i++) {
+                if ( (isLeft && bits[i] == 0) || (!isLeft && bits[i] == 1))   {
+                    sb.append(i);
+                    sb.append(" ");
+                }
+
+            }
+            edgeElement.setAttribute(EDGE_PARTITIONS,sb.toString().trim());
+        }
         return edgeElement;
     }
 

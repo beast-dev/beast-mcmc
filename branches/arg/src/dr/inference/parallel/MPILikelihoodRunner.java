@@ -2,6 +2,8 @@ package dr.inference.parallel;
 
 import dr.inference.loggers.Logger;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.AbstractModel;
 import dr.util.Identifiable;
 import dr.xml.*;
 import mpi.MPI;
@@ -18,15 +20,28 @@ import java.util.ArrayList;
 public class MPILikelihoodRunner implements Runnable, Identifiable {
 
     public static final String PARALLEL_CALCULATOR = "parallelCalculator";
+    public static final int origin = 0;
 
-    public MPILikelihoodRunner(String id) {
-        this.id = id;
+    public MPILikelihoodRunner(Likelihood likelihood) {
+       this.likelihood = likelihood;
+       this.model = likelihood.getModel();
     }
 
     public void run() {
         System.err.println("Calculator is running");
         System.err.println("rank = " + mpiRank);
         System.err.println("size = " + mpiSize);
+
+        while (!terminate) {
+
+            // Wait for calculation request
+            int[] jobId = new int[1];
+             MPI.COMM_WORLD.Recv(jobId,0,1,MPI.INT,origin,ServiceRequest.MSG_REQUEST_TYPE);
+            
+
+        }
+
+
 
         finalize();
     }
@@ -68,15 +83,9 @@ public class MPILikelihoodRunner implements Runnable, Identifiable {
          */
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            MPILikelihoodRunner runner = new MPILikelihoodRunner("mcmc1");
-            runner.init();
-            //         MCMCOptions options = new MCMCOptions();
-            //          OperatorSchedule opsched = (OperatorSchedule)xo.getChild(OperatorSchedule.class);
+           // runner.init();
             Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
             ArrayList loggers = new ArrayList();
-
-            //         options.setChainLength(xo.getIntegerAttribute(CHAIN_LENGTH));
-
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Object child = xo.getChild(i);
@@ -93,15 +102,9 @@ public class MPILikelihoodRunner implements Runnable, Identifiable {
         "\n  chainLength=" + options.getChainLength() +
         "\n  autoOptimize=" + options.useCoercion());*/
 
+            MPILikelihoodRunner runner = new MPILikelihoodRunner(likelihood);
+
             runner.init();
-
-//                MarkovChain mc = mcmc.getMarkovChain();
-//                double initialScore = mc.getCurrentScore();
-
-//                if (initialScore == Double.NEGATIVE_INFINITY) {
-//                    throw new IllegalArgumentException("The initial model is invalid because it has zero likelihood!");
-//                }
-
 
             return runner;
         }
@@ -138,5 +141,8 @@ public class MPILikelihoodRunner implements Runnable, Identifiable {
     private String id;
     private int mpiRank;
     private int mpiSize;
+    private boolean terminate = false;
+    private Likelihood likelihood;
+    private Model model;
 
 }

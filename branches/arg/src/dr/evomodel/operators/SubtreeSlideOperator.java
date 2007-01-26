@@ -28,13 +28,10 @@ package dr.evomodel.operators;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.ARGModel;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.*;
+import dr.xml.*;
 import dr.math.MathUtils;
-import dr.xml.AttributeRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
 
 import java.util.ArrayList;
 
@@ -42,38 +39,38 @@ import java.util.ArrayList;
  * Implements the subtree slide move.
  *
  * @author Alexei Drummond
+ *
  * @version $Id: SubtreeSlideOperator.java,v 1.15 2005/06/14 10:40:34 rambaut Exp $
  */
 public class SubtreeSlideOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
-    public static final String SUBTREE_SLIDE = "subtreeSlide";
-    public static final String SWAP_RATES = "swapRates";
-    public static final String SWAP_TRAITS = "swapTraits";
-    private ARGModel tree = null;
+	public static final String SUBTREE_SLIDE = "subtreeSlide";
+    public static final String SWAP_RATES = "swapInRandomRate";
+    public static final String SWAP_TRAITS = "swapInRandomTrait";
+	private TreeModel tree = null;
     private double size = 1.0;
     private boolean gaussian = false;
-    private boolean swapRates;
-    private boolean swapTraits;
-    private int mode = CoercableMCMCOperator.DEFAULT;
+    private boolean swapInRandomRate;
+    private boolean swapInRandomTrait;
+	private int mode = CoercableMCMCOperator.DEFAULT;
 
-    public SubtreeSlideOperator(ARGModel tree, int weight, double size, boolean gaussian, boolean swapRates, boolean swapTraits, int mode) {
-        this.tree = tree;
-        setWeight(weight);
+	public SubtreeSlideOperator(TreeModel tree, int weight, double size, boolean gaussian, boolean swapRates, boolean swapTraits, int mode) {
+		this.tree = tree;
+		setWeight(weight);
 
         this.size = size;
         this.gaussian = gaussian;
-        this.swapRates = swapRates;
-        this.swapTraits = swapTraits;
+        this.swapInRandomRate = swapRates;
+        this.swapInRandomTrait = swapTraits;
 
-        this.mode = mode;
-    }
+		this.mode = mode;
+	}
 
     /**
      * Do a probablistic subtree slide move.
-     *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() throws OperatorFailedException {
+	public double doOperation() throws OperatorFailedException {
 
         double logq;
 
@@ -84,7 +81,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
             i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
         } while (tree.getRoot() == i);
         NodeRef iP = tree.getParent(i);
-        NodeRef CiP = getOtherChild(tree, iP, i);
+        NodeRef CiP = getOtherChild(tree,iP, i);
         NodeRef PiP = tree.getParent(iP);
 
         // 2. choose a delta to move
@@ -99,8 +96,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
             if (PiP != null && tree.getNodeHeight(PiP) < newHeight) {
 
                 // find new parent
-                newParent = PiP;
-                newChild = iP;
+                newParent = PiP; newChild = iP;
                 while (tree.getNodeHeight(newParent) < newHeight) {
                     newChild = newParent;
                     newParent = tree.getParent(newParent);
@@ -111,20 +107,31 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
                 // 3.1.1 if creating a new root
                 if (tree.isRoot(newChild)) {
-                    tree.removeChild(iP, CiP);
-                    tree.removeChild(PiP, iP);
-                    tree.addChild(iP, newChild);
-                    tree.addChild(PiP, CiP);
+                    tree.removeChild(iP, CiP); tree.removeChild(PiP, iP);
+                    tree.addChild(iP, newChild); tree.addChild(PiP, CiP);
                     tree.setRoot(iP);
                     //System.err.println("Creating new root!");
+
+                    // **********************************************
+                    // swap traits and rates so that root keeps it trait and rate values
+                    // **********************************************
+
+                    double rootNodeTrait = tree.getNodeTrait(newChild);
+                    tree.setNodeTrait(newChild, tree.getNodeTrait(iP));
+                    tree.setNodeTrait(iP, rootNodeTrait);
+
+                    double rootNodeRate = tree.getNodeRate(newChild);
+                    tree.setNodeRate(newChild, tree.getNodeRate(iP));
+                    tree.setNodeRate(iP, rootNodeRate);
+
+                    // **********************************************
+
                 }
                 // 3.1.2 no new root
                 else {
-                    tree.removeChild(iP, CiP);
-                    tree.removeChild(PiP, iP);
+                    tree.removeChild(iP, CiP); tree.removeChild(PiP, iP);
                     tree.removeChild(newParent, newChild);
-                    tree.addChild(iP, newChild);
-                    tree.addChild(PiP, CiP);
+                    tree.addChild(iP, newChild); tree.addChild(PiP, CiP);
                     tree.addChild(newParent, iP);
                     //System.err.println("No new root!");
                 }
@@ -133,7 +140,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
                 try {
                     tree.endTreeEdit();
-                } catch (MutableTree.InvalidTreeException ite) {
+                } catch(MutableTree.InvalidTreeException ite) {
                     throw new RuntimeException(ite.toString());
                 }
 
@@ -141,7 +148,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                 int possibleSources = intersectingEdges(tree, newChild, oldHeight, null);
                 //System.out.println("possible sources = " + possibleSources);
 
-                logq = Math.log(1.0 / (double) possibleSources);
+                logq = Math.log(1.0/(double)possibleSources);
 
             } else {
                 // just change the node height
@@ -164,13 +171,11 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                 int possibleDestinations = intersectingEdges(tree, CiP, newHeight, newChildren);
 
                 // if no valid destinations then return a failure
-                if (newChildren.size() == 0) {
-                    return Double.NEGATIVE_INFINITY;
-                }
+                if (newChildren.size() == 0) { return Double.NEGATIVE_INFINITY; }
 
                 // pick a random parent/child destination edge uniformly from options
                 int childIndex = MathUtils.nextInt(newChildren.size());
-                newChild = (NodeRef) newChildren.get(childIndex);
+                newChild = (NodeRef)newChildren.get(childIndex);
                 newParent = tree.getParent(newChild);
 
                 tree.beginTreeEdit();
@@ -178,18 +183,29 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                 // 4.1.1 if iP was root
                 if (tree.isRoot(iP)) {
                     // new root is CiP
-                    tree.removeChild(iP, CiP);
-                    tree.removeChild(newParent, newChild);
-                    tree.addChild(iP, newChild);
-                    tree.addChild(newParent, iP);
+                    tree.removeChild(iP, CiP); tree.removeChild(newParent, newChild);
+                    tree.addChild(iP, newChild); tree.addChild(newParent, iP);
                     tree.setRoot(CiP);
+
+                    // **********************************************
+                    // swap traits and rates, so that root keeps it trait and rate values
+                    // **********************************************
+
+                    double rootNodeTrait = tree.getNodeTrait(iP);
+                    tree.setNodeTrait(iP, tree.getNodeTrait(CiP));
+                    tree.setNodeTrait(CiP, rootNodeTrait);
+
+                    double rootNodeRate = tree.getNodeRate(iP);
+                    tree.setNodeRate(iP, tree.getNodeRate(CiP));
+                    tree.setNodeRate(CiP, rootNodeRate);
+
+                    // **********************************************
+
                     //System.err.println("DOWN: Creating new root!");
                 } else {
-                    tree.removeChild(iP, CiP);
-                    tree.removeChild(PiP, iP);
+                    tree.removeChild(iP, CiP); tree.removeChild(PiP, iP);
                     tree.removeChild(newParent, newChild);
-                    tree.addChild(iP, newChild);
-                    tree.addChild(PiP, CiP);
+                    tree.addChild(iP, newChild); tree.addChild(PiP, CiP);
                     tree.addChild(newParent, iP);
                     //System.err.println("DOWN: no new root!");
                 }
@@ -198,18 +214,18 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
                 try {
                     tree.endTreeEdit();
-                } catch (MutableTree.InvalidTreeException ite) {
+                } catch(MutableTree.InvalidTreeException ite) {
                     throw new RuntimeException(ite.toString());
                 }
 
-                logq = Math.log((double) possibleDestinations);
+                logq = Math.log((double)possibleDestinations);
             } else {
                 tree.setNodeHeight(iP, newHeight);
                 logq = 0.0;
             }
         }
 
-        if (swapRates) {
+        if (swapInRandomRate) {
             NodeRef j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
             if (j != i) {
                 double tmp = tree.getNodeRate(i);
@@ -219,7 +235,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
         }
 
-        if (swapTraits) {
+        if (swapInRandomTrait) {
             NodeRef j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
             if (j != i) {
                 double tmp = tree.getNodeTrait(i);
@@ -235,7 +251,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
     private double getDelta() {
         if (!gaussian) {
-            return (MathUtils.nextDouble() * size) - (size / 2.0);
+            return (MathUtils.nextDouble() * size) - (size/2.0);
         } else {
             return MathUtils.nextGaussian() * size;
         }
@@ -271,71 +287,60 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
         }
     }
 
-    public double getSize() {
-        return size;
-    }
+    public double getSize() { return size; }
+    public void setSize(double size) { this.size = size; }
 
-    public void setSize(double size) {
-        this.size = size;
-    }
+	public double getCoercableParameter() {
+		return Math.log(getSize());
+	}
 
-    public double getCoercableParameter() {
-        return Math.log(getSize());
-    }
+	public void setCoercableParameter(double value) {
+		setSize(Math.exp(value));
+	}
 
-    public void setCoercableParameter(double value) {
-        setSize(Math.exp(value));
-    }
+	public double getRawParameter() { return getSize(); }
 
-    public double getRawParameter() {
-        return getSize();
-    }
+	public int getMode() {
+		return mode;
+	}
 
-    public int getMode() {
-        return mode;
-    }
-
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
+	public double getTargetAcceptanceProbability() { return 0.234; }
 
 
-    public String getPerformanceSuggestion() {
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
+	public String getPerformanceSuggestion() {
+		double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+		double targetProb = getTargetAcceptanceProbability();
 
-        double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
+		double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
 
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing size to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing size to about " + ws;
-        } else return "";
-    }
+		if (prob < getMinimumGoodAcceptanceLevel()) {
+			return "Try decreasing size to about " + ws;
+		} else if (prob > getMaximumGoodAcceptanceLevel()) {
+			return "Try increasing size to about " + ws;
+		} else return "";
+	}
 
-    public String getOperatorName() {
-        return SUBTREE_SLIDE;
-    }
+	public String getOperatorName() {
+		return SUBTREE_SLIDE;
+	}
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
-        public String getParserName() {
-            return SUBTREE_SLIDE;
-        }
+		public String getParserName() { return SUBTREE_SLIDE; }
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             boolean swapRates = false;
             boolean swapTraits = false;
 
-            int mode = CoercableMCMCOperator.DEFAULT;
-            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-                if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-                    mode = CoercableMCMCOperator.COERCION_ON;
-                } else {
-                    mode = CoercableMCMCOperator.COERCION_OFF;
-                }
-            }
+			int mode = CoercableMCMCOperator.DEFAULT;
+			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
+				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
+					mode = CoercableMCMCOperator.COERCION_ON;
+				} else {
+					mode = CoercableMCMCOperator.COERCION_OFF;
+				}
+			}
 
             if (xo.hasAttribute(SWAP_RATES)) {
                 swapRates = xo.getBooleanAttribute(SWAP_RATES);
@@ -344,34 +349,30 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                 swapTraits = xo.getBooleanAttribute(SWAP_TRAITS);
             }
 
-            ARGModel treeModel = (ARGModel) xo.getChild(ARGModel.class);
-            int weight = xo.getIntegerAttribute("weight");
-            double size = xo.getDoubleAttribute("size");
-            boolean gaussian = xo.getBooleanAttribute("gaussian");
-            return new SubtreeSlideOperator(treeModel, weight, size, gaussian, swapRates, swapTraits, mode);
-        }
+			TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
+			int weight = xo.getIntegerAttribute("weight");
+			double size = xo.getDoubleAttribute("size");
+			boolean gaussian = xo.getBooleanAttribute("gaussian");
+			return new SubtreeSlideOperator(treeModel, weight, size, gaussian, swapRates, swapTraits, mode);
+		}
 
-        public String getParserDescription() {
-            return "An operator that slides a subtree.";
-        }
+		public String getParserDescription() {
+			return "An operator that slides a subtree.";
+		}
 
-        public Class getReturnType() {
-            return SubtreeSlideOperator.class;
-        }
+		public Class getReturnType() { return SubtreeSlideOperator.class; }
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newIntegerRule("weight"),
-                AttributeRule.newDoubleRule("size"),
-                AttributeRule.newBooleanRule("gaussian"),
-                AttributeRule.newBooleanRule(SWAP_RATES, true),
-                AttributeRule.newBooleanRule(SWAP_TRAITS, true),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-//			new ElementRule(ARGModel.class)
-        };
-    };
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+			AttributeRule.newIntegerRule("weight"),
+			AttributeRule.newDoubleRule("size"),
+			AttributeRule.newBooleanRule("gaussian"),
+            AttributeRule.newBooleanRule(SWAP_RATES, true),
+            AttributeRule.newBooleanRule(SWAP_TRAITS, true),
+			AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+			new ElementRule(TreeModel.class)
+		};
+	};
 
 }

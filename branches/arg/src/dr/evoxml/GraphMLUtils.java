@@ -28,7 +28,9 @@ public class GraphMLUtils {
 	public static final String TAB = "\t";
 	public static final String END_LINE = ";\n";
 
-	private static void space(StringBuilder sb) {
+    public static final boolean printLengths = false;
+
+    private static void space(StringBuilder sb) {
 		sb.append(SPACE);
 	}
 
@@ -76,7 +78,10 @@ public class GraphMLUtils {
 		}
 		startSection(sb);
 		newLine(sb);
-		// Fill in graph details
+        tab(sb);
+        sb.append(ARGModel.GRAPH_SIZE);
+        endLine(sb);
+        // Fill in graph details
 		List<Element> nodeList = graphElement.getChildren(ARGModel.NODE_ELEMENT);
 		List<String> tipNames = new ArrayList<String>();
 		for (Element nodeElement : nodeList) {
@@ -123,13 +128,20 @@ public class GraphMLUtils {
 			tab(sb);
 			sb.append(fromName + " -> " + toName);
 			String edgeLength = edgeElement.getAttributeValue(ARGModel.EDGE_LENGTH);
-			if (edgeLength != null) {
+			if (edgeLength != null && printLengths) {
 				space(sb);
 				startAttribute(sb);
 				sb.append(ARGModel.EDGE_LENGTH + "=" + edgeLength + ",weight=1000.0");
 				endAttribute(sb);
 			}
-			endLine(sb);
+            String partitions = edgeElement.getAttributeValue(ARGModel.EDGE_PARTITIONS);
+            if (partitions != null) {
+                space(sb);
+                startAttribute(sb);
+                sb.append("label=\""+partitions+"\"");
+                endAttribute(sb);
+            }
+            endLine(sb);
 		}
 		//newLine(sb);
 		if (tipNames.size() > 0) {

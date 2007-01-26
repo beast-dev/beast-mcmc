@@ -35,6 +35,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
     public static final String SWAP_TRAITS = "swapTraits";
     public static final String MAX_VALUE = "maxTips";
 	public static final String SINGLE_PARTITION = "singlePartition";
+    public static final String IS_RECOMBINATION = "isRecombination";
 
     public static final String JUST_INTERNAL = "justInternalNodes";
     public static final String INTERNAL_AND_ROOT = "internalAndRootNodes";
@@ -43,6 +44,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
     private double size = 1.0;
     private boolean gaussian = false;
 	private boolean singlePartition = false;
+    private boolean isRecombination = false;
     //   private boolean swapRates;
     //   private boolean swapTraits;
     private int mode = CoercableMCMCOperator.DEFAULT;
@@ -51,10 +53,10 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 //	private int maxTips = 1;
 
     public AddRemoveARGEventOperator(ARGModel arg, int weight, double size, boolean gaussian,
-                                     boolean swapRates, boolean swapTraits, int mode, int maxTips,
+                                     boolean swapRates, boolean swapTraits, int mode,
                                      VariableSizeCompoundParameter param1,
                                      VariableSizeCompoundParameter param2,
-                                     boolean singlePartition) {
+                                     boolean singlePartition, boolean isRecombination) {
         this.arg = arg;
         setWeight(weight);
 //		this.maxTips = maxTips;
@@ -65,6 +67,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
         this.internalNodeParameters = param1;
         this.internalAndRootNodeParameters = param2;
 	    this.singlePartition = singlePartition;
+        this.isRecombination = isRecombination;
 
         this.mode = mode;
     }
@@ -505,30 +508,56 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
         int len = arg.getNumberOfPartitions();
         if (len == 2) {
             boolean first = MathUtils.nextBoolean();
-	        if (partitioning != null) {
-            if (first)
-                partitioning.setParameterValueQuietly(0, 1.0);
-            else
-                partitioning.setParameterValueQuietly(1, 1.0);
-	        }
+            if (partitioning != null) {
+                if (first)
+                    partitioning.setParameterValueQuietly(0, 1.0);
+                else
+                    partitioning.setParameterValueQuietly(1, 1.0);
+            }
             return Math.log(2);
         }
-	    if (singlePartition) {
-		    if (partitioning != null)
-		         partitioning.setParameterValueQuietly(MathUtils.nextInt(len),1.0);
-		    return Math.log(len);
-	    }
-	    
+        if (isRecombination) {
+            logq += drawRandomRecombination(partitioning);
+        } else {
+            logq += drawRandomReassortment(partitioning);
+        }
+        return logq;
+    }
 
 
+    private double drawRandomReassortment(Parameter partitioning) {
+        int len = arg.getNumberOfPartitions();
+        double logq = 0;
+        if (singlePartition) {
+            if (partitioning != null)
+                partitioning.setParameterValueQuietly(MathUtils.nextInt(len), 1.0);
+            return Math.log(len);
+        }
         int[] permutation = MathUtils.permuted(len);
         int cut = MathUtils.nextInt(len - 1);
         for (int i = 0; i < len; i++) {
             logq += Math.log(i + 1);
             if (i > cut && partitioning != null)
-                partitioning.setParameterValue(permutation[i], 1.0);
+                partitioning.setParameterValueQuietly(permutation[i], 1.0);
         }
         logq += Math.log(len - 1);
+        return logq;
+    }
+
+    private double drawRandomRecombination(Parameter partitioning) {
+        int len = arg.getNumberOfPartitions();
+        double logq = 0;
+        double leftValue = MathUtils.nextInt(2);
+        double rightValue = 1.0 - leftValue;
+        logq += Math.log(2);
+        if (partitioning != null) {
+            int cut = MathUtils.nextInt(len-1);
+            for (int i=0; i<=cut; i++)
+                partitioning.setParameterValueQuietly(i,leftValue);
+            for (int i=cut+1; i<len; i++)
+                partitioning.setParameterValueQuietly(i,rightValue);
+        }
+        logq += Math.log(len-1);
         return logq;
     }
 
@@ -633,6 +662,12 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 //        System.err.println("Create partitioning");
 
         logq += drawRandomPartitioning(partitioning);
+
+   /*     System.err.print("p: ");
+        double[] v = partitioning.getParameterValues();
+        for (double d : v)
+            System.err.print(d+" ");
+        System.err.println("");*/
 
 
         if (sisNode != recNode) {
@@ -846,6 +881,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
             boolean swapTraits = false;
 
 	        boolean singlePartition = false;
+            boolean isRecombination = false;
 
             int mode = CoercableMCMCOperator.DEFAULT;
             if (xo.hasAttribute(AUTO_OPTIMIZE)) {
@@ -859,6 +895,11 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 	        if (xo.hasAttribute(SINGLE_PARTITION)) {
 		        singlePartition = xo.getBooleanAttribute(SINGLE_PARTITION);
 	        }
+
+            if (xo.hasAttribute(IS_RECOMBINATION)) {
+                isRecombination = xo.getBooleanAttribute(IS_RECOMBINATION);
+
+            }
 
             if (xo.hasAttribute(SWAP_RATES)) {
                 swapRates = xo.getBooleanAttribute(SWAP_RATES);
@@ -884,11 +925,11 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 
             //VariableSizeTreeModel treeModel = (VariableSizeTreeModel)xo.getChild(TreeModel.class);
             int weight = xo.getIntegerAttribute("weight");
-            int maxTips = xo.getIntegerAttribute(MAX_VALUE);
+//            int maxTips = xo.getIntegerAttribute(MAX_VALUE);
             double size = xo.getDoubleAttribute("size");
             boolean gaussian = xo.getBooleanAttribute("gaussian");
             return new AddRemoveARGEventOperator(treeModel, weight, size, gaussian, swapRates, swapTraits,
-                    mode, maxTips, parameter1, parameter2, singlePartition);
+                    mode, parameter1, parameter2, singlePartition, isRecombination);
         }
 
         public String getParserDescription() {
@@ -905,7 +946,7 @@ public class AddRemoveARGEventOperator extends SimpleMCMCOperator implements Coe
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newIntegerRule("weight"),
-                AttributeRule.newIntegerRule(MAX_VALUE),
+//                AttributeRule.newIntegerRule(MAX_VALUE),
                 AttributeRule.newDoubleRule("size"),
                 AttributeRule.newBooleanRule("gaussian"),
                 AttributeRule.newBooleanRule(SWAP_RATES, true),

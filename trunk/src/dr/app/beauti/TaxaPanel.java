@@ -99,7 +99,9 @@ public class TaxaPanel extends JPanel implements Exportable {
         tableColumn0.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 		tableColumn0.setMinWidth(20);
 
-		taxonSetsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        //final TableColumn tableColumn1 = model.getColumn(1);
+
+        taxonSetsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent evt) { taxonSetsTableSelectionChanged(); }
 		});
 
@@ -451,6 +453,7 @@ public class TaxaPanel extends JPanel implements Exportable {
                     break;
                 }
                 case 1: {
+                    options.taxonSetsMono.set(rowIndex,  (Boolean)aValue);
                     break;
                 }
             }
@@ -463,7 +466,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 		public String getColumnName(int column) {
 			switch(column) {
                 case 0: return "Taxon Sets";
-                case 1: return "Mono";
+                case 1: return "Monophletic";
             }
             return null;
         }

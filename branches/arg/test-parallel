@@ -1,0 +1,9 @@
+#!/bin/bash
+
+export ARG=~/IdeaProjects/Beast/branches/arg
+export MPJ_HOME=$ARG/mpj
+export PATH=$PATH:$MPJ_HOME/bin
+
+export CLASSPATH=$ARG/bin/:$ARG/lib/commons-math-1.1.jar:$ARG/lib/jdom.jar:$ARG/lib/mpj.jar
+
+mpjrun.sh -np 21 -cp $CLASSPATH dr.app.beast.BeastRemote -seed 1 -working $ARG/HGT/hgt.xml

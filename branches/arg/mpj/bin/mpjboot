@@ -1,0 +1,16 @@
+#!/bin/sh
+#set -x
+
+if [ $# -ne 1 ]; then
+   echo "Usage: mpjboot <machines_file>";
+   exit 127
+fi 
+
+lines=`cat $1`
+count=0
+
+for i in `echo $lines`; do 
+  host=`echo $i`    
+  ssh $host "cd $MPJ_HOME/bin;./mpjdaemon start;"
+  count=`expr $count + 1`
+done

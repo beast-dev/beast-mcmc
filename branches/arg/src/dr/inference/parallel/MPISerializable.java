@@ -11,6 +11,6 @@ public interface MPISerializable {
 
 	public void sendState(int toRank);
 
-	public void receiveState();
+	public void receiveState(int fromRank);
 
 }

@@ -26,11 +26,12 @@ public enum ServiceRequest {
         }
     }
 
-    public ServiceRequest getByID(int id) {
+    public static ServiceRequest getByID(int id) {
         switch(id) {
             case CALCULATION_LIKELIHOOD_ID: return calculateLikeliood;
             case TERMINATE_ID: return terminateProcess;
             default: return null;
         }
     }
+
 }

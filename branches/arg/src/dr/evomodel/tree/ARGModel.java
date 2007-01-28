@@ -17,6 +17,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
+import dr.inference.parallel.MPIServices;
 import dr.math.MathUtils;
 import dr.util.Attributable;
 import dr.xml.*;
@@ -135,9 +136,171 @@ public class ARGModel extends AbstractModel
 
     }
 
+	/**
+	 * Packs and sends ARG state, including connectedness, heightparameters
+	 * and partitioning parameters.
+	 * @param toRank
+	 */
+
+	@Override
 	public void sendState(int toRank) {
-		super.sendState(toRank);
-		System.err.println("SEND: ARG string here.");
+		super.sendStateNoParameters(toRank);
+		int cnt = 0;
+		for (Node node : nodes) {
+            node.number = cnt;
+            cnt++;
+        }
+		final int size = nodes.size();
+		MPIServices.sendInt(size,toRank);
+		int[] intMsg = new int[size*7];
+		double[] doubleMsg = new double[size];
+		int indexNode = 0;
+		int indexHeight = 0;
+		int indexPartition = 0;
+		ArrayList<Parameter> partList = new ArrayList<Parameter>();
+		for (Node node: nodes) {
+			intMsg[indexNode++] = node.number;
+
+			if (node.leftParent != null)
+				intMsg[indexNode++] = node.leftParent.number;
+			else
+				intMsg[indexNode++] = -1;
+			if (node.rightParent != null)
+				intMsg[indexNode++] = node.rightParent.number;
+			else
+				intMsg[indexNode++] = -1;
+			if (node.leftChild != null)
+				intMsg[indexNode++] = node.leftChild.number;
+			else
+				intMsg[indexNode++] = -1;
+			if (node.rightChild != null)
+				intMsg[indexNode++] = node.rightChild.number;
+			else
+				intMsg[indexNode++] = -1;
+
+			if (node.partitioning != null) {
+				intMsg[indexNode++] = indexPartition++;
+				partList.add(node.partitioning);
+			} else {
+				intMsg[indexNode++] = -1;
+			}
+
+			if (node.bifurcation)
+				intMsg[indexNode++] = 1;
+			else
+				intMsg[indexNode++] = 0;
+
+			doubleMsg[indexHeight++] = node.heightParameter.getParameterValue(0);
+		}
+		MPIServices.sendIntArray(intMsg,toRank);
+		MPIServices.sendDoubleArray(doubleMsg,toRank);
+		MPIServices.sendInt(partList.size(),toRank);
+		for (Parameter partition : partList)             {
+//			System.err.println("Sending a partition.");
+			double[] values = partition.getParameterValues();
+//			System.err.println("length = "+values.length);
+			MPIServices.sendDoubleArray(partition.getParameterValues(),toRank);
+		}
+		//partitioningParameters.sendState(toRank);
+		MPIServices.sendInt( ((Node)getRoot()).number,toRank);
+	}
+
+	@Override
+	public void receiveState(int fromRank) {
+		super.receiveStateNoParameters(fromRank);
+		final int newNodeCount = MPIServices.receiveInt(fromRank);
+//		while (newNodeCount < nodes.size())
+//			nodes.remove(0);
+		int[] intMsg = MPIServices.receiveIntArray(fromRank,newNodeCount*7);
+		double[] doubleMsg = MPIServices.receiveDoubleArray(fromRank,newNodeCount);
+		int partitionLength = MPIServices.receiveInt(fromRank);
+//		System.err.println("Attemping to receive "+partitionLength+" partitions.");
+		final int length = getNumberOfPartitions();
+//		System.err.println("Expected length = "+length);
+		while (partitionLength > partitioningParameters.getNumParameters()) {
+			Parameter newPartition = new Parameter.Default(length);
+			partitioningParameters.addParameter(newPartition);
+		}
+
+		for (int i=0; i<partitionLength; i++) {
+			double[] values = MPIServices.receiveDoubleArray(fromRank,length);
+//			System.err.println("Received.");
+			Parameter param = partitioningParameters.getParameter(i);
+//			System.err.println("null? "+ (param == null ? "Yes" : "No"));
+			for (int j=0; j<length; j++)   {
+//				System.err.println("setting value #"+j+ " = "+values[j]);
+
+				param.setParameterValueQuietly(j,values[j]);
+			}
+//			System.err.println("Values set");
+		}
+//		System.err.println("Done with partition receive.");
+
+		int root = MPIServices.receiveInt(fromRank);
+//		System.err.println("Start reconstructing ARG");
+
+		beginTreeEdit();
+		while (newNodeCount > nodes.size()) {
+			Node newNode = new Node();
+			newNode.heightParameter = new Parameter.Default(0.0);
+			nodes.add(newNode);
+		}
+		//System.err.println("extra height added");
+		int nodeInt;
+		int indexNode = 0;
+		int indexHeight = 0;
+		int indexPartition = 0;
+		for (int i=0; i<newNodeCount; i++) {
+			Node node = nodes.get(i);
+			node.number = intMsg[indexNode++];
+
+			nodeInt = intMsg[indexNode++];
+			if (nodeInt != -1)
+				node.leftParent = nodes.get(nodeInt);
+			else
+				node.leftParent = null;
+			nodeInt = intMsg[indexNode++];
+			if (nodeInt != -1)
+				node.rightParent = nodes.get(nodeInt);
+			else
+				node.rightParent = null;
+			nodeInt = intMsg[indexNode++];
+			if (nodeInt != -1)
+				node.leftChild = nodes.get(nodeInt);
+			else
+				node.leftChild = null;
+			nodeInt = intMsg[indexNode++];
+			if (nodeInt != -1)
+				node.rightChild = nodes.get(nodeInt);
+			else
+				node.rightChild = null;
+			//Parameter heightParam =
+			node.heightParameter.setParameterValueQuietly(0,doubleMsg[indexHeight++]);
+			int whichPartitionParameter = intMsg[indexNode++];
+			if (whichPartitionParameter != -1)      {
+//				System.err.println("Setting partition para");
+
+				node.partitioning = partitioningParameters.getParameter(whichPartitionParameter);
+//				System.err.println("Done setting param");
+			}
+
+			if (intMsg[indexNode++] == 1)
+				node.bifurcation = true;
+			else
+				node.bifurcation = false;
+
+		}
+//		System.err.println("Recovered all nodes");
+		setRoot(nodes.get(root));
+	//	try {
+			endTreeEditFast();
+		// todo fire an ARG changed event???
+
+	//	} catch (InvalidTreeException e) {
+	//		throw new RuntimeException("Unable to unpack ARG correctly");
+//			e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+	//	}
+
 	}
 
 	public VariableSizeCompoundParameter getPartitioningParameters() {
@@ -579,11 +742,6 @@ public class ARGModel extends AbstractModel
         throw new IllegalArgumentException("ARGModel.Node can only have two parents");
     }
 
-//    public final NodeRef getParent(NodeRef node, int partition) {
-//    	// TODO
-//    	return null;
-//    }
-//    
 
     public final boolean hasBranchLengths() {
         return true;
@@ -797,6 +955,11 @@ public class ARGModel extends AbstractModel
         }
         treeChangedEvents.clear();
     }
+
+
+	private void endTreeEditFast() {
+		inEdit = false;
+	}
 
     public void setNodeHeight(NodeRef n, double height) {
         ((Node) n).setHeight(height);

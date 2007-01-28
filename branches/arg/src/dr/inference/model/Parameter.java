@@ -26,6 +26,7 @@
 package dr.inference.model;
 
 import dr.inference.parallel.MPISerializable;
+import dr.inference.parallel.MPIServices;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -102,14 +103,21 @@ public interface Parameter extends Statistic
 
 
 		public void sendState(int toRank) {
-			System.err.println("SEND: Parameter Name: "+getParameterName());
-			System.err.println("SEND: Parameter ID  : "+getId());
+//			System.err.println("SEND: Parameter Name: "+getParameterName());
+			//System.err.println("SEND: Parameter ID  : "+getId());
+			//int length = getDimension();
+			double[] value = getParameterValues();
+			MPIServices.sendDoubleArray(value,toRank);
 		}
 
-		public void receiveState() {
-			System.err.println("RECV: Parameter Name: "+getParameterName());
-			System.err.println("RECV: Parameter ID  : "+getId());
-			setParameterValueQuietly(0,0);
+		public void receiveState(int fromRank) {
+//			System.err.println("RECV: Parameter Name: "+getParameterName());
+//			System.err.println("RECV: Parameter ID  : "+getId());
+			final int length = getDimension();
+			double[] values = MPIServices.receiveDoubleArray(fromRank,length);
+			for (int i=0; i<length; i++)
+				setParameterValueQuietly(i,values[i]);
+			this.fireParameterChangedEvent();
 		}
 
 		public int getDimension() { return 1; }

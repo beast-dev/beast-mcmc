@@ -153,7 +153,7 @@ public class ARGLikelihood extends AbstractARGLikelihood {
      * Handles model changed events from the submodels.
      */
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+	   // System.err.println("yoyo");
         if (model == treeModel) {
             if (object instanceof ARGModel.TreeChangedEvent) {
 
@@ -236,6 +236,7 @@ public class ARGLikelihood extends AbstractARGLikelihood {
     protected double calculateLogLikelihood() {
 //	    sendState(0);
 //	    System.exit(0);
+//	    System.err.println("here");
 
 //        ARGTree argTree = new ARGTree(treeModel, 0);
 //        ARGModel tree = treeModel;

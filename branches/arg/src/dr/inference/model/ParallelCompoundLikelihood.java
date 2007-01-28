@@ -1,5 +1,6 @@
 package dr.inference.model;
 
+import dr.inference.parallel.MPIServices;
 import dr.xml.*;
 
 /**
@@ -12,40 +13,64 @@ import dr.xml.*;
 public class ParallelCompoundLikelihood extends CompoundLikelihood {
 
     public static final String PARALLEL_COMPOUND_LIKELIHOOD = "parallelCompoundLikelihood";
+	public static final String LOCAL_CHECK = "doLocalCheck";
+	public static final String RUN_PARALLEL = "doInParallel";
 
-    public ParallelCompoundLikelihood() {
+    public ParallelCompoundLikelihood(boolean doParallel, boolean checkLocal) {
         super();
+	    this.doParallel = doParallel;
+	    this.checkLocal = checkLocal;
     }
-
-//    @Override
-//    public double getLogLikelihood() {
-//        return 0;
-//    }
 
     public void addLikelihood(Likelihood likelihood) {
         super.addLikelihood(likelihood);
-
-        // todo link with node
+	    // todo make sure that link to a remote node exists
     }
 
 
-    public double getLogLikelihood() {
-        double logLikelihood = 0.0;
+	private boolean doParallel = true;
+	private boolean checkLocal = false;
 
-        // todo distribute calculations to node and then wait for all to reply.
+	public double getLogLikelihood() {
+		double logLikelihood = 0;
+		if (doParallel)
+			logLikelihood = getLogLikelihoodRemote();
+		else
+			logLikelihood = super.getLogLikelihood();
+
+		if (checkLocal && doParallel) {
+			double logLikelihoodLocal = super.getLogLikelihood();
+			System.err.printf("Local: %5.4f  Remote: %5.4f\n",logLikelihoodLocal,logLikelihood);
+		}
+
+		return logLikelihood;
+	}
+
+
+
+    private double getLogLikelihoodRemote() {
+        double logLikelihood = 0.0;
 
         final int N = getLikelihoodCount();
 
         for (int i = 0; i < N; i++) {
-            double l = getLikelihood(i).getLogLikelihood();
 
-            // if the likelihood is zero then short cut the rest of the likelihoods
-            // This means that expensive likelihoods such as TreeLikelihoods should
-            // be put after cheap ones such as BooleanLikelihoods
-            if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
+           MPIServices.requestLikelihood(i+1);
+	       ((AbstractModel)getLikelihood(i).getModel()).sendState(i+1);
+        }
+
+	    // Implicit barrier
+
+	    for (int i=0; i<N; i++) {
+	        double l = MPIServices.receiveDouble(i+1);
+	        if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
 
             logLikelihood += l;
         }
+
+	    // todo Use Reduce instead of blocking loop
+
+
 
         return logLikelihood;
     }
@@ -61,10 +86,18 @@ public class ParallelCompoundLikelihood extends CompoundLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            // todo initialize communication with parallel nodes and distribute jobs
+	        boolean doParallel = true;
+	        boolean checkLocal = false;
 
+	        if (xo.hasAttribute(LOCAL_CHECK)) {
+		        checkLocal = xo.getBooleanAttribute(LOCAL_CHECK);
+	        }
 
-            ParallelCompoundLikelihood compoundLikelihood = new ParallelCompoundLikelihood();
+	        if (xo.hasAttribute(RUN_PARALLEL)) {
+		        doParallel = xo.getBooleanAttribute(RUN_PARALLEL);
+	        }
+
+            ParallelCompoundLikelihood compoundLikelihood = new ParallelCompoundLikelihood(doParallel,checkLocal);
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 if (xo.getChild(i) instanceof Likelihood) {

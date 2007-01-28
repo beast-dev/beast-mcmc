@@ -352,7 +352,31 @@ public abstract class AbstractModel implements Model, ModelListener,
 
 	}
 
-	public void receiveState() {
+
+	public void sendStateNoParameters(int toRank) {
+
+		// Iterate through child models
+		for (Model model : models) {
+			((AbstractModel)model).sendState(toRank);
+		}
+
+	}
+
+	public void receiveStateNoParameters(int fromRank) {
+		for (Model model : models) {
+			((AbstractModel)model).receiveState(fromRank);
+		}
+	}
+
+	public void receiveState(int fromRank) {
+		for (Model model : models) {
+			((AbstractModel)model).receiveState(fromRank);
+		}
+		// Send current model parameters
+		for (Parameter parameter : parameters) {
+			((Parameter.Abstract)parameter).receiveState(fromRank);
+		}
+
 
 	}
 

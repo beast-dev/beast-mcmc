@@ -2,6 +2,7 @@ package dr.app.beast;
 
 import dr.app.util.Arguments;
 import dr.math.MathUtils;
+import dr.inference.parallel.MPIServices;
 import mpi.MPI;
 
 import java.io.File;
@@ -19,16 +20,33 @@ public class BeastRemote extends BeastMain {
         super(inputFile, consoleApp, verbose);
     }
 
+	public static void terminateSlaves() {
+		int size = MPI.COMM_WORLD.Size();
+		for (int i=1; i<size; i++) {
+			System.err.println("Sending kill to process "+i);
+			MPIServices.requestTermination(i);
+		}
+
+	}
+
     public static void main(String[] oldArgs) throws java.io.IOException {
 
         // First populate args from MPI.WORLD
 
         // String[] args = null;
         MPI.Init(oldArgs);
+	    int rank = MPI.COMM_WORLD.Rank();
         int argLength = oldArgs.length - 3;
         String[] args = new String[argLength];
-        for (int i = 0; i < argLength; i++)
+        for (int i = 0; i < argLength; i++) {
+
             args[i] = oldArgs[i + 3];
+	         System.err.println(i+" : "+args[i]);
+	        if (args[i].contains(".xml")) { // append rank
+		        args[i] = args[i].replace(".xml",new String(rank+".xml"));
+		        System.err.println("Attempting to load: "+args[i]);
+	        }
+        }
 
         /*  for (String str : args)
             System.err.println(str);
@@ -52,12 +70,14 @@ public class BeastRemote extends BeastMain {
             System.out.println();
             printTitle();
             printUsage(arguments);
+	        MPI.Finalize();
             System.exit(1);
         }
 
         if (arguments.hasOption("help")) {
             printTitle();
             printUsage(arguments);
+	        MPI.Finalize();
             System.exit(0);
         }
 
@@ -113,6 +133,7 @@ public class BeastRemote extends BeastMain {
             System.err.println();
             printTitle();
             printUsage(arguments);
+	        MPI.Finalize();
             System.exit(1);
         }
 
@@ -140,6 +161,10 @@ public class BeastRemote extends BeastMain {
         System.out.println();
 
         new BeastMain(inputFile, consoleApp, verbose);
+	    //System.err.println("Did I get here");
+	    if (rank == 0)
+	        terminateSlaves();
+	    MPI.Finalize();
     }
 
 

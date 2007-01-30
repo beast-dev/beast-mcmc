@@ -9,11 +9,11 @@ The rate of the strict molecular clock. The units of this parameter are in subst
 
 `constant.popSize` 
 
-This is the coalescent parameter under the assumption of a constant population size. This parameter represents the product of effective population size (N,,e,,) and the generation length in units of time ($\tau$). Therefore, only if time is measured in generations is this parameter a direct estimate of N,,e,,. Otherwise it is a composite parameter and N,,e,, can be computed from this parameter by dividing it by generation length in the units of time that your calibrations (or `clock.rate`) are defined in. Finally,  if `clock.rate` is set to 1.0 then `constant.popSize` is an estimate of N,,e,,\mu for haploid data such as mitochondrial sequences and 2N,,e,,\mu for diploid data, where \mu is the substitution rate per site per generation.
+This is the coalescent parameter under the assumption of a constant population size. This parameter represents the product of effective population size (_N,,e,,_) and the generation length in units of time (_τ_). Therefore, only if time is measured in generations is this parameter a direct estimate of _N,,e,,_. Otherwise it is a composite parameter and _N,,e,,_ can be computed from this parameter by dividing it by generation length in the units of time that your calibrations (or `clock.rate`) are defined in. Finally,  if `clock.rate` is set to 1.0 then `constant.popSize` is an estimate of _N,,e,,μ_ for haploid data such as mitochondrial sequences and _2N,,e,,μ_ for diploid data, where _μ_ is the substitution rate per site per generation.
 
 `exponential.growthRate`
 
-This is the coalescent parameter representing the rate of growth of the population assuming exponential growth. The population size at time $t$ is determined by $N(t)=N,,e,,\exp(-gt)$ where $t$ is in the same units as the branch lengths and $g$ is the `exponential.growthRate` parameter.
+This is the coalescent parameter representing the rate of growth of the population assuming exponential growth. The population size at time _t_ is determined by _N_(_t_)=_N,,e,,_exp{-_gt_} where _t_ is in the same units as the branch lengths and _g_ is the `exponential.growthRate` parameter.
 
 `exponential.popSize`
 
@@ -21,23 +21,23 @@ This is the parameter representing the modern day population size assuming expon
 
 `gtr.{ac,ag,at,cg,gt}`	
 
-These five parameters are the relative rates of substitutions for A<->C,  A<->G,  A<->T,  C<->G and  G<->T in the general time-reversible model of nucleotide substitution (Rodriguez et al, 1990). In the default set up these parameters are relative to r,,C<->T,, = 1.0.
+These five parameters are the relative rates of substitutions for A↔C,  A↔G,  A↔T,  C↔G and  G↔T in the general time-reversible model of nucleotide substitution (Rodriguez et al, 1990). In the default set up these parameters are relative to _r,,C↔T,,_ = 1.0.
 
 `hky.kappa`
 
-This parameter is the transition/transversion ratio ($\kappa$) parameter of the HKY85 model of nucleotide substitution \cite{HKY1985}.
+This parameter is the transition/transversion ratio (_κ_) parameter of the HKY85 model of nucleotide substitution (Hasegawa et al, 1985)
 
 `siteModel.alpha`	 
 
-This parameter is the shape ($\alpha$) parameter of the gamma distribution of rate heterogeneity among sites (Yang, 1994).
+This parameter is the shape (_α_) parameter of the gamma distribution of rate heterogeneity among sites (Yang, 1994).
 
 `siteModel.pInv`	 
 
-This parameter is the proportion of  invariant sites (p,,inv,,) and has a range between 0 and 1.
+This parameter is the proportion of  invariant sites (_p,,inv,,_) and has a range between 0 and 1.
 
 `treeModel.rootHeight`
 
-This variable represents the total height of the tree (often known as the time to the most recent common ancestor of all the taxa, t,,MRCA,,). The units of this variable are the same as the units for the branch lengths in the tree and will depend on the calibration information for the rate and/or dates of calibration nodes.
+This variable represents the total height of the tree (often known as the time to the most recent common ancestor of all the taxa, _t,,MRCA,,_). The units of this variable are the same as the units for the branch lengths in the tree and will depend on the calibration information for the rate and/or dates of calibration nodes.
 
 `ucld.mean`	 
 
@@ -45,8 +45,9 @@ This is the mean rate under the uncorrelated log-normal relaxed molecular clock 
 
 `ucld.stdev` 
 
-This is the standard deviation ($\sigma$) of the uncorrelated log-normal relaxed clock (in log-space). If this parameter is 0 there is no variation in rates among branches. If this parameter is greater than 1 then the standard deviation in branch rates (in real space) is greater than the mean rate.
+This is the standard deviation (_σ_) of the uncorrelated log-normal relaxed clock (in log-space). If this parameter is 0 there is no variation in rates among branches. If this parameter is greater than 1 then the standard deviation in branch rates (in real space) is greater than the mean rate.
 
 `yule.birthRate`
 
 This parameter is the rate of lineage birth and the Yule model of speciation. If `clock.rate` is 1.0 then this parameter estimates the number of lineages born from a parent lineage per substitution per site. If the tree is instead measure in, for example, years, then this parameter would be the number of new lineages born from a single parent lineage per year.
+

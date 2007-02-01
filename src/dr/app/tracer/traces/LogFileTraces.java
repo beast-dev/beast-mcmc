@@ -182,10 +182,11 @@ public class LogFileTraces implements TraceList {
 					try {
 						addValue(i, Double.parseDouble(tokens.nextToken()));
 					} catch (NumberFormatException nfe) {
-						throw new TraceException("State " + state + ": Expected real value in column " + reader.getLineNumber());
+						throw new TraceException("State " + state + ": Expected real value in column " + i +
+                                " (Line " + reader.getLineNumber() + ")");
 					}
 				} else {
-					throw new TraceException("State " + state + ": Expected real value in column " + reader.getLineNumber());
+					throw new TraceException("State " + state + ": missing values at line " + reader.getLineNumber());
 				}
 
 			}

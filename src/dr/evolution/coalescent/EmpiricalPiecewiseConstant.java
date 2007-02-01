@@ -66,8 +66,8 @@ public class EmpiricalPiecewiseConstant extends DemographicFunction.Abstract {
 	// Implementation of abstract methods
 	// **************************************************************
 	
-	public double getDemographic(double t) { 
-		int epoch = 0;
+	public double getDemographic(double t) {
+        int epoch = 0;
 		double t1 = t+lag;
 		while (t1 > getEpochDuration(epoch)) {
 			t1 -= getEpochDuration(epoch);
@@ -75,10 +75,7 @@ public class EmpiricalPiecewiseConstant extends DemographicFunction.Abstract {
 		}
 		return getDemographic(epoch, t1);
 	}
-	
-	/**
-	 * Gets the integral of intensity function from time 0 to time t.
-	 */
+
 	public double getIntensity(double t) { 
 	
 		// find the first epoch that is involved
@@ -100,7 +97,9 @@ public class EmpiricalPiecewiseConstant extends DemographicFunction.Abstract {
 			epoch += 1;
 		}
 		// add last fraction of intensity
-		intensity += getIntensity(epoch, t1);
+        // when t1 may be negative (for example when t is in the first epoch) the intensity need
+        // to be substracted
+        intensity += t1 >= 0 ? getIntensity(epoch, t1) : getIntensity(epoch-1, t1);
 	
 		return intensity; 
 	}
@@ -159,11 +158,12 @@ public class EmpiricalPiecewiseConstant extends DemographicFunction.Abstract {
 	/** 
 	 * @return the duration of the specified epoch (in whatever units this demographic model is specified in).
 	 */
-	public double getEpochDuration(int epoch) {
-		if (epoch == intervals.length) {
-			return Double.POSITIVE_INFINITY;
-		} else return intervals[epoch];
-	}
+    public double getEpochDuration(int epoch) {
+        if (epoch < intervals.length) {
+            return intervals[epoch];
+        }
+        return Double.POSITIVE_INFINITY;
+    }
 
 	/**
 	 * @return the pop size of a given epoch.
@@ -175,9 +175,9 @@ public class EmpiricalPiecewiseConstant extends DemographicFunction.Abstract {
 	
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
-		buffer.append(""+popSizes[0]);
+		buffer.append(popSizes[0]);
 		for (int i =1; i < popSizes.length; i++) {
-			buffer.append("\t" + popSizes[i]);
+            buffer.append("\t").append(popSizes[i]);
 		}
 		return buffer.toString();
 	}

@@ -24,6 +24,7 @@
  */
 package dr.app.beauti;
 
+import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.distance.DistanceMatrix;
@@ -31,149 +32,215 @@ import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 
 import java.io.*;
+import java.util.ArrayList;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class CommandLineBeauti {
-	private BeastGenerator beautiOptions = new BeastGenerator();
+    private BeastGenerator beautiOptions = new BeastGenerator();
 
-	public CommandLineBeauti(String inputFileName, String templateFileName, String outputFileName) {
+    public CommandLineBeauti(String inputFileName, String templateFileName, String outputFileName) {
 
-		try {
-			if (!importFromFile(new File(inputFileName))) {
-				return;
-			}
-		} catch (FileNotFoundException fnfe) {
-			System.err.println("Error: Input file not found");
-			return;
-		} catch (IOException ioe) {
-			System.err.println("Error reading input file: " + ioe.getMessage());
-			return;
-		}
+        try {
+            if (!importFromFile(new File(inputFileName))) {
+                return;
+            }
+        } catch (FileNotFoundException fnfe) {
+            System.err.println("Error: Input file not found");
+            return;
+        } catch (IOException ioe) {
+            System.err.println("Error reading input file: " + ioe.getMessage());
+            return;
+        }
 
-		try {
-			if (!readFromFile(new File(templateFileName))) {
-				return;
-			}
-		} catch (FileNotFoundException fnfe) {
-			System.err.println("Error: Template file not found");
-			return;
-		} catch (IOException ioe) {
-			System.err.println("Error reading template file: " + ioe.getMessage());
-			return;
-		}
+        try {
+            if (!readFromFile(new File(templateFileName))) {
+                return;
+            }
+        } catch (FileNotFoundException fnfe) {
+            System.err.println("Error: Template file not found");
+            return;
+        } catch (IOException ioe) {
+            System.err.println("Error reading template file: " + ioe.getMessage());
+            return;
+        }
 
-		beautiOptions.guessDates();
+        beautiOptions.guessDates();
 
-		try {
-			generate(new File(outputFileName));
+        try {
+            generate(new File(outputFileName));
 
-		} catch (IOException ioe) {
-			System.err.println("Unable to generate file: " + ioe.getMessage());
-			return;
-		}
-	}
+        } catch (IOException ioe) {
+            System.err.println("Unable to generate file: " + ioe.getMessage());
+            return;
+        }
+    }
 
-	private boolean readFromFile(File file) throws FileNotFoundException, IOException {
-		try {
-			SAXBuilder parser = new SAXBuilder();
-			Document doc = parser.build(file);
-			beautiOptions.parse(doc);
+    public CommandLineBeauti(String[] inputFileNames, String templateFileName, String outputFileName) {
 
-		} catch (dr.xml.XMLParseException xpe) {
-			System.err.println("Error reading file: This may not be a BEAUti Template file");
-			System.err.println(xpe.getMessage());
-			return false;
-		} catch (JDOMException e) {
-			System.err.println("Unable to open file: This may not be a BEAUti Template file");
-			System.err.println(e.getMessage());
-			return false;
-		}
-		return true;
-	}
+//        beautiOptions.alignments = new ArrayList<Alignment>();
 
-	private boolean importFromFile(File file) throws FileNotFoundException, IOException {
+        for (String inputFileName : inputFileNames) {
+            try {
+                if (!importMultipleAlignments(new File(inputFileName))) {
+                    return;
+                }
+            } catch (FileNotFoundException fnfe) {
+                System.err.println("Error: Input file '" + inputFileName + "' not found");
+            } catch (IOException ioe) {
+                System.err.println("Error reading input file: " + ioe.getMessage());
+                return;
+            }
+        }
 
-		try {
-			FileReader reader = new FileReader(file);
 
-			NexusApplicationImporter importer = new NexusApplicationImporter(reader);
+        try {
+            if (!readFromFile(new File(templateFileName))) {
+                return;
+            }
+        } catch (FileNotFoundException fnfe) {
+            System.err.println("Error: Template file not found");
+            return;
+        } catch (IOException ioe) {
+            System.err.println("Error reading template file: " + ioe.getMessage());
+            return;
+        }
 
-			boolean done = false;
+        beautiOptions.guessDates();
 
-			beautiOptions.originalAlignment = null;
-			beautiOptions.alignment = null;
-			beautiOptions.tree = null;
-			beautiOptions.taxonList = null;
+        try {
+            generate(new File(outputFileName));
 
-			while (!done) {
-				try {
+        } catch (IOException ioe) {
+            System.err.println("Unable to generate file: " + ioe.getMessage());
+            return;
+        }
 
-					NexusImporter.NexusBlock block = importer.findNextBlock();
+    }
 
-					if (block == NexusImporter.TAXA_BLOCK) {
+    private boolean readFromFile(File file) throws FileNotFoundException, IOException {
+        try {
+            SAXBuilder parser = new SAXBuilder();
+            Document doc = parser.build(file);
+            beautiOptions.parse(doc);
 
-						if (beautiOptions.taxonList != null) {
-							throw new NexusImporter.MissingBlockException("TAXA block already defined");
-						}
+        } catch (dr.xml.XMLParseException xpe) {
+            System.err.println("Error reading file: This may not be a BEAUti Template file");
+            System.err.println(xpe.getMessage());
+            return false;
+        } catch (JDOMException e) {
+            System.err.println("Unable to open file: This may not be a BEAUti Template file");
+            System.err.println(e.getMessage());
+            return false;
+        }
+        return true;
+    }
 
-						beautiOptions.taxonList = importer.parseTaxaBlock();
 
-					} else if (block == NexusImporter.CALIBRATION_BLOCK) {
-						if (beautiOptions.taxonList == null) {
-							throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a CALIBRATION block");
-						}
+    private boolean importMultipleAlignments(File file) throws FileNotFoundException, IOException {
 
-						importer.parseCalibrationBlock(beautiOptions.taxonList);
+        if (beautiOptions.alignments == null)
+            beautiOptions.alignments = new ArrayList<Alignment>();
+        TaxonList taxonList = beautiOptions.taxonList;
+        SimpleAlignment simpleAlignment = beautiOptions.originalAlignment;
+        beautiOptions.originalAlignment = null;
+        beautiOptions.taxonList = null;
+        boolean valid = importFromFile(file);
+        if (valid) {
+            beautiOptions.alignments.add(beautiOptions.alignment);
+            System.err.println("Adding " + file.getName());
+            beautiOptions.alignment.setId(beautiOptions.fileNameStem);
+        }
 
-					} else if (block == NexusImporter.CHARACTERS_BLOCK) {
+        // todo check to make sure that taxon blocks remain the same.
 
-						if (beautiOptions.taxonList == null) {
-							throw new NexusImporter.MissingBlockException("TAXA block must be defined before a CHARACTERS block");
-						}
+        return valid;
 
-						if (beautiOptions.originalAlignment != null) {
-							throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
-						}
+    }
 
-						beautiOptions.originalAlignment = (SimpleAlignment)importer.parseCharactersBlock(beautiOptions.taxonList);
+    private boolean importFromFile(File file) throws FileNotFoundException, IOException {
 
-					} else if (block == NexusImporter.DATA_BLOCK) {
+        try {
+            FileReader reader = new FileReader(file);
 
-						if (beautiOptions.originalAlignment != null) {
-							throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
-						}
+            NexusApplicationImporter importer = new NexusApplicationImporter(reader);
 
-						// A data block doesn't need a taxon block before it
-						// but if one exists then it will use it.
-						beautiOptions.originalAlignment = (SimpleAlignment)importer.parseDataBlock(beautiOptions.taxonList);
-						if (beautiOptions.taxonList == null) {
-							beautiOptions.taxonList = beautiOptions.originalAlignment;
-						}
+            boolean done = false;
 
-					} else if (block == NexusImporter.TREES_BLOCK) {
+            beautiOptions.originalAlignment = null;
+            beautiOptions.alignment = null;
+            beautiOptions.tree = null;
+            beautiOptions.taxonList = null;
 
-						if (beautiOptions.taxonList == null) {
-							throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a TREES block");
-						}
+            while (!done) {
+                try {
 
-						if (beautiOptions.tree != null) {
-							throw new NexusImporter.MissingBlockException("TREES block already defined");
-						}
+                    NexusImporter.NexusBlock block = importer.findNextBlock();
 
-						Tree[] trees = importer.parseTreesBlock(beautiOptions.taxonList);
-						if (trees.length > 0) {
-							beautiOptions.tree = trees[0];
-						}
+                    if (block == NexusImporter.TAXA_BLOCK) {
+
+                        if (beautiOptions.taxonList != null) {
+                            throw new NexusImporter.MissingBlockException("TAXA block already defined");
+                        }
+
+                        beautiOptions.taxonList = importer.parseTaxaBlock();
+
+                    } else if (block == NexusImporter.CALIBRATION_BLOCK) {
+                        if (beautiOptions.taxonList == null) {
+                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a CALIBRATION block");
+                        }
+
+                        importer.parseCalibrationBlock(beautiOptions.taxonList);
+
+                    } else if (block == NexusImporter.CHARACTERS_BLOCK) {
+
+                        if (beautiOptions.taxonList == null) {
+                            throw new NexusImporter.MissingBlockException("TAXA block must be defined before a CHARACTERS block");
+                        }
+
+                        if (beautiOptions.originalAlignment != null) {
+                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
+                        }
+
+                        beautiOptions.originalAlignment = (SimpleAlignment) importer.parseCharactersBlock(beautiOptions.taxonList);
+
+                    } else if (block == NexusImporter.DATA_BLOCK) {
+
+                        if (beautiOptions.originalAlignment != null) {
+                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
+                        }
+
+                        // A data block doesn't need a taxon block before it
+                        // but if one exists then it will use it.
+                        beautiOptions.originalAlignment = (SimpleAlignment) importer.parseDataBlock(beautiOptions.taxonList);
+                        if (beautiOptions.taxonList == null) {
+                            beautiOptions.taxonList = beautiOptions.originalAlignment;
+                        }
+
+                    } else if (block == NexusImporter.TREES_BLOCK) {
+
+                        if (beautiOptions.taxonList == null) {
+                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a TREES block");
+                        }
+
+                        if (beautiOptions.tree != null) {
+                            throw new NexusImporter.MissingBlockException("TREES block already defined");
+                        }
+
+                        Tree[] trees = importer.parseTreesBlock(beautiOptions.taxonList);
+                        if (trees.length > 0) {
+                            beautiOptions.tree = trees[0];
+                        }
 
 /*					} else if (block == NexusApplicationImporter.PAUP_BLOCK) {
 
@@ -187,75 +254,73 @@ public class CommandLineBeauti {
 
 						importer.parseRhinoBlock(beautiOptions);
 */
-					} else {
-						// Ignore the block..
-					}
+                    } else {
+                        // Ignore the block..
+                    }
 
-				} catch (EOFException ex) {
-					done = true;
-				}
-			}
+                } catch (EOFException ex) {
+                    done = true;
+                }
+            }
 
-			if (beautiOptions.originalAlignment == null) {
-				throw new NexusImporter.MissingBlockException("DATA or CHARACTERS block is missing");
-			}
+            if (beautiOptions.originalAlignment == null) {
+                throw new NexusImporter.MissingBlockException("DATA or CHARACTERS block is missing");
+            }
 
-		} catch (Importer.ImportException ime) {
-			System.err.println("Error parsing imported file: " + ime);
-			return false;
-		} catch (IOException ioex) {
-			System.err.println("File I/O Error: " + ioex);
-			return false;
-		} catch (Exception ex) {
-			System.err.println("Fatal exception: " + ex);
-			return false;
-		}
+        } catch (Importer.ImportException ime) {
+            System.err.println("Error parsing imported file: " + ime);
+            return false;
+        } catch (IOException ioex) {
+            System.err.println("File I/O Error: " + ioex);
+            return false;
+        } catch (Exception ex) {
+            System.err.println("Fatal exception: " + ex);
+            return false;
+        }
 
-		// check the taxon names for invalid characters
-		boolean foundAmp = false;
-		for (int i = 0; i < beautiOptions.originalAlignment.getTaxonCount(); i++) {
-			String name = beautiOptions.originalAlignment.getTaxon(i).getId();
-			if (name.indexOf('&') >= 0) {
-				foundAmp = true;
-			}
-		}
-		if (foundAmp) {
-			System.err.println("One or more taxon names include an illegal character ('&').\n" +
-					"These characters will prevent BEAST from reading the resulting XML file.\n\n" +
-					"Please edit the taxon name(s) before generating the BEAST file.");
-		}
+        // check the taxon names for invalid characters
+        boolean foundAmp = false;
+        for (int i = 0; i < beautiOptions.originalAlignment.getTaxonCount(); i++) {
+            String name = beautiOptions.originalAlignment.getTaxon(i).getId();
+            if (name.indexOf('&') >= 0) {
+                foundAmp = true;
+            }
+        }
+        if (foundAmp) {
+            System.err.println("One or more taxon names include an illegal character ('&').\n" +
+                    "These characters will prevent BEAST from reading the resulting XML file.\n\n" +
+                    "Please edit the taxon name(s) before generating the BEAST file.");
+        }
 
+        // make sure they all have dates...
+        for (int i = 0; i < beautiOptions.originalAlignment.getTaxonCount(); i++) {
+            if (beautiOptions.originalAlignment.getTaxonAttribute(i, "date") == null) {
+                java.util.Date origin = new java.util.Date(0);
 
-		// make sure they all have dates...
-		for (int i = 0; i < beautiOptions.originalAlignment.getTaxonCount(); i++) {
-			if (beautiOptions.originalAlignment.getTaxonAttribute(i, "date") == null) {
-				java.util.Date origin = new java.util.Date(0);
+                dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.YEARS, origin);
+                beautiOptions.originalAlignment.getTaxon(i).setAttribute("date", date);
+            }
+        }
 
-				dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.YEARS, origin);
-				beautiOptions.originalAlignment.getTaxon(i).setAttribute("date", date);
-			}
-		}
+        beautiOptions.fileNameStem = dr.app.util.Utils.trimExtensions(file.getName(),
+                new String[]{"nex", "NEX", "tre", "TRE", "nexus", "NEXUS"});
 
-		beautiOptions.fileNameStem = dr.app.util.Utils.trimExtensions(file.getName(),
-				new String[] {"nex", "NEX", "tre", "TRE", "nexus", "NEXUS"});
+        beautiOptions.alignment = beautiOptions.originalAlignment;
+        beautiOptions.alignmentReset = true;
+        if (beautiOptions.alignment != null) {
+            Patterns patterns = new Patterns(beautiOptions.alignment);
+            DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
+            beautiOptions.meanDistance = distances.getMeanDistance();
+        }
 
-		beautiOptions.alignment = beautiOptions.originalAlignment;
-		beautiOptions.alignmentReset = true;
-		if (beautiOptions.alignment != null) {
-			Patterns patterns = new Patterns(beautiOptions.alignment);
-			DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
-			beautiOptions.meanDistance = distances.getMeanDistance();
-		}
+        return true;
+    }
 
-		return true;
-	}
-
-	private void generate(File file) throws IOException {
-		FileWriter fw = new FileWriter(file);
-		beautiOptions.generateXML(fw);
-		fw.close();
-	}
-
+    private void generate(File file) throws IOException {
+        FileWriter fw = new FileWriter(file);
+        beautiOptions.generateXML(fw);
+        fw.close();
+    }
 
 
 }

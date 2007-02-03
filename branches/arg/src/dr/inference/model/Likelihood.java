@@ -33,7 +33,6 @@ import dr.util.Identifiable;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: Likelihood.java,v 1.16 2005/05/24 20:26:00 rambaut Exp $
  */
 
@@ -41,12 +40,14 @@ public interface Likelihood extends Loggable, Identifiable {
 
 	/**
 	 * Get the model.
+	 *
 	 * @return the model.
 	 */
 	Model getModel();
 
 	/**
 	 * Get the log likelihood.
+	 *
 	 * @return the log likelihood.
 	 */
 	double getLogLikelihood();
@@ -59,6 +60,8 @@ public interface Likelihood extends Loggable, Identifiable {
 	/**
 	 * A simple abstract base class for likelihood functions
 	 */
+
+//	public boolean getLikelihoodKnown();
 
 	public abstract class Abstract implements Likelihood, ModelListener {
 
@@ -73,17 +76,20 @@ public interface Likelihood extends Loggable, Identifiable {
 		}
 
 		// **************************************************************
-	    // Likelihood IMPLEMENTATION
-	    // **************************************************************
+		// Likelihood IMPLEMENTATION
+		// **************************************************************
 
 		/**
 		 * Get the model.
+		 *
 		 * @return the model.
 		 */
-		public Model getModel() { return model; }
+		public Model getModel() {
+			return model;
+		}
 
 		public final double getLogLikelihood() {
-			if (!getLikelihoodKnown()) {
+			if (!likelihoodKnown) {
 				logLikelihood = calculateLogLikelihood();
 				likelihoodKnown = true;
 			}
@@ -94,53 +100,55 @@ public interface Likelihood extends Loggable, Identifiable {
 			likelihoodKnown = false;
 		}
 
+
 		/**
 		 * Called to decide if the likelihood must be calculated. Can be overridden
 		 * (for example, to always return false).
-         * @return likelihoodKnow
-         */
-		protected boolean getLikelihoodKnown() {
-			return likelihoodKnown;
-		}
-
+		 *
+		 * @return likelihoodKnow
+		 */
 		protected abstract double calculateLogLikelihood();
 
 		public String toString() {
 			return Double.toString(getLogLikelihood());
 		}
 
-        protected void setLikelihood(double likelihood) {
-            this.logLikelihood = likelihood;
-            likelihoodKnown = true;
-        }
-
-        // **************************************************************
-	    // Loggable IMPLEMENTATION
-	    // **************************************************************
+		// **************************************************************
+		// Loggable IMPLEMENTATION
+		// **************************************************************
 
 		/**
 		 * @return the log columns.
 		 */
 		public dr.inference.loggers.LogColumn[] getColumns() {
-			return new dr.inference.loggers.LogColumn[] {
-				new LikelihoodColumn(getId())
+			return new dr.inference.loggers.LogColumn[]{
+					new LikelihoodColumn(getId())
 			};
 		}
 
 		private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-			public LikelihoodColumn(String label) { super(label); }
-			public double getDoubleValue() { return getLogLikelihood(); }
+			public LikelihoodColumn(String label) {
+				super(label);
+			}
+
+			public double getDoubleValue() {
+				return getLogLikelihood();
+			}
 		}
 
 		// **************************************************************
-	    // Identifiable IMPLEMENTATION
-	    // **************************************************************
+		// Identifiable IMPLEMENTATION
+		// **************************************************************
 
 		private String id = null;
 
-		public void setId(String id) { this.id = id; }
+		public void setId(String id) {
+			this.id = id;
+		}
 
-		public String getId() { return id; }
+		public String getId() {
+			return id;
+		}
 
 		private Model model;
 		private double logLikelihood;

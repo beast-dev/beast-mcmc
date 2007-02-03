@@ -12,26 +12,23 @@ package dr.evomodel.treelikelihood;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
-//import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.ARGModel;
 import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
+import dr.inference.model.ParallelLikelihood;
 import dr.inference.model.Parameter;
 
 /**
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
  *
- * @version $Id: AbstractARGLikelihood.java,v 1.1 2006/10/10 22:57:55 msuchard Exp $
- *
  * @author Andrew Rambaut
+ * @version $Id: AbstractARGLikelihood.java,v 1.1 2006/10/10 22:57:55 msuchard Exp $
  */
 
-public abstract class AbstractARGLikelihood extends AbstractModel implements Likelihood {
+public abstract class AbstractARGLikelihood extends AbstractModel implements ParallelLikelihood {
 
-    public AbstractARGLikelihood(String name, PatternList patternList,
-        										ARGModel treeModel)
-	{
+	public AbstractARGLikelihood(String name, PatternList patternList,
+	                             ARGModel treeModel) {
 
 		super(name);
 
@@ -42,7 +39,7 @@ public abstract class AbstractARGLikelihood extends AbstractModel implements Lik
 
 		patternWeights = patternList.getPatternWeights();
 
-    	this.treeModel = treeModel;
+		this.treeModel = treeModel;
 		addModel(treeModel);
 
 		nodeCount = treeModel.getNodeCount();
@@ -54,11 +51,11 @@ public abstract class AbstractARGLikelihood extends AbstractModel implements Lik
 
 	}
 
-   /**
-     * Sets the partials from a sequence in an alignment.
-     */
-    protected final void setStates(LikelihoodCore likelihoodCore, PatternList patternList,
-    									int sequenceIndex, int nodeIndex) {
+	/**
+	 * Sets the partials from a sequence in an alignment.
+	 */
+	protected final void setStates(LikelihoodCore likelihoodCore, PatternList patternList,
+	                               int sequenceIndex, int nodeIndex) {
 		int i;
 
 		int[] states = new int[patternCount];
@@ -70,14 +67,14 @@ public abstract class AbstractARGLikelihood extends AbstractModel implements Lik
 		}
 
 		likelihoodCore.setNodeStates(nodeIndex, states);
-    }
+	}
 
-    /**
-     * Sets the partials from a sequence in an alignment.
-     */
-    protected final void setPartials(LikelihoodCore likelihoodCore, PatternList patternList,
-    									int categoryCount,
-    									int sequenceIndex, int nodeIndex) {
+	/**
+	 * Sets the partials from a sequence in an alignment.
+	 */
+	protected final void setPartials(LikelihoodCore likelihoodCore, PatternList patternList,
+	                                 int categoryCount,
+	                                 int sequenceIndex, int nodeIndex) {
 		int i, j;
 
 		double[] partials = new double[patternCount * stateCount];
@@ -101,7 +98,7 @@ public abstract class AbstractARGLikelihood extends AbstractModel implements Lik
 		}
 
 		likelihoodCore.setNodePartials(nodeIndex, partials);
-    }
+	}
 
 	/**
 	 * Set update flag for a node and its children
@@ -116,7 +113,7 @@ public abstract class AbstractARGLikelihood extends AbstractModel implements Lik
 	 * Set update flag for a node and its children
 	 */
 	protected void updateNodeAndChildren(NodeRef node) {
-        updateNode[node.getNumber()] = true;
+		updateNode[node.getNumber()] = true;
 
 		for (int i = 0; i < treeModel.getChildCount(node); i++) {
 			NodeRef child = treeModel.getChild(node, i);
@@ -125,11 +122,11 @@ public abstract class AbstractARGLikelihood extends AbstractModel implements Lik
 		likelihoodKnown = false;
 	}
 
-    /**
-     * Set update flag for a node and its children
-     */
-    protected void updateNodeAndDescendents(NodeRef node) {
-        updateNode[node.getNumber()] = true;
+	/**
+	 * Set update flag for a node and its children
+	 */
+	protected void updateNodeAndDescendents(NodeRef node) {
+		updateNode[node.getNumber()] = true;
 
 		for (int i = 0; i < treeModel.getChildCount(node); i++) {
 			NodeRef child = treeModel.getChild(node, i);
@@ -171,19 +168,21 @@ public abstract class AbstractARGLikelihood extends AbstractModel implements Lik
 		likelihoodKnown = false;
 	}
 
-    public final double[] getPatternWeights() { return patternWeights; }
+	public final double[] getPatternWeights() {
+		return patternWeights;
+	}
 
 	// **************************************************************
-    // ParameterListener IMPLEMENTATION
-    // **************************************************************
+	// ParameterListener IMPLEMENTATION
+	// **************************************************************
 
 	protected void handleParameterChangedEvent(Parameter parameter, int index) {
 		// do nothing
 	}
 
 	// **************************************************************
-    // Model IMPLEMENTATION
-    // **************************************************************
+	// Model IMPLEMENTATION
+	// **************************************************************
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
 		//System.err.println("hi");
@@ -209,13 +208,16 @@ public abstract class AbstractARGLikelihood extends AbstractModel implements Lik
 		logLikelihood = storedLogLikelihood;
 	}
 
-	protected void acceptState() { } // nothing to do
+	protected void acceptState() {
+	} // nothing to do
 
-    // **************************************************************
-    // Likelihood IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// Likelihood IMPLEMENTATION
+	// **************************************************************
 
-	public final Model getModel() { return this; }
+	public final Model getModel() {
+		return this;
+	}
 
 	public final double getLogLikelihood() {
 		if (!likelihoodKnown) {
@@ -234,6 +236,16 @@ public abstract class AbstractARGLikelihood extends AbstractModel implements Lik
 		updateAllPatterns();
 	}
 
+	public void setLikelihood(double likelihood) {
+		this.logLikelihood = likelihood;
+		likelihoodKnown = true;
+	}
+
+
+	public boolean getLikelihoodKnown() {
+		return likelihoodKnown;
+	}
+
 	protected abstract double calculateLogLikelihood();
 
 	public String toString() {
@@ -242,58 +254,81 @@ public abstract class AbstractARGLikelihood extends AbstractModel implements Lik
 
 	}
 
-    // **************************************************************
-    // Loggable IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// Loggable IMPLEMENTATION
+	// **************************************************************
 
 	/**
 	 * @return the log columns.
 	 */
 	public dr.inference.loggers.LogColumn[] getColumns() {
-		return new dr.inference.loggers.LogColumn[] {
-			new LikelihoodColumn(getId())
+		return new dr.inference.loggers.LogColumn[]{
+				new LikelihoodColumn(getId())
 		};
 	}
 
 	private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-		public LikelihoodColumn(String label) { super(label); }
-		public double getDoubleValue() { return getLogLikelihood(); }
+		public LikelihoodColumn(String label) {
+			super(label);
+		}
+
+		public double getDoubleValue() {
+			return getLogLikelihood();
+		}
 	}
 
 	// **************************************************************
 	// INSTANCE VARIABLES
 	// **************************************************************
 
-    /** the tree */
+	/**
+	 * the tree
+	 */
 	protected ARGModel treeModel = null;
-	
-	/** the partition **/
+
+	/**
+	 * the partition *
+	 */
 	protected int partition;
 
-    /** the patternList */
-    protected PatternList patternList = null;
+	/**
+	 * the patternList
+	 */
+	protected PatternList patternList = null;
 
-    protected DataType dataType = null;
+	protected DataType dataType = null;
 
-	/** the pattern weights */
-    protected double[] patternWeights;
+	/**
+	 * the pattern weights
+	 */
+	protected double[] patternWeights;
 
-	/** the number of patterns */
+	/**
+	 * the number of patterns
+	 */
 	protected int patternCount;
 
-	/** the number of states in the data */
+	/**
+	 * the number of states in the data
+	 */
 	protected int stateCount;
 
- 	/** the number of nodes in the tree */
+	/**
+	 * the number of nodes in the tree
+	 */
 	protected int nodeCount;
 
-   /** Flags to specify which patterns are to be updated */
-	protected boolean [] updatePattern = null;
+	/**
+	 * Flags to specify which patterns are to be updated
+	 */
+	protected boolean[] updatePattern = null;
 
-    /** Flags to specify which nodes are to be updated */
+	/**
+	 * Flags to specify which nodes are to be updated
+	 */
 	protected boolean[] updateNode;
 
- 	private double logLikelihood;
+	private double logLikelihood;
 	private double storedLogLikelihood;
 	private boolean likelihoodKnown = false;
 	private boolean storedLikelihoodKnown = false;

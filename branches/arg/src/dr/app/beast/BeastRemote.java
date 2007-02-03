@@ -1,8 +1,8 @@
 package dr.app.beast;
 
 import dr.app.util.Arguments;
-import dr.math.MathUtils;
 import dr.inference.parallel.MPIServices;
+import dr.math.MathUtils;
 import mpi.MPI;
 
 import java.io.File;
@@ -16,86 +16,90 @@ import java.io.File;
  */
 public class BeastRemote extends BeastMain {
 
-    public BeastRemote(File inputFile, BeastConsoleApp consoleApp, boolean verbose) {
-        super(inputFile, consoleApp, verbose);
-    }
+	public BeastRemote(File inputFile, BeastConsoleApp consoleApp, boolean verbose) {
+		super(inputFile, consoleApp, verbose);
+	}
 
 	public static void terminateSlaves() {
 		int size = MPI.COMM_WORLD.Size();
-		for (int i=1; i<size; i++) {
-			System.err.println("Sending kill to process "+i);
+		for (int i = 1; i < size; i++) {
+			System.err.println("Sending kill to process " + i);
 			MPIServices.requestTermination(i);
 		}
 
 	}
 
-    public static void main(String[] oldArgs) throws java.io.IOException {
+	public static void main(String[] oldArgs) throws java.io.IOException {
 
-        // First populate args from MPI.WORLD
+		// First populate args from MPI.WORLD
 
-        // String[] args = null;
-        MPI.Init(oldArgs);
-	    int rank = MPI.COMM_WORLD.Rank();
-        int argLength = oldArgs.length - 3;
-        String[] args = new String[argLength];
-        for (int i = 0; i < argLength; i++) {
+		// String[] args = null;
+		MPI.Init(oldArgs);
+		System.err.println(oldArgs[0]);
+		System.err.println(oldArgs[1]);
+		System.err.println(oldArgs[2]);
 
-            args[i] = oldArgs[i + 3];
-	         System.err.println(i+" : "+args[i]);
-	        if (args[i].contains(".xml")) { // append rank
-		        args[i] = args[i].replace(".xml",new String(rank+".xml"));
-		        System.err.println("Attempting to load: "+args[i]);
-	        }
-        }
+		int rank = MPI.COMM_WORLD.Rank();
+		int argLength = oldArgs.length - 3;
+		String[] args = new String[argLength];
+		for (int i = 0; i < argLength; i++) {
 
-        /*  for (String str : args)
-            System.err.println(str);
-        System.exit(1);*/
+			args[i] = oldArgs[i + 3];
+			System.err.println(i + " : " + args[i]);
+			if (args[i].contains(".xml")) { // append rank
+				args[i] = args[i].replace(".xml", new String(rank + ".xml"));
+				System.err.println("Attempting to load: " + args[i]);
+			}
+		}
+
+		/*  for (String str : args)
+					System.err.println(str);*/
+		//System.exit(1);
 
 
-        Arguments arguments = new Arguments(
-                new Arguments.Option[]{
-                        new Arguments.Option("verbose", "verbose XML parsing messages"),
-                        new Arguments.Option("window", "provide a console window"),
-                        new Arguments.Option("working", "change working directory to input file's directory"),
-                        new Arguments.LongOption("seed", "specify a random number generator seed"),
-                        new Arguments.Option("help", "option to print this message")
-                });
+		Arguments arguments = new Arguments(
+				new Arguments.Option[]{
+						new Arguments.Option("verbose", "verbose XML parsing messages"),
+						new Arguments.Option("window", "provide a console window"),
+						new Arguments.Option("working", "change working directory to input file's directory"),
+						new Arguments.LongOption("seed", "specify a random number generator seed"),
+						new Arguments.Option("help", "option to print this message")
+				});
 
-        try {
-            arguments.parseArguments(args);
-        } catch (Arguments.ArgumentException ae) {
-            System.out.println();
-            System.out.println(ae.getMessage());
-            System.out.println();
-            printTitle();
-            printUsage(arguments);
-	        MPI.Finalize();
-            System.exit(1);
-        }
+		try {
+			arguments.parseArguments(args);
+		} catch (Arguments.ArgumentException ae) {
+			System.out.println();
+			System.out.println(ae.getMessage());
+			System.out.println();
+			printTitle();
+			printUsage(arguments);
+			MPI.Finalize();
+			System.exit(1);
+		}
 
-        if (arguments.hasOption("help")) {
-            printTitle();
-            printUsage(arguments);
-	        MPI.Finalize();
-            System.exit(0);
-        }
+		if (arguments.hasOption("help")) {
+			printTitle();
+			printUsage(arguments);
+			MPI.Finalize();
+			System.exit(0);
+		}
 
-        boolean verbose = arguments.hasOption("verbose");
-        boolean window = arguments.hasOption("window");
-        boolean working = arguments.hasOption("working");
+		boolean verbose = arguments.hasOption("verbose");
+		boolean window = arguments.hasOption("window");
+		boolean working = arguments.hasOption("working");
 
-        long seed = MathUtils.getSeed();
-        if (arguments.hasOption("seed")) {
-            seed = arguments.getLongOption("seed");
-            MathUtils.setSeed(seed);
-        }
+		long seed = MathUtils.getSeed();
+		if (arguments.hasOption("seed")) {
+			seed = arguments.getLongOption("seed");
+			MathUtils.setSeed(seed);
+		}
 
 //		if (System.getProperty("dr.app.beast.main.window", "false").toLowerCase().equals("true")) {
 //			window = true;
 //		}
 
-        BeastConsoleApp consoleApp = null;
+		BeastConsoleApp consoleApp = null;
 
 /*		if (window) {
 			System.setProperty("com.apple.macos.useScreenMenuBar", "true");
@@ -124,48 +128,48 @@ public class BeastRemote extends BeastMain {
 			consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
 		}*/      // Remote can never be interactive
 
-        String inputFileName = null;
+		String inputFileName = null;
 
-        String[] args2 = arguments.getLeftoverArguments();
+		String[] args2 = arguments.getLeftoverArguments();
 
-        if (args2.length > 1) {
-            System.err.println("Unknown option: " + args2[1]);
-            System.err.println();
-            printTitle();
-            printUsage(arguments);
-	        MPI.Finalize();
-            System.exit(1);
-        }
+		if (args2.length > 1) {
+			System.err.println("Unknown option: " + args2[1]);
+			System.err.println();
+			printTitle();
+			printUsage(arguments);
+			MPI.Finalize();
+			System.exit(1);
+		}
 
-        File inputFile = null;
+		File inputFile = null;
 
-        if (args2.length > 0) {
-            inputFileName = args2[0];
-            inputFile = new File(inputFileName);
-        }
+		if (args2.length > 0) {
+			inputFileName = args2[0];
+			inputFile = new File(inputFileName);
+		}
 
-        /*	if (inputFileName == null) {
-              // No input file name was given so throw up a dialog box...
-              inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
-          }*/
+		/*	if (inputFileName == null) {
+					  // No input file name was given so throw up a dialog box...
+					  inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
+				  }*/
 
-        if (inputFile != null && working) {
-            System.setProperty("user.dir", inputFile.getParent());
-        }
+		if (inputFile != null && working) {
+			System.setProperty("user.dir", inputFile.getParent());
+		}
 
-        printTitle();
-        printHeader();
+		printTitle();
+		printHeader();
 
-        System.out.println();
-        System.out.println("Random number seed: " + seed);
-        System.out.println();
+		System.out.println();
+		System.out.println("Random number seed: " + seed);
+		System.out.println();
 
-        new BeastMain(inputFile, consoleApp, verbose);
-	    //System.err.println("Did I get here");
-	    if (rank == 0)
-	        terminateSlaves();
-	    MPI.Finalize();
-    }
+		new BeastMain(inputFile, consoleApp, verbose);
+		//System.err.println("Did I get here");
+		if (rank == 0)
+			terminateSlaves();
+		MPI.Finalize();
+	}
 
 
 }

@@ -3,8 +3,8 @@ package dr.inference.model;
 import dr.inference.parallel.MPIServices;
 import dr.xml.*;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,136 +15,143 @@ import java.util.ArrayList;
  */
 public class ParallelCompoundLikelihood extends CompoundLikelihood {
 
-    public static final String PARALLEL_COMPOUND_LIKELIHOOD = "parallelCompoundLikelihood";
+	public static final String PARALLEL_COMPOUND_LIKELIHOOD = "parallelCompoundLikelihood";
 	public static final String LOCAL_CHECK = "doLocalCheck";
 	public static final String RUN_PARALLEL = "doInParallel";
 
-    public ParallelCompoundLikelihood(boolean doParallel, boolean checkLocal) {
-        super();
-	    this.doParallel = doParallel;
-	    this.checkLocal = checkLocal;
-    }
+	public ParallelCompoundLikelihood(boolean doParallel, boolean checkLocal) {
+		super();
+		this.doParallel = doParallel;
+		this.checkLocal = checkLocal;
+	}
 
-    public void addLikelihood(Likelihood likelihood) {
-        super.addLikelihood(likelihood);
-	    // todo make sure that link to a remote node exists
-    }
+	public void addLikelihood(Likelihood likelihood) {
+		super.addLikelihood(likelihood);
+		// todo make sure that link to a remote node exists
+	}
 
 
 	private boolean doParallel = true;
 	private boolean checkLocal = false;
 
 	public double getLogLikelihood() {
-		double logLikelihood = 0;
-		if (doParallel)
-			logLikelihood = getLogLikelihoodRemote();
-		else
-			logLikelihood = super.getLogLikelihood();
 
-		if (checkLocal && doParallel) {
-			double logLikelihoodLocal = super.getLogLikelihood();
-			System.err.printf("Local: %5.4f  Remote: %5.4f\n",logLikelihoodLocal,logLikelihood);
-		}
+		double logLikelihood = 0;
+		if (doParallel) {
+			/*double logLikelihoodLocal = 0;
+			if (checkLocal)
+				logLikelihoodLocal = super.getLogLikelihood();*/
+			logLikelihood = getLogLikelihoodRemote();
+			if (checkLocal) {
+				//super.makeDirty();
+				super.makeDirty();
+				double logLikelihoodLocal = super.getLogLikelihood();
+				System.err.printf("Local: %5.4f  Remote: %5.4f\n", logLikelihoodLocal, logLikelihood);
+			}
+		} else
+			logLikelihood = super.getLogLikelihood();
 
 		return logLikelihood;
 	}
 
-    private double getLogLikelihoodRemote() {
-        double logLikelihood = 0.0;
+	private double getLogLikelihoodRemote() {
+		double logLikelihood = 0.0;
 
-        final int N = getLikelihoodCount();
+		final int N = getLikelihoodCount();
 
-        List<Likelihood.Abstract> likelihoodsDistributed = new ArrayList<Likelihood.Abstract>();
-        List<Integer> processorList = new ArrayList<Integer>();
+		List<ParallelLikelihood> likelihoodsDistributed = new ArrayList<ParallelLikelihood>();
+		List<Integer> processorList = new ArrayList<Integer>();
 
-        for (int i = 0; i < N; i++) {
-            Likelihood.Abstract likelihood = (Likelihood.Abstract)getLikelihood(i);
-            if( !likelihood.getLikelihoodKnown() ) {
-                final int processor = i+1;
-                MPIServices.requestLikelihood(processor);
-                ((AbstractModel)getLikelihood(i).getModel()).sendState(processor);
-                likelihoodsDistributed.add(likelihood);
-                processorList.add(processor);
-            } else {
-                logLikelihood += likelihood.getLogLikelihood();
-            }
-        }
+		for (int i = 0; i < N; i++) {
+			ParallelLikelihood likelihood = (ParallelLikelihood) getLikelihood(i);
+			if (!likelihood.getLikelihoodKnown()) {
+				//    if (true) {
+				final int processor = i + 1;
+				MPIServices.requestLikelihood(processor);
+				((AbstractModel) getLikelihood(i).getModel()).sendState(processor);
+				likelihoodsDistributed.add(likelihood);
+				processorList.add(processor);
+			} else {
+				logLikelihood += likelihood.getLogLikelihood();
+			}
+		}
 
-        // Implicit barrier
+//	    System.err.print("Update size = "+likelihoodsDistributed.size()+" ");
 
-	    /*for (int i=0; i<N; i++) {
-	        double l = MPIServices.receiveDouble(i+1);
-	        //if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
+		// Implicit barrier
 
-            logLikelihood += l;
-        }*/
-        int index = 0;
-        for (Likelihood.Abstract likelihood : likelihoodsDistributed) {
-            int processor = processorList.get(index++);
-            double l = MPIServices.receiveDouble(processor);
-            logLikelihood += l;
-            likelihood.setLikelihood(l);         // todo don't we need to set all of the submodels ????
-        }
+		/*for (int i=0; i<N; i++) {
+					double l = MPIServices.receiveDouble(i+1);
+					//if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
 
-        // todo Use Reduce instead of blocking loop
+					logLikelihood += l;
+				}*/
+		int index = 0;
+		for (ParallelLikelihood likelihood : likelihoodsDistributed) {
+			int processor = processorList.get(index++);
+			double l = MPIServices.receiveDouble(processor);
+			logLikelihood += l;
+			likelihood.setLikelihood(l);         // todo don't we need to set all of the submodels ????
+		}
 
-
-
-        return logLikelihood;
-    }
+		// todo Use Reduce instead of blocking loop
 
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+		return logLikelihood;
+	}
 
-        public String getParserName() {
-            return PARALLEL_COMPOUND_LIKELIHOOD;
-        }
 
-        //      public String[] getParserNames() { return new String[] { getParserName(), "posterior", "prior", "likelihood" }; }
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+		public String getParserName() {
+			return PARALLEL_COMPOUND_LIKELIHOOD;
+		}
 
-	        boolean doParallel = true;
-	        boolean checkLocal = false;
+		//      public String[] getParserNames() { return new String[] { getParserName(), "posterior", "prior", "likelihood" }; }
 
-	        if (xo.hasAttribute(LOCAL_CHECK)) {
-		        checkLocal = xo.getBooleanAttribute(LOCAL_CHECK);
-	        }
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-	        if (xo.hasAttribute(RUN_PARALLEL)) {
-		        doParallel = xo.getBooleanAttribute(RUN_PARALLEL);
-	        }
+			boolean doParallel = true;
+			boolean checkLocal = false;
 
-            ParallelCompoundLikelihood compoundLikelihood = new ParallelCompoundLikelihood(doParallel,checkLocal);
+			if (xo.hasAttribute(LOCAL_CHECK)) {
+				checkLocal = xo.getBooleanAttribute(LOCAL_CHECK);
+			}
 
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                if (xo.getChild(i) instanceof Likelihood) {
-                    compoundLikelihood.addLikelihood((Likelihood) xo.getChild(i));
-                } else {
-                    throw new XMLParseException("An element which is not a likelihood has been added to a " + PARALLEL_COMPOUND_LIKELIHOOD + " element");
-                }
-            }
-            return compoundLikelihood;
-        }
+			if (xo.hasAttribute(RUN_PARALLEL)) {
+				doParallel = xo.getBooleanAttribute(RUN_PARALLEL);
+			}
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+			ParallelCompoundLikelihood compoundLikelihood = new ParallelCompoundLikelihood(doParallel, checkLocal);
 
-        public String getParserDescription() {
-            return "A likelihood function which is simply the product of its component likelihood functions.";
-        }
+			for (int i = 0; i < xo.getChildCount(); i++) {
+				if (xo.getChild(i) instanceof Likelihood) {
+					compoundLikelihood.addLikelihood((Likelihood) xo.getChild(i));
+				} else {
+					throw new XMLParseException("An element which is not a likelihood has been added to a " + PARALLEL_COMPOUND_LIKELIHOOD + " element");
+				}
+			}
+			return compoundLikelihood;
+		}
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE),
-        };
+		public String getParserDescription() {
+			return "A likelihood function which is simply the product of its component likelihood functions.";
+		}
 
-        public Class getReturnType() {
-            return ParallelCompoundLikelihood.class;
-        }
-    };
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
+
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE),
+		};
+
+		public Class getReturnType() {
+			return ParallelCompoundLikelihood.class;
+		}
+	};
 }

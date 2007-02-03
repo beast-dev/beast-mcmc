@@ -543,12 +543,13 @@ public class ARGModel extends AbstractModel
     public LogColumn[] getColumns() {
         int numColumns = 3;
         //numColumns += this.getMaxPartitionNumber();
-        LogColumn[] logColumns = new LogColumn[numColumns + getMaxPartitionNumber()];
+        //LogColumn[] logColumns = new LogColumn[numColumns + getMaxPartitionNumber()];
+        LogColumn[] logColumns = new LogColumn[2];
         logColumns[0] = new IsReassortmentColumn("isReassortment");
         logColumns[1] = new CountReassortmentColumn("numberReassortments");
-        logColumns[2] = new IsRootTooHighColumn("isRootTooHigh");
-        for (int i = 0; i < getMaxPartitionNumber(); i++)
-            logColumns[numColumns + i] = new ArgTreeHeightColumn("argTreeHeight", this, i);
+//        logColumns[2] = new IsRootTooHighColumn("isRootTooHigh");
+//        for (int i = 0; i < getMaxPartitionNumber(); i++)
+//            logColumns[numColumns + i] = new ArgTreeHeightColumn("argTreeHeight", this, i);
         return logColumns;
     }
 

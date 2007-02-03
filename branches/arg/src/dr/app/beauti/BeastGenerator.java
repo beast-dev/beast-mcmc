@@ -1463,6 +1463,8 @@ public class BeastGenerator extends BeautiOptions {
             writeWilsonBaldingOperator(operator, writer);
         } else if (operator.type.equals(TOSS_PARTITIONG) && argModel) {
             writeTossPartitioningOperation(operator, writer);
+        } else if (operator.type.equals(ADD_REMOVE_ARG_EVENT) && argModel) {
+            writeAddRemoveARGEventOperation(operator,writer);
         }
     }
 
@@ -1641,6 +1643,25 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeCloseTag(TossPartitioningOperator.OPERATOR_NAME);
     }
 
+    private void writeAddRemoveARGEventOperation(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(AddRemoveARGEventOperator.SUBTREE_SLIDE,
+                new Attribute[]{
+                        new Attribute.Default("weight",Integer.toString((int)operator.weight)),
+                        new Attribute.Default("gaussian","true"),
+                        new Attribute.Default("size",Double.toString(operator.tuning)),
+                        new Attribute.Default("singlePartition","true")
+
+                });
+        writer.writeTag(ARGModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref","treeModel")},true);
+        writer.writeOpenTag(AddRemoveARGEventOperator.JUST_INTERNAL);
+        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref", "treeModel.internalNodeHeights"), true);
+        writer.writeCloseTag(AddRemoveARGEventOperator.JUST_INTERNAL);
+        writer.writeOpenTag(AddRemoveARGEventOperator.INTERNAL_AND_ROOT);
+        writer.writeTag(ParameterParser.PARAMETER,new Attribute[]{new Attribute.Default("idref","treeModel.allInternalNodeHeights")},true);
+        writer.writeCloseTag(AddRemoveARGEventOperator.INTERNAL_AND_ROOT);
+        writer.writeCloseTag(AddRemoveARGEventOperator.SUBTREE_SLIDE);
+    }
+
     /**
      * Write the timer report block.
      *
@@ -1777,7 +1798,7 @@ public class BeastGenerator extends BeautiOptions {
                         treeFileName = fileNameStem + ".trees";
                 }
             }
-            System.err.println("part name " + alignments.get(i).getId());
+           // System.err.println("part name " + alignments.get(i).getId());
             String logName;
             String treeName;
             if (argModel) {
@@ -1812,6 +1833,18 @@ public class BeastGenerator extends BeautiOptions {
             }
             writer.writeTag("posterior", new Attribute.Default("idref", "posterior"), true);
             writer.writeCloseTag(logName);
+        }
+
+        if (argModel) {
+            String argFileName = fileNameStem + ".args";
+            writer.writeOpenTag(ArgLogger.LOG_ARG,
+                    new Attribute[]{
+                            new Attribute.Default(ArgLogger.LOG_EVERY,logEvery+""),
+                            new Attribute.Default(ArgLogger.DOT_FORMAT,"true"),
+                            new Attribute.Default(ArgLogger.FILE_NAME,argFileName)
+                    });
+            writer.writeTag(ARGModel.TREE_MODEL, new Attribute.Default("idref","treeModel"),true);
+            writer.writeCloseTag(ArgLogger.LOG_ARG);
         }
 
 //        if (mapTreeLog) {

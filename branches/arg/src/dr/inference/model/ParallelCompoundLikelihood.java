@@ -3,6 +3,9 @@ package dr.inference.model;
 import dr.inference.parallel.MPIServices;
 import dr.xml.*;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * Created by IntelliJ IDEA.
  * User: msuchard
@@ -46,29 +49,44 @@ public class ParallelCompoundLikelihood extends CompoundLikelihood {
 		return logLikelihood;
 	}
 
-
-
     private double getLogLikelihoodRemote() {
         double logLikelihood = 0.0;
 
         final int N = getLikelihoodCount();
 
-        for (int i = 0; i < N; i++) {
+        List<Likelihood.Abstract> likelihoodsDistributed = new ArrayList<Likelihood.Abstract>();
+        List<Integer> processorList = new ArrayList<Integer>();
 
-           MPIServices.requestLikelihood(i+1);
-	       ((AbstractModel)getLikelihood(i).getModel()).sendState(i+1);
+        for (int i = 0; i < N; i++) {
+            Likelihood.Abstract likelihood = (Likelihood.Abstract)getLikelihood(i);
+            if( !likelihood.getLikelihoodKnown() ) {
+                final int processor = i+1;
+                MPIServices.requestLikelihood(processor);
+                ((AbstractModel)getLikelihood(i).getModel()).sendState(processor);
+                likelihoodsDistributed.add(likelihood);
+                processorList.add(processor);
+            } else {
+                logLikelihood += likelihood.getLogLikelihood();
+            }
         }
 
-	    // Implicit barrier
+        // Implicit barrier
 
-	    for (int i=0; i<N; i++) {
+	    /*for (int i=0; i<N; i++) {
 	        double l = MPIServices.receiveDouble(i+1);
-	        if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
+	        //if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
 
             logLikelihood += l;
+        }*/
+        int index = 0;
+        for (Likelihood.Abstract likelihood : likelihoodsDistributed) {
+            int processor = processorList.get(index++);
+            double l = MPIServices.receiveDouble(processor);
+            logLikelihood += l;
+            likelihood.setLikelihood(l);         // todo don't we need to set all of the submodels ????
         }
 
-	    // todo Use Reduce instead of blocking loop
+        // todo Use Reduce instead of blocking loop
 
 
 

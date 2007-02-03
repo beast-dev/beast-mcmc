@@ -97,7 +97,8 @@ public interface Likelihood extends Loggable, Identifiable {
 		/**
 		 * Called to decide if the likelihood must be calculated. Can be overridden
 		 * (for example, to always return false).
-		 */
+         * @return likelihoodKnow
+         */
 		protected boolean getLikelihoodKnown() {
 			return likelihoodKnown;
 		}
@@ -108,7 +109,12 @@ public interface Likelihood extends Loggable, Identifiable {
 			return Double.toString(getLogLikelihood());
 		}
 
-	    // **************************************************************
+        protected void setLikelihood(double likelihood) {
+            this.logLikelihood = likelihood;
+            likelihoodKnown = true;
+        }
+
+        // **************************************************************
 	    // Loggable IMPLEMENTATION
 	    // **************************************************************
 
@@ -139,5 +145,5 @@ public interface Likelihood extends Loggable, Identifiable {
 		private Model model;
 		private double logLikelihood;
 		private boolean likelihoodKnown = false;
-	};
+	}
 }

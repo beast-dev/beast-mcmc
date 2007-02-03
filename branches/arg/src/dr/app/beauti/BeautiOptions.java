@@ -41,6 +41,7 @@ public class BeautiOptions {
         double rateWeights = 3.0;
         double branchWeights = 30.0;
         double treeWeights = 15.0;
+        double argWeights = 60.0;
 
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
@@ -48,7 +49,7 @@ public class BeautiOptions {
         createParameter("treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
         createParameter("constant.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("constant.recRate", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("constant.recRate", "coalescent population size parameter", TIME_SCALE, 1000.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("exponential.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("exponential.growthRate", "coalescent growth rate parameter", GROWTH_RATE_SCALE, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         createParameter("exponential.doublingTime", "coalescent doubling time parameter", TIME_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
@@ -196,7 +197,10 @@ public class BeautiOptions {
         createOperator("wideExchange", "Tree", "Performs global rearrangements of the tree", "tree", WIDE_EXCHANGE, -1, demoWeights);
         createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree", WILSON_BALDING, -1, demoWeights);
 
-        createOperator("tossPartitioning", "Tree", "Performs rearrangement of partitions", "tree", TOSS_PARTITIONG, -1, treeWeights);
+        createOperator("tossPartitioning", "Tree", "Performs rearrangement of partitions", "tree", TOSS_PARTITIONG, -1, argWeights);
+        createOperator("addremoveARGEvent", "Tree", "Performs addition and removal of reassortment nodes", "tree", ADD_REMOVE_ARG_EVENT, 1.0, argWeights);
+
+
     }
 
     public void createARGPartitionParametersAndOperators() {
@@ -697,6 +701,7 @@ public class BeautiOptions {
 
         if (argModel) {
             ops.add(getOperator("tossPartitioning"));
+            ops.add(getOperator("addremoveARGEvent"));
 
             //   ops.remove(getOperator("centeredMu"));
             //   ops.remove(getOperator("deltaMu"));
@@ -1507,7 +1512,8 @@ public class BeautiOptions {
     public static final String NARROW_EXCHANGE = "narrowExchange";
     public static final String WIDE_EXCHANGE = "wideExchange";
     public static final String WILSON_BALDING = "wilsonBalding";
-    public static final String TOSS_PARTITIONG = "tossPartitioningOperator";
+    public static final String TOSS_PARTITIONG = "tossPartitioning";
+    public static final String ADD_REMOVE_ARG_EVENT = "addremoveARGEvent" ;
     public String fileNameStem = "untitled";
     public String logFileName = null;
     public String treeFileName = null;

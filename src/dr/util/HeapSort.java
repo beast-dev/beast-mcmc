@@ -284,7 +284,7 @@ public class HeapSort {
 	 * already in heap form and then puts array[lower] to
 	 * array[upper] in heap form.
 	 */
-	private static void adjust(AbstractList array, int[] indices, int lower, int upper) {
+	private static void adjust(AbstractList<Comparable> array, int[] indices, int lower, int upper) {
 	
 		int j, k;
 		int temp;
@@ -293,10 +293,10 @@ public class HeapSort {
 		k = lower * 2;
 
 		while (k <= upper) {
-			if ((k < upper) && (((Comparable)array.get(indices[k-1])).compareTo(array.get(indices[k])) < 0)) {
+			if ((k < upper) && (array.get(indices[k-1]).compareTo(array.get(indices[k])) < 0)) {
 				k += 1;
 			}
-			if (((Comparable)array.get(indices[j-1])).compareTo(array.get(indices[k-1])) < 0) {
+			if (array.get(indices[j-1]).compareTo(array.get(indices[k-1])) < 0) {
 				temp = indices[j-1];
 				indices[j-1] = indices[k-1];
 				indices[k-1] = temp;

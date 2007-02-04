@@ -53,7 +53,7 @@ public class MetaPopulationModel extends AbstractModel
     /**
      * Construct demographic model with default settings
      */
-    public MetaPopulationModel(ArrayList demographicModels, Parameter populationProportions) {
+    public MetaPopulationModel(ArrayList<DemographicModel> demographicModels, Parameter populationProportions) {
 
         this(META_POPULATION_MODEL, demographicModels, populationProportions);
     }
@@ -61,7 +61,7 @@ public class MetaPopulationModel extends AbstractModel
     /**
      * Construct demographic model with default settings
      */
-    public MetaPopulationModel(String name, ArrayList demographicModelList, Parameter populationProportions) {
+    public MetaPopulationModel(String name, ArrayList<DemographicModel> demographicModelList, Parameter populationProportions) {
 
         super(name);
 
@@ -77,14 +77,14 @@ public class MetaPopulationModel extends AbstractModel
             for (int i=1; i<populationCount; i++) {
             	demographicModelList.add( demographicModelList.get(0) );
             }
-            demographicModels = (DemographicModel[])demographicModelList.toArray( new DemographicModel[0] );
+            demographicModels = demographicModelList.toArray( new DemographicModel[0] );
             addModel(demographicModels[0]);
 
         } else {
         
         	// Several demographic models
         	populationCount = demographicModelList.size();
-        	demographicModels = (DemographicModel[])demographicModelList.toArray( new DemographicModel[0] );
+        	demographicModels = demographicModelList.toArray( new DemographicModel[0] );
         	for (int i=0; i<populationCount; i++) {
         		addModel( demographicModels[i] );
         	}
@@ -191,13 +191,13 @@ public class MetaPopulationModel extends AbstractModel
         
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        	ArrayList demographics = new ArrayList(0);
+        	ArrayList<DemographicModel> demographics = new ArrayList<DemographicModel>(0);
         	Parameter populationProportions = null;
         	
         	for (int i=0; i<xo.getChildCount(); ++i) {
-        		Object o = xo.getChild(i);
+        		final Object o = xo.getChild(i);
         		if ( o instanceof DemographicModel ) {
-        			demographics.add( o );
+        			demographics.add( (DemographicModel) o );
         		} else if ( o instanceof Parameter ) {
         			if ( populationProportions != null) {
         				throw new Error("Allowed at most one Parameter in a MetaPopulationModel");

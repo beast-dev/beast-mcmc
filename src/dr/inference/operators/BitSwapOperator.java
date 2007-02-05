@@ -7,6 +7,25 @@ import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.math.MathUtils;
 
 /**
+ * Given a values vector (data) and an indicators vector (boolean vector indicating wheather the corrosponding value
+ * is used or ignored), this operator explores all possible positions for the used data points while preserving their
+ * order.
+ * The distribition is uniform on all possible data positions.
+ *
+ * For example, if data values A and B are used in a vector of dimension 4, each of the following states is visited 1/6
+ * of the time.
+ *
+ * ABcd 1100
+ * AcBd 1010
+ * AcdB 1001
+ * cABd 0110
+ * cAdB 0101
+ * cdAB 0011
+ *
+ * The operator works by picking a 1 bit in the indicators and swapping it with a neighbour 0, with the appropriate
+ * adjustment to the hastings ratio since a pair of 1,1 and 0,0 are never swapped, and the ends can be swapped in one 
+ * direction only.
+ *  
  * @author Joseph Heled
  * @version $Id$
  */
@@ -22,9 +41,11 @@ public class BitSwapOperator extends SimpleMCMCOperator {
         this.indicators = indicators;
         setWeight(weight);
 
-         if (indicators.getDimension() == data.getDimension()-1) {
+        final int iDim = indicators.getDimension();
+        final int dDim = data.getDimension();
+        if (iDim == dDim -1) {
             impliedOne = true;
-        } else if (indicators.getDimension() == data.getDimension()) {
+        } else if (iDim == dDim) {
              impliedOne = false;
          } else {
             throw new IllegalArgumentException();
@@ -42,59 +63,63 @@ public class BitSwapOperator extends SimpleMCMCOperator {
 
     public double doOperation() throws OperatorFailedException {
         final int dim = indicators.getDimension();
-        //double sum = 0.0;
-        int[] loc = new int[dim];
+        if( dim < 2 ) {
+            throw new OperatorFailedException("no swaps possible");
+        }
         int nLoc = 0;
+        int[] loc = new int[2*dim];
+        double prev = -1;
+        int nOnes = 0;
         for (int i = 0; i < dim; i++) {
             final double value = indicators.getStatisticValue(i);
             if( value > 0 ) {
-               //sum += value;
-                loc[nLoc] = i;
-                ++nLoc;
+                ++nOnes;
+                if( i > 0 && prev == 0 ) {
+                    loc[nLoc] = -(i+1);
+                    ++nLoc;
+                }
+                if( i < dim-1 && indicators.getStatisticValue(i+1) == 0 ) {
+                   loc[nLoc] = (i+1);
+                    ++nLoc;
+                }
             }
+            prev = value;
         }
 
-        if( nLoc > 0 ) {
-            double hastingsRatio = 0;
-            final int rand = MathUtils.nextInt(nLoc);
-            final int pos = loc[rand];
-            int direction;
-            if( pos == 0 ) {
-                direction = +1;
-                hastingsRatio = Math.log(2.0);
-            } else if( pos == dim -1 ) {
-                direction = -1;
-                hastingsRatio = Math.log(2.0);
-            } else {
-                direction = MathUtils.nextInt(2) == 0 ? -1 : 1;
-            }
-            final int nto = pos + direction;
-            if( nto == 0 || nto == dim - 1) {
-                hastingsRatio = Math.log(1.0/2.0);
-            }
+        if( nOnes == 0 ) {
+            return 0;
+        }
+        assert nLoc > 0;
+
+        final int rand = MathUtils.nextInt(nLoc);
+        int pos = loc[rand];
+        int direction = pos < 0 ? -1 : 1;
+        pos = (pos < 0 ? -pos : pos) - 1;
+        final int maxOut = 2 * nOnes;
+
+        double hastingsRatio = maxOut == nLoc ? 0.0 : Math.log((double)nLoc/maxOut);
 
 //            System.out.println("swap " + pos + "<->" + nto + "  " +
 //                              indicators.getParameterValue(pos) +  "<->" + indicators.getParameterValue(nto) +
 //                 "  " +  data.getParameterValue(pos) +  "<->" + data.getParameterValue(nto));
+        final int nto = pos + direction;
+        double vto = indicators.getStatisticValue(nto);
 
-            double vto = indicators.getStatisticValue(nto);
-            indicators.setParameterValue(nto, indicators.getParameterValue(pos));
-            indicators.setParameterValue(pos, vto);
+        indicators.setParameterValue(nto, indicators.getParameterValue(pos));
+        indicators.setParameterValue(pos, vto);
 
-            final int dataOffset = impliedOne ? 1 : 0;
-            final int ntodata = nto + dataOffset;
-            final int posdata = pos + dataOffset;
-            vto = data.getStatisticValue(ntodata);
-            data.setParameterValue(ntodata, data.getParameterValue(posdata));
-            data.setParameterValue(posdata, vto);
+        final int dataOffset = impliedOne ? 1 : 0;
+        final int ntodata = nto + dataOffset;
+        final int posdata = pos + dataOffset;
+        vto = data.getStatisticValue(ntodata);
+        data.setParameterValue(ntodata, data.getParameterValue(posdata));
+        data.setParameterValue(posdata, vto);
 
 //            System.out.println("after " + pos + "<->" + nto + "  " +
 //                              indicators.getParameterValue(pos) +  "<->" + indicators.getParameterValue(nto) +
 //                 "  " +  data.getParameterValue(pos) +  "<->" + data.getParameterValue(nto));
 
-            return hastingsRatio;
-        }
-        return 0;
+        return hastingsRatio;
     }
 
     private static final String DATA = MixedDistributionLikelihood.DATA;

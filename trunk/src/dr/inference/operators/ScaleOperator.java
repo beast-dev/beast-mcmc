@@ -89,8 +89,7 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 				}
 			}
 		} else {
-            // scale is chosen at uniform from an interval of length 1/scaleFactor, so pdf is 1/scaleFactor and
-            // hastings ratio is lg(1/scale) = -lg(scale)
+           
             logq = - Math.log(scale);
 
 			int index;
@@ -226,7 +225,7 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 			Parameter parameter = (Parameter)xo.getChild(Parameter.class);
 
             Parameter indicator = null;
-            final XMLObject cxo = (XMLObject) xo.getChild("indicator");
+            final XMLObject cxo = (XMLObject) xo.getChild("indicators");
             double indicatorOnProb = 1.0;
             if( cxo != null ) {
                 indicator = (Parameter) cxo.getChild(Parameter.class);

@@ -80,6 +80,10 @@ public class CoalescentWithRecombinationLikelihood extends AbstractModel impleme
         if (coalescentDemoModel != null) {
             addModel(coalescentDemoModel);
         }
+
+        if (recombinationDemoModel != null) {
+            addModel(recombinationDemoModel);
+        }
         if (setupIntervals) setupIntervals();
 
         addStatistic(new DeltaStatistic());

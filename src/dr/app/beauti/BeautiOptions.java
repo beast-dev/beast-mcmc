@@ -71,6 +71,8 @@ public class BeautiOptions {
 		createParameter("ucld.mean", "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("ucld.stdev", "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("branchRates.categories", "relaxed clock branch rate categories");
+		createParameter("localClock.rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
+		createParameter("localClock.changes", "random local clock rate change indicator");
 
 		createParameter("hky.kappa", "HKY transition-transversion parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("hky1.kappa", "HKY transition-transversion parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -140,6 +142,8 @@ public class BeautiOptions {
 		createOperator("ucld.mean", SCALE, 0.75, rateWeights);
 		createOperator("ucld.stdev", SCALE, 0.75, rateWeights);
 		createOperator("branchRates.categories", SWAP, 1, branchWeights);
+		createOperator("localClock.rates", SCALE, 0.75, rateWeights);
+		createOperator("localClock.changes", BITFLIP, 1, branchWeights);
 
 		createOperator("hky.kappa", SCALE, 0.75, substWeights);
 		createOperator("hky1.kappa", SCALE, 0.75, substWeights);
@@ -274,53 +278,53 @@ public class BeautiOptions {
 
 		double timeScaleMaximum = round(initialRootHeight * 1000.0, 2);
 
-        for (Parameter param : ops) {
-            if (alignmentReset) param.priorEdited = false;
+		for (Parameter param : ops) {
+			if (alignmentReset) param.priorEdited = false;
 
-            if (!param.priorEdited) {
-                switch (param.scale) {
-                    case TIME_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = timeScaleMaximum;
-                        param.initial = initialRootHeight;
-                        break;
+			if (!param.priorEdited) {
+				switch (param.scale) {
+					case TIME_SCALE:
+						param.uniformLower = 0.0;
+						param.uniformUpper = timeScaleMaximum;
+						param.initial = initialRootHeight;
+						break;
 					case T50_SCALE:
 						param.uniformLower = 0.0;
 						param.uniformUpper = timeScaleMaximum;
 						param.initial = initialRootHeight / 5.0;
 						break;
-                    case GROWTH_RATE_SCALE:
-                        param.uniformLower = -growthRateMaximum;
-                        param.uniformUpper = growthRateMaximum;
-                        break;
-                    case BIRTH_RATE_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = birthRateMaximum;
-                        break;
-                    case SUBSTITUTION_RATE_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = substitutionRateMaximum;
-                        param.initial = initialRate;
-                        break;
-                    case LOG_STDEV_SCALE:
-                        param.uniformLower = 0;
-                        param.uniformUpper = logStdevMaximum;
-                        break;
-                    case SUBSTITUTION_PARAMETER_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = substitutionParameterMaximum;
-                        break;
-                }
-                if (param.isNodeHeight) {
-                    param.lower = maximumTipHeight;
-                    param.uniformLower = maximumTipHeight;
-                    param.uniformUpper = timeScaleMaximum;
-                    param.initial = initialRootHeight;
-                }
-            }
-        }
+					case GROWTH_RATE_SCALE:
+						param.uniformLower = -growthRateMaximum;
+						param.uniformUpper = growthRateMaximum;
+						break;
+					case BIRTH_RATE_SCALE:
+						param.uniformLower = 0.0;
+						param.uniformUpper = birthRateMaximum;
+						break;
+					case SUBSTITUTION_RATE_SCALE:
+						param.uniformLower = 0.0;
+						param.uniformUpper = substitutionRateMaximum;
+						param.initial = initialRate;
+						break;
+					case LOG_STDEV_SCALE:
+						param.uniformLower = 0;
+						param.uniformUpper = logStdevMaximum;
+						break;
+					case SUBSTITUTION_PARAMETER_SCALE:
+						param.uniformLower = 0.0;
+						param.uniformUpper = substitutionParameterMaximum;
+						break;
+				}
+				if (param.isNodeHeight) {
+					param.lower = maximumTipHeight;
+					param.uniformLower = maximumTipHeight;
+					param.uniformUpper = timeScaleMaximum;
+					param.initial = initialRootHeight;
+				}
+			}
+		}
 
-        alignmentReset = false;
+		alignmentReset = false;
 
 		return ops;
 	}
@@ -425,11 +429,10 @@ public class BeautiOptions {
 				}
 			}
 
-			// if not fixed then do mutation rate move and up/down move
 			if (!fixedSubstitutionRate) {
 				Parameter rateParam;
 
-				if (clockModel == STRICT_CLOCK) {
+				if (clockModel == STRICT_CLOCK || clockModel == RANDOM_LOCAL_CLOCK) {
 					rateParam = getParameter("clock.rate");
 					params.add(rateParam);
 				} else {
@@ -448,7 +451,7 @@ public class BeautiOptions {
 				rateParam.isFixed = false;
 			} else {
 				Parameter rateParam;
-				if (clockModel == STRICT_CLOCK) {
+				if (clockModel == STRICT_CLOCK || clockModel == RANDOM_LOCAL_CLOCK) {
 					rateParam = getParameter("clock.rate");
 				} else {
 					if (clockModel == UNCORRELATED_EXPONENTIAL) {
@@ -507,14 +510,25 @@ public class BeautiOptions {
 		if (taxonSets != null) {
 			for (int i = 0; i < taxonSets.size(); i++) {
 				TaxonList taxonSet = taxonSets.get(i);
-                Parameter statistic = statistics.get(taxonSet);
-                if (statistic == null) {
-                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
-                    statistics.put(taxonSet, statistic);
-                }
-                params.add(statistic);
-            }
-        }
+				Parameter statistic = statistics.get(taxonSet);
+				if (statistic == null) {
+					statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
+					statistics.put(taxonSet, statistic);
+				}
+				params.add(statistic);
+			}
+		}
+
+		if (clockModel == RANDOM_LOCAL_CLOCK) {
+			if (localClockRateChangesStatistic == null) {
+				localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
+			}
+			if (localClockRatesStatistic == null) {
+				localClockRatesStatistic = new Parameter("localClock.rates", "random local clock rates", false);
+			}
+			params.add(localClockRatesStatistic);
+			params.add(localClockRateChangesStatistic);
+		}
 	}
 
 	protected Parameter getParameter(String name) {
@@ -592,6 +606,11 @@ public class BeautiOptions {
 				if (clockModel == STRICT_CLOCK) {
 					ops.add(getOperator("clock.rate"));
 					ops.add(getOperator("upDownRateHeights"));
+				} else if (clockModel == RANDOM_LOCAL_CLOCK) {
+					ops.add(getOperator("clock.rate"));
+					ops.add(getOperator("upDownRateHeights"));
+					ops.add(getOperator("localClock.rates"));
+					ops.add(getOperator("localClock.changes"));
 				} else {
 					if (clockModel == UNCORRELATED_EXPONENTIAL) {
 						ops.add(getOperator("uced.mean"));
@@ -608,6 +627,9 @@ public class BeautiOptions {
 			} else {
 				if (clockModel == STRICT_CLOCK) {
 					// no parameter to operator on
+				} else if (clockModel == RANDOM_LOCAL_CLOCK) {
+					ops.add(getOperator("localClock.rates"));
+					ops.add(getOperator("localClock.changes"));
 				} else {
 					if (clockModel == UNCORRELATED_EXPONENTIAL) {
 						// no parameter to operator on
@@ -1278,6 +1300,23 @@ public class BeautiOptions {
 			uniformUpper = upper;
 		}
 
+		public Parameter(String name, String description, boolean isDiscrete) {
+			this.taxa = null;
+
+			this.name = name;
+			this.description = description;
+
+			this.isNodeHeight = false;
+			this.isStatistic = true;
+			this.isDiscrete = isDiscrete;
+			this.priorType = UNIFORM_PRIOR;
+			this.scale = NONE;
+			this.priorEdited = false;
+			this.initial = Double.NaN;
+			this.lower = Double.NaN;
+			this.upper = Double.NaN;
+		}
+
 		public Parameter(String name, String description, boolean isNodeHeight,
 		                 double initial, double lower, double upper) {
 			this.name = name;
@@ -1320,6 +1359,8 @@ public class BeautiOptions {
 
 		public final TaxonList taxa;
 
+		public boolean isDiscrete = false;
+
 		public boolean isFixed = false;
 		public final boolean isNodeHeight;
 		public final boolean isStatistic;
@@ -1342,6 +1383,8 @@ public class BeautiOptions {
 		public double gammaAlpha = 1.0;
 		public double gammaBeta = 1.0;
 		public double gammaOffset = 0.0;
+		public double poissonMean = 1.0;
+		public double poissonOffset = 0.0;
 	}
 
 	public class Operator {
@@ -1430,6 +1473,7 @@ public class BeautiOptions {
 	public static final int STRICT_CLOCK = 0;
 	public static final int UNCORRELATED_EXPONENTIAL = 1;
 	public static final int UNCORRELATED_LOGNORMAL = 2;
+	public static final int RANDOM_LOCAL_CLOCK = 3;
 
 	public static final int GROWTH_RATE = 0;
 	public static final int DOUBLING_TIME = 1;
@@ -1441,6 +1485,8 @@ public class BeautiOptions {
 	public static final int LOG_NORMAL_PRIOR = 3;
 	public static final int GAMMA_PRIOR = 4;
 	public static final int JEFFREYS_PRIOR = 5;
+	public static final int POISSON_PRIOR = 6;
+
 	public static final int TIME_SCALE = 0;
 	public static final int GROWTH_RATE_SCALE = 1;
 	public static final int BIRTH_RATE_SCALE = 2;
@@ -1456,6 +1502,7 @@ public class BeautiOptions {
 	public static final String DELTA_EXCHANGE = "deltaExchange";
 	public static final String INTEGER_DELTA_EXCHANGE = "integerDeltaExchange";
 	public static final String SWAP = "swap";
+	public static final String BITFLIP = "bitFlip";
 	public static final String UNIFORM = "uniform";
 	public static final String SUBTREE_SLIDE = "subtreeSlide";
 	public static final String NARROW_EXCHANGE = "narrowExchange";
@@ -1473,8 +1520,8 @@ public class BeautiOptions {
 	public TaxonList taxonList = null;
 	public SimpleAlignment originalAlignment = null;
 	public List<Taxa> taxonSets = new ArrayList<Taxa>();
-    public List<Boolean> taxonSetsMono = new ArrayList<Boolean>();
-    public Alignment alignment = null;
+	public List<Boolean> taxonSetsMono = new ArrayList<Boolean>();
+	public Alignment alignment = null;
 	public Tree tree = null;
 	public boolean alignmentReset = true;
 	public double meanDistance = 1.0;
@@ -1528,4 +1575,6 @@ public class BeautiOptions {
 	public HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();
 	public HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
 	public HashMap<String, Operator> operators = new HashMap<String, Operator>();
+	public Parameter localClockRateChangesStatistic = null;
+	public Parameter localClockRatesStatistic = null;
 }

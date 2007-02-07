@@ -77,7 +77,7 @@ public class BeautiApp extends MultiDocApplication {
                 final String nameString = "BEAUti";
                 final String versionString = "1.5a1";
                 String aboutString = "<html><center><p>Bayesian Evolutionary Analysis Utility<br>" +
-                        "Version " + versionString + ", 2003-2006</p>" +
+                        "Version " + versionString + ", 2003-2007</p>" +
                         "<p>by<br>" +
                         "Andrew Rambaut and Alexei J. Drummond</p>" +
                         "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +

@@ -60,7 +60,7 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
 		
 		double width = getEpochDuration(epoch);
 		
-		return popSize1 * (width-t) + (popSize2 * t) / width;
+		return (popSize1 * (width-t) + (popSize2 * t)) / width;
 	}
 	
 	public DemographicFunction getCopy() {

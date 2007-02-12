@@ -27,16 +27,15 @@ package dr.app.beastdev;
 
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
+import dr.math.MathUtils;
 import dr.util.MessageLogHandler;
 import dr.util.Version;
 import dr.xml.XMLParser;
-import dr.math.MathUtils;
+import org.virion.jam.util.IconUtils;
 
 import java.io.*;
 import java.util.Iterator;
 import java.util.logging.*;
-
-import org.virion.jam.util.IconUtils;
 
 public class BeastMain {
 
@@ -56,7 +55,7 @@ public class BeastMain {
                 thread.stop();
             }
         }
-    }
+    };
 
     public BeastMain(File inputFile, BeastConsoleApp consoleApp, boolean verbose) {
 
@@ -72,7 +71,7 @@ public class BeastMain {
             FileReader fileReader = new FileReader(inputFile);
             System.out.println(fileReader.getEncoding());
 
-            XMLParser parser = new BeastParser(new String[] {fileName}, inputFile.getParentFile(), verbose);
+            XMLParser parser = new BeastParser(new String[] {fileName}, verbose);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -164,7 +163,7 @@ public class BeastMain {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAST " + version.getVersionString() + ", 2002-2006", 60);
+        centreLine("BEAST " + version.getVersionString() + ", 2002-2007", 60);
         centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
         centreLine("by", 60);
         centreLine("Alexei J. Drummond and Andrew Rambaut", 60);

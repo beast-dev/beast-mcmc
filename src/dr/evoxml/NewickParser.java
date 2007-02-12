@@ -51,7 +51,8 @@ public class NewickParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        final Units.Type units = XMLParser.Utils.getUnitsAttr(xo);
+        int units = Units.SUBSTITUTIONS;
+        units = XMLParser.Utils.getUnitsAttr(xo);
 
         boolean usingDates = true;
 
@@ -100,7 +101,7 @@ public class NewickParser extends AbstractXMLObjectParser {
 
                     taxon = (Taxon)obj;
                 }
-            } catch (ObjectNotFoundException e) { /**/ }
+            } catch (ObjectNotFoundException e) { }
 
             if (taxon != null) {
 
@@ -192,7 +193,7 @@ public class NewickParser extends AbstractXMLObjectParser {
     }
 
     public String getExample() {
-        return "<" + getParserName() + " " + UNITS + "=\"" + Units.Utils.getDefaultUnitName(Units.Type.YEARS) + "\">" + " ((A:1.0, B:1.0):1.0,(C:2.0, D:2.0):1.0); </" + getParserName() + ">";
+        return "<" + getParserName() + " " + UNITS + "=\"" + Units.Utils.getDefaultUnitName(Units.YEARS) + "\">" + " ((A:1.0, B:1.0):1.0,(C:2.0, D:2.0):1.0); </" + getParserName() + ">";
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }

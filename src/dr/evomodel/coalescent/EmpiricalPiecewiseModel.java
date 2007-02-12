@@ -55,7 +55,7 @@ public class EmpiricalPiecewiseModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public EmpiricalPiecewiseModel(double[] intervalWidths, Parameter populationSizesParameter, Parameter tauParameter, Parameter bParameter, Parameter lagParameter, Type units) {
+	public EmpiricalPiecewiseModel(double[] intervalWidths, Parameter populationSizesParameter, Parameter tauParameter, Parameter bParameter, Parameter lagParameter, int units) {
 	
 		this(EMPIRICAL_PIECEWISE, intervalWidths, populationSizesParameter, tauParameter, bParameter, lagParameter, units);
 		
@@ -64,7 +64,7 @@ public class EmpiricalPiecewiseModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public EmpiricalPiecewiseModel(String name, double[] intervalWidths, Parameter populationSizesParameter, Parameter tauParameter, Parameter bParameter, Parameter lagParameter, Type units) {
+	public EmpiricalPiecewiseModel(String name, double[] intervalWidths, Parameter populationSizesParameter, Parameter tauParameter, Parameter bParameter, Parameter lagParameter, int units) {
 	
 		super(name);
 		
@@ -157,7 +157,7 @@ public class EmpiricalPiecewiseModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			Type units = XMLParser.Utils.getUnitsAttr(xo);
+			int units = XMLParser.Utils.getUnitsAttr(xo);
 				
 			
 			XMLObject cxo = (XMLObject)xo.getChild(INTERVAL_WIDTHS);

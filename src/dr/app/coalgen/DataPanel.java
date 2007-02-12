@@ -29,10 +29,10 @@ import dr.evolution.util.Date;
 import dr.evolution.util.Units;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
-import dr.gui.table.DateCellEditor;
+import org.virion.jam.table.DateCellEditor;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableRenderer;
-import dr.gui.table.TableSorter;
+import org.virion.jam.table.TableSorter;
 import org.virion.jam.components.RealNumberField;
 
 import javax.swing.*;
@@ -168,11 +168,11 @@ public class DataPanel extends JPanel implements Exportable {
 	}
 	
 	public final void timeScaleChanged() {
-		Units.Type units = Units.Type.YEARS;
+		int units = Units.YEARS;
 		switch (unitsCombo.getSelectedIndex()) {
-			case 0: units = Units.Type.YEARS; break;
-			case 1: units = Units.Type.MONTHS; break;
-			case 2: units = Units.Type.DAYS; break;
+			case 0: units = Units.YEARS; break;
+			case 1: units = Units.MONTHS; break;
+			case 2: units = Units.DAYS; break;
 		}
 		
 		boolean backwards = directionCombo.getSelectedIndex() == 0;
@@ -192,7 +192,7 @@ public class DataPanel extends JPanel implements Exportable {
 		frame.fireDataChanged();
 	}
 	
-	private Date createDate(double timeValue, Units.Type units, boolean backwards, double origin) {
+	private Date createDate(double timeValue, int units, boolean backwards, double origin) {
 		if (backwards) {
 			return Date.createTimeAgoFromOrigin(timeValue, units, origin);
 		} else {
@@ -257,7 +257,7 @@ public class DataPanel extends JPanel implements Exportable {
 			
 			double d = 0.0;
 			
-			Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
+			Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
 			data.taxonList.getTaxon(i).setAttribute("date", date);
 		}
 		
@@ -387,7 +387,7 @@ public class DataPanel extends JPanel implements Exportable {
 				}
 			}	
 				
-			Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
+			Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
 			data.taxonList.getTaxon(i).setAttribute("date", date);
 		}	
 						

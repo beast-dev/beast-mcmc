@@ -222,8 +222,8 @@ public final class MarkovChain {
 
 	                if (testFailureCount > MAX_FAILURE_COUNTS) {
 		                throw new RuntimeException("Too many test failures: stopping chain.");
+	                }
                 }
-            }
             }
 
             if (!disableCoerce && mcmcOperator instanceof CoercableMCMCOperator) {

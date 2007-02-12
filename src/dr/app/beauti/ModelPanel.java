@@ -66,9 +66,8 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
     JComboBox clockModelCombo = new JComboBox(new String[] {
             "Strict Clock",
-		    "Random Local Clock",
-		    "Relaxed Clock: Uncorrelated Lognormal",
-            "Relaxed Clock: Uncorrelated Exponential" } );
+            "Relaxed Clock: Uncorrelated Exponential",
+            "Relaxed Clock: Uncorrelated Lognormal" });
 
     BeautiFrame frame = null;
 
@@ -313,18 +312,7 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         substitutionRateField.setValue(options.meanSubstitutionRate);
         substitutionRateField.setEnabled(options.fixedSubstitutionRate);
 
-	    switch (options.clockModel) {
-		    case BeautiOptions.STRICT_CLOCK:
-			    clockModelCombo.setSelectedIndex(0); break;
-		    case BeautiOptions.RANDOM_LOCAL_CLOCK:
-			    clockModelCombo.setSelectedIndex(1); break;
-		    case BeautiOptions.UNCORRELATED_LOGNORMAL:
-			    clockModelCombo.setSelectedIndex(2); break;
-		    case BeautiOptions.UNCORRELATED_EXPONENTIAL:
-			    clockModelCombo.setSelectedIndex(3); break;
-		    default:
-			    throw new IllegalArgumentException("Unknown option for clock model");
-	    }
+        clockModelCombo.setSelectedIndex(options.clockModel);
 
         setupPanel();
 
@@ -391,19 +379,6 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         }
 
         options.clockModel = clockModelCombo.getSelectedIndex();
-	    switch (clockModelCombo.getSelectedIndex()) {
-		    case 0:
-			    options.clockModel = BeautiOptions.STRICT_CLOCK; break;
-		    case 1:
-			    options.clockModel = BeautiOptions.RANDOM_LOCAL_CLOCK; break;
-		    case 2:
-			    options.clockModel = BeautiOptions.UNCORRELATED_LOGNORMAL; break;
-		    case 3:
-			    options.clockModel = BeautiOptions.UNCORRELATED_EXPONENTIAL; break;
-		    default:
-			    throw new IllegalArgumentException("Unknown option for clock model");
-	    }
-
     }
 
     public JComponent getExportableComponent() {

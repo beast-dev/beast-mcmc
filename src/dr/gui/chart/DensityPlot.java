@@ -35,16 +35,6 @@ public class DensityPlot extends FrequencyPlot {
 	boolean relativeDensity = true;
 	int minimumBinCount;
 	
-	public boolean isSolid() {
-		return solid;
-	}
-
-	public void setSolid(boolean solid) {
-		this.solid = solid;
-	}
-
-	boolean solid = true;
-
 	public DensityPlot(Variate data, int minimumBinCount) {
 		super(data, minimumBinCount);
 		this.minimumBinCount = minimumBinCount;
@@ -71,17 +61,13 @@ public class DensityPlot extends FrequencyPlot {
 		Variate.Double xData = new Variate.Double();
 		Variate.Double yData = new Variate.Double();
 
-		double x = frequency.getLowerBound() - frequency.getBinSize();
+		double x = frequency.getLowerBound();
 		double maxDensity = 0.0;
 		for (int i = 0; i < frequency.getBinCount(); i++) {
 			double density = frequency.getFrequency(i)/frequency.getBinSize()/data.getCount();
 			if (density > maxDensity) maxDensity = density;
 		}
 		
-		xData.add(x + (frequency.getBinSize()/2.0));
-		yData.add(0.0);
-		x += frequency.getBinSize();
-
 		for (int i = 0; i < frequency.getBinCount(); i++) {
 			xData.add(x + (frequency.getBinSize()/2.0));
 			double density = frequency.getFrequency(i)/frequency.getBinSize()/data.getCount();
@@ -92,10 +78,6 @@ public class DensityPlot extends FrequencyPlot {
 			}
 			x += frequency.getBinSize();
 		}
-		
-		xData.add(x + (frequency.getBinSize()/2.0));
-		yData.add(0.0);
-
 		setData(xData, yData);
 	}	
 	
@@ -114,11 +96,15 @@ public class DensityPlot extends FrequencyPlot {
 
 		int n = xData.getCount();
 					
+		g2.setStroke(lineStroke);
+		g2.setPaint(linePaint);
+		
+		
 		float x = (float)transformX(xData.get(0));
 		float y = (float)transformY(yData.get(0));
 		
 		GeneralPath path = new GeneralPath();
-		path.moveTo(x, y);
+		path. moveTo(x, y);
 
 		for (int i = 1; i < n; i++) {
 			x = (float)transformX(xData.get(i));
@@ -126,19 +112,7 @@ public class DensityPlot extends FrequencyPlot {
 			
 			path.lineTo(x, y);
 		}
-
-		if (solid) {
-			path.closePath();
-			Paint fillPaint = new Color(
-					((Color)linePaint).getRed(),
-					((Color)linePaint).getGreen(),
-					((Color)linePaint).getBlue(), 32);
-			g2.setPaint(fillPaint);
-			g2.fill(path);
-		}
 		
-		g2.setStroke(lineStroke);
-		g2.setPaint(linePaint);
 		g2.draw(path);
 	}	
 }

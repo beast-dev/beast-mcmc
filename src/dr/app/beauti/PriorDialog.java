@@ -62,8 +62,7 @@ public class PriorDialog {
 
 	private String[] argumentNames = new String[] {
 			"Lower Bound", "Upper Bound", "Exponential Mean", "Zero Offset", "Normal Mean", "Normal Stdev",
-			"LogNormal Mean", "LogNormal Stdev", "Zero Offset",
-			"Gamma Shape (alpha)", "Gamma Scale (beta)", "Zero Offset"
+			"LogNormal Mean", "LogNormal Stdev", "Zero Offset", "Gamma Shape (alpha)", "Gamma Scale (beta)", "Zero Offset"
 	};
 
 	private JComboBox priorCombo;
@@ -160,7 +159,7 @@ public class PriorDialog {
 			argumentFields[i].addKeyListener(listener);
 		}
 
-		dialog.setVisible(true);
+		dialog.show();
 
 		int result = JOptionPane.CANCEL_OPTION;
 		Integer value = (Integer)optionPane.getValue();

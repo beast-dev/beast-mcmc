@@ -26,7 +26,6 @@
 package dr.evoxml;
 
 import dr.evolution.util.Date;
-import dr.evolution.util.Units;
 import dr.xml.*;
 
 /**
@@ -89,7 +88,7 @@ public class DateParser extends AbstractXMLObjectParser {
             }
         }
 
-        Units.Type units = XMLParser.Utils.getUnitsAttr(xo);
+        int units = XMLParser.Utils.getUnitsAttr(xo);
 
         Date date;
 

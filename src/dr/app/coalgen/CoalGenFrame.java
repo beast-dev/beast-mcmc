@@ -105,9 +105,8 @@ public class CoalGenFrame extends DocumentFrame {
 	public void setTraces(Traces traces) {
 	
 		data.traces = traces;
-        data.reset();
-
-        fireDataChanged();
+		
+		fireDataChanged();
 	}
 	
 	public void fireDataChanged() {

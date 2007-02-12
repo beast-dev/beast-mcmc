@@ -37,7 +37,7 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public PiecewiseLinearPopulation(double[] intervals, double[] thetas, Type units) {
+	public PiecewiseLinearPopulation(double[] intervals, double[] thetas, int units) {
 	
 		super(intervals, thetas, units);
 	}
@@ -60,7 +60,7 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
 		
 		double width = getEpochDuration(epoch);
 		
-		return (popSize1 * (width-t) + (popSize2 * t)) / width;
+		return popSize1 * (width-t) + (popSize2 * t) / width;
 	}
 	
 	public DemographicFunction getCopy() {

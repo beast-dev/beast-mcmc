@@ -104,7 +104,7 @@ public class BeastMC3 {
 
 			FileReader fileReader = new FileReader(inputFile);
 
-			XMLParser parser = new BeastParser(new String[] {fileName}, inputFile.getParentFile(), verbose);
+			XMLParser parser = new BeastParser(new String[] {fileName}, verbose);
 
 			if (consoleApp != null) {
 				consoleApp.parser = parser;
@@ -118,14 +118,16 @@ public class BeastMC3 {
 			Logger.getLogger("dr.apps.beast").info("Parsing XML file: " + fileName);
 
             ObjectStore store = parser.parse(fileReader, false);
-            for (Object id : store.getIdSet()) {
-                Object obj = store.getObjectById(id);
+            Iterator iter = store.getIdSet().iterator();
+            while (iter.hasNext()) {
+                Object id = iter.next();
+	            Object obj = store.getObjectById(id);
                 if (obj instanceof MCMC) {
-                    chains[0] = (MCMC) obj;
+                    chains[0] = (MCMC)obj;
                     break;
                 }
             }
-            if (chains[0] == null) {
+			if (chains[0] == null) {
 				throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
 			}
             fileReader.close();
@@ -136,10 +138,10 @@ public class BeastMC3 {
                 fileReader = new FileReader(inputFile);
 
 				messageHandler.setLevel(Level.OFF);
-                parser = new BeastParser(new String[] {fileName}, inputFile.getParentFile(), verbose);
+                parser = new BeastParser(new String[] {fileName}, verbose);
 
 			    store = parser.parse(fileReader, false);
-                Iterator iter = store.getIdSet().iterator();
+	            iter = store.getIdSet().iterator();
                 while (iter.hasNext()) {
 	                Object id = iter.next();
 		            Object obj = store.getObjectById(id);
@@ -366,7 +368,7 @@ public class BeastMC3 {
 
 			String nameString = "BEAST " + version.getVersionString();
 			String aboutString = "Bayesian Evolutionary Analysis Sampling Trees\n" +
-									version.getVersionString() + " ï¿½2002-2004 Alexei Drummond & Andrew Rambaut\n" +
+									version.getVersionString() + " ©2002-2004 Alexei Drummond & Andrew Rambaut\n" +
 									"University of Oxford";
 
 			consoleApp = new BeastConsoleApp(nameString, aboutString, icon);

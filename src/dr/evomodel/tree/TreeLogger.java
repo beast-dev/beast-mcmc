@@ -25,15 +25,15 @@
 
 package dr.evomodel.tree;
 
-import dr.evolution.colouring.*;
-import dr.evolution.tree.*;
+import dr.evolution.colouring.TreeColouring;
+import dr.evolution.colouring.TreeColouringProvider;
+import dr.evolution.tree.BranchRateController;
+import dr.evolution.tree.Tree;
 import dr.inference.loggers.*;
 import dr.inference.model.Likelihood;
 import dr.xml.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A logger that logs tree and clade frequencies.
@@ -54,37 +54,40 @@ public class TreeLogger extends MCLogger {
 
 	private Tree tree;
 	private BranchRateController branchRateProvider = null;
+	private String rateLabel;
 
-	private TreeAttributeProvider[] treeAttributeProviders;
-	private NodeAttributeProvider[] nodeAttributeProviders;
-	private BranchAttributeProvider[] branchAttributeProviders;
+    private TreeColouringProvider treeColouringProvider = null;
+	private String colouringLabel;
+
+	private Likelihood likelihood = null;
+	private String likelihoodLabel;
 
 	private boolean nexusFormat = false;
 	public boolean usingRates = false;
 	public boolean substitutions = false;
 
-	/*
+	/**
 	 * Constructor
 	 */
-	public TreeLogger(Tree tree, BranchRateController branchRateProvider,
-	                  TreeAttributeProvider[] treeAttributeProviders,
-	                  NodeAttributeProvider[] nodeAttributeProviders,
-	                  BranchAttributeProvider[] branchAttributeProviders,
-	                  LogFormatter formatter, int logEvery, boolean nexusFormat) {
+	public TreeLogger(Tree tree, BranchRateController branchRateProvider, String rateLabel,
+                      TreeColouringProvider treeColouringProvider, String colouringLabel,
+	                  Likelihood likelihood, String likelihoodLabel,
+	                  LogFormatter formatter, int logEvery, boolean nexusFormat, boolean substitutions) {
 
 		super(formatter, logEvery);
 
 		this.nexusFormat = nexusFormat;
-
 		this.branchRateProvider = branchRateProvider;
+		this.rateLabel = rateLabel;
 
-		this.treeAttributeProviders = treeAttributeProviders;
-		this.nodeAttributeProviders = nodeAttributeProviders;
+        this.treeColouringProvider = treeColouringProvider;
+		this.colouringLabel = colouringLabel;
 
-        this.branchAttributeProviders = branchAttributeProviders;
+		this.likelihood = likelihood;
+		this.likelihoodLabel = likelihoodLabel;
 
 		if (this.branchRateProvider != null) {
-			this.substitutions = true;
+			this.substitutions = substitutions;
 		}
 		this.tree = tree;
 	}
@@ -125,43 +128,30 @@ public class TreeLogger extends MCLogger {
 		if (logEvery <= 0 || ((state % logEvery) == 0)) {
 			StringBuffer buffer = new StringBuffer("tree STATE_");
 			buffer.append(state);
-			if (treeAttributeProviders != null) {
-				boolean hasAttribute = false;
-				for (TreeAttributeProvider tap : treeAttributeProviders) {
-					if (!hasAttribute) {
-						buffer.append(" [&");
-						hasAttribute = true;
-					} else {
-						buffer.append(",");
-					}
-					buffer.append(tap.getTreeAttributeLabel());
-					buffer.append("=");
-					buffer.append(tap.getAttributeForTree(tree));
-
-				}
-				if (hasAttribute) {
-					buffer.append("]");
-				}
+			if (likelihood != null) {
+				buffer.append(" [&");
+				buffer.append(likelihoodLabel);
+				buffer.append("=");
+				buffer.append(likelihood.getLogLikelihood());
+				buffer.append("]");
 			}
 
 			buffer.append(" = [&R] ");
 
 			if (substitutions) {
-                Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
-						branchRateProvider, nodeAttributeProviders, branchAttributeProviders, buffer);
+				Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
+						branchRateProvider, null, null, null, buffer);
 			} else {
-//				if (treeColouringProvider != null) {
-//					TreeColouring colouring = treeColouringProvider.getTreeColouring(tree);
-//
-//					Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_TIME,
-//							branchRateProvider, rateLabel, colouring, colouringLabel, buffer);
-//				} else {
-//					Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_TIME,
-//							branchRateProvider, rateLabel, null, null, buffer);
-//				}
+                if (treeColouringProvider != null) {
+                    TreeColouring colouring = treeColouringProvider.getTreeColouring(tree);
+
 				Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_TIME,
-						null, nodeAttributeProviders, branchAttributeProviders, buffer);
+						branchRateProvider, rateLabel, colouring, colouringLabel, buffer);
+                } else {
+                    Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_TIME,
+		                    branchRateProvider, rateLabel, null, null, buffer);
 			}
+            }
 
 			buffer.append(";");
 			logLine(buffer.toString());
@@ -185,18 +175,21 @@ public class TreeLogger extends MCLogger {
 
 			Tree tree = (Tree)xo.getChild(Tree.class);
 
-
+			String fileName = null;
 			String title = null;
 			boolean nexusFormat = false;
+
+			String colouringLabel = "demes";
+			String rateLabel = "rate";
+			String likelihoodLabel = "lnP";
 
 			if (xo.hasAttribute(TITLE)) {
 				title = xo.getStringAttribute(TITLE);
 			}
 
-//            String fileName = null;
-//            if (xo.hasAttribute(FILE_NAME)) {
-//				fileName = xo.getStringAttribute(FILE_NAME);
-//			}
+			if (xo.hasAttribute(FILE_NAME)) {
+				fileName = xo.getStringAttribute(FILE_NAME);
+			}
 
 			if (xo.hasAttribute(NEXUS_FORMAT)) {
 				nexusFormat = xo.getBooleanAttribute(NEXUS_FORMAT);
@@ -207,116 +200,50 @@ public class TreeLogger extends MCLogger {
 				substitutions = xo.getStringAttribute(BRANCH_LENGTHS).equals(SUBSTITUTIONS);
 			}
 
-			List<TreeAttributeProvider> taps = new ArrayList<TreeAttributeProvider>();
-			List<NodeAttributeProvider> naps = new ArrayList<NodeAttributeProvider>();
-			List<BranchAttributeProvider> baps = new ArrayList<BranchAttributeProvider>();
+			BranchRateController branchRateProvider = (BranchRateController)xo.getChild(BranchRateController.class);
 
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				Object cxo = xo.getChild(i);
-				if (cxo instanceof TreeColouringProvider) {
-					final TreeColouringProvider colouringProvider = (TreeColouringProvider)cxo;
-					baps.add(new BranchAttributeProvider() {
+            TreeColouringProvider treeColouringProvider = (TreeColouringProvider)xo.getChild(TreeColouringProvider.class);
 
-						public String getBranchAttributeLabel() {
-							return "deme";
-						}
+			Likelihood likelihood = (Likelihood)xo.getChild(Likelihood.class);
 
-						public String getAttributeForBranch(Tree tree, NodeRef node) {
-							TreeColouring colouring = colouringProvider.getTreeColouring(tree);
-							BranchColouring bcol = colouring.getBranchColouring(node);
-							StringBuilder buffer = new StringBuilder();
-							if (bcol != null) {
-								buffer.append("{");
-								buffer.append(bcol.getChildColour());
-								for (int i = 1; i <= bcol.getNumEvents(); i++) {
-									buffer.append(",");
-									buffer.append(bcol.getBackwardTime(i));
-									buffer.append(",");
-									buffer.append(bcol.getBackwardColourAbove(i));
-								}
-								buffer.append("}");
-							}
-							return buffer.toString();
-						}
-					});
-
-				} else if (cxo instanceof Likelihood) {
-						final Likelihood likelihood = (Likelihood)cxo;
-						taps.add(new TreeAttributeProvider() {
-
-							public String getTreeAttributeLabel() {
-								return "lnP";
-							}
-
-							public String getAttributeForTree(Tree tree) {
-								return Double.toString(likelihood.getLogLikelihood());
-							}
-						});
-
-				} else {
-					if (cxo instanceof TreeAttributeProvider) {
-						taps.add((TreeAttributeProvider)cxo);
-					}
-					if (cxo instanceof NodeAttributeProvider) {
-						naps.add((NodeAttributeProvider)cxo);
-					}
-					if (cxo instanceof BranchAttributeProvider) {
-						baps.add((BranchAttributeProvider)cxo);
-					}
-				}
-			}
-            BranchRateController branchRateProvider = null;
-			if (substitutions) {
-                branchRateProvider = (BranchRateController)xo.getChild(BranchRateController.class);
-            }
-			if (substitutions && branchRateProvider == null) {
-				throw new XMLParseException("To log trees in units of substitutions a BranchRateModel must be provided");
-			}
-
-            // logEvery of zero only displays at the end
+			// logEvery of zero only displays at the end
 			int logEvery = 1;
 
 			if (xo.hasAttribute(LOG_EVERY)) {
 				logEvery = xo.getIntegerAttribute(LOG_EVERY);
 			}
-            PrintWriter pw = getLogFile(xo, getParserName());
-//			PrintWriter pw;
-//
-//			if (fileName != null) {
-//
-//				try {
-//					File file = new File(fileName);
-//					String name = file.getName();
-//					String parent = file.getParent();
-//
-//					if (!file.isAbsolute()) {
-//						parent = System.getProperty("user.dir");
-//					}
-//
-////					System.out.println("Writing log file to "+parent+System.getProperty("path.separator")+name);
-//					pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
-//				} catch (FileNotFoundException fnfe) {
-//					throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
-//				}
-//			} else {
-//				pw = new PrintWriter(System.out);
-//			}
+
+			PrintWriter pw = null;
+
+			if (fileName != null) {
+
+				try {
+					File file = new File(fileName);
+					String name = file.getName();
+					String parent = file.getParent();
+
+					if (!file.isAbsolute()) {
+						parent = System.getProperty("user.dir");
+					}
+
+//					System.out.println("Writing log file to "+parent+System.getProperty("path.separator")+name);
+					pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
+				} catch (FileNotFoundException fnfe) {
+					throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+				}
+			} else {
+				pw = new PrintWriter(System.out);
+			}
 
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-			TreeAttributeProvider[] treeAttributeProviders = new TreeAttributeProvider[taps.size()];
-			taps.toArray(treeAttributeProviders);
-			NodeAttributeProvider[] nodeAttributeProviders = new NodeAttributeProvider[naps.size()];
-			naps.toArray(nodeAttributeProviders);
-			BranchAttributeProvider[] branchAttributeProviders = new BranchAttributeProvider[baps.size()];
-			baps.toArray(branchAttributeProviders);
+            TreeLogger logger = new TreeLogger(tree,
+                    branchRateProvider, rateLabel,
+                    treeColouringProvider, colouringLabel,
+                    likelihood, likelihoodLabel,
+					formatter, logEvery, nexusFormat, substitutions);
 
-            TreeLogger logger =
-                    new TreeLogger(tree, branchRateProvider,
-                                   treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
-                                   formatter, logEvery, nexusFormat);
-
-            if (title != null) {
+			if (title != null) {
 				logger.setTitle(title);
 			}
 
@@ -339,11 +266,8 @@ public class TreeLogger extends MCLogger {
 				new StringAttributeRule(BRANCH_LENGTHS, "What units should the branch lengths be in", new String[] { TIME, SUBSTITUTIONS }, true),
 				new ElementRule(Tree.class, "The tree which is to be logged"),
 				new ElementRule(BranchRateController.class, true),
-				new ElementRule(TreeColouringProvider.class, true),
-				new ElementRule(Likelihood.class, true),
-				new ElementRule(TreeAttributeProvider.class, 0, Integer.MAX_VALUE),
-				new ElementRule(NodeAttributeProvider.class, 0, Integer.MAX_VALUE),
-				new ElementRule(BranchAttributeProvider.class, 0, Integer.MAX_VALUE)
+                new ElementRule(TreeColouringProvider.class, true),
+				new ElementRule(Likelihood.class, true)
 		};
 
 		public String getParserDescription() {

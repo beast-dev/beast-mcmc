@@ -25,9 +25,10 @@
 
 package dr.evomodel.branchratemodel;
 
-import dr.evolution.tree.*;
-import dr.evomodel.tree.BranchAttributeProvider;
 import dr.inference.model.Model;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.BranchRateController;
 
 /**
  * Date: Dec 13, 2004
@@ -37,7 +38,7 @@ import dr.inference.model.Model;
  *
  * @version $Id: BranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
  */
-public interface BranchRateModel extends Model, BranchRateController, BranchAttributeProvider {
+public interface BranchRateModel extends Model, BranchRateController {
 
     double getBranchRate(Tree tree, NodeRef node);
 }

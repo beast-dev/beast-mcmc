@@ -78,14 +78,6 @@ public class StrictClockBranchRates extends AbstractModel implements BranchRateM
         return rateParameter.getParameterValue(0);
     }
 
-	public String getBranchAttributeLabel() {
-		return "rate";
-	}
-
-	public String getAttributeForBranch(Tree tree, NodeRef node) {
-		return Double.toString(getBranchRate(tree, node));
-	}
-
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
 		public String getParserName() { return STRICT_CLOCK_BRANCH_RATES; }

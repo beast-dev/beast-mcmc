@@ -51,7 +51,7 @@ public interface Prior {
 		public String toString() {
 			return "Uniform";
 		}
-	}
+	};
 
 	public static final UniformPrior UNIFORM_PRIOR = new UniformPrior();
 

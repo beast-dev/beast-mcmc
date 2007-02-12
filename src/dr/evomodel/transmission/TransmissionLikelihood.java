@@ -434,7 +434,7 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
      * Sets the units these coalescent intervals are
      * measured in.
      */
-    public final void setUnits(Type u)
+    public final void setUnits(int u)
     {
         transmissionModel.setUnits(u);
     }
@@ -443,7 +443,7 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
      * Returns the units these coalescent intervals are
      * measured in.
      */
-    public final Type getUnits()
+    public final int getUnits()
     {
         return transmissionModel.getUnits();
     }

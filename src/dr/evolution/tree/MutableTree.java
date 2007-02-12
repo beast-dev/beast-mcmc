@@ -44,7 +44,7 @@ public interface MutableTree extends Tree, MutableTaxonList {
 		private static final long serialVersionUID = 1955744780140327882L;
 
 		public InvalidTreeException(String message) { super(message); }
-	}
+	};
 
 	void beginTreeEdit();
 	void endTreeEdit() throws InvalidTreeException;

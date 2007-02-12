@@ -37,16 +37,13 @@ public class LogAnalyser {
 
 	private final static Version version = new BeastVersion();
 
-    private File parentFile;
+	public LogAnalyser(int burnin, String inputFileName, String outputFileName, boolean verbose) throws java.io.IOException {
 
+		File inputFile = new File(inputFileName);
 
-    public LogAnalyser(int burnin, String inputFileName, String outputFileName, boolean verbose, boolean hpds) throws java.io.IOException {
-
-		parentFile = new File(inputFileName);
-
-        if (parentFile.isDirectory()) {
+        if (inputFile.isDirectory()) {
             System.out.println("Analysing all log files below directory: " + inputFileName);
-        } else if (parentFile.isFile()) {
+        } else if (inputFile.isFile()) {
             System.out.println("Analysing log file: " + inputFileName);
         } else {
             System.err.println(inputFileName + " does not exist!");
@@ -58,7 +55,7 @@ public class LogAnalyser {
 			System.setOut(new PrintStream(outputStream));
 		}
 
-        analyze(parentFile, burnin, verbose, new boolean[] {true}, hpds);
+        analyze(inputFile, burnin, verbose, new boolean[] {true});
 	}
 
     /**
@@ -68,7 +65,7 @@ public class LogAnalyser {
      * @param verbose if true then a full report is done on each log file, otherwise only a single line report is made
      * @param drawHeader if boolean value in the zeroth position of this array is true then a head is drawn for the short reports.
      */
-    private void analyze(File file, int burnin, boolean verbose, boolean[] drawHeader, boolean hpds) {
+    private static void analyze(File file, int burnin, boolean verbose, boolean[] drawHeader) {
 
         if (file.isFile()) {
             try {
@@ -76,13 +73,7 @@ public class LogAnalyser {
                 if (verbose) {
                     TraceAnalysis.report(new FileReader(file), burnin);
                 } else {
-
-                    String name = file.getCanonicalPath();
-                    if (parentFile.isDirectory()) {
-                        name = name.substring(parentFile.getCanonicalPath().length());
-                    }
-
-                    TraceAnalysis.shortReport(name, new FileReader(file), burnin, drawHeader[0], hpds);
+                    TraceAnalysis.shortReport(file.getName(), new FileReader(file), burnin, drawHeader[0]);
                     drawHeader[0] = false;
                 }
             } catch (IOException e) {
@@ -92,9 +83,9 @@ public class LogAnalyser {
             File[] files = file.listFiles();
             for (int i = 0; i < files.length; i++) {
                 if (files[i].isDirectory()) {
-                    analyze(files[i], burnin, verbose, drawHeader, hpds);
+                    analyze(files[i], burnin, verbose, drawHeader);
                 } else if (files[i].getName().endsWith(".log") || files[i].getName().endsWith(".p")) {
-                    analyze(files[i], burnin, verbose, drawHeader, hpds);
+                    analyze(files[i], burnin, verbose, drawHeader);
                 } else {
                     if (verbose) System.out.println("Ignoring file: " + files[i]);
                 }
@@ -104,7 +95,7 @@ public class LogAnalyser {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("LogAnalyser v1.4, 2002-2006", 60);
+        centreLine("LogAnalyser v1.4.1, 2002-2007", 60);
         centreLine("MCMC Output analysis", 60);
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
@@ -127,7 +118,7 @@ public class LogAnalyser {
         System.out.println(line);
     }
 
- 
+
 	public static void printUsage(Arguments arguments) {
 
 		arguments.printUsage("loganalyser", "[-burnin <burnin>] [-short] [<input-file-name> [<output-file-name>]]");
@@ -147,7 +138,6 @@ public class LogAnalyser {
 			new Arguments.Option[] {
 				new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
 				new Arguments.Option("short", "use this option to produce a short report"),
-                new Arguments.Option("hpd", "use this option to produce hpds"),
 //				new Arguments.Option("html", "format output as html"),
 //				new Arguments.Option("svg", "generate svg graphics"),
 				new Arguments.Option("help", "option to print this message")
@@ -171,7 +161,6 @@ public class LogAnalyser {
 			burnin = arguments.getIntegerOption("burnin");
 		}
 
-        boolean hpds = arguments.hasOption("hpd");
 		boolean shortReport = arguments.hasOption("short");
 
 		String inputFileName = null;
@@ -198,7 +187,7 @@ public class LogAnalyser {
 			inputFileName = Utils.getLoadFileName("LogAnalyser v1.4 - Select log file to analyse");
 		}
 
-		new LogAnalyser(burnin, inputFileName, outputFileName, !shortReport, hpds);
+		new LogAnalyser(burnin, inputFileName, outputFileName, !shortReport);
 
 		System.exit(0);
 	}

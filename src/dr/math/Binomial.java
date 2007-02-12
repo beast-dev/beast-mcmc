@@ -41,9 +41,7 @@ public class Binomial
 	//
 
 	/**
-	 * @return Binomial coefficient n choose k
-     * @param n total elements
-     * @param k chosen elements
+	 * Binomial coefficient n choose k
 	 */
 	public static double choose(double n, double k)
 	{
@@ -57,9 +55,8 @@ public class Binomial
 	}
 	
 	/**
-     * @param n # elements
-     * @return n choose 2 (number of distinct ways to choose a pair from n elements)
-     */
+	 * get n choose 2
+	 */
 	public static double choose2(int n)
 	{
 		// not sure how much overhead there is with try-catch blocks

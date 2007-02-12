@@ -86,9 +86,7 @@ public class NewickImporter extends Importer implements TreeImporter {
 				throw new BadFormatException("Expecting ';' after tree");
 			}
 	
-		} catch (EOFException e) {
-            throw new ImportException("incomplete tree"); 
-        }
+		} catch (EOFException e) { }	
 
 		return tree;
 	}

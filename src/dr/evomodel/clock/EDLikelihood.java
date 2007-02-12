@@ -29,8 +29,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.math.ExponentialDistribution;
 import dr.xml.*;
 import dr.inference.model.Parameter;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.NodeRef;
 
 
 /**
@@ -43,16 +41,16 @@ import dr.evolution.tree.NodeRef;
  * @author Alexei Drummond
  */
 public class EDLikelihood extends RateChangeLikelihood {
+		
+	public static final String ED_LIKELIHOOD = "EDLikelihood";	
+		
+	public EDLikelihood(TreeModel tree, Parameter ratesParameter, int rootRatePrior, boolean episodicModel) {
+		
+		super("Exponentially Distributed", tree, ratesParameter, rootRatePrior, episodicModel);
 
-    public static final String ED_LIKELIHOOD = "EDLikelihood";
 
-    public EDLikelihood(TreeModel tree, Parameter ratesParameter, int rootRatePrior, boolean episodicModel) {
-
-        super("Exponentially Distributed", tree, ratesParameter, rootRatePrior, episodicModel);
-
-
-    }
-
+	}
+	
     /**
      * @return the log likelihood of the rate change from the parent to the child.
      */
@@ -60,13 +58,13 @@ public class EDLikelihood extends RateChangeLikelihood {
         return ExponentialDistribution.logPdf(childRate, 1.0 / parentRate);
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() { return ED_LIKELIHOOD; }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel tree = (TreeModel)xo.getChild(TreeModel.class);
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+		
+		public String getParserName() { return ED_LIKELIHOOD; }
+		
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+			
+			TreeModel tree = (TreeModel)xo.getChild(TreeModel.class);
 
             Parameter ratesParameter = (Parameter)xo.getSocketChild(RATES);
 
@@ -85,33 +83,31 @@ public class EDLikelihood extends RateChangeLikelihood {
             System.out.println("  parametric model = exponential distribution");
             System.out.println("  root rate model = " + rootModelString);
 
-            return new EDLikelihood(tree, ratesParameter, rootModel, true);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return
-                "This element returns an object that can calculate the likelihood " +
-                "of rate changes in a tree under the assumption of " +
-                "exponentially distributed rate changes among lineages. " +
-                "Specifically, each branch is assumed to draw a rate from an " +
-                "exponential distribution with mean of the rate in the " +
-                "parent branch.";
-        }
-
-        public Class getReturnType() { return EDLikelihood.class; }
-
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+			return new EDLikelihood(tree, ratesParameter, rootModel, true);
+		}
+		
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
+		
+		public String getParserDescription() {
+			return 
+				"This element returns an object that can calculate the likelihood " + 
+				"of rate changes in a tree under the assumption of " + 
+				"exponentially distributed rate changes among lineages. " + 
+				"Specifically, each branch is assumed to draw a rate from an " + 
+				"exponential distribution with mean of the rate in the " +
+				"parent branch.";
+		}
+		
+		public Class getReturnType() { return EDLikelihood.class; }
+		
+		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
             new ElementRule(TreeModel.class),
             AttributeRule.newStringRule(ROOT_MODEL, true, "specify the rate model to use at the root. Should be one of: 'meanOfChildren', 'meanOfAll', 'equalToChild', 'ignoreRoot' or 'none'."),
             new ElementRule(RATES, Parameter.class, "The branch rates parameter", false)
         };
-    };
-
-
+	};
 }

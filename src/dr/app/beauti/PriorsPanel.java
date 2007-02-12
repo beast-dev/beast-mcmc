@@ -237,28 +237,18 @@ public class PriorsPanel extends JPanel implements Exportable {
 	}
 
 	private PriorDialog priorDialog = null;
-	private DiscretePriorDialog discretePriorDialog = null;
 
 	private void priorButtonPressed(int row) {
+		if (priorDialog == null) {
+			priorDialog = new PriorDialog(frame);
+		}
+
 		BeautiOptions.Parameter param = (BeautiOptions.Parameter)parameters.get(row);
 
-		if (param.isDiscrete) {
-			if (discretePriorDialog == null) {
-				discretePriorDialog = new DiscretePriorDialog(frame);
-			}
-
-			if (discretePriorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
-				return;
-			}
-		} else {
-			if (priorDialog == null) {
-				priorDialog = new PriorDialog(frame);
-			}
-
-			if (priorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
-				return;
-			}
+		if (priorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
+			return;
 		}
+
 		param.priorEdited = true;
 
 		priorTableModel.fireTableDataChanged();
@@ -349,15 +339,11 @@ public class PriorsPanel extends JPanel implements Exportable {
 					buffer.append("Using Tree Prior");
 					break;
 				case BeautiOptions.UNIFORM_PRIOR:
-					if (!param.isDiscrete) {
-						buffer.append("Uniform [");
-						buffer.append(formatter.format(param.uniformLower));
-						buffer.append(", ");
-						buffer.append(formatter.format(param.uniformUpper));
-						buffer.append("]");
-					} else {
-						buffer.append("Uniform");
-					}
+					buffer.append("Uniform [");
+					buffer.append(formatter.format(param.uniformLower));
+					buffer.append(", ");
+					buffer.append(formatter.format(param.uniformUpper));
+					buffer.append("]");
 					break;
 				case BeautiOptions.EXPONENTIAL_PRIOR:
 					buffer.append("Exponential [");
@@ -388,13 +374,6 @@ public class PriorsPanel extends JPanel implements Exportable {
 				case BeautiOptions.JEFFREYS_PRIOR:
 					buffer.append("Jeffreys");
 					break;
-				case BeautiOptions.POISSON_PRIOR:
-					buffer.append("Poisson [");
-					buffer.append(formatter.format(param.poissonMean));
-					buffer.append("]");
-					break;
-				default:
-					throw new IllegalArgumentException("Unknown prior type");
 			}
 			if (param.priorType != BeautiOptions.NONE && !param.isStatistic) {
 				buffer.append(", initial=" + param.initial);

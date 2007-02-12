@@ -28,8 +28,6 @@ package dr.app.beauti;
 import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.datatype.*;
 import dr.evolution.util.*;
-import dr.gui.table.TableSorter;
-import dr.gui.table.DateCellEditor;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
@@ -189,11 +187,11 @@ public class DataPanel extends JPanel implements Exportable {
 	}
 
 	public final void timeScaleChanged() {
-		Units.Type units = Units.Type.YEARS;
+		int units = Units.YEARS;
 		switch (unitsCombo.getSelectedIndex()) {
-			case 0: units = Units.Type.YEARS; break;
-			case 1: units = Units.Type.MONTHS; break;
-			case 2: units = Units.Type.DAYS; break;
+			case 0: units = Units.YEARS; break;
+			case 1: units = Units.MONTHS; break;
+			case 2: units = Units.DAYS; break;
 		}
 
 		boolean backwards = directionCombo.getSelectedIndex() == 1;
@@ -215,7 +213,7 @@ public class DataPanel extends JPanel implements Exportable {
 		frame.dataChanged();
 	}
 
-	private Date createDate(double timeValue, Units.Type units, boolean backwards, double origin) {
+	private Date createDate(double timeValue, int units, boolean backwards, double origin) {
 		if (backwards) {
 			return Date.createTimeAgoFromOrigin(timeValue, units, origin);
 		} else {
@@ -260,7 +258,7 @@ public class DataPanel extends JPanel implements Exportable {
 			sequenceRenderer.setText(options.alignment.getSequence(0).getSequenceString());
 			int w = sequenceRenderer.getPreferredSize().width + 8;
 			dataTable.getColumnModel().getColumn(3).setPreferredWidth(w);
-        }
+		}
 
 		unitsCombo.setSelectedIndex(options.datesUnits);
 		directionCombo.setSelectedIndex(options.datesDirection);
@@ -333,7 +331,7 @@ public class DataPanel extends JPanel implements Exportable {
 
 			double d = 0.0;
 
-			Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
+			Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
 			options.originalAlignment.getTaxon(i).setAttribute("date", date);
 		}
 
@@ -432,20 +430,20 @@ public class DataPanel extends JPanel implements Exportable {
 			return;
 		}
 
-        options.guessDates = true;
+		options.guessDates = true;
 
 		String warningMessage = null;
 
-        for (int i = 0; i < options.originalAlignment.getTaxonCount(); i++) {
+		for (int i = 0; i < options.originalAlignment.getTaxonCount(); i++) {
 			java.util.Date origin = new java.util.Date(0);
 
 			double d = 0.0;
 
 			try {
 				if (orderRadio.isSelected()) {
-                    options.guessDateFromOrder = true;
+					options.guessDateFromOrder = true;
 					options.order = orderCombo.getSelectedIndex();
-                    options.fromLast = false;
+					options.fromLast = false;
 					if (options.order > 3) {
 						options.fromLast = true;
 						options.order = 8 - options.order - 1;
@@ -453,7 +451,7 @@ public class DataPanel extends JPanel implements Exportable {
 
 					d = options.guessDateFromOrder(options.originalAlignment.getTaxonId(i), options.order, options.fromLast);
 				} else {
-                    options.guessDateFromOrder = false;
+					options.guessDateFromOrder = false;
 					options.prefix = prefixText.getText();
 					d = options.guessDateFromPrefix(options.originalAlignment.getTaxonId(i), options.prefix);
 				}
@@ -462,10 +460,10 @@ public class DataPanel extends JPanel implements Exportable {
 				warningMessage = gfe.getMessage();
 			}
 
-            options.offset = 0.0;
-            options.unlessLessThan = 0.0;
-            if (offsetCheck.isSelected()) {
-                options.offset = offsetText.getValue().doubleValue();
+			options.offset = 0.0;
+			options.unlessLessThan = 0.0;
+			if (offsetCheck.isSelected()) {
+				options.offset = offsetText.getValue().doubleValue();
 				if (unlessCheck.isSelected()) {
 					options.unlessLessThan = unlessText.getValue().doubleValue();
 					options.offset2 = offset2Text.getValue().doubleValue();
@@ -479,7 +477,7 @@ public class DataPanel extends JPanel implements Exportable {
 				}
 			}
 
-			Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
+			Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
 			options.originalAlignment.getTaxon(i).setAttribute("date", date);
 		}
 

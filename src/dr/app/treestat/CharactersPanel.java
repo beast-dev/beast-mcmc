@@ -33,7 +33,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
-import dr.gui.table.TableSorter;
+import org.virion.jam.table.TableSorter;
 import org.virion.jam.table.TableRenderer;
 import org.virion.jam.framework.Exportable;
 

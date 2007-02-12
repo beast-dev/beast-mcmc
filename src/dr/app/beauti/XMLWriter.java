@@ -98,7 +98,7 @@ public class XMLWriter extends java.io.PrintWriter {
     public void writeTag(String tagname, Attribute[] attributes, String content, boolean close) {
         StringBuffer buffer = new StringBuffer("<");
         buffer.append(tagname);
-        for (int i = 0; i < attributes.length; i++) {
+        for (int i =0; i < attributes.length; i++) {
             buffer.append(' ');
             buffer.append(attributes[i].getAttributeName());
             buffer.append("=\"");
@@ -109,9 +109,9 @@ public class XMLWriter extends java.io.PrintWriter {
             buffer.append(">");
             buffer.append(content);
             if (close) {
-                buffer.append("</");
+                buffer.append("<");
                 buffer.append(tagname);
-                //buffer.append("/");
+                buffer.append("/");
             }
         } else if (close) {
             buffer.append("/");

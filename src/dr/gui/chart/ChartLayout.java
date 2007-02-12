@@ -33,7 +33,7 @@ import java.awt.*;
  *
  * @author 	Andrew Rambaut
  */
-
+ 
 public class ChartLayout implements LayoutManager2 {
     int hgap;
     int vgap;
@@ -42,7 +42,7 @@ public class ChartLayout implements LayoutManager2 {
     Component xLabel = null;
     Component yLabel = null;
 	Component chart = null;
-
+	
     /**
      * Constructs a new ChartLayout.
      */
@@ -92,6 +92,7 @@ public class ChartLayout implements LayoutManager2 {
 
     /**
      * Adds the specified named component to the layout.
+     * @param name the String name
      * @param comp the component to be added
      */
     public void addLayoutComponent(Component comp, Object constraints) {
@@ -103,7 +104,7 @@ public class ChartLayout implements LayoutManager2 {
 			}
 		}
 	}
-
+	
     /**
      * @deprecated  replaced by <code>addLayoutComponent(Component, Object)</code>.
      */
@@ -148,7 +149,7 @@ public class ChartLayout implements LayoutManager2 {
 
     /**
      * Returns the minimum dimensions needed to layout the components
-     * contained in the specified target container.
+     * contained in the specified target container. 
      * @param target the Container on which to do the layout
      * @see Container
      * @see #preferredLayoutSize
@@ -162,7 +163,7 @@ public class ChartLayout implements LayoutManager2 {
 			    dim.width = d.width;
 			    dim.height = d.height;
 			}
-
+			
 			if ((xLabel != null) && xLabel.isVisible()) {
 			    Dimension d = xLabel.getMinimumSize();
 			    dim.width = Math.max(d.width, dim.width);
@@ -174,7 +175,7 @@ public class ChartLayout implements LayoutManager2 {
 			    dim.width += d.width + hgap;
 			    dim.height = Math.max(d.height, dim.height);
 			}
-
+			
 			if ((title != null) && title.isVisible()) {
 			    Dimension d = title.getMinimumSize();
 			    dim.width = Math.max(d.width, dim.width);
@@ -188,7 +189,7 @@ public class ChartLayout implements LayoutManager2 {
 			return dim;
 		}
     }
-
+    
     /**
      * Returns the preferred dimensions for this layout given the components
      * in the specified target container.
@@ -205,7 +206,7 @@ public class ChartLayout implements LayoutManager2 {
 			    dim.width = d.width;
 			    dim.height = d.height;
 			}
-
+			
 			if ((xLabel != null) && xLabel.isVisible()) {
 			    Dimension d = xLabel.getPreferredSize();
 			    dim.width = Math.max(d.width, dim.width);
@@ -217,7 +218,7 @@ public class ChartLayout implements LayoutManager2 {
 			    dim.width += d.width + hgap;
 			    dim.height = Math.max(d.height, dim.height);
 			}
-
+			
 			if ((title != null) && title.isVisible()) {
 			    Dimension d = title.getPreferredSize();
 			    dim.width = Math.max(d.width, dim.width);
@@ -272,8 +273,8 @@ public class ChartLayout implements LayoutManager2 {
 
 	/**
      * Lays out the specified container. This method will actually reshape the
-     * components in the specified target container in order to satisfy the
-     * constraints of the CompassLayout object.
+     * components in the specified target container in order to satisfy the 
+     * constraints of the CompassLayout object. 
      * @param target the component being laid out
      * @see Container
      */
@@ -281,9 +282,9 @@ public class ChartLayout implements LayoutManager2 {
 		synchronized (target.getTreeLock()) {
 			Insets insets = target.getInsets();
 			Dimension d;
-
+			
 			d=target.getSize();
-
+			
 			int top = insets.top;
 			int bottom = d.height - insets.bottom;
 			int left = insets.left;
@@ -294,7 +295,7 @@ public class ChartLayout implements LayoutManager2 {
 			int bottom1=bottom;
 			int left1=left;
 			int right1=right;
-
+			
 			if ((xLabel != null) && xLabel.isVisible()) {
 			    d = xLabel.getPreferredSize();
 			    bottom1 -= d.height + vgap;
@@ -322,7 +323,7 @@ public class ChartLayout implements LayoutManager2 {
 			    chart.setBounds(left1, top1, right1 - left1, bottom1 - top1);
 		}
     }
-
+    
     /**
      * Returns the String representation of this CompassLayout's values.
      */

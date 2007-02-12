@@ -45,13 +45,13 @@ import java.util.ArrayList;
 public class SubtreeSlideOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
 	public static final String SUBTREE_SLIDE = "subtreeSlide";
-    public static final String SWAP_RATES = "swapInRandomRate";
-    public static final String SWAP_TRAITS = "swapInRandomTrait";
+    public static final String SWAP_RATES = "swapRates";
+    public static final String SWAP_TRAITS = "swapTraits";
 	private TreeModel tree = null;
     private double size = 1.0;
     private boolean gaussian = false;
-    private boolean swapInRandomRate;
-    private boolean swapInRandomTrait;
+    private boolean swapRates;
+    private boolean swapTraits;
 	private int mode = CoercableMCMCOperator.DEFAULT;
 
 	public SubtreeSlideOperator(TreeModel tree, int weight, double size, boolean gaussian, boolean swapRates, boolean swapTraits, int mode) {
@@ -60,8 +60,8 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
         this.size = size;
         this.gaussian = gaussian;
-        this.swapInRandomRate = swapRates;
-        this.swapInRandomTrait = swapTraits;
+        this.swapRates = swapRates;
+        this.swapTraits = swapTraits;
 
 		this.mode = mode;
 	}
@@ -111,25 +111,6 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                     tree.addChild(iP, newChild); tree.addChild(PiP, CiP);
                     tree.setRoot(iP);
                     //System.err.println("Creating new root!");
-
-                    if( tree.hasNodeTraits() ) {
-                        // **********************************************
-                        // swap traits and rates so that root keeps it trait and rate values
-                        // **********************************************
-
-                        double rootNodeTrait = tree.getNodeTrait(newChild);
-                        tree.setNodeTrait(newChild, tree.getNodeTrait(iP));
-                        tree.setNodeTrait(iP, rootNodeTrait);
-                    }
-
-                    if( tree.hasRates() ) {
-                        double rootNodeRate = tree.getNodeRate(newChild);
-                        tree.setNodeRate(newChild, tree.getNodeRate(iP));
-                        tree.setNodeRate(iP, rootNodeRate);
-                    }
-
-                    // **********************************************
-
                 }
                 // 3.1.2 no new root
                 else {
@@ -190,25 +171,6 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                     tree.removeChild(iP, CiP); tree.removeChild(newParent, newChild);
                     tree.addChild(iP, newChild); tree.addChild(newParent, iP);
                     tree.setRoot(CiP);
-
-                    if( tree.hasNodeTraits() ) {
-                        // **********************************************
-                        // swap traits and rates, so that root keeps it trait and rate values
-                        // **********************************************
-
-                        double rootNodeTrait = tree.getNodeTrait(iP);
-                        tree.setNodeTrait(iP, tree.getNodeTrait(CiP));
-                        tree.setNodeTrait(CiP, rootNodeTrait);
-                    }
-
-                    if( tree.hasRates() ) {
-                        double rootNodeRate = tree.getNodeRate(iP);
-                        tree.setNodeRate(iP, tree.getNodeRate(CiP));
-                        tree.setNodeRate(CiP, rootNodeRate);
-                    }
-
-                    // **********************************************
-
                     //System.err.println("DOWN: Creating new root!");
                 } else {
                     tree.removeChild(iP, CiP); tree.removeChild(PiP, iP);
@@ -233,7 +195,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
             }
         }
 
-        if (swapInRandomRate) {
+        if (swapRates) {
             NodeRef j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
             if (j != i) {
                 double tmp = tree.getNodeRate(i);
@@ -243,7 +205,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
         }
 
-        if (swapInRandomTrait) {
+        if (swapTraits) {
             NodeRef j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
             if (j != i) {
                 double tmp = tree.getNodeTrait(i);

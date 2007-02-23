@@ -14,6 +14,7 @@
         <pathelement location="bin"/>
         <pathelement location="lib/commons-math-1.1.jar"/>
         <pathelement location="lib/jdom.jar"/>
+        <pathelement location="lib/jebl-0.3.jar"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>
@@ -34,7 +35,8 @@
             <classpath refid="BEAST.classpath"/>
         </javac>
     </target>
-    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+    <target description="Build all projects which reference this project. Useful to propagate changes."
+            name="build-refprojects"/>
     <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
         <copy todir="${ant.library.dir}">
             <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>

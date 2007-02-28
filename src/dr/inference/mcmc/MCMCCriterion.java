@@ -37,10 +37,14 @@ import dr.inference.markovchain.Acceptor;
  */
 public class MCMCCriterion implements Acceptor {
 
-	protected double temperature = 1.0;
+    // this parameter is actually 1/T, when the temperature parameter is 0.0, then the distribution
+    // is flat and will always accept (symmetric) proposals, i.e. hastings ratio of 0 in log space.
+    // As this temperature parameter increases, the posterior gets more peaked.
+    protected double temperature = 1.0;
 
 	public MCMCCriterion() {
-		temperature = 1.0;
+
+        temperature = 1.0;
 	}
 
 	public MCMCCriterion(double t) {

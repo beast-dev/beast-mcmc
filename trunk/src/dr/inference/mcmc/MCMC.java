@@ -67,7 +67,9 @@ public class MCMC implements Runnable, Identifiable {
 		OperatorSchedule schedule,
 		Logger[] loggers) {
 
-		mc = new MarkovChain(prior, likelihood, schedule, new MCMCCriterion(), options.useCoercion());
+        MCMCCriterion criterion = new MCMCCriterion();
+
+        mc = new MarkovChain(prior, likelihood, schedule, criterion, options.useCoercion());
 
 		this.options = options;
 		this.loggers = loggers;

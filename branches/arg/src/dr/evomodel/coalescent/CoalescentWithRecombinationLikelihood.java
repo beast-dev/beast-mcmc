@@ -560,6 +560,7 @@ public class CoalescentWithRecombinationLikelihood extends AbstractModel impleme
      */
     public final void setUnits(int u) {
         coalescentDemoModel.setUnits(u);
+        recombinationDemoModel.setUnits(u);
     }
 
     /**

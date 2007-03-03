@@ -33,7 +33,8 @@ import dr.xml.*;
 
 /**
  * This class contains methods that describe a Beta-splitting branching model (Aldous 1996, 2001).
- *@author Alexei Drummond
+ * @author Alexei Drummond
+ * @author Marc Suchard
  */
 public class BetaSplittingModel extends BranchingModel {
 

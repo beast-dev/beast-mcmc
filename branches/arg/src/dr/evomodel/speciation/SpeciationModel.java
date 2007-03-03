@@ -31,6 +31,7 @@ import dr.evolution.util.Units;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.evomodel.tree.ARGModel;
 
 /**
  * This interface provides methods that describe a speciation model.
@@ -51,8 +52,11 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 	// functions that define a speciation model
 	//
 	public abstract double logNodeProbability(Tree tree, NodeRef node);
+    
 
-	// **************************************************************
+    public double logReassortmentProbability(ARGModel tree) { return 0.0; }
+
+    // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
 	

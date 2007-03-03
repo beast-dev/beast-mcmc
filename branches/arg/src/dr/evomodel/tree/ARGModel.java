@@ -789,7 +789,12 @@ public class ARGModel extends AbstractModel
 		return internalNodeCount;
 	}
 
-	public final int getReassortmentNodeCount() {
+
+
+    private int nullCounter = 0;
+    private int storedNullCounter;
+
+    public final int getReassortmentNodeCount() {
 		int cnt = 0;
 		for (Node node : nodes) {
 			if (!node.bifurcation)
@@ -798,7 +803,14 @@ public class ARGModel extends AbstractModel
 		return cnt;
 	}
 
-	/**
+//    public final int getReassortmentNodeCount() { return nullCounter; }
+
+    public void addNullCounter() { nullCounter++; }
+
+    public void removeNullCounter() { nullCounter--; }
+
+
+    /**
 	 * Returns the root node of this tree.
 	 */
 	public final NodeRef getRoot() {
@@ -1014,7 +1026,8 @@ public class ARGModel extends AbstractModel
 		removedParameters = null;
 		removedPartitioningParameter = null;
 		removedNodes = null;
-		//System.err.println("Stored: "+Tree.Utils.uniqueNewick(this, getRoot()));
+        storedNullCounter = nullCounter;
+        //System.err.println("Stored: "+Tree.Utils.uniqueNewick(this, getRoot()));
 		//System.err.println("Stored : "+this.toString());
 	}
 
@@ -1063,7 +1076,8 @@ public class ARGModel extends AbstractModel
 		}
 		//System.err.println("Restore: "+Tree.Utils.uniqueNewick(this, getRoot()));
 		//System.err.println("Restore: "+this.toString());
-	}
+        nullCounter = storedNullCounter;
+    }
 
 	/**
 	 * accept the stored state
@@ -1119,8 +1133,9 @@ public class ARGModel extends AbstractModel
 		nodes.add(newbie1);
 		nodes.add(newbie2);
 		internalNodeCount += 2;
-		sanityNodeCheck(internalNodeParameters);
-	}
+		//sanityNodeCheck(internalNodeParameters);
+        pushTreeSizeChangedEvent();
+    }
 
 	public void sanityNodeCheck(VariableSizeCompoundParameter inodes) {
 		int len = inodes.getNumParameters();
@@ -1163,7 +1178,8 @@ public class ARGModel extends AbstractModel
 		nodes.remove(oldie1);
 		nodes.remove(oldie2);
 		internalNodeCount -= 2;
-	}
+        pushTreeSizeChangedEvent();
+    }
 
 
 	/**

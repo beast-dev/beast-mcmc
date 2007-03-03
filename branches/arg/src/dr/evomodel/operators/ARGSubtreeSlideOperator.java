@@ -31,14 +31,18 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
 //	public static final String
     public static final String SWAP_RATES = "swapRates";
     public static final String SWAP_TRAITS = "swapTraits";
+    public static final String DIRICHLET_BRANCHES = "branchesAreScaledDirichlet";
+
     private ARGModel tree = null;
     private double size = 1.0;
     private boolean gaussian = false;
     private boolean swapRates;
     private boolean swapTraits;
+      private boolean scaledDirichletBranches;
     private int mode = CoercableMCMCOperator.DEFAULT;
 
-    public ARGSubtreeSlideOperator(ARGModel tree, int weight, double size, boolean gaussian, boolean swapRates, boolean swapTraits, int mode) {
+    public ARGSubtreeSlideOperator(ARGModel tree, int weight, double size, boolean gaussian, boolean swapRates,
+                                   boolean swapTraits, boolean scaledDirichletBranches, int mode) {
         this.tree = tree;
         setWeight(weight);
 
@@ -46,6 +50,7 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
         this.gaussian = gaussian;
         this.swapRates = swapRates;
         this.swapTraits = swapTraits;
+        this.scaledDirichletBranches = scaledDirichletBranches;
 
         this.mode = mode;
     }
@@ -85,6 +90,8 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
 //		System.err.println("Starting Subtree Slide Operation.");
         double logq = 0;
 
+        double oldTreeHeight = tree.getNodeHeight(tree.getRoot());
+
         NodeRef i, newParent, newChild;
 
         // 1. choose a random node avoiding root
@@ -92,6 +99,9 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
         int numPotentialSubtrees = this.getSlideableSubtrees(tree, potentialSubtrees);
         //      	System.err.println("Slide:\n"+tree.toGraphString());
         i = potentialSubtrees.get(MathUtils.nextInt(numPotentialSubtrees));
+
+ //       logq = - Math.log(numPotentialSubtrees);
+
         NodeRef iP = tree.getParent(i);
 
         // TODO Start rewriting here.
@@ -133,11 +143,24 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
 
                 //System.err.println("No problem climbing");
 
+//                logq += Math.log(numPotentialSubtrees);
 
                 tree.beginTreeEdit();
 
                 // 3.1.1 if creating a new root
                 if (tree.isRoot(newChild)) {
+
+                    if (true)   {
+                        try {
+                            tree.endTreeEdit();
+                        } catch (MutableTree.InvalidTreeException e) {
+                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        }
+                        throw new OperatorFailedException("Temporarily disable re-rooting");
+                    }
+
+
+
                     //Parameter rootParameter = ((Node)newChild).heightParameter;
                     //Parameter otherParameter = ((Node)iP).heightParameter;
                     //tree.swapHeightParameters(newChild,iP);
@@ -196,7 +219,7 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
                 int possibleSources = intersectingEdges(tree, newChild, iP, oldHeight, null);
                 //               System.err.println("possible sources = " + possibleSources);
 
-                logq = Math.log(1.0 / (double) possibleSources);
+                logq -= Math.log(possibleSources);
             } else {
                 // 3.2
                 // just change the node height
@@ -209,7 +232,7 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
         }
         // 4 if we are sliding the subtree down.
         else {
-            logq = 0;
+  //          logq = 0;
 
             // 4.0 is it a valid move?
             if (tree.getNodeHeight(i) > newHeight) {
@@ -247,6 +270,9 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
 //                }
 //                //NodeRef oops 
                 //newParent =
+
+//                logq += Math.log(possibleDestinations);
+                
                 tree.beginTreeEdit();
 
                 // 4.1.1 if iP was root
@@ -322,7 +348,10 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
                     throw new RuntimeException(ite.toString());
                 }
 
-                logq = Math.log((double) possibleDestinations);
+                //logq = -Math.log((double) possibleDestinations);
+                logq += Math.log((double)possibleDestinations);
+
+
             } else {
                 try {
                     tree.setNodeHeight(iP, newHeight);
@@ -371,6 +400,17 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
         if (logq == Double.NEGATIVE_INFINITY)
             throw new OperatorFailedException("invalid slide");
 //		System.err.println("Ending Subtree Slide Operation.");
+        //System.err.println("logq = "+logq);
+      //  logq = 0;
+
+
+
+        if (scaledDirichletBranches) {
+            if (oldTreeHeight != tree.getNodeHeight(tree.getRoot()))
+                throw new OperatorFailedException("Temporarily disabled."); // TODO calculate Hastings ratio
+        }
+
+
         return logq;
     }
 
@@ -526,6 +566,7 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
 
             boolean swapRates = false;
             boolean swapTraits = false;
+            boolean scaledDirichletBranches = false;
 
             int mode = CoercableMCMCOperator.DEFAULT;
             if (xo.hasAttribute(AUTO_OPTIMIZE)) {
@@ -543,11 +584,16 @@ public class ARGSubtreeSlideOperator extends SimpleMCMCOperator implements Coerc
                 swapTraits = xo.getBooleanAttribute(SWAP_TRAITS);
             }
 
+                   if (xo.hasAttribute(DIRICHLET_BRANCHES)) {
+                scaledDirichletBranches = xo.getBooleanAttribute(DIRICHLET_BRANCHES);
+            }
+
             ARGModel treeModel = (ARGModel) xo.getChild(ARGModel.class);
             int weight = xo.getIntegerAttribute("weight");
             double size = xo.getDoubleAttribute("size");
             boolean gaussian = xo.getBooleanAttribute("gaussian");
-            return new ARGSubtreeSlideOperator(treeModel, weight, size, gaussian, swapRates, swapTraits, mode);
+            return new ARGSubtreeSlideOperator(treeModel, weight, size, gaussian, swapRates,
+                    swapTraits, scaledDirichletBranches, mode);
         }
 
         public String getParserDescription() {

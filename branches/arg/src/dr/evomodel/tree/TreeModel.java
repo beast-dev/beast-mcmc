@@ -55,19 +55,19 @@ public class TreeModel extends AbstractModel
     // Public stuff
     //
 
-    public static final String TREE_MODEL = "treeModel";
+    public static final String TREE_MODEL   = "treeModel";
 
-    public static final String ROOT_HEIGHT = "rootHeight";
-    public static final String LEAF_HEIGHT = "leafHeight";
+    public static final String ROOT_HEIGHT  = "rootHeight";
+    public static final String LEAF_HEIGHT  = "leafHeight";
 
     public static final String NODE_HEIGHTS = "nodeHeights";
-    public static final String NODE_RATES = "nodeRates";
-    public static final String NODE_TRAITS = "nodeTraits";
+    public static final String NODE_RATES   = "nodeRates";
+    public static final String NODE_TRAITS  = "nodeTraits";
 
-    public static final String ROOT_NODE = "rootNode";
+    public static final String ROOT_NODE      = "rootNode";
     public static final String INTERNAL_NODES = "internalNodes";
-    public static final String LEAF_NODES = "leafNodes";
-    public static final String TAXON = "taxon";
+    public static final String LEAF_NODES     = "leafNodes";
+    public static final String TAXON          = "taxon";
 
     public TreeModel(Tree tree) {
 

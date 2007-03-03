@@ -270,7 +270,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
         //binom.setMax(lineageCount);
 
         double timeOfThisCoal = width + timeOfPrevCoal;
-        System.err.printf("s: %7.6f   f: %7.6f,  %d, %d\n", timeOfPrevCoal, timeOfThisCoal, lineageCount, type);
+//        System.err.printf("s: %7.6f   f: %7.6f,  %d, %d\n", timeOfPrevCoal, timeOfThisCoal, lineageCount, type);
         double intervalArea = demoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
         double like = 0;
         switch (type) {

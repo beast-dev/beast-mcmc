@@ -28,6 +28,7 @@ package dr.evomodel.speciation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.ARGModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -65,6 +66,13 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
         if (tree instanceof TreeModel) {
             addModel((TreeModel)tree);
         }
+
+
+        if (tree instanceof ARGModel) {
+            addModel((ARGModel)tree);
+            isARG = true;
+        }
+
         if (speciationModel != null) {
             addModel(speciationModel);
         }
@@ -146,6 +154,10 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
             logL += speciationModel.logNodeProbability( tree, tree.getInternalNode(j));
         }
 
+        if (isARG) {
+            logL += speciationModel.logReassortmentProbability((ARGModel)tree);
+        }
+
         return logL;
     }
 
@@ -204,8 +216,12 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
 
             cxo = (XMLObject)xo.getChild(TREE);
             TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
+            ARGModel argModel = (ARGModel)cxo.getChild(ARGModel.class);
 
-            return new SpeciationLikelihood(treeModel, specModel);
+            if (treeModel != null)
+                return new SpeciationLikelihood(treeModel, specModel);
+            else
+                return new SpeciationLikelihood(argModel, specModel);
         }
 
         //************************************************************************
@@ -224,9 +240,9 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
                 new ElementRule(MODEL, new XMLSyntaxRule[] {
                         new ElementRule(SpeciationModel.class)
                 }),
-                new ElementRule(TREE, new XMLSyntaxRule[] {
+               /* new ElementRule(TREE, new XMLSyntaxRule[] {
                         new ElementRule(TreeModel.class)
-                }),
+                }),*/   // todo change to an OR statement
         };
     };
 
@@ -246,4 +262,5 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
     private double storedLogLikelihood;
     private boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
+    private boolean isARG = false;
 }

@@ -38,16 +38,14 @@ public class ParallelCompoundLikelihood extends CompoundLikelihood {
 
 		double logLikelihood = 0;
 		if (doParallel) {
-			/*double logLikelihoodLocal = 0;
-			if (checkLocal)
-				logLikelihoodLocal = super.getLogLikelihood();*/
+
 			logLikelihood = getLogLikelihoodRemote();
 			if (checkLocal) {
-				//super.makeDirty();
 				super.makeDirty();
 				double logLikelihoodLocal = super.getLogLikelihood();
 				System.err.printf("Local: %5.4f  Remote: %5.4f\n", logLikelihoodLocal, logLikelihood);
 			}
+
 		} else
 			logLikelihood = super.getLogLikelihood();
 
@@ -67,8 +65,8 @@ public class ParallelCompoundLikelihood extends CompoundLikelihood {
 			if (!likelihood.getLikelihoodKnown()) {
 				//    if (true) {
 				final int processor = i + 1;
-				MPIServices.requestLikelihood(processor);
-				((AbstractModel) getLikelihood(i).getModel()).sendState(processor);
+//				MPIServices.requestLikelihood(processor);
+//				((AbstractModel) getLikelihood(i).getModel()).sendState(processor);
 				likelihoodsDistributed.add(likelihood);
 				processorList.add(processor);
 			} else {
@@ -76,26 +74,36 @@ public class ParallelCompoundLikelihood extends CompoundLikelihood {
 			}
 		}
 
-//	    System.err.print("Update size = "+likelihoodsDistributed.size()+" ");
+		final int size = likelihoodsDistributed.size();
 
-		// Implicit barrier
+		if (size == 1) { // only one, so do locally
 
-		/*for (int i=0; i<N; i++) {
-					double l = MPIServices.receiveDouble(i+1);
-					//if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
+			logLikelihood += likelihoodsDistributed.get(0).getLogLikelihood();
 
-					logLikelihood += l;
-				}*/
-		int index = 0;
-		for (ParallelLikelihood likelihood : likelihoodsDistributed) {
-			int processor = processorList.get(index++);
-			double l = MPIServices.receiveDouble(processor);
-			logLikelihood += l;
-			likelihood.setLikelihood(l);         // todo don't we need to set all of the submodels ????
+		} else if (size > 1) {
+
+			// Distribute calculations
+			int index = 0;
+			for (ParallelLikelihood likelihood : likelihoodsDistributed) {
+				int processor = processorList.get(index++);
+				MPIServices.requestLikelihood(processor);
+				((AbstractModel) likelihood.getModel()).sendState(processor);
+			}
+
+			// Implicit barrier
+
+			// Collect calculations
+			index = 0;
+			for (ParallelLikelihood likelihood : likelihoodsDistributed) {
+				int processor = processorList.get(index++);
+				double l = MPIServices.receiveDouble(processor);
+				logLikelihood += l;
+				likelihood.setLikelihood(l);         // todo don't we need to set all of the submodels ????
+			}
+
+			// todo Use Gather instead of blocking loop
+
 		}
-
-		// todo Use Reduce instead of blocking loop
-
 
 		return logLikelihood;
 	}

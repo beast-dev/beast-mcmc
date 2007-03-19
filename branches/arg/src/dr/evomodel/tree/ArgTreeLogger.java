@@ -69,7 +69,30 @@ public class ArgTreeLogger extends TreeLogger {
 
 	@Override
 	protected String additionalInfo() {
-		return " [&PARTITION=" + partition + "]";
+		return " [&PARTITION=" + partition + "]"
+				+ " [&YULE=" + getLogYuleProbabilityString() + "]"
+				;
+	}
+
+	private String getLogYuleProbabilityString() {
+		ARGTree tree = new ARGTree((ARGModel) getTree(), partition);
+//		BetaSplittingModel betaModel = new BetaSplittingModel(
+//				new Parameter.Default(1.0), tree);
+//		betaModel.setBeta(0.0);
+//		double otherLP = 0;
+		double logProbability = 0;
+		for (int i = 0, n = tree.getNodeCount(); i < n; i++) {
+//			System.err.println(n);
+			ARGModel.Node node = (ARGModel.Node) tree.getNode(i);
+			int count = node.getDescendentTipCount();
+//			System.err.println(count);
+			if (count > 2)
+				logProbability -= 2 * Math.log(count - 1);
+//			otherLP += betaModel.logNodeProbability(tree,node);
+		}
+//		System.err.println("me : "+logProbability);
+//		System.err.println("old: "+otherLP);
+		return String.format("%5.4f", logProbability);
 	}
 
 	@Override

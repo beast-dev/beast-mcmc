@@ -550,13 +550,63 @@ public class ARGModel extends AbstractModel
 		int numColumns = 3;
 		//numColumns += this.getMaxPartitionNumber();
 		//LogColumn[] logColumns = new LogColumn[numColumns + getMaxPartitionNumber()];
-		LogColumn[] logColumns = new LogColumn[2];
+		LogColumn[] logColumns = new LogColumn[4];
 		logColumns[0] = new IsReassortmentColumn("isReassortment");
 		logColumns[1] = new CountReassortmentColumn("numberReassortments");
+		logColumns[2] = new ExtremeNodeHeightColumn("maxNodeHeight") {
+			double getStartValue() {
+				return 0;
+			}
+
+			double compare(double currentValue, double newValue) {
+				if (newValue > currentValue)
+					return newValue;
+				return currentValue;
+			}
+		};
+		logColumns[3] = new ExtremeNodeHeightColumn("minNodeHeight") {
+			double getStartValue() {
+				return 1;
+			}
+
+			double compare(double currentValue, double newValue) {
+				if (newValue < currentValue)
+					return newValue;
+				return currentValue;
+			}
+		};
+
 //        logColumns[2] = new IsRootTooHighColumn("isRootTooHigh");
 //        for (int i = 0; i < getMaxPartitionNumber(); i++)
 //            logColumns[numColumns + i] = new ArgTreeHeightColumn("argTreeHeight", this, i);
 		return logColumns;
+	}
+
+	private abstract class ExtremeNodeHeightColumn extends NumberColumn {
+
+		public ExtremeNodeHeightColumn(String label) {
+			super(label);
+		}
+
+		abstract double compare(double currentValue, double newValue);
+		/* {
+			if (newValue > currentValue)
+				return newValue;
+			return currentValue;
+		}*/
+
+		abstract double getStartValue();
+
+		public double getDoubleValue() {
+			double criticalValue = getStartValue();
+			for (Node node : nodes) {
+				double nodeHeight = node.heightParameter.getParameterValue(0);
+				if (nodeHeight > 0 && !isRoot(node)) {
+					criticalValue = compare(criticalValue, nodeHeight);
+				}
+			}
+			return criticalValue;
+		}
 	}
 
 	private class ArgTreeHeightColumn extends NumberColumn {
@@ -790,11 +840,10 @@ public class ARGModel extends AbstractModel
 	}
 
 
+	private int nullCounter = 0;
+	private int storedNullCounter;
 
-    private int nullCounter = 0;
-    private int storedNullCounter;
-
-    public final int getReassortmentNodeCount() {
+	public final int getReassortmentNodeCount() {
 		int cnt = 0;
 		for (Node node : nodes) {
 			if (!node.bifurcation)
@@ -805,12 +854,16 @@ public class ARGModel extends AbstractModel
 
 //    public final int getReassortmentNodeCount() { return nullCounter; }
 
-    public void addNullCounter() { nullCounter++; }
+	public void addNullCounter() {
+		nullCounter++;
+	}
 
-    public void removeNullCounter() { nullCounter--; }
+	public void removeNullCounter() {
+		nullCounter--;
+	}
 
 
-    /**
+	/**
 	 * Returns the root node of this tree.
 	 */
 	public final NodeRef getRoot() {
@@ -1026,8 +1079,8 @@ public class ARGModel extends AbstractModel
 		removedParameters = null;
 		removedPartitioningParameter = null;
 		removedNodes = null;
-        storedNullCounter = nullCounter;
-        //System.err.println("Stored: "+Tree.Utils.uniqueNewick(this, getRoot()));
+		storedNullCounter = nullCounter;
+		//System.err.println("Stored: "+Tree.Utils.uniqueNewick(this, getRoot()));
 		//System.err.println("Stored : "+this.toString());
 	}
 
@@ -1076,8 +1129,8 @@ public class ARGModel extends AbstractModel
 		}
 		//System.err.println("Restore: "+Tree.Utils.uniqueNewick(this, getRoot()));
 		//System.err.println("Restore: "+this.toString());
-        nullCounter = storedNullCounter;
-    }
+		nullCounter = storedNullCounter;
+	}
 
 	/**
 	 * accept the stored state
@@ -1134,8 +1187,8 @@ public class ARGModel extends AbstractModel
 		nodes.add(newbie2);
 		internalNodeCount += 2;
 		//sanityNodeCheck(internalNodeParameters);
-        pushTreeSizeChangedEvent();
-    }
+		pushTreeSizeChangedEvent();
+	}
 
 	public void sanityNodeCheck(VariableSizeCompoundParameter inodes) {
 		int len = inodes.getNumParameters();
@@ -1178,8 +1231,8 @@ public class ARGModel extends AbstractModel
 		nodes.remove(oldie1);
 		nodes.remove(oldie2);
 		internalNodeCount -= 2;
-        pushTreeSizeChangedEvent();
-    }
+		pushTreeSizeChangedEvent();
+	}
 
 
 	/**
@@ -2698,6 +2751,12 @@ public class ARGModel extends AbstractModel
 
 		}
 
+
+		public int getDescendentTipCount() {
+			if (isExternal())
+				return 1;
+			return leftChild.getDescendentTipCount() + rightChild.getDescendentTipCount();
+		}
 
 		public boolean checkForNullRights() {
 			if (isExternal())

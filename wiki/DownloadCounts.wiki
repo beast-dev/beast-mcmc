@@ -1,4 +1,4 @@
-#summary of the total number of downloads by version and by platform.
+_summary of the total number of downloads by version and by platform_
 
 = Total Downloads =
 == By platform ==
@@ -12,7 +12,6 @@
 ||v1.2 || 799||
 ||v1.3 || 4166||
 ||v1.4 || 2037||
-
 
 
 

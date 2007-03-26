@@ -1,17 +1,27 @@
+The http://evolve.zoo.ox.ac.uk/beast/ web site has now been closed down and the location for downloads been shifted to this googlecode project. 
 _summary of the total number of downloads by version and by platform_
 
 = Total Downloads =
 == By platform ==
-|| Mac OS X || 2459 ||
-|| Windows || 3791 ||
-|| Linux/UNIX || 2116 ||
+|| Mac OS X || 3042 ||
+|| Windows || 3838 ||
+|| Linux/UNIX || 2135 ||
+|| Total || 9015 ||
 
-== By version ==
-||v1.0 || 1006||
-||v1.1 || 358||
-||v1.2 || 799||
-||v1.3 || 4166||
-||v1.4 || 2037||
+== By milestone versions ==
+|| v1.0.3 || 798 ||
+|| v1.2 || 802 ||
+|| v1.3 || 4169 ||
+|| v1.4 || 1328 ||
+
+= Last version: v1.4.1=
+Since 9th February 2007. Doesn't include downloads on this site since the switch over. 
+== By platform ==
+|| Mac OS X || 305 ||
+|| Windows || 346 ||
+|| Linux/UNIX || 163 ||
+|| Total || 814 ||
+
 
 
 

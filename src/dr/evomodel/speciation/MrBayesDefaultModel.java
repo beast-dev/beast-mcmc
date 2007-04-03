@@ -27,14 +27,15 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 import dr.evoxml.XMLUnits;
-import dr.inference.model.Parameter;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.xml.*;
 //import dr.evomodel.tree.ARGModel;
 
 
 /**
- * This class contains methods that describe a Yule speciation with Poisson HGT event model.
+ * This class contains methods that describe a uniform over unrooted trees with an iid branch length prior
  *
  * @author Marc Suchard
  */
@@ -42,34 +43,20 @@ import dr.xml.*;
 public class MrBayesDefaultModel extends SpeciationModel {
 
     public static final String MRBAYES_DEFAULT_MODEL = "mrbayesDefaultModel";
-    public static String BIRTH_RATE = "birthRate";
-    public static final String HGT_RATE = "hgtRate";
+    public static final String OUTGROUP = "artificialOutgroup";
+    public static final String BRANCH_MODEL = "branchLengthModel";
 
 
-    public MrBayesDefaultModel(Parameter birthRateParameter, Parameter hgtRateParameter, Type units) {
+    public MrBayesDefaultModel(Taxon outgroup, ParametricDistributionModel branchModel, Type units) {
 
         super(MRBAYES_DEFAULT_MODEL, units);
 
-        this.birthRateParameter = birthRateParameter;
-        this.hgtRateParameter = hgtRateParameter;
-        addParameter(birthRateParameter);
-        addParameter(hgtRateParameter);
-        birthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        hgtRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.branchModel = branchModel;
+        this.outgroup = outgroup;
 
-    }
+        addModel(branchModel);
 
-    public double getBirthRate() {
-        return birthRateParameter.getParameterValue(0);
-    }
 
-    public double getHgtRate() {
-        return hgtRateParameter.getParameterValue(0);
-    }
-
-    public void setBirthRate(double birthRate) {
-
-        birthRateParameter.setParameterValue(0, birthRate);
     }
 
     //
@@ -81,30 +68,29 @@ public class MrBayesDefaultModel extends SpeciationModel {
         return 0.0;
     }
 
-    public double logReassortmentProbability(Tree arg) {
-        return 0.0;
-    }
 
     //
     // functions that define a speciation model
     //
     public double logNodeProbability(Tree tree, NodeRef node) {
-        if (tree.getRoot() != node)
-            //  tree.set
-            return 0.0;
+        if (tree.getRoot() == node) {
+            // Make sure that outgroup really is an outgroup
+            if ((tree.getNodeTaxon(tree.getChild(node, 0)) == outgroup) ||
+                    (tree.getNodeTaxon(tree.getChild(node, 1)) == outgroup))
+                return 0;
+            else
+                return Double.NEGATIVE_INFINITY;
+        }
+        NodeRef parentNode = tree.getParent(node);
+        double branchLength = tree.getNodeHeight(parentNode) - tree.getNodeHeight(node);
+        if (tree.getNodeTaxon(node) == outgroup) {
+            NodeRef sisterNode = tree.getChild(parentNode, 0);
+            if (sisterNode == node)
+                sisterNode = tree.getChild(parentNode, 1);
+            branchLength += tree.getNodeHeight(parentNode) - tree.getNodeHeight(sisterNode);
+        }
 
-//        ARGModel arg = (ARGModel)tree;
-
-//        if (arg.isReassortment(node))
-//            return 0.0;
-
-//        double nodeHeight = tree.getNodeHeight(node);
-        double rootHeight = tree.getNodeHeight(node);
-
-        double lambda = getBirthRate();
-//        System.err.println(getBirthRate());
-        //return Math.log((lambda * Math.exp(-lambda * nodeHeight)) / (1 - Math.exp(-lambda * rootHeight)));
-        return -lambda * rootHeight;
+        return branchModel.logPdf(branchLength);
     }
 
     // **************************************************************
@@ -127,15 +113,15 @@ public class MrBayesDefaultModel extends SpeciationModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            //int units = XMLParser.Utils.getUnitsAttr(xo);
             Type units = XMLParser.Utils.getUnitsAttr(xo);
 
-            XMLObject cxo = (XMLObject) xo.getChild(BIRTH_RATE);
-            Parameter brParameter = (Parameter) cxo.getChild(Parameter.class);
-            cxo = (XMLObject) xo.getChild(HGT_RATE);
-            Parameter hgtParameter = (Parameter) cxo.getChild(Parameter.class);
+            XMLObject cxo = (XMLObject) xo.getChild(OUTGROUP);
+            Taxon outgroup = (Taxon) cxo.getChild(Taxon.class);
 
-            return new MrBayesDefaultModel(brParameter, hgtParameter, units);
+            cxo = (XMLObject) xo.getChild(BRANCH_MODEL);
+            ParametricDistributionModel branchModel = (ParametricDistributionModel) cxo.getChild(ParametricDistributionModel.class);
+
+            return new MrBayesDefaultModel(outgroup, branchModel, units);
         }
 
         //************************************************************************
@@ -143,11 +129,11 @@ public class MrBayesDefaultModel extends SpeciationModel {
         //************************************************************************
 
         public String getParserDescription() {
-            return "A speciation model of a Yule with Horizontal Gene Transfer process.";
+            return "A speciation model that puts uniform prior on all possible unrooted topologies.";
         }
 
         public Class getReturnType() {
-            return YuleModel.class;
+            return SpeciationModel.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -155,14 +141,16 @@ public class MrBayesDefaultModel extends SpeciationModel {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(BIRTH_RATE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class), new ElementRule(Parameter.class)}),
+                new ElementRule(OUTGROUP,
+                        new XMLSyntaxRule[]{new ElementRule(Taxon.class)}),
+                new ElementRule(BRANCH_MODEL,
+                        new XMLSyntaxRule[]{new ElementRule(ParametricDistributionModel.class)}),
                 XMLUnits.SYNTAX_RULES[0]
         };
     };
 
 
     //Protected stuff
-    private Parameter birthRateParameter;
-    private Parameter hgtRateParameter;
+    private Taxon outgroup;
+    private ParametricDistributionModel branchModel;
 }

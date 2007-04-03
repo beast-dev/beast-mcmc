@@ -25,6 +25,7 @@
 
 package dr.app.beast;
 
+import dr.evomodel.speciation.MrBayesDefaultModel;
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
@@ -92,6 +93,7 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(dr.evomodel.speciation.SpeciationLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.speciation.YuleModel.PARSER);
+        addXMLObjectParser(MrBayesDefaultModel.PARSER);
         addXMLObjectParser(dr.evomodel.speciation.BirthDeathModel.PARSER);
         addXMLObjectParser(dr.evomodel.speciation.BranchingLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.speciation.BetaSplittingModel.PARSER);

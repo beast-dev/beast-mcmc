@@ -68,6 +68,7 @@ public class MCMC implements Runnable, Identifiable {
 		Logger[] loggers) {
 
         MCMCCriterion criterion = new MCMCCriterion();
+        criterion.setTemperature(options.getTemperature());
 
         mc = new MarkovChain(prior, likelihood, schedule, criterion, options.useCoercion());
 
@@ -347,6 +348,10 @@ public class MCMC implements Runnable, Identifiable {
 				options.setPreBurnin(xo.getIntegerAttribute(PRE_BURNIN));
 			}
 
+            if (xo.hasAttribute(TEMPERATURE)) {
+                options.setTemperature(xo.getIntegerAttribute(TEMPERATURE));
+            }
+
 			for (int i = 0; i < xo.getChildCount(); i++) {
 				Object child = xo.getChild(i);
 				if (child instanceof Logger) {
@@ -392,6 +397,7 @@ public class MCMC implements Runnable, Identifiable {
 			AttributeRule.newIntegerRule(CHAIN_LENGTH),
 			AttributeRule.newBooleanRule(COERCION, true),
 			AttributeRule.newIntegerRule(PRE_BURNIN, true),
+            AttributeRule.newDoubleRule(TEMPERATURE, true),
 			new ElementRule(OperatorSchedule.class ),
 			new ElementRule(Likelihood.class ),
 			new ElementRule(Logger.class, 1, Integer.MAX_VALUE )
@@ -429,5 +435,6 @@ public class MCMC implements Runnable, Identifiable {
 	public static final String MCMC = "mcmc";
 	public static final String CHAIN_LENGTH = "chainLength";
 	public static final String WEIGHT = "weight";
+    public static final String TEMPERATURE = "temperature";
 }
 

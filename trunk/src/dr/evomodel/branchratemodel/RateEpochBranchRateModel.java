@@ -13,7 +13,7 @@ import java.util.logging.Logger;
  * constant rate.
  * @author Andrew Rambaut
  *
- * @version $Id: StrictClockBranchRates.java,v 1.3 2006/01/09 17:44:30 rambaut Exp $
+ * @version $Id$
  */
 public class RateEpochBranchRateModel extends AbstractModel implements BranchRateModel  {
 

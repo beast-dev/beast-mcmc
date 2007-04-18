@@ -80,7 +80,6 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 		// exchange a random delta
 		double d = MathUtils.nextDouble() * delta;
 		scalar1 -= d; 
-		scalar2 += d;
         if (parameterWeights[dim1] != parameterWeights[dim2]) {
             scalar2 += d * (double)parameterWeights[dim1] / (double)parameterWeights[dim2];
         } else {

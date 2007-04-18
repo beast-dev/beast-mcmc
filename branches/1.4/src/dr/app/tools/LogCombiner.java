@@ -364,7 +364,7 @@ public class LogCombiner {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("LogCombiner v1.4.1, 2006-2007", 60);
+        centreLine("LogCombiner v1.4.2, 2006-2007", 60);
         centreLine("MCMC Output Combiner", 60);
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
@@ -421,8 +421,8 @@ public class LogCombiner {
                 icon = new javax.swing.ImageIcon(url);
             }
 
-            String nameString = "LogCombiner v1.4.1";
-            final String versionString = "1.4.1";
+            String nameString = "LogCombiner v1.4.2";
+            final String versionString = "1.4.2";
             String aboutString = "<html><center><p>Version " + versionString + ", 2006</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
@@ -440,7 +440,7 @@ public class LogCombiner {
 
             LogCombinerDialog dialog = new LogCombinerDialog(new JFrame());
 
-            if (!dialog.showDialog("LogCombiner v1.4.1")) {
+            if (!dialog.showDialog("LogCombiner v1.4.2")) {
                 return;
             }
 

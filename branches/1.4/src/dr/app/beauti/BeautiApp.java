@@ -75,7 +75,7 @@ public class BeautiApp extends MultiDocApplication {
                 }
 
                 final String nameString = "BEAUti";
-                final String versionString = "1.4.1";
+                final String versionString = "1.4.2";
                 String aboutString = "<html><center><p>Bayesian Evolutionary Analysis Utility<br>" +
                         "Version " + versionString + ", 2003-2007</p>" +
                         "<p>by<br>" +

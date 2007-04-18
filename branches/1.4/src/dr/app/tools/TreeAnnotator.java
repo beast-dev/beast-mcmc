@@ -532,8 +532,8 @@ public class TreeAnnotator {
                 icon = new javax.swing.ImageIcon(url);
             }
 
-            String nameString = "TreeAnnotator v1.4.1";
-            final String versionString = "1.4.1";
+            String nameString = "TreeAnnotator v1.4.2";
+            final String versionString = "1.4.2";
             String aboutString = "<html><center><p>Version " + versionString + ", 2006-2007</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
@@ -551,7 +551,7 @@ public class TreeAnnotator {
 
             TreeAnnotatorDialog dialog = new TreeAnnotatorDialog(new JFrame());
 
-            if (!dialog.showDialog("TreeAnnotator v1.4")) {
+            if (!dialog.showDialog("TreeAnnotator v1.4.2")) {
                 return;
             }
 

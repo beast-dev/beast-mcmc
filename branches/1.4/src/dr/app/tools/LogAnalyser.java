@@ -95,7 +95,7 @@ public class LogAnalyser {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("LogAnalyser v1.4.1, 2002-2007", 60);
+        centreLine("LogAnalyser v1.4.2, 2002-2007", 60);
         centreLine("MCMC Output analysis", 60);
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
@@ -184,7 +184,7 @@ public class LogAnalyser {
 
 		if (inputFileName == null) {
 			// No input file name was given so throw up a dialog box...
-			inputFileName = Utils.getLoadFileName("LogAnalyser v1.4 - Select log file to analyse");
+			inputFileName = Utils.getLoadFileName("LogAnalyser v1.4.2 - Select log file to analyse");
 		}
 
 		new LogAnalyser(burnin, inputFileName, outputFileName, !shortReport);

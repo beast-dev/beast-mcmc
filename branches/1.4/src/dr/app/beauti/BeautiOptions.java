@@ -584,7 +584,7 @@ public class BeautiOptions {
 			}
 
 			if (partitionCount > 1) {
-				ops.add(getOperator("centeredMu"));
+				//ops.add(getOperator("centeredMu"));
 				ops.add(getOperator("deltaMu"));
 			}
 

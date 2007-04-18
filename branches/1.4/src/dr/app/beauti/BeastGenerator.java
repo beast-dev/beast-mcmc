@@ -1362,7 +1362,7 @@ public class BeastGenerator extends BeautiOptions {
 	private void writeDeltaOperator(Operator operator, XMLWriter writer) {
 		partitionCount = getPartionCount(codonHeteroPattern);
 
-		if (operator.name.equals("deltaMu") && partitionCount > 1 &&
+		if (operator.name.equals("Relative rates") && partitionCount > 1 &&
 				codonHeteroPattern.equals("112")) {
 			writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
 					new Attribute[] {

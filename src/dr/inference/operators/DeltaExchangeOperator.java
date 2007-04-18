@@ -31,7 +31,7 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 /**
- * A generic operator for use with a sum-constrained vector parameter.
+ * A generic operator for use with a sum-constrained (possibly weighted) vector parameter.
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -43,15 +43,17 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 	public static final String DELTA_EXCHANGE = "deltaExchange";
 	public static final String DELTA = "delta";
 	public static final String INTEGER_OPERATOR = "integer";
-	
-	public DeltaExchangeOperator(Parameter parameter, double delta, int weight, boolean isIntegerOperator, int mode) {
+    public static final String PARAMETER_WEIGHTS = "parameterWeights";
+
+	public DeltaExchangeOperator(Parameter parameter, int[] parameterWeights, double delta, int weight, boolean isIntegerOperator, int mode) {
 		this.parameter = parameter;
 		this.delta = delta;
 		this.weight = weight;
 		this.mode = mode;
 		this.isIntegerOperator = isIntegerOperator;
-		
-		if (isIntegerOperator && delta != Math.round(delta)) {
+		this.parameterWeights = parameterWeights;
+
+        if (isIntegerOperator && delta != Math.round(delta)) {
 			throw new IllegalArgumentException("Can't be an integer operator if delta is not integer");
 		}
 	}
@@ -79,6 +81,11 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 		double d = MathUtils.nextDouble() * delta;
 		scalar1 -= d; 
 		scalar2 += d;
+        if (parameterWeights[dim1] != parameterWeights[dim2]) {
+            scalar2 += d * (double)parameterWeights[dim1] / (double)parameterWeights[dim2];
+        } else {
+            scalar2 += d;
+        }
 		
 		if (isIntegerOperator) {
 			scalar1 = Math.round(scalar1);
@@ -166,8 +173,9 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 			if (xo.hasAttribute(INTEGER_OPERATOR)) {
 				isIntegerOperator = xo.getBooleanAttribute(INTEGER_OPERATOR);
 			}
-			
-			int weight = xo.getIntegerAttribute(WEIGHT);
+
+
+            int weight = xo.getIntegerAttribute(WEIGHT);
 			double delta = xo.getDoubleAttribute(DELTA);
 			
 			if (delta <= 0.0) {
@@ -175,8 +183,24 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 			}
 			
 			Parameter parameter = (Parameter)xo.getChild(Parameter.class);	
-			
-			return new DeltaExchangeOperator(parameter, delta, weight, isIntegerOperator, mode);
+
+
+            int[] parameterWeights = null;
+            if (xo.hasAttribute(INTEGER_OPERATOR)) {
+                parameterWeights = xo.getIntegerArrayAttribute(PARAMETER_WEIGHTS);
+            } else {
+                parameterWeights = new int[parameter.getDimension()];
+                for (int i = 0; i < parameterWeights.length; i++) {
+                    parameterWeights[i] = 1;
+                }
+            }
+
+            if (parameterWeights.length != parameter.getDimension()) {
+                throw new XMLParseException("parameter weights have the same length as parameter");
+            }
+
+
+            return new DeltaExchangeOperator(parameter, parameterWeights, delta, weight, isIntegerOperator, mode);
 		}
 		
 		//************************************************************************
@@ -193,6 +217,7 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 		
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 			AttributeRule.newDoubleRule(DELTA),
+            AttributeRule.newIntegerArrayRule(PARAMETER_WEIGHTS,true),
 			AttributeRule.newIntegerRule(WEIGHT),
 			AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
 			AttributeRule.newBooleanRule(INTEGER_OPERATOR, true),
@@ -203,7 +228,8 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 	// Private instance variables
 	
 	private Parameter parameter = null;
-	private double delta = 0.02;
+    private int[] parameterWeights;
+    private double delta = 0.02;
 	private int weight = 1;
 	private int mode = CoercableMCMCOperator.DEFAULT;
 	private boolean isIntegerOperator = false;

@@ -185,8 +185,14 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 
 
             int[] parameterWeights = null;
-            if (xo.hasAttribute(INTEGER_OPERATOR)) {
+            if (xo.hasAttribute(PARAMETER_WEIGHTS)) {
                 parameterWeights = xo.getIntegerArrayAttribute(PARAMETER_WEIGHTS);
+                System.out.print("Parameter weights for delta exchange are: ");
+                for (int i = 0; i < parameterWeights.length; i++) {
+                    System.out.print(parameterWeights[i] + "\t");
+                }
+                System.out.println();
+
             } else {
                 parameterWeights = new int[parameter.getDimension()];
                 for (int i = 0; i < parameterWeights.length; i++) {

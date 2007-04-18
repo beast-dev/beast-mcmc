@@ -183,7 +183,6 @@ public class BeautiOptions {
 		createOperator("upDownRateHeights", "Substitution rate and heights", "Scales substitution rates inversely to node heights of the tree", "clock.rate", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
 		createOperator("upDownUCEDMeanHeights", "UCED mean and heights", "Scales UCED mean inversely to node heights of the tree", "uced.mean", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
 		createOperator("upDownUCLDMeanHeights", "UCLD mean and heights", "Scales UCLD mean inversely to node heights of the tree", "ucld.mean", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
-		createOperator("centeredMu", "Relative rates", "Scales codon position rates relative to each other maintaining mean", "allMus", CENTERED_SCALE, 0.75, substWeights);
 		createOperator("deltaMu", "Relative rates", "Changes codon position rates relative to each other maintaining mean", "allMus", DELTA_EXCHANGE, 0.75, substWeights);
 
 		createOperator("treeModel.rootHeight", SCALE, 0.75, demoWeights);

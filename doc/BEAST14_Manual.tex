@@ -54,6 +54,12 @@ $^{2}$Institute of Evolutionary Biology\\
 
 \pagebreak
 
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\pagebreak
+
+
 \section{Introduction}
 
 BEAST is a cross-platform program for Bayesian MCMC analysis of molecular sequences. It is orientated towards rooted,
@@ -73,11 +79,11 @@ Please see the README text file that was distributed with the version you downlo
 similar irrespective of which computer system it is running on.
 
 \subsection{Importing the NEXUS input file}
-In the top left hand corner of the BEAUti window is the "File" menu.  From the ``File" menu select ``Import NEXUS". A
+In the top left hand corner of the BEAUti window is the ``File'' menu.  From the ``File'' menu select ``Import NEXUS''. A
 window will appear, allowing you to select your NEXUS input file.
 
 \subsection{Data panel}
-Once your NEXUS input file has been imported into BEAUti, the ``Data" window will appear with your sequence information
+Once your NEXUS input file has been imported into BEAUti, the ``Data'' window will appear with your sequence information
 displayed.
 
 \subsubsection{Name column}
@@ -86,22 +92,22 @@ This column contains a unique name for each DNA sequence.
 \subsubsection{Date column and time-stamped data}
 
 This section is only important for researchers interested in ancient DNA (aDNA) or time-stamped data sets (generally
-virus sequence data).  The “Date” refers to either the date or the age of the sequences.  The default date for all taxa
+virus sequence data).  The ``Date'' refers to either the date or the age of the sequences.  The default date for all taxa
 is assumed to be zero.  This will be correct if all your sequences were sampled at approximately the same time point.
-For aDNA “Date” will typically be in radiocarbon years, though for the purposes of analysis, “Date” in years will
+For aDNA ``Date'' will typically be in radiocarbon years, though for the purposes of analysis, ``Date'' in years will
 suffice.  For radiocarbon dates, only enter the absolute date value, not the associated error.  The dates entered need
-to be specified as “Years” and “Before the present” from the “Dates specified as” menu.  For viral data sets, dates will
+to be specified as ``Years'' and ``Before the present'' from the ``Dates specified as'' menu.  For viral data sets, dates will
 most commonly be calendar years (e.g., 1984, 1989, 2007, etc.) or perhaps months or even days since the start of the study
-and need to be specified as “Years”, "Months" or "Days" and “Since some time in the past”. Although BEAUTi allows you to
+and need to be specified as ``Years'', ``Months'' or ``Days'' and ``Since some time in the past''. Although BEAUTi allows you to
 specify the units for these dates, this is simply to make a record of the units for reference. Whatever units of time
 you use to specify the dates will then be used throughout the analysis. For example, if you give your dates in millions
 of years (e.g., 0.1 representing 100,000 years) then all the reported dates and rates will be given as My (e.g., a
 reported rate of 0.01 will have units of substitutions per My and thus be 1.0E-8 substitutions per year).
 
-The "Clear Dates" button resets all dates in the Date column to zero.
+The ``Clear Dates'' button resets all dates in the Date column to zero.
 
-Sometimes it is more convenient to use the “Guess Dates” option rather than enter the date values manually into the
-“Dates” column.  This option guesses the sequence dates from the numerical information contained within the taxon name.
+Sometimes it is more convenient to use the ``Guess Dates'' option rather than enter the date values manually into the
+``Dates'' column.  This option guesses the sequence dates from the numerical information contained within the taxon name.
 If the taxon name contains more than one numerical field then you can specify BEAUti to find the field that corresponds
 to the sampling date by specifying the order that the date field comes (first, last, etc.) or specifying a prefix (a
 character that comes immediately before the date field in each name).  You can also add a fixed value to each guessed
@@ -117,8 +123,8 @@ are a few of options:
 
 \begin{enumerate}
 
-\item Exclude non-dated aDNA sequences from the analysis.  Sequences can be highlighted in the “Data” window and then
-deleted by selecting “Delete” from the “Edit” menu.
+\item Exclude non-dated aDNA sequences from the analysis.  Sequences can be highlighted in the ``Data'' window and then
+deleted by selecting ``Delete'' from the ``Edit'' menu.
 
 \item  Have two to three carbon dated aDNA sequences from each sub fossil deposit, or find published dates for the sub
 fossil deposit.  Use these dates to calculate an average age for the deposit.
@@ -128,9 +134,9 @@ calculate an average age of the deposit/aDNA sequences.  For example:  In New Ze
 glaciation did not stabilize at present levels until 6,000 years ago.  Once stabilization occurred (and not before),
 coastal sand dunes formed, with swamps forming behind these dunes, trapping moa.  Thus the majority of coastal swamp
 deposits are less than 6,000 years old, with an average age of around 3,000 years.  Another example is: During the
-Holocene species “A” lived in the geographical area “A”.  However, from published data we know that during the height
-of the last glacial cycle of the Pleistocene ice age (approximately 20,000-10,000 years ago) species “A” also lived in
-the geographical area “B”.  Thus any undated sub fossil bones of species “A” from geographical area “B” have to have an
+Holocene species ``A'' lived in the geographical area ``A''.  However, from published data we know that during the height
+of the last glacial cycle of the Pleistocene ice age (approximately 20,000-10,000 years ago) species ``A'' also lived in
+the geographical area ``B''.  Thus any undated sub fossil bones of species ``A'' from geographical area ``B'' have to have an
 average age of 15,000 years.  Finally, glacial U-shaped valleys are an indication that the valley was under a glacier
 during the height of the last glacial cycle.  These environments did not open up for colonization by plants and animals
 until 10,000-14,000 years ago.  Thus any sub fossil remains found in these valleys have to be younger than 10,000-14,000
@@ -154,9 +160,9 @@ This column shows the DNA sequence alignment specified in the NEXUS input file.
 \subsubsection{Translation options}
 This is relevant if your analysis concerns protein coding genes and you want to perform an analysis based on amino acid
 sequences. If you are analysing non-coding sequence data such as mitochondrial DNA control region, then leave this
-option set to "None".  This combo box specifies the amino acid translation code for the DNA sequence data.  The options
-refer to what organism (e.g., "Vertebrate", "Yeast" or "Bacterial") and whether the sequence data is nuclear (for
-vertebrates select "Universal") versus mitochondrial (for vertebrates select "Vertebrate Mitochondrial").  Selecting
+option set to ``None''.  This combo box specifies the amino acid translation code for the DNA sequence data.  The options
+refer to what organism (e.g., ``Vertebrate'', ``Yeast'' or ``Bacterial'') and whether the sequence data is nuclear (for
+vertebrates select ``Universal'') versus mitochondrial (for vertebrates select ``Vertebrate Mitochondrial'').  Selecting
 these options will translate the DNA sequence into the amino acid sequence using the specified translation code. If your
 sequences are amino acid sequences, then this option will be disabled.
 
@@ -171,12 +177,12 @@ important to note that setting up a taxon subset does not guarantee that this gr
 to other taxa in the resulting MCMC analysis. Therefore the corresponding MRCA may in fact contain other descendants
 than just those specified in the taxon set.
 
-You can set up taxon subsets as follows.  In the bottom left hand corner of the screen are a “+” and “-“ button.
-Selecting the “+” button will import your named sequences into the “Excluded Taxa” column.  By selecting specific
-sequences, then clicking the right-hand facing arrow, these sequences will be imported into the “Included Taxa” column
-and vice versa.  The “untitled” taxon label in the “Taxon Sets” column must be labelled with a specific name to
-designate the new taxon subset. Taxon sets can be added by clicking the “+” button and removed by clicking the “-”
-button.  Taxa in the “Included Taxa” group will be used to date the $t_{MRCA}$, while taxa in the “Excluded Taxa” column
+You can set up taxon subsets as follows.  In the bottom left hand corner of the screen are a "+" and "-" button.
+Selecting the "+" button will import your named sequences into the ``Excluded Taxa'' column.  By selecting specific
+sequences, then clicking the right-hand facing arrow, these sequences will be imported into the ``Included Taxa'' column
+and vice versa.  The ``untitled'' taxon label in the ``Taxon Sets'' column must be labelled with a specific name to
+designate the new taxon subset. Taxon sets can be added by clicking the "+" button and removed by clicking the "-"
+button.  Taxa in the ``Included Taxa'' group will be used to date the $t_{MRCA}$, while taxa in the ``Excluded Taxa'' column
 may or may not be in the same clade.
 
 \subsection{Model panel}
@@ -199,28 +205,28 @@ CPREV, Dayhoff, JTT, MTREV and WAG (ref).
 
 \subsubsection{Site heterogeneity model}
 This allows the refinement of the HKY or GTR model to allow different sites in the alignment to evolve at different
-rates.  The “None”, “Gamma”, “Invariant Sites” and “Gamma + Invariant Sites” options in this menu help explain among
+rates.  The ``None'', ``Gamma'', ``Invariant Sites'' and ``Gamma + Invariant Sites'' options in this menu help explain among
 site rate heterogeneity within your data.
 
-Selecting "None" specifies a model in which all sites are assumed to evolve at the same rate.  For most data sets, this
+Selecting ``None'' specifies a model in which all sites are assumed to evolve at the same rate.  For most data sets, this
 will not be the case, however for some alignments there is very little variation and the equal rates across sites model
 can't be rejected.
 
-Selecting "Gamma" will permit substitution rate variation among sites within your data (i.e., the substitution rate is
-allowed to vary so that some sites evolve slowly and some quickly).  The shape parameter “alpha” of the Gamma
+Selecting ``Gamma'' will permit substitution rate variation among sites within your data (i.e., the substitution rate is
+allowed to vary so that some sites evolve slowly and some quickly).  The shape parameter ``alpha'' of the Gamma
 distribution specifies the range of the rate variation among sites.  Small alpha values ($<1$) result in L shaped
 distributions, indicating that your data has extreme rate variation such that most sites are invariable but a few sites
 have high substitution rates.  High alpha values result in a bell shaped curve, indicating that there is little rate
 variation from site to site in your sequence alignment. When alpha reaches infinity, all sites have the same
-substitution rate (i.e., equivalent to "None").  If the analysis concerns protein coding DNA sequences, the estimated
+substitution rate (i.e., equivalent to ``None'').  If the analysis concerns protein coding DNA sequences, the estimated
 gamma distribution will generally be L-shaped.  If the codons are however partitioned into 1st, 2nd and 3rd positions,
 1st and 2nd will generally have a lower alpha value than the 3rd.
 
-Selecting "Invariant Sites" specifies a model in which some sites in your data never undergo any evolutionary change
+Selecting ``Invariant Sites'' specifies a model in which some sites in your data never undergo any evolutionary change
 while the rest evolve at the same rate. The parameter introduced by this option is the proportion of invariant sites
 within your data. The starting value of this parameter must be less than 1.0, or BEAST will fail to run.
 
-Finally, selecting “Gamma and Invariant Sites” will combine the two simpler models of among-site rate heterogeneity so
+Finally, selecting ``Gamma and Invariant Sites'' will combine the two simpler models of among-site rate heterogeneity so
 that there will be a proportion of invariant sites and the rates of the remaining sites are assumed to be
 $\Gamma$-distributed.
 
@@ -230,7 +236,7 @@ distribution \cite{Y1994}
 
 \subsubsection{Partitioning into codon positions}
 BEAST provides the ability to analyse multiple data partitions simultaneously which share or have separate parameters
-for each partition. If the analysis concerns just non-coding DNA like mtDNA control region, select “Off” from the menu.
+for each partition. If the analysis concerns just non-coding DNA like mtDNA control region, select ``Off'' from the menu.
 Partitioning is useful when combining multiple genes (e.g., cyt b and COI), protein and non-coding sequence data (control
 region and cytochrome b), and nuclear and mitochondrial data, or to allocate different evolutionary processes to
 different regions of a sequence alignment like codon positions. By partitioning your data, this allows more information
@@ -259,21 +265,25 @@ protein-coding nucleotide data.
 \subsubsection{Fix mean substitution rate}
 This option is relevant when you have no fossil calibration data and want to calibrate the data set
 using a known substitution/mutation rate.  This will in effect calibrate the phylogeny with an external rate and will
-mean abandoning any errors associated with this rate.  Setting this to 1.0 will result in the ages of internal nodes
-being estimated in units of substitution/site, which is often appropriate when the objective of the analysis is
-phylogenetic reconstruction and the time frame of the phylogeny is not of interest.
+mean abandoning any errors associated with this rate. If you want to calibrate your phylogeny with a rate estimate that
+includes uncertainty then you should unselect this option and provide a prior distribution for the rate in the Priors
+panel (see section \ref{priorspanel}).
+
+Setting this to 1.0 will result in the ages of internal nodes being estimated in units of substitution/site, which is
+often appropriate when the objective of the analysis is phylogenetic reconstruction and the time frame of the phylogeny
+is not of interest.
 
 \subsubsection{Molecular clock rate variation model}
 This allows you to select the appropriate model for rate variation among branches in the tree.  The model you select
 will be used to estimate the substitution rate for each node of the tree, the $t_{MRCA}$ of taxon groups, and the
 \xml{treeModel.rootHeight} parameter (which represents the $t_{MRCA}$ for the root of the phylogeny).  There are
-currently three options in BEAUti:  "Strict Clock", "Relaxed Clock: Uncorrelated Exponential" and "Relaxed Clock:
-Uncorrelated Lognormal".  A strict clock assumes a global clock rate with no variation among lineages in a tree.
+currently three options in BEAUti:  ``Strict Clock'', ``Relaxed Clock: Uncorrelated Exponential'' and ``Relaxed Clock:
+Uncorrelated Lognormal''.  A strict clock assumes a global clock rate with no variation among lineages in a tree.
 However, biology is generally not that simple.  Often the data will best fit a relaxed molecular clock model. Relaxed
 molecular clock models (There are other models - one under development that will be included in later versions of BEAUti
 will be the Random Local Molecular Clock model) assume independent rates on different branches, with one or two
 parameters that define the distribution of rates across branches.  The relaxed molecular clock models in BEAST are
-called "uncorrelated" because there is no \textit{a priori} correlation between a lineage's rate and that of its
+called ``uncorrelated'' because there is no \textit{a priori} correlation between a lineage's rate and that of its
 ancestor \cite{DHPR2006}.
 
 The strict molecular clock is the basic model for rates among branches supported by BEAST. Under this model the tree is
@@ -281,7 +291,7 @@ calibrated by either:
 
 \begin{enumerate}
 \item	Specifying a substitution rate (this can be done either by fixing the mean substitution rate to a designated
-value or by using a prior on the \xml{clock.rate} parameter in the “Priors” panel) or
+value or by using a prior on the \xml{clock.rate} parameter in the ``Priors'' panel) or
 \item	Calibrating the dates of one or more internal nodes (by specifying a prior on the $t_{MCRA}$ of a taxon subset
 or the \xml{treeModel.rootHeight}).  This allows the divergence dates of clades (defined either as a monophyletic
 grouping or as the $t_{MRCA}$ of a specified taxon subset) to be calculated based on the best fit of a single mutation
@@ -302,6 +312,7 @@ can't produce an adequate sample of the posterior under a simple model, then it 
 complicated substitution and molecular clock models.
 
 \subsection{Priors panel}
+\label{priorspanel}
 The Priors panel allows the user to specify informative priors for all the parameters in the model. This is both an
 advantage and a burden.  It is an advantage because relevant knowledge such as fossil calibration points within a
 phylogeny can be incorporated into the analysis.  It is a burden because when no obvious prior distribution for a
@@ -322,8 +333,8 @@ the demographic history is not the primary object of interest and a flexible coa
 assumptions is desirable. This coalescent-based tree prior only requires you to specify how many discrete changes in the
  population history are allowed.  It will then estimate a demographic function that has the specified number of steps
  integrated over all possible times of the change-points and population sizes within each step to calculate a function
- of $N_e$ through time \cite{DRSP2005}.  Two variants of the BSP are provided, the "Stepwise" model in which the
- population is constant between change-points and then jumps instantaneously and the "Linear" model in which the
+ of $N_e$ through time \cite{DRSP2005}.  Two variants of the BSP are provided, the ``Stepwise'' model in which the
+ population is constant between change-points and then jumps instantaneously and the ``Linear'' model in which the
  population grows or declines linearly between change-points.
 
 All the demographic models listed above are parametric priors on the ages of nodes in the tree, in which the
@@ -349,7 +360,7 @@ evolution is known in substitutions per site per unit time, then the genealogy w
 units. Likewise, if the age of one or more nodes (internal or external) are known then this will also provide the units
 for the rest of the branch lengths and the rate of evolution. Note that only the set of parameters that are currently
 being used (as defined by the model settings) will be shown in the table. For example, if the rate of substitution is
-fixed (in the "Model" section) then the \xml{clock.rate} parameter (or the  \xml{ucld.mean} if the relaxed clock
+fixed (in the ``Model'' section) then the \xml{clock.rate} parameter (or the  \xml{ucld.mean} if the relaxed clock
 is selected) will not be available. With this in mind, the following table lists some of the parameters that can be
 generated by BEAUti, their interpretation and units.
 
@@ -372,8 +383,8 @@ estimate of $N_e\mu$ for haploid data such as mitochondrial sequences and $2N_e\
 substitution rate per site per generation.
 
 \item [\texttt{\small{covariance}}] If this value is significantly positive, then it means that within your phylogeny,
-branches with fast rates are followed by branches with fast rates. This statistic measure the covariance between parent
-and child branch rates in you tree in a relaxed molecular clock analysis. If this value spans zero, then branches with
+branches with fast rates are followed by branches with fast rates. This statistic measures the covariance between parent
+and child branch rates in your tree in a relaxed molecular clock analysis. If this value spans zero, then branches with
 fast rates and slow rates are next to each other.  It also means that there is no strong evidence of autocorrelation
 of rates in the phylogeny.
 
@@ -402,7 +413,7 @@ distribution of rate heterogeneity among sites \cite{Y1994}. This parameter only
 or Gamma+Invariant Sites in the site heterogeneity model.
 
 \item [\texttt{\small{siteModel.pInv}}]	 This parameter is the proportion of  invariant sites ($p_{inv}$) and has a
-range between 0 and 1. This parameter only appears when you have selected "Invariant sites" or "Gamma+Invariant Sites" in
+range between 0 and 1. This parameter only appears when you have selected ``Invariant sites'' or ``Gamma+Invariant Sites'' in
 the site heterogeneity model. The starting value must be less than 1.0.
 
 \item [\texttt{\small{treeModel.rootHeight}}]	 This parameter represents the total height of the tree (often known as
@@ -425,14 +436,14 @@ per site. If the tree is instead measured in, for example, years, then this para
 born from a single parent lineage per year.
 
 \item [\texttt{\small{tmrca({\it taxon group})}}]	This is the parameter for the $t_{MRCA}$ of the specified taxon
-subset that you specified in the "Taxa" panel. The units of this variable are the same as the units for the branch
+subset that you specified in the ``Taxa'' panel. The units of this variable are the same as the units for the branch
 lengths in the tree and will depend on the calibration information for the rate and/or dates of calibrated nodes.  There
 will a \xml{tmrca({\it taxon group})} parameter for each taxon subset specified. Setting priors on these parameters
 and/or \xml{treeModel.rootHeight} parameter will act as calibration information.
 \end{lyxlist}
 
 \subsubsection{Priors}
-Under the "priors" column is listed the type of prior that is being utilized for each parameter in the model. Choosing
+Under the ``priors'' column is listed the type of prior that is being utilized for each parameter in the model. Choosing
 the appropriate prior is important. For example, if your sequences are all collected from a single time point, then the
 overall evolutionary rate must be specified with a strong prior. The units of the prior will then determine the units of
 the node heights in the tree, the age of the MRCA and the units of the demographic parameters such as population size
@@ -489,7 +500,8 @@ accepted by the MCMC algorithm.
 \subsubsection{Weighting}
 The weight column specifies how often each operator is used to propose a new state in the MCMC chain.  Some parameters
 have very little interaction with the rest of the model and as a result tend to be estimated very efficiently. An
-example of such a parameter is \xml{hky.kappa} which though efficiently estimated, requires a complete recalculation of the likelihood of the data whenever it is changed. Giving these parameters lower weights can improve the computational
+example of such a parameter is \xml{hky.kappa} which though efficiently estimated, requires a complete recalculation of
+the likelihood of the data whenever it is changed. Giving these parameters lower weights can improve the computational
 efficiency of the run.
 
 The efficiency of the MCMC chain can often be improved by altering the weight of the operators that work on the
@@ -502,7 +514,8 @@ to perform a more systematic study of the performance of different combinations 
 provide more guidance in this area in the future. Any assistance in this endeavor would be greatly appreciated.
 
 \subsubsection{Auto-optimize}
-The "auto optimize" option will automatically adjust the tuning parameters of operators as the MCMC algorithm runs, to try to achieve maximum efficiency.  We recommend that you choose this option. The criterion that our auto-optimization
+The ``auto optimize'' option will automatically adjust the tuning parameters of operators as the MCMC algorithm runs, to
+try to achieve maximum efficiency.  We recommend that you choose this option. The criterion that our auto-optimization
 method uses is a target acceptance probability for each operator. The target acceptance probability is 0.25 for most
 operators. The idea is that proposals for new parameter values should be bold enough that they explore the parameter
 space rapidly, without being so large that the proposals are never accepted. By tuning an operator so that it is
@@ -520,12 +533,15 @@ faster convergence and better mixing of the MCMC chain, which means that the MCM
 achieve the same Effective Sample Size (ESS).
 
 \subsection{MCMC options}
-The MCMC panel allows you to set the number of generations the MCMC algorithm will run for, how often the data is logged to file and to name the output files that BEAST will store the data in.
+The MCMC panel allows you to set the number of generations the MCMC algorithm will run for, how often the data is logged
+to file and to name the output files that BEAST will store the data in.
 
 \subsubsection{Length of chain}
 This is the number of generations that the MCMC algorithm will run for.  The length of chain depends on the size of the
 data set, the complexity of the model and the quality of the sample required.  The aim of setting the chain length is to
-achieve a reasonable ESS, especially for the parameters of interest. A very very rough rule of thumb is that for $x$ taxa/individuals you need a generation time/chain length proportional to $x^{2}$. Thus if, for 100 sequences, a 30,000,000 step chain gives good results then for 200 similar sequences we may need a chain of 120,000,000 steps.
+achieve a reasonable ESS, especially for the parameters of interest. A very very rough rule of thumb is that for $x$
+taxa/individuals you need a generation time/chain length proportional to $x^{2}$. Thus if, for 100 sequences, a
+30,000,000 step chain gives good results then for 200 similar sequences we may need a chain of 120,000,000 steps.
 
 \subsubsection{Logging options}
 The "{\it Echo state to screen}" option determines how often a summary of the state is outputted to the BEAST console
@@ -546,11 +562,11 @@ these files will be saved in the current working directory).
 
 \subsubsection{Generating the BEAST input file}
 Finally, once you are satisfied that you have specified everything you want in the BEAST XML file, click on the
-"Generate BEAST File" button in the bottom right hand corner of the BEAUti window. This will generate an XML file that
+``Generate BEAST File'' button in the bottom right hand corner of the BEAUti window. This will generate an XML file that
 can be saved in a specific folder.  This is the file that will be used by BEAST to execute the MCMC analysis.
 
 %AER This is not how it works any more - you can save and load 'templates' which you can apply to data - you can even do this non-interactively using the command line. I will update this text shortly:
-You can save a separate BEAUti file by selecting the "Save" option from the "File" menu. It will also be an XML file but will not be recognized by BEAST, and is only used so that you can re-load it in BEAUti and quickly make modifications to your analysis at a later date.  It is recommended that you save the BEAUti files with the extension “.beauti” to distinguish them from the BEAST input files.
+You can save a separate BEAUti file by selecting the ``Save'' option from the ``File'' menu. It will also be an XML file but will not be recognized by BEAST, and is only used so that you can re-load it in BEAUti and quickly make modifications to your analysis at a later date.  It is recommended that you save the BEAUti files with the extension ".beauti'' to distinguish them from the BEAST input files.
 
 \section{BEAST}
 
@@ -642,8 +658,14 @@ parameter using the \xml{value} attribute, BEAST will assume the starting value 
 for example, in the case of the \xml{clock.rate} parameter, an initial value of zero will result in a likelihood of
 zero for alignments with variable sites.
 
-If this error is occurring because a random tree has a likelihood value that is too close to zero then another
+If this error is occurring because the random initial tree has a likelihood value that is too close to zero then another
 alternative is to start with a UPGMA tree.  This can be specified in BEAUti or by manually editing the XML file.
+
+A common cause of this error is if you have specified multiple calibration bounds in the analysis or a set of monophyly
+constraints. Often the random (and even UPGMA) starting trees will not conform to these calibration bounds or monophyly
+constraints and this will cause the tree likelihood to be zero. In this situation you must specify a valid starting tree
+in Newick format that conforms to any monophyly or node height constraints that you have specified (see section
+\ref{startingtree}).
 
 %AER Is this a bug? Is it logged as an issue?
 Finally, sometimes BEAST does not proceed through the pre-burn-in period (i.e., for whatever reason BEAST freezes in the
@@ -654,7 +676,7 @@ At the end of the run report of performance of the operators will be outputted t
 will display the operators, their acceptance probabilities, the final values of the associated tuning values, and a
 textual message indicating whether they were successfully tuned to the right level for the given data set (low, good,
 slightly high, too high, etc.).  The operator tuning parameters can be changed either directly in the XML file or in the
-"Operator" panel in BEAUti.  This level of tuning is optional, as it will not alter the results that you will get.
+``Operator'' panel in BEAUti.  This level of tuning is optional, as it will not alter the results that you will get.
 However it will increase the ESSs in future runs.
 
 The main output from BEAST is a simple tab-delimited plain text file format (log file) with a row for each sample (the
@@ -767,7 +789,7 @@ Multiple sets of taxa can be defined by successive taxa elements.  Say we have a
 taxa but want to group them together, so that BEAST creates a $t_{MRCA}$ statistic for this group.  This is done in
 the following manner. Remember that since you have already defined these taxon elements previously, you only need to use
 the \xml{idref} attribute. Grouping taxa into a taxa element does not constrain the taxa to be monophyletic in the BEAST
-analysis.  Defining these taxon subsets can also be done in the "Taxa" panel within BEAUti.
+analysis.  Defining these taxon subsets can also be done in the ``Taxa'' panel within BEAUti.
 
 \begin{verbatim}
 <taxa id="Pan">
@@ -782,7 +804,7 @@ define the alignment block with a unique id and also specify the data type (\xml
 \xml{dataType} attribute. Each sequence element should reference a previously defined taxon element as well as the
 aligned sequence (with ‘-‘ designating gaps). You can directly enter the individual nucleotide sequences from an
 existing alignment by using the copy/paste function. Alternatively this element will be generated from information in
-the "Data" panel of BEAUti.
+the ``Data'' panel of BEAUti.
 
 \begin{verbatim}
 <alignment id="alignment" dataType="nucleotide">
@@ -812,7 +834,7 @@ the "Data" panel of BEAUti.
 Each alignment block must also have a patterns block.  Once again this has a unique id.  It also specifies what region
 of the alignment the patterns should be calculated from with the from and to attributes.  The patterns element contains
 a reference to the corresponding alignment element, indicating that the patterns we are referring to will be calculated
-from the specified alignment. Again BEAUti will generate this element automatically from information in the "Data"
+from the specified alignment. Again BEAUti will generate this element automatically from information in the ``Data''
 panel.
 
 \begin{verbatim}
@@ -828,7 +850,7 @@ expansion growth.  The coalescent tree prior will be used to estimate the size o
 alignment, assuming that the sequences have been randomly sampled from a single panmictic population. In the example
 below we define a constant population size demographic model, which contains a \xml{populationSize} element, which in
 turn contains a parameter element.  It is important to ensure a reasonable starting value for the parameter and
-appropriate upper and lower bounds. The demographic model element will be generated based on options in the "Model"
+appropriate upper and lower bounds. The demographic model element will be generated based on options in the ``Model''
 panel within BEAUti.
 
 \begin{verbatim}
@@ -840,12 +862,13 @@ panel within BEAUti.
 \end{verbatim}
 
 \subsubsection{Starting tree block/element}
+\label{startingtree}
 This block/element specifies the starting tree to be used in the MCMC run.  Starting with a random starting tree can
 sometimes lead to difficulties because the randomly generated tree may not satisfy all of the constraints that have been
 placed on it in the form of priors on tree topology and divergence times.  If there are no hard priors (i.e., uniform
 priors on divergence times or monophyly constraints), then a random starting tree can be generated using the coalescent
 tree prior.  The coalescent starting tree block has a unique id.  It uses the taxa and demographic model element that
-you have specified to construct a random starting tree.  This element will be generated based on options in the  "Model"
+you have specified to construct a random starting tree.  This element will be generated based on options in the  ``Model''
 panel in BEAUti.
 
 \begin{verbatim}
@@ -856,12 +879,12 @@ panel in BEAUti.
 \end{verbatim}
 
 A second option for the starting tree is to start with a UPGMA tree.  Again this can be achieved by selecting the
-appropriate option in the "Model" panel in BEAUti. In the XML you can also specify the root height of the tree (and thus
+appropriate option in the ``Model'' panel in BEAUti. In the XML you can also specify the root height of the tree (and thus
 scale the whole UPGMA tree to a certain time scale).  The units of the rate and/or date priors will determine the units
 of this root height.  By default, the UPGMA tree is constructed using a Jukes-Cantor (ref) distance matrix constructed
 from the sequence alignment (specified by the patterns element).  If you are making this change manually in the XML file
 then you will also have to change the tree model element to make sure that it references the correct starting tree.
-This is done by deleting the \xml{<coalescentTree idref="startingTree\_Medi"/>} command from the tree model block and
+This is done by deleting the \xml{<coalescentTree idref=``startingTree\_Medi''/>} command from the tree model block and
 replacing it with \xml{<upgmaTree idref="startingTree"/>}
 
 \begin{verbatim}
@@ -939,7 +962,7 @@ rate/date priors). BEAUti generates this block automatically.
 \subsubsection{Bayesian Skyline Plot element/block}
 This element/block is used when an analysis involves the Bayesian Skyline Plot tree prior. An upper limit on the
 population size can be specified by adding the \xml{upper} attribute to the \xml{skyline.popSize} parameter below.
-This can also be done from the "Priors" panel in BEAUti.  The following example is taken from the Hepatitis B viral
+This can also be done from the ``Priors'' panel in BEAUti.  The following example is taken from the Hepatitis B viral
 data set attached to this manual.
 
 \footnotesize{}
@@ -976,7 +999,7 @@ data.
 \end{verbatim}
 
 You can also create a uniform, normal or lognormal prior with appropriate parameters on a $t_{MRCA}$ statistic and
-thereby use it as a calibration point. This can be achieved in the "Priors" panel in BEAUti.
+thereby use it as a calibration point. This can be achieved in the ``Priors'' panel in BEAUti.
 
 \subsubsection{Monophyly statistic block/element}
 This element represents a Boolean statistic that indicates whether a predefined taxon subset is monophyletic in the
@@ -1102,7 +1125,7 @@ $2\times7-2=12$ dimensions.
 \subsubsection{Substitution model element}
 This element defines the substitution model for your data set. A frequencies element defines the base pair frequencies
 with reference to the data type and the alignment. This element is automatically generated based on choices made in the
-"Model" panel of BEAUti. Choosing the HKY substitution will generate XML that looks like this:
+``Model'' panel of BEAUti. Choosing the HKY substitution will generate XML that looks like this:
 
 \begin{verbatim}
 <hkyModel id="hky">
@@ -1155,7 +1178,7 @@ This element defines the among-site rate heterogeneity model for your data (i.e.
 among sites, gamma-distributed rate heterogeneity, a proportion of invariant sites, or both gamma-distributed rate
 heterogeneity and invariant sites).  This element combines the basic substitution model with the parameters associated
 with among-site rate heterogenetiy. A siteModel XML element will be generated similar to the following based on choices
-in the "Model" panel in BEAUti:
+in the ``Model'' panel in BEAUti:
 
 \small{}
 \begin{verbatim}
@@ -1197,7 +1220,7 @@ all other data partitioning must be done by manually editing the XML file.
 First of all for multi-locus data you need each locus to have a separate alignment block.  Second, you need to duplicate
 the patterns element, so that each partition has a patterns element. For partitioning between codon positions the
 \xml{from} attribute in a patterns element represents the codon position (1, 2 or 3) and the \xml{every} attribute
-should be set to “3”. Below is an example of a multi locus data set (2 genes/alignments, each split into 3 codon
+should be set to "3". Below is an example of a multi locus data set (2 genes/alignments, each split into 3 codon
 positions for a total of 6 partitions):
 
 \begin{verbatim}
@@ -1418,12 +1441,12 @@ differ depending on the type of computer Tracer is being used on.  Once it is ru
 irrespective of which operating system it is running on.
 
 \subsection{Importing log files into Tracer}
-Once Tracer has been opened you will see in the top left hand corner the "Trace Files" panel.  Below that will be a "+"
+Once Tracer has been opened you will see in the top left hand corner the ``Trace Files'' panel.  Below that will be a "+"
 and "-" button.  To load your log output files press on the + button.  A file dialog will appear allowing to choose a
-log file to load.  Multiple log files can be loaded into Tracer this way and will be displayed in the "Trace Files"
+log file to load.  Multiple log files can be loaded into Tracer this way and will be displayed in the ``Trace Files''
 panel.  By selecting multiple log files, you can click the combine button to combine these log files for further
 analysis. Combining log files is only appropriate if they represent independent replicates of the same BEAST analysis.
-The "Trace Files" panel will also display the number of generations that the MCMC algorithm ran for and the burn-in
+The ``Trace Files'' panel will also display the number of generations that the MCMC algorithm ran for and the burn-in
 period (set by default to 10\% of the MCMC chain length when a log file is loaded into Tracer).  You can double click on
 the burn-in value to change them if visual inspection of the trace suggests that 10\% is not appropriate.
 
@@ -1464,7 +1487,7 @@ distribution that the trace is equivalent to. It is calculated by dividing the c
 the ACT.
 \end{lyxlist}
 
-You can select a trace and look at the raw trace in the "Trace" panel.  This is the most important step in Tracer
+You can select a trace and look at the raw trace in the ``Trace'' panel.  This is the most important step in Tracer
 analysis.  If the Trace for each parameter has not converged on a stationary distribution (i.e., it looks like a straight
 hairy caterpillar with no obvious upward or downward trends or sudden jumps) then the MCMC run needs to be run for
 longer. Once the MCMC chain has been run for long enough the frequency histogram will generally be a smooth unimodal
@@ -1492,7 +1515,7 @@ compare results to check that the chains are converging and mixing adequately, t
 distribution and results could be combined (once a suitable burn-in is removed from each run).  The continuous parameters
 can be analysed and combined using Tracer. Tree files have to be combined manually using a text editor.
 
-\item Optimize the performance of the operators by using the auto-optimize option in the Operator tab in BEAUti
+\item Optimize the performance of the operators by using the auto-optimize option in the Operator panel in BEAUti.
 
 \item Increase the sample frequency (if you have less than 1000 samples in total).  This may help because the ESS is
 measuring the correlation between sampled states in the chain.  If the sample frequency is very low each sample will be
@@ -1504,66 +1527,79 @@ total number of samples is between 1,000 and 10,000 is recommended.
 
 \section{LogCombiner}
 
-LogCombiner allows you to combine log and tree files from multiple independent runs of BEAST. When this program is opened the LogCombiner user interface and a JAVA LogCombiner window will appear.
+LogCombiner allows you to combine log and tree files from multiple independent runs of BEAST. When this program is
+opened the LogCombiner user interface and a JAVA LogCombiner window will appear.
 
 \subsection{File Type}
 This combo menu allows you to select either the log or tree file type that you will be importing into LogCombiner.
-\subsection{Convert numbers from scientific to decimal notation}
-Explain.
+%\subsection{Convert numbers from scientific to decimal notation}
+%Explain.
 \subsection{Resample states at lower frequency}
-This option allows you to resample your posterior distribution at a lower frequency than in previous BEAST runs.  Why important?
+This option allows you to resample your posterior distribution at a lower frequency than in previous BEAST runs.
 \subsection{Select input files}
-Here you can select using the "+" button the input files that you wish to combine.  These will appear in the sub-window with the file name and the BurnIn peroid (by default 10\%).
+Here you can select using the ``+'' button the input files that you wish to combine.  These will appear in the
+sub-window with the file name and the BurnIn peroid (by default 10\%).
 \subsection{Output file}
 This option allows you to select a log file or create a new log file that the combined log data will be saved to.
 
-When you click "Run", the log files you have selected will be combined in the JAVA LogCombiner window.  The files you have selected must be from independent runs of BEAST from the same XML file, otherwise an error will occur stating that the number of columns in the first file does not match that of the second file.
-
+When you click ``Run'', the log files you have selected will be combined in the JAVA LogCombiner window.  The files you
+have selected must be from independent runs of BEAST from the same XML file, otherwise an error will occur stating that
+the number of columns in the first file does not match that of the second file.
 Once LogCombiner has finished you can analyse the combined log file in Tracer.
 
+{\it Important}: It does not make sense to combine log files from MCMC analyses of different models or different data
+sets.
+
 \section{TreeAnnotator}
-This program is for summarizing the information in a sample of trees produced by BEAST, e.g., annotating the probability
-of nodes having a rate change.  Once again, when you open this program the TreeAnnotator user interface window and the
-JAVA TreeAnnotator window will appear.
+This program assists in summarizing the information from a sample of trees produced by BEAST onto a single ``target''
+tree. The summary information includes the posterior probabilities of the nodes in the target tree, the posterior estimates
+and HPD limits of the node heights and (in the case of a relaxed molecular clock model) the rates.
 \subsection{BurnIn}
-This option allows you to select the amount of BurnIn, i.e., the number of samples that will be discarded at the start
-of the run, so that you are only analysing data that has reached equilibrium.
+This option allows you to select the amount of burn-in, i.e., the number of samples that will be discarded at the start
+of the run, so that you are only analysing the part of the trace that is in equilibrium.
 \subsection{Posterior probability limit}
-This is the same as specifying a a limit for bootstrapping in PAUP*.  It will only show branches within the tree that
-have a posterior probability of greater than 0.5, and collaspe any branches into polytomies that have a posterior
-probability limit of less than 0.5.
+This is the same as specifying a a limit for bootstrapping in PAUP*.  Posterior summaries will only be calculated for the
+nodes in the target tree that have a posterior probability greater than the specified limit.
 \subsection{Target tree type}
-Maximum clade credibility and User target tree.  Explain?
+If you select the ``Maximum clade credibility'' option then the node height and rate statistics will be summarized on
+the tree in the posterior sample that has the maximum {\bf sum} of posterior probabilities on its $n-2$ internal nodes.
+This tree is not necessarily the majority-rule consensus tree.
+
+If you select the ``User target tree'' then the tree statistics will be summarized on a user-specified tree. This could,
+for example, be a majority-rule consensus tree constructed from the posterior tree sample using PAUP*.
+
 \subsection{Node heights}
-This option allows you select how the node heights are summarised on the the tree, whether you keep the target heights,
-or display mean or median heights.
+This option allows you select how the node heights are summarised on the target tree. You can choose to keep the
+heights that the target tree has, or rescale it to reflect the posterior mean/median node heights for the clades contained in the
+target tree.
 \subsection{Target tree file}
 This option allows you to select and input the target tree.  This option will only be available if you have selected
-"User target tree" from the "Target tree type" combo menu.
+``User target tree'' from the ``Target tree type'' combo menu.
 \subsection{Input tree file}
-This option allows you to select the input tree file that you specified tree data to be saved to in BEAUti.
+This option allows you to select the input tree file (the tree file produced by a BEAST analysis).
 \subsection{Output file}
 This option allows you to select or create a file that the summarized tree data will be saved to.
 
 Once you click run,  TreeAnnotator will start to summarize the tree data produced by BEAST.  In the JAVA window
 TreeAnnotator will state the number of trees that have been read, will find the best fit tree specified under the
-"Target tree type".  The progress of this will be monitored by the * symbols moving across the screen.  TreeAnnotator
+``Target tree type''.  The progress of this will be monitored by the * symbols moving across the screen.  TreeAnnotator
 will also give you a clade support statistic before writing the annotated tree to file.  This file can then be analysed
 in FigTree.
 
 \section*{Authors Contributions}
 
-AJD and AR designed and implemented all versions of BEAST up to the current (version 1.4), which was developed between
-June 2002 and November 2006. Portions of the BEAST source code are based on an original Markov chain Monte Carlo program
+AJD and AR designed and implemented all versions of BEAST up to the current (version 1.4.2), which was developed between
+June 2002 and April 2007. Portions of the BEAST source code are based on an original Markov chain Monte Carlo program
 developed by AJD (called MEPI) during his PhD at Auckland University between the years 2000 and 2002. Portions of the
 BEAST source code are based on previous C++ software developed by AR. BEAST is now an open source project and many
-software developers have made invaluable contributions (see Acknowledgements for some of them).
-
+software developers have made invaluable contributions (see Acknowledgements for some of them). SYWH produced the
+initial version of the BEAST XML guide as an online resource. AJD twisted the arm of NR to bring together the disparate
+sources of information on BEAST into a first draft of this manual. All authors contributed to the writing of the text.
 
 \section*{Acknowledgements}
 
 We would like to thank (in alphabetical order) Roald Forsberg, Joseph Heled, Philippe Lemey, Gerton Lunter, Sidney
-Markowitz, Oliver Pybus, Tulio de Oliveira, Beth Shapiro, Korbinian Strimmer and Mark Suchard  for invaluable
+Markowitz, Oliver G. Pybus, Tulio de Oliveira, Beth Shapiro, Korbinian Strimmer and Mark A. Suchard  for invaluable
 contributions. AR was supported by the Royal Society.
 
 \begin{thebibliography}{77}

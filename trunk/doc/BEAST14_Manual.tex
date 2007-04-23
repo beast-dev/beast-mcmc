@@ -713,13 +713,15 @@ Below is the structure of the various sections of the XML BEAST file, an explana
 up the relevant parts of the file.  This is by no means an exhaustive list of what can be incorporated into the BEAST
 XML file but will provide a guide to setting one up, and how to partition data sets into various genes and codon positions
 and perform a few moderately complicated analyses.  For further information please visit the following link:
-\url{http://beast.bio.ed.ac.uk/BEAST_XML_Reference}.  In addition, at the end of this manual are attached two example XML
-files that illustrate some of the more complicated analyses that can be carried out in BEAST.  One example file involves
-the analysis of time-stamped Hepatitis B viral DNA sequences that have been partitioned into genes and codon positions
-for a Bayesian Skyline Plot analysis.  The other example involves the partitioned analysis of three separate
-intraspecific moa data sets in the same BEAST analysis.  Each moa species is allowed separate trees and population
-history parameters but they all share the same \xml{clock.rate}, \xml{hky.kappa}, \xml{siteModel.alpha} and
-\xml{siteModel.pInv} parameters.
+\url{http://beast.bio.ed.ac.uk/BEAST_XML_Reference}.
+
+%In addition, at the end of this manual are attached two example XML
+%files that illustrate some of the more complicated analyses that can be carried out in BEAST.  One example file involves
+%the analysis of time-stamped Hepatitis C viral DNA sequences that have been partitioned into genes and codon positions
+%for a Bayesian Skyline Plot analysis.  The other example involves the partitioned analysis of three separate
+%intraspecific moa data sets in the same BEAST analysis.  Each moa species is allowed separate trees and population
+%history parameters but they all share the same \xml{clock.rate}, \xml{hky.kappa}, \xml{siteModel.alpha} and
+%\xml{siteModel.pInv} parameters.
 
 XML files can be constructed in NotePad, WordPad or an XML editor.  It is important however that if XML files are
 constructed in NotePad or WordPad, that they are saved as Plain Text files and {\bf not} Rich Text files.  The majority
@@ -962,8 +964,7 @@ rate/date priors). BEAUti generates this block automatically.
 \subsubsection{Bayesian Skyline Plot element/block}
 This element/block is used when an analysis involves the Bayesian Skyline Plot tree prior. An upper limit on the
 population size can be specified by adding the \xml{upper} attribute to the \xml{skyline.popSize} parameter below.
-This can also be done from the ``Priors'' panel in BEAUti.  The following example is taken from the Hepatitis B viral
-data set attached to this manual.
+This can also be done from the ``Priors'' panel in BEAUti. Here is an example of the XML:
 
 \footnotesize{}
 \begin{verbatim}
@@ -1256,8 +1257,9 @@ you can define a model in which each partition has an independent tree. You will
 you will also have to duplicate the demographic model and coalescent likelihood elements. For each duplicated element
 you will need to create a unique id. Each partition can have as many or few independent parameters as you like.  If the
 partitions share a common parameter, you must define the parameter in the first element that uses it and then use the
-\xml{idref} attribute to refer to the parameter in subsequent elements. To see how multi-locus data sets are defined in
-XML, examine the example XML files in Appendix A and B.
+\xml{idref} attribute to refer to the parameter in subsequent elements.
+%To see how multi-locus data sets are defined in
+%XML, examine the example XML files in Appendix A and B.
 
 \subsubsection{Operators element}
 The operators element includes all the different types of proposals/moves that will be made during the MCMC analysis.

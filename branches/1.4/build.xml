@@ -130,6 +130,7 @@
                 <attribute name="Main-Class" value="dr.app.beauti.BeautiApp"/>
             </manifest>
             <fileset dir="${build}">
+	            <include name="dr/app/beast/BeastVersion.class"/>
                 <include name="dr/app/beauti/**/*.class"/>
                 <include name="dr/app/util/**/*.class"/>
 	            <include name="dr/evolution/alignment/**/*.class"/>

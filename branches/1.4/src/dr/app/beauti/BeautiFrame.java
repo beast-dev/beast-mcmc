@@ -38,6 +38,7 @@ import java.io.*;
  * @version			$Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class BeautiFrame extends DocumentFrame {
+
 	/**
 	 *
 	 */
@@ -188,6 +189,10 @@ public class BeautiFrame extends DocumentFrame {
 
 	public final void mcmcChanged() {
 		setDirty();
+	}
+
+	public BeautiOptions getBeautiOptions() {
+		return beautiOptions;
 	}
 
     public boolean requestClose() {

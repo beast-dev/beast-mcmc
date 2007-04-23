@@ -421,9 +421,9 @@ public class LogCombiner {
                 icon = new javax.swing.ImageIcon(url);
             }
 
-            String nameString = "LogCombiner v1.4.2";
-            final String versionString = "1.4.2";
-            String aboutString = "<html><center><p>Version " + versionString + ", 2006</p>" +
+	        final String versionString = version.getVersionString();
+            String nameString = "LogCombiner "+versionString;
+            String aboutString = "<html><center><p>" + versionString + ", " + version.getDateString() + "</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
@@ -440,7 +440,7 @@ public class LogCombiner {
 
             LogCombinerDialog dialog = new LogCombinerDialog(new JFrame());
 
-            if (!dialog.showDialog("LogCombiner v1.4.2")) {
+            if (!dialog.showDialog("LogCombiner " + versionString)) {
                 return;
             }
 

@@ -126,8 +126,11 @@ public class CoalescentSimulator {
 	}
 	
 	public SimpleNode[] simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic, double currentHeight, double maxHeight) {
-		
-		double[] heights = new double[nodes.length];
+        // If only one node, return it
+        // continuing results in an infinite loop
+        if( nodes.length == 1 ) return nodes;
+        
+        double[] heights = new double[nodes.length];
 		for (int i =0; i < nodes.length; i++) {
 			heights[i] = nodes[i].getHeight();
 		}

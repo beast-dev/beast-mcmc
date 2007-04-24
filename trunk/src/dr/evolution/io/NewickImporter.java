@@ -44,17 +44,17 @@ import java.util.ArrayList;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class NewickImporter extends Importer implements TreeImporter { 
+public class NewickImporter extends Importer implements TreeImporter {
 
 	public class BranchMissingException extends ImportException {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 777435104809244693L;
 
 		public BranchMissingException() { super(); }
-		
-		public BranchMissingException(String msg) { 
+
+		public BranchMissingException(String msg) {
 			super("Branch missing: "+msg);
 			System.err.println(msg);
 		}
@@ -66,35 +66,35 @@ public class NewickImporter extends Importer implements TreeImporter {
 	public NewickImporter(Reader reader) {
 		super(reader);
 	}
-	
+
 	/**
-	 * importTree. 
+	 * importTree.
 	 */
 	public Tree importTree(TaxonList taxonList) throws IOException, ImportException
 	{
 		FlexibleTree tree = null;
-		
+
 		try {
 			skipUntil("(");
 			unreadCharacter('(');
-			
+
 			FlexibleNode root = readInternalNode(taxonList);
-			
+
+//			if (getLastDelimiter() != ';') {
+//				throw new BadFormatException("Expecting ';' after tree");
+//			}
+
 			tree = new FlexibleTree(root, false, true);
-			
-			if (getLastDelimiter() != ';') {
-				throw new BadFormatException("Expecting ';' after tree");
-			}
-	
+
 		} catch (EOFException e) {
-            throw new ImportException("incomplete tree"); 
-        }
+			throw new ImportException("incomplete tree");
+		}
 
 		return tree;
 	}
 
 	/**
-	 * importTrees. 
+	 * importTrees.
 	 */
 	public Tree[] importTrees(TaxonList taxonList) throws IOException, ImportException
 	{
@@ -102,37 +102,37 @@ public class NewickImporter extends Importer implements TreeImporter {
 		ArrayList array = new ArrayList();
 
 		do {
-		
+
 			try {
-			
+
 				skipUntil("(");
 				unreadCharacter('(');
-			
+
 				FlexibleNode root = readInternalNode(taxonList);
 				FlexibleTree tree = new FlexibleTree(root, false, true);
 				array.add(tree);
-				
+
 				if (taxonList == null) {
 					taxonList = tree;
 				}
-				
+
 				if (readCharacter() != ';') {
 					throw new BadFormatException("Expecting ';' after tree");
 				}
-						
+
 			} catch (EOFException e) {
 				done = true;
-			}	
+			}
 		} while (!done);
-		
+
 		Tree[] trees = new Tree[array.size()];
 		array.toArray(trees);
-		
+
 		return trees;
 	}
 
 	/**
-	 * return whether another tree is available. 
+	 * return whether another tree is available.
 	 */
 	public boolean hasTree() throws IOException, ImportException
 	{
@@ -142,31 +142,31 @@ public class NewickImporter extends Importer implements TreeImporter {
 		} catch (EOFException e) {
 			lastTree = null;
 			return false;
-		}	
+		}
 
 		return true;
 	}
 
 	private Tree lastTree = null;
-	
+
 	/**
-	 * import the next tree. 
+	 * import the next tree.
 	 * return the tree or null if no more trees are available
 	 */
-	public Tree importNextTree() throws IOException, ImportException 
+	public Tree importNextTree() throws IOException, ImportException
 	{
 		FlexibleTree tree = null;
-		
+
 		try {
 			skipUntil("(");
 			unreadCharacter('(');
-			
+
 			FlexibleNode root = readInternalNode(lastTree);
-			
+
 			tree = new FlexibleTree(root, false, true);
-			
-		} catch (EOFException e) { }	
-		
+
+		} catch (EOFException e) { }
+
 		lastTree = tree;
 
 		return tree;
@@ -182,24 +182,24 @@ public class NewickImporter extends Importer implements TreeImporter {
 		double length = 0.0;
 		FlexibleNode branch;
 
-		if (nextCharacter() == '(') {	
+		if (nextCharacter() == '(') {
 			// is an internal node
 			branch = readInternalNode(taxonList);
-			
+
 		} else {
 			// is an external node
 			branch = readExternalNode(taxonList);
 		}
-	
+
 		if (getLastDelimiter() == ':') {
 			length = readDouble(",():;");
 		}
-		
+
 		branch.setLength(length);
-		
+
 		return branch;
-	}	
-	 
+	}
+
 	/**
 	 * Reads a node in. This could be a polytomy. Calls readBranch on each branch
 	 * in the node.
@@ -207,9 +207,9 @@ public class NewickImporter extends Importer implements TreeImporter {
 	private FlexibleNode readInternalNode(TaxonList taxonList) throws IOException, ImportException
 	{
 		FlexibleNode node = new FlexibleNode();
-		
+
 		// read the opening '('
-		readCharacter(); 
+		readCharacter();
 
 		// read the first child
 		node.addChild( readBranch(taxonList) );
@@ -218,23 +218,28 @@ public class NewickImporter extends Importer implements TreeImporter {
 		if (getLastDelimiter() != ',') {
 			throw new BadFormatException("Missing ',' in tree");
 		}
-		
+
 		// read subsequent children
 		do {
 			node.addChild( readBranch(taxonList) );
-			
+
 		} while (getLastDelimiter() == ',');
-			
+
 		// should have had a closing ')'
 		if (getLastDelimiter() != ')') {
 			throw new BadFormatException("Missing closing ')' in tree");
 		}
 
-        // If there is a label before the colon, store it:
-        String label = readToken(",():;");
-        if (label.length() > 0) {
-            node.setAttribute("label", label);
-        }
+		// If there is a label before the colon, store it:
+		try {
+			String label = readToken(",():;");
+			if (label.length() > 0) {
+				node.setAttribute("label", label);
+			}
+		} catch (IOException ioe) {
+			// probably an end of file without a terminal ';'
+			// we are going to allow this and return the nodes...
+		}
 
 		return node;
 	}
@@ -247,9 +252,9 @@ public class NewickImporter extends Importer implements TreeImporter {
 		FlexibleNode node = new FlexibleNode();
 
 		String label = readToken(":(),;");
-		
-		Taxon taxon = null;	
-		
+
+		Taxon taxon = null;
+
 		if (taxonList != null) {
 			// if a taxon list is given then the taxon must be in it...
 			int index = taxonList.getTaxonIndex(label);

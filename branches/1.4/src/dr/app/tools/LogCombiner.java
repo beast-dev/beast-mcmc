@@ -364,7 +364,7 @@ public class LogCombiner {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("LogCombiner v1.4.2, 2006-2007", 60);
+	    centreLine("LogCombiner "+ version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("MCMC Output Combiner", 60);
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);

@@ -312,7 +312,6 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         substitutionRateField.setValue(options.meanSubstitutionRate);
         substitutionRateField.setEnabled(options.fixedSubstitutionRate);
 
-        clockModelCombo.setSelectedIndex(options.clockModel);
 	    switch (options.clockModel) {
 		    case BeautiOptions.STRICT_CLOCK:
 			    clockModelCombo.setSelectedIndex(0); break;

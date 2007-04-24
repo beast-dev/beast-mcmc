@@ -299,7 +299,6 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeNucleotideLikelihoo
 	jdouble *partials3 = (jdouble*)(*env)->GetPrimitiveArrayCritical(env, outPartials, 0);
 
 	int j, k;
-	double sum1, sum2;
 		
 	int u = 0;	
 	int v = 0;

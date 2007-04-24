@@ -252,7 +252,7 @@ public class CoalescentSimulator {
 
                                 if( nIn > 0 ) {
                                     if( nIn == baseConstraint.getTaxonCount() || nIn == taxonsk.getTaxonCount() ) {
-                                        for(int j = 0; j < next.size() ; ++j) {
+                                        for(int j = 0; j < next.size(); ++j) {
                                             TaxonList jtaxons = next.get(j).taxons;
                                             int c = sizeOfIntersection(jtaxons, taxonsk);
                                             if( c == taxonsk.getTaxonCount() ) {
@@ -260,7 +260,7 @@ public class CoalescentSimulator {
                                                 break;
                                             } else if( c != jtaxons.getTaxonCount() ) {
                                                throw new XMLParseException(setsNotCOmpatibleMessage);
-                                            } else if( j == next.size() ) {
+                                            } else if( j+1 == next.size() ) {
                                                 next.add(allc.remove(k));
                                                 break;
                                             }

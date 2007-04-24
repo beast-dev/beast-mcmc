@@ -429,6 +429,7 @@ public class BeautiOptions {
 				}
 			}
 
+			// if not fixed then do mutation rate move and up/down move
 			if (!fixedSubstitutionRate) {
 				Parameter rateParam;
 
@@ -597,7 +598,9 @@ public class BeautiOptions {
 			}
 
 			if (partitionCount > 1) {
+				if (!codonHeteroPattern.equals("112")) {
 				ops.add(getOperator("centeredMu"));
+				}
 				ops.add(getOperator("deltaMu"));
 			}
 
@@ -787,10 +790,8 @@ public class BeautiOptions {
 
 		Element priorsElement = new Element("priors");
 
-		Iterator<String> iter = parameters.keySet().iterator();
-		while (iter.hasNext()) {
-			String name = iter.next();
-			Parameter parameter = (Parameter)parameters.get(name);
+		for (String name : parameters.keySet()) {
+			Parameter parameter = (Parameter) parameters.get(name);
 			Element e = new Element(name);
 			e.addContent(createChild("initial", parameter.initial));
 			e.addContent(createChild("priorType", parameter.priorType));
@@ -815,7 +816,7 @@ public class BeautiOptions {
 		Element operatorsElement = new Element("operators");
 
 		operatorsElement.addContent(createChild("autoOptimize", autoOptimize));
-		iter = operators.keySet().iterator();
+		Iterator<String> iter = operators.keySet().iterator();
 		while (iter.hasNext()) {
 			String name = iter.next();
 			Operator operator = (Operator)operators.get(name);

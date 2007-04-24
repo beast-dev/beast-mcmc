@@ -29,9 +29,7 @@ import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
-import dr.evolution.util.Units;
+import dr.evolution.util.*;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.coalescent.*;
@@ -44,15 +42,13 @@ import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.YuleModel;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.tree.RateCovarianceStatistic;
-import dr.evomodel.tree.RateStatistic;
-import dr.evomodel.tree.TreeLogger;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evoxml.*;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.distribution.LogNormalDistributionModel;
+import dr.inference.distribution.UniformDistributionModel;
 import dr.inference.loggers.Columns;
 import dr.inference.loggers.MCLogger;
 import dr.inference.model.*;
@@ -234,7 +230,7 @@ public class BeastGenerator extends BeautiOptions {
 				Attribute[] attributes = new Attribute[] {
 						new Attribute.Default("value", date.getTimeValue()+""),
 						new Attribute.Default("direction", date.isBackwards() ? "backwards" : "forwards"),
-						new Attribute.Default("units", Units.UNIT_NAMES[units][0])
+						new Attribute.Default("units", Units.Utils.getDefaultUnitName(units))
 						/*,
 																		  new Attribute.Default("origin", date.getOrigin()+"")*/
 				};
@@ -975,7 +971,7 @@ public class BeastGenerator extends BeautiOptions {
 			writer.writeCloseTag("rate");
 			writer.writeCloseTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES);
 		} else {
-			writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut, 2005)");
+			writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut, 2006)");
 			writer.writeOpenTag(
 					DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES,
 					new Attribute[] { new Attribute.Default("id", "branchRates") }
@@ -1233,16 +1229,29 @@ public class BeastGenerator extends BeautiOptions {
 		for (int i = 0; i < taxonSets.size(); i++) {
 			TaxonList taxa = (TaxonList)taxonSets.get(i);
 			writer.writeOpenTag(
-					"tmrcaStatistic",
-					new Attribute[] {
+					TMRCAStatistic.TMRCA_STATISTIC,
+					new Attribute[]{
 							new Attribute.Default("id", "tmrca(" + taxa.getId() + ")"),
 					}
 			);
-			writer.writeOpenTag("mrca");
-			writer.writeTag("taxa", new Attribute[] { new Attribute.Default("idref", taxa.getId()) }, true);
-			writer.writeCloseTag("mrca");
-			writer.writeTag(TreeModel.TREE_MODEL, new Attribute[] { new Attribute.Default("idref", "treeModel") }, true);
-			writer.writeCloseTag("tmrcaStatistic");
+			writer.writeOpenTag(TMRCAStatistic.MRCA);
+			writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default("idref", taxa.getId())}, true);
+			writer.writeCloseTag(TMRCAStatistic.MRCA);
+			writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
+			writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
+
+			if( ((Boolean)taxonSetsMono.get(i)).booleanValue() ) {
+				writer.writeOpenTag(
+						MonophylyStatistic.MONOPHYLY_STATISTIC,
+						new Attribute[]{
+								new Attribute.Default("id", "monophyly(" + taxa.getId() + ")"),
+						});
+				writer.writeOpenTag(MonophylyStatistic.MRCA);
+				writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default("idref", taxa.getId())}, true);
+				writer.writeCloseTag(MonophylyStatistic.MRCA);
+				writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
+				writer.writeCloseTag(MonophylyStatistic.MONOPHYLY_STATISTIC);
+			}
 		}
 	}
 
@@ -1632,6 +1641,22 @@ public class BeastGenerator extends BeautiOptions {
 	 * @param writer the writer
 	 */
 	private void writeParameterPriors(XMLWriter writer) {
+		boolean first = true;
+		for(int k = 0; k < taxonSetsMono.size(); ++k) {
+			if( ((Boolean)taxonSetsMono.get(k)).booleanValue() ) {
+				if( first ) {
+					writer.writeOpenTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
+					first = false;
+				}
+				final String taxaRef = "monophyly(" + ((Taxa)taxonSets.get(k)).getId() + ")";
+				final Attribute.Default attr = new Attribute.Default("idref", taxaRef);
+				writer.writeTag(MonophylyStatistic.MONOPHYLY_STATISTIC, new Attribute[]{attr}, true);
+			}
+		}
+		if( ! first ) {
+			writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
+		}
+
 		ArrayList parameters = selectParameters();
 		Iterator iter = parameters.iterator();
 		while (iter.hasNext()) {
@@ -2111,7 +2136,31 @@ public class BeastGenerator extends BeautiOptions {
 						}
 				);
 			}
-			writer.writeTag(TaxaParser.TAXA, new Attribute[] { new Attribute.Default("idref", "taxa") }, true);
+
+			Attribute[] taxaAttribute = new Attribute[]{new Attribute.Default("idref", "taxa")};
+			if( taxonSets.size() > 0 ) {
+				writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
+				writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
+				for (int i = 0; i < taxonSets.size(); i++) {
+					TaxonList taxonSet = (TaxonList)taxonSets.get(i);
+					Parameter statistic = (Parameter)statistics.get(taxonSet);
+					writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+
+					writer.writeTag(TaxaParser.TAXA,
+							new Attribute[]{new Attribute.Default("idref", taxonSet.getId())}, true);
+					if( statistic.isNodeHeight && statistic.priorType == UNIFORM_PRIOR ) {
+						writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+						writer.writeTag(UniformDistributionModel.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
+						writer.writeTag(UniformDistributionModel.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
+						writer.writeCloseTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+					}
+					writer.writeCloseTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+				}
+				writer.writeCloseTag(CoalescentSimulator.CONSTRAINED_TAXA);
+			} else {
+				writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
+			}
+
 			writeInitialDemoModelRef(writer);
 			writer.writeCloseTag(CoalescentSimulator.COALESCENT_TREE);
 		}

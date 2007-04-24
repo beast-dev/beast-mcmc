@@ -939,7 +939,7 @@ public class BeautiOptions {
 				Element taxonSetElement = (Element)iter.next();
 
 				String id = getStringChild(taxonSetElement, "id", "");
-				Taxa taxonSet = new Taxa(id);
+				final Taxa taxonSet = new Taxa(id);
 
 				Iterator iter2 = taxonSetElement.getChildren("taxon").iterator();
 				while (iter2.hasNext()) {
@@ -1282,6 +1282,23 @@ public class BeautiOptions {
 			uniformUpper = upper;
 		}
 
+		public Parameter(String name, String description, boolean isDiscrete) {
+			this.taxa = null;
+
+			this.name = name;
+			this.description = description;
+
+			this.isNodeHeight = false;
+			this.isStatistic = true;
+			this.isDiscrete = isDiscrete;
+			this.priorType = UNIFORM_PRIOR;
+			this.scale = NONE;
+			this.priorEdited = false;
+			this.initial = Double.NaN;
+			this.lower = Double.NaN;
+			this.upper = Double.NaN;
+		}
+
 		public Parameter(String name, String description, boolean isNodeHeight,
 		                 double initial, double lower, double upper) {
 			this.name = name;
@@ -1323,6 +1340,8 @@ public class BeautiOptions {
 		public double initial;
 
 		public final TaxonList taxa;
+
+		public boolean isDiscrete = false;
 
 		public boolean isFixed = false;
 		public final boolean isNodeHeight;
@@ -1477,6 +1496,7 @@ public class BeautiOptions {
 	public TaxonList taxonList = null;
 	public SimpleAlignment originalAlignment = null;
 	public List taxonSets = new ArrayList();
+	public List taxonSetsMono = new ArrayList();
 	public Alignment alignment = null;
 	public Tree tree = null;
 	public boolean alignmentReset = true;

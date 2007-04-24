@@ -191,10 +191,6 @@ public class BeautiFrame extends DocumentFrame {
 		setDirty();
 	}
 
-	public BeautiOptions getBeautiOptions() {
-		return beautiOptions;
-	}
-
     public boolean requestClose() {
         if (isDirty()) {
             int option = JOptionPane.showConfirmDialog(this,

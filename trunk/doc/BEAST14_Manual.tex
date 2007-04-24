@@ -671,6 +671,45 @@ in Newick format that conforms to any monophyly or node height constraints that 
 Finally, sometimes BEAST does not proceed through the pre-burn-in period (i.e., for whatever reason BEAST freezes in the
 pre-burn-in period).  This may happen if you only have four or fewer taxa in one of your trees.
 
+\subsection{Troubleshooting BEAST}
+
+Sometimes BEAST crashes without any indication why. In these cases you will need
+to run BEAST from the command-line in order to get the error message from the
+program so that you can report the error message to the BEAST development team.
+
+\subsubsection{Running BEAST from the command line}
+\label{commandline}
+
+Open the Command Prompt (or Terminal on Mac OS X) and navigate to the directory
+containing the BEAST executable. In Windows type the following command:
+
+\begin{verbatim}
+java -jar lib\beast.jar
+\end{verbatim}
+
+Alternatively, on Mac OS X, use this command:
+
+\begin{verbatim}
+java -jar BEAST\ v1.4/Contents/Resources/Java/beast.jar
+\end{verbatim}
+
+This will run BEAST as if it was double clicked, however now if BEAST crashes
+the crash message (called a stack trace) will be written to the Command Prompt
+(Terminal). This will help in diagnosing the problem.
+
+\subsubsection{Giving BEAST more memory}
+
+Sometimes users try to use very large datasets and BEAST will run out of memory.
+In some instances this can be remedied by running BEAST from the command line (
+see section \ref{commandline}) and adding some command line options to direct
+JAVA to give BEAST more memory using the \texttt{-Xms} and \texttt{-Xmx} JAVA
+options. For example if you wanted to give BEAST 1024Mb of memory you would use
+the following command:
+
+\begin{verbatim}
+java -Xms1024m -Xmx1024m -jar lib\beast.jar
+\end{verbatim}
+
 \subsection{BEAST output and results}
 At the end of the run report of performance of the operators will be outputted to the BEAST console window. This table
 will display the operators, their acceptance probabilities, the final values of the associated tuning values, and a

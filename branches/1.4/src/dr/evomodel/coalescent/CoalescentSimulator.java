@@ -260,7 +260,7 @@ public class CoalescentSimulator {
                                                 break;
                                             } else if( c != jtaxons.getTaxonCount() ) {
                                                throw new XMLParseException(setsNotCOmpatibleMessage);
-                                            } else if( j == next.size() ) {
+                                            } else if( j+1 == next.size() ) {
                                                 next.add(allc.remove(k));
                                                 break;
                                             }

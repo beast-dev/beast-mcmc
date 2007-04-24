@@ -46,6 +46,7 @@ public class BeastVersion implements Version {
 	 * Version string: assumed to be in format x.x.x
 	 */
 	private static String VERSION = "1.5 developmental";
+	private static String DATE_STRING = "2002-2007";
 
 	/**
 	 * Build string: assumed to be in format projectname-#-#-#
@@ -55,6 +56,10 @@ public class BeastVersion implements Version {
 
 	public String getVersionString() {
 		return "v" + VERSION;
+	}
+
+	public String getDateString() {
+		return DATE_STRING;
 	}
 
 	public String getBuildString() {

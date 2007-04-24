@@ -8,6 +8,8 @@
  */
 package dr.app.beauti;
 
+import dr.app.beast.BeastVersion;
+import dr.util.Version;
 import org.virion.jam.framework.*;
 
 import javax.swing.*;
@@ -18,6 +20,8 @@ import javax.swing.*;
  * @version			$Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
  */
 public class BeautiApp extends MultiDocApplication {
+	private final static Version version = new BeastVersion();
+
     public BeautiApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
         super(new BeautiMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
@@ -75,9 +79,9 @@ public class BeautiApp extends MultiDocApplication {
                 }
 
                 final String nameString = "BEAUti";
-                final String versionString = "1.5a1";
+                final String versionString = version.getVersionString();
                 String aboutString = "<html><center><p>Bayesian Evolutionary Analysis Utility<br>" +
-                        "Version " + versionString + ", 2003-2007</p>" +
+                        "Version " + versionString + ", " + version.getDateString() + "</p>" +
                         "<p>by<br>" +
                         "Andrew Rambaut and Alexei J. Drummond</p>" +
                         "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +

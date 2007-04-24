@@ -172,7 +172,7 @@ public class BeastMain {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAST " + version.getVersionString() + ", 2002-2006", 60);
+        centreLine("BEAST " + version.getVersionString() + ", 2002-2007", 60);
         centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
         centreLine("by", 60);
         centreLine("Alexei J. Drummond and Andrew Rambaut", 60);

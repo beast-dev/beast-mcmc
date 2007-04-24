@@ -479,7 +479,7 @@ public class TreeAnnotator {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("TreeAnnotator v1.4, 2002-2006", 60);
+        centreLine("TreeAnnotator " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("MCMC Output analysis", 60);
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
@@ -532,9 +532,9 @@ public class TreeAnnotator {
                 icon = new javax.swing.ImageIcon(url);
             }
 
-            String nameString = "TreeAnnotator v1.4";
-            final String versionString = "1.4";
-            String aboutString = "<html><center><p>Version " + versionString + ", 2006</p>" +
+	        final String versionString = version.getVersionString();
+            String nameString = "TreeAnnotator " + versionString;
+            String aboutString = "<html><center><p>" + versionString + ", " + version.getDateString() +"</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
@@ -551,7 +551,7 @@ public class TreeAnnotator {
 
             TreeAnnotatorDialog dialog = new TreeAnnotatorDialog(new JFrame());
 
-            if (!dialog.showDialog("TreeAnnotator v1.4")) {
+            if (!dialog.showDialog("TreeAnnotator " + versionString)) {
                 return;
             }
 

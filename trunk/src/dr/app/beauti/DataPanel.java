@@ -432,20 +432,20 @@ public class DataPanel extends JPanel implements Exportable {
 			return;
 		}
 
-        options.guessDates = true;
+		options.guessDates = true;
 
 		String warningMessage = null;
 
-        for (int i = 0; i < options.originalAlignment.getTaxonCount(); i++) {
+		for (int i = 0; i < options.originalAlignment.getTaxonCount(); i++) {
 			java.util.Date origin = new java.util.Date(0);
 
 			double d = 0.0;
 
 			try {
 				if (orderRadio.isSelected()) {
-                    options.guessDateFromOrder = true;
+					options.guessDateFromOrder = true;
 					options.order = orderCombo.getSelectedIndex();
-                    options.fromLast = false;
+					options.fromLast = false;
 					if (options.order > 3) {
 						options.fromLast = true;
 						options.order = 8 - options.order - 1;
@@ -453,7 +453,7 @@ public class DataPanel extends JPanel implements Exportable {
 
 					d = options.guessDateFromOrder(options.originalAlignment.getTaxonId(i), options.order, options.fromLast);
 				} else {
-                    options.guessDateFromOrder = false;
+					options.guessDateFromOrder = false;
 					options.prefix = prefixText.getText();
 					d = options.guessDateFromPrefix(options.originalAlignment.getTaxonId(i), options.prefix);
 				}
@@ -462,10 +462,10 @@ public class DataPanel extends JPanel implements Exportable {
 				warningMessage = gfe.getMessage();
 			}
 
-            options.offset = 0.0;
-            options.unlessLessThan = 0.0;
-            if (offsetCheck.isSelected()) {
-                options.offset = offsetText.getValue().doubleValue();
+			options.offset = 0.0;
+			options.unlessLessThan = 0.0;
+			if (offsetCheck.isSelected()) {
+				options.offset = offsetText.getValue().doubleValue();
 				if (unlessCheck.isSelected()) {
 					options.unlessLessThan = unlessText.getValue().doubleValue();
 					options.offset2 = offset2Text.getValue().doubleValue();

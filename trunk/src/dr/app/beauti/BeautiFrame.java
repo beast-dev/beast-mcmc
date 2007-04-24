@@ -38,6 +38,7 @@ import java.io.*;
  * @version			$Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class BeautiFrame extends DocumentFrame {
+
 	/**
 	 *
 	 */
@@ -545,37 +546,36 @@ public class BeautiFrame extends DocumentFrame {
 		return exportable;
 	}
 
-// @todo JEBL needs changing to allow these to be overrridden...
-//    public boolean doSave() {
-//       return doSaveAs();
-//    }
-//
-//    public boolean doSaveAs() {
-//        FileDialog dialog = new FileDialog(this,
-//                "Save Template As...",
-//                FileDialog.SAVE);
-//
-//        dialog.setVisible(true);
-//        if (dialog.getFile() == null) {
-//            // the dialog was cancelled...
-//            return false;
-//        }
-//
-//        File file = new File(dialog.getDirectory(), dialog.getFile());
-//
-//        try {
-//            if (writeToFile(file)) {
-//
-//                clearDirty();
-//            }
-//        } catch (IOException ioe) {
-//            JOptionPane.showMessageDialog(this, "Unable to save file: " + ioe,
-//                    "Unable to save file",
-//                    JOptionPane.ERROR_MESSAGE);
-//        }
-//
-//        return true;
-//    }
+    public boolean doSave() {
+       return doSaveAs();
+    }
+
+    public boolean doSaveAs() {
+        FileDialog dialog = new FileDialog(this,
+                "Save Template As...",
+                FileDialog.SAVE);
+
+        dialog.setVisible(true);
+        if (dialog.getFile() == null) {
+            // the dialog was cancelled...
+            return false;
+        }
+
+        File file = new File(dialog.getDirectory(), dialog.getFile());
+
+        try {
+            if (writeToFile(file)) {
+
+                clearDirty();
+            }
+        } catch (IOException ioe) {
+            JOptionPane.showMessageDialog(this, "Unable to save file: " + ioe,
+                    "Unable to save file",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+
+        return true;
+    }
 
     public Action getOpenAction() {
         return openTemplateAction;

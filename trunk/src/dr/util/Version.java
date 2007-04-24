@@ -37,4 +37,6 @@ public interface Version {
 	String getVersionString();
 
 	String getBuildString();
+
+	String getDateString();
 }

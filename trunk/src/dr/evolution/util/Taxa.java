@@ -114,12 +114,30 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 		return -1;
 	}
 
+	/**
+	 * Returns true if taxonList is a subset of the taxa in this Taxa.
+	 * @param taxonList a TaxonList
+	 * @return true if taxonList is a subset
+	 */
+	public boolean isSubset(TaxonList taxonList) {
+
+		for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+			Taxon taxon = (Taxon)taxonList.getTaxon(i);
+			if (!taxa.contains(taxon)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public String getId() { return id; }
 	public void setId(String id) { this.id = id; }
 
 	public int compareTo(Object o) {
 		return getId().compareTo(((Taxa)o).getId());
 	}
+
+	public String toString() { return id; }
 
 	private String id = null;
 

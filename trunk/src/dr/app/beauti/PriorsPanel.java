@@ -139,6 +139,7 @@ public class PriorsPanel extends JPanel implements Exportable {
 				new java.awt.event.ItemListener() {
 					public void itemStateChanged(java.awt.event.ItemEvent ev) {
 						if (!settingOptions) frame.priorsChanged();
+						setupPanel();
 					}
 				}
 		);
@@ -216,13 +217,14 @@ public class PriorsPanel extends JPanel implements Exportable {
 			treePriorCombo.setSelectedIndex(3);
 		} else if (options.nodeHeightPrior == BeautiOptions.SKYLINE) {
 			treePriorCombo.setSelectedIndex(4);
-			groupCountField.setValue(options.skylineGroupCount);
 		} else if (options.nodeHeightPrior == BeautiOptions.YULE) {
 			treePriorCombo.setSelectedIndex(5);
 		} else if (options.nodeHeightPrior == BeautiOptions.BIRTH_DEATH) {
 			treePriorCombo.setSelectedIndex(6);
-			samplingProportionField.setValue(options.birthDeathSamplingProportion);
 		}
+		groupCountField.setValue(options.skylineGroupCount);
+			samplingProportionField.setValue(options.birthDeathSamplingProportion);
+
 		parameterizationCombo.setSelectedIndex(options.parameterization);
 		bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
 

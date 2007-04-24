@@ -56,6 +56,8 @@ public class TaxaPanel extends JPanel implements Exportable {
 	 */
 	private static final long serialVersionUID = -3138832889782090814L;
 
+	private final String TAXON_SET_DEFAULT = "taxon set...";
+
 	BeautiFrame frame = null;
 
 	BeautiOptions options = null;
@@ -73,9 +75,13 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	private JTable excludedTaxaTable = null;
 	private TaxaTableModel excludedTaxaTableModel = null;
+	private JComboBox excludedTaxonSetsComboBox = null;
+	private boolean excludedSelectionChanging = false;
 
 	private JTable includedTaxaTable = null;
 	private TaxaTableModel includedTaxaTableModel = null;
+	private JComboBox includedTaxonSetsComboBox = null;
+	private boolean includedSelectionChanging = false;
 
 	private static int taxonSetCount = 0;
 
@@ -94,14 +100,14 @@ public class TaxaPanel extends JPanel implements Exportable {
 		// Taxon Sets
 		taxonSetsTableModel = new TaxonSetsTableModel();
 		taxonSetsTable = new JTable(taxonSetsTableModel);
-        final TableColumnModel model = taxonSetsTable.getColumnModel();
-        final TableColumn tableColumn0 = model.getColumn(0);
-        tableColumn0.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+		final TableColumnModel model = taxonSetsTable.getColumnModel();
+		final TableColumn tableColumn0 = model.getColumn(0);
+		tableColumn0.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 		tableColumn0.setMinWidth(20);
 
-        //final TableColumn tableColumn1 = model.getColumn(1);
+		//final TableColumn tableColumn1 = model.getColumn(1);
 
-        taxonSetsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+		taxonSetsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent evt) { taxonSetsTableSelectionChanged(); }
 		});
 
@@ -135,6 +141,13 @@ public class TaxaPanel extends JPanel implements Exportable {
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
+		Box panel1 = new Box(BoxLayout.X_AXIS);
+		panel1.add(new JLabel("Select: "));
+		panel1.setOpaque(false);
+		excludedTaxonSetsComboBox = new JComboBox(new String[] { TAXON_SET_DEFAULT });
+		excludedTaxonSetsComboBox.setOpaque(false);
+		panel1.add(excludedTaxonSetsComboBox);
+
 		JPanel buttonPanel = createAddRemoveButtonPanel(includeTaxonAction, includeIcon, "Include selected taxa in the taxon set",
 				excludeTaxonAction, excludeIcon, "Exclude selected taxa from the taxon set",
 				javax.swing.BoxLayout.Y_AXIS);
@@ -156,6 +169,13 @@ public class TaxaPanel extends JPanel implements Exportable {
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
+		Box panel2 = new Box(BoxLayout.X_AXIS);
+		panel2.add(new JLabel("Select: "));
+		panel2.setOpaque(false);
+		includedTaxonSetsComboBox = new JComboBox(new String[] { TAXON_SET_DEFAULT });
+		includedTaxonSetsComboBox.setOpaque(false);
+		panel2.add(includedTaxonSetsComboBox);
+
 		taxonSetEditingPanel = new JPanel();
 		taxonSetEditingPanel.setBorder(BorderFactory.createTitledBorder("Taxon Set: none selected"));
 		taxonSetEditingPanel.setOpaque(false);
@@ -168,13 +188,23 @@ public class TaxaPanel extends JPanel implements Exportable {
 		c.weighty = 1;
 		c.fill = GridBagConstraints.BOTH;
 		c.anchor = GridBagConstraints.CENTER;
-		c.insets = new Insets(12,12,12,0);
+		c.insets = new Insets(12,12,4,0);
 		taxonSetEditingPanel.add(scrollPane2, c);
+
+		c.gridx = 0;
+		c.gridy = 1;
+		c.weightx = 0.5;
+		c.weighty = 0;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.anchor = GridBagConstraints.CENTER;
+		c.insets = new Insets(0,12,12,0);
+		taxonSetEditingPanel.add(panel1, c);
 
 		c.gridx = 1;
 		c.gridy = 0;
 		c.weightx = 0;
 		c.weighty = 1;
+		c.gridheight = 2;
 		c.fill = GridBagConstraints.NONE;
 		c.anchor = GridBagConstraints.CENTER;
 		c.insets = new Insets(12,2,12,4);
@@ -184,14 +214,24 @@ public class TaxaPanel extends JPanel implements Exportable {
 		c.gridy = 0;
 		c.weightx = 0.5;
 		c.weighty = 1;
+		c.gridheight = 1;
 		c.fill = GridBagConstraints.BOTH;
 		c.anchor = GridBagConstraints.CENTER;
-		c.insets = new Insets(12,0,12,12);
+		c.insets = new Insets(12,0,4,12);
 		taxonSetEditingPanel.add(scrollPane3, c);
 
-		JPanel panel1 = new JPanel();
-		panel1.setOpaque(false);
-		panel1.setLayout(new GridBagLayout());
+		c.gridx = 2;
+		c.gridy = 1;
+		c.weightx = 0.5;
+		c.weighty = 0;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.anchor = GridBagConstraints.CENTER;
+		c.insets = new Insets(0,0,12,12);
+		taxonSetEditingPanel.add(panel2, c);
+
+		JPanel panel3 = new JPanel();
+		panel3.setOpaque(false);
+		panel3.setLayout(new GridBagLayout());
 		c = new GridBagConstraints();
 
 		c.gridx = 0;
@@ -201,7 +241,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 		c.fill = GridBagConstraints.BOTH;
 		c.anchor = GridBagConstraints.CENTER;
 		c.insets = new Insets(0,0,2,12);
-		panel1.add(scrollPane1, c);
+		panel3.add(scrollPane1, c);
 
 		c.gridx = 0;
 		c.gridy = 1;
@@ -210,7 +250,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 		c.fill = GridBagConstraints.NONE;
 		c.anchor = GridBagConstraints.WEST;
 		c.insets = new Insets(2,0,0,12);
-		panel1.add(actionPanel1, c);
+		panel3.add(actionPanel1, c);
 
 		c.gridx = 1;
 		c.gridy = 0;
@@ -219,12 +259,12 @@ public class TaxaPanel extends JPanel implements Exportable {
 		c.fill = GridBagConstraints.BOTH;
 		c.anchor = GridBagConstraints.CENTER;
 		c.insets = new Insets(0,0,0,0);
-		panel1.add(taxonSetEditingPanel, c);
+		panel3.add(taxonSetEditingPanel, c);
 
 		setOpaque(false);
 		setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
 		setLayout(new BorderLayout(0,0));
-		add(panel1, BorderLayout.CENTER);
+		add(panel3, BorderLayout.CENTER);
 
 //		taxonSetsTable.addMouseListener(new MouseAdapter() {
 //			public void mouseClicked(MouseEvent e) {
@@ -262,6 +302,54 @@ public class TaxaPanel extends JPanel implements Exportable {
 			}
 		});
 
+		includedTaxaTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e) {
+				if (!includedSelectionChanging && includedTaxonSetsComboBox.getSelectedIndex() != 0) {
+					includedTaxonSetsComboBox.setSelectedIndex(0);
+				}
+			}
+		});
+		includedTaxonSetsComboBox.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				includedSelectionChanging = true;
+				includedTaxaTable.clearSelection();
+				if (includedTaxonSetsComboBox.getSelectedIndex() > 0) {
+					Taxa taxa = (Taxa)includedTaxonSetsComboBox.getSelectedItem();
+					for (int i =0; i < taxa.getTaxonCount(); i++) {
+						Taxon taxon = taxa.getTaxon(i);
+						int index = includedTaxa.indexOf(taxon);
+						includedTaxaTable.getSelectionModel().addSelectionInterval(index, index);
+
+					}
+				}
+				includedSelectionChanging = false;
+			}
+		});
+
+		excludedTaxaTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e) {
+				if (!excludedSelectionChanging && excludedTaxonSetsComboBox.getSelectedIndex() != 0) {
+					excludedTaxonSetsComboBox.setSelectedIndex(0);
+				}
+			}
+		});
+		excludedTaxonSetsComboBox.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				excludedSelectionChanging = true;
+				excludedTaxaTable.clearSelection();
+				if (excludedTaxonSetsComboBox.getSelectedIndex() > 0) {
+					Taxa taxa = (Taxa)excludedTaxonSetsComboBox.getSelectedItem();
+					for (int i =0; i < taxa.getTaxonCount(); i++) {
+						Taxon taxon = taxa.getTaxon(i);
+						int index = excludedTaxa.indexOf(taxon);
+						excludedTaxaTable.getSelectionModel().addSelectionInterval(index, index);
+
+					}
+				}
+				excludedSelectionChanging = false;
+			}
+		});
+
 		taxonSetsTable.doLayout();
 		includedTaxaTable.doLayout();
 		excludedTaxaTable.doLayout();
@@ -272,6 +360,9 @@ public class TaxaPanel extends JPanel implements Exportable {
 		for (int i = 0; i < includedTaxa.size(); i++) {
 			currentTaxonSet.addTaxon((Taxon)includedTaxa.get(i));
 		}
+
+		setupTaxonSetsComboBoxes();
+
 		frame.taxonSetsChanged();
 	}
 
@@ -341,9 +432,9 @@ public class TaxaPanel extends JPanel implements Exportable {
 			options.taxonSets.add(currentTaxonSet);
 			Collections.sort(options.taxonSets);
 
-            options.taxonSetsMono.add(Boolean.FALSE);
-            
-            taxonSetsTableModel.fireTableDataChanged();
+			options.taxonSetsMono.add(Boolean.FALSE);
+
+			taxonSetsTableModel.fireTableDataChanged();
 
 			int sel = options.taxonSets.indexOf(currentTaxonSet);
 			taxonSetsTable.setRowSelectionInterval(sel, sel);
@@ -363,7 +454,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 			int row = taxonSetsTable.getSelectedRow();
 			if (row != -1) {
 				options.taxonSets.remove(row);
-                options.taxonSetsMono.remove(row);
+				options.taxonSetsMono.remove(row);
 			}
 			taxonSetChanged();
 
@@ -402,6 +493,8 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 		setTaxonSetTitle();
 
+		setupTaxonSetsComboBoxes();
+
 		includedTaxaTableModel.fireTableDataChanged();
 		excludedTaxaTableModel.fireTableDataChanged();
 	}
@@ -417,6 +510,44 @@ public class TaxaPanel extends JPanel implements Exportable {
 		}
 	}
 
+
+	private void setupTaxonSetsComboBoxes() {
+		setupTaxonSetsComboBox(excludedTaxonSetsComboBox, excludedTaxa);
+		excludedTaxonSetsComboBox.setSelectedIndex(0);
+		setupTaxonSetsComboBox(includedTaxonSetsComboBox, includedTaxa);
+		includedTaxonSetsComboBox.setSelectedIndex(0);
+	}
+
+	private void setupTaxonSetsComboBox(JComboBox comboBox, List availableTaxa) {
+		comboBox.removeAllItems();
+
+		comboBox.addItem(TAXON_SET_DEFAULT);
+		for (int i = 0; i < options.taxonSets.size(); i++) {
+			Taxa taxa = ((Taxa)options.taxonSets.get(i));
+			if (taxa != currentTaxonSet) {
+				if (isCompatible(taxa, availableTaxa)) {
+					comboBox.addItem(taxa);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns true if taxa are all found in availableTaxa
+	 * @param taxa
+	 * @param availableTaxa
+	 * @return
+	 */
+	private boolean isCompatible(Taxa taxa, List availableTaxa) {
+
+		for (int i = 0; i < taxa.getTaxonCount(); i++) {
+			Taxon taxon = (Taxon)taxa.getTaxon(i);
+			if (!availableTaxa.contains(taxon)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	class TaxonSetsTableModel extends AbstractTableModel {
 
@@ -446,75 +577,60 @@ public class TaxaPanel extends JPanel implements Exportable {
         }
 
 		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            switch(columnIndex) {
-                case 0: {
-                    options.taxonSets.get(rowIndex).setId(aValue.toString());
-                    setTaxonSetTitle();
-                    break;
-                }
-                case 1: {
-                    options.taxonSetsMono.set(rowIndex,  (Boolean)aValue);
-                    break;
-                }
-            }
-        }
+			switch(columnIndex) {
+				case 0: {
+					((Taxa)options.taxonSets.get(rowIndex)).setId(aValue.toString());
+					setTaxonSetTitle();
+					break;
+				}
+				case 1: {
+					if (((Boolean)aValue).booleanValue()) {
+						Taxa taxa = ((Taxa)options.taxonSets.get(rowIndex));
+						boolean isCompatible = true;
+						for (int i = 0; i < options.taxonSets.size(); i++) {
+							Taxa taxa2 = (Taxa)options.taxonSets.get(i);
+							if (isCompatible && taxa2 != taxa && ((Boolean)options.taxonSetsMono.get(i)).booleanValue()) {
+								if (!taxa.isSubset(taxa2) && !taxa2.isSubset(taxa)) {
+									JOptionPane.showMessageDialog(frame,
+											"You cannot enforce monophyly on this taxon set \n"+
+													"because it is not compatible with another taxon \n"+
+													"set, " + taxa2.getId() + ", for which monophyly is\n"+
+													"enforced.",
+											"Warning",
+											JOptionPane.WARNING_MESSAGE);
+									isCompatible = false;
+								}
+							}
+						}
+						if (isCompatible) {
+							options.taxonSetsMono.set(rowIndex, (Boolean)aValue);
+						}
+					} else {
+						options.taxonSetsMono.set(rowIndex, (Boolean)aValue);
+					}
+					break;
+				}
+			}
+		}
 
-        public boolean isCellEditable(int row, int col) {
+		public boolean isCellEditable(int row, int col) {
 			return true;
 		}
 
 		public String getColumnName(int column) {
 			switch(column) {
-                case 0: return "Taxon Sets";
-                case 1: return "Monophletic";
-            }
-            return null;
-        }
+				case 0: return "Taxon Sets";
+				case 1: return "Monophyletic?";
+			}
+			return null;
+		}
 
 		public Class getColumnClass(int c) {
-            return getValueAt(0, c).getClass();
-        }
+			return getValueAt(0, c).getClass();
+		}
 	}
 
-//    class TaxonSetsTableModel extends AbstractTableModel {
-//
-//		/**
-//		 *
-//		 */
-//		private static final long serialVersionUID = 3318461381525023153L;
-//
-//		public TaxonSetsTableModel() {
-//		}
-//
-//		public int getColumnCount() {
-//			return 1;
-//		}
-//
-//		public int getRowCount() {
-//			if (options == null) return 0;
-//			return options.taxonSets.size();
-//		}
-//
-//		public Object getValueAt(int row, int col) {
-//			return options.taxonSets.get(row).getId();
-//		}
-//
-//		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-//			options.taxonSets.get(rowIndex).setId(aValue.toString());
-//			setTaxonSetTitle();
-//		}
-//
-//		public boolean isCellEditable(int row, int col) {
-//			return true;
-//		}
-//
-//		public String getColumnName(int column) {
-//			return "Taxon Sets";
-//		}
-//
-//		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-//	}
-    JPanel createAddRemoveButtonPanel(Action addAction, Icon addIcon, String addToolTip,
+	private JPanel createAddRemoveButtonPanel(Action addAction, Icon addIcon, String addToolTip,
 	                                  Action removeAction, Icon removeIcon, String removeToolTip, int axis) {
 
 		JPanel buttonPanel = new JPanel();

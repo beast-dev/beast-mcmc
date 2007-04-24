@@ -199,7 +199,7 @@ public class BeastMC3 {
 				System.err.println("and tree height is extremely small or extremely large. Try to set");
 				System.err.println("initial values such that the product is similar to the average");
 				System.err.println("pairwise genetic distance between the sequences.");
-				System.err.println("For more information go to <http://evolve.zoo.ox.ac.uk/beast/help/>.");
+				System.err.println("For more information go to <http://beast.bio.ed.ac.uk/>.");
 
 			} else {
 
@@ -248,7 +248,7 @@ public class BeastMC3 {
 
 		System.out.println("|       Alexei Drummond and Andrew Rambaut      ||");
 		System.out.println("|              University of Oxford             ||");
-		System.out.println("|      http://evolve.zoo.ox.ac.uk/Beast/        ||");
+		System.out.println("|      http://beast.bio.ed.ac.uk/        ||");
 		System.out.println("\\-----------------------------------------------\\|");
 		System.out.println(" \\-----------------------------------------------\\");
 	}

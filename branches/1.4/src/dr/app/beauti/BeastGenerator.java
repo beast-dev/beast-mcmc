@@ -129,7 +129,7 @@ public class BeastGenerator extends BeautiOptions {
 		writer.writeComment("      by Alexei J. Drummond and Andrew Rambaut");
 		writer.writeComment("      Department of Computer Science, University of Auckland and");
 		writer.writeComment("      Institute of Evolutionary Biology, University of Edinburgh");
-		writer.writeComment("      http://evolve.zoo.ox.ac.uk/beast/");
+		writer.writeComment("      http://beast.bio.ed.ac.uk/");
 		writer.writeOpenTag("beast");
 		writer.writeText("");
 		writeTaxa(writer);

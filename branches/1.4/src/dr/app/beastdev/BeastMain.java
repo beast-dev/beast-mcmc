@@ -139,7 +139,7 @@ public class BeastMain {
                         "and tree height is extremely small or extremely large. Try to set\n" +
                         "initial values such that the product is similar to the average\n" +
                         "pairwise genetic distance between the sequences.\n" +
-                        "For more information go to <http://evolve.zoo.ox.ac.uk/beast/help/>.");
+                        "For more information go to <http://beast.bio.ed.ac.uk/>.");
 
             } else {
                 Logger.getLogger("dr.apps.beast").severe("Fatal exception (email the authors)");
@@ -181,7 +181,7 @@ public class BeastMain {
 
     public static void printHeader() {
         System.out.println("Downloads, Help & Resources:\n" +
-                "\thttp://evolve.zoo.ox.ac.uk/beast/\n" +
+                "\thttp://beast.bio.ed.ac.uk/\n" +
                 "\n" +
                 "Source code distributed under the GNU Lesser General Public License:\n" +
                 "\thttp://code.google.com/p/beast-mcmc/\n" +
@@ -268,7 +268,7 @@ public class BeastMain {
                     "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
                     "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
-                    "<p><a href=\"http://evolve.zoo.ox.ac.uk/beast/\">http://evolve.zoo.ox.ac.uk/beast/</a></p>" +
+                    "<p><a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                     "<p>Source code distributed under the GNU LGPL:<br>" +
                     "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
                     "<p>Additional programming by:<br>" +

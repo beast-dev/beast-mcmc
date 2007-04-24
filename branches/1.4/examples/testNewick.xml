@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes"?>
 <!-- $Id: testML.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
-<!-- Tests the strict clock -->
+<!-- Tests reading a newick tree as a starting tree -->
 
 <beast>
 
@@ -147,11 +147,9 @@
 		</populationSize>
 	</constantSize>
 
-	<!-- Generate a random starting tree under the coalescent process            -->
-	<coalescentTree id="startingTree">
-		<taxa idref="taxa"/>
-		<constantSize idref="constant"/>
-	</coalescentTree>
+	<newick id="startingTree">
+		(D4Thai63:55.32437087,((D4Indon76:5.36604663,((D4Tahiti85:7.89986557,(D4Tahiti79:1.80489258,(((D4Mexico84:3.45522865,(D4ElSal83:2.42795104,(D4NewCal81:0.12991995,D4Brazi82:1.12991995):0.29803109):0.02727761):1.08603531,D4ElSal94:14.54126396):0.20143443,D4PRico86:6.74269839):2.06219419):0.09497299):3.84375356,D4Indon77:3.74361913):2.62242750):49.30620542,((D4Philip56:1.13852879,(D4Philip84:26.11484231,D4Philip64:6.11484231):3.02368647):17.77127933,(D4SLanka78:23.27792880,(D4Thai84:11.80794106,D4Thai78:5.80794106):17.46998773):17.63187932):15.76244393):13.65211882);
+	</newick>
 
 	<treeModel id="treeModel">
 		<coalescentTree idref="startingTree"/>

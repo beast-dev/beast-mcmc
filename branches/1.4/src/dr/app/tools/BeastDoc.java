@@ -86,7 +86,7 @@ public class BeastDoc {
 
 		System.out.println("|       Alexei Drummond and Andrew Rambaut      ||");
 		System.out.println("|              University of Oxford             ||");
-		System.out.println("|      http://evolve.zoo.ox.ac.uk/beast/        ||");
+		System.out.println("|           http://beast.bio.ed.ac.uk/          ||");
 		System.out.println("\\-----------------------------------------------\\|");
 		System.out.println(" \\-----------------------------------------------\\");
 		System.out.println();

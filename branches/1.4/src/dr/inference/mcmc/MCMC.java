@@ -28,8 +28,7 @@ package dr.inference.mcmc;
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
+import dr.inference.model.*;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
@@ -50,7 +49,7 @@ import java.util.ArrayList;
  */
 public class MCMC implements Runnable, Identifiable {
 
-    public MCMC(String id) {
+	public MCMC(String id) {
 		this.id = id;
 	}
 
@@ -61,17 +60,17 @@ public class MCMC implements Runnable, Identifiable {
 	 * @param schedule operator schedule to be used in chain.
 	 */
 	public void init(
-		MCMCOptions options,
-		Likelihood likelihood,
-		Prior prior,
-		OperatorSchedule schedule,
-		Logger[] loggers) {
+			MCMCOptions options,
+			Likelihood likelihood,
+			Prior prior,
+			OperatorSchedule schedule,
+			Logger[] loggers) {
 
 		mc = new MarkovChain(prior, likelihood, schedule, new MCMCCriterion(), options.useCoercion());
 
 		this.options = options;
 		this.loggers = loggers;
-        this.schedule = schedule;
+		this.schedule = schedule;
 
 		//initialize transients
 		currentState = 0;
@@ -80,19 +79,19 @@ public class MCMC implements Runnable, Identifiable {
 		while ((getChainLength() / stepsPerReport) > 1000) {
 			stepsPerReport *= 2;
 		}
-    }
+	}
 
-    public MarkovChain getMarkovChain() {
-        return mc;
-    }
+	public MarkovChain getMarkovChain() {
+		return mc;
+	}
 
-    public Logger[] getLoggers() {
-        return loggers;
-    }
+	public Logger[] getLoggers() {
+		return loggers;
+	}
 
-    public MCMCOptions getOptions() {
-        return options;
-    }
+	public MCMCOptions getOptions() {
+		return options;
+	}
 
 	public OperatorSchedule getOperatorSchedule() {
 		return schedule;
@@ -180,95 +179,95 @@ public class MCMC implements Runnable, Identifiable {
 		int step = 0;
 	}
 
-    private MarkovChainListener chainListener = new MarkovChainListener() {
+	private MarkovChainListener chainListener = new MarkovChainListener() {
 
-        // MarkovChainListener interface *******************************************
-        // for receiving messages from subordinate MarkovChain
+		// MarkovChainListener interface *******************************************
+		// for receiving messages from subordinate MarkovChain
 
-        /**
-         * Called to update the current model keepEvery states.
-         */
-        public void currentState(int state, Model currentModel) {
+		/**
+		 * Called to update the current model keepEvery states.
+		 */
+		public void currentState(int state, Model currentModel) {
 
-            currentState = state;
+			currentState = state;
 
-            if (loggers != null) {
-                for (int i =0; i < loggers.length; i++) {
-                    loggers[i].log(state);
-                }
-            }
-        }
+			if (loggers != null) {
+				for (int i =0; i < loggers.length; i++) {
+					loggers[i].log(state);
+				}
+			}
+		}
 
-        /** Called when a new new best posterior state is found. */
-        public void bestState(int state, Model bestModel) {
-            currentState = state;
-        }
+		/** Called when a new new best posterior state is found. */
+		public void bestState(int state, Model bestModel) {
+			currentState = state;
+		}
 
-        /** cleans up when the chain finishes (possibly early). */
-        public void finished(int chainLength) {
-            currentState = chainLength;
+		/** cleans up when the chain finishes (possibly early). */
+		public void finished(int chainLength) {
+			currentState = chainLength;
 
-            if (loggers != null) {
-                for (int i =0; i < loggers.length; i++) {
-                    loggers[i].log(currentState);
-                    loggers[i].stopLogging();
-                }
-            }
+			if (loggers != null) {
+				for (int i =0; i < loggers.length; i++) {
+					loggers[i].log(currentState);
+					loggers[i].stopLogging();
+				}
+			}
 
-            if (showOperatorAnalysis) {
-                System.out.println();
-                System.out.println("Operator analysis");
-                System.out.println(
-                    formatter.formatToFieldWidth("Operator", 30) +
-                    formatter.formatToFieldWidth("", 8) +
-                    formatter.formatToFieldWidth("Pr(accept)", 11) +
-                    " Performance suggestion");
-                for (int i =0; i < schedule.getOperatorCount(); i++) {
+			if (showOperatorAnalysis) {
+				System.out.println();
+				System.out.println("Operator analysis");
+				System.out.println(
+						formatter.formatToFieldWidth("Operator", 30) +
+								formatter.formatToFieldWidth("", 8) +
+								formatter.formatToFieldWidth("Pr(accept)", 11) +
+								" Performance suggestion");
+				for (int i =0; i < schedule.getOperatorCount(); i++) {
 
-                    MCMCOperator op = schedule.getOperator(i);
-                    double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
-                    String message = "good";
-                    if (acceptanceProb < op.getMinimumGoodAcceptanceLevel()) {
-                        if (acceptanceProb < (op.getMinimumAcceptanceLevel()/10.0)) {
-                            message = "very low";
-                        } else if (acceptanceProb < op.getMinimumAcceptanceLevel()) {
-                            message = "low";
-                        } else message = "slightly low";
+					MCMCOperator op = schedule.getOperator(i);
+					double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
+					String message = "good";
+					if (acceptanceProb < op.getMinimumGoodAcceptanceLevel()) {
+						if (acceptanceProb < (op.getMinimumAcceptanceLevel()/10.0)) {
+							message = "very low";
+						} else if (acceptanceProb < op.getMinimumAcceptanceLevel()) {
+							message = "low";
+						} else message = "slightly low";
 
-                    } else if (acceptanceProb > op.getMaximumGoodAcceptanceLevel()) {
-                        double reallyHigh = 1.0 - ((1.0-op.getMaximumAcceptanceLevel())/10.0);
-                        if (acceptanceProb > reallyHigh) {
-                            message = "very high";
-                        } else if (acceptanceProb > op.getMaximumAcceptanceLevel()) {
-                            message = "high";
-                        } else message = "slightly high";
-                    }
+					} else if (acceptanceProb > op.getMaximumGoodAcceptanceLevel()) {
+						double reallyHigh = 1.0 - ((1.0-op.getMaximumAcceptanceLevel())/10.0);
+						if (acceptanceProb > reallyHigh) {
+							message = "very high";
+						} else if (acceptanceProb > op.getMaximumAcceptanceLevel()) {
+							message = "high";
+						} else message = "slightly high";
+					}
 
-                    String suggestion = op.getPerformanceSuggestion();
+					String suggestion = op.getPerformanceSuggestion();
 
-                    String pString = "        ";
-                    if (op instanceof CoercableMCMCOperator && ((CoercableMCMCOperator)op).getMode() != CoercableMCMCOperator.COERCION_OFF) {
-                        pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator)op).getRawParameter(), 3), 8);
-                    }
+					String pString = "        ";
+					if (op instanceof CoercableMCMCOperator && ((CoercableMCMCOperator)op).getMode() != CoercableMCMCOperator.COERCION_OFF) {
+						pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator)op).getRawParameter(), 3), 8);
+					}
 
-                    System.out.println(
-                        formatter.formatToFieldWidth(op.getOperatorName(), 30) +
+					System.out.println(
+							formatter.formatToFieldWidth(op.getOperatorName(), 30) +
 
-                        pString +
+									pString +
 
-                        formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) +
-                         " " + message + "\t" + suggestion);
-                }
-                System.out.println();
-            }
+									formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) +
+									" " + message + "\t" + suggestion);
+				}
+				System.out.println();
+			}
 
-            // How should premature finish be flagged?
-        }
+			// How should premature finish be flagged?
+		}
 
-    };
+	};
 
-    /** @return the prior of this MCMC analysis. */
-    public Prior getPrior() { return mc.getPrior(); }
+	/** @return the prior of this MCMC analysis. */
+	public Prior getPrior() { return mc.getPrior(); }
 
 	/** @return the likelihood function. */
 	public Likelihood getLikelihood() { return mc.getLikelihood(); }
@@ -324,9 +323,9 @@ public class MCMC implements Runnable, Identifiable {
 
 		public String getParserName() { return MCMC; }
 
-        /**
-         * @return a tree object based on the XML element it was passed.
-         */
+		/**
+		 * @return a tree object based on the XML element it was passed.
+		 */
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 			MCMC mcmc = new MCMC("mcmc1");
@@ -357,21 +356,27 @@ public class MCMC implements Runnable, Identifiable {
 			Logger[] loggerArray = new Logger[loggers.size()];
 			loggers.toArray(loggerArray);
 
-            java.util.logging.Logger.getLogger("dr.inference").info("Creating the MCMC chain:" +
-				"\n  chainLength=" + options.getChainLength() +
-                "\n  autoOptimize=" + options.useCoercion());
+			java.util.logging.Logger.getLogger("dr.inference").info("Creating the MCMC chain:" +
+					"\n  chainLength=" + options.getChainLength() +
+					"\n  autoOptimize=" + options.useCoercion());
 
 			mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, opsched, loggerArray);
 
-            MarkovChain mc = mcmc.getMarkovChain();
-            double initialScore = mc.getCurrentScore();
+			MarkovChain mc = mcmc.getMarkovChain();
+			double initialScore = mc.getCurrentScore();
 
-            if (initialScore == Double.NEGATIVE_INFINITY) {
-                throw new IllegalArgumentException("The initial model is invalid because it has zero likelihood!");
-            }
+			if (initialScore == Double.NEGATIVE_INFINITY) {
+				if (likelihood instanceof CompoundLikelihood) {
+					String message = ((CompoundLikelihood)likelihood).getDiagnosis();
+
+					throw new IllegalArgumentException("The initial posterior is zero: " + message);
+				} else {
+					throw new IllegalArgumentException("The initial posterior is zero!");
+				}
+			}
 
 
-            return mcmc;
+			return mcmc;
 		}
 
 		//************************************************************************
@@ -387,12 +392,12 @@ public class MCMC implements Runnable, Identifiable {
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newIntegerRule(CHAIN_LENGTH),
-			AttributeRule.newBooleanRule(COERCION, true),
-			AttributeRule.newIntegerRule(PRE_BURNIN, true),
-			new ElementRule(OperatorSchedule.class ),
-			new ElementRule(Likelihood.class ),
-			new ElementRule(Logger.class, 1, Integer.MAX_VALUE )
+				AttributeRule.newIntegerRule(CHAIN_LENGTH),
+				AttributeRule.newBooleanRule(COERCION, true),
+				AttributeRule.newIntegerRule(PRE_BURNIN, true),
+				new ElementRule(OperatorSchedule.class ),
+				new ElementRule(Likelihood.class ),
+				new ElementRule(Logger.class, 1, Integer.MAX_VALUE )
 		};
 
 	};
@@ -411,14 +416,14 @@ public class MCMC implements Runnable, Identifiable {
 	private int stepsPerReport = 1000;
 	private NumberFormatter formatter = new NumberFormatter(8);
 
-    /** this markov chain does most of the work. */
+	/** this markov chain does most of the work. */
 	private MarkovChain mc;
 
 	/** the options of this MCMC analysis */
 	private MCMCOptions options;
 
 	private Logger[] loggers;
-    private OperatorSchedule schedule;
+	private OperatorSchedule schedule;
 
 	private String id = null;
 

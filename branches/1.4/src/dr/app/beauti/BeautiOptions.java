@@ -116,6 +116,11 @@ public class BeautiOptions {
 		createParameter("siteModel3.mu", "relative rate parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("allMus", "All the relative rates");
 
+		// These are statistics which could have priors on...
+		createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
+		createStatistic("coefficientOfVariation", "The variation in rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
+		createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages", Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+
 		createOperator("constant.popSize", SCALE, 0.75, demoWeights);
 		createOperator("exponential.popSize", SCALE, 0.75, demoWeights);
 		createOperator("exponential.growthRate", RANDOM_WALK, 1.0, demoWeights);
@@ -201,6 +206,14 @@ public class BeautiOptions {
 
 	protected void createParameter(String name, String description) {
 		parameters.put(name, new Parameter(name, description));
+	}
+
+	protected void createStatistic(String name, String description, boolean isDiscrete) {
+		parameters.put(name, new Parameter(name, description, isDiscrete));
+	}
+
+	protected void createStatistic(String name, String description, double lower, double upper) {
+		parameters.put(name, new Parameter(name, description, lower, upper));
 	}
 
 	protected void createParameter(String name, String description, boolean isNodeHeight, double value, double lower, double upper) {
@@ -517,6 +530,11 @@ public class BeautiOptions {
 				params.add(statistic);
 			}
 		}
+		if (clockModel != STRICT_CLOCK) {
+			params.add(getParameter("meanRate"));
+			params.add(getParameter("coefficientOfVariation"));
+			params.add(getParameter("covariance"));
+ 		}
 	}
 
 	protected Parameter getParameter(String name) {
@@ -1297,6 +1315,23 @@ public class BeautiOptions {
 			this.initial = Double.NaN;
 			this.lower = Double.NaN;
 			this.upper = Double.NaN;
+		}
+
+		public Parameter(String name, String description, double lower, double upper) {
+			this.taxa = null;
+
+			this.name = name;
+			this.description = description;
+
+			this.isNodeHeight = false;
+			this.isStatistic = true;
+			this.isDiscrete = false;
+			this.priorType = UNIFORM_PRIOR;
+			this.scale = NONE;
+			this.priorEdited = false;
+			this.initial = Double.NaN;
+			this.lower = lower;
+			this.upper = upper;
 		}
 
 		public Parameter(String name, String description, boolean isNodeHeight,

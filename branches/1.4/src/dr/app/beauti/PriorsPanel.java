@@ -166,7 +166,7 @@ public class PriorsPanel extends JPanel implements Exportable {
 
 		JPanel panel = new JPanel(new BorderLayout(0,0));
 		panel.setOpaque(false);
-		panel.add(new JLabel("Priors for model parameters:"), BorderLayout.NORTH);
+		panel.add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);
 		panel.add(scrollPane, BorderLayout.CENTER);
 		panel.add(new JLabel("* Marked parameters currently have a default prior distribution. " +
 				"You could check that these are appropriate."), BorderLayout.SOUTH);
@@ -341,7 +341,7 @@ public class PriorsPanel extends JPanel implements Exportable {
 					buffer.append("Using Tree Prior");
 					break;
 				case BeautiOptions.UNIFORM_PRIOR:
-					if (!param.isDiscrete) {
+					if (!param.isDiscrete && !param.isStatistic) {
 						buffer.append("Uniform [");
 						buffer.append(formatter.format(param.uniformLower));
 						buffer.append(", ");

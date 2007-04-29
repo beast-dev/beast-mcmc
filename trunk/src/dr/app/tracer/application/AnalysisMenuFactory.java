@@ -7,8 +7,8 @@ import javax.swing.*;
 
 /**
  * @author rambaut
- *         Date: Feb 24, 2005
- *         Time: 5:12:11 PM
+ * Date: Feb 24, 2005
+ * Time: 5:12:11 PM
  */
 public class AnalysisMenuFactory implements MenuFactory {
 

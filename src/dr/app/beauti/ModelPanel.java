@@ -325,7 +325,6 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 		    default:
 			    throw new IllegalArgumentException("Unknown option for clock model");
 	    }
-
         setupPanel();
 
         settingOptions = false;
@@ -390,7 +389,6 @@ public class ModelPanel extends OptionsPanel implements Exportable {
             warningShown = true;
         }
 
-        options.clockModel = clockModelCombo.getSelectedIndex();
 	    switch (clockModelCombo.getSelectedIndex()) {
 		    case 0:
 			    options.clockModel = BeautiOptions.STRICT_CLOCK; break;
@@ -403,10 +401,10 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 		    default:
 			    throw new IllegalArgumentException("Unknown option for clock model");
 	    }
-
     }
 
     public JComponent getExportableComponent() {
+
         return this;
     }
 

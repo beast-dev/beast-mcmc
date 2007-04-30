@@ -542,7 +542,7 @@ public class TreeAnnotator {
                     "<p>Department of Computer Science, University of Auckland<br>" +
                     "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
                     "<p>Part of the BEAST package:<br>" +
-                    "<a href=\"http://evolve.zoo.ox.ac.uk/beast/\">http://evolve.zoo.ox.ac.uk/beast/</a></p>" +
+                    "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                     "</center></html>";
 
             ConsoleApplication consoleApp = new ConsoleApplication(nameString, aboutString, icon, true);

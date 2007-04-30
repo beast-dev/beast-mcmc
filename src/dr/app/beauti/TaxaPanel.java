@@ -631,7 +631,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 	}
 
 	private JPanel createAddRemoveButtonPanel(Action addAction, Icon addIcon, String addToolTip,
-	                                  Action removeAction, Icon removeIcon, String removeToolTip, int axis) {
+	                                          Action removeAction, Icon removeIcon, String removeToolTip, int axis) {
 
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, axis));

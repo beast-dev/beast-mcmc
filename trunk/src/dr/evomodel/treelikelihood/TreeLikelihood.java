@@ -83,7 +83,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             this.categoryCount = siteModel.getCategoryCount();
 
-            if (integrateAcrossCategories)	{
+            if (false)	{
+//            if (integrateAcrossCategories)	{
                 if (patternList.getDataType() instanceof dr.evolution.datatype.Nucleotides) {
 
 	                if (NativeNucleotideLikelihoodCore.isAvailable()) {
@@ -152,7 +153,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
-
     }
 
     // **************************************************************
@@ -392,7 +392,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
 
-            return new TreeLikelihood(patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling);
+            TreeLikelihood treeLikelihood = new TreeLikelihood(patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling);
+
+            return treeLikelihood;
         }
 
         //************************************************************************

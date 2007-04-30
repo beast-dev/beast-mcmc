@@ -89,11 +89,11 @@ public class BeautiApp extends MultiDocApplication {
                         "<p>Department of Computer Science, University of Auckland<br>" +
                         "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
                         "<p>Part of the BEAST package:<br>" +
-                        "<a href=\"http://evolve.zoo.ox.ac.uk/beast/\">http://evolve.zoo.ox.ac.uk/beast/</a></p>" +
+                        "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                         "</center></html>";
 
-                String websiteURLString = "http://evolve.zoo.ox.ac.uk/beast/";
-                String helpURLString = "http://evolve.zoo.ox.ac.uk/beast/help/BEAUti/";
+                String websiteURLString = "http://beast.bio.ed.ac.uk/";
+                String helpURLString = "http://beast.bio.ed.ac.uk/BEAUti/";
 
                 BeautiApp app = new BeautiApp(nameString, aboutString, icon,
                         websiteURLString, helpURLString);

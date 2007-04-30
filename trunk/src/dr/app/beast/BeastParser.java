@@ -36,6 +36,7 @@ import java.util.Iterator;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ *
  * @version $Id: BeastParser.java,v 1.76 2006/08/30 16:01:59 rambaut Exp $
  */
 public class BeastParser extends XMLParser {

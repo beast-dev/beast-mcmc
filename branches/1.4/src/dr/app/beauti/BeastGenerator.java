@@ -1747,15 +1747,35 @@ public class BeastGenerator extends BeautiOptions {
 	 * @param writer the writer
 	 */
 	private void writeScreenLog(XMLWriter writer) {
+        writer.writeOpenTag(Columns.COLUMN,
+                new Attribute[] {
+                        new Attribute.Default(Columns.LABEL, "Posterior"),
+                        new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
+                        new Attribute.Default(Columns.WIDTH, "12")
+                }
+        );
+        writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default("idref", "posterior"), true);
+        writer.writeCloseTag(Columns.COLUMN);
+
+        writer.writeOpenTag(Columns.COLUMN,
+                new Attribute[] {
+                        new Attribute.Default(Columns.LABEL, "Prior"),
+                        new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
+                        new Attribute.Default(Columns.WIDTH, "12")
+                }
+        );
+        writer.writeTag(CompoundLikelihood.PRIOR, new Attribute.Default("idref", "prior"), true);
+        writer.writeCloseTag(Columns.COLUMN);
+
 		if (alignment != null) {
 			writer.writeOpenTag(Columns.COLUMN,
 					new Attribute[] {
-							new Attribute.Default(Columns.LABEL, "Posterior"),
+							new Attribute.Default(Columns.LABEL, "Likelihood"),
 							new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
 							new Attribute.Default(Columns.WIDTH, "12")
 					}
 			);
-			writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default("idref","posterior"), true);
+			writer.writeTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default("idref","likelihood"), true);
 			writer.writeCloseTag(Columns.COLUMN);
 		}
 
@@ -1769,78 +1789,93 @@ public class BeastGenerator extends BeautiOptions {
 		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","treeModel.rootHeight"), true);
 		writer.writeCloseTag(Columns.COLUMN);
 
+        writer.writeOpenTag(Columns.COLUMN,
+                new Attribute[] {
+                        new Attribute.Default(Columns.LABEL, "Rate"),
+                        new Attribute.Default(Columns.SIGNIFICANT_FIGURES, "6"),
+                        new Attribute.Default(Columns.WIDTH, "12")
+                }
+        );
+        if (clockModel == STRICT_CLOCK) {
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","clock.rate"), true);
+        } else {
+            writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default("idref","meanRate"), true);
+        }
+        writer.writeCloseTag(Columns.COLUMN);
 
-		if (alignment != null) {
-			boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
-			if (nucs && codonHeteroPattern != null) {
-				if (codonHeteroPattern.equals("112")) {
-					writer.writeOpenTag(Columns.COLUMN,
-							new Attribute[] {
-									new Attribute.Default(Columns.LABEL, "L(codon pos 1+2)"),
-									new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
-									new Attribute.Default(Columns.WIDTH, "12")
-							}
-					);
-					writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood1"), true);
-					writer.writeCloseTag(Columns.COLUMN);
-					writer.writeOpenTag(Columns.COLUMN,
-							new Attribute[] {
-									new Attribute.Default(Columns.LABEL, "L(codon pos 3)"),
-									new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
-									new Attribute.Default(Columns.WIDTH, "12")
-							}
-					);
-					writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood2"), true);
-					writer.writeCloseTag(Columns.COLUMN);
-				} else if (codonHeteroPattern.equals("123")) {
-					for (int i =1; i <= 3; i++) {
-						writer.writeOpenTag(Columns.COLUMN,
-								new Attribute[] {
-										new Attribute.Default(Columns.LABEL, "L(codon pos "+i+")"),
-										new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
-										new Attribute.Default(Columns.WIDTH, "12")
-								}
-						);
-						writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood" + i), true);
-						writer.writeCloseTag(Columns.COLUMN);
-					}
-				}
-			} else {
-				writer.writeOpenTag(Columns.COLUMN,
-						new Attribute[] {
-								new Attribute.Default(Columns.LABEL, "L(tree)"),
-								new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
-								new Attribute.Default(Columns.WIDTH, "12")
-						}
-				);
-				writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood"), true);
-				writer.writeCloseTag(Columns.COLUMN);
-			}
-		}
-		if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
-			writer.writeOpenTag(Columns.COLUMN,
-					new Attribute[] {
-							new Attribute.Default(Columns.LABEL, "L(speciation)"),
-							new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
-							new Attribute.Default(Columns.WIDTH, "12")
-					}
-			);
-			writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default("idref", "speciation"), true);
-		} else {
-			writer.writeOpenTag(Columns.COLUMN,
-					new Attribute[] {
-							new Attribute.Default(Columns.LABEL, "L(coalecent)"),
-							new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
-							new Attribute.Default(Columns.WIDTH, "12")
-					}
-			);
-			if (nodeHeightPrior == SKYLINE) {
-				writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default("idref", "skyline"), true);
-			} else {
-				writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref","coalescent"), true);
-			}
-		}
-		writer.writeCloseTag(Columns.COLUMN);
+
+        // I think this is too much info for the screen - it is all in the log file.
+//		if (alignment != null) {
+//			boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
+//			if (nucs && codonHeteroPattern != null) {
+//				if (codonHeteroPattern.equals("112")) {
+//					writer.writeOpenTag(Columns.COLUMN,
+//							new Attribute[] {
+//									new Attribute.Default(Columns.LABEL, "L(codon pos 1+2)"),
+//									new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
+//									new Attribute.Default(Columns.WIDTH, "12")
+//							}
+//					);
+//					writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood1"), true);
+//					writer.writeCloseTag(Columns.COLUMN);
+//					writer.writeOpenTag(Columns.COLUMN,
+//							new Attribute[] {
+//									new Attribute.Default(Columns.LABEL, "L(codon pos 3)"),
+//									new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
+//									new Attribute.Default(Columns.WIDTH, "12")
+//							}
+//					);
+//					writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood2"), true);
+//					writer.writeCloseTag(Columns.COLUMN);
+//				} else if (codonHeteroPattern.equals("123")) {
+//					for (int i =1; i <= 3; i++) {
+//						writer.writeOpenTag(Columns.COLUMN,
+//								new Attribute[] {
+//										new Attribute.Default(Columns.LABEL, "L(codon pos "+i+")"),
+//										new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
+//										new Attribute.Default(Columns.WIDTH, "12")
+//								}
+//						);
+//						writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood" + i), true);
+//						writer.writeCloseTag(Columns.COLUMN);
+//					}
+//				}
+//			} else {
+//				writer.writeOpenTag(Columns.COLUMN,
+//						new Attribute[] {
+//								new Attribute.Default(Columns.LABEL, "L(tree)"),
+//								new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
+//								new Attribute.Default(Columns.WIDTH, "12")
+//						}
+//				);
+//				writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood"), true);
+//				writer.writeCloseTag(Columns.COLUMN);
+//			}
+//		}
+//		if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
+//			writer.writeOpenTag(Columns.COLUMN,
+//					new Attribute[] {
+//							new Attribute.Default(Columns.LABEL, "L(speciation)"),
+//							new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
+//							new Attribute.Default(Columns.WIDTH, "12")
+//					}
+//			);
+//			writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default("idref", "speciation"), true);
+//		} else {
+//			writer.writeOpenTag(Columns.COLUMN,
+//					new Attribute[] {
+//							new Attribute.Default(Columns.LABEL, "L(coalecent)"),
+//							new Attribute.Default(Columns.DECIMAL_PLACES, "4"),
+//							new Attribute.Default(Columns.WIDTH, "12")
+//					}
+//			);
+//			if (nodeHeightPrior == SKYLINE) {
+//				writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default("idref", "skyline"), true);
+//			} else {
+//				writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref","coalescent"), true);
+//			}
+//		}
+//		writer.writeCloseTag(Columns.COLUMN);
 
 	}
 
@@ -1849,10 +1884,10 @@ public class BeastGenerator extends BeautiOptions {
 	 * @param writer the writer
 	 */
 	private void writeLog(XMLWriter writer) {
+        writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default("idref","posterior"), true);
+        writer.writeTag(CompoundLikelihood.PRIOR, new Attribute.Default("idref","prior"), true);
 		if (alignment != null) {
-			writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default("idref","posterior"), true);
-		} else {
-			writer.writeTag(CompoundLikelihood.PRIOR, new Attribute.Default("idref","prior"), true);
+			writer.writeTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default("idref","likelihood"), true);
 		}
 
 		// As of v1.4.2, always write the rate parameter even if fixed...
@@ -1993,6 +2028,7 @@ public class BeastGenerator extends BeautiOptions {
 		} else {
 			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref","coalescent"), true);
 		}
+
 
 	}
 

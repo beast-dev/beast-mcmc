@@ -124,7 +124,8 @@ public class BeastMain {
 		} catch (dr.xml.XMLParseException pxe) {
 			if (pxe.getMessage() != null && pxe.getMessage().equals("Unknown root document element, beauti")) {
 				Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
-				Logger.getLogger("dr.apps.beast").severe("The file you just tried to run in BEAST is actually a BEAUti document.\n" +
+				Logger.getLogger("dr.apps.beast").severe(
+                        "The file you just tried to run in BEAST is actually a BEAUti document.\n" +
 						"Although this uses XML, it is not a format that BEAST understands.\n" +
 						"These files are used by BEAUti to save and load your settings so that\n" +
 						"you can go back and alter them. To generate a BEAST file you must\n" +
@@ -140,9 +141,16 @@ public class BeastMain {
 			if (rex.getMessage() != null && rex.getMessage().startsWith("The initial posterior is zero")) {
 				Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
 				Logger.getLogger("dr.apps.beast").severe(
-						"The initial model is invalid because state has a zero probability.\n" +
-								"This may be due to a number of reasons. The individual components\n" + "" +
-								"of the posterior are as follows:\n" +
+						        "The initial model is invalid because state has a zero probability.\n\n" +
+								"If the log likelihood of the tree is -Inf, his may be because the\n" +
+                                "initial, random tree is so large that it has an extremely bad\n" +
+                                "likelihood which is being rounded to zero.\n\n" +
+                                "Alternatively, it may be that the product of starting mutation rate\n" +
+                                "and tree height is extremely small or extremely large. \n\n" +
+                                "Finally, it may be that the initial state is incompatible with\n" +
+                                "one or more 'hard' constraints (on monophyly or bounds on parameter\n" +
+                                "values. This will result in Priors with zero probability.\n\n" +
+                                "The individual components of the posterior are as follows:\n" +
 								rex.getMessage() + "\n" +
 								"For more information go to <http://beast.bio.ed.ac.uk/>.");
 

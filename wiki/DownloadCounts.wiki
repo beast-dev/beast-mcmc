@@ -13,11 +13,12 @@ The http://evolve.zoo.ox.ac.uk/beast/ web site has now been closed down and the 
 || v1.4 || 1328 ||
 
 == Last version: v1.4.1==
-Since 9th February 2007. 
 || Mac OS X || 547 ||
 || Windows || 1094 ||
 || Linux/UNIX || 256 ||
 || Total || 1897 ||
+
+The download counts for the current version (v1.4.2) can be found here: http://code.google.com/p/beast-mcmc/downloads/list - this version was posted on the 1st May 2007
 
 _prior to version 1.1.1, OS X version was the same as the UNIX/Linux_
 

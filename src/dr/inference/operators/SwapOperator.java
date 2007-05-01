@@ -39,6 +39,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
+ * @version $Id: SwapOperator.java,v 1.10 2005/06/14 10:40:34 rambaut Exp $
  */
 public class SwapOperator extends SimpleMCMCOperator {
 
@@ -53,9 +54,9 @@ public class SwapOperator extends SimpleMCMCOperator {
         }
 
         int dimension = parameter.getDimension();
-        List<Integer> list = new ArrayList<Integer>();
+        ArrayList list = new ArrayList();
         for (int i = 0; i < dimension; i++) {
-            list.add(i);
+            list.add(new Integer(i));
         }
         masterList = Collections.unmodifiableList(list);
 	}
@@ -68,12 +69,12 @@ public class SwapOperator extends SimpleMCMCOperator {
 	 */
 	public final double doOperation() {
 
-        List<Integer> allIndices = new ArrayList<Integer>(masterList);
+        ArrayList allIndices = new ArrayList(masterList);
         int left, right;
 
         for (int i = 0; i < size; i++) {
-            left = allIndices.remove(MathUtils.nextInt(allIndices.size()));
-            right = allIndices.remove(MathUtils.nextInt(allIndices.size()));
+            left = ((Integer)allIndices.remove(MathUtils.nextInt(allIndices.size()))).intValue();
+            right = ((Integer)allIndices.remove(MathUtils.nextInt(allIndices.size()))).intValue();
             double value1 = parameter.getParameterValue(left);
             double value2 = parameter.getParameterValue(right);
             parameter.setParameterValue(left, value2);
@@ -134,5 +135,5 @@ public class SwapOperator extends SimpleMCMCOperator {
 	//PRIVATE STUFF
 	
 	private Parameter parameter = null;
-    private List<Integer> masterList = null;
+    private List masterList = null;
 }

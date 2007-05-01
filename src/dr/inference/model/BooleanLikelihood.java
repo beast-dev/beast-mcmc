@@ -52,7 +52,7 @@ public class BooleanLikelihood extends Likelihood.Abstract {
 	 */
 	public void addData(BooleanStatistic data) { dataList.add(data); }
 
-	protected ArrayList<BooleanStatistic> dataList = new ArrayList<BooleanStatistic>();
+	protected ArrayList dataList = new ArrayList();
 
 	// **************************************************************
     // Likelihood IMPLEMENTATION
@@ -81,14 +81,15 @@ public class BooleanLikelihood extends Likelihood.Abstract {
 
 	public boolean getBooleanState() {
 
-        for (BooleanStatistic statistic : dataList) {
-            for (int j = 0; j < statistic.getDimension(); j++) {
-                if (!statistic.getBoolean(j)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+		for (int i = 0; i < dataList.size(); i++) {
+			BooleanStatistic statistic = (BooleanStatistic)dataList.get(i);
+			for (int j = 0; j < statistic.getDimension(); j++) {
+				if (!statistic.getBoolean(j)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

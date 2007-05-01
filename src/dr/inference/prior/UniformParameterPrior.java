@@ -66,23 +66,23 @@ public class UniformParameterPrior extends AbstractParameterPrior {
 	
 	public String toString() {
 		
-		StringBuilder buffer = new StringBuilder();
+		StringBuffer buffer = new StringBuffer();
 		if (lower == -Double.MAX_VALUE) {
-            buffer.append("(").append(formatter.format(Double.NEGATIVE_INFINITY).trim());
+			buffer.append("("+formatter.format(Double.NEGATIVE_INFINITY).trim());
 		} else if (lower == Double.MIN_VALUE) {
-            buffer.append("(").append(formatter.format(0.0).trim());
+			buffer.append("("+formatter.format(0.0).trim());
 		} else {
-            buffer.append("[").append(formatter.format(lower).trim());
+			buffer.append("["+formatter.format(lower).trim());
 		}
 		
 		buffer.append(", ");
 		
 		if (upper == Double.MAX_VALUE) {
-            buffer.append(formatter.format(Double.POSITIVE_INFINITY).trim()).append(")");
+			buffer.append(formatter.format(Double.POSITIVE_INFINITY).trim()+")");
 		} else if (upper == -Double.MIN_VALUE) {
-            buffer.append(formatter.format(0.0).trim()).append(")");
+			buffer.append(formatter.format(0.0).trim()+")");
 		} else {
-            buffer.append(formatter.format(upper).trim()).append("]");
+			buffer.append(formatter.format(upper).trim()+"]");
 		}
 	
 		return buffer.toString();

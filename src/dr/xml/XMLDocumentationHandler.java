@@ -27,9 +27,7 @@ package dr.xml;
 
 import dr.math.MathUtils;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.*;
 
 public class XMLDocumentationHandler {
@@ -371,7 +369,7 @@ public class XMLDocumentationHandler {
 			Set set = (Set)table.get(key);
 
 			if (set != null) {
-				set.add(o);
+			    set.add(o);
 			} else {
 				TreeSet newSet = new TreeSet();
 				newSet.add(o);

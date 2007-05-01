@@ -569,12 +569,12 @@ public class TaxaPanel extends JPanel implements Exportable {
 		}
 
 		public Object getValueAt(int row, int col) {
-            switch(col) {
-                case 0: return options.taxonSets.get(row).getId();
-                case 1: return options.taxonSetsMono.get(row);
-            }
-            return null;
-        }
+			switch(col) {
+				case 0: return ((Taxa)options.taxonSets.get(row)).getId();
+				case 1: return options.taxonSetsMono.get(row);
+			}
+			return null;
+		}
 
 		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 			switch(columnIndex) {

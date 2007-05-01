@@ -169,7 +169,7 @@ public class Coalescent implements MultivariateFunction, Units {
 	 * Sets the units these coalescent intervals are 
 	 * measured in.
 	 */
-	public final void setUnits(Type u)
+	public final void setUnits(int u)
 	{
 		demographicFunction.setUnits(u);
 	}
@@ -178,7 +178,7 @@ public class Coalescent implements MultivariateFunction, Units {
 	 * Returns the units these coalescent intervals are 
 	 * measured in.
 	 */
-	public final Type getUnits()
+	public final int getUnits()
 	{
 		return demographicFunction.getUnits();
 	}

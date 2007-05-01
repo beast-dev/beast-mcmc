@@ -25,8 +25,6 @@
 
 package dr.evolution.tree;
 
-import dr.evomodel.tree.TreeModel;
-
 /**
  * Date: Dec 13, 2004
  * Time: 1:59:24 PM

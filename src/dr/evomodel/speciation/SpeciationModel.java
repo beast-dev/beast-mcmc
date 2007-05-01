@@ -38,7 +38,7 @@ import dr.inference.model.Parameter;
  */
 public abstract class SpeciationModel extends AbstractModel implements Units {
 
-	public SpeciationModel(String name, Type units) { 
+	public SpeciationModel(String name, int units) { 
 		super(name); 
 		setUnits(units);
 	}
@@ -76,14 +76,14 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 	/**
 	 * Units in which population size is measured.
 	 */
-	private Type units;
+	private int units;
 
 	/**
 	 * sets units of measurement.
 	 *
 	 * @param u units
 	 */
-	public void setUnits(Type u)
+	public void setUnits(int u)
 	{
 		units = u;
 	}
@@ -91,7 +91,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 	/**
 	 * returns units of measurement.
 	 */
-	public Type getUnits()
+	public int getUnits()
 	{
 		return units;
 	}

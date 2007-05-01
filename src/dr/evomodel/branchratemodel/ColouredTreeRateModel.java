@@ -46,7 +46,8 @@ import java.util.logging.Logger;
  * @version $Id: ColouredTreeRateModel.java,v 1.2 2006/01/10 16:48:27 rambaut Exp $
  */
 public class ColouredTreeRateModel extends AbstractModel implements BranchRateModel  {
-	public static final String COLOURED_TREE_RATE_MODEL = "colouredTreeRateModel";
+
+    public static final String COLOURED_TREE_RATE_MODEL = "colouredTreeRateModel";
     public static final String SUBSTITUTION_RATES = "substitutionRates";
 
     private final ColourSamplerModel colourSamplerModel;
@@ -107,14 +108,6 @@ public class ColouredTreeRateModel extends AbstractModel implements BranchRateMo
 
         return rates[node.getNumber()];
     }
-
-	public String getBranchAttributeLabel() {
-		return "rate";
-	}
-
-	public String getAttributeForBranch(Tree tree, NodeRef node) {
-		return Double.toString(getBranchRate(tree, node));
-	}
 
     /**
      * Traverse the tree calculating rates.

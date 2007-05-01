@@ -57,7 +57,7 @@ public class TwoEpochDemographicModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings.
 	 */
-	public TwoEpochDemographicModel( DemographicModel demo1, DemographicModel demo2, Parameter transitionTimeParameter, Type units) {
+	public TwoEpochDemographicModel( DemographicModel demo1, DemographicModel demo2, Parameter transitionTimeParameter, int units) {
 	
 		this(TWO_EPOCH_MODEL, demo1, demo2, transitionTimeParameter, units);
 	}
@@ -65,7 +65,7 @@ public class TwoEpochDemographicModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings.
 	 */
-	public TwoEpochDemographicModel(String name, DemographicModel demo1, DemographicModel demo2, Parameter transitionTimeParameter, Type units) {
+	public TwoEpochDemographicModel(String name, DemographicModel demo1, DemographicModel demo2, Parameter transitionTimeParameter, int units) {
 	
 		super(name);
 
@@ -107,7 +107,7 @@ public class TwoEpochDemographicModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			Type units = XMLParser.Utils.getUnitsAttr(xo);
+			int units = XMLParser.Utils.getUnitsAttr(xo);
 			
 			XMLObject cxo = (XMLObject)xo.getChild(EPOCH_1);
 			DemographicModel demo1 = (DemographicModel)cxo.getChild(DemographicModel.class);

@@ -71,7 +71,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
     /**
      * Construct model with default settings
      */
-    public TransmissionHistoryModel(Type units) {
+    public TransmissionHistoryModel(int units) {
 
         this(TRANSMISSION_HISTORY_MODEL, units);
     }
@@ -79,7 +79,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
     /**
      * Construct model with default settings
      */
-    public TransmissionHistoryModel(String name, Type units) {
+    public TransmissionHistoryModel(String name, int units) {
 
         super(name);
 
@@ -161,7 +161,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
      * Sets the units these coalescent intervals are
      * measured in.
      */
-    public final void setUnits(Type u)
+    public final void setUnits(int u)
     {
         units = u;
     }
@@ -170,12 +170,12 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
      * Returns the units these coalescent intervals are
      * measured in.
      */
-    public final Type getUnits()
+    public final int getUnits()
     {
         return units;
     }
 
-    private Type units;
+    private int units;
 
     /**
      * Parses an element from an DOM document into a ExponentialGrowth.
@@ -186,7 +186,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Type units = XMLParser.Utils.getUnitsAttr(xo);
+            int units = XMLParser.Utils.getUnitsAttr(xo);
 
             TransmissionHistoryModel history = new TransmissionHistoryModel(units);
 

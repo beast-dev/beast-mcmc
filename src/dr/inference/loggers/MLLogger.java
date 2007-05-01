@@ -50,6 +50,9 @@ public class MLLogger extends MCLogger {
 	private String[] bestValues = null;
 	private int logEvery = 0;
 
+	/**
+	 * Constructor
+	 */
 	public MLLogger(Likelihood likelihood, LogFormatter formatter, int logEvery) {
 
 		super(formatter, logEvery);
@@ -121,25 +124,24 @@ public class MLLogger extends MCLogger {
 	}
 
 	public void stopLogging() {
-        final int columnCount = getColumnCount();
-        String[] values = new String[columnCount + 2];
+		String[] values = new String[getColumnCount() + 2];
 
 		values[0] = Integer.toString(bestState);
 		values[1] = Double.toString(bestLikelihood);
 
-		for (int i = 0; i < columnCount; i++) {
+		for (int i = 0; i < getColumnCount(); i++) {
 			values[i+2] = bestValues[i];
 		}
 
 		if (logEvery > 0) {
 			logValues(values);
 		} else {
-			String[] labels = new String[columnCount + 2];
+			String[] labels = new String[getColumnCount() + 2];
 
 			labels[0] = "state";
 			labels[1] = "ML";
 
-			for (int i = 0; i < columnCount; i++) {
+			for (int i = 0; i < getColumnCount(); i++) {
 				labels[i+2] = getColumnLabel(i);
 			}
 
@@ -150,7 +152,7 @@ public class MLLogger extends MCLogger {
 		super.stopLogging();
 	}
 
-	public static LoggerParser ML_LOGGER_PARSER = new MCLogger.LoggerParser() {
+	public static XMLObjectParser ML_LOGGER_PARSER = new MCLogger.LoggerParser() {
 
 		public String getParserName() { return LOG_ML; }
 
@@ -165,30 +167,28 @@ public class MLLogger extends MCLogger {
 				logEvery = xo.getIntegerAttribute(LOG_EVERY);
 			}
 
-            PrintWriter pw = getLogFile(xo, getParserName());
-            
-//			PrintWriter pw = null;
-//
-//			if (xo.hasAttribute(FILE_NAME)) {
-//
-//				String fileName = xo.getStringAttribute(FILE_NAME);
-//				try {
-//					File file = new File(fileName);
-//					String name = file.getName();
-//					String parent = file.getParent();
-//
-//					if (!file.isAbsolute()) {
-//						parent = System.getProperty("user.dir");
-//					}
-//
-//					pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
-//				} catch (FileNotFoundException fnfe) {
-//					throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
-//				}
-//
-//			} else {
-//				pw = new PrintWriter(System.out);
-//			}
+			PrintWriter pw = null;
+
+			if (xo.hasAttribute(FILE_NAME)) {
+
+				String fileName = xo.getStringAttribute(FILE_NAME);
+				try {
+					File file = new File(fileName);
+					String name = file.getName();
+					String parent = file.getParent();
+
+					if (!file.isAbsolute()) {
+						parent = System.getProperty("user.dir");
+					}
+
+					pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
+				} catch (FileNotFoundException fnfe) {
+					throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+				}
+
+			} else {
+				pw = new PrintWriter(System.out);
+			}
 
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 

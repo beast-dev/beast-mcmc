@@ -77,7 +77,7 @@ public class SkylineLikelihood extends CoalescentLikelihood {
 	 */
 	public double calculateLogLikelihood() {
 		
-		if (!intervalsKnown) setupIntervals();
+		if (intervalsKnown == false) setupIntervals();
 		
 		double logL = 0.0;
 		
@@ -85,7 +85,7 @@ public class SkylineLikelihood extends CoalescentLikelihood {
 		
 		int popIndex=0;
 	
-		ConstantPopulation cp = new ConstantPopulation(Units.Type.YEARS);
+		ConstantPopulation cp = new ConstantPopulation(Units.YEARS);
 	
 		for (int j = 0; j < intervalCount; j++) {
 		

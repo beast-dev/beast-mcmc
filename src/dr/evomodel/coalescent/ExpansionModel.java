@@ -57,7 +57,7 @@ public class ExpansionModel extends DemographicModel
 	 * Construct demographic model with default settings
 	 */
 	public ExpansionModel(Parameter N0Parameter, Parameter N1Parameter, 
-									Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
+									Parameter growthRateParameter, int units, boolean usingGrowthRate) {
 	
 		this(EXPANSION_MODEL, N0Parameter, N1Parameter, growthRateParameter, units, usingGrowthRate);
 	}
@@ -66,7 +66,7 @@ public class ExpansionModel extends DemographicModel
 	 * Construct demographic model with default settings
 	 */
 	public ExpansionModel(String name, Parameter N0Parameter, Parameter N1Parameter, 
-									Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
+									Parameter growthRateParameter, int units, boolean usingGrowthRate) {
 	
 		super(name);
 		
@@ -121,7 +121,7 @@ public class ExpansionModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			Type units = XMLParser.Utils.getUnitsAttr(xo);
+			int units = XMLParser.Utils.getUnitsAttr(xo);
 				
 			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);

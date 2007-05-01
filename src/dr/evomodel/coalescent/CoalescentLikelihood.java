@@ -105,15 +105,13 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
     // **************************************************************
 
 	/**
-	 * @return the node ref of the MRCA of this coalescent prior in the given tree (i.e. root of tree)
-     * @param tree given tree
+	 * @return the node ref of the MRCA of this coalescent prior in the given tree.
 	 */
 	public NodeRef getMRCAOfCoalescent(Tree tree) { return tree.getRoot(); }
 
 	/**
 	 * @return an array of noderefs that represent the MRCAs of subtrees to exclude from coalescent prior.
 	 * May return null if no subtrees should be excluded.
-     * @param tree given tree
 	 */
 	public NodeRef[] getExcludedMRCAs(Tree tree) { return null; }
 
@@ -121,7 +119,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
+	protected final void handleModelChangedEvent(Model model, Object object, int index) {
 		if (model == tree) {
 			// treeModel has changed so recalculate the intervals
 			intervalsKnown = false;
@@ -136,7 +134,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-	protected  void handleParameterChangedEvent(Parameter parameter, int index) { } // No parameters to respond to
+	protected final void handleParameterChangedEvent(Parameter parameter, int index) { } // No parameters to respond to
 
 	// **************************************************************
     // Model IMPLEMENTATION
@@ -145,7 +143,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	/**
 	 * Stores the precalculated state: in this case the intervals
 	 */
-	protected void storeState() {
+	protected final void storeState() {
 		System.arraycopy(intervals, 0, storedIntervals, 0, intervals.length);
 		System.arraycopy(lineageCounts, 0, storedLineageCounts, 0, lineageCounts.length);
 		storedIntervalsKnown = intervalsKnown;
@@ -157,7 +155,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	/**
 	 * Restores the precalculated state: that is the intervals of the tree.
 	 */
-	protected  void restoreState() {
+	protected final void restoreState() {
 		System.arraycopy(storedIntervals, 0, intervals, 0, storedIntervals.length);
 		System.arraycopy(storedLineageCounts, 0, lineageCounts, 0, storedLineageCounts.length);
 		intervalsKnown = storedIntervalsKnown;
@@ -174,8 +172,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 
 	/**
 	 * Adopt the state of the model from source.
-     * @param source
-     */
+	 */
 	protected final void adoptState(Model source) {
 		// all we need to do is force a recalculation of intervals
 		makeDirty();
@@ -201,12 +198,12 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	}
 
 	/**
-     * @return the log likelihood of this set of coalescent intervals,
-	 * given a demographic model
-     */
+	 * Calculates the log likelihood of this set of coalescent intervals,
+	 * given a demographic model.
+	 */
 	public double calculateLogLikelihood() {
 
-		if (!intervalsKnown) setupIntervals();
+		if (intervalsKnown == false) setupIntervals();
 
 		if (demoModel == null) return calculateAnalyticalLogLikelihood();
 
@@ -233,19 +230,19 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 		return logL;
 	}
 
-	private double calculateAnalyticalLogLikelihood() {
+	private final double calculateAnalyticalLogLikelihood() {
 
-		final double lambda = getLambda();
-		final int n = tree.getExternalNodeCount();
+		double lambda = getLambda();
+		int n = tree.getExternalNodeCount();
+
+		double logL = 0.0;
 
 		// assumes a 1/theta prior
 		//logLikelihood = Math.log(1.0/Math.pow(lambda,n));
 
 		// assumes a flat prior
-		//double logL = Math.log(1.0/Math.pow(lambda,n-1));
-        //final double logL = - Math.log(Math.pow(lambda,n-1));
-        final double logL = - (n-1) * Math.log(lambda);
-        return logL;
+		logL = Math.log(1.0/Math.pow(lambda,n-1));
+		return logL;
 	}
 
 	/**
@@ -257,35 +254,20 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	}
 
 	/**
-     * k - number of lineages
-     * N - population size
-     * kingsman coalescent: interval to next coalescent event x ~ exp(lambda), where lambda = C(k,2) / N
-     * Like(lambda) = lambda * exp(-lambda * x)
-     * so Like(N) = (C(k,2)/N) * exp(- x * C(k,2)/N)
-     * lg(Like(N)) = lg(C(k,2)) - lg(N) -C(k,2) * x/N
-     *
-     * Now for N=N(t)  x/N is int_x(1/N), so all I am missing is the  lg(C(k,2)). I assume it sums up to a
-     * constant size over all intervals for every tree but not sure how (unless all tips are isochronic). 
-     *
-     * @return likelihood of a given interval,coalescent or otherwise
-     * @param demogFunction
-     * @param width
-     * @param timeOfPrevCoal
-     * @param lineageCount
-     * @param type
-     */
-	public final double calculateIntervalLikelihood(DemographicFunction demogFunction,
-                                                    double width, double timeOfPrevCoal, int lineageCount, int type)
+	 * Returns the likelihood of a given interval,coalescent or otherwise.
+	 */
+	public final double calculateIntervalLikelihood(DemographicFunction demoFunction, double width, double timeOfPrevCoal,
+												int lineageCount, int type)
 	{
 		//binom.setMax(lineageCount);
 
-		final double timeOfThisCoal = width + timeOfPrevCoal;
+		double timeOfThisCoal = width + timeOfPrevCoal;
 
-		final double intervalArea = demogFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
+		double intervalArea = demoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
 		double like = 0;
 		switch (type) {
 			case COALESCENT:
-				like = - Math.log(demogFunction.getDemographic(timeOfThisCoal)) -
+				like = - Math.log(demoFunction.getDemographic(timeOfThisCoal)) -
 								(Binomial.choose2(lineageCount)*intervalArea);
 				break;
 			case NEW_SAMPLE:
@@ -297,11 +279,11 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	}
 
 	/**
-	 * @return a factor lambda such that the likelihood can be expressed as
+	 * Returns a factor lambda such that the likelihood can be expressed as
 	 * 1/theta^(n-1) * exp(-lambda/theta). This allows theta to be integrated
 	 * out analytically. :-)
 	 */
-	private double getLambda() {
+	private final double getLambda() {
 		double lambda = 0.0;
 		for (int i= 0; i < getIntervalCount(); i++) {
 			lambda += (intervals[i] * lineageCounts[i]);
@@ -318,8 +300,8 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 
 		double MULTIFURCATION_LIMIT = 1e-9;
 
-		ArrayList<ComparableDouble> times = new ArrayList<ComparableDouble>();
-		ArrayList<Integer> childs = new ArrayList<Integer>();
+		ArrayList times = new ArrayList();
+		ArrayList childs = new ArrayList();
 		collectAllTimes(tree, getMRCAOfCoalescent(tree), getExcludedMRCAs(tree), times, childs);
 		int[] indices = new int[times.size()];
 
@@ -335,7 +317,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 		}
 
 		// start is the time of the first tip
-		double start = times.get(indices[0]).doubleValue();
+		double start = ((ComparableDouble)times.get(indices[0])).doubleValue();
 		int numLines = 0;
 		int i = 0;
 		intervalCount = 0;
@@ -344,20 +326,20 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 			int lineagesRemoved = 0;
 			int lineagesAdded = 0;
 
-			final double finish = times.get(indices[i]).doubleValue();
+			double finish = ((ComparableDouble)times.get(indices[i])).doubleValue();
 			double next = finish;
 
 			while (Math.abs(next - finish) < MULTIFURCATION_LIMIT) {
-				final int children = childs.get(indices[i]);
+				int children = ((Integer)childs.get(indices[i])).intValue();
 				if (children == 0) {
 					lineagesAdded += 1;
 				} else {
 					lineagesRemoved += (children - 1);
 				}
 				i += 1;
-				if (i == times.size())  break;
-
-                next = times.get(indices[i]).doubleValue();
+				if (i < times.size()) {
+					next = ((ComparableDouble)times.get(indices[i])).doubleValue();
+				} else break;
 			}
 			//System.out.println("time = " + finish + " removed = " + lineagesRemoved + " added = " + lineagesAdded);
 			if (lineagesAdded > 0) {
@@ -388,43 +370,36 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 
 
 	/**
-	 * Extract coalescent times and tip information into ArrayList times from tree.
-     * Upon return times contain the time of each node in the subtree below top, and at the corrosponding index
-     * of childs is the descendent count for that time.
-     *
-	 * @param top the node to start from
+	 * extract coalescent times and tip information into ArrayList times from tree.
+	 * @param node the node to start from
 	 * @param excludeBelow an optional array of nodes to exclude (corresponding subtrees) from density.
-     * @param tree given tree
-     * @param times array to fill with times
-     * @param childs array to fill with descendents count
 	 */
-	private static void collectAllTimes(Tree tree, NodeRef top, NodeRef[] excludeBelow,
-                                        ArrayList<ComparableDouble> times, ArrayList<Integer> childs) {
+	private final static void collectAllTimes(Tree tree, NodeRef node, NodeRef[] excludeBelow, ArrayList times, ArrayList childs) {
 
-		times.add(new ComparableDouble(tree.getNodeHeight(top)));
-		childs.add(tree.getChildCount(top));
+		times.add(new ComparableDouble(tree.getNodeHeight(node)));
+		childs.add(new Integer(tree.getChildCount(node)));
 
-		for (int i = 0; i < tree.getChildCount(top); i++) {
-			NodeRef child = tree.getChild(top, i);
+		for (int i = 0; i < tree.getChildCount(node); i++) {
+			NodeRef child = tree.getChild(node, i);
 			if (excludeBelow == null) {
 				collectAllTimes(tree, child, excludeBelow, times, childs);
 			} else {
 				// check if this subtree is included in the coalescent density
 				boolean include = true;
-                for (NodeRef anExcludeBelow : excludeBelow) {
-                    if (anExcludeBelow.getNumber() == child.getNumber()) {
-                        include = false;
-                        break;
-                    }
-                }
-                if (include) collectAllTimes(tree, child, excludeBelow, times, childs);
+				for (int j =0; j < excludeBelow.length; j++) {
+					if (excludeBelow[j].getNumber() == child.getNumber()) {
+						include = false;
+						break;
+					}
+				}
+				if (include) collectAllTimes(tree, child, excludeBelow, times, childs);
 			}
 		}
 	}
 
 
 	/**
-	 * @return number of intervals
+	 * get number of intervals
 	 */
 	public final int getIntervalCount() {
 		return intervalCount;
@@ -432,9 +407,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 
 	/**
 	 * Gets an interval.
-     * @return interval length
-     * @param i index of interval
-     */
+	 */
 	public final double getInterval(int i) {
 		if (i >= intervalCount) throw new IllegalArgumentException();
 		return intervals[i];
@@ -444,17 +417,14 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	 * Returns the number of uncoalesced lineages within this interval.
 	 * Required for s-coalescents, where new lineages are added as
 	 * earlier samples are come across.
-     * @return number of uncoalesced lineages within this interval.
-     * @param i lineage index
-     */
+	 */
 	public final int getLineageCount(int i) {
 		if (i >= intervalCount) throw new IllegalArgumentException();
 		return lineageCounts[i];
 	}
 
 	/**
-	 * @return the number coalescent events in an interval
-     * @param i interval index
+	 * Returns the number coalescent events in an interval
 	 */
 	public final int getCoalescentEvents(int i) {
 
@@ -467,8 +437,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	}
 
 	/**
-	 * @return the type of interval observed.
-     * @param i interval index
+	 * Returns the type of interval observed.
 	 */
 	public final int getIntervalType(int i) {
 
@@ -481,7 +450,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	}
 
 	/**
-	 * @return total height of the genealogy represented by these
+	 * get the total height of the genealogy represented by these
 	 * intervals.
 	 */
 	public final double getTotalHeight() {
@@ -494,7 +463,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	}
 
 	/**
-	 * @return whether this set of coalescent intervals is fully resolved
+	 * Checks whether this set of coalescent intervals is fully resolved
 	 * (i.e. whether is has exactly one coalescent event in each
 	 * subsequent interval)
 	 */
@@ -507,7 +476,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	}
 
 	/**
-	 * @return whether this set of coalescent intervals coalescent only
+	 * Checks whether this set of coalescent intervals coalescent only
 	 * (i.e. whether is has exactly one or more coalescent event in each
 	 * subsequent interval)
 	 */
@@ -550,7 +519,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	 * Sets the units these coalescent intervals are
 	 * measured in.
 	 */
-	public final void setUnits(Type u)
+	public final void setUnits(int u)
 	{
 		demoModel.setUnits(u);
 	}
@@ -559,7 +528,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	 * Returns the units these coalescent intervals are
 	 * measured in.
 	 */
-	public final Type getUnits()
+	public final int getUnits()
 	{
 		return demoModel.getUnits();
 	}

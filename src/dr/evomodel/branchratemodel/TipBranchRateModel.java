@@ -117,13 +117,5 @@ public class TipBranchRateModel extends AbstractModel implements BranchRateModel
         }
     }
 
-	public String getBranchAttributeLabel() {
-		return "rate";
-	}
-
-	public String getAttributeForBranch(Tree tree, NodeRef node) {
-		return Double.toString(getBranchRate(tree, node));
-	}
-
 
 }

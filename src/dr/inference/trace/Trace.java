@@ -32,9 +32,12 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
+
+
 /**
  *
- * @version
+ * @author  adru001
+ * @version 
  * @author Alexei Drummond
  */
 public interface Trace extends Identifiable {

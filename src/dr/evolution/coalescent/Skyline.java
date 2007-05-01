@@ -387,14 +387,14 @@ public class Skyline implements Units {
 	/**
 	 * Return the units
 	 */
-	public final Type getUnits() {
+	public final int getUnits() {
 		return intervals.getUnits();
 	} 
 
 	/**
 	 * Sets the units
 	 */
-	public final void setUnits(Type units) {
+	public final void setUnits(int units) {
 		throw new IllegalArgumentException("Can't set skyline's units");
 	}
 

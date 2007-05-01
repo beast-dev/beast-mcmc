@@ -41,7 +41,7 @@ public class TimeScale implements Units {
 	 * param units The units
 	 * param backwards True if the timescale goes backwards in time
 	 */
-	public TimeScale(Type units, boolean backwards) {
+	public TimeScale(int units, boolean backwards) {
 		this(units, backwards, 0.0);
 	}
 	
@@ -51,7 +51,7 @@ public class TimeScale implements Units {
 	 * param backwards True if the timescale goes backwards in time
 	 * param origin The origin specified relative to 1970 in same units
 	 */
-	public TimeScale(Type units, boolean backwards, double origin) {
+	public TimeScale(int units, boolean backwards, double origin) {
 		this.units = units;
 		this.backwards = backwards;
 		this.origin = origin;
@@ -63,7 +63,7 @@ public class TimeScale implements Units {
 	 * param backwards True if the timescale goes backwards in time
 	 * param origin The origin specified as a date
 	 */
-	public TimeScale(Type units, boolean backwards, java.util.Date origin) {
+	public TimeScale(int units, boolean backwards, java.util.Date origin) {
 		this.units = units;
 		this.backwards = backwards;
 		
@@ -72,9 +72,9 @@ public class TimeScale implements Units {
 		double daysAhead = ((double)millisAhead)/MILLIS_PER_DAY;
 		
 		switch (units) {	
-			case DAYS: this.origin = daysAhead; break;
-			case MONTHS: this.origin = daysAhead / DAYS_PER_MONTH; break;
-			case YEARS: this.origin = daysAhead / DAYS_PER_YEAR; break;
+			case Units.DAYS: this.origin = daysAhead; break;
+			case Units.MONTHS: this.origin = daysAhead / DAYS_PER_MONTH; break;
+			case Units.YEARS: this.origin = daysAhead / DAYS_PER_YEAR; break;
 			default: throw new IllegalArgumentException();
 		}
 		
@@ -83,12 +83,12 @@ public class TimeScale implements Units {
 	/**
 	 * @return the units of this timescale
 	 */
-	public Type getUnits() { return units; }
+	public int getUnits() { return units; }
 	
 	/**
 	 * Sets the units for this timescale.
 	 */
-	public void setUnits(Type units) { this.units = units; }
+	public void setUnits(int units) { this.units = units; }
 	
 	/**
 	 * @return true if larger numbers represent older dates in this time scale.
@@ -140,9 +140,9 @@ public class TimeScale implements Units {
 	public String unitString(double time) {
 		String unitString = null;
 		switch (units) {	
-			case DAYS: unitString = "day"; break;
-			case MONTHS: unitString = "month"; break;
-			case YEARS: unitString = "year"; break;
+			case Units.DAYS: unitString = "day"; break;
+			case Units.MONTHS: unitString = "month"; break;
+			case Units.YEARS: unitString = "year"; break; 
 			default: throw new IllegalArgumentException();
 		}
 		if (time == 1.0) {
@@ -152,8 +152,8 @@ public class TimeScale implements Units {
 	
 	public static void main(String[] args) {
 	
-		TimeScale timeScale1 = new TimeScale(Units.Type.DAYS, true);
-		TimeScale timeScale2 = new TimeScale(Units.Type.YEARS, true);
+		TimeScale timeScale1 = new TimeScale(Units.DAYS, true);
+		TimeScale timeScale2 = new TimeScale(Units.YEARS, true);
 		
 		System.out.println(timeScale1);
 		System.out.println(timeScale2);
@@ -173,7 +173,7 @@ public class TimeScale implements Units {
 	/** 
 	 * @return time in currentUnits as newUnits.
 	 */
-	public static double convertTimeUnits(double time, Type currentUnits, Type newUnits) {
+	public static double convertTimeUnits(double time, int currentUnits, int newUnits) {
 		
 		return time * getScale(currentUnits, newUnits);
 	}
@@ -181,26 +181,26 @@ public class TimeScale implements Units {
 	/** 
 	 * @return the scaling factor for converting currentUnits into newUnits.
 	 */
-	public static double getScale(Type currentUnits, Type newUnits) {
+	public static double getScale(int currentUnits, int newUnits) {
 		if (currentUnits == newUnits) return 1.0;
 		
 		switch (currentUnits) {
-			case DAYS:
+			case Units.DAYS:
 				switch (newUnits) {
-					case MONTHS: return 1.0/DAYS_PER_MONTH;
-					case YEARS: return 1.0/DAYS_PER_YEAR;
+					case Units.MONTHS: return 1.0/DAYS_PER_MONTH;
+					case Units.YEARS: return 1.0/DAYS_PER_YEAR;
 					default: throw new IllegalArgumentException();
 				}
-			case MONTHS:
+			case Units.MONTHS:
 				switch (newUnits) {
-					case DAYS: return DAYS_PER_MONTH;
-					case YEARS: return 1.0/MONTHS_PER_YEAR;
+					case Units.DAYS: return DAYS_PER_MONTH;
+					case Units.YEARS: return 1.0/MONTHS_PER_YEAR;
 					default: throw new IllegalArgumentException();
 				}
-			case YEARS:
+			case Units.YEARS:
 				switch (newUnits) {
-					case DAYS: return DAYS_PER_YEAR;
-					case MONTHS: return MONTHS_PER_YEAR;
+					case Units.DAYS: return DAYS_PER_YEAR;
+					case Units.MONTHS: return MONTHS_PER_YEAR;
 					default: throw new IllegalArgumentException();
 				}
 			default: throw new IllegalArgumentException();
@@ -213,7 +213,7 @@ public class TimeScale implements Units {
 
 	// The origin is specified in days relative to 1st January 1970
 	protected double origin;
-	protected Type units;
+	protected int units;
 	protected boolean backwards;
 	
 	protected static double MILLIS_PER_DAY = 86400000.0;

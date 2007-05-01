@@ -47,7 +47,8 @@ import java.util.logging.Logger;
  *
  * @version $Id: TreeModel.java,v 1.129 2006/01/05 17:55:47 rambaut Exp $
  */
-public class TreeModel extends AbstractModel implements MutableTree
+public class TreeModel extends AbstractModel
+        implements MutableTree
 {
 
     //
@@ -172,10 +173,6 @@ public class TreeModel extends AbstractModel implements MutableTree
 
     private List treeChangedEvents = new ArrayList();
 
-    public boolean hasRates() {
-        return hasRates;
-    }
-
     public class TreeChangedEvent {
 
         Node node;
@@ -236,12 +233,12 @@ public class TreeModel extends AbstractModel implements MutableTree
     /**
      * Return the units that this tree is expressed in.
      */
-    public final Type getUnits() { return units; }
+    public final int getUnits() { return units; }
 
     /**
      * Sets the units that this tree is expressed in.
      */
-    public final void setUnits(Type units) { this.units = units; }
+    public final void setUnits(int units) { this.units = units; }
 
     /**
      * @return a count of the number of nodes (internal + external) in this
@@ -272,10 +269,6 @@ public class TreeModel extends AbstractModel implements MutableTree
 
     public Iterator getNodeAttributeNames(NodeRef node) {
         throw new UnsupportedOperationException("TreeModel does not use NodeAttributes");
-    }
-
-    public boolean hasNodeTraits() {
-        return hasTraits;
     }
 
     public double getNodeTrait(NodeRef node) {
@@ -1334,7 +1327,7 @@ public class TreeModel extends AbstractModel implements MutableTree
     private int internalNodeCount;
 
     /** holds the units of the trees branches. */
-    private Type units = Type.SUBSTITUTIONS;
+    private int units = SUBSTITUTIONS;
 
     private boolean inEdit = false;
 

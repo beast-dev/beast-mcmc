@@ -39,11 +39,11 @@ import dr.xml.*;
  * @version $Id: DeltaExchangeOperator.java,v 1.18 2005/06/14 10:40:34 rambaut Exp $
  */
 public class DeltaExchangeOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
-	
+
 	public static final String DELTA_EXCHANGE = "deltaExchange";
 	public static final String DELTA = "delta";
 	public static final String INTEGER_OPERATOR = "integer";
-    public static final String PARAMETER_WEIGHTS = "parameterWeights";
+	public static final String PARAMETER_WEIGHTS = "parameterWeights";
 
 	public DeltaExchangeOperator(Parameter parameter, int[] parameterWeights, double delta, int weight, boolean isIntegerOperator, int mode) {
 		this.parameter = parameter;
@@ -53,20 +53,20 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 		this.isIntegerOperator = isIntegerOperator;
 		this.parameterWeights = parameterWeights;
 
-        if (isIntegerOperator && delta != Math.round(delta)) {
+		if (isIntegerOperator && delta != Math.round(delta)) {
 			throw new IllegalArgumentException("Can't be an integer operator if delta is not integer");
 		}
 	}
-	
+
 	/** @return the parameter this operator acts on. */
 	public Parameter getParameter() { return parameter; }
 
-	/** change the parameter and return the hastings ratio. 
+	/** change the parameter and return the hastings ratio.
 	 * performs a delta exchange operation between two scalars in the vector
 	 * and return the hastings ratio.
 	 */
 	public final double doOperation() throws OperatorFailedException {
-		
+
 		// get two dimensions
 		int dim1 = MathUtils.nextInt(parameter.getDimension());
 		int dim2 = MathUtils.nextInt(parameter.getDimension());
@@ -76,32 +76,32 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 
 		double scalar1 = parameter.getParameterValue(dim1);
 		double scalar2 = parameter.getParameterValue(dim2);
-		
+
 		// exchange a random delta
 		double d = MathUtils.nextDouble() * delta;
-		scalar1 -= d; 
-        if (parameterWeights[dim1] != parameterWeights[dim2]) {
-            scalar2 += d * (double)parameterWeights[dim1] / (double)parameterWeights[dim2];
-        } else {
-            scalar2 += d;
-        }
-		
+		scalar1 -= d;
+		if (parameterWeights[dim1] != parameterWeights[dim2]) {
+			scalar2 += d * (double)parameterWeights[dim1] / (double)parameterWeights[dim2];
+		} else {
+			scalar2 += d;
+		}
+
 		if (isIntegerOperator) {
 			scalar1 = Math.round(scalar1);
 			scalar2 = Math.round(scalar2);
-		}	
-		
+		}
+
 		Bounds bounds = parameter.getBounds();
-		
-		if (scalar1 < bounds.getLowerLimit(dim1) || 
-			scalar1 > bounds.getUpperLimit(dim1) ||
-			scalar2 < bounds.getLowerLimit(dim2) || 
-			scalar2 > bounds.getUpperLimit(dim2)) {
+
+		if (scalar1 < bounds.getLowerLimit(dim1) ||
+				scalar1 > bounds.getUpperLimit(dim1) ||
+				scalar2 < bounds.getLowerLimit(dim2) ||
+				scalar2 > bounds.getUpperLimit(dim2)) {
 			throw new OperatorFailedException("proposed values out of range!");
-		} 
+		}
 		parameter.setParameterValue(dim1, scalar1);
 		parameter.setParameterValue(dim2, scalar2);
-		
+
 		// symmetrical move so return a zero hasting ratio
 		return 0.0;
 	}
@@ -112,17 +112,17 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 	public double getCoercableParameter() {
 		return Math.log(delta);
 	}
-	
+
 	public void setCoercableParameter(double value) {
 		delta = Math.exp(value);
 	}
-	
+
 	public double getRawParameter() {
 		return delta;
 	}
-	
-	public int getMode() { 
-		return mode; 
+
+	public int getMode() {
+		return mode;
 	}
 
 
@@ -131,7 +131,7 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 	public double getMaximumAcceptanceLevel() { return 0.4;}
 	public double getMinimumGoodAcceptanceLevel() { return 0.20; }
 	public double getMaximumGoodAcceptanceLevel() { return 0.30; }
-	
+
 	public int getWeight() { return weight; }
 
 	public void setWeight(int w) { weight = w; }
@@ -140,25 +140,25 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 
 		double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
 		double targetProb = getTargetAcceptanceProbability();
-		
+
 		double d = OperatorUtils.optimizeWindowSize(delta, parameter.getParameterValue(0) * 2.0, prob, targetProb);
-		
-	
+
+
 		if (prob < getMinimumGoodAcceptanceLevel()) {
 			return "Try decreasing delta to about " + d;
 		} else if (prob > getMaximumGoodAcceptanceLevel()) {
 			return "Try increasing delta to about " + d;
 		} else return "";
 	}
-	
+
 	public String toString() { return getOperatorName() + "(windowsize=" + delta + ")"; }
-	
+
 	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-		
+
 		public String getParserName() { return DELTA_EXCHANGE; }
-		
+
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-		
+
 			int mode = CoercableMCMCOperator.DEFAULT;
 			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
 				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
@@ -167,74 +167,74 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 					mode = CoercableMCMCOperator.COERCION_OFF;
 				}
 			}
-			
+
 			boolean isIntegerOperator = false;
 			if (xo.hasAttribute(INTEGER_OPERATOR)) {
 				isIntegerOperator = xo.getBooleanAttribute(INTEGER_OPERATOR);
 			}
 
 
-            int weight = xo.getIntegerAttribute(WEIGHT);
+			int weight = xo.getIntegerAttribute(WEIGHT);
 			double delta = xo.getDoubleAttribute(DELTA);
-			
+
 			if (delta <= 0.0) {
 				throw new XMLParseException("delta must be greater than 0.0");
 			}
-			
-			Parameter parameter = (Parameter)xo.getChild(Parameter.class);	
+
+			Parameter parameter = (Parameter)xo.getChild(Parameter.class);
 
 
-            int[] parameterWeights = null;
-            if (xo.hasAttribute(PARAMETER_WEIGHTS)) {
-                parameterWeights = xo.getIntegerArrayAttribute(PARAMETER_WEIGHTS);
-                System.out.print("Parameter weights for delta exchange are: ");
-                for (int i = 0; i < parameterWeights.length; i++) {
-                    System.out.print(parameterWeights[i] + "\t");
-                }
-                System.out.println();
+			int[] parameterWeights = null;
+			if (xo.hasAttribute(PARAMETER_WEIGHTS)) {
+				parameterWeights = xo.getIntegerArrayAttribute(PARAMETER_WEIGHTS);
+				System.out.print("Parameter weights for delta exchange are: ");
+				for (int i = 0; i < parameterWeights.length; i++) {
+					System.out.print(parameterWeights[i] + "\t");
+				}
+				System.out.println();
 
-            } else {
-                parameterWeights = new int[parameter.getDimension()];
-                for (int i = 0; i < parameterWeights.length; i++) {
-                    parameterWeights[i] = 1;
-                }
-            }
+			} else {
+				parameterWeights = new int[parameter.getDimension()];
+				for (int i = 0; i < parameterWeights.length; i++) {
+					parameterWeights[i] = 1;
+				}
+			}
 
-            if (parameterWeights.length != parameter.getDimension()) {
-                throw new XMLParseException("parameter weights have the same length as parameter");
-            }
+			if (parameterWeights.length != parameter.getDimension()) {
+				throw new XMLParseException("parameter weights have the same length as parameter");
+			}
 
 
-            return new DeltaExchangeOperator(parameter, parameterWeights, delta, weight, isIntegerOperator, mode);
+			return new DeltaExchangeOperator(parameter, parameterWeights, delta, weight, isIntegerOperator, mode);
 		}
-		
+
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
-		
+
 		public String getParserDescription() {
 			return "This element returns a scale operator on a given parameter.";
 		}
-		
+
 		public Class getReturnType() { return MCMCOperator.class; }
-		
+
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
+
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newDoubleRule(DELTA),
-            AttributeRule.newIntegerArrayRule(PARAMETER_WEIGHTS,true),
-			AttributeRule.newIntegerRule(WEIGHT),
-			AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-			AttributeRule.newBooleanRule(INTEGER_OPERATOR, true),
-			new ElementRule(Parameter.class)
+				AttributeRule.newDoubleRule(DELTA),
+				AttributeRule.newIntegerArrayRule(PARAMETER_WEIGHTS,true),
+				AttributeRule.newIntegerRule(WEIGHT),
+				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+				AttributeRule.newBooleanRule(INTEGER_OPERATOR, true),
+				new ElementRule(Parameter.class)
 		};
-	
+
 	};
 	// Private instance variables
-	
+
 	private Parameter parameter = null;
-    private int[] parameterWeights;
-    private double delta = 0.02;
+	private int[] parameterWeights;
+	private double delta = 0.02;
 	private int weight = 1;
 	private int mode = CoercableMCMCOperator.DEFAULT;
 	private boolean isIntegerOperator = false;

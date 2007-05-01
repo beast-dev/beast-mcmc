@@ -99,7 +99,7 @@ public class BeautiTester {
 
         beautiOptions.performTraceAnalysis = false;
 
-        beautiOptions.units = Units.Type.SUBSTITUTIONS;
+        beautiOptions.units = Units.SUBSTITUTIONS;
         beautiOptions.maximumTipHeight = 0.0;
 
         beautiOptions.meanSubstitutionRate = 1.0;
@@ -369,7 +369,7 @@ public class BeautiTester {
             if (beautiOptions.originalAlignment.getTaxonAttribute(i, "date") == null) {
                 java.util.Date origin = new java.util.Date(0);
 
-                dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
+                dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.YEARS, origin);
                 beautiOptions.originalAlignment.getTaxon(i).setAttribute("date", date);
             }
         }

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ -z "$BEAST" ]; then
+	BEAST=`dirname $0`/..
+fi
+BEAST_LIB=$BEAST/lib
+java -Xms64m -Xmx256m -Djava.library.path=$BEAST_LIB -cp $BEAST_LIB/beast.jar dr.app.tools.LogAnalyser $*
+

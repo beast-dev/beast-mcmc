@@ -36,8 +36,8 @@ public class TraceCorrelation extends TraceDistribution {
         double[] gammaStat = new double[maxLag];
         double[] varGammaStat = new double[maxLag];
         double varStat = 0.0;
-        double varVarStat = 0.0;
-        double assVarCor = 1.0;
+        //double varVarStat = 0.0;
+        //double assVarCor = 1.0;
         double del1, del2;
 
         for (int lag=0; lag < maxLag; lag++) {
@@ -54,16 +54,16 @@ public class TraceCorrelation extends TraceDistribution {
 
             if (lag==0) {
                 varStat = gammaStat[0];
-                varVarStat = varGammaStat[0];
-                assVarCor = 1.0;
+                //varVarStat = varGammaStat[0];
+                //assVarCor = 1.0;
             }
             else if (lag%2==0)
             {
                 // fancy stopping criterion :)
                 if (gammaStat[lag-1] + gammaStat[lag] > 0) {
                     varStat    += 2.0*(gammaStat[lag-1] + gammaStat[lag]);
-                    varVarStat += 2.0*(varGammaStat[lag-1] + varGammaStat[lag]);
-                    assVarCor  += 2.0*((gammaStat[lag-1] * gammaStat[lag-1]) + (gammaStat[lag] * gammaStat[lag])) / (gammaStat[0] * gammaStat[0]);
+                   // varVarStat += 2.0*(varGammaStat[lag-1] + varGammaStat[lag]);
+                   // assVarCor  += 2.0*((gammaStat[lag-1] * gammaStat[lag-1]) + (gammaStat[lag] * gammaStat[lag])) / (gammaStat[0] * gammaStat[0]);
                 }
                 // stop
                 else

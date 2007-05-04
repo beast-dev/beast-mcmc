@@ -28,29 +28,29 @@ public class TraceCorrelation extends TraceDistribution {
     private void analyseCorrelation(double[] values, int stepSize) {
 
         int maxLag = MAX_OFFSET;
-        int samples = values.length;
+        final int samples = values.length;
         if ((samples/3) < maxLag) {
             maxLag = (samples/3);
         }
 
         double[] gammaStat = new double[maxLag];
-        double[] varGammaStat = new double[maxLag];
+        //double[] varGammaStat = new double[maxLag];
         double varStat = 0.0;
         //double varVarStat = 0.0;
         //double assVarCor = 1.0;
-        double del1, del2;
+        //double del1, del2;
 
         for (int lag=0; lag < maxLag; lag++) {
             for (int j = 0; j < samples-lag; j++) {
-                del1=values[j] - mean;
-                del2=values[j + lag] - mean;
+                final double del1 = values[j] - mean;
+                final double del2 = values[j + lag] - mean;
                 gammaStat[lag] += ( del1*del2 );
-                varGammaStat[lag] += (del1*del1*del2*del2);
+                //varGammaStat[lag] += (del1*del1*del2*del2);
             }
 
             gammaStat[lag] /= ((double)(samples-lag));
-            varGammaStat[lag] /= ((double) samples-lag);
-            varGammaStat[lag] -= (gammaStat[0] * gammaStat[0]);
+            //varGammaStat[lag] /= ((double) samples-lag);
+            //varGammaStat[lag] -= (gammaStat[0] * gammaStat[0]);
 
             if (lag==0) {
                 varStat = gammaStat[0];
@@ -61,7 +61,7 @@ public class TraceCorrelation extends TraceDistribution {
             {
                 // fancy stopping criterion :)
                 if (gammaStat[lag-1] + gammaStat[lag] > 0) {
-                    varStat    += 2.0*(gammaStat[lag-1] + gammaStat[lag]);
+                    varStat += 2.0*(gammaStat[lag-1] + gammaStat[lag]);
                    // varVarStat += 2.0*(varGammaStat[lag-1] + varGammaStat[lag]);
                    // assVarCor  += 2.0*((gammaStat[lag-1] * gammaStat[lag-1]) + (gammaStat[lag] * gammaStat[lag])) / (gammaStat[0] * gammaStat[0]);
                 }

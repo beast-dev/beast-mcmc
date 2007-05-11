@@ -306,20 +306,30 @@ public class CoalescentSimulator {
                                     }
                                 }
 
-                                MutableTree treeForRemaining = simulator.simulateTree(list, demoModel);
-                                if( constraintj.realLimits() ) {
-                                    double low = Math.max(constraintj.lower, tree.getNodeHeight(tree.getRoot()));
-                                    attemptToScaleTree(treeForRemaining, 0.75 * low + 0.25 * constraintj.upper);
-
-                                    // combine the trees
-                                    final SimpleNode newRoot = new SimpleNode();
-                                    final SimpleNode node = new SimpleNode(tree, tree.getRoot());
-                                    newRoot.addChild(node);
-                                    newRoot.addChild(new SimpleNode(treeForRemaining, treeForRemaining.getRoot()));
-                                    newRoot.setHeight(0.5 * low + 0.5 * constraintj.upper);
-                                    tree = new SimpleTree(newRoot);
+                                if( list.getTaxonCount() == 0 ) {
+                                    if( constraintj.realLimits() ) {
+                                        final double rootHeight1 = tree.getRootHeight();
+                                        if( rootHeight1 >= constraintj.upper ) {
+                                            throw new XMLParseException("taxa constraints are not compatible");
+                                        }
+                                        tree.setRootHeight(Math.max(constraintj.lower, rootHeight1));
+                                    }
                                 } else {
-                                    tree = simulator.simulateTree(new Tree[]{tree, treeForRemaining} , demoModel, -1);
+                                    MutableTree treeForRemaining = simulator.simulateTree(list, demoModel);
+                                    if( constraintj.realLimits() ) {
+                                        double low = Math.max(constraintj.lower, tree.getNodeHeight(tree.getRoot()));
+                                        attemptToScaleTree(treeForRemaining, 0.75 * low + 0.25 * constraintj.upper);
+
+                                        // combine the trees
+                                        final SimpleNode newRoot = new SimpleNode();
+                                        final SimpleNode node = new SimpleNode(tree, tree.getRoot());
+                                        newRoot.addChild(node);
+                                        newRoot.addChild(new SimpleNode(treeForRemaining, treeForRemaining.getRoot()));
+                                        newRoot.setHeight(0.5 * low + 0.5 * constraintj.upper);
+                                        tree = new SimpleTree(newRoot);
+                                    } else {
+                                        tree = simulator.simulateTree(new Tree[]{tree, treeForRemaining} , demoModel, -1);
+                                    }
                                 }
                             }
                             st.add(tree);
@@ -352,7 +362,12 @@ public class CoalescentSimulator {
                 }
             }
 
-            if (taxonLists.size() == 0 && subtrees.size() < 2) throw new XMLParseException("Expected at least one taxonList or two subtrees in " + getParserName() + " element.");
+            if (taxonLists.size() == 0 ) {
+                if( subtrees.size() == 1 ) {
+                    return subtrees.get(0);
+                }
+                 throw new XMLParseException("Expected at least one taxonList or two subtrees in " + getParserName() + " element.");
+            }
 
             Tree tree = null;
 

@@ -83,8 +83,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             this.categoryCount = siteModel.getCategoryCount();
 
-            if (false)	{
-//            if (integrateAcrossCategories)	{
+            if (integrateAcrossCategories)	{
                 if (patternList.getDataType() instanceof dr.evolution.datatype.Nucleotides) {
 
 	                if (NativeNucleotideLikelihoodCore.isAvailable()) {

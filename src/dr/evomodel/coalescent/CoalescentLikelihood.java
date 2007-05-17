@@ -275,7 +275,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
      * @param type
      */
 	public final double calculateIntervalLikelihood(DemographicFunction demogFunction,
-                                                    double width, double timeOfPrevCoal, int lineageCount, int type)
+							double width, double timeOfPrevCoal, int lineageCount, int type)
 	{
 		//binom.setMax(lineageCount);
 
@@ -296,6 +296,35 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 		return like;
 	}
 
+    /**
+     * @return the exponent of the population size parameter (shape parameter of Gamma distribution) associated to the 
+     *         likelihood for this interval, coalescent or otherwise
+     */
+    public final double calculateIntervalShapeParameter(DemographicFunction demogFunction,
+    		double width, double timeOfPrevCoal, int lineageCount, int type)
+    {
+    	switch (type) {
+    	case COALESCENT:
+    		return 1.0;
+    	case NEW_SAMPLE:
+    		return 0.0;
+    	}
+    	throw new Error("Unknown event found");
+    }
+
+    /**
+     * @return the intensity of coalescences (rate parameter, or inverse scale parameter, of Gamma distribution) associated
+     *         to the likelihood for this interval, coalescent or otherwise
+     */
+    public final double calculateIntervalRateParameter(DemographicFunction demogFunction,
+						       double width, double timeOfPrevCoal, int lineageCount, int type)
+    {
+	final double timeOfThisCoal = width + timeOfPrevCoal;
+	final double intervalArea = demogFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
+	return Binomial.choose2(lineageCount)*intervalArea;
+    }	
+	
+
 	/**
 	 * @return a factor lambda such that the likelihood can be expressed as
 	 * 1/theta^(n-1) * exp(-lambda/theta). This allows theta to be integrated
@@ -313,8 +342,9 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 
 	/**
 	 * Recalculates all the intervals from the tree model.
+	 * GL: made public, to give BayesianSkylineGibbsOperator access
 	 */
-	protected final void setupIntervals() {
+	public final void setupIntervals() {
 
 		double MULTIFURCATION_LIMIT = 1e-9;
 
@@ -563,6 +593,12 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	{
 		return demoModel.getUnits();
 	}
+
+	public final boolean getIntervalsKnown()
+	{
+		return intervalsKnown;
+	}
+	
 
 	// ****************************************************************
 	// Inner classes

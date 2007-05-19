@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<!-- $Id: testCoalescent.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the coalescent prior -->
+
+<beast>
+
+	<taxa id="taxa1">
+		<taxon id="A"/>
+		<taxon id="B"/>
+		<taxon id="C"/>
+		<taxon id="D"/>
+	</taxa>
+
+	<!-- create a demographic model and intialize currentPopulationSize parameter -->
+	<constantSize id="demo1" units="years">
+		<populationSize><parameter id="demo1.pop1" value="10.0"/></populationSize>
+	</constantSize>
+
+	<!-- simulate a coalescent tree -->
+	<coalescentTree id="tree1">
+		<demographicModel idref="demo1"/>
+		<taxa idref="taxa1"/>
+	</coalescentTree>
+
+
+    <!-- A prior on the distribution node heights defined given                  -->
+    <!-- a Yule speciation process (a pure birth process).                       -->
+    <yuleModel id="yule" units="substitutions">
+        <birthRate>
+            <parameter id="yule.birthRate" value="2.0" lower="0.0" upper="100.0"/>
+        </birthRate>
+    </yuleModel>
+
+	<treeModel id="treeModel1">
+		<tree idref="tree1"/>
+		<rootHeight>
+			<parameter id="treeModel1.rootHeight"/>
+		</rootHeight>
+		<nodeHeights rootNode="false" internalNodes="true">
+			<parameter id="treeModel1.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights rootNode="true" internalNodes="true">
+			<parameter id="treeModel1.allNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
+    <speciationLikelihood id="speciation">
+        <model>
+            <yuleModel idref="yule"/>
+        </model>
+        <speciesTree>
+            <treeModel idref="treeModel1"/>
+        </speciesTree>
+    </speciationLikelihood>
+
+	<mcmc id="mcmc1" chainLength="1000000"  verbose="false">
+        <speciationLikelihood idref="speciation"/>
+		<log id="logScreen2" logEvery="10000">
+			<column dp="4">
+				<likelihood idref="speciation"/>
+				<parameter idref="treeModel1.rootHeight"/>
+			</column>
+		</log>
+		<log id="log1" logEvery="5" fileName="yulePrior.log">
+			<likelihood idref="speciation"/>
+			<parameter idref="treeModel1.rootHeight"/>
+		</log>
+		<log id="logTree1" logEvery="100" fileName="yulePrior_trees.log">
+			<treeModel idref="treeModel1"/>
+		</log>
+		<operators>
+            <!--<scaleOperator scaleFactor="0.75" weight="1">
+                <parameter idref="treeModel1.rootHeight"/>
+            </scaleOperator>
+            <uniformOperator weight="3">
+                <parameter idref="treeModel1.internalNodeHeights"/>
+            </uniformOperator>  -->
+            <subtreeSlide weight="1" gaussian="true" size="1"><treeModel idref="treeModel1"/></subtreeSlide>
+		</operators>
+	</mcmc>
+
+	<report>
+		Time taken: <property name="timer"><mcmc idref="mcmc1"/></property>
+	</report>
+
+    <traceAnalysis fileName="yulePrior.log" burnIn="1000">
+        <!-- expectation of root height for 4 tips and lambda = 2 -->
+        <expectation name="treeModel1.rootHeight" value="0.91666666"/>
+	</traceAnalysis>
+
+	<treeTraceAnalysis fileName="yulePrior_trees.log"/>
+
+</beast>
+
+

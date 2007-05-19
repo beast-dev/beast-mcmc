@@ -296,6 +296,10 @@
 		</property>
 	</report>
 	
+    <marginalLikelihoodAnalysis fileName="testStrictClock.log">
+        <likelihoodColumn name="treeLikelihood" harmonicOnly="false" bootstrap="true"/>
+    </marginalLikelihoodAnalysis>
+
 	<!--
 	To check that the program is working, the results are compared to previously
 	run results. The following are for a run of 10,000,000 steps:
@@ -324,4 +328,6 @@
         <expectation name="treeLikelihood" value="-3856.59"/>
         <expectation name="coalescent" value="-72.1285"/>
     </traceAnalysis>
+
+
 </beast>

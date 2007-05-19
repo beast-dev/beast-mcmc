@@ -291,6 +291,7 @@ public class MarginalLikelihoodAnalysis {
                 if (cxo.hasAttribute(BOOTSTRAP_LENGTH))
                     bootstrapLength = cxo.getIntegerAttribute(BOOTSTRAP_LENGTH);
 
+
                 MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(trace,
                         burnin, harmonicOnly, doBootstrap, bootstrapLength);
 
@@ -312,7 +313,7 @@ public class MarginalLikelihoodAnalysis {
         }
 
         public Class getReturnType() {
-            return TraceAnalysis[].class;
+            return MarginalLikelihoodAnalysis.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

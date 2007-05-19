@@ -169,7 +169,7 @@
 			</likelihood>
 		</posterior>
 		<operators idref="operators"/>
-		<log id="screenLog" logEvery="1000">
+		<log id="screenLog" logEvery="10000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -183,7 +183,7 @@
 				<speciationLikelihood idref="speciation"/>
 			</column>
 		</log>
-		<log id="fileLog" logEvery="1000" fileName="testYule.log">
+		<log id="fileLog" logEvery="100" fileName="testYule.log">
 			<posterior idref="posterior"/>
 			<parameter idref="yule.birthRate"/>
 			<parameter idref="hky.kappa"/>
@@ -202,5 +202,14 @@
 			<object idref="mcmc"/>
 		</property>
 	</report>
+
+    <traceAnalysis fileName="testYule.log" burnIn="1000"/>
+
+    <treeTraceAnalysis fileName="testYule.trees"/>
+
+    <marginalLikelihoodAnalysis fileName="testYule.log">
+        <likelihoodColumn name="treeLikelihood" harmonicOnly="false" bootstrap="true"/>
+    </marginalLikelihoodAnalysis>
+
 	
 </beast>

@@ -69,13 +69,15 @@ public class YuleModel extends SpeciationModel{
 	// functions that define a speciation model
 	//
 	public double logNodeProbability(Tree tree, NodeRef node) {
-        if (tree.getRoot() == node) return 0.0;
+
+        // no check needs to be made to exclude the root because the tree is not normalized to 1.0 (AJD)
 
         double nodeHeight = tree.getNodeHeight(node);
-        double rootHeight = tree.getNodeHeight(tree.getRoot());
-    
+
 		double lambda = getBirthRate();
-		return Math.log((lambda * Math.exp(-lambda * nodeHeight)) / (1 - Math.exp(-lambda * rootHeight)));
+
+        return Math.log((lambda * Math.exp(-lambda * nodeHeight)) / (1 - Math.exp(-lambda)));
+
 	}
 
     // **************************************************************

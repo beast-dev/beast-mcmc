@@ -53,18 +53,24 @@
         </speciesTree>
     </speciationLikelihood>
 
-	<mcmc id="mcmc1" chainLength="1000000"  verbose="false">
+    <treeLengthStatistic name="TL" id="TL">
+        <treeModel idref="treeModel1"/>
+    </treeLengthStatistic>
+
+    <mcmc id="mcmc1" chainLength="1000000"  verbose="false">
         <speciationLikelihood idref="speciation"/>
 		<log id="logScreen2" logEvery="10000">
 			<column dp="4">
 				<likelihood idref="speciation"/>
 				<parameter idref="treeModel1.rootHeight"/>
+                <treeLengthStatistic idref="TL"/>
 			</column>
 		</log>
 		<log id="log1" logEvery="5" fileName="yulePrior.log">
 			<likelihood idref="speciation"/>
 			<parameter idref="treeModel1.rootHeight"/>
-		</log>
+            <treeLengthStatistic idref="TL"/>
+        </log>
 		<log id="logTree1" logEvery="100" fileName="yulePrior_trees.log">
 			<treeModel idref="treeModel1"/>
 		</log>
@@ -85,7 +91,9 @@
 
     <traceAnalysis fileName="yulePrior.log" burnIn="1000">
         <!-- expectation of root height for 4 tips and lambda = 2 -->
-        <expectation name="treeModel1.rootHeight" value="0.91666666"/>
+        <expectation name="treeModel1.rootHeight" value="0.541666"/>
+        <!-- expectation of tree length for 4 tips and lambda = 2 -->
+        <expectation name="TL" value="1.5"/>
 	</traceAnalysis>
 
 	<treeTraceAnalysis fileName="yulePrior_trees.log"/>

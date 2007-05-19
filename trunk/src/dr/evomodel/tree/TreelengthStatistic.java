@@ -1,5 +1,5 @@
 /*
- * TMRCAStatistic.java
+ * RateStatistic.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -27,56 +27,52 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 
-import java.util.Set;
-
 /**
- * A statistic that tracks the time of MRCA of a set of taxa
+ * A statistic that tracks the mean, variance and coefficent of variation of the rates.
  *
- * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
+ * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
  *
  * @author Alexei Drummond
- * @author Andrew Rambaut
  *
  */
-public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic {
-	
-	public static final String TMRCA_STATISTIC = "tmrcaStatistic";
-	public static final String MRCA = "mrca";
+public class TreelengthStatistic extends Statistic.Abstract implements TreeStatistic {
 
-	public TMRCAStatistic(String name, Tree tree, TaxonList taxa, boolean isRate) throws Tree.MissingTaxonException {
+	public static final String TREE_LENGTH_STATISTIC = "treeLengthStatistic";
+
+	public TreelengthStatistic(String name, Tree tree) {
 		super(name);
 		this.tree = tree;
-		this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
-        this.isRate = isRate;
-	}
+    }
 
 	public void setTree(Tree tree) { this.tree = tree; }
 	public Tree getTree() { return tree; }
-	
+
 	public int getDimension() { return 1; }
-	
-	/** @return the height of the MRCA node. */
+
+	/** @return the estimated birthRate */
 	public double getStatisticValue(int dim) {
-	
-		NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
-		if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
-		if (isRate) {
-            return tree.getNodeRate(node);
+
+        double treeLength = 0.0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+
+            if (node != tree.getRoot()) {
+                NodeRef parent = tree.getParent(node);
+                treeLength += tree.getNodeHeight(parent) - tree.getNodeHeight(node);
+            }
         }
-        return tree.getNodeHeight(node);
+        return treeLength;
 	}
-	
+
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-	
-		public String getParserName() { return TMRCA_STATISTIC; }
-	
+
+		public String getParserName() { return TREE_LENGTH_STATISTIC; }
+
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
+
 			String name;
 			if (xo.hasAttribute(NAME)) {
 				name = xo.getStringAttribute(NAME);
@@ -84,42 +80,28 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
 				name = xo.getId();
 			}
 			Tree tree = (Tree)xo.getChild(Tree.class);
-			TaxonList taxa = (TaxonList)xo.getSocketChild(MRCA);
-            boolean isRate = false;
-            if (xo.hasAttribute("rate")) {
-                isRate = xo.getBooleanAttribute("rate");
-            }
 
-			try {
-				return new TMRCAStatistic(name, tree, taxa, isRate);
-			} catch (Tree.MissingTaxonException mte) {
-				throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
-			}
+
+
+			return new TreelengthStatistic(name, tree);
 		}
-		
+
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
 
 		public String getParserDescription() {
-			return "A statistic that has as its value the height of the most recent common ancestor of a set of taxa in a given tree";
+			return "A statistic that returns the average of the branch rates";
 		}
 
-		public Class getReturnType() { return TMRCAStatistic.class; }
+		public Class getReturnType() { return RateStatistic.class; }
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
+
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 			new ElementRule(TreeModel.class),
-			new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
-            AttributeRule.newBooleanRule("rate", true),
-            new ElementRule(MRCA,
-				new XMLSyntaxRule[] { new ElementRule(Taxa.class) })
 		};
 	};
 
 	private Tree tree = null;
-	private Set leafSet = null;
-    private boolean isRate;
-
 }

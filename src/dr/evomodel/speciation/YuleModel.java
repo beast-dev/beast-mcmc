@@ -70,14 +70,24 @@ public class YuleModel extends SpeciationModel{
 	//
 	public double logNodeProbability(Tree tree, NodeRef node) {
 
-        // no check needs to be made to exclude the root because the tree is not normalized to 1.0 (AJD)
-
         double nodeHeight = tree.getNodeHeight(node);
-
 		double lambda = getBirthRate();
 
-        return Math.log((lambda * Math.exp(-lambda * nodeHeight)) / (1 - Math.exp(-lambda)));
+        double logP = 0;
 
+        // see equation 1 of Nee (2001) "Inferring Speciation Rates from Phylogenies"
+        if (tree.isRoot(node)) {
+            // see Appendix 1 of Nee (2001) paper for discussion about why we double this
+            // nodeHeight for the root.
+            nodeHeight *=2;
+        } else {
+            // see Appendix 1 of Nee (2001) paper for discussion about why we leave off
+            // this contribution for the root
+            logP += Math.log(lambda);
+        }
+        logP += -lambda * nodeHeight;
+
+        return logP;
 	}
 
     // **************************************************************
@@ -128,4 +138,5 @@ public class YuleModel extends SpeciationModel{
 
     //Protected stuff
     Parameter birthRateParameter;
+
 }

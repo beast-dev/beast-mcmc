@@ -297,100 +297,72 @@ public class GammaDistribution implements Distribution {
 	return sample;
     };
 
-    
-    /* The fast version doesn't work -- neither for shape<1.0, nor for shape>15.0 */
-/*    
-	 fast version 
-	if (shape < 15) {
 
-	    if (shape < 0.0) {
-		throw new IllegalArgumentException(
-			"Gamma distribution undefined for shape parameter "
-				+ shape);
-	    }
+    /**
+     *
+     * Sample from the gamma distribution, modified by a factor exp( -(x*bias)^-1 ), i.e.
+     * from x^(shape - 1) exp(-x/scale) exp(-1/(bias*x))
+     *
+     * Works by rejection sampling, using a shifted ordinary Gamma as proposal distribution.
+     *
+     **/
+    public static double nextExpGamma(double shape, double scale, double bias) {
+	return nextExpGamma(shape, scale, bias, false);
+    }
 
-	    if (shape < 0.00001) {
-		
-                 * special case: shape==0.0 is un-normalizable distribution; but
-                 * it works if v. small values are ignored (v. large ones don't happen)
-                 * This is useful, since in this way the truncated Gamma(0,x)-distribution can easily be calculated.
-                 
-		double minimum = 1.0e-10;
-		double maximum = 1.0e+10;
-		double normalizingConstant = Math.log(maximum) - Math.log(minimum);
-		double sample;
-		// Draw from 1/x (with boundaries), and shape by exp(-x)
-		do {
-		    sample = Math.exp( Math.log(minimum) + normalizingConstant*MathUtils.nextDouble() );
-		} while ( Math.exp(-sample) < MathUtils.nextDouble() );
-		return sample * scale;
-	    }
 
-	    int integerPart = (int) Math.floor(shape + 0.0000001);
-	    double fractionalPart = Math.max(0.0, shape - integerPart);
-	    	
-                 * first draw a number of exponential(1)-distributed variables
-                 * to obtain a Gamma(integerPart,1)
-                 
-	    double sample = 0.0;
-	    for (int i = 0; i < integerPart; i++) {
-		sample += -Math.log(MathUtils.nextDouble());
-	    }
-	    
-	    	
-                 * now sample a Gamma(fractionalPart,1)-distributed variable,
-                 * using a Wikipedia algorithm:
-                 * 
-                 * 1. Let m be 1. 
-                 * 2. Generate V2m − 1 and V2m — independent uniformly distributed on (0, 1] variables. 
-                 * 3. If V_{2m - 1} \le v_0, where v_0 = \frac e {e + \delta}, then go to step 4, else go to step 5. 
-                 * 4. Let \xi_m = V_{2m - 1}^{1 / \delta}, \eta_m = V_{2m} \xi _m^ {\delta - 1}. Go to step 6. 
-                 * 5. Let \xi_m = 1 - \ln {V_{2m - 1}}, \ \eta_m = V_{2m} e^{-\xi_m}.
-                 * 6. If \eta_m > \xi_m^{\delta - 1} e^{-\xi_m}, then increment m and go to step 2. 
-                 * 7. Assume ξ = ξm to be the realization of Gamma(δ,1).
-                 * 
-                 
-	    
-	    double xi, eta;
-	    if (fractionalPart > 0.00001) {
-		do {
-		    double v1 = -MathUtils.nextDouble();
-		    double v2 = -MathUtils.nextDouble();
-		    if (v1 <= Math.E / (Math.E + fractionalPart)) {
-			xi = Math.pow(v1, 1.0/fractionalPart);
-			eta = v2 * Math.pow(xi, fractionalPart - 1.0);
-		    } else {
-			xi = 1.0 - Math.log( v1 );
-			eta = v2 * Math.exp( -xi );
-		    }
-		} while ( eta > Math.pow(xi, fractionalPart - 1.0) * Math.exp(-xi));
-		sample += xi;
-	    }
+    public static double nextExpGamma(double shape, double scale, double bias, boolean slowCode) {
 
-	    	 finally scale and return 
-	    return sample * scale;
-	
-	} else {
-	    
-	     dominate by a Gaussian distribution 
-	    double mean = mean(shape,scale);
-	    double var = variance(shape,scale);
-	    double sd = Math.sqrt( var );
-	    double sample, t;
+	double sample;
+	double reject;
+
+	if (slowCode || shape < 1.0) {
 	    
 	    do {
+		sample = nextGamma(shape, scale);
+		reject = Math.exp( -1.0/(bias*sample) );
+	    } while (MathUtils.nextDouble() > reject);
+
+	} else {
+
+	    // compute the mode of the biased Gamma distribution
+	    double x0 = (shape-1.0)*scale/2.0 + Math.sqrt( ( 4.0 + (shape-1)*(shape-1)*bias*scale ) / ( 4.0 * bias / scale ) );
+	    
+	    // treat the case of shape == 1.0 separately, since there is no uniformly majorating Gamma function.
+	    // Instead, sample uniformly on [0,x0], and exponentially on [x0,infinity].
+	    if (shape == 1.0) {
+
+		// this probability makes the distribution continuous
+		double pUniform = (x0/scale) / (1.0 + x0/scale);
 		do {
-		    sample = NormalDistribution.quantile( MathUtils.nextDouble(), mean, 1.5*sd );
-		} while (sample < 0.0);
-		t = 0.6 * pdf( sample, shape, scale ) / NormalDistribution.pdf( sample, mean, 1.5*sd );
-	    } while ( MathUtils.nextDouble() < t);
-	    
-	    return sample;
-	    
+		    if (MathUtils.nextDouble() < pUniform) {
+			sample = MathUtils.nextDouble() * x0;
+			reject = Math.exp( -sample/scale -1.0/(bias*sample) + x0/scale );
+		    } else {
+			sample = x0 - Math.log( MathUtils.nextDouble() ) * scale;
+			reject = Math.exp( -1.0/(bias*sample) );
+		    }
+		} while (MathUtils.nextDouble() > reject);
+
+	    } else {
+
+		// the function -1/(bias*x) is majorated by x/(bias x0^2) + C, with C = -2/(bias*x0), so that these functions
+		// coincide precisely when x=x0.  This gives the scale parameter of the majorating Gamma distribution
+		double majorandScale = 1.0 / ((1.0/scale) - 1.0/(bias*x0*x0));
+
+		// now do rejection sampling
+		do {
+		    sample = nextGamma( shape, majorandScale );
+		    reject = Math.exp( -1.0/(bias*sample) - sample/(bias*x0*x0) + 2.0/(bias*x0) );
+		} while (MathUtils.nextDouble() > reject);
+	    }
 	}
 
+	return sample;
+
     }
-*/
+	
+
     // Private
 
     protected double shape, scale;
@@ -398,6 +370,14 @@ public class GammaDistribution implements Distribution {
     public static void main(String[] args) {
 	
 	System.out.println("K-S critical values: 1.22(10%), 1.36(5%), 1.63(1%)\n");
+	testExpGamma(2.0,1.0,0.5);
+	testExpGamma(2.0,1.0,1.0);
+	testExpGamma(2.0,1.0,2.0);
+	testExpGamma(3.0,3.0,2.0);
+	testExpGamma(10.0,3.0,5.0);
+	testExpGamma(1.0,3.0,5.0);
+	testExpGamma(1.0,10.0,5.0);
+	testExpGamma(2.0,10.0,5.0);
 	test(1.0,1.0);
 	testAddition(0.5,1.0,2);
 	testAddition(0.25,1.0,4);
@@ -430,6 +410,24 @@ public class GammaDistribution implements Distribution {
 	    max = Math.max( max, idx2-i );
 	}
 	return max / Math.sqrt( 2.0*l1.size() );    
+    }
+
+    private static void testExpGamma( double shape, double scale, double bias ) {
+
+	int iterations = 5000;
+	List<Double> slow = new ArrayList<Double>(0);
+	List<Double> fast = new ArrayList<Double>(0);
+	
+	for (int i=0; i<iterations; i++) {
+	    slow.add( nextExpGamma( shape, scale, bias, true ));
+	    fast.add( nextExpGamma( shape, scale, bias, false ));
+	}
+	
+	Collections.sort( slow );
+	Collections.sort( fast );
+	
+	System.out.println("KS test for shape="+shape+", bias="+bias+" : "+KolmogorovSmirnov(slow, fast)+" and "+KolmogorovSmirnov(fast, slow));
+
     }
     
     private static void test( double shape, double scale ) {

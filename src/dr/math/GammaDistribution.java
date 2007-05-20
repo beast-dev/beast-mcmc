@@ -316,7 +316,7 @@ public class GammaDistribution implements Distribution {
 	double sample;
 	double reject;
 
-	if (slowCode || shape < 1.0) {
+	if (slowCode) {
 	    
 	    do {
 		sample = nextGamma(shape, scale);
@@ -329,8 +329,10 @@ public class GammaDistribution implements Distribution {
 	    double x0 = (shape-1.0)*scale/2.0 + Math.sqrt( ( 4.0 + (shape-1)*(shape-1)*bias*scale ) / ( 4.0 * bias / scale ) );
 	    
 	    // treat the case of shape == 1.0 separately, since there is no uniformly majorating Gamma function.
-	    // Instead, sample uniformly on [0,x0], and exponentially on [x0,infinity].
 	    if (shape == 1.0) {
+		int iters = 0;
+		/*
+		// exact rejection sampling.  Unfortunately, this one becomes slow for small bias parameters
 
 		// this probability makes the distribution continuous
 		double pUniform = (x0/scale) / (1.0 + x0/scale);
@@ -342,7 +344,20 @@ public class GammaDistribution implements Distribution {
 			sample = x0 - Math.log( MathUtils.nextDouble() ) * scale;
 			reject = Math.exp( -1.0/(bias*sample) );
 		    }
+		    iters += 1;
 		} while (MathUtils.nextDouble() > reject);
+		*/
+
+		// do a 'tempered' rejection sampling.  This is an approximate solution - however never
+		// more than 1% of the low end of the actual distribution is missed
+		double x1 = Math.max(0.0, x0 - Math.sqrt( scale/bias )/3.5 - scale );
+		do {
+		    sample = x1 + Math.log( -MathUtils.nextDouble() ) * scale;
+		    reject = Math.exp( -1.0/(bias*(sample-x1)) );
+		    iters += 1;
+		} while (MathUtils.nextDouble() > reject);
+
+		//if (iters>100) System.out.println(" Iters="+iters);
 
 	    } else {
 

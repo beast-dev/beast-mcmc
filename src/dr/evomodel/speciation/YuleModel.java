@@ -34,7 +34,9 @@ import dr.xml.*;
 
 /**
  * This class contains methods that describe a Yule speciation model.
- *@author Roald Forsberg
+ *
+ * @author Roald Forsberg
+ * @author Alexei Drummond
  */
 public class YuleModel extends SpeciationModel{
 
@@ -75,14 +77,14 @@ public class YuleModel extends SpeciationModel{
 
         double logP = 0;
 
-        // see equation 1 of Nee (2001) "Inferring Speciation Rates from Phylogenies"
+        // see equation 3 of Nee (2001) "Inferring Speciation Rates from Phylogenies"
         if (tree.isRoot(node)) {
             // see Appendix 1 of Nee (2001) paper for discussion about why we double this
             // nodeHeight for the root.
             nodeHeight *=2;
         } else {
             // see Appendix 1 of Nee (2001) paper for discussion about why we leave off
-            // this contribution for the root
+            // this contribution for the last internode
             logP += Math.log(lambda);
         }
         logP += -lambda * nodeHeight;

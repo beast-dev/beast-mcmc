@@ -315,9 +315,10 @@ public class GammaDistribution implements Distribution {
 
 	double sample;
 	double reject;
+	int iters = 0;
 
 	if (slowCode) {
-	    
+
 	    do {
 		sample = nextGamma(shape, scale);
 		reject = Math.exp( -1.0/(bias*sample) );
@@ -330,34 +331,36 @@ public class GammaDistribution implements Distribution {
 	    
 	    // treat the case of shape == 1.0 separately, since there is no uniformly majorating Gamma function.
 	    if (shape == 1.0) {
-		int iters = 0;
-		/*
-		// exact rejection sampling.  Unfortunately, this one becomes slow for small bias parameters
-
-		// this probability makes the distribution continuous
-		double pUniform = (x0/scale) / (1.0 + x0/scale);
-		do {
-		    if (MathUtils.nextDouble() < pUniform) {
-			sample = MathUtils.nextDouble() * x0;
-			reject = Math.exp( -sample/scale -1.0/(bias*sample) + x0/scale );
-		    } else {
-			sample = x0 - Math.log( MathUtils.nextDouble() ) * scale;
+		
+		// work out what the rejection rate at the mean is.  If good enough, do simple rejection sampling
+		reject = Math.exp( -1.0/(bias*shape*scale));
+		if (reject > 0.05) {
+		    
+		    do {
+			sample = -Math.log( MathUtils.nextDouble() ) * scale;
 			reject = Math.exp( -1.0/(bias*sample) );
+		    } while (MathUtils.nextDouble() > reject);
+		    		    
+		} else {
+		
+		    // sample with shape == 2.0, and weigh the result.  For this to work, a portion of small
+		    // sample values have to be excluded.  I exclude those for which the pdf is 5 log units
+		    // below the density at the mode - so technically this is an approximation.  This algorithm 
+		    // is slow when the bias parameter is small, but that case is dealt with above.
+		    double y0 = 2 * x0 / scale;
+		    double x1 = x0 * (5.0 + y0 - Math.sqrt(5.0*5.0 + 2 * 5.0 * y0)) / y0;
+		
+		    do {
+			sample = nextExpGamma( 2.0, scale, bias, false );
+			reject = x1 / sample;		    
+			iters += 1;
+		    } while (MathUtils.nextDouble() > reject && iters<10000); 
+
+		    if (iters==10000) {
+			System.out.println("Severe Warning: nextExpGamma (shape=1.0) failed to generate a sample - returning bogus value!");
 		    }
-		    iters += 1;
-		} while (MathUtils.nextDouble() > reject);
-		*/
-
-		// do a 'tempered' rejection sampling.  This is an approximate solution - however never
-		// more than 1% of the low end of the actual distribution is missed
-		double x1 = Math.max(0.0, x0 - Math.sqrt( scale/bias )/3.5 - scale );
-		do {
-		    sample = x1 + Math.log( -MathUtils.nextDouble() ) * scale;
-		    reject = Math.exp( -1.0/(bias*(sample-x1)) );
-		    iters += 1;
-		} while (MathUtils.nextDouble() > reject);
-
-		//if (iters>100) System.out.println(" Iters="+iters);
+		    
+		}
 
 	    } else {
 
@@ -369,7 +372,12 @@ public class GammaDistribution implements Distribution {
 		do {
 		    sample = nextGamma( shape, majorandScale );
 		    reject = Math.exp( -1.0/(bias*sample) - sample/(bias*x0*x0) + 2.0/(bias*x0) );
-		} while (MathUtils.nextDouble() > reject);
+		    iters += 1;
+		} while (MathUtils.nextDouble() > reject && iters < 10000);
+
+		if (iters==10000) {
+		    System.out.println("Severe Warning: nextExpGamma failed to generate a sample - returning bogus value!");
+		}
 	    }
 	}
 
@@ -381,7 +389,81 @@ public class GammaDistribution implements Distribution {
     // Private
 
     protected double shape, scale;
+    
+    private static double pointChi2(double prob, double v) {
+	// Returns z so that Prob{x<z}=prob where x is Chi2 distributed with df
+        // = v
+	// RATNEST FORTRAN by
+	// Best DJ & Roberts DE (1975) The percentage points of the
+	// Chi2 distribution. Applied Statistics 24: 385-388. (AS91)
 
+	double e = 0.5e-6, aa = 0.6931471805, p = prob, g;
+	double xx, c, ch, a = 0, q = 0, p1 = 0, p2 = 0, t = 0, x = 0, b = 0, s1, s2, s3, s4, s5, s6;
+
+	if (p < 0.000002 || p > 0.999998 || v <= 0) {
+	    throw new IllegalArgumentException("Arguments out of range");
+	}
+	g = GammaFunction.lnGamma(v / 2);
+	xx = v / 2;
+	c = xx - 1;
+	if (v < -1.24 * Math.log(p)) {
+	    ch = Math.pow((p * xx * Math.exp(g + xx * aa)), 1 / xx);
+	    if (ch - e < 0) {
+		return ch;
+	    }
+	} else {
+	    if (v > 0.32) {
+		x = NormalDistribution.quantile(p, 0, 1);
+		p1 = 0.222222 / v;
+		ch = v * Math.pow((x * Math.sqrt(p1) + 1 - p1), 3.0);
+		if (ch > 2.2 * v + 6) {
+		    ch = -2 * (Math.log(1 - p) - c * Math.log(.5 * ch) + g);
+		}
+	    } else {
+		ch = 0.4;
+		a = Math.log(1 - p);
+
+		do {
+		    q = ch;
+		    p1 = 1 + ch * (4.67 + ch);
+		    p2 = ch * (6.73 + ch * (6.66 + ch));
+		    t = -0.5 + (4.67 + 2 * ch) / p1
+			    - (6.73 + ch * (13.32 + 3 * ch)) / p2;
+		    ch -= (1 - Math.exp(a + g + .5 * ch + c * aa) * p2 / p1)
+			    / t;
+		} while (Math.abs(q / ch - 1) - .01 > 0);
+	    }
+	}
+	do {
+	    q = ch;
+	    p1 = 0.5 * ch;
+	    if ((t = GammaFunction.incompleteGammaP(xx, p1, g)) < 0) {
+		throw new IllegalArgumentException(
+			"Arguments out of range: t < 0");
+	    }
+	    p2 = p - t;
+	    t = p2 * Math.exp(xx * aa + g + p1 - c * Math.log(ch));
+	    b = t / ch;
+	    a = 0.5 * t - b * c;
+
+	    s1 = (210 + a * (140 + a * (105 + a * (84 + a * (70 + 60 * a))))) / 420;
+	    s2 = (420 + a * (735 + a * (966 + a * (1141 + 1278 * a)))) / 2520;
+	    s3 = (210 + a * (462 + a * (707 + 932 * a))) / 2520;
+	    s4 = (252 + a * (672 + 1182 * a) + c * (294 + a * (889 + 1740 * a))) / 5040;
+	    s5 = (84 + 264 * a + c * (175 + 606 * a)) / 2520;
+	    s6 = (120 + c * (346 + 127 * c)) / 5040;
+	    ch += t
+		    * (1 + 0.5 * t * s1 - b
+			    * c
+			    * (s1 - b
+				    * (s2 - b
+					    * (s3 - b
+						    * (s4 - b * (s5 - b * s6))))));
+	} while (Math.abs(q / ch - 1) > e);
+
+	return (ch);
+    }
+    
     public static void main(String[] args) {
 	
 	System.out.println("K-S critical values: 1.22(10%), 1.36(5%), 1.63(1%)\n");
@@ -393,6 +475,10 @@ public class GammaDistribution implements Distribution {
 	testExpGamma(1.0,3.0,5.0);
 	testExpGamma(1.0,10.0,5.0);
 	testExpGamma(2.0,10.0,5.0);
+	testExpGamma(1.0,0.00001,1000000);
+	testExpGamma(1.0,0.00001,100000);
+	testExpGamma(1.0,0.00001,10000);
+	testExpGamma(1.0,0.00001,5000);    /* this one takes some time */
 	test(1.0,1.0);
 	testAddition(0.5,1.0,2);
 	testAddition(0.25,1.0,4);
@@ -492,79 +578,5 @@ public class GammaDistribution implements Distribution {
 		"; fast="+KolmogorovSmirnov(fast, test)+" & "+KolmogorovSmirnov(test,fast));
 	
     }
-
     
-    private static double pointChi2(double prob, double v) {
-	// Returns z so that Prob{x<z}=prob where x is Chi2 distributed with df
-        // = v
-	// RATNEST FORTRAN by
-	// Best DJ & Roberts DE (1975) The percentage points of the
-	// Chi2 distribution. Applied Statistics 24: 385-388. (AS91)
-
-	double e = 0.5e-6, aa = 0.6931471805, p = prob, g;
-	double xx, c, ch, a = 0, q = 0, p1 = 0, p2 = 0, t = 0, x = 0, b = 0, s1, s2, s3, s4, s5, s6;
-
-	if (p < 0.000002 || p > 0.999998 || v <= 0) {
-	    throw new IllegalArgumentException("Arguments out of range");
-	}
-	g = GammaFunction.lnGamma(v / 2);
-	xx = v / 2;
-	c = xx - 1;
-	if (v < -1.24 * Math.log(p)) {
-	    ch = Math.pow((p * xx * Math.exp(g + xx * aa)), 1 / xx);
-	    if (ch - e < 0) {
-		return ch;
-	    }
-	} else {
-	    if (v > 0.32) {
-		x = NormalDistribution.quantile(p, 0, 1);
-		p1 = 0.222222 / v;
-		ch = v * Math.pow((x * Math.sqrt(p1) + 1 - p1), 3.0);
-		if (ch > 2.2 * v + 6) {
-		    ch = -2 * (Math.log(1 - p) - c * Math.log(.5 * ch) + g);
-		}
-	    } else {
-		ch = 0.4;
-		a = Math.log(1 - p);
-
-		do {
-		    q = ch;
-		    p1 = 1 + ch * (4.67 + ch);
-		    p2 = ch * (6.73 + ch * (6.66 + ch));
-		    t = -0.5 + (4.67 + 2 * ch) / p1
-			    - (6.73 + ch * (13.32 + 3 * ch)) / p2;
-		    ch -= (1 - Math.exp(a + g + .5 * ch + c * aa) * p2 / p1)
-			    / t;
-		} while (Math.abs(q / ch - 1) - .01 > 0);
-	    }
-	}
-	do {
-	    q = ch;
-	    p1 = 0.5 * ch;
-	    if ((t = GammaFunction.incompleteGammaP(xx, p1, g)) < 0) {
-		throw new IllegalArgumentException(
-			"Arguments out of range: t < 0");
-	    }
-	    p2 = p - t;
-	    t = p2 * Math.exp(xx * aa + g + p1 - c * Math.log(ch));
-	    b = t / ch;
-	    a = 0.5 * t - b * c;
-
-	    s1 = (210 + a * (140 + a * (105 + a * (84 + a * (70 + 60 * a))))) / 420;
-	    s2 = (420 + a * (735 + a * (966 + a * (1141 + 1278 * a)))) / 2520;
-	    s3 = (210 + a * (462 + a * (707 + 932 * a))) / 2520;
-	    s4 = (252 + a * (672 + 1182 * a) + c * (294 + a * (889 + 1740 * a))) / 5040;
-	    s5 = (84 + 264 * a + c * (175 + 606 * a)) / 2520;
-	    s6 = (120 + c * (346 + 127 * c)) / 5040;
-	    ch += t
-		    * (1 + 0.5 * t * s1 - b
-			    * c
-			    * (s1 - b
-				    * (s2 - b
-					    * (s3 - b
-						    * (s4 - b * (s5 - b * s6))))));
-	} while (Math.abs(q / ch - 1) > e);
-
-	return (ch);
-    }
 }

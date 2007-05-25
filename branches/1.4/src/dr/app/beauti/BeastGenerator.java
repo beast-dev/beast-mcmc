@@ -1240,7 +1240,7 @@ public class BeastGenerator extends BeautiOptions {
 			writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
 			writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
 
-			if( ((Boolean)taxonSetsMono.get(i)).booleanValue() ) {
+			if( ((Boolean)taxonSetsMono.get(taxa)).booleanValue() ) {
 				writer.writeOpenTag(
 						MonophylyStatistic.MONOPHYLY_STATISTIC,
 						new Attribute[]{
@@ -1642,13 +1642,15 @@ public class BeastGenerator extends BeautiOptions {
 	 */
 	private void writeParameterPriors(XMLWriter writer) {
 		boolean first = true;
-		for(int k = 0; k < taxonSetsMono.size(); ++k) {
-			if( ((Boolean)taxonSetsMono.get(k)).booleanValue() ) {
+        Iterator iter = taxonSetsMono.keySet().iterator();
+        while (iter.hasNext()) {
+            Taxa taxa = (Taxa)iter.next();
+            if( ((Boolean)taxonSetsMono.get(taxa)).booleanValue() ) {
 				if( first ) {
 					writer.writeOpenTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
 					first = false;
 				}
-				final String taxaRef = "monophyly(" + ((Taxa)taxonSets.get(k)).getId() + ")";
+				final String taxaRef = "monophyly(" + taxa.getId() + ")";
 				final Attribute.Default attr = new Attribute.Default("idref", taxaRef);
 				writer.writeTag(MonophylyStatistic.MONOPHYLY_STATISTIC, new Attribute[]{attr}, true);
 			}
@@ -1658,9 +1660,9 @@ public class BeastGenerator extends BeautiOptions {
 		}
 
 		ArrayList parameters = selectParameters();
-		Iterator iter = parameters.iterator();
-		while (iter.hasNext()) {
-			Parameter parameter = (Parameter)iter.next();
+		Iterator iter2 = parameters.iterator();
+		while (iter2.hasNext()) {
+			Parameter parameter = (Parameter)iter2.next();
 			if (parameter.priorType != NONE) {
 				if (parameter.priorType != UNIFORM_PRIOR || parameter.isNodeHeight) {
 					writeParameterPrior(parameter, writer);

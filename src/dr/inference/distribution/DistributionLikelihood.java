@@ -41,16 +41,16 @@ import org.w3c.dom.Element;
 
 public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
-	public static final String DISTRIBUTION_LIKELIHOOD = "distributionLikelihood";
+    public static final String DISTRIBUTION_LIKELIHOOD = "distributionLikelihood";
 
-	public static final String DISTRIBUTION = "distribution";
-	public static final String DATA = "data";
+    public static final String DISTRIBUTION = "distribution";
+    public static final String DATA = "data";
 
-	public DistributionLikelihood(Distribution distribution) {
-		super(null);
+    public DistributionLikelihood(Distribution distribution) {
+        super(null);
         this.distribution = distribution;
         this.offset = 0.0;
-	}
+    }
 
     public DistributionLikelihood(Distribution distribution, double offset) {
         super(null);
@@ -62,83 +62,94 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         super(distributionModel);
         this.distribution = distributionModel;
         this.offset = 0.0;
-	}
+    }
 
-	// **************************************************************
+    // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-	/**
+    /**
      * Calculate the log likelihood of the current state.
      * @return the log likelihood.
      */
-	public double calculateLogLikelihood() {
+    public double calculateLogLikelihood() {
 
-		double logL = 0.0;
+        double logL = 0.0;
 
         for (Statistic statistic : dataList) {
             for (int j = 0; j < statistic.getDimension(); j++) {
-                logL += distribution.logPdf(statistic.getStatisticValue(j) - offset);
+
+                double value = statistic.getStatisticValue(j) - offset;
+                if (offset > 0.0 && value < 0.0) {
+                    // fixes a problem with the offset on exponential distributions not
+                    // actually bounding the distribution. This only performs this check
+                    // if a non-zero offset is actually given otherwise it assumes the
+                    // parameter is either legitimately allowed to go negative or is bounded
+                    // at zero anyway.
+                    return Double.NEGATIVE_INFINITY;
+                }
+
+                logL += distribution.logPdf(value);
             }
         }
         return logL;
-	}
+    }
 
-	// **************************************************************
+    // **************************************************************
     // XMLElement IMPLEMENTATION
     // **************************************************************
 
-	public Element createElement(Document d) {
-		throw new RuntimeException("Not implemented yet!");
-	}
+    public Element createElement(Document d) {
+        throw new RuntimeException("Not implemented yet!");
+    }
 
 
-	/**
-	 * Reads a distribution likelihood from a DOM Document element.
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    /**
+     * Reads a distribution likelihood from a DOM Document element.
+     */
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return DISTRIBUTION_LIKELIHOOD; }
+        public String getParserName() { return DISTRIBUTION_LIKELIHOOD; }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			XMLObject cxo = (XMLObject)xo.getChild(DISTRIBUTION);
-			ParametricDistributionModel model = (ParametricDistributionModel)cxo.getChild(ParametricDistributionModel.class);
+            XMLObject cxo = (XMLObject)xo.getChild(DISTRIBUTION);
+            ParametricDistributionModel model = (ParametricDistributionModel)cxo.getChild(ParametricDistributionModel.class);
 
-			DistributionLikelihood likelihood = new DistributionLikelihood(model);
+            DistributionLikelihood likelihood = new DistributionLikelihood(model);
 
-			cxo = (XMLObject)xo.getChild(DATA);
+            cxo = (XMLObject)xo.getChild(DATA);
 
-				for (int j = 0; j < cxo.getChildCount(); j++) {
-					if (cxo.getChild(j) instanceof Statistic) {
+            for (int j = 0; j < cxo.getChildCount(); j++) {
+                if (cxo.getChild(j) instanceof Statistic) {
 
-                        likelihood.addData( (Statistic)cxo.getChild(j));
-					} else {
-						throw new XMLParseException("illegal element in " + cxo.getName() + " element");
-					}
-				}
+                    likelihood.addData( (Statistic)cxo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + cxo.getName() + " element");
+                }
+            }
 
-			return likelihood;
-		}
+            return likelihood;
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(DISTRIBUTION,
-				new XMLSyntaxRule[] { new ElementRule(ParametricDistributionModel.class) }),
-			new ElementRule(DATA, new XMLSyntaxRule[] {new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )})
-		};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                new ElementRule(DISTRIBUTION,
+                        new XMLSyntaxRule[] { new ElementRule(ParametricDistributionModel.class) }),
+                new ElementRule(DATA, new XMLSyntaxRule[] {new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )})
+        };
 
-		public String getParserDescription() {
-			return "Calculates the likelihood of some data given some parametric or empirical distribution.";
-		}
+        public String getParserDescription() {
+            return "Calculates the likelihood of some data given some parametric or empirical distribution.";
+        }
 
-		public Class getReturnType() { return Likelihood.class; }
-	};
+        public Class getReturnType() { return Likelihood.class; }
+    };
 
     public static final String UNIFORM_PRIOR = "uniformPrior";
     public static final String EXPONENTIAL_PRIOR = "exponentialPrior";
@@ -149,6 +160,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
     public static final String MEAN = "mean";
+    public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
     public static final String STDEV = "stdev";
     public static final String SHAPE = "shape";
     public static final String SCALE = "scale";
@@ -181,16 +193,16 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            AttributeRule.newDoubleRule(LOWER),
-            AttributeRule.newDoubleRule(UPPER),
-            new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
+                AttributeRule.newDoubleRule(LOWER),
+                AttributeRule.newDoubleRule(UPPER),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
         };
 
         public String getParserDescription() {
             return "Calculates the prior probability of some data under a given uniform distribution.";
-		}
+        }
 
-		public Class getReturnType() { return Likelihood.class; }
+        public Class getReturnType() { return Likelihood.class; }
     };
 
     /**
@@ -202,8 +214,8 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double mean = xo.getDoubleAttribute("mean");
-            double offset = xo.getDoubleAttribute("offset");
+            double mean = xo.getDoubleAttribute(MEAN);
+            double offset = xo.getDoubleAttribute(OFFSET);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0/mean), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {
@@ -220,10 +232,10 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            AttributeRule.newDoubleRule(MEAN),
-            AttributeRule.newDoubleRule(OFFSET),
-            new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
-	};
+                AttributeRule.newDoubleRule(MEAN),
+                AttributeRule.newDoubleRule(OFFSET),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
+        };
 
         public String getParserDescription() {
             return "Calculates the prior probability of some data under a given exponential distribution.";
@@ -233,43 +245,43 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     };
 
     /**
-         * A special parser that reads a convenient short form of priors on parameters.
-         */
-        public static XMLObjectParser POISSON_PRIOR_PARSER = new AbstractXMLObjectParser() {
+     * A special parser that reads a convenient short form of priors on parameters.
+     */
+    public static XMLObjectParser POISSON_PRIOR_PARSER = new AbstractXMLObjectParser() {
 
-            public String getParserName() { return POISSON_PRIOR; }
+        public String getParserName() { return POISSON_PRIOR; }
 
-            public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-                double mean = xo.getDoubleAttribute("mean");
-                double offset = xo.getDoubleAttribute("offset");
+            double mean = xo.getDoubleAttribute(MEAN);
+            double offset = xo.getDoubleAttribute(OFFSET);
 
-                DistributionLikelihood likelihood = new DistributionLikelihood(new PoissonDistribution(mean), offset);
-                for (int j = 0; j < xo.getChildCount(); j++) {
-                    if (xo.getChild(j) instanceof Statistic) {
-                        likelihood.addData( (Statistic)xo.getChild(j));
-                    } else {
-                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
-                    }
+            DistributionLikelihood likelihood = new DistributionLikelihood(new PoissonDistribution(mean), offset);
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData( (Statistic)xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
                 }
-
-                return likelihood;
             }
 
-            public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+            return likelihood;
+        }
 
-            private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
                 AttributeRule.newDoubleRule(MEAN),
                 AttributeRule.newDoubleRule(OFFSET),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
         };
 
-            public String getParserDescription() {
-                return "Calculates the prior probability of some data under a given poisson distribution.";
-            }
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a given poisson distribution.";
+        }
 
-            public Class getReturnType() { return Likelihood.class; }
-        };
+        public Class getReturnType() { return Likelihood.class; }
+    };
 
 
     /**
@@ -281,8 +293,8 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double mean = xo.getDoubleAttribute("mean");
-            double stdev = xo.getDoubleAttribute("stdev");
+            double mean = xo.getDoubleAttribute(MEAN);
+            double stdev = xo.getDoubleAttribute(STDEV);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new NormalDistribution(mean, stdev));
             for (int j = 0; j < xo.getChildCount(); j++) {
@@ -299,9 +311,9 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            AttributeRule.newDoubleRule(MEAN),
-            AttributeRule.newDoubleRule(STDEV),
-            new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
+                AttributeRule.newDoubleRule(MEAN),
+                AttributeRule.newDoubleRule(STDEV),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
         };
 
         public String getParserDescription() {
@@ -320,9 +332,14 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double mean = xo.getDoubleAttribute("mean");
-            double stdev = xo.getDoubleAttribute("stdev");
-            double offset = xo.getDoubleAttribute("offset");
+            double mean = xo.getDoubleAttribute(MEAN);
+            double stdev = xo.getDoubleAttribute(STDEV);
+            double offset = xo.getDoubleAttribute(OFFSET);
+            boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
+
+            if (meanInRealSpace) {
+                throw new UnsupportedOperationException("meanInRealSpace is not supported yet");
+            }
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new LogNormalDistribution(mean, stdev), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {
@@ -339,10 +356,11 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            AttributeRule.newDoubleRule(MEAN),
-            AttributeRule.newDoubleRule(STDEV),
-            AttributeRule.newDoubleRule(OFFSET),
-            new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
+                AttributeRule.newDoubleRule(MEAN),
+                AttributeRule.newDoubleRule(STDEV),
+                AttributeRule.newDoubleRule(OFFSET),
+                AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
         };
 
         public String getParserDescription() {
@@ -362,9 +380,9 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double shape = xo.getDoubleAttribute("shape");
-            double scale = xo.getDoubleAttribute("scale");
-            double offset = xo.getDoubleAttribute("offset");
+            double shape = xo.getDoubleAttribute(SHAPE);
+            double scale = xo.getDoubleAttribute(SCALE);
+            double offset = xo.getDoubleAttribute(OFFSET);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new GammaDistribution(shape, scale), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {
@@ -381,10 +399,10 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            AttributeRule.newDoubleRule(SHAPE),
-            AttributeRule.newDoubleRule(SCALE),
-            AttributeRule.newDoubleRule(OFFSET),
-            new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
+                AttributeRule.newDoubleRule(SHAPE),
+                AttributeRule.newDoubleRule(SCALE),
+                AttributeRule.newDoubleRule(OFFSET),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
         };
 
         public String getParserDescription() {

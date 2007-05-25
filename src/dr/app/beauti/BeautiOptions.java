@@ -17,16 +17,14 @@ import dr.evolution.datatype.TwoStates;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
+import dr.evolution.util.Date;
 import dr.util.NumberFormatter;
 import org.jdom.Document;
 import org.jdom.Element;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author rambaut
@@ -1551,7 +1549,7 @@ public class BeautiOptions {
 	public TaxonList taxonList = null;
 	public SimpleAlignment originalAlignment = null;
 	public List<Taxa> taxonSets = new ArrayList<Taxa>();
-	public List<Boolean> taxonSetsMono = new ArrayList<Boolean>();
+	public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
 	public Alignment alignment = null;
 	public Tree tree = null;
 	public boolean alignmentReset = true;

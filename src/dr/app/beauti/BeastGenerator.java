@@ -1432,13 +1432,13 @@ public class BeastGenerator extends BeautiOptions {
 		partitionCount = getPartionCount(codonHeteroPattern);
 
 		if (operator.name.equals("Relative rates") && codonHeteroPattern.equals("112")) {
-		writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
-				new Attribute[] {
-						new Attribute.Default(DeltaExchangeOperator.DELTA, Double.toString(operator.tuning)),
+			writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
+					new Attribute[] {
+							new Attribute.Default(DeltaExchangeOperator.DELTA, Double.toString(operator.tuning)),
 							new Attribute.Default(DeltaExchangeOperator.PARAMETER_WEIGHTS, "2 1"),
-						new Attribute.Default("weight", Integer.toString((int)operator.weight))
-				}
-		);
+							new Attribute.Default("weight", Integer.toString((int)operator.weight))
+					}
+			);
 		} else {
 			writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
 					new Attribute[] {
@@ -1708,13 +1708,13 @@ public class BeastGenerator extends BeautiOptions {
 	 */
 	private void writeParameterPriors(XMLWriter writer) {
 		boolean first = true;
-		for(int k = 0; k < taxonSetsMono.size(); ++k) {
-			if( taxonSetsMono.get(k) ) {
+        for (Taxa taxa : taxonSetsMono.keySet()) {
+            if(taxonSetsMono.get(taxa)) {
 				if( first ) {
 					writer.writeOpenTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
 					first = false;
 				}
-				final String taxaRef = "monophyly(" + taxonSets.get(k).getId() + ")";
+				final String taxaRef = "monophyly(" + taxa.getId() + ")";
 				final Attribute.Default attr = new Attribute.Default("idref", taxaRef);
 				writer.writeTag(MonophylyStatistic.MONOPHYLY_STATISTIC, new Attribute[]{attr}, true);
 			}
@@ -1724,9 +1724,7 @@ public class BeastGenerator extends BeautiOptions {
 		}
 
 		ArrayList<Parameter> parameters = selectParameters();
-		Iterator<Parameter> iter = parameters.iterator();
-		while (iter.hasNext()) {
-			Parameter parameter = iter.next();
+		for (Parameter parameter : parameters) {
 			if (parameter.priorType != NONE) {
 				if (parameter.priorType != UNIFORM_PRIOR || parameter.isNodeHeight) {
 					writeParameterPrior(parameter, writer);
@@ -1775,7 +1773,10 @@ public class BeastGenerator extends BeautiOptions {
 						new Attribute[] {
 								new Attribute.Default(DistributionLikelihood.MEAN, "" + parameter.logNormalMean),
 								new Attribute.Default(DistributionLikelihood.STDEV, "" + parameter.logNormalStdev),
-								new Attribute.Default(DistributionLikelihood.OFFSET, "" + parameter.logNormalOffset)
+								new Attribute.Default(DistributionLikelihood.OFFSET, "" + parameter.logNormalOffset),
+
+								// this is to be implemented...
+								new Attribute.Default(DistributionLikelihood.MEAN_IN_REAL_SPACE, "false")
 						});
 				writeParameterIdref(writer, parameter);
 				writer.writeCloseTag(DistributionLikelihood.LOG_NORMAL_PRIOR);
@@ -1785,7 +1786,7 @@ public class BeastGenerator extends BeautiOptions {
 						new Attribute[] {
 								new Attribute.Default(DistributionLikelihood.SHAPE, "" + parameter.gammaAlpha),
 								new Attribute.Default(DistributionLikelihood.SCALE, "" + parameter.gammaBeta),
-								new Attribute.Default(DistributionLikelihood.OFFSET, "" + parameter.logNormalOffset)
+								new Attribute.Default(DistributionLikelihood.OFFSET, "" + parameter.gammaOffset)
 						});
 				writeParameterIdref(writer, parameter);
 				writer.writeCloseTag(DistributionLikelihood.GAMMA_PRIOR);

@@ -30,6 +30,7 @@ import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
@@ -51,38 +52,38 @@ import java.util.ArrayList;
 public class MCMC implements Runnable, Identifiable {
 
     public MCMC(String id) {
-		this.id = id;
-	}
+        this.id = id;
+    }
 
-	/**
-	 * Must be called before calling chain.
-	 * @param options the options for this MCMC analysis
-	 * @param prior the prior disitrbution on the model parameters.
-	 * @param schedule operator schedule to be used in chain.
-	 */
-	public void init(
-		MCMCOptions options,
-		Likelihood likelihood,
-		Prior prior,
-		OperatorSchedule schedule,
-		Logger[] loggers) {
+    /**
+     * Must be called before calling chain.
+     * @param options the options for this MCMC analysis
+     * @param prior the prior disitrbution on the model parameters.
+     * @param schedule operator schedule to be used in chain.
+     */
+    public void init(
+            MCMCOptions options,
+            Likelihood likelihood,
+            Prior prior,
+            OperatorSchedule schedule,
+            Logger[] loggers) {
 
         MCMCCriterion criterion = new MCMCCriterion();
         criterion.setTemperature(options.getTemperature());
 
         mc = new MarkovChain(prior, likelihood, schedule, criterion, options.useCoercion());
 
-		this.options = options;
-		this.loggers = loggers;
+        this.options = options;
+        this.loggers = loggers;
         this.schedule = schedule;
 
-		//initialize transients
-		currentState = 0;
+        //initialize transients
+        currentState = 0;
 
-		stepsPerReport = 1;
-		while ((getChainLength() / stepsPerReport) > 1000) {
-			stepsPerReport *= 2;
-		}
+        stepsPerReport = 1;
+        while ((getChainLength() / stepsPerReport) > 1000) {
+            stepsPerReport *= 2;
+        }
     }
 
     public MarkovChain getMarkovChain() {
@@ -97,91 +98,91 @@ public class MCMC implements Runnable, Identifiable {
         return options;
     }
 
-	public OperatorSchedule getOperatorSchedule() {
-		return schedule;
-	}
+    public OperatorSchedule getOperatorSchedule() {
+        return schedule;
+    }
 
-	public void run() {
-		chain();
-	}
+    public void run() {
+        chain();
+    }
 
-	/**
-	 * This method actually intiates the MCMC analysis.
-	 */
-	public void chain() {
+    /**
+     * This method actually intiates the MCMC analysis.
+     */
+    public void chain() {
 
-		stopping = false;
-		currentState = 0;
+        stopping = false;
+        currentState = 0;
 
-		timer.start();
+        timer.start();
 
-		if (isPreBurninNeeded()) {
-			int preBurnin = options.getPreBurnin();
-			if (preBurnin > 0) {
-				MarkovChainListener burninListener = new BurninListener(preBurnin);
-				mc.addMarkovChainListener(burninListener);
-				mc.chain(preBurnin, true);
-				mc.removeMarkovChainListener(burninListener);
-				mc.reset();
-			}
-		}
+        if (isPreBurninNeeded()) {
+            int preBurnin = options.getPreBurnin();
+            if (preBurnin > 0) {
+                MarkovChainListener burninListener = new BurninListener(preBurnin);
+                mc.addMarkovChainListener(burninListener);
+                mc.chain(preBurnin, true);
+                mc.removeMarkovChainListener(burninListener);
+                mc.reset();
+            }
+        }
 
-		if (loggers != null) {
-			for (int i =0; i < loggers.length; i++) {
-				loggers[i].startLogging();
-			}
-		}
+        if (loggers != null) {
+            for (int i =0; i < loggers.length; i++) {
+                loggers[i].startLogging();
+            }
+        }
 
-		if (!stopping) {
-			mc.addMarkovChainListener(chainListener);
-			mc.chain(getChainLength(), false);
-			mc.removeMarkovChainListener(chainListener);
-		}
-		timer.stop();
-	}
+        if (!stopping) {
+            mc.addMarkovChainListener(chainListener);
+            mc.chain(getChainLength(), false);
+            mc.removeMarkovChainListener(chainListener);
+        }
+        timer.stop();
+    }
 
-	public class BurninListener implements MarkovChainListener {
+    public class BurninListener implements MarkovChainListener {
 
-		public BurninListener(int stateCount) {
-			this.stateCount = stateCount;
-			step = 0;
-			stepSize = (double)stateCount / 60.0;
-		}
+        public BurninListener(int stateCount) {
+            this.stateCount = stateCount;
+            step = 0;
+            stepSize = (double)stateCount / 60.0;
+        }
 
-		/**
-		 * Called to update the current model keepEvery states.
-		 */
-		public void currentState(int state, Model currentModel) {
+        /**
+         * Called to update the current model keepEvery states.
+         */
+        public void currentState(int state, Model currentModel) {
 
-			if (state == 0) {
-				System.out.println();
-				System.out.println("Pre-burnin (" + stateCount + " states)");
-				System.out.println("0              25             50             75            100");
-				System.out.println("|--------------|--------------|--------------|--------------|");
-				System.out.print(  "*");
-				step = 1;
-			}
+            if (state == 0) {
+                System.out.println();
+                System.out.println("Pre-burnin (" + stateCount + " states)");
+                System.out.println("0              25             50             75            100");
+                System.out.println("|--------------|--------------|--------------|--------------|");
+                System.out.print(  "*");
+                step = 1;
+            }
 
-			if (state >= (int)Math.round(step*stepSize) && step <= 60) {
-				System.out.print("*");
-				System.out.flush();
-				step += 1;
-			}
-		}
+            if (state >= (int)Math.round(step*stepSize) && step <= 60) {
+                System.out.print("*");
+                System.out.flush();
+                step += 1;
+            }
+        }
 
-		/** Called when a new new best posterior state is found. */
-		public void bestState(int state, Model bestModel) {}
+        /** Called when a new new best posterior state is found. */
+        public void bestState(int state, Model bestModel) {}
 
-		/** cleans up when the chain finishes (possibly early). */
-		public void finished(int chainLength) {
-			System.out.println("*");
-			System.out.println();
-		}
+        /** cleans up when the chain finishes (possibly early). */
+        public void finished(int chainLength) {
+            System.out.println("*");
+            System.out.println();
+        }
 
-		int stateCount = 0;
-		double stepSize;
-		int step = 0;
-	}
+        int stateCount = 0;
+        double stepSize;
+        int step = 0;
+    }
 
     private MarkovChainListener chainListener = new MarkovChainListener() {
 
@@ -222,10 +223,10 @@ public class MCMC implements Runnable, Identifiable {
                 System.out.println();
                 System.out.println("Operator analysis");
                 System.out.println(
-                    formatter.formatToFieldWidth("Operator", 30) +
-                    formatter.formatToFieldWidth("", 8) +
-                    formatter.formatToFieldWidth("Pr(accept)", 11) +
-                    " Performance suggestion");
+                        formatter.formatToFieldWidth("Operator", 30) +
+                                formatter.formatToFieldWidth("", 8) +
+                                formatter.formatToFieldWidth("Pr(accept)", 11) +
+                                " Performance suggestion");
                 for (int i =0; i < schedule.getOperatorCount(); i++) {
 
                     MCMCOperator op = schedule.getOperator(i);
@@ -255,12 +256,12 @@ public class MCMC implements Runnable, Identifiable {
                     }
 
                     System.out.println(
-                        formatter.formatToFieldWidth(op.getOperatorName(), 30) +
+                            formatter.formatToFieldWidth(op.getOperatorName(), 30) +
 
-                        pString +
+                                    pString +
 
-                        formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) +
-                         " " + message + "\t" + suggestion);
+                                    formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) +
+                                    " " + message + "\t" + suggestion);
                 }
                 System.out.println();
             }
@@ -273,168 +274,174 @@ public class MCMC implements Runnable, Identifiable {
     /** @return the prior of this MCMC analysis. */
     public Prior getPrior() { return mc.getPrior(); }
 
-	/** @return the likelihood function. */
-	public Likelihood getLikelihood() { return mc.getLikelihood(); }
+    /** @return the likelihood function. */
+    public Likelihood getLikelihood() { return mc.getLikelihood(); }
 
-	/** @return the timer. */
-	public dr.util.Timer getTimer() { return timer; }
+    /** @return the timer. */
+    public dr.util.Timer getTimer() { return timer; }
 
-	/** @return the length of this analysis.*/
-	public final int getChainLength() { return options.getChainLength(); }
+    /** @return the length of this analysis.*/
+    public final int getChainLength() { return options.getChainLength(); }
 
-	// TRANSIENT PUBLIC METHODS *****************************************
+    // TRANSIENT PUBLIC METHODS *****************************************
 
-	/** @return the current state of the MCMC analysis. */
-	public final int getCurrentState() { return currentState; }
+    /** @return the current state of the MCMC analysis. */
+    public final int getCurrentState() { return currentState; }
 
-	/** @return the progress (0 to 1) of the MCMC analysis. */
-	public final double getProgress() {
-		return (double)currentState / (double)options.getChainLength();
-	}
+    /** @return the progress (0 to 1) of the MCMC analysis. */
+    public final double getProgress() {
+        return (double)currentState / (double)options.getChainLength();
+    }
 
-	/** @return true if this MCMC is currently adapting the operators. */
-	public final boolean isAdapting() { return isAdapting; }
+    /** @return true if this MCMC is currently adapting the operators. */
+    public final boolean isAdapting() { return isAdapting; }
 
-	/** Requests that the MCMC chain stop prematurely. */
-	public void pleaseStop() {
-		stopping = true;
-		mc.pleaseStop();
-	}
+    /** Requests that the MCMC chain stop prematurely. */
+    public void pleaseStop() {
+        stopping = true;
+        mc.pleaseStop();
+    }
 
-	/** sets the pause state of this MCMC chain */
-	public boolean isStopped() { return mc.isStopped(); }
+    /** sets the pause state of this MCMC chain */
+    public boolean isStopped() { return mc.isStopped(); }
 
-	//PRIVATE METHODS *****************************************
-	private boolean isPreBurninNeeded() {
+    //PRIVATE METHODS *****************************************
+    private boolean isPreBurninNeeded() {
 
-		if (options.useCoercion()) return true;
+        if (options.useCoercion()) return true;
 
-		for (int i = 0; i < schedule.getOperatorCount(); i++) {
-			MCMCOperator op = schedule.getOperator(i);
+        for (int i = 0; i < schedule.getOperatorCount(); i++) {
+            MCMCOperator op = schedule.getOperator(i);
 
-			if (op instanceof CoercableMCMCOperator) {
-				if (((CoercableMCMCOperator)op).getMode() == CoercableMCMCOperator.COERCION_ON) return true;
-			}
-		}
-		return false;
-	}
+            if (op instanceof CoercableMCMCOperator) {
+                if (((CoercableMCMCOperator)op).getMode() == CoercableMCMCOperator.COERCION_ON) return true;
+            }
+        }
+        return false;
+    }
 
-	public void setShowOperatorAnalysis(boolean soa) {
-		showOperatorAnalysis = soa;
-	}
+    public void setShowOperatorAnalysis(boolean soa) {
+        showOperatorAnalysis = soa;
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return MCMC; }
+        public String getParserName() { return MCMC; }
 
         /**
          * @return a tree object based on the XML element it was passed.
          */
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			MCMC mcmc = new MCMC("mcmc1");
-			MCMCOptions options = new MCMCOptions();
-			OperatorSchedule opsched = (OperatorSchedule)xo.getChild(OperatorSchedule.class);
-			Likelihood likelihood = (Likelihood)xo.getChild(Likelihood.class);
-			ArrayList loggers = new ArrayList();
+            MCMC mcmc = new MCMC("mcmc1");
+            MCMCOptions options = new MCMCOptions();
+            OperatorSchedule opsched = (OperatorSchedule)xo.getChild(OperatorSchedule.class);
+            Likelihood likelihood = (Likelihood)xo.getChild(Likelihood.class);
+            ArrayList loggers = new ArrayList();
 
-			options.setChainLength(xo.getIntegerAttribute(CHAIN_LENGTH));
+            options.setChainLength(xo.getIntegerAttribute(CHAIN_LENGTH));
 
-			if (xo.hasAttribute(COERCION)) {
-				options.setUseCoercion(xo.getBooleanAttribute(COERCION));
-			}
+            if (xo.hasAttribute(COERCION)) {
+                options.setUseCoercion(xo.getBooleanAttribute(COERCION));
+            }
 
-			if (xo.hasAttribute(PRE_BURNIN)) {
-				options.setPreBurnin(xo.getIntegerAttribute(PRE_BURNIN));
-			}
+            if (xo.hasAttribute(PRE_BURNIN)) {
+                options.setPreBurnin(xo.getIntegerAttribute(PRE_BURNIN));
+            }
 
             if (xo.hasAttribute(TEMPERATURE)) {
                 options.setTemperature(xo.getIntegerAttribute(TEMPERATURE));
             }
 
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				Object child = xo.getChild(i);
-				if (child instanceof Logger) {
-					loggers.add((Logger)child);
-				}
-			}
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                Object child = xo.getChild(i);
+                if (child instanceof Logger) {
+                    loggers.add((Logger)child);
+                }
+            }
 
-			mcmc.setShowOperatorAnalysis(true);
+            mcmc.setShowOperatorAnalysis(true);
 
-			Logger[] loggerArray = new Logger[loggers.size()];
-			loggers.toArray(loggerArray);
+            Logger[] loggerArray = new Logger[loggers.size()];
+            loggers.toArray(loggerArray);
 
             java.util.logging.Logger.getLogger("dr.inference").info("Creating the MCMC chain:" +
-				"\n  chainLength=" + options.getChainLength() +
-                "\n  autoOptimize=" + options.useCoercion());
+                    "\n  chainLength=" + options.getChainLength() +
+                    "\n  autoOptimize=" + options.useCoercion());
 
-			mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, opsched, loggerArray);
+            mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, opsched, loggerArray);
 
             MarkovChain mc = mcmc.getMarkovChain();
             double initialScore = mc.getCurrentScore();
 
             if (initialScore == Double.NEGATIVE_INFINITY) {
-                throw new IllegalArgumentException("The initial model is invalid because it has zero likelihood!");
+                if (likelihood instanceof CompoundLikelihood) {
+                    String message = ((CompoundLikelihood)likelihood).getDiagnosis();
+
+                    throw new IllegalArgumentException("The initial posterior is zero: " + message);
+                } else {
+                    throw new IllegalArgumentException("The initial posterior is zero!");
+                }
             }
 
 
             return mcmc;
-		}
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element returns an MCMC chain and runs the chain as a side effect.";
-		}
+        public String getParserDescription() {
+            return "This element returns an MCMC chain and runs the chain as a side effect.";
+        }
 
-		public Class getReturnType() { return MCMC.class; }
+        public Class getReturnType() { return MCMC.class; }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newIntegerRule(CHAIN_LENGTH),
-			AttributeRule.newBooleanRule(COERCION, true),
-			AttributeRule.newIntegerRule(PRE_BURNIN, true),
-            AttributeRule.newDoubleRule(TEMPERATURE, true),
-			new ElementRule(OperatorSchedule.class ),
-			new ElementRule(Likelihood.class ),
-			new ElementRule(Logger.class, 1, Integer.MAX_VALUE )
-		};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                AttributeRule.newIntegerRule(CHAIN_LENGTH),
+                AttributeRule.newBooleanRule(COERCION, true),
+                AttributeRule.newIntegerRule(PRE_BURNIN, true),
+                AttributeRule.newDoubleRule(TEMPERATURE, true),
+                new ElementRule(OperatorSchedule.class ),
+                new ElementRule(Likelihood.class ),
+                new ElementRule(Logger.class, 1, Integer.MAX_VALUE )
+        };
 
-	};
+    };
 
-	public String getId() { return id; }
+    public String getId() { return id; }
 
-	public void setId(String id) { this.id = id; }
+    public void setId(String id) { this.id = id; }
 
-	// PRIVATE TRANSIENTS
+    // PRIVATE TRANSIENTS
 
-	//private FileLogger operatorLogger = null;
-	private boolean isAdapting = true, stopping = false;
-	private boolean showOperatorAnalysis = true;
-	private dr.util.Timer timer = new dr.util.Timer();
-	private int currentState = 0;
-	private int stepsPerReport = 1000;
-	private NumberFormatter formatter = new NumberFormatter(8);
+    //private FileLogger operatorLogger = null;
+    private boolean isAdapting = true, stopping = false;
+    private boolean showOperatorAnalysis = true;
+    private dr.util.Timer timer = new dr.util.Timer();
+    private int currentState = 0;
+    private int stepsPerReport = 1000;
+    private NumberFormatter formatter = new NumberFormatter(8);
 
     /** this markov chain does most of the work. */
-	private MarkovChain mc;
+    private MarkovChain mc;
 
-	/** the options of this MCMC analysis */
-	private MCMCOptions options;
+    /** the options of this MCMC analysis */
+    private MCMCOptions options;
 
-	private Logger[] loggers;
+    private Logger[] loggers;
     private OperatorSchedule schedule;
 
-	private String id = null;
+    private String id = null;
 
-	public static final String COERCION = "autoOptimize";
-	public static final String PRE_BURNIN = "preBurnin";
-	public static final String MCMC = "mcmc";
-	public static final String CHAIN_LENGTH = "chainLength";
-	public static final String WEIGHT = "weight";
+    public static final String COERCION = "autoOptimize";
+    public static final String PRE_BURNIN = "preBurnin";
+    public static final String MCMC = "mcmc";
+    public static final String CHAIN_LENGTH = "chainLength";
+    public static final String WEIGHT = "weight";
     public static final String TEMPERATURE = "temperature";
 }
 

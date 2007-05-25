@@ -103,7 +103,7 @@ public class BeastGenerator extends BeautiOptions {
 		for (int i = 0; i < taxonSets.size(); i++) {
 			TaxonList taxa = (TaxonList)taxonSets.get(i);
 			if (taxa.getTaxonCount() < 2) {
-				throw new IllegalArgumentException("Taxon set, " + taxa.getId() + ", should contain\n"+
+				throw new IllegalArgumentException("Taxon set, " + taxa.getId() + ", should contain\n" +
 						"at least two taxa.");
 			}
 			if (ids.contains(taxa.getId())) {
@@ -1709,7 +1709,10 @@ public class BeastGenerator extends BeautiOptions {
 						new Attribute[] {
 								new Attribute.Default(DistributionLikelihood.MEAN, "" + parameter.logNormalMean),
 								new Attribute.Default(DistributionLikelihood.STDEV, "" + parameter.logNormalStdev),
-								new Attribute.Default(DistributionLikelihood.OFFSET, "" + parameter.logNormalOffset)
+								new Attribute.Default(DistributionLikelihood.OFFSET, "" + parameter.logNormalOffset),
+
+								// this is to be implemented...
+								new Attribute.Default(DistributionLikelihood.MEAN_IN_REAL_SPACE, "false")
 						});
 				writeParameterIdref(writer, parameter);
 				writer.writeCloseTag(DistributionLikelihood.LOG_NORMAL_PRIOR);
@@ -1719,7 +1722,7 @@ public class BeastGenerator extends BeautiOptions {
 						new Attribute[] {
 								new Attribute.Default(DistributionLikelihood.SHAPE, "" + parameter.gammaAlpha),
 								new Attribute.Default(DistributionLikelihood.SCALE, "" + parameter.gammaBeta),
-								new Attribute.Default(DistributionLikelihood.OFFSET, "" + parameter.logNormalOffset)
+								new Attribute.Default(DistributionLikelihood.OFFSET, "" + parameter.gammaOffset)
 						});
 				writeParameterIdref(writer, parameter);
 				writer.writeCloseTag(DistributionLikelihood.GAMMA_PRIOR);

@@ -101,7 +101,7 @@ public class NewickParser extends AbstractXMLObjectParser {
 
                     taxon = (Taxon)obj;
                 }
-            } catch (ObjectNotFoundException e) { }
+            } catch (ObjectNotFoundException e) { /**/ }
 
             if (taxon != null) {
 

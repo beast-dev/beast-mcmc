@@ -149,7 +149,7 @@ public class ExponentialDistribution implements Distribution
 	}
 	
 	// Private
-
+	
 	protected double lambda;
-
+	
 }

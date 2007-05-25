@@ -149,6 +149,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
     public static final String MEAN = "mean";
+	public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
     public static final String STDEV = "stdev";
     public static final String SHAPE = "shape";
     public static final String SCALE = "scale";
@@ -202,8 +203,8 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double mean = xo.getDoubleAttribute("mean");
-            double offset = xo.getDoubleAttribute("offset");
+            double mean = xo.getDoubleAttribute(MEAN);
+            double offset = xo.getDoubleAttribute(OFFSET);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0/mean), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {
@@ -241,8 +242,8 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double mean = xo.getDoubleAttribute("mean");
-            double stdev = xo.getDoubleAttribute("stdev");
+            double mean = xo.getDoubleAttribute(MEAN);
+            double stdev = xo.getDoubleAttribute(STDEV);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new NormalDistribution(mean, stdev));
             for (int j = 0; j < xo.getChildCount(); j++) {
@@ -280,9 +281,14 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double mean = xo.getDoubleAttribute("mean");
-            double stdev = xo.getDoubleAttribute("stdev");
-            double offset = xo.getDoubleAttribute("offset");
+            double mean = xo.getDoubleAttribute(MEAN);
+            double stdev = xo.getDoubleAttribute(STDEV);
+	        double offset = xo.getDoubleAttribute(OFFSET);
+	        boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
+
+	        if (meanInRealSpace) {
+		        throw new UnsupportedOperationException("meanInRealSpace is not supported yet");
+	        }
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new LogNormalDistribution(mean, stdev), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {
@@ -302,6 +308,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             AttributeRule.newDoubleRule(MEAN),
             AttributeRule.newDoubleRule(STDEV),
             AttributeRule.newDoubleRule(OFFSET),
+		        AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE),
             new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
         };
 
@@ -322,9 +329,9 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double shape = xo.getDoubleAttribute("shape");
-            double scale = xo.getDoubleAttribute("scale");
-            double offset = xo.getDoubleAttribute("offset");
+            double shape = xo.getDoubleAttribute(SHAPE);
+            double scale = xo.getDoubleAttribute(SCALE);
+            double offset = xo.getDoubleAttribute(OFFSET);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new GammaDistribution(shape, scale), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {

@@ -34,7 +34,9 @@ import dr.xml.*;
 
 /**
  * This class contains methods that describe a Yule speciation model.
- *@author Roald Forsberg
+ *
+ * @author Roald Forsberg
+ * @author Alexei Drummond
  */
 public class YuleModel extends SpeciationModel{
 
@@ -69,13 +71,25 @@ public class YuleModel extends SpeciationModel{
 	// functions that define a speciation model
 	//
 	public double logNodeProbability(Tree tree, NodeRef node) {
-        if (tree.getRoot() == node) return 0.0;
 
         double nodeHeight = tree.getNodeHeight(node);
-        double rootHeight = tree.getNodeHeight(tree.getRoot());
-    
 		double lambda = getBirthRate();
-		return Math.log((lambda * Math.exp(-lambda * nodeHeight)) / (1 - Math.exp(-lambda * rootHeight)));
+
+        double logP = 0;
+
+        // see equation 3 of Nee (2001) "Inferring Speciation Rates from Phylogenies"
+        if (tree.isRoot(node)) {
+            // see Appendix 1 of Nee (2001) paper for discussion about why we double this
+            // nodeHeight for the root.
+            nodeHeight *=2;
+        } else {
+            // see Appendix 1 of Nee (2001) paper for discussion about why we leave off
+            // this contribution for the last internode
+            logP += Math.log(lambda);
+        }
+        logP += -lambda * nodeHeight;
+
+        return logP;
 	}
 
     // **************************************************************
@@ -126,4 +140,5 @@ public class YuleModel extends SpeciationModel{
 
     //Protected stuff
     Parameter birthRateParameter;
+
 }

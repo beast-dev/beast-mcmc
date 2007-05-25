@@ -39,7 +39,6 @@ import java.util.ArrayList;
  * Implements the subtree slide move.
  *
  * @author Alexei Drummond
- *
  * @version $Id: SubtreeSlideOperator.java,v 1.15 2005/06/14 10:40:34 rambaut Exp $
  */
 public class SubtreeSlideOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
@@ -96,7 +95,8 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
             if (PiP != null && tree.getNodeHeight(PiP) < newHeight) {
 
                 // find new parent
-                newParent = PiP; newChild = iP;
+                newParent = PiP;
+                newChild = iP;
                 while (tree.getNodeHeight(newParent) < newHeight) {
                     newChild = newParent;
                     newParent = tree.getParent(newParent);
@@ -107,16 +107,20 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
                 // 3.1.1 if creating a new root
                 if (tree.isRoot(newChild)) {
-                    tree.removeChild(iP, CiP); tree.removeChild(PiP, iP);
-                    tree.addChild(iP, newChild); tree.addChild(PiP, CiP);
+                    tree.removeChild(iP, CiP);
+                    tree.removeChild(PiP, iP);
+                    tree.addChild(iP, newChild);
+                    tree.addChild(PiP, CiP);
                     tree.setRoot(iP);
                     //System.err.println("Creating new root!");
                 }
                 // 3.1.2 no new root
                 else {
-                    tree.removeChild(iP, CiP); tree.removeChild(PiP, iP);
+                    tree.removeChild(iP, CiP);
+                    tree.removeChild(PiP, iP);
                     tree.removeChild(newParent, newChild);
-                    tree.addChild(iP, newChild); tree.addChild(PiP, CiP);
+                    tree.addChild(iP, newChild);
+                    tree.addChild(PiP, CiP);
                     tree.addChild(newParent, iP);
                     //System.err.println("No new root!");
                 }
@@ -125,7 +129,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
                 try {
                     tree.endTreeEdit();
-                } catch(MutableTree.InvalidTreeException ite) {
+                } catch (MutableTree.InvalidTreeException ite) {
                     throw new RuntimeException(ite.toString());
                 }
 
@@ -133,7 +137,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                 int possibleSources = intersectingEdges(tree, newChild, oldHeight, null);
                 //System.out.println("possible sources = " + possibleSources);
 
-                logq = Math.log(1.0/(double)possibleSources);
+                logq = -Math.log(possibleSources);
 
             } else {
                 // just change the node height
@@ -156,7 +160,9 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                 int possibleDestinations = intersectingEdges(tree, CiP, newHeight, newChildren);
 
                 // if no valid destinations then return a failure
-                if (newChildren.size() == 0) { return Double.NEGATIVE_INFINITY; }
+                if (newChildren.size() == 0) {
+                    return Double.NEGATIVE_INFINITY;
+                }
 
                 // pick a random parent/child destination edge uniformly from options
                 int childIndex = MathUtils.nextInt(newChildren.size());
@@ -168,14 +174,18 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                 // 4.1.1 if iP was root
                 if (tree.isRoot(iP)) {
                     // new root is CiP
-                    tree.removeChild(iP, CiP); tree.removeChild(newParent, newChild);
-                    tree.addChild(iP, newChild); tree.addChild(newParent, iP);
+                    tree.removeChild(iP, CiP);
+                    tree.removeChild(newParent, newChild);
+                    tree.addChild(iP, newChild);
+                    tree.addChild(newParent, iP);
                     tree.setRoot(CiP);
                     //System.err.println("DOWN: Creating new root!");
                 } else {
-                    tree.removeChild(iP, CiP); tree.removeChild(PiP, iP);
+                    tree.removeChild(iP, CiP);
+                    tree.removeChild(PiP, iP);
                     tree.removeChild(newParent, newChild);
-                    tree.addChild(iP, newChild); tree.addChild(PiP, CiP);
+                    tree.addChild(iP, newChild);
+                    tree.addChild(PiP, CiP);
                     tree.addChild(newParent, iP);
                     //System.err.println("DOWN: no new root!");
                 }
@@ -184,11 +194,11 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
                 try {
                     tree.endTreeEdit();
-                } catch(MutableTree.InvalidTreeException ite) {
+                } catch (MutableTree.InvalidTreeException ite) {
                     throw new RuntimeException(ite.toString());
                 }
 
-                logq = Math.log((double)possibleDestinations);
+                logq = Math.log(possibleDestinations);
             } else {
                 tree.setNodeHeight(iP, newHeight);
                 logq = 0.0;
@@ -221,7 +231,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
     private double getDelta() {
         if (!gaussian) {
-            return (MathUtils.nextDouble() * size) - (size/2.0);
+            return (MathUtils.nextDouble() * size) - (size / 2.0);
         } else {
             return MathUtils.nextGaussian() * size;
         }
@@ -257,24 +267,33 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
         }
     }
 
-    public double getSize() { return size; }
-    public void setSize(double size) { this.size = size; }
+    public double getSize() {
+        return size;
+    }
 
-	public double getCoercableParameter() {
-		return Math.log(getSize());
-	}
+    public void setSize(double size) {
+        this.size = size;
+    }
 
-	public void setCoercableParameter(double value) {
-		setSize(Math.exp(value));
-	}
+    public double getCoercableParameter() {
+        return Math.log(getSize());
+    }
 
-	public double getRawParameter() { return getSize(); }
+    public void setCoercableParameter(double value) {
+        setSize(Math.exp(value));
+    }
 
-	public int getMode() {
-		return mode;
-	}
+    public double getRawParameter() {
+        return getSize();
+    }
 
-	public double getTargetAcceptanceProbability() { return 0.234; }
+    public int getMode() {
+        return mode;
+    }
+
+    public double getTargetAcceptanceProbability() {
+        return 0.234;
+    }
 
 
 	public String getPerformanceSuggestion() {

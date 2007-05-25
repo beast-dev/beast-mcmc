@@ -111,7 +111,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java general likelihood core");
                 likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
             }
-//            likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
             Logger.getLogger("dr.evomodel").info( "  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             Logger.getLogger("dr.evomodel").info("  Partial likelihood scaling " + (useScaling ? "on." : "off."));
 
@@ -153,7 +152,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
-
     }
 
     // **************************************************************
@@ -386,6 +384,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (xo.hasAttribute(USE_SCALING)) {
                 useScaling = xo.getBooleanAttribute(USE_SCALING);
             }
+
             PatternList patternList = (PatternList)xo.getChild(PatternList.class);
             TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
             SiteModel siteModel = (SiteModel)xo.getChild(SiteModel.class);

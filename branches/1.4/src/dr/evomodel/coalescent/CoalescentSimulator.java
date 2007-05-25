@@ -315,22 +315,22 @@ public class CoalescentSimulator {
                                         tree.setRootHeight(Math.max(constraintj.lower, rootHeight1));
                                     }
                                 } else {
-				    MutableTree treeForRemaining = simulator.simulateTree(list, demoModel);
-				    if( constraintj.realLimits() ) {
-					double low = Math.max(constraintj.lower, tree.getNodeHeight(tree.getRoot()));
-					attemptToScaleTree(treeForRemaining, 0.75 * low + 0.25 * constraintj.upper);
+                                    MutableTree treeForRemaining = simulator.simulateTree(list, demoModel);
+                                    if( constraintj.realLimits() ) {
+                                        double low = Math.max(constraintj.lower, tree.getNodeHeight(tree.getRoot()));
+                                        attemptToScaleTree(treeForRemaining, 0.75 * low + 0.25 * constraintj.upper);
 
-					// combine the trees
-					final SimpleNode newRoot = new SimpleNode();
-					final SimpleNode node = new SimpleNode(tree, tree.getRoot());
-					newRoot.addChild(node);
-					newRoot.addChild(new SimpleNode(treeForRemaining, treeForRemaining.getRoot()));
-					newRoot.setHeight(0.5 * low + 0.5 * constraintj.upper);
-					tree = new SimpleTree(newRoot);
-				    } else {
-					tree = simulator.simulateTree(new Tree[]{tree, treeForRemaining} , demoModel, -1);
-				    }
-				}
+                                        // combine the trees
+                                        final SimpleNode newRoot = new SimpleNode();
+                                        final SimpleNode node = new SimpleNode(tree, tree.getRoot());
+                                        newRoot.addChild(node);
+                                        newRoot.addChild(new SimpleNode(treeForRemaining, treeForRemaining.getRoot()));
+                                        newRoot.setHeight(0.5 * low + 0.5 * constraintj.upper);
+                                        tree = new SimpleTree(newRoot);
+                                    } else {
+                                        tree = simulator.simulateTree(new Tree[]{tree, treeForRemaining} , demoModel, -1);
+                                    }
+                                }
                             }
                             st.add(tree);
                         }

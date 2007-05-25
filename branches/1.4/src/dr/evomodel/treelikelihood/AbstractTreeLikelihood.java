@@ -67,7 +67,9 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 			updateNode[i] = true;
 		}
 
-	}
+        likelihoodKnown = false;
+
+    }
 
    /**
      * Sets the partials from a sequence in an alignment.
@@ -249,8 +251,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 	protected abstract double calculateLogLikelihood();
 
 	public String toString() {
-
-		return Double.toString(getLogLikelihood());
+        return getClass().getName() + "(" + logLikelihood + ")";
 
 	}
 

@@ -38,7 +38,7 @@ public class Arguments {
 		private static final long serialVersionUID = -3229759954341228233L;
 		public ArgumentException() { super(); }
 		public ArgumentException(String message) { super(message); }
-	};
+	}
 
 	public static class Option {
 		
@@ -50,7 +50,7 @@ public class Arguments {
 		String label;
 		String description;
 		boolean isAvailable = false;
-	};
+	}
 	
 	public static class StringOption extends Option {
 		
@@ -69,7 +69,7 @@ public class Arguments {
 		boolean caseSensitive = false;
 		
 		String value = null;
-	};
+	}
 	
 	public static class IntegerOption extends Option {
 		
@@ -87,7 +87,7 @@ public class Arguments {
 		int maxValue = Integer.MAX_VALUE;
 
 		int value = 0;
-	};
+	}
 	
 	public static class IntegerArrayOption extends IntegerOption {
 		
@@ -110,7 +110,7 @@ public class Arguments {
 		int count;
 		
 		int[] values = null;
-	};
+	}
 	
     public static class LongOption extends Option {
 
@@ -128,7 +128,7 @@ public class Arguments {
         long maxValue = Long.MAX_VALUE;
 
         long value = 0;
-    };
+    }
 
 	public static class RealOption extends Option {
 		
@@ -146,7 +146,7 @@ public class Arguments {
 		double maxValue = Double.POSITIVE_INFINITY;
 		
 		double value = 0;
-	};
+	}
 	
 	public static class RealArrayOption extends RealOption {
 
@@ -170,7 +170,7 @@ public class Arguments {
 		private int count;
 		
 		double[] values = null;
-	};
+	}
 	
 	/**
 	 * Parse a list of arguments ready for accessing

@@ -47,7 +47,8 @@ public abstract class AbstractDistributionLikelihood extends Likelihood.Abstract
 	
 	/**
 	 * Adds a statistic, this is the data for which the likelihood is calculated.
-	 */
+     * @param data to add
+     */
 	public void addData(Statistic data) { dataList.add(data); }
 	
 	

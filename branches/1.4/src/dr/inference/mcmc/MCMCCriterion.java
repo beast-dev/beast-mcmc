@@ -42,40 +42,40 @@ public class MCMCCriterion implements Acceptor {
     // As this temperature parameter increases, the posterior gets more peaked.
     protected double temperature = 1.0;
 
-	public MCMCCriterion() {
+    public MCMCCriterion() {
 
         temperature = 1.0;
-	}
+    }
 
-	public MCMCCriterion(double t) {
-		temperature = t;
-	}
+    public MCMCCriterion(double t) {
+        temperature = t;
+    }
 
-	public double getAcceptanceValue(double oldScore, double hastingsRatio) {
+    public double getAcceptanceValue(double oldScore, double hastingsRatio) {
 
-		double acceptanceValue = (MathUtils.randomLogDouble() + (oldScore * temperature) - hastingsRatio) / temperature;
+        double acceptanceValue = (MathUtils.randomLogDouble() + (oldScore * temperature) - hastingsRatio) / temperature;
 
-		return acceptanceValue;
-	}
+        return acceptanceValue;
+    }
 
-	public boolean accept(double oldScore, double newScore, double hastingsRatio, double[] logr) {
+    public boolean accept(double oldScore, double newScore, double hastingsRatio, double[] logr) {
 
-		logr[0] = (newScore - oldScore) * temperature + hastingsRatio;
+        logr[0] = (newScore - oldScore) * temperature + hastingsRatio;
 
-		// for coercedAcceptanceProbability
-		if (logr[0] > 0) logr[0] = 0.0;
+        // for coercedAcceptanceProbability
+        if (logr[0] > 0) logr[0] = 0.0;
 
-		boolean accept = MathUtils.randomLogDouble() < logr[0];
+        boolean accept = MathUtils.randomLogDouble() < logr[0];
 
-		return accept;
-	}
+        return accept;
+    }
 
-	public double getTemperature() {
-		return temperature;
-	}
+    public double getTemperature() {
+        return temperature;
+    }
 
-	public void setTemperature(double temperature) {
-		this.temperature = temperature;
-	}
+    public void setTemperature(double temperature) {
+        this.temperature = temperature;
+    }
 
 }

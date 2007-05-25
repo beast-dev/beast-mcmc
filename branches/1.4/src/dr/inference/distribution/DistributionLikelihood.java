@@ -79,7 +79,18 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 		for (int i = 0; i < dataList.size(); i++) {
 			Statistic statistic = (Statistic)dataList.get(i);
 			for (int j = 0; j < statistic.getDimension(); j++) {
-                logL += distribution.logPdf(statistic.getStatisticValue(j) - offset);
+
+                double value = statistic.getStatisticValue(j) - offset;
+                if (offset > 0.0 && value < 0.0) {
+                    // fixes a problem with the offset on exponential distributions not
+                    // actually bounding the distribution. This only performs this check
+                    // if a non-zero offset is actually given otherwise it assumes the
+                    // parameter is either legitimately allowed to go negative or is bounded
+                    // at zero anyway.
+                    return Double.NEGATIVE_INFINITY;
+                }
+
+                logL += distribution.logPdf(value);
 			}
 		}
 		return logL;

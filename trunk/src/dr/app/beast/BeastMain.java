@@ -124,12 +124,13 @@ public class BeastMain {
         } catch (dr.xml.XMLParseException pxe) {
             if (pxe.getMessage() != null && pxe.getMessage().equals("Unknown root document element, beauti")) {
                 Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
-                Logger.getLogger("dr.apps.beast").severe("The file you just tried to run in BEAST is actually a BEAUti document.\n" +
-                        "Although this uses XML, it is not a format that BEAST understands.\n" +
-                        "These files are used by BEAUti to save and load your settings so that\n" +
-                        "you can go back and alter them. To generate a BEAST file you must\n" +
-                        "select the 'Generate BEAST File' option, either from the File menu or\n" +
-                        "the button at the bottom right of the window.");
+                Logger.getLogger("dr.apps.beast").severe(
+                        "The file you just tried to run in BEAST is actually a BEAUti document.\n" +
+                                "Although this uses XML, it is not a format that BEAST understands.\n" +
+                                "These files are used by BEAUti to save and load your settings so that\n" +
+                                "you can go back and alter them. To generate a BEAST file you must\n" +
+                                "select the 'Generate BEAST File' option, either from the File menu or\n" +
+                                "the button at the bottom right of the window.");
 
             } else {
                 Logger.getLogger("dr.apps.beast").severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
@@ -137,16 +138,21 @@ public class BeastMain {
             }
 
         } catch (RuntimeException rex) {
-            if (rex.getMessage() != null && rex.getMessage().startsWith("The initial model is invalid")) {
+            if (rex.getMessage() != null && rex.getMessage().startsWith("The initial posterior is zero")) {
                 Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
-                Logger.getLogger("dr.apps.beast").severe("The initial model is invalid because state has a zero likelihood.\n" +
-                        "This may be because the initial, random tree is so large that it\n" +
-                        "has an extremely bad likelihood which is being rounded to zero.\n" +
-                        "Alternatively, it may be that the product of starting mutation rate\n" +
-                        "and tree height is extremely small or extremely large. Try to set\n" +
-                        "initial values such that the product is similar to the average\n" +
-                        "pairwise genetic distance between the sequences.\n" +
-                        "For more information go to <http://evolve.zoo.ox.ac.uk/beast/help/>.");
+                Logger.getLogger("dr.apps.beast").severe(
+                        "The initial model is invalid because state has a zero probability.\n\n" +
+                                "If the log likelihood of the tree is -Inf, his may be because the\n" +
+                                "initial, random tree is so large that it has an extremely bad\n" +
+                                "likelihood which is being rounded to zero.\n\n" +
+                                "Alternatively, it may be that the product of starting mutation rate\n" +
+                                "and tree height is extremely small or extremely large. \n\n" +
+                                "Finally, it may be that the initial state is incompatible with\n" +
+                                "one or more 'hard' constraints (on monophyly or bounds on parameter\n" +
+                                "values. This will result in Priors with zero probability.\n\n" +
+                                "The individual components of the posterior are as follows:\n" +
+                                rex.getMessage() + "\n" +
+                                "For more information go to <http://beast.bio.ed.ac.uk/>.");
 
             } else {
                 Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
@@ -190,7 +196,7 @@ public class BeastMain {
 
     public static void printHeader() {
         System.out.println("Downloads, Help & Resources:\n" +
-                "\thttp://evolve.zoo.ox.ac.uk/beast/\n" +
+                "\thttp://beast.bio.ed.ac.uk/\n" +
                 "\n" +
                 "Source code distributed under the GNU Lesser General Public License:\n" +
                 "\thttp://code.google.com/p/beast-mcmc/\n" +
@@ -276,7 +282,7 @@ public class BeastMain {
                     "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
                     "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
-                    "<p><a href=\"http://evolve.zoo.ox.ac.uk/beast/\">http://evolve.zoo.ox.ac.uk/beast/</a></p>" +
+                    "<p><a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                     "<p>Source code distributed under the GNU LGPL:<br>" +
                     "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
                     "<p>Additional programming by:<br>" +

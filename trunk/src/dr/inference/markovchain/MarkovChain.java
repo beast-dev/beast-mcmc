@@ -44,7 +44,7 @@ import java.util.ArrayList;
  */
 public final class MarkovChain {
 
-	private final OperatorSchedule schedule;
+    private final OperatorSchedule schedule;
     private final Acceptor acceptor;
     private final Prior prior;
     private final Likelihood likelihood;
@@ -57,7 +57,7 @@ public final class MarkovChain {
     private boolean useCoercion = true;
 
     private static final int FULL_EVALUTATION_STATES = 1000;
-	private static final int MAX_FAILURE_COUNTS = 10;
+    private static final int MAX_FAILURE_COUNTS = 10;
 
     public MarkovChain(Prior prior,
                        Likelihood likelihood,
@@ -80,10 +80,10 @@ public final class MarkovChain {
     public void reset() {
         currentLength = 0;
 
-	    // reset operator acceptance levels
-	    for (int i = 0; i < schedule.getOperatorCount(); i++) {
-	        schedule.getOperator(i).reset();
-	    }
+        // reset operator acceptance levels
+        for (int i = 0; i < schedule.getOperatorCount(); i++) {
+            schedule.getOperator(i).reset();
+        }
     }
 
     /**
@@ -104,13 +104,23 @@ public final class MarkovChain {
         }
 
         if (currentScore == Double.NEGATIVE_INFINITY) {
-            throw new IllegalArgumentException("The initial model is invalid because it has zero likelihood!");
+
+            // identify which component of the score is zero...
+            if (prior != null) {
+                double logPrior = prior.getLogPrior(likelihood.getModel());
+
+                if (logPrior == Double.NEGATIVE_INFINITY) {
+                    throw new IllegalArgumentException("The initial model is invalid because one of the priors has zero probability.");
+                }
+            }
+
+            throw new IllegalArgumentException("The initial likelihood is zero!");
         }
 
         pleaseStop = false;
         isStopped = false;
 
-	    int testFailureCount = 0;
+        int testFailureCount = 0;
 
         double[] logr = new double[] {0.0};
 
@@ -188,18 +198,18 @@ public final class MarkovChain {
 
             // The new model is accepted or rejected
             if (accept) {
- //               System.out.println("Move accepted: new score = " + score + ", old score = " + oldScore);
+                //               System.out.println("Move accepted: new score = " + score + ", old score = " + oldScore);
 
                 mcmcOperator.accept(deviation);
                 likelihood.getModel().acceptModelState();
                 currentScore = score;
 
             } else {
- //               System.out.println("Move rejected: new score = " + score + ", old score = " + oldScore);
+                //               System.out.println("Move rejected: new score = " + score + ", old score = " + oldScore);
 
                 mcmcOperator.reject();
 
- //               assert Profiler.startProfile("Restore");
+                //               assert Profiler.startProfile("Restore");
 
                 likelihood.getModel().restoreModelState();
 
@@ -217,13 +227,13 @@ public final class MarkovChain {
                         System.err.println("State was not correctly restored after reject step.");
                         System.err.println("Likelihood before: " + oldScore + " Likelihood after: " + testScore);
 
-	                    testFailureCount ++;
+                        testFailureCount ++;
                     }
 
-	                if (testFailureCount > MAX_FAILURE_COUNTS) {
-		                throw new RuntimeException("Too many test failures: stopping chain.");
+                    if (testFailureCount > MAX_FAILURE_COUNTS) {
+                        throw new RuntimeException("Too many test failures: stopping chain.");
+                    }
                 }
-            }
             }
 
             if (!disableCoerce && mcmcOperator instanceof CoercableMCMCOperator) {
@@ -254,15 +264,15 @@ public final class MarkovChain {
         return likelihood.getModel();
     }
 
-	public OperatorSchedule getSchedule() {
-		return schedule;
-	}
+    public OperatorSchedule getSchedule() {
+        return schedule;
+    }
 
-	public Acceptor getAcceptor() {
-		return acceptor;
-	}
+    public Acceptor getAcceptor() {
+        return acceptor;
+    }
 
-	public double getInitialScore() {
+    public double getInitialScore() {
         return initialScore;
     }
 

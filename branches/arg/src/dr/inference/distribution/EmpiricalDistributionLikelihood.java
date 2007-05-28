@@ -37,6 +37,7 @@ import java.io.IOException;
 /**
  * A class that returns the log likelihood of a set of data (statistics)
  * being distributed according to the given empirical distribution.
+ *
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @version $Id: EmpiricalDistributionLikelihood.java,v 1.8 2006/08/08 08:43:11 rambaut Exp $
@@ -74,7 +75,8 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 
 			trace = Trace.Utils.loadTrace(fileReader, statName);
 
-			if (trace == null) throw new IllegalArgumentException("Statistic " + statName + " does not exist in file " + fileName);
+			if (trace == null)
+				throw new IllegalArgumentException("Statistic " + statName + " does not exist in file " + fileName);
 
 			values = trace.getValues(burnIn);
 			indices = new int[values.length];
@@ -88,7 +90,7 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 			double suggestedDx = getDxForMaxPValue(proportion);
 
 			System.out.println("Estimated dx = " + suggestedDx);
-			System.out.println("   * This would allow a maximum of " + (int)Math.round(values.length * proportion) + " probability density classes.");
+			System.out.println("   * This would allow a maximum of " + (int) Math.round(values.length * proportion) + " probability density classes.");
 			System.out.println("   * The number of classes is also the largest finite probability ratio.");
 
 			checkForZeroDensityRegions();
@@ -108,7 +110,8 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 
 			trace = Trace.Utils.loadTrace(fileReader, statName);
 
-			if (trace == null) throw new IllegalArgumentException("Statistic " + statName + " does not exist in file " + fileName);
+			if (trace == null)
+				throw new IllegalArgumentException("Statistic " + statName + " does not exist in file " + fileName);
 
 			values = trace.getValues(burnIn);
 			indices = new int[values.length];
@@ -121,7 +124,7 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 			double proportion = 0.01;
 			double suggestedDx = getDxForMaxPValue(proportion);
 			System.out.println("Suggested dx = " + suggestedDx);
-			System.out.println("   * This would allow a maximum of " + (int)Math.round(values.length * proportion) + " probability density classes.");
+			System.out.println("   * This would allow a maximum of " + (int) Math.round(values.length * proportion) + " probability density classes.");
 			System.out.println("   * The number of classes is also the largest finite probability ratio.");
 			System.out.println("Your dx = " + dx);
 			checkForZeroDensityRegions();
@@ -135,9 +138,9 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 	private void checkForZeroDensityRegions() {
 
 		double dx = 2.0 * halfDx;
-		for (int i =0; i < (values.length-1); i++) {
-			if (values[i+1] - values[i] > dx) {
-				System.out.println("Warning: Zero probability density region between " + values[i] + " and " + values[i+1]);
+		for (int i = 0; i < (values.length - 1); i++) {
+			if (values[i + 1] - values[i] > dx) {
+				System.out.println("Warning: Zero probability density region between " + values[i] + " and " + values[i + 1]);
 			}
 		}
 	}
@@ -148,10 +151,10 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 	private double getDxForMaxPValue(double maxPValue) {
 
 		double minRange = Double.MAX_VALUE;
-		int diff = (int)Math.round(maxPValue * (double)values.length);
-		for (int i =0; i <= (values.length - diff); i++) {
+		int diff = (int) Math.round(maxPValue * (double) values.length);
+		for (int i = 0; i <= (values.length - diff); i++) {
 			double minValue = values[indices[i]];
-			double maxValue = values[indices[i+diff-1]];
+			double maxValue = values[indices[i + diff - 1]];
 			double range = Math.abs(maxValue - minValue);
 			if (range < minRange) {
 				minRange = range;
@@ -164,7 +167,7 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 	 * @return the probability density in a small area.
 	 */
 	private double getDensity(double minValue, double maxValue) {
-		double density = (((double)getCount(minValue, maxValue)) / values.length) / (maxValue-minValue);
+		double density = (((double) getCount(minValue, maxValue)) / values.length) / (maxValue - minValue);
 		return density;
 	}
 
@@ -177,7 +180,7 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 		// SHOULD USE BINARY SEARCH!
 
 		int count = 0;
-		for (int i =0; i < values.length; i++) {
+		for (int i = 0; i < values.length; i++) {
 			if (values[i] >= minValue && values[i] <= maxValue) count += 1;
 		}
 		return count;
@@ -189,14 +192,14 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 
 	/**
 	 * Calculate the log likelihood of the current state.
+	 *
 	 * @return the log likelihood.
 	 */
 	public double calculateLogLikelihood() {
 
 		double value, logL = 0.0;
 
-		for (int i = 0; i < dataList.size(); i++) {
-			Statistic statistic = (Statistic)dataList.get(i);
+		for (Statistic statistic : dataList) {
 			for (int j = 0; j < statistic.getDimension(); j++) {
 				value = statistic.getStatisticValue(j);
 				logL += Math.log(getDensity(value - halfDx, value + halfDx));
@@ -210,14 +213,16 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 	 */
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return EMPIRICAL_DISTRIBUTION_LIKELIHOOD; }
+		public String getParserName() {
+			return EMPIRICAL_DISTRIBUTION_LIKELIHOOD;
+		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 			AbstractDistributionLikelihood likelihood = null;
 
 			if (xo.getChild(LOG_FILE) != null) {
-				XMLObject cxo = (XMLObject)xo.getChild(LOG_FILE);
+				XMLObject cxo = (XMLObject) xo.getChild(LOG_FILE);
 				String fileName = xo.getStringAttribute(FILE_NAME);
 				String statName = xo.getStringAttribute(STATISTIC);
 				int burnIn = xo.getIntegerAttribute(BURN_IN);
@@ -229,12 +234,12 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 					likelihood = new EmpiricalDistributionLikelihood(fileName, statName, burnIn);
 				}
 			} else {
-				XMLObject cxo = (XMLObject)xo.getChild(HISTOGRAM);
+				XMLObject cxo = (XMLObject) xo.getChild(HISTOGRAM);
 
 				throw new RuntimeException("Still to be implemented....");
 			}
 
-			XMLObject cxo = (XMLObject)xo.getChild(DATA);
+			XMLObject cxo = (XMLObject) xo.getChild(DATA);
 
 			for (int i = 0; i < xo.getChildCount(); i++) {
 
@@ -245,7 +250,7 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 				for (int j = 0; j < cxo.getChildCount(); j++) {
 					if (cxo.getChild(j) instanceof Statistic) {
 
-						likelihood.addData( (Statistic)cxo.getChild(j));
+						likelihood.addData((Statistic) cxo.getChild(j));
 					} else {
 						throw new XMLParseException("illegal element in " + cxo.getName() + " element");
 					}
@@ -259,27 +264,31 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 				new XORRule(
-						new ElementRule(LOG_FILE, new XMLSyntaxRule[] {
+						new ElementRule(LOG_FILE, new XMLSyntaxRule[]{
 								new StringAttributeRule(FILE_NAME, "The file name of an BEAST log file"),
 								new StringAttributeRule(STATISTIC, "The name of the column in the log file that will be used as an empirical distribution"),
 								AttributeRule.newIntegerRule(BURN_IN),
 								AttributeRule.newBooleanRule(DELTA, true)
 						}),
-						new ElementRule(HISTOGRAM, new XMLSyntaxRule[] {
-								new ContentRule("X,Y data describing the distribution" )})
+						new ElementRule(HISTOGRAM, new XMLSyntaxRule[]{
+								new ContentRule("X,Y data describing the distribution")})
 				),
-				new ElementRule(DATA, new XMLSyntaxRule[] { new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )})
+				new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)})
 		};
 
 		public String getParserDescription() {
 			return "Calculates the likelihood of some data given some parametric or empirical distribution.";
 		}
 
-		public Class getReturnType() { return Likelihood.class; }
+		public Class getReturnType() {
+			return Likelihood.class;
+		}
 	};
 }
 

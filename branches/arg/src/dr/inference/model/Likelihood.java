@@ -61,8 +61,6 @@ public interface Likelihood extends Loggable, Identifiable {
 	 * A simple abstract base class for likelihood functions
 	 */
 
-//	public boolean getLikelihoodKnown();
-
 	public abstract class Abstract implements Likelihood, ModelListener {
 
 		public Abstract(Model model) {
@@ -89,7 +87,7 @@ public interface Likelihood extends Loggable, Identifiable {
 		}
 
 		public final double getLogLikelihood() {
-			if (!likelihoodKnown) {
+			if (!getLikelihoodKnown()) {
 				logLikelihood = calculateLogLikelihood();
 				likelihoodKnown = true;
 			}
@@ -100,17 +98,20 @@ public interface Likelihood extends Loggable, Identifiable {
 			likelihoodKnown = false;
 		}
 
-
 		/**
 		 * Called to decide if the likelihood must be calculated. Can be overridden
 		 * (for example, to always return false).
 		 *
-		 * @return likelihoodKnow
+		 * @return true if no need to recompute likelihood
 		 */
+		protected boolean getLikelihoodKnown() {
+			return likelihoodKnown;
+		}
+
 		protected abstract double calculateLogLikelihood();
 
 		public String toString() {
-			return Double.toString(getLogLikelihood());
+			return getClass().getName() + "(" + logLikelihood + ")";
 		}
 
 		// **************************************************************

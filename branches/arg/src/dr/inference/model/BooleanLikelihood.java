@@ -34,7 +34,6 @@ import java.util.ArrayList;
  * If all the statistics are true then it returns 0.0 otherwise -INF.
  *
  * @author Andrew Rambaut
- *
  * @version $Id: BooleanLikelihood.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
 public class BooleanLikelihood extends Likelihood.Abstract {
@@ -50,13 +49,15 @@ public class BooleanLikelihood extends Likelihood.Abstract {
 	/**
 	 * Adds a statistic, this is the data for which the likelihood is calculated.
 	 */
-	public void addData(BooleanStatistic data) { dataList.add(data); }
+	public void addData(BooleanStatistic data) {
+		dataList.add(data);
+	}
 
-	protected ArrayList dataList = new ArrayList();
+	protected ArrayList<BooleanStatistic> dataList = new ArrayList<BooleanStatistic>();
 
 	// **************************************************************
-    // Likelihood IMPLEMENTATION
-    // **************************************************************
+	// Likelihood IMPLEMENTATION
+	// **************************************************************
 
 	/**
 	 * Overridden to always return false.
@@ -66,10 +67,11 @@ public class BooleanLikelihood extends Likelihood.Abstract {
 	}
 
 	/**
-     * Calculate the log likelihood of the current state.
+	 * Calculate the log likelihood of the current state.
 	 * If all the statistics are true then it returns 0.0 otherwise -INF.
-     * @return the log likelihood.
-     */
+	 *
+	 * @return the log likelihood.
+	 */
 	public double calculateLogLikelihood() {
 
 		if (getBooleanState()) {
@@ -81,8 +83,7 @@ public class BooleanLikelihood extends Likelihood.Abstract {
 
 	public boolean getBooleanState() {
 
-		for (int i = 0; i < dataList.size(); i++) {
-			BooleanStatistic statistic = (BooleanStatistic)dataList.get(i);
+		for (BooleanStatistic statistic : dataList) {
 			for (int j = 0; j < statistic.getDimension(); j++) {
 				if (!statistic.getBoolean(j)) {
 					return true;
@@ -97,7 +98,9 @@ public class BooleanLikelihood extends Likelihood.Abstract {
 	 */
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return BOOLEAN_LIKELIHOOD; }
+		public String getParserName() {
+			return BOOLEAN_LIKELIHOOD;
+		}
 
 		public Object parseXMLObject(XMLObject xo) {
 
@@ -105,7 +108,7 @@ public class BooleanLikelihood extends Likelihood.Abstract {
 
 			for (int i = 0; i < xo.getChildCount(); i++) {
 				if (xo.getChild(i) instanceof BooleanStatistic) {
-					likelihood.addData( (BooleanStatistic)xo.getChild(i));
+					likelihood.addData((BooleanStatistic) xo.getChild(i));
 				}
 			}
 
@@ -117,16 +120,20 @@ public class BooleanLikelihood extends Likelihood.Abstract {
 		//************************************************************************
 
 		public String getParserDescription() {
-			return "A function that log likelihood of a set of boolean statistics. "+
+			return "A function that log likelihood of a set of boolean statistics. " +
 					"If all the statistics are true then it returns 0.0 otherwise -infinity.";
 		}
 
-		public Class getReturnType() { return BooleanLikelihood.class; }
+		public Class getReturnType() {
+			return BooleanLikelihood.class;
+		}
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(BooleanStatistic.class, 1, Integer.MAX_VALUE )
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				new ElementRule(BooleanStatistic.class, 1, Integer.MAX_VALUE)
 		};
 
 	};

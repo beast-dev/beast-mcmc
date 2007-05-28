@@ -25,18 +25,18 @@
 
 package dr.inference.distribution;
 
-import dr.math.*;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.math.UniformDistribution;
+import dr.math.UnivariateFunction;
 import dr.xml.*;
-import dr.inference.model.*;
 
 /**
  * A class that acts as a model for normally distributed data.
+ *
  * @author Alexei Drummond
-<<<<<<< UniformDistributionModel.java
- * @version $Id: UniformDistributionModel.java,v 1.4 2005/06/27 21:18:40 rambaut Exp $
-=======
- * @version $Id: UniformDistributionModel.java,v 1.4 2005/06/27 21:18:40 rambaut Exp $
->>>>>>> 1.3
+ *         $Id$
  */
 
 public class UniformDistributionModel extends AbstractModel implements ParametricDistributionModel {
@@ -46,7 +46,7 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
 	public static final String LOWER = "lower";
 	public static final String UPPER = "upper";
 
-	/**
+	/*
 	 * Constructor.
 	 */
 	public UniformDistributionModel(Parameter lowerParameter, Parameter upperParameter) {
@@ -73,19 +73,46 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
 	// Interface Distribution
 	// *****************************************************************
 
-	public double pdf(double x) { return UniformDistribution.pdf(x, getLower(), getUpper()); }
-	public double logPdf(double x) { return UniformDistribution.logPdf(x, getLower(), getUpper()); }
-	public double cdf(double x) { return UniformDistribution.cdf(x, getLower(), getUpper()); }
-	public double quantile(double y) { return UniformDistribution.quantile(y, getLower(), getUpper()); }
-	public double mean() { return UniformDistribution.mean(getLower(), getUpper()); }
-	public double variance() { return UniformDistribution.variance(getLower(), getUpper()); }
+	public double pdf(double x) {
+		return UniformDistribution.pdf(x, getLower(), getUpper());
+	}
 
-	public final UnivariateFunction getProbabilityDensityFunction() { return pdfFunction; }
+	public double logPdf(double x) {
+		return UniformDistribution.logPdf(x, getLower(), getUpper());
+	}
+
+	public double cdf(double x) {
+		return UniformDistribution.cdf(x, getLower(), getUpper());
+	}
+
+	public double quantile(double y) {
+		return UniformDistribution.quantile(y, getLower(), getUpper());
+	}
+
+	public double mean() {
+		return UniformDistribution.mean(getLower(), getUpper());
+	}
+
+	public double variance() {
+		return UniformDistribution.variance(getLower(), getUpper());
+	}
+
+	public final UnivariateFunction getProbabilityDensityFunction() {
+		return pdfFunction;
+	}
 
 	private UnivariateFunction pdfFunction = new UnivariateFunction() {
-		public final double evaluate(double x) { return 1.0; }
-		public final double getLowerBound() { return getLower(); }
-		public final double getUpperBound() { return getUpper(); }
+		public final double evaluate(double x) {
+			return 1.0;
+		}
+
+		public final double getLowerBound() {
+			return getLower();
+		}
+
+		public final double getUpperBound() {
+			return getUpper();
+		}
 	};
 
 	// *****************************************************************
@@ -100,33 +127,42 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
 		// no intermediates need to be recalculated...
 	}
 
-	protected void storeState() {} // no additional state needs storing
-	protected void restoreState() {} // no additional state needs restoring
-	protected void acceptState() {} // no additional state needs accepting
-	protected void adoptState(Model source) {} // no additional state needs adopting
+	protected void storeState() {
+	} // no additional state needs storing
+
+	protected void restoreState() {
+	} // no additional state needs restoring
+
+	protected void acceptState() {
+	} // no additional state needs accepting
+
+	protected void adoptState(Model source) {
+	} // no additional state needs adopting
 
 	/**
 	 * Reads a normal distribution model from a DOM Document element.
 	 */
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return UNIFORM_DISTRIBUTION_MODEL; }
+		public String getParserName() {
+			return UNIFORM_DISTRIBUTION_MODEL;
+		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 			Parameter upperParam;
 			Parameter lowerParam;
 
-			XMLObject cxo = (XMLObject)xo.getChild(LOWER);
+			XMLObject cxo = (XMLObject) xo.getChild(LOWER);
 			if (cxo.getChild(0) instanceof Parameter) {
-				lowerParam = (Parameter)cxo.getChild(Parameter.class);
+				lowerParam = (Parameter) cxo.getChild(Parameter.class);
 			} else {
 				lowerParam = new Parameter.Default(cxo.getDoubleChild(0));
 			}
 
-			cxo = (XMLObject)xo.getChild(UPPER);
+			cxo = (XMLObject) xo.getChild(UPPER);
 			if (cxo.getChild(0) instanceof Parameter) {
-				upperParam = (Parameter)cxo.getChild(Parameter.class);
+				upperParam = (Parameter) cxo.getChild(Parameter.class);
 			} else {
 				upperParam = new Parameter.Default(cxo.getDoubleChild(0));
 			}
@@ -138,36 +174,40 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(LOWER,
-				new XMLSyntaxRule[] {
-					new XORRule(
-						new ElementRule(Parameter.class),
-						new ElementRule(Double.class)
-					)}
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				new ElementRule(LOWER,
+						new XMLSyntaxRule[]{
+								new XORRule(
+										new ElementRule(Parameter.class),
+										new ElementRule(Double.class)
+								)}
 				),
-			new ElementRule(UPPER,
-				new XMLSyntaxRule[] {
-					new XORRule(
-						new ElementRule(Parameter.class),
-						new ElementRule(Double.class)
-					)}
+				new ElementRule(UPPER,
+						new XMLSyntaxRule[]{
+								new XORRule(
+										new ElementRule(Parameter.class),
+										new ElementRule(Double.class)
+								)}
 				)
 		};
 
 		public String getParserDescription() {
 			return "Describes a normal distribution with a given mean and standard deviation " +
-				"that can be used in a distributionLikelihood element";
+					"that can be used in a distributionLikelihood element";
 		}
 
-		public Class getReturnType() { return UniformDistributionModel.class; }
+		public Class getReturnType() {
+			return UniformDistributionModel.class;
+		}
 	};
 
 	// **************************************************************
-    // Private instance variables
-    // **************************************************************
+	// Private instance variables
+	// **************************************************************
 
 	private Parameter lowerParameter;
 	private Parameter upperParameter;

@@ -33,34 +33,36 @@ import dr.xml.*;
  * so that the mean of the distribution is unchanged.
  *
  * @author Alexei Drummond
- *
  * @version $Id: LNVarianceOperator.java,v 1.1 2004/12/16 14:17:21 alexei Exp $
  */
 public class LNVarianceOperator extends ScaleOperator {
 
-    public static final String LN_VARIANCE_OPERATOR = "LNVarianceOperator";
+	public static final String LN_VARIANCE_OPERATOR = "LNVarianceOperator";
 
 
-    private LogNormalDistributionModel lnd;
+	private LogNormalDistributionModel lnd;
 
-    public LNVarianceOperator(LogNormalDistributionModel lnd, double scaleFactor, int weight, int mode) {
+	public LNVarianceOperator(LogNormalDistributionModel lnd, double scaleFactor, int weight, int mode) {
 
-        super(lnd.getSParameter(), false, scaleFactor, weight, mode);
-        this.lnd = lnd;
-    }
+		//  super(lnd.getSParameter(), false, scaleFactor, weight, mode, null, 0.0);
+		super(lnd.getSParameter(), false, 0, scaleFactor, weight, mode, null, 0);
+		this.lnd = lnd;
+	}
 
-    /**
+	/**
 	 * Correct the M parameter of the lognormal distribution so that the mean is unchanged.
 	 */
 	final void cleanupOperation(double newS, double oldS) {
 
-        double newM = lnd.getM() + (oldS*oldS/2.0) - (newS*newS/2.0);
-        lnd.setM(newM);
-    }
+		double newM = lnd.getM() + (oldS * oldS / 2.0) - (newS * newS / 2.0);
+		lnd.setM(newM);
+	}
 
 	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
-		public String getParserName() { return LN_VARIANCE_OPERATOR; }
+		public String getParserName() {
+			return LN_VARIANCE_OPERATOR;
+		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -81,7 +83,7 @@ public class LNVarianceOperator extends ScaleOperator {
 				throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
 			}
 
-			LogNormalDistributionModel lnd = (LogNormalDistributionModel)xo.getChild(LogNormalDistributionModel.class);
+			LogNormalDistributionModel lnd = (LogNormalDistributionModel) xo.getChild(LogNormalDistributionModel.class);
 
 			return new LNVarianceOperator(lnd, scaleFactor, weight, mode);
 		}
@@ -94,21 +96,25 @@ public class LNVarianceOperator extends ScaleOperator {
 			return "This element returns a scale operator on a given parameter.";
 		}
 
-		public Class getReturnType() { return MCMCOperator.class; }
+		public Class getReturnType() {
+			return MCMCOperator.class;
+		}
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newDoubleRule(SCALE_FACTOR),
-			AttributeRule.newIntegerRule(WEIGHT),
-			AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-			new ElementRule(LogNormalDistributionModel.class)
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				AttributeRule.newDoubleRule(SCALE_FACTOR),
+				AttributeRule.newIntegerRule(WEIGHT),
+				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+				new ElementRule(LogNormalDistributionModel.class)
 		};
 
 	};
 
 
 	public String toString() {
-		return "LNVarianceOperator(" + lnd.getSParameter().getParameterName() + " [" + getScaleFactor() + ", " + (1.0/getScaleFactor()) + "]";
+		return "LNVarianceOperator(" + lnd.getSParameter().getParameterName() + " [" + getScaleFactor() + ", " + (1.0 / getScaleFactor()) + "]";
 	}
 }

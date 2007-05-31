@@ -114,12 +114,28 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 		return -1;
 	}
 
+    /**
+     * Returns true if at least 1 member of taxonList is contained in this Taxa.
+     * @param taxonList a TaxonList
+     * @return true if any of taxonList is in this Taxa
+     */
+    public boolean containsAny(TaxonList taxonList) {
+
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            Taxon taxon = (Taxon)taxonList.getTaxon(i);
+            if (taxa.contains(taxon)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 	/**
 	 * Returns true if taxonList is a subset of the taxa in this Taxa.
 	 * @param taxonList a TaxonList
-	 * @return true if taxonList is a subset
+     * @return true if all of taxonList is in this Taxa
 	 */
-	public boolean isSubset(TaxonList taxonList) {
+	public boolean containsAll(TaxonList taxonList) {
 
 		for (int i = 0; i < taxonList.getTaxonCount(); i++) {
 			Taxon taxon = (Taxon)taxonList.getTaxon(i);

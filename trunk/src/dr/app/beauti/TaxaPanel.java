@@ -363,6 +363,12 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 		setupTaxonSetsComboBoxes();
 
+        if (options.taxonSetsMono.get(currentTaxonSet) != null &&
+                ((Boolean)options.taxonSetsMono.get(currentTaxonSet)).booleanValue() &&
+                !checkCompatibility(currentTaxonSet)) {
+            options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
+        }
+
 		frame.taxonSetsChanged();
 	}
 
@@ -432,7 +438,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 			options.taxonSets.add(currentTaxonSet);
 			Collections.sort(options.taxonSets);
 
-			options.taxonSetsMono.add(Boolean.FALSE);
+			options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
 
 			taxonSetsTableModel.fireTableDataChanged();
 
@@ -452,9 +458,9 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 		public void actionPerformed(ActionEvent ae) {
 			int row = taxonSetsTable.getSelectedRow();
-			if (row != -1) {
-				options.taxonSets.remove(row);
-				options.taxonSetsMono.remove(row);
+            if (row != -1) {
+				Object taxa = options.taxonSets.remove(row);
+				options.taxonSetsMono.remove(taxa);
 			}
 			taxonSetChanged();
 
@@ -549,7 +555,26 @@ public class TaxaPanel extends JPanel implements Exportable {
 		return true;
 	}
 
-	class TaxonSetsTableModel extends AbstractTableModel {
+    private boolean checkCompatibility(Taxa taxa) {
+        for (int i = 0; i < options.taxonSets.size(); i++) {
+            Taxa taxa2 = (Taxa)options.taxonSets.get(i);
+            if (taxa2 != taxa && ((Boolean)options.taxonSetsMono.get(taxa2)).booleanValue()) {
+                if (taxa.containsAny(taxa2) && !taxa.containsAll(taxa2) && !taxa2.containsAll(taxa)) {
+                    JOptionPane.showMessageDialog(frame,
+                            "You cannot enforce monophyly on this taxon set \n"+
+                                    "because it is not compatible with another taxon \n"+
+                                    "set, " + taxa2.getId() + ", for which monophyly is\n"+
+                                    "enforced.",
+                            "Warning",
+                            JOptionPane.WARNING_MESSAGE);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    class TaxonSetsTableModel extends AbstractTableModel {
 
 		/**
 		 *
@@ -568,45 +593,31 @@ public class TaxaPanel extends JPanel implements Exportable {
 			return options.taxonSets.size();
 		}
 
-		public Object getValueAt(int row, int col) {
-            switch(col) {
-                case 0: return options.taxonSets.get(row).getId();
-                case 1: return options.taxonSetsMono.get(row);
-            }
-            return null;
-        }
+		public Object getValueAt(int rowIndex, int columnIndex) {
+            Taxa taxonSet = (Taxa)options.taxonSets.get(rowIndex);
+            switch(columnIndex) {
+				case 0: return taxonSet.getId();
+				case 1: return options.taxonSetsMono.get(taxonSet);
+			}
+			return null;
+		}
 
 		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            Taxa taxonSet = (Taxa)options.taxonSets.get(rowIndex);
 			switch(columnIndex) {
 				case 0: {
-					((Taxa)options.taxonSets.get(rowIndex)).setId(aValue.toString());
+					taxonSet.setId(aValue.toString());
 					setTaxonSetTitle();
 					break;
 				}
 				case 1: {
 					if (((Boolean)aValue).booleanValue()) {
 						Taxa taxa = ((Taxa)options.taxonSets.get(rowIndex));
-						boolean isCompatible = true;
-						for (int i = 0; i < options.taxonSets.size(); i++) {
-							Taxa taxa2 = (Taxa)options.taxonSets.get(i);
-							if (isCompatible && taxa2 != taxa && ((Boolean)options.taxonSetsMono.get(i)).booleanValue()) {
-								if (!taxa.isSubset(taxa2) && !taxa2.isSubset(taxa)) {
-									JOptionPane.showMessageDialog(frame,
-											"You cannot enforce monophyly on this taxon set \n"+
-													"because it is not compatible with another taxon \n"+
-													"set, " + taxa2.getId() + ", for which monophyly is\n"+
-													"enforced.",
-											"Warning",
-											JOptionPane.WARNING_MESSAGE);
-									isCompatible = false;
-								}
-							}
-						}
-						if (isCompatible) {
-							options.taxonSetsMono.set(rowIndex, (Boolean)aValue);
+						if (checkCompatibility(taxa)) {
+							options.taxonSetsMono.put(taxonSet, (Boolean)aValue);
 						}
 					} else {
-						options.taxonSetsMono.set(rowIndex, (Boolean)aValue);
+						options.taxonSetsMono.put(taxonSet, (Boolean)aValue);
 					}
 					break;
 				}

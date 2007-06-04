@@ -380,7 +380,7 @@ public class GammaDistribution implements Distribution {
 			// coincide precisely when x=x0. This gives the scale parameter of the majorating Gamma distribution
 			//
 			// First calculate the value that maximizes the acceptance probability at the mean of the proposal distribution
-			x0 = (shape * scale + Math.sqrt( 4*scale/bias + shape*shape*scale*scale )) / 2.0;
+			double x0 = (shape * scale + Math.sqrt( 4*scale/bias + shape*shape*scale*scale )) / 2.0;
 
 			// calculate the scale parameter of the majorating Gamma distribution
 			double majorandScale = 1.0 / ((1.0 / scale) - 1.0 / (bias * x0 * x0));

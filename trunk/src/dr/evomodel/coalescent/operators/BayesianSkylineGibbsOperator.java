@@ -210,10 +210,12 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 			rate = rate + popSizes[index + direction];
 		}
 
-		// Check for sanity
-		if (bias > 0.0 && exponent < 2.0) {
-			throw new IllegalArgumentException(
-					"Group size must be >= 2 when the exponential Markov prior is used.");
+		// Check arguments
+		// Note: the requirement that the exponent be > 1.0 (i.e. shape parameter > 0.0)
+		//       could be relaxed when there is nonzero bias, but this is not implemented
+		//       in GammaDistribution.nextExpGamma
+		if (exponent <= 1.0) {
+		    throw new IllegalArgumentException("Group size must be >= 2");
 		}
 
 		// now sample

@@ -369,6 +369,37 @@ public class GammaDistribution implements Distribution {
 
 		} else {
 
+		    if (shape < 0) {
+
+			//return scale / (nextExpGamma(-shape, scale, bias) * bias);
+			return 1.0 / nextExpGamma(-shape, bias, scale);
+
+		    }
+
+		    if (shape == 0) {
+
+			// sample from the restriction to x >= median, and sample the other half by using
+			// the self-similarity transformation x -> scale / (bias*x)
+
+			double median = Math.sqrt( scale / bias );
+			double rejection_mode = 1.0/bias;      // mode of rejection distribution, x^-1 e^(-1/bias x)
+			if (rejection_mode < median)
+			    rejection_mode = median;
+			double rejection_norm = (1.0/rejection_mode) * Math.exp(-1.0/(bias*rejection_mode));
+			do {
+			    sample = nextGamma(1.0, scale) + median;
+			    accept = (1.0/sample) * Math.exp( -1.0/(sample*bias) ) / rejection_norm;
+			    iters += 1;
+			} while (MathUtils.nextDouble() > accept && iters < 10000);
+			if (iters == 10000) {
+			    System.out.println("Severe Warning: nextExpGamma (shape=0) failed to generate a sample - returning bogus value!");
+			}
+			if (MathUtils.nextDouble() > 0.5) {
+			    sample = scale / (bias*sample);
+			}
+			return sample;
+		    }
+
                         // Current algorithm works for all shape parameters > 0, but it becomes very inefficient
                         // for v. small shape parameters.
 			if (shape <= 0.0) {

@@ -191,6 +191,10 @@ public final class MarkovChain {
                     accept = true;
                 } else {
                     accept = acceptor.accept(oldScore, score, hastingsRatio, logr);
+		    //if (mcmcOperator instanceof dr.evomodel.coalescent.operators.BayesianSkylineGibbsOperator) {
+		    //System.out.println("old="+oldScore+" new="+score+" diff="+(score-oldScore)+
+		    //		   " ratio="+(score-oldScore+hastingsRatio)+" accept="+accept);
+		    //}
                 }
 
                 deviation = score - oldScore;

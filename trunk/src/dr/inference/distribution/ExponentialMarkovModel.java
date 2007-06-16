@@ -49,17 +49,19 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
     public static final String CHAIN_PARAMETER = "chainParameter";
 	public static final String JEFFREYS = "jeffreys";
     public static final String REVERSE = "reverse";
+    public static final String SHAPE = "shape";
 
 	/**
 	 * Constructor.
 	 */
-    public ExponentialMarkovModel(Parameter chainParameter, boolean jeffreys, boolean reverse) {
+    public ExponentialMarkovModel(Parameter chainParameter, boolean jeffreys, boolean reverse, double shape) {
 
 		super(EXPONENTIAL_MARKOV_MODEL);
 
 		this.chainParameter = chainParameter;
 		this.jeffreys = jeffreys;
 		this.reverse = reverse;
+		this.shape = shape;
 
 		addParameter(chainParameter);
 		chainParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, chainParameter.getDimension()));
@@ -118,9 +120,21 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
 			    reverse = xo.getBooleanAttribute(REVERSE);
 			}
 
-			System.out.println("Exponential markov model on parameter " + chainParameter.getParameterName() + " (jeffreys=" + jeffreys + ", reverse=" + reverse + ")");
+			double shape = 1.0;
+			if (xo.hasAttribute(SHAPE)) {
+			    shape = xo.getDoubleAttribute(SHAPE);
+			    if (shape < 1.0) {
+				throw new XMLParseException("ExponentialMarkovModel: shape parameter must be >= 1.0");
+			    }
+			}
 
-			return new ExponentialMarkovModel(chainParameter, jeffreys, reverse);
+			if (shape == 1.0) {
+			    System.out.println("Exponential markov model on parameter " + chainParameter.getParameterName() + " (jeffreys=" + jeffreys + ", reverse=" + reverse + ")");
+			} else {
+			    System.out.println("Gamma markov model on parameter " + chainParameter.getParameterName() + " (jeffreys=" + jeffreys + ", reverse=" + reverse + " shape=" + shape + ")");
+			}
+			    
+			return new ExponentialMarkovModel(chainParameter, jeffreys, reverse, shape);
 		}
 
 		public String getParserDescription() {
@@ -169,8 +183,10 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
 		for (int i = 1; i < chainParameter.getDimension(); i++) {
 		    double mean = chainParameter.getParameterValue( index(i-1) );
 		    double x = chainParameter.getParameterValue( index(i) );
+		    //logL += dr.math.ExponentialDistribution.logPdf(x, 1.0/mean);
 
-			logL += dr.math.ExponentialDistribution.logPdf(x, 1.0/mean);
+		    double scale = mean / shape;
+		    logL += dr.math.GammaDistribution.logPdf( x, shape, scale );
 		}
 		return logL;
 	}
@@ -213,9 +229,10 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
     // Private instance variables
     // **************************************************************
 
-	private Parameter chainParameter = null;
-	private boolean jeffreys = false;
+    private Parameter chainParameter = null;
+    private boolean jeffreys = false;
     private boolean reverse = false;
+    private double shape = 1.0;
 
 }
 

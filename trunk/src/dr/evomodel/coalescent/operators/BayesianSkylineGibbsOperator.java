@@ -32,6 +32,10 @@ import dr.xml.*;
  * (any Jeffrey's prior applies to the last pop size parameter, and preceding
  * pop sizes are exponentially distributed conditional on the successor)
  *
+ * The 'shape' parameter determines the shape parameter of the Gamma distribution used in the "exponential"
+ * Markov prior.  The default value is 1.0, corresponding to an exponential distribution; otherwise a Gamma
+ * distribution with that shape parameter, and a mean equal to the previous population size, is used.
+ *
  * The 'iterations' parameter determines how many single-population-size Gibbs moves
  * will be executed per operation.  This should be set to once or twice the number
  * of dimensions.
@@ -57,6 +61,8 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 	public static final String JEFFREYS = "Jeffreys";
 
 	public static final String EXPONENTIALMARKOV = "exponentialMarkov";
+
+    public static final String SHAPE = "shape";
 
 	public static final String REVERSE = "reverse";
 	
@@ -86,14 +92,13 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 
 	private double lowerBound;
 
-	private boolean jeffreysGeometricPrior; /*
-											 * Jeffrey's prior on the geometric
-											 * average
-											 */
+	private boolean jeffreysGeometricPrior; /* Jeffrey's prior on the geometric average */
 
 	private boolean jeffreysPrior; /* Jeffrey's prior on the first Ne */
 
-	private boolean exponentialMarkovPrior; /* Exponential Markov prior */
+	private boolean exponentialMarkovPrior; /* Exponential or Gamma Markov prior */
+
+        private double shape; /* shape parameter of the Gamma prior (1.0 for exponential prior) */
 
 	private boolean reverse; /*
 								 * If true, priors are parameterized by
@@ -126,7 +131,7 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 			BayesianSkylineLikelihood bayesianSkylineLikelihood,
 			Parameter populationSizeParameter, Parameter groupSizeParameter,
 			int type, int weight, double lowerBound, double upperBound,
-			boolean jeffreysPrior, boolean exponentialMarkov, boolean reverse,
+			boolean jeffreysPrior, boolean exponentialMarkov, double shape, boolean reverse,
 			int iterations) {
 
 		this.bayesianSkylineLikelihood = bayesianSkylineLikelihood;
@@ -136,6 +141,7 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 		this.lowerBound = lowerBound;
 		this.upperBound = upperBound;
 		this.exponentialMarkovPrior = exponentialMarkov;
+		this.shape = shape;
 		this.iterations = iterations;
 		if (exponentialMarkov) {
 			this.jeffreysPrior = jeffreysPrior;
@@ -161,7 +167,7 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 		System.out.println("Using a Bayesian skyline Gibbs operator (lo="
 				+ lowerBound + ", hi=" + upperBound + ", Jeffreys="
 				+ jeffreysPrior + ", exponentialMarkov=" + exponentialMarkov
-				+ ", reverse=" + reverse + ", iterations=" + iterations + ")");
+				+ " (shape=" + shape + "), reverse=" + reverse + ", iterations=" + iterations + ")");
 	}
 
 	public final String getPerformanceSuggestion() {
@@ -195,28 +201,40 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 			exponent += 1.0;
 		}
 
-		// Include an exponential prior (1/Nprev) exp(-N/Nprev) on the remaining
-		// pop size parameters
+		// For a parameter other than the first, include an exponential prior 
+		// (1/Nprev) exp(-N/Nprev)
 		// (The normalization factor is ignored, since it does not depend on N)
+		//
+		// Modified: include a Gamma prior 
+		//   N^(shape-1) exp(-N/scale) / scale^shape Gamma(shape)  with  scale = Nprev/shape
+		// All factors not depending on N are ignored
 		if (exponentialMarkovPrior && index != firstIdx) {
-			bias = popSizes[index - direction];
+		    //bias = popSizes[index - direction];
+		    bias = popSizes[index - direction] / shape;
+		    exponent += 1.0 - shape;
 		}
 
 		// Take into account the dependent prior (1/N) exp(-Nnext/N)
 		// This time, the normalization factor, as well as the exponential
 		// factor, must be included
+		//
+		// Modified: include a Gamma prior 
+		//   Nnext^(shape-1) exp(-Nnext*shape/N) shape^shape / N^shape Gamma(shape)
 		if (exponentialMarkovPrior && index != lastIdx) {
-			exponent += 1.0;
-			rate = rate + popSizes[index + direction];
+		    //exponent += 1.0;
+		    //rate = rate + popSizes[index + direction];
+		    exponent += shape;
+		    rate = rate + popSizes[index + direction] * shape;
 		}
 
 		// Check arguments
 		// Note: the requirement that the exponent be > 1.0 (i.e. shape parameter > 0.0)
 		//       could be relaxed when there is nonzero bias, but this is not implemented
 		//       in GammaDistribution.nextExpGamma
-		if (exponent <= 1.0) {
-		    throw new IllegalArgumentException("Group size must be >= 2");
-		}
+		
+		//if (exponent <= 1.0) {
+		//    throw new IllegalArgumentException("Group size must be >= 2");
+		//}
 
 		// now sample
 		double sample;
@@ -428,6 +446,7 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 			double upperBound = Double.MAX_VALUE;
 			boolean jeffreysPrior = true;
 			boolean exponentialMarkovPrior = false;
+			double shape = 1.0;
 			boolean reverse = false;
 			int iterations = 1;
 
@@ -444,6 +463,9 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 			if (xo.hasAttribute(EXPONENTIALMARKOV)) {
 				exponentialMarkovPrior = xo
 						.getBooleanAttribute(EXPONENTIALMARKOV);
+			}
+			if (xo.hasAttribute(SHAPE)) {
+			    shape = xo.getDoubleAttribute(SHAPE);
 			}
 			if (xo.hasAttribute(REVERSE)) {
 				reverse = xo.getBooleanAttribute(REVERSE);
@@ -469,9 +491,9 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 			}
 
 			return new BayesianSkylineGibbsOperator(bayesianSkylineLikelihood,
-					paramPops, paramGroups, type, weight, lowerBound,
-					upperBound, jeffreysPrior, exponentialMarkovPrior, reverse,
-					iterations);
+								paramPops, paramGroups, type, weight, lowerBound,
+								upperBound, jeffreysPrior, exponentialMarkovPrior, 
+								shape, reverse, iterations);
 
 		}
 
@@ -499,6 +521,7 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 				AttributeRule.newBooleanRule(JEFFREYS, true),
 				AttributeRule.newBooleanRule(REVERSE, true),
 				AttributeRule.newBooleanRule(EXPONENTIALMARKOV, true),
+				AttributeRule.newDoubleRule(SHAPE),
 				new ElementRule(BayesianSkylineLikelihood.class),
 				new ElementRule(Parameter.class) };
 

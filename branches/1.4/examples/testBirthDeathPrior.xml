@@ -179,7 +179,7 @@
                 <speciationLikelihood idref="speciation"/>
             </column>
         </log>
-        <log id="fileLog" logEvery="1000" fileName="testBirthDeath.log">
+        <log id="fileLog" logEvery="1000" fileName="testBirthDeathPrior.log">
             <posterior idref="posterior"/>
             <parameter idref="birthDeath.birthRate"/>
             <parameter idref="birthDeath.deathRate"/>
@@ -192,7 +192,7 @@
         </property>
     </report>
 
-    <traceAnalysis fileName="testBirthDeath.log" burnIn="100000">
+    <traceAnalysis fileName="testBirthDeathPrior.log" burnIn="100000">
         <expectation name="birthDeath.birthRate" value="1.0"/>
         <expectation name="birthDeath.deathRate" value="0.5"/>
     </traceAnalysis>

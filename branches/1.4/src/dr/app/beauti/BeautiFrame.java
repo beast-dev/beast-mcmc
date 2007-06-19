@@ -39,164 +39,162 @@ import java.io.*;
  */
 public class BeautiFrame extends DocumentFrame {
 
-	/**
-	 *
-	 */
-	private static final long serialVersionUID = 2114148696789612509L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 2114148696789612509L;
 
-	private BeastGenerator beautiOptions = new BeastGenerator();
+    private BeastGenerator beautiOptions = new BeastGenerator();
 
-	private JTabbedPane tabbedPane = new JTabbedPane();
-	private JLabel statusLabel = new JLabel("No data loaded");
+    private JTabbedPane tabbedPane = new JTabbedPane();
+    private JLabel statusLabel = new JLabel("No data loaded");
 
-	private DataPanel dataPanel;
-	private TaxaPanel taxaPanel;
-	private ModelPanel modelPanel;
-	private PriorsPanel priorsPanel;
-	private OperatorsPanel operatorsPanel;
-	private MCMCPanel mcmcPanel;
+    private DataPanel dataPanel;
+    private TaxaPanel taxaPanel;
+    private ModelPanel modelPanel;
+    private PriorsPanel priorsPanel;
+    private OperatorsPanel operatorsPanel;
+    private MCMCPanel mcmcPanel;
 
 //	final Icon dataIcon = new ImageIcon(Utils.getImage(this, "/images/data-icon.gif"));
 //	final Icon modelIcon = new ImageIcon(Utils.getImage(this, "/images/model-icon.gif"));
 //	final Icon mcmcIcon = new ImageIcon(Utils.getImage(this, "/images/mcmc-icon.gif"));
 
-	final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
+    final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
 
-	public BeautiFrame(String title) {
-		super();
+    public BeautiFrame(String title) {
+        super();
 
-		setTitle(title);
+        setTitle(title);
 
         getOpenAction().setEnabled(false);
-		getSaveAction().setEnabled(false);
+        getSaveAction().setEnabled(false);
 
 //        getCutAction().setEnabled(false);
 //        getCopyAction().setEnabled(false);
 //        getPasteAction().setEnabled(false);
 //        getDeleteAction().setEnabled(false);
 //        getSelectAllAction().setEnabled(false);
-		getFindAction().setEnabled(false);
+        getFindAction().setEnabled(false);
 
-		getZoomWindowAction().setEnabled(false);
-	}
+        getZoomWindowAction().setEnabled(false);
+    }
 
-	public void initializeComponents() {
+    public void initializeComponents() {
 
-		dataPanel = new DataPanel(this);
-		taxaPanel = new TaxaPanel(this);
-		modelPanel = new ModelPanel(this);
-		priorsPanel = new PriorsPanel(this);
-		operatorsPanel = new OperatorsPanel(this);
-		mcmcPanel = new MCMCPanel(this);
+        dataPanel = new DataPanel(this);
+        taxaPanel = new TaxaPanel(this);
+        modelPanel = new ModelPanel(this);
+        priorsPanel = new PriorsPanel(this);
+        operatorsPanel = new OperatorsPanel(this);
+        mcmcPanel = new MCMCPanel(this);
 
 //		tabbedPane.addTab("Data", dataIcon, dataPanel);
 //		tabbedPane.addTab("Model", modelIcon, modelPanel);
 //		tabbedPane.addTab("MCMC", mcmcIcon, mcmcPanel);
 
-		tabbedPane.addTab("Data", dataPanel);
-		tabbedPane.addTab("Taxa", taxaPanel);
-		tabbedPane.addTab("Model", modelPanel);
-		tabbedPane.addTab("Priors", priorsPanel);
-		tabbedPane.addTab("Operators", operatorsPanel);
-		tabbedPane.addTab("MCMC", mcmcPanel);
-		tabbedPane.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				if (tabbedPane.getSelectedComponent() == dataPanel) {
-					dataPanel.selectionChanged();
-				} else {
-					getDeleteAction().setEnabled(false);
-				}
-			}
-		});
+        tabbedPane.addTab("Data", dataPanel);
+        tabbedPane.addTab("Taxa", taxaPanel);
+        tabbedPane.addTab("Model", modelPanel);
+        tabbedPane.addTab("Priors", priorsPanel);
+        tabbedPane.addTab("Operators", operatorsPanel);
+        tabbedPane.addTab("MCMC", mcmcPanel);
+        tabbedPane.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                if (tabbedPane.getSelectedComponent() == dataPanel) {
+                    dataPanel.selectionChanged();
+                } else {
+                    getDeleteAction().setEnabled(false);
+                }
+            }
+        });
 
-		JPanel panel = new JPanel(new BorderLayout(6, 6));
-		panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
-		panel.add(tabbedPane, BorderLayout.CENTER);
+        JPanel panel = new JPanel(new BorderLayout(6, 6));
+        panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
+        panel.add(tabbedPane, BorderLayout.CENTER);
 
-		getExportAction().setEnabled(false);
-		JButton generateButton = new JButton(getExportAction());
-		generateButton.putClientProperty("JButton.buttonType", "icon");
+        getExportAction().setEnabled(false);
+        JButton generateButton = new JButton(getExportAction());
+        generateButton.putClientProperty("JButton.buttonType", "icon");
 
-		JPanel panel2 = new JPanel(new BorderLayout(6, 6));
-		panel2.add(statusLabel, BorderLayout.CENTER);
-		panel2.add(generateButton, BorderLayout.EAST);
+        JPanel panel2 = new JPanel(new BorderLayout(6, 6));
+        panel2.add(statusLabel, BorderLayout.CENTER);
+        panel2.add(generateButton, BorderLayout.EAST);
 
-		panel.add(panel2, BorderLayout.SOUTH);
+        panel.add(panel2, BorderLayout.SOUTH);
 
-		getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
-		getContentPane().add(panel, BorderLayout.CENTER);
+        getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
+        getContentPane().add(panel, BorderLayout.CENTER);
 
-		dataPanel.setOptions(beautiOptions);
-		taxaPanel.setOptions(beautiOptions);
-		modelPanel.setOptions(beautiOptions);
-		priorsPanel.setOptions(beautiOptions);
-		operatorsPanel.setOptions(beautiOptions);
-		mcmcPanel.setOptions(beautiOptions);
+        dataPanel.setOptions(beautiOptions);
+        taxaPanel.setOptions(beautiOptions);
+        modelPanel.setOptions(beautiOptions);
+        priorsPanel.setOptions(beautiOptions);
+        operatorsPanel.setOptions(beautiOptions);
+        mcmcPanel.setOptions(beautiOptions);
 
-		setSize(new java.awt.Dimension(800, 600));
-	}
+        setSize(new java.awt.Dimension(800, 600));
+    }
 
-	public final void dataChanged() {
-		if (beautiOptions.alignment != null) {
-			taxaPanel.setOptions(beautiOptions);
-			modelPanel.setOptions(beautiOptions);
-			priorsPanel.setOptions(beautiOptions);
-			operatorsPanel.setOptions(beautiOptions);
-			setDirty();
-		}
-	}
+    public final void dataChanged() {
+        taxaPanel.setOptions(beautiOptions);
+        modelPanel.setOptions(beautiOptions);
+        priorsPanel.setOptions(beautiOptions);
+        operatorsPanel.setOptions(beautiOptions);
+        setDirty();
+    }
 
-	public final void dataSelectionChanged(boolean isSelected) {
-		if (isSelected) {
-			getDeleteAction().setEnabled(true);
-		} else {
-			getDeleteAction().setEnabled(false);
-		}
-	}
+    public final void dataSelectionChanged(boolean isSelected) {
+        if (isSelected) {
+            getDeleteAction().setEnabled(true);
+        } else {
+            getDeleteAction().setEnabled(false);
+        }
+    }
 
-	public void taxonSetsChanged() {
-		priorsPanel.setOptions(beautiOptions);
-		setDirty();
-	}
+    public void taxonSetsChanged() {
+        priorsPanel.setOptions(beautiOptions);
+        setDirty();
+    }
 
 
-	public void doDelete() {
-		if (tabbedPane.getSelectedComponent() == dataPanel) {
-			dataPanel.deleteSelection();
-		} else {
-			throw new RuntimeException("Delete should only be accessable from the Data panel");
-		}
-	}
+    public void doDelete() {
+        if (tabbedPane.getSelectedComponent() == dataPanel) {
+            dataPanel.deleteSelection();
+        } else {
+            throw new RuntimeException("Delete should only be accessable from the Data panel");
+        }
+    }
 
-	public final void modelChanged() {
-		modelPanel.getOptions(beautiOptions);
+    public final void modelChanged() {
+        modelPanel.getOptions(beautiOptions);
 
-		priorsPanel.setOptions(beautiOptions);
-		operatorsPanel.setOptions(beautiOptions);
-		setDirty();
-	}
+        priorsPanel.setOptions(beautiOptions);
+        operatorsPanel.setOptions(beautiOptions);
+        setDirty();
+    }
 
-	public final void operatorsChanged() {
-		setDirty();
-	}
+    public final void operatorsChanged() {
+        setDirty();
+    }
 
-	public final void priorsChanged() {
-		priorsPanel.getOptions(beautiOptions);
+    public final void priorsChanged() {
+        priorsPanel.getOptions(beautiOptions);
 
-		operatorsPanel.setOptions(beautiOptions);
-		setDirty();
-	}
+        operatorsPanel.setOptions(beautiOptions);
+        setDirty();
+    }
 
-	public final void mcmcChanged() {
-		setDirty();
-	}
+    public final void mcmcChanged() {
+        setDirty();
+    }
 
     public boolean requestClose() {
         if (isDirty()) {
             int option = JOptionPane.showConfirmDialog(this,
                     "You have made changes but have not generated\n" +
-                    "a BEAST XML file. Do you wish to generate\n" +
-                    "before closing this window?",
+                            "a BEAST XML file. Do you wish to generate\n" +
+                            "before closing this window?",
                     "Unused changes",
                     JOptionPane.YES_NO_CANCEL_OPTION,
                     JOptionPane.WARNING_MESSAGE);
@@ -232,163 +230,163 @@ public class BeautiFrame extends DocumentFrame {
         }
     }
 
-	protected boolean readFromFile(File file) throws FileNotFoundException, IOException {
-		try {
-			SAXBuilder parser = new SAXBuilder();
-			Document doc = parser.build(file);
-			beautiOptions.parse(doc);
+    protected boolean readFromFile(File file) throws FileNotFoundException, IOException {
+        try {
+            SAXBuilder parser = new SAXBuilder();
+            Document doc = parser.build(file);
+            beautiOptions.parse(doc);
 
             if (beautiOptions.guessDates) {
                 beautiOptions.guessDates();
             }
 
             dataPanel.setOptions(beautiOptions);
-			taxaPanel.setOptions(beautiOptions);
-			modelPanel.setOptions(beautiOptions);
-			priorsPanel.setOptions(beautiOptions);
-			operatorsPanel.setOptions(beautiOptions);
-			mcmcPanel.setOptions(beautiOptions);
+            taxaPanel.setOptions(beautiOptions);
+            modelPanel.setOptions(beautiOptions);
+            priorsPanel.setOptions(beautiOptions);
+            operatorsPanel.setOptions(beautiOptions);
+            mcmcPanel.setOptions(beautiOptions);
 
-			getExportAction().setEnabled(beautiOptions.alignment != null);
-			getSaveAction().setEnabled(beautiOptions.alignment != null);
-			getSaveAsAction().setEnabled(beautiOptions.alignment != null);
+            getExportAction().setEnabled(beautiOptions.alignment != null);
+            getSaveAction().setEnabled(beautiOptions.alignment != null);
+            getSaveAsAction().setEnabled(beautiOptions.alignment != null);
 
-		} catch (dr.xml.XMLParseException xpe) {
-			JOptionPane.showMessageDialog(this, "Error reading file: This may not be a BEAUti file",
-					"Error reading file",
-					JOptionPane.ERROR_MESSAGE);
-			return false;
-		} catch (JDOMException e) {
-			JOptionPane.showMessageDialog(this, "Unable to open file: This may not be a BEAUti file",
-					"Unable to open file",
-					JOptionPane.ERROR_MESSAGE);
-			return false;
-		}
-		return true;
-	}
+        } catch (dr.xml.XMLParseException xpe) {
+            JOptionPane.showMessageDialog(this, "Error reading file: This may not be a BEAUti file",
+                    "Error reading file",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;
+        } catch (JDOMException e) {
+            JOptionPane.showMessageDialog(this, "Unable to open file: This may not be a BEAUti file",
+                    "Unable to open file",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        return true;
+    }
 
-	public String getDefaultFileName() { return beautiOptions.fileNameStem+".beauti"; }
+    public String getDefaultFileName() { return beautiOptions.fileNameStem+".beauti"; }
 
-	protected boolean writeToFile(File file) throws IOException {
-		dataPanel.getOptions(beautiOptions);
-		taxaPanel.getOptions(beautiOptions);
-		modelPanel.getOptions(beautiOptions);
-		priorsPanel.getOptions(beautiOptions);
-		operatorsPanel.getOptions(beautiOptions);
-		mcmcPanel.getOptions(beautiOptions);
+    protected boolean writeToFile(File file) throws IOException {
+        dataPanel.getOptions(beautiOptions);
+        taxaPanel.getOptions(beautiOptions);
+        modelPanel.getOptions(beautiOptions);
+        priorsPanel.getOptions(beautiOptions);
+        operatorsPanel.getOptions(beautiOptions);
+        mcmcPanel.getOptions(beautiOptions);
 
-		Document doc = beautiOptions.create(false, true);
+        Document doc = beautiOptions.create(false, true);
 
-		FileWriter fw = new FileWriter(file);
+        FileWriter fw = new FileWriter(file);
 
-		XMLOutputter outputter = new XMLOutputter(org.jdom.output.Format.getPrettyFormat());
+        XMLOutputter outputter = new XMLOutputter(org.jdom.output.Format.getPrettyFormat());
 
-		outputter.output(doc, fw);
+        outputter.output(doc, fw);
 
-		fw.close();
-		return true;
-	}
+        fw.close();
+        return true;
+    }
 
-	public final void doImport() {
+    public final void doImport() {
 
-		FileDialog dialog = new FileDialog(this,
-				"Import NEXUS File...",
-				FileDialog.LOAD);
+        FileDialog dialog = new FileDialog(this,
+                "Import NEXUS File...",
+                FileDialog.LOAD);
 
-		dialog.setVisible(true);
-		if (dialog.getFile() != null) {
-			File file = new File(dialog.getDirectory(), dialog.getFile());
+        dialog.setVisible(true);
+        if (dialog.getFile() != null) {
+            File file = new File(dialog.getDirectory(), dialog.getFile());
 
-			try {
-				importFromFile(file);
+            try {
+                importFromFile(file);
 
-				setDirty();
-			} catch (FileNotFoundException fnfe) {
-				JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-						"Unable to open file",
-						JOptionPane.ERROR_MESSAGE);
-			} catch (IOException ioe) {
-				JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe,
-						"Unable to read file",
-						JOptionPane.ERROR_MESSAGE);
-			}
-		}
+                setDirty();
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe,
+                        "Unable to read file",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
 
-	}
+    }
 
-	protected void importFromFile(File file) throws FileNotFoundException, IOException {
+    protected void importFromFile(File file) throws FileNotFoundException, IOException {
 
-		try {
-			FileReader reader = new FileReader(file);
+        try {
+            FileReader reader = new FileReader(file);
 
-			NexusApplicationImporter importer = new NexusApplicationImporter(reader);
+            NexusApplicationImporter importer = new NexusApplicationImporter(reader);
 
-			boolean done = false;
+            boolean done = false;
 
-			beautiOptions.originalAlignment = null;
-			beautiOptions.alignment = null;
-			beautiOptions.tree = null;
-			beautiOptions.taxonList = null;
+            beautiOptions.originalAlignment = null;
+            beautiOptions.alignment = null;
+            beautiOptions.tree = null;
+            beautiOptions.taxonList = null;
 
-			while (!done) {
-				try {
+            while (!done) {
+                try {
 
-					NexusImporter.NexusBlock block = importer.findNextBlock();
+                    NexusImporter.NexusBlock block = importer.findNextBlock();
 
-					if (block == NexusImporter.TAXA_BLOCK) {
+                    if (block == NexusImporter.TAXA_BLOCK) {
 
-						if (beautiOptions.taxonList != null) {
-							throw new NexusImporter.MissingBlockException("TAXA block already defined");
-						}
+                        if (beautiOptions.taxonList != null) {
+                            throw new NexusImporter.MissingBlockException("TAXA block already defined");
+                        }
 
-						beautiOptions.taxonList = importer.parseTaxaBlock();
+                        beautiOptions.taxonList = importer.parseTaxaBlock();
 
-					} else if (block == NexusImporter.CALIBRATION_BLOCK) {
-						if (beautiOptions.taxonList == null) {
-							throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a CALIBRATION block");
-						}
+                    } else if (block == NexusImporter.CALIBRATION_BLOCK) {
+                        if (beautiOptions.taxonList == null) {
+                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a CALIBRATION block");
+                        }
 
-						importer.parseCalibrationBlock(beautiOptions.taxonList);
+                        importer.parseCalibrationBlock(beautiOptions.taxonList);
 
-					} else if (block == NexusImporter.CHARACTERS_BLOCK) {
+                    } else if (block == NexusImporter.CHARACTERS_BLOCK) {
 
-						if (beautiOptions.taxonList == null) {
-							throw new NexusImporter.MissingBlockException("TAXA block must be defined before a CHARACTERS block");
-						}
+                        if (beautiOptions.taxonList == null) {
+                            throw new NexusImporter.MissingBlockException("TAXA block must be defined before a CHARACTERS block");
+                        }
 
-						if (beautiOptions.originalAlignment != null) {
-							throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
-						}
+                        if (beautiOptions.originalAlignment != null) {
+                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
+                        }
 
-						beautiOptions.originalAlignment = (SimpleAlignment)importer.parseCharactersBlock(beautiOptions.taxonList);
+                        beautiOptions.originalAlignment = (SimpleAlignment)importer.parseCharactersBlock(beautiOptions.taxonList);
 
-					} else if (block == NexusImporter.DATA_BLOCK) {
+                    } else if (block == NexusImporter.DATA_BLOCK) {
 
-						if (beautiOptions.originalAlignment != null) {
-							throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
-						}
+                        if (beautiOptions.originalAlignment != null) {
+                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
+                        }
 
-						// A data block doesn't need a taxon block before it
-						// but if one exists then it will use it.
-						beautiOptions.originalAlignment = (SimpleAlignment)importer.parseDataBlock(beautiOptions.taxonList);
-						if (beautiOptions.taxonList == null) {
-							beautiOptions.taxonList = beautiOptions.originalAlignment;
-						}
+                        // A data block doesn't need a taxon block before it
+                        // but if one exists then it will use it.
+                        beautiOptions.originalAlignment = (SimpleAlignment)importer.parseDataBlock(beautiOptions.taxonList);
+                        if (beautiOptions.taxonList == null) {
+                            beautiOptions.taxonList = beautiOptions.originalAlignment;
+                        }
 
-					} else if (block == NexusImporter.TREES_BLOCK) {
+                    } else if (block == NexusImporter.TREES_BLOCK) {
 
-						if (beautiOptions.taxonList == null) {
-							throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a TREES block");
-						}
+                        if (beautiOptions.taxonList == null) {
+                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a TREES block");
+                        }
 
-						if (beautiOptions.tree != null) {
-							throw new NexusImporter.MissingBlockException("TREES block already defined");
-						}
+                        if (beautiOptions.tree != null) {
+                            throw new NexusImporter.MissingBlockException("TREES block already defined");
+                        }
 
-						Tree[] trees = importer.parseTreesBlock(beautiOptions.taxonList);
-						if (trees.length > 0) {
-							beautiOptions.tree = trees[0];
-						}
+                        Tree[] trees = importer.parseTreesBlock(beautiOptions.taxonList);
+                        if (trees.length > 0) {
+                            beautiOptions.tree = trees[0];
+                        }
 
 /*					} else if (block == NexusApplicationImporter.PAUP_BLOCK) {
 
@@ -402,152 +400,157 @@ public class BeautiFrame extends DocumentFrame {
 
 						importer.parseRhinoBlock(beautiOptions);
 */
-					} else {
-						// Ignore the block..
-					}
+                    } else {
+                        // Ignore the block..
+                    }
 
-				} catch (EOFException ex) {
-					done = true;
-				}
-			}
+                } catch (EOFException ex) {
+                    done = true;
+                }
+            }
 
-			if (beautiOptions.originalAlignment == null) {
-				throw new NexusImporter.MissingBlockException("DATA or CHARACTERS block is missing");
-			}
+            // Allow the user to load taxa only (perhaps from a tree file) so that they can sample from a prior...
+            if (beautiOptions.originalAlignment == null && beautiOptions.taxonList == null) {
+                throw new NexusImporter.MissingBlockException("TAXON, DATA or CHARACTERS block is missing");
+            }
 
-		} catch (Importer.ImportException ime) {
-			JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
-					"Error reading file",
-					JOptionPane.ERROR_MESSAGE);
-			return;
-		} catch (IOException ioex) {
-			JOptionPane.showMessageDialog(this, "File I/O Error: " + ioex,
-					"File I/O Error",
-					JOptionPane.ERROR_MESSAGE);
-			return;
-		} catch (Exception ex) {
-			JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
-					"Error reading file",
-					JOptionPane.ERROR_MESSAGE);
-			return;
-		}
+        } catch (Importer.ImportException ime) {
+            JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
+                    "Error reading file",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        } catch (IOException ioex) {
+            JOptionPane.showMessageDialog(this, "File I/O Error: " + ioex,
+                    "File I/O Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+                    "Error reading file",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-		// check the taxon names for invalid characters
-		boolean foundAmp = false;
-		for (int i = 0; i < beautiOptions.originalAlignment.getTaxonCount(); i++) {
-			String name = beautiOptions.originalAlignment.getTaxon(i).getId();
-			if (name.indexOf('&') >= 0) {
-				foundAmp = true;
-			}
-		}
-		if (foundAmp) {
-			JOptionPane.showMessageDialog(this, "One or more taxon names include an illegal character ('&').\n" +
-					"These characters will prevent BEAST from reading the resulting XML file.\n\n" +
-					"Please edit the taxon name(s) before generating the BEAST file.",
-					"Illegal Taxon Name(s)",
-					JOptionPane.WARNING_MESSAGE);
-		}
+        // check the taxon names for invalid characters
+        boolean foundAmp = false;
+        for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
+            String name = beautiOptions.taxonList.getTaxon(i).getId();
+            if (name.indexOf('&') >= 0) {
+                foundAmp = true;
+            }
+        }
+        if (foundAmp) {
+            JOptionPane.showMessageDialog(this, "One or more taxon names include an illegal character ('&').\n" +
+                    "These characters will prevent BEAST from reading the resulting XML file.\n\n" +
+                    "Please edit the taxon name(s) before generating the BEAST file.",
+                    "Illegal Taxon Name(s)",
+                    JOptionPane.WARNING_MESSAGE);
+        }
 
 
-		// make sure they all have dates...
-		for (int i = 0; i < beautiOptions.originalAlignment.getTaxonCount(); i++) {
-			if (beautiOptions.originalAlignment.getTaxonAttribute(i, "date") == null) {
-				java.util.Date origin = new java.util.Date(0);
+        // make sure they all have dates...
+        for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
+            if (beautiOptions.taxonList.getTaxonAttribute(i, "date") == null) {
+                java.util.Date origin = new java.util.Date(0);
 
-				dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.YEARS, origin);
-				beautiOptions.originalAlignment.getTaxon(i).setAttribute("date", date);
-			}
-		}
+                dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.YEARS, origin);
+                beautiOptions.taxonList.getTaxon(i).setAttribute("date", date);
+            }
+        }
 
-		beautiOptions.fileNameStem = dr.app.util.Utils.trimExtensions(file.getName(),
-				new String[] {"nex", "NEX", "tre", "TRE", "nexus", "NEXUS"});
+        beautiOptions.fileNameStem = dr.app.util.Utils.trimExtensions(file.getName(),
+                new String[] {"nex", "NEX", "tre", "TRE", "nexus", "NEXUS"});
 
-		beautiOptions.alignment = beautiOptions.originalAlignment;
-		beautiOptions.alignmentReset = true;
-		if (beautiOptions.alignment != null) {
-			Patterns patterns = new Patterns(beautiOptions.alignment);
-			DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
-			beautiOptions.meanDistance = distances.getMeanDistance();
-		}
+        beautiOptions.alignment = beautiOptions.originalAlignment;
+        beautiOptions.alignmentReset = true;
+        if (beautiOptions.alignment != null) {
+            Patterns patterns = new Patterns(beautiOptions.alignment);
+            DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
+            beautiOptions.meanDistance = distances.getMeanDistance();
 
-		dataPanel.setOptions(beautiOptions);
-		taxaPanel.setOptions(beautiOptions);
-		modelPanel.setOptions(beautiOptions);
-		priorsPanel.setOptions(beautiOptions);
-		operatorsPanel.setOptions(beautiOptions);
-		mcmcPanel.setOptions(beautiOptions);
+            statusLabel.setText("Alignment: " + beautiOptions.alignment.getTaxonCount() + " taxa, " +
+                    beautiOptions.alignment.getSiteCount() + " sites");
+        } else {
+            statusLabel.setText("Taxa only: " + beautiOptions.taxonList.getTaxonCount() + " taxa");
+            beautiOptions.meanDistance = 0.0;
+        }
 
-		statusLabel.setText("Alignment: " + beautiOptions.alignment.getTaxonCount() + " taxa, " +
-				beautiOptions.alignment.getSiteCount() + " sites");
+        dataPanel.setOptions(beautiOptions);
+        taxaPanel.setOptions(beautiOptions);
+        modelPanel.setOptions(beautiOptions);
+        priorsPanel.setOptions(beautiOptions);
+        operatorsPanel.setOptions(beautiOptions);
+        mcmcPanel.setOptions(beautiOptions);
+
 
         getOpenAction().setEnabled(true);
-		getSaveAction().setEnabled(true);
-		getExportAction().setEnabled(true);
-	}
+        getSaveAction().setEnabled(true);
+        getExportAction().setEnabled(true);
+    }
 
-	public final boolean doGenerate() {
+    public final boolean doGenerate() {
 
-		try {
-			beautiOptions.checkOptions();
-		} catch(IllegalArgumentException iae) {
-			JOptionPane.showMessageDialog(this, iae.getMessage(),
-					"Unable to generate file",
-					JOptionPane.ERROR_MESSAGE);
-			return false;
-		}
+        try {
+            beautiOptions.checkOptions();
+        } catch(IllegalArgumentException iae) {
+            JOptionPane.showMessageDialog(this, iae.getMessage(),
+                    "Unable to generate file",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
 
-		FileDialog dialog = new FileDialog(this,
-				"Generate BEAST File...",
-				FileDialog.SAVE);
+        FileDialog dialog = new FileDialog(this,
+                "Generate BEAST File...",
+                FileDialog.SAVE);
 
-		dialog.setVisible(true);
-		if (dialog.getFile() != null) {
-			File file = new File(dialog.getDirectory(), dialog.getFile());
+        dialog.setVisible(true);
+        if (dialog.getFile() != null) {
+            File file = new File(dialog.getDirectory(), dialog.getFile());
 
-			try {
-				generate(file);
+            try {
+                generate(file);
 
-			} catch (IOException ioe) {
-				JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
-						"Unable to generate file",
-						JOptionPane.ERROR_MESSAGE);
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
+                        "Unable to generate file",
+                        JOptionPane.ERROR_MESSAGE);
                 return false;
-			}
-		}
+            }
+        }
 
         clearDirty();
         return true;
-	}
+    }
 
-	protected void generate(File file) throws IOException {
-		dataPanel.getOptions(beautiOptions);
-		taxaPanel.getOptions(beautiOptions);
-		modelPanel.getOptions(beautiOptions);
-		priorsPanel.getOptions(beautiOptions);
-		operatorsPanel.getOptions(beautiOptions);
-		mcmcPanel.getOptions(beautiOptions);
+    protected void generate(File file) throws IOException {
+        dataPanel.getOptions(beautiOptions);
+        taxaPanel.getOptions(beautiOptions);
+        modelPanel.getOptions(beautiOptions);
+        priorsPanel.getOptions(beautiOptions);
+        operatorsPanel.getOptions(beautiOptions);
+        mcmcPanel.getOptions(beautiOptions);
 
-		FileWriter fw = new FileWriter(file);
-		beautiOptions.generateXML(fw);
-		fw.close();
-	}
+        FileWriter fw = new FileWriter(file);
+        beautiOptions.generateXML(fw);
+        fw.close();
+    }
 
-	public JComponent getExportableComponent() {
+    public JComponent getExportableComponent() {
 
-		JComponent exportable = null;
-		Component comp = tabbedPane.getSelectedComponent();
+        JComponent exportable = null;
+        Component comp = tabbedPane.getSelectedComponent();
 
-		if (comp instanceof Exportable) {
-			exportable = ((Exportable)comp).getExportableComponent();
-		} else if (comp instanceof JComponent) {
-			exportable = (JComponent)comp;
-		}
+        if (comp instanceof Exportable) {
+            exportable = ((Exportable)comp).getExportableComponent();
+        } else if (comp instanceof JComponent) {
+            exportable = (JComponent)comp;
+        }
 
-		return exportable;
-	}
+        return exportable;
+    }
 
     public boolean doSave() {
-       return doSaveAs();
+        return doSaveAs();
     }
 
     public boolean doSaveAs() {
@@ -582,9 +585,9 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     private AbstractAction openTemplateAction = new AbstractAction("Apply Template...") {
-		private static final long serialVersionUID = 2450459627280385426L;
+        private static final long serialVersionUID = 2450459627280385426L;
 
-		public void actionPerformed(ActionEvent ae) {
+        public void actionPerformed(ActionEvent ae) {
             doApplyTemplate();
         }
     };
@@ -598,31 +601,31 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     private AbstractAction saveAsAction = new AbstractAction("Save Template As...") {
-		private static final long serialVersionUID = 2424923366448459342L;
+        private static final long serialVersionUID = 2424923366448459342L;
 
-		public void actionPerformed(ActionEvent ae) {
+        public void actionPerformed(ActionEvent ae) {
             doSaveAs();
         }
     };
 
-	public Action getImportAction() { return importNexusAction; }
+    public Action getImportAction() { return importNexusAction; }
 
-	protected AbstractAction importNexusAction = new AbstractAction("Import NEXUS...") {
-		private static final long serialVersionUID = 3217702096314745005L;
+    protected AbstractAction importNexusAction = new AbstractAction("Import NEXUS...") {
+        private static final long serialVersionUID = 3217702096314745005L;
 
-		public void actionPerformed(java.awt.event.ActionEvent ae) {
-			doImport();
-		}
-	};
+        public void actionPerformed(java.awt.event.ActionEvent ae) {
+            doImport();
+        }
+    };
 
-	public Action getExportAction() { return generateAction; }
+    public Action getExportAction() { return generateAction; }
 
-	protected AbstractAction generateAction = new AbstractAction("Generate BEAST File...", gearIcon) {
-		private static final long serialVersionUID = -5329102618630268783L;
+    protected AbstractAction generateAction = new AbstractAction("Generate BEAST File...", gearIcon) {
+        private static final long serialVersionUID = -5329102618630268783L;
 
-		public void actionPerformed(java.awt.event.ActionEvent ae) {
-			doGenerate();
-		}
-	};
+        public void actionPerformed(java.awt.event.ActionEvent ae) {
+            doGenerate();
+        }
+    };
 
 }

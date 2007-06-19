@@ -37,6 +37,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
@@ -52,601 +54,647 @@ import java.util.GregorianCalendar;
  */
 public class DataPanel extends JPanel implements Exportable {
 
-	/**
-	 *
-	 */
-	private static final long serialVersionUID = 5283922195494563924L;
-	JScrollPane scrollPane = new JScrollPane();
-	JTable dataTable = null;
-	DataTableModel dataTableModel = null;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 5283922195494563924L;
+    JScrollPane scrollPane = new JScrollPane();
+    JTable dataTable = null;
+    DataTableModel dataTableModel = null;
 
-	ClearDatesAction clearDatesAction = new ClearDatesAction();
-	GuessDatesAction guessDatesAction = new GuessDatesAction();
+    ClearDatesAction clearDatesAction = new ClearDatesAction();
+    GuessDatesAction guessDatesAction = new GuessDatesAction();
 
-	JComboBox unitsCombo = new JComboBox(new String[] {"Years", "Months", "Days"});
-	JComboBox directionCombo = new JComboBox(new String[] {"Since some time in the past", "Before the present"});
-	//RealNumberField originField = new RealNumberField(0.0, Double.POSITIVE_INFINITY);
+    JComboBox unitsCombo = new JComboBox(new String[] {"Years", "Months", "Days"});
+    JComboBox directionCombo = new JComboBox(new String[] {"Since some time in the past", "Before the present"});
+    //RealNumberField originField = new RealNumberField(0.0, Double.POSITIVE_INFINITY);
 
-	JComboBox translationCombo = new JComboBox();
+    JComboBox translationCombo = new JComboBox();
 
-	TableRenderer sequenceRenderer = null;
+    JCheckBox ignoreDataCheckBox = new JCheckBox("Ignore data - sample prior only");
 
-	BeautiFrame frame = null;
+    TableRenderer sequenceRenderer = null;
 
-	BeautiOptions options = null;
+    BeautiFrame frame = null;
 
-	double[] heights = null;
+    BeautiOptions options = null;
 
-	public DataPanel(BeautiFrame parent) {
+    double[] heights = null;
 
-		this.frame = parent;
+    public DataPanel(BeautiFrame parent) {
 
-		dataTableModel = new DataTableModel();
-		TableSorter sorter = new TableSorter(dataTableModel);
-		dataTable = new JTable(sorter);
+        this.frame = parent;
 
-		sorter.setTableHeader(dataTable.getTableHeader());
+        dataTableModel = new DataTableModel();
+        TableSorter sorter = new TableSorter(dataTableModel);
+        dataTable = new JTable(sorter);
 
-		dataTable.getTableHeader().setReorderingAllowed(false);
-		dataTable.getTableHeader().setDefaultRenderer(
-				new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        sorter.setTableHeader(dataTable.getTableHeader());
 
-		dataTable.getColumnModel().getColumn(0).setCellRenderer(
-				new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-		dataTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+        dataTable.getTableHeader().setReorderingAllowed(false);
+        dataTable.getTableHeader().setDefaultRenderer(
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-		dataTable.getColumnModel().getColumn(1).setCellRenderer(
-				new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-		dataTable.getColumnModel().getColumn(1).setPreferredWidth(80);
-		dataTable.getColumnModel().getColumn(1).setCellEditor(
-				new DateCellEditor());
+        dataTable.getColumnModel().getColumn(0).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(0).setPreferredWidth(80);
 
-		dataTable.getColumnModel().getColumn(2).setCellRenderer(
-				new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-		dataTable.getColumnModel().getColumn(2).setPreferredWidth(80);
+        dataTable.getColumnModel().getColumn(1).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(1).setPreferredWidth(80);
+        dataTable.getColumnModel().getColumn(1).setCellEditor(
+                new DateCellEditor());
 
-		sequenceRenderer = new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4));
-		sequenceRenderer.setFont(new Font("Courier", Font.PLAIN, 12));
-		dataTable.getColumnModel().getColumn(3).setCellRenderer(sequenceRenderer);
-		dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        dataTable.getColumnModel().getColumn(2).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(2).setPreferredWidth(80);
 
-		dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent evt) { selectionChanged(); }
-		});
+        sequenceRenderer = new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4));
+        sequenceRenderer.setFont(new Font("Courier", Font.PLAIN, 12));
 
-		scrollPane = new JScrollPane(dataTable,
-				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		scrollPane.setOpaque(false);
+        dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent evt) { selectionChanged(); }
+        });
 
-		clearDatesAction.setEnabled(false);
+        scrollPane = new JScrollPane(dataTable,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        scrollPane.setOpaque(false);
 
-		guessDatesAction.setEnabled(false);
-		unitsCombo.setOpaque(false);
-		unitsCombo.setEnabled(false);
-		directionCombo.setOpaque(false);
-		directionCombo.setEnabled(false);
-		//originField.setEnabled(false);
-		//originField.setValue(0.0);
-		//originField.setColumns(12);
+        clearDatesAction.setEnabled(false);
 
-		JToolBar toolBar1 = new JToolBar();
-		toolBar1.setFloatable(false);
-		toolBar1.setOpaque(false);
+        guessDatesAction.setEnabled(false);
+        unitsCombo.setOpaque(false);
+        unitsCombo.setEnabled(false);
+        directionCombo.setOpaque(false);
+        directionCombo.setEnabled(false);
+        //originField.setEnabled(false);
+        //originField.setValue(0.0);
+        //originField.setColumns(12);
+
+        JToolBar toolBar1 = new JToolBar();
+        toolBar1.setFloatable(false);
+        toolBar1.setOpaque(false);
 //		toolBar1.setLayout(new BoxLayout(toolBar1, javax.swing.BoxLayout.X_AXIS));
-		toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-		toolBar1.add(clearDatesAction);
-		toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
-		toolBar1.add(guessDatesAction);
-		toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
-		toolBar1.add(new JLabel("Dates specified as "));
-		toolBar1.add(unitsCombo);
-		toolBar1.add(directionCombo);
-		//toolBar.add(originField);
+        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        toolBar1.add(clearDatesAction);
+        toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
+        toolBar1.add(guessDatesAction);
+        toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
+        toolBar1.add(new JLabel("Dates specified as "));
+        toolBar1.add(unitsCombo);
+        toolBar1.add(directionCombo);
+        //toolBar.add(originField);
 
 
-		translationCombo.setOpaque(false);
-		translationCombo.addItem("None");
-		for (int i = 0; i < GeneticCode.GENETIC_CODE_DESCRIPTIONS.length; i++) {
-			translationCombo.addItem(GeneticCode.GENETIC_CODE_DESCRIPTIONS[i]);
-		}
-		translationCombo.setEnabled(false);
-		translationCombo.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent e) { translationChanged(); }
-		});
+        translationCombo.setOpaque(false);
+        translationCombo.addItem("None");
+        for (int i = 0; i < GeneticCode.GENETIC_CODE_DESCRIPTIONS.length; i++) {
+            translationCombo.addItem(GeneticCode.GENETIC_CODE_DESCRIPTIONS[i]);
+        }
+        translationCombo.setEnabled(false);
+        translationCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                translationChanged();
+            }
+        });
 
-		JToolBar toolBar2 = new JToolBar();
-		toolBar2.setOpaque(false);
-		toolBar2.setFloatable(false);
-		toolBar2.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-		toolBar2.add(new JLabel("Translation:"));
-		toolBar2.add(translationCombo);
+        JToolBar toolBar2 = new JToolBar();
+        toolBar2.setOpaque(false);
+        toolBar2.setFloatable(false);
+        toolBar2.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        toolBar2.add(new JLabel("Translation:"));
+        toolBar2.add(translationCombo);
 
-		setOpaque(false);
-		setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
-		setLayout(new BorderLayout(0,0));
-		add(toolBar1, "North");
-		add(scrollPane, "Center");
-		add(toolBar2, "South");
+        ignoreDataCheckBox.setOpaque(false);
+        ignoreDataCheckBox.setEnabled(false);
+        ignoreDataCheckBox.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent changeEvent) {
+                translationChanged();
+            }
+        });
+        toolBar2.add(new JToolBar.Separator());
+        toolBar2.add(ignoreDataCheckBox);
 
-		ItemListener listener =	new ItemListener() {
-			public void itemStateChanged(ItemEvent ev) { timeScaleChanged(); }
-		};
-		unitsCombo.addItemListener(listener);
-		directionCombo.addItemListener(listener);
-		//originField.addKeyListener(new java.awt.event.KeyAdapter() {
-		//	public void keyTyped(java.awt.event.KeyEvent ev) {
-		//		timeScaleChanged();
-		//	}});
+        setOpaque(false);
+        setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
+        setLayout(new BorderLayout(0,0));
+        add(toolBar1, "North");
+        add(scrollPane, "Center");
+        add(toolBar2, "South");
 
-	}
+        ItemListener listener =	new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) { timeScaleChanged(); }
+        };
+        unitsCombo.addItemListener(listener);
+        directionCombo.addItemListener(listener);
+        //originField.addKeyListener(new java.awt.event.KeyAdapter() {
+        //	public void keyTyped(java.awt.event.KeyEvent ev) {
+        //		timeScaleChanged();
+        //	}});
 
-	public final void dataChanged() {
-		calculateHeights();
-		frame.dataChanged();
-	}
+    }
 
-	public final void timeScaleChanged() {
-		int units = Units.YEARS;
-		switch (unitsCombo.getSelectedIndex()) {
-			case 0: units = Units.YEARS; break;
-			case 1: units = Units.MONTHS; break;
-			case 2: units = Units.DAYS; break;
-		}
+    public final void dataChanged() {
+        calculateHeights();
+        frame.dataChanged();
+    }
 
-		boolean backwards = directionCombo.getSelectedIndex() == 1;
+    public final void timeScaleChanged() {
+        int units = Units.YEARS;
+        switch (unitsCombo.getSelectedIndex()) {
+            case 0: units = Units.YEARS; break;
+            case 1: units = Units.MONTHS; break;
+            case 2: units = Units.DAYS; break;
+        }
 
-		//double origin = originField.getValue().doubleValue();
+        boolean backwards = directionCombo.getSelectedIndex() == 1;
 
-		for (int i = 0; i < options.alignment.getTaxonCount(); i++) {
-			Date date = options.alignment.getTaxon(i).getDate();
-			double d = date.getTimeValue();
+        //double origin = originField.getValue().doubleValue();
 
-			Date newDate = createDate(d, units, backwards, 0.0);
+        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+            Date date = options.taxonList.getTaxon(i).getDate();
+            double d = date.getTimeValue();
 
-			options.alignment.getTaxon(i).setDate(newDate);
-		}
+            Date newDate = createDate(d, units, backwards, 0.0);
 
-		calculateHeights();
+            options.taxonList.getTaxon(i).setDate(newDate);
+        }
 
-		dataTableModel.fireTableDataChanged();
-		frame.dataChanged();
-	}
+        calculateHeights();
 
-	private Date createDate(double timeValue, int units, boolean backwards, double origin) {
-		if (backwards) {
-			return Date.createTimeAgoFromOrigin(timeValue, units, origin);
-		} else {
-			return Date.createTimeSinceOrigin(timeValue, units, origin);
-		}
-	}
+        dataTableModel.fireTableDataChanged();
+        frame.dataChanged();
+    }
 
-	public final void translationChanged() {
-		int index = translationCombo.getSelectedIndex() - 1;
+    private Date createDate(double timeValue, int units, boolean backwards, double origin) {
+        if (backwards) {
+            return Date.createTimeAgoFromOrigin(timeValue, units, origin);
+        } else {
+            return Date.createTimeSinceOrigin(timeValue, units, origin);
+        }
+    }
 
-		if (index < 0) {
-			options.alignment = options.originalAlignment;
-		} else {
-			options.alignment = new ConvertAlignment(AminoAcids.INSTANCE, GeneticCode.GENETIC_CODES[index],
-					options.originalAlignment);
-		}
+    public final void translationChanged() {
+        if (ignoreDataCheckBox.isSelected()) {
+            options.alignment = null;
+            translationCombo.setEnabled(false);
+        } else {
+            translationCombo.setEnabled(true);
+            int index = translationCombo.getSelectedIndex() - 1;
 
-		dataTableModel.fireTableDataChanged();
-		frame.dataChanged();
-	}
+            if (index < 0) {
+                options.alignment = options.originalAlignment;
+            } else {
+                options.alignment = new ConvertAlignment(AminoAcids.INSTANCE, GeneticCode.GENETIC_CODES[index],
+                        options.originalAlignment);
+            }
+        }
+        
+        setupTable();
 
-	public void setOptions(BeautiOptions options) {
+        frame.dataChanged();
+    }
 
-		this.options = options;
+    public void setOptions(BeautiOptions options) {
 
-		if (options.originalAlignment != null) {
-			clearDatesAction.setEnabled(true);
-			guessDatesAction.setEnabled(true);
-			unitsCombo.setEnabled(true);
-			directionCombo.setEnabled(true);
+        this.options = options;
 
-			//originField.setEnabled(true);
+        if (options.taxonList != null) {
+            clearDatesAction.setEnabled(true);
+            guessDatesAction.setEnabled(true);
+            unitsCombo.setEnabled(true);
+            directionCombo.setEnabled(true);
 
-			if (options.originalAlignment.getDataType() == Nucleotides.INSTANCE) {
-				translationCombo.setEnabled(true);
-				translationCombo.setSelectedIndex(options.translation);
-			} else {
-				translationCombo.setEnabled(false);
-				translationCombo.setSelectedIndex(0);
-			}
+            //originField.setEnabled(true);
 
-			sequenceRenderer.setText(options.alignment.getSequence(0).getSequenceString());
-			int w = sequenceRenderer.getPreferredSize().width + 8;
-			dataTable.getColumnModel().getColumn(3).setPreferredWidth(w);
-		}
+            ignoreDataCheckBox.setEnabled(options.originalAlignment != null);
 
-		unitsCombo.setSelectedIndex(options.datesUnits);
-		directionCombo.setSelectedIndex(options.datesDirection);
+            if (options.originalAlignment != null && options.originalAlignment.getDataType() == Nucleotides.INSTANCE) {
+                translationCombo.setEnabled(true);
+                translationCombo.setSelectedIndex(options.translation);
+            } else {
+                translationCombo.setEnabled(false);
+                translationCombo.setSelectedIndex(0);
+            }
 
-		calculateHeights();
+        }
 
-		dataTableModel.fireTableDataChanged();
-	}
+        setupTable();
 
-	public void getOptions(BeautiOptions options) {
-		options.datesUnits = unitsCombo.getSelectedIndex();
-		options.datesDirection = directionCombo.getSelectedIndex();
-		options.translation = translationCombo.getSelectedIndex();
-	}
+        unitsCombo.setSelectedIndex(options.datesUnits);
+        directionCombo.setSelectedIndex(options.datesDirection);
 
-	public JComponent getExportableComponent() {
-		return dataTable;
-	}
+        calculateHeights();
 
-	public void selectionChanged() {
+        dataTableModel.fireTableDataChanged();
+    }
 
-		int[] selRows = dataTable.getSelectedRows();
-		if (selRows == null || selRows.length == 0) {
-			frame.dataSelectionChanged(false);
-		} else {
-			frame.dataSelectionChanged(true);
-		}
-	}
+    private void setupTable() {
 
-	public void deleteSelection() {
-		int option = JOptionPane.showConfirmDialog(this, "Are you sure you wish to delete\n"+
-				"the selected sequences?\n"+
-				"This operation cannot be undone.",
-				"Warning",
-				JOptionPane.YES_NO_OPTION,
-				JOptionPane.WARNING_MESSAGE);
+        dataTableModel.fireTableStructureChanged();
+        if (options.alignment != null) {
 
-		if (option == JOptionPane.YES_OPTION) {
-			int[] selRows = dataTable.getSelectedRows();
-			String[] names = new String[selRows.length];
+            dataTable.getColumnModel().getColumn(3).setCellRenderer(sequenceRenderer);
+            dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
 
-			TableModel model = dataTable.getModel();
+            sequenceRenderer.setText(options.alignment.getSequence(0).getSequenceString());
+            int w = sequenceRenderer.getPreferredSize().width + 8;
+            dataTable.getColumnModel().getColumn(3).setPreferredWidth(w);
+        }
+    }
 
-			for (int i = 0; i < names.length; i++) {
-				names[i] = (String)model.getValueAt(selRows[i], 0);
-			}
+    public void getOptions(BeautiOptions options) {
+        options.datesUnits = unitsCombo.getSelectedIndex();
+        options.datesDirection = directionCombo.getSelectedIndex();
+        options.translation = translationCombo.getSelectedIndex();
+    }
 
-			for (int i = 0; i < names.length; i++) {
-				int index = options.originalAlignment.getTaxonIndex(names[i]);
-				options.originalAlignment.removeSequence(index);
-			}
+    public JComponent getExportableComponent() {
+        return dataTable;
+    }
 
-			if (options.originalAlignment.getTaxonCount() == 0) {
-				// if all the sequences are deleted we may as well throw
-				// away the alignment...
+    public void selectionChanged() {
 
-				options.originalAlignment = null;
-				options.alignment = null;
-			}
+        int[] selRows = dataTable.getSelectedRows();
+        if (selRows == null || selRows.length == 0) {
+            frame.dataSelectionChanged(false);
+        } else {
+            frame.dataSelectionChanged(true);
+        }
+    }
 
-			dataTableModel.fireTableDataChanged();
-			frame.dataChanged();
-		}
+    public void deleteSelection() {
+        int option = JOptionPane.showConfirmDialog(this, "Are you sure you wish to delete\n"+
+                "the selected taxa?\n"+
+                "This operation cannot be undone.",
+                "Warning",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
 
-	}
+        if (option == JOptionPane.YES_OPTION) {
+            int[] selRows = dataTable.getSelectedRows();
+            String[] names = new String[selRows.length];
 
-	public void clearDates() {
-		for (int i = 0; i < options.originalAlignment.getTaxonCount(); i++) {
-			java.util.Date origin = new java.util.Date(0);
+            TableModel model = dataTable.getModel();
 
-			double d = 0.0;
+            for (int i = 0; i < names.length; i++) {
+                names[i] = (String)model.getValueAt(selRows[i], 0);
+            }
 
-			Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
-			options.originalAlignment.getTaxon(i).setAttribute("date", date);
-		}
+            for (int i = 0; i < names.length; i++) {
+                if (options.originalAlignment != null) {
+                    int index = options.originalAlignment.getTaxonIndex(names[i]);
+                    options.originalAlignment.removeSequence(index);
+                } else {
+                    // there is no alignment so options.taxonList must be a Taxa object:
+                    int index = options.taxonList.getTaxonIndex(names[i]);
+                    ((Taxa)options.taxonList).removeTaxon(options.taxonList.getTaxon(index));
+                }
+            }
 
-		// adjust the dates to the current timescale...
-		timeScaleChanged();
+            if (options.taxonList.getTaxonCount() == 0) {
+                // if all the sequences are deleted we may as well throw
+                // away the alignment...
 
-		dataTableModel.fireTableDataChanged();
-		frame.dataChanged();
-	}
+                options.originalAlignment = null;
+                options.alignment = null;
+                options.taxonList = null;
+            }
 
-	public void guessDates() {
+            dataTableModel.fireTableDataChanged();
+            frame.dataChanged();
+        }
 
-		OptionsPanel optionPanel = new OptionsPanel(12, 12);
+    }
 
-		optionPanel.addLabel("The date is given by a numerical field in the taxon label that is:");
+    public void clearDates() {
+        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+            java.util.Date origin = new java.util.Date(0);
 
-		final JRadioButton orderRadio = new JRadioButton("Defined by its order", true);
-		final JComboBox orderCombo = new JComboBox(new String[] {"first", "second", "third",
-				"fourth", "fourth from last",
-				"third from last", "second from last", "last"});
+            double d = 0.0;
 
-		optionPanel.addComponents(orderRadio, orderCombo);
-		optionPanel.addSeparator();
+            Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
+            options.taxonList.getTaxon(i).setAttribute("date", date);
+        }
 
-		final JRadioButton prefixRadio = new JRadioButton("Defined by a prefix", false);
-		final JTextField prefixText = new JTextField(16);
-		prefixText.setEnabled(false);
-		optionPanel.addComponents(prefixRadio, prefixText);
-		optionPanel.addSeparator();
+        // adjust the dates to the current timescale...
+        timeScaleChanged();
 
-		final JCheckBox offsetCheck = new JCheckBox("Add the following value to each: ", false);
-		final RealNumberField offsetText = new RealNumberField();
-		offsetText.setValue(1900);
-		offsetText.setColumns(16);
-		offsetText.setEnabled(false);
-		offsetCheck.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent e) {
-				offsetText.setEnabled(offsetCheck.isSelected());
-			}
-		});
-		optionPanel.addComponents(offsetCheck, offsetText);
+        dataTableModel.fireTableDataChanged();
+        frame.dataChanged();
+    }
 
-		final JCheckBox unlessCheck = new JCheckBox("...unless less than:", false);
-		final RealNumberField unlessText = new RealNumberField();
-		Calendar calendar = GregorianCalendar.getInstance();
+    public void guessDates() {
 
-		int year = calendar.get(Calendar.YEAR) - 1999;
-		unlessText.setValue(year);
-		unlessText.setColumns(16);
-		unlessText.setEnabled(false);
-		optionPanel.addComponents(unlessCheck, unlessText);
+        OptionsPanel optionPanel = new OptionsPanel(12, 12);
 
-		final RealNumberField offset2Text = new RealNumberField();
-		offset2Text.setValue(2000);
-		offset2Text.setColumns(16);
-		offset2Text.setEnabled(false);
-		optionPanel.addComponentWithLabel("...in which case add:", offset2Text);
+        optionPanel.addLabel("The date is given by a numerical field in the taxon label that is:");
 
-		unlessCheck.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent e) {
-				unlessText.setEnabled(unlessCheck.isSelected());
-				offset2Text.setEnabled(unlessCheck.isSelected());
-			}
-		});
+        final JRadioButton orderRadio = new JRadioButton("Defined by its order", true);
+        final JComboBox orderCombo = new JComboBox(new String[] {"first", "second", "third",
+                "fourth", "fourth from last",
+                "third from last", "second from last", "last"});
 
-		ButtonGroup group = new ButtonGroup();
-		group.add(orderRadio);
-		group.add(prefixRadio);
-		ItemListener listener = new ItemListener() {
-			public void itemStateChanged(ItemEvent e) {
-				orderCombo.setEnabled(orderRadio.isSelected());
-				prefixText.setEnabled(prefixRadio.isSelected());
-			}
-		};
-		orderRadio.addItemListener(listener);
-		prefixRadio.addItemListener(listener);
+        optionPanel.addComponents(orderRadio, orderCombo);
+        optionPanel.addSeparator();
 
-		JOptionPane optionPane = new JOptionPane(optionPanel,
-				JOptionPane.QUESTION_MESSAGE,
-				JOptionPane.OK_CANCEL_OPTION,
-				null,
-				null,
-				null);
-		optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+        final JRadioButton prefixRadio = new JRadioButton("Defined by a prefix", false);
+        final JTextField prefixText = new JTextField(16);
+        prefixText.setEnabled(false);
+        optionPanel.addComponents(prefixRadio, prefixText);
+        optionPanel.addSeparator();
 
-		JDialog dialog = optionPane.createDialog(frame, "Guess Dates");
+        final JCheckBox offsetCheck = new JCheckBox("Add the following value to each: ", false);
+        final RealNumberField offsetText = new RealNumberField();
+        offsetText.setValue(1900);
+        offsetText.setColumns(16);
+        offsetText.setEnabled(false);
+        offsetCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                offsetText.setEnabled(offsetCheck.isSelected());
+            }
+        });
+        optionPanel.addComponents(offsetCheck, offsetText);
+
+        final JCheckBox unlessCheck = new JCheckBox("...unless less than:", false);
+        final RealNumberField unlessText = new RealNumberField();
+        Calendar calendar = GregorianCalendar.getInstance();
+
+        int year = calendar.get(Calendar.YEAR) - 1999;
+        unlessText.setValue(year);
+        unlessText.setColumns(16);
+        unlessText.setEnabled(false);
+        optionPanel.addComponents(unlessCheck, unlessText);
+
+        final RealNumberField offset2Text = new RealNumberField();
+        offset2Text.setValue(2000);
+        offset2Text.setColumns(16);
+        offset2Text.setEnabled(false);
+        optionPanel.addComponentWithLabel("...in which case add:", offset2Text);
+
+        unlessCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                unlessText.setEnabled(unlessCheck.isSelected());
+                offset2Text.setEnabled(unlessCheck.isSelected());
+            }
+        });
+
+        ButtonGroup group = new ButtonGroup();
+        group.add(orderRadio);
+        group.add(prefixRadio);
+        ItemListener listener = new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                orderCombo.setEnabled(orderRadio.isSelected());
+                prefixText.setEnabled(prefixRadio.isSelected());
+            }
+        };
+        orderRadio.addItemListener(listener);
+        prefixRadio.addItemListener(listener);
+
+        JOptionPane optionPane = new JOptionPane(optionPanel,
+                JOptionPane.QUESTION_MESSAGE,
+                JOptionPane.OK_CANCEL_OPTION,
+                null,
+                null,
+                null);
+        optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+
+        JDialog dialog = optionPane.createDialog(frame, "Guess Dates");
 //		dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-		dialog.setVisible(true);
+        dialog.setVisible(true);
 
-		if (optionPane.getValue() == null) {
-			return;
-		}
+        if (optionPane.getValue() == null) {
+            return;
+        }
 
-		int value = ((Integer)optionPane.getValue()).intValue();
-		if (value == -1 || value == JOptionPane.CANCEL_OPTION) {
-			return;
-		}
+        int value = ((Integer)optionPane.getValue()).intValue();
+        if (value == -1 || value == JOptionPane.CANCEL_OPTION) {
+            return;
+        }
 
-		options.guessDates = true;
+        options.guessDates = true;
 
-		String warningMessage = null;
+        String warningMessage = null;
 
-		for (int i = 0; i < options.originalAlignment.getTaxonCount(); i++) {
-			java.util.Date origin = new java.util.Date(0);
+        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+            java.util.Date origin = new java.util.Date(0);
 
-			double d = 0.0;
+            double d = 0.0;
 
-			try {
-				if (orderRadio.isSelected()) {
-					options.guessDateFromOrder = true;
-					options.order = orderCombo.getSelectedIndex();
-					options.fromLast = false;
-					if (options.order > 3) {
-						options.fromLast = true;
-						options.order = 8 - options.order - 1;
-					}
+            try {
+                if (orderRadio.isSelected()) {
+                    options.guessDateFromOrder = true;
+                    options.order = orderCombo.getSelectedIndex();
+                    options.fromLast = false;
+                    if (options.order > 3) {
+                        options.fromLast = true;
+                        options.order = 8 - options.order - 1;
+                    }
 
-					d = options.guessDateFromOrder(options.originalAlignment.getTaxonId(i), options.order, options.fromLast);
-				} else {
-					options.guessDateFromOrder = false;
-					options.prefix = prefixText.getText();
-					d = options.guessDateFromPrefix(options.originalAlignment.getTaxonId(i), options.prefix);
-				}
+                    d = options.guessDateFromOrder(options.taxonList.getTaxonId(i), options.order, options.fromLast);
+                } else {
+                    options.guessDateFromOrder = false;
+                    options.prefix = prefixText.getText();
+                    d = options.guessDateFromPrefix(options.taxonList.getTaxonId(i), options.prefix);
+                }
 
-			} catch (GuessDatesException gfe) {
-				warningMessage = gfe.getMessage();
-			}
+            } catch (GuessDatesException gfe) {
+                warningMessage = gfe.getMessage();
+            }
 
-			options.offset = 0.0;
-			options.unlessLessThan = 0.0;
-			if (offsetCheck.isSelected()) {
-				options.offset = offsetText.getValue().doubleValue();
-				if (unlessCheck.isSelected()) {
-					options.unlessLessThan = unlessText.getValue().doubleValue();
-					options.offset2 = offset2Text.getValue().doubleValue();
-					if (d < options.unlessLessThan) {
-						d += options.offset2;
-					} else {
-						d += options.offset;
-					}
-				} else {
-					d += options.offset;
-				}
-			}
+            options.offset = 0.0;
+            options.unlessLessThan = 0.0;
+            if (offsetCheck.isSelected()) {
+                options.offset = offsetText.getValue().doubleValue();
+                if (unlessCheck.isSelected()) {
+                    options.unlessLessThan = unlessText.getValue().doubleValue();
+                    options.offset2 = offset2Text.getValue().doubleValue();
+                    if (d < options.unlessLessThan) {
+                        d += options.offset2;
+                    } else {
+                        d += options.offset;
+                    }
+                } else {
+                    d += options.offset;
+                }
+            }
 
-			Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
-			options.originalAlignment.getTaxon(i).setAttribute("date", date);
-		}
+            Date date = Date.createTimeSinceOrigin(d, Units.YEARS, origin);
+            options.taxonList.getTaxon(i).setAttribute("date", date);
+        }
 
-		if (warningMessage != null) {
-			JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
-					"Error guessing dates",
-					JOptionPane.WARNING_MESSAGE);
-		}
+        if (warningMessage != null) {
+            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
+                    "Error guessing dates",
+                    JOptionPane.WARNING_MESSAGE);
+        }
 
-		// adjust the dates to the current timescale...
-		timeScaleChanged();
+        // adjust the dates to the current timescale...
+        timeScaleChanged();
 
-		dataTableModel.fireTableDataChanged();
-		frame.dataChanged();
-	}
+        dataTableModel.fireTableDataChanged();
+        frame.dataChanged();
+    }
 
-	public class ClearDatesAction extends AbstractAction {
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = -7281309694753868635L;
+    public class ClearDatesAction extends AbstractAction {
+        /**
+         *
+         */
+        private static final long serialVersionUID = -7281309694753868635L;
 
-		public ClearDatesAction() {
-			super("Clear Dates");
-			setToolTipText("Use this tool to remove sampling dates from each taxon");
-		}
+        public ClearDatesAction() {
+            super("Clear Dates");
+            setToolTipText("Use this tool to remove sampling dates from each taxon");
+        }
 
-		public void actionPerformed(ActionEvent ae) { clearDates(); }
-	};
+        public void actionPerformed(ActionEvent ae) { clearDates(); }
+    };
 
-	public class GuessDatesAction extends AbstractAction {
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = 8514706149822252033L;
+    public class GuessDatesAction extends AbstractAction {
+        /**
+         *
+         */
+        private static final long serialVersionUID = 8514706149822252033L;
 
-		public GuessDatesAction() {
-			super("Guess Dates");
-			setToolTipText("Use this tool to guess the sampling dates from the taxon labels");
-		}
+        public GuessDatesAction() {
+            super("Guess Dates");
+            setToolTipText("Use this tool to guess the sampling dates from the taxon labels");
+        }
 
-		public void actionPerformed(ActionEvent ae) { guessDates(); }
-	};
+        public void actionPerformed(ActionEvent ae) { guessDates(); }
+    };
 
-	private void calculateHeights() {
+    private void calculateHeights() {
 
-		options.maximumTipHeight = 0.0;
-		if (options.alignment == null) return;
+        options.maximumTipHeight = 0.0;
+        if (options.alignment == null) return;
 
-		heights = null;
+        heights = null;
 
-		dr.evolution.util.Date mostRecent = null;
-		for (int i = 0; i < options.alignment.getSequenceCount(); i++) {
-			Date date = options.alignment.getTaxon(i).getDate();
-			if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
-				mostRecent = date;
-			}
-		}
+        dr.evolution.util.Date mostRecent = null;
+        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+            Date date = options.taxonList.getTaxon(i).getDate();
+            if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
+                mostRecent = date;
+            }
+        }
 
-		if (mostRecent != null) {
-			heights = new double[options.alignment.getSequenceCount()];
+        if (mostRecent != null) {
+            heights = new double[options.taxonList.getTaxonCount()];
 
-			TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
-			double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
+            TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
+            double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
 
-			for (int i = 0; i < options.alignment.getSequenceCount(); i++) {
-				Date date = options.alignment.getTaxon(i).getDate();
-				if (date != null) {
-					heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
-					if (heights[i] > options.maximumTipHeight) options.maximumTipHeight = heights[i];
-				}
-			}
-		}
-	}
+            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+                Date date = options.taxonList.getTaxon(i).getDate();
+                if (date != null) {
+                    heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
+                    if (heights[i] > options.maximumTipHeight) options.maximumTipHeight = heights[i];
+                }
+            }
+        }
+    }
 
-	class DataTableModel extends AbstractTableModel {
+    class DataTableModel extends AbstractTableModel {
 
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = -6707994233020715574L;
-		String[] columnNames = { "Name", "Date", "Height", "Sequence" };
+        /**
+         *
+         */
+        private static final long serialVersionUID = -6707994233020715574L;
+        String[] columnNames1 = { "Name", "Date", "Height", "Sequence" };
+        String[] columnNames2 = { "Name", "Date", "Height" };
 
-		public DataTableModel() {
-		}
+        public DataTableModel() {
+        }
 
-		public int getColumnCount() {
-			return columnNames.length;
-		}
+        public int getColumnCount() {
+            if (options != null && options.alignment != null) {
+                return columnNames1.length;
+            } else {
+                return columnNames2.length;
+            }
+        }
 
-		public int getRowCount() {
-			if (options == null) return 0;
-			if (options.alignment == null) return 0;
+        public int getRowCount() {
+            if (options == null) return 0;
+            if (options.taxonList == null) return 0;
 
-			return options.alignment.getTaxonCount();
-		}
+            return options.taxonList.getTaxonCount();
+        }
 
-		public Object getValueAt(int row, int col) {
-			switch (col) {
-				case 0: return options.alignment.getTaxonId(row);
-				case 1:
-					Date date = options.alignment.getTaxon(row).getDate();
-					if (date != null) {
-						return new Double(date.getTimeValue());
-					} else {
-						return "-";
-					}
-				case 2:
-					if (heights != null) {
-						return new Double(heights[row]);
-					} else {
-						return "0.0";
-					}
-				case 3: return options.alignment.getAlignedSequenceString(row);
-			}
-			return null;
-		}
+        public Object getValueAt(int row, int col) {
+            switch (col) {
+                case 0: return options.taxonList.getTaxonId(row);
+                case 1:
+                    Date date = options.taxonList.getTaxon(row).getDate();
+                    if (date != null) {
+                        return new Double(date.getTimeValue());
+                    } else {
+                        return "-";
+                    }
+                case 2:
+                    if (heights != null) {
+                        return new Double(heights[row]);
+                    } else {
+                        return "0.0";
+                    }
+                case 3: return options.alignment.getAlignedSequenceString(row);
+            }
+            return null;
+        }
 
-		public void setValueAt(Object aValue, int row, int col) {
-			if (col == 0) {
-				options.alignment.getTaxon(row).setId(aValue.toString());
-			} else if (col == 1) {
-				Date date = options.alignment.getTaxon(row).getDate();
-				if (date != null) {
-					double d = ((Double)aValue).doubleValue();
-					Date newDate = createDate(d, date.getUnits(), date.isBackwards(), date.getOrigin());
-					options.alignment.getTaxon(row).setDate(newDate);
-				}
-			}
+        public void setValueAt(Object aValue, int row, int col) {
+            if (col == 0) {
+                options.taxonList.getTaxon(row).setId(aValue.toString());
+            } else if (col == 1) {
+                Date date = options.taxonList.getTaxon(row).getDate();
+                if (date != null) {
+                    double d = ((Double)aValue).doubleValue();
+                    Date newDate = createDate(d, date.getUnits(), date.isBackwards(), date.getOrigin());
+                    options.taxonList.getTaxon(row).setDate(newDate);
+                }
+            }
 
-			dataChanged();
-		}
+            dataChanged();
+        }
 
-		public boolean isCellEditable(int row, int col) {
-			if (col == 0) return true;
-			if (col == 1) {
-				Date date = options.alignment.getTaxon(row).getDate();
-				return (date != null);
-			}
-			return false;
-		}
+        public boolean isCellEditable(int row, int col) {
+            if (col == 0) return true;
+            if (col == 1) {
+                Date date = options.taxonList.getTaxon(row).getDate();
+                return (date != null);
+            }
+            return false;
+        }
 
-		public String getColumnName(int column) {
-			return columnNames[column];
-		}
+        public String getColumnName(int column) {
+            return columnNames1[column];
+        }
 
-		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
+        public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
 
-		public String toString() {
-			StringBuffer buffer = new StringBuffer();
+        public String toString() {
+            StringBuffer buffer = new StringBuffer();
 
-			buffer.append(getColumnName(0));
-			for (int j = 1; j < getColumnCount(); j++) {
-				buffer.append("\t");
-				buffer.append(getColumnName(j));
-			}
-			buffer.append("\n");
+            buffer.append(getColumnName(0));
+            for (int j = 1; j < getColumnCount(); j++) {
+                buffer.append("\t");
+                buffer.append(getColumnName(j));
+            }
+            buffer.append("\n");
 
-			for (int i = 0; i < getRowCount(); i++) {
-				buffer.append(getValueAt(i, 0));
-				for (int j = 1; j < getColumnCount(); j++) {
-					buffer.append("\t");
-					buffer.append(getValueAt(i, j));
-				}
-				buffer.append("\n");
-			}
+            for (int i = 0; i < getRowCount(); i++) {
+                buffer.append(getValueAt(i, 0));
+                for (int j = 1; j < getColumnCount(); j++) {
+                    buffer.append("\t");
+                    buffer.append(getValueAt(i, j));
+                }
+                buffer.append("\n");
+            }
 
-			return buffer.toString();
-		}
-	};
+            return buffer.toString();
+        }
+    };
 
 }

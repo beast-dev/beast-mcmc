@@ -52,7 +52,7 @@ public abstract class AbstractDistributionLikelihood extends Likelihood.Abstract
 	public void addData(Statistic data) { dataList.add(data); }
 	
 	
-	protected ArrayList<Statistic> dataList = new ArrayList<Statistic>();
+	protected ArrayList dataList = new ArrayList();
 
 	/**
 	 * Overridden to always return false.

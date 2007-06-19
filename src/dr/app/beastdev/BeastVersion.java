@@ -45,8 +45,7 @@ public class BeastVersion implements Version {
 	/**
 	 * Version string: assumed to be in format x.x.x
 	 */
-	private static String VERSION = "1.5 developmental";
-	private static String DATE_STRING = "2002-2007";
+	private static String VERSION = "1.4.2 developmental";
 
 	/**
 	 * Build string: assumed to be in format projectname-#-#-#
@@ -59,9 +58,8 @@ public class BeastVersion implements Version {
 	}
 
 	public String getDateString() {
-		return DATE_STRING;
+		return "2002-2007";
 	}
-
 	public String getBuildString() {
 
 		java.util.StringTokenizer token = new java.util.StringTokenizer(ID);
@@ -72,4 +70,5 @@ public class BeastVersion implements Version {
 
 		return "Build " + build + " " + date;
 	}
+
 }

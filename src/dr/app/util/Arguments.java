@@ -398,13 +398,13 @@ public class Arguments {
 					o.value = arg;
 
 					if (o.options != null) {
-						boolean found = false;
-                        for (String option1 : o.options) {
-                            if (option1.equals(o.value)) {
-                                found = true;
-                                break;
-                            }
-                        }
+						boolean found = false;					
+						for (int j = 0; j < o.options.length; j++) {
+							if (o.options[j].equals(o.value)) {
+								found = true;
+								break;
+							}
+						}
 						if (!found)	 {
 							throw new ArgumentException("Argument, " + arguments[index] + 
 								" has a bad string value: " + arg);
@@ -520,50 +520,52 @@ public class Arguments {
 	public void printUsage(String name, String commandLine) {
 		
 		System.out.print("  Usage: " + name);
-        for (Option option : options) {
-            System.out.print(" [-" + option.label);
-
-            if (option instanceof IntegerArrayOption) {
-
-                IntegerArrayOption o = (IntegerArrayOption) option;
-                for (int j = 1; j <= o.count; j++) {
-                    System.out.print(" <i" + j + ">");
-                }
-                System.out.print("]");
-            } else if (option instanceof IntegerOption) {
-
-                System.out.print(" <i>]");
-            } else if (option instanceof RealArrayOption) {
-
-                RealArrayOption o = (RealArrayOption) option;
-                for (int j = 1; j <= o.count; j++) {
-                    System.out.print(" <r" + j + ">");
-                }
-                System.out.print("]");
-            } else if (option instanceof RealOption) {
-
-                System.out.print(" <r>]");
-            } else if (option instanceof StringOption) {
-
-                StringOption o = (StringOption) option;
-                if (o.options != null) {
-                    System.out.print(" <" + o.options[0]);
-                    for (int j = 1; j < o.options.length; j++) {
-                        System.out.print("|" + o.options[j]);
-                    }
-                    System.out.print(">]");
-                } else {
-                    System.out.print(" <" + o.tag + ">]");
-                }
-            } else {
-                System.out.print("]");
-            }
-        }
+		for (int i = 0; i < options.length; i++) {
+			Option option = options[i];
+			System.out.print(" [-" + option.label);
+			
+			if (option instanceof IntegerArrayOption) {
+			
+				IntegerArrayOption o = (IntegerArrayOption)option;
+				for (int j = 1; j <= o.count; j++) {
+					System.out.print(" <i" + j + ">");
+				}
+				System.out.print("]");
+			} else if (option instanceof IntegerOption) {
+			
+				System.out.print(" <i>]");
+			} else if (option instanceof RealArrayOption) {
+			
+				RealArrayOption o = (RealArrayOption)option;
+				for (int j = 1; j <= o.count; j++) {
+					System.out.print(" <r" + j + ">");
+				}
+				System.out.print("]");
+			} else if (option instanceof RealOption) {
+			
+				System.out.print(" <r>]");
+			} else if (option instanceof StringOption) {
+			
+				StringOption o = (StringOption)option;
+				if (o.options != null) {
+					System.out.print(" <" + o.options[0]);
+					for (int j = 1; j < o.options.length; j++) {
+						System.out.print("|" + o.options[j]);
+					}
+					System.out.print(">]");
+				} else {
+					System.out.print(" <" + o.tag + ">]");
+				}
+			} else {
+				System.out.print("]");
+			}
+		}
 		System.out.println(" " + commandLine);
 
-        for (Option option : options) {
-            System.out.println("    -" + option.label + " " + option.description);
-        }
+		for (int i = 0; i < options.length; i++) {
+			Option option = options[i];
+			System.out.println("    -" + option.label + " " + option.description);
+		}
 	}
 
 	private int findOption(String label) {

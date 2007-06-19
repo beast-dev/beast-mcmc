@@ -41,7 +41,7 @@ public class TwoEpochDemographic extends DemographicFunction.Abstract {
 	/**
 	 * Construct demographic model with default settings.
 	 */
-	public TwoEpochDemographic(DemographicFunction epoch1, DemographicFunction epoch2, Type units) {
+	public TwoEpochDemographic(DemographicFunction epoch1, DemographicFunction epoch2, int units) {
 
 		super(units);
 

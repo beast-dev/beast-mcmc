@@ -57,7 +57,8 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 	/**
 	 * Constructor.
 	 */
-	public LogNormalDistributionModel(Parameter meanParameter, Parameter stdevParameter, double offset, boolean meanInRealSpace) {
+	public LogNormalDistributionModel(Parameter meanParameter, Parameter stdevParameter,
+	                                  double offset, boolean meanInRealSpace) {
 
 		super(NORMAL_DISTRIBUTION_MODEL);
 
@@ -268,7 +269,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
 			if ((cxo = (XMLObject) xo.getChild(PRECISION)) != null) {
 				cxo = (XMLObject) xo.getChild(PRECISION);
-				if (cxo.getChild(0) instanceof Parameter) {
+			if (cxo.getChild(0) instanceof Parameter) {
 					precParam = (Parameter) cxo.getChild(Parameter.class);
 				} else {
 					precParam = new Parameter.Default(cxo.getDoubleChild(0));
@@ -280,12 +281,12 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 				cxo = (XMLObject) xo.getChild(STDEV);
 				if (cxo.getChild(0) instanceof Parameter) {
 					stdevParam = (Parameter) cxo.getChild(Parameter.class);
-				} else {
-					stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
-				}
-
-				return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace);
+			} else {
+				stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
 			}
+
+			return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace);
+		}
 		}
 
 		//************************************************************************
@@ -299,15 +300,15 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 				AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE),
 				AttributeRule.newDoubleRule(OFFSET, true),
-				new ElementRule(MEAN,
+			new ElementRule(MEAN,
 						new XMLSyntaxRule[]{
-								new XORRule(
-										new ElementRule(Parameter.class),
-										new ElementRule(Double.class)
-								)}
+					new XORRule(
+						new ElementRule(Parameter.class),
+						new ElementRule(Double.class)
+					)}
 				),
 				new XORRule(
-						new ElementRule(STDEV,
+			new ElementRule(STDEV,
 								new XMLSyntaxRule[]{
 										new XORRule(
 												new ElementRule(Parameter.class),
@@ -316,17 +317,17 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 						),
 						new ElementRule(PRECISION,
 								new XMLSyntaxRule[]{
-										new XORRule(
-												new ElementRule(Parameter.class),
-												new ElementRule(Double.class)
-										)}
+					new XORRule(
+						new ElementRule(Parameter.class),
+						new ElementRule(Double.class)
+					)}
 
 						))
 		};
 
 		public String getParserDescription() {
 			return "Describes a normal distribution with a given mean and standard deviation " +
-					"that can be used in a distributionLikelihood element";
+				"that can be used in a distributionLikelihood element";
 		}
 
 		public Class getReturnType() {

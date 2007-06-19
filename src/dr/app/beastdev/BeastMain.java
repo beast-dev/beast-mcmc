@@ -27,16 +27,15 @@ package dr.app.beastdev;
 
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
+import dr.math.MathUtils;
 import dr.util.MessageLogHandler;
 import dr.util.Version;
 import dr.xml.XMLParser;
-import dr.math.MathUtils;
+import org.virion.jam.util.IconUtils;
 
 import java.io.*;
 import java.util.Iterator;
 import java.util.logging.*;
-
-import org.virion.jam.util.IconUtils;
 
 public class BeastMain {
 
@@ -56,7 +55,7 @@ public class BeastMain {
                 thread.stop();
             }
         }
-    }
+    };
 
     public BeastMain(File inputFile, BeastConsoleApp consoleApp, boolean verbose) {
 
@@ -72,7 +71,7 @@ public class BeastMain {
             FileReader fileReader = new FileReader(inputFile);
             System.out.println(fileReader.getEncoding());
 
-            XMLParser parser = new BeastParser(new String[] {fileName}, inputFile.getParentFile(), verbose);
+            XMLParser parser = new BeastParser(new String[] {fileName}, verbose);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -140,7 +139,7 @@ public class BeastMain {
                         "and tree height is extremely small or extremely large. Try to set\n" +
                         "initial values such that the product is similar to the average\n" +
                         "pairwise genetic distance between the sequences.\n" +
-                        "For more information go to <http://evolve.zoo.ox.ac.uk/beast/help/>.");
+                        "For more information go to <http://beast.bio.ed.ac.uk/>.");
 
             } else {
                 Logger.getLogger("dr.apps.beast").severe("Fatal exception (email the authors)");
@@ -164,7 +163,7 @@ public class BeastMain {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAST " + version.getVersionString() + ", 2002-2006", 60);
+        centreLine("BEAST " + version.getVersionString() + ", 2002-2007", 60);
         centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
         centreLine("by", 60);
         centreLine("Alexei J. Drummond and Andrew Rambaut", 60);
@@ -182,7 +181,7 @@ public class BeastMain {
 
     public static void printHeader() {
         System.out.println("Downloads, Help & Resources:\n" +
-                "\thttp://evolve.zoo.ox.ac.uk/beast/\n" +
+                "\thttp://beast.bio.ed.ac.uk/\n" +
                 "\n" +
                 "Source code distributed under the GNU Lesser General Public License:\n" +
                 "\thttp://code.google.com/p/beast-mcmc/\n" +
@@ -269,7 +268,7 @@ public class BeastMain {
                     "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
                     "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
-                    "<p><a href=\"http://evolve.zoo.ox.ac.uk/beast/\">http://evolve.zoo.ox.ac.uk/beast/</a></p>" +
+                    "<p><a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                     "<p>Source code distributed under the GNU LGPL:<br>" +
                     "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
                     "<p>Additional programming by:<br>" +

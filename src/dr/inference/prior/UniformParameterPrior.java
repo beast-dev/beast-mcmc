@@ -66,7 +66,7 @@ public class UniformParameterPrior extends AbstractParameterPrior {
 	
 	public String toString() {
 		
-		StringBuilder buffer = new StringBuilder();
+		StringBuffer buffer = new StringBuffer();
 		if (lower == -Double.MAX_VALUE) {
             buffer.append("(").append(formatter.format(Double.NEGATIVE_INFINITY).trim());
 		} else if (lower == Double.MIN_VALUE) {

@@ -51,7 +51,7 @@ public class ConstantPopulationModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ConstantPopulationModel(Parameter N0Parameter, Type units) {
+	public ConstantPopulationModel(Parameter N0Parameter, int units) {
 	
 		this(CONSTANT_POPULATION_MODEL, N0Parameter, units);
 	}
@@ -59,7 +59,7 @@ public class ConstantPopulationModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ConstantPopulationModel(String name, Parameter N0Parameter, Type units) {
+	public ConstantPopulationModel(String name, Parameter N0Parameter, int units) {
 	
 		super(name);
 		
@@ -87,7 +87,7 @@ public class ConstantPopulationModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			Type units = XMLParser.Utils.getUnitsAttr(xo);
+			int units = XMLParser.Utils.getUnitsAttr(xo);
 			
 			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);

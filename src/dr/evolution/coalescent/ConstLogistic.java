@@ -39,7 +39,7 @@ public class ConstLogistic extends LogisticGrowth {
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ConstLogistic(Type units) {
+	public ConstLogistic(int units) {
 	
 		super(units);
 	}
@@ -65,19 +65,7 @@ public class ConstLogistic extends LogisticGrowth {
 	 * (= integral 1/N(x) dx from 0 to t).
 	 */
 	public double getIntensity(double t) {
-        // Untested code
-        double nZero = getN0();
-		double nOne = getN1();
-		double r = getGrowthRate();
-		double c = getShape();
-
-        double aa = nOne + (nZero-nOne)*(1+c);
-        double bb = nOne*c;
-        final double e = Math.exp(-r * t);
-        double v1 = Math.log(bb + aa* e) / (aa*-r);
-        double v2 = c * Math.log(aa + bb/e) / (bb*r);
-        return v1 + v2;
-        //throw new RuntimeException("Not implemented!");
+		throw new RuntimeException("Not implemented!");
 	}
 
 	public double getInverseIntensity(double x) {
@@ -86,10 +74,9 @@ public class ConstLogistic extends LogisticGrowth {
 	}
 	
 	public double getIntegral(double start, double finish) {
-		final double v1 = getIntensity(finish) - getIntensity(start);
+		
 		// Until the above getIntensity is implemented, numerically integrate
-        final double numerical = getNumericalIntegral(start, finish);
-        return numerical;
+		return getNumericalIntegral(start, finish);
 	}
 		
 	public int getNumArguments() {

@@ -39,7 +39,7 @@ public class UniformDistribution implements Distribution
 	// Public stuff
 	//
 
-	/*
+	/**
 	 * Constructor
 	 */
 	public UniformDistribution(double lower, double upper) {

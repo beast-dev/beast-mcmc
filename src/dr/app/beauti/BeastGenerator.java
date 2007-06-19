@@ -32,7 +32,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.coalescent.*;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
@@ -85,14 +84,14 @@ public class BeastGenerator extends BeautiOptions {
 	 * @throws IllegalArgumentException if there is a problem with the current settings
 	 */
 	public void checkOptions() throws IllegalArgumentException {
-		Set<String> ids = new HashSet<String>() ;
+		Set ids = new HashSet();
 
 		ids.add("taxa");
 		ids.add("alignment");
 
 		if (taxonList != null) {
 			for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-				Taxon taxon = taxonList.getTaxon(i);
+				Taxon taxon = (Taxon)taxonList.getTaxon(i);
 				if (ids.contains(taxon.getId())) {
 					throw new IllegalArgumentException("A taxon has the same id," + taxon.getId() +
 							"\nas another element (taxon, sequence, taxon set etc.):\nAll ids should be unique.");
@@ -179,7 +178,7 @@ public class BeastGenerator extends BeautiOptions {
 			writeTMRCAStatistics(writer);
 		}
 
-		ArrayList<Operator> operators = selectOperators();
+		ArrayList operators = selectOperators();
 		writeOperatorSchedule(operators, writer);
 		writer.writeText("");
 		writeMCMC(writer);
@@ -971,61 +970,6 @@ public class BeastGenerator extends BeautiOptions {
 			writeParameter("clock.rate", writer);
 			writer.writeCloseTag("rate");
 			writer.writeCloseTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES);
-		} else if (clockModel == RANDOM_LOCAL_CLOCK) {
-			if (fixedSubstitutionRate) {
-				fixParameter("clock.rate", meanSubstitutionRate);
-			}
-
-			writer.writeComment("The random local clock model (Drummond, Rambaut & Suchard, 2007)");
-			writer.writeOpenTag(
-					RandomLocalClockModel.LOCAL_BRANCH_RATES,
-					new Attribute[] {
-							new Attribute.Default("id", "branchRates"),
-							new Attribute.Default("ratesAreMultipliers", "false")
-					}
-			);
-			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default("idref", "treeModel"), true);
-
-			writer.writeOpenTag("rates");
-			writeParameter("localClock.rates", writer);
-			writer.writeCloseTag("rates");
-
-			writer.writeOpenTag("rateIndicator");
-			writeParameter("localClock.changes", writer);
-			writer.writeCloseTag("rateIndicator");
-
-			writer.writeOpenTag("clockRate");
-			writeParameter("clock.rate", writer);
-			writer.writeCloseTag("clockRate");
-
-			writer.writeCloseTag(RandomLocalClockModel.LOCAL_BRANCH_RATES);
-
-			writer.writeText("");
-			writer.writeOpenTag(
-					SumStatistic.SUM_STATISTIC,
-					new Attribute[] {
-							new Attribute.Default("id", "rateChanges"),
-							new Attribute.Default("name", "rateChangeCount"),
-							new Attribute.Default("elementwise", "true"),
-					}
-			);
-			writer.writeTag("parameter", new Attribute.Default("idref", "treeModel.traits"), true);
-			writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
-
-			writer.writeText("");
-			writer.writeOpenTag(
-					RateStatistic.RATE_STATISTIC,
-					new Attribute[] {
-							new Attribute.Default("id", "coefficientOfVariation"),
-							new Attribute.Default("name", "coefficientOfVariation"),
-							new Attribute.Default("mode", "coefficientOfVariation"),
-							new Attribute.Default("internal", "true"),
-							new Attribute.Default("external", "true")
-					}
-			);
-			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default("idref", "treeModel"), true);
-			writer.writeTag(RandomLocalClockModel.LOCAL_BRANCH_RATES, new Attribute.Default("idref", "branchRates"), true);
-			writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 		} else {
 			writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut, 2006)");
 			writer.writeOpenTag(
@@ -1283,7 +1227,7 @@ public class BeastGenerator extends BeautiOptions {
 
 		writer.writeText("");
 		for (int i = 0; i < taxonSets.size(); i++) {
-			TaxonList taxa = taxonSets.get(i);
+			TaxonList taxa = (TaxonList)taxonSets.get(i);
 			writer.writeOpenTag(
 					TMRCAStatistic.TMRCA_STATISTIC,
 					new Attribute[]{
@@ -1296,7 +1240,7 @@ public class BeastGenerator extends BeautiOptions {
 			writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
 			writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
 
-			if( taxonSetsMono.get(i) ) {
+			if( ((Boolean)taxonSetsMono.get(taxa)).booleanValue() ) {
 				writer.writeOpenTag(
 						MonophylyStatistic.MONOPHYLY_STATISTIC,
 						new Attribute[]{
@@ -1316,13 +1260,15 @@ public class BeastGenerator extends BeautiOptions {
 	 * @param operators the list of operators
 	 * @param writer the writer
 	 */
-	public void writeOperatorSchedule(ArrayList<Operator> operators, XMLWriter writer) {
+	public void writeOperatorSchedule(ArrayList operators, XMLWriter writer) {
 		writer.writeOpenTag(
 				SimpleOperatorSchedule.OPERATOR_SCHEDULE,
 				new Attribute[] { new Attribute.Default("id", "operators") }
 		);
 
-		for (Operator operator : operators) {
+		Iterator iter = operators.iterator();
+		while (iter.hasNext()) {
+			Operator operator = (Operator)iter.next();
 			writeOperator(operator, writer);
 		}
 
@@ -1346,8 +1292,6 @@ public class BeastGenerator extends BeautiOptions {
 			writeIntegerDeltaOperator(operator, writer);
 		} else if (operator.type.equals(SWAP)) {
 			writeSwapOperator(operator, writer);
-		} else if (operator.type.equals(BITFLIP)) {
-			writeBitFlipOperator(operator, writer);
 		} else if (operator.type.equals(UNIFORM)) {
 			writeUniformOperator(operator, writer);
 		} else if (operator.type.equals(SUBTREE_SLIDE)) {
@@ -1475,16 +1419,6 @@ public class BeastGenerator extends BeautiOptions {
 		);
 		writer.writeTag(ParameterParser.PARAMETER, new Attribute[] { new Attribute.Default("idref", operator.parameter1.getName()) }, true);
 		writer.writeCloseTag(SwapOperator.SWAP_OPERATOR);
-	}
-
-	private void writeBitFlipOperator(Operator operator, XMLWriter writer) {
-		writer.writeOpenTag(BitFlipOperator.BIT_FLIP_OPERATOR,
-				new Attribute[] {
-						new Attribute.Default("weight", Integer.toString((int)operator.weight))
-				}
-		);
-		writer.writeTag(ParameterParser.PARAMETER, new Attribute[] { new Attribute.Default("idref", operator.parameter1.getName()) }, true);
-		writer.writeCloseTag(BitFlipOperator.BIT_FLIP_OPERATOR);
 	}
 
 	private void writeUniformOperator(Operator operator, XMLWriter writer) {
@@ -1708,8 +1642,10 @@ public class BeastGenerator extends BeautiOptions {
 	 */
 	private void writeParameterPriors(XMLWriter writer) {
 		boolean first = true;
-        for (Taxa taxa : taxonSetsMono.keySet()) {
-            if(taxonSetsMono.get(taxa)) {
+        Iterator iter = taxonSetsMono.keySet().iterator();
+        while (iter.hasNext()) {
+            Taxa taxa = (Taxa)iter.next();
+            if( ((Boolean)taxonSetsMono.get(taxa)).booleanValue() ) {
 				if( first ) {
 					writer.writeOpenTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
 					first = false;
@@ -1723,8 +1659,10 @@ public class BeastGenerator extends BeautiOptions {
 			writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
 		}
 
-		ArrayList<Parameter> parameters = selectParameters();
-		for (Parameter parameter : parameters) {
+		ArrayList parameters = selectParameters();
+		Iterator iter2 = parameters.iterator();
+		while (iter2.hasNext()) {
+			Parameter parameter = (Parameter)iter2.next();
 			if (parameter.priorType != NONE) {
 				if (parameter.priorType != UNIFORM_PRIOR || parameter.isNodeHeight) {
 					writeParameterPrior(parameter, writer);
@@ -2158,7 +2096,7 @@ public class BeastGenerator extends BeautiOptions {
 	 * @param writer the writer
 	 */
 	public void writeParameter(String id, int dimension, double value, double lower, double upper, XMLWriter writer) {
-		ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
+		ArrayList attributes = new ArrayList();
 		attributes.add(new Attribute.Default("id", id));
 		if (dimension > 1) {
 			attributes.add(new Attribute.Default("dimension", dimension + ""));
@@ -2175,7 +2113,7 @@ public class BeastGenerator extends BeautiOptions {
 
 		Attribute[] attrArray = new Attribute[attributes.size()];
 		for (int i =0; i < attrArray.length; i++) {
-			attrArray[i] = attributes.get(i);
+			attrArray[i] = (Attribute)attributes.get(i);
 		}
 
 		writer.writeTag(ParameterParser.PARAMETER, attrArray, true);
@@ -2245,8 +2183,8 @@ public class BeastGenerator extends BeautiOptions {
 				writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
 				writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
 				for (int i = 0; i < taxonSets.size(); i++) {
-					TaxonList taxonSet = taxonSets.get(i);
-					Parameter statistic = statistics.get(taxonSet);
+					TaxonList taxonSet = (TaxonList)taxonSets.get(i);
+					Parameter statistic = (Parameter)statistics.get(taxonSet);
 					writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT);
 
 					writer.writeTag(TaxaParser.TAXA,

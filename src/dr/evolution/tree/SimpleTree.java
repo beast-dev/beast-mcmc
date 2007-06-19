@@ -132,14 +132,14 @@ public class SimpleTree implements MutableTree {
     /**
      * Return the units that this tree is expressed in.
      */
-    public final Type getUnits() {
+    public final int getUnits() {
         return units;
     }
 
     /**
      * Sets the units that this tree is expressed in.
      */
-    public final void setUnits(Type units) {
+    public final void setUnits(int units) {
         this.units = units;
     }
 
@@ -528,7 +528,7 @@ public class SimpleTree implements MutableTree {
     int internalNodeCount;
 
     /** holds the units of the trees branches. */
-    private Type units = Type.SUBSTITUTIONS;
+    private int units = SUBSTITUTIONS;
 
     boolean inEdit = false;
 }

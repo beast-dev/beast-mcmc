@@ -43,44 +43,40 @@ import org.apache.commons.math.analysis.UnivariateRealFunction;
  */
 public interface DemographicFunction extends UnivariateRealFunction, Units {
 
-    /**
-     * @param t time
-     * @return value of the demographic function N(t) at time t
-     */
+	/**
+	 * Gets the value of the demographic function N(t) at time t.
+	 */
 	double getDemographic(double t);
 
 	/**
-     * @return  value of demographic intensity function at time t (= integral 1/N(x) dx from 0 to t).
-     * @param t time
-     */
+	 * Returns value of demographic intensity function at time t
+	 * (= integral 1/N(x) dx from 0 to t).
+	 */
 	double getIntensity(double t);
 
 	/**
-	 * @return value of inverse demographic intensity function
+	 * Returns value of inverse demographic intensity function 
 	 * (returns time, needed for simulation of coalescent intervals).
 	 */
 	double getInverseIntensity(double x);
 
 	/**
 	 * Calculates the integral 1/N(x) dx between start and finish.
-     * @param start  point
-     * @param finish point
-     * @return integral value
-     */
+	 */
 	double getIntegral(double start, double finish);
 				
 	/**
-	 * @return the number of arguments for this function.
+	 * Returns the number of arguments for this function.
 	 */
 	int getNumArguments();
 	
 	/**
-	 * @return the name of the n'th argument of this function.
+	 * Returns the name of the nth argument of this function.
 	 */
 	String getArgumentName(int n);
 
 	/**
-	 * @return the value of the n'th argument of this function.
+	 * Returns the value of the nth argument of this function.
 	 */
 	double getArgument(int n);
 
@@ -90,7 +86,7 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 	void setArgument(int n, double value);
 
 	/**
-	 * @return the lower bound of the nth argument of this function.
+	 * Returns the lower bound of the nth argument of this function.
 	 */
 	double getLowerBound(int n);
 	
@@ -117,8 +113,10 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
         /**
 		 * Construct demographic model with default settings
 		 */
-		public Abstract(Type units) {
+		public Abstract(int units) {
+		
 			setUnits(units);
+
         }
 
 		// general functions
@@ -220,14 +218,14 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 		/**
 		 * Units in which population size is measured.
 		 */
-		private Type units;
+		private int units;
 
 		/**
 		 * sets units of measurement.
 		 *
 		 * @param u units
 		 */
-		public void setUnits(Type u)
+		public void setUnits(int u)
 		{
 			units = u;
 		}
@@ -235,17 +233,17 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 		/**
 		 * returns units of measurement.
 		 */
-		public Type getUnits()
+		public int getUnits()
 		{
 			return units;
 		}
-	}
+	};
 
 	public static class Utils
 	{
 		/**
-         * @return a random interval size selected from the Kingman prior of the demographic model.
-         */
+		 * Returns an random interval size selected from the Kingman prior of the demographic model.
+		 */
 		public static double getSimulatedInterval(DemographicFunction demographicFunction, int lineageCount, double timeOfLastCoalescent)
 		{
 			double U = MathUtils.nextDouble(); // create unit uniform random variate
@@ -281,5 +279,6 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 				}
 			}
 		}
-	}
+	};
+		
 }

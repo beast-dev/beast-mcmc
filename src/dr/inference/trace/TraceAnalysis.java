@@ -98,8 +98,8 @@ public class TraceAnalysis {
 		return ACT;
 	}
 	public double getEffectiveSampleSize() {
-			if (!correlation) throw new RuntimeException("Correlation-based statistics not calculated!");
-			return ESS;
+		if (!correlation) throw new RuntimeException("Correlation-based statistics not calculated!");
+		return ESS;
 	}
 
 	public String getName() { return statName; }
@@ -212,26 +212,26 @@ public class TraceAnalysis {
 		System.out.println();
 
 		/*
-		System.out.println("Correlation matrix");
-		System.out.print(formatter.formatToFieldWidth("", firstField));
-		for (int i =0; i < analysis.length; i++) {
-			System.out.print(formatter.formatToFieldWidth(analysis[i].getName(), fieldWidth));
-		}
-		System.out.println();
-		for (int i = 0; i < analysis.length; i++) {
+				  System.out.println("Correlation matrix");
+				  System.out.print(formatter.formatToFieldWidth("", firstField));
+				  for (int i =0; i < analysis.length; i++) {
+					  System.out.print(formatter.formatToFieldWidth(analysis[i].getName(), fieldWidth));
+				  }
+				  System.out.println();
+				  for (int i = 0; i < analysis.length; i++) {
 
-			double[] x = analysis[i].getTrace().getValues(analysis[i].getBurnin());
+					  double[] x = analysis[i].getTrace().getValues(analysis[i].getBurnin());
 
 
-			System.out.print(formatter.formatToFieldWidth(analysis[i].getName(), firstField));
-			for (int j = 0; j < i; j++) {
+					  System.out.print(formatter.formatToFieldWidth(analysis[i].getName(), firstField));
+					  for (int j = 0; j < i; j++) {
 
-				double[] y = analysis[j].getTrace().getValues(analysis[j].getBurnin());
-				System.out.print(formatter.format(DiscreteStatistics.covariance(x, y)));
-			}
-			System.out.println();
-		}
-		*/
+						  double[] y = analysis[j].getTrace().getValues(analysis[j].getBurnin());
+						  System.out.print(formatter.format(DiscreteStatistics.covariance(x, y)));
+					  }
+					  System.out.println();
+				  }
+				  */
 
 		System.out.println();
 
@@ -244,7 +244,7 @@ public class TraceAnalysis {
 		return analysis;
 	}
 
-    /**
+	/**
 	 * @param reader the log file to report
 	 * @param burnin the number of states of burnin or if -1 then use 10%
 	 */
@@ -255,31 +255,31 @@ public class TraceAnalysis {
 		int maxState = analysis[0].maxState;
 		burnin = analysis[0].burnin;
 
-        double minESS = Double.MAX_VALUE;
+		double minESS = Double.MAX_VALUE;
 
-        if (drawHeader) {
-            System.out.print("file\t");
-            for (int j = 0; j < analysis.length; j++) {
-                System.out.print(analysis[j].getName()+"\t");
-                if (hpds) {
-                    System.out.print(analysis[j].getName()+" hpdLower\t");
-                    System.out.print(analysis[j].getName()+" hpdUpper\t");
-                }
-            }
-            System.out.println("minESS\tchainLength");
-        }
+		if (drawHeader) {
+			System.out.print("file\t");
+			for (int j = 0; j < analysis.length; j++) {
+				System.out.print(analysis[j].getName()+"\t");
+				if (hpds) {
+					System.out.print(analysis[j].getName()+" hpdLower\t");
+					System.out.print(analysis[j].getName()+" hpdUpper\t");
+				}
+			}
+			System.out.println("minESS\tchainLength");
+		}
 
-        System.out.print(name + "\t");
+		System.out.print(name + "\t");
 		for (int j = 0; j < analysis.length; j++) {
 			System.out.print(analysis[j].getMean()+"\t");
-            if (hpds) {
-                System.out.print(analysis[j].getHPDLower()+"\t");
-                System.out.print(analysis[j].getHPDUpper()+"\t");                    
-            }
+			if (hpds) {
+				System.out.print(analysis[j].getHPDLower()+"\t");
+				System.out.print(analysis[j].getHPDUpper()+"\t");
+			}
 			double ess = analysis[j].getEffectiveSampleSize();
-            if (ess < minESS) {
-                minESS = ess;
-            }
+			if (ess < minESS) {
+				minESS = ess;
+			}
 		}
 		System.out.println(minESS+ "\t" + maxState);
 		return analysis;
@@ -323,20 +323,19 @@ public class TraceAnalysis {
 		double[] gammaStat = new double[maxLag];
 		double[] varGammaStat = new double[maxLag];
 		double meanStat = 0.0;
-  		double varStat = 0.0;
+		double varStat = 0.0;
 		double varVarStat = 0.0;
 		double assVarCor = 0.0;
 		double del1, del2;
 
-  		for (int i = 0; i < samples; i++) {
+		for (int i = 0; i < samples; i++) {
 			meanStat += statistic[i];
 		}
 		meanStat /= samples;
 
-		for (int lag=0; lag < maxLag; lag++) 
-                {
+		for (int lag=0; lag < maxLag; lag++) {
 			for (int j = 0; j < samples-lag; j++) {
-			        del1=statistic[j] - meanStat;
+				del1=statistic[j] - meanStat;
 				del2=statistic[j+lag] - meanStat;
 				gammaStat[lag] += ( del1*del2 );
 				varGammaStat[lag] += (del1*del1*del2*del2);
@@ -347,21 +346,21 @@ public class TraceAnalysis {
 			varGammaStat[lag] -= (gammaStat[0] * gammaStat[0]);
 
 			if (lag==0) {
-			        varStat = gammaStat[0];
+				varStat = gammaStat[0];
 				varVarStat = varGammaStat[0];
 				assVarCor = 1.0;
 			}
-			else if (lag%2==0) 
-                        {
-			        // fancy stopping criterion :)
-  			        if (gammaStat[lag-1] + gammaStat[lag] > 0) {
-				        varStat    += 2.0*(gammaStat[lag-1] + gammaStat[lag]);
+			else if (lag%2==0)
+			{
+				// fancy stopping criterion :)
+				if (gammaStat[lag-1] + gammaStat[lag] > 0) {
+					varStat    += 2.0*(gammaStat[lag-1] + gammaStat[lag]);
 					varVarStat += 2.0*(varGammaStat[lag-1] + varGammaStat[lag]);
 					assVarCor  += 2.0*((gammaStat[lag-1] * gammaStat[lag-1]) + (gammaStat[lag] * gammaStat[lag])) / (gammaStat[0] * gammaStat[0]);
 				}
 				// stop
-				else 
-				        maxLag=lag;
+				else
+					maxLag=lag;
 			}
 		}
 
@@ -395,13 +394,13 @@ public class TraceAnalysis {
 
 	private double stdErrorOfMean;
 	private double mean, median;
-//	private double variance;
+	//	private double variance;
 	private int burnin = -1;
 	private double ACT, ESS;
 //    private double stdErrorOfVariance;
 //	private double M, M_update;
 //	private double stdErrOfACT;
-//	private double assStdOfCorrelationFunction;
+	//	private double assStdOfCorrelationFunction;
 	private double cpdLower, cpdUpper, hpdLower, hpdUpper;
 	private static final int MAX_OFFSET = 2000;
 	private boolean correlation;

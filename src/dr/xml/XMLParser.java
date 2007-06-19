@@ -26,7 +26,6 @@
 package dr.xml;
 
 import dr.util.Identifiable;
-import dr.evolution.util.Units;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 
@@ -39,7 +38,7 @@ public class XMLParser {
 	public static final String IDREF = "idref";
     public static final String CONCURRENT = "concurrent";
 
-	private Vector<Thread> threads = new Vector<Thread>();
+	private Vector threads = new Vector();
 
 	public XMLParser() {
 		addXMLObjectParser(new ArrayParser());
@@ -55,22 +54,22 @@ public class XMLParser {
 	
 		String[] parserNames = parser.getParserNames();
 
-        for (String parserName : parserNames) {
-            XMLObjectParser oldParser = parserStore.get(parserName);
-            if (oldParser != null) {
+        for (int i = 0; i < parserNames.length; i++) {
+            XMLObjectParser oldParser = (XMLObjectParser)parserStore.get(parserNames[i]);
+            if ( oldParser != null) {
                 throw new IllegalArgumentException("New parser ( " + parser + " ) cannot replace existing parser (" + oldParser + ")");
             }
 
-            parserStore.put(parserName, parser);
+            parserStore.put(parserNames[i], parser);
         }
-    }
+	}
 
     public Iterator getParserNames() {
         return parserStore.keySet().iterator();
     }
 
     public XMLObjectParser getParser(String name) {
-        return parserStore.get(name);
+        return (XMLObjectParser)parserStore.get(name);
     }
 
 	public Iterator getParsers() {
@@ -132,7 +131,7 @@ public class XMLParser {
 				if (concurrent) throw new XMLParseException("Nested concurrent elements not allowed.");
 				concurrent = true; 
 			
-				threads = new Vector<Thread>();
+				threads = new Vector();
 			}
 			
 			XMLObject xo = new XMLObject(e, objectStore);
@@ -158,7 +157,7 @@ public class XMLParser {
 				throw new XMLParseException("Object with Id=" + id + " already exists");
 			}
 			
-			XMLObjectParser parser = parserStore.get(xo.getName());
+			XMLObjectParser parser = (XMLObjectParser)parserStore.get(xo.getName());
 			 
 			Object obj = null; 
 			if (parser != null) { 
@@ -189,10 +188,10 @@ public class XMLParser {
 					}
 					concurrent = false; 
 					// wait for all threads collected to die
-                    for (Object thread1 : threads) {
-                        waitForThread((Thread) thread1);
-                    }
-                } else if (obj instanceof Runnable && !concurrent) {
+					for (int i =0; i < threads.size(); i++) {
+						waitForThread((Thread)threads.get(i));
+					}
+				} else if (obj instanceof Runnable && !concurrent) {
 					Thread thread = new Thread((Runnable)obj);
 					thread.start();
 					threads.add(thread);
@@ -282,8 +281,8 @@ public class XMLParser {
 		}
 	};
 	
-	private Hashtable<String, Object> store = new Hashtable<String, Object>();
-	private TreeMap<String, XMLObjectParser> parserStore = new TreeMap<String, XMLObjectParser>(new ParserComparator());
+	private Hashtable store = new Hashtable();
+	private TreeMap parserStore = new TreeMap(new ParserComparator());	
 	private boolean concurrent = false;
 	private XMLObject root = null;
 
@@ -304,17 +303,15 @@ public class XMLParser {
 
 		/**
 		 * Converts a unit integer into a human-readable name.
-         * @return unit name
-         * @param units
-         */
-		public static String getUnitString(Units.Type units) {
+		 */
+		public static String getUnitString(int units) {
 			switch (units) {
-				case GENERATIONS: return GENERATIONS;
-				case DAYS: return DAYS;
-				case MONTHS: return MONTHS;
-				case YEARS: return YEARS;
+				case dr.evolution.util.Units.GENERATIONS: return GENERATIONS;
+				case dr.evolution.util.Units.DAYS: return DAYS;
+				case dr.evolution.util.Units.MONTHS: return MONTHS;
+				case dr.evolution.util.Units.YEARS: return YEARS;
 				// Mutations has been replaced with substitutions...
-				case SUBSTITUTIONS: return SUBSTITUTIONS; 	
+				case dr.evolution.util.Units.SUBSTITUTIONS: return SUBSTITUTIONS; 	
 				default: return UNKNOWN;
 			}
 		}
@@ -330,22 +327,22 @@ public class XMLParser {
 			}
 		}
 
-		public static Units.Type getUnitsAttr(XMLObject xo) throws XMLParseException {
+		public static int getUnitsAttr(XMLObject xo) throws XMLParseException {
 		
-			Units.Type units = dr.evolution.util.Units.Type.GENERATIONS;
+			int units = dr.evolution.util.Units.GENERATIONS;
 			if (xo.hasAttribute(UNITS)) {
 				String unitsAttr = (String)xo.getAttribute(UNITS);
-				if (unitsAttr.equals(YEARS)) { units = dr.evolution.util.Units.Type.YEARS;}
-				else if (unitsAttr.equals(MONTHS)) { units = dr.evolution.util.Units.Type.MONTHS;} 
-				else if (unitsAttr.equals(DAYS)) { units = dr.evolution.util.Units.Type.DAYS;}
+				if (unitsAttr.equals(YEARS)) { units = dr.evolution.util.Units.YEARS;} 
+				else if (unitsAttr.equals(MONTHS)) { units = dr.evolution.util.Units.MONTHS;} 
+				else if (unitsAttr.equals(DAYS)) { units = dr.evolution.util.Units.DAYS;} 
 				else if (unitsAttr.equals(SUBSTITUTIONS) || unitsAttr.equals(MUTATIONS)) { 
-					units = dr.evolution.util.Units.Type.SUBSTITUTIONS;
+					units = dr.evolution.util.Units.SUBSTITUTIONS;
 				} 	
 			}
 			return units;
 		}
 	
-		public static boolean hasAttribute(Element e, String name) {
+		public static final boolean hasAttribute(Element e, String name) {
 			String attr = e.getAttribute(name);	
 			return ((attr != null) && !attr.equals(""));
 		}
@@ -362,14 +359,16 @@ public class XMLParser {
 	
 	}
 
-	class ParserComparator implements Comparator<String> {
-        public int compare(String o1, String o2) {
-            String name1 = o1.toUpperCase();
-			String name2 = o2.toUpperCase();
+	class ParserComparator implements Comparator {
 
+		public int compare(Object c1, Object c2) {
+		
+			String name1 = ((String)c1).toUpperCase();
+			String name2 = ((String)c2).toUpperCase();
+			
 			return name1.compareTo(name2);
-        }
-    }
+		}
+    };
 }
 
    

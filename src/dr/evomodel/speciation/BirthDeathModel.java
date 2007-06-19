@@ -44,7 +44,7 @@ public class BirthDeathModel extends SpeciationModel {
 	public static String SAMPLING_PROPORTION = "samplingProportion";
 
 
-	public BirthDeathModel(Parameter birthRateParameter, Parameter deathRateParameter, Parameter samplingProportionParameter, Type units) {
+	public BirthDeathModel(Parameter birthRateParameter, Parameter deathRateParameter, Parameter samplingProportionParameter, int units) {
 
 		super(BIRTH_DEATH_MODEL, units);
 
@@ -268,7 +268,7 @@ public class BirthDeathModel extends SpeciationModel {
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			Type units = XMLParser.Utils.getUnitsAttr(xo);
+			int units = XMLParser.Utils.getUnitsAttr(xo);
 
 			Parameter birthParameter = (Parameter)xo.getSocketChild(BIRTH_RATE);
 			Parameter deathParameter = (Parameter)xo.getSocketChild(DEATH_RATE);

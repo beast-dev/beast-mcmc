@@ -36,8 +36,8 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 
 		this.epochTransitionTimes = epochTransitionTimes;
 		this.rateParameters = rateParameters;
-		for (Parameter parameter : rateParameters) {
-			addParameter(parameter);
+		for (int i = 0; i < rateParameters.length; i++) {
+			addParameter(rateParameters[i]);
 		}
 	}
 
@@ -113,7 +113,7 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 
 			Logger.getLogger("dr.evomodel").info("Using multi-epoch rate model.");
 
-			List<Epoch> epochs = new ArrayList<Epoch>();
+			List epochs = new ArrayList();
 
 			for (int i = 0; i < xo.getChildCount(); i++) {
 				XMLObject xoc = (XMLObject)xo.getChild(i);
@@ -130,13 +130,13 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 			double[] epochTransitionTimes = new double[epochs.size()];
 			Parameter[] rateParameters = new Parameter[epochs.size() + 1];
 
-			int i = 0;
-			for (Epoch epoch : epochs) {
+			for (int i = 0; i < epochs.size(); i++) {
+				Epoch epoch = (Epoch)epochs.get(i);
 				epochTransitionTimes[i] = epoch.transitionTime;
 				rateParameters[i] = epoch.parameter;
 				i++;
 			}
-			rateParameters[i] = ancestralRateParameter;
+			rateParameters[epochs.size()] = ancestralRateParameter;
 
 			return new RateEpochBranchRateModel(epochTransitionTimes, rateParameters);
 		}

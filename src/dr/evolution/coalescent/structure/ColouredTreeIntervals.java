@@ -48,7 +48,7 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
     List eventList = new ArrayList();
     int colourStateCount;
     int[][] lineageCount;
-    Type units;
+    int units;
 
     public ColouredTreeIntervals(Tree tree, TreeColouring colouring) {
 
@@ -170,14 +170,14 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
     /**
      * Gets the units for this object.
      */
-    public Type getUnits() {
+    public int getUnits() {
         return units;
     }
 
     /**
      * Sets the units for this object.
      */
-    public void setUnits(Type units) {
+    public void setUnits(int units) {
         this.units = units;
     }
 

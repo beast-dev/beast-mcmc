@@ -195,13 +195,14 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 
 		double value, logL = 0.0;
 
-        for (Statistic statistic : dataList) {
-            for (int j = 0; j < statistic.getDimension(); j++) {
-                value = statistic.getStatisticValue(j);
-                logL += Math.log(getDensity(value - halfDx, value + halfDx));
-            }
-        }
-        return logL;
+		for (int i = 0; i < dataList.size(); i++) {
+			Statistic statistic = (Statistic)dataList.get(i);
+			for (int j = 0; j < statistic.getDimension(); j++) {
+				value = statistic.getStatisticValue(j);
+				logL += Math.log(getDensity(value - halfDx, value + halfDx));
+			}
+		}
+		return logL;
 	}
 
 	/**

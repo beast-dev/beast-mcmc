@@ -1060,7 +1060,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 	{
 		double origin = 0.0;
 		boolean isBackwards = false;
-		Units.Type units = Units.Type.YEARS;
+		int units = Units.YEARS;
 		ArrayList dates = new ArrayList();
 
 		String token;
@@ -1083,15 +1083,15 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 						String token3 = readToken(";");
 						if (token3.equalsIgnoreCase("DAYS")) {
 
-							units = Units.Type.DAYS;
+							units = Units.DAYS;
 
 						} else if (token3.equalsIgnoreCase("MONTHS")) {
 
-							units = Units.Type.MONTHS;
+							units = Units.MONTHS;
 
 						} else if (token3.equalsIgnoreCase("YEARS")) {
 
-							units = Units.Type.YEARS;
+							units = Units.YEARS;
 
 						} else {
 							throw new BadFormatException("SCALE in OPTIONS command of CALIBRATION block must be one of DAYS, MONTHS or YEARS");

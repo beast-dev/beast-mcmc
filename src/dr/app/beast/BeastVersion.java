@@ -47,7 +47,7 @@ public class BeastVersion implements Version {
 	/**
 	 * Version string: assumed to be in format x.x.x
 	 */
-	private static String VERSION = "1.5a1";
+	private static String VERSION = "1.4.3";
 	private static String DATE_STRING = "2002-2007";
 
 	/**

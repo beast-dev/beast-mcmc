@@ -25,8 +25,7 @@
 
 package dr.inference.markovchain;
 
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
+import dr.inference.model.*;
 import dr.inference.operators.*;
 import dr.inference.prior.Prior;
 
@@ -191,10 +190,6 @@ public final class MarkovChain {
                     accept = true;
                 } else {
                     accept = acceptor.accept(oldScore, score, hastingsRatio, logr);
-		    //if (mcmcOperator instanceof dr.evomodel.coalescent.operators.BayesianSkylineGibbsOperator) {
-		    //System.out.println("old="+oldScore+" new="+score+" diff="+(score-oldScore)+
-		    //		   " ratio="+(score-oldScore+hastingsRatio)+" accept="+accept);
-		    //}
                 }
 
                 deviation = score - oldScore;

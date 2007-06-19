@@ -162,12 +162,11 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 
 		int subIndex = 0;
 
-		ConstantPopulation cp = new ConstantPopulation(Units.Type.YEARS);
+		ConstantPopulation cp = new ConstantPopulation(Units.YEARS);
 
 		for (int j = 0; j < intervalCount; j++) {
 
 			// set the population size to the size of the middle of the current interval
-		    	double ps = getPopSize(groupIndex, currentTime + (intervals[j]/2.0), groupEnds);
 			cp.setN0(getPopSize(groupIndex, currentTime + (intervals[j]/2.0), groupEnds));
 			if (getIntervalType(j) == COALESCENT) {
 				subIndex += 1;
@@ -201,7 +200,7 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 	 * @return the pop size for the given time. If linear model is being used then this pop size is
 	 * interpolated between the two pop sizes at either end of the grouped interval.
 	 */
-	public final double getPopSize(int groupIndex, double midTime, double[] groupHeights) {
+	private final double getPopSize(int groupIndex, double midTime, double[] groupHeights) {
 		if (type == EXPONENTIAL_TYPE) {
             throw new UnsupportedOperationException("Exponential Skyline Plot not implemented yet");
 		} else  if (type == LINEAR_TYPE) {
@@ -227,8 +226,7 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 		}
 	}
 
-	/* GAL: made public to give BayesianSkylineGibbsOperator access */
-	public final int[] getGroupSizes() {
+	private final int[] getGroupSizes() {
 		if ((type == EXPONENTIAL_TYPE || type == LINEAR_TYPE) && groupSizeParameter.getParameterValue(0) < 2.0) {
 			throw new IllegalArgumentException("For linear model first group size must be >= 2.");
 		}
@@ -257,8 +255,7 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 		return (int)Math.round(g);
 	}
 
-	/* GAL: made public to give BayesianSkylineGibbsOperator access */
-    public final double[] getGroupHeights() {
+    private final double[] getGroupHeights() {
         double[] groupEnds = new double[getGroupCount()];
 
         double timeEnd = 0.0;
@@ -286,18 +283,6 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
         return getGroupHeights()[groupIndex];
     }
 
-    final public int getType() {
-    	return type;
-    }
-
-    final public Parameter getPopSizeParameter() {
-	return popSizeParameter;
-    }
-
-    final public Parameter getGroupSizeParameter() {
-	return groupSizeParameter;
-    }	
-    
     // ****************************************************************
     // Inner classes
     // ****************************************************************
@@ -325,40 +310,40 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 		public String getParserName() { return SKYLINE_LIKELIHOOD; }
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-		    
-		    XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZES);
-		    Parameter param = (Parameter)cxo.getChild(Parameter.class);
-		    
-		    cxo = (XMLObject)xo.getChild(GROUP_SIZES);
-		    Parameter param2 = (Parameter)cxo.getChild(Parameter.class);
-		    
-		    cxo = (XMLObject)xo.getChild(POPULATION_TREE);
-		    TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
-		    
-		    int type = LINEAR_TYPE;
-		    String typeName = LINEAR;
-		    if (xo.hasAttribute(LINEAR) &&!xo.getBooleanAttribute(LINEAR)) {
-			type = STEPWISE_TYPE;
-			typeName = STEPWISE;
-		    }
-		    
-		    if (xo.hasAttribute(TYPE)) {
-			if (xo.getStringAttribute(TYPE).equalsIgnoreCase(STEPWISE)) {
-			    type = STEPWISE_TYPE;
-			    typeName = STEPWISE;
-			} else if (xo.getStringAttribute(TYPE).equalsIgnoreCase(LINEAR)) {
-			    type = LINEAR_TYPE;
-			    typeName = LINEAR;
-			} else if (xo.getStringAttribute(TYPE).equalsIgnoreCase(EXPONENTIAL)) {
-			    type = EXPONENTIAL_TYPE;
-			    typeName = EXPONENTIAL;
-			}
-			else throw new XMLParseException("Unknown Bayesian Skyline type: " + xo.getStringAttribute(TYPE));
-		    }
-		    
-		    Logger.getLogger("dr.evomodel").info("Bayesian skyline plot: " + param.getDimension() + " " + typeName + " control points");
 
-		    return new BayesianSkylineLikelihood(treeModel, param, param2, type);
+			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZES);
+			Parameter param = (Parameter)cxo.getChild(Parameter.class);
+
+			cxo = (XMLObject)xo.getChild(GROUP_SIZES);
+			Parameter param2 = (Parameter)cxo.getChild(Parameter.class);
+
+			cxo = (XMLObject)xo.getChild(POPULATION_TREE);
+			TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
+
+			int type = LINEAR_TYPE;
+            String typeName = LINEAR;
+            if (xo.hasAttribute(LINEAR) &&!xo.getBooleanAttribute(LINEAR)) {
+                    type = STEPWISE_TYPE;
+                    typeName = STEPWISE;
+			}
+
+            if (xo.hasAttribute(TYPE)) {
+                if (xo.getStringAttribute(TYPE).equalsIgnoreCase(STEPWISE)) {
+                    type = STEPWISE_TYPE;
+                    typeName = STEPWISE;
+                } else if (xo.getStringAttribute(TYPE).equalsIgnoreCase(LINEAR)) {
+                    type = LINEAR_TYPE;
+                    typeName = LINEAR;
+                } else if (xo.getStringAttribute(TYPE).equalsIgnoreCase(EXPONENTIAL)) {
+                    type = EXPONENTIAL_TYPE;
+                    typeName = EXPONENTIAL;
+                }
+                else throw new XMLParseException("Unknown Bayesian Skyline type: " + xo.getStringAttribute(TYPE));
+            }
+
+            Logger.getLogger("dr.evomodel").info("Bayesian skyline plot: " + param.getDimension() + " " + typeName + " control points");
+
+			return new BayesianSkylineLikelihood(treeModel, param, param2, type);
 		}
 
 		//************************************************************************
@@ -374,19 +359,17 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-		    AttributeRule.newBooleanRule(LINEAR, true),
-		    new ElementRule(POPULATION_SIZES, new XMLSyntaxRule[] {
-					new ElementRule(Parameter.class)
-				    }),
-		    new ElementRule(GROUP_SIZES, new XMLSyntaxRule[] {
-					new ElementRule(Parameter.class)
-				    }),
-		    new ElementRule(POPULATION_TREE, new XMLSyntaxRule[] {
-					new ElementRule(TreeModel.class)
-				    }),
+			AttributeRule.newBooleanRule(LINEAR, true),
+			new ElementRule(POPULATION_SIZES, new XMLSyntaxRule[] {
+				new ElementRule(Parameter.class)
+			}),
+			new ElementRule(GROUP_SIZES, new XMLSyntaxRule[] {
+				new ElementRule(Parameter.class)
+			}),
+			new ElementRule(POPULATION_TREE, new XMLSyntaxRule[] {
+				new ElementRule(TreeModel.class)
+			}),
 		};
-
-
 	};
 
 	/** The demographic model. */

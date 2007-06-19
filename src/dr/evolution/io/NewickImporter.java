@@ -86,9 +86,8 @@ public class NewickImporter extends Importer implements TreeImporter {
 
 			tree = new FlexibleTree(root, false, true);
 
-		} catch (EOFException e) {
-			throw new ImportException("incomplete tree");
-		}
+		} catch (EOFException e) { }
+
 
 		return tree;
 	}

@@ -391,9 +391,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
 
-            TreeLikelihood treeLikelihood = new TreeLikelihood(patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling);
-
-            return treeLikelihood;
+            return new TreeLikelihood(patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling);
         }
 
         //************************************************************************

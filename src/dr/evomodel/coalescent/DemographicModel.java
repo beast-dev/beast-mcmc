@@ -74,14 +74,14 @@ public abstract class DemographicModel extends AbstractModel implements Units
 	/**
 	 * Units in which population size is measured.
 	 */
-	private Type units;
+	private int units;
 
 	/**
 	 * sets units of measurement.
 	 *
 	 * @param u units
 	 */
-	public void setUnits(Type u)
+	public void setUnits(int u)
 	{
 		units = u;
 	}
@@ -89,7 +89,7 @@ public abstract class DemographicModel extends AbstractModel implements Units
 	/**
 	 * returns units of measurement.
 	 */
-	public Type getUnits()
+	public int getUnits()
 	{
 		return units;
 	}

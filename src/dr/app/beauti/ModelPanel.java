@@ -66,7 +66,6 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
     JComboBox clockModelCombo = new JComboBox(new String[] {
             "Strict Clock",
-		    "Random Local Clock",
 		    "Relaxed Clock: Uncorrelated Lognormal",
             "Relaxed Clock: Uncorrelated Exponential" } );
 
@@ -316,12 +315,10 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 	    switch (options.clockModel) {
 		    case BeautiOptions.STRICT_CLOCK:
 			    clockModelCombo.setSelectedIndex(0); break;
-		    case BeautiOptions.RANDOM_LOCAL_CLOCK:
-			    clockModelCombo.setSelectedIndex(1); break;
 		    case BeautiOptions.UNCORRELATED_LOGNORMAL:
-			    clockModelCombo.setSelectedIndex(2); break;
+			    clockModelCombo.setSelectedIndex(1); break;
 		    case BeautiOptions.UNCORRELATED_EXPONENTIAL:
-			    clockModelCombo.setSelectedIndex(3); break;
+			    clockModelCombo.setSelectedIndex(2); break;
 		    default:
 			    throw new IllegalArgumentException("Unknown option for clock model");
 	    }
@@ -393,10 +390,8 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 		    case 0:
 			    options.clockModel = BeautiOptions.STRICT_CLOCK; break;
 		    case 1:
-			    options.clockModel = BeautiOptions.RANDOM_LOCAL_CLOCK; break;
-		    case 2:
 			    options.clockModel = BeautiOptions.UNCORRELATED_LOGNORMAL; break;
-		    case 3:
+		    case 2:
 			    options.clockModel = BeautiOptions.UNCORRELATED_EXPONENTIAL; break;
 		    default:
 			    throw new IllegalArgumentException("Unknown option for clock model");

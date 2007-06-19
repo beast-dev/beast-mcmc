@@ -38,7 +38,6 @@ import org.w3c.dom.Element;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @author Gerton Lunter
  *
  * @version $Id: ExponentialMarkovModel.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
@@ -48,20 +47,16 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
 	public static final String EXPONENTIAL_MARKOV_MODEL = "exponentialMarkovLikelihood";
     public static final String CHAIN_PARAMETER = "chainParameter";
 	public static final String JEFFREYS = "jeffreys";
-    public static final String REVERSE = "reverse";
-    public static final String SHAPE = "shape";
 
 	/**
 	 * Constructor.
 	 */
-    public ExponentialMarkovModel(Parameter chainParameter, boolean jeffreys, boolean reverse, double shape) {
+	public ExponentialMarkovModel(Parameter chainParameter, boolean jeffreys) {
 
 		super(EXPONENTIAL_MARKOV_MODEL);
 
 		this.chainParameter = chainParameter;
 		this.jeffreys = jeffreys;
-		this.reverse = reverse;
-		this.shape = shape;
 
 		addParameter(chainParameter);
 		chainParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, chainParameter.getDimension()));
@@ -115,26 +110,9 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
 				jeffreys = xo.getBooleanAttribute(JEFFREYS);
 			}
 
-			boolean reverse = false;
-			if (xo.hasAttribute(REVERSE)) {
-			    reverse = xo.getBooleanAttribute(REVERSE);
-			}
+			System.out.println("Exponential markov model on parameter " + chainParameter.getParameterName() + " (jeffreys=" + jeffreys + ")");
 
-			double shape = 1.0;
-			if (xo.hasAttribute(SHAPE)) {
-			    shape = xo.getDoubleAttribute(SHAPE);
-			    if (shape < 1.0) {
-				throw new XMLParseException("ExponentialMarkovModel: shape parameter must be >= 1.0");
-			    }
-			}
-
-			if (shape == 1.0) {
-			    System.out.println("Exponential markov model on parameter " + chainParameter.getParameterName() + " (jeffreys=" + jeffreys + ", reverse=" + reverse + ")");
-			} else {
-			    System.out.println("Gamma markov model on parameter " + chainParameter.getParameterName() + " (jeffreys=" + jeffreys + ", reverse=" + reverse + " shape=" + shape + ")");
-			}
-			    
-			return new ExponentialMarkovModel(chainParameter, jeffreys, reverse, shape);
+			return new ExponentialMarkovModel(chainParameter, jeffreys);
 		}
 
 		public String getParserDescription() {
@@ -147,7 +125,6 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 			AttributeRule.newBooleanRule(JEFFREYS, true),
-			AttributeRule.newBooleanRule(REVERSE, true),
 			new ElementRule(CHAIN_PARAMETER, Parameter.class)
 		};
 	};
@@ -162,13 +139,6 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
 	 */
 	public Model getModel() { return this; }
 
-    private int index(int i) {
-	if (reverse) 
-	    return chainParameter.getDimension() - i - 1;
-	else
-	    return i;
-    }
-
 	/**
 	 * Get the log likelihood.
 	 * @return the log likelihood.
@@ -178,15 +148,13 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
 		double logL = 0.0;
 		// jeffreys Prior!
 		if (jeffreys) {
-		    logL += -Math.log(chainParameter.getParameterValue( index(0) ));
+			logL += -Math.log(chainParameter.getParameterValue(0));
 		}
 		for (int i = 1; i < chainParameter.getDimension(); i++) {
-		    double mean = chainParameter.getParameterValue( index(i-1) );
-		    double x = chainParameter.getParameterValue( index(i) );
-		    //logL += dr.math.ExponentialDistribution.logPdf(x, 1.0/mean);
+			double mean = chainParameter.getParameterValue(i-1);
+			double x = chainParameter.getParameterValue(i);
 
-		    double scale = mean / shape;
-		    logL += dr.math.GammaDistribution.logPdf( x, shape, scale );
+			logL += dr.math.ExponentialDistribution.logPdf(x, 1.0/mean);
 		}
 		return logL;
 	}
@@ -229,10 +197,8 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
     // Private instance variables
     // **************************************************************
 
-    private Parameter chainParameter = null;
-    private boolean jeffreys = false;
-    private boolean reverse = false;
-    private double shape = 1.0;
+	private Parameter chainParameter = null;
+	private boolean jeffreys = false;
 
 }
 

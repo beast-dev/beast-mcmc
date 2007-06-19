@@ -44,7 +44,7 @@ public class YuleModel extends SpeciationModel{
     public static String BIRTH_RATE = "birthRate";
 
 
-    public YuleModel(Parameter birthRateParameter, Type units) {
+    public YuleModel(Parameter birthRateParameter, int units) {
     
 		super(YULE_MODEL, units);
 
@@ -110,7 +110,7 @@ public class YuleModel extends SpeciationModel{
 	    
 	    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 		
-			Type units = XMLParser.Utils.getUnitsAttr(xo);
+			int units = XMLParser.Utils.getUnitsAttr(xo);
 			
 			XMLObject cxo = (XMLObject)xo.getChild(BIRTH_RATE);
 			Parameter brParameter = (Parameter)cxo.getChild(Parameter.class);

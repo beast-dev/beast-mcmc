@@ -48,7 +48,7 @@ public class TKF91Model extends IndelModel {
 	
 	private Parameter lengthDistParameter, deathRateParameter;
 
-	public TKF91Model(Parameter lengthDistParameter, Parameter deathRateParameter, Type units) {
+	public TKF91Model(Parameter lengthDistParameter, Parameter deathRateParameter, int units) {
 		super(TKF91_MODEL);
 		
 		this.lengthDistParameter = lengthDistParameter;
@@ -112,7 +112,7 @@ public class TKF91Model extends IndelModel {
 			
 			Parameter lengthDistParameter = (Parameter)xo.getSocketChild("lengthDistribution");
 			Parameter deathParameter = (Parameter)xo.getSocketChild("deathRate");
-			Type units = XMLParser.Utils.getUnitsAttr(xo);
+			int units = XMLParser.Utils.getUnitsAttr(xo);
 				
 			return new TKF91Model(lengthDistParameter, deathParameter, units);
 		}

@@ -183,8 +183,8 @@ public class CoalescentSimulator {
             CoalescentSimulator simulator = new CoalescentSimulator();
 
             DemographicModel demoModel = (DemographicModel)xo.getChild(DemographicModel.class);
-            List<TaxonList> taxonLists = new ArrayList<TaxonList>();
-            List<Tree> subtrees = new ArrayList<Tree>() ;
+            ArrayList taxonLists = new ArrayList();
+            ArrayList subtrees = new ArrayList();
 
             double rootHeight = -1;
             if (xo.hasAttribute(ROOT_HEIGHT)) {
@@ -209,7 +209,7 @@ public class CoalescentSimulator {
                     XMLObject constrainedTaxa = (XMLObject) child;
 
                     TaxonList taxa = (TaxonList)constrainedTaxa.getChild(TaxonList.class);
-                    List<TaxaConstraint> allc = new ArrayList<TaxaConstraint>();
+                    List allc = new ArrayList();
 
                     for(int nc = 0; nc < constrainedTaxa.getChildCount(); ++nc) {
 
@@ -232,7 +232,7 @@ public class CoalescentSimulator {
                     } else {
 
                         // collect subtrees here
-                        List<Tree> st = new ArrayList<Tree>();
+                        List st = new ArrayList();
 
                         final String setsNotCOmpatibleMessage = "taxa sets not compatible";
 
@@ -240,20 +240,20 @@ public class CoalescentSimulator {
                             // pick a group of taxon-subsets where each is contained in the next
                             // ordered by set inclusion from first to last
 
-                            List<TaxaConstraint> next = new ArrayList<TaxaConstraint>();
+                            List next = new ArrayList();
 
                             // arbitrarily pick the first of remaining ones
                             next.add(allc.remove(0));
-                            TaxonList baseConstraint = next.get(0).taxons;
+                            TaxonList baseConstraint = ((TaxaConstraint)next.get(0)).taxons;
 
                             for(int k = 0; k < allc.size(); ++k) {
-                                final TaxonList taxonsk = allc.get(k).taxons;
+                                final TaxonList taxonsk = ((TaxaConstraint)allc.get(k)).taxons;
                                 final int nIn = sizeOfIntersection(taxonsk, baseConstraint);
 
                                 if( nIn > 0 ) {
                                     if( nIn == baseConstraint.getTaxonCount() || nIn == taxonsk.getTaxonCount() ) {
-                                        for(int j = 0; j < next.size(); ++j) {
-                                            TaxonList jtaxons = next.get(j).taxons;
+                                        for(int j = 0; j < next.size() ; ++j) {
+                                            TaxonList jtaxons = ((TaxaConstraint)next.get(j)).taxons;
                                             int c = sizeOfIntersection(jtaxons, taxonsk);
                                             if( c == taxonsk.getTaxonCount() ) {
                                                 next.add(j, allc.remove(k));
@@ -265,7 +265,7 @@ public class CoalescentSimulator {
                                                 break;
                                             }
                                         }
-                                        baseConstraint = next.get(0).taxons;
+                                        baseConstraint = ((TaxaConstraint)next.get(0)).taxons;
 
                                     }  else {
                                         throw new XMLParseException(setsNotCOmpatibleMessage);
@@ -276,8 +276,8 @@ public class CoalescentSimulator {
 
                             for(int k = 1; k < next.size(); ++k) {
                                 // worry about equality!
-                                final TaxaConstraint ckm1 = next.get(k - 1);
-                                final TaxaConstraint ck = next.get(k);
+                                final TaxaConstraint ckm1 = ((TaxaConstraint)next.get(k - 1));
+                                final TaxaConstraint ck = ((TaxaConstraint)next.get(k));
                                 int intersectionSize = sizeOfIntersection(ckm1.taxons, ck.taxons);
                                 if( intersectionSize != ckm1.taxons.getTaxonCount() ) {
                                     throw new XMLParseException(setsNotCOmpatibleMessage);
@@ -288,7 +288,7 @@ public class CoalescentSimulator {
                             }
 
                             // build tree for first subset
-                            final TaxaConstraint taxaConstraint = next.get(0);
+                            final TaxaConstraint taxaConstraint = ((TaxaConstraint)next.get(0));
                             SimpleTree tree = simulator.simulateTree(taxaConstraint.taxons, demoModel);
                             if( taxaConstraint.realLimits() ) {
                                attemptToScaleTree(tree, (taxaConstraint.lower + taxaConstraint.upper)/2);
@@ -296,7 +296,7 @@ public class CoalescentSimulator {
 
                             // add more trees incrementally
                             for(int k = 1; k < next.size(); ++k) {
-                                final TaxaConstraint constraintj = next.get(k);
+                                final TaxaConstraint constraintj = ((TaxaConstraint)next.get(k));
                                 // build tree for taxons in difference
                                 final Taxa list = new Taxa();
                                 for(int j = 0; j < constraintj.taxons.getTaxonCount(); ++j) {
@@ -309,7 +309,7 @@ public class CoalescentSimulator {
                                 if( list.getTaxonCount() == 0 ) {
                                     if( constraintj.realLimits() ) {
                                         final double rootHeight1 = tree.getRootHeight();
-                                        if( rootHeight1 >= constraintj.upper ) {
+                                        if( rootHeight1 > constraintj.upper ) {
                                             throw new XMLParseException("taxa constraints are not compatible");
                                         }
                                         tree.setRootHeight(Math.max(constraintj.lower, rootHeight1));
@@ -340,7 +340,7 @@ public class CoalescentSimulator {
                         for(int j = 0; j < taxa.getTaxonCount(); ++j) {
                             Taxon taxonj = taxa.getTaxon(j);
                             for(int k = 0; k < st.size(); ++k) {
-                                if( st.get(k).getTaxonIndex(taxonj) >= 0 ) {
+                                if( ((Tree)st.get(k)).getTaxonIndex(taxonj) >= 0 ) {
                                     taxonj = null;
                                     break;
                                 }
@@ -353,7 +353,7 @@ public class CoalescentSimulator {
                            taxonLists.add(list);
                         }
                         if( st.size() > 1 ) {
-                          final Tree tree1 = simulator.simulateTree(st.toArray(new Tree[]{}), demoModel, -1);
+                          final Tree tree1 = simulator.simulateTree((Tree[])st.toArray(new Tree[]{}), demoModel, -1);
                           subtrees.add(tree1);
                         } else {
                            subtrees.add(st.get(0));
@@ -362,7 +362,7 @@ public class CoalescentSimulator {
                 }
             }
 
-            if (taxonLists.size() == 0 ) {
+            if ( taxonLists.size() == 0 ) {
                 if( subtrees.size() == 1 ) {
                     return subtrees.get(0);
                 }
@@ -375,11 +375,11 @@ public class CoalescentSimulator {
                 Tree[] trees = new Tree[taxonLists.size()+subtrees.size()];
                 // simulate each taxonList separately
                 for (int i = 0; i < taxonLists.size(); i++) {
-                    trees[i] = simulator.simulateTree(taxonLists.get(i), demoModel);
+                    trees[i] = simulator.simulateTree((TaxonList)taxonLists.get(i), demoModel);
                 }
                 // add the preset trees
                 for (int i = 0; i < subtrees.size(); i++) {
-                    trees[i+taxonLists.size()] = subtrees.get(i);
+                    trees[i+taxonLists.size()] = (Tree)subtrees.get(i);
                 }
 
                 tree = simulator.simulateTree(trees, demoModel, rootHeight);

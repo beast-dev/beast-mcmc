@@ -239,28 +239,18 @@ public class PriorsPanel extends JPanel implements Exportable {
 	}
 
 	private PriorDialog priorDialog = null;
-	private DiscretePriorDialog discretePriorDialog = null;
 
 	private void priorButtonPressed(int row) {
 		BeautiOptions.Parameter param = (BeautiOptions.Parameter)parameters.get(row);
 
-		if (param.isDiscrete) {
-			if (discretePriorDialog == null) {
-				discretePriorDialog = new DiscretePriorDialog(frame);
-			}
-
-			if (discretePriorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
-				return;
-			}
-		} else {
-			if (priorDialog == null) {
-				priorDialog = new PriorDialog(frame);
-			}
-
-			if (priorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
-				return;
-			}
+		if (priorDialog == null) {
+			priorDialog = new PriorDialog(frame);
 		}
+
+		if (priorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
+			return;
+		}
+
 		param.priorEdited = true;
 
 		priorTableModel.fireTableDataChanged();
@@ -389,11 +379,6 @@ public class PriorsPanel extends JPanel implements Exportable {
 					break;
 				case BeautiOptions.JEFFREYS_PRIOR:
 					buffer.append("Jeffreys");
-					break;
-				case BeautiOptions.POISSON_PRIOR:
-					buffer.append("Poisson [");
-					buffer.append(formatter.format(param.poissonMean));
-					buffer.append("]");
 					break;
 				default:
 					throw new IllegalArgumentException("Unknown prior type");

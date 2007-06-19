@@ -35,62 +35,79 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.Set;
+import java.util.*;
 
 /**
+ * Implements a local clock model for rates of evolution on a tree. One or
+ * more sets of taxa can be given additional rates. The rate will apply from
+ * the TMRCA down (including the branch above if includeStem=true). Unless
+ * these clades are constrained to be monophyletic, then the behaviour may
+ * be unpredictable.
+ * 
  * @author Andrew Rambaut
  *
  * @version $Id: LocalClockModel.java,v 1.1 2005/04/05 09:27:48 rambaut Exp $
  */
 public class LocalClockModel extends AbstractModel implements BranchRateModel  {
 
-    public static final String LOCAL_CLOCK_MODEL = "localClockModel";
-    public static final String CLADE = "clade";
-    public static final String INCLUDE_STEM = "includeStem";
-    public static final String EXTERNAL_BRANCHES = "externalBranches";
-    public static final String RELATIVE_RATE = "relativeRate";
+	public static final String LOCAL_CLOCK_MODEL = "localClockModel";
+	public static final String CLADE = "clade";
+	public static final String INCLUDE_STEM = "includeStem";
+	public static final String EXTERNAL_BRANCHES = "externalBranches";
+	public static final String RATE = "rate";
 
-    private TreeModel treeModel;
-    protected ArrayList localClocks = new ArrayList();
+	private final Parameter rateParameter;
+	private TreeModel treeModel;
+	private ArrayList localClocks = new ArrayList();
+	private final Map localRateParameters = new HashMap();
 
 
-	public LocalClockModel(TreeModel treeModel) {
+	public LocalClockModel(TreeModel treeModel, Parameter rateParameter) {
 
-        super(LOCAL_CLOCK_MODEL);
-        this.treeModel = treeModel;
+		super(LOCAL_CLOCK_MODEL);
+		this.treeModel = treeModel;
 
-        addModel(treeModel);
+		addModel(treeModel);
+
+		this.rateParameter = rateParameter;
+
+		addParameter(rateParameter);
 	}
 
-    private void addExternalBranchClock(Parameter rateParameter, TaxonList taxonList) throws Tree.MissingTaxonException {
-        Set leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
-        LocalClock clock = new LocalClock(rateParameter, leafSet);
-        localClocks.add(clock);
+	private void addExternalBranchClock(Parameter rateParameter, TaxonList taxonList) throws Tree.MissingTaxonException {
+		Set leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
+		LocalClock clock = new LocalClock(rateParameter, leafSet);
+		localClocks.add(clock);
 
-    }
+	}
 
-    private void addCladeClock(Parameter rateParameter, TaxonList taxonList, boolean includeStem) throws Tree.MissingTaxonException {
-        Set leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
-        LocalClock clock = new LocalClock(rateParameter, leafSet, includeStem);
-        localClocks.add(clock);
-    }
+	private void addCladeClock(Parameter rateParameter, TaxonList taxonList, boolean includeStem) throws Tree.MissingTaxonException {
+		Set leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
+		LocalClock clock = new LocalClock(rateParameter, leafSet, includeStem);
+		localClocks.add(clock);
+	}
 
 	public void handleModelChangedEvent(Model model, Object object, int index) {
-        fireModelChanged();
-    }
+		if (model == treeModel) {
+			localRateParameters.clear();
+			findRateParameters(treeModel, treeModel.getRoot(), null);
+		}
+		fireModelChanged();
+	}
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
-        fireModelChanged();
-    }
+	protected void handleParameterChangedEvent(Parameter parameter, int index) {
+		fireModelChanged();
+	}
 
-    protected void storeState() {
-    }
+	protected void storeState() {
+	}
 
-    protected void restoreState() {
-    }
+	protected void restoreState() {
+		localRateParameters.clear();
+		findRateParameters(treeModel, treeModel.getRoot(), null);
+	}
 
-    protected void acceptState() {}
+	protected void acceptState() {}
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -100,54 +117,55 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
 
 			TreeModel tree = (TreeModel)xo.getChild(TreeModel.class);
 
-            LocalClockModel localClockModel =  new LocalClockModel(tree);
+			Parameter rateParameter = (Parameter)xo.getSocketChild(RATE);
 
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                if (xo.getChild(i) instanceof XMLObject) {
+			LocalClockModel localClockModel =  new LocalClockModel(tree, rateParameter);
 
-                    XMLObject xoc = (XMLObject)xo.getChild(i);
-                    if (xoc.getName().equals(CLADE)) {
+			for (int i = 0; i < xo.getChildCount(); i++) {
+				if (xo.getChild(i) instanceof XMLObject) {
 
-                        Parameter rateParameter = (Parameter)xoc.getSocketChild(RELATIVE_RATE);
-                        TaxonList taxonList = (TaxonList)xoc.getChild(TaxonList.class);
+					XMLObject xoc = (XMLObject)xo.getChild(i);
+					if (xoc.getName().equals(CLADE)) {
 
-                        if (taxonList.getTaxonCount()==1) {
-                            throw new XMLParseException("A local clock for a clade must be defined by at least two taxa");
-                        }
+						Parameter localRateParameter = (Parameter)xoc.getSocketChild(RATE);
+						TaxonList taxonList = (TaxonList)xoc.getChild(TaxonList.class);
 
-                        boolean includeStem = false;
+						if (taxonList.getTaxonCount()==1) {
+							throw new XMLParseException("A local clock for a clade must be defined by at least two taxa");
+						}
 
-                        if (xoc.hasAttribute(INCLUDE_STEM)) {
-                            includeStem = xoc.getBooleanAttribute(INCLUDE_STEM);
-                        }
+						boolean includeStem = false;
 
-                        try {
-                            localClockModel.addCladeClock(rateParameter, taxonList, includeStem);
+						if (xoc.hasAttribute(INCLUDE_STEM)) {
+							includeStem = xoc.getBooleanAttribute(INCLUDE_STEM);
+						}
 
-                        } catch (Tree.MissingTaxonException mte) {
-                            throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
-                        }
-                    } else if (xoc.getName().equals(EXTERNAL_BRANCHES)) {
+						try {
+							localClockModel.addCladeClock(localRateParameter, taxonList, includeStem);
 
-                        Parameter rateParameter = (Parameter)xoc.getSocketChild(RELATIVE_RATE);
-                        TaxonList taxonList = (TaxonList)xoc.getChild(TaxonList.class);
+						} catch (Tree.MissingTaxonException mte) {
+							throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
+						}
+					} else if (xoc.getName().equals(EXTERNAL_BRANCHES)) {
 
+						Parameter localRateParameter = (Parameter)xoc.getSocketChild(RATE);
+						TaxonList taxonList = (TaxonList)xoc.getChild(TaxonList.class);
 
-                        try {
-                            localClockModel.addExternalBranchClock(rateParameter, taxonList);
+						try {
+							localClockModel.addExternalBranchClock(localRateParameter, taxonList);
 
-                        } catch (Tree.MissingTaxonException mte) {
-                            throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
-                        }
-                    }
+						} catch (Tree.MissingTaxonException mte) {
+							throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
+						}
+					}
 
-                }
-            }
+				}
+			}
 
-            System.out.println("Using local clock branch rate model.");
+			System.out.println("Using local clock branch rate model.");
 
 			return localClockModel;
-        }
+		}
 
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
@@ -155,7 +173,7 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
 
 		public String getParserDescription() {
 			return
-				"This element returns a branch rate model that adds a delta to each terminal branch length.";
+					"This element returns a branch rate model that adds a delta to each terminal branch length.";
 		}
 
 		public Class getReturnType() { return LocalClockModel.class; }
@@ -163,81 +181,90 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(TreeModel.class),
-            new ElementRule(EXTERNAL_BRANCHES,
-                new XMLSyntaxRule[] {
-                    new ElementRule(Taxa.class, "A local clock that will be applied only to the external branches for these taxa"),
-                    new ElementRule(RELATIVE_RATE, Parameter.class, "The relative rate parameter", false),
-                }, 0, Integer.MAX_VALUE),
-            new ElementRule(CLADE,
-                new XMLSyntaxRule[] {
-                    AttributeRule.newBooleanRule(INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel."),
-                    new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
-                    new ElementRule(RELATIVE_RATE, Parameter.class, "The relative rate parameter", false),
-                }, 0, Integer.MAX_VALUE)
-        };
-    };
+				new ElementRule(Parameter.class, "The global rate parameter"),
+				new ElementRule(TreeModel.class, "The tree model"),
+				new ElementRule(EXTERNAL_BRANCHES,
+						new XMLSyntaxRule[] {
+								new ElementRule(Taxa.class, "A local clock that will be applied only to the external branches for these taxa"),
+								new ElementRule(RATE, Parameter.class, "The local rate parameter", false),
+						}, 0, Integer.MAX_VALUE),
+				new ElementRule(CLADE,
+						new XMLSyntaxRule[] {
+								AttributeRule.newBooleanRule(INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel."),
+								new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
+								new ElementRule(RATE, Parameter.class, "The local rate parameter", false),
+						}, 0, Integer.MAX_VALUE)
+		};
+	};
 
-    public double getBranchRate(Tree tree, NodeRef node) {
+	public double getBranchRate(Tree tree, NodeRef node) {
 
-        if (tree.isRoot(node)) {
-            throw new IllegalArgumentException("root node doesn't have a rate!");
-        }
+		if (tree.isRoot(node)) {
+			throw new IllegalArgumentException("root node doesn't have a rate!");
+		}
 
-        Parameter rateParameter = findRateParameter(tree, tree.getRoot(), node);
+		Parameter localRateParameter = (Parameter) localRateParameters.get(node);
 
-        if (rateParameter != null) {
-            return rateParameter.getParameterValue(0);
-        }
+		if (localRateParameter != null) {
+			return localRateParameter.getParameterValue(0);
+		}
 
-        return 1.0;
-    }
-
-	public String getBranchAttributeLabel() {
-		return "rate";
+		return rateParameter.getParameterValue(0);
 	}
 
-	public String getAttributeForBranch(Tree tree, NodeRef node) {
-		return Double.toString(getBranchRate(tree, node));
+	private void findRateParameters(Tree tree, NodeRef node, Parameter currentParameter) {
+
+		Parameter newParameter = currentParameter;
+
+		for (int j = 0; j < localClocks.size(); j++) {
+			LocalClock local = (LocalClock)localClocks.get(j);
+
+			if (local.findMRCA() == node) {
+				newParameter = local.getRateParameter();
+				if (local.includeStem()) {
+					currentParameter = newParameter;
+				}
+			}
+		}
+
+		if (!tree.isExternal(node)) {
+			for (int i = 0; i < tree.getChildCount(node); i++) {
+				findRateParameters(tree, tree.getChild(node, i), newParameter);
+			}
+		}
+
+		if (currentParameter != null) {
+			localRateParameters.put(node, currentParameter);
+		}
 	}
 
-    private Parameter findRateParameter(Tree tree, NodeRef node, NodeRef targetNode) {
-        if (tree.isExternal(node)) {
-            // @todo Not done yet!
-        } else {
+	private class LocalClock {
+		LocalClock(Parameter rateParameter, Set leafSet) {
+			this.rateParameter = rateParameter;
+			this.leafSet = leafSet;
+			this.isClade = false;
+			this.includeStem = true;
+		}
 
-        }
+		LocalClock(Parameter rateParameter, Set leafSet, boolean includeStem) {
+			this.rateParameter = rateParameter;
+			this.leafSet = leafSet;
+			this.isClade = true;
+			this.includeStem = includeStem;
+		}
 
-        return null;
-    }
+		NodeRef findMRCA() {
+			return Tree.Utils.getCommonAncestorNode(treeModel, leafSet);
+		}
 
-    private class LocalClock {
-        LocalClock(Parameter rateParameter, Set leafSet) {
-            this.rateParameter = rateParameter;
-            this.leafSet = leafSet;
-            this.isClade = false;
-            this.includeStem = true;
-        }
+		boolean includeStem() { return this.includeStem; }
+		boolean isClade() { return this.isClade; }
+		Parameter getRateParameter() { return this.rateParameter; }
 
-        LocalClock(Parameter rateParameter, Set leafSet, boolean includeStem) {
-            this.rateParameter = rateParameter;
-            this.leafSet = leafSet;
-            this.isClade = true;
-            this.includeStem = includeStem;
-        }
-
-        int findMRCA() {
-            return Tree.Utils.getCommonAncestorNode(treeModel, leafSet).getNumber();
-        }
-
-        boolean includeStem() { return this.includeStem; }
-        boolean isClade() { return this.isClade; }
-        Parameter getRateParameter() { return this.rateParameter; }
-
-        Parameter rateParameter;
-        Set leafSet;
-        boolean isClade;
-        boolean includeStem;
-    };
+		Parameter rateParameter;
+		Set leafSet;
+		boolean isClade;
+		boolean includeStem;
+	};
 
 }

@@ -94,7 +94,7 @@ public class MathUtils {
 	/**
 	 * @param array to normalize
 	 * @return a new double array where all the values sum to 1.
-	 *         Relative ratios are preserved.
+	 * Relative ratios are preserved.
 	 */
 	public static double[] getNormalized(double[] array) {
 		double[] newArray = new double[array.length];
@@ -109,7 +109,7 @@ public class MathUtils {
 	/**
 	 * @param array entries to be summed
 	 * @param start start position
-	 * @param end   the index of the element after the last one to be included
+	 * @param end the index of the element after the last one to be included
 	 * @return the total of a the values in a range of an array
 	 */
 	public static double getTotal(double[] array, int start, int end) {

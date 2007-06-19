@@ -68,7 +68,8 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
 		if (isRate) {
             return tree.getNodeRate(node);
         }
-        return tree.getNodeHeight(node);
+        double height = tree.getNodeHeight(node);
+        return height;
 	}
 	
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

@@ -128,18 +128,10 @@ public class UniversalClock extends AbstractModel implements BranchRateModel {
 	}
 	
     public double getBranchRate(Tree tree, NodeRef node) {
-        throw new RuntimeException("Look at code before running this class!");
-    }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
+        return 0;
     }
 	
-    Parameter rateParameter = null;
+	Parameter rateParameter = null;
 	Parameter massParameter = null;
 	Parameter temperatureParameter = null;
 	Parameter scaleParameter = null;

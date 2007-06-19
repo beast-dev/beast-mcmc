@@ -130,7 +130,11 @@ public interface Plot {
 	/**	
 	*	A point on the plot has been clicked
 	*/
-	public void pointClicked(Point2D point);
+	void pointClicked(Point2D point);
+
+    Variate getXData();
+
+    Variate getYData();
 
     public interface Listener {
 
@@ -173,8 +177,6 @@ public interface Plot {
 		protected Stroke markStroke = new BasicStroke(0.5f);
 		protected Paint markPaint = Color.black;
 		protected Paint markFillPaint = Color.black;
-
-		private Rectangle2D bounds = null;
 		
 		private double xScale, yScale, xOffset, yOffset;
 
@@ -475,8 +477,6 @@ public interface Plot {
 			this.yScale = yScale;
 			this.xOffset = xOffset;
 			this.yOffset = yOffset;
-
-			this.bounds = bounds;
 			
 			if (xData != null && yData != null && xData.getCount() > 0)
 				paintData(g2, xData, yData); 

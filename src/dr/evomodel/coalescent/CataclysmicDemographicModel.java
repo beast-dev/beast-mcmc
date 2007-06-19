@@ -60,7 +60,7 @@ public class CataclysmicDemographicModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public CataclysmicDemographicModel( Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter, Type units) {
+	public CataclysmicDemographicModel( Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter, int units) {
 	
 		this(CATACLYSM_MODEL, N0Parameter, N1Parameter, growthRateParameter,  timeParameter, units);
 	}
@@ -68,7 +68,7 @@ public class CataclysmicDemographicModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public CataclysmicDemographicModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter, Type units) {
+	public CataclysmicDemographicModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter, int units) {
 	
 		super(name);
 		
@@ -127,7 +127,7 @@ public class CataclysmicDemographicModel extends DemographicModel
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			Type units = XMLParser.Utils.getUnitsAttr(xo);
+			int units = XMLParser.Utils.getUnitsAttr(xo);
 			
 			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);

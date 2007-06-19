@@ -47,14 +47,8 @@ public class BeastVersion implements Version {
 	/**
 	 * Version string: assumed to be in format x.x.x
 	 */
-	private static String VERSION = "1.4.3";
+	private static String VERSION = "1.4.4";
 	private static String DATE_STRING = "2002-2007";
-
-	/**
-	 * Build string: assumed to be in format projectname-#-#-#
-	 * surrounded by standard CVS junk.
-	 */
-	private static String ID = "$Id: BeastVersion.java,v 1.6 2006/07/02 11:02:51 rambaut Exp $";
 
 	public String getVersionString() {
 		return "v" + VERSION;
@@ -64,14 +58,9 @@ public class BeastVersion implements Version {
 		return DATE_STRING;
 	}
 
-	public String getBuildString() {
-
-		java.util.StringTokenizer token = new java.util.StringTokenizer(ID);
-		token.nextToken(" ");
-		token.nextToken(" ");
-		String build = token.nextToken(" ");
-		String date = token.nextToken(" ");
-
-		return "Build " + build + " " + date;
+    public String getBuildString() {
+        // this used to parse the CVS ID string but there is no equivalent
+        // for SVN. We could increment this manually?
+        return "Build r294";
 	}
 }

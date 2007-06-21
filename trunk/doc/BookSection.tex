@@ -531,10 +531,12 @@ The next thing to do is to click on the Model tab at the top of the main window.
 
 This chapter assumes that you are familiar with the evolutionary models available, however there are a couple of points to note about selecting a model in BEAUTi:
 
-\begin{itemize}\item Selecting the {\it Partition into codon positions} option assumes that the data are aligned as codons. This option will then estimate a separate rate of substitution for each codon position, or for 1+2 versus 3, depending on the setting.
+\begin{itemize}
+\item Selecting the {\it Partition into codon positions} option assumes that the data are aligned as codons. This option will then estimate a separate rate of substitution for each codon position, or for 1+2 versus 3, depending on the setting.
 \item Selecting the {\it Unlink substitution model across codon positions} will specify that BEAST should estimate a separate transition-transversion ratio or general time reversible rate matrix for each codon position.
 \item Selecting the {\it Unlink rate heterogeneity model across codon positions} will specify that BEAST should estimate set of rate heterogeneity parameters (gamma shape parameter and/or proportion of invariant sites) for each codon position.
-\item If there are no dates for the sequences (they are contemporaneous) then you can specify a fixed {\it mean substitution rate} obtained from another source. Setting this to 1.0 will result in the ages of the nodes of the tree being estimated in units of substitutions per site (i.e. the normal units of branch lengths in popular packages such as MrBayes).\end{itemize}
+\item If there are no dates for the sequences (they are contemporaneous) then you can specify a fixed {\it mean substitution rate} obtained from another source. Setting this to 1.0 will result in the ages of the nodes of the tree being estimated in units of substitutions per site (i.e. the normal units of branch lengths in popular packages such as MrBayes).
+\end{itemize}
 
 \section{Setting up the operators}
 
@@ -551,6 +553,64 @@ Unsurprisingly, the {\it MCMC} tab in BEAUTi provides settings to control the MC
 The next couple of options specify how often the current parameter values should be displayed on the screen and recorded in the log file. The screen output is simply for monitoring the programs progress so can be set to any value (although if set too small, the sheer quantity of information being displayed on the screen may actually slow the program down). For the log file, the value should be set relative to the total length of the chain. Sampling too often will result in very large files with little extra benefit in terms of the precision of the analysis. Sample too infrequently and the log file will not contain much information about the distributions of the parameters. You probably want to aim to store no more than 10,000 samples so this should be set to the chain length / 10,000.
 For this dataset let's initially setting the chain length to 100,000 as this will run reasonably quickly on most modern computers.
 The final two options give the file names of the log files for the parameters and the trees. These will be set to a default based on the name of the imported NEXUS file but feel free to change these.
+
+\section{Running BEAST}
+ 
+At this point we are ready to generate a BEAST XML file and to use this to run BEAST and perform the analysis. To do this, either select the \it{Generate BEAST File...} option from the File menu or click the similarly labelled button at the bottom of the window. Choose a name for the file (for example, \texttt{Dengue4.env.xml}) and save the file.  Leave the BEAUti window running for the moment as it may be necessary to adjust the options later on in this tutorial.
+
+The precise instructions for running BEAST depend on the operating system so the user should consult the README text file included with the program.  However, for all platforms, BEAST reads the XML file, and generates the log file and trees file specified in BEAUti. It will also report information about the MCMC chain to the screen. When it has finished running, the log and trees file can be further processed to obtain estimates of the parameters of the model.
+
+\section{Analysing the BEAST output using Tracer}
+
+Tracer is a graphical application for summarizing the results of BEAST MCMC analyses (and other MCMC applications such as MrBayes). It can be used to obtain marginal posterior distributions of continuous parameter, diagnose problems with the MCMC analysis and to graphically reconstruct the demographic history of the sequences (in conjunction with the coalescent priors implemented in BEAST).
+
+The exact instructions for running Tracer differs depending on which computer you are using. Please see the README text file that was distributed with the version you downloaded. Once running, Tracer will look similar irrespective of which computer system it is running on. For this tutorial, the Mac OS X version will be shown but the Linux & Windows versions will have exactly the same layout and functionality.
+
+Select the \it{Open...} option from the File menu. Select the log file that you created in previous section. The file will load and you will presented with a window similar to the one below (Figure~\ref{fig:tracerFigure}).. Remember that BEAST is a stochastic program so the actual numbers will not be exactly the same.
+
+\begin{figure}[htbp]
+\begin{center}
+\leavevmode
+\scalebox{0.5}{\includegraphics{Figure_Tracer.png}}
+\end{center}
+\caption{The Tracer main window}
+\label{fig:tracerFigure}
+\end{figure}
+
+On the left hand side is the name of the log file loaded and the traces that it contains. There are traces for the likelihood (this is the combined log likelihood of the tree and the coalescent model), and the continuous parameters. Selecting a trace on the left brings up analyses for this trace on the right hand side depending on tab that is selected. In the picture above, the log likelihood trace is selected and various statistics of this trace is shown under the Estimates tab.
+
+Note that the Effective Sample Sizes(ESSs) for all the traces are small (ESSs less than 100 are highlighted in red by Tracer). This is not good. A low ESS means that the trace contained a lot of correlated samples and thus may not represent the posterior distribution well. In the bottom right of the window is a frequency plot of the samples which as expected given the low ESSs is extremely rough.
+
+In the top right of the window is a table of calculated statistics for the selected trace. The statistics and their meaning are described in the table below.
+
+\begin{itemize}
+\item Mean
+The mean value of the sampled trace across the chain (excluding the burn-in).
+\item Stdev
+The standard deviation of the mean. This takes into account the effective sample size so a small ESS will give a large Stdev.
+\item Median
+The median value of the sampled trace across the chain (excluding the burn-in).
+\item 95\% HPD Lower
+The lower bound of the highest posterior density (HPD) interval. The HPD is a credible set that contains 95\% of the sampled values.
+\item 95\% HPD Upper
+The upper bound of the highest posterior density (HPD) interval. The HPD is a credible set that contains 95\% of the sampled values.
+\item Auto-Correlation Time (ACT)
+The number of states in the MCMC chain that two samples have to be from each other for them to be uncorrelated. The ACT is estimated from the samples in the trace (excluding the burn-in).
+\item Effective Sample Size (ESS)
+The ESS is the number of independent samples that the trace is equivalent to. This is calculated as the chain length (excluding the burn-in) divided by the ACT.
+\end{itemize}
+
+If we select the Trace we can view the raw trace, that is, the sampled values against the step in the MCMC chain (Figure~\ref{fig:tracerFigure2}). Here you can see how the samples are correlated. There are only 100 samples in the trace (we ran the MCMC for 100,000 steps sampling every 1000) but it is clear that adjacent samples often tend to have similar values. The ESS for the likelihood is about 50 so we are only getting half the amount of independent samples as actual samples. Essentially this simply looks as if we need to run the chain for longer. Given the lowest ESS (for the coalescent likelihood) is 27, it would suggest that we have to run it for 4 times longer to get ESSs that are > 100. However it would be better to aim higher so lets go for a chain length of 1,000,000. Go back to \ref{section:Setting the MCMC options} and create a new BEAST XML file with a longer chain length. Now run BEAST and load the new log file into Tracer (you need to quit and restart Tracer to clear out the old log file). You should now have something like figure \ref{fig:tracerFigure3}.
+
+This is much better. The ESSs are now all > 350 and the frequency plot is starting to show a reasonable curve. Click on the Trace tab and look at the raw trace plot \ref{fig:tracerFigure4}
+
+Again this is more like what we are aiming for - we call this plot the hairy catapiller. There are now 1000 samples making up this plot and with an ESS of about 500 there is still auto-correlation between the samples but 500 effectively independent samples is pretty respectable. There are no obvious trends in the plot suggesting that the MCMC was still converging and there are no large-scale fluctuations in the trace suggesting poor mixing. Diagnosis of trace plots will be delt with in a another tutorial.
+As we are happy with the behaviour of log-likelihood we can now move on to one of the parameters of interest: mutation rate. Select siteModel1.mu in the left-hand table. This is the mutation rate of the first codon position. Now choose the density plot by selecting the tab labelled Density. This shows a plot of the posterior probability density of this parameter. You should see a plot similar to this one:
+
+As you can see the posterior probability density is a reasonable looking bell-shaped curve. There is some stochastic noise which would be reduced if we ran the chain for longer but we already have a pretty good estimate of the mean and credible interval. You can overlay the density plots of multiple traces in order to compare them (it is up to the user whether they are comparable on the the same axis or not). Select the mutation rates for all three codon positions in the table to the left. You can either click and drag to select multiple traces or click on the top trace and shift-click on the bottom trace. You will now see the posterior probability densities for the mutation rate at all three codon positions over-layed.
+
+\section{Summarizing the trees}
+
 
 \section{Availability and Requirements}
 

@@ -740,3 +740,4 @@ public class GammaDistribution implements Distribution {
 	protected int samples;
 	
 }
+

@@ -30,10 +30,8 @@ import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
 import dr.util.Identifiable;
-import dr.util.NumberFormatter;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -99,26 +97,23 @@ public class MLOptimizer implements Runnable, Identifiable {
 	 * to reduce the footprint of the sample.
 	 */
 	public void chain() {
-
-		stopping = false;
-		currentState = 0;
+        currentState = 0;
 
 		if (loggers != null) {
-			for (int i =0; i < loggers.length; i++) {
-				loggers[i].startLogging();
-			}
-		}
+            for (Logger logger : loggers) {
+                logger.startLogging();
+            }
+        }
 
 		timer.start();
 
 		mc.reset();
 		timer.start();
 
-		if (!stopping) {
 			mc.addMarkovChainListener(chainListener);
 			mc.chain(getChainLength(), true);
 			mc.removeMarkovChainListener(chainListener);
-		}
+
 		timer.stop();
 	}
 
@@ -162,8 +157,8 @@ public class MLOptimizer implements Runnable, Identifiable {
             currentState = state;
 
             if (loggers != null) {
-                for (int i =0; i < loggers.length; i++) {
-                    loggers[i].log(state);
+                for (Logger logger : loggers) {
+                    logger.log(state);
                 }
             }
         }
@@ -183,13 +178,13 @@ public class MLOptimizer implements Runnable, Identifiable {
             currentState = chainLength;
 
             if (loggers != null) {
-                for (int i =0; i < loggers.length; i++) {
-                    loggers[i].log(currentState);
-                    loggers[i].stopLogging();
+                for (Logger logger : loggers) {
+                    logger.log(currentState);
+                    logger.stopLogging();
                 }
             }
 
-            if (false) {
+           /* if (false) {
                 NumberFormatter formatter = new NumberFormatter(8);
 
                 System.out.println();
@@ -202,7 +197,7 @@ public class MLOptimizer implements Runnable, Identifiable {
                 }
                 System.out.println();
             }
-
+*/
         }
     };
 
@@ -226,7 +221,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 
 			OperatorSchedule opsched = null;
 			dr.inference.model.Likelihood likelihood = null;
-			ArrayList loggers = new ArrayList();
+			ArrayList<Logger> loggers = new ArrayList<Logger>();
 
 			for (int i = 0; i < xo.getChildCount(); i++) {
 				Object child = xo.getChild(i);
@@ -244,9 +239,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 			Logger[] loggerArray = new Logger[loggers.size()];
 			loggers.toArray(loggerArray);
 
-			MLOptimizer optimizer = new MLOptimizer("optimizer1", chainLength, likelihood, opsched, loggerArray);
-
-			return optimizer;
+            return new MLOptimizer("optimizer1", chainLength, likelihood, opsched, loggerArray);
 		}
 
 		//************************************************************************
@@ -279,9 +272,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 
 	int currentState;
 
-	//private FileLogger operatorLogger = null;
-	private boolean stopping = false;
-	private dr.util.Timer timer = new dr.util.Timer();
+    private dr.util.Timer timer = new dr.util.Timer();
 
 	/** this markov chain does most of the work. */
 	private MarkovChain mc = null;

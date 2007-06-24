@@ -76,7 +76,7 @@ public class BranchRatePlotter {
         String lineTarget = readerTarget.readLine();
         readerTarget.close();
         
-        TreeImporter targetImporter = null;
+        TreeImporter targetImporter;
         if (lineTarget.toUpperCase().startsWith("#NEXUS")) {
             targetImporter = new NexusImporter(new FileReader(targetTreeFile));
         } else {
@@ -126,13 +126,12 @@ public class BranchRatePlotter {
             NodeRef node = targetTree.getNode(i);
 
             if (!targetTree.isRoot(node)) {
-	            Integer c = ((Integer)targetTree.getNodeAttribute(node,"count"));
-	            if (c == null) {
+	            Integer count = ((Integer)targetTree.getNodeAttribute(node,"count"));
+	            if (count == null) {
 		            throw new RuntimeException("Count missing from node in target tree");
 	            }
-                int count = c.intValue();
                 if (!targetTree.isExternal(node)) {
-                    double prob = (double)count/(double)(totalTreesUsed);
+                    double prob = (double) (int) count /(double)(totalTreesUsed);
                     if (prob >= 0.5) {
                         String label = ""+(Math.round(prob*100)/100.0);
                         targetTree.setNodeAttribute(node, "label", label);
@@ -166,13 +165,15 @@ public class BranchRatePlotter {
             if (!targetTree.isRoot(node)) {
                 double rate = targetTree.getNodeRate(node);
 
-                double branchTime = ((Number)targetTree.getNodeAttribute(node, "totalTime")).doubleValue();
-                double branchMutations = ((Number)targetTree.getNodeAttribute(node, "totalMutations")).doubleValue();
+                //double branchTime = ((Number)targetTree.getNodeAttribute(node, "totalTime")).doubleValue();
+                //double branchMutations = ((Number)targetTree.getNodeAttribute(node, "totalMutations")).doubleValue();
 
                 float relativeRate = (float)(rate /maxRate);
                 float radius = (float)Math.sqrt(relativeRate*36.0);
 
+                /*
                 float relativeRateZero = (float)((rate - minRate) / (maxRate - minRate));
+
                 float red = 0.0f;
                 float green = 0.0f;
                 float blue = 0.0f;
@@ -183,6 +184,7 @@ public class BranchRatePlotter {
                     red = (relativeRateZero - 0.5f) * 2.0f;
                     green = 1.0f - red;
                 }
+                */
                 //System.out.println(red + " " + green + " " + blue);
 
                 //float lineThickness = relativeRate*6.0f;
@@ -203,13 +205,13 @@ public class BranchRatePlotter {
             if (heightList != null) {
                 double[] heights = new double[heightList.size()];
                 for (int j = 0; j < heights.length; j++) {
-                    heights[j] = ((Double)heightList.get(j)).doubleValue();
+                    heights[j] = (Double) heightList.get(j);
                 }
                 targetTree.setNodeHeight(node, DiscreteStatistics.mean(heights));
                 //if (heights.length >= (totalTreesUsed/2)) {
-                    targetTree.setNodeAttribute(node, "nodeHeight.mean", new Double(DiscreteStatistics.mean(heights)));
-                    targetTree.setNodeAttribute(node, "nodeHeight.hpdUpper", new Double(DiscreteStatistics.quantile(0.975, heights)));
-                    targetTree.setNodeAttribute(node, "nodeHeight.hpdLower", new Double(DiscreteStatistics.quantile(0.025, heights)));
+                    targetTree.setNodeAttribute(node, "nodeHeight.mean", DiscreteStatistics.mean(heights));
+                    targetTree.setNodeAttribute(node, "nodeHeight.hpdUpper", DiscreteStatistics.quantile(0.975, heights));
+                    targetTree.setNodeAttribute(node, "nodeHeight.hpdLower", DiscreteStatistics.quantile(0.025, heights));
                     //targetTree.setNodeAttribute(node, "nodeHeight.max", new Double(DiscreteStatistics.max(heights)));
                     //targetTree.setNodeAttribute(node, "nodeHeight.min", new Double(DiscreteStatistics.min(heights)));
                 //}
@@ -267,15 +269,15 @@ public class BranchRatePlotter {
 
         NodeRef parent = tree.getParent(node);
         if (parent != null) {
-            double totalMutations = ((Double)tree.getNodeAttribute(node,"totalMutations")).doubleValue();
-            double totalTime = ((Double)tree.getNodeAttribute(node,"totalTime")).doubleValue();
+            double totalMutations = (Double) tree.getNodeAttribute(node, "totalMutations");
+            double totalTime = (Double) tree.getNodeAttribute(node, "totalTime");
             double rate = totalMutations/totalTime;
 
-            int count = ((Integer)tree.getNodeAttribute(node,"count")).intValue();
+            int count = (Integer) tree.getNodeAttribute(node, "count");
             if (rates) {
-                buffer.append(":" + String.valueOf(rate));
+                buffer.append(":").append(String.valueOf(rate));
             } else {
-                buffer.append(":" + String.valueOf(count));
+                buffer.append(":").append(String.valueOf(count));
             }
         }
     }
@@ -283,7 +285,7 @@ public class BranchRatePlotter {
     private static void annotateRates(
             MutableTree targetTree, NodeRef node, Tree timeTree, Tree mutationTree) {
 
-        Set leafSet = Tree.Utils.getDescendantLeaves(targetTree, node);
+        Set<String> leafSet = Tree.Utils.getDescendantLeaves(targetTree, node);
         if (Tree.Utils.isMonophyletic(timeTree, leafSet)) {
             NodeRef timeNode = Tree.Utils.getCommonAncestorNode(timeTree, leafSet);
             NodeRef mutationNode = Tree.Utils.getCommonAncestorNode(mutationTree, leafSet);
@@ -298,23 +300,23 @@ public class BranchRatePlotter {
                 Number totalMutations = (Number)targetTree.getNodeAttribute(node, "totalMutations");
                 Number totalTime = (Number)targetTree.getNodeAttribute(node, "totalTime");
                 if (totalMutations == null) {
-                    targetTree.setNodeAttribute(node, "totalMutations", new Double(mutations));
-                    targetTree.setNodeAttribute(node, "totalTime", new Double(time));
-                    targetTree.setNodeAttribute(node, "count", new Integer(1));
+                    targetTree.setNodeAttribute(node, "totalMutations", mutations);
+                    targetTree.setNodeAttribute(node, "totalTime", time);
+                    targetTree.setNodeAttribute(node, "count", 1);
                 } else {
                     Integer count = (Integer)targetTree.getNodeAttribute(node, "count");
-                    targetTree.setNodeAttribute(node, "totalMutations", new Double(totalMutations.doubleValue() + mutations));
-                    targetTree.setNodeAttribute(node, "totalTime", new Double(totalTime.doubleValue() + time));
-                    targetTree.setNodeAttribute(node, "count", new Integer(count.intValue() + 1));
+                    targetTree.setNodeAttribute(node, "totalMutations", totalMutations.doubleValue() + mutations);
+                    targetTree.setNodeAttribute(node, "totalTime", totalTime.doubleValue() + time);
+                    targetTree.setNodeAttribute(node, "count", count + 1);
                 }
             }
             if (!targetTree.isExternal(node)) {
-                java.util.List list = (java.util.List)targetTree.getNodeAttribute(node, "heightList");
+                java.util.List<Double> list = (java.util.List<Double>)targetTree.getNodeAttribute(node, "heightList");
                 if (list == null) {
-                    list = new ArrayList();
+                    list = new ArrayList<Double>() ;
                     targetTree.setNodeAttribute(node, "heightList", list);
                 }
-                list.add(new Double(height));
+                list.add(height);
             }
         }
 

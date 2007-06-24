@@ -52,7 +52,9 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 	//
 	public abstract double logNodeProbability(Tree tree, NodeRef node);
 
-	// **************************************************************
+    public abstract boolean includeExternalNodesInLikelihoodCalculation();
+
+    // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
 	

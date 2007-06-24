@@ -61,7 +61,6 @@ import dr.app.beast.BeastVersion;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -101,18 +100,17 @@ public class BeastGenerator extends BeautiOptions {
 			}
 		}
 
-		for (int i = 0; i < taxonSets.size(); i++) {
-			TaxonList taxa = (TaxonList)taxonSets.get(i);
-			if (taxa.getTaxonCount() < 2) {
-				throw new IllegalArgumentException("Taxon set, " + taxa.getId() + ", should contain\n" +
-						"at least two taxa.");
-			}
-			if (ids.contains(taxa.getId())) {
-				throw new IllegalArgumentException("A taxon sets has the same id," + taxa.getId() +
-						"\nas another element (taxon, sequence, taxon set etc.):\nAll ids should be unique.");
-			}
-			ids.add(taxa.getId());
-		}
+        for (Taxa taxa : taxonSets) {
+            if (taxa.getTaxonCount() < 2) {
+                throw new IllegalArgumentException("Taxon set, " + taxa.getId() + ", should contain\n" +
+                        "at least two taxa.");
+            }
+            if (ids.contains(taxa.getId())) {
+                throw new IllegalArgumentException("A taxon sets has the same id," + taxa.getId() +
+                        "\nas another element (taxon, sequence, taxon set etc.):\nAll ids should be unique.");
+            }
+            ids.add(taxa.getId());
+        }
 
 		getPartionCount(codonHeteroPattern);
 	}
@@ -251,22 +249,21 @@ public class BeastGenerator extends BeautiOptions {
 	public void writeTaxonSets(XMLWriter writer) {
 
 		writer.writeText("");
-		for (int i = 0; i < taxonSets.size(); i++) {
-			TaxonList taxa = (TaxonList)taxonSets.get(i);
-			writer.writeOpenTag(
-					"taxa",
-					new Attribute[] {
-							new Attribute.Default("id", taxa.getId())
-					}
-			);
+        for (Taxa taxa : taxonSets) {
+            writer.writeOpenTag(
+                    "taxa",
+                    new Attribute[]{
+                            new Attribute.Default("id", taxa.getId())
+                    }
+            );
 
-			for (int j = 0; j < taxa.getTaxonCount(); j++) {
-				Taxon taxon = taxa.getTaxon(j);
+            for (int j = 0; j < taxa.getTaxonCount(); j++) {
+                Taxon taxon = taxa.getTaxon(j);
 
-				writer.writeTag("taxon", new Attribute[] { new Attribute.Default("idref", taxon.getId()) }, true);
-			}
-			writer.writeCloseTag("taxa");
-		}
+                writer.writeTag("taxon", new Attribute[]{new Attribute.Default("idref", taxon.getId())}, true);
+            }
+            writer.writeCloseTag("taxa");
+        }
 	}
 
 	/**
@@ -624,6 +621,26 @@ public class BeastGenerator extends BeautiOptions {
 		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("id", "treeModel.allInternalNodeHeights"), true);
 		writer.writeCloseTag(TreeModel.NODE_HEIGHTS);
 
+        if (clockModel == RANDOM_LOCAL_CLOCK) {
+            writer.writeOpenTag(TreeModel.NODE_RATES,
+                    new Attribute[] {
+                            new Attribute.Default(TreeModel.ROOT_NODE, "false"),
+                            new Attribute.Default(TreeModel.INTERNAL_NODES, "true"),
+                            new Attribute.Default(TreeModel.LEAF_NODES, "true")
+                    });
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("id", "localClock.rates"), true);
+            writer.writeCloseTag(TreeModel.NODE_RATES);
+
+            writer.writeOpenTag(TreeModel.NODE_TRAITS,
+                    new Attribute[] {
+                            new Attribute.Default(TreeModel.ROOT_NODE, "false"),
+                            new Attribute.Default(TreeModel.INTERNAL_NODES, "true"),
+                            new Attribute.Default(TreeModel.LEAF_NODES, "true")
+                    });
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("id", "localClock.changes"), true);
+            writer.writeCloseTag(TreeModel.NODE_TRAITS);
+        }
+
 		writer.writeCloseTag(TreeModel.TREE_MODEL);
 	}
 
@@ -976,7 +993,7 @@ public class BeastGenerator extends BeautiOptions {
 				fixParameter("clock.rate", meanSubstitutionRate);
 			}
 
-			writer.writeComment("The random local clock model (Drummond, Rambaut & Suchard, 2007)");
+			writer.writeComment("The random local clock model (Drummond & Suchard, 2007)");
 			writer.writeOpenTag(
 					RandomLocalClockModel.LOCAL_BRANCH_RATES,
 					new Attribute[] {
@@ -987,11 +1004,11 @@ public class BeastGenerator extends BeautiOptions {
 			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default("idref", "treeModel"), true);
 
 			writer.writeOpenTag("rates");
-			writeParameter("localClock.rates", writer);
+            writer.writeTag("parameter", new Attribute.Default("idref", "localClock.rates"), true);
 			writer.writeCloseTag("rates");
 
 			writer.writeOpenTag("rateIndicator");
-			writeParameter("localClock.changes", writer);
+            writer.writeTag("parameter", new Attribute.Default("idref", "localClock.changes"), true);
 			writer.writeCloseTag("rateIndicator");
 
 			writer.writeOpenTag("clockRate");
@@ -1009,11 +1026,27 @@ public class BeastGenerator extends BeautiOptions {
 							new Attribute.Default("elementwise", "true"),
 					}
 			);
-			writer.writeTag("parameter", new Attribute.Default("idref", "treeModel.traits"), true);
+			writer.writeTag("parameter", new Attribute.Default("idref", "localClock.changes"), true);
 			writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
 
 			writer.writeText("");
-			writer.writeOpenTag(
+
+            writer.writeOpenTag(
+					RateStatistic.RATE_STATISTIC,
+					new Attribute[] {
+							new Attribute.Default("id", "meanRate"),
+							new Attribute.Default("name", "meanRate"),
+							new Attribute.Default("mode", "mean"),
+							new Attribute.Default("internal", "true"),
+							new Attribute.Default("external", "true")
+					}
+			);
+			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default("idref", "treeModel"), true);
+			writer.writeTag(RandomLocalClockModel.LOCAL_BRANCH_RATES, new Attribute.Default("idref", "branchRates"), true);
+			writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
+
+            writer.writeText("");
+            writer.writeOpenTag(
 					RateStatistic.RATE_STATISTIC,
 					new Attribute[] {
 							new Attribute.Default("id", "coefficientOfVariation"),
@@ -1026,7 +1059,20 @@ public class BeastGenerator extends BeautiOptions {
 			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default("idref", "treeModel"), true);
 			writer.writeTag(RandomLocalClockModel.LOCAL_BRANCH_RATES, new Attribute.Default("idref", "branchRates"), true);
 			writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
-		} else {
+
+            writer.writeText("");
+			writer.writeOpenTag(
+					RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,
+					new Attribute[] {
+							new Attribute.Default("id", "covariance"),
+							new Attribute.Default("name", "covariance")
+					}
+			);
+			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default("idref", "treeModel"), true);
+			writer.writeTag(RandomLocalClockModel.LOCAL_BRANCH_RATES, new Attribute.Default("idref", "branchRates"), true);
+			writer.writeCloseTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC);
+
+        } else {
 			writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut, 2006)");
 			writer.writeOpenTag(
 					DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES,
@@ -1282,33 +1328,32 @@ public class BeastGenerator extends BeautiOptions {
 	public void writeTMRCAStatistics(XMLWriter writer) {
 
 		writer.writeText("");
-		for (int i = 0; i < taxonSets.size(); i++) {
-			TaxonList taxa = taxonSets.get(i);
-			writer.writeOpenTag(
-					TMRCAStatistic.TMRCA_STATISTIC,
-					new Attribute[]{
-							new Attribute.Default("id", "tmrca(" + taxa.getId() + ")"),
-					}
-			);
-			writer.writeOpenTag(TMRCAStatistic.MRCA);
-			writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default("idref", taxa.getId())}, true);
-			writer.writeCloseTag(TMRCAStatistic.MRCA);
-			writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
-			writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
+        for (Taxa taxa : taxonSets) {
+            writer.writeOpenTag(
+                    TMRCAStatistic.TMRCA_STATISTIC,
+                    new Attribute[]{
+                            new Attribute.Default("id", "tmrca(" + taxa.getId() + ")"),
+                    }
+            );
+            writer.writeOpenTag(TMRCAStatistic.MRCA);
+            writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default("idref", taxa.getId())}, true);
+            writer.writeCloseTag(TMRCAStatistic.MRCA);
+            writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
+            writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
 
-			if( taxonSetsMono.get(i) ) {
-				writer.writeOpenTag(
-						MonophylyStatistic.MONOPHYLY_STATISTIC,
-						new Attribute[]{
-								new Attribute.Default("id", "monophyly(" + taxa.getId() + ")"),
-						});
-				writer.writeOpenTag(MonophylyStatistic.MRCA);
-				writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default("idref", taxa.getId())}, true);
-				writer.writeCloseTag(MonophylyStatistic.MRCA);
-				writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
-				writer.writeCloseTag(MonophylyStatistic.MONOPHYLY_STATISTIC);
-			}
-		}
+            if (taxonSetsMono.get(taxa)) {
+                writer.writeOpenTag(
+                        MonophylyStatistic.MONOPHYLY_STATISTIC,
+                        new Attribute[]{
+                                new Attribute.Default("id", "monophyly(" + taxa.getId() + ")"),
+                        });
+                writer.writeOpenTag(MonophylyStatistic.MRCA);
+                writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default("idref", taxa.getId())}, true);
+                writer.writeCloseTag(MonophylyStatistic.MRCA);
+                writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
+                writer.writeCloseTag(MonophylyStatistic.MONOPHYLY_STATISTIC);
+            }
+        }
 	}
 
 	/**
@@ -1796,7 +1841,15 @@ public class BeastGenerator extends BeautiOptions {
 				writeParameterIdref(writer, parameter);
 				writer.writeCloseTag(JeffreysPriorLikelihood.JEFFREYS_PRIOR);
 				break;
-			default:
+            case POISSON_PRIOR:
+                writer.writeOpenTag(DistributionLikelihood.POISSON_PRIOR,
+						new Attribute[] {
+								new Attribute.Default(DistributionLikelihood.MEAN, "" + parameter.poissonMean),
+                                new Attribute.Default(DistributionLikelihood.OFFSET, "" + parameter.poissonOffset)
+						});				writeParameterIdref(writer, parameter);
+				writer.writeCloseTag(DistributionLikelihood.POISSON_PRIOR);
+				break;
+            default:
 				throw new IllegalArgumentException("Unknown priorType");
 		}
 	}
@@ -1869,6 +1922,19 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default("idref","meanRate"), true);
         }
         writer.writeCloseTag(Columns.COLUMN);
+
+        if (clockModel == RANDOM_LOCAL_CLOCK) {
+            writer.writeOpenTag(Columns.COLUMN,
+                    new Attribute[] {
+                            new Attribute.Default(Columns.LABEL, "Rate Changes"),
+                            new Attribute.Default(Columns.DECIMAL_PLACES, "0"),
+                            new Attribute.Default(Columns.WIDTH, "12")
+                    }
+            );
+            writer.writeTag("sumStatistic", new Attribute.Default("idref", "rateChanges"), true);
+            writer.writeCloseTag(Columns.COLUMN);
+        }
+
 
 
         // I think this is too much info for the screen - it is all in the log file.
@@ -1968,10 +2034,9 @@ public class BeastGenerator extends BeautiOptions {
 
 		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","treeModel.rootHeight"), true);
 
-		for (int i = 0; i < taxonSets.size(); i++) {
-			TaxonList taxa = (TaxonList)taxonSets.get(i);
-			writer.writeTag("tmrcaStatistic", new Attribute[] { new Attribute.Default("idref", "tmrca(" + taxa.getId() + ")") }, true);
-		}
+        for (Taxa taxa : taxonSets) {
+            writer.writeTag("tmrcaStatistic", new Attribute[]{new Attribute.Default("idref", "tmrca(" + taxa.getId() + ")")}, true);
+        }
 
 		if (nodeHeightPrior == CONSTANT) {
 			writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","constant.popSize"), true);
@@ -2078,7 +2143,11 @@ public class BeastGenerator extends BeautiOptions {
 //			}
 			writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default("idref","coefficientOfVariation"), true);
 			writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default("idref","covariance"), true);
-		}
+
+            if (clockModel == RANDOM_LOCAL_CLOCK) {
+                writer.writeTag("sumStatistic", new Attribute.Default("idref", "rateChanges"), true);
+            }
+        }
 
 		if (alignment != null) {
 			boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
@@ -2105,7 +2174,7 @@ public class BeastGenerator extends BeautiOptions {
 	 * @param value the value
 	 */
 	public void fixParameter(String id, double value) {
-		Parameter parameter = (Parameter)parameters.get(id);
+		Parameter parameter = parameters.get(id);
 		if (parameter == null) { throw new IllegalArgumentException("parameter with name, "+id+", is unknown");}
 		parameter.isFixed = true;
 		parameter.initial = value;
@@ -2117,7 +2186,7 @@ public class BeastGenerator extends BeautiOptions {
 	 * @param writer the writer
 	 */
 	public void writeParameter(String id, XMLWriter writer) {
-		Parameter parameter = (Parameter)parameters.get(id);
+		Parameter parameter = parameters.get(id);
 		if (parameter == null) { throw new IllegalArgumentException("parameter with name, "+id+", is unknown");}
 		if (parameter.isFixed) {
 			writeParameter(id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
@@ -2137,7 +2206,7 @@ public class BeastGenerator extends BeautiOptions {
 	 * @param writer the writer
 	 */
 	public void writeParameter(String id, int dimension, XMLWriter writer) {
-		Parameter parameter = (Parameter)parameters.get(id);
+		Parameter parameter = parameters.get(id);
 		if (parameter == null) { throw new IllegalArgumentException("parameter with name, "+id+", is unknown");}
 		if (parameter.isFixed) {
 			writeParameter(id, dimension, parameter.initial, Double.NaN, Double.NaN, writer);
@@ -2244,21 +2313,20 @@ public class BeastGenerator extends BeautiOptions {
 			if( taxonSets.size() > 0 ) {
 				writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
 				writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
-				for (int i = 0; i < taxonSets.size(); i++) {
-					TaxonList taxonSet = taxonSets.get(i);
-					Parameter statistic = statistics.get(taxonSet);
-					writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+                for (Taxa taxonSet : taxonSets) {
+                    Parameter statistic = statistics.get(taxonSet);
+                    writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT);
 
-					writer.writeTag(TaxaParser.TAXA,
-							new Attribute[]{new Attribute.Default("idref", taxonSet.getId())}, true);
-					if( statistic.isNodeHeight && statistic.priorType == UNIFORM_PRIOR ) {
-						writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
-						writer.writeTag(UniformDistributionModel.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
-						writer.writeTag(UniformDistributionModel.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
-						writer.writeCloseTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
-					}
-					writer.writeCloseTag(CoalescentSimulator.TMRCA_CONSTRAINT);
-				}
+                    writer.writeTag(TaxaParser.TAXA,
+                            new Attribute[]{new Attribute.Default("idref", taxonSet.getId())}, true);
+                    if (statistic.isNodeHeight && statistic.priorType == UNIFORM_PRIOR) {
+                        writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+                        writer.writeTag(UniformDistributionModel.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
+                        writer.writeTag(UniformDistributionModel.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
+                        writer.writeCloseTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+                    }
+                    writer.writeCloseTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+                }
 				writer.writeCloseTag(CoalescentSimulator.CONSTRAINED_TAXA);
 			} else {
 				writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);

@@ -146,6 +146,12 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
             logL += speciationModel.logNodeProbability( tree, tree.getInternalNode(j));
         }
 
+        if (speciationModel.includeExternalNodesInLikelihoodCalculation()) {
+            for (int j = 0; j < tree.getExternalNodeCount(); j++) {
+                logL += speciationModel.logNodeProbability( tree, tree.getExternalNode(j));
+            }
+        }
+
         return logL;
     }
 

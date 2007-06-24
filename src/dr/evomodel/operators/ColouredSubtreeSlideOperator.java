@@ -40,6 +40,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implements the subtree slide move.
@@ -50,38 +51,38 @@ import java.util.ArrayList;
  */
 public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
-	public static final String SUBTREE_SLIDE = "colouredSubtreeSlide";
+    public static final String SUBTREE_SLIDE = "colouredSubtreeSlide";
     public static final String SWAP_RATES = "swapRates";
     public static final String SWAP_TRAITS = "swapTraits";
-	private TreeModel tree = null;
+    private TreeModel tree = null;
     private double size = 1.0;
     private boolean gaussian = false;
     private boolean swapRates;
     private boolean swapTraits;
-	private int mode = CoercableMCMCOperator.DEFAULT;
+    private int mode = CoercableMCMCOperator.DEFAULT;
 
     private ColourSamplerModel colouringModel;
 
-	public ColouredSubtreeSlideOperator(TreeModel tree, ColourSamplerModel colouringModel, int weight, double size, boolean gaussian, boolean swapRates, boolean swapTraits, int mode) {
-		this.tree = tree;
-		setWeight(weight);
+    public ColouredSubtreeSlideOperator(TreeModel tree, ColourSamplerModel colouringModel, int weight, double size, boolean gaussian, boolean swapRates, boolean swapTraits, int mode) {
+        this.tree = tree;
+        setWeight(weight);
 
         this.size = size;
         this.gaussian = gaussian;
         this.swapRates = swapRates;
         this.swapTraits = swapTraits;
 
-		this.mode = mode;
+        this.mode = mode;
 
         this.colouringModel = colouringModel;
 
-	}
+    }
 
     /**
      * Do a probablistic subtree slide move.
      * @return the log-transformed hastings ratio
      */
-	public double doOperation() throws OperatorFailedException {
+    public double doOperation() throws OperatorFailedException {
 
         double logP = colouringModel.getTreeColouringWithProbability().getLogProbabilityDensity();
 
@@ -167,7 +168,7 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
             // 4.1 will the move change the topology
             if (tree.getNodeHeight(CiP) > newHeight) {
 
-                ArrayList newChildren = new ArrayList();
+                List<NodeRef> newChildren = new ArrayList<NodeRef>();
                 int possibleDestinations = intersectingEdges(tree, CiP, newHeight, newChildren);
 
                 // if no valid destinations then return a failure
@@ -175,7 +176,7 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
 
                 // pick a random parent/child destination edge uniformly from options
                 int childIndex = MathUtils.nextInt(newChildren.size());
-                newChild = (NodeRef)newChildren.get(childIndex);
+                newChild = newChildren.get(childIndex);
                 newParent = tree.getParent(newChild);
 
                 tree.beginTreeEdit();
@@ -223,9 +224,9 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
         if (swapTraits) {
             NodeRef j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
             if (j != i) {
-                double tmp = tree.getNodeTrait(i);
-                tree.setNodeTrait(i, tree.getNodeTrait(j));
-                tree.setNodeTrait(j, tmp);
+                double tmp = tree.getNodeTrait(i, "trait");
+                tree.setNodeTrait(i, "trait", tree.getNodeTrait(j, "trait"));
+                tree.setNodeTrait(j, "trait", tmp);
             }
 
         }
@@ -247,7 +248,7 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
         }
     }
 
-    private int intersectingEdges(Tree tree, NodeRef node, double height, ArrayList directChildren) {
+    private int intersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> directChildren) {
 
         NodeRef parent = tree.getParent(node);
 
@@ -280,62 +281,61 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
     public double getSize() { return size; }
     public void setSize(double size) { this.size = size; }
 
-	public double getCoercableParameter() {
-		return Math.log(getSize());
-	}
+    public double getCoercableParameter() {
+        return Math.log(getSize());
+    }
 
-	public void setCoercableParameter(double value) {
-		setSize(Math.exp(value));
-	}
+    public void setCoercableParameter(double value) {
+        setSize(Math.exp(value));
+    }
 
-	public double getRawParameter() { return getSize(); }
+    public double getRawParameter() { return getSize(); }
 
-	public int getMode() {
-		return mode;
-	}
+    public int getMode() {
+        return mode;
+    }
 
-	public double getTargetAcceptanceProbability() { return 0.234; }
+    public double getTargetAcceptanceProbability() { return 0.234; }
 
 
-	public String getPerformanceSuggestion() {
-		double prob = Utils.getAcceptanceProbability(this);
-		double targetProb = getTargetAcceptanceProbability();
+    public String getPerformanceSuggestion() {
+        double prob = Utils.getAcceptanceProbability(this);
+        double targetProb = getTargetAcceptanceProbability();
 
-		double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
+        double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
 
-		if (prob < getMinimumGoodAcceptanceLevel()) {
-			return "Try decreasing size to about " + ws;
-		} else if (prob > getMaximumGoodAcceptanceLevel()) {
-			return "Try increasing size to about " + ws;
-		} else return "";
-	}
+        if (prob < getMinimumGoodAcceptanceLevel()) {
+            return "Try decreasing size to about " + ws;
+        } else if (prob > getMaximumGoodAcceptanceLevel()) {
+            return "Try increasing size to about " + ws;
+        } else return "";
+    }
 
-	public String getOperatorName() {
-		return SUBTREE_SLIDE;
-	}
+    public String getOperatorName() {
+        return SUBTREE_SLIDE;
+    }
 
-	public Element createOperatorElement(Document d) {
-		Element e = d.createElement(SUBTREE_SLIDE);
-		return e;
-	}
+    public Element createOperatorElement(Document d) {
+        return d.createElement(SUBTREE_SLIDE);
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return SUBTREE_SLIDE; }
+        public String getParserName() { return SUBTREE_SLIDE; }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             boolean swapRates = false;
             boolean swapTraits = false;
 
-			int mode = CoercableMCMCOperator.DEFAULT;
-			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-					mode = CoercableMCMCOperator.COERCION_ON;
-				} else {
-					mode = CoercableMCMCOperator.COERCION_OFF;
-				}
-			}
+            int mode = CoercableMCMCOperator.DEFAULT;
+            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
+                if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
+                    mode = CoercableMCMCOperator.COERCION_ON;
+                } else {
+                    mode = CoercableMCMCOperator.COERCION_OFF;
+                }
+            }
 
             if (xo.hasAttribute(SWAP_RATES)) {
                 swapRates = xo.getBooleanAttribute(SWAP_RATES);
@@ -344,32 +344,32 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
                 swapTraits = xo.getBooleanAttribute(SWAP_TRAITS);
             }
 
-			TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
+            TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
             ColourSamplerModel colourSamplerModel = (ColourSamplerModel)xo.getChild(ColourSamplerModel.class);
-			int weight = xo.getIntegerAttribute("weight");
-			double size = xo.getDoubleAttribute("size");
-			boolean gaussian = xo.getBooleanAttribute("gaussian");
-			return new ColouredSubtreeSlideOperator(treeModel, colourSamplerModel, weight, size, gaussian, swapRates, swapTraits, mode);
-		}
+            int weight = xo.getIntegerAttribute("weight");
+            double size = xo.getDoubleAttribute("size");
+            boolean gaussian = xo.getBooleanAttribute("gaussian");
+            return new ColouredSubtreeSlideOperator(treeModel, colourSamplerModel, weight, size, gaussian, swapRates, swapTraits, mode);
+        }
 
-		public String getParserDescription() {
-			return "An operator that slides a subtree.";
-		}
+        public String getParserDescription() {
+            return "An operator that slides a subtree.";
+        }
 
-		public Class getReturnType() { return ColouredSubtreeSlideOperator.class; }
+        public Class getReturnType() { return ColouredSubtreeSlideOperator.class; }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newIntegerRule("weight"),
-			AttributeRule.newDoubleRule("size"),
-			AttributeRule.newBooleanRule("gaussian"),
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+            AttributeRule.newIntegerRule("weight"),
+            AttributeRule.newDoubleRule("size"),
+            AttributeRule.newBooleanRule("gaussian"),
             AttributeRule.newBooleanRule(SWAP_RATES, true),
             AttributeRule.newBooleanRule(SWAP_TRAITS, true),
-			AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-			new ElementRule(TreeModel.class),
+            AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+            new ElementRule(TreeModel.class),
             new ElementRule(ColourSamplerModel.class)
-		};
-	};
+        };
+    };
 
 }

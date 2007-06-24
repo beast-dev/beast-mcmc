@@ -55,19 +55,14 @@ public class MrBayesDefaultModel extends SpeciationModel {
         this.outgroup = outgroup;
 
         addModel(branchModel);
-
-
     }
 
     //
     // functions that define a speciation model
     //
     public double logTreeProbability(int taxonCount) {
-        if (true)
-            throw new RuntimeException("Why was 'logTreeProbability' called?");
-        return 0.0;
+        throw new RuntimeException("Why was 'logTreeProbability' called?");
     }
-
 
     //
     // functions that define a speciation model
@@ -92,6 +87,8 @@ public class MrBayesDefaultModel extends SpeciationModel {
 
         return branchModel.logPdf(branchLength);
     }
+
+    public boolean includeExternalNodesInLikelihoodCalculation() { return false; }
 
     // **************************************************************
     // XMLElement IMPLEMENTATION

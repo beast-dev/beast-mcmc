@@ -92,7 +92,7 @@ public class UnivariateMinimum
 	{
 		double tol = Math.pow(10, -1-fracDigits);
 
-		double optx = optimize(x, f, tol);
+		final double optx = optimize(x, f, tol);
 
 		//return trim(optx, fracDigits);
 		return optx;
@@ -126,7 +126,7 @@ public class UnivariateMinimum
 	{
 		double tol = Math.pow(10, -1-fracDigits);
 
-		double optx = optimize(f, tol);
+		final double optx = optimize(f, tol);
 
 		//return trim(optx, fracDigits);
 		return optx;
@@ -314,7 +314,7 @@ public class UnivariateMinimum
 			}
 			double u = b - ((b - c) * q - (b - a) * r) / 2.0 / (q - r);
 			u = constrain(u, searchToMax, min, max);
-			double fu = 0; // Don´t evaluate now
+			double fu = 0; // Don't evaluate now
 
 			boolean magnify = false;
 

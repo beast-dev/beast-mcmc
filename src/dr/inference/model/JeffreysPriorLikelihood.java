@@ -50,7 +50,7 @@ public class JeffreysPriorLikelihood extends Likelihood.Abstract {
 	public void addData(Statistic data) { dataList.add(data); }
 
 
-	protected ArrayList dataList = new ArrayList();
+	protected ArrayList<Statistic> dataList = new ArrayList<Statistic>();
 
 	/**
 	 * Overridden to always return false.
@@ -67,13 +67,12 @@ public class JeffreysPriorLikelihood extends Likelihood.Abstract {
 
 		double logL = 0.0;
 
-		for (int i = 0; i < dataList.size(); i++) {
-			Statistic statistic = (Statistic)dataList.get(i);
-			for (int j = 0; j < statistic.getDimension(); j++) {
-				logL += Math.log(1.0/statistic.getStatisticValue(j));
-			}
-		}
-		return logL;
+        for (Statistic statistic : dataList) {
+            for (int j = 0; j < statistic.getDimension(); j++) {
+                logL += Math.log(1.0 / statistic.getStatisticValue(j));
+            }
+        }
+        return logL;
 	}
 
 

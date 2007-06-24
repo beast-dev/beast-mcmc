@@ -51,8 +51,8 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 		
 		double[] values = null;
-		double[] uppers = null;
-		double[] lowers = null;
+		double[] uppers;
+		double[] lowers;
 		
 		if (xo.hasAttribute(DIMENSION)) {
 				values = new double[xo.getIntegerAttribute(DIMENSION)];
@@ -118,11 +118,13 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
             }
 		}
 
-		if (uppers != null && (uppers.length != values.length)) {
+        assert uppers != null && lowers != null;
+
+        if ( (uppers.length != values.length) ) {
 			throw new XMLParseException("value and upper limit strings have different dimension, in parameter");
 		}
 
-		if (lowers != null && (lowers.length != values.length)) {
+		if ( (lowers.length != values.length) ) {
 			throw new XMLParseException("value and lower limit strings have different dimension, in parameter");
 		}
 		
@@ -145,20 +147,20 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
 		param.addBounds(new Parameter.DefaultBounds(uppers, lowers));
 		return param;
 	}
-	
-			public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-			
-			private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-				AttributeRule.newDoubleArrayRule(VALUE, true),
-				AttributeRule.newIntegerRule(DIMENSION, true),
-				AttributeRule.newDoubleArrayRule(UPPER, true),
-				AttributeRule.newDoubleArrayRule(LOWER, true)
-			};
+
+    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+            AttributeRule.newDoubleArrayRule(VALUE, true),
+            AttributeRule.newIntegerRule(DIMENSION, true),
+            AttributeRule.newDoubleArrayRule(UPPER, true),
+            AttributeRule.newDoubleArrayRule(LOWER, true)
+    };
 
 
-	public String getParserDescription() {
-		return "A real-valued parameter of one or more dimensions.";
-	}
+    public String getParserDescription() {
+        return "A real-valued parameter of one or more dimensions.";
+    }
 	
 	public Class getReturnType() { return Parameter.class; }
 }

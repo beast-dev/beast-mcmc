@@ -34,6 +34,7 @@ import dr.inference.model.CompoundLikelihood;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
+import dr.inference.operators.GibbsOperator;
 import dr.inference.prior.Prior;
 import dr.util.Identifiable;
 import dr.util.NumberFormatter;
@@ -80,10 +81,12 @@ public class MCMC implements Runnable, Identifiable {
         //initialize transients
         currentState = 0;
 
+        // Does not seem to be in use (JH)
+/*
         stepsPerReport = 1;
         while ((getChainLength() / stepsPerReport) > 1000) {
             stepsPerReport *= 2;
-        }
+        }*/
     }
 
     public MarkovChain getMarkovChain() {
@@ -127,9 +130,9 @@ public class MCMC implements Runnable, Identifiable {
             }
         }
 
-        if (loggers != null) {
-            for (int i =0; i < loggers.length; i++) {
-                loggers[i].startLogging();
+		if (loggers != null) {
+            for (Logger logger : loggers) {
+                logger.startLogging();
             }
         }
 
@@ -197,8 +200,8 @@ public class MCMC implements Runnable, Identifiable {
             currentState = state;
 
             if (loggers != null) {
-                for (int i =0; i < loggers.length; i++) {
-                    loggers[i].log(state);
+                for (Logger logger : loggers) {
+                    logger.log(state);
                 }
             }
         }
@@ -213,9 +216,9 @@ public class MCMC implements Runnable, Identifiable {
             currentState = chainLength;
 
             if (loggers != null) {
-                for (int i =0; i < loggers.length; i++) {
-                    loggers[i].log(currentState);
-                    loggers[i].stopLogging();
+                for (Logger logger : loggers) {
+                    logger.log(currentState);
+                    logger.stopLogging();
                 }
             }
 
@@ -227,10 +230,11 @@ public class MCMC implements Runnable, Identifiable {
                                 formatter.formatToFieldWidth("", 8) +
                                 formatter.formatToFieldWidth("Pr(accept)", 11) +
                                 " Performance suggestion");
-                for (int i =0; i < schedule.getOperatorCount(); i++) {
+                for (int i = 0; i < schedule.getOperatorCount(); i++) {
 
-                    MCMCOperator op = schedule.getOperator(i);
-                    double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
+                    final MCMCOperator op = schedule.getOperator(i);
+                    final double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
+                    
                     String message = "good";
                     if (acceptanceProb < op.getMinimumGoodAcceptanceLevel()) {
                         if (acceptanceProb < (op.getMinimumAcceptanceLevel()/10.0)) {
@@ -255,13 +259,16 @@ public class MCMC implements Runnable, Identifiable {
                         pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator)op).getRawParameter(), 3), 8);
                     }
 
-                    System.out.println(
-                            formatter.formatToFieldWidth(op.getOperatorName(), 30) +
+                    String performacsMsg;
+                    if( op instanceof GibbsOperator ) {
+                        performacsMsg = "none (Gibbs operator)";
+                    } else {
+                        performacsMsg = message + "\t" + suggestion;
+                    }
 
-                                    pString +
-
-                                    formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) +
-                                    " " + message + "\t" + suggestion);
+                    final String name = formatter.formatToFieldWidth(op.getOperatorName(), 30);
+                    final String prob = formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11);
+                    System.out.println(name + pString + prob + " " + performacsMsg);
                 }
                 System.out.println();
             }
@@ -337,7 +344,7 @@ public class MCMC implements Runnable, Identifiable {
             MCMCOptions options = new MCMCOptions();
             OperatorSchedule opsched = (OperatorSchedule)xo.getChild(OperatorSchedule.class);
             Likelihood likelihood = (Likelihood)xo.getChild(Likelihood.class);
-            ArrayList loggers = new ArrayList();
+            ArrayList<Logger> loggers = new ArrayList<Logger>();
 
             options.setChainLength(xo.getIntegerAttribute(CHAIN_LENGTH));
 
@@ -423,7 +430,7 @@ public class MCMC implements Runnable, Identifiable {
     private boolean showOperatorAnalysis = true;
     private dr.util.Timer timer = new dr.util.Timer();
     private int currentState = 0;
-    private int stepsPerReport = 1000;
+    //private int stepsPerReport = 1000;
     private NumberFormatter formatter = new NumberFormatter(8);
 
     /** this markov chain does most of the work. */

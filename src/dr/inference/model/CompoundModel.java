@@ -56,7 +56,7 @@ public class CompoundModel implements Model {
 	}
 
 	public final Model getModel(int i) { 
-		return (Model)models.get(i); 
+		return models.get(i);
 	}
 
 	public void addModelListener(ModelListener listener) {
@@ -68,22 +68,22 @@ public class CompoundModel implements Model {
 	}
 
 	public void storeModelState() {
-		for (int i = 0; i < models.size(); i++) {
-			((Model)models.get(i)).storeModelState();
-		}
-	}
+        for (Model model : models) {
+            model.storeModelState();
+        }
+    }
 
 	public void restoreModelState() {
-		for (int i = 0; i < models.size(); i++) {
-			((Model)models.get(i)).restoreModelState();
-		}
-	}
+        for (Model model : models) {
+            model.restoreModelState();
+        }
+    }
 
 	public void acceptModelState() {
-		for (int i = 0; i < models.size(); i++) {
-			((Model)models.get(i)).acceptModelState();
-		}
-	}
+        for (Model model : models) {
+            model.acceptModelState();
+        }
+    }
 
 	public boolean isValidState() { 
 	
@@ -158,6 +158,6 @@ public class CompoundModel implements Model {
 	};*/
 	
 	String name = null;
-	ArrayList models = new ArrayList();
+	ArrayList<Model> models = new ArrayList<Model>();
 }
 		

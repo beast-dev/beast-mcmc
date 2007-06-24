@@ -39,8 +39,12 @@ import java.util.ArrayList;
  * @version $Id: AbstractModel.java,v 1.13 2006/08/17 15:30:08 rambaut Exp $
  */
 public abstract class AbstractModel implements Model, ModelListener, ParameterListener, StatisticList {
-	
-	public AbstractModel(String name) { 
+
+    /**
+     *
+     * @param name Model Name
+     */
+    public AbstractModel(String name) {
 		this.name = name;
 	}
 	
@@ -51,7 +55,6 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 	public void addModel(Model model) {
 		
 		if ( !models.contains(model) ) {
-		
 			models.add(model);
 			model.addModelListener(this);
 		}
@@ -125,19 +128,18 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 
 	public final int getParameterCount() { return parameters.size(); }
 	
-	public final Parameter getParameter(int i ) { return parameters.get(i); }
+	public final Parameter getParameter(int i) { return parameters.get(i); }
 
 	/**
 	 * @return the parameter of the component that is called name
 	 */
 	public final Parameter getParameter(String name) {
 	
-		int i, n = getParameterCount();
-		Parameter parameter;
-		for (i = 0; i < n; i++) {
-			parameter = getParameter(i);
-			String paramName = parameter.getParameterName();
-			if (paramName.equals(name)) {
+		final int n = getParameterCount();
+
+		for (int i = 0; i < n; i++) {
+			final Parameter parameter = getParameter(i);
+            if( parameter.getParameterName().equals(name) ) {
 				return parameter;
 			}
 		}
@@ -177,10 +179,11 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 	
 	/**
 	 * This method is called whenever a parameter is changed.
-	 * Typically the model component sets a flag to recalculate intermediates
-	 * Recalculation is typically done when the modelComponent is asked for some information
-	 * that requires them. This mechanism is 'lazy' so that this method
-	 * can be safely called a lot of times, without excessive calculation occurring.
+	 *
+     * It is strongly recommended that the model component sets a "dirty" flag and does no
+     * further calculations. Recalculation is typically done when the model component is asked for
+     * some information that requires them. This mechanism is 'lazy' so that this method
+	 * can be safely called multiple times withminimal computetional cost.
 	 */
 	protected abstract void handleParameterChangedEvent(Parameter parameter, int index);
 
@@ -192,9 +195,10 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 		if (isValidState) {
 			//System.out.println("STORE MODEL: " + getModelName() + "/" + getId());
 			
-			for (int i = 0; i < models.size(); i++) {
-				getModel(i).storeModelState();
+			for (Model m : models) {
+				m.storeModelState();
 			}
+
             for (Parameter parameter : parameters) {
                 parameter.storeParameterValues();
             }
@@ -207,12 +211,12 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 	public final void restoreModelState() {
 		if (!isValidState) {
 			//System.out.println("RESTORE MODEL: " + getModelName() + "/" + getId());
-			
-			for (int i =0; i < parameters.size(); i++) {
-				getParameter(i).restoreParameterValues();
+
+            for (Parameter parameter : parameters) {
+				parameter.restoreParameterValues();
 			}
-            for (int i = 0; i < models.size(); i++) {
-                getModel(i).restoreModelState();
+            for (Model m : models) {
+                m.restoreModelState();
             }
 
 			restoreState();
@@ -223,16 +227,18 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 	public final void acceptModelState() {
 		if (!isValidState) {
 			//System.out.println("ACCEPT MODEL: " + getModelName() + "/" + getId());
-			
-			for (int i =0; i < parameters.size(); i++) {
-				getParameter(i).acceptParameterValues();
-			}
-            for (int i = 0; i < models.size(); i++) {
-                getModel(i).acceptModelState();
+
+            for (Parameter parameter : parameters) {
+                parameter.acceptParameterValues();
             }
- 
-			acceptState();
-			isValidState = true;
+
+            for (Model m : models) {
+                m.acceptModelState();
+            }
+
+            acceptState();
+
+            isValidState = true;
 		}
 	}
 		
@@ -290,11 +296,9 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 	}
 	
 	public final Statistic getStatistic(String name) {
-	
-		int i, n = getStatisticCount();
-		Statistic statistic;
-		for (i = 0; i < n; i++) {
-			statistic = getStatistic(i);
+
+		for (int i = 0; i < getStatisticCount(); i++) {
+			Statistic statistic = getStatistic(i);
 			if (name.equals(statistic.getStatisticName())) {
 				return statistic;
 			}

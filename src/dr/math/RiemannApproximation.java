@@ -60,7 +60,7 @@ public class RiemannApproximation implements Integral {
 		return integral;
 	}
 	
-	public static final void main(String[] args) {
+	public static void main(String[] args) {
 	
 		UnivariateFunction normalPDF = new NormalDistribution(0.0, 1.0).getProbabilityDensityFunction();
 		UnivariateFunction normalPDF2 = new NormalDistribution(0.0, 1.0).getProbabilityDensityFunction();
@@ -90,9 +90,6 @@ public class RiemannApproximation implements Integral {
 			System.out.println(integrator2.integrate(normalPDF, -4.0, 4.0));	
 		}*/
 	}
-	
-	
-	
 	
 	private int sampleSize;
 }

@@ -95,7 +95,7 @@ public interface Statistic extends Attribute, Identifiable, Loggable {
 			StringBuffer buffer = new StringBuffer(String.valueOf(getStatisticValue(0)));
 			
 			for (int i = 1; i < getDimension(); i++) {
-				buffer.append(", " + String.valueOf(getStatisticValue(i)));
+                buffer.append(", ").append(String.valueOf(getStatisticValue(i)));
 			}
 			return buffer.toString();
 		}

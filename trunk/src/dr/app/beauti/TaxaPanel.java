@@ -70,8 +70,8 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	private Taxa currentTaxonSet = null;
 
-	private List includedTaxa = new ArrayList();
-	private List excludedTaxa = new ArrayList();
+	private List<Taxon> includedTaxa = new ArrayList<Taxon>();
+	private List<Taxon> excludedTaxa = new ArrayList<Taxon>();
 
 	private JTable excludedTaxaTable = null;
 	private TaxaTableModel excludedTaxaTableModel = null;
@@ -357,14 +357,14 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	private void taxonSetChanged() {
 		currentTaxonSet.removeAllTaxa();
-		for (int i = 0; i < includedTaxa.size(); i++) {
-			currentTaxonSet.addTaxon((Taxon)includedTaxa.get(i));
-		}
+        for (Taxon anIncludedTaxa : includedTaxa) {
+            currentTaxonSet.addTaxon(anIncludedTaxa);
+        }
 
-		setupTaxonSetsComboBoxes();
+        setupTaxonSetsComboBoxes();
 
         if (options.taxonSetsMono.get(currentTaxonSet) != null &&
-                ((Boolean)options.taxonSetsMono.get(currentTaxonSet)).booleanValue() &&
+                options.taxonSetsMono.get(currentTaxonSet) &&
                 !checkCompatibility(currentTaxonSet)) {
             options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
         }
@@ -403,7 +403,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 		if (rows.length == 0) {
 			removeTaxonSetAction.setEnabled(false);
 		} else if (rows.length == 1) {
-			currentTaxonSet = (Taxa)options.taxonSets.get(rows[0]);
+			currentTaxonSet = options.taxonSets.get(rows[0]);
 			setCurrentTaxonSet(currentTaxonSet);
 			removeTaxonSetAction.setEnabled(true);
 		} else {
@@ -459,7 +459,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 		public void actionPerformed(ActionEvent ae) {
 			int row = taxonSetsTable.getSelectedRow();
             if (row != -1) {
-				Object taxa = options.taxonSets.remove(row);
+				Taxa taxa = options.taxonSets.remove(row);
 				options.taxonSetsMono.remove(taxa);
 			}
 			taxonSetChanged();
@@ -528,26 +528,24 @@ public class TaxaPanel extends JPanel implements Exportable {
 		comboBox.removeAllItems();
 
 		comboBox.addItem(TAXON_SET_DEFAULT);
-		for (int i = 0; i < options.taxonSets.size(); i++) {
-			Taxa taxa = ((Taxa)options.taxonSets.get(i));
-			if (taxa != currentTaxonSet) {
-				if (isCompatible(taxa, availableTaxa)) {
-					comboBox.addItem(taxa);
-				}
-			}
-		}
+        for (Taxa taxa : options.taxonSets) {
+            if (taxa != currentTaxonSet) {
+                if (isCompatible(taxa, availableTaxa)) {
+                    comboBox.addItem(taxa);
+                }
+            }
+        }
 	}
 
 	/**
-	 * Returns true if taxa are all found in availableTaxa
 	 * @param taxa
 	 * @param availableTaxa
-	 * @return
+	 * @return true if the taxa are all found in availableTaxa
 	 */
 	private boolean isCompatible(Taxa taxa, List availableTaxa) {
 
 		for (int i = 0; i < taxa.getTaxonCount(); i++) {
-			Taxon taxon = (Taxon)taxa.getTaxon(i);
+			Taxon taxon = taxa.getTaxon(i);
 			if (!availableTaxa.contains(taxon)) {
 				return false;
 			}
@@ -556,14 +554,13 @@ public class TaxaPanel extends JPanel implements Exportable {
 	}
 
     private boolean checkCompatibility(Taxa taxa) {
-        for (int i = 0; i < options.taxonSets.size(); i++) {
-            Taxa taxa2 = (Taxa)options.taxonSets.get(i);
-            if (taxa2 != taxa && ((Boolean)options.taxonSetsMono.get(taxa2)).booleanValue()) {
+        for (Taxa taxa2 : options.taxonSets) {
+            if (taxa2 != taxa && options.taxonSetsMono.get(taxa2)) {
                 if (taxa.containsAny(taxa2) && !taxa.containsAll(taxa2) && !taxa2.containsAll(taxa)) {
                     JOptionPane.showMessageDialog(frame,
-                            "You cannot enforce monophyly on this taxon set \n"+
-                                    "because it is not compatible with another taxon \n"+
-                                    "set, " + taxa2.getId() + ", for which monophyly is\n"+
+                            "You cannot enforce monophyly on this taxon set \n" +
+                                    "because it is not compatible with another taxon \n" +
+                                    "set, " + taxa2.getId() + ", for which monophyly is\n" +
                                     "enforced.",
                             "Warning",
                             JOptionPane.WARNING_MESSAGE);
@@ -594,7 +591,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 		}
 
 		public Object getValueAt(int rowIndex, int columnIndex) {
-            Taxa taxonSet = (Taxa)options.taxonSets.get(rowIndex);
+            Taxa taxonSet = options.taxonSets.get(rowIndex);
             switch(columnIndex) {
 				case 0: return taxonSet.getId();
 				case 1: return options.taxonSetsMono.get(taxonSet);
@@ -603,7 +600,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 		}
 
 		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            Taxa taxonSet = (Taxa)options.taxonSets.get(rowIndex);
+            Taxa taxonSet = options.taxonSets.get(rowIndex);
 			switch(columnIndex) {
 				case 0: {
 					taxonSet.setId(aValue.toString());
@@ -611,8 +608,8 @@ public class TaxaPanel extends JPanel implements Exportable {
 					break;
 				}
 				case 1: {
-					if (((Boolean)aValue).booleanValue()) {
-						Taxa taxa = ((Taxa)options.taxonSets.get(rowIndex));
+					if ((Boolean)aValue) {
+						Taxa taxa = options.taxonSets.get(rowIndex);
 						if (checkCompatibility(taxa)) {
 							options.taxonSetsMono.put(taxonSet, (Boolean)aValue);
 						}
@@ -693,11 +690,11 @@ public class TaxaPanel extends JPanel implements Exportable {
 	private void includeSelectedTaxa() {
 		int[] rows = excludedTaxaTable.getSelectedRows();
 
-		List transfer = new ArrayList();
+		List<Taxon> transfer = new ArrayList<Taxon>();
 
-		for (int i = 0; i < rows.length; i++) {
-			transfer.add(excludedTaxa.get(rows[i]));
-		}
+        for (int r : rows) {
+            transfer.add(excludedTaxa.get(r));
+        }
 
 		includedTaxa.addAll(transfer);
 		Collections.sort(includedTaxa);
@@ -708,11 +705,10 @@ public class TaxaPanel extends JPanel implements Exportable {
 		excludedTaxaTableModel.fireTableDataChanged();
 
 		includedTaxaTable.getSelectionModel().clearSelection();
-		for (int i = 0; i < transfer.size(); i++) {
-			Taxon taxon = (Taxon)transfer.get(i);
-			int row = includedTaxa.indexOf(taxon);
-			includedTaxaTable.getSelectionModel().addSelectionInterval(row, row);
-		}
+        for (Taxon taxon : transfer) {
+            int row = includedTaxa.indexOf(taxon);
+            includedTaxaTable.getSelectionModel().addSelectionInterval(row, row);
+        }
 
 		taxonSetChanged();
 	}
@@ -720,11 +716,11 @@ public class TaxaPanel extends JPanel implements Exportable {
 	private void excludeSelectedTaxa() {
 		int[] rows = includedTaxaTable.getSelectedRows();
 
-		List transfer = new ArrayList();
+		List<Taxon> transfer = new ArrayList<Taxon>();
 
-		for (int i = 0; i < rows.length; i++) {
-			transfer.add(includedTaxa.get(rows[i]));
-		}
+        for (int r : rows) {
+            transfer.add(includedTaxa.get(r));
+        }
 
 		excludedTaxa.addAll(transfer);
 		Collections.sort(excludedTaxa);
@@ -735,11 +731,10 @@ public class TaxaPanel extends JPanel implements Exportable {
 		excludedTaxaTableModel.fireTableDataChanged();
 
 		excludedTaxaTable.getSelectionModel().clearSelection();
-		for (int i = 0; i < transfer.size(); i++) {
-			Taxon taxon = (Taxon)transfer.get(i);
-			int row = excludedTaxa.indexOf(taxon);
-			excludedTaxaTable.getSelectionModel().addSelectionInterval(row, row);
-		}
+        for (Taxon taxon : transfer) {
+            int row = excludedTaxa.indexOf(taxon);
+            excludedTaxaTable.getSelectionModel().addSelectionInterval(row, row);
+        }
 
 		taxonSetChanged();
 	}
@@ -796,9 +791,9 @@ public class TaxaPanel extends JPanel implements Exportable {
 		public Object getValueAt(int row, int col) {
 
 			if (included) {
-				return ((Taxon)includedTaxa.get(row)).getId();
+				return includedTaxa.get(row).getId();
 			} else {
-				return ((Taxon)excludedTaxa.get(row)).getId();
+				return excludedTaxa.get(row).getId();
 			}
 		}
 

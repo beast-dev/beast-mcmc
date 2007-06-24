@@ -51,7 +51,7 @@ public class DiscretePriorDialog {
 
 		this.parameter = parameter;
 
-		priorCombo.setSelectedIndex(parameter.priorType == BeautiOptions.POISSON_PRIOR ? 1 : 0);
+		priorCombo.setSelectedIndex(parameter.priorType == PriorType.POISSON_PRIOR ? 1 : 0);
 
 		if (!parameter.isStatistic) {
 			initialField.setRange(parameter.lower, parameter.upper);
@@ -102,16 +102,16 @@ public class DiscretePriorDialog {
 	}
 
 	private void getArguments() {
-		parameter.priorType = priorCombo.getSelectedIndex() == 0 ? BeautiOptions.UNIFORM_PRIOR : BeautiOptions.POISSON_PRIOR;
+		parameter.priorType = priorCombo.getSelectedIndex() == 0 ? PriorType.UNIFORM_PRIOR : PriorType.POISSON_PRIOR;
 
 		if (initialField.getValue() != null) parameter.initial = initialField.getValue();
 
 		switch (parameter.priorType) {
-			case BeautiOptions.UNIFORM_PRIOR:
+			case UNIFORM_PRIOR:
 				if (argumentFields[0].getValue() != null) parameter.uniformLower = argumentFields[0].getValue();
 				if (argumentFields[1].getValue() != null) parameter.uniformUpper = argumentFields[1].getValue();
 				break;
-			case BeautiOptions.POISSON_PRIOR:
+			case POISSON_PRIOR:
 				if (argumentFields[0].getValue() != null) parameter.poissonMean = argumentFields[0].getValue();
 				if (argumentFields[1].getValue() != null) parameter.poissonOffset = argumentFields[1].getValue();
 				break;

@@ -336,75 +336,10 @@ public class PriorsPanel extends JPanel implements Exportable {
 			BeastGenerator.Parameter param = (BeastGenerator.Parameter)parameters.get(row);
 			switch (col) {
 				case 0: return param.getName();
-				case 1: return getPriorString(param);
+				case 1: return param.priorType.getPriorString(param);
 				case 2: return param.getDescription();
 			}
 			return null;
-		}
-
-		public String getPriorString(BeastGenerator.Parameter param) {
-			StringBuffer buffer = new StringBuffer();
-
-			if (!param.priorEdited) {
-				buffer.append("* ");
-			}
-			switch (param.priorType) {
-				case BeautiOptions.NONE:
-					buffer.append("Using Tree Prior");
-					break;
-				case BeautiOptions.UNIFORM_PRIOR:
-					if (!param.isDiscrete && !param.isStatistic) {
-						buffer.append("Uniform [");
-						buffer.append(formatter.format(param.uniformLower));
-						buffer.append(", ");
-						buffer.append(formatter.format(param.uniformUpper));
-						buffer.append("]");
-					} else {
-						buffer.append("Uniform");
-					}
-					break;
-				case BeautiOptions.EXPONENTIAL_PRIOR:
-					buffer.append("Exponential [");
-					buffer.append(formatter.format(param.exponentialMean));
-					buffer.append("]");
-					break;
-				case BeautiOptions.NORMAL_PRIOR:
-					buffer.append("Normal [");
-					buffer.append(formatter.format(param.normalMean));
-					buffer.append(", ");
-					buffer.append(formatter.format(param.normalStdev));
-					buffer.append("]");
-					break;
-				case BeautiOptions.LOG_NORMAL_PRIOR:
-					buffer.append("LogNormal [");
-					buffer.append(formatter.format(param.logNormalMean));
-					buffer.append(", ");
-					buffer.append(formatter.format(param.logNormalStdev));
-					buffer.append("]");
-					break;
-				case BeautiOptions.GAMMA_PRIOR:
-					buffer.append("Gamma [");
-					buffer.append(formatter.format(param.gammaAlpha));
-					buffer.append(", ");
-					buffer.append(formatter.format(param.gammaBeta));
-					buffer.append("]");
-					break;
-				case BeautiOptions.JEFFREYS_PRIOR:
-					buffer.append("Jeffreys");
-					break;
-				case BeautiOptions.POISSON_PRIOR:
-					buffer.append("Poisson [");
-					buffer.append(formatter.format(param.poissonMean));
-					buffer.append("]");
-					break;
-				default:
-					throw new IllegalArgumentException("Unknown prior type");
-			}
-			if (param.priorType != BeautiOptions.NONE && !param.isStatistic) {
-                buffer.append(", initial=").append(param.initial);
-			}
-
-			return buffer.toString();
 		}
 
 		public String getColumnName(int column) {

@@ -53,7 +53,8 @@ public class MCMCCriterion implements Acceptor {
 
     public double getAcceptanceValue(double oldScore, double hastingsRatio) {
 
-        double acceptanceValue = (MathUtils.randomLogDouble() + (oldScore * temperature) - hastingsRatio) / temperature;
+        final double acceptanceValue =
+                (MathUtils.randomLogDouble() + (oldScore * temperature) - hastingsRatio) / temperature;
 
         return acceptanceValue;
     }
@@ -65,7 +66,7 @@ public class MCMCCriterion implements Acceptor {
         // for coercedAcceptanceProbability
         if (logr[0] > 0) logr[0] = 0.0;
 
-        boolean accept = MathUtils.randomLogDouble() < logr[0];
+		final boolean accept = MathUtils.randomLogDouble() < logr[0];
 
         return accept;
     }

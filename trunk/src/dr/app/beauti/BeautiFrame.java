@@ -184,7 +184,10 @@ public class BeautiFrame extends DocumentFrame {
 		priorsPanel.getOptions(beautiOptions);
 
 		operatorsPanel.setOptions(beautiOptions);
-		setDirty();
+
+        priorsPanel.setOptions(beautiOptions); // update priors table - AJD
+
+        setDirty();
 	}
 
 	public final void mcmcChanged() {

@@ -186,18 +186,18 @@ public class DistanceMatrix extends Matrix.AbstractMatrix implements TaxonList {
 	}
 
 	public String toString() {
-		double[] dists = null;
 		try {
-			dists = getUpperTriangle();
-		} catch(Matrix.NotSquareException e) {}
+			double[] dists = getUpperTriangle();
+            StringBuffer buffer = new StringBuffer(String.valueOf(dists[0]));
 
-		StringBuffer buffer = new StringBuffer(String.valueOf(dists[0]));
-
-		for (int i = 1; i < dists.length; i++) {
-			buffer.append(", " + String.valueOf(dists[i]));
-		}
-		return buffer.toString();
-	}
+            for (int i = 1; i < dists.length; i++) {
+                buffer.append(", ").append(String.valueOf(dists[i]));
+            }
+            return buffer.toString();
+        } catch(Matrix.NotSquareException e) {
+            return e.toString();
+        }
+    }
 
     // **************************************************************
     // TaxonList IMPLEMENTATION
@@ -376,8 +376,8 @@ public class DistanceMatrix extends Matrix.AbstractMatrix implements TaxonList {
 	//
 
 	protected DataType dataType = null;
-	private int dimension = 0;
-	private boolean distancesKnown;
+	int dimension = 0;
+	boolean distancesKnown;
 	private double[][] distances = null;
 	protected PatternList patterns = null;
 	private TaxonList taxa = null;

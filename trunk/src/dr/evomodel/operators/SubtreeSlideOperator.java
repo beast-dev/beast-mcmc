@@ -34,6 +34,7 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implements the subtree slide move.
@@ -47,6 +48,8 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
     public static final String SWAP_RATES = "swapInRandomRate";
     public static final String SWAP_TRAITS = "swapInRandomTrait";
     public static final String DIRICHLET_BRANCHES = "branchesAreScaledDirichlet";
+
+    public static final String TRAIT = "trait";
 
     private TreeModel tree = null;
     private double size = 1.0;
@@ -126,9 +129,9 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                         // swap traits and rates so that root keeps it trait and rate values
                         // **********************************************
 
-                        double rootNodeTrait = tree.getNodeTrait(newChild);
-                        tree.setNodeTrait(newChild, tree.getNodeTrait(iP));
-                        tree.setNodeTrait(iP, rootNodeTrait);
+                        double rootNodeTrait = tree.getNodeTrait(newChild, TRAIT);
+                        tree.setNodeTrait(newChild, TRAIT, tree.getNodeTrait(iP,TRAIT));
+                        tree.setNodeTrait(iP, TRAIT, rootNodeTrait);
                     }
 
                     if (tree.hasRates()) {
@@ -182,7 +185,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
             // 4.1 will the move change the topology
             if (tree.getNodeHeight(CiP) > newHeight) {
 
-                ArrayList newChildren = new ArrayList();
+                List<NodeRef> newChildren = new ArrayList<NodeRef>();
                 int possibleDestinations = intersectingEdges(tree, CiP, newHeight, newChildren);
 
                 // if no valid destinations then return a failure
@@ -192,7 +195,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
                 // pick a random parent/child destination edge uniformly from options
                 int childIndex = MathUtils.nextInt(newChildren.size());
-                newChild = (NodeRef) newChildren.get(childIndex);
+                newChild = newChildren.get(childIndex);
                 newParent = tree.getParent(newChild);
 
                 tree.beginTreeEdit();
@@ -211,9 +214,9 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                         // swap traits and rates, so that root keeps it trait and rate values
                         // **********************************************
 
-                        double rootNodeTrait = tree.getNodeTrait(iP);
-                        tree.setNodeTrait(iP, tree.getNodeTrait(CiP));
-                        tree.setNodeTrait(CiP, rootNodeTrait);
+                        double rootNodeTrait = tree.getNodeTrait(iP, TRAIT);
+                        tree.setNodeTrait(iP, TRAIT, tree.getNodeTrait(CiP, TRAIT));
+                        tree.setNodeTrait(CiP, TRAIT, rootNodeTrait);
                     }
 
                     if (tree.hasRates()) {
@@ -263,9 +266,9 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
         if (swapInRandomTrait) {
             NodeRef j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
             if (j != i) {
-                double tmp = tree.getNodeTrait(i);
-                tree.setNodeTrait(i, tree.getNodeTrait(j));
-                tree.setNodeTrait(j, tmp);
+                double tmp = tree.getNodeTrait(i, TRAIT);
+                tree.setNodeTrait(i, TRAIT, tree.getNodeTrait(j, TRAIT));
+                tree.setNodeTrait(j, TRAIT, tmp);
             }
 
         }
@@ -288,7 +291,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
         }
     }
 
-    private int intersectingEdges(Tree tree, NodeRef node, double height, ArrayList directChildren) {
+    private int intersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> directChildren) {
 
         NodeRef parent = tree.getParent(node);
 
@@ -424,6 +427,6 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 new ElementRule(TreeModel.class)
         };
-	};
+    };
 
 }

@@ -83,8 +83,8 @@ public class DiscretePriorDialog {
 
 		int result = JOptionPane.CANCEL_OPTION;
 		Integer value = (Integer)optionPane.getValue();
-		if (value != null && value.intValue() != -1) {
-			result = value.intValue();
+		if (value != null && value != -1) {
+			result = value;
 		}
 
 		if (result == JOptionPane.OK_OPTION) {
@@ -104,16 +104,16 @@ public class DiscretePriorDialog {
 	private void getArguments() {
 		parameter.priorType = priorCombo.getSelectedIndex() == 0 ? BeautiOptions.UNIFORM_PRIOR : BeautiOptions.POISSON_PRIOR;
 
-		if (initialField.getValue() != null) parameter.initial = initialField.getValue().doubleValue();
+		if (initialField.getValue() != null) parameter.initial = initialField.getValue();
 
 		switch (parameter.priorType) {
 			case BeautiOptions.UNIFORM_PRIOR:
-				if (argumentFields[0].getValue() != null) parameter.uniformLower = argumentFields[0].getValue().doubleValue();
-				if (argumentFields[1].getValue() != null) parameter.uniformUpper = argumentFields[1].getValue().doubleValue();
+				if (argumentFields[0].getValue() != null) parameter.uniformLower = argumentFields[0].getValue();
+				if (argumentFields[1].getValue() != null) parameter.uniformUpper = argumentFields[1].getValue();
 				break;
 			case BeautiOptions.POISSON_PRIOR:
-				if (argumentFields[2].getValue() != null) parameter.poissonMean = argumentFields[2].getValue().doubleValue();
-				if (argumentFields[3].getValue() != null) parameter.poissonOffset = argumentFields[3].getValue().doubleValue();
+				if (argumentFields[0].getValue() != null) parameter.poissonMean = argumentFields[0].getValue();
+				if (argumentFields[1].getValue() != null) parameter.poissonOffset = argumentFields[1].getValue();
 				break;
 			default: throw new IllegalArgumentException("Unknown prior index");
 		}

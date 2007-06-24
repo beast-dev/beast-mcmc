@@ -153,7 +153,7 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
     }
 
     public final boolean isRateChangeOnBranchAbove(Tree tree, NodeRef node) {
-        return (int) Math.round(((TreeModel) tree).getNodeTrait(node)) == 1;
+        return (int) Math.round(((TreeModel) tree).getNodeTrait(node, "trait")) == 1;
     }
 
     public String getNodeAttributeLabel() {
@@ -201,7 +201,7 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
                 ratesAreMultipliers = xo.getBooleanAttribute(RATES_ARE_MULTIPLIERS);
             }
 
-            Logger.getLogger("dr.evomodel").info("Using random local clock (RLM) model.");
+            Logger.getLogger("dr.evomodel").info("Using random local clock (RLC) model.");
             Logger.getLogger("dr.evomodel").info("  rates at change points are parameterized to be " + (ratesAreMultipliers ? " multipliers of parent rates." : "independent of parent rates."));
 
             return new RandomLocalClockModel(tree, meanRateParameter, rateIndicatorParameter, ratesParameter, ratesAreMultipliers);
@@ -213,7 +213,7 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
 
         public String getParserDescription() {
             return
-                    "This element returns an random local clock (RLM) model." +
+                    "This element returns an random local clock (RLC) model." +
                             "Each branch either has a new independent rate or " +
                             "inherits the rate of the branch above it depending on the indicator vector.";
         }

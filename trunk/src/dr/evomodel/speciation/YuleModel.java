@@ -92,6 +92,10 @@ public class YuleModel extends SpeciationModel{
         return logP;
 	}
 
+    public boolean includeExternalNodesInLikelihoodCalculation() {
+        return false;
+    }
+
     // **************************************************************
     // XMLElement IMPLEMENTATION
     // **************************************************************

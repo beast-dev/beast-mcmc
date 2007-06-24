@@ -19,6 +19,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
 import dr.evolution.util.Date;
 import dr.util.NumberFormatter;
+import dr.xml.XMLParseException;
 import org.jdom.Document;
 import org.jdom.Element;
 
@@ -145,8 +146,8 @@ public class BeautiOptions {
 		createOperator("ucld.mean", SCALE, 0.75, rateWeights);
 		createOperator("ucld.stdev", SCALE, 0.75, rateWeights);
 		createOperator("branchRates.categories", SWAP, 1, branchWeights);
-		createOperator("localClock.rates", SCALE, 0.75, rateWeights);
-		createOperator("localClock.changes", BITFLIP, 1, branchWeights);
+		createOperator("localClock.rates", SCALE, 0.75, treeWeights);
+		createOperator("localClock.changes", BITFLIP, 1, treeWeights);
 
 		createOperator("hky.kappa", SCALE, 0.75, substWeights);
 		createOperator("hky1.kappa", SCALE, 0.75, substWeights);
@@ -520,15 +521,14 @@ public class BeautiOptions {
 	private void selectStatistics(ArrayList<Parameter> params) {
 
 		if (taxonSets != null) {
-			for (int i = 0; i < taxonSets.size(); i++) {
-				TaxonList taxonSet = taxonSets.get(i);
-				Parameter statistic = statistics.get(taxonSet);
-				if (statistic == null) {
-					statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
-					statistics.put(taxonSet, statistic);
-				}
-				params.add(statistic);
-			}
+            for (Taxa taxonSet : taxonSets) {
+                Parameter statistic = statistics.get(taxonSet);
+                if (statistic == null) {
+                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
+                    statistics.put(taxonSet, statistic);
+                }
+                params.add(statistic);
+            }
 		}
 
 		if (clockModel == RANDOM_LOCAL_CLOCK) {
@@ -544,7 +544,7 @@ public class BeautiOptions {
 	}
 
 	protected Parameter getParameter(String name) {
-		Parameter parameter = (Parameter)parameters.get(name);
+		Parameter parameter = parameters.get(name);
 		if (parameter == null) throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
 		return parameter;
 	}
@@ -761,17 +761,16 @@ public class BeautiOptions {
 
 		Element taxaElement = new Element("taxa");
 
-		for (int i = 0; i < taxonSets.size(); i++) {
-			Taxa taxonSet = taxonSets.get(i);
-			Element taxonSetElement = new Element("taxonSet");
-			taxonSetElement.addContent(createChild("id", taxonSet.getId()));
-			for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
-				Element taxonElement = new Element("taxon");
-				taxonElement.addContent(createChild("id", taxonSet.getTaxon(j).getId()));
-				taxonSetElement.addContent(taxonElement);
-			}
-			taxaElement.addContent(taxonSetElement);
-		}
+        for (Taxa taxonSet : taxonSets) {
+            Element taxonSetElement = new Element("taxonSet");
+            taxonSetElement.addContent(createChild("id", taxonSet.getId()));
+            for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
+                Element taxonElement = new Element("taxon");
+                taxonElement.addContent(createChild("id", taxonSet.getTaxon(j).getId()));
+                taxonSetElement.addContent(taxonElement);
+            }
+            taxaElement.addContent(taxonSetElement);
+        }
 
 		root.addContent(taxaElement);
 
@@ -802,7 +801,7 @@ public class BeautiOptions {
 		Element priorsElement = new Element("priors");
 
 		for (String name : parameters.keySet()) {
-			Parameter parameter = (Parameter) parameters.get(name);
+			Parameter parameter = parameters.get(name);
 			Element e = new Element(name);
 			e.addContent(createChild("initial", parameter.initial));
 			e.addContent(createChild("priorType", parameter.priorType));
@@ -827,16 +826,14 @@ public class BeautiOptions {
 		Element operatorsElement = new Element("operators");
 
 		operatorsElement.addContent(createChild("autoOptimize", autoOptimize));
-		Iterator<String> iter = operators.keySet().iterator();
-		while (iter.hasNext()) {
-			String name = iter.next();
-			Operator operator = (Operator)operators.get(name);
-			Element e = new Element(name);
-			e.addContent(createChild("tuning", operator.tuning));
-			e.addContent(createChild("tuningEdited", operator.tuningEdited));
-			e.addContent(createChild("weight", (int)operator.weight));
-			operatorsElement.addContent(e);
-		}
+        for (String name : operators.keySet()) {
+            Operator operator = operators.get(name);
+            Element e = new Element(name);
+            e.addContent(createChild("tuning", operator.tuning));
+            e.addContent(createChild("tuningEdited", operator.tuningEdited));
+            e.addContent(createChild("weight", (int) operator.weight));
+            operatorsElement.addContent(e);
+        }
 
 		root.addContent(operatorsElement);
 
@@ -928,27 +925,26 @@ public class BeautiOptions {
 					default: originalAlignment.setDataType(Nucleotides.INSTANCE);
 				}
 
-				Iterator iter = alignmentElement.getChildren("taxon").iterator();
-				while (iter.hasNext()) {
-					Element taxonElement = (Element)iter.next();
+                for (Object o : alignmentElement.getChildren("taxon")) {
+                    Element taxonElement = (Element) o;
 
-					String id = getStringChild(taxonElement, "id", "");
-					Taxon taxon = new Taxon(id);
+                    String id = getStringChild(taxonElement, "id", "");
+                    Taxon taxon = new Taxon(id);
 
-					if (taxonElement.getChild("date") != null) {
-						double dateValue = getDoubleChild(taxonElement, "date", 0.0);
+                    if (taxonElement.getChild("date") != null) {
+                        double dateValue = getDoubleChild(taxonElement, "date", 0.0);
 
-						if (datesDirection == FORWARDS) {
-							taxon.setDate(dr.evolution.util.Date.createTimeSinceOrigin(dateValue, theUnits, 0.0));
-						} else {
-							taxon.setDate(dr.evolution.util.Date.createTimeAgoFromOrigin(dateValue, theUnits, 0.0));
-						}
-					}
-					String seqString = getStringChild(taxonElement, "sequence", "");
-					Sequence sequence = new Sequence(taxon, seqString);
+                        if (datesDirection == FORWARDS) {
+                            taxon.setDate(Date.createTimeSinceOrigin(dateValue, theUnits, 0.0));
+                        } else {
+                            taxon.setDate(Date.createTimeAgoFromOrigin(dateValue, theUnits, 0.0));
+                        }
+                    }
+                    String seqString = getStringChild(taxonElement, "sequence", "");
+                    Sequence sequence = new Sequence(taxon, seqString);
 
-					originalAlignment.addSequence(sequence);
-				}
+                    originalAlignment.addSequence(sequence);
+                }
 				taxonList = originalAlignment;
 				alignment = originalAlignment;
 			}
@@ -964,24 +960,22 @@ public class BeautiOptions {
 		}
 
 		if (taxaElement != null) {
-			Iterator iter = taxaElement.getChildren("taxonSet").iterator();
-			while (iter.hasNext()) {
-				Element taxonSetElement = (Element)iter.next();
+            for (Object ts : taxaElement.getChildren("taxonSet")) {
+                Element taxonSetElement = (Element) ts;
 
-				String id = getStringChild(taxonSetElement, "id", "");
-				final Taxa taxonSet = new Taxa(id);
+                String id = getStringChild(taxonSetElement, "id", "");
+                final Taxa taxonSet = new Taxa(id);
 
-				Iterator iter2 = taxonSetElement.getChildren("taxon").iterator();
-				while (iter2.hasNext()) {
-					Element taxonElement = (Element)iter2.next();
-					String taxonId = getStringChild(taxonElement, "id", "");
-					int index = taxonList.getTaxonIndex(taxonId);
-					if (index != -1) {
-						taxonSet.addTaxon(taxonList.getTaxon(index));
-					}
-				}
-				taxonSets.add(taxonSet);
-			}
+                for (Object o : taxonSetElement.getChildren("taxon")) {
+                    Element taxonElement = (Element) o;
+                    String taxonId = getStringChild(taxonElement, "id", "");
+                    int index = taxonList.getTaxonIndex(taxonId);
+                    if (index != -1) {
+                        taxonSet.addTaxon(taxonList.getTaxon(index));
+                    }
+                }
+                taxonSets.add(taxonSet);
+            }
 		}
 
 		if (modelElement != null) {
@@ -1016,47 +1010,43 @@ public class BeautiOptions {
 
 		if (operatorsElement != null) {
 			autoOptimize = getBooleanChild(operatorsElement, "autoOptimize", true);
-			Iterator<String> iter = operators.keySet().iterator();
-			while (iter.hasNext()) {
-				String name = iter.next();
-				Operator operator = (Operator)operators.get(name);
-				Element e = operatorsElement.getChild(name);
-				if (e == null) {
-					throw new dr.xml.XMLParseException("Operators element, " + name + " missing");
-				}
+            for (String name : operators.keySet()) {
+                Operator operator = operators.get(name);
+                Element e = operatorsElement.getChild(name);
+                if (e == null) {
+                    throw new XMLParseException("Operators element, " + name + " missing");
+                }
 
-				operator.tuning = getDoubleChild(e, "tuning", 1.0);
-				operator.tuningEdited = getBooleanChild(e, "tuningEdited", false);
-				operator.weight = getIntegerChild(e, "weight", 1);
-			}
+                operator.tuning = getDoubleChild(e, "tuning", 1.0);
+                operator.tuningEdited = getBooleanChild(e, "tuningEdited", false);
+                operator.weight = getIntegerChild(e, "weight", 1);
+            }
 		}
 
 		if (priorsElement != null) {
-			Iterator<String> iter = parameters.keySet().iterator();
-			while (iter.hasNext()) {
-				String name = iter.next();
-				Parameter parameter = (Parameter)parameters.get(name);
-				Element e = priorsElement.getChild(name);
-				if (e == null) {
-					throw new dr.xml.XMLParseException("Priors element, " + name + " missing");
-				}
+            for (String name : parameters.keySet()) {
+                Parameter parameter = parameters.get(name);
+                Element e = priorsElement.getChild(name);
+                if (e == null) {
+                    throw new XMLParseException("Priors element, " + name + " missing");
+                }
 
-				parameter.initial = getDoubleChild(e, "initial", 1.0);
-				parameter.priorType = getIntegerChild(e, "priorType", UNIFORM_PRIOR);
-				parameter.priorEdited = getBooleanChild(e, "priorEdited", false);
-				parameter.uniformLower = getDoubleChild(e, "uniformLower", parameter.uniformLower);
-				parameter.uniformUpper = getDoubleChild(e, "uniformUpper", parameter.uniformUpper);
-				parameter.exponentialMean = getDoubleChild(e, "exponentialMean", parameter.exponentialMean);
-				parameter.exponentialOffset  = getDoubleChild(e, "exponentialOffset", parameter.exponentialOffset);
-				parameter.normalMean = getDoubleChild(e, "normalMean", parameter.normalMean);
-				parameter.normalStdev  = getDoubleChild(e, "normalStdev", parameter.normalStdev);
-				parameter.logNormalMean = getDoubleChild(e, "logNormalMean", parameter.logNormalMean);
-				parameter.logNormalStdev = getDoubleChild(e, "logNormalStdev", parameter.logNormalStdev);
-				parameter.logNormalOffset = getDoubleChild(e, "logNormalOffset", parameter.logNormalOffset);
-				parameter.gammaAlpha = getDoubleChild(e, "gammaAlpha", parameter.gammaAlpha);
-				parameter.gammaBeta = getDoubleChild(e, "gammaBeta", parameter.gammaBeta);
-				parameter.gammaOffset = getDoubleChild(e, "gammaOffset", parameter.gammaOffset);
-			}
+                parameter.initial = getDoubleChild(e, "initial", 1.0);
+                parameter.priorType = getIntegerChild(e, "priorType", UNIFORM_PRIOR);
+                parameter.priorEdited = getBooleanChild(e, "priorEdited", false);
+                parameter.uniformLower = getDoubleChild(e, "uniformLower", parameter.uniformLower);
+                parameter.uniformUpper = getDoubleChild(e, "uniformUpper", parameter.uniformUpper);
+                parameter.exponentialMean = getDoubleChild(e, "exponentialMean", parameter.exponentialMean);
+                parameter.exponentialOffset = getDoubleChild(e, "exponentialOffset", parameter.exponentialOffset);
+                parameter.normalMean = getDoubleChild(e, "normalMean", parameter.normalMean);
+                parameter.normalStdev = getDoubleChild(e, "normalStdev", parameter.normalStdev);
+                parameter.logNormalMean = getDoubleChild(e, "logNormalMean", parameter.logNormalMean);
+                parameter.logNormalStdev = getDoubleChild(e, "logNormalStdev", parameter.logNormalStdev);
+                parameter.logNormalOffset = getDoubleChild(e, "logNormalOffset", parameter.logNormalOffset);
+                parameter.gammaAlpha = getDoubleChild(e, "gammaAlpha", parameter.gammaAlpha);
+                parameter.gammaBeta = getDoubleChild(e, "gammaBeta", parameter.gammaBeta);
+                parameter.gammaOffset = getDoubleChild(e, "gammaOffset", parameter.gammaOffset);
+            }
 		}
 
 		if (mcmcElement != null) {
@@ -1094,9 +1084,8 @@ public class BeautiOptions {
 	private boolean getBooleanChild(Element element, String childName, boolean defaultValue) {
 		String value = element.getChildTextTrim(childName);
 		if (value == null) return defaultValue;
-		if (value.equals("true")) return true;
-		return false;
-	}
+        return value.equals("true");
+    }
 
 	public void guessDates() {
 
@@ -1137,7 +1126,7 @@ public class BeautiOptions {
 
 	public double guessDateFromOrder(String label, int order, boolean fromLast) throws GuessDatesException {
 
-		String field = null;
+		String field;
 
 		if (fromLast) {
 			int count = 0;
@@ -1235,7 +1224,7 @@ public class BeautiOptions {
 		return d;
 	}
 
-	private final void timeScaleChanged() {
+	private void timeScaleChanged() {
 
 		for (int i = 0; i < alignment.getTaxonCount(); i++) {
 			Date date = alignment.getTaxon(i).getDate();

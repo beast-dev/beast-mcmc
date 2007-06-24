@@ -48,7 +48,9 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
     public static final String SWAP_AT_ROOT = "swapAtRoot";
     public static final String MOVE_HEIGHT = "moveHeight";
 
-	private final TreeModel tree;
+    private static final String TRAIT = "trait";
+
+    private final TreeModel tree;
     private final boolean swapRates;
     private final boolean swapTraits;
     private final boolean swapAtRoot;
@@ -98,24 +100,24 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
 
         if (swapTraits) {
             if (swapAtRoot) {
-                double[] traits = new double[] { tree.getNodeTrait(node0), tree.getNodeTrait(node1), tree.getNodeTrait(node2) };
+                double[] traits = new double[] { tree.getNodeTrait(node0, TRAIT), tree.getNodeTrait(node1, TRAIT), tree.getNodeTrait(node2, TRAIT) };
 
                 int r1 = MathUtils.nextInt(3);
-                tree.setNodeTrait(node0, traits[r1]);
+                tree.setNodeTrait(node0, TRAIT, traits[r1]);
                 // swap down the top trait
                 traits[r1] = traits[2];
 
                 int r2 = MathUtils.nextInt(2);
-                tree.setNodeTrait(node1, traits[r2]);
+                tree.setNodeTrait(node1, TRAIT, traits[r2]);
                 // swap down the top trait
                 traits[r2] = traits[1];
 
-                tree.setNodeTrait(node2, traits[0]);
+                tree.setNodeTrait(node2, TRAIT, traits[0]);
             } else {
                 // just swap the two child traits...
-                double tmp = tree.getNodeTrait(node1);
-                tree.setNodeTrait(node1, tree.getNodeTrait(node2));
-                tree.setNodeTrait(node2, tmp);
+                double tmp = tree.getNodeTrait(node1, TRAIT);
+                tree.setNodeTrait(node1, TRAIT, tree.getNodeTrait(node2, TRAIT));
+                tree.setNodeTrait(node2, TRAIT, tmp);
             }
         }
 
@@ -148,8 +150,7 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
 	}
 
 	public Element createOperatorElement(Document d) {
-		Element e = d.createElement(RATE_EXCHANGE);
-		return e;
+        return d.createElement(RATE_EXCHANGE);
 	}
 
 	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {

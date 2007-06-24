@@ -102,7 +102,9 @@ public class BirthDeathModel extends SpeciationModel {
 		return logPDF(nodeHeight, rootHeight, lambda, mu, rho);
 	}
 
-	private double logPDF(double nodeTime, double rootTime, double lambda, double mu, double rho)
+    public boolean includeExternalNodesInLikelihoodCalculation() { return false; }
+
+    private double logPDF(double nodeTime, double rootTime, double lambda, double mu, double rho)
 	{
 //   this calculates the kernel density from the birth-death process with
 //   species sampling.

@@ -27,6 +27,8 @@ package dr.inference.model;
 
 import dr.util.Identifiable;
 
+import java.util.ArrayList;
+
 /**
  * An interface that describes a model of some data.
  *
@@ -43,7 +45,11 @@ public interface Model extends Identifiable {
 	 */
 	void addModelListener(ModelListener listener);
 
-	void removeModelListener(ModelListener listener);
+    /**
+     * Remove a listener previously addeed by addModelListener
+     * @param listener
+     */
+    void removeModelListener(ModelListener listener);
 
 	/**
 	 * This function should be called to store the state of the
@@ -88,7 +94,7 @@ public interface Model extends Identifiable {
 	Parameter getParameter(int i);
 	
 	/**
-	 * @return the parameter of the component that is called name
+	 * @return the parameter of the component with a given name
 	 */
 	Parameter getParameter(String name);
 	
@@ -112,16 +118,15 @@ public interface Model extends Identifiable {
 		
 		public void fireModelChanged(Model model, Object object, int index) {
 			if (listeners != null) {
-				for (int i = 0; i < listeners.size(); i++) {
-					ModelListener listener = (ModelListener)listeners.get(i);
-					listener.modelChangedEvent(model, object, index);
-				}
-			}
+                for (ModelListener listener : listeners) {
+                    listener.modelChangedEvent(model, object, index);
+                }
+            }
 		}
 		
 		public void addModelListener(ModelListener listener) {
 			if (listeners == null) {
-				listeners = new java.util.ArrayList();
+				listeners = new java.util.ArrayList<ModelListener>();
 			}	
 			listeners.add(listener);
 		}
@@ -132,8 +137,7 @@ public interface Model extends Identifiable {
 			}
 		}
 
-		private java.util.ArrayList listeners = null;
+		private ArrayList<ModelListener> listeners = null;
 	}
-
 }
 		

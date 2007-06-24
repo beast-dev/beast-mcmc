@@ -181,11 +181,11 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
 		    logL += -Math.log(chainParameter.getParameterValue( index(0) ));
 		}
 		for (int i = 1; i < chainParameter.getDimension(); i++) {
-		    double mean = chainParameter.getParameterValue( index(i-1) );
-		    double x = chainParameter.getParameterValue( index(i) );
+		    final double mean = chainParameter.getParameterValue( index(i-1) );
+		    final double x = chainParameter.getParameterValue( index(i) );
 		    //logL += dr.math.ExponentialDistribution.logPdf(x, 1.0/mean);
 
-		    double scale = mean / shape;
+		    final double scale = mean / shape;
 		    logL += dr.math.GammaDistribution.logPdf( x, shape, scale );
 		}
 		return logL;

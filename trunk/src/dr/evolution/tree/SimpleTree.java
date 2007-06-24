@@ -73,9 +73,7 @@ public class SimpleTree implements MutableTree {
 
     /** clone constructor */
     public SimpleTree(SimpleNode root) {
-
-            adoptNodes(root);
-
+        adoptNodes(root);
     }
 
     /**
@@ -472,24 +470,24 @@ public class SimpleTree implements MutableTree {
     }
 
     private void fireTreeChanged() {
-        for (int i = 0; i < mutableTreeListeners.size(); i++) {
-            ((MutableTreeListener)mutableTreeListeners.get(i)).treeChanged(this);
+        for (MutableTreeListener mutableTreeListener : mutableTreeListeners) {
+            mutableTreeListener.treeChanged(this);
         }
     }
 
-    private ArrayList mutableTreeListeners = new ArrayList();
+    private ArrayList<MutableTreeListener> mutableTreeListeners = new ArrayList<MutableTreeListener>();
 
     public void addMutableTaxonListListener(MutableTaxonListListener listener) {
         mutableTaxonListListeners.add(listener);
     }
 
     private void fireTaxaChanged() {
-        for (int i = 0; i < mutableTaxonListListeners.size(); i++) {
-            ((MutableTaxonListListener)mutableTaxonListListeners.get(i)).taxaChanged(this);
+        for (MutableTaxonListListener mutableTaxonListListener : mutableTaxonListListeners) {
+            mutableTaxonListListener.taxaChanged(this);
         }
     }
 
-    private ArrayList mutableTaxonListListeners = new ArrayList();
+    private ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
 
     /**
      * @return a string containing a newick representation of the tree

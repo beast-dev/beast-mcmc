@@ -54,7 +54,7 @@ public interface Distribution
 	public double logPdf(double x);
 
 	/**
-	 * cumulative density function of the Gamma distribution 
+	 * cumulative density function of the distribution
 	 * 
 	 * @param x argument
 	 *
@@ -63,7 +63,7 @@ public interface Distribution
 	public double cdf(double x);
 
 	/**
-	 * quantile (inverse cumulative density function) of the Gamma distribution
+	 * quantile (inverse cumulative density function) of the distribution
 	 *
 	 * @param y argument
 	 *

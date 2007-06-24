@@ -28,9 +28,8 @@ import java.text.ParseException;
 import java.util.*;
 
 /**
- * @author rambaut
- *         Date: Jul 6, 2005
- *         Time: 3:34:41 PM
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
  */
 public class BeautiOptions {
 
@@ -70,7 +69,7 @@ public class BeautiOptions {
 		createParameter("ucld.mean", "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("ucld.stdev", "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("branchRates.categories", "relaxed clock branch rate categories");
-		createParameter("localClock.rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
+		createParameter("localClock.rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("localClock.changes", "random local clock rate change indicator");
 
 		createParameter("hky.kappa", "HKY transition-transversion parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -534,10 +533,17 @@ public class BeautiOptions {
 		if (clockModel == RANDOM_LOCAL_CLOCK) {
 			if (localClockRateChangesStatistic == null) {
 				localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
-			}
+                localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
+                localClockRateChangesStatistic.poissonMean = 1.0;
+                localClockRateChangesStatistic.poissonOffset = 0.0;
+            }
 			if (localClockRatesStatistic == null) {
 				localClockRatesStatistic = new Parameter("localClock.rates", "random local clock rates", false);
-			}
+
+                localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
+                localClockRatesStatistic.gammaAlpha = 0.5;
+                localClockRatesStatistic.gammaBeta = 2.0;
+            }
 			params.add(localClockRatesStatistic);
 			params.add(localClockRateChangesStatistic);
 		}
@@ -869,6 +875,12 @@ public class BeautiOptions {
 		return e;
 	}
 
+    private Element createChild(String name, PriorType value) {
+        Element e = new Element(name);
+        e.setText(value.name());
+        return e;
+    }
+
 	private Element createChild(String name, double value) {
 		Element e = new Element(name);
 		e.setText(Double.toString(value));
@@ -1032,7 +1044,7 @@ public class BeautiOptions {
                 }
 
                 parameter.initial = getDoubleChild(e, "initial", 1.0);
-                parameter.priorType = getIntegerChild(e, "priorType", UNIFORM_PRIOR);
+                parameter.priorType = PriorType.valueOf(getStringChild(e, "priorType", PriorType.UNIFORM_PRIOR.name()));
                 parameter.priorEdited = getBooleanChild(e, "priorEdited", false);
                 parameter.uniformLower = getDoubleChild(e, "uniformLower", parameter.uniformLower);
                 parameter.uniformUpper = getDoubleChild(e, "uniformUpper", parameter.uniformUpper);
@@ -1258,7 +1270,7 @@ public class BeautiOptions {
 			this.isNodeHeight = false;
 			this.isStatistic = false;
 			this.taxa = null;
-			this.priorType = NONE;
+			this.priorType = PriorType.NONE;
 			this.initial = Double.NaN;
 			this.lower = Double.NaN;
 			this.upper = Double.NaN;
@@ -1274,7 +1286,7 @@ public class BeautiOptions {
 
 			this.taxa = null;
 
-			this.priorType = UNIFORM_PRIOR;
+			this.priorType = PriorType.UNIFORM_PRIOR;
 			this.scale = scale;
 			this.priorEdited = false;
 			this.lower = lower;
@@ -1291,7 +1303,7 @@ public class BeautiOptions {
 
 			this.isNodeHeight = true;
 			this.isStatistic = true;
-			this.priorType = NONE;
+			this.priorType = PriorType.NONE;
 			this.scale = TIME_SCALE;
 			this.priorEdited = false;
 			this.lower = 0.0;
@@ -1310,7 +1322,7 @@ public class BeautiOptions {
 			this.isNodeHeight = false;
 			this.isStatistic = true;
 			this.isDiscrete = isDiscrete;
-			this.priorType = UNIFORM_PRIOR;
+			this.priorType = PriorType.UNIFORM_PRIOR;
 			this.scale = NONE;
 			this.priorEdited = false;
 			this.initial = Double.NaN;
@@ -1327,7 +1339,7 @@ public class BeautiOptions {
 			this.isNodeHeight = false;
 			this.isStatistic = true;
 			this.isDiscrete = false;
-			this.priorType = UNIFORM_PRIOR;
+			this.priorType = PriorType.UNIFORM_PRIOR;
 			this.scale = NONE;
 			this.priorEdited = false;
 			this.initial = Double.NaN;
@@ -1345,7 +1357,7 @@ public class BeautiOptions {
 
 			this.isNodeHeight = isNodeHeight;
 			this.isStatistic = false;
-			this.priorType = NONE;
+			this.priorType = PriorType.NONE;
 			this.scale = TIME_SCALE;
 			this.priorEdited = false;
 			this.lower = lower;
@@ -1383,7 +1395,7 @@ public class BeautiOptions {
 		public final boolean isNodeHeight;
 		public final boolean isStatistic;
 
-		public int priorType;
+		public PriorType priorType;
 		public boolean priorEdited;
 		public final int scale;
 		public double lower;
@@ -1497,15 +1509,8 @@ public class BeautiOptions {
 	public static final int DOUBLING_TIME = 1;
 	public static final int CONSTANT_SKYLINE = 0;
 	public static final int LINEAR_SKYLINE = 1;
-	public static final int UNIFORM_PRIOR = 0;
-	public static final int EXPONENTIAL_PRIOR = 1;
-	public static final int NORMAL_PRIOR = 2;
-	public static final int LOG_NORMAL_PRIOR = 3;
-	public static final int GAMMA_PRIOR = 4;
-	public static final int JEFFREYS_PRIOR = 5;
-	public static final int POISSON_PRIOR = 6;
 
-	public static final int TIME_SCALE = 0;
+    public static final int TIME_SCALE = 0;
 	public static final int GROWTH_RATE_SCALE = 1;
 	public static final int BIRTH_RATE_SCALE = 2;
 	public static final int SUBSTITUTION_RATE_SCALE = 3;

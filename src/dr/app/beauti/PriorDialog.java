@@ -45,20 +45,24 @@ public class PriorDialog {
 
 	private JFrame frame;
 
-	public static String[] priors = { "Uniform",
-			"Exponential",
-			"Normal",
-			"LogNormal",
-			"Gamma",
-			"Jeffreys"};
+	public static PriorType[] priors = {
+            PriorType.UNIFORM_PRIOR,
+			PriorType.EXPONENTIAL_PRIOR,
+            PriorType.NORMAL_PRIOR,
+            PriorType.LOGNORMAL_PRIOR,
+            PriorType.GAMMA_PRIOR,
+            PriorType.JEFFREYS_PRIOR
+    };
 
-	public static String[] rootHeightPriors = { "Tree Prior",
-			"Uniform",
-			"Exponential",
-			"Normal",
-			"LogNormal",
-			"Gamma",
-			"Jeffreys"};
+    public static PriorType[] rootHeightPriors = {
+            PriorType.NONE,
+            PriorType.UNIFORM_PRIOR,
+            PriorType.EXPONENTIAL_PRIOR,
+            PriorType.NORMAL_PRIOR,
+            PriorType.LOGNORMAL_PRIOR,
+            PriorType.GAMMA_PRIOR,
+            PriorType.JEFFREYS_PRIOR
+    };
 
 	private String[] argumentNames = new String[] {
 			"Lower Bound", "Upper Bound", "Exponential Mean", "Zero Offset", "Normal Mean", "Normal Stdev",
@@ -109,13 +113,13 @@ public class PriorDialog {
 		this.parameter = parameter;
 
 		if (parameter.isNodeHeight) {
-			if (parameter.priorType != BeautiOptions.NONE) {
-				rootHeightPriorCombo.setSelectedIndex(parameter.priorType + 1);
+			if (parameter.priorType != PriorType.NONE) {
+				rootHeightPriorCombo.setSelectedItem(parameter.priorType);
 			} else {
 				rootHeightPriorCombo.setSelectedIndex(0);
 			}
 		} else {
-			priorCombo.setSelectedIndex(parameter.priorType);
+			priorCombo.setSelectedItem(parameter.priorType);
 		}
 
 		if (!parameter.isStatistic) {
@@ -164,8 +168,8 @@ public class PriorDialog {
 
 		int result = JOptionPane.CANCEL_OPTION;
 		Integer value = (Integer)optionPane.getValue();
-		if (value != null && value.intValue() != -1) {
-			result = value.intValue();
+		if (value != null && value != -1) {
+			result = value;
 		}
 
 		if (result == JOptionPane.OK_OPTION) {
@@ -203,42 +207,42 @@ public class PriorDialog {
 	private void getArguments() {
 		if (parameter.isNodeHeight) {
 			if (rootHeightPriorCombo.getSelectedIndex() == 0) {
-				parameter.priorType = BeautiOptions.NONE;
+				parameter.priorType = PriorType.NONE;
 				parameter.initial = Double.NaN;
 				return;
 			} else {
-				parameter.priorType = rootHeightPriorCombo.getSelectedIndex() - 1;
+				parameter.priorType = (PriorType)rootHeightPriorCombo.getSelectedItem();
 			}
 		} else {
-			parameter.priorType = priorCombo.getSelectedIndex();
+			parameter.priorType = (PriorType)rootHeightPriorCombo.getSelectedItem();
 		}
 
-		if (initialField.getValue() != null) parameter.initial = initialField.getValue().doubleValue();
+		if (initialField.getValue() != null) parameter.initial = initialField.getValue();
 
 		switch (parameter.priorType) {
-			case BeautiOptions.UNIFORM_PRIOR:
-				if (argumentFields[0].getValue() != null) parameter.uniformLower = argumentFields[0].getValue().doubleValue();
-				if (argumentFields[1].getValue() != null) parameter.uniformUpper = argumentFields[1].getValue().doubleValue();
+			case UNIFORM_PRIOR:
+				if (argumentFields[0].getValue() != null) parameter.uniformLower = argumentFields[0].getValue();
+				if (argumentFields[1].getValue() != null) parameter.uniformUpper = argumentFields[1].getValue();
 				break;
-			case BeautiOptions.EXPONENTIAL_PRIOR:
-				if (argumentFields[2].getValue() != null) parameter.exponentialMean = argumentFields[2].getValue().doubleValue();
-				if (argumentFields[3].getValue() != null) parameter.exponentialOffset = argumentFields[3].getValue().doubleValue();
+			case EXPONENTIAL_PRIOR:
+				if (argumentFields[2].getValue() != null) parameter.exponentialMean = argumentFields[2].getValue();
+				if (argumentFields[3].getValue() != null) parameter.exponentialOffset = argumentFields[3].getValue();
 				break;
-			case BeautiOptions.NORMAL_PRIOR:
-				if (argumentFields[4].getValue() != null) parameter.normalMean = argumentFields[4].getValue().doubleValue();
-				if (argumentFields[5].getValue() != null) parameter.normalStdev = argumentFields[5].getValue().doubleValue();
+			case NORMAL_PRIOR:
+				if (argumentFields[4].getValue() != null) parameter.normalMean = argumentFields[4].getValue();
+				if (argumentFields[5].getValue() != null) parameter.normalStdev = argumentFields[5].getValue();
 				break;
-			case BeautiOptions.LOG_NORMAL_PRIOR:
-				if (argumentFields[6].getValue() != null) parameter.logNormalMean = argumentFields[6].getValue().doubleValue();
-				if (argumentFields[7].getValue() != null) parameter.logNormalStdev = argumentFields[7].getValue().doubleValue();
-				if (argumentFields[8].getValue() != null) parameter.logNormalOffset = argumentFields[8].getValue().doubleValue();
+			case LOGNORMAL_PRIOR:
+				if (argumentFields[6].getValue() != null) parameter.logNormalMean = argumentFields[6].getValue();
+				if (argumentFields[7].getValue() != null) parameter.logNormalStdev = argumentFields[7].getValue();
+				if (argumentFields[8].getValue() != null) parameter.logNormalOffset = argumentFields[8].getValue();
 				break;
-			case BeautiOptions.GAMMA_PRIOR:
-				if (argumentFields[9].getValue() != null) parameter.gammaAlpha = argumentFields[9].getValue().doubleValue();
-				if (argumentFields[10].getValue() != null) parameter.gammaBeta = argumentFields[10].getValue().doubleValue();
-				if (argumentFields[11].getValue() != null) parameter.gammaOffset = argumentFields[11].getValue().doubleValue();
+			case GAMMA_PRIOR:
+				if (argumentFields[9].getValue() != null) parameter.gammaAlpha = argumentFields[9].getValue();
+				if (argumentFields[10].getValue() != null) parameter.gammaBeta = argumentFields[10].getValue();
+				if (argumentFields[11].getValue() != null) parameter.gammaOffset = argumentFields[11].getValue();
 				break;
-			case BeautiOptions.JEFFREYS_PRIOR:
+			case JEFFREYS_PRIOR:
 				break;
 			default: throw new IllegalArgumentException("Unknown prior index");
 		}
@@ -249,24 +253,24 @@ public class PriorDialog {
 
 		optionPanel.addSpanningComponent(new JLabel("Select prior distribution for " + parameter.getName()));
 
-		int priorType;
+		PriorType priorType;
 		if (parameter.isNodeHeight) {
 			optionPanel.addComponents(new JLabel("Prior Distribution:"), rootHeightPriorCombo);
 			if (rootHeightPriorCombo.getSelectedIndex() == 0) {
 				return;
 			} else {
-				priorType = rootHeightPriorCombo.getSelectedIndex() - 1;
+				priorType = (PriorType)rootHeightPriorCombo.getSelectedItem();
 			}
 		} else {
 			optionPanel.addComponents(new JLabel("Prior Distribution:"), priorCombo);
-			priorType = priorCombo.getSelectedIndex();
+			priorType = (PriorType)priorCombo.getSelectedItem();
 		}
 
-		if (priorType != BeautiOptions.JEFFREYS_PRIOR) {
+		if (priorType != PriorType.JEFFREYS_PRIOR) {
 			optionPanel.addSeparator();
 
-			for (int i = 0; i < argumentIndices[priorType].length; i++) {
-				int k = argumentIndices[priorType][i];
+			for (int i = 0; i < argumentIndices[priorType.ordinal()-1].length; i++) {
+				int k = argumentIndices[priorType.ordinal()-1][i];
 				optionPanel.addComponentWithLabel(argumentNames[k] + ":", argumentFields[k]);
 			}
 
@@ -277,7 +281,7 @@ public class PriorDialog {
 			optionPanel.addComponents(new JLabel("Initial Value:"), initialField);
 		}
 
-		if (priorType != BeautiOptions.UNIFORM_PRIOR && priorType != BeautiOptions.JEFFREYS_PRIOR) {
+		if (priorType != PriorType.UNIFORM_PRIOR && priorType != PriorType.JEFFREYS_PRIOR) {
 			optionPanel.addSeparator();
 
 			setupChart();
@@ -292,44 +296,44 @@ public class PriorDialog {
 	private void setupChart() {
 		chart.removeAllPlots();
 
-		int priorType;
+		PriorType priorType;
 		if (parameter.isNodeHeight) {
 			if (rootHeightPriorCombo.getSelectedIndex() == 0) {
 				return;
 			} else {
-				priorType = rootHeightPriorCombo.getSelectedIndex() - 1;
+				priorType = (PriorType)rootHeightPriorCombo.getSelectedItem();
 			}
 		} else {
-			priorType = priorCombo.getSelectedIndex();
+			priorType = (PriorType)priorCombo.getSelectedItem();
 		}
 		Distribution distribution = null;
 		double offset = 0.0;
 		switch (priorType) {
-			case BeautiOptions.UNIFORM_PRIOR:
+			case UNIFORM_PRIOR:
 				return;
-			case BeautiOptions.EXPONENTIAL_PRIOR:
-				double exponentialMean = argumentFields[2].getValue().doubleValue();
-				offset = argumentFields[3].getValue().doubleValue();
+			case EXPONENTIAL_PRIOR:
+				double exponentialMean = argumentFields[2].getValue();
+				offset = argumentFields[3].getValue();
 				distribution = new ExponentialDistribution(1.0 / exponentialMean);
 				break;
-			case BeautiOptions.NORMAL_PRIOR:
-				double normalMean = argumentFields[4].getValue().doubleValue();
-				double normalStdev = argumentFields[5].getValue().doubleValue();
+			case NORMAL_PRIOR:
+				double normalMean = argumentFields[4].getValue();
+				double normalStdev = argumentFields[5].getValue();
 				distribution = new NormalDistribution(normalMean, normalStdev);
 				break;
-			case BeautiOptions.LOG_NORMAL_PRIOR:
-				double logNormalMean = argumentFields[6].getValue().doubleValue();
-				double logNormalStdev = argumentFields[7].getValue().doubleValue();
-				offset = argumentFields[8].getValue().doubleValue();
+			case LOGNORMAL_PRIOR:
+				double logNormalMean = argumentFields[6].getValue();
+				double logNormalStdev = argumentFields[7].getValue();
+				offset = argumentFields[8].getValue();
 				distribution = new LogNormalDistribution(logNormalMean, logNormalStdev);
 				break;
-			case BeautiOptions.GAMMA_PRIOR:
-				double gammaAlpha = argumentFields[9].getValue().doubleValue();
-				double gammaBeta = argumentFields[10].getValue().doubleValue();
-				offset = argumentFields[11].getValue().doubleValue();
+			case GAMMA_PRIOR:
+				double gammaAlpha = argumentFields[9].getValue();
+				double gammaBeta = argumentFields[10].getValue();
+				offset = argumentFields[11].getValue();
 				distribution = new GammaDistribution(gammaAlpha, gammaBeta);
 				break;
-			case BeautiOptions.JEFFREYS_PRIOR:
+			case JEFFREYS_PRIOR:
 				break;
 			default: throw new IllegalArgumentException("Unknown prior index");
 		}

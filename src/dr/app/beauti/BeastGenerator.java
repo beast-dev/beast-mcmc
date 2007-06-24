@@ -1770,8 +1770,8 @@ public class BeastGenerator extends BeautiOptions {
 
 		ArrayList<Parameter> parameters = selectParameters();
 		for (Parameter parameter : parameters) {
-			if (parameter.priorType != NONE) {
-				if (parameter.priorType != UNIFORM_PRIOR || parameter.isNodeHeight) {
+			if (parameter.priorType != PriorType.NONE) {
+				if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
 					writeParameterPrior(parameter, writer);
 				}
 			}
@@ -1813,7 +1813,7 @@ public class BeastGenerator extends BeautiOptions {
 				writeParameterIdref(writer, parameter);
 				writer.writeCloseTag(DistributionLikelihood.NORMAL_PRIOR);
 				break;
-			case LOG_NORMAL_PRIOR:
+			case LOGNORMAL_PRIOR:
 				writer.writeOpenTag(DistributionLikelihood.LOG_NORMAL_PRIOR,
 						new Attribute[] {
 								new Attribute.Default(DistributionLikelihood.MEAN, "" + parameter.logNormalMean),
@@ -2191,7 +2191,7 @@ public class BeastGenerator extends BeautiOptions {
 		if (parameter.isFixed) {
 			writeParameter(id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
 		} else {
-			if (parameter.priorType == UNIFORM_PRIOR) {
+			if (parameter.priorType == PriorType.UNIFORM_PRIOR) {
 				writeParameter(id, 1, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
 			} else {
 				writeParameter(id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
@@ -2210,7 +2210,7 @@ public class BeastGenerator extends BeautiOptions {
 		if (parameter == null) { throw new IllegalArgumentException("parameter with name, "+id+", is unknown");}
 		if (parameter.isFixed) {
 			writeParameter(id, dimension, parameter.initial, Double.NaN, Double.NaN, writer);
-		} else if (parameter.priorType == UNIFORM_PRIOR) {
+		} else if (parameter.priorType == PriorType.UNIFORM_PRIOR) {
 			writeParameter(id, dimension, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
 		} else {
 			writeParameter(id, dimension, parameter.initial, parameter.lower, parameter.upper, writer);
@@ -2261,7 +2261,7 @@ public class BeastGenerator extends BeautiOptions {
 			// generate a upgma starting tree
 			writer.writeComment("Construct a rough-and-ready UPGMA tree as an starting tree");
 			Parameter rootHeight = getParameter("treeModel.rootHeight");
-			if (rootHeight.priorType != NONE) {
+			if (rootHeight.priorType != PriorType.NONE) {
 				writer.writeOpenTag(
 						UPGMATreeParser.UPGMA_TREE,
 						new Attribute[] {
@@ -2292,7 +2292,7 @@ public class BeastGenerator extends BeautiOptions {
 			// generate a coalescent tree
 			writer.writeComment("Generate a random starting tree under the coalescent process");
 			Parameter rootHeight = getParameter("treeModel.rootHeight");
-			if (rootHeight.priorType != NONE) {
+			if (rootHeight.priorType != PriorType.NONE) {
 				writer.writeOpenTag(
 						CoalescentSimulator.COALESCENT_TREE,
 						new Attribute[] {
@@ -2319,7 +2319,7 @@ public class BeastGenerator extends BeautiOptions {
 
                     writer.writeTag(TaxaParser.TAXA,
                             new Attribute[]{new Attribute.Default("idref", taxonSet.getId())}, true);
-                    if (statistic.isNodeHeight && statistic.priorType == UNIFORM_PRIOR) {
+                    if (statistic.isNodeHeight && statistic.priorType == PriorType.UNIFORM_PRIOR) {
                         writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
                         writer.writeTag(UniformDistributionModel.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
                         writer.writeTag(UniformDistributionModel.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);

@@ -30,6 +30,7 @@ import org.w3c.dom.Element;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.List;
 
 /**
  * This class wraps a DOM Element for the purposes of parsing.
@@ -182,7 +183,7 @@ public class XMLObject {
 	 * that the given string represents. 
 	 * @return true if the given string represents a whitespaced-delimited array of doubles.
 	 */
-	public static boolean isDoubleArray(String s, ArrayList valueList) {
+	public static boolean isDoubleArray(String s, List<Double> valueList) {
 		try {
 			StringTokenizer st = new StringTokenizer(s);
 			while (st.hasMoreTokens()) {
@@ -200,7 +201,7 @@ public class XMLObject {
 	 * that the given string represents. 
 	 * @return true if the given string represents a whitespaced-delimited array of integers.
 	 */
-	public static boolean isIntegerArray(String s, ArrayList valueList) {
+	public static boolean isIntegerArray(String s, List<Integer> valueList) {
 		try {
 			StringTokenizer st = new StringTokenizer(s);
 			while (st.hasMoreTokens()) {
@@ -299,7 +300,7 @@ public class XMLObject {
 	/** @return the object as a boolean if possible */
 	private boolean getBoolean(Object obj) throws XMLParseException { 
 		
-		if (obj instanceof Boolean) return ((Boolean)obj).booleanValue();
+		if (obj instanceof Boolean) return (Boolean) obj;
 		if (obj instanceof String) {
 			if (obj.equals("true")) return true;
 			if (obj.equals("false")) return false;
@@ -323,11 +324,11 @@ public class XMLObject {
 		if (obj instanceof Number) return new double[] {((Number)obj).doubleValue()};
 		if (obj instanceof double[]) return (double[])obj;
 		if (obj instanceof String) {
-			ArrayList valueList = new ArrayList();
+			List<Double> valueList = new ArrayList<Double>();
 			if (isDoubleArray((String)obj, valueList)) {
 				double[] values = new double[valueList.size()];
 				for (int i =0; i < values.length; i++) {
-					values[i] = ((Double)valueList.get(i)).doubleValue();
+					values[i] = valueList.get(i);
 				}
 				return values;
 			} else {
@@ -343,11 +344,11 @@ public class XMLObject {
 		if (obj instanceof Number) return new int[] {((Number)obj).intValue()};
 		if (obj instanceof int[]) return (int[])obj;
 		if (obj instanceof String) {
-			ArrayList valueList = new ArrayList();
+			ArrayList<Integer> valueList = new ArrayList<Integer>();
 			if (isIntegerArray((String)obj, valueList)) {
 				int[] values = new int[valueList.size()];
-				for (int i =0; i < values.length; i++) {
-					values[i] = ((Number)valueList.get(i)).intValue();
+				for (int i = 0; i < values.length; i++) {
+					values[i] = valueList.get(i);
 				}
 				return values;
 			} else {
@@ -379,14 +380,14 @@ public class XMLObject {
 		
 		if (obj instanceof String[]) return (String[])obj;
 		if (obj instanceof String) {
-			ArrayList stringList = new ArrayList();
+			ArrayList<String> stringList = new ArrayList<String>();
 			StringTokenizer st = new StringTokenizer((String)obj);
 			while (st.hasMoreTokens()) {
 				stringList.add(st.nextToken());
 			}
 			String[] strings = new String[stringList.size()];
 			for (int i =0; i < strings.length; i++) {
-				strings[i] = (String)stringList.get(i);
+				strings[i] = stringList.get(i);
 			}
 			return strings;
 		}
@@ -394,7 +395,7 @@ public class XMLObject {
 	}
 
 	/** @return the named attribute if it exists, throws XMLParseException otherwise. */
-	private final Object getAndTest(String name) throws XMLParseException {
+	private Object getAndTest(String name) throws XMLParseException {
 		
 		if (element.hasAttribute(name)) { return element.getAttribute(name); } 
 		throw new XMLParseException("'" + name + "' attribute was not found in " + element.getTagName() + " element.");
@@ -404,7 +405,7 @@ public class XMLObject {
 	// Private instance variables
 	//*********************************************************************
 
-	private Vector children = new Vector();
+	private Vector<Object> children = new Vector<Object>();
 	private Element element = null;	
 	
 	private Object nativeObject;

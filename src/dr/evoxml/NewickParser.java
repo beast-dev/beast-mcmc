@@ -72,7 +72,7 @@ public class NewickParser extends AbstractXMLObjectParser {
         java.io.Reader reader = new java.io.StringReader(buffer.toString());
         NewickImporter importer = new NewickImporter(reader);
 
-        FlexibleTree tree = null;
+        FlexibleTree tree;
 
         try {
             tree = (FlexibleTree)importer.importTree(null);
@@ -84,6 +84,10 @@ public class NewickParser extends AbstractXMLObjectParser {
             throw new XMLParseException("error parsing tree in newick element");
         }
 
+        if( tree == null ) {
+             throw new XMLParseException("Failed to read tree");
+        }
+        
         tree.setUnits(units);
 
         for (int i = 0; i < tree.getTaxonCount(); i++) {
@@ -205,6 +209,4 @@ public class NewickParser extends AbstractXMLObjectParser {
     };
 
     public Class getReturnType() { return Tree.class; }
-    
-
 }

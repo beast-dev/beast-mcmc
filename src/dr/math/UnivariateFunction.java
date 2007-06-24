@@ -27,7 +27,7 @@ package dr.math;
 
 
 /**
- * interface for a function of one variable
+ * Interface for a function of one variable.
  *
  * @author Korbinian Strimmer
  */
@@ -36,23 +36,21 @@ public interface UnivariateFunction
 	/**
 	 * compute function value
 	 *
-	 * @param function argument
+	 * @param argument
 	 * 
 	 * @return function value
 	 */
 	double evaluate(double argument);
 	
 	/**
-	 * get lower bound of argument
 	 *
-	 * @return lower bound
+	 * @return lower bound of argument
 	 */
 	double getLowerBound();
 	
 	/**
-	 * get upper bound of argument
 	 *
-	 * @return upper bound
+	 * @return upper bound of argument
 	 */
 	double getUpperBound();
 }

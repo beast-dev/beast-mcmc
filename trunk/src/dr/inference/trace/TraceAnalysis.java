@@ -189,27 +189,27 @@ public class TraceAnalysis {
 		System.out.print(formatter.formatToFieldWidth("statistic", firstField));
 		String[] names = new String[] {"mean", "hpdLower", "hpdUpper", "ESS"};
 
-		for (int i =0; i < names.length; i++) {
-			System.out.print(formatter.formatToFieldWidth(names[i], fieldWidth));
-		}
-		System.out.println();
+        for (String name : names) {
+            System.out.print(formatter.formatToFieldWidth(name, fieldWidth));
+        }
+        System.out.println();
 
 		int warning = 0;
-		for (int j = 0; j < analysis.length; j++) {
-			System.out.print(formatter.formatToFieldWidth(analysis[j].getName(), firstField));
-			System.out.print(formatter.format(analysis[j].getMean()));
-			System.out.print(formatter.format(analysis[j].getHPDLower()));
-			System.out.print(formatter.format(analysis[j].getHPDUpper()));
-			System.out.print(formatter.format(analysis[j].getEffectiveSampleSize()));
-			double ess = analysis[j].getEffectiveSampleSize();
-			if (ess < 100) {
-				warning += 1;
-				System.out.println("*");
-			} else {
-				System.out.println();
-			}
-		}
-		System.out.println();
+        for (TraceAnalysis analysi : analysis) {
+            System.out.print(formatter.formatToFieldWidth(analysi.getName(), firstField));
+            System.out.print(formatter.format(analysi.getMean()));
+            System.out.print(formatter.format(analysi.getHPDLower()));
+            System.out.print(formatter.format(analysi.getHPDUpper()));
+            System.out.print(formatter.format(analysi.getEffectiveSampleSize()));
+            double ess = analysi.getEffectiveSampleSize();
+            if (ess < 100) {
+                warning += 1;
+                System.out.println("*");
+            } else {
+                System.out.println();
+            }
+        }
+        System.out.println();
 
 		/*
 		System.out.println("Correlation matrix");
@@ -248,40 +248,41 @@ public class TraceAnalysis {
 	 * @param reader the log file to report
 	 * @param burnin the number of states of burnin or if -1 then use 10%
 	 */
-	public static TraceAnalysis[] shortReport(String name, Reader reader, int burnin, boolean drawHeader, boolean hpds) throws java.io.IOException {
+	public static TraceAnalysis[] shortReport(String name, Reader reader,
+                                              final int burnin, boolean drawHeader, boolean hpds) throws java.io.IOException {
 
 		TraceAnalysis[] analysis = analyzeLogFile(reader, burnin);
 
 		int maxState = analysis[0].maxState;
-		burnin = analysis[0].burnin;
+		//burnin = analysis[0].burnin;
 
         double minESS = Double.MAX_VALUE;
 
         if (drawHeader) {
             System.out.print("file\t");
-            for (int j = 0; j < analysis.length; j++) {
-                System.out.print(analysis[j].getName()+"\t");
+            for (TraceAnalysis analysi : analysis) {
+                System.out.print(analysi.getName() + "\t");
                 if (hpds) {
-                    System.out.print(analysis[j].getName()+" hpdLower\t");
-                    System.out.print(analysis[j].getName()+" hpdUpper\t");
+                    System.out.print(analysi.getName() + " hpdLower\t");
+                    System.out.print(analysi.getName() + " hpdUpper\t");
                 }
             }
             System.out.println("minESS\tchainLength");
         }
 
         System.out.print(name + "\t");
-		for (int j = 0; j < analysis.length; j++) {
-			System.out.print(analysis[j].getMean()+"\t");
+        for (TraceAnalysis analysi1 : analysis) {
+            System.out.print(analysi1.getMean() + "\t");
             if (hpds) {
-                System.out.print(analysis[j].getHPDLower()+"\t");
-                System.out.print(analysis[j].getHPDUpper()+"\t");                    
+                System.out.print(analysi1.getHPDLower() + "\t");
+                System.out.print(analysi1.getHPDUpper() + "\t");
             }
-			double ess = analysis[j].getEffectiveSampleSize();
+            double ess = analysi1.getEffectiveSampleSize();
             if (ess < minESS) {
                 minESS = ess;
             }
-		}
-		System.out.println(minESS+ "\t" + maxState);
+        }
+        System.out.println(minESS+ "\t" + maxState);
 		return analysis;
 	}
 
@@ -293,18 +294,18 @@ public class TraceAnalysis {
 		double minRange = Double.MAX_VALUE;
 		int hpdIndex = 0;
 
-		int diff = (int)Math.round(proportion * (double)array.length);
-		for (int i =0; i <= (array.length - diff); i++) {
-			double minValue = array[indices[i]];
-			double maxValue = array[indices[i+diff-1]];
-			double range = Math.abs(maxValue - minValue);
+		final int elementsIn = (int)Math.round(proportion * (double)array.length);
+		for (int i = 0; i <= (array.length - elementsIn); i++) {
+			final double minValue = array[indices[i]];
+			final double maxValue = array[indices[i+elementsIn-1]];
+			final double range = Math.abs(maxValue - minValue);
 			if (range < minRange) {
 				minRange = range;
 				hpdIndex = i;
 			}
 		}
 		hpdLower = array[indices[hpdIndex]];
-		hpdUpper = array[indices[hpdIndex+diff-1]];
+		hpdUpper = array[indices[hpdIndex+elementsIn-1]];
 	}
 
 	/**
@@ -324,8 +325,8 @@ public class TraceAnalysis {
 		double[] varGammaStat = new double[maxLag];
 		double meanStat = 0.0;
   		double varStat = 0.0;
-		double varVarStat = 0.0;
-		double assVarCor = 0.0;
+		//double varVarStat = 0.0;
+		//double assVarCor = 0.0;
 		double del1, del2;
 
   		for (int i = 0; i < samples; i++) {
@@ -348,16 +349,16 @@ public class TraceAnalysis {
 
 			if (lag==0) {
 			        varStat = gammaStat[0];
-				varVarStat = varGammaStat[0];
-				assVarCor = 1.0;
+				//varVarStat = varGammaStat[0];
+				//assVarCor = 1.0;
 			}
 			else if (lag%2==0) 
                         {
 			        // fancy stopping criterion :)
   			        if (gammaStat[lag-1] + gammaStat[lag] > 0) {
 				        varStat    += 2.0*(gammaStat[lag-1] + gammaStat[lag]);
-					varVarStat += 2.0*(varGammaStat[lag-1] + varGammaStat[lag]);
-					assVarCor  += 2.0*((gammaStat[lag-1] * gammaStat[lag-1]) + (gammaStat[lag] * gammaStat[lag])) / (gammaStat[0] * gammaStat[0]);
+					//varVarStat += 2.0*(varGammaStat[lag-1] + varGammaStat[lag]);
+					//assVarCor  += 2.0*((gammaStat[lag-1] * gammaStat[lag-1]) + (gammaStat[lag] * gammaStat[lag])) / (gammaStat[0] * gammaStat[0]);
 				}
 				// stop
 				else 

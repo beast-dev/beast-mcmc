@@ -34,6 +34,9 @@ import dr.evomodel.tree.*;
 
 import java.util.*;
 
+import jebl.evolution.graphs.Node;
+import jebl.evolution.trees.SimpleRootedTree;
+
 /**
  * Interface for a phylogenetic or genealogical tree.
  *
@@ -903,7 +906,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 			}
 		}
 
-		public static MutableTree rotateTreeByComparator(Tree tree, Comparator comparator) {
+		public static MutableTree rotateTreeByComparator(Tree tree, Comparator<NodeRef> comparator) {
 
 			return new SimpleTree(rotateTreeByComparator(tree, tree.getRoot(), comparator));
 		}
@@ -911,7 +914,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		/**
 		 * Recursive function for constructing a newick tree representation in the given buffer.
 		 */
-		private static SimpleNode rotateTreeByComparator(Tree tree, NodeRef node, Comparator comparator) {
+		private static SimpleNode rotateTreeByComparator(Tree tree, NodeRef node, Comparator<NodeRef> comparator) {
 
 			SimpleNode newNode = new SimpleNode();
 			newNode.setHeight(tree.getNodeHeight(node));
@@ -937,34 +940,25 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 			return newNode;
 		}
 
-		public static Comparator createNodeDensityComparator(final Tree tree) {
+		public static Comparator<NodeRef> createNodeDensityComparator(final Tree tree) {
 
-			return new Comparator() {
+			return new Comparator<NodeRef>() {
 
-				public int compare(Object o1, Object o2) {
-					NodeRef node1 = (NodeRef)o1;
-					NodeRef node2 = (NodeRef)o2;
-
+				public int compare(NodeRef node1, NodeRef node2) {
 					return getLeafCount(tree, node2) - getLeafCount(tree, node1);
 				}
 
-				public boolean equals(Object o1, Object o2) {
-					NodeRef node1 = (NodeRef)o1;
-					NodeRef node2 = (NodeRef)o2;
-
+				public boolean equals(NodeRef node1, NodeRef node2) {
 					return getLeafCount(tree, node1) == getLeafCount(tree, node2);
 				}
 			};
 		}
 
-		public static Comparator createNodeDensityMinNodeHeightComparator(final Tree tree) {
+		public static Comparator<NodeRef> createNodeDensityMinNodeHeightComparator(final Tree tree) {
 
-			return new Comparator() {
+			return new Comparator<NodeRef>() {
 
-				public int compare(Object o1, Object o2) {
-					NodeRef node1 = (NodeRef)o1;
-					NodeRef node2 = (NodeRef)o2;
-
+				public int compare(NodeRef node1, NodeRef node2) {
 					int larger = getLeafCount(tree, node1) - getLeafCount(tree, node2);
 
 					if (larger != 0) return larger;
@@ -985,5 +979,38 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 			return uniqueNewick(tree1, tree1.getRoot()).equals(uniqueNewick(tree2, tree2.getRoot()));
 		}
-	}
+
+        private static Node convertToJebl(Tree tree, NodeRef node, SimpleRootedTree jtree) {
+            if( tree.isExternal(node) ) {
+                String taxonId = tree.getTaxonId(node.getNumber());
+                Node externalNode = jtree.createExternalNode(jebl.evolution.taxa.Taxon.getTaxon(taxonId));
+                jtree.setHeight(externalNode, tree.getNodeHeight(node));
+                return externalNode;
+            }
+            List<Node> jchildren = new ArrayList<Node>() ;
+            for(int nc = 0; nc < tree.getChildCount(node); ++nc )  {
+                NodeRef child = tree.getChild(node, nc);
+                Node node1 = convertToJebl(tree, child, jtree);
+                jtree.setHeight(node1, tree.getNodeHeight(child));
+                jchildren.add(node1);
+            }
+
+            return jtree.createInternalNode(jchildren);
+        }
+
+        /**
+         * Convert from beast tree to JEBL tree.
+         * Note that currently only topology and branch lengths are preserved.
+         * Can add attributes later if needed.
+         * 
+         * @param tree beast
+         * @return  jebl tree
+         */
+        static public SimpleRootedTree asJeblTree(Tree tree) {
+            SimpleRootedTree jtree = new SimpleRootedTree();
+
+            convertToJebl(tree, tree.getRoot(), jtree);
+            return jtree;
+        }
+    }
 }

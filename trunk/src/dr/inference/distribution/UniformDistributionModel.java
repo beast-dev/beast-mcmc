@@ -30,7 +30,7 @@ import dr.xml.*;
 import dr.inference.model.*;
 
 /**
- * A class that acts as a model for normally distributed data.
+ * A class that acts as a model for uniformly distributed data.
  * @author Alexei Drummond
  * $Id$
  */
@@ -154,8 +154,7 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
 		};
 
 		public String getParserDescription() {
-			return "Describes a normal distribution with a given mean and standard deviation " +
-				"that can be used in a distributionLikelihood element";
+			return "Describes a uniform distribution with a given lower and upper bounds ";
 		}
 
 		public Class getReturnType() { return UniformDistributionModel.class; }

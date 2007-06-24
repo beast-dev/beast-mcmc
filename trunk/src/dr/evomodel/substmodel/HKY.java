@@ -51,10 +51,10 @@ public class HKY extends AbstractNucleotideModel
 
     private Parameter kappaParameter = null;
 
-     private boolean updateIntermediates = true;
+    private boolean updateIntermediates = true;
 
     /** Used for precalculations */
-     private double 				beta, A_R, A_Y;
+    private double 				beta, A_R, A_Y;
     private double 				tab1A, tab2A, tab3A;
     private double 				tab1C, tab2C, tab3C;
     private double 				tab1G, tab2G, tab3G;
@@ -102,8 +102,8 @@ public class HKY extends AbstractNucleotideModel
      */
     public double getTsTv()
     {
-          calculateFreqRY();
-          tsTv = (getKappa() * (freqA*freqG + freqC*freqT))/(freqR*freqY);
+        calculateFreqRY();
+        tsTv = (getKappa() * (freqA*freqG + freqC*freqT))/(freqR*freqY);
 
         return tsTv;
     }
@@ -150,22 +150,22 @@ public class HKY extends AbstractNucleotideModel
             setupMatrix();
         }
 
-        double xx, aa, bbR, bbY;
+        final double xx = beta * distance;
+        final double bbR = Math.exp(xx*A_R);
+        final double bbY = Math.exp(xx*A_Y);
 
-        xx = beta * distance;
-        bbR = Math.exp(xx*A_R);
-        bbY = Math.exp(xx*A_Y);
-
-        aa = Math.exp(xx);
+        final double aa = Math.exp(xx);
+        final double oneminusa = (1 - aa);
 
         matrix[0] =	freqA+(tab1A*aa)+(tab2A*bbR);
-        matrix[1] =	freqC*(1-aa);
-        matrix[2] =	freqG+(tab1G*aa)-(tab3G*bbR);
-        matrix[3] =	freqT*(1-aa);
 
-        matrix[4] =	freqA*(1-aa);
+        matrix[1] =	freqC* oneminusa;
+        matrix[2] =	freqG+(tab1G*aa)-(tab3G*bbR);
+        matrix[3] =	freqT* oneminusa;
+
+        matrix[4] =	freqA* oneminusa;
         matrix[5] =	freqC+(tab1C*aa)+(tab2C*bbY);
-        matrix[6] =	freqG*(1-aa);
+        matrix[6] =	freqG* oneminusa;
         matrix[7] =	freqT+(tab1T*aa)-(tab3T*bbY);
 
         matrix[8] =	freqA+(tab1A*aa)-(tab3A*bbR);
@@ -177,7 +177,6 @@ public class HKY extends AbstractNucleotideModel
         matrix[13] =freqC+(tab1C*aa)-(tab3C*bbY);
         matrix[14] =matrix[6];
         matrix[15] =freqT+(tab1T*aa)+(tab2T*bbY);
-
     }
 
     /**
@@ -289,5 +288,4 @@ public class HKY extends AbstractNucleotideModel
         }
 
     };
-
 }

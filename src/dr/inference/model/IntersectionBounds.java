@@ -40,7 +40,7 @@ public class IntersectionBounds implements Bounds {
 				dimension + " but received " + boundary.getBoundsDimension());
 		}
 		if (bounds == null) { 
-			bounds = new ArrayList(); 
+			bounds = new ArrayList<Bounds>();
 		}
 		bounds.add(boundary);
 	}
@@ -52,13 +52,12 @@ public class IntersectionBounds implements Bounds {
 		
 		double lower = Double.NEGATIVE_INFINITY; 
 		if (bounds != null) {
-			for (int i =0; i < bounds.size(); i++) {
-				Bounds boundary = (Bounds)bounds.get(i);
-				if (boundary.getLowerLimit(index) > lower) { 
-					lower = boundary.getLowerLimit(index);
-				}
-			}
-		}
+            for (Bounds boundary : bounds) {
+                if (boundary.getLowerLimit(index) > lower) {
+                    lower = boundary.getLowerLimit(index);
+                }
+            }
+        }
 		return lower;
 	}
 			
@@ -69,13 +68,12 @@ public class IntersectionBounds implements Bounds {
 		
 		double upper = Double.POSITIVE_INFINITY;
 		if (bounds != null) {
-			for (int i =0; i < bounds.size(); i++) {
-				Bounds boundary = (Bounds)bounds.get(i);
-				if (boundary.getUpperLimit(index) < upper) { 
-					upper = boundary.getUpperLimit(index);
-				}
-			}
-		}
+            for (Bounds boundary : bounds) {
+                if (boundary.getUpperLimit(index) < upper) {
+                    upper = boundary.getUpperLimit(index);
+                }
+            }
+        }
 		return upper;
 	}
 		
@@ -95,6 +93,6 @@ public class IntersectionBounds implements Bounds {
 			return str;
 		}
 		
-	private ArrayList bounds = null;
+	private ArrayList<Bounds> bounds = null;
 	private int dimension;
 }

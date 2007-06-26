@@ -253,7 +253,9 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());
 		addXMLObjectParser(new dr.inference.trace.TraceAnalysisParser());
-	}
+        addXMLObjectParser(dr.inference.trace.MarginalLikelihoodAnalysis.PARSER);
+        
+    }
 
 }
 

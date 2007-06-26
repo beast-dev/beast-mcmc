@@ -33,13 +33,19 @@ public class PatristicDistanceMatrix extends DistanceMatrix {
         NodeRef node1 = tree.getExternalNode(taxon1);
         NodeRef node2 = tree.getExternalNode(taxon2);
 
-        Set<NodeRef> nodes = new HashSet<NodeRef>();
-        nodes.add(node1);
-        nodes.add(node2);
+        Set<String> nodes = new HashSet<String>();
+        nodes.add(tree.getNodeTaxon(node1).getId());
+        nodes.add(tree.getNodeTaxon(node2).getId());
 
         NodeRef ancestor = Tree.Utils.getCommonAncestorNode(tree, nodes);
 
-        return height(tree, node1, ancestor) + height(tree, node2, ancestor);
+        if (ancestor == null) System.out.println("common ancestor is null!");
+
+        double height1 = height(tree, node1, ancestor);
+        double height2 = height(tree, node2, ancestor);
+
+        return height1 + height2;
+
     }
 
     public double height(Tree tree, NodeRef node, NodeRef ancestor) {
@@ -53,6 +59,7 @@ public class PatristicDistanceMatrix extends DistanceMatrix {
     public String toString() {
         try {
             double[] dists = getUpperTriangle();
+
             StringBuffer buffer = new StringBuffer();
 
             buffer.append(" \t");
@@ -62,12 +69,12 @@ public class PatristicDistanceMatrix extends DistanceMatrix {
 
             buffer.append("\n");
             int i = 0;
-            for (int k = 0; k < dimension-1; k++) {
+            for (int k = 0; k < dimension; k++) {
                 buffer.append(tree.getNodeTaxon(tree.getExternalNode(k)));
                 for (int j = 0; j <= k; j++) {
                     buffer.append("\t");
                 }
-                for (int j = 0; j < dimension-k-2; j++) {
+                for (int j = 0; j < dimension-k-1; j++) {
                     buffer.append(String.valueOf(dists[i])).append("\t");
                     i += 1;
                 }
@@ -92,6 +99,8 @@ public class PatristicDistanceMatrix extends DistanceMatrix {
         NexusImporter importer = new NexusImporter(new FileReader(file));
 
         Tree[] trees = importer.importTrees(null);
+
+        System.out.println("Found " + trees.length + " trees.");
 
         for (Tree tree : trees) {
 

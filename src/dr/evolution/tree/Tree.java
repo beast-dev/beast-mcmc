@@ -329,7 +329,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		 * @param leafNodes a set of names
 		 * @return the NodeRef of the MRCA
 		 */
-		public static NodeRef getCommonAncestorNode(Tree tree, Set leafNodes) {
+		public static NodeRef getCommonAncestorNode(Tree tree, Set<String> leafNodes) {
 
 			int cardinality = leafNodes.size();
 
@@ -347,7 +347,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		 * Private recursive function used by getCommonAncestorNode.
 		 */
 		private static int getCommonAncestorNode(Tree tree, NodeRef node,
-		                                         Set leafNodes, int cardinality,
+		                                         Set<String> leafNodes, int cardinality,
 		                                         NodeRef[] mrca) {
 
 			if (tree.isExternal(node)) {

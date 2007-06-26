@@ -308,7 +308,7 @@
 				<coalescentLikelihood idref="coalescent"/>
 			</column>
 		</log>
-		<log id="fileLog" logEvery="1000" fileName="testRelaxedClock.log">
+		<log id="fileLog" logEvery="500" fileName="testRelaxedClock.log">
 			<posterior idref="posterior"/>
 			<parameter idref="ucld.mean"/>
 			<parameter idref="ucld.stdev"/>
@@ -321,7 +321,7 @@
 			<treeLikelihood idref="treeLikelihood"/>
 			<coalescentLikelihood idref="coalescent"/>
 		</log>
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testRelaxedClock.trees">
+		<logTree id="treeFileLog" logEvery="500" nexusFormat="true" fileName="testRelaxedClock.trees">
 			<treeModel idref="treeModel"/>
 			<discretizedBranchRates idref="branchRates"/>
 			<posterior idref="posterior"/>
@@ -370,4 +370,11 @@
         <expectation name="treeLikelihood" value="-3855.78"/>
         <expectation name="skyline" value="-72.0313"/>
     </traceAnalysis>
+
+    <treeTraceAnalysis fileName="testRelaxedClock.trees"/>
+
+    <marginalLikelihoodAnalysis fileName="testRelaxedClock.log">
+        <likelihoodColumn name="treeLikelihood" harmonicOnly="false" bootstrap="true"/>
+    </marginalLikelihoodAnalysis>
+
 </beast>

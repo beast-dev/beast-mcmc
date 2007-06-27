@@ -9064,7 +9064,7 @@
 				<parameter idref="hky1.kappa"/>
 			</column>
 		</log>
-		<log id="fileLog" logEvery="10" fileName="log-me.log">
+		<log id="fileLog" logEvery="10" fileName="Rokas.log">
 			<posterior idref="posterior"/>
 			<treeLikelihood idref="treeLikelihood1"/>
 			<treeLikelihood idref="treeLikelihood2"/>
@@ -9816,7 +9816,7 @@
 			<argTreeModel idref="treeModel"/>
 			<posterior idref="posterior"/>
 		</logArgTree>
-		<logArg logEvery="1000" dotFormat="true" fileName="YPR181C.args">
+		<logArg logEvery="1000" dotFormat="true" fileName="Rokas.args">
 			<argTreeModel idref="treeModel"/>
 		</logArg>
 	</mcmc>
@@ -9827,7 +9827,7 @@
 		</property>
 	</report>
 
-	<traceAnalysis fileName="log-me.log"/>
+	<traceAnalysis fileName="Rokas.log"/>
 	<treeTraceAnalysis fileName="YAL053W.trees" shortReport="true"/>
 	<treeTraceAnalysis fileName="YAR007C.trees" shortReport="true"/>
 	<treeTraceAnalysis fileName="YBL015W.trees" shortReport="true"/>

@@ -106,7 +106,7 @@ optimization based on a maximum likelihood criterion.
 
 In addition to phylogenetic inference, a number of researchers have
 recently developed Bayesian MCMC software for coalescent-based estimation
-of demographic parameters from genetic data \cite{DNRS2002,WWB2003,Beaumont1999,RY2003,PDNRR2003,Kuhner2006}.
+of demographic parameters from genetic data \cite{Beaumont1999,DNRS2002,WWB2003,RY2003,PDNRR2003,Kuhner2006}.
 Like phylogenetic analysis, these also require a gene tree in the
 underlying model, although in this setting, the sequences represent
 different individuals from the same species, rather than from different
@@ -249,6 +249,31 @@ can be compiled into a highly optimized library for a given platform
 providing an improvement in speed. If this library is not found, BEAST
 will use its Java version of these functions, thereby retaining its
 platform-independence. 
+
+\section{Example}
+
+We demonstrate some of the key features of a Bayesian analysis on a sample
+of 17 dengue virus serotype 4 sequences, isolated at dates ranging from 1956
+to 1994. Because this virus evolves at a rapid rate, the sampling times can be
+used by BEAST as calibrations to estimate the overall substitution rate and the
+divergence times in years. We analyze the data under two different substitution
+models and two different models of rates variation among branches: the strict
+clock and the uncorrelated lognormal-distributed relaxed molecular clock. We 
+use the constant population size coalescent as the tree prior. 
+\\\\
+\begin{tabular}{|c|c|c|l|}
+	\hline
+Clock Model & Substitution Model & Marginal Likelihood & Root height  \\
+	\hline
+Lognormal relaxed & GTR + CP & -3655.33 $\pm$ 0.11 & \\
+Strict & GTR + CP & -3656.13 $\pm$ 0.11 & \\
+Lognormal relaxed & GTR +  $\Gamma$ + I  & -3750.23 $\pm$ 0.11 & \\
+Strict & GTR + $\Gamma$ + I & -3751.37 $\pm$ 0.11 & \\
+	\hline
+\end{tabular}
+
+
+
 
 
 \section{Results and Discussion}

@@ -55,7 +55,7 @@ public class GammaStatistic extends AbstractTreeSummaryStatistic {
             }
         }
 
-        double gamma = ((T / 2.0) - (sum * (1.0 / n-2.0))) / T * Math.sqrt(1.0/(12.0*(n-2.0)));
+        double gamma = ((sum / (n-2.0)) - (T / 2.0)) / (T * Math.sqrt(1.0 / (12.0 * (n - 2.0))));
         return new double[] { gamma };
     }
 

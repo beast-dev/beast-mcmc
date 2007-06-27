@@ -138,11 +138,9 @@ public class PriorsPanel extends JPanel implements Exportable {
 		treePriorCombo.addItemListener(
 				new java.awt.event.ItemListener() {
 					public void itemStateChanged(java.awt.event.ItemEvent ev) {
-
-                        if (!settingOptions) frame.priorsChanged();
+						if (!settingOptions) frame.priorsChanged();
 						setupPanel();
-
-                    }
+					}
 				}
 		);
 		groupCountField.addKeyListener(new java.awt.event.KeyAdapter() {

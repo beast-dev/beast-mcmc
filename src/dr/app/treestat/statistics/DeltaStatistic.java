@@ -47,18 +47,18 @@ public class DeltaStatistic extends AbstractTreeSummaryStatistic {
 
         double T = 0; // total branch length
         for (int j = 2; j <= n; j++) {
-            T += j * g[j-2];
+            T += Binomial.choose2(j) * g[j-2];
         }
 
         double sum = 0.0;
-        for (int i = 2; i < n; i++) {
-            for (int k = 2; k <= i; k++) {
+        for (int i = n; i > 2; i--) {
+            for (int k = n; k >= i; k--) {
                 sum += Binomial.choose2(k) * g[k-2];
             }
         }
 
-        double gamma = ((T / 2.0) - (sum * (1.0 / n-2.0))) / T * Math.sqrt(1.0/(12.0*(n-2.0)));
-        return new double[] { gamma };
+        double delta = ((T / 2.0) - (sum * (1.0 / (n - 2.0)))) / (T * Math.sqrt(1.0/(12.0*(n - 2.0))));
+        return new double[] { delta };
     }
 
     /**

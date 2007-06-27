@@ -250,7 +250,7 @@ public class DataPanel extends JPanel implements Exportable {
                         options.originalAlignment);
             }
         }
-        
+
         setupTable();
 
         frame.dataChanged();

@@ -43,8 +43,18 @@ public class TreeStatApp {
             }
 
             String nameString = "TreeStat";
-            String aboutString = "Tree Statistic Calculation Tool\nVersion 1.1\n \nCopyright 2005-2006 Andrew Rambaut and Alexei Drummond\nUniversity of Oxford\nAll Rights Reserved.";
 
+            String aboutString = "<html><center><p>Tree Statistic Calculation Tool<br>" +
+                    "Version 1.1, 2005-2007</p>" +
+                    "<p>by<br>" +
+                    "Andrew Rambaut and Alexei J. Drummond</p>" +
+                    "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
+                    "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
+                    "<p>Department of Computer Science, University of Auckland<br>" +
+                    "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
+                    "<p>Visit the BEAST page:<br>" +
+                    "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
+                    "</center></html>";
 
             SingleDocApplication app = new SingleDocApplication(nameString, aboutString, icon);
 

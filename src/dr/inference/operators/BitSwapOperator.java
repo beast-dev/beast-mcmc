@@ -32,13 +32,17 @@ import dr.math.MathUtils;
 public class BitSwapOperator extends SimpleMCMCOperator {
 
     public static final String BIT_SWAP_OPERATOR = "bitSwapOperator";
+    public static final String RADIUS = "radius";
+
     private Parameter data;
     private Parameter indicators;
     private final boolean impliedOne;
+    private int radious;
 
-    public BitSwapOperator(Parameter data, Parameter indicators, int weight) {
+    public BitSwapOperator(Parameter data, Parameter indicators, int radius, int weight) {
         this.data = data;
         this.indicators = indicators;
+        this.radious = radius;
         setWeight(weight);
 
         final int iDim = indicators.getDimension();
@@ -61,6 +65,15 @@ public class BitSwapOperator extends SimpleMCMCOperator {
         return BIT_SWAP_OPERATOR;   // todo is that right, seems to conflict with bitSwap
     }
 
+//    private boolean allZeros(int start, int stop) {
+//        for (int i = start; i < stop; i++) {
+//            if( indicators.getStatisticValue(i) > 0 ) {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
+    
     public double doOperation() throws OperatorFailedException {
         final int dim = indicators.getDimension();
         if( dim < 2 ) {
@@ -68,36 +81,71 @@ public class BitSwapOperator extends SimpleMCMCOperator {
         }
         int nLoc = 0;
         int[] loc = new int[2*dim];
-        double prev = -1;
+        double hastingsRatio;
+        int pos;
+        int direction;
+
         int nOnes = 0;
-        for (int i = 0; i < dim; i++) {
-            final double value = indicators.getStatisticValue(i);
-            if( value > 0 ) {
-                ++nOnes;
-                if( i > 0 && prev == 0 ) {
-                    loc[nLoc] = -(i+1);
-                    ++nLoc;
-                }
-                if( i < dim-1 && indicators.getStatisticValue(i+1) == 0 ) {
-                   loc[nLoc] = (i+1);
+        if( radious > 0 ) {
+            for (int i = 0; i < dim; i++) {
+                final double value = indicators.getStatisticValue(i);
+                if( value > 0 ) {
+                    ++nOnes;
+                    loc[nLoc] = i;
                     ++nLoc;
                 }
             }
-            prev = value;
+
+            if( nOnes == 0 || nOnes == dim ) {
+                throw new OperatorFailedException("no swaps possible");  //??
+                //return 0;
+            }
+
+            hastingsRatio = 0.0;
+            final int rand = MathUtils.nextInt(nLoc);
+            pos = loc[rand];
+            direction = MathUtils.nextInt(2*radious);
+            direction -= radious - (direction < radious ? 0 : 1);
+            for (int i = direction > 0 ? pos+1 : pos + direction; i < (direction > 0 ? pos + direction + 1 : pos); i++) {
+               if( i < 0 || i >= dim || indicators.getStatisticValue(i) > 0 ) {
+                  throw new OperatorFailedException("swap faild");
+               }
+            }
+        } else {
+            double prev = -1;
+            for (int i = 0; i < dim; i++) {
+                final double value = indicators.getStatisticValue(i);
+                if( value > 0 ) {
+                    ++nOnes;
+                    if( i > 0 && prev == 0 ) {
+                        loc[nLoc] = -(i+1);
+                        ++nLoc;
+                    }
+                    if( i < dim-1 && indicators.getStatisticValue(i+1) == 0 ) {
+                        loc[nLoc] = (i+1);
+                        ++nLoc;
+                    }
+                }
+                prev = value;
+            }
+
+            if( nOnes == 0 || nOnes == dim ) {
+                return 0;
+            }
+
+            if( ! (nLoc > 0) ) {
+                // System.out.println(indicators);
+                assert false : indicators;
+            }
+
+            final int rand = MathUtils.nextInt(nLoc);
+            pos = loc[rand];
+            direction = pos < 0 ? -1 : 1;
+            pos = (pos < 0 ? -pos : pos) - 1;
+            final int maxOut = 2 * nOnes;
+
+            hastingsRatio = (maxOut == nLoc) ? 0.0 : Math.log((double)nLoc/maxOut);
         }
-
-        if( nOnes == 0 ) {
-            return 0;
-        }
-        assert nLoc > 0;
-
-        final int rand = MathUtils.nextInt(nLoc);
-        int pos = loc[rand];
-        int direction = pos < 0 ? -1 : 1;
-        pos = (pos < 0 ? -pos : pos) - 1;
-        final int maxOut = 2 * nOnes;
-
-        double hastingsRatio = maxOut == nLoc ? 0.0 : Math.log((double)nLoc/maxOut);
 
 //            System.out.println("swap " + pos + "<->" + nto + "  " +
 //                              indicators.getParameterValue(pos) +  "<->" + indicators.getParameterValue(nto) +
@@ -131,10 +179,28 @@ public class BitSwapOperator extends SimpleMCMCOperator {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final int weight = xo.getIntegerAttribute(WEIGHT);
-
             Parameter data = (Parameter )((XMLObject)xo.getChild(DATA)).getChild(Parameter.class);
             Parameter indicators = (Parameter)((XMLObject)xo.getChild(INDICATORS)).getChild(Parameter.class);
-            return new BitSwapOperator(data, indicators, weight);
+            int radius = -1;
+            
+            if( xo.hasAttribute(RADIUS) ) {
+                double rd = xo.getDoubleAttribute(RADIUS);
+
+                if( rd > 0 ) {
+                    if( rd < 1 ) {
+                        rd = Math.round(rd * indicators.getDimension());
+                    }
+                    radius = (int)Math.round(rd);
+                    if( ! (radius >= 1 && radius < indicators.getDimension()-1) ) {
+                       radius = -1;
+                    }
+                }
+                if( radius < 1 ) {
+                    throw new XMLParseException("invalid radius " + rd);
+                }
+            }
+
+            return new BitSwapOperator(data, indicators, radius, weight);
         }
 
         //************************************************************************

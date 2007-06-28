@@ -48,9 +48,10 @@ public class BitFlipOperator extends SimpleMCMCOperator {
 	/** @return the parameter this operator acts on. */
 	public Parameter getParameter() { return parameter; }
 
-	/** change the parameter and return the hastings ratio. 
-	 * performs a delta exchange operation between two scalars in the vector
-	 * and return the hastings ratio.
+	/** Change the parameter and return the hastings ratio.
+	 * Flip (Switch a 0 to 1 or 1 to 0) for a random bit in a bit vector.
+	 * Return the hastings ratio which makes all subsets of vectors with the same number of 1 bits
+     * equiprobable.
 	 */
 	public final double doOperation() {
         final int dim = parameter.getDimension();

@@ -82,7 +82,7 @@ public class WilsonBalding extends SimpleMCMCOperator {
 	 */
 	public void proposeTree()  throws OperatorFailedException {
 
-		NodeRef i = null, iP = null, j = null, k = null, PiP = null, CiP;
+		NodeRef i;
 		double delta, oldMinAge, newMinAge, newRange, oldRange, newAge, q;
 
 		//Bchoose
@@ -92,61 +92,68 @@ public class WilsonBalding extends SimpleMCMCOperator {
 		//}
 
 		// choose a random node avoiding root
-		do {
-			i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
+        final int nodeCount = tree.getNodeCount();
+        do {
+			i = tree.getNode(MathUtils.nextInt(nodeCount));
 		} while (tree.getRoot() == i);
-		iP = tree.getParent(i);
+		final NodeRef iP = tree.getParent(i);
 
 		// choose another random node to insert i above
-		j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-		k = tree.getParent(j);
+		NodeRef j = tree.getNode(MathUtils.nextInt(nodeCount));
+		NodeRef k = tree.getParent(j);
 
-		// make sure that the target branch <k, j> is above the subtree being moved
+
+        // make sure that the target branch <k, j> is above the subtree being moved
 		while ((k != null && tree.getNodeHeight(k) <= tree.getNodeHeight(i)) || (i == j)) {
-			j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
+			j = tree.getNode(MathUtils.nextInt(nodeCount));
 			k = tree.getParent(j);
 		}
 
-		if (k == iP || j == iP || k == i) throw new OperatorFailedException("move failed");
+        // disallow moves that change the root.
+        if (j == tree.getRoot() || iP == tree.getRoot()) {
+            throw new OperatorFailedException("Root changes not allowed!");
+        }
 
-		CiP = getOtherChild(tree, iP, i);
-		PiP = tree.getParent(iP);
+        if (k == iP || j == iP || k == i) throw new OperatorFailedException("move failed");
 
-		ConstantPopulation demoFunc = null;
-		if (demoModel != null && demoModel.getDemographicFunction() instanceof ConstantPopulation) {
-			demoFunc = (ConstantPopulation)demoModel.getDemographicFunction();
-		}
+		final NodeRef CiP = getOtherChild(tree, iP, i);
+		NodeRef PiP = tree.getParent(iP);
 
-		if (j == tree.getRoot()) {
-			if (demoModel != null) {
-				delta = -demoFunc.getN0() * Math.log(MathUtils.nextDouble());
-			} else {
-				delta = tree.getNodeHeight(j) * MathUtils.nextDouble();
-			}
-			newAge = tree.getNodeHeight(j) + delta;
+//		ConstantPopulation demoFunc = null;
+//		if (demoModel != null && demoModel.getDemographicFunction() instanceof ConstantPopulation) {
+//			demoFunc = (ConstantPopulation)demoModel.getDemographicFunction();
+//		}
 
-			PiP = tree.getParent(iP);
-			oldMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(CiP));
-			oldRange = tree.getNodeHeight(PiP) - oldMinAge;
-
-			if (demoFunc == null) {
-				q =  tree.getNodeHeight(j) / oldRange;
-			} else {
-				q = Math.exp(delta/demoFunc.getN0())*demoFunc.getN0()/oldRange;
-			}
-		} else if (iP == tree.getRoot()) {
-
-			newMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(j));
-			newRange = tree.getNodeHeight(k) - newMinAge;
-			newAge = newMinAge + (MathUtils.nextDouble()*newRange);
-
-			if (demoFunc == null) {
-				if (tree.getNodeHeight(iP) > (tree.getNodeHeight(CiP) * 2)) throw new OperatorFailedException("too big");
-				q = newRange / tree.getNodeHeight(CiP);
-			} else {
-				q = (tree.getNodeHeight(CiP)-tree.getNodeHeight(iP))/demoFunc.getN0() + Math.log(newRange/demoFunc.getN0());
-			}
-		} else {
+//        if (j == tree.getRoot()) {
+//			if (demoModel != null) {
+//				delta = -demoFunc.getN0() * Math.log(MathUtils.nextDouble());
+//			} else {
+//				delta = tree.getNodeHeight(j) * MathUtils.nextDouble();
+//			}
+//			newAge = tree.getNodeHeight(j) + delta;
+//
+//			PiP = tree.getParent(iP);
+//			oldMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(CiP));
+//			oldRange = tree.getNodeHeight(PiP) - oldMinAge;
+//
+//			if (demoFunc == null) {
+//				q = tree.getNodeHeight(j) / oldRange;
+//			} else {
+//				q = Math.exp(delta/demoFunc.getN0())*demoFunc.getN0()/oldRange;
+//			}
+//		} else if (iP == tree.getRoot()) {
+//
+//			newMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(j));
+//			newRange = tree.getNodeHeight(k) - newMinAge;
+//			newAge = newMinAge + (MathUtils.nextDouble()*newRange);
+//
+//			if (demoFunc == null) {
+//				if (tree.getNodeHeight(iP) > (tree.getNodeHeight(CiP) * 2)) throw new OperatorFailedException("too big");
+//				q = newRange / tree.getNodeHeight(CiP);
+//			} else {
+//				q = (tree.getNodeHeight(CiP)-tree.getNodeHeight(iP))/demoFunc.getN0() + Math.log(newRange/demoFunc.getN0());
+//			}
+//		} else {
 			newMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(j));
 			newRange = tree.getNodeHeight(k) - newMinAge;
 			newAge = newMinAge + (MathUtils.nextDouble()*newRange);
@@ -154,14 +161,9 @@ public class WilsonBalding extends SimpleMCMCOperator {
 			oldRange = tree.getNodeHeight(PiP) - oldMinAge;
 			q = newRange/Math.abs(oldRange);
 			//System.out.println(newRange + "/" + oldRange + "=" + q);
-		}
+//		}
 
 		//Bupdate
-
-		// disallow moves that change the root.
-		if (j == tree.getRoot() || iP == tree.getRoot()) {
-			throw new OperatorFailedException("Root changes not allowed!");
-		}
 
 		tree.beginTreeEdit();
 

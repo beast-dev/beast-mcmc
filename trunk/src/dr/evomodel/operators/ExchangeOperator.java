@@ -80,39 +80,36 @@ public class ExchangeOperator extends SimpleMCMCOperator {
 	 * WARNING: Assumes strictly bifurcating tree.
 	 */
 	public void narrow() throws OperatorFailedException {
+        final int nNodes = tree.getNodeCount();
+        final NodeRef root = tree.getRoot();
 
-		NodeRef i = null, iP = null, j = null, jP = null;
-		int tries = 0;
+        for(int tries = 0; tries < MAX_TRIES; ++tries) {
+            NodeRef i = tree.getNode(MathUtils.nextInt(nNodes));
 
-		//Echoose
-
-		while (tries < MAX_TRIES) {
-			i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-			while (tree.getRoot() == i || tree.getParent(i) == tree.getRoot()) {
-				i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
+            while (root == i || tree.getParent(i) == root) {
+				i = tree.getNode(MathUtils.nextInt(nNodes));
 			}
 
-			iP = tree.getParent(i);
-			jP = tree.getParent(iP);
-			j = tree.getChild(jP, 0);
-			if (j == iP) {
-				j = tree.getChild(jP, 1);
+			final NodeRef iParent = tree.getParent(i);
+			final NodeRef iGrandParent = tree.getParent(iParent);
+			NodeRef iUncle = tree.getChild(iGrandParent, 0);
+			if (iUncle == iParent) {
+				iUncle = tree.getChild(iGrandParent, 1);
 			}
 
-			if ((tree.getNodeHeight(j) < tree.getNodeHeight(iP)) && (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
-				break;
-			}
-			tries += 1;
+            assert tree.getNodeHeight(i) < tree.getNodeHeight(iGrandParent);
+
+            if ( tree.getNodeHeight(iUncle) < tree.getNodeHeight(iParent) ) {
+                eupdate(i, iUncle, iParent, iGrandParent);
+
+                tree.pushTreeChangedEvent(iParent);
+                tree.pushTreeChangedEvent(iGrandParent);
+                return;
+            }
 		}
 		//System.out.println("tries = " + tries);
 
-		//Eupdate
-		if (tries < MAX_TRIES) {
-			eupdate(i, j, iP, jP);
-
-			tree.pushTreeChangedEvent(iP);
-			tree.pushTreeChangedEvent(jP);
-		} else throw new OperatorFailedException("Couldn't find valid narrow move on this tree!!");
+        throw new OperatorFailedException("Couldn't find valid narrow move on this tree!!");
 	}
 
 	/**
@@ -120,38 +117,39 @@ public class ExchangeOperator extends SimpleMCMCOperator {
 	 */
 	public void wide() throws OperatorFailedException {
 
-		NodeRef i = null, iP = null, j = null, jP = null;
-		int tries = 0;
+        final int nodeCount = tree.getNodeCount();
+        final NodeRef root = tree.getRoot();
 
-		//Echoose
+        // I don't know how to prove this but it seems that there are exactly k(k-1) permissable pairs for k+1
+        // contemporaneous tips, and since the total is 2k * (2k-1) / 2, so the average number of tries is 2.
+        // With serial data the average number of tries can be made arbitrarily high as tree becomes less balanced.
+            
+        for(int tries = 0; tries < MAX_TRIES; ++tries) {
 
-		while (tries < MAX_TRIES) {
-			i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-			while (tree.getRoot() == i) {
-				i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
+            NodeRef i = tree.getNode(MathUtils.nextInt(nodeCount));
+
+            while (root == i) {
+				i = tree.getNode(MathUtils.nextInt(nodeCount));
 			}
 
-			j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-			while (j == i || j == tree.getRoot()) {
-				j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
+			NodeRef j = tree.getNode(MathUtils.nextInt(nodeCount));
+			while (j == i || j == root) {
+				j = tree.getNode(MathUtils.nextInt(nodeCount));
 			}
 
-			iP = tree.getParent(i);
-			jP = tree.getParent(j);
+			final NodeRef iP = tree.getParent(i);
+			final NodeRef jP = tree.getParent(j);
 
 			if ((iP != jP) && (i != jP) && (j != iP) &&
 				(tree.getNodeHeight(j) < tree.getNodeHeight(iP)) &&
 				(tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
-				break;
+                eupdate(i, j, iP, jP);
+                //System.out.println("tries = " + tries+1);
+                return;
 			}
-			tries += 1;
 		}
-		//System.out.println("tries = " + tries);
 
-		//Eupdate
-		if (tries < MAX_TRIES) {
-			eupdate(i, j, iP, jP);
-		} else throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
+        throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
 	}
 
 	public int getMode() {
@@ -162,7 +160,8 @@ public class ExchangeOperator extends SimpleMCMCOperator {
 		return ((mode == NARROW) ? "Narrow" : "Wide") + " Exchange";
 	}
 
-	private void eupdate(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP) throws OperatorFailedException {
+    /* exchange subtrees whose root are i and j */
+    private void eupdate(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP) throws OperatorFailedException {
 
 		tree.beginTreeEdit();
 		tree.removeChild(iP, i);

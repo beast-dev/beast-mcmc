@@ -223,7 +223,7 @@ public final class MarkovChain {
                     if (Math.abs(testScore - oldScore) >  1e-6) {
                         System.err.println("State was not correctly restored after reject step.");
                         System.err.println("Likelihood before: " + oldScore + " Likelihood after: " + testScore);
-
+                        System.err.println("Operator: " + mcmcOperator + " " + mcmcOperator.getOperatorName());
                         testFailureCount ++;
                     }
 
@@ -298,22 +298,21 @@ public final class MarkovChain {
         double logPosterior = 0.0;
 
         if (prior != null) {
-            double logPrior = prior.getLogPrior(likelihood.getModel());
+            final double logPrior = prior.getLogPrior(likelihood.getModel());
 
             if (logPrior == Double.NEGATIVE_INFINITY) {
                 return Double.NEGATIVE_INFINITY;
             }
 
-
             logPosterior += logPrior;
         }
 
-        double logLikelihood = likelihood.getLogLikelihood();
+        final double logLikelihood = likelihood.getLogLikelihood();
 
         if (Double.isNaN(logLikelihood)) {
             return Double.NEGATIVE_INFINITY;
         }
-
+        //System.err.println("** " + logPosterior + " + " + logLikelihood + " = " + (logPosterior + logLikelihood));
         logPosterior += logLikelihood;
 
         return logPosterior;

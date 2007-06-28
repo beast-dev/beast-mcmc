@@ -75,7 +75,7 @@ public class CompoundLikelihood implements Likelihood {
 
 	public final double getLogLikelihood() {
 		double logLikelihood = 0.0;
-
+        //System.err.println("mixed of " + likelihoods.size());
 		for (int i = 0; i < likelihoods.size(); i++) {
 			double l = getLikelihood(i).getLogLikelihood();
 
@@ -83,11 +83,12 @@ public class CompoundLikelihood implements Likelihood {
 			// This means that expensive likelihoods such as TreeLikelihoods should
 			// be put after cheap ones such as BooleanLikelihoods
 			if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
-
+            //System.err.println(getLikelihood(i) + " : " + l);
 			logLikelihood += l;
 		}
-
-		return logLikelihood;
+        //System.err.println("mixed end");
+        
+        return logLikelihood;
 	}
 
 	public void makeDirty() {

@@ -26,6 +26,7 @@
 package dr.inference.model;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An interface that describes a model of some data.
@@ -46,9 +47,12 @@ public class CompoundModel implements Model {
 	public void addModel(Model model) {
 		
 		if ( !models.contains(model) ) {
-		
 			models.add(model);
-		}
+            // add all listeners to this model
+            for( ModelListener ml : listeners ) {
+                 model.addModelListener(ml);
+            }
+        }
 	}
 	
 	public int getModelCount() {
@@ -59,12 +63,25 @@ public class CompoundModel implements Model {
 		return models.get(i);
 	}
 
-	public void addModelListener(ModelListener listener) {
-		throw new IllegalArgumentException("Compound models don't have listeners");
+
+    public void addModelListener(ModelListener listener) {
+        // add listener to all models comprizing this compund model - a change in any one of them
+        // menas the compund model changed
+
+        listeners.add(listener);
+        for( Model m : models ) {
+            m.addModelListener(listener);
+        }
+
+        //throw new IllegalArgumentException("Compound models don't have listeners");
 	}
 	
 	public void removeModelListener(ModelListener listener) {
-		throw new IllegalArgumentException("Compound models don't have listeners");
+        for( Model m : models ) {
+            m.removeModelListener(listener);
+        }
+        listeners.remove(listener);
+       // throw new IllegalArgumentException("Compound models don't have listeners");
 	}
 
 	public void storeModelState() {
@@ -157,7 +174,8 @@ public class CompoundModel implements Model {
 		};
 	};*/
 	
-	String name = null;
-	ArrayList<Model> models = new ArrayList<Model>();
+	private String name = null;
+	private ArrayList<Model> models = new ArrayList<Model>();
+    private List<ModelListener> listeners = new ArrayList<ModelListener>();
 }
 		

@@ -125,7 +125,7 @@ public class TreeIntervals implements IntervalList {
 
         if (lineages[interval] == null) {
 
-            List lines = new ArrayList();
+            List<Object> lines = new ArrayList<Object>();
             for (int i = 0; i <= interval; i++) {
                 if (lineagesAdded[i] != null) lines.addAll(lineagesAdded[i]);
                 if (lineagesRemoved[i] != null) lines.removeAll(lineagesRemoved[i]);
@@ -175,7 +175,7 @@ public class TreeIntervals implements IntervalList {
         if (getIntervalType(interval) == IntervalType.COALESCENT) {
             if (lineagesRemoved[interval] != null) {
                 if (lineagesRemoved[interval].size() == 1) {
-                    return (NodeRef)lineagesRemoved[interval].get(0);
+                    return lineagesRemoved[interval].get(0);
                 } else throw new IllegalArgumentException("multiple lineages lost over this interval!");
             } else throw new IllegalArgumentException("Inconsistent: no intervals lost over this interval!");
         } else throw new IllegalArgumentException("Interval " + interval + " is not a coalescent interval.");
@@ -323,12 +323,12 @@ public class TreeIntervals implements IntervalList {
 	}
 
     private void addLineage(int interval, NodeRef node) {
-        if (lineagesAdded[interval] == null) lineagesAdded[interval] = new ArrayList();
+        if (lineagesAdded[interval] == null) lineagesAdded[interval] = new ArrayList<NodeRef>();
         lineagesAdded[interval].add(node);
     }
 
     private void removeLineage(int interval, NodeRef node) {
-        if (lineagesRemoved[interval] == null) lineagesRemoved[interval] = new ArrayList();
+        if (lineagesRemoved[interval] == null) lineagesRemoved[interval] = new ArrayList<NodeRef>();
         lineagesRemoved[interval].add(node);
     }
 
@@ -379,8 +379,8 @@ public class TreeIntervals implements IntervalList {
     /**
      * The lineages in each interval (stored by node ref).
      */
-    private List[] lineagesAdded;
-    private List[] lineagesRemoved;
+    private List<NodeRef>[] lineagesAdded;
+    private List<NodeRef>[] lineagesRemoved;
     private List[] lineages;
 
 	private int intervalCount = 0;

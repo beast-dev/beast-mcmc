@@ -32,6 +32,9 @@ import dr.xml.*;
 
 /**
  * A generic scale operator for use with a multi-dimensional parameters.
+ * Either scale all dimentions at once or scale one dimention at a time.
+ * An optional bit vector and a threshold is used to vary the rate of the individual dimentions according
+ * to their on/off status. For example a threshold of 1 means pick only "on" dimentions.
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -46,8 +49,8 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 	private Parameter indicator;
 	private double indicatorOnProb;
 
-	public ScaleOperator(Parameter parameter, boolean scaleAll, int degreesOfFreedom, double scale, int weight, int mode, Parameter indicator,
-	                     double indicatorOnProb) {
+	public ScaleOperator(Parameter parameter, boolean scaleAll, int degreesOfFreedom, double scale, int weight,
+                         int mode, Parameter indicator, double indicatorOnProb) {
 		this.parameter = parameter;
 		this.indicator = indicator;
 		this.indicatorOnProb = indicatorOnProb;
@@ -79,46 +82,45 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 		final int dim = parameter.getDimension();
 		if (scaleAll) {
 			// update all dimensions
-			// hasting ratio is dim-2 times of 1dim case. why?
-			if (degreesOfFreedom > 0)
+			// hasting ratio is dim-2 times of 1dim case. would be nice to have a reference here
+            // for the proof. It is supposed to be somewhere in an Alexei/Nicholes article.
+            if (degreesOfFreedom > 0)
 				logq = -degreesOfFreedom * Math.log(scale);     // For parameters with non-uniform prior on only one dimension
 			else
-				logq = (parameter.getDimension() - 2) * Math.log(scale);      // TODO is this correct????
+				logq = (parameter.getDimension() - 2) * Math.log(scale);
 
 			for (int i = 0; i < dim; i++) {
-				parameter.setParameterValue(i, parameter.getParameterValue(i) * scale);
-			}
-			// why after changing? in the 1dim it is doen before?
-			for (int i = 0; i < dim; i++) {
-				final double parameterValue = parameter.getParameterValue(i);
-				if (parameterValue < bounds.getLowerLimit(i) ||
-						parameterValue > bounds.getUpperLimit(i)) {
+                final double value = parameter.getParameterValue(i) * scale;
+                if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
 					throw new OperatorFailedException("proposed value outside boundaries");
 				}
+                parameter.setParameterValue(i, value);
 			}
 		} else {
+            logq = -Math.log(scale);
 
-			logq = -Math.log(scale);
+            // which bit to scale
+            int index;
+            if (indicator != null) {
+                final int idim = indicator.getDimension();
+                final boolean impliedOne = idim == (dim - 1);
+                // available bit locations
+                int[] loc = new int[idim+1];
+                int nLoc = 0;
+                // choose active or non active ones?
+                final boolean takeOne = indicatorOnProb >= 1.0 || MathUtils.nextDouble() < indicatorOnProb;
 
-			int index;
-			if (indicator != null) {
-				final int idim = indicator.getDimension();
-				final boolean impliedOne = idim == dim - 1;
-				int[] loc = new int[idim];
-				int nLoc = 0;
-				final boolean takeOne = MathUtils.nextDouble() < indicatorOnProb;
-
-				if (impliedOne && takeOne) {
-					loc[nLoc] = 0;
-					++nLoc;
-				}
-				for (int i = 0; i < idim; i++) {
-					final double value = indicator.getStatisticValue(i);
-					if (takeOne == value > 0) {
-						loc[nLoc] = i + (impliedOne ? 1 : 0);
-						++nLoc;
-					}
-				}
+                if( impliedOne && takeOne ) {
+                    loc[nLoc] = 0;
+                    ++nLoc;
+                }
+                for (int i = 0; i < idim; i++) {
+                    final double value = indicator.getStatisticValue(i);
+                    if( takeOne == (value > 0) ) {
+                        loc[nLoc] = i + (impliedOne ? 1 : 0);
+                        ++nLoc;
+                    }
+                }
 
 				if (nLoc > 0) {
 					final int rand = MathUtils.nextInt(nLoc);
@@ -126,16 +128,15 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 				} else {
 					throw new OperatorFailedException("no active indicators");
 				}
-
 			} else {
-				index = MathUtils.nextInt(dim);
+                // any is good
+                index = MathUtils.nextInt(dim);
 			}
 
 			final double oldValue = parameter.getParameterValue(index);
 			final double newValue = scale * oldValue;
 
-			if (newValue < bounds.getLowerLimit(index) ||
-					newValue > bounds.getUpperLimit(index)) {
+			if (newValue < bounds.getLowerLimit(index) || newValue > bounds.getUpperLimit(index)) {
 				throw new OperatorFailedException("proposed value outside boundaries");
 			}
 
@@ -246,30 +247,31 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 			}
 
 			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-					mode = CoercableMCMCOperator.COERCION_ON;
-				} else {
-					mode = CoercableMCMCOperator.COERCION_OFF;
-				}
-			}
+					mode = xo.getBooleanAttribute(AUTO_OPTIMIZE) ?
+                            CoercableMCMCOperator.COERCION_ON : CoercableMCMCOperator.COERCION_OFF;
+            }
 
-			int weight = xo.getIntegerAttribute(WEIGHT);
-			double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+			final int weight = xo.getIntegerAttribute(WEIGHT);
+			final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
 			if (scaleFactor <= 0.0 || scaleFactor >= 1.0) {
 				throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
 			}
 
-			Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+			final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
 			Parameter indicator = null;
-			final XMLObject cxo = (XMLObject) xo.getChild("indicators");
-			double indicatorOnProb = 1.0;
+            double indicatorOnProb = 1.0;
+            final XMLObject cxo = (XMLObject) xo.getChild("indicators");
+
 			if (cxo != null) {
 				indicator = (Parameter) cxo.getChild(Parameter.class);
 				if (cxo.hasAttribute("pickoneprob")) {
 					indicatorOnProb = cxo.getDoubleAttribute("pickoneprob");
-				}
+                    if( ! (0 <= indicatorOnProb && indicatorOnProb <= 1) ) {
+                        throw new XMLParseException("pickoneprob must be between 0.0 and 1.0");
+                    }
+                }
 			}
 			return new ScaleOperator(parameter, scaleAll, degreesOfFreedom, scaleFactor, weight, mode, indicator, indicatorOnProb);
 		}

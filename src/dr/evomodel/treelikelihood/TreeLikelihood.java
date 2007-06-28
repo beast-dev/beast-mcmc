@@ -236,8 +236,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      */
     protected double calculateLogLikelihood() {
 
-        NodeRef root = treeModel.getRoot();
-
         if (rootPartials == null) {
             rootPartials = new double[patternCount * stateCount];
         }
@@ -255,6 +253,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             }
         }
 
+        final NodeRef root = treeModel.getRoot();
         traverse(treeModel, root);
 
         //********************************************************************
@@ -278,7 +277,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * Traverse the tree calculating partial likelihoods.
      * @return whether the partials for this node were recalculated.
      */
-    private final boolean traverse(Tree tree, NodeRef node) {
+    private boolean traverse(Tree tree, NodeRef node) {
 
         boolean update = false;
 

@@ -44,11 +44,11 @@ import dr.app.treestat.statistics.TreeSummaryStatistic;
 public class TreeStatFrame extends DocumentFrame {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = -1775448072034877658L;
+     *
+     */
+    private static final long serialVersionUID = -1775448072034877658L;
 
-	private TreeStatData treeStatData = null;
+    private TreeStatData treeStatData = null;
 
     private JTabbedPane tabbedPane = new JTabbedPane();
 
@@ -139,8 +139,8 @@ public class TreeStatFrame extends DocumentFrame {
     public final void doImport() {
 
         FileDialog dialog = new FileDialog(this,
-                                       "Import Tree File...",
-                                       FileDialog.LOAD);
+                "Import Tree File...",
+                FileDialog.LOAD);
 
         dialog.setVisible(true);
         if (dialog.getFile() != null) {
@@ -151,20 +151,20 @@ public class TreeStatFrame extends DocumentFrame {
 
             } catch (Importer.ImportException ie) {
                 JOptionPane.showMessageDialog(this, "Unable to read tree file: " + ie,
-                                                            "Unable to read tree file",
-                                                            JOptionPane.ERROR_MESSAGE);
+                        "Unable to read tree file",
+                        JOptionPane.ERROR_MESSAGE);
             } catch (FileNotFoundException fnfe) {
                 JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-                                                            "Unable to open file",
-                                                            JOptionPane.ERROR_MESSAGE);
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
             } catch (IOException ioe) {
                 JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe,
-                                                            "Unable to read file",
-                                                            JOptionPane.ERROR_MESSAGE);
+                        "Unable to read file",
+                        JOptionPane.ERROR_MESSAGE);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, "Error: " + e,
-                                                            "Error",
-                                                            JOptionPane.ERROR_MESSAGE);
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -197,8 +197,8 @@ public class TreeStatFrame extends DocumentFrame {
     public final void doExport() {
 
         FileDialog inDialog = new FileDialog(this,
-                                       "Import Tree File...",
-                                       FileDialog.LOAD);
+                "Import Tree File...",
+                FileDialog.LOAD);
 
         inDialog.setVisible(true);
         if (inDialog.getFile() != null) {
@@ -206,8 +206,8 @@ public class TreeStatFrame extends DocumentFrame {
 
 
             FileDialog outDialog = new FileDialog(this,
-                                           "Save Log File As...",
-                                           FileDialog.SAVE);
+                    "Save Log File As...",
+                    FileDialog.SAVE);
 
             outDialog.setVisible(true);
             if (outDialog.getFile() != null) {
@@ -219,20 +219,20 @@ public class TreeStatFrame extends DocumentFrame {
 
                 } catch (FileNotFoundException fnfe) {
                     JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-                                                                "Unable to open file",
-                                                                JOptionPane.ERROR_MESSAGE);
+                            "Unable to open file",
+                            JOptionPane.ERROR_MESSAGE);
                 } catch (IOException ioe) {
                     JOptionPane.showMessageDialog(this, "Unable to read/write file: " + ioe,
-                                                                "Unable to read/write file",
-                                                                JOptionPane.ERROR_MESSAGE);
+                            "Unable to read/write file",
+                            JOptionPane.ERROR_MESSAGE);
                 } catch (Importer.ImportException ie) {
                     JOptionPane.showMessageDialog(this, "Unable to import file: " + ie,
-                                                                "Unable to import tree file",
-                                                                JOptionPane.ERROR_MESSAGE);
+                            "Unable to import tree file",
+                            JOptionPane.ERROR_MESSAGE);
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(this, "Error: " + e,
-                                                                "Error",
-                                                                JOptionPane.ERROR_MESSAGE);
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -242,97 +242,125 @@ public class TreeStatFrame extends DocumentFrame {
 
         processTreeFileAction.setEnabled(false);
 
-        BufferedReader reader = new BufferedReader(new FileReader(inFile));
-        String line = reader.readLine();
-        TreeImporter importer = null;
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(inFile));
+            String line = reader.readLine();
+            if (line == null) {
+                throw new IOException("File is empty");  
+            }
+            TreeImporter importer = null;
 
 
-        if (line.toUpperCase().startsWith("#NEXUS")) {
-            importer = new NexusImporter(reader);
-        } else {
-            reader.close();
-            reader = new BufferedReader(new FileReader(inFile));
-            importer = new NewickImporter(reader);
-        }
-
-        Tree tree = importer.importNextTree();
-        boolean isUltrametric = Tree.Utils.isUltrametric(tree);
-        boolean isBinary = Tree.Utils.isBinary(tree);
-        boolean stop = false;
-
-        // check that the trees conform with the requirements of the selected statistics
-        for (int i = 0; i < treeStatData.statistics.size(); i++) {
-            TreeSummaryStatistic tss = (TreeSummaryStatistic)treeStatData.statistics.get(i);
-            String label = tss.getSummaryStatisticName();
-
-            if (!isUltrametric && !tss.allowsNonultrametricTrees()) {
-                if (JOptionPane.showConfirmDialog(
-                        this, "Warning: These trees may not be ultrametric and this is\na requirement of the " +
-                        label + " statistic. Do you wish to continue?", "Warning", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
-                    stop = true;
-                    break;
-                }
-                // don't ask the question again...
-                isUltrametric = true;
+            if (line.toUpperCase().startsWith("#NEXUS")) {
+                importer = new NexusImporter(reader);
+            } else {
+                reader.close();
+                reader = new BufferedReader(new FileReader(inFile));
+                importer = new NewickImporter(reader);
             }
 
-            if (!isBinary && !tss.allowsPolytomies()) {
-                if (JOptionPane.showConfirmDialog(
-                        this, "Warning: These trees may not be strictly bifurcating and this is\na requirement of the " +
-                        label + " statistic. Do you wish to continue?", "Warning", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
-                    stop = true;
-                    break;
-                }
-                // don't ask the question again...
-                isBinary = true;
-            }
-        }
+            Tree tree = importer.importNextTree();
+            boolean isUltrametric = Tree.Utils.isUltrametric(tree);
+            boolean isBinary = Tree.Utils.isBinary(tree);
+            boolean stop = false;
 
-        if (stop) {
-            processTreeFileAction.setEnabled(true);
-            return;
-        }
-
-        PrintWriter writer = new PrintWriter(new FileWriter(outFile));
-
-        writer.print("state");
-        for (int i = 0; i < treeStatData.statistics.size(); i++) {
-            TreeSummaryStatistic tss = (TreeSummaryStatistic)treeStatData.statistics.get(i);
-
-            int dim = tss.getStatisticDimensions(tree);
-            for (int j = 0; j < dim; j++) {
-                writer.print("\t" + tss.getStatisticLabel(tree, j));
-            }
-
-        }
-        writer.println();
-
-        int state = 0;
-        do {
-            writer.print(state);
-
+            // check that the trees conform with the requirements of the selected statistics
             for (int i = 0; i < treeStatData.statistics.size(); i++) {
                 TreeSummaryStatistic tss = (TreeSummaryStatistic)treeStatData.statistics.get(i);
-                double[] stats = tss.getSummaryStatistic(tree);
-                for (int j = 0; j < stats.length; j++) {
-                    writer.print("\t" + stats[j]);
+                String label = tss.getSummaryStatisticName();
+
+                if (!isUltrametric && !tss.allowsNonultrametricTrees()) {
+                    if (JOptionPane.showConfirmDialog(
+                            this, "Warning: These trees may not be ultrametric and this is\na requirement of the " +
+                            label + " statistic. Do you wish to continue?", "Warning", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+                        stop = true;
+                        break;
+                    }
+                    // don't ask the question again...
+                    isUltrametric = true;
+                }
+
+                if (!isBinary && !tss.allowsPolytomies()) {
+                    if (JOptionPane.showConfirmDialog(
+                            this, "Warning: These trees may not be strictly bifurcating and this is\na requirement of the " +
+                            label + " statistic. Do you wish to continue?", "Warning", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+                        stop = true;
+                        break;
+                    }
+                    // don't ask the question again...
+                    isBinary = true;
                 }
             }
-            writer.println();
-            state += 1;
 
-            progressLabel.setText("Processing Tree " + state + "...");
-
-            if (state == 82) {
-                System.out.println();
+            if (stop) {
+                processTreeFileAction.setEnabled(true);
+                return;
             }
-            tree = importer.importNextTree();
-        } while (tree != null);
+            progressLabel.setText("Processing Trees...");
 
-        reader.close();
-        writer.close();
+            PrintWriter writer = new PrintWriter(new FileWriter(outFile));
 
-        progressLabel.setText("" + state + " trees processed.");
+            writer.print("state");
+            for (int i = 0; i < treeStatData.statistics.size(); i++) {
+                TreeSummaryStatistic tss = (TreeSummaryStatistic)treeStatData.statistics.get(i);
+
+                int dim = tss.getStatisticDimensions(tree);
+                for (int j = 0; j < dim; j++) {
+                    writer.print("\t" + tss.getStatisticLabel(tree, j));
+                }
+
+            }
+            writer.println();
+
+            int state = 0;
+            do {
+                writer.print(state);
+
+                for (int i = 0; i < treeStatData.statistics.size(); i++) {
+                    TreeSummaryStatistic tss = (TreeSummaryStatistic)treeStatData.statistics.get(i);
+                    double[] stats = tss.getSummaryStatistic(tree);
+                    for (int j = 0; j < stats.length; j++) {
+                        writer.print("\t" + stats[j]);
+                    }
+                }
+                writer.println();
+                state += 1;
+
+                progressLabel.setText("Processing Tree " + state + "...");
+
+                if (state == 82) {
+                    System.out.println();
+                }
+                tree = importer.importNextTree();
+            } while (tree != null);
+
+            reader.close();
+            writer.close();
+
+            progressLabel.setText("" + state + " trees processed.");
+
+        } catch (Importer.ImportException ie) {
+            JOptionPane.showMessageDialog(this, "Unable to read tree file: " + ie,
+                    "Unable to read tree file",
+                    JOptionPane.ERROR_MESSAGE);
+            progressLabel.setText("Processing failed.");
+        } catch (FileNotFoundException fnfe) {
+            JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                    "Unable to open file",
+                    JOptionPane.ERROR_MESSAGE);
+            progressLabel.setText("Processing failed.");
+        } catch (IOException ioe) {
+            JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe,
+                    "Unable to read file",
+                    JOptionPane.ERROR_MESSAGE);
+            progressLabel.setText("Processing failed.");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e,
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            progressLabel.setText("Processing failed.");
+        }
         processTreeFileAction.setEnabled(true);
     }
 
@@ -345,27 +373,27 @@ public class TreeStatFrame extends DocumentFrame {
         return statisticsPanel.getExportableComponent();
     }
 
-      protected AbstractAction importTaxaAction = new AbstractAction("Import Taxa...") {
-          /**
-		 * 
-		 */
-		private static final long serialVersionUID = -3185667996732228702L;
+    protected AbstractAction importTaxaAction = new AbstractAction("Import Taxa...") {
+        /**
+         *
+         */
+        private static final long serialVersionUID = -3185667996732228702L;
 
-		public void actionPerformed(java.awt.event.ActionEvent ae) {
-              doImport();
-          }
-      };
+        public void actionPerformed(java.awt.event.ActionEvent ae) {
+            doImport();
+        }
+    };
 
-      protected AbstractAction processTreeFileAction = new AbstractAction("Process Tree File...", gearIcon) {
-          /**
-		 * 
-		 */
-		private static final long serialVersionUID = -8285433136692586532L;
+    protected AbstractAction processTreeFileAction = new AbstractAction("Process Tree File...", gearIcon) {
+        /**
+         *
+         */
+        private static final long serialVersionUID = -8285433136692586532L;
 
-		public void actionPerformed(java.awt.event.ActionEvent ae) {
-              doExport();
-          }
-      };
+        public void actionPerformed(java.awt.event.ActionEvent ae) {
+            doExport();
+        }
+    };
 
     TreeImporter treeImporter;
 }

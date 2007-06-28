@@ -68,7 +68,8 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 	public final double doOperation() throws OperatorFailedException {
 		
 		// get two dimensions
-		int dim1 = MathUtils.nextInt(parameter.getDimension());
+        final int dim = parameter.getDimension();
+        final int dim1 = MathUtils.nextInt(dim);
 		int dim2 = MathUtils.nextInt(parameter.getDimension());
 		while (dim1 == dim2) {
 			dim2 = MathUtils.nextInt(parameter.getDimension());
@@ -78,7 +79,7 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 		double scalar2 = parameter.getParameterValue(dim2);
 		
 		// exchange a random delta
-		double d = MathUtils.nextDouble() * delta;
+		final double d = MathUtils.nextDouble() * delta;
 		scalar1 -= d; 
         if (parameterWeights[dim1] != parameterWeights[dim2]) {
             scalar2 += d * (double)parameterWeights[dim1] / (double)parameterWeights[dim2];
@@ -184,12 +185,12 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 			Parameter parameter = (Parameter)xo.getChild(Parameter.class);	
 
 
-            int[] parameterWeights = null;
+            int[] parameterWeights;
             if (xo.hasAttribute(PARAMETER_WEIGHTS)) {
                 parameterWeights = xo.getIntegerArrayAttribute(PARAMETER_WEIGHTS);
                 System.out.print("Parameter weights for delta exchange are: ");
-                for (int i = 0; i < parameterWeights.length; i++) {
-                    System.out.print(parameterWeights[i] + "\t");
+                for (int parameterWeight : parameterWeights) {
+                    System.out.print(parameterWeight + "\t");
                 }
                 System.out.println();
 

@@ -169,7 +169,7 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 			// set the population size to the size of the middle of the current interval
 		    	double ps = getPopSize(groupIndex, currentTime + (intervals[j]/2.0), groupEnds);
 			cp.setN0(getPopSize(groupIndex, currentTime + (intervals[j]/2.0), groupEnds));
-			if (getIntervalType(j) == COALESCENT) {
+			if (getIntervalType(j) == CoalescentEventType.COALESCENT) {
 				subIndex += 1;
 				if (subIndex >= groupSizes[groupIndex]) {
 					groupIndex += 1;
@@ -183,7 +183,8 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 			int diff = getCoalescentEvents(j)-1;
 			for (int k = 0; k < diff; k++) {
 				cp.setN0(getPopSize(groupIndex, currentTime, groupEnds));
-				logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j]-k-1, COALESCENT);
+				logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j]-k-1,
+                        CoalescentEventType.COALESCENT);
 				subIndex += 1;
 				if (subIndex >= groupSizes[groupIndex]) {
 					groupIndex += 1;
@@ -219,7 +220,7 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
                 double m = (endGroupPopSize-startGroupPopSize)/(endGroupTime-startGroupTime);
 
                 // calculate the population size at midTime using linear interpolation
-                double midPopSize = (m * (midTime-startGroupTime)) + startGroupPopSize;
+                final double midPopSize = (m * (midTime-startGroupTime)) + startGroupPopSize;
 
                 return midPopSize;
         } else {
@@ -245,11 +246,11 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 		return groupSizes;
 	}
 
-	private final int getGroupCount() {
+	private  int getGroupCount() {
 		return groupSizeParameter.getDimension();
 	}
 
-	private final int getGroupSize(int groupIndex) {
+	private  int getGroupSize(int groupIndex) {
         double g = groupSizeParameter.getParameterValue(groupIndex);
         if (g != Math.round(g)) {
             throw new RuntimeException("Group size " + groupIndex + " should be integer but found:" + g);
@@ -268,7 +269,7 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 
             timeEnd += intervals[i];
 
-            if (getIntervalType(i) == COALESCENT) {
+            if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
                 subIndex += 1;
                 if (subIndex >= getGroupSize(groupIndex)) {
                     groupEnds[groupIndex] = timeEnd;
@@ -282,7 +283,7 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
         return groupEnds;
     }
 
-    private final double getGroupHeight(int groupIndex) {
+    private double getGroupHeight(int groupIndex) {
         return getGroupHeights()[groupIndex];
     }
 
@@ -296,8 +297,8 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 
     final public Parameter getGroupSizeParameter() {
 	return groupSizeParameter;
-    }	
-    
+    }
+
     // ****************************************************************
     // Inner classes
     // ****************************************************************
@@ -325,23 +326,23 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 		public String getParserName() { return SKYLINE_LIKELIHOOD; }
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-		    
+
 		    XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZES);
 		    Parameter param = (Parameter)cxo.getChild(Parameter.class);
-		    
+
 		    cxo = (XMLObject)xo.getChild(GROUP_SIZES);
 		    Parameter param2 = (Parameter)cxo.getChild(Parameter.class);
-		    
+
 		    cxo = (XMLObject)xo.getChild(POPULATION_TREE);
 		    TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
-		    
+
 		    int type = LINEAR_TYPE;
 		    String typeName = LINEAR;
 		    if (xo.hasAttribute(LINEAR) &&!xo.getBooleanAttribute(LINEAR)) {
 			type = STEPWISE_TYPE;
 			typeName = STEPWISE;
 		    }
-		    
+
 		    if (xo.hasAttribute(TYPE)) {
 			if (xo.getStringAttribute(TYPE).equalsIgnoreCase(STEPWISE)) {
 			    type = STEPWISE_TYPE;
@@ -355,7 +356,7 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 			}
 			else throw new XMLParseException("Unknown Bayesian Skyline type: " + xo.getStringAttribute(TYPE));
 		    }
-		    
+
 		    Logger.getLogger("dr.evomodel").info("Bayesian skyline plot: " + param.getDimension() + " " + typeName + " control points");
 
 		    return new BayesianSkylineLikelihood(treeModel, param, param2, type);

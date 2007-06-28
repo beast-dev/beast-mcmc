@@ -99,7 +99,7 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         for (int j = 0; j < intervalCount; j++) {
 
             cp.setN0(popSizeParameter.getParameterValue(popIndex));
-            if (getIntervalType(j) == COALESCENT) {
+            if (getIntervalType(j) == CoalescentEventType.COALESCENT) {
                 popIndex += 1;
             }
 
@@ -109,7 +109,7 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
             int diff = getCoalescentEvents(j) - 1;
             for (int k = 0; k < diff; k++) {
                 cp.setN0(popSizeParameter.getParameterValue(popIndex));
-                logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j] - k - 1, COALESCENT);
+                logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j] - k - 1, CoalescentEventType.COALESCENT);
                 popIndex += 1;
             }
 

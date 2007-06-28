@@ -54,9 +54,7 @@ public class PiecewisePopulationModel extends DemographicModel
 	 * Construct demographic model with default settings
 	 */
 	public PiecewisePopulationModel(Parameter N0Parameter, double[] epochLengths, boolean linear, Type units) {
-	
 		this(PIECEWISE_POPULATION, N0Parameter, epochLengths, linear, units);
-		
 	}
 
 	/**
@@ -88,10 +86,7 @@ public class PiecewisePopulationModel extends DemographicModel
 			piecewiseFunction = new PiecewiseConstantPopulation(epochLengths, new double[N0Parameter.getDimension()], units);
 		}
 	}
-	
-	/**
-	 * 
-	 */
+
 	public DemographicFunction getDemographicFunction() {
 		for (int i = 0; i < N0Parameter.getDimension(); i++) {
 			piecewiseFunction.setArgument(i, N0Parameter.getParameterValue(i));

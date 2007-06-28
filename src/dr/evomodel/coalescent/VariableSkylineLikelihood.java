@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.coalescent.ConstantPopulation;
+import dr.evolution.coalescent.Coalescent;
 import dr.evolution.util.Units;
 import dr.inference.model.Parameter;
 import dr.inference.model.Likelihood;
@@ -47,7 +48,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
 
     // PUBLIC STUFF
 
-    public static final String SKYLINE_LIKELIHOOD = "variableSkyLineLikelihood";
+    public static final String SKYLINE_LIKELIHOOD = "ovariableSkyLineLikelihood";
     public static final String POPULATION_SIZES = "populationSizes";
     public static final String INDICATOR_PARAMETER = "indicators";
     public static final String LOG_SPACE = "logUnits";
@@ -64,14 +65,16 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
         EXPONENTIAL
     }
 
-    public VariableSkylineLikelihood(Tree tree, Parameter popSizeParameter, Parameter indicatorParameter, Type type, boolean logSpace) {
+    public VariableSkylineLikelihood(Tree tree, Parameter popSizeParameter, Parameter indicatorParameter,
+                                     Type type, boolean logSpace) {
         super(SKYLINE_LIKELIHOOD);
 
         this.popSizeParameter = popSizeParameter;
         this.indicatorParameter = indicatorParameter;
-        int events = tree.getExternalNodeCount() - 1;
-        int paramDim1 = popSizeParameter.getDimension();
-        int paramDim2 = indicatorParameter.getDimension();
+        final int redcueDim = type == Type.STEPWISE ? 1 : 0;
+        final int events = tree.getExternalNodeCount() - redcueDim;
+        final int paramDim1 = popSizeParameter.getDimension();
+        final int paramDim2 = indicatorParameter.getDimension();
         this.type = type;
         this.logSpace = logSpace;
 
@@ -105,16 +108,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
      */
     public synchronized double getLogLikelihood() {
 
-       if( !intervalsKnown ) {
-//            System.out.println("**" + intervalsKnown);
-//            assert !intervalsKnown;
-            setupIntervals();
-           groupsValid = false;
-        }
-
-        if( ! groupsValid ) {
-          calculateGroupSizesHeightsAndEnds();
-        }
+        insureValid();
 
         double logL = 0.0;
 
@@ -125,15 +119,28 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
 
         // how many intervals precessed in the current group - tell when to switch to next group
         int subIndex = 0;
-
         ConstantPopulation cp = new ConstantPopulation(Units.Type.YEARS);
+
+        final double[] pop = new double[1];
+        if( type == Type.LINEAR ) {
+            cp = new ConstantPopulation(Units.Type.YEARS) {
+                public double getDemographic(double t) {
+                    return pop[0];
+                }
+            };
+        }
+
+        if( Coalescent.detaildPrint ) { System.err.println("Old:"); }
 
         for (int j = 0; j < intervalCount; j++) {
 
             // set the population size to the size of the middle of the current interval
+            if( type == Type.LINEAR ) {
+                pop[0] = getPopSize(groupIndex, currentTime + intervals[j]);
+            }
             cp.setN0(getPopSize(groupIndex, currentTime + (intervals[j] / 2.0)));
-            final int iType = getIntervalType(j);
-            if (iType == COALESCENT) {
+            final CoalescentEventType iType = getIntervalType(j);
+            if (iType == CoalescentEventType.COALESCENT) {
                 subIndex += 1;
                 if (subIndex >= groupSizes.get(groupIndex)) {
                     groupIndex += 1;
@@ -143,11 +150,20 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
 
             logL += calculateIntervalLikelihood(cp, intervals[j], currentTime, lineageCounts[j], iType);
 
+            if( Coalescent.detaildPrint ) { System.err.println(" lgl " + logL); }
+
+            if( logL > 0 && j > 1 ) {
+                System.out.println(logL);
+            }
+
             // insert zero-length coalescent intervals
             final int diff = getCoalescentEvents(j) - 1;
             for (int k = 0; k < diff; k++) {
-                cp.setN0(getPopSize(groupIndex, currentTime));
-                logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j] - k - 1, COALESCENT);
+                // not clear, seems wrong - how can population size change in 0 time?
+                pop[0] = getPopSize(groupIndex, currentTime);
+                cp.setN0(pop[0]);
+                logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j] - k - 1,
+                        CoalescentEventType.COALESCENT);
                 subIndex += 1;
                 if (subIndex >= groupSizes.get(groupIndex)) {
                     groupIndex += 1;
@@ -161,13 +177,69 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
         return logL;
     }
 
+    private void insureValid() {
+        if( !intervalsKnown ) {
+            //            System.out.println("**" + intervalsKnown);
+            //            assert !intervalsKnown;
+            setupIntervals();
+            groupsValid = false;
+        }
+
+        if( ! groupsValid ) {
+            calculateGroupSizesHeightsAndEnds();
+            popPoints = null;
+        }
+    }
+
+    private double[] popPoints = null;
+
+    public double[] getPopulation(int dim) {
+        insureValid();
+
+        if( popPoints != null && popPoints.length == dim ) {
+            return popPoints;
+        }
+       
+        if( popPoints == null || popPoints.length != dim) {
+            popPoints = new double[dim];
+        }
+
+        final double height = tree.getNodeHeight(tree.getRoot());
+        double hstep = height / popPoints.length;
+        double h = 0;
+        int groupIndex = 0;
+        double currentTime = 0.0;
+        double switchAt = groupEnds.get(groupIndex);
+        for(int k = 0; k < popPoints.length-1; ++k) {
+            popPoints[k] = getPopSize(groupIndex, currentTime);
+            currentTime += hstep;
+            while( currentTime >= switchAt ) {
+                ++groupIndex;
+                switchAt = groupEnds.get(groupIndex);
+            }
+        }
+        popPoints[popPoints.length-1] = getPopSize(groupIndex, currentTime);
+        return popPoints;
+    }
+
     /**
      * @return the population size for the given time. If linear model is being used then this pop size is
      *         interpolated between the two pop sizes at either end of the grouped interval.
      * @param groupIndex time inside this group
-     * @param midTime given time
+     * @param atTime given time
      */
-    private double getPopSize(int groupIndex, double midTime) {
+    private double getPopSize(int groupIndex, double atTime) {
+
+        final double startGroupTime = groupIndex > 0 ? groupEnds.get(groupIndex - 1) : 0.0;
+        final double endGroupTime = groupEnds.get(groupIndex);
+        final double startGroupPopSize = groupHeights.get(groupIndex);
+
+        if(! ( startGroupTime <= atTime &&
+                ((type != Type.STEPWISE && atTime <= endGroupTime) ||
+                 (type == Type.STEPWISE && atTime < endGroupTime))) ) {
+            System.out.println(atTime + " " + startGroupTime + "/" + endGroupTime);
+        }
+
         switch( type ) {
             case EXPONENTIAL:
             {
@@ -175,25 +247,32 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
             }
             case LINEAR:
             {
-                double startGroupPopSize = groupHeights.get(groupIndex);
-                double endGroupPopSize = groupHeights.get(groupIndex + 1);
-
-                double startGroupTime = 0.0;
-                if (groupIndex > 0) {
-                    startGroupTime = groupEnds.get(groupIndex - 1);
+                if( groupIndex + 1 >= groupHeights.size() ) {
+                    return startGroupPopSize;
                 }
-                double endGroupTime = groupEnds.get(groupIndex);
+                
+                final double endGroupPopSize = groupHeights.get(groupIndex + 1);
 
                 // calculate the gradient
-                double m = (endGroupPopSize - startGroupPopSize) / (endGroupTime - startGroupTime);
+                //final double m = (endGroupPopSize - startGroupPopSize) / (endGroupTime - startGroupTime);
+                final double a = (atTime - startGroupTime) / (endGroupTime - startGroupTime);
+                // calculate the population size at atTime using linear interpolation
 
-                // calculate the population size at midTime using linear interpolation
-
-                return (m * (midTime - startGroupTime)) + startGroupPopSize;
+                double v = (1-a) * startGroupPopSize + a * endGroupPopSize;
+                if( v <= 0 ) {
+                    // numerical problems, very small endGroupPopSize
+                    if( a == 1 ) {
+                       assert endGroupPopSize > 0;
+                       return endGroupPopSize;
+                    }
+                    System.out.println(v);
+                    assert v > 0;
+                }
+                return v;
             }
             case STEPWISE:
             {
-              return groupHeights.get(groupIndex);
+              return startGroupPopSize;
             }
         }
 
@@ -229,7 +308,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
                 groupSize += 1;
             }
         }
-        height += intervals[indicatorParameter.getDimension() + 1];
+        height += intervals[indicatorParameter.getDimension()];
 
         groupSizes.add(groupSize);
         groupHeights.add(popSizeParameter.getParameterValue(nextPopSizeIndex));
@@ -245,9 +324,9 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index) {
-           super.handleParameterChangedEvent(parameter,  index);
+        super.handleParameterChangedEvent(parameter, index);
 //        if( parameter == indicatorParameter || parameter == popSizeParameter ) {
-           groupsValid = false;
+        groupsValid = false;
 //        }
     }
 
@@ -259,7 +338,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
         storeValid = groupsValid;
     }
 
-    protected  void restoreState() {
+    protected void restoreState() {
         super.restoreState();
         groupsValid = storeValid;
         groupSizes.clear(); groupSizes.addAll(storeSizes);
@@ -296,17 +375,15 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
 
             if (xo.hasAttribute(VariableSkylineLikelihood.TYPE)) {
                 final String s = xo.getStringAttribute(VariableSkylineLikelihood.TYPE);
-                if (s.equalsIgnoreCase(VariableSkylineLikelihood.STEPWISE))
-                {
+                if (s.equalsIgnoreCase(VariableSkylineLikelihood.STEPWISE)) {
                     type = VariableSkylineLikelihood.Type.STEPWISE;
-                } else if (s.equalsIgnoreCase(VariableSkylineLikelihood.LINEAR))
-                {
+                } else if (s.equalsIgnoreCase(VariableSkylineLikelihood.LINEAR)) {
                     type = VariableSkylineLikelihood.Type.LINEAR;
-                } else if (s.equalsIgnoreCase(VariableSkylineLikelihood.EXPONENTIAL))
-                {
+                } else if (s.equalsIgnoreCase(VariableSkylineLikelihood.EXPONENTIAL)) {
                     type = VariableSkylineLikelihood.Type.EXPONENTIAL;
-                } else
+                } else {
                     throw new XMLParseException("Unknown Bayesian Skyline type: " + s);
+                }
             }
 
             boolean logSpace = xo.getBooleanAttribute(LOG_SPACE);

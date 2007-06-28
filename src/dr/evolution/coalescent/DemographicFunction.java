@@ -50,7 +50,7 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 	double getDemographic(double t);
 
 	/**
-     * @return  value of demographic intensity function at time t (= integral 1/N(x) dx from 0 to t).
+     * @return value of demographic intensity function at time t (= integral 1/N(x) dx from 0 to t).
      * @param t time
      */
 	double getIntensity(double t);
@@ -106,7 +106,7 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 	
 	public abstract class Abstract implements DemographicFunction
 	{
-        private static final double LARGE_POSITIVE_NUMBER = 1.0e50;
+       // private static final double LARGE_POSITIVE_NUMBER = 1.0e50;
         private static final double LARGE_NEGATIVE_NUMBER = -1.0e50;
         private static final double INTEGRATION_PRECISION = 1.0e-5;
         private static final double INTEGRATION_MAX_ITERATIONS = 50;
@@ -248,12 +248,11 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
          */
 		public static double getSimulatedInterval(DemographicFunction demographicFunction, int lineageCount, double timeOfLastCoalescent)
 		{
-			double U = MathUtils.nextDouble(); // create unit uniform random variate
+			final double U = MathUtils.nextDouble(); // create unit uniform random variate
 				
-			double tmp = -Math.log(U)/Binomial.choose2(lineageCount) + demographicFunction.getIntensity(timeOfLastCoalescent);
-			double interval = demographicFunction.getInverseIntensity(tmp) - timeOfLastCoalescent;
-			
-			return interval;
+			final double tmp = -Math.log(U)/Binomial.choose2(lineageCount) + demographicFunction.getIntensity(timeOfLastCoalescent);
+
+            return demographicFunction.getInverseIntensity(tmp) - timeOfLastCoalescent;
 		}
 		
 		/**
@@ -269,12 +268,12 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 			
 			double delta = maxTime / (double)steps;
 			
-			for (int i =0; i <= steps; i++) {
+			for (int i = 0; i <= steps; i++) {
 				double time = (double)i * delta;
 				double intensity = demographicFunction.getIntensity(time);
 				double newTime = demographicFunction.getInverseIntensity(intensity);
 							
-				if (Math.abs(time-newTime) > 1e-12) {
+				if (Math.abs(time - newTime) > 1e-12) {
 					throw new RuntimeException(
 						"Demographic model not consistent! error size = " + 
 						Math.abs(time-newTime)); 

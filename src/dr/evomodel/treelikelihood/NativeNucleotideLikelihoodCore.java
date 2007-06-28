@@ -58,14 +58,28 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 													double[] partials3) {
         nativeStatesPartialsPruning(states1, matrices1, partials2, matrices2, patternCount, matrixCount, partials3);
     }
-
+/*
+    private void out(PrintStream s, double[] a, String name) {
+        s.print("double " + name + "["  + a.length + "] = {");
+        for( double f : a )  s.print(f + ", ");
+        s.println("};");
+    }
+    */
     protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
 													double[] partials2, double[] matrices2,
 													double[] partials3) {
+       /* if( false ) {
+            System.out.println("*//*nativePartialsPartialsPruning*//* int patternCount = " +
+                    patternCount + "; int matrixCount = " + matrixCount);
+            out(System.out, partials1, "partials1");
+            out(System.out, partials2, "partials2");
+            out(System.out, partials2, "matrices1");
+            out(System.out, partials2, "matrices2");
+        }*/
         nativePartialsPartialsPruning(partials1, matrices1, partials2, matrices2, patternCount, matrixCount, partials3);
     }
 
-	/**
+    /**
 	 * Calculates partial likelihoods at a node when both children have states.
 	 */
 	protected void calculateStatesStatesPruning(int[] states1, double[] matrices1,
@@ -150,7 +164,7 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 			isNativeAvailable = true;
 		} catch (UnsatisfiedLinkError e) {
 
-			// System.err.println("Using Java nucleotide likelihood core");
+			System.err.println("Using Java nucleotide likelihood core " + e.toString());
 		}
 
 	}

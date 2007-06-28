@@ -3,6 +3,7 @@ package dr.evomodel.coalescent.operators;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.evomodel.coalescent.BayesianSkylineLikelihood;
+import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.util.Units;
 import dr.math.GammaDistribution;
@@ -178,8 +179,7 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 	// shape and rate parameters,
 	// and, when required, taking account of the exponential Markov prior on
 	// either side
-	double getSample(double exponents[], double gammaRates[],
-			double popSizes[], int index) {
+	double getSample(double exponents[], double gammaRates[], double popSizes[], int index) {
 
 		int numGroups = popSizes.length;
 		int direction = reverse ? -1 : 1;
@@ -330,7 +330,7 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 							bayesianSkylineLikelihood.getIntervalType(j))
 					* curpopsize;
 
-			if (bayesianSkylineLikelihood.getIntervalType(j) == BayesianSkylineLikelihood.COALESCENT) {
+			if (bayesianSkylineLikelihood.getIntervalType(j) == CoalescentLikelihood.CoalescentEventType.COALESCENT ) {
 				subIndex += 1;
 				if (subIndex >= groupSizes[groupIndex]) {
 

@@ -55,12 +55,14 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
 			return getEpochDemographic(epoch);
 		}
 		
-		double popSize1 = getEpochDemographic(epoch);
-		double popSize2 = getEpochDemographic(epoch+1);
-		
-		double width = getEpochDuration(epoch);
-		
-		return (popSize1 * (width-t) + (popSize2 * t)) / width;
+		final double popSize1 = getEpochDemographic(epoch);
+		final double popSize2 = getEpochDemographic(epoch+1);
+
+		final double width = getEpochDuration(epoch);
+
+        assert 0 <= t && t <= width;
+
+        return popSize1 + (t/width) * (popSize2 - popSize1);
 	}
 	
 	public DemographicFunction getCopy() {
@@ -82,6 +84,8 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
 	 * @return the value of the intensity function for the given epoch and time relative to start of epoch.
 	 */
 	protected final double getIntensity(int epoch, double relativeTime) {
-		return 2.0 * relativeTime / (getEpochDemographic(epoch) + getDemographic(epoch, relativeTime));
+        assert  relativeTime <= getEpochDuration(epoch);
+        
+        return 2.0 * relativeTime / (getEpochDemographic(epoch) + getDemographic(epoch, relativeTime));
 	}
 }

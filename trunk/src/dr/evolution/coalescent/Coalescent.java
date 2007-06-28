@@ -63,36 +63,52 @@ public class Coalescent implements MultivariateFunction, Units {
 				
 		return calculateLogLikelihood(intervals, demographicFunction);
 	}
-	
-	/** 
+
+    public static boolean detaildPrint = false;
+
+    /**
 	 * Calculates the log likelihood of this set of coalescent intervals, 
 	 * given a demographic model.
 	 */
-	public static final double calculateLogLikelihood(IntervalList intervals,
-														DemographicFunction demographicFunction) {
+	public static double calculateLogLikelihood(IntervalList intervals, DemographicFunction demographicFunction) {
 		
 		double logL = 0.0;
-		
+		if( detaildPrint ) { System.err.println("new:"); }
 		double startTime = 0.0;
-		
-		for (int i = 0, n = intervals.getIntervalCount(); i < n; i++) {
+		final int n = intervals.getIntervalCount();
+		for (int i = 0; i < n; i++) {
 			
-			double duration = intervals.getInterval(i);
-			double finishTime = startTime + duration;
+			final double duration = intervals.getInterval(i);
+			final double finishTime = startTime + duration;
 
-			double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
-			int lineageCount = intervals.getLineageCount(i);
-			
-			if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
-			
-				logL += -Math.log(demographicFunction.getDemographic(finishTime)) - 
-									(Binomial.choose2(lineageCount)*intervalArea);
-									
-			} else { // SAMPLE or NOTHING
-			
-				logL += -(Binomial.choose2(lineageCount)*intervalArea);
-			}
-			
+			final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
+			final int lineageCount = intervals.getLineageCount(i);
+
+            final double kover2 = Binomial.choose2(lineageCount);
+            // common part
+            logL += -kover2 * intervalArea;
+
+            if( detaildPrint ) {
+                System.err.print("l = " + lineageCount + " width " + duration + " int " + intervalArea
+                        + " avg " + (duration * 1/intervalArea) );
+
+
+            }
+            // SAMPLE or NOTHING just add likelihood for nothing to happen.
+            if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+
+                final double demographicAtCoalPoint = demographicFunction.getDemographic(finishTime);
+            /*    if ( Math.abs(1 - ((duration * 1/intervalArea) / demographicAtCoalPoint) ) > 1e-10 ) {
+                    System.out.println( demographicAtCoalPoint + "," + (duration * 1/intervalArea));
+                }*/
+                if( demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
+                  logL += Math.log(kover2 / demographicAtCoalPoint);
+                  if( detaildPrint ) { System.err.println(" vatend " + demographicAtCoalPoint + " lgl " + logL); }
+                } else {
+                    System.out.println(demographicAtCoalPoint  + " " + (intervalArea/duration) );
+                }
+            }
+
 			startTime = finishTime; 
 		}
 		
@@ -103,7 +119,7 @@ public class Coalescent implements MultivariateFunction, Units {
 	 * Calculates the log likelihood of this set of coalescent intervals, 
 	 * using an analytical integration over theta.
 	 */
-	public static final double calculateAnalyticalLogLikelihood(IntervalList intervals) {
+	public static double calculateAnalyticalLogLikelihood(IntervalList intervals) {
 	
 		if (!intervals.isCoalescentOnly()) {
 			throw new IllegalArgumentException("Can only calculate analytical likelihood for pure coalescent intervals");
@@ -127,7 +143,7 @@ public class Coalescent implements MultivariateFunction, Units {
 	 * 1/theta^(n-1) * exp(-lambda/theta). This allows theta to be integrated
 	 * out analytically. :-)
 	 */
-	private static final double getLambda(IntervalList intervals) {
+	private static double getLambda(IntervalList intervals) {
 		double lambda = 0.0;
 		for (int i= 0; i < intervals.getIntervalCount(); i++) {
 			lambda += (intervals.getInterval(i) * intervals.getLineageCount(i));	

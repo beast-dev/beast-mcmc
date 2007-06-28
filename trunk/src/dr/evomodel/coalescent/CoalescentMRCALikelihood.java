@@ -216,7 +216,7 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 	 */
 	public double calculateLogLikelihood() {
 
-		if (intervalsKnown == false) setupIntervals();
+		if (!intervalsKnown) setupIntervals();
 
 		if (demoModel == null) return calculateAnalyticalLogLikelihood();
 
@@ -243,19 +243,15 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 		return logL;
 	}
 
-	private final double calculateAnalyticalLogLikelihood() {
+	private double calculateAnalyticalLogLikelihood() {
 
-		double lambda = getLambda();
-		int n = treeModel.getExternalNodeCount();
-
-		double logL = 0.0;
-
+		final double lambda = getLambda();
+		final int n = treeModel.getExternalNodeCount();
 		// assumes a 1/theta prior
 		//logLikelihood = Math.log(1.0/Math.pow(lambda,n));
 
 		// assumes a flat prior
-		logL = Math.log(1.0/Math.pow(lambda,n-1));
-		return logL;
+        return Math.log(1.0/Math.pow(lambda,n-1));
 	}
 
 	/**
@@ -274,17 +270,17 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 	{
 		//binom.setMax(lineageCount);
 
-		double timeOfThisCoal = width + timeOfPrevCoal;
+		final double timeOfThisCoal = width + timeOfPrevCoal;
 
-		double intervalArea = demoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
-		double like = 0;
+		final double intervalArea = demoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
+        final double kover2 = Binomial.choose2(lineageCount);
+        double like =  -(kover2 *intervalArea);
 		switch (type) {
 			case COALESCENT:
-				like = - Math.log(demoFunction.getDemographic(timeOfThisCoal)) -
-								(Binomial.choose2(lineageCount)*intervalArea);
+				like += Math.log(kover2 / demoFunction.getDemographic(timeOfThisCoal));
 				break;
 			case NEW_SAMPLE:
-				like = -(Binomial.choose2(lineageCount)*intervalArea);
+				//like = -(Binomial.choose2(lineageCount)*intervalArea);
 				break;
 		}
 
@@ -296,7 +292,7 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 	 * 1/theta^(n-1) * exp(-lambda/theta). This allows theta to be integrated
 	 * out analytically. :-)
 	 */
-	private final double getLambda() {
+	private double getLambda() {
 		double lambda = 0.0;
 		for (int i= 0; i < getIntervalCount(); i++) {
 			lambda += (intervals[i] * lineageCounts[i]);
@@ -313,8 +309,8 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 
 		double MULTIFURCATION_LIMIT = 1e-9;
 
-		ArrayList times = new ArrayList();
-		ArrayList childs = new ArrayList();
+		ArrayList<ComparableDouble> times = new ArrayList<ComparableDouble>();
+		ArrayList<Integer> childs = new ArrayList<Integer>();
 		collectAllTimes(treeModel, getMRCAOfCoalescent(treeModel), getExcludedMRCAs(treeModel), times, childs);
 		int[] indices = new int[times.size()];
 
@@ -330,7 +326,7 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 		}
 
 		// start is the time of the first tip
-		double start = ((ComparableDouble)times.get(indices[0])).doubleValue();
+		double start = (times.get(indices[0])).doubleValue();
 		int numLines = 0;
 		int i = 0;
 		intervalCount = 0;
@@ -339,11 +335,11 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 			int lineagesRemoved = 0;
 			int lineagesAdded = 0;
 
-			double finish = ((ComparableDouble)times.get(indices[i])).doubleValue();
+			double finish = (times.get(indices[i])).doubleValue();
 			double next = finish;
 
 			while (Math.abs(next - finish) < MULTIFURCATION_LIMIT) {
-				int children = ((Integer)childs.get(indices[i])).intValue();
+				final int children = childs.get(indices[i]);
 				if (children == 0) {
 					lineagesAdded += 1;
 				} else {
@@ -351,7 +347,7 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 				}
 				i += 1;
 				if (i < times.size()) {
-					next = ((ComparableDouble)times.get(indices[i])).doubleValue();
+					next = (times.get(indices[i])).doubleValue();
 				} else break;
 			}
 			//System.out.println("time = " + finish + " removed = " + lineagesRemoved + " added = " + lineagesAdded);
@@ -387,10 +383,10 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 	 * @param node the node to start from
 	 * @param excludeBelow an optional array of nodes to exclude (corresponding subtrees) from density.
 	 */
-	private final static void collectAllTimes(Tree tree, NodeRef node, NodeRef[] excludeBelow, ArrayList times, ArrayList childs) {
+	private static void collectAllTimes(Tree tree, NodeRef node, NodeRef[] excludeBelow, ArrayList<ComparableDouble> times, ArrayList<Integer> childs) {
 
 		times.add(new ComparableDouble(tree.getNodeHeight(node)));
-		childs.add(new Integer(tree.getChildCount(node)));
+		childs.add(tree.getChildCount(node));
 
 		for (int i = 0; i < tree.getChildCount(node); i++) {
 			NodeRef child = tree.getChild(node, i);
@@ -399,13 +395,13 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 			} else {
 				// check if this subtree is included in the coalescent density
 				boolean include = true;
-				for (int j =0; j < excludeBelow.length; j++) {
-					if (excludeBelow[j].getNumber() == child.getNumber()) {
-						include = false;
-						break;
-					}
-				}
-				if (include) collectAllTimes(tree, child, excludeBelow, times, childs);
+                for (NodeRef anExcludeBelow : excludeBelow) {
+                    if (anExcludeBelow.getNumber() == child.getNumber()) {
+                        include = false;
+                        break;
+                    }
+                }
+                if (include) collectAllTimes(tree, child, excludeBelow, times, childs);
 			}
 		}
 	}
@@ -563,7 +559,7 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 			TaxonList ingroup = (TaxonList)xo.getSocketChild("mrca");
 
 			TaxonList[] excludeSubtrees = null;
-			ArrayList excludeTaxa = new ArrayList();
+			ArrayList<TaxonList> excludeTaxa = new ArrayList<TaxonList>();
 
 
 			// should have one child that is node
@@ -575,7 +571,7 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 
 					for (int j = 0; j < xchild.getChildCount(); j++) {
 						if  (xchild.getChild(j) instanceof TaxonList) {
-							excludeTaxa.add(xchild.getChild(j));
+							excludeTaxa.add((TaxonList)xchild.getChild(j));
 						}
 					}
 					if (excludeTaxa.size() == 0) {
@@ -583,7 +579,7 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 					} else {
 						excludeSubtrees = new TaxonList[excludeTaxa.size()];
 						for (int j = 0; j < excludeSubtrees.length; j++) {
-							excludeSubtrees[j] = (TaxonList)excludeTaxa.get(j);
+							excludeSubtrees[j] = excludeTaxa.get(j);
 						}
 					}
 				}
@@ -621,7 +617,7 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 	/** The demographic model. */
 	DemographicModel demoModel = null;
 
-	Set ingroupLeafSet = null;
+	Set<String> ingroupLeafSet = null;
 	Set[] excludeLeafSets = null;
 
 	/** The treeModel. */

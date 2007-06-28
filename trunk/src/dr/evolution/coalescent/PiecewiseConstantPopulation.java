@@ -77,7 +77,9 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
 			intensity += getIntensity(epoch);
 			epoch += 1;
 		}
-		// add last fraction of intensity
+
+        // probably same bug as in EmpiricalPiecewiseConstant when t1 goes negative
+        // add last fraction of intensity
 		intensity += getIntensity(epoch, t1);
 	
 		return intensity; 
@@ -122,8 +124,10 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
 	/**
 	 * @return the value of the intensity function for the given epoch and time relative to start of epoch.
 	 */
-	protected double getIntensity(int epoch, double relativeTime) {
-		return relativeTime / getEpochDemographic(epoch);
+	protected double getIntensity(final int epoch, final double relativeTime) {
+        assert 0 <= relativeTime && relativeTime <= getEpochDuration(epoch);
+
+        return relativeTime / getEpochDemographic(epoch);
 	}
 	
 	/** 
@@ -155,9 +159,9 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
 	
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
-		buffer.append(""+thetas[0]);
+		buffer.append(thetas[0]);
 		for (int i =1; i < thetas.length; i++) {
-			buffer.append("\t" + thetas[i]);
+            buffer.append("\t").append(thetas[i]);
 		}
 		return buffer.toString();
 	}

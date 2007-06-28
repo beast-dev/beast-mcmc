@@ -775,7 +775,7 @@ public class TreeModel extends AbstractModel implements MutableTree
 
                         if (cxo.hasAttribute(LEAF_NODES)) {
                             leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
-                        }                        
+                        }
 
                         if (cxo.hasAttribute(NAME)) {
                             name = cxo.getStringAttribute(NAME);
@@ -1281,7 +1281,7 @@ public class TreeModel extends AbstractModel implements MutableTree
         public boolean isRoot() { return (parent == null); }
 
         public String toString() {
-	        return "node " + number + ", height=" + getHeight() + (taxon != null ? ": " + taxon.getId() : ""); 
+	        return "node " + number + ", height=" + getHeight() + (taxon != null ? ": " + taxon.getId() : "");
         }
 
         public Parameter getTraitParameter(String name) {

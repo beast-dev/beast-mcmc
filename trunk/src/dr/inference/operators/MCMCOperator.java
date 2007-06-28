@@ -36,7 +36,7 @@ package dr.inference.operators;
 public interface MCMCOperator {
 
 	public static final String WEIGHT = "weight";
-	
+
 // This attribute is now called AUTO_OPTIMIZE and is in CoercableMCMCOperator	
 //	public static final String ADAPT = "adapt";
 	

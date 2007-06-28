@@ -76,21 +76,21 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 	 * @return the ith taxon.
 	 */
 	public Taxon getTaxon(int taxonIndex) {
-		return (Taxon)taxa.get(taxonIndex);
+		return taxa.get(taxonIndex);
 	}
 
 	/**
 	 * @return the ID of the ith taxon.
 	 */
 	public String getTaxonId(int taxonIndex) {
-		return ((Taxon)taxa.get(taxonIndex)).getId();
+		return (taxa.get(taxonIndex)).getId();
 	}
 
 	/**
 	 * Sets the unique identifier of the ith taxon.
 	 */
 	public void setTaxonId(int taxonIndex, String id) {
-		((Taxon)taxa.get(taxonIndex)).setId(id);
+		(taxa.get(taxonIndex)).setId(id);
 		fireTaxaChanged();
 	}
 
@@ -122,7 +122,7 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
     public boolean containsAny(TaxonList taxonList) {
 
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-            Taxon taxon = (Taxon)taxonList.getTaxon(i);
+            Taxon taxon = taxonList.getTaxon(i);
             if (taxa.contains(taxon)) {
                 return true;
             }
@@ -138,7 +138,7 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 	public boolean containsAll(TaxonList taxonList) {
 
 		for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-			Taxon taxon = (Taxon)taxonList.getTaxon(i);
+			Taxon taxon = taxonList.getTaxon(i);
 			if (!taxa.contains(taxon)) {
 				return false;
 			}
@@ -184,25 +184,25 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 	}
 
 	private void fireTaxonAdded(Taxon taxon) {
-		for (int i = 0; i < mutableTaxonListListeners.size(); i++) {
-			((MutableTaxonListListener)mutableTaxonListListeners.get(i)).taxonAdded(this, taxon);
-		}
-	}
+        for (MutableTaxonListListener mutableTaxonListListener : mutableTaxonListListeners) {
+            mutableTaxonListListener.taxonAdded(this, taxon);
+        }
+    }
 
 	private void fireTaxonRemoved(Taxon taxon) {
-		for (int i = 0; i < mutableTaxonListListeners.size(); i++) {
-			((MutableTaxonListListener)mutableTaxonListListeners.get(i)).taxonRemoved(this, taxon);
-		}
-	}
+        for (MutableTaxonListListener mutableTaxonListListener : mutableTaxonListListeners) {
+            mutableTaxonListListener.taxonRemoved(this, taxon);
+        }
+    }
 
 	private void fireTaxaChanged() {
-		for (int i = 0; i < mutableTaxonListListeners.size(); i++) {
-			((MutableTaxonListListener)mutableTaxonListListeners.get(i)).taxaChanged(this);
-		}
-	}
+        for (MutableTaxonListListener mutableTaxonListListener : mutableTaxonListListeners) {
+            mutableTaxonListListener.taxaChanged(this);
+        }
+    }
 
-	private ArrayList mutableTaxonListListeners = new ArrayList();
+	private ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
 
-	ArrayList taxa = new ArrayList();
-	ArrayList listeners = new ArrayList();
+	ArrayList<Taxon> taxa = new ArrayList<Taxon>();
+	//ArrayList listeners = new ArrayList();
 }

@@ -86,7 +86,7 @@ public class TreeAnnotator {
 
         System.out.println("Total trees read: " + totalTrees);
         if (burnin > 0) {
-            System.out.println("Ignoring first" + burnin + " trees.");
+            System.out.println("Ignoring first " + burnin + " trees.");
         }
 
         MutableTree targetTree;

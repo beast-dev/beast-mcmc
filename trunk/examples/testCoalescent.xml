@@ -84,7 +84,7 @@
 		</populationTree>
 	</coalescentLikelihood>
 
-	<mcmc id="mcmc1" chainLength="100000"  verbose="false">
+	<mcmc id="mcmc1" chainLength="1000000"  verbose="false">
 		<coalescentLikelihood idref="coalescent1"/>
 		<log id="logScreen2" logEvery="5000">
 			<column dp="4">

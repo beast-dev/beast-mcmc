@@ -87,7 +87,7 @@ public class CompoundLikelihood implements Likelihood {
 			logLikelihood += l;
 		}
         //System.err.println("mixed end");
-        
+
         return logLikelihood;
 	}
 
@@ -122,7 +122,7 @@ public class CompoundLikelihood implements Likelihood {
 
 			if (lik instanceof CompoundLikelihood) {
 				String d = ((CompoundLikelihood)lik).getDiagnosis();
-				if (d != null & d.length() > 0) {
+				if (d != null && d.length() > 0) {
 					message += "(" + d + ")";
 				}
 			} else {

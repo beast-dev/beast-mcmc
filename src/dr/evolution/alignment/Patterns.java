@@ -114,7 +114,7 @@ public class Patterns implements PatternList {
             throw new IllegalArgumentException("Patterns' existing DataType does not match that of added SiteList");
         }
 
-        if (from <= 0)
+        if (from < 0)
             from = 0;
 
         if (to <= 0)
@@ -372,7 +372,7 @@ public class Patterns implements PatternList {
      * Gets the weight of a site pattern
      */
     public double getPatternWeight(int patternIndex) {
-        return (double)weights[patternIndex];
+        return weights[patternIndex];
     }
 
     /**
@@ -380,7 +380,7 @@ public class Patterns implements PatternList {
      */
     public double[] getPatternWeights() {
         double[] w = new double[weights.length];
-        for (int i = 0; i < weights.length; i++) w[i] = (double)weights[i];
+        for (int i = 0; i < weights.length; i++) w[i] = weights[i];
         return w;
     }
 

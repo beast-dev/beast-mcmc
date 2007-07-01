@@ -4,11 +4,10 @@
  \usepackage{graphicx}
  \usepackage{amssymb}
  \usepackage{epstopdf}
+ \usepackage[authoryear,sort]{natbib}
  
 \IfFileExists{url.sty}{\usepackage{url}}
-                      {\newcommand{\url}{\texttt}}
-                      
-                      
+                      {\newcommand{\url}{\texttt}}         
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
 \newcommand{\noun}[1]{\textsc{#1}}
@@ -98,7 +97,7 @@ framework and thus provides a role for prior knowledge in combination with the
 information provided by the data. Bayesian MCMC has already been enthusiastically embraced
 as the state-of-the-art method for phylogenetic reconstruction, largely
 driven by the rapid and widespread adoption of \textbf{\textsc{MrBayes}}
-\cite{HR2001}. This enthusiasm can be attributed to a number of factors.
+\citep{HR2001}. This enthusiasm can be attributed to a number of factors.
 Firstly, Bayesian methods allow the relatively straightforward implementation
 of extremely complex evolutionary models. Secondly, there is an often erroneous
 perception that Bayesian estimation is {}``faster'' than heuristic
@@ -106,24 +105,24 @@ optimization based on a maximum likelihood criterion.
 
 In addition to phylogenetic inference, a number of researchers have
 recently developed Bayesian MCMC software for coalescent-based estimation
-of demographic parameters from genetic data \cite{Beaumont1999,DNRS2002,WWB2003,RY2003,PDNRR2003,Kuhner2006}.
+of demographic parameters from genetic data \citep{Beaumont1999,DNRS2002,WWB2003,RY2003,PDNRR2003,Kuhner2006}.
 Like phylogenetic analysis, these also require a gene tree in the
 underlying model, although in this setting, the sequences represent
 different individuals from the same species, rather than from different
 species.
 
 Most recently, Bayesian MCMC has also been applied to a central problem in evolutionary bioinformatics: the co-estimation
-of phylogeny and alignment \cite{LMDJH2005,RS2005}. Taken together
+of phylogeny and alignment \citep{LMDJH2005,RS2005}. Taken together
 with progress in phylogenetics and coalescent-based population genetics,
 Bayesian MCMC has been applied to most of the evolutionary questions
 commonly asked of molecular data. 
 
 BEAST can be compared to a number of other software packages with
-similar goals, such as \textbf{\textsc{MrBayes}} \cite{HR2001}, which
+similar goals, such as \textbf{\textsc{MrBayes}} \citep{HR2001}, which
 currently focuses on phylogenetic inference and \textbf{\textsc{Batwing}}
-\cite{WWB2003} which focuses predominanty on coalescent-based population
+\citep{WWB2003} which focuses predominanty on coalescent-based population
 genetics. Like these software packages, the core algorithm implemented
-in BEAST is Metropolis-Hastings MCMC \cite{MRRTT1953,Hastings1970}.
+in BEAST is Metropolis-Hastings MCMC \citep{MRRTT1953,Hastings1970}.
 MCMC is a stochastic algorithm that produces sample-based estimates
 of a target distribution of choice. For our purposes the target distribution
 is the posterior distribution of a set of evolutionary parameters
@@ -134,13 +133,13 @@ on calibrated phylogenies and genealogies, that is, rooted trees incorporating
 a time-scale. This is achieved by explicitly modeling the rate of
 molecular evolution on each branch in the tree. On the simplest level
 this can be a uniform rate over the entire tree (i.e. the molecular
-clock model \cite{ZP1965}) with this rate known in advance or estimated
+clock model \citep{ZP1965}) with this rate known in advance or estimated
 from calibration information. However, one of the most promising recent
 advances in molecular phylogenetics has been the introduction of \emph{relaxed
 molecular clock} models that do not assume a constant rate across
-lineages\cite{TKP1998,YY2000,KTB2001,Sanderson2002,TK2002,AY2003}.
+lineages\citep{TKP1998,YY2000,KTB2001,Sanderson2002,TK2002,AY2003}.
 BEAST was the first software package that allows phylogenetic inference
-under such models \cite{DHPR2006}. 
+under such models \citep{DHPR2006}. 
 
 The purpose behind the development of BEAST is to bring a large number
 of complementary evolutionary models (substitution models, insertion-deletion
@@ -181,8 +180,8 @@ generating BEAST XML input files for a number of simple model combinations.
 distributed separately from BEAST that provides a graphical tool for
 MCMC output analysis. It can be used for the analysis of the output
 of BEAST as well as the output of other common MCMC packages such
-as \textbf{\textsc{MrBayes}} \cite{HR2001} and \textbf{\textsc{BAli-Phy}}
-\cite{SR2006}.
+as \textbf{\textsc{MrBayes}} \citep{HR2001} and \textbf{\textsc{BAli-Phy}}
+\citep{SR2006}.
 \end{itemize}
 Because of the combinatorial nature of the BEAST XML input format,
 not all models can be specified through the graphical interface of
@@ -194,9 +193,6 @@ is therefore intended as a way of generating commonly used and well-understood
 analyses. For the more adventurous researcher, and with the above
 warnings in mind, the XML file can be directly edited. A number of
 online tutorials are available to guide users on how to do this. 
-
-
-\subsection*{Input Format}
 
 One of the primary motivations for providing a highly structured XML
 input format is to facilitate reproducibility of complex evolutionary
@@ -214,15 +210,12 @@ reproducibility, it is our view that the publication of the exact
 details of any Bayesian MCMC analysis should be made a pre-requisite
 for publication of all MCMC analysis results.
 
-
-\subsection*{Output and results}
-
 The output from BEAST is a simple tab-delimited plain text file format
 with one a row for each sample. When accumulated into frequency distributions,
 this file provides an estimate of the marginal posterior probability
 distribution of each parameter. This can be done using any standard
 statistics package or using the specially written package, \textbf{\textsc{Tracer}}
-\cite{RD2003}. \textbf{\textsc{Tracer}} provides a number of graphical and statistical 
+\citep{RD2003}. \textbf{\textsc{Tracer}} provides a number of graphical and statistical 
 ways of analyzing the output of BEAST to check performance and accuracy. 
 It also provides specialized functions for summarizing the posterior distribution of
 population size through time when a coalescent model is used.
@@ -233,12 +226,9 @@ the posterior probability of various phylogenetic questions such as
 the monophyly of a particular group of organisms or to obtain a consensus
 phylogeny.
 
-
-\subsection*{Computational Performance}
-
 Although there is always a trade-off between a program's flexibility
 and its computational performance, BEAST performs well on large analyses
-(e.g. \cite{Shapiroetal2004}). A Bayesian MCMC algorithm needs to
+(e.g. \citep{Shapiroetal2004}). A Bayesian MCMC algorithm needs to
 evaluate the likelihood of each state in the chain and thus performance
 is dictated by the speed at which these likelihood evaluations can
 be made. BEAST attempts to minimize the time taken to evaluate a state
@@ -254,26 +244,28 @@ platform-independence.
 
 We demonstrate some of the key features of a Bayesian analysis on a sample
 of 17 dengue virus serotype 4 sequences, isolated at dates ranging from 1956
-to 1994. Because this virus evolves at a rapid rate, the sampling times can be
+to 1994 (see \citep{Rambaut2000} for details). Like many RNA viruses, Dengue virus evolves at a rapid rate and as a result the sampling times of the 17 isolates can be
 used by BEAST as calibrations to estimate the overall substitution rate and the
-divergence times in years. We analyze the data under two different substitution
-models and two different models of rates variation among branches: the strict
-clock and the uncorrelated lognormal-distributed relaxed molecular clock. We 
-use the constant population size coalescent as the tree prior. 
+divergence times in years. We analyzed the data under both a codon-position specific substitution
+model, in which each codon position had a separate rate parameter, as well as the standard GTR + $\Gamma$ + I model. Both of these models have the same number of free parameters. We also investigate two different models of rates variation among branches: the strict clock and the uncorrelated lognormal-distributed relaxed molecular clock. We use the constant population size coalescent as the tree prior. For each model the Markov chain Monte Carlo was run for 10,000,000 steps and sampled every 500 steps. The first 100,000 steps of each run were discarded as burnin. This resulted in effective sample sizes for the posterior probability of more than 1000 for all four analyses.
+
+As has been previously suggested to be a general feature of protein-coding sequences \citep{Shapiroetal2006}, we found that the codon-position-specific model of rate heterogeneity among sites has a substantially superior fit to the data than the GTR + $\Gamma$ + I model (see Table 1). However we find little difference (log BP = 1.6) between the two models of rate variation among branches, indicating that this particular data is very clock-like as has been previously suggested \citep{Rambaut2000}. Under the strict clock model with codon-position rate heterogeneity and a constant-size coalescent tree prior the estimated date of the root of the phylogeny is 1924 (95\% HPD: $1911-1936$) and the estimated rate of substitution for this serotype was estimated to be $8.38 \times 10^{-4}$ (95\% HPD: $6.40 \times 10^{-4} -1.05 \times 10^{-3}$).
 \\\\
-\begin{tabular}{|c|c|c|l|}
+\begin{tabular}{lll}
 	\hline
-Clock Model & Substitution Model & Marginal Likelihood & Root height  \\
+Clock Model & Substitution Model & Marginal Likelihood  \\
 	\hline
-Lognormal relaxed & GTR + CP & -3655.33 $\pm$ 0.11 & \\
-Strict & GTR + CP & -3656.13 $\pm$ 0.11 & \\
-Lognormal relaxed & GTR +  $\Gamma$ + I  & -3750.23 $\pm$ 0.11 & \\
-Strict & GTR + $\Gamma$ + I & -3751.37 $\pm$ 0.11 & \\
+Lognormal relaxed & GTR + CP & -3655.33 $\pm$ 0.11 \\
+Strict & GTR + CP & -3656.13 $\pm$ 0.11 \\
+Lognormal relaxed & GTR +  $\Gamma$ + I  & -3750.23 $\pm$ 0.11 \\
+Strict & GTR + $\Gamma$ + I & -3751.37 $\pm$ 0.11 \\
 	\hline
 \end{tabular}
 
-
-
+\begin{figure}[!tpb]%figure1
+\centerline{\includegraphics{fig01.pdf}}
+\caption{The consensus tree for the Dengue 4 sequences. Each internal node is labeled with the posterior probability of monophyly of the corresponding clade. The gray bars illustrated the extent of the 95\% highest posterior density intervals for each divergence time. The scale is in years. }\label{fig:01}
+\end{figure}
 
 
 \section{Results and Discussion}
@@ -324,15 +316,15 @@ for the node heights (in units of time) and tree topology.
 \subsection*{Substitution models and rate models among sites}
 
 For nucleotide data, all of the models that are nested in the general
-time-reversible (GTR) model \cite{ROMM1990} - including the well
-known HKY85 model \cite{HKY1985} - can be specified. For the analysis
+time-reversible (GTR) model \citep{ROMM1990} - including the well
+known HKY85 model \citep{HKY1985} - can be specified. For the analysis
 of amino acid sequence alignments all of the following replacement
 models can be used: Blosum62, CPREV, Dayhoff, JTT, MTREV and WAG.
 When nucleotide data represents a coding sequence (i.e. an in-frame
-protein-coding sequence with introns removed) the Goldman and Yang model \cite{GY1994} can be used to model
+protein-coding sequence with introns removed) the Goldman and Yang model \citep{GY1994} can be used to model
 codon evolution. 
 
-In addition, both $\Gamma$-distributed rates among sites \cite{Y1994}
+In addition, both $\Gamma$-distributed rates among sites \citep{Y1994}
 and a proportion of invariant sites can be used to describe rate heterogeneity
 among sites.
 
@@ -341,7 +333,7 @@ among sites.
 data}
 
 The basic model for rates among branches supported by BEAST is the
-strict molecular clock model \cite{ZP1965}, calibrated by specifying
+strict molecular clock model \citep{ZP1965}, calibrated by specifying
 either a substitution rate or the date of a node or set of nodes.
 In this context, dates of divergence for particular clades can be
 estimated. The clades can be defined either by a monophyletic grouping
@@ -351,14 +343,14 @@ selected taxa with respect to the rest of the tree. Furthermore, when
 the differences in the dates associated with the tips of the tree
 comprise a significant proportion of the age of the entire tree, these
 dates can be incorporated into the model providing a source of information
-about the overall rate of evolutionary change \cite{DNRS2002,DPRFR2003}.
+about the overall rate of evolutionary change \citep{DNRS2002,DPRFR2003}.
 
 In BEAST, divergence time estimation has also been extended to include
 \emph{relaxed phylogenetics} models, in which the rate of evolution
 is allowed to vary among the branches of the tree. In particular we
 support a class of uncorrelated relaxed clock branch rate models,
 in which the rate at each branch is drawn from an underlying distribution
-such as exponential or lognormal \cite{DHPR2006}.
+such as exponential or lognormal \citep{DHPR2006}.
 
 If the sequence data are all from one time point, then the overall
 evolutionary rate must be specified with a strong prior. The units
@@ -386,13 +378,13 @@ $N_{e}$).
 \subsection*{Tree Priors}
 
 When sequence data has been collected from a homogenous population,
-various coalescent \cite{Kingman1982,GT1994} models of demographic
+various coalescent \citep{Kingman1982,GT1994} models of demographic
 history can be used in BEAST to model population size changes through
 time. At present the simple parametric models available include constant
 size $N(t)=N_{e}$ (1 parameter), exponential growth $N(t)=N_{e}e^{-gt}$
 (2 parameters) and logistic growth (3 parameters). 
 
-In addition, the highly parametric Bayesian skyline plot \cite{DRSP2005}
+In addition, the highly parametric Bayesian skyline plot \citep{DRSP2005}
 is also available, but this model can only be used when the data are
 strongly informative about population history. All of these demographic
 models are parametric priors on the ages of nodes in the tree, in
@@ -408,9 +400,6 @@ At present there are only a limited number of options for non-coalescent
 priors on tree shape and branching rate. Currently a simple Yule prior
 on birth rate of new lineages (1 parameter) can be employed. However,
 generalized birth-death tree priors are currently under development.
-Futhermore, Aldous's beta-splitting model \cite{Aldous2001} (1 parameter)
-is also available as a prior on tree shape, if the balance/imbalance
-of the tree topology is important.
 
 In addition to general models of branching times such as the coalescent
 and Yule priors, the tree prior may also include specific distributions
@@ -419,7 +408,7 @@ These additional priors may represent other sources of knowledge such
 as expert interpretation of the fossil record. For example, as briefly
 noted above, each node in the tree can have a prior distribution representing
 knowledge of its date. A recent paper on {}``relaxed phylogenetics''
-contains more information on calibration priors \cite{DHPR2006}. 
+contains more information on calibration priors \citep{DHPR2006}. 
 
 
 \subsection*{Insertion-deletion models}
@@ -427,21 +416,21 @@ contains more information on calibration priors \cite{DHPR2006}.
 Finally, BEAST also has a model of the insertion-deletion process.
 This provides the ability to co-estimate the phylogeny and the multiple
 sequence alignment. Currently only the TKF91 model of insertion-deletion
-\cite{TKF1991} is available. Interested readers should refer to the
-paper on this subject for more details \cite{LMDJH2005}.
+\citep{TKF1991} is available. Interested readers should refer to the
+paper on this subject for more details \citep{LMDJH2005}.
 
 
 \subsection*{Multiple data partitions and linking and unlinking parameters}
 
 BEAST provides the ability to analyze multiple data partitions simultaneously.
 This is useful when combining multiple genes in a single multi-locus
-coalescent analysis (e.g. \cite{Lemeyetal2004}) or to allocate different
+coalescent analysis (e.g. \citep{Lemeyetal2004}) or to allocate different
 evolutionary processes to different regions of a sequence alignment
-(such as the codon positions; e.g. \cite{PDNRR2003}). The parameters
+(such as the codon positions; e.g. \citep{PDNRR2003}). The parameters
 of the substitution model, the rate model among sites, the rate model
 among branches, the tree, and the tree prior can all be 'linked' or
 'unlinked' in a analysis involving multiple partitions. For example
-in an analysis of HIV-1 group O by Lemey \emph{et al} \cite{Lemeyetal2004},
+in an analysis of HIV-1 group O by Lemey \emph{et al} \citep{Lemeyetal2004},
 three loci (gag, int, pol) were assumed to share the same substitution
 model parameters (GTR), as well as sharing the same demographic history
 of exponential growth. However they were assumed to have different
@@ -500,16 +489,16 @@ prior.
 
 \item [\texttt{\small{gtr.\{ac,ag,at,cg,gt\}}}]	 These five parameters are the relative rates of substitutions for
 $A{\leftrightarrow}C$,  $A{\leftrightarrow}G$,  $A{\leftrightarrow}T$,  $C{\leftrightarrow}G$ and  $G{\leftrightarrow}T$
-in the general time-reversible model of nucleotide substitution \cite{ROMM1990}. In the default set up these parameters
+in the general time-reversible model of nucleotide substitution \citep{ROMM1990}. In the default set up these parameters
 are relative to $r_{C{\leftrightarrow}T} = 1.0$. These parameters only appear if you have selected the GTR substitution
 model.
 
 \item [\texttt{\small{hky.kappa}}]	 This parameter is the transition/transversion ratio ($\kappa$) parameter of the
-HKY85 model of nucleotide substitution \cite{HKY1985}. This parameter only appears if you have selected the HKY
+HKY85 model of nucleotide substitution \citep{HKY1985}. This parameter only appears if you have selected the HKY
 substitution model.
 
 \item [\texttt{\small{siteModel.alpha}}]	 This parameter is the shape ($\alpha$) parameter of the $\Gamma$
-distribution of rate heterogeneity among sites \cite{Y1994}. This parameter only appears when you have selected Gamma
+distribution of rate heterogeneity among sites \citep{Y1994}. This parameter only appears when you have selected Gamma
 or Gamma+Invariant Sites in the site heterogeneity model.
 
 \item [\texttt{\small{siteModel.pInv}}]	 This parameter is the proportion of  invariant sites ($p_{inv}$) and has a
@@ -549,7 +538,7 @@ and hypothesis testing. The component-based nature of model specification
 in BEAST means that the number of different evolutionary models possible
 is very large and therefore difficult to summarize. However a number
 of published uses of the BEAST software already serve to highlight
-the breadth of application the software enjoys \cite{PDNRR2003,Lemeyetal2004,Shapiroetal2004,DRSP2005,LMDJH2005}. 
+the breadth of application the software enjoys \citep{PDNRR2003,Lemeyetal2004,Shapiroetal2004,DRSP2005,LMDJH2005}. 
 
 BEAST is an actively developed package and enhancements for the next
 version include (1) birth-death priors for tree shape (2) faster and
@@ -604,132 +593,136 @@ AJD was partially supported by the Wellcome Trust and AR was supported
 by the Royal Society.
 
 \begin{thebibliography}{77}
-\bibitem{HR2001}Huelsenbeck JP, Ronquist F: MRBAYES: Bayesian inference
-of phylogenetic trees. \emph{Bioinformatics} 2001, \textbf{17}:754-755.
+
+\bibitem{AY2003}Aris-Brosou S, Yang Z: Bayesian models of episodic
+evolution support a late Precambrian explosive diversification of
+the Metazoa. \emph{Mol Biol Evol} 2003, \textbf{20}(12):1947-1954.
+
+\bibitem{Beaumont1999}Beaumont MA: Detecting population expansion
+and decline using microsatellites. \emph{Genetics} 1999, \textbf{153}(4):2013-2029.
+
+\bibitem{DHPR2006}Drummond AJ, Ho SYW, Phillips MJ, Rambaut A: Relaxed
+phylogenetics and dating with confidence. \emph{PLoS Biology} 2006,
+\textbf{4}(5)
 
 \bibitem{DNRS2002}Drummond AJ, Nicholls GK, Rodrigo AG, Solomon W:
 Estimating mutation parameters, population history and genealogy simultaneously
 from temporally spaced sequence data. \emph{Genetics} 2002, \textbf{\noun{161}}(3):1307-1320.
 
-\bibitem{WWB2003}Wilson IJ, Weale ME, Balding DJ: Inferences from
-DNA data: population histories, evolutionary processes and forensic
-match probabilities. \emph{J Royal Stat Soc A-Statistics in Society}
-2003, \textbf{166}:155-188.
+\bibitem{DPRFR2003}Drummond AJ, Pybus OG, Rambaut A, Forsberg R,
+Rodrigo AG: Measurably evolving populations. \emph{Trends Ecol Evol}
+2003, \textbf{18}(9):481-488.
 
-\bibitem{Beaumont1999}Beaumont MA: Detecting population expansion
-and decline using microsatellites. \emph{Genetics} 1999, \textbf{153}(4):2013-2029.
+\bibitem{DRSP2005}Drummond AJ, Rambaut A, Shapiro B, Pybus OG: Bayesian
+coalescent inference of past population dynamics from molecular sequences.
+\emph{Mol Biol Evol} 2005, \textbf{22}(5):1185-1192.
 
-\bibitem{RY2003}Rannala B, Yang ZH: Bayes estimation of species divergence
-times and ancestral population sizes using DNA sequences from multiple
-loci. \emph{Genetics} 2003, \textbf{164}(4):1645-1656.
+\bibitem{GY1994}Goldman N, Yang Z: A codon-based model of nucleotide
+substitution for protein-coding DNA sequences. \emph{Mol Biol Evol}
+1994, \textbf{11}(5):725-736.
+
+\bibitem{GT1994}Griffiths RC, Tavare S: Sampling theory for neutral
+alleles in a varying environment. \emph{Philos Trans R Soc Lond B
+Biol Sci} 1994, \textbf{344}(1310):403-410.
+
+\bibitem{HKY1985}Hasegawa M, Kishino H, Yano T: Dating of the human-ape
+splitting by a molecular clock of mitochondrial DNA. \emph{J Mol Evol}
+1985, \textbf{22}(2):160-174.
+
+\bibitem{Hastings1970}Hastings WK: Monte Carlo sampling methods using
+Markov chains and their applications. \emph{Biometrika} 1970, \textbf{57}:97-109.
+
+\bibitem{HR2001}Huelsenbeck JP, Ronquist F: MRBAYES: Bayesian inference
+of phylogenetic trees. \emph{Bioinformatics} 2001, \textbf{17}:754-755.
+
+\bibitem{Kingman1982}Kingman JFC: The coalescent. \emph{Stochastic
+Processes and Their Applications} 1982, \textbf{13}:235-248.
+
+\bibitem{KTB2001}Kishino H, Thorne JL, Bruno WJ: Performance of a
+divergence time estimation method under a probabilistic model of rate
+evolution. Molecular Biology \& Evolution 2001, 18:352-361.
+
+\bibitem{Kuhner2006}Kuhner, MK: LAMARC 2.0: Maximum likelihood and
+Bayesian estimation of population parameters. \emph{Bioinformatics}
+2006 \textbf{22}(6):768-770.
+
+\bibitem{Lemeyetal2004}Lemey P, Pybus OG, Rambaut A, Drummond AJ,
+Robertson DL, Roques P, Worobey M, Vandamme AM: The molecular population
+genetics of HIV-1 group O. \emph{Genetics} 2004, \textbf{167}(3):1059-1068.
+
+\bibitem{LMDJH2005}Lunter G, Miklos I, Drummond A, Jensen JL, Hein
+J: Bayesian coestimation of phylogeny and sequence alignment. \emph{BMC
+Bioinformatics} 2005, \textbf{6}(1):83.
+
+\bibitem{MRRTT1953}Metropolis N, Rosenbluth A, Rosenbluth M, Teller
+A, Teller E: Equations of state calculations by fast computing machines.
+\emph{J Chem Phys} 1953, \textbf{21}:1087-1091.
 
 \bibitem{PDNRR2003}Pybus OG, Drummond AJ, Nakano T, Robertson BH,
 Rambaut A: The epidemiology and iatrogenic transmission of hepatitis
 C virus in Egypt: a Bayesian coalescent approach. \emph{Mol Biol Evol}
 2003, \textbf{20}(3):381-387.
 
-\bibitem{Kuhner2006}Kuhner, MK: LAMARC 2.0: Maximum likelihood and
-Bayesian estimation of population parameters. \emph{Bioinformatics}
-2006 \textbf{22}(6):768-770.
+\bibitem{Rambaut2000}Rambaut A: Estimating the rate of molecular evolution: incorporating non-contemporaneous sequences into maximum likelihood phylogenies. \emph{Bioinformatics} 2000, \textbf{16}:395-399.
+
+\bibitem{RD2003}Rambaut A, Drummond AJ: Tracer {[}computer program]
+Available from http://evolve.zoo.ox.ac.uk/software/ 2003
+
+\bibitem{RY2003}Rannala B, Yang ZH: Bayes estimation of species divergence
+times and ancestral population sizes using DNA sequences from multiple
+loci. \emph{Genetics} 2003, \textbf{164}(4):1645-1656.
 
 \bibitem{RS2005}Redelings BD, Suchard MA: Joint Bayesian Estimation
 of Alignment and Phylogeny. \emph{Syst Biol} 2005, \textbf{54}(3):401-418.
 
-\bibitem{LMDJH2005}Lunter G, Miklos I, Drummond A, Jensen JL, Hein
-J: Bayesian coestimation of phylogeny and sequence alignment. \emph{BMC
-Bioinformatics} 2005, \textbf{6}(1):83.
-
-\bibitem{Hastings1970}Hastings WK: Monte Carlo sampling methods using
-Markov chains and their applications. \emph{Biometrika} 1970, \textbf{57}:97-109.
-
-\bibitem{MRRTT1953}Metropolis N, Rosenbluth A, Rosenbluth M, Teller
-A, Teller E: Equations of state calculations by fast computing machines.
-\emph{J Chem Phys} 1953, \textbf{21}:1087-1091.
-
-\bibitem{ZP1965}Zuckerkandl E, Pauling L: Evolutionary divergence
-and convergence in proteins. In: \emph{Evolving genes and proteins}.
-Edited by Bryson V, Vogel HJ. Academic Press: New York; 1965: 97-166.
-
-\bibitem{AY2003}Aris-Brosou S, Yang Z: Bayesian models of episodic
-evolution support a late Precambrian explosive diversification of
-the Metazoa. \emph{Mol Biol Evol} 2003, \textbf{20}(12):1947-1954.
-
-\bibitem{KTB2001}Kishino H, Thorne JL, Bruno WJ: Performance of a
-divergence time estimation method under a probabilistic model of rate
-evolution. Molecular Biology \& Evolution 2001, 18:352-361.
+\bibitem{ROMM1990}Rodriguez F, Oliver JL, Marin A, Medina JR: The
+general stochastic model of nucleotide substitution. \emph{J Theor
+Biol} 1990, \textbf{142}(4):485-501.
 
 \bibitem{Sanderson2002}Sanderson MJ: Estimating absolute rates of
 molecular evolution and divergence times: A penalized likelihood approach.
 \emph{Mol Biol Evol} 2002, \textbf{19}:101-109.
-
-\bibitem{TK2002}Thorne JL, Kishino H: Divergence time and evolutionary
-rate estimation with multilocus data. \emph{Syst Biol} 2002, \textbf{51}(5):689-702.
-
-\bibitem{TKP1998}Thorne JL, Kishino H, Painter IS: Estimating the
-rate of evolution of the rate of molecular evolution. \emph{Mol Biol
-Evol} 1998, \textbf{15}:1647-1657.
-
-\bibitem{YY2000}Yoder AD, Yang ZH: Estimation of primate speciation
-dates using local molecular clocks. \emph{Mol Biol Evol} 2000, \textbf{17}:1081-1090.
-
-\bibitem{SR2006}Suchard MA, Redelings BD: BAli-Phy: simultaneous
-Bayesian inference of alignment and phylogeny. \emph{Bioinformatics}
-2006 \textbf{22}(16):2047-2048.
-
-\bibitem{RD2003}Rambaut A, Drummond AJ: Tracer {[}computer program]
-Available from http://evolve.zoo.ox.ac.uk/software/ 2003
 
 \bibitem{Shapiroetal2004}Shapiro B, Drummond AJ, Rambaut A, Wilson
 MC, Matheus PE, Sher AV, Pybus OG, Gilbert MT, Barnes I, Binladen
 J et al: Rise and fall of the Beringian steppe bison. \emph{Science}
 2004, \textbf{306}(5701):1561-1565.
 
-\bibitem{ROMM1990}Rodriguez F, Oliver JL, Marin A, Medina JR: The
-general stochastic model of nucleotide substitution. \emph{J Theor
-Biol} 1990, \textbf{142}(4):485-501.
+\bibitem{Shapiroetal2006}Shapiro B, Rambaut A, Drummond AJ: 
+Choosing Appropriate Substitution Models for the Phylogenetic Analysis of 
+Protein-Coding Sequences \emph{Mol Biol Evol}
+2006, \textbf{23}(1):7-9.
 
-\bibitem{HKY1985}Hasegawa M, Kishino H, Yano T: Dating of the human-ape
-splitting by a molecular clock of mitochondrial DNA. \emph{J Mol Evol}
-1985, \textbf{22}(2):160-174.
+\bibitem{SR2006}Suchard MA, Redelings BD: BAli-Phy: simultaneous
+Bayesian inference of alignment and phylogeny. \emph{Bioinformatics}
+2006 \textbf{22}(16):2047-2048.
 
-\bibitem{GY1994}Goldman N, Yang Z: A codon-based model of nucleotide
-substitution for protein-coding DNA sequences. \emph{Mol Biol Evol}
-1994, \textbf{11}(5):725-736.
-
-\bibitem{Y1994}Yang Z: Maximum likelihood phylogenetic estimation
-from DNA sequences with variable rates over sites: approximate methods.
-\emph{J Mol Evol} 1994, \textbf{39}(3):306-314.
-
-\bibitem{DPRFR2003}Drummond AJ, Pybus OG, Rambaut A, Forsberg R,
-Rodrigo AG: Measurably evolving populations. \emph{Trends Ecol Evol}
-2003, \textbf{18}(9):481-488.
-
-\bibitem{GT1994}Griffiths RC, Tavare S: Sampling theory for neutral
-alleles in a varying environment. \emph{Philos Trans R Soc Lond B
-Biol Sci} 1994, \textbf{344}(1310):403-410.
-
-\bibitem{Kingman1982}Kingman JFC: The coalescent. \emph{Stochastic
-Processes and Their Applications} 1982, \textbf{13}:235-248.
-
-\bibitem{DRSP2005}Drummond AJ, Rambaut A, Shapiro B, Pybus OG: Bayesian
-coalescent inference of past population dynamics from molecular sequences.
-\emph{Mol Biol Evol} 2005, \textbf{22}(5):1185-1192.
-
-\bibitem{Aldous2001}Aldous DJ: Stochastic models and descriptive
-statistics for phylogenetic trees, from Yule to today. \emph{Statistical
-Science} 2001, \textbf{16}(1):23-34.
-
-\bibitem{DHPR2006}Drummond AJ, Ho SYW, Phillips MJ, Rambaut A: Relaxed
-phylogenetics and dating with confidence. \emph{PLoS Biology} 2006,
-\textbf{4}(5)
+\bibitem{TK2002}Thorne JL, Kishino H: Divergence time and evolutionary
+rate estimation with multilocus data. \emph{Syst Biol} 2002, \textbf{51}(5):689-702.
 
 \bibitem{TKF1991}Thorner JL, Kishino H, Felsenstein J: An evolutionary
 model for maximum likelihood alignment of DNA sequences. \emph{J Mol
 Evol} 1991, \textbf{33}(2): 114-124.
 
-\bibitem{Lemeyetal2004}Lemey P, Pybus OG, Rambaut A, Drummond AJ,
-Robertson DL, Roques P, Worobey M, Vandamme AM: The molecular population
-genetics of HIV-1 group O. \emph{Genetics} 2004, \textbf{167}(3):1059-1068.
+\bibitem{TKP1998}Thorne JL, Kishino H, Painter IS: Estimating the
+rate of evolution of the rate of molecular evolution. \emph{Mol Biol
+Evol} 1998, \textbf{15}:1647-1657.
+
+\bibitem{WWB2003}Wilson IJ, Weale ME, Balding DJ: Inferences from
+DNA data: population histories, evolutionary processes and forensic
+match probabilities. \emph{J Royal Stat Soc A-Statistics in Society}
+2003, \textbf{166}:155-188.
+
+\bibitem{Y1994}Yang Z: Maximum likelihood phylogenetic estimation
+from DNA sequences with variable rates over sites: approximate methods.
+\emph{J Mol Evol} 1994, \textbf{39}(3):306-314.
+
+\bibitem{YY2000}Yoder AD, Yang ZH: Estimation of primate speciation
+dates using local molecular clocks. \emph{Mol Biol Evol} 2000, \textbf{17}:1081-1090.
+
+\bibitem{ZP1965}Zuckerkandl E, Pauling L: Evolutionary divergence
+and convergence in proteins. In: \emph{Evolving genes and proteins}.
+Edited by Bryson V, Vogel HJ. Academic Press: New York; 1965: 97-166.
 \end{thebibliography}
 
 \end{document}

@@ -144,8 +144,6 @@ public class DistanceMatrix extends Matrix.AbstractMatrix implements TaxonList {
 		for (int i = 0; i < n; i++) {
 			pattern = patterns.getPattern(i);
 
-//			state1 = patterns.getPatternState(taxon1, i);
-//			state2 = patterns.getPatternState(taxon2,  i);
 			state1 = pattern[taxon1];
 			state2 = pattern[taxon2];
 

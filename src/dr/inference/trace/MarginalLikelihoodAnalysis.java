@@ -19,7 +19,7 @@ import java.io.Reader;
  * <p/>
  * Source translated from model_P.c (a component of BAli-Phy by Benjamin Redelings and Marc Suchard
  */
-public class MarginalLikelihoodAnalysis {
+public class    MarginalLikelihoodAnalysis {
 
     public static final String ML_ANALYSIS = "marginalLikelihoodAnalysis";
     public static final String FILE_NAME = "fileName";
@@ -156,9 +156,9 @@ public class MarginalLikelihoodAnalysis {
         if (!marginalLikelihoodCalculated)
             update();
         StringBuilder sb = new StringBuilder();
-        sb.append("log P(" + trace.getId() + "|Data) = " + String.format("%5.4f", logMarginalLikelihood));
+        sb.append("log P(").append(trace.getId()).append("|Data) = ").append(String.format("%5.4f", logMarginalLikelihood));
         if (doBootstrap) {
-            sb.append(" +/- " + String.format("%5.4f", bootstrappedSE));
+            sb.append(" +/- ").append(String.format("%5.4f", bootstrappedSE));
         } else {
             sb.append("           ");
         }
@@ -166,9 +166,9 @@ public class MarginalLikelihoodAnalysis {
             sb.append(" (harmonic)");
         else
             sb.append(" (smoothed)");
-        sb.append(" burnin=" + burnin);
+        sb.append(" burnin=").append(burnin);
         if (doBootstrap)
-            sb.append(" replicates=" + bootstrapLength);
+            sb.append(" replicates=").append(bootstrapLength);
 //        sb.append("\n");
 
         return sb.toString();
@@ -237,7 +237,7 @@ public class MarginalLikelihoodAnalysis {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             try {
-                Reader reader = null;
+                Reader reader;
 
                 String fileName = xo.getStringAttribute(FILE_NAME);
                 try {

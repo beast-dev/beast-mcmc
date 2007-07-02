@@ -52,7 +52,7 @@ public interface Units {
 
     // array of unit names
     // second dimension is to allow synonyms -- first element is default
-	public String[][] UNIT_NAMES = {{"substitutions","mutations"}, {"generations"}, {"days"}, {"months"}, {"years"}};
+	final public String[][] UNIT_NAMES = {{"substitutions","mutations"}, {"generations"}, {"days"}, {"months"}, {"years"}};
 
     public class Utils {
 

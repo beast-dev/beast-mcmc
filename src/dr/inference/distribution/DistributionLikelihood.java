@@ -338,7 +338,11 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
 
             if (meanInRealSpace) {
-                throw new UnsupportedOperationException("meanInRealSpace is not supported yet");
+                if( mean <= 0 ) {
+                   throw new IllegalArgumentException("meanInRealSpace works only for a positive mean") ;
+                }
+                mean = Math.log(mean) - 0.5 * stdev * stdev;
+                //throw new UnsupportedOperationException("meanInRealSpace is not supported yet");
             }
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new LogNormalDistribution(mean, stdev), offset);

@@ -26,6 +26,7 @@
 package dr.xml;
 
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 
 import java.util.ArrayList;
 import java.util.StringTokenizer;
@@ -135,8 +136,15 @@ public class XMLObject {
 		Object socket = getChild(socketName);
 		return (socket != null) && (socket instanceof XMLObject);
 	}
-	
-	/** @return the ith child as a double. */
+
+    /**
+     * @return all attributes
+     */
+    public NamedNodeMap getAttributes() {
+        return element.getAttributes();
+    }
+
+    /** @return the ith child as a double. */
 	public boolean getBooleanChild(int i) throws XMLParseException { return getBoolean(getChild(i)); }
 
 	/** @return the ith child as a double. */
@@ -156,8 +164,8 @@ public class XMLObject {
 
 	/** @return the named attribute */
 	public Object getAttribute(String name) throws XMLParseException { return getAndTest(name); }
-	
-	/** @return the named attribute as a boolean. */
+
+    /** @return the named attribute as a boolean. */
 	public boolean getBooleanAttribute(String name) throws XMLParseException { return getBoolean(getAndTest(name)); }	
 		
 	/** @return the named attribute as a double. */

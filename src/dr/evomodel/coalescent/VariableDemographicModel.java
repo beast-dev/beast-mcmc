@@ -63,6 +63,9 @@ public class VariableDemographicModel extends DemographicModel {
         final int paramDim2 = indicatorParameter.getDimension();
         this.type = type;
         this.logSpace = logSpace;
+        if( logSpace ) {
+            throw new IllegalArgumentException("sorry log space not implemented");
+        }
 
         if (paramDim1 != events) {
             throw new IllegalArgumentException("Dimension of population parameter must be the same as the number of internal nodes in the tree. ("
@@ -102,20 +105,18 @@ public class VariableDemographicModel extends DemographicModel {
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        assert Arrays.asList(trees).contains((TreeModel)model);
-        //assert model == tree;
-       //  model.class.isAssignableFrom(TreeModel.class) 
         // tree has changed
 
         if( demoFunction != null ) {
             if( demoFunction == savedDemoFunction ) {
                 demoFunction = new VD(demoFunction);
             }
-            for(int k = 0; k < trees.length; ++ k) {
+            for(int k = 0; k < trees.length; ++k) {
                 if( model == trees[k] ) {
                     demoFunction.treeChanged(k);
                     break;
                 }
+                assert k+1 < trees.length;
             }
         }
         super.handleModelChangedEvent(model, object, index);
@@ -169,8 +170,7 @@ public class VariableDemographicModel extends DemographicModel {
             for( int k = 0; k < treeModels.length; ++k) {
                 treeModels[k] = (TreeModel) cxo.getChild(k);
             }
-            //TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
-
+            
             Type type = Type.STEPWISE;
 
             if (xo.hasAttribute(TYPE)) {
@@ -210,7 +210,7 @@ public class VariableDemographicModel extends DemographicModel {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newBooleanRule(VariableSkylineLikelihood.LINEAR, true),
+                AttributeRule.newStringRule(VariableSkylineLikelihood.TYPE, true),
                 new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }),
@@ -486,17 +486,6 @@ public class VariableDemographicModel extends DemographicModel {
                 {
                     if( first == last ) {
                         intensity += intensityLinInterval(start, finish, first);
-//                        double dx = finish - start;
-//                        final double time0 = times[first];
-//                        final double interval = intervals[first];
-//                        final double popDiff = values[first + 1] - popStart;
-//                        if( popDiff == 0 ) {
-//                           intensity += (finish - start) / popStart;
-//                        } else {
-//                            double pop0 = popStart + ((start - time0) / interval) * popDiff;
-//                            double pop1 = popStart + ((finish - time0) / interval) * popDiff;
-//                            intensity += dx * Math.log(pop1/pop0) / (pop1 - pop0);
-//                        }
                     } else {
                         // from first to end of interval
                         intensity += intensityLinInterval(start, times[first+1], first);

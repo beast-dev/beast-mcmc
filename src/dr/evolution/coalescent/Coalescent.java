@@ -98,14 +98,18 @@ public class Coalescent implements MultivariateFunction, Units {
             if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
 
                 final double demographicAtCoalPoint = demographicFunction.getDemographic(finishTime);
-            /*    if ( Math.abs(1 - ((duration * 1/intervalArea) / demographicAtCoalPoint) ) > 1e-10 ) {
-                    System.out.println( demographicAtCoalPoint + "," + (duration * 1/intervalArea));
-                }*/
+
+                // if value at end is many orders of magnitude different than mean over interval reject this interval
+                // This is protection against cases where you get  ridiculous coalescent values with infitisimal
+                // population size at the end of a linear interval
+
                 if( demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
                   logL += Math.log(kover2 / demographicAtCoalPoint);
+                    
                   if( detaildPrint ) { System.err.println(" vatend " + demographicAtCoalPoint + " lgl " + logL); }
                 } else {
-                    System.out.println(demographicAtCoalPoint  + " " + (intervalArea/duration) );
+                    // remove this at some stage
+                    System.err.println(demographicAtCoalPoint + " " + (intervalArea/duration) );
                 }
             }
 
@@ -125,17 +129,14 @@ public class Coalescent implements MultivariateFunction, Units {
 			throw new IllegalArgumentException("Can only calculate analytical likelihood for pure coalescent intervals");
 		}
 	
-		double lambda = getLambda(intervals);
-		int n = intervals.getSampleCount();
-		
-		double logL = 0.0;
-		
+		final double lambda = getLambda(intervals);
+		final int n = intervals.getSampleCount();
+
 		// assumes a 1/theta prior	
 		//logLikelihood = Math.log(1.0/Math.pow(lambda,n));
 		
 		// assumes a flat prior
-		logL = Math.log(1.0/Math.pow(lambda,n-1));
-		return logL;
+        return (1-n) * Math.log(lambda); // Math.log(1.0/Math.pow(lambda,n-1));
 	}
 	
 	/**

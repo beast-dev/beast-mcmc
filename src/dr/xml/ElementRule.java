@@ -228,7 +228,11 @@ public class ElementRule implements XMLSyntaxRule {
 		return (matchCount >= min && matchCount <= max);
 	}
 
-	/**
+    public boolean containsAttribute(String name) {
+        return false;
+    }
+
+    /**
 	 * @return a string describing the rule.
 	 */
 	public String ruleString() {
@@ -236,10 +240,10 @@ public class ElementRule implements XMLSyntaxRule {
 			return "ELEMENT of type " + getTypeName() + " REQUIRED";
 		} else {
 			StringBuffer buffer = new StringBuffer("Exactly one ELEMENT of name " + name + " REQUIRED containing");
-			for (int i =0;i < rules.length; i++) {
-				buffer.append("\n    " + rules[i].ruleString());
-			}
-			return buffer.toString();
+            for (XMLSyntaxRule rule : rules) {
+                buffer.append("\n    ").append(rule.ruleString());
+            }
+            return buffer.toString();
 		}
 	}
 
@@ -282,11 +286,11 @@ public class ElementRule implements XMLSyntaxRule {
 
 		} else {
 			StringBuffer buffer = new StringBuffer("<div class=\"" + (min == 0 ? "optional" : "required") + "compoundrule\">Element named <span class=\"elemname\">" + name + "</span> containing:");
-			for (int i =0;i < rules.length; i++) {
-				buffer.append(rules[i].htmlRuleString(handler));
-			}
-			if (hasDescription()) {
-				buffer.append("<div class=\"description\">" + getDescription() + "</div>\n");
+            for (XMLSyntaxRule rule : rules) {
+                buffer.append(rule.htmlRuleString(handler));
+            }
+            if (hasDescription()) {
+                buffer.append("<div class=\"description\">").append(getDescription()).append("</div>\n");
 			}
 			buffer.append("</div>\n");
 			return buffer.toString();
@@ -312,7 +316,7 @@ public class ElementRule implements XMLSyntaxRule {
 	/**
 	 * @return true if the given object is compatible with the required class.
 	 */
-	private final boolean isCompatible(Object o) {
+	private boolean isCompatible(Object o) {
 
 		if (rules != null) {
 
@@ -320,13 +324,13 @@ public class ElementRule implements XMLSyntaxRule {
 				XMLObject xo = (XMLObject)o;
 
 				if (xo.getName().equals(name)) {
-					for (int i =0; i < rules.length; i++) {
-						if (!rules[i].isSatisfied(xo)) {
-							return false;
-						}
-					}
+                    for (XMLSyntaxRule rule : rules) {
+                        if (!rule.isSatisfied(xo)) {
+                            return false;
+                        }
+                    }
 
-					return true;
+                    return true;
 				}
 			}
 		} else {
@@ -377,7 +381,7 @@ public class ElementRule implements XMLSyntaxRule {
 	/**
 	 * @return a pretty name for a class.
 	 */
-	private final String getTypeName() {
+	private String getTypeName() {
 
 		if (c == null) return "Object";
 		String name = c.getName();
@@ -387,16 +391,16 @@ public class ElementRule implements XMLSyntaxRule {
 	/**
 	 * @return a set containing the required types of this rule.
 	 */
-	public Set getRequiredTypes() {
+	public Set<Class> getRequiredTypes() {
 		if (c != null) {
 			return Collections.singleton(c);
 		} else {
-			Set set = new TreeSet(ClassComparator.INSTANCE);
+			Set<Class> set = new TreeSet<Class>(ClassComparator.INSTANCE);
 
-			for (int i = 0; i < rules.length; i++) {
-				set.addAll(rules[i].getRequiredTypes());
-			}
-			return set;
+            for (XMLSyntaxRule rule : rules) {
+                set.addAll(rule.getRequiredTypes());
+            }
+            return set;
 		}
 	}
 

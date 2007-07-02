@@ -56,12 +56,12 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
     /**
      * Constructor.
      */   	
-    public PurifyingGammaTreeLikelihood(	PatternList patternList,
-    								TreeModel treeModel,
-    								GammaSiteModel siteModel,
-  									Parameter substitutionRateParameter,
-									Parameter halfLifeParameter,
-   									boolean useAmbiguities ) throws TaxonList.MissingTaxonException 
+    public PurifyingGammaTreeLikelihood(PatternList patternList,
+    								    TreeModel treeModel,
+    								    GammaSiteModel siteModel,
+  									    Parameter substitutionRateParameter,
+									    Parameter halfLifeParameter,
+   									    boolean useAmbiguities ) throws TaxonList.MissingTaxonException
 	{
     	
 		super(PURIFYING_GAMMA_TREE_LIKELIHOOD, patternList, treeModel);
@@ -214,7 +214,7 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
      */
     protected double calculateLogLikelihood() {
 	 
-		NodeRef root = treeModel.getRoot();
+		final NodeRef root = treeModel.getRoot();
 					
 		if (rootPartials == null) {
 			rootPartials = new double[patternCount * stateCount];
@@ -230,9 +230,9 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
 		
 		gammaCategoryRates = siteModel.getCategoryRates();
 		
-		double mu = siteModel.getMutationRateParameter().getParameterValue(0);
-		double k = substitutionRateParameter.getParameterValue(0);
-		double lambda = Math.log(2) / halfLifeParameter.getParameterValue(0);
+		final double mu = siteModel.getMutationRateParameter().getParameterValue(0);
+		final double k = substitutionRateParameter.getParameterValue(0);
+		final double lambda = Math.log(2) / halfLifeParameter.getParameterValue(0);
 
         if (nodeTimes == null) {
             nodeTimes = new double[treeModel.getNodeCount()];
@@ -267,7 +267,7 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
      * Traverse the tree calculating partial likelihoods.
      * @return whether the partials for this node were recalculated.
      */
-	private final double calculateNodeTimes(TreeModel tree, NodeRef node) {
+	private double calculateNodeTimes(TreeModel tree, NodeRef node) {
 
 		NodeRef parent = tree.getParent(node);
 	   	
@@ -305,11 +305,11 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
      * Traverse the tree calculating partial likelihoods.
      * @return whether the partials for this node were recalculated.
      */
-	private final boolean traverse(Tree tree, NodeRef node, double mu, double k, double lambda) {
+	private boolean traverse(Tree tree, NodeRef node, double mu, double k, double lambda) {
 	
 		boolean update = false;
 		
-		int nodeNum = node.getNumber();
+		final int nodeNum = node.getNumber();
 		
 		NodeRef parent = tree.getParent(node);
 		
@@ -402,15 +402,12 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
 			PatternList patternList = (PatternList)xo.getChild(PatternList.class);
 			TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
 			GammaSiteModel siteModel = (GammaSiteModel)xo.getChild(GammaSiteModel.class);
-			
-			PurifyingGammaTreeLikelihood treeLikelihood = null;
+
 			try {
-				treeLikelihood = new PurifyingGammaTreeLikelihood(patternList, treeModel, siteModel, substitutionRateParam, halfLifeParam, false);
-			} catch (TaxonList.MissingTaxonException e) {
+                return new PurifyingGammaTreeLikelihood(patternList, treeModel, siteModel, substitutionRateParam, halfLifeParam, false);
+            } catch (TaxonList.MissingTaxonException e) {
 				throw new XMLParseException(e.toString()); 
 			}
-			
-			return treeLikelihood;
 		}
 		
 		//************************************************************************

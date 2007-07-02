@@ -45,11 +45,11 @@ public class XMLDocumentationHandler {
 			XMLSyntaxRule[] rules = xmlparser.getSyntaxRules();
 
 			if (rules != null) {
-				for (int i =0; i < rules.length; i++) {
-					Set requiredTypesForRule = rules[i].getRequiredTypes();
-					requiredTypes.addAll(requiredTypesForRule);
-				}
-			}
+                for (XMLSyntaxRule rule : rules) {
+                    Set<Class> requiredTypesForRule = rule.getRequiredTypes();
+                    requiredTypes.addAll(requiredTypesForRule);
+                }
+            }
 		}
 	}
 
@@ -116,37 +116,35 @@ public class XMLDocumentationHandler {
 		outputElementRules(writer, parser.getParserName(), parser.getSyntaxRules(), level);
 	}
 
-	public void stochasticCollectRules(XMLSyntaxRule[] allRules, ArrayList attributeList, ArrayList elementList) {
+	public void stochasticCollectRules(XMLSyntaxRule[] allRules, ArrayList<XMLSyntaxRule> attributeList, ArrayList<ElementRule> elementList) {
 
 		if (allRules != null) {
-			for (int i =0; i < allRules.length; i++) {
+            for (XMLSyntaxRule rule : allRules) {
 
-				XMLSyntaxRule rule = allRules[i];
+                if (rule instanceof AttributeRule) {
+                    attributeList.add(rule);
+                } else if (rule instanceof ElementRule) {
+                    int min = ((ElementRule) rule).getMin();
+                    int max = Math.max(min, Math.min(5, ((ElementRule) rule).getMax()));
 
-				if (rule instanceof AttributeRule) {
-					attributeList.add(rule);
-				} else if (rule instanceof ElementRule) {
-					int min = ((ElementRule)rule).getMin();
-					int max = Math.max(min, Math.min(5, ((ElementRule)rule).getMax()));
-
-					int numRules = min;
-					if (max != min) numRules = MathUtils.nextInt(max-min) + min;
-					for (int j =0; j < numRules; j++) {
-						elementList.add((ElementRule)rule);
-					}
-				} else if (rule instanceof XORRule) {
-					XORRule xorRule = (XORRule)rule;
-					XMLSyntaxRule[] rules = xorRule.getRules();
-					int ruleIndex = MathUtils.nextInt(rules.length);
-					stochasticCollectRules(new XMLSyntaxRule[] { rules[ruleIndex] }, attributeList, elementList);
-				} else if (rule instanceof OrRule) {
-					OrRule orRule = (OrRule)rule;
-					XMLSyntaxRule[] rules = orRule.getRules();
-					int ruleIndex = MathUtils.nextInt(rules.length);
-					stochasticCollectRules(new XMLSyntaxRule[] { rules[ruleIndex] }, attributeList, elementList);
-				}
-			}
-		}
+                    int numRules = min;
+                    if (max != min) numRules = MathUtils.nextInt(max - min) + min;
+                    for (int j = 0; j < numRules; j++) {
+                        elementList.add((ElementRule) rule);
+                    }
+                } else if (rule instanceof XORRule) {
+                    XORRule xorRule = (XORRule) rule;
+                    XMLSyntaxRule[] rules = xorRule.getRules();
+                    int ruleIndex = MathUtils.nextInt(rules.length);
+                    stochasticCollectRules(new XMLSyntaxRule[]{rules[ruleIndex]}, attributeList, elementList);
+                } else if (rule instanceof OrRule) {
+                    OrRule orRule = (OrRule) rule;
+                    XMLSyntaxRule[] rules = orRule.getRules();
+                    int ruleIndex = MathUtils.nextInt(rules.length);
+                    stochasticCollectRules(new XMLSyntaxRule[]{rules[ruleIndex]}, attributeList, elementList);
+                }
+            }
+        }
 	}
 
 	/**
@@ -181,24 +179,22 @@ public class XMLDocumentationHandler {
 
 	public void outputElementRules(PrintWriter writer, String name, XMLSyntaxRule[] rules, int level) {
 
-		ArrayList attributeList = new ArrayList();
-		ArrayList elementList = new ArrayList();
+		ArrayList<XMLSyntaxRule> attributeList = new ArrayList<XMLSyntaxRule>();
+		ArrayList<ElementRule> elementList = new ArrayList<ElementRule>();
 		stochasticCollectRules(rules, attributeList, elementList);
 
 		writer.print(spaces(level) + "&lt;" + name);
 		// write out the attributes
-		for (int i =0; i < attributeList.size(); i++) {
-			XMLSyntaxRule rule = (XMLSyntaxRule)attributeList.get(i);
-			outputExampleXML(writer, (AttributeRule)rule, level + 1);
-		}
-		if (elementList.size() > 0) {
+        for (XMLSyntaxRule rule : attributeList) {
+            outputExampleXML(writer, (AttributeRule) rule, level + 1);
+        }
+        if (elementList.size() > 0) {
 			writer.println("&gt;");
 			// write out the elements
-			for (int i =0; i < elementList.size(); i++) {
-				ElementRule rule = (ElementRule)elementList.get(i);
-				outputExampleXML(writer, rule, level + 1);
-			}
-			writer.println(spaces(level) + "&lt;/" + name + "&gt;");
+            for (ElementRule rule : elementList) {
+                outputExampleXML(writer, rule, level + 1);
+            }
+            writer.println(spaces(level) + "&lt;/" + name + "&gt;");
 		} else {
 			writer.println("/&gt;");
 		}
@@ -265,15 +261,15 @@ public class XMLDocumentationHandler {
 
 	public XMLObjectParser getRandomParser(Class c) {
 
-		ArrayList matchingParsers = getMatchingParsers(c);
+		ArrayList<XMLObjectParser> matchingParsers = getMatchingParsers(c);
 
 		if (matchingParsers.size() == 0) return null;
-		return (XMLObjectParser)matchingParsers.get(MathUtils.nextInt(matchingParsers.size()));
+		return matchingParsers.get(MathUtils.nextInt(matchingParsers.size()));
 	}
 
-	public final ArrayList getMatchingParsers(Class c) {
+	public final ArrayList<XMLObjectParser> getMatchingParsers(Class c) {
 
-		ArrayList matchingParsers = new ArrayList();
+		ArrayList<XMLObjectParser> matchingParsers = new ArrayList<XMLObjectParser>();
 		// find all parsers that match this required type
 		Iterator i = parser.getParsers();
 		while (i.hasNext()) {
@@ -304,63 +300,61 @@ public class XMLDocumentationHandler {
 
 
 		// iterate through the types
-		Iterator iterator = requiredTypes.iterator();
-		while (iterator.hasNext()) {
+		//Iterator iterator = requiredTypes.iterator();
+        for (Class requiredType : requiredTypes) {
+            if (requiredType != Object.class) {
 
-			Class requiredType = (Class)iterator.next();
+                String name = ClassComparator.getName(requiredType);
 
-
-			if (requiredType != Object.class) {
-
-				String name = ClassComparator.getName(requiredType);
-
-				System.out.println("  outputting HTML for generic type " + name);
+                System.out.println("  outputting HTML for generic type " + name);
 
 
-				TreeSet matchingParserNames = new TreeSet();
+                TreeSet<String> matchingParserNames = new TreeSet<String>();
 
-				// find all parsers that match this required type
-				Iterator i = parser.getParsers();
-				while (i.hasNext()) {
-					XMLObjectParser xmlParser = (XMLObjectParser)i.next();
-					Class returnType = xmlParser.getReturnType();
-					if (requiredType.isAssignableFrom(returnType)) {
-						matchingParserNames.add(xmlParser.getParserName());
-					}
-				}
+                // find all parsers that match this required type
+                Iterator i = parser.getParsers();
+                while (i.hasNext()) {
+                    XMLObjectParser xmlParser = (XMLObjectParser) i.next();
+                    Class returnType = xmlParser.getReturnType();
+                    if (requiredType.isAssignableFrom(returnType)) {
+                        matchingParserNames.add(xmlParser.getParserName());
+                    }
+                }
 
-				// output table row containing the type and the matching parser names
-				writer.println("<div id=\"" + name + "\"><h2>" + name + "</h2>");
-				writer.println("<p>");
-				writer.println("Elements of this type include:");
-				writer.println("</p>");
-				i = matchingParserNames.iterator();
-				while (i.hasNext()) {
-					String parserName = (String)i.next();
-					writer.println("<div><a href=\"index.html#" + parserName + "\"> &lt;" + parserName + "&gt;</a></div>");
-				}
-				writer.println("</div>");
-			}
+                // output table row containing the type and the matching parser names
+                writer.println("<div id=\"" + name + "\"><h2>" + name + "</h2>");
+                writer.println("<p>");
+                writer.println("Elements of this type include:");
+                writer.println("</p>");
+                i = matchingParserNames.iterator();
+                while (i.hasNext()) {
+                    String parserName = (String) i.next();
+                    writer.println("<div><a href=\"index.html#" + parserName + "\"> &lt;" + parserName + "&gt;</a></div>");
+                }
+                writer.println("</div>");
+            }
 
-		}
+        }
 
-		writer.println("</html>");
+        writer.println("</html>");
 		writer.flush();
 		writer.close();
 	}
 
+/*
 
 	public Set getParsersForClass(Class returnType) {
 
 		TreeSet set = new TreeSet();
 		return set;
 	}
+*/
 
 	public String getHTMLForClass(Class c) {
 		String name = ClassComparator.getName(c);
 		return "<A HREF=\"types.html#" + name + "\">" + name + "</A>";
 	}
-
+/*
 	class SetHash {
 
 		private HashMap table;
@@ -384,19 +378,19 @@ public class XMLDocumentationHandler {
 		public final Object[] getArray(Object key) { return getSortedSet(key).toArray(); }
 
 		public final SortedSet getSortedSet(Object key) { return (SortedSet)table.get(key); }
-	}
+	}*/
 
-	class XMLObjectParserComparator implements Comparator {
+	/*class XMLObjectParserComparator implements Comparator<XMLObjectParser> {
 
-		public int compare(Object c1, Object c2) {
+		public int compare(XMLObjectParser c1, XMLObjectParser c2) {
 
-			String name1 = ((XMLObjectParser)c1).getParserName().toUpperCase();
-			String name2 = ((XMLObjectParser)c2).getParserName().toUpperCase();
+			final String name1 = c1.getParserName().toUpperCase();
+			final String name2 = c2.getParserName().toUpperCase();
 
 			return name1.compareTo(name2);
 		}
-	}
+	}*/
 
-	private Set requiredTypes = new TreeSet(ClassComparator.INSTANCE);
+	private Set<Class> requiredTypes = new TreeSet<Class>(ClassComparator.INSTANCE);
 	private XMLParser parser = null;
 }

@@ -25,6 +25,8 @@
 
 package dr.xml;
 
+import org.w3c.dom.NamedNodeMap;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -35,7 +37,7 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 		this.store = store;
 		
 		if (hasSyntaxRules()) {
-			XMLSyntaxRule[] rules = getSyntaxRules();
+			final XMLSyntaxRule[] rules = getSyntaxRules();
             for (XMLSyntaxRule rule : rules) {
                 if (!rule.isSatisfied(xo)) {
                     // System.err.println(this);
@@ -43,6 +45,23 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                             ">' element with id, '" + id +
                             "', is incorrectly constructed.\nThe following was expected:\n" +
                             rule.ruleString(xo));
+                }
+            }
+
+            // Look for undeclared attributes and issue a warning
+            final NamedNodeMap attributes = xo.getAttributes();
+            for(int k = 0; k < attributes.getLength(); ++k) {
+                String name = attributes.item(k).getNodeName();
+                if( name.equals(XMLObject.ID) ) continue;
+
+                for (XMLSyntaxRule rule : rules) {
+                    if( rule.containsAttribute(name) ) {
+                        name = null;
+                        break;
+                    }
+                }
+                if( name != null ) {
+                    System.err.println("WARNING: unhandled attribute (typo?) " + name + " in " + xo);
                 }
             }
         }
@@ -88,20 +107,20 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 	 */
 	public final String toHTML(XMLDocumentationHandler handler) {
 		StringBuffer buffer = new StringBuffer();
-		buffer.append("<div id=\"" + getParserName() + "\" class=\"element\">\n");
+        buffer.append("<div id=\"").append(getParserName()).append("\" class=\"element\">\n");
 		buffer.append("  <div class=\"elementheader\">\n");
-		buffer.append("    <span class=\"elementname\">" + getParserName() + "</span> element\n");
+        buffer.append("    <span class=\"elementname\">").append(getParserName()).append("</span> element\n");
 		buffer.append("    <div class=\"description\">\n");
-		buffer.append("      " + getParserDescription() + "\n");
+        buffer.append("      ").append(getParserDescription()).append("\n");
 		buffer.append("    </div>\n");
 		buffer.append("  </div>\n");
 		if (hasSyntaxRules()) {
 			XMLSyntaxRule[] rules = getSyntaxRules();
 			buffer.append("  <div class=\"rules\">\n");
-			for (int i = 0; i < rules.length; i++) {
-				buffer.append(rules[i].htmlRuleString(handler));
-			}
-			buffer.append("  </div>\n");
+            for (XMLSyntaxRule rule : rules) {
+                buffer.append(rule.htmlRuleString(handler));
+            }
+            buffer.append("  </div>\n");
 		}
 		buffer.append("<div class=\"example\">");
 		StringWriter sw = new StringWriter();
@@ -119,14 +138,14 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 	 */
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
-		buffer.append("\nELEMENT " + getParserName() + "\n");
+        buffer.append("\nELEMENT ").append(getParserName()).append("\n");
 		
 		if (hasSyntaxRules()) {
 			XMLSyntaxRule[] rules = getSyntaxRules();
-			for (int i = 0; i < rules.length; i++) {
-				buffer.append("  " + rules[i].ruleString() + "\n");
-			}
-		}
+            for (XMLSyntaxRule rule : rules) {
+                buffer.append("  ").append(rule.ruleString()).append("\n");
+            }
+        }
 		return buffer.toString();
 	}	
 	

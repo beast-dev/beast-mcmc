@@ -118,7 +118,7 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
             }
 		}
 
-        assert uppers != null && lowers != null;
+       //  assert uppers != null && lowers != null;
 
         if ( (uppers.length != values.length) ) {
 			throw new XMLParseException("value and upper limit strings have different dimension, in parameter");
@@ -135,7 +135,7 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
 			}
 		}
 		
-		// make values consistent with bounds
+        // make values consistent with bounds
 		for (int i =0; i < values.length; i++) {
 			if (uppers[i] < values[i]) values[i] = uppers[i];
 		}

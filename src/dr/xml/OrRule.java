@@ -46,13 +46,22 @@ public class OrRule implements XMLSyntaxRule {
 	 * Returns true if the rule is satisfied for the given XML object.
 	 */
 	public boolean isSatisfied(XMLObject xo) {
-		for (int i = 0; i < rules.length; i++) {
-			if (rules[i].isSatisfied(xo)) return true;
-		}
-		return false;
+        for (XMLSyntaxRule rule : rules) {
+            if (rule.isSatisfied(xo)) return true;
+        }
+        return false;
 	}
 
-	/**
+    public boolean containsAttribute(String name) {
+        for( XMLSyntaxRule rule : rules ) {
+            if( rule.containsAttribute((name)) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
 	 * Describes the rule.
 	 */
 	public String ruleString() {
@@ -89,12 +98,12 @@ public class OrRule implements XMLSyntaxRule {
 	/**
 	 * @return a set containing the required types of this rule.
 	 */
-	public Set getRequiredTypes() { 
-		Set set = new TreeSet(ClassComparator.INSTANCE);
-		for (int i = 0; i < rules.length; i++) {
-			set.addAll(rules[i].getRequiredTypes());
-		}
-		return set;
+	public Set<Class> getRequiredTypes() {
+		Set<Class> set = new TreeSet<Class>(ClassComparator.INSTANCE);
+        for (XMLSyntaxRule rule : rules) {
+            set.addAll(rule.getRequiredTypes());
+        }
+        return set;
 	}
 
 	XMLSyntaxRule[] rules;

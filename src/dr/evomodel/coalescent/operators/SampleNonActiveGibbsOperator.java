@@ -6,10 +6,7 @@ import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
-import dr.xml.XMLParseException;
-import dr.xml.XMLObject;
-import dr.xml.XMLSyntaxRule;
-import dr.xml.ElementRule;
+import dr.xml.*;
 import dr.math.MathUtils;
 
 /**
@@ -72,7 +69,7 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            int weight = xo.getIntegerAttribute(WEIGHT);
+            final int weight = xo.getIntegerAttribute(WEIGHT);
 
             XMLObject cxo = (XMLObject) xo.getChild("distribution");
             ParametricDistributionModel distribution =
@@ -111,6 +108,7 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
                         new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
                 new ElementRule(DATA_PARAMETER,
                         new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
+                AttributeRule.newIntegerRule(WEIGHT),
         };
 
     };

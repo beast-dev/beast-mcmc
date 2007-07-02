@@ -55,16 +55,25 @@ public class XORRule implements XMLSyntaxRule {
 	public boolean isSatisfied(XMLObject xo) {
 
 		int satisfiedCount = 0;
-		for (int i =0; i < rules.length; i++) {
-			if (rules[i].isSatisfied(xo)) {
-				satisfiedCount += 1;
-				if (satisfiedCount > 1) return false;
-			}
-		}
-		return optional || satisfiedCount == 1;
+        for (XMLSyntaxRule rule : rules) {
+            if (rule.isSatisfied(xo)) {
+                satisfiedCount += 1;
+                if (satisfiedCount > 1) return false;
+            }
+        }
+        return optional || satisfiedCount == 1;
 	}
 
-	/**
+    public boolean containsAttribute(String name) {
+        for( XMLSyntaxRule rule : rules ) {
+            if( rule.containsAttribute(name) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
 	 * Describes the rule.
 	 */
 	public String ruleString() {
@@ -74,10 +83,10 @@ public class XORRule implements XMLSyntaxRule {
         } else {
             buffer.append("One of \n");
         }
-		for (int i =0; i < rules.length; i++) {
-			buffer.append("  " + rules[i].ruleString() + "\n");
-		}
-		return buffer.toString();
+        for (XMLSyntaxRule rule : rules) {
+            buffer.append("  ").append(rule.ruleString()).append("\n");
+        }
+        return buffer.toString();
 	}
 
 	/**
@@ -85,10 +94,10 @@ public class XORRule implements XMLSyntaxRule {
 	 */
 	public String htmlRuleString(XMLDocumentationHandler handler) {
 		StringBuffer buffer = new StringBuffer("<div class=\"requiredcompoundrule\">One of:\n");
-		for (int i =0; i < rules.length; i++) {
-			buffer.append(rules[i].htmlRuleString(handler));
-		}
-		buffer.append("</div>\n");
+        for (XMLSyntaxRule rule : rules) {
+            buffer.append(rule.htmlRuleString(handler));
+        }
+        buffer.append("</div>\n");
 		return buffer.toString();
 	}
 
@@ -103,14 +112,14 @@ public class XORRule implements XMLSyntaxRule {
 	/**
 	 * @return a set containing the required types of this rule.
 	 */
-	public Set getRequiredTypes() {
+	public Set<Class> getRequiredTypes() {
 
-		Set set = new TreeSet(ClassComparator.INSTANCE);
+		Set<Class> set = new TreeSet<Class>(ClassComparator.INSTANCE);
 
-		for (int i = 0; i < rules.length; i++) {
-			set.addAll(rules[i].getRequiredTypes());
-		}
-		return set;
+        for (XMLSyntaxRule rule : rules) {
+            set.addAll(rule.getRequiredTypes());
+        }
+        return set;
 	}
 
 	private final XMLSyntaxRule[] rules;

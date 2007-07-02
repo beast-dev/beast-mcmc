@@ -260,10 +260,8 @@ public interface Parameter extends Statistic
 		
 		public Default(double[] values) {
 			this.values = new double[values.length];
-			for (int i =0; i < values.length; i++) {
-				this.values[i] = values[i];
-			}
-		}
+            System.arraycopy(values, 0, this.values, 0, values.length);
+        }
 		
 		public void addBounds(Bounds boundary) {
 			if (bounds == null) {
@@ -315,10 +313,8 @@ public interface Parameter extends Statistic
 		public void setDimension(int dim) {
 			if (!hasBeenStored) {
 				double[] newValues = new double[dim];
-				for (int i = 0; i < values.length; i++) {
-					newValues[i] = values[i];
-				}
-				for (int i = values.length; i < newValues.length; i++) {
+                System.arraycopy(values, 0, newValues, 0, values.length);
+                for (int i = values.length; i < newValues.length; i++) {
 					newValues[i] = values[0];
 				}
 				values = newValues;

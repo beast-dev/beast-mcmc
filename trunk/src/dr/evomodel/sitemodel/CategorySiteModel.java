@@ -178,7 +178,7 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
 	/**
 	 * 
 	 */
-	private final void calculateCategoryRates() {
+	private void calculateCategoryRates() {
 
 		categoryRates[relativeTo] = 1.0;
 		double total = 1.0;

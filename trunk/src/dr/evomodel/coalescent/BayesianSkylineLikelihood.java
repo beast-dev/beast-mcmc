@@ -167,8 +167,8 @@ public class BayesianSkylineLikelihood extends CoalescentLikelihood {
 		for (int j = 0; j < intervalCount; j++) {
 
 			// set the population size to the size of the middle of the current interval
-		    	double ps = getPopSize(groupIndex, currentTime + (intervals[j]/2.0), groupEnds);
-			cp.setN0(getPopSize(groupIndex, currentTime + (intervals[j]/2.0), groupEnds));
+		    final double ps = getPopSize(groupIndex, currentTime + (intervals[j]/2.0), groupEnds);
+			cp.setN0(ps);
 			if (getIntervalType(j) == CoalescentEventType.COALESCENT) {
 				subIndex += 1;
 				if (subIndex >= groupSizes[groupIndex]) {

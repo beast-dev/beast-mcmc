@@ -46,7 +46,9 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 	public static final String SCALE_ALL = "scaleAll";
 	public static final String SCALE_FACTOR = "scaleFactor";
 	public static final String DEGREES_OF_FREEDOM = "df";
-	private Parameter indicator;
+    private static final String PICKONEPROB = "pickoneprob";
+
+    private Parameter indicator;
 	private double indicatorOnProb;
 
 	public ScaleOperator(Parameter parameter, boolean scaleAll, int degreesOfFreedom, double scale, int weight,
@@ -225,7 +227,8 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 		} else return "";
 	}
 
-	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+
+    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
 		public String getParserName() {
 			return SCALE_OPERATOR;
@@ -236,7 +239,6 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 			boolean scaleAll = false;
 			int degreesOfFreedom = 0;
 			int mode = CoercableMCMCOperator.DEFAULT;
-
 
 			if (xo.hasAttribute(SCALE_ALL)) {
 				scaleAll = xo.getBooleanAttribute(SCALE_ALL);
@@ -266,8 +268,8 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 
 			if (cxo != null) {
 				indicator = (Parameter) cxo.getChild(Parameter.class);
-				if (cxo.hasAttribute("pickoneprob")) {
-					indicatorOnProb = cxo.getDoubleAttribute("pickoneprob");
+				if (cxo.hasAttribute(PICKONEPROB)) {
+					indicatorOnProb = cxo.getDoubleAttribute(PICKONEPROB);
                     if( ! (0 <= indicatorOnProb && indicatorOnProb <= 1) ) {
                         throw new XMLParseException("pickoneprob must be between 0.0 and 1.0");
                     }
@@ -297,7 +299,8 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 				AttributeRule.newBooleanRule(SCALE_ALL, true),
 				AttributeRule.newIntegerRule(WEIGHT),
 				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-				new ElementRule(Parameter.class)
+                AttributeRule.newDoubleRule(PICKONEPROB, true),
+                new ElementRule(Parameter.class)
 		};
 
 	};

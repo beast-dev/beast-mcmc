@@ -117,8 +117,12 @@ public class AttributeRule implements XMLSyntaxRule {
 		}
 		return false;
 	}
-	
-	/**
+
+    public boolean containsAttribute(String name) {
+        return name.equals(getName());
+    }
+
+    /**
 	 * @return a string describing the rule.
 	 */
 	public String ruleString() {
@@ -176,7 +180,7 @@ public class AttributeRule implements XMLSyntaxRule {
 	/**
 	 * @return a set containing the required types of this rule.
 	 */
-	public Set getRequiredTypes() { return Collections.singleton(c); }
+	public Set<Class> getRequiredTypes() { return Collections.singleton(c); }
 
 	
 	public boolean isAttributeRule() { return true; }
@@ -184,7 +188,7 @@ public class AttributeRule implements XMLSyntaxRule {
 	/**
 	 * @return true if the given object is compatible with the required class.
 	 */
-	private final boolean isCompatible(Object o) {
+	private boolean isCompatible(Object o) {
 		
 		if (c == null) return true;
 		
@@ -235,7 +239,7 @@ public class AttributeRule implements XMLSyntaxRule {
 	/**
 	 * @return a pretty name for a class.
 	 */
-	private final String getTypeName() {
+	private String getTypeName() {
 	
 		if (c == null) return "Object";
 		String name = c.getName();

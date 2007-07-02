@@ -44,8 +44,12 @@ public class ContentRule implements XMLSyntaxRule {
 	 * @return true
 	 */
 	public boolean isSatisfied(XMLObject xo) { return true; }
-	
-	/**
+
+    public boolean containsAttribute(String name) {
+        return false;
+    }
+
+    /**
 	 * @return a string describing the rule.
 	 */
 	public String ruleString() { return htmlDescription; }
@@ -65,7 +69,7 @@ public class ContentRule implements XMLSyntaxRule {
 	/**
 	 * @return a set containing the required types of this rule.
 	 */
-	public Set getRequiredTypes() { return Collections.EMPTY_SET; }
+	public Set<Class> getRequiredTypes() { return Collections.EMPTY_SET; }
 
 	
 	public boolean isAttributeRule() { return false; }

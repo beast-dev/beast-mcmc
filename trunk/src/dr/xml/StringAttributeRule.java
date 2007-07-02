@@ -67,11 +67,11 @@ public class StringAttributeRule extends AttributeRule {
 	 */
 	public StringAttributeRule(String name, String description, String[] valid, boolean optional) {
 		this(name, description, null, optional, 0, Integer.MAX_VALUE);
-		validValues = new ArrayList();
-        for (int i = 0; i < valid.length; i++) {
-            validValues.add(valid[i]);
+		validValues = new ArrayList<String>();
+        for (String aValid : valid) {
+            validValues.add(aValid);
         }
-		this.example = null;
+        this.example = null;
 	}
 
     /**
@@ -80,10 +80,10 @@ public class StringAttributeRule extends AttributeRule {
      */
     public StringAttributeRule(String name, String description, String[][] valid, boolean optional) {
         this(name, description, null, optional, 0, Integer.MAX_VALUE);
-        validValues = new ArrayList();
-        for (int i = 0; i < valid.length; i++) {
-            for (int j = 0; j < valid[i].length; j++) {
-                validValues.add(valid[i][j]);
+        validValues = new ArrayList<String>();
+        for (String[] aValid : valid) {
+            for (String anAValid : aValid) {
+                validValues.add(anAValid);
             }
         }
         this.example = null;
@@ -110,16 +110,18 @@ public class StringAttributeRule extends AttributeRule {
 		if (super.isSatisfied(xo)) {
 			if (!getOptional()) {
 				try {
-					String str = (String)getAttribute(xo);
+					final String str = (String)getAttribute(xo);
 					if (validValues != null) {
-						for (int i =0; i < validValues.size(); i++) {
-							if (str.equals((String)validValues.get(i))) return true;
-						}
-						return false;
+                        for (Object validValue : validValues) {
+                            if (str.equals(validValue)) return true;
+                        }
+                        return false;
 					} else {
 						return (str.length() >= minLength || str.length() <= maxLength);
 					}
-				} catch (XMLParseException xpe) {}
+				} catch (XMLParseException xpe) {
+                    //
+                }
 			}
 			return true;
 		}
@@ -172,7 +174,7 @@ public class StringAttributeRule extends AttributeRule {
 	
 	public String getExample() {
 		if (validValues != null) {
-			return (String)validValues.get(MathUtils.nextInt(validValues.size()));
+			return validValues.get(MathUtils.nextInt(validValues.size()));
 		} else return example;
 	}
 	
@@ -181,6 +183,6 @@ public class StringAttributeRule extends AttributeRule {
 	}
 		
 	private int minLength = 0, maxLength = Integer.MAX_VALUE;
-	private List validValues = null;
+	private List<String> validValues = null;
 	private String example = null;
 }

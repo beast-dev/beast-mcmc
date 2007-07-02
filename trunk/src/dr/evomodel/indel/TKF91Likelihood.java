@@ -44,7 +44,7 @@ public class TKF91Likelihood extends AbstractModel implements Likelihood {
 	public static final String TKF91_LIKELIHOOD = "tkf91Likelihood";
 	public static final String TKF91_LENGTH_DIST = "lengthDistribution";
 	public static final String TKF91_DEATH = "deathRate";
-	public static final String MU = "mutationRate";
+	//public static final String MU = "mutationRate";
 
 	public TKF91Likelihood(TreeModel treeModel, Alignment alignment, GammaSiteModel siteModel, TKF91Model tkfModel) {
 

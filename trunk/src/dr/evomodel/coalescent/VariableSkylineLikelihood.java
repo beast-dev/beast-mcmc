@@ -368,10 +368,10 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
             TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
 
             Type type = VariableSkylineLikelihood.Type.STEPWISE;
-            if (xo.hasAttribute(VariableSkylineLikelihood.LINEAR) && !xo.getBooleanAttribute(VariableSkylineLikelihood.LINEAR))
+           /* if (xo.hasAttribute(VariableSkylineLikelihood.LINEAR) && !xo.getBooleanAttribute(VariableSkylineLikelihood.LINEAR))
             {
                 type = VariableSkylineLikelihood.Type.STEPWISE;
-            }
+            }*/
 
             if (xo.hasAttribute(VariableSkylineLikelihood.TYPE)) {
                 final String s = xo.getStringAttribute(VariableSkylineLikelihood.TYPE);
@@ -410,7 +410,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newBooleanRule(VariableSkylineLikelihood.LINEAR, true),
+                AttributeRule.newBooleanRule(VariableSkylineLikelihood.TYPE, true),
                 new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }),

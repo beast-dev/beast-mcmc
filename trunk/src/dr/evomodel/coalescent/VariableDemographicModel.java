@@ -58,6 +58,9 @@ public class VariableDemographicModel extends DemographicModel {
             // we will have to handle this I guess
             assert t.getUnits() == trees[0].getUnits();
         }
+        // all trees share time 0, need fixing for serial data
+        events -= (trees.length - 1);
+
         //final int events = tree.getExternalNodeCount() - redcueDim;
         final int paramDim1 = popSizeParameter.getDimension();
         final int paramDim2 = indicatorParameter.getDimension();
@@ -106,7 +109,7 @@ public class VariableDemographicModel extends DemographicModel {
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // tree has changed
-
+        //System.out.println("model changed: " + model);
         if( demoFunction != null ) {
             if( demoFunction == savedDemoFunction ) {
                 demoFunction = new VD(demoFunction);
@@ -114,6 +117,8 @@ public class VariableDemographicModel extends DemographicModel {
             for(int k = 0; k < trees.length; ++k) {
                 if( model == trees[k] ) {
                     demoFunction.treeChanged(k);
+                    //System.out.println("tree changed: " + k + " " + Arrays.toString(demoFunction.dirtyTrees)
+                     //       + " " + demoFunction.dirtyTrees);
                     break;
                 }
                 assert k+1 < trees.length;
@@ -125,6 +130,7 @@ public class VariableDemographicModel extends DemographicModel {
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index) {
+        //System.out.println("parm changed: " + parameter);
         super.handleParameterChangedEvent(parameter, index);
         if( demoFunction != null ) {
             if( demoFunction == savedDemoFunction ) {
@@ -138,12 +144,26 @@ public class VariableDemographicModel extends DemographicModel {
     }
 
     protected void storeState() {
+        //System.out.println("store");
+
+        /*for (int u = 0; u < 2; ++u) {
+            System.out.println(u + " " + getModel(u));
+          System.out.println(Arrays.toString(demoFunction.ttimes[u]));
+        }
+*/
         savedDemoFunction = demoFunction;
     }
 
     protected void restoreState() {
+        //System.out.println("restore");
         demoFunction = savedDemoFunction;
         savedDemoFunction = null;
+        
+        /*for (int u = 0; u < 2; ++u) {
+            System.out.println(u + " " + getModel(u));
+            System.out.println(Arrays.toString(demoFunction.ttimes[u]));
+        }*/
+        //demoFunction.setDirty(); demoFunction.setup();
     }
 
     public TreeIntervals[] getTreeIntervals() {
@@ -263,6 +283,10 @@ public class VariableDemographicModel extends DemographicModel {
             this.times = demoFunction.times.clone();
             this.intervals = demoFunction.intervals.clone();
             this.ttimes = demoFunction.ttimes.clone();
+            for(int k = 0; k < ttimes.length; ++k) {
+                ttimes[k] = ttimes[k].clone();
+            }
+
             this.alltimes = demoFunction.alltimes.clone();
             this.dirtyTrees = demoFunction.dirtyTrees.clone();
             this.dirty = demoFunction.dirty;
@@ -279,11 +303,17 @@ public class VariableDemographicModel extends DemographicModel {
 
         private boolean setTreeTimes(int nt) {
             if( dirtyTrees[nt] ) {
+                double[] doubles = null;
+                if( ! dirtyTrees[nt] ) {
+                   doubles = ttimes[nt].clone();
+
+                }
                 ti[nt] = new TreeIntervals(trees[nt]);
+
                 TreeIntervals nti = ti[nt];
                 nti.setMultifurcationLimit(1e-9);
 
-                assert ti[nt].getIntervalCount() ==  ttimes[nt].length;
+                assert nti.getIntervalCount() ==  ttimes[nt].length;
 
                 int iCount = 0;
                 for(int k = 0; k < ttimes[nt].length; ++k) {
@@ -305,13 +335,22 @@ public class VariableDemographicModel extends DemographicModel {
                     }
                     ttimes[nt][k] = timeToCoal + (k == 0 ? 0 : ttimes[nt][k-1]);
                 }
+
+                if( doubles != null ) {
+                    if( ! Arrays.equals(doubles, ttimes[nt]) ) {
+                       System.out.println(Arrays.toString(doubles) + " != " + Arrays.toString(ttimes[nt])
+                               + Arrays.toString(dirtyTrees) + " " + dirtyTrees);
+                    }
+                }
                 dirtyTrees[nt] = false;
+               // System.out.print(nt + " " + Arrays.toString(dirtyTrees) + " " + dirtyTrees);
                 return true;
             }
             return false;
         }
 
         private void setup() {
+           // boolean was = dirty;
             if( dirty ) {
                 boolean any = false;
                 for(int nt = 0; nt < ti.length; ++nt) {
@@ -322,7 +361,7 @@ public class VariableDemographicModel extends DemographicModel {
 
                 final int nd = indicatorParameter.getDimension();
 
-                assert nd == alltimes.length-1;
+                assert nd == alltimes.length + (type == VariableDemographicModel.Type.STEPWISE ? -1 : 0);
 
                 if( any ) {
                     // now we want to merge times together
@@ -379,6 +418,10 @@ public class VariableDemographicModel extends DemographicModel {
                 }
                 dirty = false;
             }
+            //
+            /*System.out.println("after setup " + (was ? "(dirty)" : "") + " , alltimes " + Arrays.toString(alltimes)
+                        + " times " + Arrays.toString(times) + " values " + Arrays.toString(values) +
+                    " inds " + Arrays.toString(indicatorParameter.getParameterValues())) ;*/
         }
 
         private int getIntervalIndex(final double t) {

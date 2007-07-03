@@ -40,9 +40,7 @@ public class FrequencySet
 	// Public stuff
 	//
 
-	public FrequencySet()
-	{
-	}
+	public FrequencySet() {}
 
 	/** get number of objects */
 	public int size()
@@ -53,8 +51,7 @@ public class FrequencySet
 	}
 
 	/** get object in frequency order */
-	public Object get(int i)
-	{
+	public Object get(int i) {
 
 		//return null;
 
@@ -76,8 +73,7 @@ public class FrequencySet
 	}
 
 	/** get sum of all frequencies */
-	public int getSumFrequency()
-	{
+	public int getSumFrequency() {
 		int sum = 0;
 		for (int i = 0, n = size(); i < n; i++) {
 			sum += getFrequency(i);
@@ -92,25 +88,13 @@ public class FrequencySet
 		add(object, 1);
 	}
 
-	/** adds an object to the set with an initial frequency */
-	public void add(Object object, int frequency)
-	{
-/*		if (!set.contains(object)) {
-			Bin bin = new Bin(object, frequency);
+	/**
+     * adds an object to the set with an initial frequency, or if object already
+     * in frequency set then frequency is incremented by 1. 
+     */
+	public void add(Object object, int frequency) {
 
-			list.add(bin);
-			set.add(object);
-		} else {
-			for (int i = 0, n = list.size(); i < n; i++) {
-				Bin bin = (Bin)list.get(i);
-				if (bin.object.equals(object)) {
-					bin.frequency++;
-					break;
-				}
-			}
-		}*/
-
-		Bin bin = (Bin)hash.get(object.toString());
+		Bin bin = hash.get(object.toString());
 		if (bin != null) {
 			bin.frequency += 1;
 		} else {
@@ -119,26 +103,6 @@ public class FrequencySet
 			size += 1;
 			sorted = false;
 		}
-
-		/*boolean found = false;
-
-		for (int i = 0, n = list.size(); i < n; i++) {
-			Bin bin = (Bin)list.get(i);
-			if (bin.object.equals(object)) {
-				bin.frequency++;
-				found = true;
-				break;
-			}
-		}
-
-		if (!found) {
-			Bin bin = new Bin(object, frequency);
-
-			list.add(bin);
-			set.add(object);
-		}
-		*/
-
 	}
 
 	/** The frequencySets are equal if their inner sets are equal */
@@ -150,8 +114,8 @@ public class FrequencySet
 	private void sortByFrequency() {
 
 		list.clear();
-		for (Iterator i = hash.values().iterator(); i.hasNext();) {
-			list.add(i.next());
+		for (Bin bin : hash.values()) {
+			list.add(bin);
 		}
 
 		Collections.sort(list, frequencyComparator);
@@ -162,15 +126,15 @@ public class FrequencySet
 	// Private stuff
 	//
 
-	private ArrayList list = new ArrayList();
-	private Hashtable hash = new Hashtable();
+	private List<Bin> list = new ArrayList<Bin>();
+	private Hashtable<String, Bin> hash = new Hashtable<String, Bin>();
 	private HashSet set = new HashSet();
 	private boolean sorted = false;
 	private int size = 0;
 
 	private class Bin {
 		Object object;
-		int frequency;
+        int frequency;
 
 		public Bin(Object object, int frequency) {
 			this.object = object;
@@ -186,9 +150,9 @@ public class FrequencySet
 		}
 	}
 
-	private Comparator frequencyComparator = new Comparator() {
-		public int compare(Object o1, Object o2) {
-			return ((Bin)o2).frequency - ((Bin)o1).frequency;
+	private Comparator<Bin> frequencyComparator = new Comparator<Bin>() {
+		public int compare(Bin bin1, Bin bin2) {
+			return bin2.frequency - bin1.frequency;
 		}
 
 	};

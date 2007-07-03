@@ -26,19 +26,13 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.NodeRef;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 import jebl.evolution.treemetrics.BilleraMetric;
-import jebl.evolution.treemetrics.RootedTreeMetric;
-import jebl.evolution.treemetrics.RobinsonsFouldMetric;
 import jebl.evolution.treemetrics.CladeHeightMetric;
+import jebl.evolution.treemetrics.RobinsonsFouldMetric;
+import jebl.evolution.treemetrics.RootedTreeMetric;
 import jebl.evolution.trees.SimpleRootedTree;
-import jebl.evolution.taxa.Taxon;
-import jebl.evolution.graphs.Node;
-
-import java.util.List;
-import java.util.ArrayList;
 
 
 /**
@@ -156,6 +150,7 @@ public class TreeMetricStatistic extends Statistic.Abstract implements TreeStati
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
                 new StringAttributeRule(NAME, "A name for this statistic primarily for the purposes of logging", true),
+                new StringAttributeRule(METHOD, "comparision method", true),
                 new ElementRule(TARGET,
                         new XMLSyntaxRule[] { new ElementRule(TreeModel.class) }),
                 new ElementRule(REFERENCE,

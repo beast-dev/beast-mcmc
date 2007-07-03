@@ -38,6 +38,10 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Alexei Drummond
+ * @author Andrew Rambaut
+ */
 public class TreeLogAnalyser {
 
 	private final static Version version = new BeastVersion();
@@ -46,7 +50,7 @@ public class TreeLogAnalyser {
 
 	public TreeLogAnalyser(int burnin, String inputFileName, String outputFileName, String trueTreeFileName, boolean verbose) throws java.io.IOException {
 
-		List files = new ArrayList();
+		List<File> files = new ArrayList<File>();
         File inputFile = new File(inputFileName);
 
         if (inputFile.isDirectory()) {
@@ -78,7 +82,7 @@ public class TreeLogAnalyser {
 		analyze(files, burnin, trueTree, verbose, new boolean[] {true});
 	}
 
-    private static void collectFiles(File file, List files) {
+    private static void collectFiles(File file, List<File> files) {
 
         if (file.isFile()) {
             if (file.getName().endsWith(".tre") || file.getName().endsWith(".trees") || file.getName().endsWith(".t")) {
@@ -86,23 +90,23 @@ public class TreeLogAnalyser {
             }
         } else {
             File[] listFiles = file.listFiles();
-            for (int i = 0; i < listFiles.length; i++) {
-                collectFiles(listFiles[i], files);
+            for (File listFile : listFiles) {
+                collectFiles(listFile, files);
             }
         }
     }
 
-    private static void analyze(List files, int burnin, Tree tree, boolean verbose, boolean[] drawHeader) {
+    private static void analyze(List<File> files, int burnin, Tree tree, boolean verbose, boolean[] drawHeader) {
 
         if (combine) {
             try {
                 Reader[] readers = new Reader[files.size()];
                 for (int i = 0; i < readers.length; i++) {
-                    readers[i] = new FileReader((File)files.get(i));
+                    readers[i] = new FileReader(files.get(i));
                 }
                 TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(readers, burnin, verbose);
                 if (verbose) {
-                    analysis.report();
+                    analysis.report(0.05);
                 } else {
                     analysis.shortReport("combined", tree, drawHeader[0]);
                     drawHeader[0] = false;
@@ -112,23 +116,20 @@ public class TreeLogAnalyser {
 
             }
         } else {
-            for (int i = 0; i < files.size(); i++) {
+            for (File file : files) {
                 try {
-                    TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(new Reader[] {new FileReader((File)files.get(i))}, burnin, verbose);
+                    TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(new Reader[]{new FileReader(file)}, burnin, verbose);
                     if (verbose) {
                         analysis.report();
                     } else {
-                        analysis.shortReport(files.get(i).toString(), tree, drawHeader[0]);
+                        analysis.shortReport(file.toString(), tree, drawHeader[0]);
                         drawHeader[0] = false;
                     }
                 } catch (IOException ioe) {
 
                 }
             }
-
         }
-
-
     }
 
 	public static void printTitle() {

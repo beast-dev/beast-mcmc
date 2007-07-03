@@ -29,164 +29,182 @@ import dr.evolution.util.TaxonList;
 import dr.util.FrequencySet;
 
 import java.util.BitSet;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
- * Stores a set of unique clades for a tree 
+ * Stores a set of unique clades (and their node heights) for a tree
  *
  * @version $Id: CladeSet.java,v 1.8 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
+ * @author Alexei Drummond
  */
-public class CladeSet extends FrequencySet
-{
-	//
-	// Public stuff
-	//
+public class CladeSet extends FrequencySet {
+    //
+    // Public stuff
+    //
 
-	public CladeSet()
-	{
-	}
+    public CladeSet() {}
 
-	/**
-	 * @param tree
-	 */
-	public CladeSet(Tree tree)
-	{
-		this.taxonList = tree;
-		add(tree);
-	}
+    /**
+     * @param tree
+     */
+    public CladeSet(Tree tree)
+    {
+        this.taxonList = tree;
+        add(tree);
+    }
 
-	/**
-	 * @param taxonList  a set of taxa used to label the tips
-	 */
-	public CladeSet(Tree tree, TaxonList taxonList)
-	{
-		this.taxonList = taxonList;
-		add(tree);
-	}
+    /**
+     * @param taxonList  a set of taxa used to label the tips
+     */
+    public CladeSet(Tree tree, TaxonList taxonList)
+    {
+        this.taxonList = taxonList;
+        add(tree);
+    }
 
-	/** get number of unique clades */
-	public int getCladeCount()
-	{		
-		return size();
-	}
+    /** get number of unique clades */
+    public int getCladeCount()
+    {
+        return size();
+    }
 
-	/** get clade bit set */
-	public String getClade(int index)
-	{
-		BitSet bits = (BitSet)get(index);
-		
-		StringBuffer buffer = new StringBuffer("{");
-		boolean first = true;
-		for (int i = 0; i < bits.length(); i++) {
-			if (bits.get(i)) {
-				if (!first) {
-					buffer.append(", ");					
-				} else {
-					first = false;
-				}
-				buffer.append(taxonList.getTaxonId(i));
-			}
-		}
-		buffer.append("}");
-		return buffer.toString();
-	}
+    /** get clade bit set */
+    public String getClade(int index)
+    {
+        BitSet bits = (BitSet)get(index);
 
-	/** get clade frequency */
-	public int getCladeFrequency(int index)
-	{		
-		return getFrequency(index);
-	}
+        StringBuffer buffer = new StringBuffer("{");
+        boolean first = true;
+        for (int i = 0; i < bits.length(); i++) {
+            if (bits.get(i)) {
+                if (!first) {
+                    buffer.append(", ");
+                } else {
+                    first = false;
+                }
+                buffer.append(taxonList.getTaxonId(i));
+            }
+        }
+        buffer.append("}");
+        return buffer.toString();
+    }
 
-	/** adds all the clades in the tree */
-	public void add(Tree tree)
-	{		
-		if (taxonList == null) {
-			taxonList = tree;
-		}
-		
-		// Recurse over the tree and add all the clades (or increment their
-		// frequency if already present). The root clade is not added.
-		addClades(tree, tree.getRoot(), null);
-	}
+    /** get clade frequency */
+    public int getCladeFrequency(int index)
+    {
+        return getFrequency(index);
+    }
 
-	private void addClades(Tree tree, NodeRef node, BitSet bits) {
-	
-		if (tree.isExternal(node)) {
-		
-			if (taxonList != null) {
-				int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-				bits.set(index);
-			} else {
-				bits.set(node.getNumber());
-			}
-		} else {
-			
-			BitSet bits2 = new BitSet();
-			for (int i = 0; i < tree.getChildCount(node); i++) {
-			
-				NodeRef node1 = tree.getChild(node, i);
+    /** adds all the clades in the tree */
+    public void add(Tree tree)
+    {
+        if (taxonList == null) {
+            taxonList = tree;
+        }
 
-				addClades(tree, node1, bits2);
-			}
-			
-			add(bits2, 1);
-			
-			if (bits != null) {
-				bits.or(bits2);
-			}
-		}
-	}
-		
-	/** adds all the clades in the CladeSet */
-	public void add(CladeSet cladeSet)
-	{		
-		for (int i = 0, n = cladeSet.getCladeCount(); i < n; i++) {
-			add(cladeSet.getClade(i), cladeSet.getCladeFrequency(i));
-		}
-	}
-	
-	public boolean hasClade(int index, Tree tree) {
-		BitSet bits = (BitSet)get(index);
+        // Recurse over the tree and add all the clades (or increment their
+        // frequency if already present). The root clade is not added.
+        addClades(tree, tree.getRoot(), null);
+    }
 
-		NodeRef[] mrca = new NodeRef[1];
-		findClade(bits, tree, tree.getRoot(), mrca);			
-	
-		return (mrca[0] != null);
-	}
-	
-	public int findClade(BitSet bitSet, Tree tree, NodeRef node, NodeRef[] cladeMRCA) {
-		
-		if (tree.isExternal(node)) {
-		
-			if (taxonList != null) {
-				int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-				if (bitSet.get(index)) return 1;
-			} else {
-				if (bitSet.get(node.getNumber())) return 1;
-			} 
-			return -1;
-		} else {
-			int count = 0;
-			for (int i = 0; i < tree.getChildCount(node); i++) {
-			
-				NodeRef node1 = tree.getChild(node, i);
+    private void addClades(Tree tree, NodeRef node, BitSet bits) {
 
-				int childCount = findClade(bitSet, tree, node1, cladeMRCA);
-				
-				if (childCount != -1 && count != -1) {
-					count += childCount;
-				} else count = -1;
-			}
-			
-			if (count == bitSet.cardinality()) cladeMRCA[0] = node;
-			
-			return count;
-		}
-	}
+        if (tree.isExternal(node)) {
 
-	//
-	// Private stuff
-	//
-	TaxonList taxonList = null;
+            if (taxonList != null) {
+                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                bits.set(index);
+            } else {
+                bits.set(node.getNumber());
+            }
+        } else {
+
+            BitSet bits2 = new BitSet();
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                NodeRef node1 = tree.getChild(node, i);
+
+                addClades(tree, node1, bits2);
+            }
+
+            add(bits2, 1);
+            addNodeHeight(bits2, tree.getNodeHeight(node));
+
+            if (bits != null) {
+                bits.or(bits2);
+            }
+        }
+    }
+
+    public double getMeanNodeHeight(int i) {
+        BitSet bits = (BitSet)get(i);
+
+        return getTotalNodeHeight(bits) / getFrequency(i);
+    }
+
+    private double getTotalNodeHeight(BitSet bits) {
+        Double tnh = totalNodeHeight.get(bits);
+        if (tnh == null) return 0.0;
+        return tnh;
+    }
+
+    private void addNodeHeight(BitSet bits, double height) {
+        totalNodeHeight.put(bits, (getTotalNodeHeight(bits) + height));
+    }
+
+    /** adds all the clades in the CladeSet */
+    public void add(CladeSet cladeSet)
+    {
+        for (int i = 0, n = cladeSet.getCladeCount(); i < n; i++) {
+            add(cladeSet.getClade(i), cladeSet.getCladeFrequency(i));
+        }
+    }
+
+    public boolean hasClade(int index, Tree tree) {
+        BitSet bits = (BitSet)get(index);
+
+        NodeRef[] mrca = new NodeRef[1];
+        findClade(bits, tree, tree.getRoot(), mrca);
+
+        return (mrca[0] != null);
+    }
+
+    public int findClade(BitSet bitSet, Tree tree, NodeRef node, NodeRef[] cladeMRCA) {
+
+        if (tree.isExternal(node)) {
+
+            if (taxonList != null) {
+                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                if (bitSet.get(index)) return 1;
+            } else {
+                if (bitSet.get(node.getNumber())) return 1;
+            }
+            return -1;
+        } else {
+            int count = 0;
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                NodeRef node1 = tree.getChild(node, i);
+
+                int childCount = findClade(bitSet, tree, node1, cladeMRCA);
+
+                if (childCount != -1 && count != -1) {
+                    count += childCount;
+                } else count = -1;
+            }
+
+            if (count == bitSet.cardinality()) cladeMRCA[0] = node;
+
+            return count;
+        }
+    }
+
+    //
+    // Private stuff
+    //
+    TaxonList taxonList = null;
+    Map<BitSet, Double> totalNodeHeight = new HashMap<BitSet, Double>();
 }

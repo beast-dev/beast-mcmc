@@ -28,9 +28,7 @@ package dr.evolution.tree;
 import dr.evolution.util.TaxonList;
 import dr.util.FrequencySet;
 
-import java.util.BitSet;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * Stores a set of unique clades (and their node heights) for a tree
@@ -78,19 +76,30 @@ public class CladeSet extends FrequencySet {
 
         StringBuffer buffer = new StringBuffer("{");
         boolean first = true;
-        for (int i = 0; i < bits.length(); i++) {
-            if (bits.get(i)) {
-                if (!first) {
-                    buffer.append(", ");
-                } else {
-                    first = false;
-                }
-                buffer.append(taxonList.getTaxonId(i));
+        for (String taxonId : getTaxaSet(bits)) {
+            if (!first) {
+                buffer.append(", ");
+            } else {
+                first = false;
             }
+            buffer.append(taxonId);
         }
         buffer.append("}");
         return buffer.toString();
     }
+
+    private SortedSet<String> getTaxaSet(BitSet bits) {
+
+        SortedSet<String> taxaSet = new TreeSet<String>();
+
+        for (int i = 0; i < bits.length(); i++) {
+            if (bits.get(i)) {
+                taxaSet.add(taxonList.getTaxonId(i));
+            }
+        }
+        return taxaSet;
+    }
+
 
     /** get clade frequency */
     public int getCladeFrequency(int index)

@@ -148,6 +148,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.clock.GDLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.branchratemodel.DiscretizedBranchRates.PARSER);
         addXMLObjectParser(dr.evomodel.branchratemodel.StrictClockBranchRates.PARSER);
+        addXMLObjectParser(dr.evomodel.branchratemodel.RandomLocalClockModel.PARSER);
         addXMLObjectParser(dr.evomodel.branchratemodel.RateEpochBranchRateModel.PARSER);
 
         addXMLObjectParser(dr.evomodel.tree.TreeModel.PARSER);
@@ -193,6 +194,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.UNIFORM_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.EXPONENTIAL_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.NORMAL_PRIOR_PARSER);
+        addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.POISSON_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.LOG_NORMAL_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.GAMMA_PRIOR_PARSER);
 

@@ -40,179 +40,182 @@ import java.util.ArrayList;
  */
 public class CompoundLikelihood implements Likelihood {
 
-	public static final String COMPOUND_LIKELIHOOD = "compoundLikelihood";
-	public static final String POSTERIOR = "posterior";
-	public static final String PRIOR = "prior";
-	public static final String LIKELIHOOD = "likelihood";
+    public static final String COMPOUND_LIKELIHOOD = "compoundLikelihood";
+    public static final String POSTERIOR = "posterior";
+    public static final String PRIOR = "prior";
+    public static final String LIKELIHOOD = "likelihood";
 
-	public CompoundLikelihood() { }
+    public CompoundLikelihood() { }
 
-	public void addLikelihood(Likelihood likelihood) {
+    public void addLikelihood(Likelihood likelihood) {
 
-		if ( !likelihoods.contains(likelihood) ) {
+        if ( !likelihoods.contains(likelihood) ) {
 
-			likelihoods.add(likelihood);
-			if (likelihood.getModel() != null) {
-				compoundModel.addModel(likelihood.getModel());
-			}
+            likelihoods.add(likelihood);
+            if (likelihood.getModel() != null) {
+                compoundModel.addModel(likelihood.getModel());
+            }
 
-		}
-	}
+        }
+    }
 
-	public int getLikelihoodCount() {
-		return likelihoods.size();
-	}
+    public int getLikelihoodCount() {
+        return likelihoods.size();
+    }
 
-	public final Likelihood getLikelihood(int i) {
-		return likelihoods.get(i);
-	}
+    public final Likelihood getLikelihood(int i) {
+        return likelihoods.get(i);
+    }
 
-	// **************************************************************
-	// Likelihood IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // Likelihood IMPLEMENTATION
+    // **************************************************************
 
-	public Model getModel() { return compoundModel; }
+    public Model getModel() { return compoundModel; }
 
-	public final double getLogLikelihood() {
-		double logLikelihood = 0.0;
+    public final double getLogLikelihood() {
+        double logLikelihood = 0.0;
         //System.err.println("mixed of " + likelihoods.size());
-		for (int i = 0; i < likelihoods.size(); i++) {
-			double l = getLikelihood(i).getLogLikelihood();
+        for (int i = 0; i < likelihoods.size(); i++) {
+            double l = getLikelihood(i).getLogLikelihood();
 
-			// if the likelihood is zero then short cut the rest of the likelihoods
-			// This means that expensive likelihoods such as TreeLikelihoods should
-			// be put after cheap ones such as BooleanLikelihoods
-			if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
+            // if the likelihood is zero then short cut the rest of the likelihoods
+            // This means that expensive likelihoods such as TreeLikelihoods should
+            // be put after cheap ones such as BooleanLikelihoods
+            if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
             //System.err.println(getLikelihood(i) + " : " + l);
-			logLikelihood += l;
-		}
+            logLikelihood += l;
+        }
         //System.err.println("mixed end");
 
         return logLikelihood;
-	}
+    }
 
-	public void makeDirty() {
+    public void makeDirty() {
 
-		for (int i = 0; i < likelihoods.size(); i++) {
-			getLikelihood(i).makeDirty();
-		}
-	}
+        for (int i = 0; i < likelihoods.size(); i++) {
+            getLikelihood(i).makeDirty();
+        }
+    }
 
-	public String getDiagnosis() {
-		String message = "";
-		boolean first = true;
+    public String getDiagnosis() {
+        String message = "";
+        boolean first = true;
 
-		for (int i = 0; i < likelihoods.size(); i++) {
-			Likelihood lik = getLikelihood(i);
+        for (int i = 0; i < likelihoods.size(); i++) {
+            Likelihood lik = getLikelihood(i);
 
-			if (!first) {
-				message += ", ";
-			} else {
-				first = false;
-			}
+            if (!first) {
+                message += ", ";
+            } else {
+                first = false;
+            }
 
-			String id = lik.getId();
-			if (id == null || id.trim().length() == 0) {
-				String[] parts = lik.getClass().getName().split("\\.");
-				id = parts[parts.length - 1];
-			}
+            String id = lik.getId();
+            if (id == null || id.trim().length() == 0) {
+                String[] parts = lik.getClass().getName().split("\\.");
+                id = parts[parts.length - 1];
+            }
 
-			message += id + "=";
+            message += id + "=";
 
 
-			if (lik instanceof CompoundLikelihood) {
-				String d = ((CompoundLikelihood)lik).getDiagnosis();
-				if (d != null && d.length() > 0) {
-					message += "(" + d + ")";
-				}
-			} else {
+            if (lik instanceof CompoundLikelihood) {
+                String d = ((CompoundLikelihood)lik).getDiagnosis();
+                if (d != null && d.length() > 0) {
+                    message += "(" + d + ")";
+                }
+            } else {
 
-				if (lik.getLogLikelihood() == Double.NEGATIVE_INFINITY) {
-					message += "-Inf";
-				} else if (Double.isNaN(lik.getLogLikelihood())) {
-					message += "NaN";
-				} else {
-					NumberFormatter nf = new NumberFormatter(6);
-					message += nf.formatDecimal(lik.getLogLikelihood(), 4);
-				}
-			}
-		}
-		
-		return message;
-	}
+                if (lik.getLogLikelihood() == Double.NEGATIVE_INFINITY) {
+                    message += "-Inf";
+                } else if (Double.isNaN(lik.getLogLikelihood())) {
+                    message += "NaN";
+                } else {
+                    NumberFormatter nf = new NumberFormatter(6);
+                    message += nf.formatDecimal(lik.getLogLikelihood(), 4);
+                }
+            }
+        }
 
-	public String toString() {
+        return message;
+    }
 
-		return Double.toString(getLogLikelihood());
+    public String toString() {
 
-	}
+        return Double.toString(getLogLikelihood());
 
-	// **************************************************************
-	// Loggable IMPLEMENTATION
-	// **************************************************************
+    }
 
-	/**
-	 * @return the log columns.
-	 */
-	public dr.inference.loggers.LogColumn[] getColumns() {
-		return new dr.inference.loggers.LogColumn[] {
-				new LikelihoodColumn(getId())
-		};
-	}
+    // **************************************************************
+    // Loggable IMPLEMENTATION
+    // **************************************************************
 
-	private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-		public LikelihoodColumn(String label) { super(label); }
-		public double getDoubleValue() { return getLogLikelihood(); }
-	}
+    /**
+     * @return the log columns.
+     */
+    public dr.inference.loggers.LogColumn[] getColumns() {
+        return new dr.inference.loggers.LogColumn[] {
+                new LikelihoodColumn(getId())
+        };
+    }
 
-	// **************************************************************
-	// Identifiable IMPLEMENTATION
-	// **************************************************************
+    private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
+        public LikelihoodColumn(String label) { super(label); }
+        public double getDoubleValue() { return getLogLikelihood(); }
+    }
 
-	private String id = null;
+    // **************************************************************
+    // Identifiable IMPLEMENTATION
+    // **************************************************************
 
-	public void setId(String id) { this.id = id; }
+    private String id = null;
 
-	public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public String getId() { return id; }
 
-		public String getParserName() { return COMPOUND_LIKELIHOOD; }
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String[] getParserNames() { return new String[] { getParserName(), "posterior", "prior", "likelihood" }; }
+        public String getParserName() { return COMPOUND_LIKELIHOOD; }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public String[] getParserNames() { return new String[] { getParserName(), "posterior", "prior", "likelihood" }; }
 
-			CompoundLikelihood compoundLikelihood = new CompoundLikelihood();
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				if (xo.getChild(i) instanceof Likelihood) {
-					compoundLikelihood.addLikelihood((Likelihood)xo.getChild(i));
-				} else {
-					throw new XMLParseException("An element which is not a likelihood has been added to a " + COMPOUND_LIKELIHOOD + " element");
-				}
-			}
-			return compoundLikelihood;
-		}
+            CompoundLikelihood compoundLikelihood = new CompoundLikelihood();
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                if (xo.getChild(i) instanceof Likelihood) {
+                    compoundLikelihood.addLikelihood((Likelihood)xo.getChild(i));
+                } else {
 
-		public String getParserDescription() {
-			return "A likelihood function which is simply the product of its component likelihood functions.";
-		}
+                    Object rogueElement = xo.getChild(i);
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+                    throw new XMLParseException("An element (" + rogueElement + ") which is not a likelihood has been added to a " + COMPOUND_LIKELIHOOD + " element");
+                }
+            }
+            return compoundLikelihood;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-				new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE ),
-		};
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public Class getReturnType() { return CompoundLikelihood.class; }
-	};
+        public String getParserDescription() {
+            return "A likelihood function which is simply the product of its component likelihood functions.";
+        }
 
-	private ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
-	private CompoundModel compoundModel = new CompoundModel("compoundModel");
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE ),
+        };
+
+        public Class getReturnType() { return CompoundLikelihood.class; }
+    };
+
+    private ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
+    private CompoundModel compoundModel = new CompoundModel("compoundModel");
 }
 

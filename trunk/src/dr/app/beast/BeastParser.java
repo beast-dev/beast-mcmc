@@ -229,6 +229,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.operators.SwapOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.DeltaExchangeOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.CenteredScaleOperator.PARSER);
+        addXMLObjectParser(dr.inference.operators.BitFlipOperator.PARSER);
+        addXMLObjectParser(dr.inference.operators.BitSwapOperator.PARSER);        
 
         addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());
         addXMLObjectParser(new dr.inference.trace.TraceAnalysisParser());

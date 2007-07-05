@@ -27,7 +27,8 @@ package dr.inference.model;
 
 import dr.xml.*;
 
-import java.util.Vector;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @version $Id: SumStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
@@ -35,18 +36,18 @@ import java.util.Vector;
  * @author Alexei Drummond
  */
 public class SumStatistic extends Statistic.Abstract {
-	
-	public static String SUM_STATISTIC = "sumStatistic";
-    
+
+    public static String SUM_STATISTIC = "sumStatistic";
+
     private int dimension = 0;
     private boolean elementwise;
 
     public SumStatistic(String name, boolean elementwise) {
-		super(name);
+        super(name);
         this.elementwise = elementwise;
     }
-	
-	public void addStatistic(Statistic statistic) {
+
+    public void addStatistic(Statistic statistic) {
         if (!elementwise) {
             if (dimension == 0) {
                 dimension = statistic.getDimension();
@@ -55,20 +56,17 @@ public class SumStatistic extends Statistic.Abstract {
             }
         } else { dimension = 1; }
         statistics.add(statistic);
-	}
-	
-	public int getDimension() { return dimension; }
+    }
 
-	/** @return mean of contained statistics */
-	public double getStatisticValue(int dim) {	
-        
+    public int getDimension() { return dimension; }
+
+    /** @return mean of contained statistics */
+    public double getStatisticValue(int dim) {
+
         double sum = 0.0;
-        
-		Statistic statistic;
-		
-		for (int i = 0; i < statistics.size(); i++) {
-			statistic = (Statistic)statistics.get(i);
-			if (elementwise) {
+
+        for (Statistic statistic : statistics) {
+            if (elementwise) {
                 for (int j = 0; j < statistic.getDimension(); j++) {
                     sum += statistic.getStatisticValue(j);
                 }
@@ -76,54 +74,54 @@ public class SumStatistic extends Statistic.Abstract {
                 sum += statistic.getStatisticValue(dim);
             }
         }
-		
-		return sum;
-	}
-		
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return SUM_STATISTIC; }
-		
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
+
+        return sum;
+    }
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() { return SUM_STATISTIC; }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
 
             boolean elementwise = xo.getBooleanAttribute("elementwise");
             SumStatistic sumStatistic = new SumStatistic(SUM_STATISTIC, elementwise);
 
             for (int i =0; i < xo.getChildCount(); i++) {
-				Object child = xo.getChild(i);
-				if (child instanceof Statistic) {
-					sumStatistic.addStatistic((Statistic)child);
-				} else {
-					throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
-				}
-			}
-				
-			return sumStatistic;
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return "This element returns a statistic that is the element-wise sum of the child statistics.";
-		}
-		
-		public Class getReturnType() { return SumStatistic.class; }
-		
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			    AttributeRule.newBooleanRule("elementwise", false),
-                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
-		};		
-	};
-	
+                Object child = xo.getChild(i);
+                if (child instanceof Statistic) {
+                    sumStatistic.addStatistic((Statistic)child);
+                } else {
+                    throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
+                }
+            }
 
-	// ****************************************************************
-	// Private and protected stuff
-	// ****************************************************************
-	
-	private Vector statistics = new Vector();
+            return sumStatistic;
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "This element returns a statistic that is the element-wise sum of the child statistics.";
+        }
+
+        public Class getReturnType() { return SumStatistic.class; }
+
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                AttributeRule.newBooleanRule("elementwise", false),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
+        };
+    };
+
+
+    // ****************************************************************
+    // Private and protected stuff
+    // ****************************************************************
+
+    private List<Statistic> statistics = new ArrayList<Statistic>();
 }

@@ -156,7 +156,11 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 		return currentPanel;
 	}
 
-	class StatisticsModel extends AbstractTableModel {
+    public String toString() {
+        return statisticsModel.toString();
+    }
+    
+    class StatisticsModel extends AbstractTableModel {
 
 		String[] rowNames = { MEAN_ROW, STDEV_ROW, MEDIAN_ROW, LOWER_ROW, UPPER_ROW, ACT_ROW, ESS_ROW };
 
@@ -182,7 +186,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 				return rowNames[row];
 			}
 
-			TraceDistribution td = null;
+			TraceDistribution td;
 			TraceCorrelation tc = null;
 
             if (traceLists != null && traceIndices != null) {
@@ -268,7 +272,5 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
 			return buffer.toString();
 		}
-	};
-
-
+	}
 }

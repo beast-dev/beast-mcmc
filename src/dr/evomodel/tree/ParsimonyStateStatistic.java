@@ -130,5 +130,5 @@ public class ParsimonyStateStatistic extends Statistic.Abstract implements TreeS
 	
 	private Tree tree = null;
 	private Set stateLeafSet = null;
-	private Set mrcaLeafSet = null;
+	private Set<String> mrcaLeafSet = null;
 }

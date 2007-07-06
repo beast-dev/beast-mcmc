@@ -71,16 +71,16 @@ public class SpeciesTreeStatistic extends BooleanStatistic implements TreeStatis
 	}
 	
 	
-	private boolean isCompatible(NodeRef popNode, Set species) {
+	private boolean isCompatible(NodeRef popNode, Set<String> species) {
 		
-		int n = popNode.getNumber() - popTree.getExternalNodeCount();
+		//int n = popNode.getNumber() - popTree.getExternalNodeCount();
 		
 		if (popTree.isExternal(popNode)) {
 			Taxon speciesTaxon = (Taxon)popTree.getTaxonAttribute(popNode.getNumber(), "species");
 			species.add(speciesTaxon.getId());
 		} else {
 		
-			Set speciesTaxa = new HashSet();
+			Set<String> speciesTaxa = new HashSet<String>();
 			
 			int childCount = popTree.getChildCount(popNode);
 			for (int i = 0; i < childCount; i++) {

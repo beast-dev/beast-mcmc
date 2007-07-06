@@ -154,9 +154,7 @@ public class AlignmentScore implements UnivariateFunction, MultivariateFunction 
         double score = alignmentScore.evaluate(params);
 
         double[] results = new double[params.length + 1];
-        for (int i = 0; i < params.length; i++) {
-            results[i] = params[i];
-        }
+        System.arraycopy(params, 0, results, 0, params.length);
         results[params.length] = score;
 
         return results;
@@ -171,7 +169,7 @@ public class AlignmentScore implements UnivariateFunction, MultivariateFunction 
         for (int i = 0; i < params.length; i++) params[i] = 0.5;
 
         de.optimize(alignmentScore, params,1e-6, 1e-6);
-        double score = alignmentScore.evaluate(params);
+        //double score = alignmentScore.evaluate(params);
 
         return params[params.length-1];
 
@@ -186,23 +184,19 @@ public class AlignmentScore implements UnivariateFunction, MultivariateFunction 
             double time = de.optimize(alignmentScore, 1e-6);
             double score = alignmentScore.evaluate(time);
 
-            double[] results = new double[] {time, score};
-
-            return results;
+        return new double[] {time, score};
         }
 
 
-    private static void printFrequencyTable(List list) {
+    private static void printFrequencyTable(List<Integer> list) {
         int max = 0;
         int total = 0;
-        for (int i = 0; i < list.size(); i++) {
-            int size = ((Integer)list.get(i)).intValue();
+        for (Integer size : list) {
             if (size > max) max = size;
             total += size;
         }
         int[] freqs = new int[max+1];
-        for (int i = 0; i < list.size(); i++) {
-            int size = ((Integer)list.get(i)).intValue();
+        for (Integer size : list) {
             freqs[size] += 1;
         }
 
@@ -238,9 +232,9 @@ public class AlignmentScore implements UnivariateFunction, MultivariateFunction 
 
         double threshold = 0.1;
 
-        List pairDistances = new ArrayList();
-        Set sequencesUsed = new HashSet();
-        List allGaps = new ArrayList();
+        List<PairDistance> pairDistances = new ArrayList<PairDistance>();
+        Set<Integer> sequencesUsed = new HashSet<Integer>();
+        List<Integer> allGaps = new ArrayList<Integer>();
         for (int i = 0; i < alignment.getSequenceCount(); i++) {
             for (int j = i+1; j < alignment.getSequenceCount(); j++) {
                 Alignment pairAlignment = pairs.getPairAlignment(i,j);
@@ -265,11 +259,10 @@ public class AlignmentScore implements UnivariateFunction, MultivariateFunction 
 
         Collections.sort(pairDistances);
         int totalLength = 0;
-        for (int i = 0; i < pairDistances.size(); i++) {
-            PairDistance pairDistance = (PairDistance)pairDistances.get(i);
+        for (PairDistance pairDistance : pairDistances) {
 
-            Integer x = new Integer(pairDistance.x);
-            Integer y = new Integer(pairDistance.y);
+            Integer x = pairDistance.x;
+            Integer y = pairDistance.y;
 
             if (!sequencesUsed.contains(x) && !sequencesUsed.contains(y)) {
                 allGaps.addAll(pairDistance.gaps);

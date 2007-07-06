@@ -38,7 +38,7 @@ import dr.xml.*;
  */
 public class PopSizeStatistic extends Statistic.Abstract {
 	
-	public static final String TMRCA_STATISTIC = "popSizeStatistic";
+	public static final String POPSIZE_STATISTIC = "popSizeStatistic";
 
     public DemographicModel model;
     public double time;
@@ -60,7 +60,7 @@ public class PopSizeStatistic extends Statistic.Abstract {
 	
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 	
-		public String getParserName() { return TMRCA_STATISTIC; }
+		public String getParserName() { return POPSIZE_STATISTIC; }
 	
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			

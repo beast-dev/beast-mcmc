@@ -104,8 +104,7 @@ public class FrequencyModel extends AbstractModel {
 		public String getParserName() { return FREQUENCY_MODEL; }
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-				
-			FrequencyModel freqModel = null;
+
 			DataType dataType = DataTypeUtils.getDataType(xo);
 			
 			Parameter freqsParam = (Parameter)xo.getSocketChild(FREQUENCIES);
@@ -126,9 +125,8 @@ public class FrequencyModel extends AbstractModel {
 					freqsParam.setParameterValue(j, frequencies[j]);
 				}
 			}
-			
-			freqModel = new FrequencyModel(dataType, freqsParam);			
-			return freqModel;
+
+            return new FrequencyModel(dataType, freqsParam);
 		}
 		
 		public String getParserDescription() {

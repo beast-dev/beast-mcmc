@@ -63,9 +63,9 @@ public interface EmpiricalRateMatrix {
 		
 		private String name;
 		protected DataType dataType;
-	};
+	}
 
-	public abstract class AbstractAminoAcid extends Abstract {
+    public abstract class AbstractAminoAcid extends Abstract {
 	
 		public AbstractAminoAcid(String name) {
 			super(name, AminoAcids.INSTANCE);

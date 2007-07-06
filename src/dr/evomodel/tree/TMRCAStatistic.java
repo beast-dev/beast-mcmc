@@ -119,7 +119,7 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
 	};
 
 	private Tree tree = null;
-	private Set leafSet = null;
+	private Set<String> leafSet = null;
     private boolean isRate;
 
 }

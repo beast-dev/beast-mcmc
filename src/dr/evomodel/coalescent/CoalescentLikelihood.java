@@ -58,29 +58,23 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	public static final String COALESCENT_LIKELIHOOD = "coalescentLikelihood";
 	public static final String ANALYTICAL = "analytical";
 	public static final String MODEL = "model";
-	public static final String POPULATION_TREE = "populationTree";
+	public static final String POPULATION_TREE = "trees";
 
     public enum CoalescentEventType {
-       COALESCENT,
+        /** Denotes an interval after which a coalescent event is observed
+         * (i.e. the number of lineages is smaller in the next interval) */
+        COALESCENT,
+        /**
+         * Denotes an interval at the end of which a new sample addition is
+         * observed (i.e. the number of lineages is larger in the next interval).
+         */
         NEW_SAMPLE,
+        /**
+         * Denotes an interval at the end of which nothing is
+         * observed (i.e. the number of lineages is the same in the next interval).
+         */
         NOTHING
     }
-//    /** Denotes an interval after which a coalescent event is observed
-//	  * (i.e. the number of lineages is smaller in the next interval) */
-//	public static final int COALESCENT = 0;
-//
-//	/**
-//	 * Denotes an interval at the end of which a new sample addition is
-//	 * observed (i.e. the number of lineages is larger in the next interval).
-//	 */
-//	public static final int NEW_SAMPLE = 1;
-//
-//	/**
-//	 * Denotes an interval at the end of which nothing is
-//	 * observed (i.e. the number of lineages is the same in the next interval).
-//	 */
-//	public static final int NOTHING = 2;
-
 
 	public CoalescentLikelihood(Tree tree, DemographicModel demoModel) {
 		this(COALESCENT_LIKELIHOOD, tree, demoModel, true);
@@ -238,10 +232,11 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
                 System.err.println("pop " + demo.popSizeParameter + " ind " + demo.indicatorParameter);
             }
             
-            final TreeIntervals[] tis = demo.getTreeIntervals();
+            final int nTrees = demo.nLoci();
             VariableDemographicModel.VD demogFunction = demo.getDemographicFunction();
             double logLike = 0.0;
-            for( TreeIntervals ti : tis ) {
+            for(int nt = 0; nt < nTrees; ++nt  ) {
+                TreeIntervals ti = demo.getTreeIntervals(nt);
                 Coalescent coalescent = new Coalescent(ti, demogFunction);
                 logLike +=  coalescent.calculateLogLikelihood();
             }

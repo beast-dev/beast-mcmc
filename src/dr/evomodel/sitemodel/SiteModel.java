@@ -109,4 +109,4 @@ public interface SiteModel extends Model {
 	 */
 	FrequencyModel getFrequencyModel();
 			
-};
+}

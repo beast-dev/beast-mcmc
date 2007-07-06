@@ -16,10 +16,13 @@ import java.util.Arrays;
  * @version $Id$
  */
 public class VariableDemographicModel extends DemographicModel {
-    public static final String MODEL_NAME = "variableDemographic";
-    public static final String POPULATION_SIZES = "populationSizes";
-    public static final String INDICATOR_PARAMETER = "indicators";
-    public static final String POPULATION_TREE = "populationTree";
+    static final String MODEL_NAME = "variableDemographic";
+    static final String POPULATION_SIZES = "populationSizes";
+    static final String INDICATOR_PARAMETER = "indicators";
+    static final String POPULATION_TREE = "trees";
+    private static String PLOIDY = "ploidy";
+    private static String POP_TREE = "ptree";
+
     public static final String LOG_SPACE = "logUnits";
 
     public static final String TYPE = "type";
@@ -34,6 +37,8 @@ public class VariableDemographicModel extends DemographicModel {
     private TreeModel[] trees;
     private VD demoFunction = null;
     private VD savedDemoFunction = null;
+    //private Parameter[] branchScale;
+    private double[] populationFactors;
 
     public Parameter getIndices() {
         return indicatorParameter;
@@ -45,39 +50,44 @@ public class VariableDemographicModel extends DemographicModel {
         EXPONENTIAL
     }
 
-    public VariableDemographicModel(TreeModel[] trees, Parameter popSizeParameter, Parameter indicatorParameter,
+    public VariableDemographicModel(TreeModel[] trees, double[] popFactors, Parameter popSizeParameter, Parameter indicatorParameter,
                                     Type type, boolean logSpace) {
         super(MODEL_NAME);
 
         this.popSizeParameter = popSizeParameter;
         this.indicatorParameter = indicatorParameter;
-        final int redcueDim = type == Type.STEPWISE ? 1 : 0;
+
+    //    this.branchScale = bfactors;
+        this.populationFactors = popFactors;
+
+        //final int redcueDim = type == Type.STEPWISE ? 1 : 0;
         int events = 0;
         for( Tree t : trees ) {
-            events += t.getExternalNodeCount() - redcueDim;
+            // number of coalescent envents
+            events += t.getExternalNodeCount() - 1;
             // we will have to handle this I guess
             assert t.getUnits() == trees[0].getUnits();
         }
         // all trees share time 0, need fixing for serial data
-        events -= (trees.length - 1);
-
+        //events -= (trees.length - 1);
+         events +=  type == Type.STEPWISE ? 0 : 1;
         //final int events = tree.getExternalNodeCount() - redcueDim;
-        final int paramDim1 = popSizeParameter.getDimension();
-        final int paramDim2 = indicatorParameter.getDimension();
+        final int popSizes = popSizeParameter.getDimension();
+        final int nIndicators = indicatorParameter.getDimension();
         this.type = type;
         this.logSpace = logSpace;
         if( logSpace ) {
             throw new IllegalArgumentException("sorry log space not implemented");
         }
 
-        if (paramDim1 != events) {
+        if (popSizes != events) {
             throw new IllegalArgumentException("Dimension of population parameter must be the same as the number of internal nodes in the tree. ("
-            + paramDim1 + " != " + events + ")");
+            + popSizes + " != " + events + ")");
         }
         
-        if (paramDim2 != events - 1) {
+        if (nIndicators != events - 1) {
             throw new IllegalArgumentException("Dimension of indicator parameter must one less than the number of internal nodes in the tree. ("
-            + paramDim2 + " != " + (events-1) + ")");
+            + nIndicators + " != " + (events-1) + ")");
         }
 
         this.trees = trees;
@@ -166,9 +176,11 @@ public class VariableDemographicModel extends DemographicModel {
         //demoFunction.setDirty(); demoFunction.setup();
     }
 
-    public TreeIntervals[] getTreeIntervals() {
-        return getDemographicFunction().getTreeIntervals();
+    // must be called before each use demographic integrals/population to set the population scaling
+    public TreeIntervals getTreeIntervals(int nt) {
+        return getDemographicFunction().getTreeIntervals(nt);
     }
+
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -186,9 +198,31 @@ public class VariableDemographicModel extends DemographicModel {
 
             cxo = (XMLObject) xo.getChild(POPULATION_TREE);
 
-            TreeModel[] treeModels = new TreeModel[cxo.getChildCount()];
-            for( int k = 0; k < treeModels.length; ++k) {
-                treeModels[k] = (TreeModel) cxo.getChild(k);
+            final int nc = cxo.getChildCount();
+            TreeModel[] treeModels = new TreeModel[nc];
+            double[] populationFactor = new double[nc];
+            //Parameter[] branchFactors = new Parameter[nc];
+
+            for(int k = 0; k < treeModels.length; ++k) {
+                final Object child = cxo.getChild(k);
+
+                populationFactor[k] = 1.0;
+                //branchFactors[k] = null;
+
+                if( child.getClass().isAssignableFrom(TreeModel.class) ) {
+                    treeModels[k] = (TreeModel) child;
+                } else {
+                    /*final XMLObject bscale = (XMLObject) cxo.getChild("branchScale");
+
+                    if( bscale != null ) {
+                      branchFactors[k] = (Parameter) bscale.getChild(Parameter.class);
+                    }
+                    */
+                    cxo = (XMLObject) child;
+                    populationFactor[k] = cxo.getDoubleAttribute(PLOIDY) ;                   
+                    treeModels[k] = (TreeModel) cxo.getChild(TreeModel.class);
+                }
+
             }
             
             Type type = Type.STEPWISE;
@@ -210,7 +244,7 @@ public class VariableDemographicModel extends DemographicModel {
 
             Logger.getLogger("dr.evomodel").info("Variable demographic: " + type.toString() + " control points");
 
-            return new VariableDemographicModel(treeModels, popParam, indicatorParam, type, logSpace);
+            return new VariableDemographicModel(treeModels, populationFactor, popParam, indicatorParam, type, logSpace);
         }
 
         //************************************************************************
@@ -231,15 +265,23 @@ public class VariableDemographicModel extends DemographicModel {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(VariableSkylineLikelihood.TYPE, true),
+
                 new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }),
                 new ElementRule(VariableSkylineLikelihood.INDICATOR_PARAMETER, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }),
-                new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
-                        new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE)
-                }),
+                new ElementRule(POPULATION_TREE,
+                        new XMLSyntaxRule[]{
+                           new OrRule(new ElementRule(TreeModel.class),
+                                      new ElementRule(POP_TREE,
+                                              new XMLSyntaxRule[]{ new ElementRule(TreeModel.class),
+                                                                   AttributeRule.newDoubleRule(PLOIDY) }))
+                        }, 1, Integer.MAX_VALUE) ,
+                       /* new ElementRule(new XMLSyntaxRule[]{new OrRule(new ElementRule(TreeModel.class),
+                                new ElementRule(TreeModel.class))} }, 1, Integer.MAX_VALUE)*/
+
                 AttributeRule.newBooleanRule(LOG_SPACE)
         };
     };
@@ -255,6 +297,7 @@ public class VariableDemographicModel extends DemographicModel {
         boolean dirty;
 
         TreeIntervals[] ti;
+        private double popFactor = 1;
 
         public VD(TreeIntervals[] ti) {
             this.ti = ti;
@@ -311,9 +354,11 @@ public class VariableDemographicModel extends DemographicModel {
                 ti[nt] = new TreeIntervals(trees[nt]);
 
                 TreeIntervals nti = ti[nt];
-                nti.setMultifurcationLimit(1e-9);
+                // make sure we get each coalescent event individually
+                nti.setMultifurcationLimit(0);
 
-                assert nti.getIntervalCount() ==  ttimes[nt].length;
+                final int nLineages = nti.getIntervalCount();
+                assert nLineages == ttimes[nt].length: nLineages + " " + ttimes[nt].length;
 
                 int iCount = 0;
                 for(int k = 0; k < ttimes[nt].length; ++k) {
@@ -321,9 +366,9 @@ public class VariableDemographicModel extends DemographicModel {
                     int linAtStart = nti.getLineageCount(iCount);
                     ++iCount;
 
-                    assert ! ( iCount == nti.getIntervalCount() && linAtStart != 2);
+                    assert ! (iCount == nLineages && linAtStart != 2);
 
-                    int linAtEnd = iCount == nti.getIntervalCount() ? 1 : nti.getLineageCount(iCount);
+                    int linAtEnd = (iCount == nLineages) ? 1 : nti.getLineageCount(iCount);
 
                     while( linAtStart <= linAtEnd ) {
                         ++iCount;
@@ -437,36 +482,32 @@ public class VariableDemographicModel extends DemographicModel {
 
         public double getDemographic(double t) {
             final int j = getIntervalIndex(t);
+            double p;
             switch( type ) {
                 case STEPWISE:
                 {
-                    return values[j];
+                    p = values[j];
+                    break;
                 }
                 case LINEAR:
                 {
-                    if( j == values.length - 1 ) return values[j];
+                    if( j == values.length - 1 ) {
+                        p = values[j];
+                        break;
+                    }
 
                     final double a = (t - times[j]) / (intervals[j]);
-                    return values[j] + a * (values[j+1] - values[j]);
+                    p = values[j] + a * (values[j+1] - values[j]);
+                    break;
                 }
+                default: throw new IllegalArgumentException("");
+
             }
-            return 0;
+            return p * popFactor;
         }
 
         public double getIntensity(double t) {
-            final int j = getIntervalIndex(t);
-            double intensity = 0.0;
-            switch( type ) {
-                case STEPWISE:
-                {
-                    for(int k = 0; k < j; ++k) {
-                        intensity += intervals[k]/values[k];
-                    }
-                    intensity += (t - values[j]) / values[j];
-                    break;
-                }
-            }
-            return intensity;
+            return getIntegral(0, t);
         }
 
         public double getInverseIntensity(double x) {
@@ -484,8 +525,8 @@ public class VariableDemographicModel extends DemographicModel {
             }
             final double time0 = times[index];
             final double interval = intervals[index];
-            double pop0 = popStart + ((start - time0) / interval) * popDiff;
-            double pop1 = popStart + ((end - time0) / interval) * popDiff;
+            final double pop0 = popStart + ((start - time0) / interval) * popDiff;
+            final double pop1 = popStart + ((end - time0) / interval) * popDiff;
             if( pop0 == pop1 ) {
                 // either dx == 0 or very small (numerical inaccuracy)
                 return dx/pop0;
@@ -542,7 +583,7 @@ public class VariableDemographicModel extends DemographicModel {
                     break;
                 }
             }
-            return intensity;
+            return intensity/popFactor;
         }
 
         public int getNumArguments() {
@@ -590,9 +631,9 @@ public class VariableDemographicModel extends DemographicModel {
           assert false;
         }
 
-        public TreeIntervals[] getTreeIntervals() {
-            return ti;
+        public TreeIntervals getTreeIntervals(int nt) {
+            popFactor = populationFactors[nt];
+            return ti[nt];
         }
-
     }
 }

@@ -120,7 +120,7 @@ public class MCMC implements Runnable, Identifiable {
         timer.start();
 
         if (isPreBurninNeeded()) {
-            int preBurnin = options.getPreBurnin();
+            final int preBurnin = options.getPreBurnin();
             if (preBurnin > 0) {
                 MarkovChainListener burninListener = new BurninListener(preBurnin);
                 mc.addMarkovChainListener(burninListener);

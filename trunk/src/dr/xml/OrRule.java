@@ -77,10 +77,10 @@ public class OrRule implements XMLSyntaxRule {
 	 */
 	public String htmlRuleString(XMLDocumentationHandler handler) {
 		String html = "<div class=\"requiredcompoundrule\">At least one of:";
-		for (int i = 0; i < rules.length; i++) {
-			html += rules[i].htmlRuleString(handler);
-		}	
-		html += "</div>";
+        for (XMLSyntaxRule rule : rules) {
+            html += rule.htmlRuleString(handler);
+        }
+        html += "</div>";
 		return html;	
 	}
 	
@@ -88,11 +88,11 @@ public class OrRule implements XMLSyntaxRule {
 	 * Describes the rule.
 	 */
 	public String ruleString(XMLObject xo) {
-	
-		for (int i = 0; i < rules.length; i++) {
-			if (!rules[i].isSatisfied(xo)) return rules[i].ruleString(xo);
-		}
-		return ruleString();
+
+        for (XMLSyntaxRule rule : rules) {
+            if (!rule.isSatisfied(xo)) return rule.ruleString(xo);
+        }
+        return ruleString();
 	}
 	
 	/**

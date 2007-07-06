@@ -54,7 +54,7 @@ public abstract class DataType
     protected int ambiguousStateCount;
 
     // this map contains all dataTypes in the class loader that have added themselves
-    static private Map registeredDataTypes = null;
+    static private Map<String, DataType> registeredDataTypes = null;
 
     /**
      * Due to some unpleasant interactions between static initializations in the
@@ -62,7 +62,7 @@ public abstract class DataType
      */
     private static void lazyRegisterDataTypes() {
         if (registeredDataTypes == null) {
-            registeredDataTypes = new Hashtable();
+            registeredDataTypes = new Hashtable<String, DataType>();
             registerDataType(Nucleotides.DESCRIPTION, Nucleotides.INSTANCE);
             registerDataType(AminoAcids.DESCRIPTION, AminoAcids.INSTANCE);
             registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.UNIVERSAL.getName(), Codons.UNIVERSAL);
@@ -103,16 +103,16 @@ public abstract class DataType
      */
     public static DataType getRegisteredDataTypeByName(String name) {
         lazyRegisterDataTypes();
-        return (DataType)registeredDataTypes.get(name);
+        return registeredDataTypes.get(name);
     }
 
     public static String[] getRegisteredDataTypeNames() {
         lazyRegisterDataTypes();
-        Set set = registeredDataTypes.keySet();
-        List keys = new ArrayList(set);
+        Set<String> set = registeredDataTypes.keySet();
+        List<String> keys = new ArrayList<String>(set);
         String[] names = new String[keys.size()];
         for (int i = 0; i < names.length; i++) {
-            names[i] = (String)keys.get(i);
+            names[i] = keys.get(i);
         }
 
         return names;
@@ -303,9 +303,7 @@ public abstract class DataType
             }
         }
 
-        double distance = (1.0 - (sumMatch / (sum1 * sum2)));
-
-        return distance;
+        return (1.0 - (sumMatch / (sum1 * sum2)));
     }
 
     public String toString() {

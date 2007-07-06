@@ -81,10 +81,8 @@ public class EmpiricalAminoAcidModel extends AbstractAminoAcidModel {
 	
 	protected void setupRelativeRates() {
 		double[] rates = rateMatrix.getEmpiricalRates();
-		for (int i = 0; i < relativeRates.length; i++) {
-			relativeRates[i] = rates[i];
-		}	
-	}
+        System.arraycopy(rates, 0, relativeRates, 0, relativeRates.length);
+    }
 	
 
 	// *****************************************************************

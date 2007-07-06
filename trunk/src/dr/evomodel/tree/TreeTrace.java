@@ -61,7 +61,7 @@ public class TreeTrace implements Identifiable {
 		if (startIndex < 0) {
 			startIndex = 0;
 		}
-		return (Tree)trees.get(index + startIndex);
+		return trees.get(index + startIndex);
 	}
 
 	public void add(Tree tree) {
@@ -80,7 +80,7 @@ public class TreeTrace implements Identifiable {
 	public String getId() { return id; }
 	public void setId(String id) { this.id = id; }
 		
-	private ArrayList trees = new ArrayList();
+	private ArrayList<Tree> trees = new ArrayList<Tree>();
 	
 	private int minState;
 	private int stepSize;
@@ -116,11 +116,11 @@ public class TreeTrace implements Identifiable {
 
             minState = getStateNumber(id1);
             stepSize = getStateNumber(id2) - minState;
-			
-			for (int i = 0; i < trees.length; i++) {
-				trace.add(trees[i]);
-			}
-		} else {
+
+            for (Tree tree : trees) {
+                trace.add(tree);
+            }
+        } else {
 			NewickImporter importer = new NewickImporter(reader);
 				
 			while (true) {
@@ -162,7 +162,7 @@ public class TreeTrace implements Identifiable {
 		return trace;
 	}
 
-    private final static int getStateNumber(String id) throws Importer.ImportException {
+    private static int getStateNumber(String id) throws Importer.ImportException {
         try {
             return Integer.parseInt(id.substring(id.indexOf('_')+1));
         } catch (NumberFormatException nfe) {

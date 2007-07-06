@@ -31,13 +31,13 @@ import java.util.List;
  * @author alexei
  * @version $Id: PairDistance.java,v 1.2 2005/04/11 11:29:37 alexei Exp $
  */
-public class PairDistance implements Comparable {
+public class PairDistance implements Comparable<PairDistance> {
     int x, y;
     double distance;
-    List gaps = null;
+    List<Integer> gaps = null;
     int alignmentLength;
 
-    public PairDistance(int x, int y, double distance, List gaps, int alignmentLength) {
+    public PairDistance(int x, int y, double distance, List<Integer> gaps, int alignmentLength) {
         this.x = x;
         this.y = y;
         this.distance = distance;
@@ -45,9 +45,7 @@ public class PairDistance implements Comparable {
         this.alignmentLength = alignmentLength;
     }
 
-    public int compareTo(Object o) {
-        PairDistance p = (PairDistance)o;
-
+    public int compareTo(PairDistance p) {
         if (p.distance > distance) return -1;
         if (p.distance < distance) return 1;
         return 0;

@@ -227,7 +227,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 			cxo = (XMLObject)xo.getChild(PROPORTIONS);
 			Parameter proportionParameter = (Parameter)cxo.getChild(Parameter.class);
 			
-			Vector subModels = new Vector();
+			Vector<Object> subModels = new Vector<Object>();
 			
 			for (int i =0; i < xo.getChildCount(); i++) {
 				if (xo.getChild(i) instanceof SubstitutionModel) {
@@ -318,7 +318,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 			return 1;
 		}
 		
-	};
+	}
 
 	class classSizeBounds implements Bounds{
 	
@@ -364,7 +364,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 			return 1;
 		}
 		
-	};
+	}
 
 	/** mutation rate parameter */
 	private Parameter muParameter;

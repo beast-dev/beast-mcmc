@@ -232,7 +232,7 @@ public class GammaSiteModel extends AbstractModel
      * discretization of gamma distribution with equal proportions in each
      * category
      */
-    private final void calculateCategoryRates() {
+    private void calculateCategoryRates() {
 
         double propVariable = 1.0;
         int cat = 0;
@@ -247,9 +247,9 @@ public class GammaSiteModel extends AbstractModel
 
         if (shapeParameter != null) {
 
-            double a = shapeParameter.getParameterValue(0);
+            final double a = shapeParameter.getParameterValue(0);
             double mean = 0.0;
-            int gammaCatCount = categoryCount - cat;
+            final int gammaCatCount = categoryCount - cat;
 
             for (int i = 0; i < gammaCatCount; i++) {
 
@@ -414,4 +414,4 @@ public class GammaSiteModel extends AbstractModel
     private double[] categoryRates;
 
     private double[] categoryProportions;
-};
+}

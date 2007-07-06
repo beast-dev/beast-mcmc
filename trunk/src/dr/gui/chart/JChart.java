@@ -42,7 +42,7 @@ public class JChart extends JPanel {
 	 */
 	private static final long serialVersionUID = -7064065852204509247L;
 	protected Axis yAxis, xAxis;
-	private Vector plots = new Vector();
+	private Vector<Plot> plots = new Vector<Plot>();
 	
 	private Paint plotBackgroundPaint = Color.white;
 
@@ -93,11 +93,11 @@ public class JChart extends JPanel {
 	
 	public void setXAxis(Axis xAxis) {
 		this.xAxis = xAxis;
-		for (int i = 0; i < plots.size(); i++) {
-			Plot p = (Plot)plots.get(i);
-			p.setAxes(xAxis, yAxis);
-		}
-		recalibrate();
+        for (Object plot : plots) {
+            Plot p = (Plot) plot;
+            p.setAxes(xAxis, yAxis);
+        }
+        recalibrate();
 		repaint();	
 	}
 
@@ -107,11 +107,10 @@ public class JChart extends JPanel {
 
 	public void setYAxis(Axis yAxis) {
 		this.yAxis = yAxis;
-		for (int i = 0; i < plots.size(); i++) {
-			Plot p = (Plot)plots.get(i);
-			p.setAxes(xAxis, yAxis);
-		}
-		recalibrate();
+        for (Plot p : plots) {
+            p.setAxes(xAxis, yAxis);
+        }
+        recalibrate();
 		repaint();	
 	}
 
@@ -134,11 +133,10 @@ public class JChart extends JPanel {
 		plots.remove(plot);
 		xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
 		yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
-		for (int i =0; i < plots.size(); i++) {
-			Plot p = (Plot)plots.get(i);
-			p.setAxes(xAxis, yAxis);
-		}
-		recalibrate();
+        for (Plot p : plots) {
+            p.setAxes(xAxis, yAxis);
+        }
+        recalibrate();
 		repaint();
 	}
 	
@@ -155,17 +153,16 @@ public class JChart extends JPanel {
 	}
 
 	public Plot getPlot(int index) {
-		return (Plot)plots.get(index);
+		return plots.get(index);
 	}
 
 	private void resetPlots() {
 		xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
 		yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
-		for (int i =0; i < plots.size(); i++) {
-			Plot p = (Plot)plots.get(i);
-			p.resetAxes();
-		}
-	}
+        for (Plot p : plots) {
+            p.resetAxes();
+        }
+    }
 	
 	/**	
 	 *	Set origin style. Use a stroke of null to not draw origin
@@ -361,12 +358,10 @@ public class JChart extends JPanel {
 	}
 		
 	protected void paintContents(Graphics2D g2) {
-		Plot plot;
-		for (int i = 0; i < plots.size(); i++) {
-			plot = (Plot)plots.get(i);
-			plot.paintPlot(g2, xScale, yScale, xOffset, yOffset);
-		}
-	}
+        for (Plot plot : plots) {
+            plot.paintPlot(g2, xScale, yScale, xOffset, yOffset);
+        }
+    }
 	
 	protected void paintFrame(Graphics2D g2) {
 		g2.setPaint(framePaint);
@@ -413,7 +408,7 @@ public class JChart extends JPanel {
 		int itemCount = 0;
 		
 		for (int i = 0; i < getPlotCount(); i++) {
-			String name = ((Plot)getPlot(i)).getName();
+			String name = getPlot(i).getName();
 			if (name != null) {
 				float w = (float)g2.getFontMetrics().stringWidth(name);
 				if (width < w) {
@@ -464,7 +459,7 @@ public class JChart extends JPanel {
 		float iy = 8 + g2.getFontMetrics().getAscent();
 		y += g2.getFontMetrics().getAscent() + 4;
 		for (int i = 0; i < getPlotCount(); i++) {
-			Plot plot = (Plot)getPlot(i);
+			Plot plot = getPlot(i);
 			String name = plot.getName();
 			if (name != null) {
 			
@@ -633,15 +628,12 @@ public class JChart extends JPanel {
 		public void mouseClicked(MouseEvent me) {
 		
 			if (plotBounds != null && plotBounds.contains(me.getPoint())) {
-				
-				Plot plot;
-				for (int i = 0; i < plots.size(); i++) {
-					plot = (Plot)plots.get(i);
-					plot.pointClicked(me.getPoint());
-				}
-		
+                for (Plot plot : plots) {
+                    plot.pointClicked(me.getPoint());
+                }
 
-			}
+
+            }
 		}
 	}
 }

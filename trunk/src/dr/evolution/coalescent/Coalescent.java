@@ -64,6 +64,7 @@ public class Coalescent implements MultivariateFunction, Units {
 		return calculateLogLikelihood(intervals, demographicFunction);
 	}
 
+    // (todo) comment this out this when done debugging
     public static boolean detaildPrint = false;
 
     /**
@@ -100,7 +101,7 @@ public class Coalescent implements MultivariateFunction, Units {
                 final double demographicAtCoalPoint = demographicFunction.getDemographic(finishTime);
 
                 // if value at end is many orders of magnitude different than mean over interval reject this interval
-                // This is protection against cases where you get  ridiculous coalescent values with infitisimal
+                // This is protection against cases where you get ridiculous coalescent values with infitisimal
                 // population size at the end of a linear interval
 
                 if( demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
@@ -109,7 +110,9 @@ public class Coalescent implements MultivariateFunction, Units {
                   if( detaildPrint ) { System.err.println(" vatend " + demographicAtCoalPoint + " lgl " + logL); }
                 } else {
                     // remove this at some stage
-                    System.err.println(demographicAtCoalPoint + " " + (intervalArea/duration) );
+                    System.err.println("Interval ignored: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
+                    double d =  duration / intervalArea;
+                    logL += Math.log(kover2 / d);
                 }
             }
 

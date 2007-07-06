@@ -119,10 +119,8 @@ public class GTR extends AbstractNucleotideModel
 	}
 	
  	public void setRelativeRates(double[] rates) {
-		for (int i = 0; i < relativeRates.length; i++) {
-			relativeRates[i] = rates[i];
-		}	
-		updateMatrix = true;
+         System.arraycopy(rates, 0, relativeRates, 0, relativeRates.length);
+         updateMatrix = true;
 		fireModelChanged();
 	}
 	
@@ -275,4 +273,4 @@ public class GTR extends AbstractNucleotideModel
 		};
 	};
 
-};
+}

@@ -48,7 +48,7 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
 		try {
-            Reader reader = null;
+            Reader reader;
 
             String fileName = xo.getStringAttribute(FILE_NAME);
             try {

@@ -69,10 +69,13 @@ public class TreeIntervals implements IntervalList {
 		intervalsKnown = false;
 	}
 
-	/**
-	 * Sets the limit for which adjacent intervals are merged
-	 */
-	public void setMultifurcationLimit(double multifurcationLimit)
+    /**
+     *  Sets the limit for which adjacent events are merged.
+     * @param multifurcationLimit   A value of 0 means merge addition of leafs (terminal nodes) when possible but
+     * return each coalescense as a separate event.
+     *
+     */
+    public void setMultifurcationLimit(double multifurcationLimit)
 	{
 		this.multifurcationLimit = multifurcationLimit;
 		intervalsKnown = false;
@@ -261,36 +264,46 @@ public class TreeIntervals implements IntervalList {
 		// start is the time of the first tip
 		double start = times[indices[0]];
 		int numLines = 0;
-		int i = 0;
+		int nodeNo = 0;
 		intervalCount = 0;
-		while (i < nodeCount) {
+		while (nodeNo < nodeCount) {
 			
 			int lineagesRemoved = 0;
 			int lineagesAdded = 0;
 			
-			double finish = times[indices[i]];
-			double next = finish;
+			double finish = times[indices[nodeNo]];
+			double next;
 			
 			do {
-				if (childCounts[indices[i]] == 0) {
-                    addLineage(intervalCount, tree.getNode(indices[i]));
+                final int childIndex = indices[nodeNo];
+                final int childCount = childCounts[childIndex];
+                // dont use nodeNo from here on in do loop
+                nodeNo += 1;
+                if (childCount == 0) {
+                    addLineage(intervalCount, tree.getNode(childIndex));
                     lineagesAdded += 1;
 				} else {
-					lineagesRemoved += (childCounts[indices[i]] - 1);
+					lineagesRemoved += (childCount - 1);
 
                     // record removed lineages
-                    NodeRef parent = tree.getNode(indices[i]);
-                    for (int j = 0; j < lineagesRemoved + 1; j++) {
+                    final NodeRef parent = tree.getNode(childIndex);
+                    //assert childCounts[indices[nodeNo]] == tree.getChildCount(parent);
+                    //for (int j = 0; j < lineagesRemoved + 1; j++) {
+                    for (int j = 0; j < childCount; j++) {
                         NodeRef child = tree.getChild(parent, j);
                         removeLineage(intervalCount, child);
                     }
 
                     // record added lineages
                     addLineage(intervalCount, parent);
+                    // no mix of removed lineages when 0 th
+                    if( multifurcationLimit == 0.0 ) {
+                        break;
+                    }
                 }
-				i += 1;
-				if (i < nodeCount) {
-					next = times[indices[i]];
+
+				if (nodeNo < nodeCount) {
+					next = times[indices[nodeNo]];
 				} else break;
 			} while (Math.abs(next - finish) <= multifurcationLimit);
 

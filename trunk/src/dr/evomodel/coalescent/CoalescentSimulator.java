@@ -61,15 +61,16 @@ public class CoalescentSimulator {
      * @param subtrees an array of tree to be used as subtrees
      * @param model the demographic model to use
      * @param rootHeight an optional root height with which to scale the whole tree
+     * @return a simulated coalescent tree
      */
     public SimpleTree simulateTree(Tree[] subtrees, DemographicModel model, double rootHeight) {
 
         SimpleNode[] roots = new SimpleNode[subtrees.length];
-        SimpleTree tree = null;
+        SimpleTree tree;
 
         dr.evolution.util.Date mostRecent = null;
-        for (int i = 0; i < subtrees.length; i++) {
-            dr.evolution.util.Date date = Tree.Utils.findMostRecentDate(subtrees[i]);
+        for (Tree subtree : subtrees) {
+            Date date = Tree.Utils.findMostRecentDate(subtree);
             if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
                 mostRecent = date;
             }
@@ -79,22 +80,13 @@ public class CoalescentSimulator {
             TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
             double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
 
-            for (int i = 0; i < subtrees.length; i++) {
-                dr.evolution.util.Date date = Tree.Utils.findMostRecentDate(subtrees[i]);
+            for (Tree subtree : subtrees) {
+                Date date = Tree.Utils.findMostRecentDate(subtree);
                 if (date != null) {
                     double diff = timeScale.convertTime(date.getTimeValue(), date) - time0;
-                    for (int j = 0; j < subtrees[i].getNodeCount(); j++) {
-                        NodeRef node = subtrees[i].getNode(j);
-
-/*						if (subtrees[i].isExternal(node)) {
-							System.out.print(subtrees[i].getNodeTaxon(node).getId() + " - ");
-							System.out.print(subtrees[i].getNodeTaxon(node).getAttribute("date") + " - ");
-							System.out.print("Old height: "+Double.toString(subtrees[i].getNodeHeight(node)));
-							System.out.println(" New height: "+Double.toString(subtrees[i].getNodeHeight(node) + diff));
-						}
-*/
-                        ((SimpleTree)subtrees[i]).setNodeHeight(node, subtrees[i].getNodeHeight(node) + diff);
-
+                    for (int j = 0; j < subtree.getNodeCount(); j++) {
+                        NodeRef node = subtree.getNode(j);
+                        ((SimpleTree) subtree).setNodeHeight(node, subtree.getNodeHeight(node) + diff);
                     }
                 }
             }
@@ -120,6 +112,7 @@ public class CoalescentSimulator {
      * Simulates a coalescent tree, given a taxon list.
      * @param taxa the set of taxa to simulate a coalescent tree between
      * @param model the demographic model to use
+     * @return a simulated coalescent tree
      */
     public SimpleTree simulateTree(TaxonList taxa, DemographicModel model) {
 
@@ -234,7 +227,7 @@ public class CoalescentSimulator {
                         // collect subtrees here
                         List<Tree> st = new ArrayList<Tree>();
 
-                        final String setsNotCOmpatibleMessage = "taxa sets not compatible";
+                        final String setsNotCompatibleMessage = "taxa sets not compatible";
 
                         while( allc.size() > 0 ) {
                             // pick a group of taxon-subsets where each is contained in the next
@@ -259,7 +252,7 @@ public class CoalescentSimulator {
                                                 next.add(j, allc.remove(k));
                                                 break;
                                             } else if( c != jtaxons.getTaxonCount() ) {
-                                               throw new XMLParseException(setsNotCOmpatibleMessage);
+                                               throw new XMLParseException(setsNotCompatibleMessage);
                                             } else if( j+1 == next.size() ) {
                                                 next.add(allc.remove(k));
                                                 break;
@@ -268,7 +261,7 @@ public class CoalescentSimulator {
                                         baseConstraint = next.get(0).taxons;
 
                                     }  else {
-                                        throw new XMLParseException(setsNotCOmpatibleMessage);
+                                        throw new XMLParseException(setsNotCompatibleMessage);
                                     }
                                     --k;
                                 }
@@ -280,7 +273,7 @@ public class CoalescentSimulator {
                                 final TaxaConstraint ck = next.get(k);
                                 int intersectionSize = sizeOfIntersection(ckm1.taxons, ck.taxons);
                                 if( intersectionSize != ckm1.taxons.getTaxonCount() ) {
-                                    throw new XMLParseException(setsNotCOmpatibleMessage);
+                                    throw new XMLParseException(setsNotCompatibleMessage);
                                 }
                                 if( ckm1.upper > ck.upper ) {
                                    ckm1.upper = ck.upper;
@@ -339,8 +332,8 @@ public class CoalescentSimulator {
                         final Taxa list = new Taxa();
                         for(int j = 0; j < taxa.getTaxonCount(); ++j) {
                             Taxon taxonj = taxa.getTaxon(j);
-                            for(int k = 0; k < st.size(); ++k) {
-                                if( st.get(k).getTaxonIndex(taxonj) >= 0 ) {
+                            for (Tree aSt : st) {
+                                if (aSt.getTaxonIndex(taxonj) >= 0) {
                                     taxonj = null;
                                     break;
                                 }
@@ -369,8 +362,6 @@ public class CoalescentSimulator {
                  throw new XMLParseException("Expected at least one taxonList or two subtrees in " + getParserName() + " element.");
             }
 
-            Tree tree = null;
-
             try {
                 Tree[] trees = new Tree[taxonLists.size()+subtrees.size()];
                 // simulate each taxonList separately
@@ -382,11 +373,10 @@ public class CoalescentSimulator {
                     trees[i+taxonLists.size()] = subtrees.get(i);
                 }
 
-                tree = simulator.simulateTree(trees, demoModel, rootHeight);
+                return simulator.simulateTree(trees, demoModel, rootHeight);
             } catch (IllegalArgumentException iae) {
                 throw new XMLParseException(iae.getMessage());
             }
-            return tree;
         }
 
         //************************************************************************

@@ -165,7 +165,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
 	public void handleParameterChangedEvent(Parameter parameter, int index) {
 
 		Node node = getNodeOfParameter(parameter);
-		pushTreeChangedEvent(node, parameter, index);
+        pushTreeChangedEvent(node, parameter, index);
 	}
 
 	private List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
@@ -1032,7 +1032,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
 			if (hasRates && node.rateParameter == parameter) {
 				return node;
 			}
-			System.err.println("START OF: " + node.getNumber());
+			//System.err.println("START OF: " + node.getNumber());
 			for (Parameter p : node.traitParameters.values()) {
 				System.err.println("OWN: " + p.getParameterName() + " " + p.hashCode());
 			}

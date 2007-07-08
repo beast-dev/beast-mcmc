@@ -31,11 +31,13 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -170,6 +172,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
                     updateNodeAndChildren(((TreeModel.TreeChangedEvent)object).getNode());
 
+                } else if (((TreeModel.TreeChangedEvent)object).isRateChanged()) {
+                    updateNodeAndChildren(((TreeModel.TreeChangedEvent)object).getNode());
                 } else {
                     updateAllNodes();
 
@@ -177,11 +181,23 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             }
 
         } else if (model == branchRateModel) {
-            updateAllNodes();
+
+            if (object instanceof Parameter) {
+
+                Parameter parameter = (Parameter)object;
+
+                if (branchRateModel instanceof DiscretizedBranchRates && ((DiscretizedBranchRates)branchRateModel).hasParameter(parameter)) {
+                    NodeRef node = ((DiscretizedBranchRates)branchRateModel).getNodeForParameter(parameter, index);
+
+                    updateNode(node);
+                } else {
+                    updateAllNodes();
+                }
+            } else updateAllNodes();
 
         } else if (model == frequencyModel) {
 
-            updateAllNodes();
+           updateAllNodes();
 
         } else if (model instanceof SiteModel) {
 
@@ -288,7 +304,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         // First update the transition probability matrix(ices) for this branch
         if (parent != null && updateNode[nodeNum]) {
 
-
             final double branchRate = branchRateModel.getBranchRate(tree, node);
 
             // Get the operational time of the branch
@@ -390,9 +405,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
 
-            TreeLikelihood treeLikelihood = new TreeLikelihood(patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling);
-
-            return treeLikelihood;
+            return new TreeLikelihood(patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling);
         }
 
         //************************************************************************

@@ -174,7 +174,7 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 	
 	public final void parameterChangedEvent(Parameter parameter, int index) {
 		handleParameterChangedEvent(parameter, index);
-		listenerHelper.fireModelChanged(this, parameter);
+		listenerHelper.fireModelChanged(this, parameter, index);
 	}
 	
 	/**

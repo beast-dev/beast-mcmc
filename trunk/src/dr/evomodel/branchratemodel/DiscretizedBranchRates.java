@@ -103,14 +103,23 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 	public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == distributionModel) {
             ratesKnown = false;
+            fireModelChanged();
         } else if (model == tree) {
-            orderKnown = false;
+
+            int newRootNodeNumber = tree.getRoot().getNumber();
+
+            if (newRootNodeNumber != rootNodeNumber) {
+
+                orderKnown = false;
+                fireModelChanged();
+            }
+        } else {
+            // DO NOTHING -- this should speed things up! AJD
         }
-        fireModelChanged();
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index) {
-        fireModelChanged();
+        fireModelChanged(parameter, index);
     }
 
     protected void storeState() {
@@ -187,7 +196,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
         int nodeNumber = node.getNumber();
 
-        int rateCategory = 0;
+        int rateCategory;
         if (nodeNumber < rootNodeNumber) {
             rateCategory = (int)Math.round(rateCategoryParameter.getParameterValue(nodeNumber));
         } else if (nodeNumber > rootNodeNumber) {
@@ -198,9 +207,30 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         return rates[rateCategory];
     }
 
-	public String getBranchAttributeLabel() {
-		return "rate";
-	}
+    public NodeRef getNodeForParameter(Parameter parameter, int index) {
+
+        if (parameter != rateCategoryParameter) {
+            throw new RuntimeException("Expecting " + rateCategoryParameter + ", but got " + parameter);
+        }
+
+        if (index == -1) {
+            throw new RuntimeException("Expecting non-negative index!");
+        }
+
+        NodeRef node;
+        if (index < rootNodeNumber) {
+            node = tree.getNode(index);
+            if (node.getNumber() != index) throw new RuntimeException();
+        } else {
+            node = tree.getNode(index - 1);
+            if (node.getNumber() != index - 1) throw new RuntimeException();
+        }
+        return node;
+    }
+
+    public String getBranchAttributeLabel() {
+        return "rate";
+    }
 
 	public String getAttributeForBranch(Tree tree, NodeRef node) {
 		return Double.toString(getBranchRate(tree, node));

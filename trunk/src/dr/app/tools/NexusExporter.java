@@ -31,6 +31,8 @@ import dr.evolution.tree.Tree;
 
 import java.io.PrintStream;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author Andrew Rambaut
@@ -43,8 +45,29 @@ public class NexusExporter implements TreeExporter {
         this.out = out;
     }
 
-    public void exportTree(Tree tree) {
+    public void exportTrees(Tree[] trees) {
+        writeNexusHeader(trees[0]);
+        out.println("\t\t;");
+        for (int i = 0; i < trees.length; i++) {
+            writeNexusTree(trees[i], i);
+        }
+        out.println("End;");
+    }
 
+    public void exportTree(Tree tree) {
+        writeNexusHeader(tree);
+        out.println("\t\t;");
+        writeNexusTree(tree, 1);
+        out.println("End;");
+    }
+
+    private void writeNexusTree(Tree tree, int i) {
+        out.print("tree TREE" + i  + "  = [&R] ");
+        writeNode( tree, tree.getRoot(), true, null);
+        out.println(";");
+    }
+
+    private Map<String, Integer> writeNexusHeader(Tree tree) {
         int taxonCount = tree.getTaxonCount();
         out.println("#NEXUS");
         out.println();
@@ -61,31 +84,31 @@ public class NexusExporter implements TreeExporter {
 
         // This is needed if the trees use numerical taxon labels
         out.println("\tTranslate");
+        Map<String, Integer> idMap = new HashMap<String, Integer>();
         for (int i = 0; i < taxonCount; i++) {
             int k = i + 1;
+            idMap.put(tree.getTaxonId(i),k);
             if (k < taxonCount) {
                 out.println("\t\t" + k + " " + tree.getTaxonId(i) + ",");
             } else {
                 out.println("\t\t" + k + " " + tree.getTaxonId(i));
             }
         }
-        out.println("\t\t;");
-        out.print("tree TREE1  = [&R] ");
-        writeNode( tree, tree.getRoot(), true);
-        out.println(";");
-        out.println("End;");
+        return idMap;
     }
 
-    private void writeNode(Tree tree, NodeRef node, boolean attributes) {
+    private void writeNode(Tree tree, NodeRef node, boolean attributes, Map<String, Integer> idMap) {
         if (tree.isExternal(node)) {
             int k = node.getNumber() + 1;
+            if (idMap != null) k = idMap.get(tree.getTaxonId(k-1));
+
             out.print(k);
         } else {
             out.print("(");
-            writeNode(tree, tree.getChild(node, 0), attributes);
+            writeNode(tree, tree.getChild(node, 0), attributes, idMap);
             for (int i = 1; i < tree.getChildCount(node); i++) {
                 out.print(",");
-                writeNode(tree, tree.getChild(node, i), attributes);
+                writeNode(tree, tree.getChild(node, i), attributes, idMap);
             }
             out.print(")");
         }

@@ -129,7 +129,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 	}
 
 	/**
-	 * Set update flag for a node and its children
+	 * Set update flag for a node and its direct children
 	 */
 	protected void updateNodeAndChildren(NodeRef node) {
         updateNode[node.getNumber()] = true;
@@ -142,7 +142,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 	}
 
     /**
-     * Set update flag for a node and its children
+     * Set update flag for a node and all its descendents
      */
     protected void updateNodeAndDescendents(NodeRef node) {
         updateNode[node.getNumber()] = true;

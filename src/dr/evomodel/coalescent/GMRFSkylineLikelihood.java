@@ -43,136 +43,160 @@ import dr.xml.*;
  */
 public class GMRFSkylineLikelihood extends CoalescentLikelihood {
 
-    // PUBLIC STUFF
+	// PUBLIC STUFF
 
-    public static final String SKYLINE_LIKELIHOOD = "gmrfSkyLineLikelihood";
-    public static final String POPULATION_PARAMETER = "populationSizes";
-    public static final String PRECISION_PARAMETER = "precisionParameter";
+	public static final String SKYLINE_LIKELIHOOD = "gmrfSkyLineLikelihood";
+	public static final String POPULATION_PARAMETER = "populationSizes";
+	public static final String PRECISION_PARAMETER = "precisionParameter";
 
-    // PRIVATE STUFF
+	// PRIVATE STUFF
 
-    private Parameter popSizeParameter;
-    private Parameter precisionParameter;
+	private Parameter popSizeParameter;
+	private Parameter precisionParameter;
 
-    public GMRFSkylineLikelihood(Tree tree, Parameter popParameter, Parameter precParameter) {
-        super(SKYLINE_LIKELIHOOD);
+	public GMRFSkylineLikelihood(Tree tree, Parameter popParameter, Parameter precParameter) {
+		super(SKYLINE_LIKELIHOOD);
 
-        this.popSizeParameter = popParameter;
-        this.precisionParameter = precParameter;
-        int tips = tree.getExternalNodeCount();
-        int params = popSizeParameter.getDimension();
-        if (tips - params != 1) {
-            throw new IllegalArgumentException("Number of tips (" + tips + ") must be one greater than number of pop sizes (" + params + ")");
-        }
+		this.popSizeParameter = popParameter;
+		this.precisionParameter = precParameter;
+		int tips = tree.getExternalNodeCount();
+		int params = popSizeParameter.getDimension();
+		if (tips - params != 1) {
+			throw new IllegalArgumentException("Number of tips (" + tips + ") must be one greater than number of pop sizes (" + params + ")");
+		}
 
-        this.tree = tree;
-        if (tree instanceof TreeModel) {
-            addModel((TreeModel) tree);
-        }
-        addParameter(popSizeParameter);
-        addParameter(precisionParameter);
-        setupIntervals();
+		this.tree = tree;
+		if (tree instanceof TreeModel) {
+			addModel((TreeModel) tree);
+		}
+		addParameter(popSizeParameter);
+		addParameter(precisionParameter);
+		setupIntervals();
 
-        addStatistic(new DeltaStatistic());
-    }
+		addStatistic(new DeltaStatistic());
+	}
 
-    // **************************************************************
-    // Likelihood IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// Likelihood IMPLEMENTATION
+	// **************************************************************
 
-    /**
-     * Calculates the log likelihood of this set of coalescent intervals,
-     * given a demographic model.
-     */
-    public double calculateLogLikelihood() {
+	/**
+	 * Calculates the log likelihood of this set of coalescent intervals,
+	 * given a demographic model.
+	 */
+	public double calculateLogLikelihood() {
 
-        if (!intervalsKnown) setupIntervals();
+		if (!intervalsKnown) setupIntervals();
 
-        double logL = 0.0;
+		double logL = 0.0;
 
-        double currentTime = 0.0;
+		double currentTime = 0.0;
 
-        int popIndex = 0;
+		int popIndex = 0;
 
-        ConstantPopulation cp = new ConstantPopulation(Units.Type.YEARS);
+		ConstantPopulation cp = new ConstantPopulation(Units.Type.YEARS);
 
-        for (int j = 0; j < intervalCount; j++) {
+		for (int j = 0; j < intervalCount; j++) {
 
-            cp.setN0(popSizeParameter.getParameterValue(popIndex));
-            if (getIntervalType(j) == CoalescentEventType.COALESCENT) {
-                popIndex += 1;
-            }
+			cp.setN0(popSizeParameter.getParameterValue(popIndex));
+			if (getIntervalType(j) == CoalescentEventType.COALESCENT) {
+				popIndex += 1;
+			}
 
-            //		logL += calculateIntervalLikelihood(cp, intervals[j], currentTime, lineageCounts[j], getIntervalType(j));
+			//		logL += calculateIntervalLikelihood(cp, intervals[j], currentTime, lineageCounts[j], getIntervalType(j));
 
-            // insert zero-length coalescent intervals
-            int diff = getCoalescentEvents(j) - 1;
-            for (int k = 0; k < diff; k++) {
-                cp.setN0(popSizeParameter.getParameterValue(popIndex));
-                logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j] - k - 1, CoalescentEventType.COALESCENT);
-                popIndex += 1;
-            }
+			// insert zero-length coalescent intervals
+			int diff = getCoalescentEvents(j) - 1;
+			for (int k = 0; k < diff; k++) {
+				cp.setN0(popSizeParameter.getParameterValue(popIndex));
+				logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j] - k - 1, CoalescentEventType.COALESCENT);
+				popIndex += 1;
+			}
 
-            currentTime += intervals[j];
+			currentTime += intervals[j];
 
 
-        }
+		}
 
-        return logL;
-    }
+		// Calculate GMRF density; here GMRF = RW(1)
+		logL += -0.5 * calculateWeightedSSE();
 
-    // ****************************************************************
-    // Private and protected stuff
-    // ****************************************************************
+		return logL;
+	}
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+	public Parameter getPrecisionParameter() {
+		return precisionParameter;
+	}
 
-        public String getParserName() {
-            return SKYLINE_LIKELIHOOD;
-        }
+	public double calculateWeightedSSE() {
+		double weightedSSE = 0;
+		double currentPopSize = popSizeParameter.getParameterValue(0); // todo: do we need a prior on N_e(0)?
+		double currentInterval = intervals[0];
+		for (int j = 1; j < intervalCount; j++) {
+			double nextPopSize = popSizeParameter.getParameterValue(j);
+			double nextInterval = intervals[j];
+			double delta = nextPopSize - currentPopSize;
+			double weight = (currentInterval + nextInterval) / 2.0;
+			weightedSSE += delta * delta / weight;
+			currentPopSize = nextPopSize;
+			currentInterval = nextInterval;
+		}
+		return weightedSSE;
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+	}
 
-            XMLObject cxo = (XMLObject) xo.getChild(POPULATION_PARAMETER);
-            Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
+	// ****************************************************************
+	// Private and protected stuff
+	// ****************************************************************
 
-            cxo = (XMLObject) xo.getChild(PRECISION_PARAMETER);
-            Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-            cxo = (XMLObject) xo.getChild(POPULATION_TREE);
-            TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
+		public String getParserName() {
+			return SKYLINE_LIKELIHOOD;
+		}
 
-            return new GMRFSkylineLikelihood(treeModel, popParameter, precParameter);
-        }
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+			XMLObject cxo = (XMLObject) xo.getChild(POPULATION_PARAMETER);
+			Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        public String getParserDescription() {
-            return "This element represents the likelihood of the tree given the population size vector.";
-        }
+			cxo = (XMLObject) xo.getChild(PRECISION_PARAMETER);
+			Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
+			cxo = (XMLObject) xo.getChild(POPULATION_TREE);
+			TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+			return new GMRFSkylineLikelihood(treeModel, popParameter, precParameter);
+		}
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
-                        new ElementRule(TreeModel.class)
-                }),
-        };
-    };
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
+
+		public String getParserDescription() {
+			return "This element represents the likelihood of the tree given the population size vector.";
+		}
+
+		public Class getReturnType() {
+			return Likelihood.class;
+		}
+
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
+
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
+						new ElementRule(Parameter.class)
+				}),
+				new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
+						new ElementRule(Parameter.class)
+				}),
+				new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
+						new ElementRule(TreeModel.class)
+				}),
+		};
+	};
 
 
 }

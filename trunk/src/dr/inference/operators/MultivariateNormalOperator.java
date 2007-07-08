@@ -42,12 +42,10 @@ public class MultivariateNormalOperator extends SimpleMCMCOperator implements Co
 			for (int j = i; j < dim; j++)
 				cholesky[i][j] = cholesky[j][i] = varMatrix.getParameterValue(i, j);
 		}
-		//Cholesky.decompose(cholesky, cholesky);
 
 		try {
 			cholesky = (new CholeskyDecomposition(cholesky)).getL();
 		} catch (IllegalDimension illegalDimension) {
-			// todo - check for square variance matrix before here
 		}
 
 	}
@@ -62,7 +60,8 @@ public class MultivariateNormalOperator extends SimpleMCMCOperator implements Co
 
 		for (int i = 0; i < dim; i++) {
 			for (int j = i; j < dim; j++) {
-				x[i] += cholesky[i][j] * epsilon[j];
+				x[i] += cholesky[j][i] * epsilon[j];
+				// caution: decomposition returns lower triangular
 			}
 			parameter.setParameterValue(i, x[i]);
 //            System.out.println(i+" : "+x[i]);

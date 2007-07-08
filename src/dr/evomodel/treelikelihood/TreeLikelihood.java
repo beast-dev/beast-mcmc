@@ -172,8 +172,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
                     updateNodeAndChildren(((TreeModel.TreeChangedEvent)object).getNode());
 
-                } else if (((TreeModel.TreeChangedEvent)object).isRateChanged()) {
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent)object).getNode());
                 } else {
                     updateAllNodes();
 
@@ -182,6 +180,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         } else if (model == branchRateModel) {
 
+            updateAllNodes();
+
+            /* hmm this doesn't quite cut it...
             if (object instanceof Parameter) {
 
                 Parameter parameter = (Parameter)object;
@@ -193,7 +194,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 } else {
                     updateAllNodes();
                 }
-            } else updateAllNodes();
+            } else updateAllNodes();  */
 
         } else if (model == frequencyModel) {
 

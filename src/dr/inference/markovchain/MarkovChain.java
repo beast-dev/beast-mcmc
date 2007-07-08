@@ -56,7 +56,7 @@ public final class MarkovChain {
 
     private boolean useCoercion = true;
 
-    private static final int FULL_EVALUTATION_STATES = 1000;
+    private static final int FULL_EVALUTATION_STATES = 2000;
     private static final int MAX_FAILURE_COUNTS = 10;
 
     public MarkovChain(Prior prior,

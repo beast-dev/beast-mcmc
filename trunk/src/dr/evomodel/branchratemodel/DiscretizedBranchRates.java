@@ -144,7 +144,10 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
                 Logger.getLogger("dr.evomodel").warning("   WARNING: single root rate is not implemented!");
             }
 
-
+            if (rateCategoryParameter.getDimension() != tree.getNodeCount() -1 ) {
+                throw new XMLParseException(DISCRETIZED_BRANCH_RATES + ": The rate category parameter must be of length nodeCount-1");
+            }
+                                                     
 			return new DiscretizedBranchRates(tree, rateCategoryParameter, distributionModel);
         }
 

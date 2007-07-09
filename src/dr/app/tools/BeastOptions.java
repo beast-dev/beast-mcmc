@@ -44,6 +44,7 @@ import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeLogger;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeModelParser;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evoxml.SitePatternsParser;
 import dr.evoxml.TaxaParser;
@@ -526,22 +527,22 @@ public class BeastOptions {
 			writer.writeTag(CoalescentSimulator.COALESCENT_TREE, new Attribute.Default("idref", "startingTree"), true);	
 		}
 		
-		writer.writeOpenTag(TreeModel.ROOT_HEIGHT);
+		writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
 		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("id", "treeModel1.rootHeight"), true);
-		writer.writeCloseTag(TreeModel.ROOT_HEIGHT);
+		writer.writeCloseTag(TreeModelParser.ROOT_HEIGHT);
 		
 		
-		writer.writeOpenTag(TreeModel.NODE_HEIGHTS, new Attribute.Default(TreeModel.INTERNAL_NODES, "true"));
+		writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS, new Attribute.Default(TreeModelParser.INTERNAL_NODES, "true"));
 		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("id", "treeModel1.internalNodeHeights"), true);
-		writer.writeCloseTag(TreeModel.NODE_HEIGHTS);
+		writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 		
-		writer.writeOpenTag(TreeModel.NODE_HEIGHTS, 
+		writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS,
 			new Attribute[] {
-				new Attribute.Default(TreeModel.INTERNAL_NODES, "true"),
-				new Attribute.Default(TreeModel.ROOT_NODE, "true")
+				new Attribute.Default(TreeModelParser.INTERNAL_NODES, "true"),
+				new Attribute.Default(TreeModelParser.ROOT_NODE, "true")
 			});
 		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("id", "treeModel1.allInternalNodeHeights"), true);
-		writer.writeCloseTag(TreeModel.NODE_HEIGHTS);
+		writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 			
 		writer.writeCloseTag(TreeModel.TREE_MODEL);
 	}

@@ -58,7 +58,8 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	public static final String COALESCENT_LIKELIHOOD = "coalescentLikelihood";
 	public static final String ANALYTICAL = "analytical";
 	public static final String MODEL = "model";
-	public static final String POPULATION_TREE = "trees";
+
+    public static final String POPULATION_TREE = "populationTree";
 
     public enum CoalescentEventType {
         /** Denotes an interval after which a coalescent event is observed
@@ -90,10 +91,8 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
             if( vdModel.nLoci() == 1 && vdModel.getTree(0) == tree ) {
                 tree = null;
             }
-        } else {
-            if( tree == null ) {
+        } else if( tree == null ) {
                throw new RuntimeException("Tree is optional only when using  Variable Demographic Model");
-            }
         }
 
         this.tree = tree;
@@ -710,7 +709,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 			cxo = (XMLObject)xo.getChild(POPULATION_TREE);
             TreeModel treeModel = cxo != null ? (TreeModel)cxo.getChild(TreeModel.class) : null;
 
-			return new CoalescentLikelihood(treeModel, demoModel);
+            return new CoalescentLikelihood(treeModel, demoModel);
 		}
 
 		//************************************************************************

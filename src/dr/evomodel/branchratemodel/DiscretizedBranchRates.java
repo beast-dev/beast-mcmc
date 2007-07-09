@@ -103,23 +103,14 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 	public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == distributionModel) {
             ratesKnown = false;
-            fireModelChanged();
         } else if (model == tree) {
-
-            int newRootNodeNumber = tree.getRoot().getNumber();
-
-            if (newRootNodeNumber != rootNodeNumber) {
-
-                orderKnown = false;
-                fireModelChanged();
-            }
-        } else {
-            // DO NOTHING -- this should speed things up! AJD
+            orderKnown = false;
         }
+        fireModelChanged();
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index) {
-        fireModelChanged(parameter, index);
+        fireModelChanged();
     }
 
     protected void storeState() {

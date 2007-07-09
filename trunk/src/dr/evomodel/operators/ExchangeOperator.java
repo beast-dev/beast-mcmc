@@ -111,7 +111,7 @@ public class ExchangeOperator extends SimpleMCMCOperator {
 
         throw new OperatorFailedException("Couldn't find valid narrow move on this tree!!");
 	}
-
+                                  
 	/**
 	 * WARNING: Assumes strictly bifurcating tree.
 	 */

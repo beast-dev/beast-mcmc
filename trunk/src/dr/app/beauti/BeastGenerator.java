@@ -604,41 +604,41 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(CoalescentSimulator.COALESCENT_TREE, new Attribute.Default("idref", "startingTree"), true);
         }
 
-        writer.writeOpenTag(TreeModel.ROOT_HEIGHT);
+        writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("id", "treeModel.rootHeight"), true);
-        writer.writeCloseTag(TreeModel.ROOT_HEIGHT);
+        writer.writeCloseTag(TreeModelParser.ROOT_HEIGHT);
 
 
-        writer.writeOpenTag(TreeModel.NODE_HEIGHTS, new Attribute.Default(TreeModel.INTERNAL_NODES, "true"));
+        writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS, new Attribute.Default(TreeModelParser.INTERNAL_NODES, "true"));
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("id", "treeModel.internalNodeHeights"), true);
-        writer.writeCloseTag(TreeModel.NODE_HEIGHTS);
+        writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
-        writer.writeOpenTag(TreeModel.NODE_HEIGHTS,
+        writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS,
                 new Attribute[] {
-                        new Attribute.Default(TreeModel.INTERNAL_NODES, "true"),
-                        new Attribute.Default(TreeModel.ROOT_NODE, "true")
+                        new Attribute.Default(TreeModelParser.INTERNAL_NODES, "true"),
+                        new Attribute.Default(TreeModelParser.ROOT_NODE, "true")
                 });
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("id", "treeModel.allInternalNodeHeights"), true);
-        writer.writeCloseTag(TreeModel.NODE_HEIGHTS);
+        writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
         if (clockModel == RANDOM_LOCAL_CLOCK) {
-            writer.writeOpenTag(TreeModel.NODE_RATES,
+            writer.writeOpenTag(TreeModelParser.NODE_RATES,
                     new Attribute[] {
-                            new Attribute.Default(TreeModel.ROOT_NODE, "false"),
-                            new Attribute.Default(TreeModel.INTERNAL_NODES, "true"),
-                            new Attribute.Default(TreeModel.LEAF_NODES, "true")
+                            new Attribute.Default(TreeModelParser.ROOT_NODE, "false"),
+                            new Attribute.Default(TreeModelParser.INTERNAL_NODES, "true"),
+                            new Attribute.Default(TreeModelParser.LEAF_NODES, "true")
                     });
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("id", "localClock.rates"), true);
-            writer.writeCloseTag(TreeModel.NODE_RATES);
+            writer.writeCloseTag(TreeModelParser.NODE_RATES);
 
-            writer.writeOpenTag(TreeModel.NODE_TRAITS,
+            writer.writeOpenTag(TreeModelParser.NODE_TRAITS,
                     new Attribute[] {
-                            new Attribute.Default(TreeModel.ROOT_NODE, "false"),
-                            new Attribute.Default(TreeModel.INTERNAL_NODES, "true"),
-                            new Attribute.Default(TreeModel.LEAF_NODES, "true")
+                            new Attribute.Default(TreeModelParser.ROOT_NODE, "false"),
+                            new Attribute.Default(TreeModelParser.INTERNAL_NODES, "true"),
+                            new Attribute.Default(TreeModelParser.LEAF_NODES, "true")
                     });
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("id", "localClock.changes"), true);
-            writer.writeCloseTag(TreeModel.NODE_TRAITS);
+            writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
         }
 
         writer.writeCloseTag(TreeModel.TREE_MODEL);

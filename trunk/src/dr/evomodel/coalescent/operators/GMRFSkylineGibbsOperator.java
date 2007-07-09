@@ -1,7 +1,10 @@
 package dr.evomodel.coalescent.operators;
 
+import dr.evomodel.coalescent.GMRFSkylineLikelihood;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
+import dr.math.GammaDistribution;
 import dr.xml.*;
 
 /**
@@ -14,166 +17,199 @@ import dr.xml.*;
 
 public class GMRFSkylineGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, CoercableMCMCOperator {
 
-    public static final String GMRF_GIBBS_OPERATOR = "gmrfGibbsOperator";
-    public static final String SCALE_FACTOR = "scaleFactor";
-    public static final String POPULATION_PARAMETER = "populationSizes";
-    public static final String PRECISION_PARAMETER = "precisionParameter";
+	public static final String GMRF_GIBBS_OPERATOR = "gmrfGibbsOperator";
+	public static final String SCALE_FACTOR = "scaleFactor";
+	//    public static final String POPULATION_PARAMETER = "populationSizes";
+	//    public static final String PRECISION_PARAMETER = "precisionParameter";
+	public static final String PRECISION_PRIOR = "precisionPrior";
+	public static final String GMRF_LIKELIHOOD = "gmrfLikelihood";
 
-    private Parameter precisionParameter;
-    private Parameter populationSizeParameter;
-    private double scaleFactor = 0.5;
-    private int mode = CoercableMCMCOperator.DEFAULT;
-    private int weight = 1;
+	private Parameter precisionParameter;
+	//    private Parameter populationSizeParameter;
+	private GMRFSkylineLikelihood gmrfLikelihood;
+	//	private DistributionLikelihood precisionPrior;
+	private double scaleFactor = 0.5;
+	private int mode = CoercableMCMCOperator.DEFAULT;
+	private int weight = 1;
+	private double priorScale;
+	private double priorShape;
 
-    public GMRFSkylineGibbsOperator(Parameter populationSizeParameter, Parameter precisionParameter, double scaleFactor,
-                                    int weight, int mode) {
-        this.populationSizeParameter = populationSizeParameter;
-        this.precisionParameter = precisionParameter;
-        this.scaleFactor = scaleFactor;
-        this.weight = weight;
-        this.mode = mode;
-    }
+	public GMRFSkylineGibbsOperator(//Parameter populationSizeParameter, Parameter precisionParameter,
+	                                GMRFSkylineLikelihood gmrfLikelihood, DistributionLikelihood precisionPrior,
+	                                double scaleFactor, int weight, int mode) {
+//        this.populationSizeParameter =
+		this.precisionParameter = gmrfLikelihood.getPrecisionParameter();
+		this.gmrfLikelihood = gmrfLikelihood;
+//	    this.precisionPrior = precisionPrior;
+		this.scaleFactor = scaleFactor;
+		this.weight = weight;
+		this.mode = mode;
 
-    public double doOperation() throws OperatorFailedException {
-        return 0;
-    }
+		priorScale = ((GammaDistribution) precisionPrior.getDistribution()).getScale();
+		priorShape = ((GammaDistribution) precisionPrior.getDistribution()).getShape();
 
-    public int getStepCount() {
-        return 0;
-    }
+	}
 
+	public double doOperation() throws OperatorFailedException {
 
-    //MCMCOperator INTERFACE
-    public final String getOperatorName() {
-        return GMRF_GIBBS_OPERATOR;
-    }
+		double weightedSSE = gmrfLikelihood.calculateWeightedSSE();
 
-    public double getCoercableParameter() {
-        return Math.log(1.0 / scaleFactor - 1.0);
-    }
+		double drawScale = 1.0;
+		double drawShape = 1.0;
 
-    public void setCoercableParameter(double value) {
-        scaleFactor = 1.0 / (Math.exp(value) + 1.0);
-    }
+		precisionParameter.setParameterValue(0,
+				GammaDistribution.nextGamma(drawShape, drawScale)
+		);
 
-    public double getRawParameter() {
-        return scaleFactor;
-    }
+		return 0;
+	}
 
-    public int getMode() {
-        return mode;
-    }
-
-    public double getScaleFactor() {
-        return scaleFactor;
-    }
-
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public int getWeight() {
-        return weight;
-    }
-
-    public void setWeight(int w) {
-        weight = w;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
-    }
+	public int getStepCount() {
+		return 0;
+	}
 
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+	//MCMCOperator INTERFACE
+	public final String getOperatorName() {
+		return GMRF_GIBBS_OPERATOR;
+	}
 
-        public String getParserName() {
-            return GMRF_GIBBS_OPERATOR;
-        }
+	public double getCoercableParameter() {
+		return Math.log(1.0 / scaleFactor - 1.0);
+	}
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+	public void setCoercableParameter(double value) {
+		scaleFactor = 1.0 / (Math.exp(value) + 1.0);
+	}
+
+	public double getRawParameter() {
+		return scaleFactor;
+	}
+
+	public int getMode() {
+		return mode;
+	}
+
+	public double getScaleFactor() {
+		return scaleFactor;
+	}
+
+	public double getTargetAcceptanceProbability() {
+		return 0.234;
+	}
+
+	public double getMinimumAcceptanceLevel() {
+		return 0.1;
+	}
+
+	public double getMaximumAcceptanceLevel() {
+		return 0.4;
+	}
+
+	public double getMinimumGoodAcceptanceLevel() {
+		return 0.20;
+	}
+
+	public double getMaximumGoodAcceptanceLevel() {
+		return 0.30;
+	}
+
+	public int getWeight() {
+		return weight;
+	}
+
+	public void setWeight(int w) {
+		weight = w;
+	}
+
+	public final String getPerformanceSuggestion() {
+
+		double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+		double targetProb = getTargetAcceptanceProbability();
+		dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
+		double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
+		if (prob < getMinimumGoodAcceptanceLevel()) {
+			return "Try setting scaleFactor to about " + formatter.format(sf);
+		} else if (prob > getMaximumGoodAcceptanceLevel()) {
+			return "Try setting scaleFactor to about " + formatter.format(sf);
+		} else return "";
+	}
 
 
-            int mode = CoercableMCMCOperator.DEFAULT;
+	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
-            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-                if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-                    mode = CoercableMCMCOperator.COERCION_ON;
-                } else {
-                    mode = CoercableMCMCOperator.COERCION_OFF;
-                }
-            }
+		public String getParserName() {
+			return GMRF_GIBBS_OPERATOR;
+		}
 
-            int weight = xo.getIntegerAttribute(WEIGHT);
-            double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            if (scaleFactor <= 0.0 || scaleFactor >= 1.0) {
-                throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
-            }
 
-            XMLObject cxo = (XMLObject) xo.getChild(POPULATION_PARAMETER);
-            Parameter populationSizeParameter = (Parameter) cxo.getChild(Parameter.class);
+			int mode = CoercableMCMCOperator.DEFAULT;
 
-            cxo = (XMLObject) xo.getChild(PRECISION_PARAMETER);
-            Parameter precisionParameter = (Parameter) cxo.getChild(Parameter.class);
+			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
+				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
+					mode = CoercableMCMCOperator.COERCION_ON;
+				} else {
+					mode = CoercableMCMCOperator.COERCION_OFF;
+				}
+			}
 
-            return new GMRFSkylineGibbsOperator(populationSizeParameter, precisionParameter, scaleFactor, weight, mode);
+			int weight = xo.getIntegerAttribute(WEIGHT);
+			double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
-        }
+			if (scaleFactor <= 0.0 || scaleFactor >= 1.0) {
+				throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
+			}
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+//            XMLObject cxo = (XMLObject) xo.getChild(POPULATION_PARAMETER);
+//            Parameter populationSizeParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        public String getParserDescription() {
-            return "This element returns a Gibbs operator for the joint distribution of the population sizes and precision parameter.";
-        }
+//            cxo = (XMLObject) xo.getChild(PRECISION_PARAMETER);
+//            Parameter precisionParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
+			XMLObject cxo = (XMLObject) xo.getChild(PRECISION_PRIOR);
+			DistributionLikelihood precisionPrior = (DistributionLikelihood) cxo.getChild(DistributionLikelihood.class);
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+			GMRFSkylineLikelihood gmrfLikelihood = (GMRFSkylineLikelihood) xo.getChild(GMRFSkylineLikelihood.class);
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(SCALE_FACTOR),
-                AttributeRule.newIntegerRule(WEIGHT),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-                new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                })
-        };
+			return new GMRFSkylineGibbsOperator(//populationSizeParameter, precisionParameter,
+					gmrfLikelihood, precisionPrior, scaleFactor, weight, mode);
 
-    };
+		}
+
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
+
+		public String getParserDescription() {
+			return "This element returns a Gibbs operator for the joint distribution of the population sizes and precision parameter.";
+		}
+
+		public Class getReturnType() {
+			return MCMCOperator.class;
+		}
+
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
+
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				AttributeRule.newDoubleRule(SCALE_FACTOR),
+				AttributeRule.newIntegerRule(WEIGHT),
+				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+				new ElementRule(PRECISION_PRIOR, new XMLSyntaxRule[]{
+						new ElementRule(DistributionLikelihood.class)
+				}),
+//                new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
+//                        new ElementRule(Parameter.class)
+//                }),
+//                new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
+//                        new ElementRule(Parameter.class)
+//                }),
+				new ElementRule(GMRFSkylineLikelihood.class)
+		};
+
+	};
 
 }

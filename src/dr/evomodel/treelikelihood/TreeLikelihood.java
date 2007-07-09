@@ -31,7 +31,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
@@ -179,22 +178,11 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             }
 
         } else if (model == branchRateModel) {
-
-            updateAllNodes();
-
-            /* hmm this doesn't quite cut it...
-            if (object instanceof Parameter) {
-
-                Parameter parameter = (Parameter)object;
-
-                if (branchRateModel instanceof DiscretizedBranchRates && ((DiscretizedBranchRates)branchRateModel).hasParameter(parameter)) {
-                    NodeRef node = ((DiscretizedBranchRates)branchRateModel).getNodeForParameter(parameter, index);
-
-                    updateNode(node);
-                } else {
-                    updateAllNodes();
-                }
-            } else updateAllNodes();  */
+            if (index == -1) {
+                updateAllNodes();
+            } else {
+                updateNode(treeModel.getNode(index));
+            }
 
         } else if (model == frequencyModel) {
 

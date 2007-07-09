@@ -235,20 +235,6 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
 				String traitName = xo.getStringAttribute(TRAIT_NAME);
 
-				System.err.println("NAME: " + traitParameter.getParameterName());
-				for (int i = 0; i < traitParameter.getNumberOfParameters(); i++) {
-					System.err.println("N: " + traitParameter.getParameter(i).getId());
-				}
-
-				System.err.println("TREE:" + treeModel.getMultivariateNodeTrait(treeModel.getExternalNode(0), "trait")[0]);
-
-				Parameter p = traitParameter.getParameter(2);
-
-				NodeRef node = treeModel.getNodeOfParameter(p);
-
-				System.err.println("FOUND OWNER!" + treeModel.getNodeTaxon(node).getId() + " " + p.hashCode());
-
-				System.exit(-1);
 				// Fill in attributeValues
 				int taxonCount = treeModel.getTaxonCount();
 				for (int i = 0; i < taxonCount; i++) {

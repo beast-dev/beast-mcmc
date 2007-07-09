@@ -165,7 +165,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
 	public void handleParameterChangedEvent(Parameter parameter, int index) {
 
 		Node node = getNodeOfParameter(parameter);
-        pushTreeChangedEvent(node, parameter, index);
+		pushTreeChangedEvent(node, parameter, index);
 	}
 
 	private List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
@@ -1032,10 +1032,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
 			if (hasRates && node.rateParameter == parameter) {
 				return node;
 			}
-			//System.err.println("START OF: " + node.getNumber());
-			for (Parameter p : node.traitParameters.values()) {
-				System.err.println("OWN: " + p.getParameterName() + " " + p.hashCode());
-			}
+
 			if (hasTraits && node.traitParameters.containsValue(parameter)) {
 				return node;
 			}
@@ -1268,26 +1265,23 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
 
 		public final void createTraitParameter(String name, int dim) {
-			Parameter trait = new Parameter.Default(dim);
-			if (isRoot()) {
-				trait.setId("root." + name);
-			} else if (isExternal()) {
-				trait.setId(getTaxonId(getNumber()) + "." + name);
-			} else {
-				trait.setId("node" + getNumber() + "." + name);
+
+			if (!traitParameters.containsKey(name)) {
+
+				Parameter trait = new Parameter.Default(dim);
+				if (isRoot()) {
+					trait.setId("root." + name);
+				} else if (isExternal()) {
+					trait.setId(getTaxonId(getNumber()) + "." + name);
+				} else {
+					trait.setId("node" + getNumber() + "." + name);
+				}
+				trait.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, dim));
+
+				traitParameters.put(name, trait);
+
+				addParameter(trait);
 			}
-			trait.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, dim));
-
-			if (traitParameters.containsKey(name)) {
-				traitParameters.remove(name);
-//			    System.err.println("REMOVED: "+name);
-			}
-			traitParameters.put(name, trait);
-
-//		    if (traitParameters.containsValue(trait))
-//			    System.err.println("FOUND NEW");
-
-			addParameter(trait);
 		}
 
 		public final double getHeight() {

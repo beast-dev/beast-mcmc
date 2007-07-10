@@ -156,7 +156,7 @@ public class Intervals implements IntervalList {
 			throw new IllegalArgumentException("Too few events to construct intervals");
 		}
 
-		Arrays.sort(events, 0, eventCount - 1);
+		Arrays.sort(events);
 
 		if (events[0].type != IntervalType.SAMPLE) {
 			throw new IllegalArgumentException("First event is not a sample event");

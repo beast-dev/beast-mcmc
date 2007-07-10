@@ -77,11 +77,6 @@ public class MCMC implements Runnable, Identifiable {
 
         //initialize transients
         currentState = 0;
-
-        stepsPerReport = 1;
-        while ((getChainLength() / stepsPerReport) > 1000) {
-            stepsPerReport *= 2;
-        }
     }
 
     public MarkovChain getMarkovChain() {
@@ -421,7 +416,6 @@ public class MCMC implements Runnable, Identifiable {
     private boolean showOperatorAnalysis = true;
     private dr.util.Timer timer = new dr.util.Timer();
     private int currentState = 0;
-    private int stepsPerReport = 1000;
     private NumberFormatter formatter = new NumberFormatter(8);
 
     /** this markov chain does most of the work. */

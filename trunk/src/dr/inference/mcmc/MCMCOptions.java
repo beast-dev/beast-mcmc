@@ -62,8 +62,10 @@ public class MCMCOptions {
         if (!preBurninSet) preBurnin=chainLength/100;
     }
 
-    public final void setFullEvaluationCount(int integerAttribute) {
+    public final void setFullEvaluationCount(int fullEvaluationCount) {
+        this.fullEvaluationCount = fullEvaluationCount;
     }
+
     public final void setUseCoercion(boolean coercion) {
         this.coercion = coercion;
         if (!coercion) preBurnin = 0;

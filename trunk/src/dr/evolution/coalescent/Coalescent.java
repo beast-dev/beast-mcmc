@@ -74,69 +74,42 @@ public class Coalescent implements MultivariateFunction, Units {
         double logL = 0.0;
 
         double startTime = 0.0;
+        final int n = intervals.getIntervalCount();
+        for (int i = 0; i < n; i++) {
 
-        for (int i = 0, n = intervals.getIntervalCount(); i < n; i++) {
+            final double duration = intervals.getInterval(i);
+            final double finishTime = startTime + duration;
 
-            double duration = intervals.getInterval(i);
-            double finishTime = startTime + duration;
+            final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
+            final int lineageCount = intervals.getLineageCount(i);
 
-            double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
-            int lineageCount = intervals.getLineageCount(i);
+            final double kChoose2 = Binomial.choose2(lineageCount);
+            // common part
+            logL += - kChoose2 * intervalArea;
 
             if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
 
-                logL += -Math.log(demographicFunction.getDemographic(finishTime)) -
-                        (Binomial.choose2(lineageCount)*intervalArea);
+                final double demographicAtCoalPoint = demographicFunction.getDemographic(finishTime);
 
-            } else { // SAMPLE or NOTHING
+                // if value at end is many orders of magnitude different than mean over interval reject this interval
+                // This is protection against cases where you get ridiculous coalescent values with infitisimal
+                // population size at the end of a linear interval
 
-                logL += -(Binomial.choose2(lineageCount)*intervalArea);
+                if( demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
+                    logL += - Math.log(demographicAtCoalPoint);
+
+                } else {
+                    // remove this at some stage
+                    System.err.println("Interval ignored: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
+                    double d =  duration / intervalArea;
+                    logL += - Math.log(kChoose2 / d);
+                }
             }
 
             startTime = finishTime;
         }
 
         return logL;
-
-//        double logL = 0.0;
-//
-//        double startTime = 0.0;
-//        final int n = intervals.getIntervalCount();
-//        for (int i = 0; i < n; i++) {
-//
-//            final double duration = intervals.getInterval(i);
-//            final double finishTime = startTime + duration;
-//
-//            final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
-//            final int lineageCount = intervals.getLineageCount(i);
-//
-//            final double kChoose2 = Binomial.choose2(lineageCount);
-//            // common part
-//            logL += -kChoose2 * intervalArea;
-//
-//            if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
-//
-//                final double demographicAtCoalPoint = demographicFunction.getDemographic(finishTime);
-//
-//                // if value at end is many orders of magnitude different than mean over interval reject this interval
-//                // This is protection against cases where you get ridiculous coalescent values with infitisimal
-//                // population size at the end of a linear interval
-//
-//                if( demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
-//                    logL += Math.log(kChoose2 / demographicAtCoalPoint);
-//
-//                } else {
-//                    // remove this at some stage
-//                    System.err.println("Interval ignored: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
-//                    double d =  duration / intervalArea;
-//                    logL += Math.log(kChoose2 / d);
-//                }
-//            }
-//
-//            startTime = finishTime;
-//        }
-//
-//        return logL;
     }
 
     /**

@@ -130,7 +130,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
             };
         }
 
-        if( Coalescent.detaildPrint ) { System.err.println("Old:"); }
+        if( false ) { System.err.println("Old:"); }
 
         for (int j = 0; j < intervalCount; j++) {
 
@@ -150,7 +150,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
 
             logL += calculateIntervalLikelihood(cp, intervals[j], currentTime, lineageCounts[j], iType);
 
-            if( Coalescent.detaildPrint ) { System.err.println(" lgl " + logL); }
+            if( false ) { System.err.println(" lgl " + logL); }
 
             if( logL > 0 && j > 1 ) {
                 System.out.println(logL);

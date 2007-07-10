@@ -51,7 +51,7 @@ public class NewCoalescentLikelihood extends AbstractModel implements Likelihood
 
 	// PUBLIC STUFF
 
-	public static final String COALESCENT_LIKELIHOOD = "newCoalescentLikelihood";
+	public static final String COALESCENT_LIKELIHOOD = "coalescentLikelihood";
 	public static final String MODEL = "model";
 	public static final String POPULATION_TREE = "populationTree";
 
@@ -79,6 +79,8 @@ public class NewCoalescentLikelihood extends AbstractModel implements Likelihood
 		eventsKnown = false;
 
 		addStatistic(new DeltaStatistic());
+
+        likelihoodKnown = false;
 	}
 
 	// **************************************************************
@@ -88,7 +90,6 @@ public class NewCoalescentLikelihood extends AbstractModel implements Likelihood
 	protected final void handleModelChangedEvent(Model model, Object object, int index) {
 		if (model == tree) {
 			// treeModel has changed so recalculate the intervals
-			intervals.resetEvents();
 			eventsKnown = false;
 		} else {
 			// demoModel has changed so we don't need to recalculate the intervals
@@ -154,7 +155,6 @@ public class NewCoalescentLikelihood extends AbstractModel implements Likelihood
 	}
 
 	public final void makeDirty() {
-		intervals.resetEvents();
 		likelihoodKnown = false;
 		eventsKnown = false;
 	}
@@ -165,9 +165,9 @@ public class NewCoalescentLikelihood extends AbstractModel implements Likelihood
 	 */
 	public double calculateLogLikelihood() {
 
-		if (eventsKnown == false) setupIntervals();
-
-		if (demoModel == null) return Coalescent.calculateAnalyticalLogLikelihood(intervals);
+		if (!eventsKnown) {
+		    setupIntervals();
+		}
 
 		DemographicFunction demoFunction = demoModel.getDemographicFunction();
 
@@ -179,6 +179,7 @@ public class NewCoalescentLikelihood extends AbstractModel implements Likelihood
 	 */
 	protected final void setupIntervals() {
 
+        intervals.resetEvents();
 		collectTimes(tree, tree.getRoot(), intervals);
 		// force a calculation of the intervals...
 		intervals.getIntervalCount();
@@ -189,11 +190,13 @@ public class NewCoalescentLikelihood extends AbstractModel implements Likelihood
 
 	/**
 	 * extract coalescent times and tip information into ArrayList times from tree.
+     * @param tree the tree
 	 * @param node the node to start from
+     * @param intervals the intervals object to store the events
 	 */
-	private final static void collectTimes(Tree tree, NodeRef node, Intervals intervals) {
+	private void collectTimes(Tree tree, NodeRef node, Intervals intervals) {
 
-		intervals.addCoalescentEvent(tree.getNodeHeight(node));
+        intervals.addCoalescentEvent(tree.getNodeHeight(node));
 
 		for (int i = 0; i < tree.getChildCount(node); i++) {
 			NodeRef child = tree.getChild(node, i);
@@ -228,13 +231,11 @@ public class NewCoalescentLikelihood extends AbstractModel implements Likelihood
 		public double getDoubleValue() { return getLogLikelihood(); }
 	}
 
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
+    public String toString() {
+        return Double.toString(logLikelihood);
 
-	public org.w3c.dom.Element createElement(org.w3c.dom.Document d) {
-		throw new RuntimeException("createElement not implemented");
-	}
+    }
+
 
     // **************************************************************
     // Units IMPLEMENTATION
@@ -271,7 +272,8 @@ public class NewCoalescentLikelihood extends AbstractModel implements Likelihood
 		public int getDimension() { return 1; }
 
 		public double getStatisticValue(int i) {
-			return IntervalList.Utils.getDelta(intervals);
+			throw new RuntimeException("Not implemented");
+//			return IntervalList.Utils.getDelta(intervals);
 		}
 
 	}

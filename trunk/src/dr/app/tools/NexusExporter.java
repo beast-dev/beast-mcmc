@@ -30,9 +30,8 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 
 import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
+import java.text.NumberFormat;
 
 /**
  * @author Andrew Rambaut
@@ -41,41 +40,82 @@ import java.util.HashMap;
  */
 public class NexusExporter implements TreeExporter {
 
+    static final String DEFAULT_TREE_PREFIX = "TREE";
+
     public NexusExporter(PrintStream out) {
         this.out = out;
     }
 
-    public void exportTrees(Tree[] trees) {
-        writeNexusHeader(trees[0]);
+    /**
+     * Sets the name to use for each tree (will be suffixed by tree number)
+     * @param treePrefix
+     */
+    public void setTreePrefix(String treePrefix) {
+        this.treePrefix = treePrefix;
+    }
+
+    /**
+     * Sets the number format to use for outputting branch lengths
+     * @param format
+     */
+    public void setNumberFormat(NumberFormat format) {
+        formatter = format;
+    }
+
+    /**
+     * @param sorted  true if you wish the translation table to be alphabetically sorted.
+     */
+    public void setSortedTranslationTable(boolean sorted) {
+        this.sorted = sorted;
+    }
+
+    /**
+     * @param trees the array of trees to export
+     * @param attributes true if the nodes should be annotated with their attributes
+     */
+    public void exportTrees(Tree[] trees, boolean attributes) {
+        Map<String, Integer> idMap = writeNexusHeader(trees[0]);
         out.println("\t\t;");
         for (int i = 0; i < trees.length; i++) {
-            writeNexusTree(trees[i], i);
+            writeNexusTree(trees[i], i, attributes, idMap);
         }
         out.println("End;");
     }
 
+    /**
+     * Export a tree with all its attributes.
+     * @param tree  the tree to export.
+     */
     public void exportTree(Tree tree) {
-        writeNexusHeader(tree);
+        Map<String, Integer> idMap = writeNexusHeader(tree);
         out.println("\t\t;");
-        writeNexusTree(tree, 1);
+        writeNexusTree(tree, 1, true, idMap);
         out.println("End;");
     }
 
-    private void writeNexusTree(Tree tree, int i) {
-        out.print("tree TREE" + i  + "  = [&R] ");
-        writeNode( tree, tree.getRoot(), true, null);
+    private void writeNexusTree(Tree tree, int i, boolean attributes, Map<String, Integer> idMap) {
+        out.print("tree " + treePrefix + i  + "  = [&R] ");
+        writeNode( tree, tree.getRoot(), attributes, idMap);
         out.println(";");
     }
 
     private Map<String, Integer> writeNexusHeader(Tree tree) {
         int taxonCount = tree.getTaxonCount();
+        List<String> names = new ArrayList<String>();
+
+        for (int i = 0; i < tree.getTaxonCount(); i++) {
+            names.add(tree.getTaxonId(i));
+        }
+
+        if (sorted) Collections.sort(names);
+
         out.println("#NEXUS");
         out.println();
         out.println("Begin taxa;");
         out.println("\tDimensions ntax=" + taxonCount + ";");
         out.println("\tTaxlabels");
-        for (int i = 0; i < taxonCount; i++) {
-            out.println("\t\t" + tree.getTaxon(i).getId());
+        for (String name : names) {
+            out.println("\t\t" + name);
         }
         out.println("\t\t;");
         out.println("End;");
@@ -85,14 +125,16 @@ public class NexusExporter implements TreeExporter {
         // This is needed if the trees use numerical taxon labels
         out.println("\tTranslate");
         Map<String, Integer> idMap = new HashMap<String, Integer>();
-        for (int i = 0; i < taxonCount; i++) {
-            int k = i + 1;
-            idMap.put(tree.getTaxonId(i),k);
-            if (k < taxonCount) {
-                out.println("\t\t" + k + " " + tree.getTaxonId(i) + ",");
+
+        int k = 1;
+        for (String name : names) {
+            idMap.put(name,k);
+            if (k < names.size()) {
+                out.println("\t\t" + k + " " + name + ",");
             } else {
-                out.println("\t\t" + k + " " + tree.getTaxonId(i));
+                out.println("\t\t" + k + " " + name);
             }
+            k += 1;
         }
         return idMap;
     }
@@ -113,29 +155,34 @@ public class NexusExporter implements TreeExporter {
             out.print(")");
         }
 
-        Iterator iter = tree.getNodeAttributeNames(node);
-        if (iter != null) {
-            boolean first = true;
-            while (iter.hasNext()) {
-                if (first) {
-                    out.print("[&");
-                    first = false;
-                } else {
-                    out.print(",");
+        if (attributes) {Iterator iter = tree.getNodeAttributeNames(node);
+            if (iter != null) {
+                boolean first = true;
+                while (iter.hasNext()) {
+                    if (first) {
+                        out.print("[&");
+                        first = false;
+                    } else {
+                        out.print(",");
+                    }
+                    String name = (String)iter.next();
+                    out.print(name + "=");
+                    Object value = tree.getNodeAttribute(node, name);
+                    printValue(value);
                 }
-                String name = (String)iter.next();
-                out.print(name + "=");
-                Object value = tree.getNodeAttribute(node, name);
-                printValue(value);
+                out.print("]");
             }
-            out.print("]");
         }
 
         if (!tree.isRoot(node)) {
             out.print(":");
 
             double length = tree.getBranchLength(node);
-            out.print(Double.toString(length));
+            if (formatter != null) {
+                out.print(formatter.format(length));
+            } else {
+                out.print(length);
+            }
         }
     }
 
@@ -158,5 +205,8 @@ public class NexusExporter implements TreeExporter {
     }
 
     private PrintStream out;
+    private NumberFormat formatter = null;
+    private String treePrefix = DEFAULT_TREE_PREFIX;
+    private boolean sorted = false;
 
 }

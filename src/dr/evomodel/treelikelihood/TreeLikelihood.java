@@ -36,7 +36,6 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.logging.Logger;

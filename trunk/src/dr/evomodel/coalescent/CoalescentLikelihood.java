@@ -227,7 +227,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 
         if( tree == null ) {
             final VariableDemographicModel demo = ((VariableDemographicModel) demoModel);
-            if( Coalescent.detaildPrint ) {
+            if( false ) {
                 System.err.println("pop " + demo.popSizeParameter + " ind " + demo.indicatorParameter);
             }
             
@@ -326,7 +326,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 		final double intervalArea = demogFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
         final double kover2 = Binomial.choose2(lineageCount);
         double like = -kover2 * intervalArea;
-        if( Coalescent.detaildPrint ) {
+        if( false ) {
             System.err.print("l = " + lineageCount + " width " + width + " int " + intervalArea);
         }
         switch (type) {
@@ -334,7 +334,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
                 final double demographic = demogFunction.getDemographic(timeOfThisCoal);
                 like += //Math.log(Math.min(1.0, kover2 / demogFunction.getDemographic(timeOfThisCoal)));
                 Math.log(kover2 / demographic);
-                if( Coalescent.detaildPrint ) { System.err.print(" vatend " + demographic); }
+                if( false ) { System.err.print(" vatend " + demographic); }
                 break;
 			case NEW_SAMPLE:
 				break;

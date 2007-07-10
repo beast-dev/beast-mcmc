@@ -319,7 +319,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
                 AttributeRule.newDoubleRule(MEAN),
                 AttributeRule.newDoubleRule(STDEV),
                 AttributeRule.newDoubleRule(OFFSET),
-                AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE),
+                AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
         };
 

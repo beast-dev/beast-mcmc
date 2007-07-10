@@ -86,7 +86,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (integrateAcrossCategories)	{
                 if (patternList.getDataType() instanceof dr.evolution.datatype.Nucleotides) {
 
-	                if (NativeNucleotideLikelihoodCore.isAvailable()) {
+                    if (NativeNucleotideLikelihoodCore.isAvailable()) {
 
                         Logger.getLogger("dr.evomodel").info("TreeLikelihood using native nucleotide likelihood core");
                         likelihoodCore = new NativeNucleotideLikelihoodCore();
@@ -177,7 +177,11 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             }
 
         } else if (model == branchRateModel) {
-            updateAllNodes();
+            if (index == -1) {
+                updateAllNodes();
+            } else {
+                updateNode(treeModel.getNode(index));
+            }
 
         } else if (model == frequencyModel) {
 
@@ -294,7 +298,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             // Get the operational time of the branch
             double branchTime = branchRate * ( tree.getNodeHeight(parent) - tree.getNodeHeight(node) );
-            
+
             if (branchTime < 0.0) {
                 throw new RuntimeException("Negative branch length: " + branchTime);
             }

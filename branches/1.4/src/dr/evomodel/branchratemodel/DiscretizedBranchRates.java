@@ -63,10 +63,6 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
     private final double step;
     private final double[] rates;
 
-    private boolean ratesKnown = false;
-    private boolean orderKnown = false;
-
-
 	public DiscretizedBranchRates(TreeModel tree, Parameter rateCategoryParameter, ParametricDistributionModel model) {
 
         super(DISCRETIZED_BRANCH_RATES);
@@ -88,9 +84,6 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             rateCategoryParameter.setParameterValue(i, i);
         }
 
-        ratesKnown = false;
-        orderKnown = false;
-
         addModel(model);
         addModel(tree);
 
@@ -98,19 +91,23 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
         rootNodeNumber = tree.getRoot().getNumber();
         storedRootNodeNumber = rootNodeNumber;
+        
+        setupRates();
+        shuffleIndices();
+
 	}
 
 	public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == distributionModel) {
-            ratesKnown = false;
+            setupRates();
+            fireModelChanged();
         } else if (model == tree) {
-            orderKnown = false;
+            shuffleIndices();
         }
-        fireModelChanged();
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index) {
-        fireModelChanged();
+        fireModelChanged(null, getNodeNumberFromCategoryIndex(index));
     }
 
     protected void storeState() {
@@ -118,7 +115,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
     }
 
     protected void restoreState() {
-        ratesKnown = false;
+        setupRates();
         rootNodeNumber = storedRootNodeNumber;
     }
 
@@ -179,26 +176,25 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             throw new IllegalArgumentException("root node doesn't have a rate!");
         }
 
-        if (!ratesKnown) {
-            setupRates();
-            ratesKnown = true;
-        }
-        if (!orderKnown) {
-            shuffleIndices();
-            orderKnown = true;
-        }
-
         int nodeNumber = node.getNumber();
 
-        int rateCategory = 0;
-        if (nodeNumber < rootNodeNumber) {
-            rateCategory = (int)Math.round(rateCategoryParameter.getParameterValue(nodeNumber));
-        } else if (nodeNumber > rootNodeNumber) {
-            rateCategory = (int)Math.round(rateCategoryParameter.getParameterValue(nodeNumber-1));
-        } else {
+        if (nodeNumber == rootNodeNumber) {
             throw new IllegalArgumentException("INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.");
         }
+
+        int rateCategory = (int)Math.round(rateCategoryParameter.getParameterValue(getCategoryIndexFromNodeNumber(nodeNumber)));
+
         return rates[rateCategory];
+    }
+
+    public int getNodeNumberFromCategoryIndex(int categoryIndex) {
+        if (categoryIndex >= rootNodeNumber) return categoryIndex + 1;
+        return categoryIndex;
+    }
+
+    public int getCategoryIndexFromNodeNumber(int nodeNumber) {
+        if (nodeNumber > rootNodeNumber) return nodeNumber - 1;
+        return nodeNumber;
     }
 
     /**

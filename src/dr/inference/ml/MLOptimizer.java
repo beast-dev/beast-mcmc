@@ -74,7 +74,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 
 		this.id = id;
 
-		mc = new MarkovChain(null, likelihood, schedule, new GreatDelugeCriterion(0.2), false);
+		mc = new MarkovChain(null, likelihood, schedule, new GreatDelugeCriterion(0.2), 2000, false);
         //mc = new MarkovChain(null, likelihood, schedule, new HillClimbingCriterion(), false);
 
 		this.chainLength = chainLength;

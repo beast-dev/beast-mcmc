@@ -72,7 +72,7 @@ public class MCMC implements Runnable, Identifiable {
         MCMCCriterion criterion = new MCMCCriterion();
         criterion.setTemperature(options.getTemperature());
 
-        mc = new MarkovChain(prior, likelihood, schedule, criterion, options.useCoercion());
+        mc = new MarkovChain(prior, likelihood, schedule, criterion, options.fullEvaluationCount(), options.useCoercion());
 
         this.options = options;
         this.loggers = loggers;
@@ -357,7 +357,11 @@ public class MCMC implements Runnable, Identifiable {
             }
 
             if (xo.hasAttribute(TEMPERATURE)) {
-                options.setTemperature(xo.getIntegerAttribute(TEMPERATURE));
+                options.setTemperature(xo.getDoubleAttribute(TEMPERATURE));
+            }
+
+            if (xo.hasAttribute(FULL_EVALUATION)) {
+                options.setFullEvaluationCount(xo.getIntegerAttribute(FULL_EVALUATION));
             }
 
             for (int i = 0; i < xo.getChildCount(); i++) {
@@ -412,6 +416,7 @@ public class MCMC implements Runnable, Identifiable {
                 AttributeRule.newBooleanRule(COERCION, true),
                 AttributeRule.newIntegerRule(PRE_BURNIN, true),
                 AttributeRule.newDoubleRule(TEMPERATURE, true),
+                AttributeRule.newIntegerRule(FULL_EVALUATION, true),
                 new ElementRule(OperatorSchedule.class ),
                 new ElementRule(Likelihood.class ),
                 new ElementRule(Logger.class, 1, Integer.MAX_VALUE )
@@ -448,6 +453,7 @@ public class MCMC implements Runnable, Identifiable {
     public static final String PRE_BURNIN = "preBurnin";
     public static final String MCMC = "mcmc";
     public static final String CHAIN_LENGTH = "chainLength";
+    public static final String FULL_EVALUATION = "fullEvaluation";
     public static final String WEIGHT = "weight";
     public static final String TEMPERATURE = "temperature";
 }

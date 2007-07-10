@@ -56,13 +56,15 @@ public final class MarkovChain {
 
     private boolean useCoercion = true;
 
-    private static final int FULL_EVALUTATION_STATES = 2000;
+    private final int fullEvaluationCount;
+
     private static final int MAX_FAILURE_COUNTS = 10;
 
     public MarkovChain(Prior prior,
                        Likelihood likelihood,
                        OperatorSchedule schedule,
                        Acceptor acceptor,
+                       int fullEvaluationCount,
                        boolean useCoercion) {
         currentLength = 0;
         this.prior = prior;
@@ -70,6 +72,8 @@ public final class MarkovChain {
         this.schedule = schedule;
         this.acceptor = acceptor;
         this.useCoercion = useCoercion;
+
+        this.fullEvaluationCount = fullEvaluationCount;
 
         currentScore = evaluate(likelihood, prior);
     }
@@ -216,7 +220,7 @@ public final class MarkovChain {
                 // This is a test that the state is correctly restored. The restored
                 // state is fully evaluated and the likelihood compared with that before
                 // the operation was made.
-                if (currentState < FULL_EVALUTATION_STATES) {
+                if (currentState < fullEvaluationCount) {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood, prior);
 

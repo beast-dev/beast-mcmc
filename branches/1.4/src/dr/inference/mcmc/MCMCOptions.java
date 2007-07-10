@@ -35,26 +35,22 @@ package dr.inference.mcmc;
  */
 public class MCMCOptions {
 
-    int chainLength;
-    int logEvery, repeats = 1;
-    boolean verbose;
-    boolean coercion = true;
-    boolean append = false;
-    int preBurnin = 0;
-    boolean preBurninSet = false;
-    double temperature = 1.0;
+    private int chainLength;
+    private int fullEvaluationCount = 2000;
+    private boolean coercion = true;
+    private int preBurnin = 0;
+    private boolean preBurninSet = false;
+    private double temperature = 1.0;
 
-    public MCMCOptions() { verbose = true; }
+    public MCMCOptions() {  }
+    
     /** @return the chain length of the MCMC analysis */
     public final int getChainLength() { return chainLength; }
 
-    /** @return whether this MCMC run is verbose. */
-    public final boolean isVerbose() {return verbose; }
+    public final int fullEvaluationCount() {return fullEvaluationCount; }
 
     public final boolean useCoercion() {return coercion; }
 
-    public final int getRepeats() { return repeats; }
-    public final boolean getAppend() { return append; }
 
     public final int getPreBurnin() { return preBurnin; }
 
@@ -65,10 +61,10 @@ public class MCMCOptions {
         chainLength = length;
         if (!preBurninSet) preBurnin=chainLength/100;
     }
-    public final void setAppend(boolean append) { this.append = append; }
 
-    public final void setVerbose(boolean ver) { verbose = ver; }
-    public final void setRepeats(int reps) { repeats = reps; }
+    public final void setFullEvaluationCount(int fullEvaluationCount) {
+        this.fullEvaluationCount = fullEvaluationCount;
+    }
 
     public final void setUseCoercion(boolean coercion) {
         this.coercion = coercion;
@@ -79,4 +75,5 @@ public class MCMCOptions {
         this.preBurnin = preBurnin;
         preBurninSet = true;
     }
+
 }

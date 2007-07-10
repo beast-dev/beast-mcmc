@@ -55,13 +55,15 @@ public final class MarkovChain {
 
     private boolean useCoercion = true;
 
-    private static final int FULL_EVALUTATION_STATES = 1000;
+    private final int fullEvaluationCount;
+
     private static final int MAX_FAILURE_COUNTS = 10;
 
     public MarkovChain(Prior prior,
                        Likelihood likelihood,
                        OperatorSchedule schedule,
                        Acceptor acceptor,
+                       int fullEvaluationCount,
                        boolean useCoercion) {
         currentLength = 0;
         this.prior = prior;
@@ -69,6 +71,8 @@ public final class MarkovChain {
         this.schedule = schedule;
         this.acceptor = acceptor;
         this.useCoercion = useCoercion;
+
+        this.fullEvaluationCount = fullEvaluationCount;
 
         currentScore = evaluate(likelihood, prior);
     }
@@ -96,10 +100,12 @@ public final class MarkovChain {
 
         int currentState = currentLength;
 
+        final Model currentModel = likelihood.getModel();
+
         if (currentState == 0) {
             initialScore = currentScore;
             bestScore = currentScore;
-            fireBestModel(currentState, likelihood.getModel());
+            fireBestModel(currentState, currentModel);
         }
 
         if (currentScore == Double.NEGATIVE_INFINITY) {
@@ -126,7 +132,7 @@ public final class MarkovChain {
         while (!pleaseStop && (currentState < (currentLength + length))) {
 
             // periodically log states
-            fireCurrentModel(currentState, likelihood.getModel());
+            fireCurrentModel(currentState, currentModel);
 
             if (pleaseStop) {
                 isStopped = true;
@@ -134,16 +140,16 @@ public final class MarkovChain {
             }
 
             // Get the operator
-            int op = schedule.getNextOperatorIndex();
-            MCMCOperator mcmcOperator = schedule.getOperator(op);
+            final int op = schedule.getNextOperatorIndex();
+            final MCMCOperator mcmcOperator = schedule.getOperator(op);
 
-            double oldScore = currentScore;
+            final double oldScore = currentScore;
 
 //            assert Profiler.startProfile("Store");
 
             // The current model is stored here in case the proposal fails
-            if (likelihood.getModel() != null) {
-                likelihood.getModel().storeModelState();
+            if (currentModel != null) {
+                currentModel.storeModelState();
             }
 
 //            assert Profiler.stopProfile("Store");
@@ -182,7 +188,7 @@ public final class MarkovChain {
 
                 if (score > bestScore) {
                     bestScore = score;
-                    fireBestModel(currentState, likelihood.getModel());
+                    fireBestModel(currentState, currentModel);
                 }
 
                 if (mcmcOperator instanceof GibbsOperator) {
@@ -200,7 +206,7 @@ public final class MarkovChain {
                 //               System.out.println("Move accepted: new score = " + score + ", old score = " + oldScore);
 
                 mcmcOperator.accept(deviation);
-                likelihood.getModel().acceptModelState();
+                currentModel.acceptModelState();
                 currentScore = score;
 
             } else {
@@ -210,7 +216,7 @@ public final class MarkovChain {
 
                 //               assert Profiler.startProfile("Restore");
 
-                likelihood.getModel().restoreModelState();
+                currentModel.restoreModelState();
 
 //                assert Profiler.stopProfile("Restore");
 
@@ -218,14 +224,14 @@ public final class MarkovChain {
                 // This is a test that the state is correctly restored. The restored
                 // state is fully evaluated and the likelihood compared with that before
                 // the operation was made.
-                if (currentState < FULL_EVALUTATION_STATES) {
+                if (currentState < fullEvaluationCount) {
                     likelihood.makeDirty();
-                    double testScore = evaluate(likelihood, prior);
+                    final double testScore = evaluate(likelihood, prior);
 
                     if (Math.abs(testScore - oldScore) >  1e-6) {
                         System.err.println("State was not correctly restored after reject step.");
                         System.err.println("Likelihood before: " + oldScore + " Likelihood after: " + testScore);
-
+                        System.err.println("Operator: " + mcmcOperator + " " + mcmcOperator.getOperatorName());
                         testFailureCount ++;
                     }
 
@@ -300,17 +306,16 @@ public final class MarkovChain {
         double logPosterior = 0.0;
 
         if (prior != null) {
-            double logPrior = prior.getLogPrior(likelihood.getModel());
+            final double logPrior = prior.getLogPrior(likelihood.getModel());
 
             if (logPrior == Double.NEGATIVE_INFINITY) {
                 return Double.NEGATIVE_INFINITY;
             }
 
-
             logPosterior += logPrior;
         }
 
-        double logLikelihood = likelihood.getLogLikelihood();
+        final double logLikelihood = likelihood.getLogLikelihood();
 
         if (Double.isNaN(logLikelihood)) {
             return Double.NEGATIVE_INFINITY;
@@ -347,9 +352,8 @@ public final class MarkovChain {
 
     private boolean isCoercable(CoercableMCMCOperator op) {
 
-        if (op.getMode() == CoercableMCMCOperator.COERCION_ON) return true;
-        if (op.getMode() == CoercableMCMCOperator.COERCION_OFF) return false;
-        return useCoercion;
+        return op.getMode() == CoercableMCMCOperator.COERCION_ON ||
+               (op.getMode() != CoercableMCMCOperator.COERCION_OFF && useCoercion);
     }
 
     public void addMarkovChainListener(MarkovChainListener listener) {

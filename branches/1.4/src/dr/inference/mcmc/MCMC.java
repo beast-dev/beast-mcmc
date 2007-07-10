@@ -69,7 +69,7 @@ public class MCMC implements Runnable, Identifiable {
         MCMCCriterion criterion = new MCMCCriterion();
         criterion.setTemperature(options.getTemperature());
 
-        mc = new MarkovChain(prior, likelihood, schedule, criterion, options.useCoercion());
+        mc = new MarkovChain(prior, likelihood, schedule, criterion, options.fullEvaluationCount(), options.useCoercion());
 
         this.options = options;
         this.loggers = loggers;
@@ -110,7 +110,7 @@ public class MCMC implements Runnable, Identifiable {
         timer.start();
 
         if (isPreBurninNeeded()) {
-            int preBurnin = options.getPreBurnin();
+            final int preBurnin = options.getPreBurnin();
             if (preBurnin > 0) {
                 MarkovChainListener burninListener = new BurninListener(preBurnin);
                 mc.addMarkovChainListener(burninListener);
@@ -220,10 +220,11 @@ public class MCMC implements Runnable, Identifiable {
                                 formatter.formatToFieldWidth("", 8) +
                                 formatter.formatToFieldWidth("Pr(accept)", 11) +
                                 " Performance suggestion");
-                for (int i =0; i < schedule.getOperatorCount(); i++) {
+                for (int i = 0; i < schedule.getOperatorCount(); i++) {
 
-                    MCMCOperator op = schedule.getOperator(i);
-                    double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
+                    final MCMCOperator op = schedule.getOperator(i);
+                    final double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
+                    
                     String message = "good";
                     if (acceptanceProb < op.getMinimumGoodAcceptanceLevel()) {
                         if (acceptanceProb < (op.getMinimumAcceptanceLevel()/10.0)) {
@@ -248,13 +249,9 @@ public class MCMC implements Runnable, Identifiable {
                         pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator)op).getRawParameter(), 3), 8);
                     }
 
-                    System.out.println(
-                            formatter.formatToFieldWidth(op.getOperatorName(), 30) +
-
-                                    pString +
-
-                                    formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) +
-                                    " " + message + "\t" + suggestion);
+                    final String name = formatter.formatToFieldWidth(op.getOperatorName(), 30);
+                    final String prob = formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11);
+                    System.out.println(name + pString + prob + " " + suggestion);
                 }
                 System.out.println();
             }
@@ -343,7 +340,11 @@ public class MCMC implements Runnable, Identifiable {
             }
 
             if (xo.hasAttribute(TEMPERATURE)) {
-                options.setTemperature(xo.getIntegerAttribute(TEMPERATURE));
+                options.setTemperature(xo.getDoubleAttribute(TEMPERATURE));
+            }
+
+            if (xo.hasAttribute(FULL_EVALUATION)) {
+                options.setFullEvaluationCount(xo.getIntegerAttribute(FULL_EVALUATION));
             }
 
             for (int i = 0; i < xo.getChildCount(); i++) {
@@ -360,7 +361,8 @@ public class MCMC implements Runnable, Identifiable {
 
             java.util.logging.Logger.getLogger("dr.inference").info("Creating the MCMC chain:" +
                     "\n  chainLength=" + options.getChainLength() +
-                    "\n  autoOptimize=" + options.useCoercion());
+                    "\n  autoOptimize=" + options.useCoercion() +
+                    "\n  fullEvaluation=" + options.fullEvaluationCount());
 
             mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, opsched, loggerArray);
 
@@ -398,6 +400,7 @@ public class MCMC implements Runnable, Identifiable {
                 AttributeRule.newBooleanRule(COERCION, true),
                 AttributeRule.newIntegerRule(PRE_BURNIN, true),
                 AttributeRule.newDoubleRule(TEMPERATURE, true),
+                AttributeRule.newIntegerRule(FULL_EVALUATION, true),
                 new ElementRule(OperatorSchedule.class ),
                 new ElementRule(Likelihood.class ),
                 new ElementRule(Logger.class, 1, Integer.MAX_VALUE )
@@ -433,6 +436,7 @@ public class MCMC implements Runnable, Identifiable {
     public static final String PRE_BURNIN = "preBurnin";
     public static final String MCMC = "mcmc";
     public static final String CHAIN_LENGTH = "chainLength";
+    public static final String FULL_EVALUATION = "fullEvaluation";
     public static final String WEIGHT = "weight";
     public static final String TEMPERATURE = "temperature";
 }

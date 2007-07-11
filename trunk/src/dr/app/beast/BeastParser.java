@@ -30,6 +30,7 @@ import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
+import dr.inference.model.MultiThreadedLikelihood;
 
 import java.util.Iterator;
 
@@ -231,7 +232,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.operators.DeltaExchangeOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.CenteredScaleOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.BitFlipOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.BitSwapOperator.PARSER);        
+        addXMLObjectParser(dr.inference.operators.BitSwapOperator.PARSER);
 
         addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());
         addXMLObjectParser(new dr.inference.trace.TraceAnalysisParser());

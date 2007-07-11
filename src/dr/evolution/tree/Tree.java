@@ -712,14 +712,14 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		 */
 		public static String newick(Tree tree) {
 			StringBuffer buffer = new StringBuffer();
-			newick(tree, tree.getRoot(), true, LENGTHS_AS_TIME, null, null, null, buffer);
+			newick(tree, tree.getRoot(), true, LENGTHS_AS_TIME, null, null, null, null, buffer);
 			buffer.append(";");
 			return buffer.toString();
 		}
 
 		public static String newick(Tree tree, BranchRateController branchRateController) {
 			StringBuffer buffer = new StringBuffer();
-			newick(tree, tree.getRoot(), true, LENGTHS_AS_SUBSTITUTIONS, branchRateController, null, null, buffer);
+			newick(tree, tree.getRoot(), true, LENGTHS_AS_SUBSTITUTIONS, branchRateController, null, null, null, buffer);
 			buffer.append(";");
 			return buffer.toString();
 		}
@@ -729,7 +729,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		                            BranchAttributeProvider[] branchAttributeProviders
 		                            ) {
 			StringBuffer buffer = new StringBuffer();
-			newick(tree, tree.getRoot(), true, LENGTHS_AS_TIME, null, nodeAttributeProviders, branchAttributeProviders, buffer);
+			newick(tree, tree.getRoot(), true, LENGTHS_AS_TIME, null, nodeAttributeProviders, branchAttributeProviders, null, buffer);
 			buffer.append(";");
 			return buffer.toString();
 		}
@@ -739,7 +739,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		 */
 		public static String newickNoLengths(Tree tree) {
 			StringBuffer buffer = new StringBuffer();
-			newick(tree, tree.getRoot(), true, NO_BRANCH_LENGTHS, null, null, null, buffer);
+			newick(tree, tree.getRoot(), true, NO_BRANCH_LENGTHS, null, null, null, null, buffer);
 			buffer.append(";");
 			return buffer.toString();
 		}
@@ -753,21 +753,26 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 		 * @param branchRateController An optional BranchRateController (or null)
 		 * @param nodeAttributeProviders An array of NodeAttributeProviders
 		 * @param branchAttributeProviders An array of BranchAttributeProviders
+         * @param idMap A map if id names to integers that is used to overide node labels when present
 		 * @param buffer The StringBuffer
 		 */
 		public static void newick(Tree tree, NodeRef node, boolean labels, int lengths,
 		                          BranchRateController branchRateController,
 		                          NodeAttributeProvider[] nodeAttributeProviders,
 		                          BranchAttributeProvider[] branchAttributeProviders,
-		                          StringBuffer buffer) {
+		                          Map<String, Integer> idMap, StringBuffer buffer) {
 
 			NodeRef parent = tree.getParent(node);
 
 			if (tree.isExternal(node)) {
 				if (!labels) {
-					int k = node.getNumber() + 1;
-					buffer.append(k);
-				} else {
+					int k = node.getNumber();
+					if (idMap != null) {
+                        buffer.append(idMap.get(tree.getTaxonId(k)));
+                    } else {
+                        buffer.append((k+1));
+                    }
+                } else {
 					buffer.append(tree.getTaxonId(node.getNumber()));
 				}
 			} else {
@@ -775,14 +780,14 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 				newick(tree, tree.getChild(node, 0), labels, lengths,
 						branchRateController,
 						nodeAttributeProviders,
-						branchAttributeProviders,
+						branchAttributeProviders, idMap,
 						buffer);
 				for (int i = 1; i < tree.getChildCount(node); i++) {
 					buffer.append(",");
 					newick(tree, tree.getChild(node, i), labels, lengths,
 							branchRateController,
 							nodeAttributeProviders,
-							branchAttributeProviders,
+							branchAttributeProviders, idMap,
 							buffer);
 				}
 				buffer.append(")");

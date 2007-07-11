@@ -18,14 +18,14 @@ import dr.xml.*;
 public class GMRFSkylineGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, CoercableMCMCOperator {
 
 	public static final String GMRF_GIBBS_OPERATOR = "gmrfGibbsOperator";
-	public static final String SCALE_FACTOR = "scaleFactor";
+//	public static final String SCALE_FACTOR = "scaleFactor";
 	//    public static final String POPULATION_PARAMETER = "populationSizes";
 	//    public static final String PRECISION_PARAMETER = "precisionParameter";
-	public static final String PRECISION_PRIOR = "precisionPrior";
-	public static final String GMRF_LIKELIHOOD = "gmrfLikelihood";
+//	public static final String PRECISION_PRIOR = "precisionPrior";
+//	public static final String GMRF_LIKELIHOOD = "gmrfLikelihood";
 
 	private Parameter precisionParameter;
-	//    private Parameter populationSizeParameter;
+	private Parameter populationSizeParameter;
 	private GMRFSkylineLikelihood gmrfLikelihood;
 	//	private DistributionLikelihood precisionPrior;
 	private double scaleFactor = 0.5;
@@ -33,15 +33,16 @@ public class GMRFSkylineGibbsOperator extends SimpleMCMCOperator implements Gibb
 	private int weight = 1;
 	private double priorScale;
 	private double priorShape;
+	private int dim;
 
 	public GMRFSkylineGibbsOperator(//Parameter populationSizeParameter, Parameter precisionParameter,
 	                                GMRFSkylineLikelihood gmrfLikelihood, DistributionLikelihood precisionPrior,
-	                                double scaleFactor, int weight, int mode) {
-//        this.populationSizeParameter =
+//	                                double scaleFactor,
+int weight, int mode) {
 		this.precisionParameter = gmrfLikelihood.getPrecisionParameter();
+		this.populationSizeParameter = gmrfLikelihood.getPopSizeParameter();
+		this.dim = gmrfLikelihood.getPopSizeParameter().getDimension();
 		this.gmrfLikelihood = gmrfLikelihood;
-//	    this.precisionPrior = precisionPrior;
-		this.scaleFactor = scaleFactor;
 		this.weight = weight;
 		this.mode = mode;
 
@@ -52,14 +53,18 @@ public class GMRFSkylineGibbsOperator extends SimpleMCMCOperator implements Gibb
 
 	public double doOperation() throws OperatorFailedException {
 
-		double weightedSSE = gmrfLikelihood.calculateWeightedSSE();
+		// For use with Rue's library
+		// double[] sufficientStatistics = gmrfLikelihood.getSufficientStatistics();
 
-		double drawScale = 1.0;
-		double drawShape = 1.0;
+		double weightedSSE = gmrfLikelihood.calculateWeightedSSE();
+		double drawScale = 1.0 / (1.0 / priorScale + 0.5 * weightedSSE);
+		double drawShape = priorShape + 0.5 * (dim - 1);
 
 		precisionParameter.setParameterValue(0,
+				// the function below returns a RV with mean = shape * scale
 				GammaDistribution.nextGamma(drawShape, drawScale)
 		);
+
 
 		return 0;
 	}
@@ -156,11 +161,11 @@ public class GMRFSkylineGibbsOperator extends SimpleMCMCOperator implements Gibb
 			}
 
 			int weight = xo.getIntegerAttribute(WEIGHT);
-			double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
-
-			if (scaleFactor <= 0.0 || scaleFactor >= 1.0) {
-				throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
-			}
+//			double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+//
+//			if (scaleFactor <= 0.0 || scaleFactor >= 1.0) {
+//				throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
+//			}
 
 //            XMLObject cxo = (XMLObject) xo.getChild(POPULATION_PARAMETER);
 //            Parameter populationSizeParameter = (Parameter) cxo.getChild(Parameter.class);
@@ -168,13 +173,13 @@ public class GMRFSkylineGibbsOperator extends SimpleMCMCOperator implements Gibb
 //            cxo = (XMLObject) xo.getChild(PRECISION_PARAMETER);
 //            Parameter precisionParameter = (Parameter) cxo.getChild(Parameter.class);
 
-			XMLObject cxo = (XMLObject) xo.getChild(PRECISION_PRIOR);
-			DistributionLikelihood precisionPrior = (DistributionLikelihood) cxo.getChild(DistributionLikelihood.class);
+//			XMLObject cxo = (XMLObject) xo.getChild(PRECISION_PRIOR);
+			DistributionLikelihood precisionPrior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
 
 			GMRFSkylineLikelihood gmrfLikelihood = (GMRFSkylineLikelihood) xo.getChild(GMRFSkylineLikelihood.class);
 
 			return new GMRFSkylineGibbsOperator(//populationSizeParameter, precisionParameter,
-					gmrfLikelihood, precisionPrior, scaleFactor, weight, mode);
+					gmrfLikelihood, precisionPrior, weight, mode);
 
 		}
 
@@ -195,12 +200,12 @@ public class GMRFSkylineGibbsOperator extends SimpleMCMCOperator implements Gibb
 		}
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				AttributeRule.newDoubleRule(SCALE_FACTOR),
+//				AttributeRule.newDoubleRule(SCALE_FACTOR),
 				AttributeRule.newIntegerRule(WEIGHT),
-				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-				new ElementRule(PRECISION_PRIOR, new XMLSyntaxRule[]{
-						new ElementRule(DistributionLikelihood.class)
-				}),
+//				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+//				new ElementRule(PRECISION_PRIOR, new XMLSyntaxRule[]{
+				new ElementRule(DistributionLikelihood.class),
+//				}),
 //                new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
 //                        new ElementRule(Parameter.class)
 //                }),

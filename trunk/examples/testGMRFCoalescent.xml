@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+
+<beast>
+
+	<taxa id="taxa1">
+		<taxon id="A">
+			<date value="0" direction="backwards" units="years"/>
+		</taxon>
+		<taxon id="B">
+			<date value="0" direction="backwards" units="years"/>
+		</taxon>
+		<taxon id="C">
+			<date value="0.5" direction="backwards" units="years"/>
+		</taxon>
+		<taxon id="D">
+			<date value="0" direction="backwards" units="years"/>
+		</taxon>
+	</taxa>
+
+	<newick id="startingTree">
+		(A:4.0,(B:2.0,(C:0.5,D:1.0):1.0):2.0);
+	</newick>
+
+	<treeModel id="treeModel">
+		<tree idref="startingTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights rootNode="false" internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights rootNode="true" internalNodes="true">
+			<parameter id="treeModel.allNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
+	<gmrfSkyLineLikelihood id="coalescent">
+		<populationTree>
+			<treeModel idref="treeModel"/>
+		</populationTree>
+		<populationSizes>
+			<parameter id="skyline.logPopSize" dimension="3" value="0.0 1.0 2.0"/>
+		</populationSizes>
+		<precisionParameter>
+			<parameter id="skyline.precision" value="1.0"/>
+		</precisionParameter>
+	</gmrfSkyLineLikelihood>
+
+	<gammaPrior id="prior.precision" shape="1.0" scale="3.0" offset="0.0">
+		<parameter idref="skyline.precision"/>
+	</gammaPrior>
+
+	<operators id="operators">
+		<randomWalkOperator windowSize="1.0" weight="10">
+			<parameter idref="skyline.logPopSize"/>
+		</randomWalkOperator>
+		<gmrfGibbsOperator weight="1">
+			<gammaPrior idref="prior.precision"/>
+			<gmrfSkyLineLikelihood idref="coalescent"/>
+		</gmrfGibbsOperator>
+	</operators>
+
+	<mcmc id="mcmc" chainLength="1000000" verbose="false">
+		<posterior>
+			<likelihood>
+				<gmrfSkyLineLikelihood idref="coalescent"/>
+			</likelihood>
+			<prior>
+				<gammaPrior idref="prior.precision"/>
+			</prior>
+		</posterior>
+		<operators idref="operators"/>
+		<log id="logScreen" logEvery="20000">
+			<column dp="4">
+				<likelihood idref="coalescent"/>
+				<parameter idref="skyline.logPopSize"/>
+				<parameter idref="skyline.precision"/>
+			</column>
+		</log>
+		<log id="logFile" logEvery="1000" fileName="testGMRFCoalescent.log">
+			<likelihood idref="coalescent"/>
+			<parameter idref="skyline.logPopSize"/>
+			<parameter idref="skyline.precision"/>
+		</log>
+	</mcmc>
+
+	<report>
+		Time taken:
+		<property name="timer">
+			<mcmc idref="mcmc"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testGMRFCoalescent.log" burnIn="1000"/>
+
+</beast>
+
+
+

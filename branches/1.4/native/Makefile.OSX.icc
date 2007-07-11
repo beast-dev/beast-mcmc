@@ -1,0 +1,14 @@
+CC=icc
+CFLAGS=-m32 -axT -O3 -no-prec-div -funroll-loops -fp-model fast=2 -fp-speculation fast
+
+INCLUDES=-I/Library/Java/Home/include
+
+libNucleotideLikelihoodCore.jnilib: NucleotideLikelihoodCore.o
+	${CC} -bundle -framework JavaVM ${CFLAGS} -o libNucleotideLikelihoodCore.jnilib NucleotideLikelihoodCore.o
+
+NucleotideLikelihoodCore.o: NucleotideLikelihoodCore.c
+	${CC} ${CFLAGS} ${INCLUDES} -o NucleotideLikelihoodCore.o -c NucleotideLikelihoodCore.c
+
+clean:
+	/bin/rm -f *.jnilib *.o
+	

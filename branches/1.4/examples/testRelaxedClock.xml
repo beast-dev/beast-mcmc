@@ -283,7 +283,7 @@
 		</wilsonBalding>
 	</operators>
 
-	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true" fullEvaluation="1000000">
+	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true" fullEvaluation="1000">
 		<posterior id="posterior">
 			<prior id="prior">
 				<coalescentLikelihood idref="coalescent"/>

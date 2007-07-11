@@ -155,11 +155,11 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
     public class MissingTaxonException extends Exception {
         /**
-		 *
-		 */
-		private static final long serialVersionUID = 8468656622238269963L;
+         *
+         */
+        private static final long serialVersionUID = 8468656622238269963L;
 
-		public MissingTaxonException(Taxon taxon) { super(taxon.getId()); }
+        public MissingTaxonException(Taxon taxon) { super(taxon.getId()); }
     }
 
     /**
@@ -692,14 +692,14 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          */
         public static String newick(Tree tree) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, LENGTHS_AS_TIME, null, null, null, null, buffer);
+            newick(tree, tree.getRoot(), true, LENGTHS_AS_TIME, null, null, null, null, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
 
         public static String newick(Tree tree, BranchRateController branchRateController) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, LENGTHS_AS_SUBSTITUTIONS, branchRateController, null, null, null, buffer);
+            newick(tree, tree.getRoot(), true, LENGTHS_AS_SUBSTITUTIONS, branchRateController, null, null, null, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
@@ -709,7 +709,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             StringBuffer buffer = new StringBuffer();
             newick(tree, tree.getRoot(), true, LENGTHS_AS_TIME,
                     branchRateController, rateLabel,
-                    null, null,
+                    null, null, null,
                     buffer);
             buffer.append(";");
             return buffer.toString();
@@ -720,7 +720,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             StringBuffer buffer = new StringBuffer();
             newick(tree, tree.getRoot(), true, LENGTHS_AS_TIME,
                     null, null,
-                    colouring, colouringLabel,
+                    colouring, colouringLabel, null,
                     buffer);
             buffer.append(";");
             return buffer.toString();
@@ -732,7 +732,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             StringBuffer buffer = new StringBuffer();
             newick(tree, tree.getRoot(), true, LENGTHS_AS_TIME,
                     branchRateController, rateLabel,
-                    colouring, colouringLabel,
+                    colouring, colouringLabel, null,
                     buffer);
             buffer.append(";");
             return buffer.toString();
@@ -743,7 +743,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          */
         public static String newickNoLengths(Tree tree) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, NO_BRANCH_LENGTHS, null, null, null, null, buffer);
+            newick(tree, tree.getRoot(), true, NO_BRANCH_LENGTHS, null, null, null, null, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
@@ -763,14 +763,18 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         public static void newick(Tree tree, NodeRef node, boolean labels, int lengths,
                                   BranchRateController branchRateController, String rateLabel,
                                   TreeColouring colouring, String colouringLabel,
-                                  StringBuffer buffer) {
+                                  Map idMap, StringBuffer buffer) {
 
             NodeRef parent = tree.getParent(node);
 
             if (tree.isExternal(node)) {
                 if (!labels) {
-                    int k = node.getNumber() + 1;
-                    buffer.append(k);
+                    int k = node.getNumber();
+                    if (idMap != null) {
+                        buffer.append((Integer)idMap.get(tree.getTaxonId(k)));
+                    } else {
+                        buffer.append((k+1));
+                    }
                 } else {
                     buffer.append(tree.getTaxonId(node.getNumber()));
                 }
@@ -779,13 +783,13 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 newick(tree, tree.getChild(node, 0), labels, lengths,
                         branchRateController, rateLabel,
                         colouring, colouringLabel,
-                        buffer);
+                        idMap, buffer);
                 for (int i = 1; i < tree.getChildCount(node); i++) {
                     buffer.append(",");
                     newick(tree, tree.getChild(node, i), labels, lengths,
                             branchRateController, rateLabel,
                             colouring, colouringLabel,
-                            buffer);
+                            idMap, buffer);
                 }
                 buffer.append(")");
             }

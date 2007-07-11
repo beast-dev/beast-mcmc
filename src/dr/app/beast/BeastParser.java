@@ -30,7 +30,6 @@ import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
-import dr.inference.model.MultiThreadedLikelihood;
 
 import java.util.Iterator;
 

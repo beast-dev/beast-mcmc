@@ -173,10 +173,10 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.branchratemodel.RandomLocalClockModel.PARSER);
 
 		//addXMLObjectParser(dr.evomodel.tree.TreeModel.PARSER);
-        addXMLObjectParser(new dr.evomodel.tree.TreeModelParser());
+		addXMLObjectParser(new dr.evomodel.tree.TreeModelParser());
 		addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.TreelengthStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.TreelengthStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.TreeShapeStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.TMRCAStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.RateCovarianceStatistic.PARSER);
@@ -271,6 +271,10 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.operators.PrecisionMatrixGibbsOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.InternalTraitGibbsOperator.PARSER);
 		addXMLObjectParser(dr.inference.model.CorrelationStatistic.PARSER);
+
+		//GMRF
+		addXMLObjectParser(dr.evomodel.coalescent.GMRFSkylineLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkylineGibbsOperator.PARSER);
 
 	}
 

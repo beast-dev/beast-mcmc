@@ -247,17 +247,17 @@ public class TreeLogger extends MCLogger {
                     });
 
                 } else if (cxo instanceof Likelihood) {
-                        final Likelihood likelihood = (Likelihood)cxo;
-                        taps.add(new TreeAttributeProvider() {
+                    final Likelihood likelihood = (Likelihood)cxo;
+                    taps.add(new TreeAttributeProvider() {
 
-                            public String getTreeAttributeLabel() {
-                                return "lnP";
-                            }
+                        public String getTreeAttributeLabel() {
+                            return "lnP";
+                        }
 
-                            public String getAttributeForTree(Tree tree) {
-                                return Double.toString(likelihood.getLogLikelihood());
-                            }
-                        });
+                        public String getAttributeForTree(Tree tree) {
+                            return Double.toString(likelihood.getLogLikelihood());
+                        }
+                    });
 
                 } else {
                     if (cxo instanceof TreeAttributeProvider) {
@@ -298,8 +298,8 @@ public class TreeLogger extends MCLogger {
 
             TreeLogger logger =
                     new TreeLogger(tree, branchRateProvider,
-                                   treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
-                                   formatter, logEvery, nexusFormat, sortTranslationTable);
+                            treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
+                            formatter, logEvery, nexusFormat, sortTranslationTable);
 
             if (title != null) {
                 logger.setTitle(title);

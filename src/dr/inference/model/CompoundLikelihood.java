@@ -30,6 +30,7 @@ import dr.util.NumberFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.concurrent.*;
 
 /**
@@ -87,7 +88,7 @@ public class CompoundLikelihood implements Likelihood {
 	public final double getLogLikelihood() {
 		double logLikelihood = 0.0;
 
-		if (pool == null) {
+        if (pool == null) {
 			// Single threaded
 
 			//System.err.println("mixed of " + likelihoods.size());
@@ -104,9 +105,11 @@ public class CompoundLikelihood implements Likelihood {
 			try {
 				List<Future<Double>> results = pool.invokeAll(likelihoodCallers);
 
-				for (Future<Double> result : results) {
-					logLikelihood += result.get();
-				}
+                for (Future<Double> result : results) {
+
+                    double logL = result.get();
+                    logLikelihood += logL;
+                }
 
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -115,7 +118,7 @@ public class CompoundLikelihood implements Likelihood {
 			}
 		}
 
-		return logLikelihood;
+        return logLikelihood;
 	}
 
 	public void makeDirty() {
@@ -226,7 +229,13 @@ public class CompoundLikelihood implements Likelihood {
 					throw new XMLParseException("An element (" + rogueElement + ") which is not a likelihood has been added to a " + COMPOUND_LIKELIHOOD + " element");
 				}
 			}
-			return compoundLikelihood;
+
+            if (threads > 1) {
+                Logger.getLogger("dr.evomodel").info("Likelihood is using " + threads + " threads.");
+            }
+
+
+            return compoundLikelihood;
 		}
 
 		//************************************************************************
@@ -260,7 +269,7 @@ public class CompoundLikelihood implements Likelihood {
 		}
 
 		public Double call() throws Exception {
-			return (Double)likelihood.getLogLikelihood();
+			return likelihood.getLogLikelihood();
 		}
 
 		private final Likelihood likelihood;

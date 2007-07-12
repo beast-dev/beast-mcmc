@@ -44,7 +44,7 @@ import java.util.logging.Logger;
  */
 
 public class GammaSiteModel extends AbstractModel
-                                    implements SiteModel {
+        implements SiteModel {
 
     public static final String SITE_MODEL = "siteModel";
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
@@ -175,8 +175,10 @@ public class GammaSiteModel extends AbstractModel
     }
 
     public double getSubstitutionsForCategory(int category, double time) {
-        if (!ratesKnown) {
-            calculateCategoryRates();
+        synchronized(this) {
+            if (!ratesKnown) {
+                calculateCategoryRates();
+            }
         }
 
         double mu = 1.0;
@@ -374,24 +376,24 @@ public class GammaSiteModel extends AbstractModel
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[] {
-                new ElementRule(SubstitutionModel.class)
-            }),
-            new XORRule(
-                    new ElementRule(MUTATION_RATE, new XMLSyntaxRule[] {
+                new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[] {
+                        new ElementRule(SubstitutionModel.class)
+                }),
+                new XORRule(
+                        new ElementRule(MUTATION_RATE, new XMLSyntaxRule[] {
+                                new ElementRule(Parameter.class)
+                        }),
+                        new ElementRule(RELATIVE_RATE, new XMLSyntaxRule[] {
+                                new ElementRule(Parameter.class)
+                        }), true
+                ),
+                new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[] {
+                        AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
                         new ElementRule(Parameter.class)
-                    }),
-                    new ElementRule(RELATIVE_RATE, new XMLSyntaxRule[] {
+                }, true),
+                new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[] {
                         new ElementRule(Parameter.class)
-                    }), true
-            ),
-            new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[] {
-                AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
-                new ElementRule(Parameter.class)
-            }, true),
-            new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[] {
-                new ElementRule(Parameter.class)
-            }, true)
+                }, true)
         };
     };
 

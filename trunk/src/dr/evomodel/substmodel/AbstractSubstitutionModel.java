@@ -43,7 +43,7 @@ import java.util.LinkedList;
  * @author Alexei Drummond
  */
 public abstract class AbstractSubstitutionModel extends AbstractModel
-                                                implements SubstitutionModel {
+        implements SubstitutionModel {
 
 
     public static final String MODEL = "model";
@@ -646,7 +646,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
                             for (i = low - 1; i < hgh; i++)
                             {
                                 p = x * zz[i][k - 1] + y * zz[i][k] +
-                                    z * zz[i][k + 1];
+                                        z * zz[i][k + 1];
                                 zz[i][k - 1] -= p;
                                 zz[i][k] -= p * q;
                                 zz[i][k + 1] -= p * r;
@@ -854,7 +854,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
                                     if (vr == 0.0 && vi == 0.0)
                                     {
                                         tst1 = norm * (Math.abs(w) + Math.abs(q) + Math.abs(x) +
-                                                         Math.abs(y) + Math.abs(z));
+                                                Math.abs(y) + Math.abs(z));
                                         vr = tst1;
                                         do
                                         {
@@ -869,10 +869,10 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
                                     if (Math.abs(x) > Math.abs(z) + Math.abs(q))
                                     {
                                         h[i + 1]
-                                            [na - 1] = (q * h[i][en - 1] -
-                                                        w * h[i][na - 1] - ra) / x;
+                                                [na - 1] = (q * h[i][en - 1] -
+                                                w * h[i][na - 1] - ra) / x;
                                         h[i + 1][en - 1] = (-sa - w * h[i][en - 1] -
-                                                            q * h[i][na - 1]) / x;
+                                                q * h[i][na - 1]) / x;
                                     }
                                     else
                                     {
@@ -883,7 +883,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
                                 }
                                 /* overflow control */
                                 t = (Math.abs(h[i][na - 1]) > Math.abs(h[i][en - 1])) ?
-                                     Math.abs(h[i][na - 1]) : Math.abs(h[i][en - 1]);
+                                        Math.abs(h[i][na - 1]) : Math.abs(h[i][en - 1]);
                                 if (t != 0.0)
                                 {
                                     tst1 = t;

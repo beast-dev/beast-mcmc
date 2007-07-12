@@ -51,8 +51,8 @@ public class CompoundLikelihood implements Likelihood {
 
 	public CompoundLikelihood(int threads) {
 		if (threads > 1) {
-//			pool = Executors.newFixedThreadPool(threads);
-			pool = Executors.newCachedThreadPool();
+			pool = Executors.newFixedThreadPool(threads);
+//			pool = Executors.newCachedThreadPool();
 		} else {
 			pool = null;
 		}

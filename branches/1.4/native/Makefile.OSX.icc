@@ -1,5 +1,5 @@
 CC=icc
-CFLAGS=-m32 -axT -O3 -no-prec-div -funroll-loops -fp-model fast=2 -fp-speculation fast
+CFLAGS=-m32 -axT -O3 -no-prec-div -funroll-loops -fp-model fast=2 -fp-speculation fast -prof-use
 
 INCLUDES=-I/Library/Java/Home/include
 

@@ -1587,7 +1587,8 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default("id", "treeFileLog"),
                         new Attribute.Default(TreeLogger.LOG_EVERY, logEvery+""),
                         new Attribute.Default(TreeLogger.NEXUS_FORMAT, "true"),
-                        new Attribute.Default(TreeLogger.FILE_NAME, treeFileName)
+                        new Attribute.Default(TreeLogger.FILE_NAME, treeFileName),
+                        new Attribute.Default(TreeLogger.SORT_TRANSLATION_TABLE, "true")
                 });
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default("idref", "treeModel"), true);
         if (clockModel != STRICT_CLOCK) {

@@ -167,8 +167,10 @@ public class GammaSiteModel extends AbstractModel
     }
 
     public double getRateForCategory(int category) {
-        if (!ratesKnown) {
-            calculateCategoryRates();
+        synchronized(this) {
+            if (!ratesKnown) {
+                calculateCategoryRates();
+            }
         }
 
         return categoryRates[category];
@@ -199,8 +201,10 @@ public class GammaSiteModel extends AbstractModel
      * @return the proportion.
      */
     public double getProportionForCategory(int category) {
-        if (!ratesKnown) {
-            calculateCategoryRates();
+        synchronized(this) {
+            if (!ratesKnown) {
+                calculateCategoryRates();
+            }
         }
 
         return categoryProportions[category];
@@ -211,8 +215,10 @@ public class GammaSiteModel extends AbstractModel
      * @return an array of the proportion.
      */
     public double[] getCategoryProportions() {
-        if (!ratesKnown) {
-            calculateCategoryRates();
+        synchronized(this) {
+            if (!ratesKnown) {
+                calculateCategoryRates();
+            }
         }
 
         return categoryProportions;
@@ -223,8 +229,10 @@ public class GammaSiteModel extends AbstractModel
      * @return an array of the proportion.
      */
     public double[] getCategoryRates() {
-        if (!ratesKnown) {
-            calculateCategoryRates();
+        synchronized(this) {
+            if (!ratesKnown) {
+                calculateCategoryRates();
+            }
         }
 
         return categoryRates;

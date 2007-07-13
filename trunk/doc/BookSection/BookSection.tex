@@ -475,9 +475,31 @@ character evolution and (5) new relaxed clock models based on random local molec
 
 \section{The BEAST software package}
 
-This chapter provides a step-by-step tutorial to converting a NEXUS file with a DATA or CHARACTERS block into a
-BEAST XML input file. This is done using the program BEAUti (this stands for Bayesian Evolutionary Analysis Utility).
-This is a user-friendly program for setting the evolutionary model and options for the MCMC analysis.
+This chapter provides a step-by-step tutorial for analysing a set of virus sequences which have been isolated
+at different points in time (heterochronous data). The data are 17 sequences from the {\it env} gene of Dengue-4
+virus from various parts of the world with dates from 1956-1994 \cite{LGT1997, R2000}.The aim is to obtain an
+estimate of the rate of molecular evolution, an estimate of the date of the most recent common ancestor and to
+infer the phylogenetic relationships with appropriate measures of statistical support.
+
+The first step will be to convert a NEXUS file with a DATA or CHARACTERS block into a BEAST XML input file.
+This is done using the program BEAUti (this stands for Bayesian Evolutionary Analysis Utility). This is a
+user-friendly program for setting the evolutionary model and options for the MCMC analysis. The second step
+is to actually run BEAST using the input file that contains the data, model and settings. The final step is to
+explore the output of BEAST in order to diagnose problems and to summarize the results.
+
+To undertake this tutorial, you will need to download three software packages in a format that is compatible
+with your computer system (all three are available for Mac OS X, Windows and Linux/UNIX operating systems):
+
+\begin{itemize}
+\item BEAST - this package contains the BEAST program, BEAUti and a couple of utility programs. At the time of writing,
+the current version is v1.4.4. It is available for download from http://beast.bio.ed.ac.uk/.
+\item Tracer - this program is used to explore the output of BEAST (and other Bayesian MCMC programs). It
+graphically and quantitively summarizes the distributions of continuous parameters and provides diagnostic
+information. At the time of writing, the current version is v1.4. It is available for download from http://beast.bio.ed.ac.uk/.
+\item FigTree - this is an application for displaying and printing molecular phylogenies, in particular
+those obtained using BEAST. At the time of writing, the current version is v1.0. It is available for download
+from http://tree.bio.ed.ac.uk/.
+\end{itemize}
 
 \section{Running BEAUTi}
 
@@ -888,7 +910,20 @@ produced by BEAST.
 Select a name for the output tree file.
 \end{itemize}
 
+Once you have selected all the options, above, press the "Run" button. TreeAnnotator will analyse
+the input tree file and write the summarized tree to the file you specified. This tree is in
+standard NEXUS tree file format so may be loaded into any tree drawing package that supports this.
+However, it also contains additional information that can only be displayed using the FigTree
+program.
+
 \section{Viewing the annotated tree}
+
+Run FigTree now and select the {\it Open...} command from the {\it File} menu. Select the tree file
+you created using TreeAnnotator in the previous section. The tree will be displayed in the FigTree
+window. On the left hand side of the window are the options and setting which control how the
+tree is displayed. In this case we want to display the posterior probabilities of each of the clades
+present in the tree and estimates of the age of each node (see Figure~\ref{fig:figure10}). In order
+to do this you need to change some of the settings.
 
 \begin{figure}[htbp]
 \begin{center}
@@ -898,6 +933,44 @@ Select a name for the output tree file.
 \caption{The annotated tree displayed in FigTree.}
 \label{fig:figure10}
 \end{figure}
+
+First open the {\it Branch Labels} section of
+the control panel on the left. Now select {\it posterior} from the {\it Display} popup menu. The
+posterior probabilities won't actually be displayed until you tick the check-box next to the
+{\it Branch Labels} title. You can then increase the font size here and possibly reduce
+the number of displayed significant digits to get the required results.
+
+We now want to display bars on the tree to represent the estimated uncertainty in the date for
+each node. TreeAnnotator will have placed this information in the tree file in the shape of the
+95\% highest posterior density (HPD) intervals (see the description of HPDs, above). Open the
+{\it Node Bars} section of the control panel and you will notice that it is already
+set to display the 95\% HPDs of the node heights so all you need to do is to select the check-box in
+order to turn the node bars on.
+
+Finally, open the {\it Appearance} panel and alter the {\it Line Weight} to draw the tree with thicker
+lines. None of the options actually alter the tree's topology or branch lengths in anyway so feel free
+to explore the options and settings. You can also save the tree and this will save all your settings
+so that when you load it into FigTree again it will be displayed exactly as you selected.
+
+\section{Conclusion and Resources}
+
+This tutorial can only scratch the surface of the analyses that it is possible to undertake using
+BEAST. It has hopefully provided a relatively gentle introduction to the fundimental steps that will
+be common to all BEAST analyses and provide a basis for more challenging investigations. BEAST is an
+ongoing development project with new models and techniques being added all the time. The BEAST website
+provides details of the mailing list that is used to announce new features and to discuss the use
+of the package. The website also contains an ever increasing list of tutorials and recipies about
+how to answer particular evolutionary questions using BEAST as well as a description of the XML
+input format, common questions and error messages.
+
+ \begin{itemize}
+ \item The BEAST website:
+ http://beast.bio.ed.ac.uk/
+ \item Tutorials:
+ http://beast.bio.ed.ac.uk/Tutorials/
+ \item Frequently asked questions:
+ http://beast.bio.ed.ac.uk/FAQ/
+ \end{itemize}
 
 \begin{thebibliography}{77}
 \bibitem{HR2001}Huelsenbeck JP, Ronquist F: MRBAYES: Bayesian inference
@@ -1027,10 +1100,13 @@ Evol} 1991, \textbf{33}(2): 114-124.
 Robertson DL, Roques P, Worobey M, Vandamme AM: The molecular population
 genetics of HIV-1 group O. \emph{Genetics} 2004, \textbf{167}(3):1059-1068.
 
-\bibitem{LGT1997}Lanciotti RS, Gubler DJ, Trent DW: Molecular evolution and phylogeny of dengue-4 viruses.  \emph{Journal of General Virology} 1997, \textbf{78}:2279-2284. 
+\bibitem{LGT1997}Lanciotti RS, Gubler DJ, Trent DW: Molecular evolution and
+phylogeny of dengue-4 viruses.  \emph{Journal of General Virology} 1997,
+\textbf{78}:2279-2284.
 
-\bibitem{R2000}Rambaut A: Estimating the rate of molecular evolution: incorporating non-contemporaneous sequences into maximum likelihood phylogenies. \emph{Bioinformatics}
-2000, \textbf{16}(4):395-399.
+\bibitem{R2000}Rambaut A: Estimating the rate of molecular evolution: incorporating
+non-contemporaneous sequences into maximum likelihood phylogenies.
+\emph{Bioinformatics} 2000, \textbf{16}(4):395-399.
 
 \end{thebibliography}
 

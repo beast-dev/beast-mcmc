@@ -68,9 +68,9 @@ of extremely complex evolutionary models. Secondly, there is an often erroneous
 perception that Bayesian estimation is ``faster'' than heuristic
 optimization based on a maximum likelihood criterion.
 
-BEAST can be compared to a number of other software packages with
-similar goals, such as MRBAYES \cite{HR2001}, which
-currently focuses on phylogenetic inference and BATWING
+\textbf{\textsc{BEAST}} can be compared to a number of other software packages with
+similar goals, such as \textbf{\textsc{MRBAYES}} \cite{HR2001}, which
+currently focuses on phylogenetic inference and \textbf{\textsc{BATWING}}
 \cite{WWB2003} which focuses predominanty on coalescent-based population
 genetics. Like these software packages, the core algorithm implemented
 in BEAST is Metropolis-Hastings MCMC \cite{MRRTT1953,Hastings1970}.
@@ -217,8 +217,8 @@ analyses. While an interactive graphical user interface provides a
 pleasant user experience, it can be time-consuming and error-prone
 for a user to record and reproduce the full sequence of choices that
 are made, especially with the large array of options typically available
-for MCMC analysis. By separating the graphical user interface (BEAUti)
-from the analysis (BEAST) we accommodate an XML layer that captures
+for MCMC analysis. By separating the graphical user interface (\textbf{\textsc{BEAUti}})
+from the analysis (\textbf{\textsc{BEAST}}) we accommodate an XML layer that captures
 the exact details of the MCMC analysis being performed. We strongly
 encourage the routine publication of XML input files as supplementary
 information with publication of the results of a BEAST analysis. Because
@@ -541,8 +541,8 @@ character evolution and (5) new relaxed clock models based on random local molec
 \section{The BEAST software package}
 
 This chapter provides a step-by-step tutorial for analysing a set of virus sequences which have been isolated
-at different points in time (heterochronous data). The data are 17 sequences from the {\it env} gene of Dengue-4
-virus from various parts of the world with dates from 1956-1994 \cite{LGT1997, R2000}.The aim is to obtain an
+at different points in time (heterochronous data). The data are 17 sequences from the {\it E} (envelope) gene of dengue
+virus serotype 4 from various parts of the world with dates from 1956-1994 \cite{LGT1997, R2000}.The aim is to obtain an
 estimate of the rate of molecular evolution, an estimate of the date of the most recent common ancestor and to
 infer the phylogenetic relationships with appropriate measures of statistical support.
 
@@ -556,12 +556,12 @@ To undertake this tutorial, you will need to download three software packages in
 with your computer system (all three are available for Mac OS X, Windows and Linux/UNIX operating systems):
 
 \begin{itemize}
-\item BEAST - this package contains the BEAST program, BEAUti and a couple of utility programs. At the time of writing,
+\item \textbf{\textsc{BEAST}} - this package contains the BEAST program, BEAUti and a couple of utility programs. At the time of writing,
 the current version is v1.4.4. It is available for download from http://beast.bio.ed.ac.uk/.
-\item Tracer - this program is used to explore the output of BEAST (and other Bayesian MCMC programs). It
+\item \textbf{\textsc{Tracer}} - this program is used to explore the output of BEAST (and other Bayesian MCMC programs). It
 graphically and quantitively summarizes the distributions of continuous parameters and provides diagnostic
 information. At the time of writing, the current version is v1.4. It is available for download from http://beast.bio.ed.ac.uk/.
-\item FigTree - this is an application for displaying and printing molecular phylogenies, in particular
+\item \textbf{\textsc{FigTree}} - this is an application for displaying and printing molecular phylogenies, in particular
 those obtained using BEAST. At the time of writing, the current version is v1.0. It is available for download
 from http://tree.bio.ed.ac.uk/.
 \end{itemize}
@@ -575,16 +575,16 @@ the Linux and Windows versions will have exactly the same layout and functionali
 
 \section{Loading the NEXUS file}
 
-To load a NEXUS format alignment, simply select the {\it Import NEXUS...} option from the File menu. The examples
+To load a NEXUS format alignment, simply select the \texttt{Import NEXUS...} option from the \texttt{File} menu. The examples
 folder contains a file called \texttt{Dengue4.env.nex}. This file contains an alignment of 17 sequences from the
-{\it env} gene of Dengue-4 virus from various parts of the world with dates from 1956-1994 \cite{LGT1997, R2000}.
+{\it E} gene of dengue virus, 1485 nucleotides in length.
 Once loaded, the list of taxa and the actual alignment will be displayed in the
 main window (Figure~\ref{fig:figure1}).
 
 \begin{figure}[htbp]
 \begin{center}
 \leavevmode
-\scalebox{0.5}{\includegraphics{Figure1_Data.png}}
+\scalebox{0.4}{\includegraphics{Figure1_Data.png}}
 \end{center}
 \caption{The data tab in BEAUTi}
 \label{fig:figure1}
@@ -594,7 +594,7 @@ main window (Figure~\ref{fig:figure1}).
 
 If the NEXUS file contains a calibrations block then the dates will automatically be loaded. Otherwise, by default 
 all the taxa are assumed to have a date of zero (i.e. the sequences are assumed to be sampled at the same time). 
-In this case, the Dengue-4 virus have been sampled at various dates going back to the 1950s. The actual year of 
+In this case, the dengue virus have been sampled at various dates going back to the 1950s. The actual year of 
 sampling is given in the name of each taxon and we could simply edit the value in the Date column of the table to
 reflect these. However the following subsections describe two simpler methods for specifying the sequence dates.
 
@@ -638,13 +638,13 @@ The  {\it taxa-list} is a space-delimited list of the taxa to be calibrated with
 \subsection{Guessing the dates from the taxa names}
 
 If the taxa names contain the calibration information, then another convenient way to specify the dates of the 
-sequences in BEAUTi is to use the "Guess Dates" button at the top of the Data tab. Clicking this will make a 
-dialog box appear (Figure~\ref{fig:figure2}).
+sequences in BEAUTi is to use the \texttt{Guess Dates} button at the top of the \texttt{Data} tab. Clicking 
+this will make a  dialog box appear (Figure~\ref{fig:figure2}).
 
 \begin{figure}[htbp]
 \begin{center}
 \leavevmode
-\scalebox{0.5}{\includegraphics{Figure2_GuessDates.png}}
+\scalebox{0.4}{\includegraphics{Figure2_GuessDates.png}}
 \end{center}
 \caption{The Guess Dates dialog}
 \label{fig:figure2}
@@ -652,14 +652,14 @@ dialog box appear (Figure~\ref{fig:figure2}).
 
 This operation attempts to guess what the dates are from information contained within the taxon names. Generally 
 this works by trying to find a numerical field within each name. If the taxon names contain more than one 
-numerical field (such as the Dengue-4 sequences, above) then you can specify how to find the one that 
+numerical field (such as the dengue sequences, above) then you can specify how to find the one that 
 corresponds to the date of sampling. You can either specify the order that the date field comes (e.g., 
 first, last or various positions in between) or specify a prefix (some characters that come immediately 
-before the date field in each name). For the Dengue-4 sequences you select last from the drop-down menu 
+before the date field in each name). For the dengue virus sequences you select last from the drop-down menu 
 for the order. If you left it at first then all taxa would be given a date of "4" taken from the second 
 character of each name.
 
-In this dialog box, you can also get BEAUti to add a fixed value to each guessed date. In this case the 
+In this dialog box, you can also get \textbf{\textsc{BEAUti}} to add a fixed value to each guessed date. In this case the 
 value "1900" has been added to turn the dates from 2 digit years to 4 digit. Any dates in the taxon names 
 given as "00" would thus become "1900". If these dates were actually referring to the year 2000 then 
 selecting the next option would convert them correctly, adding 2000 to any date less than 08.
@@ -676,43 +676,44 @@ nucleotides then this option will be disabled.
 
 \section{Setting the evolutionary model}
 
-The next thing to do is to click on the Model tab at the top of the main window. This will reveal the 
+The next thing to do is to click on the \texttt{Model} tab at the top of the main window. This will reveal the 
 evolutionary model settings for BEAST. Exactly which options appear depend on whether the data are 
 nucleotides or amino acids (or nucleotides translated into amino acids). Figure~\ref{fig:figure3} 
-shows the settings that will appear after loading the Dengue-4 data.
+shows the settings that will appear after loading the dengue virus data.
 
 \begin{figure}[htbp]
 \begin{center}
 \leavevmode
-\scalebox{0.5}{\includegraphics{Figure3_Model.png}}
+\scalebox{0.4}{\includegraphics{Figure3_Model.png}}
 \end{center}
 \caption{The evolutionary model settings in BEAUTi}
 \label{fig:figure3}
 \end{figure}
 
 This chapter assumes that you are familiar with the evolutionary models available, however there are 
-a couple of points to note about selecting a model in BEAUTi:
+a couple of points to note about selecting a model in \textbf{\textsc{BEAUti}}:
 
 \begin{itemize}
-\item Selecting the {\it Partition into codon positions} option assumes that the data are aligned 
+\item Selecting the \texttt{Partition into codon positions} option assumes that the data are aligned 
 as codons. This option will then estimate a separate rate of substitution for each codon position, 
 or for 1+2 versus 3, depending on the setting.
-\item Selecting the {\it Unlink substitution model across codon positions} will specify that BEAST 
+\item Selecting the \texttt{Unlink substitution model across codon positions} will specify that BEAST 
 should estimate a separate transition-transversion ratio or general time reversible rate matrix for 
 each codon position.
-\item Selecting the {\it Unlink rate heterogeneity model across codon positions} will specify that 
+\item Selecting the \texttt{Unlink rate heterogeneity model across codon positions} will specify that 
 BEAST should estimate set of rate heterogeneity parameters (gamma shape parameter and/or proportion 
 of invariant sites) for each codon position.
 \item If there are no dates for the sequences (they are contemporaneous) then you can specify a 
-fixed {\it mean substitution rate} obtained from another source. Setting this to 1.0 will result 
+fixed \texttt{mean substitution rate} obtained from another source. Setting this to 1.0 will result 
 in the ages of the nodes of the tree being estimated in units of substitutions per site (i.e. the 
-normal units of branch lengths in popular packages such as MRBAYES).
+normal units of branch lengths in popular packages such as \textbf{\textsc{MRBAYES}}).
 \end{itemize}
 
 \section{Setting up the operators}
 
 Each parameter in the model has one or more "operators" (these are variously called moves and 
-proposals by other MCMC software packages such as MRBAYES and LAMARC). The operators specify how 
+proposals by other MCMC software packages such as \textbf{\textsc{MRBAYES}} and \textbf{\textsc{LAMARC}}). 
+The operators specify how 
 the parameters change as the MCMC runs. This table lists the parameters, their operators and the 
 tuning settings for these operators. In the first column are the parameter names. These will be 
 called things like \texttt{hky.kappa} which means the HKY model's kappa parameter (the 
@@ -722,32 +723,33 @@ random walk operator adds or subtracts an amount to the parameter and the unifor
 picks a new value uniformally within a range. Some parameters relate to the tree or to the divergence 
 times of the nodes of the tree and these have special operators.
 
-The next column, labelled {\it Tuning}, gives a tuning setting to the operator. Some operators 
-don't have any tuning settings so have {\it n/a} under this column. The tuning parameter will 
+The next column, labelled \texttt{Tuning}, gives a tuning setting to the operator. Some operators 
+don't have any tuning settings so have \texttt{n/a} under this column. The tuning parameter will 
 determine how large a move each operator will make which will affect how often that change is 
 accepted by the MCMC which will affect the efficency of the analysis. For most operators (like 
 random walk and subtree slide operators) a larger tuning parameter means larger moves. However 
 for the scale operator a tuning parameter value closer to 0.0 means bigger moves. At the top of 
-the window is an option called {\it Auto Optimize} which, when selected, will automatically adjust 
+the window is an option called \texttt{Auto Optimize} which, when selected, will automatically adjust 
 the tuning setting as the MCMC runs to try to achieve maximum efficiency. At the end of the run 
 a table of the operators, their performance and the final values of these tuning settings will be 
 displayed. These can then be used to set the starting tuning settings in order to minimize the 
 amount of time taken to reach optimum performance in subsequent runs.
 
-The next column, labelled {\it Weight}, specifies how often each operator is applied relative 
-to each other. Some parameters tend to be estimated very efficiently - an example is the kappa 
+The next column, labelled \texttt{Weight}, specifies how often each operator is applied relative 
+to each other. Some parameters tend to be estimated very efficiently - an example is the \texttt{kappa} 
 parameter - these parameters can have their operators down-weighted so that they are not changed 
 as often (this may mean upweighting other operators since the weights must be integers).
 
 \section{Setting the MCMC options}
 
-The {\it MCMC} tab in BEAUTi provides settings to control the MCMC chain (Figure~\ref{fig:figure4}). Firstly we have the 
+The \texttt{MCMC} tab in \textbf{\textsc{BEAUti}} provides settings to control the MCMC chain 
+(Figure~\ref{fig:figure4}). Firstly we have the 
 {\it Length of chain}. This is the number of steps the MCMC will make in the chain before 
 finishing. How long this should be depends on the size of the dataset, the complexity of the 
 model and the precision of the answer required. The default value of 10,000,000 is entirely 
 arbitrary and should be adjusted according to the size of your dataset. In order to examine 
 whether a particular chain length is adequate, the resulting log file can be analysed using 
-Tracer. The aim is to set the chain length so as to achieve a reasonable effective sample 
+\textbf{\textsc{Tracer}}. The aim is to set the chain length so as to achieve a reasonable effective sample 
 size (ESS).
 
 The next couple of options specify how often the current parameter values should be displayed 
@@ -767,7 +769,7 @@ to change these.
 \begin{figure}[htbp]
 \begin{center}
 \leavevmode
-\scalebox{0.5}{\includegraphics{Figure4_MCMC.png}}
+\scalebox{0.4}{\includegraphics{Figure4_MCMC.png}}
 \end{center}
 \caption{The MCMC settings in BEAUTi}
 \label{fig:figure4}
@@ -775,19 +777,19 @@ to change these.
 
 \section{Running BEAST}
 
-At this point we are ready to generate a BEAST XML file and to use this to run BEAST and 
-perform the analysis. To do this, either select the {\it Generate BEAST File...} option 
+At this point we are ready to generate a BEAST XML file and to use this to run \textbf{\textsc{BEAST}} and 
+perform the analysis. To do this, either select the \texttt{Generate BEAST File...} option 
 from the File menu or click the similarly labelled button at the bottom of the window. 
 Choose a name for the file (for example, \texttt{Dengue4.env.xml}) and save the file. For
-convienience, leave teh BEAUti window open so that you can change the values and re-generate
+convienience, leave the \textbf{\textsc{BEAUti}} window open so that you can change the values and re-generate
 the BEAST file as required later in this tutorial.
 
 \section{Analysing the BEAST output}
 
-To analyse the results of running BEAST we are going to use the program Tracer. This
-is available from the BEAST website. The exact instructions for running Tracer differs depending 
+To analyse the results of running BEAST we are going to use the program \textbf{\textsc{Tracer}}. This
+is available from the BEAST website. The exact instructions for running \textbf{\textsc{Tracer}} differs depending 
 on which computer you are using. Please see the README text file that was distributed with the 
-version you downloaded. Once running, Tracer will look similar irrespective of which computer system 
+version you downloaded. Once running, \textbf{\textsc{Tracer}} will look similar irrespective of which computer system 
 it is running on. 
 
 Select the Open option from the File menu. If you have it available, select the log file 
@@ -802,7 +804,7 @@ brings up analyses for this trace on the right hand side depending on tab that i
 selected. In the picture above, the log likelihood trace is selected and various statistics 
 of this trace is shown under the Estimates tab.
 
-Note that the Effective Sample Sizes(ESSs) for all the traces are small (ESSs less than 
+Note that the Effective Sample Sizes (ESSs) for all the traces are small (ESSs less than 
 100 are highlighted in red by Tracer). This is not good. A low ESS means that the trace 
 contained a lot of correlated samples and thus may not represent the posterior distribution 
 well. In the bottom right of the window is a frequency plot of the samples which as 
@@ -812,28 +814,28 @@ In the top right of the window is a table of calculated statistics for the selec
 The statistics and their meaning are described in the table below.
 
 \begin{itemize}
-\item Mean
+\item \texttt{Mean}
 The mean value of the sampled trace across the chain (excluding the burn-in).
-\item Stdev
+\item \texttt{Stdev}
 The standard deviation of the mean. This takes into account the effective sample size so a 
 small ESS will give a large Stdev.
-\item Median
+\item \texttt{Median}
 The median value of the sampled trace across the chain (excluding the burn-in).
-\item 95\% HPD Lower
+\item \texttt{95\% HPD Lower}
 The lower bound of the highest posterior density (HPD) interval. The HPD is a credible set 
 that contains 95\% of the sampled values.
-\item 95\% HPD Upper
+\item \texttt{95\% HPD Upper}
 The upper bound of the highest posterior density (HPD) interval. The HPD is a credible set 
 that contains 95\% of the sampled values.
-\item Auto-Correlation Time (ACT)
+\item \texttt{Auto-Correlation Time (ACT)}
 The number of states in the MCMC chain that two samples have to be from each other for them 
 to be uncorrelated. The ACT is estimated from the samples in the trace (excluding the burn-in).
-\item Effective Sample Size (ESS)
+\item \texttt{Effective Sample Size (ESS)}
 The ESS is the number of independent samples that the trace is equivalent to. This is 
 calculated as the chain length (excluding the burn-in) divided by the ACT.
 \end{itemize}
 
-If we select the tab on the right-hand-side labelled 'Trace' we can view the raw trace, 
+If we select the tab on the right-hand-side labelled \texttt{Trace} we can view the raw trace, 
 that is, the sampled values against the  step in the MCMC chain (Figure~\ref{fig:figure5}).
 
 \begin{figure}[htbp]
@@ -854,11 +856,11 @@ of the start of the chain as burn-in will bias the results and introduce autocor
 (and thus reduce the ESSs).
 
 The simple response to this situation is that we need to run the chain for longer. Given the lowest 
-ESS (for the 'clock.rate') is 26, it would suggest that we have to run it for 4 
+ESS (for the \texttt{clock.rate}) is 26, it would suggest that we have to run it for 4 
 times longer to get ESSs that are $>$100. However it would be better to aim higher so lets 
 go for a chain length of 1,000,000. Go back to Section \ref{section:2.7} 
-and create a new BEAST XML file with a longer chain length. Now run BEAST and load the new 
-log file into Tracer (you can leave the old one loaded for comparison). Click on the Trace 
+and create a new BEAST XML file with a longer chain length. Now run \textbf{\textsc{BEAST}} and load the new 
+log file into \textbf{\textsc{Tracer}} (you can leave the old one loaded for comparison). Click on the \texttt{Trace} 
 tab and look at the raw trace plot (Figure~\ref{fig:figure6}). 
 
 \begin{figure}[htbp]
@@ -876,7 +878,7 @@ respectable. There are no obvious trends in the plot suggesting that the MCMC wa
 converging and there are no large-scale fluctuations in the trace suggesting poor 
 mixing. Diagnosis of trace plots will be delt with in a another tutorial.
 As we are happy with the behaviour of log-likelihood we can now move on to one of the 
-parameters of interest: mutation rate. Select siteModel1.mu in the left-hand table. This 
+parameters of interest: substitution rate. Select \texttt{clock.rate} in the left-hand table. This 
 is the mutation rate of the first codon position. Now choose the density plot by selecting 
 the tab labelled Density. This shows a plot of the posterior probability density of this 
 parameter. You should see a plot similar to Figure~\ref{fig:figure7}.
@@ -912,33 +914,33 @@ codon position.}
 
 \section{Summarizing the trees}
 
-We seen how we can diagnose our MCMC run using Tracer and produce estimates of the
+We seen how we can diagnose our MCMC run using \textbf{\textsc{Tracer}} and produce estimates of the
 posterior distributions of parameters of our model. However, BEAST also samples
 trees (either phylogenies or geneologies) at the same time as the other parameters
 of the model. These are written to a seperate file called the 'trees' file. This 
 file is a standard NEXUS format file. As such it can easily be loaded into other
 software in order to examine the trees it contains. One possibility is to load the
-trees into a program such as PAUP and construct a consensus tree in a similar manner
+trees into a program such as \textbf{\textsc{PAUP}} and construct a consensus tree in a similar manner
 to summarizing a set of bootstrap trees. In this case, the support values reported
 for the resolved nodes in the consensus tree will be the posterior probability of 
 those clades.
 
 In this tutorial, however, we are going to use a tool that is provided as part
 of the BEAST package to summarize the information contained within our sampled
-trees. The tool is called 'TreeAnnotator' and once again, the details for running 
+trees. The tool is called \textbf{\textsc{TreeAnnotator}} and once again, the details for running 
 the program will differ depending on which operating system you are using. Once
 running, you will be presented with a window like the one in Figure~\ref{fig:figure9}.
 
 \begin{figure}[htbp]
 \begin{center}
 \leavevmode
-\scalebox{0.5}{\includegraphics{Figure9_TreeAnnotator.png}}
+\scalebox{0.4}{\includegraphics{Figure9_TreeAnnotator.png}}
 \end{center}
 \caption{The user-interface for the TreeAnnotator tool.}
 \label{fig:figure9}
 \end{figure}
 
-TreeAnnotator takes a single 'target' tree and annotates it with the summarized
+\textbf{\textsc{TreeAnnotator}} takes a single 'target' tree and annotates it with the summarized
 information from the entire sample of trees. The summarized information includes
 the average node ages (along with the HPD intervals), the posterior probability
 support and the average rate of evolution on each branch (for models where this
@@ -946,36 +948,36 @@ can vary). The program calculates these values for each node or clade observed i
 the specified 'target' tree. 
 
 \begin{itemize}
-\item Burnin
+\item \texttt{Burnin}
 This is the number of trees in the input file that should be excluded from the summarization.
 This value is given as the number of trees rather than the number of steps in the MCMC chain. 
 Thus for the example above, with a chain of 1,000,000 steps, sampling every 1000 steps, there
 are 1000 trees in the file. To obtain a 10\% burnin, set this value to 100.
-\item Posterior probability limit
+\item \texttt{Posterior probability limit}
 This is the minimum posterior probability for a node in order for TreeAnnotator to store
 the annoted information. The default is 0.5 so only nodes with this posterior probability
 or greater will have information summarized (the equivalent to the nodes in a majority-rule
 consensus tree). Set this value to 0.0 to summarize all nodes.
-\item Target tree type
+\item \texttt{Target tree type}
 This has two options "Maximum clade credibility" or "User target tree". For the latter option,
 a NEXUS tree file can be specified as the Target Tree File, below. For the former option, 
 TreeAnnotator will examine every tree in the Input Tree File and select the tree that has
 the highest sum of the posterior probability of all its nodes. 
-\item Node heights
+\item \texttt{Node heights}
 This option specifies what node heights (times) should be used for the output tree. If the "Keep
 target heights" is selected, then the node heights will be the same as the target tree. The other
 two options give node heights as an average (Mean or Median) over the sample of trees.
-\item Target Tree File
+\item \texttt{Target Tree File}
 If the "User target tree" option is selected then you can use "Choose File..." to select a
 NEXUS file containing the target tree.
-\item Input Tree File
+\item \texttt{Input Tree File}
 Use the "Choose File..." button to select an input trees file. This will be the trees file
 produced by BEAST.
-\item Output File
+\item \texttt{Output File}
 Select a name for the output tree file.
 \end{itemize}
 
-Once you have selected all the options, above, press the "Run" button. TreeAnnotator will analyse
+Once you have selected all the options, above, press the \texttt{Run} button. \textbf{\textsc{TreeAnnotator}} will analyse
 the input tree file and write the summarized tree to the file you specified. This tree is in
 standard NEXUS tree file format so may be loaded into any tree drawing package that supports this.
 However, it also contains additional information that can only be displayed using the FigTree
@@ -983,7 +985,7 @@ program.
 
 \section{Viewing the annotated tree}
 
-Run FigTree now and select the {\it Open...} command from the {\it File} menu. Select the tree file
+Run \textbf{\textsc{FigTree}} now and select the \texttt{Open...} command from the \texttt{File} menu. Select the tree file
 you created using TreeAnnotator in the previous section. The tree will be displayed in the FigTree
 window. On the left hand side of the window are the options and setting which control how the
 tree is displayed. In this case we want to display the posterior probabilities of each of the clades
@@ -999,20 +1001,20 @@ to do this you need to change some of the settings.
 \label{fig:figure10}
 \end{figure}
 
-First open the {\it Branch Labels} section of
-the control panel on the left. Now select {\it posterior} from the {\it Display} popup menu. The
+First open the \texttt{Branch Labels} section of
+the control panel on the left. Now select \texttt{posterior} from the \texttt{Display} popup menu. The
 posterior probabilities won't actually be displayed until you tick the check-box next to the
-{\it Branch Labels} title. You can then increase the font size here and possibly reduce
+\texttt{Branch Labels} title. You can then increase the font size here and possibly reduce
 the number of displayed significant digits to get the required results.
 
 We now want to display bars on the tree to represent the estimated uncertainty in the date for
 each node. TreeAnnotator will have placed this information in the tree file in the shape of the
 95\% highest posterior density (HPD) intervals (see the description of HPDs, above). Open the
-{\it Node Bars} section of the control panel and you will notice that it is already
+\texttt{Node Bars} section of the control panel and you will notice that it is already
 set to display the 95\% HPDs of the node heights so all you need to do is to select the check-box in
 order to turn the node bars on.
 
-Finally, open the {\it Appearance} panel and alter the {\it Line Weight} to draw the tree with thicker
+Finally, open the \texttt{Appearance} panel and alter the \texttt{Line Weight} to draw the tree with thicker
 lines. None of the options actually alter the tree's topology or branch lengths in anyway so feel free
 to explore the options and settings. You can also save the tree and this will save all your settings
 so that when you load it into FigTree again it will be displayed exactly as you selected.

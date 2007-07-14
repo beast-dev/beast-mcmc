@@ -32,7 +32,7 @@
 \makeatother
 \begin{document}
 
-\title{\textbf{Bayesian Evolutionary Analysis Sampling Trees}}
+\title{\textbf{Bayesian evolutionary analysis by sampling trees}}
 
 
 \author{\textsc{Alexei J. Drummond}$^{1}$ and \textsc{Andrew Rambaut}$^{2}$\\
@@ -59,18 +59,18 @@ The BEAST software package is an ambitious attempt to provide a general
 framework for parameter estimation and hypothesis testing of evolutionary
 models from molecular sequence data. BEAST is a Bayesian statistical
 framework and thus provides a role for prior knowledge in combination with the
-information provided by the data. Bayesian MCMC has already been enthusiastically embraced
-as the state-of-the-art method for phylogenetic reconstruction, largely
-driven by the rapid and widespread adoption of \textbf{\textsc{MrBayes}}
+information provided by the data. Bayesian Markov chain Monte Carlo (MCMC) has 
+already been enthusiastically embraced as the state-of-the-art method for phylogenetic 
+reconstruction, largely driven by the rapid and widespread adoption of MRBAYES
 \cite{HR2001}. This enthusiasm can be attributed to a number of factors.
 Firstly, Bayesian methods allow the relatively straightforward implementation
 of extremely complex evolutionary models. Secondly, there is an often erroneous
-perception that Bayesian estimation is {}``faster'' than heuristic
+perception that Bayesian estimation is ``faster'' than heuristic
 optimization based on a maximum likelihood criterion.
 
 BEAST can be compared to a number of other software packages with
-similar goals, such as \textbf{\textsc{MrBayes}} \cite{HR2001}, which
-currently focuses on phylogenetic inference and \textbf{\textsc{Batwing}}
+similar goals, such as MRBAYES \cite{HR2001}, which
+currently focuses on phylogenetic inference and BATWING
 \cite{WWB2003} which focuses predominanty on coalescent-based population
 genetics. Like these software packages, the core algorithm implemented
 in BEAST is Metropolis-Hastings MCMC \cite{MRRTT1953,Hastings1970}.
@@ -92,11 +92,38 @@ lineages\cite{TKP1998,YY2000,KTB2001,Sanderson2002,TK2002,AY2003}.
 BEAST was the first software package that allows phylogenetic inference
 under such models \cite{DHPR2006}.
 
+In the context of genealogy-based population genetics, the target distribution of interest
+is the posterior probability of the the population genetic parameters ($\phi$) given a 
+multiple sequence alignment ($D$):
+
+\begin{equation}
+p(\phi|D) = \frac{1}{Z}\int_{g,\omega} Pr\{D|g, \omega\}p(g|\phi)p(\phi)p(\omega)dgd\omega
+\label{posterior-phi} 
+\end{equation} 
+
+In order to estimate the posterior probability distribution of $\phi$ it is necessary to average
+over all combinations of genealogies ($g$) and substitution model parameters ($\omega$)
+proportional to their probabilities. This integration is achieved by MCMC. In the above equation 
+$Pr\{D|g, \omega\}$ is the likelihood of genealogy $g$ given the sequence data and the 
+substitution model and $p(g|\phi)$ is the coalescent
+prior of the genealogy given the population parameters $\phi$. In the original formulation
+of the Kingman coalescent, there is a single population size, $\phi = \{\theta\}$ and the
+coalescent prior take the form:
+
+ \begin{equation}
+p(g|\phi) = \frac{1}{\theta^{n-1}}\prod_{i=2}^n \exp\frac{-i(i-1)u_i}{2\theta}
+\end{equation} 
+
+where $u_i$ is the length of time over which the genealogy $g$ has exactly $i$ lineages.
+More complex coalescent models can easily be devised so that the population size
+is a function of time. BEAST supports a number of demographic models including
+constant size, exponential growth, logistic growth, expansion and the highly parameteric
+Bayesian skyline plot \cite{DRSP2005}.
+
 The purpose behind the development of BEAST is to bring a large number
-of complementary evolutionary models (substitution models, insertion-deletion
-models, demographic models, tree shape priors, relaxed clock models,
-node calibration models) into a single coherent framework for evolutionary
-inference. This building-block principle of constructing a complex
+of complementary evolutionary models (substitution models, demographic models, 
+tree shape priors, relaxed clock models, node calibration models) into a single coherent 
+framework for evolutionary inference. This building-block principle of constructing a complex
 evolutionary model out of a number of simpler model components provides
 powerful new possibilities for molecular sequence analysis. The motivation
 for doing this is (1) to avoid the unnecessary simplifying assumptions
@@ -105,13 +132,55 @@ to provide new model combinations and a flexible system for model
 specification so that researchers can tailor their evolutionary analyses
 to their specific set of questions.
 
-\section{Implementation}
+\section{Bayesian MCMC for genealogy-based population genetics}
+
+The integration in equation \ref{posterior-phi} is achieved by constructing a chain of
+parameter/genealogy combinations in such a way that they form a (correlated) sample
+of states from the full posterior distribution:
+
+\begin{equation}
+p(g, \omega, \phi|D) = \frac{1}{Z} Pr\{D|g, \omega\}p(g|\phi)p(\phi)p(\omega)
+\end{equation}
+
+We summarize the marginal density $p(\phi|D)$ by using samples 
+$(g, \omega, \phi) \sim p(g, \omega, \phi|D)$. The sampled genealogies and
+substitution model parameters can be thought of as uninteresting nuisance 
+parameters. 
+
+To construct the Markov chain we begin with an initial state 
+$x_0 = (g^{(0)}, \omega^{(0)}, \phi^{(0)})$. At each step $i$ in the chain we begin 
+by proposing a new state $y$. An operator ($m$) proposes this state by copying
+the previous state $x_{i-1}$ and making a small alteration (to the genealogy, or the parameter values, or both). 
+The probability of the previous state and the newly proposed state are then compared in an accept/reject step.
+The proposed state is accepted as the new state in the Markov chain with probability:
+
+\begin{equation}
+\alpha = \max \left(1,\frac{p(y|D)}{p(x_{i-1}|D)} \right)
+\end{equation}
+
+If the proposed state $y$ is accepted, then state $x_i = y$ otherwise the previous
+state is kept ($x_i = x_{i-1}$). Notice that if the posterior probability of $y$ is greater than $x_{i-1}$
+then $y$ will definitely be accepted. Whereas when $y$ has lower probability than $x_{i-1}$ it
+will only be accepted with a probability proportional to the ratio of their posterior probabilities.
+The above acceptance probability assumes that the operator is unbiased, so that
+the probability of proposing state $y$ from state $x$, $q(y|x)$, is the same as proposing state $x$ from
+state $y$, $q(x|y)$. BEAST uses a mixture of biased and unbiased operators. At each step in the chain
+an operator ($m$) is chosen at random (with weights). When operator $m$ is
+biased then $q_m(y|x) \neq q_m(x|y)$ and the acceptance probability becomes
+
+\begin{equation}
+\alpha = \max \left(1,\frac{p(y|D)}{p(x_{i-1}|D)}\frac{q(x_{i-1}|y)}{q(y|x_{i-1})}\right)
+\end{equation}
+
+The additional ratio of proposal probabilities is called the Hasting ratio \cite{Hastings1970}.
+
+\subsection{Implementation}
 
 The overall architecture of the BEAST software package is a file-mediated
 pipeline. The core program takes, as input, an XML file describing
 the data to be analyzed, the models to be used and technical details
-of the MCMC algorithm such as the proposal distribution (operators),
-the chain length and the output options. The output of a BEAST analysis
+of the MCMC algorithm such as the proposal distribution (defined by the operators),
+the length of the Markov chain (chain length) and the output options. The output of a BEAST analysis
 is a set of tab-delimited plain text files that summarize the estimated
 posterior distribution of parameter values and trees.
 
@@ -126,7 +195,7 @@ generating BEAST XML input files for a number of simple model combinations.
 distributed separately from BEAST that provides a graphical tool for
 MCMC output analysis. It can be used for the analysis of the output
 of BEAST as well as the output of other common MCMC packages such
-as \textbf{\textsc{MrBayes}} \cite{HR2001} and \textbf{\textsc{BAli-Phy}}
+as MRBAYES \cite{HR2001} and \textbf{\textsc{BAli-Phy}}
 \cite{SR2006}.
 \end{itemize}
 Because of the combinatorial nature of the BEAST XML input format,
@@ -139,7 +208,6 @@ is therefore intended as a way of generating commonly used and well-understood
 analyses. For the more adventurous researcher, and with the above
 warnings in mind, the XML file can be directly edited. A number of
 online tutorials are available to guide users on how to do this.
-
 
 \subsection*{Input Format}
 
@@ -159,7 +227,6 @@ reproducibility, it is our view that the publication of the exact
 details of any Bayesian MCMC analysis should be made a pre-requisite
 for publication of all MCMC analysis results.
 
-
 \subsection*{Output and results}
 
 The output from BEAST is a simple tab-delimited plain text file format
@@ -178,7 +245,6 @@ the posterior probability of various phylogenetic questions such as
 the monophyly of a particular group of organisms or to obtain a consensus
 phylogeny.
 
-
 \subsection*{Computational Performance}
 
 Although there is always a trade-off between a program's flexibility
@@ -194,7 +260,6 @@ can be compiled into a highly optimized library for a given platform
 providing an improvement in speed. If this library is not found, BEAST
 will use its Java version of these functions, thereby retaining its
 platform-independence.
-
 
 \section{Results and Discussion}
 
@@ -256,9 +321,14 @@ In addition, both $\Gamma$-distributed rates among sites \cite{Y1994}
 and a proportion of invariant sites can be used to describe rate heterogeneity
 among sites.
 
-
 \subsection*{Rate models among branches, divergence time estimation and time-stamped
 data}
+
+Without calibration information, mutation rate ($\mu$)
+and time ($t$) are confounded and thus branches must be estimated in units
+of mutations per site, $\mu t$. However when a strong prior is available for (a) the time 
+of one or more nodes, or (b) the overall mutation rate, then the genealogy can be estimated
+in units of time.
 
 The basic model for rates among branches supported by BEAST is the
 strict molecular clock model \cite{ZP1965}, calibrated by specifying
@@ -288,7 +358,7 @@ common ancestor) as well as the units of the demographic parameters
 such as the population size parameter and the growth rate. For example,
 if the evolutionary rate is set to 1.0, then the node heights (and
 root height) will be in units of mutations per site (i.e. the units
-of branch lengths produced by common software packages such as \textbf{\textsc{MrBayes}}
+of branch lengths produced by common software packages such as MRBAYES
 3.0). Similarly, for a haploid population, the coalescent parameter
 will be an estimate of $N_{e}\mu$. However, if, for example, the
 evolutionary rate is expressed in mutations per site per year, then
@@ -301,7 +371,6 @@ the resulting tree will be in units of generations and the population
 parameter of the demographic model will be in natural units (i.e.
 will be equal to the effective number of reproducing individuals,
 $N_{e}$).
-
 
 \subsection*{Tree Priors}
 
@@ -328,9 +397,6 @@ At present there are only a limited number of options for non-coalescent
 priors on tree shape and branching rate. Currently a simple Yule prior
 on birth rate of new lineages (1 parameter) can be employed. However,
 generalized birth-death tree priors are currently under development.
-Futhermore, Aldous's beta-splitting model \cite{Aldous2001} (1 parameter)
-is also available as a prior on tree shape, if the balance/imbalance
-of the tree topology is important.
 
 In addition to general models of branching times such as the coalescent
 and Yule priors, the tree prior may also include specific distributions
@@ -338,9 +404,8 @@ and/or constraints on certain node heights and topological features.
 These additional priors may represent other sources of knowledge such
 as expert interpretation of the fossil record. For example, as briefly
 noted above, each node in the tree can have a prior distribution representing
-knowledge of its date. A recent paper on {}``relaxed phylogenetics''
+knowledge of its date. A recent paper on ``relaxed phylogenetics''
 contains more information on calibration priors \cite{DHPR2006}.
-
 
 \subsection*{Multiple data partitions and linking and unlinking parameters}
 
@@ -641,16 +706,16 @@ of invariant sites) for each codon position.
 \item If there are no dates for the sequences (they are contemporaneous) then you can specify a 
 fixed {\it mean substitution rate} obtained from another source. Setting this to 1.0 will result 
 in the ages of the nodes of the tree being estimated in units of substitutions per site (i.e. the 
-normal units of branch lengths in popular packages such as MrBayes).
+normal units of branch lengths in popular packages such as MRBAYES).
 \end{itemize}
 
 \section{Setting up the operators}
 
 Each parameter in the model has one or more "operators" (these are variously called moves and 
-proposals by other MCMC software packages such as MrBayes and Lamarc). The operators specify how 
+proposals by other MCMC software packages such as MRBAYES and LAMARC). The operators specify how 
 the parameters change as the MCMC runs. This table lists the parameters, their operators and the 
 tuning settings for these operators. In the first column are the parameter names. These will be 
-called things like \texttt{hky1.kappa} which means the HKY model's kappa parameter (the 
+called things like \texttt{hky.kappa} which means the HKY model's kappa parameter (the 
 transition-transversion bias). The next column has the type of operators that are acting on each 
 parameter. For example, the scale operator scales the parameter up or down by a proportion, the 
 random walk operator adds or subtracts an amount to the parameter and the uniform operator simply 
@@ -790,7 +855,7 @@ of the start of the chain as burn-in will bias the results and introduce autocor
 
 The simple response to this situation is that we need to run the chain for longer. Given the lowest 
 ESS (for the 'clock.rate') is 26, it would suggest that we have to run it for 4 
-times longer to get ESSs that are > 100. However it would be better to aim higher so lets 
+times longer to get ESSs that are $>$100. However it would be better to aim higher so lets 
 go for a chain length of 1,000,000. Go back to Section \ref{section:2.7} 
 and create a new BEAST XML file with a longer chain length. Now run BEAST and load the new 
 log file into Tracer (you can leave the old one loaded for comparison). Click on the Trace 

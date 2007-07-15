@@ -32,7 +32,7 @@ import java.util.Set;
  * A syntax rule to ensure that allows one to document arbitrary content.
  */
 public class ContentRule implements XMLSyntaxRule {
-	
+
 	/**
 	 * Creates a required element rule.
 	 */
@@ -53,26 +53,33 @@ public class ContentRule implements XMLSyntaxRule {
 	 * @return a string describing the rule.
 	 */
 	public String ruleString() { return htmlDescription; }
-	
+
 	/**
 	 * @return a string describing the rule.
 	 */
 	public String htmlRuleString(XMLDocumentationHandler handler) {
 		return htmlDescription;
 	}
-	
+
+	/**
+	 * @return a string describing the rule.
+	 */
+	public String wikiRuleString(XMLDocumentationHandler handler) {
+		return ":" + htmlDescription;
+	}
+
 	/**
 	 * @return a string describing the rule.
 	 */
 	public String ruleString(XMLObject xo) { return null; }
-	
+
 	/**
 	 * @return a set containing the required types of this rule.
 	 */
 	public Set<Class> getRequiredTypes() { return Collections.EMPTY_SET; }
 
-	
+
 	public boolean isAttributeRule() { return false; }
-	
+
 	private String htmlDescription;
 }

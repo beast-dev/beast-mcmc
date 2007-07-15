@@ -33,7 +33,7 @@ public class OrRule implements XMLSyntaxRule {
 	public OrRule(XMLSyntaxRule a, XMLSyntaxRule b) {
 		rules = new XMLSyntaxRule[] {a,b};
 	}
-	
+
 	public OrRule(XMLSyntaxRule[] rules) {
 		this.rules = rules;
 	}
@@ -71,7 +71,7 @@ public class OrRule implements XMLSyntaxRule {
 		}
 		return ruleString + ")";
 	}
-	
+
 	/**
 	 * Describes the rule.
 	 */
@@ -81,9 +81,21 @@ public class OrRule implements XMLSyntaxRule {
             html += rule.htmlRuleString(handler);
         }
         html += "</div>";
-		return html;	
+		return html;
 	}
-	
+
+	/**
+	 * Describes the rule.
+	 */
+	public String wikiRuleString(XMLDocumentationHandler handler) {
+		String html = "At least one of:";
+        for (XMLSyntaxRule rule : rules) {
+            html += rule.htmlRuleString(handler);
+        }
+        html += "\n";
+		return html;
+	}
+
 	/**
 	 * Describes the rule.
 	 */
@@ -94,7 +106,7 @@ public class OrRule implements XMLSyntaxRule {
         }
         return ruleString();
 	}
-	
+
 	/**
 	 * @return a set containing the required types of this rule.
 	 */

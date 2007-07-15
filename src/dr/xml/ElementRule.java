@@ -295,8 +295,53 @@ public class ElementRule implements XMLSyntaxRule {
 			buffer.append("</div>\n");
 			return buffer.toString();
 		}
+	}
 
+	public String wikiRuleString(XMLDocumentationHandler handler) {
+		if (c != null) {
+			String html = ";" + (min == 0 ? "" : "'''") + handler.getHTMLForClass(c) + (min == 0 ? "" : "'''");
+			if (max > 1) {
+				html += " elements (";
+				if (min == 0) {
+					html += "zero";
+				} else if (min == 1) {
+					html += "one";
+				} else if (min == max) {
+					html += "exactly " + min;
+				}
+				if (max != min) {
+					if (max < Integer.MAX_VALUE) {
+						html += " to " + max;
+					} else {
+						html += " or more";
+					}
+				}
+			} else {
+				html += " element (";
+				if (min == 0) {
+					html += "zero or one";
+				} else {
+					html += "exactly one";
+				}
+			}
+			html += ")\n";
 
+			if (hasDescription()) {
+				html += ":" + getDescription() + "\n";
+			}
+			return html + "\n";
+
+		} else {
+			StringBuffer buffer = new StringBuffer(";" + (min == 0 ? "" : "'''") + "Element named <code>" + name + "</code> containing:");
+            for (XMLSyntaxRule rule : rules) {
+                buffer.append(rule.htmlRuleString(handler));
+            }
+            if (hasDescription()) {
+                buffer.append(":").append(getDescription()).append("\n");
+			}
+			buffer.append("\n");
+			return buffer.toString();
+		}
 	}
 
 	/**

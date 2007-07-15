@@ -391,6 +391,6 @@ public class XMLDocumentationHandler {
 		}
 	}*/
 
-	private Set<Class> requiredTypes = new TreeSet<Class>(ClassComparator.INSTANCE);
-	private XMLParser parser = null;
+	protected Set<Class> requiredTypes = new TreeSet<Class>(ClassComparator.INSTANCE);
+	protected XMLParser parser = null;
 }

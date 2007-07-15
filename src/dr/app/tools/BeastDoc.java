@@ -29,9 +29,7 @@ import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.app.beast.BeastParser;
 import dr.app.beast.BeastVersion;
-import dr.xml.XMLDocumentationHandler;
-import dr.xml.XMLParseException;
-import dr.xml.XMLParser;
+import dr.xml.*;
 import dr.util.Version;
 
 import java.io.File;
@@ -52,7 +50,7 @@ public class BeastDoc {
 			throw new IllegalArgumentException(directory + " is not a directory!");
 		}
 
-		XMLDocumentationHandler handler = new XMLDocumentationHandler(parser);
+		XMLDocumentationHandler handler = new WikiDocumentationHandler(parser);
 
 		System.out.println("Building types table...");
 		handler.outputTypes(file);

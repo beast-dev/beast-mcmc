@@ -33,9 +33,9 @@ import java.io.StringWriter;
 public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
 	public final Object parseXMLObject(XMLObject xo, String id, ObjectStore store) throws XMLParseException {
-	
+
 		this.store = store;
-		
+
 		if (hasSyntaxRules()) {
 			final XMLSyntaxRule[] rules = getSyntaxRules();
             for (XMLSyntaxRule rule : rules) {
@@ -65,12 +65,12 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                 }
             }
         }
-		
+
 		try {
 			return parseXMLObject(xo);
 		} catch(XMLParseException xpe) {
-			throw new XMLParseException("Error parsing '<" + getParserName() + 
-											">' element with id, '" + id + "':\n" + 
+			throw new XMLParseException("Error parsing '<" + getParserName() +
+											">' element with id, '" + id + "':\n" +
 											xpe.getMessage());
 		}
 	}
@@ -80,28 +80,28 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 	public final void throwUnrecognizedElement(XMLObject xo) throws XMLParseException {
 		throw new XMLParseException("Unrecognized element '<" + xo.getName() + ">' in element '<" + getParserName()+">'");
 	}
-	
+
 	public abstract Object parseXMLObject(XMLObject xo) throws XMLParseException;
 	/**
-	 * @return an array of syntax rules required by this element. 
+	 * @return an array of syntax rules required by this element.
 	 * Order is not important.
 	 */
 	public abstract XMLSyntaxRule[] getSyntaxRules();
-	
+
 	public abstract String getParserDescription();
-	
+
 	public abstract Class getReturnType();
-	
+
 	public final boolean hasExample() {
 		return getExample() != null;
 	}
-	
+
 	public String getExample() { return null; }
-	
+
 	public final ObjectStore getStore() {
 		return store;
 	}
-	
+
 	/**
 	 * @return a description of this parser as a string.
 	 */
@@ -131,15 +131,39 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 		buffer.append("</div>\n");
 		buffer.append("</div>\n");
 		return buffer.toString();
-	}	
-	
+	}
+
+	/**
+	 * @return a description of this parser as a string.
+	 */
+	public final String toWiki(XMLDocumentationHandler handler) {
+		StringBuffer buffer = new StringBuffer();
+        buffer.append("===<code>&lt;").append(getParserName()).append("&gt;</code> element===\n\n");
+		buffer.append(getParserDescription()).append("\n\n");
+
+		if (hasSyntaxRules()) {
+			XMLSyntaxRule[] rules = getSyntaxRules();
+            for (XMLSyntaxRule rule : rules) {
+                buffer.append(rule.wikiRuleString(handler));
+            }
+            buffer.append("\n");
+		}
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		handler.outputExampleXML(pw, this);
+		pw.flush(); pw.close();
+		buffer.append(sw.toString());
+		buffer.append("\n");
+		return buffer.toString();
+	}
+
 	/**
 	 * @return a description of this parser as a string.
 	 */
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
         buffer.append("\nELEMENT ").append(getParserName()).append("\n");
-		
+
 		if (hasSyntaxRules()) {
 			XMLSyntaxRule[] rules = getSyntaxRules();
             for (XMLSyntaxRule rule : rules) {
@@ -147,16 +171,16 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
             }
         }
 		return buffer.toString();
-	}	
-	
+	}
+
 	//************************************************************************
 	// private methods
 	//************************************************************************
 
 	public final boolean hasSyntaxRules() {
 		XMLSyntaxRule[] rules = getSyntaxRules();
-		return (rules != null && rules.length > 0); 
+		return (rules != null && rules.length > 0);
 	}
-	
+
 	private ObjectStore store = null;
 }

@@ -36,7 +36,7 @@ public interface XMLSyntaxRule {
 
     /**
      * Check if rule contains attribute of that name
-     *  
+     *
      * @param name attribute name
      * @return   true if contains attribute
      */
@@ -46,18 +46,23 @@ public interface XMLSyntaxRule {
 	 * Describes the rule in general.
 	 */
 	public String ruleString();
-	
+
 	/**
 	 * Describes the rule in html.
 	 */
 	public String htmlRuleString(XMLDocumentationHandler handler);
 
 	/**
+	 * Describes the rule in html.
+	 */
+	public String wikiRuleString(XMLDocumentationHandler handler);
+	
+	/**
 	 * Describes the rule as pertains to the given object.
 	 * In particular if object does not satisfy the rule then how.
 	 */
 	public String ruleString(XMLObject object);
-	
+
 	/**
 	 * @return the classes potentially required by this rule.
 	 */

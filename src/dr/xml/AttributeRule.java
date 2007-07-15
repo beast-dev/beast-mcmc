@@ -29,14 +29,14 @@ import java.util.Collections;
 import java.util.Set;
 
 public class AttributeRule implements XMLSyntaxRule {
-	
+
 	AttributeRule() {}
-	
+
 	public void setName(String name) { this.name = name; }
 	public void setDescription(String description) { this.description = description; }
 	public void setAttributeClass(Class c) { this.c = c; }
 	public void setOptional(boolean optional) { this.optional = optional; }
-	
+
 	public boolean getOptional() { return optional; }
 
 	/**
@@ -57,7 +57,7 @@ public class AttributeRule implements XMLSyntaxRule {
 		this.c = c;
 		this.optional = optional;
 	}
-	
+
 	/**
 	 * Creates an attribute rule.
 	 */
@@ -67,49 +67,49 @@ public class AttributeRule implements XMLSyntaxRule {
 		this.optional = optional;
 		this.description = description;
 	}
-	
+
 	public static AttributeRule newIntegerRule(String name) { return new AttributeRule(name, Integer.class); }
 	public static AttributeRule newDoubleRule(String name) { return new AttributeRule(name, Double.class); }
 	public static AttributeRule newDoubleArrayRule(String name) { return new AttributeRule(name, Double[].class); }
 	public static AttributeRule newBooleanRule(String name) { return new AttributeRule(name, Boolean.class); }
 	public static AttributeRule newStringRule(String name) { return new AttributeRule(name, String.class); }
 	public static AttributeRule newStringArrayRule(String name) { return new AttributeRule(name, String[].class); }
-	
+
 	public static AttributeRule newIntegerRule(String name, boolean optional) { return new AttributeRule(name, Integer.class, optional); }
 	public static AttributeRule newIntegerArrayRule(String name, boolean optional) { return new AttributeRule(name, Integer[].class, optional); }
 	public static AttributeRule newDoubleRule(String name, boolean optional) { return new AttributeRule(name, Double.class, optional); }
 	public static AttributeRule newDoubleArrayRule(String name, boolean optional) { return new AttributeRule(name, Double[].class, optional); }
 	public static AttributeRule newBooleanRule(String name, boolean optional) { return new AttributeRule(name, Boolean.class, optional); }
 	public static AttributeRule newStringRule(String name, boolean optional) { return new AttributeRule(name, String.class, optional); }
-	
+
 	public static AttributeRule newIntegerRule(String name, boolean optional, String description) { return new AttributeRule(name, Integer.class, optional, description); }
 	public static AttributeRule newDoubleRule(String name, boolean optional, String description) { return new AttributeRule(name, Double.class, optional, description); }
 	public static AttributeRule newDoubleArrayRule(String name, boolean optional, String description) { return new AttributeRule(name, Double[].class, optional, description); }
 	public static AttributeRule newBooleanRule(String name, boolean optional, String description) { return new AttributeRule(name, Boolean.class, optional, description); }
 	public static AttributeRule newStringRule(String name, boolean optional, String description) { return new AttributeRule(name, String.class, optional, description); }
-	
+
 	public String getName() { return name; }
 	public Class getAttributeClass() { return c; }
 	public String getDescription() { return description; }
-	
+
 	public Object getAttribute(XMLObject xo) throws XMLParseException {
-		return xo.getAttribute(name); 
+		return xo.getAttribute(name);
 	}
-	
+
 	public boolean hasDescription() { return description != null; }
-	
-	public boolean hasExample() { return false; } 
-	
+
+	public boolean hasExample() { return false; }
+
 	public String getExample() { return null; }
 
 	/**
 	 * @return true if the required attribute of the correct type is present.
 	 */
 	public boolean isSatisfied(XMLObject xo) {
-	
-		if (xo.hasAttribute(name)) {	
+
+		if (xo.hasAttribute(name)) {
 			try {
-				Object obj = xo.getAttribute(name); 
+				Object obj = xo.getAttribute(name);
 				return isCompatible(obj);
 			} catch (XMLParseException xpe) { return false; }
 		} else if (optional) {
@@ -134,74 +134,82 @@ public class AttributeRule implements XMLSyntaxRule {
 		}
 		return rule;
 	}
-	
+
 	/**
 	 * @return a string describing the rule.
 	 */
 	public String htmlRuleString(XMLDocumentationHandler handler) {
-		String rule = 
-			"<div class=\"" + (optional ? "optional" : "required") + "rule\"> " + 
-			"Attribute <span class=\"attrname\">" + name + "</span> is " + 
+		String rule =
+			"<div class=\"" + (optional ? "optional" : "required") + "rule\"> " +
+			"Attribute <span class=\"attrname\">" + name + "</span> is " +
 			handler.getHTMLForClass(c) + " " +
-			(hasDescription() ? "<div class=\"description\">" + description + "</div>" : "") + 
+			(hasDescription() ? "<div class=\"description\">" + description + "</div>" : "") +
 			"</div>" ;
-			
+
 		/*if (optional) {
 			rule += " <span class=\"optional\">optional</span></div>";
 		} else {
 			rule += " <span class=\"required\">required</span></div>";
 		}*/
-		
+
 		/* <span class=\"symbol\">&#206;</span> */
-		
+
 		return rule;
 	}
-	
+
+	public String wikiRuleString(XMLDocumentationHandler handler) {
+		String rule = (optional ? ";Optional" : ";Required") + " attribute <code>" + name + "</code> is " +
+			handler.getHTMLForClass(c) + "\n" +
+			(hasDescription() ? ":" + description : "");
+
+		return rule;
+	}
+
 	/**
 	 * @return a string describing the rule.
 	 */
 	public String ruleString(XMLObject xo) {
-		
+
 		if (xo.hasAttribute(name)) {
 			try {
-				Object obj = xo.getAttribute(name); 
+				Object obj = xo.getAttribute(name);
 				boolean compatible = isCompatible(obj);
 				if (compatible) {
 					return ruleString();
 				} else return "ATTRIBUTE " + name + " expected to be of type " + getTypeName();
-	
-			} catch (XMLParseException xpe) { 
-				return xpe.toString(); 
+
+			} catch (XMLParseException xpe) {
+				return xpe.toString();
 			}
 		}
 		return ruleString();
 	}
-	
+
 	/**
 	 * @return a set containing the required types of this rule.
 	 */
 	public Set<Class> getRequiredTypes() { return Collections.singleton(c); }
 
-	
+
 	public boolean isAttributeRule() { return true; }
 
 	/**
 	 * @return true if the given object is compatible with the required class.
 	 */
 	private boolean isCompatible(Object o) {
-		
+
 		if (c == null) return true;
-		
+
 		if (c.isInstance(o)) { return true; }
-		
+
 		if (o instanceof String) {
-			
+
 			if (c == Double[].class) {
-				
+
 				return XMLObject.isDoubleArray((String)o, null);
 			}
 			if (c == Integer[].class) {
-				
+
 				return XMLObject.isIntegerArray((String)o, null);
 			}
 			if (c == Double.class) {
@@ -223,7 +231,7 @@ public class AttributeRule implements XMLSyntaxRule {
 				} catch (NumberFormatException nfe) { return false; }
 			}
 			if (c == Boolean.class) {
-				return (o.equals("true") || o.equals("false"));	
+				return (o.equals("true") || o.equals("false"));
 			}
 			if (c == Number.class) {
 				try {
@@ -232,20 +240,20 @@ public class AttributeRule implements XMLSyntaxRule {
 				} catch (NumberFormatException nfe) { return false; }
 			}
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * @return a pretty name for a class.
 	 */
 	private String getTypeName() {
-	
+
 		if (c == null) return "Object";
 		String name = c.getName();
 		return name.substring(name.lastIndexOf('.')+1);
 	}
-	
+
 	private String name;
 	private Class c;
 	private boolean optional;

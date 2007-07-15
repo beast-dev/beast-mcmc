@@ -101,6 +101,18 @@ public class XORRule implements XMLSyntaxRule {
 		return buffer.toString();
 	}
 
+	/**
+	 * Describes the rule.
+	 */
+	public String wikiRuleString(XMLDocumentationHandler handler) {
+		StringBuffer buffer = new StringBuffer("One of:\n");
+        for (XMLSyntaxRule rule : rules) {
+            buffer.append(rule.htmlRuleString(handler));
+        }
+        buffer.append("\n");
+		return buffer.toString();
+	}
+
 
 	/**
 	 * Describes the rule.

@@ -31,22 +31,24 @@ public interface XMLObjectParser {
 	 * @param store contains all named objects that have already been parsed.
 	 */
 	Object parseXMLObject(XMLObject xo, String id, ObjectStore store) throws XMLParseException;
-	
+
 	String getParserName();
-    
+
     String[] getParserNames();
-	
+
 	String getParserDescription();
-	
+
 	boolean hasExample();
-	
+
 	String getExample();
-	
-	
+
+
 	/**
 	 * @return a description of this parser as HTML.
 	 */
 	String toHTML(XMLDocumentationHandler handler);
+
+	String toWiki(XMLDocumentationHandler handler);
 	
 	Class getReturnType();
 

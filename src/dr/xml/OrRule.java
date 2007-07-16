@@ -87,10 +87,10 @@ public class OrRule implements XMLSyntaxRule {
 	/**
 	 * Describes the rule.
 	 */
-	public String wikiRuleString(XMLDocumentationHandler handler) {
-		String html = "At least one of:";
+	public String wikiRuleString(XMLDocumentationHandler handler, String prefix) {
+		String html = prefix + "At least one of:";
         for (XMLSyntaxRule rule : rules) {
-            html += rule.htmlRuleString(handler);
+            html += rule.wikiRuleString(handler, prefix + "*");
         }
         html += "\n";
 		return html;

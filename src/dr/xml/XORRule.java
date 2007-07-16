@@ -79,12 +79,12 @@ public class XORRule implements XMLSyntaxRule {
 	public String ruleString() {
 		StringBuffer buffer = new StringBuffer();
         if (optional) {
-            buffer.append("Optionally, one of \n");
+            buffer.append("*Optionally, one of \n");
         } else {
-            buffer.append("One of \n");
+            buffer.append("*One of \n");
         }
         for (XMLSyntaxRule rule : rules) {
-            buffer.append("  ").append(rule.ruleString()).append("\n");
+            buffer.append("*").append(rule.ruleString()).append("\n");
         }
         return buffer.toString();
 	}
@@ -104,10 +104,10 @@ public class XORRule implements XMLSyntaxRule {
 	/**
 	 * Describes the rule.
 	 */
-	public String wikiRuleString(XMLDocumentationHandler handler) {
-		StringBuffer buffer = new StringBuffer("One of:\n");
+	public String wikiRuleString(XMLDocumentationHandler handler, String prefix) {
+		StringBuffer buffer = new StringBuffer(prefix + "One of:\n");
         for (XMLSyntaxRule rule : rules) {
-            buffer.append(rule.htmlRuleString(handler));
+            buffer.append(rule.wikiRuleString(handler, prefix + "*"));
         }
         buffer.append("\n");
 		return buffer.toString();

@@ -29,15 +29,17 @@ import org.w3c.dom.NamedNodeMap;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
-	public final Object parseXMLObject(XMLObject xo, String id, ObjectStore store) throws XMLParseException {
+    public final Object parseXMLObject(XMLObject xo, String id, ObjectStore store) throws XMLParseException {
 
-		this.store = store;
+        this.store = store;
 
-		if (hasSyntaxRules()) {
-			final XMLSyntaxRule[] rules = getSyntaxRules();
+        if (hasSyntaxRules()) {
+            final XMLSyntaxRule[] rules = getSyntaxRules();
             for (XMLSyntaxRule rule : rules) {
                 if (!rule.isSatisfied(xo)) {
                     // System.err.println(this);
@@ -66,121 +68,142 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
             }
         }
 
-		try {
-			return parseXMLObject(xo);
-		} catch(XMLParseException xpe) {
-			throw new XMLParseException("Error parsing '<" + getParserName() +
-											">' element with id, '" + id + "':\n" +
-											xpe.getMessage());
-		}
-	}
+        try {
+            return parseXMLObject(xo);
+        } catch(XMLParseException xpe) {
+            throw new XMLParseException("Error parsing '<" + getParserName() +
+                    ">' element with id, '" + id + "':\n" +
+                    xpe.getMessage());
+        }
+    }
 
     public String[] getParserNames() { return new String[] { getParserName() }; }
 
-	public final void throwUnrecognizedElement(XMLObject xo) throws XMLParseException {
-		throw new XMLParseException("Unrecognized element '<" + xo.getName() + ">' in element '<" + getParserName()+">'");
-	}
+    public final void throwUnrecognizedElement(XMLObject xo) throws XMLParseException {
+        throw new XMLParseException("Unrecognized element '<" + xo.getName() + ">' in element '<" + getParserName()+">'");
+    }
 
-	public abstract Object parseXMLObject(XMLObject xo) throws XMLParseException;
-	/**
-	 * @return an array of syntax rules required by this element.
-	 * Order is not important.
-	 */
-	public abstract XMLSyntaxRule[] getSyntaxRules();
+    public abstract Object parseXMLObject(XMLObject xo) throws XMLParseException;
+    /**
+     * @return an array of syntax rules required by this element.
+     * Order is not important.
+     */
+    public abstract XMLSyntaxRule[] getSyntaxRules();
 
-	public abstract String getParserDescription();
+    public abstract String getParserDescription();
 
-	public abstract Class getReturnType();
+    public abstract Class getReturnType();
 
-	public final boolean hasExample() {
-		return getExample() != null;
-	}
+    public final boolean hasExample() {
+        return getExample() != null;
+    }
 
-	public String getExample() { return null; }
+    public String getExample() { return null; }
 
-	public final ObjectStore getStore() {
-		return store;
-	}
+    public final ObjectStore getStore() {
+        return store;
+    }
 
-	/**
-	 * @return a description of this parser as a string.
-	 */
-	public final String toHTML(XMLDocumentationHandler handler) {
-		StringBuffer buffer = new StringBuffer();
+    /**
+     * @return a description of this parser as a string.
+     */
+    public final String toHTML(XMLDocumentationHandler handler) {
+        StringBuffer buffer = new StringBuffer();
         buffer.append("<div id=\"").append(getParserName()).append("\" class=\"element\">\n");
-		buffer.append("  <div class=\"elementheader\">\n");
+        buffer.append("  <div class=\"elementheader\">\n");
         buffer.append("    <span class=\"elementname\">").append(getParserName()).append("</span> element\n");
-		buffer.append("    <div class=\"description\">\n");
+        buffer.append("    <div class=\"description\">\n");
         buffer.append("      ").append(getParserDescription()).append("\n");
-		buffer.append("    </div>\n");
-		buffer.append("  </div>\n");
-		if (hasSyntaxRules()) {
-			XMLSyntaxRule[] rules = getSyntaxRules();
-			buffer.append("  <div class=\"rules\">\n");
+        buffer.append("    </div>\n");
+        buffer.append("  </div>\n");
+        if (hasSyntaxRules()) {
+            XMLSyntaxRule[] rules = getSyntaxRules();
+            buffer.append("  <div class=\"rules\">\n");
             for (XMLSyntaxRule rule : rules) {
                 buffer.append(rule.htmlRuleString(handler));
             }
             buffer.append("  </div>\n");
-		}
-		buffer.append("<div class=\"example\">");
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		handler.outputExampleXML(pw, this);
-		pw.flush(); pw.close();
-		buffer.append(sw.toString());
-		buffer.append("</div>\n");
-		buffer.append("</div>\n");
-		return buffer.toString();
-	}
+        }
+        buffer.append("<div class=\"example\">");
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        handler.outputExampleXML(pw, this);
+        pw.flush(); pw.close();
+        buffer.append(sw.toString());
+        buffer.append("</div>\n");
+        buffer.append("</div>\n");
+        return buffer.toString();
+    }
 
-	/**
-	 * @return a description of this parser as a string.
-	 */
-	public final String toWiki(XMLDocumentationHandler handler) {
-		StringBuffer buffer = new StringBuffer();
+    /**
+     * @return a description of this parser as a string.
+     */
+    public final String toWiki(XMLDocumentationHandler handler) {
+        StringBuffer buffer = new StringBuffer();
         buffer.append("===<code>&lt;").append(getParserName()).append("&gt;</code> element===\n\n");
-		buffer.append(getParserDescription()).append("\n\n");
+        buffer.append(getParserDescription()).append("\n\n");
 
-		if (hasSyntaxRules()) {
-			XMLSyntaxRule[] rules = getSyntaxRules();
+        if (hasSyntaxRules()) {
+            XMLSyntaxRule[] rules = getSyntaxRules();
+            List<XMLSyntaxRule> attributes = new ArrayList<XMLSyntaxRule>();
+            List<XMLSyntaxRule> contents = new ArrayList<XMLSyntaxRule>();
             for (XMLSyntaxRule rule : rules) {
-                buffer.append(rule.wikiRuleString(handler));
+                if (rule instanceof AttributeRule) {
+                    attributes.add(rule);
+                } else {
+                    contents.add(rule);
+                }
             }
-            buffer.append("\n");
-		}
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		handler.outputExampleXML(pw, this);
-		pw.flush(); pw.close();
-		buffer.append(sw.toString());
-		buffer.append("\n");
-		return buffer.toString();
-	}
 
-	/**
-	 * @return a description of this parser as a string.
-	 */
-	public String toString() {
-		StringBuffer buffer = new StringBuffer();
+            if (attributes.size() > 0) {
+                buffer.append("The element takes following attributes:\n");
+                for (XMLSyntaxRule rule : attributes) {
+                    buffer.append(rule.wikiRuleString(handler, "*"));
+                }
+                buffer.append("\n");
+            }
+
+            if (contents.size() > 0) {
+                buffer.append("The element has the following contents:\n");
+                for (XMLSyntaxRule rule : contents) {
+                    buffer.append(rule.wikiRuleString(handler, "*"));
+                }
+                buffer.append("\n");
+            }
+        }
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        handler.outputExampleXML(pw, this);
+        pw.flush(); pw.close();
+        buffer.append(sw.toString());
+        buffer.append("\n");
+        return buffer.toString();
+    }
+
+    /**
+     * @return a description of this parser as a string.
+     */
+    public String toString() {
+        StringBuffer buffer = new StringBuffer();
         buffer.append("\nELEMENT ").append(getParserName()).append("\n");
 
-		if (hasSyntaxRules()) {
-			XMLSyntaxRule[] rules = getSyntaxRules();
+        if (hasSyntaxRules()) {
+            XMLSyntaxRule[] rules = getSyntaxRules();
             for (XMLSyntaxRule rule : rules) {
                 buffer.append("  ").append(rule.ruleString()).append("\n");
             }
         }
-		return buffer.toString();
-	}
+        return buffer.toString();
+    }
 
-	//************************************************************************
-	// private methods
-	//************************************************************************
+    //************************************************************************
+    // private methods
+    //************************************************************************
 
-	public final boolean hasSyntaxRules() {
-		XMLSyntaxRule[] rules = getSyntaxRules();
-		return (rules != null && rules.length > 0);
-	}
+    public final boolean hasSyntaxRules() {
+        XMLSyntaxRule[] rules = getSyntaxRules();
+        return (rules != null && rules.length > 0);
+    }
 
-	private ObjectStore store = null;
+    private ObjectStore store = null;
 }

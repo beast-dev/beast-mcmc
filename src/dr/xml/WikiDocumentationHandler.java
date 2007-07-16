@@ -33,48 +33,43 @@ import java.util.*;
  */
 public class WikiDocumentationHandler extends XMLDocumentationHandler {
 
-	public WikiDocumentationHandler(XMLParser parser) {
-		super(parser);
-	}
+    public WikiDocumentationHandler(XMLParser parser) {
+        super(parser);
+    }
 
-	public void outputElements(File directory) throws java.io.IOException {
+    public void outputElements(PrintWriter writer) {
 
-		PrintWriter writer = new PrintWriter(new FileWriter(new File(directory, "elements.wiki")));
+        writer.println("==BEAST elements==");
+        writer.println("");
+        writer.println("The following is a list of valid elements in a beast file.");
+        writer.println("");
 
-		writer.println("==BEAST elements==");
-		writer.println("");
-		writer.println("The following is a list of valid elements in a beast file.");
-		writer.println("");
+        Iterator iterator = parser.getParsers();
+        while (iterator.hasNext()) {
+            XMLObjectParser xmlParser = (XMLObjectParser)iterator.next();
+            writer.println(xmlParser.toWiki(this));
 
-		Iterator iterator = parser.getParsers();
-		while (iterator.hasNext()) {
-			XMLObjectParser xmlParser = (XMLObjectParser)iterator.next();
-			writer.println(xmlParser.toWiki(this));
+            // convert the html into wiki...
 
-			// convert the html into wiki...
+            System.out.println("  outputting Wiki for element " + xmlParser.getParserName());
+        }
 
-			System.out.println("  outputting Wiki for element " + xmlParser.getParserName());
-		}
-
-		writer.flush();
-		writer.close();
-	}
+    }
 
 
-	/**
-	 * Outputs all types that appear as required attributes or elements in an HTML table to the given writer.
-	 */
-	public void outputTypes(File directory) throws java.io.IOException {
+    /**
+     * Outputs all types that appear as required attributes or elements in an HTML table to the given writer.
+     */
+    public void outputTypes(PrintWriter writer) {
 
-		PrintWriter writer = new PrintWriter(new FileWriter(new File(directory, "types.wiki")));
-		writer.println("==BEAST types==");
-		writer.println("");
-		writer.println("The following is a list of generic types that elements represent in a beast file.");
-		writer.println("");
+        writer.println("==BEAST types==");
+        writer.println("");
+        writer.println("The following is a list of generic types that elements represent in a beast file.");
+        writer.println("");
 
 
-		// iterate through the types
-		//Iterator iterator = requiredTypes.iterator();
+        // iterate through the types
+        //Iterator iterator = requiredTypes.iterator();
         for (Class requiredType : requiredTypes) {
             if (requiredType != Object.class) {
 
@@ -95,28 +90,28 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
                     }
                 }
 
-                // output table row containing the type and the matching parser names
-                writer.println("===" + name + "===");
-                writer.println();
-                writer.println("Elements of this type include:");
-                writer.println();
-                i = matchingParserNames.iterator();
-                while (i.hasNext()) {
-                    String parserName = (String) i.next();
-                    writer.println(":*[[#" + parserName + "|" + parserName + "]]");
+                if (!(matchingParserNames.size() == 1 && matchingParserNames.iterator().next().equals(name))) {
+                    
+                    // output table row containing the type and the matching parser names
+                    writer.println("===" + name + "===");
+                    writer.println();
+                    writer.println("Elements of this type include:");
+                    writer.println();
+                    i = matchingParserNames.iterator();
+                    while (i.hasNext()) {
+                        String parserName = (String) i.next();
+                        writer.println(":*[[#" + parserName + "|" + parserName + "]]");
+                    }
+                    writer.println();
                 }
-                writer.println();
             }
 
         }
-
-		writer.flush();
-		writer.close();
-	}
+    }
 
 
-	public String getHTMLForClass(Class c) {
-		String name = ClassComparator.getName(c);
-		return "[[#" + name + "|" + name + "]]";
-	}
+    public String getHTMLForClass(Class c) {
+        String name = ClassComparator.getName(c);
+        return "[[#" + name + "|" + name + "]]";
+    }
 }

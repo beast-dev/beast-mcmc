@@ -159,9 +159,8 @@ public class AttributeRule implements XMLSyntaxRule {
 
 	public String wikiRuleString(XMLDocumentationHandler handler, String prefix) {
 		String rule = prefix + "Attribute " + (optional ? "(optional) " : "") + "<code>" + name + "</code> is " +
-			handler.getHTMLForClass(c) + "\n" +
-			(hasDescription() ? ":" + description : "") +
-                "\n";
+			handler.getHTMLForClass(c) + "\n" + prefix + ":" +
+			(hasDescription() ? "''" + description + "''" : "") + "\n";
 
 		return rule;
 	}

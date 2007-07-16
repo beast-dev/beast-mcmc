@@ -156,7 +156,7 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
             }
 
             if (attributes.size() > 0) {
-                buffer.append("The element takes following attributes:\n");
+                buffer.append("\nThe element takes following attributes:\n");
                 for (XMLSyntaxRule rule : attributes) {
                     buffer.append(rule.wikiRuleString(handler, "*"));
                 }
@@ -164,13 +164,14 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
             }
 
             if (contents.size() > 0) {
-                buffer.append("The element has the following contents:\n");
+                buffer.append("\nThe element has the following contents:\n");
                 for (XMLSyntaxRule rule : contents) {
                     buffer.append(rule.wikiRuleString(handler, "*"));
                 }
                 buffer.append("\n");
             }
         }
+        buffer.append("\nExample:\n");
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         handler.outputExampleXML(pw, this);

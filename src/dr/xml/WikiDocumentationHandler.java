@@ -100,7 +100,7 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
                     i = matchingParserNames.iterator();
                     while (i.hasNext()) {
                         String parserName = (String) i.next();
-                        writer.println(":*[[#" + parserName + "|" + parserName + "]]");
+                        writer.println(":*" + getWikiLink(parserName));
                     }
                     writer.println();
                 }
@@ -111,7 +111,16 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
 
 
     public String getHTMLForClass(Class c) {
-        String name = ClassComparator.getName(c);
-        return "[[#" + name + "|" + name + "]]";
+        return getWikiLink(ClassComparator.getName(c));
+    }
+
+    public String getWikiLink(String name) {
+        if (Character.isUpperCase(name.charAt(0))) {
+            // linking to a 'type'
+            return "[[#" + name + "|" + name + "]]";
+        } else {
+            // linking to an 'element'
+            return "[[#&lt;" + name + "&gt; element|" + name + "]]";
+        }
     }
 }

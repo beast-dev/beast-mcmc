@@ -299,7 +299,7 @@ public class ElementRule implements XMLSyntaxRule {
 
     public String wikiRuleString(XMLDocumentationHandler handler, String prefix) {
 		if (c != null) {
-			String wiki = prefix + ";" + handler.getHTMLForClass(c);
+			String wiki = prefix + handler.getHTMLForClass(c);
 			if (max > 1) {
 				wiki += " elements (";
 				if (min == 0) {
@@ -327,19 +327,22 @@ public class ElementRule implements XMLSyntaxRule {
 			wiki += ")\n";
 
 			if (hasDescription()) {
-				wiki += prefix + ":" + getDescription() + "\n";
-			}
-			return wiki + "\n";
+				wiki += prefix + ":''" + getDescription() + "''\n";
+			} else {
+                wiki += prefix + ":\n";
+            }
+			return wiki;
 
 		} else {
-			StringBuffer buffer = new StringBuffer(prefix + ";" + "Element named <code>&lt;" + name + "&gt;</code> containing:\n");
+			StringBuffer buffer = new StringBuffer(prefix + "Element named <code>&lt;" + name + "&gt;</code> containing:\n");
             for (XMLSyntaxRule rule : rules) {
                 buffer.append(rule.wikiRuleString(handler, prefix + "*"));
             }
             if (hasDescription()) {
-                buffer.append(prefix + ":").append(getDescription()).append("\n");
-			}
-			buffer.append("\n");
+                buffer.append(prefix + "*:''").append(getDescription()).append("''\n");
+			} else {
+                buffer.append(prefix + "*:\n");
+            }
 			return buffer.toString();
 		}
 	}

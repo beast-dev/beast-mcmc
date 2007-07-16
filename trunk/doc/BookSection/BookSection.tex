@@ -486,11 +486,11 @@ are relative to $r_{C{\leftrightarrow}T} = 1.0$. These parameters only appear if
 model.
 
 \item \texttt{hky.kappa} - This parameter is the transition/transversion ratio ($\kappa$) parameter of the
-HKY85 model of nucleotide substitution \cite{ha85}. This parameter only appears if you have selected the HKY
+HKY85 model of nucleotide substitution \cite{HKY1985}. This parameter only appears if you have selected the HKY
 substitution model.
 
 \item \texttt{siteModel.alpha} -	 This parameter is the shape ($\alpha$) parameter of the $\Gamma$
-distribution of rate heterogeneity among sites \cite{yang94approx}. This parameter only appears when you have selected Gamma
+distribution of rate heterogeneity among sites \cite{Y1994}. This parameter only appears when you have selected Gamma
 or Gamma+Invariant Sites in the site heterogeneity model.
 
 \item \texttt{siteModel.pInv} -	 This parameter is the proportion of  invariant sites ($p_{inv}$) and has a
@@ -876,7 +876,7 @@ unreliable.
 The simple response to this situation is that we need to run the chain for longer. Given the lowest
 ESS (for the \texttt{clock.rate}) is 26, it would suggest that we have to run it at least 4
 times longer to get ESSs that are $>$100. However it would be better to aim higher so lets
-go for a chain length of 1,000,000. Go back to Section \ref{section:2.7}
+go for a chain length of 1,000,000. Go back to Section~\ref{section:Setting the MCMC options}
 and create a new BEAST XML file with a longer chain length. Now run BEAST and load the new
 log file into Tracer (you can leave the old one loaded for comparison). Click on the Trace
 tab and look at the raw trace plot (Figure~\ref{fig:figure7}).
@@ -1070,6 +1070,9 @@ match probabilities. \emph{J Royal Stat Soc A-Statistics in Society}
 
 \bibitem{Beaumont1999}Beaumont MA: Detecting population expansion
 and decline using microsatellites. \emph{Genetics} 1999, \textbf{153}(4):2013-2029.
+
+\bibitem{F81}Felsenstein J: Evolutionary trees from DNA sequences: a maximum likelihood approach.
+\emph{J Mol Evol} 1981, \textbf{17}: 368-376.
 
 \bibitem{RY2003}Rannala B, Yang ZH: Bayes estimation of species divergence
 times and ancestral population sizes using DNA sequences from multiple

@@ -297,47 +297,47 @@ public class ElementRule implements XMLSyntaxRule {
 		}
 	}
 
-	public String wikiRuleString(XMLDocumentationHandler handler) {
+    public String wikiRuleString(XMLDocumentationHandler handler, String prefix) {
 		if (c != null) {
-			String html = ";" + (min == 0 ? "" : "'''") + handler.getHTMLForClass(c) + (min == 0 ? "" : "'''");
+			String wiki = prefix + ";" + handler.getHTMLForClass(c);
 			if (max > 1) {
-				html += " elements (";
+				wiki += " elements (";
 				if (min == 0) {
-					html += "zero";
+					wiki += "zero";
 				} else if (min == 1) {
-					html += "one";
+					wiki += "one";
 				} else if (min == max) {
-					html += "exactly " + min;
+					wiki += "exactly " + min;
 				}
 				if (max != min) {
 					if (max < Integer.MAX_VALUE) {
-						html += " to " + max;
+						wiki += " to " + max;
 					} else {
-						html += " or more";
+						wiki += " or more";
 					}
 				}
 			} else {
-				html += " element (";
+				wiki += " element (";
 				if (min == 0) {
-					html += "zero or one";
+					wiki += "zero or one";
 				} else {
-					html += "exactly one";
+					wiki += "exactly one";
 				}
 			}
-			html += ")\n";
+			wiki += ")\n";
 
 			if (hasDescription()) {
-				html += ":" + getDescription() + "\n";
+				wiki += prefix + ":" + getDescription() + "\n";
 			}
-			return html + "\n";
+			return wiki + "\n";
 
 		} else {
-			StringBuffer buffer = new StringBuffer(";" + (min == 0 ? "" : "'''") + "Element named <code>" + name + "</code> containing:");
+			StringBuffer buffer = new StringBuffer(prefix + ";" + "Element named <code>&lt;" + name + "&gt;</code> containing:\n");
             for (XMLSyntaxRule rule : rules) {
-                buffer.append(rule.htmlRuleString(handler));
+                buffer.append(rule.wikiRuleString(handler, prefix + "*"));
             }
             if (hasDescription()) {
-                buffer.append(":").append(getDescription()).append("\n");
+                buffer.append(prefix + ":").append(getDescription()).append("\n");
 			}
 			buffer.append("\n");
 			return buffer.toString();

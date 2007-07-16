@@ -64,8 +64,8 @@ public class ContentRule implements XMLSyntaxRule {
 	/**
 	 * @return a string describing the rule.
 	 */
-	public String wikiRuleString(XMLDocumentationHandler handler) {
-		return ":" + htmlDescription;
+	public String wikiRuleString(XMLDocumentationHandler handler, String prefix) {
+		return prefix + ":" + htmlDescription;
 	}
 
 	/**

@@ -53,9 +53,9 @@ public interface XMLSyntaxRule {
 	public String htmlRuleString(XMLDocumentationHandler handler);
 
 	/**
-	 * Describes the rule in html.
+	 * Describes the rule in wiki.
 	 */
-	public String wikiRuleString(XMLDocumentationHandler handler);
+	public String wikiRuleString(XMLDocumentationHandler handler, String prefix);
 	
 	/**
 	 * Describes the rule as pertains to the given object.

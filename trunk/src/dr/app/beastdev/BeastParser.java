@@ -271,6 +271,8 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.operators.PrecisionMatrixGibbsOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.InternalTraitGibbsOperator.PARSER);
 		addXMLObjectParser(dr.inference.model.CorrelationStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.continuous.BivariateDiscreteDiffusionModel.PARSER);
+		addXMLObjectParser(dr.inference.operators.RandomWalkOnMapOperator.PARSER);
 
 		//GMRF
 		addXMLObjectParser(dr.evomodel.coalescent.GMRFSkylineLikelihood.PARSER);

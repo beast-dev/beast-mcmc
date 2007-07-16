@@ -41,6 +41,11 @@ public class MultivariateDiffusionModel extends AbstractModel {
 
 	}
 
+	public MultivariateDiffusionModel() {
+		super(DIFFUSION_PROCESS);
+	}
+
+
 	public MatrixParameter getPrecisionMatrixParameter() {
 		return diffusionPrecisionMatrixParameter;
 	}

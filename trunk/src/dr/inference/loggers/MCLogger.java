@@ -33,6 +33,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A class for a general purpose logger.
@@ -334,13 +335,13 @@ public class MCLogger implements Logger {
 	
 	protected int logEvery = 0;
 
-    public ArrayList<LogFormatter> getFormatters() {
+    public List<LogFormatter> getFormatters() {
         return formatters;
     }
 
-    public void setFormatters(ArrayList<LogFormatter> formatters) {
+    public void setFormatters(List<LogFormatter> formatters) {
         this.formatters = formatters;
     }
 
-    protected ArrayList<LogFormatter> formatters = new ArrayList<LogFormatter>();
+    protected List<LogFormatter> formatters = new ArrayList<LogFormatter>();
 }

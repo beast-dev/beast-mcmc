@@ -27,8 +27,12 @@ package dr.inference.operators;
 
 public abstract class SimpleMCMCOperator implements MCMCOperator {
 
-	public double getTargetAcceptanceProbability() { return 0.234; }
-	public double getMinimumAcceptanceLevel() { return 0.10; }
+	public double getTargetAcceptanceProbability() { return targetAcceptanceProb; }
+	public void setTargetAcceptanceProbability(double tap) {
+        targetAcceptanceProb = tap;
+    }
+
+    public double getMinimumAcceptanceLevel() { return 0.10; }
 	public double getMaximumAcceptanceLevel() { return 0.40; }
 	public double getMinimumGoodAcceptanceLevel() { return 0.20; }
 	public double getMaximumGoodAcceptanceLevel() { return 0.30; }
@@ -124,4 +128,6 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
 	private double sumDeviation = 0.0;
 	private double lastDeviation = 0.0;
 	private boolean operateAllowed = true;
+    private double targetAcceptanceProb = 0.234;
 }
+

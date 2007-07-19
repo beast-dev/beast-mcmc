@@ -48,6 +48,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
     public static final String SWAP_RATES = "swapInRandomRate";
     public static final String SWAP_TRAITS = "swapInRandomTrait";
     public static final String DIRICHLET_BRANCHES = "branchesAreScaledDirichlet";
+    public static final String TARGET_ACCEPTANCE = "targetAcceptance";
 
     public static final String TRAIT = "trait";
 
@@ -402,10 +403,19 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             int weight = xo.getIntegerAttribute("weight");
+
+            double targetAcceptance = 0.234;
+            if (xo.hasAttribute(TARGET_ACCEPTANCE)) {
+                targetAcceptance = xo.getDoubleAttribute(TARGET_ACCEPTANCE);
+
+            }
             double size = xo.getDoubleAttribute("size");
             boolean gaussian = xo.getBooleanAttribute("gaussian");
-            return new SubtreeSlideOperator(treeModel, weight, size, gaussian,
+            SubtreeSlideOperator operator = new SubtreeSlideOperator(treeModel, weight, size, gaussian,
                     swapRates, swapTraits, scaledDirichletBranches, mode);
+            operator.setTargetAcceptanceProbability(targetAcceptance);
+
+            return operator;
         }
 
         public String getParserDescription() {
@@ -423,6 +433,7 @@ public class SubtreeSlideOperator extends SimpleMCMCOperator implements Coercabl
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newIntegerRule("weight"),
                 AttributeRule.newDoubleRule("size"),
+                AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true),
                 AttributeRule.newBooleanRule("gaussian"),
                 AttributeRule.newBooleanRule(SWAP_RATES, true),
                 AttributeRule.newBooleanRule(SWAP_TRAITS, true),

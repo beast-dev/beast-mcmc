@@ -27,6 +27,7 @@ package dr.inference.mcmcmc;
 
 import dr.inference.loggers.Logger;
 import dr.inference.loggers.MCLogger;
+import dr.inference.loggers.LogFormatter;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
@@ -40,6 +41,9 @@ import dr.util.NumberFormatter;
 import dr.math.MathUtils;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Collections;
+import java.util.logging.Formatter;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -59,7 +63,7 @@ public class MCMCMC implements Runnable {
             throw new RuntimeException("The first chain in the array should be cold (temperature = 1.0)");
         }
 
-	    coldChain = 0;
+        coldChain = 0;
 
         this.mcmcOptions = mcmcs[coldChain].getOptions();
 
@@ -80,7 +84,7 @@ public class MCMCMC implements Runnable {
 
         // Get all the operator schedules. The tuning values of these must be swapped
         // around as the temperatures are swapped.
-		schedules = new OperatorSchedule[mcmcs.length];
+        schedules = new OperatorSchedule[mcmcs.length];
         for (int i = 0; i < schedules.length; i++) {
             schedules[i] = mcmcs[i].getOperatorSchedule();
         }
@@ -90,8 +94,8 @@ public class MCMCMC implements Runnable {
         chains[0] = mcmcs[0].getMarkovChain();
         for (int i = 1; i < chains.length; i++) {
             chains[i] = mcmcs[i].getMarkovChain();
-	        MCMCCriterion acceptor = ((MCMCCriterion)chains[i].getAcceptor());
-	        acceptor.setTemperature(mcmcmcOptions.getChainTemperatures()[i]);
+            MCMCCriterion acceptor = ((MCMCCriterion)chains[i].getAcceptor());
+            acceptor.setTemperature(mcmcmcOptions.getChainTemperatures()[i]);
         }
 
     }
@@ -113,24 +117,24 @@ public class MCMCMC implements Runnable {
             }
         }
 
-        MCLogger[] loggers = mcLoggers[coldChain];
-        ArrayList[] logFormatters = new ArrayList[loggers.length];
+        MCLogger[] coldChainLoggers = mcLoggers[coldChain];
+        List<LogFormatter>[] logFormatters = new List[coldChainLoggers.length];
 
-        for (int i = 0; i < loggers.length; i++) {
+        for (int i = 0; i < coldChainLoggers.length; i++) {
             // Start the logging for the cold chain
-            loggers[i].startLogging();
+            coldChainLoggers[i].startLogging();
 
-            // Now get the formatters (destinations) for the cold chains loggers
-            logFormatters[i] = loggers[i].getFormatters();
+            // Now get the formatters (destinations) for the cold chains coldChainLoggers
+            logFormatters[i] = coldChainLoggers[i].getFormatters();
         }
 
-        int oldColdChain = 0;
-
-        // Set the cold chain's loggers with the formatters (destinations) of
-        // the original cold chain
-        loggers = mcLoggers[coldChain];
-        for (int i = 0; i < loggers.length; i++) {
-            loggers[i].setFormatters(logFormatters[i]);
+        // Set the other chains to have null log formatters...
+        for (int j = 0; j < mcLoggers.length; j++) {
+            if (j != coldChain) {
+                for (int i = 0; i < mcLoggers[j].length; i++) {
+                    mcLoggers[j][i].setFormatters(Collections.EMPTY_LIST);
+                }
+            }
         }
 
         chains[coldChain].addMarkovChainListener(chainListener);
@@ -160,29 +164,34 @@ public class MCMCMC implements Runnable {
             } while (!allDone);
 
             if (chains[coldChain].getCurrentLength() < getChainLength()) {
+                int oldColdChain = coldChain;
+
                 // attempt to swap two chains' temperatures
                 coldChain = swapChainTemperatures();
 
                 // if the cold chain was involved in a swap then we need to change the
-                // listener that does the logging and the destinations for the loggers.
+                // listener that does the logging and the destinations for the coldChainLoggers.
                 if (coldChain != oldColdChain) {
 
                     chains[oldColdChain].removeMarkovChainListener(chainListener);
 
-                    // Set the cold chain's loggers with the formatters (destinations) of
+                    // Set the new cold chain's loggers with the formatters (destinations) of
                     // the original cold chain
-                    loggers = mcLoggers[coldChain];
-                    for (int j = 0; j < loggers.length; j++) {
-                        loggers[j].setFormatters(logFormatters[j]);
+                    for (int i = 0; i < mcLoggers[coldChain].length; i++) {
+                        mcLoggers[coldChain][i].setFormatters(logFormatters[i]);
+                    }
+
+                    // Set the old cold chain to have null log formatters...
+                    for (int i = 0; i < mcLoggers[oldColdChain].length; i++) {
+                        mcLoggers[oldColdChain][i].setFormatters(Collections.EMPTY_LIST);
                     }
 
                     chains[coldChain].addMarkovChainListener(chainListener);
 
-                    oldColdChain = coldChain;
                 }
 
                 for (int i = 0; i < chains.length; i++) {
-	                threads[i].continueChain();
+                    threads[i].continueChain();
                 }
             }
 
@@ -201,43 +210,43 @@ public class MCMCMC implements Runnable {
             threads[i].start();
         }
 
-	    // wait for all threads collected to die
-	    for (int i =0; i < chains.length; i++) {
-		    // wait doggedly for thread to die
-		    while (threads[i].isAlive()) {
-			    try {
-				    threads[i].join();
-			    } catch (InterruptedException ie) {
-				    // DO NOTHING
-			    }
-		    }
+        // wait for all threads collected to die
+        for (int i =0; i < chains.length; i++) {
+            // wait doggedly for thread to die
+            while (threads[i].isAlive()) {
+                try {
+                    threads[i].join();
+                } catch (InterruptedException ie) {
+                    // DO NOTHING
+                }
+            }
 
-	    }
+        }
     }
 
     private int swapChainTemperatures() {
 
         int newColdChain = coldChain;
 
-	    int index1 = MathUtils.nextInt(chains.length);
-	    int index2 = MathUtils.nextInt(chains.length);
-	    while (index1 == index2) {
-		    index2 = MathUtils.nextInt(chains.length);
-	    }
+        int index1 = MathUtils.nextInt(chains.length);
+        int index2 = MathUtils.nextInt(chains.length);
+        while (index1 == index2) {
+            index2 = MathUtils.nextInt(chains.length);
+        }
 
-	    double score1 = chains[index1].getCurrentScore();
-	    MCMCCriterion acceptor1 = ((MCMCCriterion)chains[index1].getAcceptor());
-	    double temperature1 = acceptor1.getTemperature();
-	    double score2 = chains[index2].getCurrentScore();
-	    MCMCCriterion acceptor2 = ((MCMCCriterion)chains[index2].getAcceptor());
-	    double temperature2 = acceptor2.getTemperature();
+        double score1 = chains[index1].getCurrentScore();
+        MCMCCriterion acceptor1 = ((MCMCCriterion)chains[index1].getAcceptor());
+        double temperature1 = acceptor1.getTemperature();
+        double score2 = chains[index2].getCurrentScore();
+        MCMCCriterion acceptor2 = ((MCMCCriterion)chains[index2].getAcceptor());
+        double temperature2 = acceptor2.getTemperature();
 
-	    double logRatio = ((score2 - score1) * temperature1) + ((score1 - score2) * temperature2);
-	    boolean swap = (Math.log(MathUtils.nextDouble()) < logRatio);
+        double logRatio = ((score2 - score1) * temperature1) + ((score1 - score2) * temperature2);
+        boolean swap = (Math.log(MathUtils.nextDouble()) < logRatio);
 
-	    if (swap) {
-		    acceptor1.setTemperature(temperature2);
-		    acceptor2.setTemperature(temperature1);
+        if (swap) {
+            acceptor1.setTemperature(temperature2);
+            acceptor2.setTemperature(temperature1);
 
             OperatorSchedule schedule1 = schedules[index1];
             OperatorSchedule schedule2 = schedules[index2];
@@ -265,12 +274,12 @@ public class MCMCMC implements Runnable {
                 }
             }
 
-		    if (index1 == coldChain) {
-		        newColdChain = index2;
-		    } else if (index2 == coldChain) {
-		        newColdChain = index1;
-		    }
-	    }
+            if (index1 == coldChain) {
+                newColdChain = index2;
+            } else if (index2 == coldChain) {
+                newColdChain = index1;
+            }
+        }
 
         return newColdChain;
     }
@@ -282,10 +291,10 @@ public class MCMCMC implements Runnable {
         }
     }
 
-	/** cleans up when the chain finishes (possibly early). */
-	private void finish() {
+    /** cleans up when the chain finishes (possibly early). */
+    private void finish() {
 
-		NumberFormatter formatter = new NumberFormatter(8);
+        NumberFormatter formatter = new NumberFormatter(8);
 
         MCLogger[] loggers = mcLoggers[coldChain];
         for (int i =0; i < loggers.length; i++) {
@@ -296,53 +305,53 @@ public class MCMCMC implements Runnable {
         System.out.println();
         System.out.println("Time taken: " + timer.toString());
 
-	    if (showOperatorAnalysis) {
-	        System.out.println();
-	        System.out.println("Operator analysis");
-	        System.out.println(
-	            formatter.formatToFieldWidth("Operator", 30) +
-	            formatter.formatToFieldWidth("", 8) +
-	            formatter.formatToFieldWidth("Pr(accept)", 11) +
-	            " Performance suggestion");
-	        for (int i =0; i < schedules[coldChain].getOperatorCount(); i++) {
+        if (showOperatorAnalysis) {
+            System.out.println();
+            System.out.println("Operator analysis");
+            System.out.println(
+                    formatter.formatToFieldWidth("Operator", 30) +
+                            formatter.formatToFieldWidth("", 8) +
+                            formatter.formatToFieldWidth("Pr(accept)", 11) +
+                            " Performance suggestion");
+            for (int i =0; i < schedules[coldChain].getOperatorCount(); i++) {
 
-	            MCMCOperator op = schedules[coldChain].getOperator(i);
-	            double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
-	            String message = "good";
-	            if (acceptanceProb < op.getMinimumGoodAcceptanceLevel()) {
-	                if (acceptanceProb < (op.getMinimumAcceptanceLevel()/10.0)) {
-	                    message = "very low";
-	                } else if (acceptanceProb < op.getMinimumAcceptanceLevel()) {
-	                    message = "low";
-	                } else message = "slightly low";
+                MCMCOperator op = schedules[coldChain].getOperator(i);
+                double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
+                String message = "good";
+                if (acceptanceProb < op.getMinimumGoodAcceptanceLevel()) {
+                    if (acceptanceProb < (op.getMinimumAcceptanceLevel()/10.0)) {
+                        message = "very low";
+                    } else if (acceptanceProb < op.getMinimumAcceptanceLevel()) {
+                        message = "low";
+                    } else message = "slightly low";
 
-	            } else if (acceptanceProb > op.getMaximumGoodAcceptanceLevel()) {
-	                double reallyHigh = 1.0 - ((1.0-op.getMaximumAcceptanceLevel())/10.0);
-	                if (acceptanceProb > reallyHigh) {
-	                    message = "very high";
-	                } else if (acceptanceProb > op.getMaximumAcceptanceLevel()) {
-	                    message = "high";
-	                } else message = "slightly high";
-	            }
+                } else if (acceptanceProb > op.getMaximumGoodAcceptanceLevel()) {
+                    double reallyHigh = 1.0 - ((1.0-op.getMaximumAcceptanceLevel())/10.0);
+                    if (acceptanceProb > reallyHigh) {
+                        message = "very high";
+                    } else if (acceptanceProb > op.getMaximumAcceptanceLevel()) {
+                        message = "high";
+                    } else message = "slightly high";
+                }
 
-	            String suggestion = op.getPerformanceSuggestion();
+                String suggestion = op.getPerformanceSuggestion();
 
-	            String pString = "        ";
-	            if (op instanceof CoercableMCMCOperator) {
-	                pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator)op).getRawParameter(), 3), 8);
-	            }
+                String pString = "        ";
+                if (op instanceof CoercableMCMCOperator) {
+                    pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator)op).getRawParameter(), 3), 8);
+                }
 
-	            System.out.println(
-	                formatter.formatToFieldWidth(op.getOperatorName(), 30) +
+                System.out.println(
+                        formatter.formatToFieldWidth(op.getOperatorName(), 30) +
 
-	                pString +
+                                pString +
 
-	                formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) +
-	                 " " + message + "\t" + suggestion);
-	        }
-	        System.out.println();
-	    }
-	}
+                                formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) +
+                                " " + message + "\t" + suggestion);
+            }
+            System.out.println();
+        }
+    }
 
     public class BurninListener implements MarkovChainListener {
 
@@ -485,8 +494,8 @@ public class MCMCMC implements Runnable {
 
     // PRIVATE TRANSIENTS
 
-	private MCMCOptions mcmcOptions;
-	private MCMCMCOptions mcmcmcOptions;
+    private MCMCOptions mcmcOptions;
+    private MCMCMCOptions mcmcmcOptions;
 
     private boolean showOperatorAnalysis = true;
     private dr.util.Timer timer = new dr.util.Timer();

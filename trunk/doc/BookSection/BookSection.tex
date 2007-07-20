@@ -1,6 +1,9 @@
-%% LyX 1.4.3 created this file.  For more info, see http://www.lyx.org/.
-%% Do not edit unless you really know what you are doing.
-\documentclass[a4paper, english]{report}
+
+\NeedsTeXFormat{LaTeX2e}[1996/06/01]
+
+\documentclass[cup7b, english]{cupbook}
+
+
  \usepackage{graphicx}
  \usepackage{amssymb}
  \usepackage{epstopdf}
@@ -27,52 +30,60 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
 
-\setcounter{chapter}{18}
 
-\usepackage{babel}
+\title{The Phylogenetics Handbook}
+
 \makeatother
 \begin{document}
+\maketitle
+\tableofcontents
+\cleardoublepage
+\pagenumbering{arabic}
 
-\title{\textbf{Bayesian evolutionary analysis by sampling trees}}
+\setcounter{chapter}{17}
 
+\author[Alexei J. Drummond and Andrew Rambaut] 
+{Alexei J. Drummond \\ Department of Computer Science, 
+University of Auckland, Auckland, NZ
+\and
+Andrew Rambaut \\ Institute of Evolutionary Biology, University of Edinburgh, 
+ Edinburgh, UK}
+
+\chapter{Bayesian evolutionary analysis by sampling trees}
 
 \author{\textsc{Alexei J. Drummond}$^{1}$ and \textsc{Andrew Rambaut}$^{2}$\\
  \\
 $^{1}$Department of Computer Science\\
  The University of Auckland, Private Bag 92019\\
  Auckland, New Zealand\\
- \texttt{alexei@cs.auckland.ac.nz}\\
+\\
 \\
 $^{2}$Institute of Evolutionary Biology\\
  University of Edinburgh\\
  Edinburgh, United Kingdom\\
  \texttt{a.rambaut@ed.ac.uk} }
 
-\maketitle
+\section{Theory}
 
-\pagebreak
-
-\chapter*{Theory}
-
-\section{Background}
+\subsection{Background}
 
 The \texttt{BEAST} software package is an ambitious attempt to provide a general
 framework for parameter estimation and hypothesis testing of evolutionary
 models from molecular sequence data. \texttt{BEAST} is a Bayesian statistical
 framework and thus provides a role for prior knowledge in combination with the
-information provided by the data. Bayesian Markov chain Monte Carlo (MCMC) has 
+information provided by the data. Bayesian \textbf{\textit{Markov chain Monte Carlo (MCMC)}} has 
 already been enthusiastically embraced as the state-of-the-art method for phylogenetic 
 reconstruction, largely driven by the rapid and widespread adoption of \texttt{MrBayes}
 \cite{HR2001}. This enthusiasm can be attributed to a number of factors.
 Firstly, Bayesian methods allow the relatively straightforward implementation
-of extremely complex evolutionary models. Secondly, there is an often erroneous 
+of extremely complex \textbf{\textit{evolutionary models}}. Secondly, there is an often erroneous 
 perception that Bayesian estimation is ``faster'' than heuristic
-optimization based on a maximum likelihood criterion.
+optimization based on the \textbf{\textit{maximum likelihood}} criterion.
 
 \texttt{BEAST} can be compared to a number of other software packages with
 similar goals, such as \texttt{MrBayes} \cite{HR2001}, which
 currently focuses on phylogenetic inference and \texttt{BATWING}
-\cite{WWB2003} which focuses predominantly on coalescent-based population
+\cite{WWB2003} which focuses predominantly on \textbf{\textit{coalescent}}-based population
 genetics. Like these software packages, the core algorithm implemented
 in \texttt{BEAST} is Metropolis-Hastings MCMC \cite{MRRTT1953,Hastings1970}.
 MCMC is a stochastic algorithm that produces sample-based estimates
@@ -82,18 +93,18 @@ given an alignment of molecular sequences.
 
 Possibly the most distinguishing feature of \texttt{BEAST} is its firm focus
 on calibrated phylogenies and genealogies, that is, rooted trees incorporating
-a time-scale. This is achieved by explicitly modeling the rate of
-molecular evolution on each branch in the tree. On the simplest level
-this can be a uniform rate over the entire tree (i.e. the molecular
-clock model \cite{ZP1965}) with this rate known in advance or estimated
+a time-scale. This is achieved by explicitly modeling the \textbf{\textit{rate of
+molecular evolution}} on each branch in the tree. On the simplest level
+this can be a uniform rate over the entire tree (i.e. the \textbf{\textit{molecular
+clock model}} \cite{ZP1965}) with this rate known in advance or estimated
 from calibration information. However, one of the most promising recent
-advances in molecular phylogenetics has been the introduction of \emph{relaxed
-molecular clock} models that do not assume a constant rate across
+advances in molecular phylogenetics has been the introduction of \textbf{\textit{relaxed
+molecular clock}} models that do not assume a constant rate across
 lineages\cite{TKP1998,YY2000,KTB2001,Sanderson2002,TK2002,AY2003}.
 \texttt{BEAST} was the first software package that allows phylogenetic inference
 under such models \cite{DHPR2006}.
 
-In the context of genealogy-based population genetics, the target distribution of interest
+In the context of \textbf{\textit{genealogy}}-based population genetics, the target distribution of interest
 is the posterior probability of the the population genetic parameters ($\phi$) given a
 multiple sequence alignment ($D$):
 
@@ -105,7 +116,7 @@ p(\phi|D) = \frac{1}{Z}\int_{g,\omega} Pr\{D|g, \omega\}p(g|\phi)p(\phi)p(\omega
 In order to estimate the posterior probability distribution of $\phi$ it is necessary to average
 over all possible genealogies ($g$) and substitution model parameters ($\omega$)
 proportional to their probabilities. This integration is achieved by MCMC. In the above equation
-$Pr\{D|g, \omega\}$ is the likelihood of genealogy $g$ given the sequence data and the
+$Pr\{D|g, \omega\}$ is the \textbf{\textit{likelihood}} of genealogy $g$ given the sequence data and the
 substitution model \cite{F81} and $p(g|\phi)$ is the coalescent
 prior of the genealogy given the population parameters $\phi$. In the original formulation
 of the Kingman coalescent \cite{Kingman1982}, there is a single population size, $\phi = \{\theta\}$ and the
@@ -135,11 +146,11 @@ to provide new model combinations and a flexible system for model
 specification so that researchers can tailor their evolutionary analyses
 to their specific set of questions.
 
-\section{Bayesian MCMC for genealogy-based population genetics}
+\subsection{Bayesian MCMC for genealogy-based population genetics}
 
 The integration in equation \ref{posterior-phi} is achieved by constructing a chain of
 parameter/genealogy combinations in such a way that they form a (correlated) sample
-of states from the full posterior distribution:
+of states from the full \textbf{\textit{posterior distribution}}:
 
 \begin{equation}
 p(g, \omega, \phi|D) = \frac{1}{Z} Pr\{D|g, \omega\}p(g|\phi)p(\phi)p(\omega)
@@ -147,10 +158,10 @@ p(g, \omega, \phi|D) = \frac{1}{Z} Pr\{D|g, \omega\}p(g|\phi)p(\phi)p(\omega)
 
 We summarize the marginal density $p(\phi|D)$ by using samples
 $(g, \omega, \phi) \sim p(g, \omega, \phi|D)$. The sampled genealogies and
-substitution model parameters can be thought of as uninteresting nuisance
-parameters.
+substitution model parameters can be thought of as uninteresting \textbf{\textit{nuisance
+parameters}}.
 
-To construct the Markov chain we begin with an initial state
+To construct the \textbf{\textit{Markov chain}} we begin with an initial state
 $x_0 = (g^{(0)}, \omega^{(0)}, \phi^{(0)})$. At each step $i$ in the chain we begin
 by proposing a new state $y$. An operator ($m$) proposes this state by copying
 the previous state $x_{i-1}$ and making a small alteration (to the genealogy, or the parameter values, or both).
@@ -158,7 +169,7 @@ The probability of the previous state and the newly proposed state are then comp
 The proposed state is accepted as the new state in the Markov chain with probability:
 
 \begin{equation}
-\alpha = \max \left(1,\frac{p(y|D)}{p(x_{i-1}|D)} \right)
+\alpha = \min \left(1,\frac{p(y|D)}{p(x_{i-1}|D)} \right)
 \end{equation}
 
 If the proposed state $y$ is accepted, then state $x_i = y$ otherwise the previous
@@ -172,12 +183,12 @@ an operator ($m$) is chosen at random (with weights). When operator $m$ is
 not symmetric then $q_m(y|x) \neq q_m(x|y)$ and the acceptance probability becomes
 
 \begin{equation}
-\alpha = \max \left(1,\frac{p(y|D)}{p(x_{i-1}|D)}\frac{q(x_{i-1}|y)}{q(y|x_{i-1})}\right)
+\alpha = \min \left(1,\frac{p(y|D)}{p(x_{i-1}|D)}\frac{q(x_{i-1}|y)}{q(y|x_{i-1})}\right)
 \end{equation}
 
 The additional ratio of proposal probabilities is called the Hastings ratio \cite{Hastings1970}.
 
-\subsection*{Implementation}
+\subsubsection{Implementation}
 
 The overall architecture of the \texttt{BEAST} software package is a file-mediated
 pipeline. The core program takes, as input, an XML file describing
@@ -191,15 +202,14 @@ A number of additional software programs assist in generating the
 input and analyzing the output:
 
 \begin{itemize}
-\item \textbf{\textsc{\texttt{BEAUti}}} is a software package written in Java and
+\item \textbf{\texttt{BEAUti}} is a software package written in Java and
 distributed with \texttt{BEAST} that provides a graphical user interface for
 generating \texttt{BEAST} XML input files for a number of simple model combinations.
-\item \textbf{\textsc{\texttt{Tracer}}} is a software package written in Java and
+\item \textbf{\texttt{Tracer}} is a software package written in Java and
 distributed separately from \texttt{BEAST} that provides a graphical tool for
 MCMC output analysis. It can be used for the analysis of the output
 of \texttt{BEAST} as well as the output of other common MCMC packages such
-as \texttt{MrBayes} \cite{HR2001} and \textbf{\textsc{\texttt{Bali-Phy}}}
-\cite{SR2006}.
+as \texttt{MrBayes} \cite{HR2001} and \texttt{Bali-Phy} \cite{SR2006}.
 \end{itemize}
 Because of the combinatorial nature of the \texttt{BEAST} XML input format,
 not all models can be specified through the graphical interface of
@@ -212,7 +222,7 @@ analyses. For the more adventurous researcher, and with the above
 warnings in mind, the XML file can be directly edited. A number of
 online tutorials are available to guide users on how to do this.
 
-\subsection*{Input Format}
+\subsubsection{Input Format}
 
 One of the primary motivations for providing a highly structured XML
 input format is to facilitate reproducibility of complex evolutionary
@@ -230,7 +240,7 @@ reproducibility, it is our view that the publication of the exact
 details of any Bayesian MCMC analysis should be made a pre-requisite
 for publication of all MCMC analysis results.
 
-\subsection*{Output and results}
+\subsubsection{Output and results}
 
 The output from \texttt{BEAST} is a simple tab-delimited plain text file format
 with one a row for each sample. When accumulated into frequency distributions,
@@ -245,10 +255,10 @@ population size through time when a coalescent model is used.
 The phylogenetic tree of each sample state is written to a separate
 file as either NEWICK or NEXUS format. This can be used to investigate
 the posterior probability of various phylogenetic questions such as
-the monophyly of a particular group of organisms or to obtain a consensus
+the \textbf{\textit{monophyly}} of a particular group of organisms or to obtain a consensus
 phylogeny.
 
-\subsection*{Computational Performance}
+\subsubsection{Computational Performance}
 
 Although there is always a trade-off between a program's flexibility
 and its computational performance, \texttt{BEAST} performs well on large analyses
@@ -264,7 +274,7 @@ providing an improvement in speed. If this library is not found, \texttt{BEAST}
 will use its Java version of these functions, thereby retaining its
 platform-independence.
 
-\section{Results and Discussion}
+\subsection{Results and Discussion}
 
 \texttt{BEAST} provides considerable flexibility in the specification of an
 evolutionary model. For example, consider the analysis of a multiple
@@ -272,7 +282,7 @@ sequence alignment of protein-coding DNA. In a \texttt{BEAST} analysis, it is po
 to allow each codon position to have a different rate, a different
 amount of rate heterogeneity among sites, and a different amount of
 rate heterogeneity among branches, while, at the same time, sharing
-the same intrinsic ratio of transitions to transversions with the
+the same intrinsic ratio of \textbf{\textit{transitions}} to \textbf{\textit{transversions}} with the
 other codon positions. In fact, all parameters can be shared or made
 independent among partitions of the sequence data.
 
@@ -294,23 +304,23 @@ The five components of an evolutionary model for a set of aligned
 nucleotides in \texttt{BEAST} are:
 
 \begin{itemize}
-\item Substitution model - The substitution model is a homogeneous Markov
-process that defines the relative rates at which different substitutions
+\item \emph{Substitution model} - The substitution model is a homogeneous \textbf{\textit{Markov
+process}} that defines the relative rates at which different substitutions
 occur along a branch in the tree.
-\item Rate model among sites - The rate model among sites defines the distribution
+\item \emph{Rate model among sites} - The rate model among sites defines the distribution
 of relative rates of evolutionary change among sites.
-\item Rate model among branches - The rate model among branches defines
+\item \emph{Rate model among branches} - The rate model among branches defines
 the distribution of rates among branches and is used to convert the
 tree, which is in units of time, to units of substitutions. These
 models are important for divergence time estimation procedures and producing time
 scales on demographic reconstructions.
-\item Tree - a model of the phylogenetic or genealogical relationships of
+\item \emph{Tree} - a model of the phylogenetic or genealogical relationships of
 the sequences.
-\item Tree prior - The tree prior provides a parameterized prior distribution
+\item \emph{Tree prior} - The tree prior provides a parameterized prior distribution
 for the node heights (in units of time) and tree topology.
 \end{itemize}
 
-\subsection*{Substitution models and rate models among sites}
+\subsubsection{Substitution models and rate models among sites}
 
 For nucleotide data, all of the models that are nested in the general
 time-reversible (GTR) model \cite{ROMM1990} - including the well
@@ -325,10 +335,10 @@ In addition, both $\Gamma$-distributed rates among sites \cite{Y1994}
 and a proportion of invariant sites can be used to describe rate heterogeneity
 among sites.
 
-\subsection*{Rate models among branches, divergence time estimation and time-stamped
+\subsubsection{Rate models among branches, divergence time estimation and time-stamped
 data}
 
-Without calibration information, mutation rate ($\mu$)
+Without calibration information, \textbf{\textit{mutation rate ($\mu$)}}
 and time ($t$) are confounded and thus branches must be estimated in units
 of mutations per site, $\mu t$. However when a strong prior is available for (1) the time
 of one or more nodes, or (2) the overall mutation rate, then the genealogy can be estimated
@@ -350,7 +360,7 @@ about the overall rate of evolutionary change \cite{DNRS2002,DPRFR2003}.
 In \texttt{BEAST}, divergence time estimation has also been extended to include
 \emph{relaxed phylogenetics} models, in which the rate of evolution
 is allowed to vary among the branches of the tree. In particular we
-support a class of uncorrelated relaxed clock branch rate models,
+support a class of \textbf{\textit{uncorrelated relaxed clock}} branch rate models,
 in which the rate at each branch is drawn from an underlying distribution
 such as exponential or lognormal \cite{DHPR2006}.
 
@@ -363,12 +373,12 @@ such as the population size parameter and the growth rate. For example,
 if the evolutionary rate is set to 1.0, then the node heights (and
 root height) will be in units of mutations per site (i.e. the units
 of branch lengths produced by common software packages such as \texttt{MrBayes}
-3.0). Similarly, for a haploid population, the coalescent parameter
+3.0). Similarly, for a \textbf{\textit{haploid}} population, the coalescent parameter
 will be an estimate of $N_{e}\mu$. However, if, for example, the
 evolutionary rate is expressed in mutations per site per year, then
 the branches in the tree will be in units of years. Furthermore the
 population size parameter of the demographic model will then be equal
-to $N_{e}\tau$, where $N_{e}$ is the effective population size and
+to $N_{e}\tau$, where $N_{e}$ is the \textbf{\textit{effective population size}} and
 $\tau$ is the generation length in years. Finally, if the evolutionary
 rate is expressed in units of mutations per site per generation then
 the resulting tree will be in units of generations and the population
@@ -376,7 +386,7 @@ parameter of the demographic model will be in natural units (i.e.
 will be equal to the effective number of reproducing individuals,
 $N_{e}$).
 
-\subsection*{Tree Priors}
+\subsubsection{Tree Priors}
 
 When sequence data has been collected from a homogenous population,
 various coalescent \cite{Kingman1982,GT1994} models of demographic
@@ -411,7 +421,7 @@ noted above, each node in the tree can have a prior distribution representing
 knowledge of its date. A recent paper on ``relaxed phylogenetics''
 contains more information on calibration priors \cite{DHPR2006}.
 
-\subsection*{Multiple data partitions and linking and unlinking parameters}
+\subsubsection{Multiple data partitions and linking and unlinking parameters}
 
 \texttt{BEAST} provides the ability to analyze multiple data partitions simultaneously.
 This is useful when combining multiple genes in a single multi-locus
@@ -430,7 +440,7 @@ sites, different rate parameters for the strict molecular clock and
 the three tree topologies and sets of divergence times were also assumed
 to be independent and unlinked.
 
-\subsection*{Definitions and units of the standard parameters and variables}
+\subsubsection{Definitions and units of the standard parameters and variables}
 
 Crucial to the interpretation of all \texttt{BEAST} parameters is an understanding of
 the units that the tree is measured in. The simplest situation occurs when no
@@ -461,7 +471,7 @@ product of effective population size ($N_e$) and the generation length in units 
 generations this parameter a direct estimate of $N_e$. Otherwise it is a composite parameter and an estimate of $N_e$
 can be computed from this parameter by dividing it by the generation length in the units of time that your calibrations
 (or \texttt{clock.rate}) are defined in. Finally,  if \texttt{clock.rate} is set to $1.0$ then \texttt{constant.popSize} is an
-estimate of $N_e\mu$ for haploid data such as mitochondrial sequences and $2N_e\mu$ for diploid data, where $\mu$ is the
+estimate of $N_e\mu$ for haploid data such as mitochondrial sequences and $2N_e\mu$ for \textbf{\textit{diploid}} data, where $\mu$ is the
 substitution rate per site per generation.
 
 \item \texttt{covariance} - If this value is significantly positive, it means that within your phylogeny,
@@ -524,7 +534,7 @@ lengths in the tree and will depend on the calibration information for the rate 
 Setting priors on these parameters and/or \texttt{treeModel.rootHeight} parameter will act as calibration information.
 \end{itemize}
 
-\subsection*{Model comparison}
+\subsubsection{Model comparison}
 
 Considering the large number of models available in a Bayesian inference package like \texttt{BEAST}, a common question is 
 ``Which model should I use?''. This is especially the case for the parts of the evolutionary model that are not of 
@@ -534,8 +544,8 @@ but nevertheless some substitution model must be chosen. It is in these situatio
 the substitution model which best fits the data. 
 
 In a Bayesian setting, the most theoretically sound method of determining which of two models is better is to calculate 
-the Bayes Factor (BF), which is the ratio of their marginal likelihoods. Generally speaking calculating the BF involves 
-a Bayesian MCMC that averages over both models (using a technique called `reversible jump' MCMC), and this is not something 
+the \textbf{\textit{Bayes Factor (BF)}}, which is the ratio of their marginal likelihoods. Generally speaking calculating the BF involves 
+a Bayesian MCMC that averages over both models (using a technique called \textbf{\textit{reversible jump MCMC}}), and this is not something 
 that can currently be done in \texttt{BEAST}. However there are a couple of ways of approximately calculating the marginal likelihood 
 of each model (and therefore the Bayes factor between them) that can be achieved by processing the output of two \texttt{BEAST} 
 analyses. For exampled, a simple method first described by Newton and Raftery (1994) computes the Bayes factor via 
@@ -546,7 +556,7 @@ space) you get the log BF and you can look up this number in a table to decide i
 favour the better model. This method of calculating the BF is only approximate and in certain situations it is not 
 very stable, so model comparison is an area of Bayesian evolutionary analysis that could certainly be improved.
 
-\section{Conclusions}
+\subsection{Conclusions}
 
 \texttt{BEAST} is a flexible analysis package for evolutionary parameter estimation
 and hypothesis testing. The component-based nature of model specification
@@ -561,14 +571,14 @@ more flexible codon-based substitution models (3) the structured coalescent
 to model subdivided populations with migration (4) models of continuous
 character evolution and (5) new relaxed clock models based on random local molecular clocks.
 
-\chapter*{Practice}
+\section{Practice}
 
-\section{The \texttt{BEAST} software package}
+\subsection{The \texttt{BEAST} software package}
 
 This chapter provides a step-by-step tutorial for analysing a set of virus sequences which have been isolated
 at different points in time (heterochronous data). The data are 35 sequences from the {\it G} (attachment protein) gene 
 of human respiratory syncytial virus subgroup A (RSVA) from various parts of the world with isolation dates ranging from 1956-2002 
-\cite{?????}. The aim is to obtain an estimate of the rate of molecular evolution, an estimate of the date of 
+\cite{Zlateva2004}. The aim is to obtain an estimate of the rate of molecular evolution, an estimate of the date of 
 the most recent common ancestor and to infer the phylogenetic relationships with appropriate measures of statistical support.
 
 The first step will be to convert a NEXUS file with a DATA or CHARACTERS block into a \texttt{BEAST} XML input file.
@@ -582,23 +592,23 @@ with your computer system (all three are available for Mac OS X, Windows and Lin
 
 \begin{itemize}
 \item \texttt{BEAST} - this package contains the \texttt{BEAST} program, \texttt{BEAUti} and a couple of utility programs. At the time of writing,
-the current version is v1.4.4. It is available for download from http://\texttt{BEAST}.bio.ed.ac.uk/.
+the current version is v1.4.4. It is available for download from http://beast.bio.ed.ac.uk/.
 \item \texttt{Tracer} - this program is used to explore the output of \texttt{BEAST} (and other Bayesian MCMC programs). It
 graphically and quantitively summarizes the distributions of continuous parameters and provides diagnostic
-information. At the time of writing, the current version is v1.4. It is available for download from http://\texttt{BEAST}.bio.ed.ac.uk/.
+information. At the time of writing, the current version is v1.4. It is available for download from http://beast.bio.ed.ac.uk/.
 \item \texttt{FigTree} - this is an application for displaying and printing molecular phylogenies, in particular
 those obtained using \texttt{BEAST}. At the time of writing, the current version is v1.0. It is available for download
 from http://tree.bio.ed.ac.uk/.
 \end{itemize}
 
-\section{Running \texttt{BEAUti}}
+\subsection{Running \texttt{BEAUti}}
 
 The exact instructions for running \texttt{BEAUti} differs depending on which computer you are using. Please see the README
 text file that was distributed with the version you downloaded. Once running, \texttt{BEAUti} will look similar irrespective
 of which computer system it is running on. For this tutorial, the Mac OS X version will be used in the Figures but
 the Linux and Windows versions will have exactly the same layout and functionality.
 
-\section{Loading the NEXUS file}
+\subsection{Loading the NEXUS file}
 
 To load a NEXUS format alignment, simply select the {\it Import NEXUS...} option from the File menu. The example
 file, called \texttt{RSVA.nex}, is available from http://www.thephylogenetichandbook.org/. This file contains an 
@@ -615,7 +625,7 @@ main window (Figure~\ref{fig:figure1}).
 \label{fig:figure1}
 \end{figure}
 
-\section{Setting the dates of the taxa}
+\subsection{Setting the dates of the taxa}
 
 If the NEXUS file contains a calibrations block then the dates will automatically be loaded. Otherwise, by default 
 all the taxa are assumed to have a date of zero (i.e. the sequences are assumed to be sampled at the same time). 
@@ -652,13 +662,13 @@ are given in (years, months, days) and whether they are specified relative to a 
 would be the case for years such as 1984) or backwards in time from the present (as in the case of
 radiocarbon ages).
 
-\subsection*{Translating the data in amino acid sequences}
+\subsubsection{Translating the data in amino acid sequences}
 
 At the bottom of the main window is the option to translate the data into amino acid sequences. This will
 be done using the genetic code specified in the associated drop down menu. If the loaded sequence are not
 nucleotides then this option will be disabled.
 
-\section{Setting the evolutionary model}
+\subsection{Setting the evolutionary model}
 
 The next thing to do is to click on the Model tab at the top of the main window. This will reveal the
 evolutionary model settings for \texttt{BEAST}. Exactly which options appear depend on whether the data are
@@ -696,7 +706,7 @@ normal units of branch lengths in popular packages such as \texttt{MrBayes}).
 For this tutorial, select the '3 partitions: codon positions 1, 2 \& 3' option so that each codon
 position has its own rate of evolution.
 
-\section{Setting up the operators}
+\subsection{Setting up the operators}
 
 Each parameter in the model has one or more``operators" (these are variously called moves and
 proposals by other MCMC software packages such as \texttt{MrBayes} and \texttt{LAMARC}). The operators specify how
@@ -726,7 +736,8 @@ to the others. Some parameters tend to be sampled very efficiently - an example 
 parameter - these parameters can have their operators down-weighted so that they are not changed
 as often (this may mean upweighting other operators since the weights must be integers).
 
-\section{Setting the MCMC options}
+\subsection{Setting the MCMC options}
+\label{MCMC_options}
 
 The {\it MCMC} tab in \texttt{BEAUti} provides settings to control the MCMC chain (Figure~\ref{fig:figure4}). Firstly we have the
 {\it Length of chain}. This is the number of steps the MCMC will make in the chain before
@@ -759,7 +770,7 @@ to change these.
 \label{fig:figure4}
 \end{figure}
 
-\section{Running \texttt{BEAST}}
+\subsection{Running \texttt{BEAST}}
 
 At this point we are ready to generate a \texttt{BEAST} XML file and to use this to run the Bayesian
 evolutionary analysis. To do this, either select the {\it Generate \texttt{BEAST} File...} option
@@ -768,7 +779,7 @@ Choose a name for the file (for example, \texttt{RSVA.xml}) and save the file. F
 convenience, leave the \texttt{BEAUti} window open so that you can change the values and re-generate
 the \texttt{BEAST} file as required later in this tutorial.
 
-\section{Analysing the \texttt{BEAST} output}
+\subsection{Analysing the \texttt{BEAST} output}
 
 To analyse the results of running \texttt{BEAST} we are going to use the program \texttt{Tracer}.
 The exact instructions for running \texttt{Tracer} differs depending
@@ -797,36 +808,36 @@ brings up analyses for this trace on the right hand side depending on tab that i
 selected. When first opened (Figure~\ref{fig:figure5}), the `posterior' trace is selected and various statistics
 of this trace is shown under the Estimates tab.
 
+In the top right of the window is a table of calculated statistics for the selected trace.
+The statistics and their meaning are described in the table below.
+
+\begin{itemize}
+\item \emph{Mean} -
+The mean value of the samples (excluding the burn-in).
+\item \emph{Stdev} -
+The standard error of the mean. This takes into account the effective sample size so a
+small ESS will give a large standard error.
+\item \emph{Median} -
+The median value of the samples (excluding the burn-in).
+\item \emph{95\% HPD Lower} -
+The lower bound of the \textbf{\textit{highest posterior density (HPD)}} interval. The HPD is the shortest interval
+that contains 95\% of the sampled values.
+\item \emph{95\% HPD Upper} -
+The upper bound of the highest posterior density (HPD) interval. 
+\item \emph{Auto-Correlation Time (ACT)} -
+The average number of states in the MCMC chain that two samples have to be separated by for them
+to be uncorrelated (i.e. independent samples from the posterior). The ACT is estimated from the
+samples in the trace (excluding the burn-in).
+\item \emph{Effective Sample Size (ESS)} -
+The \textbf{\textit{effective sample size (ESS)}} is the number of independent samples that the trace is equivalent to. This is
+calculated as the chain length (excluding the burn-in) divided by the ACT.
+\end{itemize}
+
 Note that the effective sample sizes (ESSs) for all the traces are small (ESSs less than
 100 are highlighted in red by \texttt{Tracer}). This is not good. A low ESS means that the trace
 contained a lot of correlated samples and thus may not represent the posterior distribution
 well. In the bottom right of the window is a frequency plot of the samples which as
 expected given the low ESSs is extremely rough (Figure~\ref{fig:figure5}).
-
-In the top right of the window is a table of calculated statistics for the selected trace.
-The statistics and their meaning are described in the table below.
-
-\begin{itemize}
-\item {\it Mean} -
-The mean value of the samples (excluding the burn-in).
-\item {\it Stdev} -
-The standard error of the mean. This takes into account the effective sample size so a
-small ESS will give a large standard error.
-\item {\it Median} -
-The median value of the samples (excluding the burn-in).
-\item {\it 95\% HPD Lower} -
-The lower bound of the highest posterior density (HPD) interval. The HPD is the shortest interval
-that contains 95\% of the sampled values.
-\item {\it 95\% HPD Upper} -
-The upper bound of the highest posterior density (HPD) interval. 
-\item {\it Auto-Correlation Time (ACT)} -
-The average number of states in the MCMC chain that two samples have to be separated by for them
-to be uncorrelated (i.e. independent samples from the posterior). The ACT is estimated from the
-samples in the trace (excluding the burn-in).
-\item {\it Effective Sample Size (ESS)} -
-The ESS is the number of independent samples that the trace is equivalent to. This is
-calculated as the chain length (excluding the burn-in) divided by the ACT.
-\end{itemize}
 
 If we select the tab on the right-hand-side labelled `Trace' we can view the raw trace,
 that is, the sampled values against the  step in the MCMC chain (Figure~\ref{fig:figure6}).
@@ -852,7 +863,7 @@ unreliable.
 The simple response to this situation is that we need to run the chain for longer. Given the lowest
 ESS (for the \texttt{clock.rate}) is 9, it would suggest that we have to run it at least 12
 times longer to get ESSs that are $>$100. However it would be better to aim higher so lets
-go for a chain length of 5,000,000. Go back to Section~\ref{section:Setting the MCMC options}
+go for a chain length of 5,000,000. Go back to Section~\ref{MCMC_options}
 and create a new \texttt{BEAST} XML file with a longer chain length. Now run \texttt{BEAST} and load the new
 log file into \texttt{Tracer} (you can leave the old one loaded for comparison). Click on the Trace
 tab and look at the raw trace plot (Figure~\ref{fig:figure7}).
@@ -905,7 +916,7 @@ codon position.}
 \label{fig:figure9}
 \end{figure}
 
-\section{Summarizing the trees}
+\subsection{Summarizing the trees}
 
 We have seen how we can diagnose our MCMC run using \texttt{Tracer} and produce estimates of the
 marginal posterior distributions of parameters of our model. However, \texttt{BEAST} also samples
@@ -940,32 +951,32 @@ can vary). The program calculates these values for each node or clade observed i
 the specified 'target' tree.
 
 \begin{itemize}
-\item {\it Burnin} -
+\item \emph{Burnin} -
 This is the number of trees in the input file that should be excluded from the summarization.
 This value is given as the number of trees rather than the number of steps in the MCMC chain.
 Thus for the example above, with a chain of 1,000,000 steps, sampling every 1000 steps, there
 are 1000 trees in the file. To obtain a 10\% burnin, set this value to 100.
-\item {\it Posterior probability limit} -
+\item \emph{Posterior probability limit} -
 This is the minimum posterior probability for a node in order for \texttt{TreeAnnotator} to store
 the annoted information. The default is 0.5 so only nodes with this posterior probability
 or greater will have information summarized (the equivalent to the nodes in a majority-rule
 consensus tree). Set this value to 0.0 to summarize all nodes in the target tree.
-\item {\it Target tree type} -
+\item \emph{Target tree type} -
 This has two options "Maximum clade credibility" or "User target tree". For the latter option,
 a NEXUS tree file can be specified as the Target Tree File, below. For the former option,
 \texttt{TreeAnnotator} will examine every tree in the Input Tree File and select the tree that has
 the highest sum of the posterior probabilities of all its nodes.
-\item {\it Node heights} -
+\item \emph{Node heights} -
 This option specifies what node heights (times) should be used for the output tree. If the ``Keep
 target heights'' is selected, then the node heights will be the same as the target tree. The other
 two options give node heights as an average (Mean or Median) over the sample of trees.
-\item {\it Target Tree File} -
+\item \emph{Target Tree File} -
 If the "User target tree" option is selected then you can use "Choose File..." to select a
 NEXUS file containing the target tree.
-\item {\it Input Tree File} -
+\item \emph{Input Tree File} -
 Use the "Choose File..." button to select an input trees file. This will be the trees file
 produced by \texttt{BEAST}.
-\item {\it Output File} -
+\item \emph{Output File} -
 Select a name for the output tree file.
 \end{itemize}
 
@@ -975,7 +986,7 @@ standard NEXUS tree file format so may be loaded into any tree drawing package t
 However, it also contains additional information that can only be displayed using the \texttt{FigTree}
 program.
 
-\section{Viewing the annotated tree}
+\subsection{Viewing the annotated tree}
 
 Run \texttt{FigTree} now and select the {\it Open...} command from the {\it File} menu. Select the tree file
 you created using \texttt{TreeAnnotator} in the previous section. The tree will be displayed in the \texttt{FigTree}
@@ -1010,7 +1021,7 @@ lines. None of the options actually alter the tree's topology or branch lengths 
 to explore the options and settings. You can also save the tree and this will save all your settings
 so that when you load it into \texttt{FigTree} again it will be displayed exactly as you selected.
 
-\section{Conclusion and Resources}
+\subsection{Conclusion and Resources}
 
 This chapter only scratches the surface of the analyses that are possible to undertake using
 \texttt{BEAST}. It has hopefully provided a relatively gentle introduction to the fundimental steps that will
@@ -1023,11 +1034,11 @@ input format, common questions and error messages.
 
  \begin{itemize}
  \item The \texttt{BEAST} website:
- http://\texttt{BEAST}.bio.ed.ac.uk/
+ http://beast.bio.ed.ac.uk/
  \item Tutorials:
- http://\texttt{BEAST}.bio.ed.ac.uk/Tutorials/
+ http://beast.bio.ed.ac.uk/Tutorials/
  \item Frequently asked questions:
- http://\texttt{BEAST}.bio.ed.ac.uk/FAQ/
+ http://beast.bio.ed.ac.uk/FAQ/
  \end{itemize}
 
 \begin{thebibliography}{77}
@@ -1160,6 +1171,11 @@ Evol} 1991, \textbf{33}(2): 114-124.
 \bibitem{Lemeyetal2004}Lemey P, Pybus OG, Rambaut A, Drummond AJ,
 Robertson DL, Roques P, Worobey M, Vandamme AM: The molecular population
 genetics of HIV-1 group O. \emph{Genetics} 2004, \textbf{167}(3):1059-1068.
+
+\bibitem{Zlateva2004}Zlateva KT, Lemey P, Vandamme AM, Van Ranst M: Molecular
+evolution and circulation patterns of human respiratory syncytial virus
+subgroup a: positively selected sites in the attachment g glycoprotein. \emph{J
+Virol} 2004, \textbf{78}(9): 4675-4683.
 
 \bibitem{LGT1997}Lanciotti RS, Gubler DJ, Trent DW: Molecular evolution and
 phylogeny of dengue-4 viruses.  \emph{Journal of General Virology} 1997,

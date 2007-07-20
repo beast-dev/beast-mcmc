@@ -25,14 +25,17 @@ public class ArgLogger extends MCLogger {
 
 	public static final String LOG_ARG = "logArg";
 	public static final String DOT_FORMAT = "dotFormat";
+	public static final String COMPRESSED_STRING = "compressedString";
 
 	private ARGModel argModel;
 	private boolean dotFormat;
+	private boolean newickFormat;
 
-	public ArgLogger(ARGModel argModel, LogFormatter formatter, int logEvery, boolean dotFormat) {
+	public ArgLogger(ARGModel argModel, LogFormatter formatter, int logEvery, boolean dotFormat, boolean newickFormat) {
 		super(formatter, logEvery);
 		this.argModel = argModel;
 		this.dotFormat = dotFormat;
+		this.newickFormat = newickFormat;
 	}
 
 
@@ -40,12 +43,14 @@ public class ArgLogger extends MCLogger {
 	public static final String GRAPHML_FOOTER = "</graphml>";
 
 	public void startLogging() {
-		if (!dotFormat)
+		if (!dotFormat && !newickFormat)
 			logLine(GRAPHML_HEADER);
+		if (newickFormat)
+			logLine("state ARG.string");
 	}
 
 	public void stopLogging() {
-		if (!dotFormat)
+		if (!dotFormat && !newickFormat)
 			logLine(GRAPHML_FOOTER);
 	}
 
@@ -54,11 +59,13 @@ public class ArgLogger extends MCLogger {
 	public void log(int state) {
 		if (logEvery <= 0 || ((state % logEvery) == 0)) {
 			Element graphElement = argModel.toXML();
-			graphElement.setAttribute(ARGModel.ID_ATTRIBUTE, "STATE" + state);
-			if (!dotFormat)
-				logLine(outputter.outputString(graphElement));
-			else
+			graphElement.setAttribute(ARGModel.ID_ATTRIBUTE, "STATE_" + state);
+			if (dotFormat)
 				logLine(GraphMLUtils.dotFormat(graphElement));
+			else if (newickFormat)
+				logLine("ARG STATE_" + state + " = " + argModel.toGraphStringCompressed(false));
+			else
+				logLine(outputter.outputString(graphElement));
 		}
 	}
 
@@ -79,6 +86,7 @@ public class ArgLogger extends MCLogger {
 			String fileName = null;
 			String title = null;
 			boolean dotFormat = false;
+			boolean newickFormat = false;
 //			boolean nexusFormat = false;
 
 //			String colouringLabel = "demes";
@@ -95,6 +103,14 @@ public class ArgLogger extends MCLogger {
 
 			if (xo.hasAttribute(DOT_FORMAT)) {
 				dotFormat = xo.getBooleanAttribute(DOT_FORMAT);
+			}
+
+			if (xo.hasAttribute(COMPRESSED_STRING)) {
+				newickFormat = xo.getBooleanAttribute(COMPRESSED_STRING);
+			}
+
+			if (dotFormat && newickFormat) {
+				throw new XMLParseException("An ARG logger may only return one graphic representation.");
 			}
 
 //			boolean substitutions = false;
@@ -139,7 +155,7 @@ public class ArgLogger extends MCLogger {
 
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-			ArgLogger logger = new ArgLogger(argModel, formatter, logEvery, dotFormat);
+			ArgLogger logger = new ArgLogger(argModel, formatter, logEvery, dotFormat, newickFormat);
 
 //			TreeLogger logger = new TreeLogger(tree, branchRateModel, rateLabel,
 //					colourSamplerModel, colouringLabel, likelihood, likelihoodLabel,

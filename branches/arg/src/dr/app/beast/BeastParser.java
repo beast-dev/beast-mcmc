@@ -25,6 +25,7 @@
 
 package dr.app.beast;
 
+import dr.evomodel.tree.ArgTraceAnalysisParser;
 import dr.xml.*;
 
 import java.util.Iterator;
@@ -239,6 +240,7 @@ public class BeastParser extends XMLParser {
 
 		addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());
 		addXMLObjectParser(new dr.inference.trace.TraceAnalysisParser());
+		addXMLObjectParser(new ArgTraceAnalysisParser());
 	}
 
 }

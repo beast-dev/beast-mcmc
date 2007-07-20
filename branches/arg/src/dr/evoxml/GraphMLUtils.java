@@ -6,6 +6,7 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -28,9 +29,9 @@ public class GraphMLUtils {
 	public static final String TAB = "\t";
 	public static final String END_LINE = ";\n";
 
-    public static final boolean printLengths = false;
+	public static final boolean printLengths = false;
 
-    private static void space(StringBuilder sb) {
+	private static void space(StringBuilder sb) {
 		sb.append(SPACE);
 	}
 
@@ -78,10 +79,18 @@ public class GraphMLUtils {
 		}
 		startSection(sb);
 		newLine(sb);
-        tab(sb);
-        sb.append(ARGModel.GRAPH_SIZE);
-        endLine(sb);
-        // Fill in graph details
+		tab(sb);
+		sb.append(ARGModel.GRAPH_SIZE);
+		endLine(sb);
+//		newLine(sb);
+		tab(sb);
+		sb.append(ARGModel.DOT_EDGE_DEF);
+		endLine(sb);
+//		newLine(sb);
+		tab(sb);
+		sb.append(ARGModel.DOT_NODE_DEF);
+		endLine(sb);
+		// Fill in graph details
 		List<Element> nodeList = graphElement.getChildren(ARGModel.NODE_ELEMENT);
 		List<String> tipNames = new ArrayList<String>();
 		for (Element nodeElement : nodeList) {
@@ -91,11 +100,13 @@ public class GraphMLUtils {
 			List<Attribute> attributes = nodeElement.getAttributes();
 			int cnt = 1;
 			boolean started = false;
+			boolean isTip = false;
 			int length = attributes.size();
 			for (Attribute attribute : attributes) {
 				String name = attribute.getName();
 				if (name.compareTo(ARGModel.ID_ATTRIBUTE) != 0) {
 					if (name.compareTo(ARGModel.IS_TIP) == 0) {
+						isTip = true;
 						try {
 							if (attribute.getBooleanValue()) {
 								tipNames.add(nodeName);
@@ -105,20 +116,44 @@ public class GraphMLUtils {
 						}
 						cnt++;
 					} else {
-						if (!started) {
-							space(sb);
-							startAttribute(sb);
-							started = true;
+						if (!ignore(name)) {
+							if (!started) {
+								space(sb);
+								startAttribute(sb);
+								started = true;
+							} else
+								nextAttribute(sb);
+							sb.append(translate(name) + "=" + attribute.getValue());
+							cnt++;
+//							if (cnt < length)
+//								nextAttribute(sb);
+//							else {
+
+//							}
 						}
-						sb.append(name + "=" + attribute.getValue());
-						cnt++;
-						if (cnt < length)
-							nextAttribute(sb);
-						else
-							endAttribute(sb);
 					}
 				}
 			}
+			if (!isTip) {
+				if (!started) {
+					space(sb);
+					startAttribute(sb);
+					started = true;
+				} else {
+					nextAttribute(sb);
+				}
+				sb.append("label=\"\",shape=circle,height=0.02,width=0.2,fontsize=1");
+
+
+			}
+			if (started) {
+				endAttribute(sb);
+
+
+			}
+//			if (!isTip) {
+//
+//			}
 			endLine(sb);
 		}
 		List<Element> edgeList = graphElement.getChildren(ARGModel.EDGE_ELEMENT);
@@ -134,14 +169,14 @@ public class GraphMLUtils {
 				sb.append(ARGModel.EDGE_LENGTH + "=" + edgeLength + ",weight=1000.0");
 				endAttribute(sb);
 			}
-            String partitions = edgeElement.getAttributeValue(ARGModel.EDGE_PARTITIONS);
-            if (partitions != null) {
-                space(sb);
-                startAttribute(sb);
-                sb.append("label=\""+partitions+"\"");
-                endAttribute(sb);
-            }
-            endLine(sb);
+			String partitions = edgeElement.getAttributeValue(ARGModel.EDGE_PARTITIONS);
+			if (partitions != null) {
+				space(sb);
+				startAttribute(sb);
+				sb.append("label=\"" + partitions + "\"");
+				endAttribute(sb);
+			}
+			endLine(sb);
 		}
 		//newLine(sb);
 		if (tipNames.size() > 0) {
@@ -158,6 +193,40 @@ public class GraphMLUtils {
 
 		endSection(sb);
 		return sb.toString();
+	}
+
+	private static class TranslationMap extends HashMap<String, String> {
+
+		TranslationMap() {
+			put("taxonName", "label");
+		}
+
+	}
+
+	private static class IgnoreList extends ArrayList<String> {
+		IgnoreList() {
+			add("nodeHeight");
+			add("isRoot");
+//			add()
+		}
+	}
+
+	private static TranslationMap translation = new TranslationMap();
+
+	private static IgnoreList ignoreList = new IgnoreList();
+
+	private static String translate(String text) {
+		String newText = null;
+		if ((newText = translation.get(text)) == null)
+			return text;
+		return newText;
+//		if ()
+//		System.err.println("t size = "+translation.size());
+//		return text;
+	}
+
+	private static boolean ignore(String text) {
+		return ignoreList.contains(text);
 	}
 
 }

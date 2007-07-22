@@ -68,40 +68,48 @@ public class DensityPanel extends JPanel implements Exportable {
 		toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
 		toolBar.setFloatable(false);
 
-        JButton chartSetupButton = new JButton("Setup Axes");
-        toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
+        JButton chartSetupButton = new JButton("Axes...");
+		chartSetupButton.putClientProperty(
+			"Quaqua.Button.style", "placard"
+		);
+		chartSetupButton.setFont(UIManager.getFont("SmallSystemFont"));
         toolBar.add(chartSetupButton);
 
+		binsCombo.setFont(UIManager.getFont("SmallSystemFont"));
         binsCombo.setOpaque(false);
         binsCombo.setSelectedItem(100);
         JLabel label = new JLabel("Bins:");
-        label.setFont(binsCombo.getFont());
+		label.setFont(UIManager.getFont("SmallSystemFont"));
         label.setLabelFor(binsCombo);
         toolBar.add(label);
         toolBar.add(binsCombo);
 
         relativeDensityCheckBox.setOpaque(false);
+		relativeDensityCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
 		toolBar.add(relativeDensityCheckBox);
 
-		solidCheckBox.setOpaque(false);
-		solidCheckBox.setSelected(true);
-		toolBar.add(solidCheckBox);
+		// Probably don't need this as an option - takes up space and
+		// solid (translucent) plots look cool...
+//		solidCheckBox.setOpaque(false);
+//		solidCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
+//		solidCheckBox.setSelected(true);
+//		toolBar.add(solidCheckBox);
 
 		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
 		label = new JLabel("Legend:");
-		label.setFont(relativeDensityCheckBox.getFont());
+		label.setFont(UIManager.getFont("SmallSystemFont"));
 		label.setLabelFor(legendCombo);
 		toolBar.add(label);
-		legendCombo.setFont(relativeDensityCheckBox.getFont());
+		legendCombo.setFont(UIManager.getFont("SmallSystemFont"));
 		legendCombo.setOpaque(false);
 		toolBar.add(legendCombo);
 
 		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
-		JLabel label2 = new JLabel("Colour by:");
-		label2.setFont(relativeDensityCheckBox.getFont());
-		label2.setLabelFor(colourByCombo);
-		toolBar.add(label2);
-		colourByCombo.setFont(relativeDensityCheckBox.getFont());
+		label = new JLabel("Colour by:");
+		label.setFont(UIManager.getFont("SmallSystemFont"));
+		label.setLabelFor(colourByCombo);
+		toolBar.add(label);
+		colourByCombo.setFont(UIManager.getFont("SmallSystemFont"));
 		colourByCombo.setOpaque(false);
 		toolBar.add(colourByCombo);
 
@@ -219,9 +227,9 @@ public class DensityPanel extends JPanel implements Exportable {
         int i = 0;
         for (TraceList tl : traceLists) {
             int n = tl.getStateCount();
-            double values[] = new double[n];
 
             for (int j = 0; j < traceIndices.length; j++) {
+	            double values[] = new double[n];
                 tl.getValues(traceIndices[j], values);
                 String name = tl.getTraceName(traceIndices[j]);
                 if (traceLists.length > 1) {

@@ -4,6 +4,7 @@ import dr.gui.chart.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 
 /**
@@ -14,6 +15,8 @@ import java.awt.*;
  * @version $Id: FrequencyPanel.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
 public class FrequencyPanel extends JPanel {
+
+	private ChartSetupDialog chartSetupDialog = null;
 
     private TraceList traceList = null;
     private int traceIndex = -1;
@@ -28,7 +31,7 @@ public class FrequencyPanel extends JPanel {
 	private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "Frequency");
 
 	/** Creates new FrequencyPanel */
-	public FrequencyPanel() {
+	public FrequencyPanel(final JFrame frame) {
 		setOpaque(false);
 
 		setMinimumSize(new Dimension(300,150));
@@ -40,15 +43,38 @@ public class FrequencyPanel extends JPanel {
         toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
         toolBar.setFloatable(false);
 
+		JButton chartSetupButton = new JButton("Axes...");
+		chartSetupButton.putClientProperty(
+			"Quaqua.Button.style", "placard"
+		);
+		chartSetupButton.setFont(UIManager.getFont("SmallSystemFont"));
+		toolBar.add(chartSetupButton);
+
         binsCombo.setOpaque(false);
-        binsCombo.setSelectedItem(100);
+		binsCombo.setFont(UIManager.getFont("SmallSystemFont"));
+		binsCombo.setSelectedItem(100);
         JLabel label = new JLabel("Bins:");
-        label.setFont(binsCombo.getFont());
+        label.setFont(UIManager.getFont("SmallSystemFont"));
         label.setLabelFor(binsCombo);
         toolBar.add(label);
         toolBar.add(binsCombo);
 
         add(toolBar, BorderLayout.SOUTH);
+
+		chartSetupButton.addActionListener(
+		        new java.awt.event.ActionListener() {
+		            public void actionPerformed(ActionEvent actionEvent) {
+		                if (chartSetupDialog == null) {
+		                    chartSetupDialog = new ChartSetupDialog(frame, true, false,
+		                            Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK, Axis.AT_ZERO, Axis.AT_MAJOR_TICK);
+		                }
+
+		                chartSetupDialog.showDialog(traceChart);
+		                validate();
+		                repaint();
+		            }
+		        }
+		);
 
         binsCombo.addItemListener(
             new java.awt.event.ItemListener() {

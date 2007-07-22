@@ -40,10 +40,10 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
 		summaryIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/summary-small-icon.png"));
 		correlationIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/correlation-small-icon.gif"));
 
-		summaryPanel = new SummaryStatisticsPanel();
+		summaryPanel = new SummaryStatisticsPanel(parent);
 		densityPanel = new DensityPanel(parent);
 		correlationPanel = new CorrelationPanel(parent);
-		tracePanel = new RawTracePanel();
+		tracePanel = new RawTracePanel(parent);
 
 		tabbedPane.addTab("Estimates", summaryIcon, summaryPanel);
 		tabbedPane.addTab("Marginal Density", densityIcon, densityPanel);

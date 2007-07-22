@@ -37,22 +37,24 @@ public class TemporalAnalysisPlotPanel extends JPanel {
 		toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
 		toolBar.setFloatable(false);
 
+	    JButton chartSetupButton = new JButton("Axes...");
+        chartSetupButton.putClientProperty(
+	        "Quaqua.Button.style", "placard"
+        );
+        chartSetupButton.setFont(UIManager.getFont("SmallSystemFont"));
+	    toolBar.add(chartSetupButton);
+
 		JLabel label = new JLabel("Show:");
+	    label.setFont(UIManager.getFont("SmallSystemFont"));
 		label.setLabelFor(meanMedianComboBox);
 		toolBar.add(label);
 
+	    meanMedianComboBox.setFont(UIManager.getFont("SmallSystemFont"));
 		toolBar.add(meanMedianComboBox);
 
-		JButton chartSetupButton = new JButton("Setup Axes");
 		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
-		toolBar.add(chartSetupButton);
-
-		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
+	    solidIntervalCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
 		toolBar.add(solidIntervalCheckBox);
-
-		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
-
-		meanMedianComboBox.setFont(UIManager.getFont("SmallSystemFont"));
 
 		add(chartPanel, BorderLayout.CENTER);
 		add(toolBar, BorderLayout.SOUTH);
@@ -249,6 +251,6 @@ public class TemporalAnalysisPlotPanel extends JPanel {
 		double timeMedian = -1;
 		double timeMean = -1;
 		double timeUpper = -1;
-		double timeLower = -1;     
+		double timeLower = -1;
 	}
 }

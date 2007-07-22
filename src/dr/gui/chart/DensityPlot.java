@@ -26,6 +26,7 @@
 package dr.gui.chart;
 
 import dr.util.Variate;
+import dr.util.FrequencyDistribution;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -34,7 +35,7 @@ public class DensityPlot extends FrequencyPlot {
 
 	boolean relativeDensity = true;
 	int minimumBinCount;
-	
+
 	public boolean isSolid() {
 		return solid;
 	}
@@ -49,7 +50,7 @@ public class DensityPlot extends FrequencyPlot {
 		super(data, minimumBinCount);
 		this.minimumBinCount = minimumBinCount;
 	}
-		
+
 	public DensityPlot(double[] data, int minimumBinCount) {
 		super(data, minimumBinCount);
 		this.minimumBinCount = minimumBinCount;
@@ -57,17 +58,17 @@ public class DensityPlot extends FrequencyPlot {
 
 	public void setRelativeDensity(boolean relative) {
 		relativeDensity = relative;
-		setData(raw, minimumBinCount);
+		setData(getRawData(), minimumBinCount);
 	}
 
-   /**	
+   /**
 	*	Set data
 	*/
 	public void setData(Variate data, int minimumBinCount) {
-	
-		this.raw = data;
-		frequency = getFrequencyDistribution(data, minimumBinCount);
-		
+
+		setRawData(data);
+		FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
+
 		Variate.Double xData = new Variate.Double();
 		Variate.Double yData = new Variate.Double();
 
@@ -77,7 +78,7 @@ public class DensityPlot extends FrequencyPlot {
 			double density = frequency.getFrequency(i)/frequency.getBinSize()/data.getCount();
 			if (density > maxDensity) maxDensity = density;
 		}
-		
+
 		xData.add(x + (frequency.getBinSize()/2.0));
 		yData.add(0.0);
 		x += frequency.getBinSize();
@@ -92,38 +93,38 @@ public class DensityPlot extends FrequencyPlot {
 			}
 			x += frequency.getBinSize();
 		}
-		
+
 		xData.add(x + (frequency.getBinSize()/2.0));
 		yData.add(0.0);
 
 		setData(xData, yData);
-	}	
-	
-	/**	
-	 *	Set bar fill style. Use a barPaint of null to not fill bar. 
+	}
+
+	/**
+	 *	Set bar fill style. Use a barPaint of null to not fill bar.
 	 *  Bar outline style is set using setLineStyle
 	 */
 	public void setBarFillStyle(Paint barPaint) {
 		throw new IllegalArgumentException();
 	}
 
-	/**	
+	/**
 	 *	Paint data series
 	 */
 	protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
 
 		int n = xData.getCount();
-					
+
 		float x = (float)transformX(xData.get(0));
 		float y = (float)transformY(yData.get(0));
-		
+
 		GeneralPath path = new GeneralPath();
 		path.moveTo(x, y);
 
 		for (int i = 1; i < n; i++) {
 			x = (float)transformX(xData.get(i));
 			y = (float)transformY(yData.get(i));
-			
+
 			path.lineTo(x, y);
 		}
 
@@ -136,9 +137,9 @@ public class DensityPlot extends FrequencyPlot {
 			g2.setPaint(fillPaint);
 			g2.fill(path);
 		}
-		
+
 		g2.setStroke(lineStroke);
 		g2.setPaint(linePaint);
 		g2.draw(path);
-	}	
+	}
 }

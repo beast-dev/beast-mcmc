@@ -211,6 +211,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 
 	private void removeTraceList() {
 		int[] selRows = traceTable.getSelectedRows();
+
 		LogFileTraces[] tls = new LogFileTraces[selRows.length];
 		int i = 0;
 		for (int row : selRows) {
@@ -220,7 +221,11 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 		for (LogFileTraces tl : tls) {
 			traceLists.remove(tl);
 		}
+
 		updateCombinedTraces();
+
+		traceTableModel.fireTableDataChanged();
+		statisticTableModel.fireTableDataChanged();
 
 		if (traceLists.size() == 0) {
 			getRemoveTraceAction().setEnabled(false);
@@ -231,7 +236,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 			statisticTableModel.fireTableDataChanged();
 		}
 
-		traceTableModel.fireTableDataChanged();
+
 		if (traceLists.size() > 0) {
 			int row = selRows[0];
 			if (row >= traceLists.size()) {
@@ -247,7 +252,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 		trace.setBurnIn(burnIn);
 		analyseTraceList(trace);
 		updateCombinedTraces();
-		statisticTableModel.fireTableDataChanged();
+		updateTraceTables();
 	}
 
 	public void updateCombinedTraces() {
@@ -264,8 +269,24 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 		} else {
 			combinedTraces = null;
 		}
+	}
+
+	public void updateTraceTables() {
+		int[] selectedTraces = traceTable.getSelectedRows();
+		int[] selectedStatistics = statisticTable.getSelectedRows();
+
 		traceTableModel.fireTableDataChanged();
 		statisticTableModel.fireTableDataChanged();
+
+		traceTable.getSelectionModel().clearSelection();
+		for (int row : selectedTraces) {
+			traceTable.getSelectionModel().addSelectionInterval(row, row);
+		}
+
+		statisticTable.getSelectionModel().clearSelection();
+		for (int row : selectedStatistics) {
+			statisticTable.getSelectionModel().addSelectionInterval(row, row);
+		}
 	}
 
 	public void traceTableSelectionChanged() {

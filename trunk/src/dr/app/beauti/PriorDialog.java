@@ -214,7 +214,7 @@ public class PriorDialog {
 				parameter.priorType = (PriorType)rootHeightPriorCombo.getSelectedItem();
 			}
 		} else {
-			parameter.priorType = (PriorType)rootHeightPriorCombo.getSelectedItem();
+			parameter.priorType = (PriorType)priorCombo.getSelectedItem();
 		}
 
 		if (initialField.getValue() != null) parameter.initial = initialField.getValue();

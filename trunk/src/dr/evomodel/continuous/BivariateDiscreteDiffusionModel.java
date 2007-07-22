@@ -47,13 +47,13 @@ public class BivariateDiscreteDiffusionModel extends MultivariateDiffusionModel 
 		System.err.println("TEST01 = " + getCTMCProbability(0, 1, 0.0));
 	}
 
-	private final int getIndex(int x, int y) {
+	private int getIndex(int x, int y) {
 		return x * yDim + y;
 	}
 
-	private final int[] getXY(int index) {
+	private int[] getXY(int index) {
 		int[] xy = new int[2];
-		xy[0] = (int) (index / yDim);
+		xy[0] = index / yDim;
 		xy[1] = index - xy[0] * yDim;
 		return xy;
 	}
@@ -72,7 +72,7 @@ public class BivariateDiscreteDiffusionModel extends MultivariateDiffusionModel 
 //		probabilityCache.clear();
 	}
 
-	private final double getCTMCProbability(int I, int J, double time) {
+	private double getCTMCProbability(int I, int J, double time) {
 		double probability = 0;
 		for (int k = 0; k < totalDim; k++) {
 			probability += eVec[I][k] * Math.exp(time * eVal[k]) * eVec[J][k];
@@ -118,8 +118,8 @@ public class BivariateDiscreteDiffusionModel extends MultivariateDiffusionModel 
 			String evecFileName = xo.getStringAttribute(EVEC_NAME);
 			String evalFileName = xo.getStringAttribute(EVAL_NAME);
 
-			File evecFile = null;
-			File evalFile = null;
+			File evecFile;
+			File evalFile;
 
 			try {
 				File file = new File(evecFileName);

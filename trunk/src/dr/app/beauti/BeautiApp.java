@@ -39,8 +39,6 @@ public class BeautiApp extends MultiDocApplication {
         throw new UnsupportedOperationException("getOpenAction is not supported");
     }
 
-
-
     // Main entry point
     static public void main(String[] args) {
 

@@ -1,11 +1,11 @@
 package dr.app.tracer.traces;
 
+import dr.gui.chart.*;
 import org.virion.jam.framework.Exportable;
 
 import javax.swing.*;
 import java.awt.*;
-
-import dr.gui.chart.*;
+import java.awt.event.ActionEvent;
 
 /**
  * A panel that displays information about traces
@@ -32,6 +32,8 @@ public class RawTracePanel extends JPanel implements Exportable {
 			Color.DARK_GRAY
 	};
 
+	private ChartSetupDialog chartSetupDialog = null;
+
 	private JTraceChart traceChart = new JTraceChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
 	private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
 
@@ -50,7 +52,7 @@ public class RawTracePanel extends JPanel implements Exportable {
 	private boolean sampleOnly = true;
 
 	/** Creates new RawTracePanel */
-	public RawTracePanel() {
+	public RawTracePanel(final JFrame frame) {
 
 		setOpaque(false);
 
@@ -62,30 +64,39 @@ public class RawTracePanel extends JPanel implements Exportable {
 		toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
 		toolBar.setFloatable(false);
 
+		JButton chartSetupButton = new JButton("Axes...");
+		chartSetupButton.putClientProperty(
+			"Quaqua.Button.style", "placard"
+		);
+		chartSetupButton.setFont(UIManager.getFont("SmallSystemFont"));
+		toolBar.add(chartSetupButton);
+
 		sampleCheckBox.setSelected(true);
+		sampleCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
 		sampleCheckBox.setOpaque(false);
 		toolBar.add(sampleCheckBox);
 
 		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
 		linePlotCheckBox.setSelected(true);
+		linePlotCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
 		linePlotCheckBox.setOpaque(false);
 		toolBar.add(linePlotCheckBox);
 
 		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
 		JLabel label = new JLabel("Legend:");
-		label.setFont(linePlotCheckBox.getFont());
+		label.setFont(UIManager.getFont("SmallSystemFont"));
 		label.setLabelFor(legendCombo);
 		toolBar.add(label);
-		legendCombo.setFont(linePlotCheckBox.getFont());
+		legendCombo.setFont(UIManager.getFont("SmallSystemFont"));
 		legendCombo.setOpaque(false);
 		toolBar.add(legendCombo);
 
 		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
-		JLabel label2 = new JLabel("Colour by:");
-		label2.setFont(linePlotCheckBox.getFont());
-		label2.setLabelFor(colourByCombo);
-		toolBar.add(label2);
-		colourByCombo.setFont(linePlotCheckBox.getFont());
+		label = new JLabel("Colour by:");
+		label.setFont(UIManager.getFont("SmallSystemFont"));
+		label.setLabelFor(colourByCombo);
+		toolBar.add(label);
+		colourByCombo.setFont(UIManager.getFont("SmallSystemFont"));
 		colourByCombo.setOpaque(false);
 		toolBar.add(colourByCombo);
 
@@ -94,6 +105,23 @@ public class RawTracePanel extends JPanel implements Exportable {
 		add(messageLabel, BorderLayout.NORTH);
 		add(toolBar, BorderLayout.SOUTH);
 		add(chartPanel, BorderLayout.CENTER);
+
+
+		chartSetupButton.addActionListener(
+		        new java.awt.event.ActionListener() {
+		            public void actionPerformed(ActionEvent actionEvent) {
+		                if (chartSetupDialog == null) {
+		                    chartSetupDialog = new ChartSetupDialog(frame, false, true,
+		                            Axis.AT_ZERO, Axis.AT_MAJOR_TICK,
+				                    Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
+		                }
+
+		                chartSetupDialog.showDialog(traceChart);
+		                validate();
+		                repaint();
+		            }
+		        }
+		);
 
 		sampleCheckBox.addActionListener(
 			new java.awt.event.ActionListener() {
@@ -160,7 +188,9 @@ public class RawTracePanel extends JPanel implements Exportable {
 
 
 	private void setupTraces(TraceList[] traceLists, int[] traceIndices) {
-        traceChart.removeAllPlots();
+
+		traceChart.removeAllTraces();
+
 
 		if (traceLists == null || traceIndices == null || traceIndices.length == 0) {
 			chartPanel.setXAxisTitle("");
@@ -171,8 +201,6 @@ public class RawTracePanel extends JPanel implements Exportable {
 		}
 
         remove(messageLabel);
-
-		traceChart.removeAllTraces();
 
         int i = 0;
         for (TraceList tl : traceLists) {

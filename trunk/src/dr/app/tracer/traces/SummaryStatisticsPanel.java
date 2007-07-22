@@ -37,7 +37,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 	IntervalsPanel intervalsPanel = null;
 	JComponent currentPanel = null;
 
-	public SummaryStatisticsPanel() {
+	public SummaryStatisticsPanel(JFrame frame) {
 
 		setOpaque(false);
 
@@ -60,7 +60,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 							new java.awt.Insets(0, 0, 6, 0)));
 		topPanel.add(scrollPane1, BorderLayout.CENTER);
 
-		frequencyPanel = new FrequencyPanel();
+		frequencyPanel = new FrequencyPanel(frame);
 		frequencyPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
 									new java.awt.Insets(6, 0, 0, 0)));
 
@@ -159,7 +159,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
     public String toString() {
         return statisticsModel.toString();
     }
-    
+
     class StatisticsModel extends AbstractTableModel {
 
 		String[] rowNames = { MEAN_ROW, STDEV_ROW, MEDIAN_ROW, LOWER_ROW, UPPER_ROW, ACT_ROW, ESS_ROW };

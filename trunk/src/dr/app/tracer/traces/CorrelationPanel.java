@@ -50,18 +50,24 @@ public class CorrelationPanel extends JPanel implements Exportable {
         toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
         toolBar.setFloatable(false);
 
-        JButton chartSetupButton = new JButton("Setup Axes");
-        toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
+        JButton chartSetupButton = new JButton("Axes...");
+	    chartSetupButton.putClientProperty(
+		    "Quaqua.Button.style", "placard"
+	    );
+	    chartSetupButton.setFont(UIManager.getFont("SmallSystemFont"));
         toolBar.add(chartSetupButton);
 
         sampleCheckBox.setOpaque(false);
+	    sampleCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
         sampleCheckBox.setSelected(true);
         toolBar.add(sampleCheckBox);
 
         pointsCheckBox.setOpaque(false);
+	    pointsCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
         toolBar.add(pointsCheckBox);
 
         translucencyCheckBox.setOpaque(false);
+	    translucencyCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
         toolBar.add(translucencyCheckBox);
 
         toolBar.add(new JToolBar.Separator(new Dimension(8,8)));

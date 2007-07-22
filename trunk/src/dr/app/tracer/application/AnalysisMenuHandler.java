@@ -20,4 +20,6 @@ public interface AnalysisMenuHandler {
 	Action getAddBayesianSkylineAction();
 
 	Action getAddTimeDensityAction();
+
+	Action getMarginalLikelihoodAction();
 }

@@ -46,6 +46,8 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 	private BayesianSkylineDialog bayesianSkylineDialog = null;
 	private NewTemporalAnalysisDialog createTemporalAnalysisDialog = null;
 
+	private MarginalLikelihoodDialog marginalLikelihoodDialog = null;
+
 	public TracerFrame(String title) {
 		super();
 
@@ -674,6 +676,27 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 	}
 
 	private void doAddTimeDensity() {
+		throw new UnsupportedOperationException("Not implemented yet...");
+	}
+
+	private void doCalculateMarginalLikelihood() {
+		if (marginalLikelihoodDialog == null) {
+			marginalLikelihoodDialog = new MarginalLikelihoodDialog(this);
+		}
+
+		if (currentTraceLists.size() != 1) {
+			JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
+					"this analysis on, (but not the Combined trace).",
+					"Unable to perform analysis",
+					JOptionPane.INFORMATION_MESSAGE);
+		}
+
+			if (marginalLikelihoodDialog.showDialog(currentTraceLists.get(0)) == JOptionPane.CANCEL_OPTION) {
+				return;
+			}
+
+			marginalLikelihoodDialog.createMarginalLikelihoodFrame(currentTraceLists.get(0), this);
+
 	}
 
 	public JComponent getExportableComponent() {
@@ -797,6 +820,10 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 
 	public Action getAddTimeDensityAction() { return addTimeDensity; }
 
+	public Action getMarginalLikelihoodAction() {
+		return marginalLikelihoodAction;
+	}
+
 	private AbstractAction demographicAction = new AbstractAction(AnalysisMenuFactory.DEMOGRAPHIC_RECONSTRUCTION) {
 		 public void actionPerformed(ActionEvent ae) {
 			 doDemographic(false);
@@ -830,6 +857,12 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 	private AbstractAction addTimeDensity = new AbstractAction(AnalysisMenuFactory.ADD_TIME_DENSITY) {
 		 public void actionPerformed(ActionEvent ae) {
 			 doAddTimeDensity();
+		 }
+	 };
+
+	private AbstractAction marginalLikelihoodAction = new AbstractAction(AnalysisMenuFactory.CALCULATE_MARGINAL_LIKELIHOOD) {
+		 public void actionPerformed(ActionEvent ae) {
+			 doCalculateMarginalLikelihood();
 		 }
 	 };
 

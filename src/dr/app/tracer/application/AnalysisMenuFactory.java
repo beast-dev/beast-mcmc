@@ -20,6 +20,8 @@ public class AnalysisMenuFactory implements MenuFactory {
 	public static final String ADD_BAYESIAN_SKYLINE_RECONSTRUCTION = "Add Bayesian Skyline Reconstruction...";
 	public static final String ADD_TIME_DENSITY = "Add Time Density...";
 
+	public static final String CALCULATE_MARGINAL_LIKELIHOOD = "Calculate Marginal Likelihood...";
+
 	public String getMenuName() {
 	    return "Analysis";
 	}
@@ -47,6 +49,12 @@ public class AnalysisMenuFactory implements MenuFactory {
 
 		    item = new JMenuItem(((AnalysisMenuHandler)frame).getAddTimeDensityAction());
 		    menu.add(item);
+
+		    menu.addSeparator();
+
+		    item = new JMenuItem(((AnalysisMenuHandler)frame).getMarginalLikelihoodAction());
+		    menu.add(item);
+
 	    } else {
 	        item = new JMenuItem(DEMOGRAPHIC_RECONSTRUCTION);
 	        item.setEnabled(false);
@@ -71,6 +79,12 @@ public class AnalysisMenuFactory implements MenuFactory {
 		    menu.add(item);
 
 		    item = new JMenuItem(ADD_TIME_DENSITY);
+		    item.setEnabled(false);
+		    menu.add(item);
+
+		    menu.addSeparator();
+
+		    item = new JMenuItem(CALCULATE_MARGINAL_LIKELIHOOD);
 		    item.setEnabled(false);
 		    menu.add(item);
 	    }

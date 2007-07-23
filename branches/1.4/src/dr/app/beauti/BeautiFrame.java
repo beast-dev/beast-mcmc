@@ -70,11 +70,6 @@ public class BeautiFrame extends DocumentFrame {
         getOpenAction().setEnabled(false);
         getSaveAction().setEnabled(false);
 
-//        getCutAction().setEnabled(false);
-//        getCopyAction().setEnabled(false);
-//        getPasteAction().setEnabled(false);
-//        getDeleteAction().setEnabled(false);
-//        getSelectAllAction().setEnabled(false);
         getFindAction().setEnabled(false);
 
         getZoomWindowAction().setEnabled(false);
@@ -88,10 +83,6 @@ public class BeautiFrame extends DocumentFrame {
         priorsPanel = new PriorsPanel(this);
         operatorsPanel = new OperatorsPanel(this);
         mcmcPanel = new MCMCPanel(this);
-
-//		tabbedPane.addTab("Data", dataIcon, dataPanel);
-//		tabbedPane.addTab("Model", modelIcon, modelPanel);
-//		tabbedPane.addTab("MCMC", mcmcIcon, mcmcPanel);
 
         tabbedPane.addTab("Data", dataPanel);
         tabbedPane.addTab("Taxa", taxaPanel);
@@ -180,8 +171,8 @@ public class BeautiFrame extends DocumentFrame {
 
     public final void priorsChanged() {
         priorsPanel.getOptions(beautiOptions);
-
         operatorsPanel.setOptions(beautiOptions);
+        priorsPanel.setOptions(beautiOptions);
         setDirty();
     }
 

@@ -384,7 +384,7 @@ public class PriorsPanel extends JPanel implements Exportable {
 					throw new IllegalArgumentException("Unknown prior type");
 			}
 			if (param.priorType != BeautiOptions.NONE && !param.isStatistic) {
-				buffer.append(", initial=" + param.initial);
+                buffer.append(", initial=").append(param.initial);
 			}
 
 			return buffer.toString();
@@ -397,11 +397,8 @@ public class PriorsPanel extends JPanel implements Exportable {
 		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
 
 		public boolean isCellEditable(int row, int col) {
-			if (col == 1) {
-				return true;
-			}
-			return false;
-		}
+            return col == 1;
+        }
 
 		public String toString() {
 			StringBuffer buffer = new StringBuffer();
@@ -424,7 +421,7 @@ public class PriorsPanel extends JPanel implements Exportable {
 
 			return buffer.toString();
 		}
-	};
+	}
 
 	class DoubleRenderer extends TableRenderer {
 
@@ -450,7 +447,7 @@ public class PriorsPanel extends JPanel implements Exportable {
 			return super.getTableCellRendererComponent(table, s, isSelected, hasFocus, row, column);
 
 		}
-	};
+	}
 
 	public class ButtonRenderer extends JButton implements TableCellRenderer {
 
@@ -479,7 +476,7 @@ public class PriorsPanel extends JPanel implements Exportable {
 			setText( (value ==null) ? "" : value.toString() );
 			return this;
 		}
-	};
+	}
 
 	public class ButtonEditor extends DefaultCellEditor {
 		/**

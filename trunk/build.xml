@@ -15,6 +15,7 @@
         <pathelement location="lib/commons-math-1.1.jar"/>
         <pathelement location="lib/jdom.jar"/>
         <pathelement location="lib/jebl-0.4.jar"/>
+        <pathelement location="lib/mtj.jar"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>

@@ -19,7 +19,8 @@ public class Trace {
 
 	public Trace(String name, double[] values) {
 
-		this.values = new double[values.length];
+        this.name = name;
+        this.values = new double[values.length];
 		System.arraycopy(values, 0, this.values, 0, values.length);
 	}
 
@@ -42,9 +43,9 @@ public class Trace {
 	 * add all the values in an array of doubles
 	 */
 	public void add(double[] values) {
-		for (int i = 0; i < values.length; i++) {
-			add(values[i]);
-		}
+        for (double value : values) {
+            add(value);
+        }
 	}
 
 	public int getCount() { return valueCount; }

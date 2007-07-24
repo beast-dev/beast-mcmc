@@ -138,32 +138,40 @@ public class Traces implements TraceList {
 	public static Traces loadTraces(Reader r, String name) throws TraceException, java.io.IOException {
 		
 		TrimLineReader reader = new Traces.TrimLineReader(r);
-		
-		Traces traces = new Traces(name);
-		
-		// Read through to first token
-		StringTokenizer tokens = reader.tokenizeLine();
-		while (!tokens.hasMoreTokens()) {
-			tokens = reader.tokenizeLine();
-		}
-		
-		// skip the first column which should be the state number
-		String token = tokens.nextToken();
-		while (token.startsWith("[")) { // Probably a MrBayes trace file starting with a comment
-			
-			tokens = reader.tokenizeLine();
-			while (!tokens.hasMoreTokens()) {
-				 tokens = reader.tokenizeLine();
-			}
-			// read state token and ignore
-			token = tokens.nextToken();
-		}
-		
-		// read label tokens
-		while (tokens.hasMoreTokens()) {
-			String label = tokens.nextToken();
-			traces.addTrace(label);
-		}
+
+        Traces traces = new Traces(name);
+
+        // Read through to first token
+        StringTokenizer tokens = reader.tokenizeLine();
+        // read over empty lines
+        while (!tokens.hasMoreTokens()) {
+            tokens = reader.tokenizeLine();
+        }
+
+        // skip the first column which should be the state number
+        String token = tokens.nextToken();
+
+        // lines starting with [ are ignored, assuming comments in MrBayes file
+        // lines starting with # are ignored, assuming comments in Migrate file
+        // (or BEAST since I think we should be adding comments to the log files!)
+        while (token.startsWith("[") || token.startsWith("#")) {
+
+            tokens = reader.tokenizeLine();
+
+            // read over empty lines
+            while (!tokens.hasMoreTokens()) {
+                tokens = reader.tokenizeLine();
+            }
+
+            // read state token and ignore
+            token = tokens.nextToken();
+        }
+
+        // read label tokens
+        while (tokens.hasMoreTokens()) {
+            String label = tokens.nextToken();
+            traces.addTrace(label);
+        }
 		
 		int statCount = traces.getTraceCount();
 
@@ -269,27 +277,29 @@ public class Traces implements TraceList {
 	private int stepSize = -1;
 
     public static class TrimLineReader extends BufferedReader {
-	
-	public TrimLineReader(Reader reader) {
-		super(reader);
-	}
 
-	public String readLine() throws java.io.IOException {
-		lineNumber += 1;
-		String line = super.readLine();
-		if (line != null) return line.trim();
-		return null;
-	}
-	
-	public StringTokenizer tokenizeLine() throws java.io.IOException {
-		String line = readLine();
-		if (line == null) return null;
-		return new StringTokenizer(line, "\t");
-	}
-	
-	public int getLineNumber() { return lineNumber; }
-	
-	private int lineNumber = 0;
-    };
+        public TrimLineReader(Reader reader) {
+            super(reader);
+        }
+
+        public String readLine() throws java.io.IOException {
+            lineNumber += 1;
+            String line = super.readLine();
+            if (line != null) return line.trim();
+            return null;
+        }
+
+        public StringTokenizer tokenizeLine() throws java.io.IOException {
+            String line = readLine();
+            if (line == null) return null;
+            return new StringTokenizer(line, "\t");
+        }
+
+        public int getLineNumber() {
+            return lineNumber;
+        }
+
+        private int lineNumber = 0;
+    }
 }
 

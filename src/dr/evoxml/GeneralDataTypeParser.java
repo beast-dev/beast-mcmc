@@ -30,6 +30,7 @@ import dr.evolution.datatype.GeneralDataType;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The XML for a nucleotide data type under this scheme would be:
@@ -66,7 +67,7 @@ public class GeneralDataTypeParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        ArrayList states = new ArrayList();
+        List<String> states = new ArrayList<String>();
 
         for (int i =0; i < xo.getChildCount(); i++) {
             if (xo.getChild(i) instanceof XMLObject) {
@@ -101,7 +102,7 @@ public class GeneralDataTypeParser extends AbstractXMLObjectParser {
 
         char[] stateArray = new char[states.size()];
         for (int i = 0; i < states.size(); i++) {
-            stateArray[i] = ((String)states.get(i)).charAt(0);
+            stateArray[i] = states.get(i).charAt(0);
         }
 
         String stateLookUp = new String(stateArray);

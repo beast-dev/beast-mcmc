@@ -338,10 +338,12 @@ public class PriorDialog {
 			default: throw new IllegalArgumentException("Unknown prior index");
 		}
 		chart.addPlot(new PDFPlot(distribution, offset));
-		quantileText.setText(formatter.format(distribution.quantile(0.025)) +
+		if (distribution != null) {
+            quantileText.setText(formatter.format(distribution.quantile(0.025)) +
 				"\n" +formatter.format(distribution.quantile(0.05)) +
 				"\n" +formatter.format(distribution.quantile(0.5)) +
 				"\n" +formatter.format(distribution.quantile(0.95)) +
 				"\n" +formatter.format(distribution.quantile(0.975)));
-	}
+        }
+    }
 }

@@ -51,18 +51,6 @@ public class AlignmentParser extends  AbstractXMLObjectParser {
 
         DataType dataType = DataTypeUtils.getDataType(xo);
 
-        for (int i = 0; i < xo.getChildCount(); i++) {
-
-            Object child = xo.getChild(i);
-            if (child instanceof DataType) {
-                if (dataType != null) {
-                    throw new XMLParseException("Multiple dataTypes defined for alignment element");
-                }
-
-                dataType = (DataType)child;
-            }
-        }
-
         if (dataType == null) {
             throw new XMLParseException("dataType attribute expected for alignment element");
         }

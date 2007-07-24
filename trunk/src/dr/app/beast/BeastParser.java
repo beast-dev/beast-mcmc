@@ -152,7 +152,6 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.branchratemodel.RateEpochBranchRateModel.PARSER);
 
         addXMLObjectParser(new dr.evomodel.tree.TreeModelParser());
-        //addXMLObjectParser(dr.evomodel.tree.TreeModel.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreelengthStatistic.PARSER);

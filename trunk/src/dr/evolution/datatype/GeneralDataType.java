@@ -88,10 +88,8 @@ public class GeneralDataType extends DataType implements Identifiable {
 		stateNumbers[(int)code] = n;
 		
 		State[] newStates = new State[n + 1];
-		
-		for (int i = 0; i < n; i++) {
-			newStates[i] = states[i];
-		} 
+
+        System.arraycopy(states, 0, newStates, 0, n); 
 		newStates[n] = new State(n, code, ambiguousStates);
 		states = newStates;
 	}

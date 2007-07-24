@@ -129,19 +129,28 @@ public class LogFileTraces implements TraceList {
 
 		// Read through to first token
 		StringTokenizer tokens = reader.tokenizeLine();
-		while (!tokens.hasMoreTokens()) {
+
+        // read over empty lines
+        while (!tokens.hasMoreTokens()) {
 			tokens = reader.tokenizeLine();
 		}
 
 		// skip the first column which should be the state number
 		String token = tokens.nextToken();
-		while (token.startsWith("[")) { // Probably a MrBayes trace file starting with a comment
+
+        // lines starting with [ are ignored, assuming comments in MrBayes file
+        // lines starting with # are ignored, assuming comments in Migrate file
+        // (or BEAST since I think we should be adding comments to the log files!)
+        while (token.startsWith("[") || token.startsWith("#")) {
 
 			tokens = reader.tokenizeLine();
-			while (!tokens.hasMoreTokens()) {
+
+            // read over empty lines
+            while (!tokens.hasMoreTokens()) {
 				 tokens = reader.tokenizeLine();
 			}
-			// read state token and ignore
+
+            // read state token and ignore
 			token = tokens.nextToken();
 		}
 

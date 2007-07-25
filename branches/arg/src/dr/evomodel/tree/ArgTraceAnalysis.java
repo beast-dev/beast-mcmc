@@ -189,21 +189,21 @@ public class ArgTraceAnalysis {
 			String newickTree = //(String)argSet.get(i);
 					argSet.get(i).toString();
 
-			if (freq > 100) {
-				// calculate conditional average node heights
+//			if (freq > 100) {
+			// calculate conditional average node heights
 //				Tree meanTree = analyzeTree(newickTree);
 //				System.out.println("\t" + Tree.Utils.newick(meanTree));
-				/*for (int k = 0; k < meanTree.getInternalNodeCount(); k++) {
-					NodeRef node = meanTree.getInternalNode(k);
-					System.out.println("node " + k + "\t" +
-						meanTree.getNodeHeight(node) + "\t" +
-						meanTree.getNodeAttribute(node, "lower") + "\t" +
-						meanTree.getNodeAttribute(node, "upper"));
-				}*/
+			/*for (int k = 0; k < meanTree.getInternalNodeCount(); k++) {
+				   NodeRef node = meanTree.getInternalNode(k);
+				   System.out.println("node " + k + "\t" +
+					   meanTree.getNodeHeight(node) + "\t" +
+					   meanTree.getNodeAttribute(node, "lower") + "\t" +
+					   meanTree.getNodeAttribute(node, "upper"));
+			   }*/
 
-			} else {
-				System.out.println("\t" + newickTree);
-			}
+//			} else {
+			System.out.println("\t" + newickTree);
+//			}
 
 
 			if (sumFreq >= credSet) {

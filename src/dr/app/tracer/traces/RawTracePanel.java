@@ -34,7 +34,9 @@ public class RawTracePanel extends JPanel implements Exportable {
 
 	private ChartSetupDialog chartSetupDialog = null;
 
-	private JTraceChart traceChart = new JTraceChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
+	private JTraceChart traceChart = new JTraceChart(
+			new LinearAxis(Axis.AT_ZERO, Axis.AT_DATA), 
+			new LinearAxis());
 	private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
 
 	private JCheckBox sampleCheckBox = new JCheckBox("Sample only");

@@ -200,7 +200,7 @@ public class TreeLogger extends MCLogger {
 
             String title = null;
             boolean nexusFormat = false;
-            boolean sortTranslationTable = false;
+            boolean sortTranslationTable = true;
 
             if (xo.hasAttribute(TITLE)) {
                 title = xo.getStringAttribute(TITLE);

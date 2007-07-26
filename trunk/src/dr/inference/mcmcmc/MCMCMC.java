@@ -25,25 +25,19 @@
 
 package dr.inference.mcmcmc;
 
-import dr.inference.loggers.Logger;
-import dr.inference.loggers.MCLogger;
-import dr.inference.loggers.LogFormatter;
+import dr.inference.loggers.*;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
+import dr.inference.mcmc.*;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.operators.*;
 import dr.inference.prior.Prior;
-import dr.inference.mcmc.MCMC;
-import dr.inference.mcmc.MCMCCriterion;
-import dr.inference.mcmc.MCMCOptions;
-import dr.util.NumberFormatter;
 import dr.math.MathUtils;
+import dr.util.NumberFormatter;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
-import java.util.logging.Formatter;
+import java.util.List;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -444,7 +438,11 @@ public class MCMCMC implements Runnable {
 
     };
 
-    /** @return the prior of this MCMC analysis. */
+	public int getColdChain() {
+		return coldChain;
+	}
+
+	/** @return the prior of this MCMC analysis. */
     public Prior getPrior() { return chains[coldChain].getPrior(); }
 
     /** @return the likelihood function. */

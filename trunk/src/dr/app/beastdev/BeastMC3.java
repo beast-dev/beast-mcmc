@@ -281,7 +281,7 @@ public class BeastMC3 {
 
 		Arguments arguments = new Arguments(
 			new Arguments.Option[] {
-                new Arguments.RealOption("chains", 2, Integer.MAX_VALUE, "number of chains"),
+                new Arguments.IntegerOption("chains", 2, Integer.MAX_VALUE, "number of chains"),
                 new Arguments.RealOption("delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                 new Arguments.RealArrayOption("temperatures", HOT_CHAIN_COUNT, "a comma-separated list of the hot chain temperatures"),
                 new Arguments.IntegerOption("swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),

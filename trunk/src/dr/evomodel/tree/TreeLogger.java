@@ -64,6 +64,7 @@ public class TreeLogger extends MCLogger {
     public boolean usingRates = false;
     public boolean substitutions = false;
     private Map<String, Integer> idMap = new HashMap<String, Integer>();
+	private List<String> taxaIds = new ArrayList<String>();
 
     /*
       * Constructor
@@ -91,6 +92,19 @@ public class TreeLogger extends MCLogger {
             this.substitutions = true;
         }
         this.tree = tree;
+
+	    for (int i = 0; i < tree.getTaxonCount(); i++) {
+	        taxaIds.add(tree.getTaxon(i).getId());
+	    }
+	    if (sortTranslationTable) {
+	        Collections.sort(taxaIds);
+	    }
+
+	    int k = 1;
+	    for (String taxaId : taxaIds) {
+	        idMap.put(taxaId, k);
+	        k += 1;
+	    }
     }
 
     public void startLogging() {
@@ -103,17 +117,10 @@ public class TreeLogger extends MCLogger {
             logLine("\tDimensions ntax=" + taxonCount + ";");
             logLine("\tTaxlabels");
 
-            List<String> taxaIds = new ArrayList<String>();
-            for (int i = 0; i < taxonCount; i++) {
-                taxaIds.add(tree.getTaxon(i).getId());
-            }
-            if (sortTranslationTable) {
-                Collections.sort(taxaIds);
-            }
-
             for (String taxaId : taxaIds) {
                 logLine("\t\t" + taxaId);
             }
+
             logLine("\t\t;");
             logLine("End;");
             logLine("");
@@ -128,7 +135,6 @@ public class TreeLogger extends MCLogger {
                 } else {
                     logLine("\t\t" + k + " " + taxaId);
                 }
-                idMap.put(taxaId, k);
                 k += 1;
             }
             logLine("\t\t;");

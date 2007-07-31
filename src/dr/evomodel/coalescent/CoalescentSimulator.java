@@ -292,8 +292,9 @@ public class CoalescentSimulator {
                                 final TaxaConstraint constraintj = next.get(k);
                                 // build tree for taxons in difference
                                 final Taxa list = new Taxa();
-                                for(int j = 0; j < constraintj.taxons.getTaxonCount(); ++j) {
-                                    Taxon taxonj = taxa.getTaxon(j);
+                                final TaxonList cjtaxa = constraintj.taxons;
+                                for(int j = 0; j < cjtaxa.getTaxonCount(); ++j) {
+                                    final Taxon taxonj = cjtaxa.getTaxon(j);
                                     if( tree.getTaxonIndex(taxonj) < 0 ) {
                                         list.addTaxon(taxonj);
                                     }

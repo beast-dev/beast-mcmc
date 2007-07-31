@@ -233,16 +233,6 @@ public class WilsonBalding extends SimpleMCMCOperator {
 		return WILSON_BALDING;
 	}
 
-	private NodeRef getOtherChild(Tree tree, NodeRef parent, NodeRef child) {
-
-
-		if (tree.getChild(parent, 0) == child) {
-			return tree.getChild(parent, 1);
-		} else {
-			return tree.getChild(parent, 0);
-		}
-	}
-
 	public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
 		public String getParserName() { return WILSON_BALDING; }

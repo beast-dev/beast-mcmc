@@ -25,6 +25,7 @@
 
 package dr.evomodel.tree;
 
+import dr.evolution.tree.BranchScoreMetric;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Statistic;
 import dr.xml.*;
@@ -34,141 +35,183 @@ import jebl.evolution.treemetrics.RobinsonsFouldMetric;
 import jebl.evolution.treemetrics.RootedTreeMetric;
 import jebl.evolution.trees.SimpleRootedTree;
 
-
 /**
  * A statistic that returns the distance between two trees.
- *
- * Currently supports the following metrics,
- *   1. compare - returns a 0 for identity of topology, 1 otherwise.
- *   2. Billera tree distance.
- *   3. ROBINSONS FOULD
- *   4. Clade height 
- *
+ * 
+ * Currently supports the following metrics, 
+ * 1. compare - returns a 0 for identity of topology, 1 otherwise. 
+ * 2. Billera tree distance. 
+ * 3. ROBINSONS FOULD 
+ * 4. Clade height 
+ * 5. Branch Score
+ * 
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Joseph Heled
- *
+ * @author Sebastian Hoehna
+ * 
  * @version $Id: TreeMetricStatistic.java,v 1.14 2005/07/11 14:06:25 rambaut Exp $
  */
-public class TreeMetricStatistic extends Statistic.Abstract implements TreeStatistic {
+public class TreeMetricStatistic extends Statistic.Abstract implements
+      TreeStatistic {
 
-	public static final String TREE_METRIC_STATISTIC = "treeMetricStatistic";
-	public static final String TARGET = "target";
-	public static final String REFERENCE = "reference";
-    public static final String METHOD = "method";
+   public static final String TREE_METRIC_STATISTIC = "treeMetricStatistic";
 
+   public static final String TARGET                = "target";
 
-    enum Method {
-        TOPOLOGY,
-        BILLERA,
-        ROBINSONSFOULD,
-        CLADEHEIGHTM,
-    }
+   public static final String REFERENCE             = "reference";
 
-    public TreeMetricStatistic(String name, Tree target, Tree reference, Method method) {
-		super(name);
-		
-		this.target = target;
-        this.method = method;
+   public static final String METHOD                = "method";
 
-        switch( method ) {
-            case TOPOLOGY: {
-                this.referenceNewick = Tree.Utils.uniqueNewick(reference, reference.getRoot());
-                break;
-            }
-            default: {
-                jreference = Tree.Utils.asJeblTree(reference);
-                break;
-            }
-        }
+   enum Method {
+      TOPOLOGY, BILLERA, ROBINSONSFOULD, CLADEHEIGHTM, BRANCHSCORE
+   }
 
-        switch( method ) {
-            case BILLERA:         metric = new BilleraMetric(); break;
-            case ROBINSONSFOULD:  metric = new RobinsonsFouldMetric(); break;
-            case CLADEHEIGHTM:    metric = new CladeHeightMetric(); break;
-        }
-    }
+   public TreeMetricStatistic(String name, Tree target, Tree reference,
+         Method method) {
+      super(name);
 
-	public void setTree(Tree tree) { this.target = tree; }
-	public Tree getTree() { return target; }
-	
-	public int getDimension() { return 1; }
+      this.target = target;
+      this.method = method;
 
-    /** @return value. */
-    public double getStatisticValue(int dim) {
+      switch (method) {
+         case TOPOLOGY: {
+            this.referenceNewick = Tree.Utils.uniqueNewick(reference, reference
+                  .getRoot());
+            break;
+         }
+         default: {
+            jreference = Tree.Utils.asJeblTree(reference);
+            break;
+         }
+      }
 
-        if( method == Method.TOPOLOGY ) {
-            return compareTreesByTopology();
-        }
+      switch (method) {
+         case BILLERA:
+            metric = new BilleraMetric();
+            break;
+         case ROBINSONSFOULD:
+            metric = new RobinsonsFouldMetric();
+            break;
+         case CLADEHEIGHTM:
+            metric = new CladeHeightMetric();
+            break;
+         case BRANCHSCORE:
+            metric = new BranchScoreMetric();
+            break;
+      }
+   }
 
-        return metric.getMetric(jreference, Tree.Utils.asJeblTree(target));
-    }
+   public void setTree(Tree tree) {
+      this.target = tree;
+   }
 
-    private double compareTreesByTopology() {
-        return Tree.Utils.uniqueNewick(target, target.getRoot()).equals(referenceNewick) ? 0.0 : 1.0;
-    }
+   public Tree getTree() {
+      return target;
+   }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+   public int getDimension() {
+      return 1;
+   }
 
-        public String getParserName() { return TREE_METRIC_STATISTIC; }
+   /** @return value. */
+   public double getStatisticValue(int dim) {
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+      if (method == Method.TOPOLOGY) {
+         return compareTreesByTopology();
+      }
 
-            String name;
-            if (xo.hasAttribute(NAME)) {
-                name = xo.getStringAttribute(NAME);
-            } else {
-                name = xo.getId();
-            }
-            Tree target = (Tree)xo.getSocketChild(TARGET);
-            Tree reference = (Tree)xo.getSocketChild(REFERENCE);
+      return metric.getMetric(jreference, Tree.Utils.asJeblTree(target));
+   }
 
-            Method m = Method.TOPOLOGY;
-            if( xo.hasAttribute(METHOD) ) {
-                final String s = xo.getStringAttribute(METHOD);
-                m = Method.valueOf(s.toUpperCase());
-            }
-            return new TreeMetricStatistic(name, target, reference, m);
-        }
+   private double compareTreesByTopology() {
+      return Tree.Utils.uniqueNewick(target, target.getRoot()).equals(
+            referenceNewick) ? 0.0 : 1.0;
+   }
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+   public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserDescription() {
-            return "A statistic that returns the distance between two trees. " +
-                    " with method=\"topology\", return a 0 for identity and a 1 for difference. " +
-                    "With other methods return the distance metric associated with that method.";
-        }
+                                           public String getParserName() {
+                                              return TREE_METRIC_STATISTIC;
+                                           }
 
-        public Class getReturnType() { return TreeMetricStatistic.class; }
+                                           public Object parseXMLObject(
+                                                 XMLObject xo)
+                                                 throws XMLParseException {
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+                                              String name;
+                                              if (xo.hasAttribute(NAME)) {
+                                                 name = xo
+                                                       .getStringAttribute(NAME);
+                                              } else {
+                                                 name = xo.getId();
+                                              }
+                                              Tree target = (Tree) xo
+                                                    .getSocketChild(TARGET);
+                                              Tree reference = (Tree) xo
+                                                    .getSocketChild(REFERENCE);
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                new StringAttributeRule(NAME, "A name for this statistic primarily for the purposes of logging", true),
-                new StringAttributeRule(METHOD, "comparision method (" + methodNames(",") + ")", true),
-                new ElementRule(TARGET,
-                        new XMLSyntaxRule[] { new ElementRule(TreeModel.class) }),
-                new ElementRule(REFERENCE,
-                        new XMLSyntaxRule[] { new ElementRule(Tree.class) }),
-        };
+                                              Method m = Method.TOPOLOGY;
+                                              if (xo.hasAttribute(METHOD)) {
+                                                 final String s = xo
+                                                       .getStringAttribute(METHOD);
+                                                 m = Method.valueOf(s
+                                                       .toUpperCase());
+                                              }
+                                              return new TreeMetricStatistic(
+                                                    name, target, reference, m);
+                                           }
 
-    };
+                                           // ************************************************************************
+                                           // AbstractXMLObjectParser
+                                             // implementation
+                                           // ************************************************************************
 
-    private static String methodNames(String s) {
-        String r = "";
-        for( Method m : Method.values() ) {
-            if( r.length() > 0 ) r = r + s;
-            r = r + m.name();
-        }
-        return r;
-    }
+                                           public String getParserDescription() {
+                                              return "A statistic that returns the distance between two trees. "
+                                                    + " with method=\"topology\", return a 0 for identity and a 1 for difference. "
+                                                    + "With other methods return the distance metric associated with that method.";
+                                           }
 
-    private Method method;
-    private Tree target = null;
-    private String referenceNewick = null;
+                                           public Class getReturnType() {
+                                              return TreeMetricStatistic.class;
+                                           }
 
-    private SimpleRootedTree jreference = null;
-    RootedTreeMetric metric = null;
+                                           public XMLSyntaxRule[] getSyntaxRules() {
+                                              return rules;
+                                           }
+
+                                           private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+         new StringAttributeRule(
+               NAME,
+               "A name for this statistic primarily for the purposes of logging",
+               true),
+         new StringAttributeRule(METHOD, "comparision method ("
+               + methodNames(",") + ")", true),
+         new ElementRule(TARGET, new XMLSyntaxRule[] { new ElementRule(
+               TreeModel.class) }),
+         new ElementRule(REFERENCE, new XMLSyntaxRule[] { new ElementRule(
+               Tree.class) }),                                          };
+
+                                        };
+
+   private static String methodNames(String s) {
+      String r = "";
+      for (Method m : Method.values()) {
+         if (r.length() > 0)
+            r = r + s;
+         r = r + m.name();
+      }
+      return r;
+   }
+
+   private Method           method;
+
+   private Tree             target          = null;
+
+   private String           referenceNewick = null;
+
+   private SimpleRootedTree jreference      = null;
+
+   RootedTreeMetric         metric          = null;
 }

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-O3 -fPIC
+CFLAGS=-O2 -funroll-loops -fstrict-aliasing
 INCLUDES=-I${JAVA_HOME}/include/ -I${JAVA_HOME}/include/solaris
 
 OBJS = NucleotideLikelihoodCore.o

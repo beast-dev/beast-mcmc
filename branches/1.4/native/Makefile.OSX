@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS_PPC=-arch ppc -O2 -funroll-loops 
-CFLAGS_I386=-arch i386 -O4 -fast -funroll-loops -mtune=i686
+CFLAGS_I386=-arch i386 -O2 -funroll-loops -mtune=i686
 
 INCLUDES=-I/Library/Java/Home/include
 

@@ -295,7 +295,11 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             double mean = xo.getDoubleAttribute(MEAN);
             double stdev = xo.getDoubleAttribute(STDEV);
             double offset = xo.getDoubleAttribute(OFFSET);
-            boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
+            boolean meanInRealSpace = false;
+
+            if (xo.hasAttribute(MEAN_IN_REAL_SPACE)) {
+                meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
+            }
 
             if (meanInRealSpace) {
                 throw new UnsupportedOperationException("meanInRealSpace is not supported yet");

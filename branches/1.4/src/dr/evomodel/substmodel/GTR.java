@@ -275,4 +275,4 @@ public class GTR extends AbstractNucleotideModel
 		};
 	};
 
-};
+}

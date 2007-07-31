@@ -51,10 +51,10 @@ public class HKY extends AbstractNucleotideModel
 
     private Parameter kappaParameter = null;
 
-     private boolean updateIntermediates = true;
+    private boolean updateIntermediates = true;
 
     /** Used for precalculations */
-     private double 				beta, A_R, A_Y;
+    private double 				beta, A_R, A_Y;
     private double 				tab1A, tab2A, tab3A;
     private double 				tab1C, tab2C, tab3C;
     private double 				tab1G, tab2G, tab3G;
@@ -102,8 +102,8 @@ public class HKY extends AbstractNucleotideModel
      */
     public double getTsTv()
     {
-          calculateFreqRY();
-          tsTv = (getKappa() * (freqA*freqG + freqC*freqT))/(freqR*freqY);
+        calculateFreqRY();
+        tsTv = (getKappa() * (freqA*freqG + freqC*freqT))/(freqR*freqY);
 
         return tsTv;
     }
@@ -177,7 +177,6 @@ public class HKY extends AbstractNucleotideModel
         matrix[13] =freqC+(tab1C*aa)-(tab3C*bbY);
         matrix[14] =matrix[6];
         matrix[15] =freqT+(tab1T*aa)+(tab2T*bbY);
-
     }
 
     /**
@@ -289,5 +288,4 @@ public class HKY extends AbstractNucleotideModel
         }
 
     };
-
 }

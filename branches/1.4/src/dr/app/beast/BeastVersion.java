@@ -35,11 +35,10 @@ import dr.util.Version;
  * 1. the dr source has been checked out *by tag* before being packaged for
  * distribution.
  *
- * Version last changed 2006/07/02 by AER
+ * Version last changed 2007/07/31 by AER
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: BeastVersion.java,v 1.6 2006/07/02 11:02:51 rambaut Exp $
  */
 public class BeastVersion implements Version {
 
@@ -61,6 +60,6 @@ public class BeastVersion implements Version {
     public String getBuildString() {
         // this used to parse the CVS ID string but there is no equivalent
         // for SVN. We could increment this manually?
-        return "Build r435";
+        return "Build r436";
 	}
 }

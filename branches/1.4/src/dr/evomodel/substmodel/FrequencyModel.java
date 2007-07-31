@@ -32,6 +32,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 import dr.evoxml.DataTypeUtils;
+import dr.util.NumberFormatter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -132,10 +133,11 @@ public class FrequencyModel extends AbstractModel {
                 sb.append("Initial frequencies ");
             }
             sb.append("= {");
-            sb.append(freqsParam.getParameterValue(0));
+            NumberFormatter nf = new NumberFormatter(5);
+            sb.append(nf.format(freqsParam.getParameterValue(0)));
             for (int j = 1; j < freqsParam.getDimension(); j++) {
                 sb.append(", ");
-                sb.append(freqsParam.getParameterValue(j));
+                sb.append(nf.format(freqsParam.getParameterValue(j)));
             }
             sb.append("}");
             Logger.getLogger("dr.evomodel").info(sb.toString());

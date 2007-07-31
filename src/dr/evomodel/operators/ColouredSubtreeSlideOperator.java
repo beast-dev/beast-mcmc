@@ -266,18 +266,6 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
         return count;
     }
 
-    /**
-     * @return the other child of the given parent.
-     */
-    private NodeRef getOtherChild(Tree tree, NodeRef parent, NodeRef child) {
-
-        if (tree.getChild(parent, 0) == child) {
-            return tree.getChild(parent, 1);
-        } else {
-            return tree.getChild(parent, 0);
-        }
-    }
-
     public double getSize() { return size; }
     public void setSize(double size) { this.size = size; }
 

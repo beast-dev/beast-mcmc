@@ -35,6 +35,8 @@ import dr.evoxml.DataTypeUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.util.logging.Logger;
+
 /**
  * A model of equlibrium frequencies
  *
@@ -45,110 +47,122 @@ import org.w3c.dom.Element;
  */
 public class FrequencyModel extends AbstractModel {
 
-	public static final String FREQUENCIES = "frequencies";
-	public static final String FREQUENCY_MODEL = "frequencyModel";
-	
-	public FrequencyModel(DataType dataType, Parameter frequencyParameter) {  
-	
-		super(FREQUENCY_MODEL);
-		this.frequencyParameter = frequencyParameter;
-		addParameter(frequencyParameter);
-		frequencyParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, dataType.getStateCount()));
-		this.dataType = dataType;
-	}
-	
-	public final void setFrequency(int i, double value) {
-		frequencyParameter.setParameterValue(i, value);
-	}
-	
-	public final double getFrequency(int i) { return frequencyParameter.getParameterValue(i); }
-	
-	public int getFrequencyCount() { return frequencyParameter.getDimension(); }
-	
-	public final double[] getFrequencies() { 
-		double[] frequencies = new double[getFrequencyCount()];
-		for (int i =0; i < frequencies.length; i++) {
-			frequencies[i] = getFrequency(i);		 
-		}
-		return frequencies;
-	}
-	
-	public DataType getDataType() { return dataType; }
-	
-	// *****************************************************************
-	// Interface Model
-	// *****************************************************************
-		
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		// no intermediates need recalculating....
-	}
-	
-	protected void handleParameterChangedEvent(Parameter parameter, int index) {
-		// no intermediates need recalculating....
-	}
-	
-	protected void storeState() {} // no state apart from parameters to store 
-	protected void restoreState() {} // no state apart from parameters to restore 
-	protected void acceptState() {} // no state apart from parameters to accept 
-	protected void adoptState(Model source) {} // no state apart from parameters to adopt 
-	
-	public Element createElement(Document doc) {
-		throw new RuntimeException("Not implemented!");
-	}
+    public static final String FREQUENCIES = "frequencies";
+    public static final String FREQUENCY_MODEL = "frequencyModel";
 
-	/**
-	 * Reads a frequency model from an XMLObject. 
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return FREQUENCY_MODEL; }
-			
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    public FrequencyModel(DataType dataType, Parameter frequencyParameter) {
 
-			DataType dataType = DataTypeUtils.getDataType(xo);
-			
-			Parameter freqsParam = (Parameter)xo.getSocketChild(FREQUENCIES);
-			double[] frequencies = null;	
-						
-			for (int i =0; i < xo.getChildCount(); i++) {
-				Object obj = xo.getChild(i);
-				if (obj instanceof PatternList) {
-					frequencies = ((PatternList)obj).getStateFrequencies();
-				} 
-			}
-			
-			if (frequencies != null) {
-				if (freqsParam.getDimension() != frequencies.length) {
-					throw new XMLParseException("dimension of frequency parameter and number of sequence states don't match!");
-				}
-				for (int j = 0; j < frequencies.length; j++) {
-					freqsParam.setParameterValue(j, frequencies[j]);
-				}
-			}
+        super(FREQUENCY_MODEL);
+        this.frequencyParameter = frequencyParameter;
+        addParameter(frequencyParameter);
+        frequencyParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, dataType.getStateCount()));
+        this.dataType = dataType;
+    }
+
+    public final void setFrequency(int i, double value) {
+        frequencyParameter.setParameterValue(i, value);
+    }
+
+    public final double getFrequency(int i) { return frequencyParameter.getParameterValue(i); }
+
+    public int getFrequencyCount() { return frequencyParameter.getDimension(); }
+
+    public final double[] getFrequencies() {
+        double[] frequencies = new double[getFrequencyCount()];
+        for (int i =0; i < frequencies.length; i++) {
+            frequencies[i] = getFrequency(i);
+        }
+        return frequencies;
+    }
+
+    public DataType getDataType() { return dataType; }
+
+    // *****************************************************************
+    // Interface Model
+    // *****************************************************************
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        // no intermediates need recalculating....
+    }
+
+    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+        // no intermediates need recalculating....
+    }
+
+    protected void storeState() {} // no state apart from parameters to store
+    protected void restoreState() {} // no state apart from parameters to restore
+    protected void acceptState() {} // no state apart from parameters to accept
+    protected void adoptState(Model source) {} // no state apart from parameters to adopt
+
+    public Element createElement(Document doc) {
+        throw new RuntimeException("Not implemented!");
+    }
+
+    /**
+     * Reads a frequency model from an XMLObject.
+     */
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() { return FREQUENCY_MODEL; }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            DataType dataType = DataTypeUtils.getDataType(xo);
+
+            Parameter freqsParam = (Parameter)xo.getSocketChild(FREQUENCIES);
+            double[] frequencies = null;
+
+            for (int i =0; i < xo.getChildCount(); i++) {
+                Object obj = xo.getChild(i);
+                if (obj instanceof PatternList) {
+                    frequencies = ((PatternList)obj).getStateFrequencies();
+                }
+            }
+
+            StringBuilder sb = new StringBuilder("Creating state frequencies model: ");
+            if (frequencies != null) {
+                if (freqsParam.getDimension() != frequencies.length) {
+                    throw new XMLParseException("dimension of frequency parameter and number of sequence states don't match!");
+                }
+                for (int j = 0; j < frequencies.length; j++) {
+                    freqsParam.setParameterValue(j, frequencies[j]);
+                }
+                sb.append("Using emprical frequencies from data ");
+            } else {
+                sb.append("Initial frequencies ");
+            }
+            sb.append("= {");
+            sb.append(freqsParam.getParameterValue(0));
+            for (int j = 1; j < freqsParam.getDimension(); j++) {
+                sb.append(", ");
+                sb.append(freqsParam.getParameterValue(j));
+            }
+            sb.append("}");
+            Logger.getLogger("dr.evomodel").info(sb.toString());
 
             return new FrequencyModel(dataType, freqsParam);
-		}
-		
-		public String getParserDescription() {
-			return "A model of equilibrium base frequencies.";
-		}
+        }
 
-		public Class getReturnType() { return FrequencyModel.class; }
+        public String getParserDescription() {
+            return "A model of equilibrium base frequencies.";
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-	
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new XORRule(
-				new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", DataType.getRegisteredDataTypeNames(), false),
-				new ElementRule(DataType.class)
-				),
-			new ElementRule(FREQUENCIES, 
-				new XMLSyntaxRule[] { new ElementRule(Parameter.class) })
-		
-		};
-};
-	
-	private DataType dataType = null;
-	private Parameter frequencyParameter = null;
-	
+        public Class getReturnType() { return FrequencyModel.class; }
+
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                new XORRule(
+                        new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", DataType.getRegisteredDataTypeNames(), false),
+                        new ElementRule(DataType.class)
+                ),
+                new ElementRule(FREQUENCIES,
+                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) })
+
+        };
+    };
+
+    private DataType dataType = null;
+    private Parameter frequencyParameter = null;
+
 }

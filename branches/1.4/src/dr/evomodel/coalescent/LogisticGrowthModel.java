@@ -39,8 +39,7 @@ import dr.xml.*;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class LogisticGrowthModel extends DemographicModel
-{
+public class LogisticGrowthModel extends DemographicModel {
 	
 	//
 	// Public stuff
@@ -127,7 +126,7 @@ public class LogisticGrowthModel extends DemographicModel
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);		
 					
 			boolean usingGrowthRate = true;		
-			Parameter rParam = null;		
+			Parameter rParam;		
 			if (xo.getChild(GROWTH_RATE) != null) {			
 				cxo = (XMLObject)xo.getChild(GROWTH_RATE);
 				rParam = (Parameter)cxo.getChild(Parameter.class);

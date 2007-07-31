@@ -94,7 +94,7 @@ public class TreeTraceAnalysis {
                 System.out.print(  "*");
             }
             for (int i = 1; i < treeCount; i++) {
-                tree = (Tree)trace[t].getTree(i, burnin*trace[t].getStepSize());
+                tree = trace[t].getTree(i, burnin*trace[t].getStepSize());
                 cladeSet.add(tree);
                 treeSet.add(Tree.Utils.uniqueNewick(tree, tree.getRoot()));
                 if (i >= (int)Math.round(counter*stepSize) && counter <= 60) {
@@ -328,9 +328,7 @@ public class TreeTraceAnalysis {
 
         }
 
-		TreeTraceAnalysis analysis = new TreeTraceAnalysis(trace, burnin, verbose);
-		
-		return analysis;
+        return new TreeTraceAnalysis(trace, burnin, verbose);
 	}
 		
 	private int burnin = -1;

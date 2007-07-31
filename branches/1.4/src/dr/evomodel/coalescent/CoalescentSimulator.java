@@ -65,7 +65,7 @@ public class CoalescentSimulator {
     public SimpleTree simulateTree(Tree[] subtrees, DemographicModel model, double rootHeight) {
 
         SimpleNode[] roots = new SimpleNode[subtrees.length];
-        SimpleTree tree = null;
+        SimpleTree tree;
 
         dr.evolution.util.Date mostRecent = null;
         for (int i = 0; i < subtrees.length; i++) {
@@ -299,15 +299,16 @@ public class CoalescentSimulator {
                                 final TaxaConstraint constraintj = ((TaxaConstraint)next.get(k));
                                 // build tree for taxons in difference
                                 final Taxa list = new Taxa();
-                                for(int j = 0; j < constraintj.taxons.getTaxonCount(); ++j) {
-                                    Taxon taxonj = taxa.getTaxon(j);
-                                    if( tree.getTaxonIndex(taxonj) < 0 ) {
+                                final TaxonList cjtaxa = constraintj.taxons;
+                                for (int j = 0; j < cjtaxa.getTaxonCount(); ++j) {
+                                    final Taxon taxonj = cjtaxa.getTaxon(j);
+                                    if (tree.getTaxonIndex(taxonj) < 0) {
                                         list.addTaxon(taxonj);
                                     }
                                 }
 
                                 if( list.getTaxonCount() == 0 ) {
-                                    if( constraintj.realLimits() ) {
+                                    if(constraintj.realLimits()) {
                                         final double rootHeight1 = tree.getRootHeight();
                                         if( rootHeight1 > constraintj.upper ) {
                                             throw new XMLParseException("taxa constraints are not compatible");
@@ -336,7 +337,7 @@ public class CoalescentSimulator {
                         }
 
                         // add a taxon list for remaining taxa
-                        final Taxa list = new Taxa();
+                        final Taxa list = new Taxa("remaining");
                         for(int j = 0; j < taxa.getTaxonCount(); ++j) {
                             Taxon taxonj = taxa.getTaxon(j);
                             for(int k = 0; k < st.size(); ++k) {
@@ -350,7 +351,7 @@ public class CoalescentSimulator {
                             }
                         }
                         if( list.getTaxonCount() > 0 ) {
-                           taxonLists.add(list);
+                            taxonLists.add(list);
                         }
                         if( st.size() > 1 ) {
                           final Tree tree1 = simulator.simulateTree((Tree[])st.toArray(new Tree[]{}), demoModel, -1);
@@ -369,7 +370,7 @@ public class CoalescentSimulator {
                  throw new XMLParseException("Expected at least one taxonList or two subtrees in " + getParserName() + " element.");
             }
 
-            Tree tree = null;
+            Tree tree;
 
             try {
                 Tree[] trees = new Tree[taxonLists.size()+subtrees.size()];

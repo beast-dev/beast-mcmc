@@ -198,6 +198,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.model.MeanStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.ProductStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.SumStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.DifferenceStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.RatioStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.ReciprocalStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.NegateStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.ExponentiationStatistic.PARSER);

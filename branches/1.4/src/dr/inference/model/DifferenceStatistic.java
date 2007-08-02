@@ -34,87 +34,86 @@ import java.util.Vector;
  *
  * @author Alexei Drummond
  */
-public class ProductStatistic extends Statistic.Abstract {
-	
-	public static String PRODUCT_STATISTIC = "product";
+public class DifferenceStatistic extends Statistic.Abstract {
 
-    private int dimension = 0;
+	public static String DIFFERENCE_STATISTIC = "difference";
 
-	public ProductStatistic(String name) {
+	public DifferenceStatistic(String name, Statistic term1, Statistic term2) {
 		super(name);
-	}
-	
-	public void addStatistic(Statistic statistic) {
-        if (dimension == 0) {
-            dimension = statistic.getDimension();
-        } else if (dimension != statistic.getDimension()) {
+
+        this.term1 = term1;
+        this.term2 = term2;
+
+        if (term1.getDimension() != 1 &&
+                term2.getDimension() != 1 &&
+                term1.getDimension() != term2.getDimension()) {
             throw new IllegalArgumentException();
         }
-		statistics.add(statistic);
-	}
-	
-	public int getDimension() { return dimension; }
+
+        if (term2.getDimension() == 1) {
+            dimension = term1.getDimension();
+        } else {
+            dimension = term2.getDimension();
+        }
+    }
+
+    public int getDimension() { return dimension; }
 
 	/** @return mean of contained statistics */
 	public double getStatisticValue(int dim) {
 
-        double product = 1.0;
+        if (term1.getDimension() == 1) {
+            return term1.getStatisticValue(0) - term2.getStatisticValue(dim);
+        } else if (term2.getDimension() == 1) {
+            return term1.getStatisticValue(dim) - term1.getStatisticValue(0);
+        } else {
+            return term1.getStatisticValue(dim) - term2.getStatisticValue(dim);
+        }
+    }
 
-		Statistic statistic;
-		
-		for (int i = 0; i < statistics.size(); i++) {
-			statistic = (Statistic)statistics.get(i);
-			product *= statistic.getStatisticValue(dim);
-		}
-		
-		return product;
-	}
-		
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return PRODUCT_STATISTIC; }
-		
+
+		public String getParserName() { return DIFFERENCE_STATISTIC; }
+
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			ProductStatistic productStatistic = new ProductStatistic(PRODUCT_STATISTIC);
-			
-			for (int i =0; i < xo.getChildCount(); i++) {
-				Object child = xo.getChild(i);
-				if (child instanceof Statistic) {
-                    try {
-                        productStatistic.addStatistic((Statistic)child);
-                    } catch (IllegalArgumentException iae) {
-                        throw new XMLParseException("Statistic addeed to " + getParserName() + " element is not of the same dimension");
-                    }
-				} else {
-					throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
-				}
-			}
-				
-			return productStatistic;
+
+            Statistic term1 = (Statistic)xo.getChild(0);
+            Statistic term2 = (Statistic)xo.getChild(1);
+
+            DifferenceStatistic differenceStatistic;
+            try {
+                differenceStatistic = new DifferenceStatistic(DIFFERENCE_STATISTIC, term1, term2);
+            } catch (IllegalArgumentException iae) {
+                throw new XMLParseException("Error parsing " + getParserName() + " the left and right statistics " +
+                        "should be of the same dimension or of dimension 1");
+            }
+			return differenceStatistic;
 		}
-		
+
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
-		
+
 		public String getParserDescription() {
-			return "This element returns a statistic that is the product of the child statistics.";
+			return "This element returns a statistic that is the difference of the 2 child statistics.";
 		}
-		
+
 		public Class getReturnType() { return ProductStatistic.class; }
-		
+
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
+
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
-		};		
+                new ElementRule(Statistic.class, "The first statistic" ),
+                new ElementRule(Statistic.class, "The second statistic" )
+		};
 	};
-	
+
 
 	// ****************************************************************
 	// Private and protected stuff
 	// ****************************************************************
-	
-	private Vector statistics = new Vector();
+
+    private int dimension = 0;
+    private Statistic term1 = null;
+	private Statistic term2 = null;
 }

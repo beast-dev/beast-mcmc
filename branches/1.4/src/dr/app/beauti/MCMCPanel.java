@@ -30,6 +30,8 @@ import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 import java.awt.event.ActionEvent;
 
 /**
@@ -40,12 +42,14 @@ import java.awt.event.ActionEvent;
 public class MCMCPanel extends OptionsPanel implements Exportable {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -3710586474593827540L;
 	WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
 	WholeNumberField echoEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 	WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
+
+	JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
 
 	JTextField logFileNameField = new JTextField("untitled.log");
 	JTextField treeFileNameField = new JTextField("untitled.trees");
@@ -101,7 +105,8 @@ public class MCMCPanel extends OptionsPanel implements Exportable {
         substTreeLogCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 substTreeFileNameField.setEnabled(substTreeLogCheck.isSelected());
-            }
+	            frame.mcmcChanged();
+           }
         });
 
         substTreeFileNameField.setColumns(32);
@@ -112,6 +117,16 @@ public class MCMCPanel extends OptionsPanel implements Exportable {
 				frame.mcmcChanged();
 			}
 		};
+
+		addSeparator();
+
+		addComponent(samplePriorCheckBox);
+		samplePriorCheckBox.setOpaque(false);
+		samplePriorCheckBox.addChangeListener(new ChangeListener() {
+		    public void stateChanged(ChangeEvent changeEvent) {
+			    frame.mcmcChanged();
+		    }
+		});
 
 		chainLengthField.addKeyListener(listener);
 		echoEveryField.addKeyListener(listener);
@@ -173,6 +188,8 @@ public class MCMCPanel extends OptionsPanel implements Exportable {
             substTreeFileNameField.setText("untitled");
 		}
 
+		samplePriorCheckBox.setSelected(options.samplePriorOnly);
+
 		validate();
 		repaint();
 	}
@@ -192,6 +209,7 @@ public class MCMCPanel extends OptionsPanel implements Exportable {
         options.substTreeLog = substTreeLogCheck.isSelected();
         options.substTreeFileName = substTreeFileNameField.getText();
 
+		options.samplePriorOnly = samplePriorCheckBox.isSelected();
 	}
 
     public JComponent getExportableComponent() {

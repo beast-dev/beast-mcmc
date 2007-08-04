@@ -277,6 +277,9 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeText("");
         writer.writeComment("The sequence alignment (each sequence refers to a taxon above).");
         writer.writeComment("ntax=" + alignment.getTaxonCount() + " nchar=" + alignment.getSiteCount());
+	    if (samplePriorOnly) {
+		    writer.writeComment("Null sequences generated in order to sample from the prior only.");
+	    }
         writer.writeOpenTag(
                 "alignment",
                 new Attribute[] {
@@ -290,7 +293,12 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeOpenTag("sequence");
             writer.writeTag("taxon", new Attribute[] { new Attribute.Default("idref", taxon.getId()) }, true);
-            writer.writeText(alignment.getAlignedSequenceString(i));
+	        if (!samplePriorOnly) {
+		        writer.writeText(alignment.getAlignedSequenceString(i));
+	        } else {
+		        // 3 Ns written in case 3 codon positions selected...
+		        writer.writeText("NNN");
+	        }
             writer.writeCloseTag("sequence");
         }
         writer.writeCloseTag("alignment");

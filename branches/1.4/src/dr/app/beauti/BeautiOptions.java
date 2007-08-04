@@ -1581,6 +1581,8 @@ public class BeautiOptions {
 	public String fileName = null;
 	public boolean autoOptimize = true;
 	public boolean performTraceAnalysis = false;
+	public boolean samplePriorOnly = false;	
+
 	public HashMap parameters = new HashMap();
 	public HashMap statistics = new HashMap();
 	public HashMap operators = new HashMap();

@@ -749,6 +749,8 @@ public class BeautiOptions {
 			Taxa taxonSet = (Taxa)taxonSets.get(i);
 			Element taxonSetElement = new Element("taxonSet");
 			taxonSetElement.addContent(createChild("id", taxonSet.getId()));
+			taxonSetElement.addContent(createChild("enforceMonophyly",
+						((Boolean)taxonSetsMono.get(taxonSet)).booleanValue() ? "true" : "false"));
 			for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
 				Element taxonElement = new Element("taxon");
 				taxonElement.addContent(createChild("id", taxonSet.getTaxon(j).getId()));
@@ -957,6 +959,7 @@ public class BeautiOptions {
 				String id = getStringChild(taxonSetElement, "id", "");
 				final Taxa taxonSet = new Taxa(id);
 
+				Boolean enforceMonophyly = Boolean.valueOf(getStringChild(taxonSetElement, "enforceMonophyly", "false"));
 				Iterator iter2 = taxonSetElement.getChildren("taxon").iterator();
 				while (iter2.hasNext()) {
 					Element taxonElement = (Element)iter2.next();
@@ -967,6 +970,7 @@ public class BeautiOptions {
 					}
 				}
 				taxonSets.add(taxonSet);
+				taxonSetsMono.put(taxonSet, enforceMonophyly);
 			}
 		}
 
@@ -1581,7 +1585,7 @@ public class BeautiOptions {
 	public String fileName = null;
 	public boolean autoOptimize = true;
 	public boolean performTraceAnalysis = false;
-	public boolean samplePriorOnly = false;	
+	public boolean samplePriorOnly = false;
 
 	public HashMap parameters = new HashMap();
 	public HashMap statistics = new HashMap();

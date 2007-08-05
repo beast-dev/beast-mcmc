@@ -273,11 +273,11 @@ public class CoalescentMRCALikelihood extends AbstractModel implements Likelihoo
 		final double timeOfThisCoal = width + timeOfPrevCoal;
 
 		final double intervalArea = demoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
-        final double kover2 = Binomial.choose2(lineageCount);
-        double like =  -(kover2 *intervalArea);
+        final double kchoose2 = Binomial.choose2(lineageCount);
+        double like =  -(kchoose2 * intervalArea);
 		switch (type) {
 			case COALESCENT:
-				like += Math.log(kover2 / demoFunction.getDemographic(timeOfThisCoal));
+				like += - Math.log(demoFunction.getDemographic(timeOfThisCoal));
 				break;
 			case NEW_SAMPLE:
 				//like = -(Binomial.choose2(lineageCount)*intervalArea);

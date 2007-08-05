@@ -976,6 +976,22 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             };
         }
 
+        public static boolean allDisjoint(SimpleNode[] nodes) {
+
+            Set<String>[] ids = new Set[nodes.length];
+            for(int k = 0; k < nodes.length; ++k) {
+                ids[k] = Tree.Utils.getLeafSet(new SimpleTree(nodes[k]));
+                for(int j = 0; j < k; ++j) {
+                    Set<String> intersection = new HashSet<String>(ids[j]);
+                    intersection.retainAll(ids[k]);
+                    if( intersection.size() > 0 ) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
         /**
          * Compares 2 trees and returns true if they have the same topology (same taxon
          * order is assumed).

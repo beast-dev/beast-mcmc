@@ -346,11 +346,11 @@ public class VariableDemographicModel extends DemographicModel {
 
         private boolean setTreeTimes(int nt) {
             if( dirtyTrees[nt] ) {
-                double[] doubles = null;
+                /*double[] doubles = null;
                 if( ! dirtyTrees[nt] ) {
                    doubles = ttimes[nt].clone();
 
-                }
+                }*/
                 ti[nt] = new TreeIntervals(trees[nt]);
 
                 TreeIntervals nti = ti[nt];
@@ -381,12 +381,12 @@ public class VariableDemographicModel extends DemographicModel {
                     ttimes[nt][k] = timeToCoal + (k == 0 ? 0 : ttimes[nt][k-1]);
                 }
 
-                if( doubles != null ) {
+                /*if( doubles != null ) {
                     if( ! Arrays.equals(doubles, ttimes[nt]) ) {
                        System.out.println(Arrays.toString(doubles) + " != " + Arrays.toString(ttimes[nt])
                                + Arrays.toString(dirtyTrees) + " " + dirtyTrees);
                     }
-                }
+                }*/
                 dirtyTrees[nt] = false;
                // System.out.print(nt + " " + Arrays.toString(dirtyTrees) + " " + dirtyTrees);
                 return true;
@@ -469,28 +469,37 @@ public class VariableDemographicModel extends DemographicModel {
                     " inds " + Arrays.toString(indicatorParameter.getParameterValues())) ;*/
         }
 
-        private int getIntervalIndex(final double t) {
+        private int getIntervalIndexStep(final double t) {
             int j = 0;
             // ugly hack,
             // when doubles are added in a different order and compared later, they can be a tiny bit off. With a
             // stepwise model this creates a "one off" situation here, which is unpleasent.
             // use float comarison here to avoid it
+
             final float tf = (float)t;
             while( tf > (float)times[j+1] ) ++j;
             return j;
         }
 
+        private int getIntervalIndexLin(final double t) {
+            int j = 0;
+            while( t > times[j+1] ) ++j;
+            return j;
+        }
+
         public double getDemographic(double t) {
-            final int j = getIntervalIndex(t);
+
             double p;
             switch( type ) {
                 case STEPWISE:
                 {
+                    final int j = getIntervalIndexStep(t);
                     p = values[j];
                     break;
                 }
                 case LINEAR:
                 {
+                    final int j = getIntervalIndexLin(t);
                     if( j == values.length - 1 ) {
                         p = values[j];
                         break;
@@ -525,8 +534,18 @@ public class VariableDemographicModel extends DemographicModel {
             }
             final double time0 = times[index];
             final double interval = intervals[index];
-            final double pop0 = popStart + ((start - time0) / interval) * popDiff;
-            final double pop1 = popStart + ((end - time0) / interval) * popDiff;
+
+            assert (float)start <= (float)(time0 + interval) && start >= time0 && (float)end <= (float)(time0 + interval) && end >= time0;
+            
+           // final double pop0 = popStart + ((start - time0) / interval) * popDiff;
+           // final double pop1 = popStart + ((end - time0) / interval) * popDiff;
+
+            // do same as above more effeciently
+            final double r = popDiff / interval;
+            final double x = popStart - time0 * r;
+            final double pop0 = x + start * r;
+            final double pop1 = x + end * r;
+            
             if( pop0 == pop1 ) {
                 // either dx == 0 or very small (numerical inaccuracy)
                 return dx/pop0;
@@ -545,46 +564,51 @@ public class VariableDemographicModel extends DemographicModel {
          }
 
        // private double populationLin()
-        public double getIntegral(double start, double finish) {
-            final int first = getIntervalIndex(start);
-            final int last = getIntervalIndex(finish);
-            double intensity = 0.0;
+       public double getIntegral(double start, double finish) {
 
-           final double popStart = values[first];
+           double intensity = 0.0;
+
            switch( type ) {
-                case STEPWISE:
-                {
-                    if( first == last ) {
-                        intensity = (finish - start) / popStart;
-                    } else {
-                        intensity = (times[first+1] - start) / popStart;
+               case STEPWISE:
+               {
+                   final int first = getIntervalIndexStep(start);
+                   final int last = getIntervalIndexStep(finish);
 
-                        for(int k = first + 1; k < last; ++k) {
-                            intensity += intervals[k]/values[k];
-                        }
-                        intensity += (finish - times[last]) / values[last];
-                    }
-                    break;
-                }
-                case LINEAR:
-                {
-                    if( first == last ) {
-                        intensity += intensityLinInterval(start, finish, first);
-                    } else {
-                        // from first to end of interval
-                        intensity += intensityLinInterval(start, times[first+1], first);
-                        // intervals until (not including) last
-                         for(int k = first + 1; k < last; ++k) {
-                            intensity += intensityLinInterval(k);
-                        }
-                        // last interval
-                        intensity += intensityLinInterval(times[last], finish, last);                       
-                    }
-                    break;
-                }
-            }
-            return intensity/popFactor;
-        }
+                   final double popStart = values[first];
+                   if( first == last ) {
+                       intensity = (finish - start) / popStart;
+                   } else {
+                       intensity = (times[first+1] - start) / popStart;
+
+                       for(int k = first + 1; k < last; ++k) {
+                           intensity += intervals[k]/values[k];
+                       }
+                       intensity += (finish - times[last]) / values[last];
+                   }
+                   break;
+               }
+               case LINEAR:
+               {
+                   final int first = getIntervalIndexLin(start);
+                   final int last = getIntervalIndexLin(finish);
+
+                   if( first == last ) {
+                       intensity += intensityLinInterval(start, finish, first);
+                   } else {
+                       // from first to end of interval
+                       intensity += intensityLinInterval(start, times[first+1], first);
+                       // intervals until (not including) last
+                       for(int k = first + 1; k < last; ++k) {
+                           intensity += intensityLinInterval(k);
+                       }
+                       // last interval
+                       intensity += intensityLinInterval(times[last], finish, last);
+                   }
+                   break;
+               }
+           }
+           return intensity/popFactor;
+       }
 
         public int getNumArguments() {
             assert false;

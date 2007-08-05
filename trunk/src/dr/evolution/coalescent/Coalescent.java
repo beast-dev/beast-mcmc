@@ -68,8 +68,7 @@ public class Coalescent implements MultivariateFunction, Units {
      * Calculates the log likelihood of this set of coalescent intervals,
      * given a demographic model.
      */
-    public static final double calculateLogLikelihood(IntervalList intervals,
-                                                      DemographicFunction demographicFunction) {
+    public static double calculateLogLikelihood(IntervalList intervals, DemographicFunction demographicFunction) {
 
         double logL = 0.0;
 
@@ -85,7 +84,7 @@ public class Coalescent implements MultivariateFunction, Units {
 
             final double kChoose2 = Binomial.choose2(lineageCount);
             // common part
-            logL += - kChoose2 * intervalArea;
+            logL += -kChoose2 * intervalArea;
 
             if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
 
@@ -101,8 +100,9 @@ public class Coalescent implements MultivariateFunction, Units {
                 } else {
                     // remove this at some stage
                     System.err.println("Interval ignored: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
-                    double d =  duration / intervalArea;
-                    logL += - Math.log(kChoose2 / d);
+                    return Double.NEGATIVE_INFINITY;
+                    //double d =  duration / intervalArea;
+                    //logL += Math.log(kover2 / d);
                 }
             }
 
@@ -137,7 +137,7 @@ public class Coalescent implements MultivariateFunction, Units {
      * 1/theta^(n-1) * exp(-lambda/theta). This allows theta to be integrated
      * out analytically. :-)
      */
-    private static final double getLambda(IntervalList intervals) {
+    private static double getLambda(IntervalList intervals) {
         double lambda = 0.0;
         for (int i= 0; i < intervals.getIntervalCount(); i++) {
             lambda += (intervals.getInterval(i) * intervals.getLineageCount(i));

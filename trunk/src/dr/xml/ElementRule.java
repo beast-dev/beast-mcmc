@@ -339,9 +339,9 @@ public class ElementRule implements XMLSyntaxRule {
                 buffer.append(rule.wikiRuleString(handler, prefix + "*"));
             }
             if (hasDescription()) {
-                buffer.append(prefix + "*:''").append(getDescription()).append("''\n");
+                buffer.append(prefix).append("*:''").append(getDescription()).append("''\n");
 			} else {
-                buffer.append(prefix + "*:\n");
+                buffer.append(prefix).append("*:\n");
             }
 			return buffer.toString();
 		}

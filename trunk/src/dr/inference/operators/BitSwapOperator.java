@@ -62,7 +62,7 @@ public class BitSwapOperator extends SimpleMCMCOperator {
     }
 
     public String getOperatorName() {
-        return BIT_SWAP_OPERATOR;   // todo is that right, seems to conflict with bitSwap
+        return "bitSwap("  + data.getParameterName() + ")";
     }
 
 //    private boolean allZeros(int start, int stop) {

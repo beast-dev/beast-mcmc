@@ -64,7 +64,9 @@ public class UniformOperator extends SimpleMCMCOperator {
 	}
 
 	//MCMCOperator INTERFACE
-	public final String getOperatorName() { return parameter.getParameterName(); }
+	public final String getOperatorName() {
+        return "uniform(" + parameter.getParameterName() + ")"; 
+    }
 
 	public final void optimize(double targetProb) {	
 	

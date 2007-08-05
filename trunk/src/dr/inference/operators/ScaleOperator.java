@@ -163,7 +163,7 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 
 	//MCMCOperator INTERFACE
 	public final String getOperatorName() {
-		return parameter.getParameterName();
+		return "scale(" + parameter.getParameterName() + ")";
 	}
 
 	public double getCoercableParameter() {

@@ -50,7 +50,7 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
 		try {			
-            Reader reader = null;
+            Reader reader;
 
             String fileName = xo.getStringAttribute(FILE_NAME);
             try {
@@ -83,23 +83,23 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
 				NumberFormatter formatter = new NumberFormatter(6);
 				formatter.setPadding(true);
 				formatter.setFieldWidth(14);
-			
-				for (int i =0; i < analysis.length; i++) {
-					if (analysis[i].getName().equals(statName)) {
-						double estimate = analysis[i].getMean();
-						double error = analysis[i].getStdError();
-								
-						System.out.println("E[" + statName + "]=" + formatter.format(expectation));
-									
-						if (expectation > (estimate-(2*error)) && expectation < (estimate+(2*error))) {
-							System.out.println("OK:       " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
-						} else {
-							System.out.print("WARNING: " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
-						}
-									
-					}
-				}
-			}
+
+                for (TraceAnalysis analysi : analysis) {
+                    if (analysi.getName().equals(statName)) {
+                        double estimate = analysi.getMean();
+                        double error = analysi.getStdError();
+
+                        System.out.println("E[" + statName + "]=" + formatter.format(expectation));
+
+                        if (expectation > (estimate - (2 * error)) && expectation < (estimate + (2 * error))) {
+                            System.out.println("OK:       " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
+                        } else {
+                            System.out.print("WARNING: " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
+                        }
+
+                    }
+                }
+            }
 					
 			System.out.println();
 			System.out.flush();

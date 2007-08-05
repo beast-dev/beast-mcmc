@@ -107,8 +107,7 @@ public class SimpleNode implements NodeRef, Attributable {
 	}
 	
 	public SimpleNode getDeepCopy() {
-		SimpleNode copy = new SimpleNode(this);
-		return copy;
+        return new SimpleNode(this);
 	}
 
 	/**

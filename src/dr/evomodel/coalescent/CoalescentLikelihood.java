@@ -324,16 +324,16 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 		final double timeOfThisCoal = width + timeOfPrevCoal;
 
 		final double intervalArea = demogFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
-        final double kover2 = Binomial.choose2(lineageCount);
-        double like = -kover2 * intervalArea;
+        final double kchoose2 = Binomial.choose2(lineageCount);
+        double like = -kchoose2 * intervalArea;
         if( false ) {
             System.err.print("l = " + lineageCount + " width " + width + " int " + intervalArea);
         }
         switch (type) {
 			case COALESCENT:
                 final double demographic = demogFunction.getDemographic(timeOfThisCoal);
-                like += //Math.log(Math.min(1.0, kover2 / demogFunction.getDemographic(timeOfThisCoal)));
-                Math.log(kover2 / demographic);
+                like +=  -Math.log(demographic);
+                //Math.log(kchoose2 / demographic);
                 if( false ) { System.err.print(" vatend " + demographic); }
                 break;
 			case NEW_SAMPLE:

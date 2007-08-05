@@ -28,11 +28,10 @@ package dr.evolution.coalescent;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.MutableTree;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.TimeScale;
-import dr.util.HeapSort;
 import dr.math.MathUtils;
+import dr.util.HeapSort;
 
 import java.util.ArrayList;
 
@@ -62,7 +61,9 @@ public class CoalescentSimulator {
 	 */
 	public SimpleTree simulateTree(TaxonList taxa, DemographicFunction demoFunction) {
 
-		SimpleNode[] nodes = new SimpleNode[taxa.getTaxonCount()];
+        if( taxa.getTaxonCount() == 0 ) return new SimpleTree();
+
+        SimpleNode[] nodes = new SimpleNode[taxa.getTaxonCount()];
 		for (int i = 0; i < taxa.getTaxonCount(); i++) {
 			nodes[i] = new SimpleNode();
 			nodes[i].setTaxon(taxa.getTaxon(i));
@@ -71,7 +72,7 @@ public class CoalescentSimulator {
 		dr.evolution.util.Date mostRecent = null;
 		boolean usingDates = false;
 		
-		for (int i =0; i < taxa.getTaxonCount(); i++) {
+		for (int i = 0; i < taxa.getTaxonCount(); i++) {
 			if (TaxonList.Utils.hasAttribute(taxa, i, dr.evolution.util.Date.DATE)) {
 				usingDates = true;
 				dr.evolution.util.Date date = (dr.evolution.util.Date)taxa.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
@@ -84,7 +85,7 @@ public class CoalescentSimulator {
 			}
 		}
 		
-		if (usingDates) {
+		if (usingDates && mostRecent != null ) {
 			TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
 			
 			for (int i =0; i < taxa.getTaxonCount(); i++) {
@@ -108,21 +109,24 @@ public class CoalescentSimulator {
 	 * @return the root node of the given array of nodes after simulation of the coalescent under the given demographic model.
 	 */
 	public SimpleNode simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic) {
-	
-		
-		SimpleNode[] rootNode = simulateCoalescent(nodes, demographic, 0.0, Double.POSITIVE_INFINITY);
-		
-		int attempts = 0;
-		while (rootNode.length > 1 && attempts < 1000) {
-			rootNode = simulateCoalescent(nodes, demographic, 0.0, Double.POSITIVE_INFINITY);
-			attempts += 1;
-		} 
-		
-		if (rootNode.length > 1) {
-			throw new RuntimeException(rootNode.length + " nodes found where there should have been 1, after 1000 tries!");
-		}
-		
-		return rootNode[0];
+        // sanity check - disjoint trees
+
+        if( ! Tree.Utils.allDisjoint(nodes) ) {
+            throw new RuntimeException("non disjoint trees");
+        }
+
+        if( nodes.length == 0 ) {
+             throw new IllegalArgumentException("empty nodes set") ;
+        }
+
+        for(int attempts = 0; attempts < 1000; ++attempts) {
+            SimpleNode[] rootNode = simulateCoalescent(nodes, demographic, 0.0, Double.POSITIVE_INFINITY);
+            if( rootNode.length == 1 ) {
+                return rootNode[0];
+            }
+        }
+
+        throw new RuntimeException("failed to merge trees after 1000 tries!");
 	}
 	
 	public SimpleNode[] simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic, double currentHeight, double maxHeight) {
@@ -131,7 +135,7 @@ public class CoalescentSimulator {
         if( nodes.length == 1 ) return nodes;
         
         double[] heights = new double[nodes.length];
-		for (int i =0; i < nodes.length; i++) {
+		for (int i = 0; i < nodes.length; i++) {
 			heights[i] = nodes[i].getHeight();
 		}
 		int[] indices = new int[nodes.length];
@@ -140,7 +144,7 @@ public class CoalescentSimulator {
 		// node list
 		nodeList.clear();
 		activeNodeCount = 0;
-		for (int i =0; i < nodes.length; i++) {
+		for (int i = 0; i < nodes.length; i++) {
 			nodeList.add(nodes[indices[i]]);
 		}		
 		setCurrentHeight(currentHeight);
@@ -176,8 +180,8 @@ public class CoalescentSimulator {
 		}
 		
 		SimpleNode[] nodesLeft = new SimpleNode[nodeList.size()];
-		for (int i =0; i < nodesLeft.length; i++) {
-			nodesLeft[i] = (SimpleNode)nodeList.get(i);
+		for (int i = 0; i < nodesLeft.length; i++) {
+			nodesLeft[i] = nodeList.get(i);
 		}
 		
 		return nodesLeft;
@@ -188,7 +192,7 @@ public class CoalescentSimulator {
 	 */
 	private double getMinimumInactiveHeight() {
 		if (activeNodeCount < nodeList.size()) {
-			return ((SimpleNode)nodeList.get(activeNodeCount)).getHeight();
+			return (nodeList.get(activeNodeCount)).getHeight();
 		} else return Double.POSITIVE_INFINITY;
 	}
 	
@@ -226,8 +230,8 @@ public class CoalescentSimulator {
 			node2 = MathUtils.nextInt(activeNodeCount);
 		}
 		
-		SimpleNode left = (SimpleNode)nodeList.get(node1);
-		SimpleNode right = (SimpleNode)nodeList.get(node2);
+		SimpleNode left = nodeList.get(node1);
+		SimpleNode right = nodeList.get(node2);
 		
 		SimpleNode newNode = new SimpleNode();
 		newNode.setHeight(height);
@@ -248,6 +252,6 @@ public class CoalescentSimulator {
 		}
 	}	
 
-	private ArrayList nodeList = new ArrayList();
+	private ArrayList<SimpleNode> nodeList = new ArrayList<SimpleNode>();
 	private int activeNodeCount = 0;
 }

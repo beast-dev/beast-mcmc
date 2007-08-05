@@ -26,6 +26,7 @@
 package dr.evolution.util;
 
 import dr.util.Identifiable;
+import dr.evolution.tree.Tree;
 
 import java.util.ArrayList;
 
@@ -40,11 +41,15 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 	public Taxa() {
 	}
 
-	public Taxa(String id) {
+    public Taxa(String id) {
 		this.id = id;
 	}
 
-	/** Adds a taxon of the given name and return its index. */
+    public Taxa(TaxonList list) {
+        addTaxons(list);
+    }
+
+    /** Adds a taxon of the given name and return its index. */
 	public int addTaxon(Taxon taxon) {
 		taxa.add(taxon);
 		fireTaxonAdded(taxon);
@@ -60,7 +65,19 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 		return success;
 	}
 
-	public void removeAllTaxa() {
+    public void addTaxons(TaxonList list) {
+        for(int nt = 0; nt < list.getTaxonCount(); ++nt) {
+            addTaxon(list.getTaxon(nt));
+        }
+    }
+        
+    public void removeTaxons(TaxonList list) {
+        for(int nt = 0; nt < list.getTaxonCount(); ++nt) {
+            removeTaxon(list.getTaxon(nt));
+        }
+    }
+
+    public void removeAllTaxa() {
 		taxa.clear();
 		fireTaxonRemoved(null);
 	}
@@ -98,7 +115,7 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 	 * returns the index of the taxon with the given id.
 	 */
 	public int getTaxonIndex(String id) {
-		for (int i =0; i < taxa.size(); i++) {
+		for (int i = 0; i < taxa.size(); i++) {
 			if (getTaxonId(i).equals(id)) return i;
 		}
 		return -1;
@@ -108,7 +125,7 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 	 * returns the index of the given taxon.
 	 */
 	public int getTaxonIndex(Taxon taxon) {
-		for (int i =0; i < taxa.size(); i++) {
+		for (int i = 0; i < taxa.size(); i++) {
 			if (getTaxon(i) == taxon) return i;
 		}
 		return -1;

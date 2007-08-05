@@ -27,6 +27,7 @@ package dr.inference.loggers;
 
 import dr.util.Identifiable;
 import dr.xml.*;
+import dr.app.beast.BeastVersion;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -34,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 /**
  * A class for a general purpose logger.
@@ -65,7 +67,7 @@ public class MCLogger implements Logger {
 	
 	/**
 	 * Constructor. Will log every logEvery.
-     * @param formatter
+     * @param formatter the formatter of this logger
      * @param logEvery  logging frequency
      */
 	public MCLogger(LogFormatter formatter, int logEvery) {
@@ -271,7 +273,12 @@ public class MCLogger implements Logger {
 								
 			if (xo.hasAttribute(TITLE)) {
 				logger.setTitle(xo.getStringAttribute(TITLE)); 			
-			}
+			} else {
+                String title = "BEAST " + (new BeastVersion()).getVersionString() + "\n" +
+
+                        "Generated " + (new Date()).toString();
+                logger.setTitle(title);
+            }
 			
 			for (int i =0; i < xo.getChildCount(); i++) {
 			

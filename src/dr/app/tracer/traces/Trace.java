@@ -53,7 +53,8 @@ public class Trace {
 	public void getValues(int start, double[] destination) {
 		System.arraycopy(values, start, destination, 0, Math.min(valueCount - start, destination.length));
 	}
-	public void getValues(int start, double[] destination, int offset) {
+    
+    public void getValues(int start, double[] destination, int offset) {
 		System.arraycopy(values, start, destination, offset, Math.min(valueCount - start, destination.length - offset));
 	}
 

@@ -57,7 +57,7 @@ public class BeastMain {
                 thread.stop();
             }
         }
-    };
+    }
 
     public BeastMain(File inputFile, BeastConsoleApp consoleApp, boolean verbose) {
 
@@ -72,7 +72,6 @@ public class BeastMain {
         try {
 
             FileReader fileReader = new FileReader(inputFile);
-            System.out.println(fileReader.getEncoding());
 
             XMLParser parser = new BeastParser(new String[] {fileName}, verbose);
 
@@ -104,6 +103,7 @@ public class BeastMain {
             logger.setUseParentHandlers(false);
 
             Logger.getLogger("dr.apps.beast").info("Parsing XML file: " + fileName);
+            Logger.getLogger("dr.apps.beast").info("  File encoding: " + fileReader.getEncoding());
 
             parser.parse(fileReader, true);
 

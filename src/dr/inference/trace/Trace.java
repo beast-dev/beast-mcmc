@@ -31,10 +31,10 @@ import java.io.BufferedReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
+import java.util.List;
 
 /**
- *
- * @version
+ * @version $Id$
  * @author Alexei Drummond
  */
 public interface Trace extends Identifiable {
@@ -43,7 +43,10 @@ public interface Trace extends Identifiable {
 	
 	/**
 	 * Copies the trace values (after discarding burnin) into a destination array at a given start index
-	 */
+     * @param burnIn the state to discard up to
+     * @param destination the array to copy values into
+     * @param startIndex the index in destination array to start copy at
+     */
 	void copyValues(int burnIn, double[] destination, int startIndex);
 	
 	int getMinimumState();
@@ -71,6 +74,9 @@ public interface Trace extends Identifiable {
 		/**
 		 * Loads the trace for a single statistic given by name
 		 * @return null if statistic not found in trace file
+         * @param r the reader
+         * @param name the name of the trace
+         * @throws java.io.IOException
 		 */
 		public static Trace loadTrace(Reader r, String name) throws java.io.IOException {
 			
@@ -106,7 +112,7 @@ public interface Trace extends Identifiable {
 			
 			int minState = -1;
 			int stepSize = 0;
-			ArrayList values = new ArrayList();
+			List<Double> values = new ArrayList<Double>();
 			
 			line = reader.readLine().trim();
 		
@@ -135,15 +141,17 @@ public interface Trace extends Identifiable {
 				}
 				if (line != null) line = line.trim();
 			}
-			Trace trace = new DefaultTrace(name, values, minState, stepSize);
-			
-			return trace;
+
+            return new DefaultTrace(name, values, minState, stepSize);
 		}
 	
 	
 		/**
 		 * Loads all the traces in a file
-		 */
+         * @return an array of the traces loaded
+         * @param r the reader used to read in traces
+         * @throws java.io.IOException
+         */
 		public static Trace[] loadTraces(Reader r) throws java.io.IOException {
 			
 			BufferedReader reader;
@@ -152,8 +160,8 @@ public interface Trace extends Identifiable {
 			} else {
 				reader = new BufferedReader(r);
 			}
-			
-			ArrayList names = new ArrayList();
+
+			List<String> names = new ArrayList<String>();
 			
 			// Read through to first token
 			String line = reader.readLine().trim();
@@ -176,9 +184,9 @@ public interface Trace extends Identifiable {
 			int statCount = names.size();
 			int minState = -1;
 			int stepSize = 0;
-			ArrayList[] values = new ArrayList[statCount];
+			List<Double>[] values = new List[statCount];
 			for (int i =0; i < values.length; i++) {
-				values[i] = new ArrayList();
+				values[i] = new ArrayList<Double>();
 			}
 			
 			line = reader.readLine().trim();
@@ -201,8 +209,8 @@ public interface Trace extends Identifiable {
 						} else {
 							StringBuffer buf = new StringBuffer("State " + state + ", Expected double after " );
 							for (int j = 0; j < Math.min(i, 10); j++) {
-								Double d = (Double)values[j].get(values[j].size()-1);
-								buf.append(names.get(j)+":"+d.doubleValue()+" ");
+								Double d = values[j].get(values[j].size()-1);
+                                buf.append(names.get(j)).append(":").append(d).append(" ");
 							}
 							throw new RuntimeException(buf.toString());
 						}
@@ -215,7 +223,7 @@ public interface Trace extends Identifiable {
 			}
 			Trace[] traces = new Trace[statCount];
 			for (int i = 0; i < traces.length; i++) {
-				traces[i] = new DefaultTrace((String)names.get(i), values[i], minState, stepSize);
+				traces[i] = new DefaultTrace(names.get(i), values[i], minState, stepSize);
 			}
 			return traces;
 		}
@@ -231,11 +239,11 @@ public interface Trace extends Identifiable {
 			this.stepSize = stepSize;
 		}
 		
-		public DefaultTrace(String id, ArrayList valueList, int minState, int stepSize) {
+		public DefaultTrace(String id, List<Double> valueList, int minState, int stepSize) {
 		
 			values = new double[valueList.size()];
 			for (int i =0; i < values.length; i++) {
-				values[i] = ((Double)valueList.get(i)).doubleValue();
+				values[i] = valueList.get(i);
 			}
 			this.id = id;
 			this.minState = minState;

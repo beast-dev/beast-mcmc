@@ -139,8 +139,7 @@ public class LogFileTraces implements TraceList {
 		String token = tokens.nextToken();
 
         // lines starting with [ are ignored, assuming comments in MrBayes file
-        // lines starting with # are ignored, assuming comments in Migrate file
-        // (or BEAST since I think we should be adding comments to the log files!)
+        // lines starting with # are ignored, assuming comments in Migrate or BEAST file
         while (token.startsWith("[") || token.startsWith("#")) {
 
 			tokens = reader.tokenizeLine();
@@ -225,7 +224,7 @@ public class LogFileTraces implements TraceList {
 	 * Add a state number for these traces. This should be
 	 * called before adding values for each trace. The spacing
 	 * between stateNumbers should remain constant.
-     * @param stateNumber
+     * @param stateNumber the state
      * @throws TraceException when state number is inconsistent
      */
 	private void addState(int stateNumber) throws TraceException {

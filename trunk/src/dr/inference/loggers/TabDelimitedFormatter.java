@@ -51,17 +51,18 @@ public class TabDelimitedFormatter extends LogFormatter {
 	}
 
 	public void startLogging(String title) {
-		// do nothing
-	}
+        // DO NOTHING    
+    }
 	
 	public void logHeading(String heading) {
-        printWriter.println(heading);
-        for (int i = 0; i < heading.length(); i++) {
-            printWriter.print("=");
+        if (heading != null) {
+            String[] lines = heading.split("[\r\n]");
+            for (String line : lines) {
+                printWriter.println("# " + line);
+            }
         }
-        printWriter.println();
         printWriter.flush();
-	}
+    }
 	
 	public void logLine(String line) {
 		printWriter.println(line);

@@ -60,7 +60,8 @@ public class TraceAnalysis {
 
 	/**
 	 * Actually analyzes the trace given the burnin
-	 */
+     * @param burnin discard all states up to this one
+     */
 	public void reanalyze(int burnin) {
 
 		if (burnin >= 0 && burnin < maxState) {
@@ -110,6 +111,9 @@ public class TraceAnalysis {
 
 	/**
 	 * @return an array og analyses of the statistics in a log file.
+     * @param reader the reader to analyze
+     * @param burnin discard all states up to this one
+     * @throws java.io.IOException
 	 */
 	public static TraceAnalysis[] analyzeLogFile(Reader reader, int burnin) throws java.io.IOException {
 		return analyzeLogFile(reader, burnin, false);

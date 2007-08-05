@@ -40,17 +40,32 @@ public interface TraceList {
 
     boolean isIncomplete();
 
-    /** get the values of trace with the given index (without burnin) */
+    /**
+     * get the values of trace with the given index (without burnin)
+     * @param index the index of trace
+     * @param destination the array to copy values into
+     */
 	void getValues(int index, double[] destination);
 
-	/** get the values of trace with the given index (without burnin) */
+	/**
+     * get the values of trace with the given index (without burnin)
+     * @param index the index of trace
+     * @param destination the array to copy values into
+     * @param offset the start position for copying into the destination array
+     */
 	void getValues(int index, double[] destination, int offset);
 
-	/** @return the trace distribution statistic object for the given index */
-	TraceDistribution getDistributionStatistics(int index);
+	/**
+     * @return the trace distribution statistic object for the given index
+     * @param traceIndex the index of the trace
+     */
+	TraceDistribution getDistributionStatistics(int traceIndex);
 
-	/** @return the trace correlation statistic object for the given index */
-	TraceCorrelation getCorrelationStatistics(int index);
+	/**
+     * @return the trace correlation statistic object for the given index
+     * @param traceIndex the index of the trace
+     */
+	TraceCorrelation getCorrelationStatistics(int traceIndex);
 
 	void analyseTrace(int index);
 }

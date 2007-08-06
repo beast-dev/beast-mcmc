@@ -107,28 +107,42 @@ public class LogisticGrowth extends ExponentialGrowth {
 		double expOfMinusRT = Math.exp(-r*start);
 		double expOfMinusRG = Math.exp(-r*intervalLength);
 
+/*
 		double term1 = nZero*(1.0+c);
 		if (term1==0.0) {
-			throw new RuntimeException("Infinite integral!");
+            return Double.NaN;
+//			throw new RuntimeException("Infinite integral!");
 		}
 
 		double term2 = c*(1.0 - expOfMinusRG);
 
 		double term3 = (term1*expOfMinusRT) * r * expOfMinusRG;
 		if (term3==0.0 && term2>0.0) {
-			throw new RuntimeException("Infinite integral!");
+            return Double.NaN;
+//			throw new RuntimeException("Infinite integral!");
 		}
 
 		double term4;
-		if (term3!=0.0 && term2==0.0) {term4=0.0;}
-		else if (term3==0.0 && term2==0.0) {
-		    throw new RuntimeException("term3 and term2 are both zeros. N0=" + getN0() + " growthRate=" +  getGrowthRate() + "c=" + c);
-		}    
-		else {term4 = term2 / term3;}
+		if (term3!=0.0 && term2==0.0) {
+            term4=0.0;
+        } else if (term3==0.0 && term2==0.0) {
+            return Double.NaN;
+//		    throw new RuntimeException("term3 and term2 are both zeros. N0=" + getN0() + " growthRate=" +  getGrowthRate() + "c=" + c);
+		} else {
+            term4 = term2 / term3;
+        }
+        double term4 = term2 / term3;
 
 		double term5 = intervalLength / term1;
 
 		return term5 + term4;
+*/
+        // rather than the convoluted checking, above, it seemed easier to let numerical issues come out
+        // in the wash...
+
+        double common = nZero * (1.0 + c);
+
+        return (intervalLength / common) + (c*(1.0 - expOfMinusRG)) / ((common * expOfMinusRT) * r * expOfMinusRG);
 	}
 	
 	public int getNumArguments() {

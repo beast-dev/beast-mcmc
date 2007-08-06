@@ -203,15 +203,13 @@ public final class MarkovChain {
 
             // The new model is accepted or rejected
             if (accept) {
-                //               System.out.println("Move accepted: new score = " + score + ", old score = " + oldScore);
-
+//                    System.out.println("Move accepted: new score = " + score + ", old score = " + oldScore);
                 mcmcOperator.accept(deviation);
                 currentModel.acceptModelState();
                 currentScore = score;
 
             } else {
-                //               System.out.println("Move rejected: new score = " + score + ", old score = " + oldScore);
-
+//                    System.out.println("Move rejected: new score = " + score + ", old score = " + oldScore);
                 mcmcOperator.reject();
 
                 //               assert Profiler.startProfile("Restore");
@@ -353,7 +351,7 @@ public final class MarkovChain {
     private boolean isCoercable(CoercableMCMCOperator op) {
 
         return op.getMode() == CoercableMCMCOperator.COERCION_ON ||
-               (op.getMode() != CoercableMCMCOperator.COERCION_OFF && useCoercion);
+                (op.getMode() != CoercableMCMCOperator.COERCION_OFF && useCoercion);
     }
 
     public void addMarkovChainListener(MarkovChainListener listener) {

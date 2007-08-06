@@ -81,12 +81,27 @@ public class Coalescent implements MultivariateFunction, Units {
             double finishTime = startTime + duration;
 
             double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
+
+            if (intervalArea == Double.NEGATIVE_INFINITY ||
+                    intervalArea == Double.POSITIVE_INFINITY ||
+                    Double.isNaN(intervalArea)) {
+                // if the demographic function goes numerically haywire in any way...
+                return Double.NEGATIVE_INFINITY;
+            }
+
             int lineageCount = intervals.getLineageCount(i);
 
             if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
 
-                logL += -Math.log(demographicFunction.getDemographic(finishTime)) -
-                        (Binomial.choose2(lineageCount)*intervalArea);
+                double logF = Math.log(demographicFunction.getDemographic(finishTime));
+                if (logF == Double.NEGATIVE_INFINITY ||
+                        logF == Double.POSITIVE_INFINITY ||
+                        Double.isNaN(logF)) {
+                    // if the demographic function goes numerically haywire in any way...
+                    return Double.NEGATIVE_INFINITY;
+                }
+
+                logL += -logF - (Binomial.choose2(lineageCount)*intervalArea);
 
             } else { // SAMPLE or NOTHING
 

@@ -15,12 +15,12 @@ import org.virion.jam.framework.*;
 import javax.swing.*;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
  */
 public class BeautiApp extends MultiDocApplication {
-	private final static Version version = new BeastVersion();
+    private final static Version version = new BeastVersion();
 
     public BeautiApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
@@ -33,6 +33,7 @@ public class BeautiApp extends MultiDocApplication {
      * None of these operations result in a file being associated with the DocumentFrame. All
      * these actions are located in the BeautiFrame class. This overriden method should never
      * be called and throw a RuntimeException if it is.
+     *
      * @return the action
      */
     public Action getOpenAction() {
@@ -54,16 +55,16 @@ public class BeautiApp extends MultiDocApplication {
             String templateFileName = args[1];
             String outputFileName = args[2];
 
-            CommandLineBeauti beauti = new CommandLineBeauti(inputFileName, templateFileName, outputFileName);
+            new CommandLineBeauti(inputFileName, templateFileName, outputFileName);
 
         } else {
 
-	        if (args.length == 1 && args[0].equalsIgnoreCase("-developer")) {
-		        developer = true;
-	        }
+            if (args.length == 1 && args[0].equalsIgnoreCase("-developer")) {
+                developer = true;
+            }
 
-            System.setProperty("com.apple.macos.useScreenMenuBar","true");
-            System.setProperty("apple.laf.useScreenMenuBar","true");
+            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
 
             try {
 
@@ -111,5 +112,5 @@ public class BeautiApp extends MultiDocApplication {
         }
     }
 
-	public static boolean developer = false;
+    public static boolean developer = false;
 }

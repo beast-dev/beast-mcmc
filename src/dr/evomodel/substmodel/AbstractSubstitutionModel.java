@@ -154,7 +154,6 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
     }
 
     protected void acceptState() { } // nothing to do
-    protected void adoptState(Model source) {}
 
     abstract protected void frequenciesChanged();
     abstract protected void ratesChanged();

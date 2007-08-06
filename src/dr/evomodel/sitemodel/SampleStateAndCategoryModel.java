@@ -224,7 +224,6 @@ public class SampleStateAndCategoryModel extends AbstractModel
 	protected void storeState(){}
 	protected void restoreState(){}
 	protected void acceptState() {} // no additional state needs accepting
-	protected void adoptState(Model source) {}
 
 	public String toString(){
 		StringBuffer s = new StringBuffer();

@@ -111,14 +111,6 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
 
 	protected final void acceptState() { } // nothing to do
 
-	/**
-	 * Adopt the state of the model from source.
-	 */
-	protected final void adoptState(Model source) {
-		// all we need to do is force a recalculation of intervals
-		makeDirty();
-	}
-
 	// **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************

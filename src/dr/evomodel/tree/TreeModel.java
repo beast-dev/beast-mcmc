@@ -494,12 +494,6 @@ public class TreeModel extends AbstractModel implements MutableTree {
 	} // nothing to do
 
 	/**
-	 * Adopt the state of the model component from source.
-	 */
-	protected void adoptState(Model source) {
-	}
-
-	/**
 	 * Copies the node connections from this TreeModel's nodes array to the
 	 * destination array. Basically it connects up the nodes in destination
 	 * in the same way as this TreeModel is set up. This method is package

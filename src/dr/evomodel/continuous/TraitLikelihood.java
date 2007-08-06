@@ -101,14 +101,6 @@ public class TraitLikelihood extends AbstractModel implements Likelihood {
 
 	protected void acceptState() { } // nothing to do
 
-	/**
-	 * Adopt the state of the model from source.
-	 */
-	protected void adoptState(Model source) {
-		// all we need to do is force a recalculation of intervals
-		makeDirty();
-	}
-
 	// **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************

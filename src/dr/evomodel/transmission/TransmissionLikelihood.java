@@ -241,7 +241,6 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
     }
 
     protected final void acceptState() { } // nothing to do
-    protected final void adoptState(Model source) { }
 
     // **************************************************************
     // Likelihood IMPLEMENTATION

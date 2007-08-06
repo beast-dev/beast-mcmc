@@ -83,10 +83,6 @@ public class TKF91Likelihood extends AbstractModel implements Likelihood {
 		public String getStatisticName() { return "alignmentLength"; }
 	}
 
-	public void adoptState(Model model) {
-		throw new RuntimeException("Not implemented!");
-	}
-
 	public void acceptState() {
 		//throw new RuntimeException("Not implemented!");
 	}

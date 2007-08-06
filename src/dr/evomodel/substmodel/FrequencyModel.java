@@ -92,7 +92,6 @@ public class FrequencyModel extends AbstractModel {
     protected void storeState() {} // no state apart from parameters to store
     protected void restoreState() {} // no state apart from parameters to restore
     protected void acceptState() {} // no state apart from parameters to accept
-    protected void adoptState(Model source) {} // no state apart from parameters to adopt
 
     public Element createElement(Document doc) {
         throw new RuntimeException("Not implemented!");

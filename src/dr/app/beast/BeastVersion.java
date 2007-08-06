@@ -35,11 +35,10 @@ import dr.util.Version;
  * 1. the dr source has been checked out *by tag* before being packaged for
  * distribution.
  *
- * Version last changed 2006/07/02 by AER
+ * Version last changed 2007/07/31 by AER
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: BeastVersion.java,v 1.6 2006/07/02 11:02:51 rambaut Exp $
  */
 public class BeastVersion implements Version {
 
@@ -51,10 +50,10 @@ public class BeastVersion implements Version {
 	private static String DATE_STRING = "2002-2007";
 
 	/**
-	 * Build string: assumed to be in format projectname-#-#-#
-	 * surrounded by standard CVS junk.
+     * this used to parse the CVS ID string but there is no equivalent
+     * for SVN. We must increment this manually.
 	 */
-	private static String ID = "$Id: BeastVersion.java,v 1.6 2006/07/02 11:02:51 rambaut Exp $";
+	private static String BUILD_ID = "Build r436";
 
 	public String getVersionString() {
 		return "v" + VERSION;
@@ -64,14 +63,7 @@ public class BeastVersion implements Version {
 		return DATE_STRING;
 	}
 
-	public String getBuildString() {
-
-		java.util.StringTokenizer token = new java.util.StringTokenizer(ID);
-		token.nextToken(" ");
-		token.nextToken(" ");
-		String build = token.nextToken(" ");
-		String date = token.nextToken(" ");
-
-		return "Build " + build + " " + date;
+    public String getBuildString() {
+        return BUILD_ID;
 	}
 }

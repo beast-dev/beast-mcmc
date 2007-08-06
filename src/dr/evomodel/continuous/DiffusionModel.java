@@ -133,8 +133,7 @@ public class DiffusionModel extends AbstractModel {
 	protected void storeState() {} // no additional state needs storing
 	protected void restoreState() {} // no additional state needs restoring	
 	protected void acceptState() {} // no additional state needs accepting	
-	protected void adoptState(Model source) {} // no additional state needs adopting	
-	
+
 	
     // **************************************************************
     // XMLElement IMPLEMENTATION

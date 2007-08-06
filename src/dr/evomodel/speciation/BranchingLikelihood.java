@@ -87,12 +87,6 @@ public class BranchingLikelihood extends AbstractModel implements Likelihood {
 
     protected final void acceptState() { } // nothing to do
 
-	/**
-	 * Adopt the state of the model from source.
-	 */
-	protected final void adoptState(Model source) {
-	}
-
 	// **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************

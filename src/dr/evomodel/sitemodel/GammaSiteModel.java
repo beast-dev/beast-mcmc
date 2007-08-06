@@ -321,9 +321,6 @@ public class GammaSiteModel extends AbstractModel
         ratesKnown = false;
     }
     protected void acceptState() {} // no additional state needs accepting
-    protected void adoptState(Model source) {
-        ratesKnown = false;
-    }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 

@@ -80,12 +80,5 @@ abstract public class AbstractNucleotideModel extends AbstractSubstitutionModel 
 	}
 	
 	protected void acceptState() { } // nothing to do
-	
-	/**
-	 * Adopt the state of the model component from source.
-	 */
-	protected void adoptState(Model source) {
-		updateMatrix = true;
-	}
-		
+
 };

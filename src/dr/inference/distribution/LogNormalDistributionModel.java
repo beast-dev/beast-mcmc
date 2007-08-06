@@ -224,9 +224,6 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 	protected void acceptState() {
 	} // no additional state needs accepting
 
-	protected void adoptState(Model source) {
-	} // no additional state needs adopting
-
 	// **************************************************************
 	// XMLElement IMPLEMENTATION
 	// **************************************************************

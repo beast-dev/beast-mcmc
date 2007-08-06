@@ -183,7 +183,7 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
      * It is strongly recommended that the model component sets a "dirty" flag and does no
      * further calculations. Recalculation is typically done when the model component is asked for
      * some information that requires them. This mechanism is 'lazy' so that this method
-	 * can be safely called multiple times withminimal computetional cost.
+	 * can be safely called multiple times with minimal computational cost.
 	 */
 	protected abstract void handleParameterChangedEvent(Parameter parameter, int index);
 

@@ -273,7 +273,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     private AbstractAction saveAction = new AbstractAction("Save") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -4540478663138470260L;
 
@@ -284,7 +284,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     private AbstractAction saveAsAction = new AbstractAction("Save As...") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -1584673587355509882L;
 
@@ -298,7 +298,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     private AbstractAction printAction = new AbstractAction("Print...") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 7608963909000084240L;
 
@@ -309,7 +309,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     protected AbstractAction closeWindowAction = new AbstractAction("Close") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -8653835282951538865L;
 
@@ -320,7 +320,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     private AbstractAction zoomWindowAction = new AbstractAction("Zoom Window") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -5303318185278668551L;
 
@@ -331,7 +331,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     private AbstractAction minimizeWindowAction = new AbstractAction("Minimize Window") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 4122140938271674271L;
 
@@ -342,7 +342,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     private AbstractAction cutAction = new AbstractAction("Cut") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -389065906967196702L;
 
@@ -353,7 +353,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     private AbstractAction copyAction = new AbstractAction("Copy") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 1150131467885279315L;
 
@@ -364,7 +364,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     private AbstractAction pasteAction = new AbstractAction("Paste") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 7399738765663916935L;
 
@@ -375,7 +375,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     private AbstractAction deleteAction = new AbstractAction("Delete") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 59368389446966562L;
 
@@ -386,7 +386,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     private AbstractAction selectAllAction = new AbstractAction("Select All") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 378627540775330105L;
 
@@ -397,7 +397,7 @@ public abstract class AbstractFrame extends JFrame implements Exportable {
 
     private AbstractAction findAction = new AbstractAction("Find...") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 1693178283344457760L;
 

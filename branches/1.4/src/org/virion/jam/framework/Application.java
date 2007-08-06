@@ -42,8 +42,7 @@ import java.io.*;
  */
 
 public abstract class Application {
-
-    private static MenuBarFactory menuBarFactory;
+	private static MenuBarFactory menuBarFactory;
     private static Icon icon;
     private static String nameString;
     private static String aboutString;
@@ -98,7 +97,7 @@ public abstract class Application {
 
         aboutAction = new AbstractAction("About " + nameString + "...") {
             /**
-			 * 
+			 *
 			 */
 			private static final long serialVersionUID = -5041909266347767945L;
 
@@ -144,7 +143,7 @@ public abstract class Application {
     }
 
     protected abstract JFrame getDefaultFrame();
-
+	
     public void doAbout() {
         AboutBox aboutBox = new AboutBox(getNameString(), getAboutString(), getIcon());
         //aboutBox.initialize();        //causes about frame to have the menu system from the main frame.
@@ -258,7 +257,7 @@ public abstract class Application {
 
     protected AbstractAction newAction = new AbstractAction("New") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -1521224399481196083L;
 
@@ -269,7 +268,7 @@ public abstract class Application {
 
     protected AbstractAction openAction = new AbstractAction("Open...") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -4447260642111669429L;
 
@@ -280,7 +279,7 @@ public abstract class Application {
 
     protected AbstractAction pageSetupAction = new AbstractAction("Page Setup...") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 2066709411506589740L;
 
@@ -291,7 +290,7 @@ public abstract class Application {
 
     protected AbstractAction exitAction = new AbstractAction("Exit") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -4248102898807999282L;
 
@@ -304,7 +303,7 @@ public abstract class Application {
 
     protected AbstractAction preferencesAction = new AbstractAction("Preferences...") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -6992111486368469010L;
 
@@ -315,7 +314,7 @@ public abstract class Application {
 
     protected AbstractAction helpAction = new AbstractAction("Help...") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -3959121576921987360L;
 
@@ -326,7 +325,7 @@ public abstract class Application {
 
     protected AbstractAction websiteAction = new AbstractAction("Website...") {
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 837521123495914197L;
 

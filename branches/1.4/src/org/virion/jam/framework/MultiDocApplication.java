@@ -31,6 +31,7 @@ import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.awt.event.WindowEvent;
 
 public class MultiDocApplication extends Application {
 	private DocumentFrameFactory documentFrameFactory = null;
@@ -115,14 +116,15 @@ public class MultiDocApplication extends Application {
         upperDocumentFrame = documentFrame;
     }
 
-    // Close the window when the close box is clicked
+    // Attempt to close the window when the close box is clicked
     private void documentFrameClosing(DocumentFrame documentFrame) {
-        if (documentFrame.requestClose()) {
-            documentFrame.setVisible(false);
-            documentFrame.dispose();
-            documents.remove(documentFrame);
-        }
+        documentFrame.doCloseWindow();
     }
+
+	// The window has actually closed
+	private void documentFrameClosed(DocumentFrame documentFrame) {
+		documents.remove(documentFrame);
+	}
 
     private void addDocumentFrame(DocumentFrame documentFrame) {
         documentFrame.initialize();
@@ -134,8 +136,16 @@ public class MultiDocApplication extends Application {
                 documentFrameActivated((DocumentFrame) e.getWindow());
             }
 
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                documentFrameClosing((DocumentFrame) e.getWindow());
+	        /**
+	         * Invoked when a window is in the process of being closed.
+	         * The close operation can be overridden at this point.
+	         */
+	        public void windowClosing(WindowEvent e) {
+		        documentFrameClosing((DocumentFrame) e.getWindow());
+	        }
+
+	        public void windowClosed(java.awt.event.WindowEvent e) {
+                documentFrameClosed((DocumentFrame) e.getWindow());
             }
         });
 
@@ -155,7 +165,7 @@ public class MultiDocApplication extends Application {
 				invisibleFrame = new AbstractFrame() {
 
 					/**
-					 * 
+					 *
 					 */
 					private static final long serialVersionUID = -5780680156084747030L;
 

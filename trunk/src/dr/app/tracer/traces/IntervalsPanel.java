@@ -2,6 +2,8 @@ package dr.app.tracer.traces;
 
 import dr.gui.chart.JChartPanel;
 import dr.gui.chart.LinearAxis;
+import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,10 +21,12 @@ public class IntervalsPanel extends JPanel {
     private JIntervalsChart intervalsChart = new JIntervalsChart(new LinearAxis());
     private JChartPanel chartPanel = new JChartPanel(intervalsChart, null, "", "");
 
-    /** Creates new IntervalsPanel */
+    /**
+     * Creates new IntervalsPanel
+     */
     public IntervalsPanel() {
         setOpaque(false);
-        setMinimumSize(new Dimension(300,150));
+        setMinimumSize(new Dimension(300, 150));
         setLayout(new BorderLayout());
         add(chartPanel, BorderLayout.CENTER);
     }

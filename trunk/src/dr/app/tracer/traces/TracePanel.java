@@ -1,5 +1,6 @@
 package dr.app.tracer.traces;
 
+import dr.inference.trace.TraceList;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
 
@@ -15,46 +16,50 @@ import java.awt.*;
  */
 public class TracePanel extends javax.swing.JPanel implements Exportable {
 
-	private JTabbedPane tabbedPane = new JTabbedPane();
-	private JFrame parent = null;
+    private JTabbedPane tabbedPane = new JTabbedPane();
+    private JFrame parent = null;
 
-	private SummaryStatisticsPanel summaryPanel;
-	private DensityPanel densityPanel;
-	private CorrelationPanel correlationPanel;
-	private RawTracePanel tracePanel;
+    private SummaryStatisticsPanel summaryPanel;
+    private DensityPanel densityPanel;
+    private CorrelationPanel correlationPanel;
+    private RawTracePanel tracePanel;
 
-	Icon traceIcon = null;
-	Icon frequencyIcon = null;
-	Icon densityIcon = null;
-	Icon summaryIcon = null;
-	Icon correlationIcon = null;
+    Icon traceIcon = null;
+    Icon frequencyIcon = null;
+    Icon densityIcon = null;
+    Icon summaryIcon = null;
+    Icon correlationIcon = null;
 
-	/** Creates new form TracePanel */
-	public TracePanel(JFrame parent) {
+    /**
+     * Creates new form TracePanel
+     */
+    public TracePanel(JFrame parent) {
 
-		this.parent = parent;
+        this.parent = parent;
 
-		traceIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/trace-small-icon.gif"));
-		frequencyIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/frequency-small-icon.gif"));
-		densityIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/density-small-icon.gif"));
-		summaryIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/summary-small-icon.png"));
-		correlationIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/correlation-small-icon.gif"));
+        traceIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/trace-small-icon.gif"));
+        frequencyIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/frequency-small-icon.gif"));
+        densityIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/density-small-icon.gif"));
+        summaryIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/summary-small-icon.png"));
+        correlationIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/correlation-small-icon.gif"));
 
-		summaryPanel = new SummaryStatisticsPanel(parent);
-		densityPanel = new DensityPanel(parent);
-		correlationPanel = new CorrelationPanel(parent);
-		tracePanel = new RawTracePanel(parent);
+        summaryPanel = new SummaryStatisticsPanel(parent);
+        densityPanel = new DensityPanel(parent);
+        correlationPanel = new CorrelationPanel(parent);
+        tracePanel = new RawTracePanel(parent);
 
-		tabbedPane.addTab("Estimates", summaryIcon, summaryPanel);
-		tabbedPane.addTab("Marginal Density", densityIcon, densityPanel);
-		tabbedPane.addTab("Joint-Marginal", correlationIcon, correlationPanel);
-		tabbedPane.addTab("Trace", traceIcon, tracePanel);
+        tabbedPane.addTab("Estimates", summaryIcon, summaryPanel);
+        tabbedPane.addTab("Marginal Density", densityIcon, densityPanel);
+        tabbedPane.addTab("Joint-Marginal", correlationIcon, correlationPanel);
+        tabbedPane.addTab("TraceOld", traceIcon, tracePanel);
 
-		setLayout(new BorderLayout());
-		add(tabbedPane, BorderLayout.CENTER);
-	}
+        setLayout(new BorderLayout());
+        add(tabbedPane, BorderLayout.CENTER);
+    }
 
-    /** This function takes a multiple statistics in a single log files */
+    /**
+     * This function takes a multiple statistics in a single log files
+     */
     public void setTraces(TraceList[] traceLists, int[] traces) {
 
         summaryPanel.setTraces(traceLists, traces);
@@ -63,42 +68,54 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
         tracePanel.setTraces(traceLists, traces);
     }
 
-	public String getExportText() {
-		switch (tabbedPane.getSelectedIndex()) {
-			case 0: return summaryPanel.toString();
-	        case 1: return densityPanel.toString();
-			case 2: return correlationPanel.toString();
-			case 3: return tracePanel.toString();
-		}
-	    return "";
-	}
+    public String getExportText() {
+        switch (tabbedPane.getSelectedIndex()) {
+            case 0:
+                return summaryPanel.toString();
+            case 1:
+                return densityPanel.toString();
+            case 2:
+                return correlationPanel.toString();
+            case 3:
+                return tracePanel.toString();
+        }
+        return "";
+    }
 
     public void doCopy() {
-    	summaryPanel.copyToClipboard();
-    	switch (tabbedPane.getSelectedIndex()) {
-			case 0: summaryPanel.copyToClipboard(); break;
-			case 1: densityPanel.copyToClipboard(); break;
-			case 2: correlationPanel.copyToClipboard(); break;
-			case 3: tracePanel.copyToClipboard(); break;
-		}
-	}
+        summaryPanel.copyToClipboard();
+        switch (tabbedPane.getSelectedIndex()) {
+            case 0:
+                summaryPanel.copyToClipboard();
+                break;
+            case 1:
+                densityPanel.copyToClipboard();
+                break;
+            case 2:
+                correlationPanel.copyToClipboard();
+                break;
+            case 3:
+                tracePanel.copyToClipboard();
+                break;
+        }
+    }
 
     public JComponent getExportableComponent() {
 
-		JComponent exportable = null;
-		Component comp = tabbedPane.getSelectedComponent();
+        JComponent exportable = null;
+        Component comp = tabbedPane.getSelectedComponent();
 
-		if (comp instanceof Exportable) {
-			exportable = ((Exportable)comp).getExportableComponent();
-		} else if (comp instanceof JComponent) {
-			exportable = (JComponent)comp;
-		}
+        if (comp instanceof Exportable) {
+            exportable = ((Exportable) comp).getExportableComponent();
+        } else if (comp instanceof JComponent) {
+            exportable = (JComponent) comp;
+        }
 
-		return exportable;
-	}
+        return exportable;
+    }
 
-	//************************************************************************
-	// private methods
-	//************************************************************************
+    //************************************************************************
+    // private methods
+    //************************************************************************
 
 }

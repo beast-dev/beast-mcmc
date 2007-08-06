@@ -14,7 +14,7 @@ public class LogTricks {
     public static final double logZero = -maxFloat;
     public static final double NATS = 40;
 
-    public static final double logSumNoCheck(double x, double y) {
+    public static double logSumNoCheck(double x, double y) {
         double temp = y - x;
         if (Math.abs(temp) > NATS)
             return (x > y) ? x : y;
@@ -22,7 +22,7 @@ public class LogTricks {
             return x + StrictMath.log1p(StrictMath.exp(temp));
     }
 
-    public static final double logSum(double x, double y) {
+    public static double logSum(double x, double y) {
         double temp = y - x;
         if (temp > NATS || x < logLimit)
             return y;
@@ -31,7 +31,7 @@ public class LogTricks {
         return x + StrictMath.log1p(StrictMath.exp(temp));
     }
 
-    public static final void logInc(Double x, double y) {
+    public static void logInc(Double x, double y) {
         double temp = y - x;
         if (temp > NATS || x < logLimit)
             x = y;
@@ -41,7 +41,7 @@ public class LogTricks {
             x += StrictMath.log1p(StrictMath.exp(temp));
     }
 
-    public static final double logDiff(double x, double y) {
+    public static double logDiff(double x, double y) {
         assert x > y;
         double temp = y - x;
         if (temp < -NATS || y < logLimit)

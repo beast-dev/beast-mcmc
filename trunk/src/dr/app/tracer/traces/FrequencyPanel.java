@@ -1,6 +1,8 @@
 package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
+import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +18,7 @@ import java.awt.event.ActionEvent;
  */
 public class FrequencyPanel extends JPanel {
 
-	private ChartSetupDialog chartSetupDialog = null;
+    private ChartSetupDialog chartSetupDialog = null;
 
     private TraceList traceList = null;
     private int traceIndex = -1;
@@ -24,35 +26,37 @@ public class FrequencyPanel extends JPanel {
     private int minimumBins = 50;
 
     private JComboBox binsCombo = new JComboBox(
-        new Integer[] { 10, 20, 50, 100, 200, 500, 1000 });
+            new Integer[]{10, 20, 50, 100, 200, 500, 1000});
 
 
-	private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
-	private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "Frequency");
+    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
+    private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "Frequency");
 
-	/** Creates new FrequencyPanel */
-	public FrequencyPanel(final JFrame frame) {
-		setOpaque(false);
+    /**
+     * Creates new FrequencyPanel
+     */
+    public FrequencyPanel(final JFrame frame) {
+        setOpaque(false);
 
-		setMinimumSize(new Dimension(300,150));
-		setLayout(new BorderLayout());
-		add(chartPanel, BorderLayout.CENTER);
+        setMinimumSize(new Dimension(300, 150));
+        setLayout(new BorderLayout());
+        add(chartPanel, BorderLayout.CENTER);
 
         JToolBar toolBar = new JToolBar();
         toolBar.setOpaque(false);
         toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
         toolBar.setFloatable(false);
 
-		JButton chartSetupButton = new JButton("Axes...");
-		chartSetupButton.putClientProperty(
-			"Quaqua.Button.style", "placard"
-		);
-		chartSetupButton.setFont(UIManager.getFont("SmallSystemFont"));
-		toolBar.add(chartSetupButton);
+        JButton chartSetupButton = new JButton("Axes...");
+        chartSetupButton.putClientProperty(
+                "Quaqua.Button.style", "placard"
+        );
+        chartSetupButton.setFont(UIManager.getFont("SmallSystemFont"));
+        toolBar.add(chartSetupButton);
 
         binsCombo.setOpaque(false);
-		binsCombo.setFont(UIManager.getFont("SmallSystemFont"));
-		binsCombo.setSelectedItem(100);
+        binsCombo.setFont(UIManager.getFont("SmallSystemFont"));
+        binsCombo.setSelectedItem(100);
         JLabel label = new JLabel("Bins:");
         label.setFont(UIManager.getFont("SmallSystemFont"));
         label.setLabelFor(binsCombo);
@@ -61,30 +65,30 @@ public class FrequencyPanel extends JPanel {
 
         add(toolBar, BorderLayout.SOUTH);
 
-		chartSetupButton.addActionListener(
-		        new java.awt.event.ActionListener() {
-		            public void actionPerformed(ActionEvent actionEvent) {
-		                if (chartSetupDialog == null) {
-		                    chartSetupDialog = new ChartSetupDialog(frame, true, false,
-		                            Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK, Axis.AT_ZERO, Axis.AT_MAJOR_TICK);
-		                }
+        chartSetupButton.addActionListener(
+                new java.awt.event.ActionListener() {
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        if (chartSetupDialog == null) {
+                            chartSetupDialog = new ChartSetupDialog(frame, true, false,
+                                    Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK, Axis.AT_ZERO, Axis.AT_MAJOR_TICK);
+                        }
 
-		                chartSetupDialog.showDialog(traceChart);
-		                validate();
-		                repaint();
-		            }
-		        }
-		);
+                        chartSetupDialog.showDialog(traceChart);
+                        validate();
+                        repaint();
+                    }
+                }
+        );
 
         binsCombo.addItemListener(
-            new java.awt.event.ItemListener() {
-                public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                    minimumBins = (Integer)binsCombo.getSelectedItem();
-                    setupTrace(traceList, traceIndex);
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                        minimumBins = (Integer) binsCombo.getSelectedItem();
+                        setupTrace(traceList, traceIndex);
+                    }
                 }
-            }
         );
-	}
+    }
 
     public void setTrace(TraceList traceList, int traceIndex) {
         this.traceList = traceList;
@@ -95,34 +99,34 @@ public class FrequencyPanel extends JPanel {
 
     private void setupTrace(TraceList traceList, int traceIndex) {
 
-		this.traceList = traceList;
-		this.traceIndex = traceIndex;
+        this.traceList = traceList;
+        this.traceIndex = traceIndex;
 
-		traceChart.removeAllPlots();
+        traceChart.removeAllPlots();
 
-		if (traceList == null || traceIndex == -1) {
-			chartPanel.setXAxisTitle("");
-			chartPanel.setYAxisTitle("");
-			return;
-		}
+        if (traceList == null || traceIndex == -1) {
+            chartPanel.setXAxisTitle("");
+            chartPanel.setYAxisTitle("");
+            return;
+        }
 
-		double values[] = new double[traceList.getStateCount()];
-		traceList.getValues(traceIndex, values);
-		FrequencyPlot plot = new FrequencyPlot(values, minimumBins);
+        double values[] = new double[traceList.getStateCount()];
+        traceList.getValues(traceIndex, values);
+        FrequencyPlot plot = new FrequencyPlot(values, minimumBins);
 
-		TraceDistribution td = traceList.getDistributionStatistics(traceIndex);
-		if (td != null) {
-			plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
-		}
+        TraceDistribution td = traceList.getDistributionStatistics(traceIndex);
+        if (td != null) {
+            plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
+        }
 
-		traceChart.addPlot(plot);
+        traceChart.addPlot(plot);
 
-		chartPanel.setXAxisTitle(traceList.getTraceName(traceIndex));
-		chartPanel.setYAxisTitle("Frequency");
-	}
+        chartPanel.setXAxisTitle(traceList.getTraceName(traceIndex));
+        chartPanel.setYAxisTitle("Frequency");
+    }
 
     public JComponent getExportableComponent() {
-		return chartPanel;
-	}
+        return chartPanel;
+    }
 
 }

@@ -1,3 +1,27 @@
+/*
+ * MarginalLikelihoodAnalysis.java
+ *
+ * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
 package dr.inference.trace;
 
 import dr.math.LogTricks;
@@ -7,19 +31,14 @@ import dr.xml.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Jan 17, 2007
- * Time: 6:45:12 PM
- * To change this template use File | Settings | File Templates.
- * <p/>
- * Source translated from model_P.c (a component of BAli-Phy by Benjamin Redelings and Marc Suchard
+ * @author Marc Suchard
+ * @author Alexei Drummond
+ *         <p/>
+ *         Source translated from model_P.c (a component of BAli-Phy by Benjamin Redelings and Marc Suchard
  */
-public class    MarginalLikelihoodAnalysis {
+public class MarginalLikelihoodAnalysis {
 
     public static final String ML_ANALYSIS = "marginalLikelihoodAnalysis";
     public static final String FILE_NAME = "fileName";
@@ -38,8 +57,6 @@ public class    MarginalLikelihoodAnalysis {
 
     private boolean marginalLikelihoodCalculated = false;
     private double logMarginalLikelihood;
-    private double[] bootstrappedLogML;
-    private double bootstrappedAverage;
     private double bootstrappedSE;
 
 
@@ -91,17 +108,16 @@ public class    MarginalLikelihoodAnalysis {
     }
 
     public void update() {
-        double sample[] = trace.getValues(burnin);
 
-//        System.err.println("using "+sample.length+" samples.") ;
-//        if (!marginalLikelihoodCalculated)      {
+        double sample[] = new double[trace.getCount()];
+        trace.getValues(0, sample);
+
         logMarginalLikelihood = calculateLogMarginalLikelihood(sample);
-//        }
         if (doBootstrap) {
             final int bsLength = bootstrapLength;
             final int sampleLength = sample.length;
             double[] bsSample = new double[sampleLength];
-            bootstrappedLogML = new double[bsLength];
+            double[] bootstrappedLogML = new double[bsLength];
             double sum = 0;
             for (int i = 0; i < bsLength; i++) {
                 int[] indices = MathUtils.sampleIndicesWithReplacement(sampleLength);
@@ -111,11 +127,12 @@ public class    MarginalLikelihoodAnalysis {
                 sum += bootstrappedLogML[i];
             }
             sum /= bsLength;
-            bootstrappedAverage = sum;
+            double bootstrappedAverage = sum;
             // Summarize bootstrappedLogML
             double var = 0;
             for (int i = 0; i < bsLength; i++) {
-                var += (bootstrappedLogML[i] - sum) * (bootstrappedLogML[i] - sum);
+                var += (bootstrappedLogML[i] - bootstrappedAverage) *
+                        (bootstrappedLogML[i] - bootstrappedAverage);
             }
             var /= (bsLength - 1.0);
             bootstrappedSE = Math.sqrt(var);
@@ -131,6 +148,7 @@ public class    MarginalLikelihoodAnalysis {
      * @param Pdata current estimate of the log marginal likelihood
      * @return the log marginal likelihood
      */
+    @SuppressWarnings({"SuspiciousNameCombination"})
     public double logMarginalLikelihoodSmoothed(double[] v, double delta, double Pdata) {
 
         final double logDelta = StrictMath.log(delta);
@@ -156,7 +174,7 @@ public class    MarginalLikelihoodAnalysis {
         if (!marginalLikelihoodCalculated)
             update();
         StringBuilder sb = new StringBuilder();
-        sb.append("log P(").append(trace.getId()).append("|Data) = ").append(String.format("%5.4f", logMarginalLikelihood));
+        sb.append("log P(").append(trace.getName()).append("|Data) = ").append(String.format("%5.4f", logMarginalLikelihood));
         if (doBootstrap) {
             sb.append(" +/- ").append(String.format("%5.4f", bootstrappedSE));
         } else {
@@ -186,7 +204,7 @@ public class    MarginalLikelihoodAnalysis {
 
         int iterations = 0;
 
-        double dx = 10.0;
+        double dx;
 
         final double tolerance = 1E-3; // todo make class adjustable by accessor/setter
 
@@ -236,33 +254,27 @@ public class    MarginalLikelihoodAnalysis {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+            String fileName = xo.getStringAttribute(FILE_NAME);
             try {
-                Reader reader;
 
-                String fileName = xo.getStringAttribute(FILE_NAME);
-                try {
-                    File file = new File(fileName);
-                    String name = file.getName();
-                    String parent = file.getParent();
+                File file = new File(fileName);
+                String name = file.getName();
+                String parent = file.getParent();
 
-                    if (!file.isAbsolute()) {
-                        parent = System.getProperty("user.dir");
-                    }
-
-                    reader = new FileReader(new File(parent, name));
-                } catch (FileNotFoundException fnfe) {
-                    throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+                if (!file.isAbsolute()) {
+                    parent = System.getProperty("user.dir");
                 }
+
+                file = new File(parent, name);
+
+                fileName = file.getAbsolutePath();
 
                 XMLObject cxo = (XMLObject) xo.getChild(COLUMN_NAME);
                 String likelihoodName = cxo.getStringAttribute(Attribute.NAME);
 
-                Trace trace = Trace.Utils.loadTrace(reader, likelihoodName);
-                reader.close();
-                if (trace == null)
-                    throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
-
-                int maxState = Trace.Utils.getMaximumState(trace);
+                LogFileTraces traces = new LogFileTraces(fileName, file);
+                traces.loadTraces();
+                int maxState = traces.getMaxState();
 
                 int burnin = -1;
                 if (xo.hasAttribute(BURN_IN)) {
@@ -278,6 +290,20 @@ public class    MarginalLikelihoodAnalysis {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using to 10%");
                 }
+
+                traces.setBurnIn(burnin);
+
+                Trace trace = null;
+                for (int i = 0; i < traces.getTraceCount(); i++) {
+                    String traceName = traces.getTraceName(i);
+                    if (traceName.equals(likelihoodName)) {
+                        trace = traces.getTrace(i);
+                        break;
+                    }
+                }
+
+                if (trace == null)
+                    throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
 
                 boolean harmonicOnly = false;
                 if (cxo.hasAttribute(ONLY_HARMONIC))
@@ -299,8 +325,12 @@ public class    MarginalLikelihoodAnalysis {
 
                 return analysis;
 
+            } catch (FileNotFoundException fnfe) {
+                throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
             } catch (java.io.IOException ioe) {
                 throw new XMLParseException(ioe.getMessage());
+            } catch (TraceException e) {
+                throw new XMLParseException(e.getMessage());
             }
         }
 

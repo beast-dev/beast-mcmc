@@ -29,20 +29,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.io.FileReader;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
- *
  * @author Alexei Drummond
- *
  * @version $Id: DensityRectangle.java,v 1.4 2006/08/26 19:24:41 rambaut Exp $
  */
 public class DensityRectangle {
 
     Rectangle2D rectangle;
-    ArrayList points;
+    List<Point2D> points;
     int pointCount;
     double area;
 
@@ -54,8 +53,8 @@ public class DensityRectangle {
     public DensityRectangle(double x, double y, double w, double h) {
 
         rectangle = new Rectangle2D.Double(x, y, w, h);
-        area = w*h;
-        points = new ArrayList();
+        area = w * h;
+        points = new ArrayList<Point2D>();
     }
 
     public boolean contains(Point2D point) {
@@ -65,7 +64,7 @@ public class DensityRectangle {
 
     public boolean contains(double x, double y) {
 
-        return rectangle.contains(x,y);
+        return rectangle.contains(x, y);
     }
 
     public void addPoint(Point2D point) {
@@ -84,16 +83,16 @@ public class DensityRectangle {
 
                     double x = rectangle.getX();
                     double y = rectangle.getY();
-                    double w = rectangle.getWidth()/2.0;
-                    double h = rectangle.getHeight()/2.0;
+                    double w = rectangle.getWidth() / 2.0;
+                    double h = rectangle.getHeight() / 2.0;
 
-                    quadrants[0] = new DensityRectangle(x,y,w,h);
-                    quadrants[1] = new DensityRectangle(x+w,y,w,h);
-                    quadrants[2] = new DensityRectangle(x,y+h,w,h);
-                    quadrants[3] = new DensityRectangle(x+w,y+h,w,h);
+                    quadrants[0] = new DensityRectangle(x, y, w, h);
+                    quadrants[1] = new DensityRectangle(x + w, y, w, h);
+                    quadrants[2] = new DensityRectangle(x, y + h, w, h);
+                    quadrants[3] = new DensityRectangle(x + w, y + h, w, h);
 
-                    for (int i = 0; i < points.size(); i++) {
-                        quadrantPoint((Point2D)points.get(i));
+                    for (Point2D p : points) {
+                        quadrantPoint(p);
                     }
                     points.clear();
                     points = null;
@@ -106,7 +105,7 @@ public class DensityRectangle {
 
         } else {
             // ignore point!
-        }           
+        }
     }
 
     private void quadrantPoint(Point2D point) {
@@ -124,7 +123,7 @@ public class DensityRectangle {
     }
 
     public final double density() {
-        return getPointCount()/getArea();
+        return getPointCount() / getArea();
     }
 
     public final double maximumDensity() {
@@ -151,11 +150,11 @@ public class DensityRectangle {
         paint(g2d, targetRectangle, maximumDensity());
     }
 
-    private final void paint(Graphics2D g2d, Rectangle2D targetRectangle, double maxDensity) {
+    private void paint(Graphics2D g2d, Rectangle2D targetRectangle, double maxDensity) {
 
         double density = density();
 
-        float red = (float)(density / maxDensity);
+        float red = (float) (density / maxDensity);
         float blue = 1.0f - red;
         float green = Math.min(red, blue); //(0.5f - Math.abs(red-0.5f));
 
@@ -167,36 +166,34 @@ public class DensityRectangle {
 
             double x = targetRectangle.getX();
             double y = targetRectangle.getY();
-            double w = targetRectangle.getWidth()/2.0;
-            double h = targetRectangle.getHeight()/2.0;
+            double w = targetRectangle.getWidth() / 2.0;
+            double h = targetRectangle.getHeight() / 2.0;
 
             Rectangle2D rect[] = new Rectangle2D[4];
 
-            rect[0] = new Rectangle2D.Double(x,y,w,h);
-            rect[1] = new Rectangle2D.Double(x+w,y,w,h);
-            rect[2] = new Rectangle2D.Double(x,y+h,w,h);
-            rect[3] = new Rectangle2D.Double(x+w,y+h,w,h);
+            rect[0] = new Rectangle2D.Double(x, y, w, h);
+            rect[1] = new Rectangle2D.Double(x + w, y, w, h);
+            rect[2] = new Rectangle2D.Double(x, y + h, w, h);
+            rect[3] = new Rectangle2D.Double(x + w, y + h, w, h);
 
             for (int i = 0; i < quadrants.length; i++) {
-                quadrants[i].paint(g2d,rect[i], maxDensity);
+                quadrants[i].paint(g2d, rect[i], maxDensity);
             }
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, TraceException {
 
         int burnin = 0;
 
         System.out.println("usage: densityPlot <logFileName> <xIndex> <yIndex> <maxX> <maxY>");
-
-
 
         String logFileName = args[0];
 
         int[] indices = new int[2];
 
         for (int i = 0; i < 2; i++) {
-            indices[i] = Integer.parseInt(args[i+1]);
+            indices[i] = Integer.parseInt(args[i + 1]);
         }
 
         double width = Double.parseDouble(args[3]);
@@ -208,42 +205,45 @@ public class DensityRectangle {
         System.out.println("  maxX=" + width);
         System.out.println("  maxY=" + height);
 
-        Trace[] traces = Trace.Utils.loadTraces(new FileReader(logFileName));
+        File file = new File(logFileName);
 
-        double[][] values = new double[2][];
+        LogFileTraces traces = new LogFileTraces(logFileName, file);
+        traces.loadTraces();
+        traces.setBurnIn(burnin);
+
+        double[][] values = new double[2][traces.getStateCount()];
         for (int j = 0; j < 2; j++) {
-            values[j] = traces[indices[j]].getValues(burnin);
+            traces.getValues(indices[j], values[j]);
         }
         int totalSize = values[0].length;
         System.out.println("total samples = " + totalSize);
 
-        final DensityRectangle densityRectangle = new DensityRectangle(0,0,width, height);
+        final DensityRectangle densityRectangle = new DensityRectangle(0, 0, width, height);
 
         for (int i = 0; i < values[0].length; i++) {
             densityRectangle.addPoint(new Point2D.Double(values[0][i], values[1][i]));
         }
 
-        System.out.println("posterior prob visualized = " + ((double)densityRectangle.getPointCount())/totalSize);
-
+        System.out.println("posterior prob visualized = " + ((double) densityRectangle.getPointCount()) / totalSize);
 
 
         JFrame frame = new JFrame();
-        frame.setSize(400,400);
+        frame.setSize(400, 400);
         frame.getContentPane().add(
                 new JComponent() {
                     /**
-					 * 
-					 */
-					private static final long serialVersionUID = -4045142094590087910L;
+                     *
+                     */
+                    private static final long serialVersionUID = -4045142094590087910L;
 
-					public void paintComponent(Graphics g) {
+                    public void paintComponent(Graphics g) {
 
                         Rectangle2D bounds = getBounds();
 
-                        densityRectangle.paint((Graphics2D)g,bounds);
+                        densityRectangle.paint((Graphics2D) g, bounds);
 
                     }
-                },BorderLayout.CENTER
+                }, BorderLayout.CENTER
         );
         frame.setVisible(true);
     }

@@ -29,65 +29,60 @@ import dr.util.Attribute;
 import dr.util.NumberFormatter;
 import dr.xml.*;
 
-import java.io.Reader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileNotFoundException;
 
 /**
- *
  * @author Alexei Drummond
  * @version $Id: TraceAnalysisParser.java,v 1.18 2005/05/24 20:26:00 rambaut Exp $
  */
 public class TraceAnalysisParser extends AbstractXMLObjectParser {
-	
-	public static final String TRACE_ANALYSIS = "traceAnalysis";
+
+    public static final String TRACE_ANALYSIS = "traceAnalysis";
     public static final String FILE_NAME = "fileName";
-	public static final String BURN_IN = "burnIn";
-	
-	public String getParserName() { return TRACE_ANALYSIS; }
-			
-	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-		try {			
-            Reader reader;
+    public static final String BURN_IN = "burnIn";
 
-            String fileName = xo.getStringAttribute(FILE_NAME);
-            try {
-                File file = new File(fileName);
-                String name = file.getName();
-                String parent = file.getParent();
+    public String getParserName() {
+        return TRACE_ANALYSIS;
+    }
 
-                if (!file.isAbsolute()) {
-                    parent = System.getProperty("user.dir");
-                }
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-//					System.out.println("Writing log file to "+parent+System.getProperty("path.separator")+name);
-                reader = new FileReader(new File(parent, name));
-            } catch (FileNotFoundException fnfe) {
-                throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+        String fileName = xo.getStringAttribute(FILE_NAME);
+        try {
+
+            File file = new File(fileName);
+            String name = file.getName();
+            String parent = file.getParent();
+
+            if (!file.isAbsolute()) {
+                parent = System.getProperty("user.dir");
             }
 
-			int burnin = -1;
-			if (xo.hasAttribute(BURN_IN)) {
-				// leaving the burnin attribute off will result in 10% being used
-				burnin = xo.getIntegerAttribute(BURN_IN);
-			}
-					
-			TraceAnalysis[] analysis = TraceAnalysis.report(reader, burnin);
-							
-			for (int x = 0; x < xo.getChildCount(); x++) {
-				XMLObject child = (XMLObject)xo.getChild(x);
-				String statName = child.getStringAttribute(Attribute.NAME);
-				double expectation = child.getDoubleAttribute(Attribute.VALUE);
-				NumberFormatter formatter = new NumberFormatter(6);
-				formatter.setPadding(true);
-				formatter.setFieldWidth(14);
+            file = new File(parent, name);
+            fileName = file.getName();
 
-                for (TraceAnalysis analysi : analysis) {
-                    if (analysi.getName().equals(statName)) {
-                        double estimate = analysi.getMean();
-                        double error = analysi.getStdError();
+            int burnin = -1;
+            if (xo.hasAttribute(BURN_IN)) {
+                // leaving the burnin attribute off will result in 10% being used
+                burnin = xo.getIntegerAttribute(BURN_IN);
+            }
+
+            TraceList traces = TraceAnalysis.report(fileName, burnin);
+            for (int x = 0; x < xo.getChildCount(); x++) {
+                XMLObject child = (XMLObject) xo.getChild(x);
+                String statName = child.getStringAttribute(Attribute.NAME);
+                double expectation = child.getDoubleAttribute(Attribute.VALUE);
+                NumberFormatter formatter = new NumberFormatter(6);
+                formatter.setPadding(true);
+                formatter.setFieldWidth(14);
+
+                for (int i = 0; i < traces.getTraceCount(); i++) {
+                    TraceDistribution distribution = traces.getDistributionStatistics(i);
+                    TraceCorrelation corr = traces.getCorrelationStatistics(i);
+                    if (traces.getTraceName(i).equals(statName)) {
+                        double estimate = distribution.getMean();
+                        double error = corr.getStdErrorOfMean();
 
                         System.out.println("E[" + statName + "]=" + formatter.format(expectation));
 
@@ -100,30 +95,39 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
                     }
                 }
             }
-					
-			System.out.println();
-			System.out.flush();
-			return analysis;
-		} catch (java.io.IOException ioe) {
-			throw new XMLParseException(ioe.getMessage());
-		}
-	}
-	
-	//************************************************************************
-	// AbstractXMLObjectParser implementation
-	//************************************************************************
-	
-	public String getParserDescription() {
-		return "Performs a trace analysis. Estimates the mean of the various statistics in the given log file.";
-	}
-		
-	public Class getReturnType() { return TraceAnalysis[].class; }
-	
-	public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-	private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-		new StringAttributeRule(FILE_NAME, "The name of a BEAST log file (can not include trees, which should be logged separately" ),
-		AttributeRule.newIntegerRule("burnIn", true)
-			//, "The number of states (not sampled states, but actual states) that are discarded from the beginning of the trace before doing the analysis" ),
-	};
+
+            System.out.println();
+            System.out.flush();
+            return traces;
+
+        } catch (FileNotFoundException fnfe) {
+            throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+        } catch (java.io.IOException ioe) {
+            throw new XMLParseException(ioe.getMessage());
+        } catch (TraceException e) {
+            throw new XMLParseException(e.toString());
+        }
+    }
+
+    //************************************************************************
+    // AbstractXMLObjectParser implementation
+    //************************************************************************
+
+    public String getParserDescription() {
+        return "Performs a trace analysis. Estimates the mean of the various statistics in the given log file.";
+    }
+
+    public Class getReturnType() {
+        return TraceAnalysis[].class;
+    }
+
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
+
+    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            new StringAttributeRule(FILE_NAME, "The name of a BEAST log file (can not include trees, which should be logged separately"),
+            AttributeRule.newIntegerRule("burnIn", true)
+            //, "The number of states (not sampled states, but actual states) that are discarded from the beginning of the trace before doing the analysis" ),
+    };
 }

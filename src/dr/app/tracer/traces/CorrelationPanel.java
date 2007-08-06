@@ -1,12 +1,14 @@
 package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
+import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceList;
 import org.virion.jam.framework.Exportable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * A panel that displays correlation plots of 2 traces
@@ -35,11 +37,13 @@ public class CorrelationPanel extends JPanel implements Exportable {
     private String name1;
     private String name2;
 
-    /** Creates new CorrelationPanel */
+    /**
+     * Creates new CorrelationPanel
+     */
     public CorrelationPanel(final JFrame frame) {
 
         setOpaque(false);
-        setMinimumSize(new Dimension(300,150));
+        setMinimumSize(new Dimension(300, 150));
         setLayout(new BorderLayout());
 
         add(messageLabel, BorderLayout.NORTH);
@@ -51,26 +55,26 @@ public class CorrelationPanel extends JPanel implements Exportable {
         toolBar.setFloatable(false);
 
         JButton chartSetupButton = new JButton("Axes...");
-	    chartSetupButton.putClientProperty(
-		    "Quaqua.Button.style", "placard"
-	    );
-	    chartSetupButton.setFont(UIManager.getFont("SmallSystemFont"));
+        chartSetupButton.putClientProperty(
+                "Quaqua.Button.style", "placard"
+        );
+        chartSetupButton.setFont(UIManager.getFont("SmallSystemFont"));
         toolBar.add(chartSetupButton);
 
         sampleCheckBox.setOpaque(false);
-	    sampleCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
+        sampleCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
         sampleCheckBox.setSelected(true);
         toolBar.add(sampleCheckBox);
 
         pointsCheckBox.setOpaque(false);
-	    pointsCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
+        pointsCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
         toolBar.add(pointsCheckBox);
 
         translucencyCheckBox.setOpaque(false);
-	    translucencyCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
+        translucencyCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
         toolBar.add(translucencyCheckBox);
 
-        toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
+        toolBar.add(new JToolBar.Separator(new Dimension(8, 8)));
 
         add(messageLabel, BorderLayout.NORTH);
         add(toolBar, BorderLayout.SOUTH);
@@ -120,7 +124,8 @@ public class CorrelationPanel extends JPanel implements Exportable {
             traceIndex2 = traceIndices[0];
             name1 = name1 + " - " + tl1.getTraceName(traceIndex1);
             name2 = name2 + " - " + tl2.getTraceName(traceIndex2);
-        } else if (traceLists != null && traceIndices != null && traceLists.length == 1 && traceIndices.length == 2) {
+        } else
+        if (traceLists != null && traceIndices != null && traceLists.length == 1 && traceIndices.length == 2) {
             tl1 = traceLists[0];
             tl2 = traceLists[0];
             traceIndex1 = traceIndices[0];
@@ -164,9 +169,9 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
         if (sampleCheckBox.isSelected()) {
             if (td1.getESS() < td2.getESS()) {
-                sampleSize = (int)td1.getESS();
+                sampleSize = (int) td1.getESS();
             } else {
-                sampleSize = (int)td2.getESS();
+                sampleSize = (int) td2.getESS();
             }
             if (sampleSize < 20) {
                 sampleSize = 20;
@@ -201,7 +206,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
         ScatterPlot plot = new ScatterPlot(samples1, samples2);
         plot.setMarkStyle(pointsCheckBox.isSelected() ? Plot.POINT_MARK : Plot.CIRCLE_MARK, pointsCheckBox.isSelected() ? 1.0 : 3.0,
                 new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER),
-                new Color(16,16,64,translucencyCheckBox.isSelected() ? 32 : 255), new Color(16,16,64,translucencyCheckBox.isSelected() ? 32 : 255));
+                new Color(16, 16, 64, translucencyCheckBox.isSelected() ? 32 : 255), new Color(16, 16, 64, translucencyCheckBox.isSelected() ? 32 : 255));
         correlationChart.addPlot(plot);
 
         chartPanel.setXAxisTitle(name1);

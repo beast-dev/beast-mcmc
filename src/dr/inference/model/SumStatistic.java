@@ -91,7 +91,11 @@ public class SumStatistic extends Statistic.Abstract {
             for (int i =0; i < xo.getChildCount(); i++) {
                 Object child = xo.getChild(i);
                 if (child instanceof Statistic) {
-                    sumStatistic.addStatistic((Statistic)child);
+                    try {
+                        sumStatistic.addStatistic((Statistic)child);
+                    } catch (IllegalArgumentException iae) {
+                        throw new XMLParseException("Statistic addeed to " + getParserName() + " element is not of the same dimension");
+                    }
                 } else {
                     throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
                 }

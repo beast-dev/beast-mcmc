@@ -28,6 +28,8 @@ package dr.inference.model;
 import dr.xml.*;
 
 import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @version $Id: ProductStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
@@ -35,86 +37,99 @@ import java.util.Vector;
  * @author Alexei Drummond
  */
 public class ProductStatistic extends Statistic.Abstract {
-	
-	public static String PRODUCT_STATISTIC = "product";
+
+    public static String PRODUCT_STATISTIC = "product";
 
     private int dimension = 0;
+    private boolean elementwise;
 
-	public ProductStatistic(String name) {
-		super(name);
-	}
-	
-	public void addStatistic(Statistic statistic) {
-        if (dimension == 0) {
-            dimension = statistic.getDimension();
-        } else if (dimension != statistic.getDimension()) {
-            throw new IllegalArgumentException();
+    public ProductStatistic(String name, boolean elementwise) {
+        super(name);
+        this.elementwise = elementwise;
+    }
+
+    public void addStatistic(Statistic statistic) {
+        if (!elementwise) {
+            if (dimension == 0) {
+                dimension = statistic.getDimension();
+            } else if (dimension != statistic.getDimension()) {
+                throw new IllegalArgumentException();
+            }
+        } else {
+            dimension = 1;
         }
-		statistics.add(statistic);
-	}
-	
-	public int getDimension() { return dimension; }
+        statistics.add(statistic);
+    }
 
-	/** @return mean of contained statistics */
-	public double getStatisticValue(int dim) {
+    public int getDimension() { return dimension; }
+
+    /** @return mean of contained statistics */
+    public double getStatisticValue(int dim) {
 
         double product = 1.0;
 
-		Statistic statistic;
-		
-		for (int i = 0; i < statistics.size(); i++) {
-			statistic = (Statistic)statistics.get(i);
-			product *= statistic.getStatisticValue(dim);
-		}
-		
-		return product;
-	}
-		
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return PRODUCT_STATISTIC; }
-		
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			ProductStatistic productStatistic = new ProductStatistic(PRODUCT_STATISTIC);
-			
-			for (int i =0; i < xo.getChildCount(); i++) {
-				Object child = xo.getChild(i);
-				if (child instanceof Statistic) {
+        for (int i = 0; i < statistics.size(); i++) {
+            Statistic statistic = (Statistic)statistics.get(i);
+            if (elementwise) {
+                for (int j = 0; j < statistic.getDimension(); j++) {
+                    product *= statistic.getStatisticValue(j);
+                }
+            } else {
+                product *= statistic.getStatisticValue(dim);
+            }
+        }
+
+        return product;
+    }
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() { return PRODUCT_STATISTIC; }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+
+            boolean elementwise = xo.getBooleanAttribute("elementwise");
+            ProductStatistic productStatistic = new ProductStatistic(PRODUCT_STATISTIC, elementwise);
+
+            for (int i =0; i < xo.getChildCount(); i++) {
+                Object child = xo.getChild(i);
+                if (child instanceof Statistic) {
                     try {
                         productStatistic.addStatistic((Statistic)child);
                     } catch (IllegalArgumentException iae) {
                         throw new XMLParseException("Statistic addeed to " + getParserName() + " element is not of the same dimension");
                     }
-				} else {
-					throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
-				}
-			}
-				
-			return productStatistic;
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return "This element returns a statistic that is the product of the child statistics.";
-		}
-		
-		public Class getReturnType() { return ProductStatistic.class; }
-		
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
-		};		
-	};
-	
+                } else {
+                    throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
+                }
+            }
 
-	// ****************************************************************
-	// Private and protected stuff
-	// ****************************************************************
-	
-	private Vector statistics = new Vector();
+            return productStatistic;
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "This element returns a statistic that is the product of the child statistics.";
+        }
+
+        public Class getReturnType() { return ProductStatistic.class; }
+
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                AttributeRule.newBooleanRule("elementwise", false),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
+        };
+    };
+
+
+    // ****************************************************************
+    // Private and protected stuff
+    // ****************************************************************
+
+    private List statistics = new ArrayList();
 }

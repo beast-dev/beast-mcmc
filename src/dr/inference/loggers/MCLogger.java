@@ -283,7 +283,7 @@ public class MCLogger implements Logger {
                 BeastVersion version = new BeastVersion();
 
                 String title = "BEAST " + version.getVersionString() +
-                        ", build " + version.getBuildString() + "\n" +
+                        ", " + version.getBuildString() + "\n" +
 
                         "Generated " + (new Date()).toString();
                 logger.setTitle(title);

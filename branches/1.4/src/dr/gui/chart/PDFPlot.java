@@ -68,15 +68,14 @@ public class PDFPlot extends Plot.AbstractPlot {
             return;
         }
 
-        xMin = distribution.quantile(0.01);
-        xMax = distribution.quantile(0.99);
+        xMin = distribution.quantile(0.005);
+        xMax = distribution.quantile(0.995);
         if (xMin == xMax) xMax += 1;
-        yMax = 0.0;
 
-        double x = offset;
+        double x = xMin + offset;
         yMax = distribution.pdf(x - offset);
         double step = (xMax - xMin) / stepCount;
-		for (int i = 0; i < 100; i++) {
+		for (int i = 1; i < stepCount; i++) {
             x += step;
             double y = distribution.pdf(x - offset);
             if (y > yMax) yMax = y;
@@ -85,25 +84,25 @@ public class PDFPlot extends Plot.AbstractPlot {
         if (xAxis instanceof LogAxis) {
             throw new IllegalArgumentException("Log axis are not compatible to PDFPlot");
         } else {
-            xAxis.addRange(offset + xMin, offset + xMax);
+            xAxis.setRange(offset + xMin, offset + xMax);
         }
         if (yAxis instanceof LogAxis) {
             throw new IllegalArgumentException("Log axis are not compatible to PDFPlot");
         } else {
-            yAxis.addRange(0.0, yMax);
+            yAxis.setRange(0.0, yMax);
         }
     }
 
 	/**
 	*	Paint actual plot
 	*/
-	public void paintPlot(Graphics2D g2, double xScale, double yScale, 
+	public void paintPlot(Graphics2D g2, double xScale, double yScale,
 											double xOffset, double yOffset) {
-											
+
 		if (distribution == null) {
 			return;
 		}
-			
+
 		super.paintPlot(g2, xScale, yScale, xOffset, yOffset);
 
 		g2.setPaint(linePaint);
@@ -112,7 +111,7 @@ public class PDFPlot extends Plot.AbstractPlot {
         double x1 = xMin + offset;
         double y1 = distribution.pdf(x1 - offset);
         double step = (xMax - xMin) / stepCount;
-		for (int i = 0; i < 100; i++) {
+		for (int i = 1; i < stepCount; i++) {
             double x2 = x1 + step;
             double y2 = distribution.pdf(x2 - offset);
 			drawLine(g2, x1, y1, x2, y2);
@@ -120,11 +119,11 @@ public class PDFPlot extends Plot.AbstractPlot {
             y1 = y2;
 		}
 	}
-	
-	/**	
+
+	/**
 	*	Paint data series
 	*/
 	protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
 		// do nothing because paintPlot is overridden
-	}	
+	}
 }

@@ -92,7 +92,8 @@ public class PriorDialog {
 
 		optionPanel = new OptionsPanel(12,12);
 
-		chart = new JChart(new LinearAxis(), new LinearAxis());
+		chart = new JChart(new LinearAxis(Axis.AT_MINOR_TICK, Axis.AT_MINOR_TICK),
+											new LinearAxis(Axis.AT_ZERO, Axis.AT_DATA));
 
 		quantileLabels = new JLabel();
 		quantileLabels.setFont(quantileLabels.getFont().deriveFont(10.0f));
@@ -308,25 +309,25 @@ public class PriorDialog {
 			case BeautiOptions.UNIFORM_PRIOR:
 				return;
 			case BeautiOptions.EXPONENTIAL_PRIOR:
-				double exponentialMean = argumentFields[2].getValue().doubleValue();
-				offset = argumentFields[3].getValue().doubleValue();
+				double exponentialMean = getValue(argumentFields[2].getValue(), 1.0);
+				offset = getValue(argumentFields[3].getValue(), 0.0);
 				distribution = new ExponentialDistribution(1.0 / exponentialMean);
 				break;
 			case BeautiOptions.NORMAL_PRIOR:
-				double normalMean = argumentFields[4].getValue().doubleValue();
-				double normalStdev = argumentFields[5].getValue().doubleValue();
+				double normalMean = getValue(argumentFields[4].getValue(), 0.0);
+				double normalStdev = getValue(argumentFields[5].getValue(), 1.0);
 				distribution = new NormalDistribution(normalMean, normalStdev);
 				break;
 			case BeautiOptions.LOG_NORMAL_PRIOR:
-				double logNormalMean = argumentFields[6].getValue().doubleValue();
-				double logNormalStdev = argumentFields[7].getValue().doubleValue();
-				offset = argumentFields[8].getValue().doubleValue();
+				double logNormalMean = getValue(argumentFields[6].getValue(), 0.0);
+				double logNormalStdev = getValue(argumentFields[7].getValue(), 1.0);
+				offset = getValue(argumentFields[8].getValue(), 0.0);
 				distribution = new LogNormalDistribution(logNormalMean, logNormalStdev);
 				break;
 			case BeautiOptions.GAMMA_PRIOR:
-				double gammaAlpha = argumentFields[9].getValue().doubleValue();
-				double gammaBeta = argumentFields[10].getValue().doubleValue();
-				offset = argumentFields[11].getValue().doubleValue();
+				double gammaAlpha = getValue(argumentFields[9].getValue(), 1.0);
+				double gammaBeta = getValue(argumentFields[10].getValue(), 1.0);
+				offset = getValue(argumentFields[11].getValue(), 0.0);
 				distribution = new GammaDistribution(gammaAlpha, gammaBeta);
 				break;
 			case BeautiOptions.JEFFREYS_PRIOR:
@@ -339,5 +340,12 @@ public class PriorDialog {
 				"\n" +formatter.format(distribution.quantile(0.5)) +
 				"\n" +formatter.format(distribution.quantile(0.95)) +
 				"\n" +formatter.format(distribution.quantile(0.975)));
+	}
+
+	private double getValue(Double field, double defaultValue) {
+		if (field != null) {
+			return field.doubleValue();
+		}
+		return defaultValue;
 	}
 }

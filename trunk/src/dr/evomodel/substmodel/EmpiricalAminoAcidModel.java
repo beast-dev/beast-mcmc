@@ -93,7 +93,6 @@ public class EmpiricalAminoAcidModel extends AbstractAminoAcidModel {
 	protected void storeState() { } // nothing to do
 	protected void restoreState() { updateMatrix = !areFrequenciesConstant; }
 	protected void acceptState() { } // nothing to do
-	protected void adoptState(Model source) { updateMatrix = !areFrequenciesConstant; }
 		
 	/**
 	 * Parses an element from an DOM document into a DemographicModel. Recognises

@@ -275,7 +275,7 @@ public class BeastMain {
 
             String nameString = "BEAST " + version.getVersionString();
             String aboutString = "<html><center><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
-                    "Version " + version.getVersionString() + ", 2002-2006</p>" +
+                    "Version " + version.getVersionString() + ", 2002-2007</p>" +
                     "<p>by<br>" +
                     "Alexei J. Drummond and Andrew Rambaut</p>" +
                     "<p>Department of Computer Science, University of Auckland<br>" +

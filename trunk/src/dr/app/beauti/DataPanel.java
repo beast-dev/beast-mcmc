@@ -73,8 +73,6 @@ public class DataPanel extends JPanel implements Exportable {
 
     JComboBox translationCombo = new JComboBox();
 
-    JCheckBox ignoreDataCheckBox = new JCheckBox("Ignore data - sample prior only");
-
     TableRenderer sequenceRenderer = null;
 
     BeautiFrame frame = null;
@@ -168,16 +166,6 @@ public class DataPanel extends JPanel implements Exportable {
         toolBar2.add(new JLabel("Translation:"));
         toolBar2.add(translationCombo);
 
-        ignoreDataCheckBox.setOpaque(false);
-        ignoreDataCheckBox.setEnabled(false);
-        ignoreDataCheckBox.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
-                translationChanged();
-            }
-        });
-        toolBar2.add(new JToolBar.Separator());
-        toolBar2.add(ignoreDataCheckBox);
-
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0,0));
@@ -238,19 +226,13 @@ public class DataPanel extends JPanel implements Exportable {
     }
 
     public final void translationChanged() {
-        if (ignoreDataCheckBox.isSelected()) {
-            options.alignment = null;
-            translationCombo.setEnabled(false);
-        } else {
-            translationCombo.setEnabled(true);
-            int index = translationCombo.getSelectedIndex() - 1;
+        int index = translationCombo.getSelectedIndex() - 1;
 
-            if (index < 0) {
-                options.alignment = options.originalAlignment;
-            } else {
-                options.alignment = new ConvertAlignment(AminoAcids.INSTANCE, GeneticCode.GENETIC_CODES[index],
-                        options.originalAlignment);
-            }
+        if (index < 0) {
+            options.alignment = options.originalAlignment;
+        } else {
+            options.alignment = new ConvertAlignment(AminoAcids.INSTANCE, GeneticCode.GENETIC_CODES[index],
+                    options.originalAlignment);
         }
 
         setupTable();
@@ -269,8 +251,6 @@ public class DataPanel extends JPanel implements Exportable {
             directionCombo.setEnabled(true);
 
             //originField.setEnabled(true);
-
-            ignoreDataCheckBox.setEnabled(options.originalAlignment != null);
 
             if (options.originalAlignment != null && options.originalAlignment.getDataType() == Nucleotides.INSTANCE) {
                 translationCombo.setEnabled(true);

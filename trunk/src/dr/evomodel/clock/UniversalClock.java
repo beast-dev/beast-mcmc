@@ -95,14 +95,7 @@ public class UniversalClock extends AbstractModel implements BranchRateModel {
 	protected void storeState() {} // no additional state needs storing
 	protected void restoreState() {} // no additional state needs restoring	
 	protected void acceptState() {} // no additional state needs accepting	
-		
-	/**
-	 * Adopt the state of the model component from source.
-	 */
-	protected void adoptState(Model source) {
-		throw new UnsupportedOperationException("this has not been implemented yet");
-	}
-	
+
 	// **************************************************************
     // Private methods
     // **************************************************************

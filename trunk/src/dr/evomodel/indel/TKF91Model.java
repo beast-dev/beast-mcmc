@@ -89,10 +89,7 @@ public class TKF91Model extends IndelModel {
 	protected void storeState() {} // no extra state apart from parameters
 	protected void acceptState() {} // no extra state apart from parameters
 	protected void restoreState() {} // no extra state apart from parameters
-	protected void adoptState(Model model) {
-		throw new RuntimeException("Not implemented!");
-	} // no extra state apart from parameters
-	
+
     // **************************************************************
     // XMLElement IMPLEMENTATION
     // **************************************************************

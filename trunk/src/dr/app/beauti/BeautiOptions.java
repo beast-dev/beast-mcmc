@@ -749,7 +749,7 @@ public class BeautiOptions {
      * Read options from a file
      *
      * @param includeData include a data block?
-     * @param guessDates  guess dates?
+     * @param guessDates guess dates?
      * @return the Document
      */
     public Document create(boolean includeData, boolean guessDates) {
@@ -799,6 +799,8 @@ public class BeautiOptions {
         for (Taxa taxonSet : taxonSets) {
             Element taxonSetElement = new Element("taxonSet");
             taxonSetElement.addContent(createChild("id", taxonSet.getId()));
+            taxonSetElement.addContent(createChild("enforceMonophyly",
+                    ((Boolean)taxonSetsMono.get(taxonSet)).booleanValue() ? "true" : "false"));
             for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
                 Element taxonElement = new Element("taxon");
                 taxonElement.addContent(createChild("id", taxonSet.getTaxon(j).getId()));
@@ -1015,6 +1017,7 @@ public class BeautiOptions {
                 String id = getStringChild(taxonSetElement, "id", "");
                 final Taxa taxonSet = new Taxa(id);
 
+                Boolean enforceMonophyly = Boolean.valueOf(getStringChild(taxonSetElement, "enforceMonophyly", "false"));
                 for (Object o : taxonSetElement.getChildren("taxon")) {
                     Element taxonElement = (Element) o;
                     String taxonId = getStringChild(taxonElement, "id", "");
@@ -1024,6 +1027,7 @@ public class BeautiOptions {
                     }
                 }
                 taxonSets.add(taxonSet);
+                taxonSetsMono.put(taxonSet, enforceMonophyly);
             }
         }
 
@@ -1636,6 +1640,8 @@ public class BeautiOptions {
     public String fileName = null;
     public boolean autoOptimize = true;
     public boolean performTraceAnalysis = false;
+    public boolean samplePriorOnly = false;
+
     public HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();
     public HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
     public HashMap<String, Operator> operators = new HashMap<String, Operator>();

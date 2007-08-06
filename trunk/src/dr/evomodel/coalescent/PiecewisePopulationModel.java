@@ -114,8 +114,7 @@ public class PiecewisePopulationModel extends DemographicModel
 	protected void storeState() {} // no additional state needs storing
 	protected void restoreState() {} // no additional state needs restoring	
 	protected void acceptState() {} // no additional state needs accepting	
-	protected void adoptState(Model source) {} // no additional state needs adopting	
-	
+
 	/**
 	 * Parses an element from an DOM document into a PiecewisePopulation. 
 	 */

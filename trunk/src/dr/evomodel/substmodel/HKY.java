@@ -210,14 +210,6 @@ public class HKY extends AbstractNucleotideModel
         updateIntermediates = true;
     }
 
-    /**
-     * Restore the stored state
-     */
-    public void adoptState(Model source) {
-        super.adoptState(source);
-        updateIntermediates = true;
-    }
-
     // **************************************************************
     // XHTMLable IMPLEMENTATION
     // **************************************************************

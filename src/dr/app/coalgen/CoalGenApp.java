@@ -32,12 +32,10 @@ import javax.swing.*;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- *
  * @version $Id$
  */
-public class CoalGenApp  {
+public class CoalGenApp {
     public CoalGenApp() {
-
 
         try {
 
@@ -57,7 +55,7 @@ public class CoalGenApp  {
             SingleDocApplication app = new SingleDocApplication(new CoalGenMenuFactory(), nameString, aboutString, icon);
 
 
-            CoalGenFrame frame = new CoalGenFrame(app, nameString);
+            CoalGenFrame frame = new CoalGenFrame(nameString);
             app.setDocumentFrame(frame);
 
         } catch (Exception e) {
@@ -67,10 +65,9 @@ public class CoalGenApp  {
 
     // Main entry point
     static public void main(String[] args) {
-        System.setProperty("com.apple.macos.useScreenMenuBar","true");
-        System.setProperty("apple.laf.useScreenMenuBar","true");
+        System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+        System.setProperty("apple.laf.useScreenMenuBar", "true");
 
         new CoalGenApp();
     }
-
 }

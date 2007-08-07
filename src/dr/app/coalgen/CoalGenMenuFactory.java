@@ -35,27 +35,25 @@ import javax.swing.*;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- *
  * @version $Id$
  */
 public class CoalGenMenuFactory extends SingleDocMenuBarFactory {
-	
-	public void populateMenuBar(JMenuBar menuBar, DocumentFrame documentFrame, 
-								Application application) {
-								
-		super.populateMenuBar(menuBar, documentFrame);
-		
-		documentFrame.getSaveAction().setEnabled(false);
-		documentFrame.getSaveAsAction().setEnabled(false);
 
-		documentFrame.getCutAction().setEnabled(false);
-		documentFrame.getCopyAction().setEnabled(true);
-		documentFrame.getPasteAction().setEnabled(false);
-		documentFrame.getDeleteAction().setEnabled(false);
-		documentFrame.getSelectAllAction().setEnabled(false);
-		documentFrame.getFindAction().setEnabled(false);
+    public void populateMenuBar(JMenuBar menuBar, DocumentFrame documentFrame,
+                                Application application) {
 
-		documentFrame.getZoomWindowAction().setEnabled(false);
-	}
+        super.populateMenuBar(menuBar, documentFrame);
 
+        documentFrame.getSaveAction().setEnabled(false);
+        documentFrame.getSaveAsAction().setEnabled(false);
+
+        documentFrame.getCutAction().setEnabled(false);
+        documentFrame.getCopyAction().setEnabled(true);
+        documentFrame.getPasteAction().setEnabled(false);
+        documentFrame.getDeleteAction().setEnabled(false);
+        documentFrame.getSelectAllAction().setEnabled(false);
+        documentFrame.getFindAction().setEnabled(false);
+
+        documentFrame.getZoomWindowAction().setEnabled(false);
+    }
 }

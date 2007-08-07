@@ -34,6 +34,7 @@ import java.util.Vector;
  * @version $Id: VarianceStatistic.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
 public class VarianceStatistic extends Statistic.Abstract {
 	
@@ -75,6 +76,7 @@ public class VarianceStatistic extends Statistic.Abstract {
 		
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 		
+        public String[] getParserNames() { return new String[] { getParserName(), "variance" }; }
 		public String getParserName() { return VARIANCE_STATISTIC; }
 		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {

@@ -1,5 +1,5 @@
 /*
- * ReciprocalStatistic.java
+ * ExponentialStatistic.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -28,49 +28,48 @@ package dr.inference.model;
 import dr.xml.*;
 
 /**
- * @version $Id: ReciprocalStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
+ * @version $Id: ExponentialStatistic.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class ReciprocalStatistic extends Statistic.Abstract {
+public class ExponentialStatistic extends Statistic.Abstract {
 	
-	public static String RECIPROCAL_STATISTIC = "reciprocalStatistic";
+	public static String EXPONENTIAL_STATISTIC = "exponentialStatistic";
     
+    private int dimension = 0;
     private Statistic statistic = null;
 
-	public ReciprocalStatistic(String name, Statistic statistic) {
+	public ExponentialStatistic(String name, Statistic statistic) {
 		super(name);
         this.statistic = statistic;
-    }
-		
-	public int getDimension() {
-        return statistic.getDimension();
-    }
+	}
+
+	public int getDimension() { return dimension; }
 
 	/** @return mean of contained statistics */
 	public double getStatisticValue(int dim) {	
         
-        return 1.0/statistic.getStatisticValue(dim);
+        return Math.exp(statistic.getStatisticValue(dim));
 	}
 		
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 		
-        public String[] getParserNames() { return new String[] { getParserName(), "reciprocal" }; }
-		public String getParserName() { return RECIPROCAL_STATISTIC; }
+        public String[] getParserNames() { return new String[] { getParserName(), "exp" }; }
+		public String getParserName() { return EXPONENTIAL_STATISTIC; }
 		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			ReciprocalStatistic recipStatistic = null;
+			ExponentialStatistic expStatistic = null;
 			
             Object child = xo.getChild(0);
             if (child instanceof Statistic) {
-                recipStatistic = new ReciprocalStatistic(RECIPROCAL_STATISTIC, (Statistic)child);
+                expStatistic = new ExponentialStatistic(EXPONENTIAL_STATISTIC, (Statistic)child);
             } else {
                 throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
             }
 				
-			return recipStatistic;
+			return expStatistic;
 		}
 		
 		//************************************************************************
@@ -78,10 +77,10 @@ public class ReciprocalStatistic extends Statistic.Abstract {
 		//************************************************************************
 		
 		public String getParserDescription() {
-			return "This element returns a statistic that is the element-wise reciprocal of the child statistic.";
+			return "This element returns a statistic that is the element-wise exponentiation of the child statistic.";
 		}
 		
-		public Class getReturnType() { return ReciprocalStatistic.class; }
+		public Class getReturnType() { return ExponentialStatistic.class; }
 		
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 		

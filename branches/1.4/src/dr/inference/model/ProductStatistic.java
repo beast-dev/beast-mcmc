@@ -35,10 +35,11 @@ import java.util.List;
  * @version $Id: ProductStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
 public class ProductStatistic extends Statistic.Abstract {
 
-    public static String PRODUCT_STATISTIC = "product";
+    public static String PRODUCT_STATISTIC = "productStatistic";
 
     private int dimension = 0;
     private boolean elementwise;
@@ -84,12 +85,17 @@ public class ProductStatistic extends Statistic.Abstract {
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public String[] getParserNames() { return new String[] { getParserName(), "product" }; }
         public String getParserName() { return PRODUCT_STATISTIC; }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 
-            boolean elementwise = xo.getBooleanAttribute("elementwise");
+            boolean elementwise = false;
+            if (xo.hasAttribute("elementwise")) {
+                elementwise = xo.getBooleanAttribute("elementwise");
+            }
+
             ProductStatistic productStatistic = new ProductStatistic(PRODUCT_STATISTIC, elementwise);
 
             for (int i =0; i < xo.getChildCount(); i++) {
@@ -98,7 +104,7 @@ public class ProductStatistic extends Statistic.Abstract {
                     try {
                         productStatistic.addStatistic((Statistic)child);
                     } catch (IllegalArgumentException iae) {
-                        throw new XMLParseException("Statistic addeed to " + getParserName() + " element is not of the same dimension");
+                        throw new XMLParseException("Statistic added to " + getParserName() + " element is not of the same dimension");
                     }
                 } else {
                     throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
@@ -121,7 +127,7 @@ public class ProductStatistic extends Statistic.Abstract {
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                AttributeRule.newBooleanRule("elementwise", false),
+                AttributeRule.newBooleanRule("elementwise", true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
         };
     };

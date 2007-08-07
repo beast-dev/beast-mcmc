@@ -36,7 +36,7 @@ import dr.xml.*;
  */
 public class TestStatistic extends BooleanStatistic {
 	
-	public static String TEST_STATISTIC = "test";
+	public static String TEST_STATISTIC = "testStatistic";
 	public static String NAME = "name";
 
 	private Attribute attribute = null;
@@ -111,6 +111,7 @@ public class TestStatistic extends BooleanStatistic {
 
 	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 		
+        public String[] getParserNames() { return new String[] { getParserName(), "test" }; }
 		public String getParserName() { return TEST_STATISTIC; }
 		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {

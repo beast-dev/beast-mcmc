@@ -193,17 +193,18 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.inference.model.StatisticParser());
         addXMLObjectParser(new dr.inference.model.ParameterParser());
         addXMLObjectParser(dr.inference.model.TestStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.VarianceStatistic.PARSER);
 
         addXMLObjectParser(dr.inference.model.MeanStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.VarianceStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.ProductStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.SumStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.DifferenceStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.RatioStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.ReciprocalStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.NegateStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.ExponentiationStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.ExpressionStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.NegativeStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.ExponentialStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.LogorithmStatistic.PARSER);
+        // addXMLObjectParser(dr.inference.model.ExpressionStatistic.PARSER);
 
         addXMLObjectParser(dr.inference.ml.MLOptimizer.PARSER);
         addXMLObjectParser(dr.inference.mcmc.MCMC.PARSER);

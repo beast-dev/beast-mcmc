@@ -37,7 +37,6 @@ public class ExponentialStatistic extends Statistic.Abstract {
 	
 	public static String EXPONENTIAL_STATISTIC = "exponentialStatistic";
     
-    private int dimension = 0;
     private Statistic statistic = null;
 
 	public ExponentialStatistic(String name, Statistic statistic) {
@@ -45,7 +44,9 @@ public class ExponentialStatistic extends Statistic.Abstract {
         this.statistic = statistic;
 	}
 
-	public int getDimension() { return dimension; }
+	public int getDimension() {
+        return statistic.getDimension(); 
+    }
 
 	/** @return mean of contained statistics */
 	public double getStatisticValue(int dim) {	

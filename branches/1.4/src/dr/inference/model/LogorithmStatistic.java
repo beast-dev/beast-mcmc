@@ -36,22 +36,29 @@ import dr.xml.*;
 public class LogorithmStatistic extends Statistic.Abstract {
 
 	public static String LOGORITHM_STATISTIC = "logorithmStatistic";
+    public static String BASE = "base";
+ 
+    private final Statistic statistic;
+    private final double base;
 
-    private int dimension = 0;
-    private Statistic statistic = null;
-
-	public LogorithmStatistic(String name, Statistic statistic) {
+    public LogorithmStatistic(String name, Statistic statistic, double base) {
 		super(name);
         this.statistic = statistic;
-	}
+        this.base = base;
+    }
 
-	public int getDimension() { return dimension; }
+	public int getDimension() {
+        return statistic.getDimension();
+    }
 
 	/** @return mean of contained statistics */
 	public double getStatisticValue(int dim) {
-
-        return Math.log(statistic.getStatisticValue(dim));
-	}
+        if (base <= 1.0) {
+            return Math.log(statistic.getStatisticValue(dim));
+        } else {
+            return Math.log(statistic.getStatisticValue(dim)) / Math.log(base);
+        }
+    }
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -60,16 +67,25 @@ public class LogorithmStatistic extends Statistic.Abstract {
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			ExponentialStatistic expStatistic = null;
+			LogorithmStatistic logStatistic = null;
+
+            double base = 0.0; // base 0.0 means natural logorithm
+            if (xo.hasAttribute(BASE)) {
+                base = xo.getDoubleAttribute(BASE);
+            }
+
+            if (base <= 1.0) {
+                throw new XMLParseException("Error parsing " + getParserName() + " element: base attribute should be > 1");
+            }
 
             Object child = xo.getChild(0);
             if (child instanceof Statistic) {
-                expStatistic = new ExponentialStatistic(LOGORITHM_STATISTIC, (Statistic)child);
+                logStatistic = new LogorithmStatistic(LOGORITHM_STATISTIC, (Statistic)child, base);
             } else {
                 throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
             }
 
-			return expStatistic;
+			return logStatistic;
 		}
 
 		//************************************************************************
@@ -85,7 +101,8 @@ public class LogorithmStatistic extends Statistic.Abstract {
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(Statistic.class, 1, 1 )
+                AttributeRule.newDoubleRule(BASE, true, "An optional base for the logoritm (default is the natural logorithm, base e)"),
+                new ElementRule(Statistic.class, 1, 1 )
 		};
 	};
 }

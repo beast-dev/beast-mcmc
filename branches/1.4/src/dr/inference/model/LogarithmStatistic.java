@@ -1,5 +1,5 @@
 /*
- * LogorithmStatistic.java
+ * LogarithmStatistic.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -33,15 +33,15 @@ import dr.xml.*;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class LogorithmStatistic extends Statistic.Abstract {
+public class LogarithmStatistic extends Statistic.Abstract {
 
-	public static String LOGORITHM_STATISTIC = "logorithmStatistic";
+	public static String LOGARITHM_STATISTIC = "logarithmStatistic";
     public static String BASE = "base";
  
     private final Statistic statistic;
     private final double base;
 
-    public LogorithmStatistic(String name, Statistic statistic, double base) {
+    public LogarithmStatistic(String name, Statistic statistic, double base) {
 		super(name);
         this.statistic = statistic;
         this.base = base;
@@ -63,11 +63,11 @@ public class LogorithmStatistic extends Statistic.Abstract {
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String[] getParserNames() { return new String[] { getParserName(), "log" }; }
-		public String getParserName() { return LOGORITHM_STATISTIC; }
+		public String getParserName() { return LOGARITHM_STATISTIC; }
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			LogorithmStatistic logStatistic = null;
+			LogarithmStatistic logStatistic;
 
             double base = 0.0; // base 0.0 means natural logorithm
             if (xo.hasAttribute(BASE)) {
@@ -80,7 +80,7 @@ public class LogorithmStatistic extends Statistic.Abstract {
 
             Object child = xo.getChild(0);
             if (child instanceof Statistic) {
-                logStatistic = new LogorithmStatistic(LOGORITHM_STATISTIC, (Statistic)child, base);
+                logStatistic = new LogarithmStatistic(LOGARITHM_STATISTIC, (Statistic)child, base);
             } else {
                 throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
             }

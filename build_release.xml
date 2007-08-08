@@ -1,4 +1,3 @@
-
 <project name="BEAST_RELEASE" default="all" basedir=".">
     <description>
         Build file for BEAST release versions
@@ -21,41 +20,42 @@
     </target>
 
     <target name="all"
-        depends="compile-all"
-        description="Build all run-time stuff">
+            depends="compile-all"
+            description="Build all run-time stuff">
     </target>
 
     <target name="compile-all"
-        depends="compile-basic">
+            depends="compile-basic">
     </target>
 
     <target name="compile-basic" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.5" srcdir="${src}" destdir="${build}" classpath="${lib}/jebl-0.4.jar:${lib}/jdom.jar:${lib}/commons-math-1.1.jar">
+        <javac source="1.5" srcdir="${src}" destdir="${build}"
+               classpath="${lib}/jebl-0.4.jar:${lib}/jdom.jar:${lib}/commons-math-1.1.jar:${lib}/colt.jar">
             <include name="dr/app/beast/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/tools/**"/>
             <include name="dr/app/util/**"/>
             <include name="dr/evolution/alignment/**"/>
-	        <include name="dr/evolution/coalescent/**"/>
+            <include name="dr/evolution/coalescent/**"/>
             <include name="dr/evolution/colouring/**"/>
-	        <include name="dr/evolution/datatype/**"/>
-	        <include name="dr/evolution/distance/**"/>
-	        <include name="dr/evolution/io/**"/>
-	        <include name="dr/evolution/parsimony/**"/>
-	        <include name="dr/evolution/sequence/**"/>
-	        <include name="dr/evolution/tree/**"/>
-	        <include name="dr/evolution/util/**"/>
+            <include name="dr/evolution/datatype/**"/>
+            <include name="dr/evolution/distance/**"/>
+            <include name="dr/evolution/io/**"/>
+            <include name="dr/evolution/parsimony/**"/>
+            <include name="dr/evolution/sequence/**"/>
+            <include name="dr/evolution/tree/**"/>
+            <include name="dr/evolution/util/**"/>
             <include name="dr/evomodel/branchratemodel/**"/>
-	        <include name="dr/evomodel/clock/**"/>
-	        <include name="dr/evomodel/coalescent/**"/>
-	        <include name="dr/evomodel/indel/**"/>
-	        <include name="dr/evomodel/operators/**"/>
-	        <include name="dr/evomodel/sitemodel/**"/>
-	        <include name="dr/evomodel/speciation/**"/>
-	        <include name="dr/evomodel/substmodel/**"/>
-	        <include name="dr/evomodel/tree/**"/>
-	        <include name="dr/evomodel/treelikelihood/**"/>
+            <include name="dr/evomodel/clock/**"/>
+            <include name="dr/evomodel/coalescent/**"/>
+            <include name="dr/evomodel/indel/**"/>
+            <include name="dr/evomodel/operators/**"/>
+            <include name="dr/evomodel/sitemodel/**"/>
+            <include name="dr/evomodel/speciation/**"/>
+            <include name="dr/evomodel/substmodel/**"/>
+            <include name="dr/evomodel/tree/**"/>
+            <include name="dr/evomodel/treelikelihood/**"/>
             <include name="dr/evoxml/**"/>
             <include name="dr/gui/chart/**"/>
             <include name="dr/gui/tree/**"/>
@@ -69,7 +69,8 @@
         </javac>
     </target>
 
-    <target name="dist" depends="compile-all" description="generate the distribution">
+    <target name="dist" depends="compile-all"
+            description="generate the distribution">
         <!-- Create the distribution directory -->
         <mkdir dir="${dist}"/>
 
@@ -83,26 +84,26 @@
                 <include name="dr/app/beast/**/*.class"/>
                 <include name="dr/app/util/**/*.class"/>
                 <include name="dr/app/tools/**/*.class"/>
-	            <include name="dr/evolution/alignment/**/*.class"/>
-		        <include name="dr/evolution/coalescent/**/*.class"/>
+                <include name="dr/evolution/alignment/**/*.class"/>
+                <include name="dr/evolution/coalescent/**/*.class"/>
                 <include name="dr/evolution/colouring/**/*.class"/>
-		        <include name="dr/evolution/datatype/**/*.class"/>
-		        <include name="dr/evolution/distance/**/*.class"/>
-		        <include name="dr/evolution/io/**/*.class"/>
-		        <include name="dr/evolution/parsimony/**/*.class"/>
-		        <include name="dr/evolution/sequence/**/*.class"/>
-		        <include name="dr/evolution/tree/**/*.class"/>
-		        <include name="dr/evolution/util/**/*.class"/>
-	            <include name="dr/evomodel/branchratemodel/**/*.class"/>
-		        <include name="dr/evomodel/clock/**/*.class"/>
-		        <include name="dr/evomodel/coalescent/**/*.class"/>
-		        <include name="dr/evomodel/indel/**/*.class"/>
-		        <include name="dr/evomodel/operators/**/*.class"/>
-		        <include name="dr/evomodel/sitemodel/**/*.class"/>
-		        <include name="dr/evomodel/speciation/**/*.class"/>
-		        <include name="dr/evomodel/substmodel/**/*.class"/>
-		        <include name="dr/evomodel/tree/**/*.class"/>
-		        <include name="dr/evomodel/treelikelihood/**/*.class"/>
+                <include name="dr/evolution/datatype/**/*.class"/>
+                <include name="dr/evolution/distance/**/*.class"/>
+                <include name="dr/evolution/io/**/*.class"/>
+                <include name="dr/evolution/parsimony/**/*.class"/>
+                <include name="dr/evolution/sequence/**/*.class"/>
+                <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/util/**/*.class"/>
+                <include name="dr/evomodel/branchratemodel/**/*.class"/>
+                <include name="dr/evomodel/clock/**/*.class"/>
+                <include name="dr/evomodel/coalescent/**/*.class"/>
+                <include name="dr/evomodel/indel/**/*.class"/>
+                <include name="dr/evomodel/operators/**/*.class"/>
+                <include name="dr/evomodel/sitemodel/**/*.class"/>
+                <include name="dr/evomodel/speciation/**/*.class"/>
+                <include name="dr/evomodel/substmodel/**/*.class"/>
+                <include name="dr/evomodel/tree/**/*.class"/>
+                <include name="dr/evomodel/treelikelihood/**/*.class"/>
                 <include name="dr/evoxml/**/*.class"/>
                 <include name="dr/gui/tree/**/*.class"/>
                 <include name="dr/inference/**/*.class"/>
@@ -132,26 +133,26 @@
             <fileset dir="${build}">
                 <include name="dr/app/beauti/**/*.class"/>
                 <include name="dr/app/util/**/*.class"/>
-	            <include name="dr/evolution/alignment/**/*.class"/>
-		        <include name="dr/evolution/coalescent/**/*.class"/>
+                <include name="dr/evolution/alignment/**/*.class"/>
+                <include name="dr/evolution/coalescent/**/*.class"/>
                 <include name="dr/evolution/colouring/**/*.class"/>
-		        <include name="dr/evolution/datatype/**/*.class"/>
-		        <include name="dr/evolution/distance/**/*.class"/>
-		        <include name="dr/evolution/io/**/*.class"/>
-		        <include name="dr/evolution/parsimony/**/*.class"/>
-		        <include name="dr/evolution/sequence/**/*.class"/>
-		        <include name="dr/evolution/tree/**/*.class"/>
-		        <include name="dr/evolution/util/**/*.class"/>
-	            <include name="dr/evomodel/branchratemodel/**/*.class"/>
-		        <include name="dr/evomodel/clock/**/*.class"/>
-		        <include name="dr/evomodel/coalescent/**/*.class"/>
-		        <include name="dr/evomodel/indel/**/*.class"/>
-		        <include name="dr/evomodel/operators/**/*.class"/>
-		        <include name="dr/evomodel/sitemodel/**/*.class"/>
-		        <include name="dr/evomodel/speciation/**/*.class"/>
-		        <include name="dr/evomodel/substmodel/**/*.class"/>
-		        <include name="dr/evomodel/tree/**/*.class"/>
-		        <include name="dr/evomodel/treelikelihood/**/*.class"/>
+                <include name="dr/evolution/datatype/**/*.class"/>
+                <include name="dr/evolution/distance/**/*.class"/>
+                <include name="dr/evolution/io/**/*.class"/>
+                <include name="dr/evolution/parsimony/**/*.class"/>
+                <include name="dr/evolution/sequence/**/*.class"/>
+                <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/util/**/*.class"/>
+                <include name="dr/evomodel/branchratemodel/**/*.class"/>
+                <include name="dr/evomodel/clock/**/*.class"/>
+                <include name="dr/evomodel/coalescent/**/*.class"/>
+                <include name="dr/evomodel/indel/**/*.class"/>
+                <include name="dr/evomodel/operators/**/*.class"/>
+                <include name="dr/evomodel/sitemodel/**/*.class"/>
+                <include name="dr/evomodel/speciation/**/*.class"/>
+                <include name="dr/evomodel/substmodel/**/*.class"/>
+                <include name="dr/evomodel/tree/**/*.class"/>
+                <include name="dr/evomodel/treelikelihood/**/*.class"/>
                 <include name="dr/evoxml/**/*.class"/>
                 <include name="dr/gui/chart/**"/>
                 <include name="dr/inference/**/*.class"/>

@@ -70,6 +70,15 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
             addTaxon(list.getTaxon(nt));
         }
     }
+
+    public void unionTaxons(TaxonList list) {
+        for(int nt = 0; nt < list.getTaxonCount(); ++nt) {
+            final Taxon taxon = list.getTaxon(nt);
+            if( getTaxonIndex(taxon) == -1 ) {
+                addTaxon(taxon);
+            }
+        }
+    }
         
     public void removeTaxons(TaxonList list) {
         for(int nt = 0; nt < list.getTaxonCount(); ++nt) {

@@ -1349,7 +1349,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
             writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
 
-            if( ((Boolean)taxonSetsMono.get(taxa)).booleanValue() ) {
+            if( taxonSetsMono.get(taxa) ) {
                 writer.writeOpenTag(
                         MonophylyStatistic.MONOPHYLY_STATISTIC,
                         new Attribute[]{
@@ -2336,7 +2336,10 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
                 for (Taxa taxonSet : taxonSets) {
                     Parameter statistic = statistics.get(taxonSet);
-                    writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+
+                    Attribute mono = new Attribute.Default(CoalescentSimulator.IS_MONOPHYLETIC, taxonSetsMono.get(taxonSet));
+
+                    writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT, mono);
 
                     writer.writeTag(TaxaParser.TAXA,
                             new Attribute[]{new Attribute.Default("idref", taxonSet.getId())}, true);

@@ -28,6 +28,8 @@ package dr.inference.model;
 import dr.xml.*;
 
 import java.util.Vector;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @version $Id: MeanStatistic.java,v 1.9 2005/05/24 20:26:00 rambaut Exp $
@@ -36,17 +38,17 @@ import java.util.Vector;
  * @author Alexei Drummond
  */
 public class MeanStatistic extends Statistic.Abstract {
-	
+
 	public static String MEAN_STATISTIC = "meanStatistic";
 
 	public MeanStatistic(String name) {
 		super(name);
 	}
-	
+
 	public void addStatistic(Statistic statistic) {
 		statistics.add(statistic);
 	}
-	
+
 	public int getDimension() { return 1; }
 
 	/** @return mean of contained statistics */
@@ -54,10 +56,8 @@ public class MeanStatistic extends Statistic.Abstract {
 		double sum = 0.0;
 		int dimensionCount = 0;
 		int n;
-		Statistic statistic;
-		
-		for (int i = 0; i < statistics.size(); i++) {
-			statistic = (Statistic)statistics.get(i);
+
+		for (Statistic statistic : statistics) {
 			n = statistic.getDimension();
 
 			for (int j = 0; j < n; j++) {
@@ -65,18 +65,19 @@ public class MeanStatistic extends Statistic.Abstract {
 			}
 			dimensionCount += n;
 		}
-		
+
 		return sum / dimensionCount;
 	}
-		
+
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
+
+        public String[] getParserNames() { return new String[] { getParserName(), "mean" }; }
 		public String getParserName() { return MEAN_STATISTIC; }
-		
+
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
+
 			MeanStatistic meanStatistic = new MeanStatistic(MEAN_STATISTIC);
-			
+
 			for (int i =0; i < xo.getChildCount(); i++) {
 				Object child = xo.getChild(i);
 				if (child instanceof Statistic) {
@@ -85,31 +86,31 @@ public class MeanStatistic extends Statistic.Abstract {
 					throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
 				}
 			}
-				
+
 			return meanStatistic;
 		}
-		
+
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
-		
+
 		public String getParserDescription() {
 			return "This element returns a statistic that is the mean of the child statistics.";
 		}
-		
+
 		public Class getReturnType() { return MeanStatistic.class; }
-		
+
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
+
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 			new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
-		};		
+		};
 	};
-	
+
 
 	// ****************************************************************
 	// Private and protected stuff
 	// ****************************************************************
-	
-	private Vector statistics = new Vector();
+
+	private List<Statistic> statistics = new ArrayList<Statistic>();
 }

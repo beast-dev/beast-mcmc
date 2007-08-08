@@ -7,15 +7,15 @@ import dr.xml.*;
  * statistic.
  *
  *
- * @version $Id: NegateStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
+ * @version $Id: NegativeStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
 public class NotStatistic extends Statistic.Abstract {
 
-    public static String NOT_STATISTIC = "not";
+    public static String NOT_STATISTIC = "notStatistic";
 
-    private int dimension = 0;
     private Statistic statistic = null;
 
     public NotStatistic(String name, Statistic statistic) {
@@ -23,16 +23,19 @@ public class NotStatistic extends Statistic.Abstract {
         this.statistic = statistic;
     }
 
-    public int getDimension() { return dimension; }
+    public int getDimension() {
+        return statistic.getDimension();
+    }
 
     /** @return mean of contained statistics */
     public double getStatisticValue(int dim) {
 
-        return 1.0-statistic.getStatisticValue(dim);
+        return 1.0 - statistic.getStatisticValue(dim);
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public String[] getParserNames() { return new String[] { getParserName(), "not" }; }
         public String getParserName() { return NotStatistic.NOT_STATISTIC; }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -54,7 +57,7 @@ public class NotStatistic extends Statistic.Abstract {
         //************************************************************************
 
         public String getParserDescription() {
-            return "This element returns a statistic that is the element-wise negation of the child statistic.";
+            return "This element returns a statistic that is the element-wise inverse of the child statistic.";
         }
 
         public Class getReturnType() { return NotStatistic.class; }

@@ -1,5 +1,5 @@
 /*
- * ReciprocalStatistic.java
+ * NegativeStatistic.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -28,21 +28,21 @@ package dr.inference.model;
 import dr.xml.*;
 
 /**
- * @version $Id: ReciprocalStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
+ * @version $Id: NegativeStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class ReciprocalStatistic extends Statistic.Abstract {
+public class NegativeStatistic extends Statistic.Abstract {
 	
-	public static String RECIPROCAL_STATISTIC = "reciprocalStatistic";
+	public static String NEGATE_STATISTIC = "negativeStatistic";
     
     private Statistic statistic = null;
 
-	public ReciprocalStatistic(String name, Statistic statistic) {
+	public NegativeStatistic(String name, Statistic statistic) {
 		super(name);
         this.statistic = statistic;
-    }
+	}
 		
 	public int getDimension() {
         return statistic.getDimension();
@@ -51,26 +51,26 @@ public class ReciprocalStatistic extends Statistic.Abstract {
 	/** @return mean of contained statistics */
 	public double getStatisticValue(int dim) {	
         
-        return 1.0/statistic.getStatisticValue(dim);
+        return -statistic.getStatisticValue(dim);
 	}
 		
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 		
-        public String[] getParserNames() { return new String[] { getParserName(), "reciprocal" }; }
-		public String getParserName() { return RECIPROCAL_STATISTIC; }
+        public String[] getParserNames() { return new String[] { getParserName(), "negative", "negate" }; }
+		public String getParserName() { return NEGATE_STATISTIC; }
 		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			ReciprocalStatistic recipStatistic = null;
+			NegativeStatistic negativeStatistic = null;
 			
             Object child = xo.getChild(0);
             if (child instanceof Statistic) {
-                recipStatistic = new ReciprocalStatistic(RECIPROCAL_STATISTIC, (Statistic)child);
+                negativeStatistic = new NegativeStatistic(NEGATE_STATISTIC, (Statistic)child);
             } else {
                 throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
             }
-				
-			return recipStatistic;
+
+			return negativeStatistic;
 		}
 		
 		//************************************************************************
@@ -78,10 +78,10 @@ public class ReciprocalStatistic extends Statistic.Abstract {
 		//************************************************************************
 		
 		public String getParserDescription() {
-			return "This element returns a statistic that is the element-wise reciprocal of the child statistic.";
+			return "This element returns a statistic that is the element-wise negation of the child statistic.";
 		}
 		
-		public Class getReturnType() { return ReciprocalStatistic.class; }
+		public Class getReturnType() { return NegativeStatistic.class; }
 		
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 		

@@ -34,6 +34,7 @@ import java.util.ArrayList;
  * @version $Id: SumStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
 public class SumStatistic extends Statistic.Abstract {
 
@@ -80,12 +81,16 @@ public class SumStatistic extends Statistic.Abstract {
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public String[] getParserNames() { return new String[] { getParserName(), "sum" }; }
         public String getParserName() { return SUM_STATISTIC; }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+            boolean elementwise = false;
+            if (xo.hasAttribute("elementwise")) {
+                elementwise = xo.getBooleanAttribute("elementwise");
+            }
 
-            boolean elementwise = xo.getBooleanAttribute("elementwise");
             SumStatistic sumStatistic = new SumStatistic(SUM_STATISTIC, elementwise);
 
             for (int i =0; i < xo.getChildCount(); i++) {
@@ -94,7 +99,7 @@ public class SumStatistic extends Statistic.Abstract {
                     try {
                         sumStatistic.addStatistic((Statistic)child);
                     } catch (IllegalArgumentException iae) {
-                        throw new XMLParseException("Statistic addeed to " + getParserName() + " element is not of the same dimension");
+                        throw new XMLParseException("Statistic added to " + getParserName() + " element is not of the same dimension");
                     }
                 } else {
                     throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
@@ -117,7 +122,7 @@ public class SumStatistic extends Statistic.Abstract {
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                AttributeRule.newBooleanRule("elementwise", false),
+                AttributeRule.newBooleanRule("elementwise", true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
         };
     };

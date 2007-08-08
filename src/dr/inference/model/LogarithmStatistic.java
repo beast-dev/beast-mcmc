@@ -1,5 +1,5 @@
 /*
- * NegateStatistic.java
+ * LogarithmStatistic.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -28,62 +28,81 @@ package dr.inference.model;
 import dr.xml.*;
 
 /**
- * @version $Id: NegateStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
+ * @version $Id: ExponentialStatistic.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
-public class NegateStatistic extends Statistic.Abstract {
-	
-	public static String NEGATE_STATISTIC = "negate";
-    
-    private int dimension = 0;
-    private Statistic statistic = null;
+public class LogarithmStatistic extends Statistic.Abstract {
 
-	public NegateStatistic(String name, Statistic statistic) {
+	public static String LOGARITHM_STATISTIC = "logarithmStatistic";
+    public static String BASE = "base";
+ 
+    private final Statistic statistic;
+    private final double base;
+
+    public LogarithmStatistic(String name, Statistic statistic, double base) {
 		super(name);
         this.statistic = statistic;
-	}
-		
-	public int getDimension() { return dimension; }
+        this.base = base;
+    }
+
+	public int getDimension() {
+        return statistic.getDimension();
+    }
 
 	/** @return mean of contained statistics */
-	public double getStatisticValue(int dim) {	
-        
-        return -statistic.getStatisticValue(dim);
-	}
+	public double getStatisticValue(int dim) {
+        if (base <= 1.0) {
+            return Math.log(statistic.getStatisticValue(dim));
+        } else {
+            return Math.log(statistic.getStatisticValue(dim)) / Math.log(base);
+        }
+    }
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return NEGATE_STATISTIC; }
-		
+
+        public String[] getParserNames() { return new String[] { getParserName(), "log" }; }
+		public String getParserName() { return LOGARITHM_STATISTIC; }
+
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			NegateStatistic negateStatistic;
-			
+
+			LogarithmStatistic logStatistic;
+
+            double base = 0.0; // base 0.0 means natural logorithm
+            if (xo.hasAttribute(BASE)) {
+                base = xo.getDoubleAttribute(BASE);
+            }
+
+            if (base <= 1.0) {
+                throw new XMLParseException("Error parsing " + getParserName() + " element: base attribute should be > 1");
+            }
+
             Object child = xo.getChild(0);
             if (child instanceof Statistic) {
-                negateStatistic = new NegateStatistic(NEGATE_STATISTIC, (Statistic)child);
+                logStatistic = new LogarithmStatistic(LOGARITHM_STATISTIC, (Statistic)child, base);
             } else {
                 throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
             }
 
-			return negateStatistic;
+			return logStatistic;
 		}
-		
+
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
-		
+
 		public String getParserDescription() {
-			return "This element returns a statistic that is the element-wise negation of the child statistic.";
+			return "This element returns a statistic that is the element-wise natural logarithm of the child statistic.";
 		}
-		
-		public Class getReturnType() { return NegateStatistic.class; }
-		
+
+		public Class getReturnType() { return ExponentialStatistic.class; }
+
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
+
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(Statistic.class, 1, 1 )
-		};		
+                AttributeRule.newDoubleRule(BASE, true, "An optional base for the logoritm (default is the natural logorithm, base e)"),
+                new ElementRule(Statistic.class, 1, 1 )
+		};
 	};
 }

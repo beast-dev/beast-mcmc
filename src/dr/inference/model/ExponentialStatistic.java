@@ -1,5 +1,5 @@
 /*
- * ExponentiationStatistic.java
+ * ExponentialStatistic.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -28,23 +28,25 @@ package dr.inference.model;
 import dr.xml.*;
 
 /**
- * @version $Id: ExponentiationStatistic.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
+ * @version $Id: ExponentialStatistic.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
-public class ExponentiationStatistic extends Statistic.Abstract {
+public class ExponentialStatistic extends Statistic.Abstract {
 	
-	public static String EXP_STATISTIC = "exp";
+	public static String EXPONENTIAL_STATISTIC = "exponentialStatistic";
     
-    private int dimension = 0;
     private Statistic statistic = null;
 
-	public ExponentiationStatistic(String name, Statistic statistic) {
+	public ExponentialStatistic(String name, Statistic statistic) {
 		super(name);
         this.statistic = statistic;
 	}
 
-	public int getDimension() { return dimension; }
+	public int getDimension() {
+        return statistic.getDimension(); 
+    }
 
 	/** @return mean of contained statistics */
 	public double getStatisticValue(int dim) {	
@@ -54,15 +56,16 @@ public class ExponentiationStatistic extends Statistic.Abstract {
 		
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 		
-		public String getParserName() { return EXP_STATISTIC; }
+        public String[] getParserNames() { return new String[] { getParserName(), "exp" }; }
+		public String getParserName() { return EXPONENTIAL_STATISTIC; }
 		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			ExponentiationStatistic expStatistic = null;
+			ExponentialStatistic expStatistic = null;
 			
             Object child = xo.getChild(0);
             if (child instanceof Statistic) {
-                expStatistic = new ExponentiationStatistic(EXP_STATISTIC, (Statistic)child);
+                expStatistic = new ExponentialStatistic(EXPONENTIAL_STATISTIC, (Statistic)child);
             } else {
                 throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
             }
@@ -78,7 +81,7 @@ public class ExponentiationStatistic extends Statistic.Abstract {
 			return "This element returns a statistic that is the element-wise exponentiation of the child statistic.";
 		}
 		
-		public Class getReturnType() { return ExponentiationStatistic.class; }
+		public Class getReturnType() { return ExponentialStatistic.class; }
 		
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 		

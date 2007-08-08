@@ -1,7 +1,7 @@
 /*
  * CompoundParameter.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -39,7 +39,7 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     public static final String COMPOUND_PARAMETER = "compoundParameter";
 
     public CompoundParameter(String name, Parameter[] parameters) {
-//		this.name = name;
+
         this.parameters = parameters;
         dimension = 0;
         for (Parameter parameter : parameters) {
@@ -50,7 +50,6 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     }
 
     public CompoundParameter(String name) {
-//		this.name = name;
         dimension = 0;
     }
 
@@ -60,9 +59,7 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
             parameters = new Parameter[]{param};
         } else {
             Parameter[] newParams = new Parameter[parameters.length + 1];
-            for (int i = 0; i < parameters.length; i++) {
-                newParams[i] = parameters[i];
-            }
+            System.arraycopy(parameters, 0, newParams, 0, parameters.length);
             newParams[parameters.length] = param;
             parameters = newParams;
         }

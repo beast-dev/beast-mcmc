@@ -1,7 +1,7 @@
 /*
  * CoalescentSimulator.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,13 +27,12 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.tree.*;
 import dr.evolution.util.*;
-import dr.xml.*;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.math.UnivariateFunction;
+import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 /**
  * Simulates a set of coalescent intervals given a demographic model.
@@ -59,9 +58,11 @@ public class CoalescentSimulator {
 
     /**
      * Simulates a coalescent tree from a set of subtrees.
-     * @param subtrees an array of tree to be used as subtrees
-     * @param model the demographic model to use
-     * @param rootHeight an optional root height with which to scale the whole tree
+     *
+     * @param subtrees         an array of tree to be used as subtrees
+     * @param model            the demographic model to use
+     * @param rootHeight       an optional root height with which to scale the whole tree
+     * @param preserveSubtrees true of subtrees should be preserved
      * @return a simulated coalescent tree
      */
     public SimpleTree simulateTree(Tree[] subtrees, DemographicModel model, double rootHeight, boolean preserveSubtrees) {
@@ -96,7 +97,7 @@ public class CoalescentSimulator {
         for (int i = 0; i < roots.length; i++) {
             roots[i] = new SimpleNode(subtrees[i], subtrees[i].getRoot());
         }
-        
+
         // if just one taxonList then finished
         if (roots.length == 1) {
             tree = new SimpleTree(roots[0]);
@@ -105,10 +106,10 @@ public class CoalescentSimulator {
         }
 
         if (rootHeight > 0.0) {
-            if( preserveSubtrees ) {
-              limitNodes(tree, rootHeight);
+            if (preserveSubtrees) {
+                limitNodes(tree, rootHeight);
             } else {
-              attemptToScaleTree(tree, rootHeight);
+                attemptToScaleTree(tree, rootHeight);
             }
         }
 
@@ -118,7 +119,8 @@ public class CoalescentSimulator {
 
     /**
      * Simulates a coalescent tree, given a taxon list.
-     * @param taxa the set of taxa to simulate a coalescent tree between
+     *
+     * @param taxa  the set of taxa to simulate a coalescent tree between
      * @param model the demographic model to use
      * @return a simulated coalescent tree
      */
@@ -129,13 +131,14 @@ public class CoalescentSimulator {
 
     /**
      * Clip nodes height above limit.
+     *
      * @param tree  to clip
      * @param limit height limit
      */
     private static void limitNodes(MutableTree tree, double limit) {
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             NodeRef n = tree.getInternalNode(i);
-            if( tree.getNodeHeight(n) > limit ) {
+            if (tree.getNodeHeight(n) > limit) {
                 tree.setNodeHeight(n, limit);
             }
         }
@@ -161,7 +164,7 @@ public class CoalescentSimulator {
             this.taxons = taxons;
             this.isMonophyletic = isMono;
 
-            if( p != null ) {
+            if (p != null) {
                 final UnivariateFunction univariateFunction = p.getProbabilityDensityFunction();
                 lower = univariateFunction.getLowerBound();
                 upper = univariateFunction.getUpperBound();
@@ -170,6 +173,7 @@ public class CoalescentSimulator {
                 upper = Double.POSITIVE_INFINITY;
             }
         }
+
         TaxaConstraint(TaxonList taxons, double low, double high, boolean isMono) {
             this.taxons = taxons;
             this.isMonophyletic = isMono;
@@ -184,9 +188,9 @@ public class CoalescentSimulator {
 
     static private int sizeOfIntersection(TaxonList tl1, TaxonList tl2) {
         int nIn = 0;
-        for(int j = 0; j < tl1.getTaxonCount(); ++j) {
-            if( tl2.getTaxonIndex(tl1.getTaxon(j)) >= 0 ) {
-                ++ nIn;
+        for (int j = 0; j < tl1.getTaxonCount(); ++j) {
+            if (tl2.getTaxonIndex(tl1.getTaxon(j)) >= 0) {
+                ++nIn;
             }
         }
         return nIn;
@@ -194,20 +198,22 @@ public class CoalescentSimulator {
 
 
     static private boolean contained(TaxonList taxons, TaxonList taxons1) {
-        return sizeOfIntersection(taxons,  taxons1) == taxons.getTaxonCount();
+        return sizeOfIntersection(taxons, taxons1) == taxons.getTaxonCount();
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return COALESCENT_TREE; }
+        public String getParserName() {
+            return COALESCENT_TREE;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             CoalescentSimulator simulator = new CoalescentSimulator();
 
-            DemographicModel demoModel = (DemographicModel)xo.getChild(DemographicModel.class);
+            DemographicModel demoModel = (DemographicModel) xo.getChild(DemographicModel.class);
             List<TaxonList> taxonLists = new ArrayList<TaxonList>();
-            List<Tree> subtrees = new ArrayList<Tree>() ;
+            List<Tree> subtrees = new ArrayList<Tree>();
 
             double rootHeight = -1;
             if (xo.hasAttribute(ROOT_HEIGHT)) {
@@ -223,16 +229,16 @@ public class CoalescentSimulator {
 
                 // AER - swapped the order of these round because Trees are TaxonLists...
                 if (child instanceof Tree) {
-                    subtrees.add((Tree)child);
+                    subtrees.add((Tree) child);
                 } else if (child instanceof TaxonList) {
-                    taxonLists.add((TaxonList)child);
-                } else if( xo.getChildName(i).equals(CONSTRAINED_TAXA) ) {
+                    taxonLists.add((TaxonList) child);
+                } else if (xo.getChildName(i).equals(CONSTRAINED_TAXA)) {
                     rootHeight = -1; // ignore it? should we errror?
 
                     XMLObject constrainedTaxa = (XMLObject) child;
 
                     // all taxa
-                    final TaxonList taxa = (TaxonList)constrainedTaxa.getChild(TaxonList.class);
+                    final TaxonList taxa = (TaxonList) constrainedTaxa.getChild(TaxonList.class);
 
                     List<TaxaConstraint> constraints = new ArrayList<TaxaConstraint>();
                     final String setsNotCompatibleMessage = "taxa sets not compatible";
@@ -241,43 +247,43 @@ public class CoalescentSimulator {
                     // taxa_1 is before taxa_2.
 
 
-                    for(int nc = 0; nc < constrainedTaxa.getChildCount(); ++nc) {
+                    for (int nc = 0; nc < constrainedTaxa.getChildCount(); ++nc) {
 
                         final Object object = constrainedTaxa.getChild(nc);
-                        if( object instanceof XMLObject ) {
-                            final XMLObject constraint = (XMLObject)object;
+                        if (object instanceof XMLObject) {
+                            final XMLObject constraint = (XMLObject) object;
 
-                            if( constraint.getName().equals(TMRCA_CONSTRAINT) ) {
-                                TaxonList taxaSubSet = (TaxonList)constraint.getChild(TaxonList.class);
+                            if (constraint.getName().equals(TMRCA_CONSTRAINT)) {
+                                TaxonList taxaSubSet = (TaxonList) constraint.getChild(TaxonList.class);
                                 ParametricDistributionModel dist =
                                         (ParametricDistributionModel) constraint.getChild(ParametricDistributionModel.class);
                                 boolean isMono = true;
-                                if( constraint.hasAttribute(IS_MONOPHYLETIC) ) {
+                                if (constraint.hasAttribute(IS_MONOPHYLETIC)) {
                                     isMono = constraint.getBooleanAttribute(IS_MONOPHYLETIC);
                                 }
                                 final TaxaConstraint taxaConstraint = new TaxaConstraint(taxaSubSet, dist, isMono);
                                 int insertPoint;
-                                for(insertPoint = 0; insertPoint < constraints.size(); ++insertPoint) {
+                                for (insertPoint = 0; insertPoint < constraints.size(); ++insertPoint) {
                                     // if new <= constraints[insertPoint] insert before insertPoint
 
                                     final TaxaConstraint iConstraint = constraints.get(insertPoint);
-                                    if( iConstraint.isMonophyletic ) {
-                                        if( !taxaConstraint.isMonophyletic ) {
+                                    if (iConstraint.isMonophyletic) {
+                                        if (!taxaConstraint.isMonophyletic) {
                                             continue;
                                         }
 
                                         final TaxonList taxonsip = iConstraint.taxons;
                                         final int nIn = sizeOfIntersection(taxonsip, taxaSubSet);
-                                        if( nIn == taxaSubSet.getTaxonCount() ) {
+                                        if (nIn == taxaSubSet.getTaxonCount()) {
                                             break;
                                         }
-                                        if( nIn > 0 && nIn != taxonsip.getTaxonCount() ) {
+                                        if (nIn > 0 && nIn != taxonsip.getTaxonCount()) {
                                             throw new XMLParseException(setsNotCompatibleMessage);
                                         }
                                     } else {
                                         // reached non mono area
-                                        if( !taxaConstraint.isMonophyletic ) {
-                                            if( iConstraint.upper >= taxaConstraint.upper ) {
+                                        if (!taxaConstraint.isMonophyletic) {
+                                            if (iConstraint.upper >= taxaConstraint.upper) {
                                                 break;
                                             }
                                         } else {
@@ -291,16 +297,16 @@ public class CoalescentSimulator {
                     }
                     final int nConstraints = constraints.size();
 
-                    if( nConstraints == 0 ) {
+                    if (nConstraints == 0) {
                         taxonLists.add(taxa);
                     } else {
-                        for(int nc = 0; nc <nConstraints; ++nc) {
-                           TaxaConstraint cnc = constraints.get(nc);
-                            if( ! cnc.isMonophyletic ) {
-                                for(int nc1 = nc-1; nc1 >= 0; --nc1) {
+                        for (int nc = 0; nc < nConstraints; ++nc) {
+                            TaxaConstraint cnc = constraints.get(nc);
+                            if (!cnc.isMonophyletic) {
+                                for (int nc1 = nc - 1; nc1 >= 0; --nc1) {
                                     TaxaConstraint cnc1 = constraints.get(nc1);
                                     int x = sizeOfIntersection(cnc.taxons, cnc1.taxons);
-                                    if( x > 0 ) {
+                                    if (x > 0) {
                                         Taxa combinedTaxa = new Taxa(cnc.taxons);
                                         combinedTaxa.unionTaxons(cnc1.taxons);
                                         cnc = new TaxaConstraint(combinedTaxa, cnc.lower, cnc.upper, cnc.isMonophyletic);
@@ -311,24 +317,24 @@ public class CoalescentSimulator {
                         }
                         // determine upper bound for each set.
                         double[] upper = new double[nConstraints];
-                        for(int nc = nConstraints - 1; nc >= 0; --nc) {
-                           final TaxaConstraint cnc = constraints.get(nc);
-                            if( cnc.realLimits() ) {
-                               upper[nc] = cnc.upper;
+                        for (int nc = nConstraints - 1; nc >= 0; --nc) {
+                            final TaxaConstraint cnc = constraints.get(nc);
+                            if (cnc.realLimits()) {
+                                upper[nc] = cnc.upper;
                             } else {
                                 upper[nc] = Double.POSITIVE_INFINITY;
                             }
                         }
 
-                        for(int nc = nConstraints - 1; nc >= 0; --nc) {
+                        for (int nc = nConstraints - 1; nc >= 0; --nc) {
                             final TaxaConstraint cnc = constraints.get(nc);
-                            if( upper[nc] < Double.POSITIVE_INFINITY ) {
-                                for(int nc1 = nc-1; nc1 >= 0; --nc1) {
+                            if (upper[nc] < Double.POSITIVE_INFINITY) {
+                                for (int nc1 = nc - 1; nc1 >= 0; --nc1) {
                                     final TaxaConstraint cnc1 = constraints.get(nc1);
-                                    if( contained(cnc1.taxons, cnc.taxons)) {
+                                    if (contained(cnc1.taxons, cnc.taxons)) {
                                         upper[nc1] = Math.min(upper[nc1], upper[nc]);
-                                        if( cnc1.realLimits() && cnc1.lower > upper[nc1] ) {
-                                           throw new XMLParseException(setsNotCompatibleMessage);
+                                        if (cnc1.realLimits() && cnc1.lower > upper[nc1]) {
+                                            throw new XMLParseException(setsNotCompatibleMessage);
                                         }
                                         break;
                                     }
@@ -337,35 +343,35 @@ public class CoalescentSimulator {
                         }
                         // collect subtrees here
                         List<Tree> st = new ArrayList<Tree>();
-                        for(int nc = 0; nc < constraints.size(); ++nc) {
+                        for (int nc = 0; nc < constraints.size(); ++nc) {
                             final TaxaConstraint nxt = constraints.get(nc);
                             // collect all previously built subtrees which are a subset of taxa set to be added
                             List<Tree> subs = new ArrayList<Tree>();
                             Taxa newTaxons = new Taxa(nxt.taxons);
-                            for(int k = 0; k < st.size(); ++k) {
+                            for (int k = 0; k < st.size(); ++k) {
                                 final Tree stk = st.get(k);
                                 int x = sizeOfIntersection(stk, nxt.taxons);
-                                if( x == st.get(k).getTaxonCount() ) {
+                                if (x == st.get(k).getTaxonCount()) {
                                     final Tree tree = st.remove(k);
-                                     --k;
+                                    --k;
                                     subs.add(tree);
                                     newTaxons.removeTaxons(tree);
                                 }
                             }
 
                             SimpleTree tree = simulator.simulateTree(newTaxons, demoModel);
-                            final double lower =  nxt.realLimits() ? nxt.lower : 0;
-                            if( upper[nc] < Double.MAX_VALUE ) {
-                               attemptToScaleTree(tree, (lower + upper[nc])/2);
+                            final double lower = nxt.realLimits() ? nxt.lower : 0;
+                            if (upper[nc] < Double.MAX_VALUE) {
+                                attemptToScaleTree(tree, (lower + upper[nc]) / 2);
                             }
-                            if( subs.size() > 0 ) {
-                                if( tree.getTaxonCount() > 0 ) subs.add(tree);
+                            if (subs.size() > 0) {
+                                if (tree.getTaxonCount() > 0) subs.add(tree);
                                 double h = -1;
-                                if( upper[nc] < Double.MAX_VALUE ) {
-                                    for( Tree t : subs ) {
+                                if (upper[nc] < Double.MAX_VALUE) {
+                                    for (Tree t : subs) {
                                         h = Math.max(h, t.getNodeHeight(t.getRoot()));
                                     }
-                                    h = (h + upper[nc])/2;
+                                    h = (h + upper[nc]) / 2;
                                 }
                                 tree = simulator.simulateTree(subs.toArray(new Tree[0]), demoModel, h, true);
                             }
@@ -375,7 +381,7 @@ public class CoalescentSimulator {
 
                         // add a taxon list for remaining taxa
                         final Taxa list = new Taxa();
-                        for(int j = 0; j < taxa.getTaxonCount(); ++j) {
+                        for (int j = 0; j < taxa.getTaxonCount(); ++j) {
                             Taxon taxonj = taxa.getTaxon(j);
                             for (Tree aSt : st) {
                                 if (aSt.getTaxonIndex(taxonj) >= 0) {
@@ -383,39 +389,39 @@ public class CoalescentSimulator {
                                     break;
                                 }
                             }
-                            if( taxonj != null ){
+                            if (taxonj != null) {
                                 list.addTaxon(taxonj);
                             }
                         }
-                        if( list.getTaxonCount() > 0 ) {
-                           taxonLists.add(list);
+                        if (list.getTaxonCount() > 0) {
+                            taxonLists.add(list);
                         }
-                        if( st.size() > 1 ) {
-                          final Tree tree1 = simulator.simulateTree(st.toArray(new Tree[]{}), demoModel, -1, false);
-                          subtrees.add(tree1);
+                        if (st.size() > 1) {
+                            final Tree tree1 = simulator.simulateTree(st.toArray(new Tree[]{}), demoModel, -1, false);
+                            subtrees.add(tree1);
                         } else {
-                           subtrees.add(st.get(0));
+                            subtrees.add(st.get(0));
                         }
                     }
                 }
             }
 
-            if ( taxonLists.size() == 0 ) {
-                if( subtrees.size() == 1 ) {
+            if (taxonLists.size() == 0) {
+                if (subtrees.size() == 1) {
                     return subtrees.get(0);
                 }
-                 throw new XMLParseException("Expected at least one taxonList or two subtrees in " + getParserName() + " element.");
+                throw new XMLParseException("Expected at least one taxonList or two subtrees in " + getParserName() + " element.");
             }
 
             try {
-                Tree[] trees = new Tree[taxonLists.size()+subtrees.size()];
+                Tree[] trees = new Tree[taxonLists.size() + subtrees.size()];
                 // simulate each taxonList separately
                 for (int i = 0; i < taxonLists.size(); i++) {
                     trees[i] = simulator.simulateTree(taxonLists.get(i), demoModel);
                 }
                 // add the preset trees
                 for (int i = 0; i < subtrees.size(); i++) {
-                    trees[i+taxonLists.size()] = subtrees.get(i);
+                    trees[i + taxonLists.size()] = subtrees.get(i);
                 }
 
                 return simulator.simulateTree(trees, demoModel, rootHeight, true);
@@ -432,11 +438,15 @@ public class CoalescentSimulator {
             return "This element returns a simulated tree under the given demographic model.";
         }
 
-        public Class getReturnType() { return Object.class; }
+        public Class getReturnType() {
+            return Object.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(RESCALE_HEIGHT, true, "Attempt to rescale the tree to the given root height"),
                 new XORRule(
                         new ElementRule(ConstantPopulationModel.class),

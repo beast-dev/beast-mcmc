@@ -1,7 +1,7 @@
 /*
  * MCMCMC.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,13 +25,19 @@
 
 package dr.inference.mcmcmc;
 
-import dr.inference.loggers.*;
+import dr.inference.loggers.LogFormatter;
+import dr.inference.loggers.Logger;
+import dr.inference.loggers.MCLogger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
-import dr.inference.mcmc.*;
+import dr.inference.mcmc.MCMC;
+import dr.inference.mcmc.MCMCCriterion;
+import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.inference.operators.*;
+import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorSchedule;
 import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 import dr.util.NumberFormatter;
@@ -43,9 +49,7 @@ import java.util.List;
  * An MCMC analysis that estimates parameters of a probabilistic model.
  *
  * @author Andrew Rambaut
- *
  * @version $Id: MCMCMC.java,v 1.12 2005/01/10 10:56:59 rambaut Exp $
- *
  */
 public class MCMCMC implements Runnable {
 
@@ -69,7 +73,7 @@ public class MCMCMC implements Runnable {
             Logger[] loggers = mcmcs[i].getLoggers();
             mcLoggers[i] = new MCLogger[loggers.length];
             for (int j = 0; j < loggers.length; j++) {
-                mcLoggers[i][j] = (MCLogger)loggers[j];
+                mcLoggers[i][j] = (MCLogger) loggers[j];
             }
             if (mcLoggers[i] == null) {
                 throw new RuntimeException("There are no loggers in the MCMC chains.");
@@ -88,7 +92,7 @@ public class MCMCMC implements Runnable {
         chains[0] = mcmcs[0].getMarkovChain();
         for (int i = 1; i < chains.length; i++) {
             chains[i] = mcmcs[i].getMarkovChain();
-            MCMCCriterion acceptor = ((MCMCCriterion)chains[i].getAcceptor());
+            MCMCCriterion acceptor = ((MCMCCriterion) chains[i].getAcceptor());
             acceptor.setTemperature(mcmcmcOptions.getChainTemperatures()[i]);
         }
 
@@ -143,11 +147,12 @@ public class MCMCMC implements Runnable {
         while (chains[coldChain].getCurrentLength() < getChainLength()) {
 
             // wait for all the threads to complete their alloted chain length
-            boolean allDone = true;
+            boolean allDone;
             do {
                 try {
                     Thread.sleep(10);
-                } catch (InterruptedException e) { }
+                } catch (InterruptedException e) {
+                }
 
                 allDone = true;
                 for (int i = 0; i < chains.length; i++) {
@@ -205,7 +210,7 @@ public class MCMCMC implements Runnable {
         }
 
         // wait for all threads collected to die
-        for (int i =0; i < chains.length; i++) {
+        for (int i = 0; i < chains.length; i++) {
             // wait doggedly for thread to die
             while (threads[i].isAlive()) {
                 try {
@@ -229,10 +234,10 @@ public class MCMCMC implements Runnable {
         }
 
         double score1 = chains[index1].getCurrentScore();
-        MCMCCriterion acceptor1 = ((MCMCCriterion)chains[index1].getAcceptor());
+        MCMCCriterion acceptor1 = ((MCMCCriterion) chains[index1].getAcceptor());
         double temperature1 = acceptor1.getTemperature();
         double score2 = chains[index2].getCurrentScore();
-        MCMCCriterion acceptor2 = ((MCMCCriterion)chains[index2].getAcceptor());
+        MCMCCriterion acceptor2 = ((MCMCCriterion) chains[index2].getAcceptor());
         double temperature2 = acceptor2.getTemperature();
 
         double logRatio = ((score2 - score1) * temperature1) + ((score1 - score2) * temperature2);
@@ -262,9 +267,9 @@ public class MCMCMC implements Runnable {
                 operator2.setDumDeviation(tmp2);
 
                 if (operator1 instanceof CoercableMCMCOperator) {
-                    tmp2 = ((CoercableMCMCOperator)operator1).getCoercableParameter();
-                    ((CoercableMCMCOperator)operator1).setCoercableParameter(((CoercableMCMCOperator)operator2).getCoercableParameter());
-                    ((CoercableMCMCOperator)operator2).setCoercableParameter(tmp2);
+                    tmp2 = ((CoercableMCMCOperator) operator1).getCoercableParameter();
+                    ((CoercableMCMCOperator) operator1).setCoercableParameter(((CoercableMCMCOperator) operator2).getCoercableParameter());
+                    ((CoercableMCMCOperator) operator2).setCoercableParameter(tmp2);
                 }
             }
 
@@ -280,20 +285,22 @@ public class MCMCMC implements Runnable {
 
     private void resetChains() {
 
-        for (int i = 0; i < chains.length; i++) {
-            chains[i].reset();
+        for (MarkovChain chain : chains) {
+            chain.reset();
         }
     }
 
-    /** cleans up when the chain finishes (possibly early). */
+    /**
+     * cleans up when the chain finishes (possibly early).
+     */
     private void finish() {
 
         NumberFormatter formatter = new NumberFormatter(8);
 
         MCLogger[] loggers = mcLoggers[coldChain];
-        for (int i =0; i < loggers.length; i++) {
-            loggers[i].log(currentState);
-            loggers[i].stopLogging();
+        for (MCLogger logger : loggers) {
+            logger.log(currentState);
+            logger.stopLogging();
         }
 
         System.out.println();
@@ -307,20 +314,20 @@ public class MCMCMC implements Runnable {
                             formatter.formatToFieldWidth("", 8) +
                             formatter.formatToFieldWidth("Pr(accept)", 11) +
                             " Performance suggestion");
-            for (int i =0; i < schedules[coldChain].getOperatorCount(); i++) {
+            for (int i = 0; i < schedules[coldChain].getOperatorCount(); i++) {
 
                 MCMCOperator op = schedules[coldChain].getOperator(i);
                 double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
                 String message = "good";
                 if (acceptanceProb < op.getMinimumGoodAcceptanceLevel()) {
-                    if (acceptanceProb < (op.getMinimumAcceptanceLevel()/10.0)) {
+                    if (acceptanceProb < (op.getMinimumAcceptanceLevel() / 10.0)) {
                         message = "very low";
                     } else if (acceptanceProb < op.getMinimumAcceptanceLevel()) {
                         message = "low";
                     } else message = "slightly low";
 
                 } else if (acceptanceProb > op.getMaximumGoodAcceptanceLevel()) {
-                    double reallyHigh = 1.0 - ((1.0-op.getMaximumAcceptanceLevel())/10.0);
+                    double reallyHigh = 1.0 - ((1.0 - op.getMaximumAcceptanceLevel()) / 10.0);
                     if (acceptanceProb > reallyHigh) {
                         message = "very high";
                     } else if (acceptanceProb > op.getMaximumAcceptanceLevel()) {
@@ -332,7 +339,7 @@ public class MCMCMC implements Runnable {
 
                 String pString = "        ";
                 if (op instanceof CoercableMCMCOperator) {
-                    pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator)op).getRawParameter(), 3), 8);
+                    pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator) op).getRawParameter(), 3), 8);
                 }
 
                 System.out.println(
@@ -352,7 +359,7 @@ public class MCMCMC implements Runnable {
         public BurninListener(int stateCount) {
             this.stateCount = stateCount;
             step = 0;
-            stepSize = (double)stateCount / 60.0;
+            stepSize = (double) stateCount / 60.0;
         }
 
         /**
@@ -365,21 +372,26 @@ public class MCMCMC implements Runnable {
                 System.out.println("Pre-burnin (" + stateCount + " states)");
                 System.out.println("0              25             50             75            100");
                 System.out.println("|--------------|--------------|--------------|--------------|");
-                System.out.print(  "*");
+                System.out.print("*");
                 step = 1;
             }
 
-            if (state >= (int)Math.round(step*stepSize) && step <= 60) {
+            if (state >= (int) Math.round(step * stepSize) && step <= 60) {
                 System.out.print("*");
                 System.out.flush();
                 step += 1;
             }
         }
 
-        /** Called when a new new best posterior state is found. */
-        public synchronized void bestState(int state, Model bestModel) {}
+        /**
+         * Called when a new new best posterior state is found.
+         */
+        public synchronized void bestState(int state, Model bestModel) {
+        }
 
-        /** cleans up when the chain finishes (possibly early). */
+        /**
+         * cleans up when the chain finishes (possibly early).
+         */
         public synchronized void finished(int chainLength) {
             System.out.println("*");
             System.out.println();
@@ -406,7 +418,7 @@ public class MCMCMC implements Runnable {
                 NumberFormatter formatter = new NumberFormatter(8);
                 formatter.setPadding(false);
 
-                System.out.print("State " + currentState + ": ");
+                //System.out.print("State " + currentState + ": ");
                 for (int i = 0; i < chains.length; i++) {
                     String score;
                     if (i == coldChain) {
@@ -421,53 +433,81 @@ public class MCMCMC implements Runnable {
             }
 
             MCLogger[] loggers = mcLoggers[coldChain];
-            for (int i =0; i < loggers.length; i++) {
-                loggers[i].log(state);
+            for (MCLogger logger : loggers) {
+                logger.log(state);
             }
 
         }
 
-        /** Called when a new new best posterior state is found. */
+        /**
+         * Called when a new new best posterior state is found.
+         */
         public synchronized void bestState(int state, Model bestModel) {
             currentState = state;
         }
 
-        /** cleans up when the chain finishes (possibly early). */
+        /**
+         * cleans up when the chain finishes (possibly early).
+         */
         public synchronized void finished(int chainLength) {
         }
 
     };
 
-	public int getColdChain() {
-		return coldChain;
-	}
+    public int getColdChain() {
+        return coldChain;
+    }
 
-	/** @return the prior of this MCMC analysis. */
-    public Prior getPrior() { return chains[coldChain].getPrior(); }
+    /**
+     * @return the prior of this MCMC analysis.
+     */
+    public Prior getPrior() {
+        return chains[coldChain].getPrior();
+    }
 
-    /** @return the likelihood function. */
-    public Likelihood getLikelihood() { return chains[coldChain].getLikelihood(); }
+    /**
+     * @return the likelihood function.
+     */
+    public Likelihood getLikelihood() {
+        return chains[coldChain].getLikelihood();
+    }
 
-    /** @return the timer. */
-    public dr.util.Timer getTimer() { return timer; }
+    /**
+     * @return the timer.
+     */
+    public dr.util.Timer getTimer() {
+        return timer;
+    }
 
-    /** @return the length of this analysis.*/
-    public final int getChainLength() { return mcmcOptions.getChainLength(); }
+    /**
+     * @return the length of this analysis.
+     */
+    public final int getChainLength() {
+        return mcmcOptions.getChainLength();
+    }
 
     // TRANSIENT PUBLIC METHODS *****************************************
 
-    /** @return the current state of the MCMC analysis. */
-    public final int getCurrentState() { return currentState; }
-
-    /** @return the progress (0 to 1) of the MCMC analysis. */
-    public final double getProgress() {
-        return (double)currentState / (double)mcmcOptions.getChainLength();
+    /**
+     * @return the current state of the MCMC analysis.
+     */
+    public final int getCurrentState() {
+        return currentState;
     }
 
-    /** Requests that the MCMC chain stop prematurely. */
+    /**
+     * @return the progress (0 to 1) of the MCMC analysis.
+     */
+    public final double getProgress() {
+        return (double) currentState / (double) mcmcOptions.getChainLength();
+    }
+
+    /**
+     * Requests that the MCMC chain stop prematurely.
+     */
     public void pleaseStop() {
-        for (int i = 0; i < chains.length; i++) {
-            chains[i].pleaseStop();
+        for (MarkovChain chain : chains) {
+            chain.pleaseStop();
         }
     }
 
@@ -480,7 +520,7 @@ public class MCMCMC implements Runnable {
             MCMCOperator op = schedules[coldChain].getOperator(i);
 
             if (op instanceof CoercableMCMCOperator) {
-                if (((CoercableMCMCOperator)op).getMode() == CoercableMCMCOperator.COERCION_ON) return true;
+                if (((CoercableMCMCOperator) op).getMode() == CoercableMCMCOperator.COERCION_ON) return true;
             }
         }
         return false;

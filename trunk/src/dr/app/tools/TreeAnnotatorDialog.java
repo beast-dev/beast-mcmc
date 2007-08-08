@@ -46,7 +46,7 @@ public class TreeAnnotatorDialog {
     private WholeNumberField burninText = new WholeNumberField(0, Integer.MAX_VALUE);
 	private RealNumberField limitText = new RealNumberField(0.0, 1.0);
 
-    private JComboBox summaryTreeCombo = new JComboBox(new String[] { "Maximum clade credibility", "User target tree" });
+    private JComboBox summaryTreeCombo = new JComboBox(new String[] { "Maximum clade credibility tree", "Maximum sum of clade credibilities", "User target tree" });
     private JComboBox nodeHeightsCombo = new JComboBox(new String[] { "Keep target heights", "Mean heights", "Median heights" });
 
 	private File targetFile = null;

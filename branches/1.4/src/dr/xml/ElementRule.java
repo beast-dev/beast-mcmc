@@ -228,7 +228,11 @@ public class ElementRule implements XMLSyntaxRule {
 		return (matchCount >= min && matchCount <= max);
 	}
 
-	/**
+    public boolean containsAttribute(String name) {
+        return false;
+    }
+
+    /**
 	 * @return a string describing the rule.
 	 */
 	public String ruleString() {

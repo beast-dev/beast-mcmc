@@ -64,7 +64,16 @@ public class XORRule implements XMLSyntaxRule {
 		return optional || satisfiedCount == 1;
 	}
 
-	/**
+    public boolean containsAttribute(String name) {
+        for (int i = 0; i < rules.length; i++) {
+            if( rules[i].containsAttribute((name)) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
 	 * Describes the rule.
 	 */
 	public String ruleString() {

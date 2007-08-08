@@ -26,10 +26,12 @@
 package dr.xml;
 
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.List;
 
 /**
  * This class wraps a DOM Element for the purposes of parsing.
@@ -134,8 +136,15 @@ public class XMLObject {
 		Object socket = getChild(socketName);
 		return (socket != null) && (socket instanceof XMLObject);
 	}
-	
-	/** @return the ith child as a double. */
+
+    /**
+     * @return all attributes
+     */
+    public NamedNodeMap getAttributes() {
+        return element.getAttributes();
+    }
+
+    /** @return the ith child as a double. */
 	public boolean getBooleanChild(int i) throws XMLParseException { return getBoolean(getChild(i)); }
 
 	/** @return the ith child as a double. */
@@ -155,8 +164,8 @@ public class XMLObject {
 
 	/** @return the named attribute */
 	public Object getAttribute(String name) throws XMLParseException { return getAndTest(name); }
-	
-	/** @return the named attribute as a boolean. */
+
+    /** @return the named attribute as a boolean. */
 	public boolean getBooleanAttribute(String name) throws XMLParseException { return getBoolean(getAndTest(name)); }	
 		
 	/** @return the named attribute as a double. */
@@ -182,7 +191,7 @@ public class XMLObject {
 	 * that the given string represents. 
 	 * @return true if the given string represents a whitespaced-delimited array of doubles.
 	 */
-	public static boolean isDoubleArray(String s, ArrayList valueList) {
+	public static boolean isDoubleArray(String s, List valueList) {
 		try {
 			StringTokenizer st = new StringTokenizer(s);
 			while (st.hasMoreTokens()) {
@@ -200,7 +209,7 @@ public class XMLObject {
 	 * that the given string represents. 
 	 * @return true if the given string represents a whitespaced-delimited array of integers.
 	 */
-	public static boolean isIntegerArray(String s, ArrayList valueList) {
+	public static boolean isIntegerArray(String s, List valueList) {
 		try {
 			StringTokenizer st = new StringTokenizer(s);
 			while (st.hasMoreTokens()) {
@@ -323,7 +332,7 @@ public class XMLObject {
 		if (obj instanceof Number) return new double[] {((Number)obj).doubleValue()};
 		if (obj instanceof double[]) return (double[])obj;
 		if (obj instanceof String) {
-			ArrayList valueList = new ArrayList();
+			List valueList = new ArrayList();
 			if (isDoubleArray((String)obj, valueList)) {
 				double[] values = new double[valueList.size()];
 				for (int i =0; i < values.length; i++) {
@@ -343,7 +352,7 @@ public class XMLObject {
 		if (obj instanceof Number) return new int[] {((Number)obj).intValue()};
 		if (obj instanceof int[]) return (int[])obj;
 		if (obj instanceof String) {
-			ArrayList valueList = new ArrayList();
+			List valueList = new ArrayList();
 			if (isIntegerArray((String)obj, valueList)) {
 				int[] values = new int[valueList.size()];
 				for (int i =0; i < values.length; i++) {
@@ -379,7 +388,7 @@ public class XMLObject {
 		
 		if (obj instanceof String[]) return (String[])obj;
 		if (obj instanceof String) {
-			ArrayList stringList = new ArrayList();
+			List stringList = new ArrayList();
 			StringTokenizer st = new StringTokenizer((String)obj);
 			while (st.hasMoreTokens()) {
 				stringList.add(st.nextToken());

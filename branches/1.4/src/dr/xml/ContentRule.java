@@ -44,8 +44,12 @@ public class ContentRule implements XMLSyntaxRule {
 	 * @return true
 	 */
 	public boolean isSatisfied(XMLObject xo) { return true; }
-	
-	/**
+
+    public boolean containsAttribute(String name) {
+        return false;
+    }
+
+    /**
 	 * @return a string describing the rule.
 	 */
 	public String ruleString() { return htmlDescription; }

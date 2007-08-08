@@ -117,8 +117,12 @@ public class AttributeRule implements XMLSyntaxRule {
 		}
 		return false;
 	}
-	
-	/**
+
+    public boolean containsAttribute(String name) {
+        return name.equals(getName());
+    }
+
+    /**
 	 * @return a string describing the rule.
 	 */
 	public String ruleString() {

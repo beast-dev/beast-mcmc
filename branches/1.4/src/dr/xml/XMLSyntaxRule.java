@@ -34,11 +34,19 @@ public interface XMLSyntaxRule {
 	 */
 	public boolean isSatisfied(XMLObject object);
 
-	/**
+    /**
+     * Check if rule contains attribute of that name
+     *
+     * @param name attribute name
+     * @return   true if contains attribute
+     */
+    public boolean containsAttribute(String name);
+
+    /**
 	 * Describes the rule in general.
 	 */
 	public String ruleString();
-	
+
 	/**
 	 * Describes the rule in html.
 	 */
@@ -49,7 +57,7 @@ public interface XMLSyntaxRule {
 	 * In particular if object does not satisfy the rule then how.
 	 */
 	public String ruleString(XMLObject object);
-	
+
 	/**
 	 * @return the classes potentially required by this rule.
 	 */

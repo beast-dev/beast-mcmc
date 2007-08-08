@@ -32,11 +32,12 @@ import java.util.Vector;
 /**
  * @version $Id: ProductStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  *
+ * @author Andrew Rambaut
  * @author Alexei Drummond
  */
 public class RatioStatistic extends Statistic.Abstract {
 
-	public static String RATIO_STATISTIC = "ratio";
+	public static String RATIO_STATISTIC = "ratioStatistic";
 
 	public RatioStatistic(String name, Statistic numerator, Statistic denominator) {
 		super(name);
@@ -73,6 +74,7 @@ public class RatioStatistic extends Statistic.Abstract {
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public String[] getParserNames() { return new String[] { getParserName(), "ratio" }; }
 		public String getParserName() { return RATIO_STATISTIC; }
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {

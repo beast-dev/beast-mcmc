@@ -33,7 +33,6 @@ import dr.math.UnivariateFunction;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Arrays;
 
 
 /**
@@ -50,6 +49,7 @@ public class CoalescentSimulator {
     public static final String ROOT_HEIGHT = "rootHeight";
     public static final String CONSTRAINED_TAXA = "constrainedTaxa";
     public static final String TMRCA_CONSTRAINT = "tmrca";
+    public static final String IS_MONOPHYLETIC = "monophyletic";
 
     /**
      * Simulates a coalescent tree from a set of subtrees.
@@ -154,28 +154,31 @@ public class CoalescentSimulator {
     static class TaxaConstraint {
         final TaxonList taxons;
         final double lower;
+        final boolean isMonophyletic;
         double upper;
 
-        TaxaConstraint(TaxonList taxons, ParametricDistributionModel p) {
+        TaxaConstraint(TaxonList taxons, ParametricDistributionModel p, boolean isMono) {
             this.taxons = taxons;
-            // no constraint
-            //upper = -1;
+            this.isMonophyletic = isMono;
 
             if( p != null ) {
                 final UnivariateFunction univariateFunction = p.getProbabilityDensityFunction();
                 lower = univariateFunction.getLowerBound();
                 upper = univariateFunction.getUpperBound();
-//                if( lower == 0 && upper == Double.POSITIVE_INFINITY ) {
-//                     upper = -1;
-//                }
             } else {
                 lower = 0;
                 upper = Double.POSITIVE_INFINITY;
             }
         }
+        TaxaConstraint(TaxonList taxons, double low, double high, boolean isMono) {
+            this.taxons = taxons;
+            this.isMonophyletic = isMono;
+            upper = high;
+            lower = low;
+        }
 
         public boolean realLimits() {
-            return lower != 0 || upper !=  Double.POSITIVE_INFINITY;
+            return lower != 0 || upper != Double.POSITIVE_INFINITY;
         }
     }
 
@@ -240,26 +243,46 @@ public class CoalescentSimulator {
 
                     for(int nc = 0; nc < constrainedTaxa.getChildCount(); ++nc) {
 
-                        Object object = constrainedTaxa.getChild(nc);
+                        final Object object = constrainedTaxa.getChild(nc);
                         if( object instanceof XMLObject ) {
-                            XMLObject constraint = (XMLObject)object;
+                            final XMLObject constraint = (XMLObject)object;
 
-                            if( constraint.getName().equals(TMRCA_CONSTRAINT)) {
+                            if( constraint.getName().equals(TMRCA_CONSTRAINT) ) {
                                 TaxonList taxaSubSet = (TaxonList)constraint.getChild(TaxonList.class);
                                 ParametricDistributionModel dist =
                                         (ParametricDistributionModel) constraint.getChild(ParametricDistributionModel.class);
-
-                                final TaxaConstraint taxaConstraint = new TaxaConstraint(taxaSubSet, dist);
+                                boolean isMono = true;
+                                if( constraint.hasAttribute(IS_MONOPHYLETIC) ) {
+                                    isMono = constraint.getBooleanAttribute(IS_MONOPHYLETIC);
+                                }
+                                final TaxaConstraint taxaConstraint = new TaxaConstraint(taxaSubSet, dist, isMono);
                                 int insertPoint;
                                 for(insertPoint = 0; insertPoint < constraints.size(); ++insertPoint) {
                                     // if new <= constraints[insertPoint] insert before insertPoint
-                                    final TaxonList taxonsip = constraints.get(insertPoint).taxons;
-                                    final int nIn = sizeOfIntersection(taxonsip, taxaSubSet);
-                                    if( nIn == taxaSubSet.getTaxonCount() ) {
-                                        break;
-                                    }
-                                    if( nIn > 0 && nIn != taxonsip.getTaxonCount() ) {
-                                       throw new XMLParseException(setsNotCompatibleMessage);
+
+                                    final TaxaConstraint iConstraint = constraints.get(insertPoint);
+                                    if( iConstraint.isMonophyletic ) {
+                                        if( !taxaConstraint.isMonophyletic ) {
+                                            continue;
+                                        }
+
+                                        final TaxonList taxonsip = iConstraint.taxons;
+                                        final int nIn = sizeOfIntersection(taxonsip, taxaSubSet);
+                                        if( nIn == taxaSubSet.getTaxonCount() ) {
+                                            break;
+                                        }
+                                        if( nIn > 0 && nIn != taxonsip.getTaxonCount() ) {
+                                            throw new XMLParseException(setsNotCompatibleMessage);
+                                        }
+                                    } else {
+                                        // reached non mono area
+                                        if( !taxaConstraint.isMonophyletic ) {
+                                            if( iConstraint.upper >= taxaConstraint.upper ) {
+                                                break;
+                                            }
+                                        } else {
+                                            break;
+                                        }
                                     }
                                 }
                                 constraints.add(insertPoint, taxaConstraint);
@@ -271,9 +294,24 @@ public class CoalescentSimulator {
                     if( nConstraints == 0 ) {
                         taxonLists.add(taxa);
                     } else {
+                        for(int nc = 0; nc <nConstraints; ++nc) {
+                           TaxaConstraint cnc = constraints.get(nc);
+                            if( ! cnc.isMonophyletic ) {
+                                for(int nc1 = nc-1; nc1 >= 0; --nc1) {
+                                    TaxaConstraint cnc1 = constraints.get(nc1);
+                                    int x = sizeOfIntersection(cnc.taxons, cnc1.taxons);
+                                    if( x > 0 ) {
+                                        Taxa combinedTaxa = new Taxa(cnc.taxons);
+                                        combinedTaxa.unionTaxons(cnc1.taxons);
+                                        cnc = new TaxaConstraint(combinedTaxa, cnc.lower, cnc.upper, cnc.isMonophyletic);
+                                        constraints.set(nc, cnc);
+                                    }
+                                }
+                            }
+                        }
                         // determine upper bound for each set.
                         double[] upper = new double[nConstraints];
-                        for(int nc = nConstraints -1; nc >= 0; --nc) {
+                        for(int nc = nConstraints - 1; nc >= 0; --nc) {
                            final TaxaConstraint cnc = constraints.get(nc);
                             if( cnc.realLimits() ) {
                                upper[nc] = cnc.upper;
@@ -282,7 +320,7 @@ public class CoalescentSimulator {
                             }
                         }
 
-                        for(int nc = nConstraints -1; nc >= 0; --nc) {
+                        for(int nc = nConstraints - 1; nc >= 0; --nc) {
                             final TaxaConstraint cnc = constraints.get(nc);
                             if( upper[nc] < Double.POSITIVE_INFINITY ) {
                                 for(int nc1 = nc-1; nc1 >= 0; --nc1) {

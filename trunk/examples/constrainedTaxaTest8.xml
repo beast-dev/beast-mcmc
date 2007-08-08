@@ -1,11 +1,12 @@
 <?xml version="1.0" standalone="yes"?>
-<!-- simple test 6: two constraints -->
+<!-- simple test 3: one monophyletic, one not -->
 <beast>
 
   <taxa id="taxa">
     	<taxon id="A"/>
     	<taxon id="B"/>
     	<taxon id="C"/>
+    	<taxon id="D"/>
   </taxa>
 
   <taxa id="AB">
@@ -13,9 +14,8 @@
     <taxon idref="B"/>
   </taxa>
 
-  <taxa id="ABC">
+  <taxa id="AC">
     <taxon idref="A"/>
-    <taxon idref="B"/>
     <taxon idref="C"/>
   </taxa>
 
@@ -28,7 +28,7 @@
   <coalescentTree id="startingTree">
     <constrainedTaxa>
       <taxa idref="taxa"/>
-      <tmrca>
+      <tmrca monophyletic="false">
 	<taxa idref="AB"/>
 	<uniformDistributionModel>
 	  <lower>40.0</lower>
@@ -36,11 +36,7 @@
 	</uniformDistributionModel>
       </tmrca>
       <tmrca>
-	<taxa idref="ABC"/>
-	<uniformDistributionModel>
-	  <lower>30.0</lower>
-	  <upper>60.0</upper>
-	</uniformDistributionModel>
+	<taxa idref="AC"/>
       </tmrca>
     </constrainedTaxa>
     <constantSize idref="constant"/>
@@ -67,12 +63,13 @@
     <treeModel idref="treeModel"/>
   </tmrcaStatistic>
 
-  <tmrcaStatistic id="mABC">
+  <monophylyStatistic id="mAC">
     <mrca>
-      <taxa idref="ABC"/>
+      <taxa idref="AC"/>
     </mrca>
     <treeModel idref="treeModel"/>
-  </tmrcaStatistic>
+  </monophylyStatistic>
+
 
   <mcmc id="mcmc" chainLength="1" preBurnin="0">
     <posterior id="posterior">
@@ -80,9 +77,9 @@
 	<uniformPrior lower="40.0" upper="100.0">
 	  <tmrcaStatistic idref="mAB"/>
 	</uniformPrior>
-	<uniformPrior lower="30.0" upper="60.0">
-	  <tmrcaStatistic idref="mABC"/>
-	</uniformPrior>
+	<booleanLikelihood>
+	  <monophylyStatistic idref="mAC"/>
+	</booleanLikelihood>
       </prior>
     </posterior>
 

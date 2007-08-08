@@ -62,7 +62,7 @@ public class LogarithmStatistic extends Statistic.Abstract {
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String[] getParserNames() { return new String[] { getParserName(), "log" }; }
+        public String[] getParserNames() { return new String[] { getParserName(), "logarithm" }; }
 		public String getParserName() { return LOGARITHM_STATISTIC; }
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {

@@ -52,7 +52,8 @@ public class TreeAnnotator {
     private final static Version version = new BeastVersion();
 
     public final static int MAX_CLADE_CREDIBILITY = 0;
-    public final static int USER_TARGET_TREE = 1;
+    public final static int MAX_SUM_CLADE_CREDIBILITY = 1;
+    public final static int USER_TARGET_TREE = 2;
 
     public final static int KEEP_HEIGHTS = 0;
     public final static int MEAN_HEIGHTS = 1;
@@ -84,9 +85,11 @@ public class TreeAnnotator {
             return;
         }
 
+        cladeSystem.calculateCladeCredibilities(totalTreesUsed);
+
         System.out.println("Total trees read: " + totalTrees);
         if (burnin > 0) {
-            System.out.println("Ignoring first" + burnin + " trees.");
+            System.out.println("Ignoring first " + burnin + " trees.");
         }
 
         MutableTree targetTree;
@@ -106,9 +109,14 @@ public class TreeAnnotator {
                 System.err.println("No user target tree specified.");
                 return;
             }
+        } else if (targetOption == MAX_CLADE_CREDIBILITY) {
+            System.out.println("Finding maximum credibility tree...");
+            targetTree = new FlexibleTree(summarizeTrees( burnin, cladeSystem, inputFileName, false));
+        } else if (targetOption == MAX_SUM_CLADE_CREDIBILITY) {
+            System.out.println("Finding maximum sum clade credibility tree...");
+            targetTree = new FlexibleTree(summarizeTrees( burnin, cladeSystem, inputFileName, true));
         } else {
-            System.out.println("Finding maximum clade credibility tree...");
-            targetTree = new FlexibleTree(summarizeTrees( burnin, cladeSystem, inputFileName));
+            throw new RuntimeException("Unknown target tree option");
         }
 
         System.out.println("Annotating target tree...");
@@ -124,7 +132,7 @@ public class TreeAnnotator {
         }
     }
 
-    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName) throws IOException {
+    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName, boolean useSumCladeCredibility) throws IOException {
 
         Tree bestTree = null;
         double bestScore = 0.0;
@@ -143,7 +151,7 @@ public class TreeAnnotator {
                 Tree tree = importer.importNextTree();
 
                 if (counter >= burnin) {
-                    double score = scoreTree(tree, cladeSystem);
+                    double score = scoreTree(tree, cladeSystem, useSumCladeCredibility);
 //                    System.out.println(score);
                     if (score > bestScore) {
                         bestTree = tree;
@@ -162,13 +170,21 @@ public class TreeAnnotator {
         }
         System.out.println();
         System.out.println();
-        System.out.println("Best Sum Clade Support: " + bestScore);
+        if (useSumCladeCredibility) {
+            System.out.println("Highest Sum Clade Credibility: " + bestScore);
+        } else {
+            System.out.println("Highest Total Clade Credibility: " + bestScore);
+        }
 
         return bestTree;
     }
 
-    private double scoreTree(Tree tree, CladeSystem cladeSystem) {
-        return cladeSystem.getSumCladeFrequency(tree, tree.getRoot(), null);
+    private double scoreTree(Tree tree, CladeSystem cladeSystem, boolean useSumCladeCredibility) {
+        if (useSumCladeCredibility) {
+            return cladeSystem.getSumCladeCredibility(tree, tree.getRoot(), null);
+        } else {
+            return cladeSystem.getProductCladeCredibility(tree, tree.getRoot(), null);
+        }
     }
 
     private class CladeSystem
@@ -240,7 +256,7 @@ public class TreeAnnotator {
                 clade = new Clade(bits);
                 cladeMap.put(bits, clade);
             }
-            clade.setFrequency(clade.getFrequency() + 1);
+            clade.setCount(clade.getCount() + 1);
 
             if (attributeNames != null) {
                 if (clade.attributeLists == null) {
@@ -271,9 +287,17 @@ public class TreeAnnotator {
             }
         }
 
-        public double getSumCladeFrequency(Tree tree, NodeRef node, BitSet bits) {
+        public void calculateCladeCredibilities(int totalTreesUsed) {
+            Iterator iter = cladeMap.values().iterator();
+            while (iter.hasNext()) {
+                Clade clade = (Clade)iter.next();
+                clade.setCredibility(((double)clade.getCount()) / totalTreesUsed);
+            }
+        }
 
-            double sumCladeFrequency = 0.0;
+        public double getSumCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
+
+            double sum = 0.0;
 
             if (tree.isExternal(node)) {
 
@@ -286,25 +310,53 @@ public class TreeAnnotator {
 
                     NodeRef node1 = tree.getChild(node, i);
 
-                    sumCladeFrequency += getSumCladeFrequency(tree, node1, bits2);
+                    sum += getSumCladeCredibility(tree, node1, bits2);
                 }
 
-                sumCladeFrequency += getCladeFrequency(bits2);
+                sum += getCladeCredibility(bits2);
 
                 if (bits != null) {
                     bits.or(bits2);
                 }
             }
 
-            return sumCladeFrequency;
+            return sum;
         }
 
-        private double getCladeFrequency(BitSet bits) {
+        public double getProductCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
+
+            double product = 1.0;
+
+            if (tree.isExternal(node)) {
+
+                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                bits.set(index);
+            } else {
+
+                BitSet bits2 = new BitSet();
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                    NodeRef node1 = tree.getChild(node, i);
+
+                    product *= getProductCladeCredibility(tree, node1, bits2);
+                }
+
+                product *= getCladeCredibility(bits2);
+
+                if (bits != null) {
+                    bits.or(bits2);
+                }
+            }
+
+            return product;
+        }
+
+        private double getCladeCredibility(BitSet bits) {
             Clade clade = (Clade)cladeMap.get(bits);
             if (clade == null) {
                 return 0.0;
             }
-            return clade.getFrequency();
+            return clade.getCredibility();
         }
 
         public void annotateTree(MutableTree tree, NodeRef node, BitSet bits, int heightsOption) {
@@ -342,7 +394,7 @@ public class TreeAnnotator {
 
             boolean filter = false;
             if (!isTip) {
-                double posterior = ((double)clade.frequency) / totalTreesUsed;
+                double posterior = clade.getCredibility();
                 tree.setNodeAttribute(node, "posterior", new Double(posterior));
                 if (posterior < posteriorLimit) {
                     filter = true;
@@ -430,15 +482,24 @@ public class TreeAnnotator {
         class Clade {
             public Clade(BitSet bits) {
                 this.bits = bits;
-                frequency = 0;
+                count = 0;
+                credibility = 0.0;
             }
 
-            public int getFrequency() {
-                return frequency;
+            public int getCount() {
+                return count;
             }
 
-            public void setFrequency(int frequency) {
-                this.frequency = frequency;
+            public void setCount(int count) {
+                this.count = count;
+            }
+
+            public double getCredibility() {
+                return credibility;
+            }
+
+            public void setCredibility(double credibility) {
+                this.credibility = credibility;
             }
 
             public boolean equals(Object o) {
@@ -456,7 +517,8 @@ public class TreeAnnotator {
                 return (bits != null ? bits.hashCode() : 0);
             }
 
-            int frequency;
+            int count;
+            double credibility;
             BitSet bits;
             List[] attributeLists = null;
         }
@@ -532,7 +594,7 @@ public class TreeAnnotator {
                 icon = new javax.swing.ImageIcon(url);
             }
 
-	        final String versionString = version.getVersionString();
+            final String versionString = version.getVersionString();
             String nameString = "TreeAnnotator " + versionString;
             String aboutString = "<html><center><p>" + versionString + ", " + version.getDateString() +"</p>" +
                     "<p>by<br>" +

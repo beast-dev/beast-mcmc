@@ -44,6 +44,7 @@ import dr.xml.*;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.HashSet;
 import java.util.logging.Logger;
 
 /**
@@ -187,7 +188,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
     private void addDeltaParameter(Parameter deltaParameter, TaxonList taxa) {
         this.deltaParameter = deltaParameter;
-        this.deltaTips = new TreeSet();
+        this.deltaTips = new HashSet();
 
         if (taxa != null) {
             boolean first = true;
@@ -196,12 +197,13 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
                 NodeRef node = treeModel.getExternalNode(i);
                 Taxon taxon = treeModel.getNodeTaxon(node);
                 if (taxa.getTaxonIndex(taxon) != -1) {
-                    if (first) {
+                    if (!first) {
                         sb.append(", ");
+                    } else {
                         first = false;
                     }
                     sb.append(taxon.getId());
-                    deltaTips.add(node);
+                    deltaTips.add(new Integer(node.getNumber()));
                 }
             }
             sb.append("}");
@@ -413,7 +415,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
             likelihoodCore.setNodeMatrixForUpdate(nodeNum);
 
-            if (tree.isExternal(node) && deltaParameter != null && deltaTips.contains(node)) {
+            if (tree.isExternal(node) && deltaParameter != null && deltaTips.contains(new Integer(node.getNumber()))) {
                 branchTime += deltaParameter.getParameterValue(0);
             }
 
@@ -502,7 +504,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
                 treeLikelihood.addTipsSiteModel(siteModel2);
             }
 
-            XMLObject xoc = (XMLObject)xo.getChild("DELTA");
+            XMLObject xoc = (XMLObject)xo.getChild(DELTA);
             if (xoc != null) {
                 Parameter deltaParameter = (Parameter)xoc.getChild(Parameter.class);
                 TaxonList taxa = (TaxonList)xoc.getChild(TaxonList.class);

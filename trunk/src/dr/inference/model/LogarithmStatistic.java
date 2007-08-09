@@ -69,7 +69,7 @@ public class LogarithmStatistic extends Statistic.Abstract {
 
 			LogarithmStatistic logStatistic;
 
-            double base = 0.0; // base 0.0 means natural logorithm
+            double base = 0.0; // base 0.0 means natural logarithm
             if (xo.hasAttribute(BASE)) {
                 base = xo.getDoubleAttribute(BASE);
             }
@@ -101,7 +101,7 @@ public class LogarithmStatistic extends Statistic.Abstract {
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                AttributeRule.newDoubleRule(BASE, true, "An optional base for the logoritm (default is the natural logorithm, base e)"),
+                AttributeRule.newDoubleRule(BASE, true, "An optional base for the logarithm (default is the natural logarithm, base e)"),
                 new ElementRule(Statistic.class, 1, 1 )
 		};
 	};

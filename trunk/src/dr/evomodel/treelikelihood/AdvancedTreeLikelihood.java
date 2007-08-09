@@ -30,6 +30,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -42,6 +43,8 @@ import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.HashSet;
 import java.util.logging.Logger;
 
 /**
@@ -183,9 +186,33 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
         addModel(siteModel);
     }
 
-    private void addDeltaParameter(Parameter deltaParameter) {
-        Logger.getLogger("dr.evomodel").info("Delta parameter added for tips.");
+    private void addDeltaParameter(Parameter deltaParameter, TaxonList taxa) {
         this.deltaParameter = deltaParameter;
+        this.deltaTips = new HashSet();
+
+        if (taxa != null) {
+            boolean first = true;
+            StringBuffer sb = new StringBuffer("Delta parameter added for tips: {");
+            for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+                NodeRef node = treeModel.getExternalNode(i);
+                Taxon taxon = treeModel.getNodeTaxon(node);
+                if (taxa.getTaxonIndex(taxon) != -1) {
+                    if (!first) {
+                        sb.append(", ");
+                    } else {
+                        first = false;
+                    }
+                    sb.append(taxon.getId());
+                    deltaTips.add(new Integer(node.getNumber()));
+                }
+            }
+            sb.append("}");
+
+            Logger.getLogger("dr.evomodel").info(sb.toString());
+        } else {
+            Logger.getLogger("dr.evomodel").info("Delta parameter added for all tips.");
+        }
+
         addParameter(deltaParameter);
     }
 
@@ -388,7 +415,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
             likelihoodCore.setNodeMatrixForUpdate(nodeNum);
 
-            if (tree.isExternal(node) && deltaParameter != null) {
+            if (tree.isExternal(node) && deltaParameter != null && deltaTips.contains(new Integer(node.getNumber()))) {
                 branchTime += deltaParameter.getParameterValue(0);
             }
 
@@ -477,16 +504,17 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
                 treeLikelihood.addTipsSiteModel(siteModel2);
             }
 
-            Parameter deltaParameter = null;
-            if (xo.hasSocket(DELTA)) {
-                deltaParameter = (Parameter)xo.getSocketChild(DELTA);
-                treeLikelihood.addDeltaParameter(deltaParameter);
+            XMLObject xoc = (XMLObject)xo.getChild(DELTA);
+            if (xoc != null) {
+                Parameter deltaParameter = (Parameter)xoc.getChild(Parameter.class);
+                TaxonList taxa = (TaxonList)xoc.getChild(TaxonList.class);
+                treeLikelihood.addDeltaParameter(deltaParameter, taxa);
             }
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 if (xo.getChild(i) instanceof XMLObject) {
 
-                    XMLObject xoc = (XMLObject)xo.getChild(i);
+                    xoc = (XMLObject)xo.getChild(i);
                     if (xoc.getName().equals(CLADE)) {
 
                         SiteModel siteModel2 = (SiteModel)xoc.getChild(SiteModel.class);
@@ -536,11 +564,15 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
                 AttributeRule.newBooleanRule(STORE_PARTIALS, true),
                 AttributeRule.newBooleanRule(USE_SCALING, true),
                 new ElementRule(TIPS, SiteModel.class, "A siteModel that will be applied only to the tips.", 0, 1),
-                new ElementRule(DELTA, Parameter.class, "A parameter that specifies the amount of extra substitutions per site at each tip.", 0, 1),
+                new ElementRule(DELTA,
+                        new XMLSyntaxRule[] {
+                                new ElementRule(TaxonList.class, "A set of taxa to which to apply the delta model to", 0, 1),
+                                new ElementRule(Parameter.class, "A parameter that specifies the amount of extra substitutions per site at each tip.", 0, 1),
+                        }, true),
                 new ElementRule(CLADE,
                         new XMLSyntaxRule[] {
                                 AttributeRule.newBooleanRule(INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel."),
-                                new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
+                                new ElementRule(TaxonList.class, "A set of taxa which defines a clade to apply a different site model to"),
                                 new ElementRule(SiteModel.class, "A siteModel that will be applied only to this clade")
                         }, 0, Integer.MAX_VALUE),
                 new ElementRule(PatternList.class),
@@ -596,6 +628,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
     protected SiteModel tipsSiteModel = null;
 
     protected Parameter deltaParameter = null;
+    protected Set deltaTips = null;
 
     /** the site models for specific clades */
     protected ArrayList cladeSiteModels = new ArrayList();

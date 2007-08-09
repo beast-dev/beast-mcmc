@@ -1,40 +1,38 @@
 package dr.evomodel.coalescent.operators;
 
-import cern.colt.matrix.DoubleMatrix1D;
-import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.impl.DenseDoubleMatrix1D;
-import cern.colt.matrix.impl.DenseDoubleMatrix2D;
-import cern.colt.matrix.impl.SparseDoubleMatrix1D;
-import cern.colt.matrix.linalg.Algebra;
-import cern.colt.matrix.linalg.CholeskyDecomposition;
 import dr.evomodel.coalescent.GMRFSkylineLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.xml.*;
-
-import java.util.Random;
+import no.uib.cipr.matrix.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Aug 6, 2007
- * Time: 10:41:17 AM
- * To change this template use File | Settings | File Templates.
+ * @author Erik Bloomquist
+ *         <p/>
+ *         Created by IntelliJ IDEA.
+ *         User: ebloomqu
+ *         Date: Aug 8, 2007
+ *         Time: 10:41:17 AM
+ *         To change this template use File | Settings | File Templates.
  */
 public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
     public static final String BLOCK_UPDATE_OPERATOR = "gmrfBlockUpdateOperator";
 
-    private double scaleFactor = 0.5;
+    private double scaleFactor;
     private int mode = CoercableMCMCOperator.DEFAULT;
     private int weight = 1;
     private int fieldLength;
+
+    private Parameter popSizeParameter;
+    private Parameter precisionParameter;
+    private Parameter lambdaParameter;
+
     GMRFSkylineLikelihood gmrfField;
-    Parameter popSizeParameter;
-    Parameter precisionParameter;
-    Parameter lambdaParameter;
-    DoubleMatrix2D weightMatrix;
+
+    private DenseVector one;
+    private DenseMatrix I;
 
     public GMRFSkylineBlockUpdateOperator(GMRFSkylineLikelihood gmrfLikelihood, int weight, int mode) {
         super();
@@ -44,295 +42,306 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
         popSizeParameter = gmrfLikelihood.getPopSizeParameter();
         precisionParameter = gmrfLikelihood.getPrecisionParameter();
         lambdaParameter = gmrfLikelihood.getLambdaParameter();
-        weightMatrix = gmrfLikelihood.getWeightMatrix();
+
         scaleFactor = 2.0;
         fieldLength = popSizeParameter.getDimension();
 
 
-        I = new DenseDoubleMatrix2D(fieldLength, fieldLength);
-        one = new DenseDoubleMatrix1D(fieldLength);
+        one = new DenseVector(fieldLength);
+        I = new DenseMatrix(fieldLength, fieldLength);
 
         for (int i = 0; i < fieldLength; i++) {
-            I.set(i, i, 1);
             one.set(i, 1);
+            I.set(i, i, 1.0);
         }
-
-        solver = new Algebra();
-    }
-
-
-    public DoubleMatrix2D getUpdateQ(double newTau, double newLambda) {
-        DoubleMatrix2D a = new DenseDoubleMatrix2D(fieldLength, fieldLength);
-
-        for (int i = 0; i < fieldLength; i++) {
-            a.set(i, i, newTau * (weightMatrix.get(i, i) * newLambda + 1 - newLambda));
-        }
-
-        for (int i = 0; i < fieldLength - 1; i++) {
-            a.set(i, i + 1, weightMatrix.get(i, i + 1) * newTau * newLambda);
-            a.set(i + 1, i, weightMatrix.get(i + 1, i) * newTau * newLambda);
-        }
-        a.set(0, 0, weightMatrix.get(0, 0) * newTau);
-        a.set(fieldLength - 1, fieldLength - 1,
-                weightMatrix.get(fieldLength - 1, fieldLength - 1) * newTau);
-
-        return a;
 
     }
 
-    public double doOperation() throws OperatorFailedException {
-
-//   	public void update(){
-
-        //First generate a new value for tau
-        double tau = precisionParameter.getParameterValue(0);
-        double lambda = lambdaParameter.getParameterValue(0);
-        double newTau = this.getNewTau(tau, scaleFactor);
-//		double newLambda = this.getNewLambda(lambdaParameter.getParameterValue(0),0.0);
-        double newLambda = 0.999999;
-
-//        System.err.println("Old tau = "+tau+" New tau = "+newTau);
-//        System.err.println("Old lambda = "+lambda+" New lambda = "+lambda);
-
-        precisionParameter.setParameterValue(0, newTau);
-        lambdaParameter.setParameterValue(0, newLambda);
-
-        //Now conditional on tau.new, propose a new value for gamma
-        DoubleMatrix1D mean = new DenseDoubleMatrix1D(fieldLength);
-        //parm.getMu();
-        double[] wNative = gmrfField.getSufficientStatistics();
-        DoubleMatrix2D w = new DenseDoubleMatrix2D(fieldLength, fieldLength);
-        for (int i = 0; i < fieldLength; i++)
-            w.set(i, i, wNative[i]);
-        //raw.getW();
-//        System.err.println("Weight matrix:"+w);
-
-        DoubleMatrix1D currentGamma = new DenseDoubleMatrix1D(popSizeParameter.getParameterValues());
-//                parm.getGammaVector();
-
-//        System.err.println("Current gamma = "+currentGamma);
-
-        DoubleMatrix1D proposedGamma = new DenseDoubleMatrix1D(fieldLength);
-
-
-        DoubleMatrix2D qProposed = getUpdateQ(newTau, newLambda);
-
-//        System.err.println("qProposed = "+qProposed);
-
-
-        DoubleMatrix2D qCurrent = getUpdateQ(tau, newLambda);
-
-//        System.err.println("qCurrent = "+qCurrent);
-
-        DoubleMatrix2D qwInverseProposed;
-        DoubleMatrix2D qwInverseBackward;
-
-        DoubleMatrix2D temp1 = new DenseDoubleMatrix2D(fieldLength, fieldLength);
-        DoubleMatrix2D temp2 = new DenseDoubleMatrix2D(fieldLength, fieldLength);
-        DoubleMatrix2D temp3 = new DenseDoubleMatrix2D(fieldLength, fieldLength);
-        DoubleMatrix1D temp4 = new DenseDoubleMatrix1D(fieldLength);
-        DoubleMatrix1D temp5 = new DenseDoubleMatrix1D(fieldLength);
-
-        for (int i = 0; i < fieldLength; i++) {
-            temp1.set(i, i, w.get(i, i) * Math.exp(-currentGamma.get(i)));
-            temp2.set(i, i, currentGamma.get(i) + 1);
-
-        }
-
-        qwInverseProposed = solver.inverse(add(qProposed, temp1, true));
-
-        temp3 = add(solver.mult(temp1, temp2), I, false);
-        temp4 = solver.mult(temp3, one);
-
-        temp4 = addVector(solver.mult(qProposed, mean), temp4, true);
-
-        temp4 = solver.mult(qwInverseProposed, temp4);
-
-
-        proposedGamma = getMultiNormal(temp4, qwInverseProposed);
-
-//        System.err.println("Proposed gamma = "+proposedGamma);
-
-        for (int i = 0; i < fieldLength; i++)
-            popSizeParameter.setParameterValue(i, proposedGamma.get(i));
-
-        //Now do some Metropolis-Hastings stuff in 6 steps.
-        double hRatio = 0;
-
-        //1. First calculate the difference in log-likelihoods
-        for (int i = 0; i < fieldLength; i++) {
-            hRatio += -proposedGamma.get(i) - w.get(i, 1) * Math.exp(-proposedGamma.get(i));
-            hRatio -= -currentGamma.get(i) - w.get(i, i) * Math.exp(-currentGamma.get(i));
-        }
-
-        //2. Now the difference in proposal distributions.
-        hRatio += gammaPrior(newTau, 0.1, 0.1);
-        hRatio -= gammaPrior(tau, 0.1, 0.1);
-
-        //3. Next find the difference in the proposal ratio's for gamma
-        //This part sucks cuz you have to do all the backwards stuff
-        for (int i = 0; i < fieldLength; i++) {
-            temp1.set(i, i, w.get(i, i) * Math.exp(-proposedGamma.get(i)));
-            temp2.set(i, i, proposedGamma.get(i) + 1);
-        }
-
-        qwInverseBackward = solver.inverse(add(qCurrent, w, true));
-        temp3 = add(solver.mult(temp1, temp2), I, false);
-        temp5 = solver.mult(temp3, one);
-        temp5 = addVector(solver.mult(qCurrent, mean), temp4, true);
-        temp5 = solver.mult(qwInverseBackward, temp4);
-
-        hRatio += -1 / 2 * solver.mult(addVector(currentGamma, temp5, false),
-                solver.mult(qwInverseBackward, addVector(currentGamma, temp5, false)));
-        hRatio -= -1 / 2 * solver.mult(addVector(proposedGamma, temp4, false),
-                solver.mult(qwInverseProposed, addVector(proposedGamma, temp4, false)));
-
-        //4. Don't forget to inlucde the determinants of Q and Q^\star
-//        System.err.println("hRatioB = "+hRatio);
-//        System.err.println("detC = "+solver.det(qCurrent));
-        double logDetRatio = Math.log(solver.det(qCurrent)) - Math.log(solver.det(qProposed));
-//        System.err.println("detRatio = "+logDetRatio);
-
-        hRatio += logDetRatio;
-
-        //5. We don't have to worry about the proposal distribution for tau
-        //because it is symmetric.
-
-//		 //6. Finally, run the usual HM acceptance step.
-//		 if(rand.getUniform(0,1) < Math.exp(Math.min(0,hRatio))){
-//        	 mon.blockUpdateSuccess(true);
-//			 parm.updateQ(newTau,newLambda);
-//        	 parm.updateGamma(proposedGamma);
-//         }
-//		 else{
-//			 mon.blockUpdateSuccess(false);
-//		 }
-
-        //Done!
-//	}
-        System.err.println("hRatio = " + hRatio);
-
-        return hRatio;
-    }
-
-
-    public DoubleMatrix1D getMultiNormal(DoubleMatrix1D mean, DoubleMatrix2D variance) {
-        DoubleMatrix1D Z = new DenseDoubleMatrix1D(mean.size());
-        for (int i = 0; i < Z.size(); i++)
-            Z.set(i, MathUtils.nextGaussian());
-//                    norm.nextDouble());
-
-        CholeskyDecomposition cholesky = new CholeskyDecomposition(variance);
-//		Algebra solver = new Algebra();
-
-        return addMatrix(mean, solver.mult(cholesky.getL(), Z));
-
-    }
-
-    private static DoubleMatrix1D addMatrix(DoubleMatrix1D A, DoubleMatrix1D B) {
-        DoubleMatrix1D returnValue = new SparseDoubleMatrix1D(A.size());
-        for (int i = 0; i < A.size(); i++)
-            returnValue.set(i, A.get(i) + B.get(i));
-        return returnValue;
-    }
-
-
-    private Parameter parm;
-    private Random rand;
-//	private RawData raw;
-//	private Settings set;
-//	private SamplerMonitor mon;
-
-    private DoubleMatrix2D I;
-    private DoubleMatrix1D one;
-    private Algebra solver;
-
-//	public Blockupdate(Parameters inP, Random inR,RawData data,Settings inSet,SamplerMonitor inM){
-//		parm = inP;
-//		rand = inR;
-//		raw = data;
-//		set = inSet;
-//
-//		I = new DenseDoubleMatrix2D(fieldLength, fieldLength);
-//		one = new DenseDoubleMatrix1D(fieldLength);
-//
-//		for(int i = 0; i < fieldLength; i++){
-//			I.set(i, i, 1);
-//			one.set(i,1);
-//		}
-//
-//		solver = new Algebra();
-//		mon = inM;
-//	}
-
-    private double getNewLambda(double currentValue, double lambdaScale) {
-        double a = MathUtils.nextDouble() * lambdaScale - lambdaScale / 2.0;
-        double b = currentValue + a;
-        if (b == 1)
-            b = 0.999999;
-        if (b == 0)
-            b = 0.000001;
-        if (b > 1)
-            b = 2 - b;
-        if (b < 0)
-            b = -b;
-
-        return b;
-    }
-
-    private double getNewTau(double currentValue, double scaleFactor) {
+    private double getNewPrecision(double currentValue, double scaleFactor) {
         double length = scaleFactor - 1 / scaleFactor;
         double returnValue = currentValue;
 
         if (scaleFactor == 1)
             return currentValue;
-        if (//rand.getUniform(0, 1)
-                MathUtils.nextDouble()
-                        < length / (length + 2 * Math.log(scaleFactor))) {
-            returnValue = (1 / scaleFactor + length * MathUtils.nextDouble())
-//                    rand.getUniform(0, 1))
-                    * currentValue;
+        if (MathUtils.nextDouble() < length / (length + 2 * Math.log(scaleFactor))) {
+            returnValue = (1 / scaleFactor + length * MathUtils.nextDouble()) * currentValue;
         } else {
-            returnValue = Math.pow(scaleFactor, 2.0 *//rand.getUniform(0, 1)
-                    MathUtils.nextDouble()
-                    - 1) * currentValue;
+            returnValue = Math.pow(scaleFactor, 2.0 * MathUtils.nextDouble() - 1) * currentValue;
+        }
+
+        return returnValue;
+    }
+
+
+    public double precisionPrior(double precision, double priorA, double priorB) {
+        return (priorA - 1.0) * Math.log(precision) - precision * priorB;
+    }
+
+
+    public DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
+        DenseVector tempValue = new DenseVector(fieldLength);
+        DenseVector returnValue = new DenseVector(fieldLength);
+        UpperSPDDenseMatrix ab = Variance.copy();
+
+        for (int i = 0; i < returnValue.size(); i++)
+            tempValue.set(i, MathUtils.nextGaussian());
+
+        DenseCholesky chol = new DenseCholesky(fieldLength, true);
+        chol.factor(ab);
+
+        UpperTriangDenseMatrix x = chol.getU();
+
+        x.transMult(tempValue, returnValue);
+        returnValue.add(Mean);
+        return returnValue;
+    }
+
+    public double logGeneralizedDeterminant(SymmTridiagMatrix X) {
+        //Set up the eigenvalue solver
+        SymmTridiagEVD eigen = new SymmTridiagEVD(X.numRows(), false);
+        //Solve for the eigenvalues
+        try {
+            eigen.factor(X);
+        } catch (NotConvergedException e) {
+            throw new RuntimeException("Not converged error in generalized determinate calculation.\n" + e.getMessage());
+        }
+
+        //Get the eigenvalues
+        double[] x = eigen.getEigenvalues();
+
+        double a = 0;
+        for (int i = 0; i < x.length; i++) {
+            if (x[i] > 0.00001)
+                a += Math.log(x[i]);
+        }
+        return a;
+    }
+
+    public double logGeneralizedDeterminant(UpperSPDPackMatrix X) {
+        //Set up the eigenvalue solver
+        SymmPackEVD eigen = new SymmPackEVD(X.numRows(), false);
+        //Solve for the eigenvalues
+        try {
+            eigen.factor(X);
+        } catch (NotConvergedException e) {
+            throw new RuntimeException("Not converged error in generalized determinate calculation.\n" + e.getMessage());
+        }
+
+        //Get the eigenvalues;
+        double[] x = eigen.getEigenvalues();
+
+        double a = 0;
+        for (int i = 0; i < x.length; i++) {
+
+            if (x[i] > 0.00001)
+                a += Math.log(x[i]);
+        }
+        return a;
+
+    }
+
+    public static DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) {
+
+        DenseVector iterateGamma = currentGamma.copy();
+        int numberIterations = 0;
+        while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > 0.01) {
+            inverseJacobian(data, iterateGamma, proposedQ).multAdd(gradient(data, iterateGamma, proposedQ), iterateGamma);
+            numberIterations++;
+        }
+        return iterateGamma;
+    }
+
+    private static DenseVector gradient(double[] data, DenseVector value, SymmTridiagMatrix Q) {
+
+        DenseVector returnValue = new DenseVector(value.size());
+        Q.mult(value, returnValue);
+        for (int i = 0; i < value.size(); i++) {
+            returnValue.set(i, -returnValue.get(i) - 1 + data[i] * Math.exp(-value.get(i)));
         }
         return returnValue;
     }
 
-    public static DoubleMatrix2D add(DoubleMatrix2D A, DoubleMatrix2D B, boolean add) {
-        DoubleMatrix2D returnValue = new DenseDoubleMatrix2D(A.rows(), A.columns());
-        if (add) {
-            for (int i = 0; i < A.rows(); i++)
-                for (int j = 0; j < B.rows(); j++)
-                    returnValue.set(i, j, A.get(i, j) + B.get(i, j));
-        } else {
-            for (int i = 0; i < A.rows(); i++)
-                for (int j = 0; j < B.rows(); j++)
-                    returnValue.set(i, j, A.get(i, j) - B.get(i, j));
+
+    private static DenseMatrix inverseJacobian(double[] data, DenseVector value, SymmTridiagMatrix Q) {
+
+        SPDTridiagMatrix jacobian = new SPDTridiagMatrix(Q, true);
+        for (int i = 0; i < value.size(); i++) {
+            jacobian.set(i, i, jacobian.get(i, i) + Math.exp(-value.get(i)) * data[i]);
         }
-        return returnValue;
+
+        DenseMatrix inverseJacobian = Matrices.identity(jacobian.numRows());
+        jacobian.solve(Matrices.identity(value.size()), inverseJacobian);
+
+        return inverseJacobian;
     }
 
-    public static DoubleMatrix1D addVector(DoubleMatrix1D A, DoubleMatrix1D B, boolean add) {
-        DoubleMatrix1D returnValue = new SparseDoubleMatrix1D(A.size());
-        if (add) {
-            for (int i = 0; i < A.size(); i++)
-                returnValue.set(i, A.get(i) + B.get(i));
-        } else {
-            for (int i = 0; i < A.size(); i++)
-                returnValue.set(i, A.get(i) - B.get(i));
+
+    public double doOperation() throws OperatorFailedException {
+
+        double currentPrecisionParameter = precisionParameter.getParameterValue(0);
+
+        //Generate a new precision.
+        double newPrecisionParameter =
+                this.getNewPrecision(currentPrecisionParameter, scaleFactor);
+
+        precisionParameter.setParameterValue(0, newPrecisionParameter);
+
+//        System.err.println("cur prec = "+currentPrecisionParameter);
+//        System.err.println("new prec = "+newPrecisionParameter);
+//        if( newPrecisionParameter > 1000)
+//                    System.exit(-1);
+
+        //Conditional on tau, generate a new value for gamma (it takes some work to do this).
+        DenseVector currentGamma = new DenseVector(gmrfField.getPopSizeParameter().getParameterValues());
+        DenseVector proposedGamma;
+
+//        System.err.println("currentGamma = "+currentGamma);
+
+        //Get the current Precision and New Precision
+        SymmTridiagMatrix currentQ = gmrfField.getScaledWeightMatrix(currentPrecisionParameter);
+        SymmTridiagMatrix proposedQ = gmrfField.getScaledWeightMatrix(newPrecisionParameter);
+
+//        System.err.println("currentQ = "+currentQ);
+//        System.err.println("proposedQ = "+proposedQ);
+
+        //TODO Save the current value of Q.
+
+        //Get the data
+        double[] wNative = gmrfField.getSufficientStatistics();
+
+        //All of these Matricies and vectors are involved in the proposal steps
+        SymmTridiagMatrix forwardQW = new SymmTridiagMatrix(proposedQ, true);
+        SymmTridiagMatrix backwardQW = new SymmTridiagMatrix(currentQ, true);
+
+        DenseVector forwardMean = new DenseVector(fieldLength);
+        DenseVector backwardMean = new DenseVector(fieldLength);
+
+        //Just some temporary storage.
+        DenseVector diagonal1 = new DenseVector(fieldLength);
+        DenseVector diagonal2 = new DenseVector(fieldLength);
+        DenseVector diagonal3 = new DenseVector(fieldLength);
+
+        //Needed for the inverses
+        DenseMatrix workingDenseMatrix = Matrices.identity(fieldLength);
+
+        //This finds the mode under Q proposed
+        //NOT NEEDED IF EXPANDING UNDER CURRENT LOCATION
+        DenseVector modeForward = newtonRaphson(wNative, currentGamma, proposedQ.copy());
+
+//        System.err.println("modeForward = "+modeForward);
+
+        //This part determines whether the taylor expansion
+        //will occur around the current value or the mode
+        for (int i = 0; i < fieldLength; i++) {
+            //Option1: Expand around current location
+            //diagonal1.set(i, w[i]*Math.exp(-currentGamma.get(i)));
+            //diagonal2.set(i, currentGamma.get(i) + 1);
+
+            //Option2: Expand about the mode
+            diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
+            diagonal2.set(i, modeForward.get(i) + 1);
+
+            forwardQW.set(i, i, diagonal1.get(i) + forwardQW.get(i, i));
+            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
         }
-        return returnValue;
-    }
 
-    public double gammaPrior(double tau, double priorA, double priorB) {
-        return (priorA - 1.0) * Math.log(tau) - tau * priorB;
-    }
+        //Find the mean and variance of proposal distribution
+        forwardQW.solve(I, workingDenseMatrix);
+        UpperSPDDenseMatrix inverseForwardQW = new UpperSPDDenseMatrix(workingDenseMatrix, true);
 
-    /*
-    * This is the method that does all the work.
-    */
+        inverseForwardQW.mult(diagonal1, forwardMean);
+
+        //Once we obtain the mean and Variance of the proposal
+        //distribution, get a proposal!
+        proposedGamma = getMultiNormal(forwardMean, inverseForwardQW);
+//        System.err.println("forwardMean = "+forwardMean);
+//        System.err.println("proposedGamma = "+proposedGamma);
+
+
+        for (int i = 0; i < fieldLength; i++)
+            popSizeParameter.setParameterValue(i, proposedGamma.get(i));
+
+        //Now do some Metropolis-Hastings stuff in 5 steps.
+        double hRatio = 0;
+
+        double proposedLike = 0;
+        double currentLike = 0;
+
+        //1. First calculate the difference in the log-likelihoods
+        for (int i = 0; i < fieldLength; i++) {
+            proposedLike += -proposedGamma.get(i) - wNative[i] * Math.exp(-proposedGamma.get(i));
+            currentLike += -currentGamma.get(i) - wNative[i] * Math.exp(-currentGamma.get(i));
+        }
+
+        hRatio = proposedLike - currentLike;
+
+        //2. Now the prior for gamma
+        diagonal1.zero();
+        diagonal2.zero();
+
+        proposedQ.mult(proposedGamma, diagonal1);
+        currentQ.mult(currentGamma, diagonal2);
+
+        hRatio += 0.5 * logGeneralizedDeterminant(proposedQ) - 0.5 * proposedGamma.dot(diagonal1);
+        hRatio -= 0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal2);
+
+        //3. Now the prior for tau, no need for lambda prior, its 1.
+        hRatio += precisionPrior(newPrecisionParameter, 0.01, 0.01);
+        hRatio -= precisionPrior(currentPrecisionParameter, 0.01, 0.01);
+
+        //4. Next find the difference in the proposal ratio's for gamma
+        //This part sucks cuz you have to do all the backwards stuff
+        diagonal1.zero();
+        diagonal2.zero();
+        diagonal3.zero();
+        workingDenseMatrix = Matrices.identity(fieldLength);
+
+        //This finds the mode under Q proposed
+        DenseVector modeBackward = newtonRaphson(wNative, proposedGamma, currentQ.copy());
+
+        for (int i = 0; i < fieldLength; i++) {
+            //Expand around current value
+            //diagonal1.set(i,w[i]*Math.exp(-proposedGamma.get(i)));
+            //diagonal2.set(i, proposedGamma.get(i) + 1);
+
+            //Expand about the mode
+            diagonal1.set(i, wNative[i] * Math.exp(-modeBackward.get(i)));
+            diagonal2.set(i, modeBackward.get(i) + 1);
+
+            backwardQW.set(i, i, diagonal1.get(i) + backwardQW.get(i, i));
+            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
+        }
+
+        backwardQW.solve(I, workingDenseMatrix);
+        UpperSPDDenseMatrix inverseBackwardQW = new UpperSPDDenseMatrix(workingDenseMatrix, true);
+
+
+        inverseBackwardQW.mult(diagonal1, backwardMean);
+
+        //A lot of these steps are necessary
+        //because MTJ has some bad matrix multiplication
+        //and addition routines.
+
+        for (int i = 0; i < fieldLength; i++) {
+            diagonal1.set(i, currentGamma.get(i) - backwardMean.get(i));
+            diagonal2.set(i, proposedGamma.get(i) - forwardMean.get(i));
+        }
+
+        backwardQW.mult(diagonal1, diagonal3);
+
+        hRatio += 0.5 * logGeneralizedDeterminant(backwardQW) - 0.5 * diagonal1.dot(diagonal3);
+
+        diagonal3.zero();
+        forwardQW.mult(diagonal2, diagonal3);
+
+        hRatio -= 0.5 * logGeneralizedDeterminant(forwardQW) - 0.5 * diagonal2.dot(diagonal3);
+
+//        System.err.println("finalRatio = "+hRatio);
+//        System.exit(-1);
+
+
+        return hRatio;
+    }
 
     //MCMCOperator INTERFACE
 

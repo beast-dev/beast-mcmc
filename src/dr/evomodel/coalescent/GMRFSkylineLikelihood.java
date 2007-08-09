@@ -25,8 +25,6 @@
 
 package dr.evomodel.coalescent;
 
-import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
@@ -34,11 +32,13 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 /**
  * A likelihood function for the Gaussian Markov random field population trajectory.
  * *
  *
+ * @author Erik Bloomquist
  * @author Vladimir Minin
  * @author Marc Suchard
  * @version $Id: GMRFSkylineLikelihood.java,v 1.3 2007/03/20 22:40:04 msuchard Exp $
@@ -55,19 +55,22 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
 
     // PRIVATE STUFF
 
-    private Parameter popSizeParameter;
-    private Parameter precisionParameter;
-    private Parameter lambdaParameter;
-    double[] gmrfWeights;
-    private int params;
-    private double[] coalescentIntervals;
-    private double[] storedCoalescentIntervals;
-    private double[] sufficientStatistics;
-    private double[] storedSufficientStatistics;
+    protected Parameter popSizeParameter;
+    protected Parameter precisionParameter;
+    protected Parameter lambdaParameter;
+    protected double[] gmrfWeights;
+    protected int fieldLength;
+    protected double[] coalescentIntervals;
+    protected double[] storedCoalescentIntervals;
+    protected double[] sufficientStatistics;
+    protected double[] storedSufficientStatistics;
 
-    DoubleMatrix2D gmrfWeightMatrix;
-    DoubleMatrix2D Q;
+    protected SymmTridiagMatrix weightMatrix;
+    protected SymmTridiagMatrix storedWeightMatrix;
 
+    public GMRFSkylineLikelihood() {
+        super(SKYLINE_LIKELIHOOD);
+    }
 
     public GMRFSkylineLikelihood(Tree tree, Parameter popParameter, Parameter precParameter, Parameter lambda) {
         super(SKYLINE_LIKELIHOOD);
@@ -76,9 +79,9 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         this.precisionParameter = precParameter;
         this.lambdaParameter = lambda;
         int tips = tree.getExternalNodeCount();
-        params = popSizeParameter.getDimension();
-        if (tips - params != 1) {
-            throw new IllegalArgumentException("Number of tips (" + tips + ") must be one greater than number of pop sizes (" + params + ")");
+        fieldLength = popSizeParameter.getDimension();
+        if (tips - fieldLength != 1) {
+            throw new IllegalArgumentException("Number of tips (" + tips + ") must be one greater than number of pop sizes (" + fieldLength + ")");
         }
 
         this.tree = tree;
@@ -89,15 +92,11 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         addParameter(precisionParameter);
         addParameter(lambdaParameter);
         setupIntervals();
-        coalescentIntervals = new double[params];
-        storedCoalescentIntervals = new double[params];
-        sufficientStatistics = new double[params];
-        storedSufficientStatistics = new double[params];
+        coalescentIntervals = new double[fieldLength];
+        storedCoalescentIntervals = new double[fieldLength];
+        sufficientStatistics = new double[fieldLength];
+        storedSufficientStatistics = new double[fieldLength];
 
-        gmrfWeightMatrix = new DenseDoubleMatrix2D(params, params);
-        Q = new DenseDoubleMatrix2D(params, params);
-
-        System.err.println("From constructor");
         setupGMRFWeights();
 
         addStatistic(new DeltaStatistic());
@@ -137,50 +136,51 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
             }
         }
 
-        for (int i = 0; i < index - 1; i++) {
-            gmrfWeightMatrix.set(i, i + 1, -2 / (coalescentIntervals[i] + coalescentIntervals[i + 1]));
-//                    raw.getDataValue(i, 0) + raw.getDataValue(i+1, 0)));
-            gmrfWeightMatrix.set(i + 1, i, gmrfWeightMatrix.get(i, i + 1));
+        //Set up the weight Matrix
+        double[] offdiag = new double[fieldLength - 1];
+        double[] diag = new double[fieldLength];
+
+//        double precision = precisionParameter.getParameterValue(0);
+
+        //First set up the offdiagonal entries;
+        for (int i = 0; i < fieldLength - 1; i++) {
+            offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]);
         }
 
+        //Then set up the diagonal entries;
+        for (int i = 1; i < fieldLength - 1; i++)
+            diag[i] = -(offdiag[i] + offdiag[i - 1]);
 
-        for (int i = 1; i < index - 1; i++) {
-            gmrfWeightMatrix.set(i, i, -gmrfWeightMatrix.get(i, i - 1) - gmrfWeightMatrix.get(i, i + 1));
-        }
-        gmrfWeightMatrix.set(0, 0, -gmrfWeightMatrix.get(0, 1));
-        gmrfWeightMatrix.set(index - 1, index - 1,
-                -gmrfWeightMatrix.get(index - 1, index - 2));
+        //Take care of the endpoints
+        diag[0] = -offdiag[0];
+        diag[fieldLength - 1] = -offdiag[fieldLength - 2];
 
-//        System.err.println(gmrfWeightMatrix.toString());
-//        System.err.println("Weights routine known="+intervalsKnown);
 
+        weightMatrix = new SymmTridiagMatrix(diag, offdiag);
 
     }
 
-//    public void updateQ(double inTau,double inLambda){
-//		tau = inTau;
-//		lambda = inLambda;
-//
-//		for(int i = 0; i < raw.getNumberObservations(); i++){
-//			Q.set(i, i, tau*(weightMatrix.get(i, i)*lambda + 1 - lambda));
-//
-//		}
-//
-//		for(int i = 0; i < raw.getNumberObservations() -1; i++){
-//			Q.set(i, i+1, weightMatrix.get(i, i+1)*tau*lambda);
-//			Q.set(i+1, i, weightMatrix.get(i+1,i)*tau*lambda);
-//		}
-//		Q.set(0, 0, weightMatrix.get(0,0)*tau);
-//		Q.set(raw.getNumberObservations()-1, raw.getNumberObservations()-1,
-//				weightMatrix.get(raw.getNumberObservations()-1, raw.getNumberObservations()-1)*tau);
-//
-//	}
+
+    public SymmTridiagMatrix getScaledWeightMatrix(double precision) {
+        SymmTridiagMatrix a = weightMatrix.copy();
+        for (int i = 0; i < a.numRows() - 1; i++) {
+            a.set(i, i, a.get(i, i) * precision);
+            a.set(i + 1, i, a.get(i + 1, i) * precision);
+        }
+        a.set(fieldLength - 1, fieldLength - 1, a.get(fieldLength - 1, fieldLength - 1) * precision);
+        return a;
+    }
+
+    public SymmTridiagMatrix getCopyWeightMatrix() {
+        return weightMatrix.copy();
+    }
 
 
     protected void storeState() {
         super.storeState();
         System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
         System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
+        storedWeightMatrix = weightMatrix.copy();
     }
 
 
@@ -188,6 +188,7 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         super.restoreState();
         System.arraycopy(storedCoalescentIntervals, 0, coalescentIntervals, 0, storedCoalescentIntervals.length);
         System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
+        weightMatrix = storedWeightMatrix;
 
     }
 
@@ -293,15 +294,16 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         return lambdaParameter;
     }
 
-    public DoubleMatrix2D getWeightMatrix() {
-        return gmrfWeightMatrix;
+    public SymmTridiagMatrix getWeightMatrix() {
+        return weightMatrix.copy();
     }
+
 
     public double calculateWeightedSSE() {
         double weightedSSE = 0;
         double currentPopSize = popSizeParameter.getParameterValue(0);
         double currentInterval = coalescentIntervals[0];
-        for (int j = 1; j < params; j++) {
+        for (int j = 1; j < fieldLength; j++) {
             double nextPopSize = popSizeParameter.getParameterValue(j);
             double nextInterval = coalescentIntervals[j];
             double delta = nextPopSize - currentPopSize;

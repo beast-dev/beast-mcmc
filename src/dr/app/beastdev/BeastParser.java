@@ -225,16 +225,16 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.inference.model.ParameterParser());
         addXMLObjectParser(dr.inference.model.TestStatistic.PARSER);
 
-		addXMLObjectParser(dr.inference.model.MeanStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.MeanStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.VarianceStatistic.PARSER);
-		addXMLObjectParser(dr.inference.model.ProductStatistic.PARSER);
-		addXMLObjectParser(dr.inference.model.SumStatistic.PARSER);
-		addXMLObjectParser(dr.inference.model.ReciprocalStatistic.PARSER);
-		addXMLObjectParser(dr.inference.model.NegativeStatistic.PARSER);
-		addXMLObjectParser(dr.inference.model.NotStatistic.PARSER);
-		addXMLObjectParser(dr.inference.model.ExponentialStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.ProductStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.SumStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.ReciprocalStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.NegativeStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.NotStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.ExponentialStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.LogarithmStatistic.PARSER);
-		addXMLObjectParser(dr.inference.model.ExpressionStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.ExpressionStatistic.PARSER);
 
         addXMLObjectParser(dr.inference.mcmc.MCMC.PARSER);
         addXMLObjectParser(dr.inference.ml.MLOptimizer.PARSER);
@@ -278,6 +278,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.coalescent.GMRFSkylineLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkylineGibbsOperator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkylineBlockUpdateOperator.PARSER);
+        addXMLObjectParser(dr.evomodel.coalescent.GMRFTestLikelihood.PARSER);
 
     }
 

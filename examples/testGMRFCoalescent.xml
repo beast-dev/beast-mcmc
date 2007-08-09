@@ -34,10 +34,22 @@
         </nodeHeights>
     </treeModel>
 
-    <gmrfSkyLineLikelihood id="coalescent">
-        <populationTree>
-            <treeModel idref="treeModel"/>
-        </populationTree>
+    <!--<gmrfSkyLineLikelihood id="coalescent">-->
+    <!--<populationTree>-->
+    <!--<treeModel idref="treeModel"/>-->
+    <!--</populationTree>-->
+    <!--<populationSizes>-->
+    <!--<parameter id="skyline.logPopSize" dimension="3" value="0.0 1.0 2.0"/>-->
+    <!--</populationSizes>-->
+    <!--<precisionParameter>-->
+    <!--<parameter id="skyline.precision" value="1.0"/>-->
+    <!--</precisionParameter>-->
+    <!--<lambdaParameter>-->
+    <!--<parameter id="lambda" value="1.0" lower="0.0" upper="1.0"/>-->
+    <!--</lambdaParameter>-->
+    <!--</gmrfSkyLineLikelihood>-->
+
+    <gmrfTestLikelihood id="coalescent">
         <populationSizes>
             <parameter id="skyline.logPopSize" dimension="3" value="0.0 1.0 2.0"/>
         </populationSizes>
@@ -47,7 +59,13 @@
         <lambdaParameter>
             <parameter id="lambda" value="1.0" lower="0.0" upper="1.0"/>
         </lambdaParameter>
-    </gmrfSkyLineLikelihood>
+        <intervals>
+            <parameter id="myIntervals" value="1.0 1.0 2.0"/>
+        </intervals>
+        <sufficientStatistics>
+            <parameter id="myStats" value="4.5 3.0 2.0"/>
+        </sufficientStatistics>
+    </gmrfTestLikelihood>
 
     <gammaPrior id="prior.precision" shape="1.0" scale="3.0" offset="0.0">
         <parameter idref="skyline.precision"/>
@@ -67,20 +85,20 @@
         </gmrfBlockUpdateOperator>
     </operators>
 
-    <mcmc id="mcmc" chainLength="1000000" verbose="false">
+    <mcmc id="mcmc" chainLength="10000" verbose="false">
         <posterior>
             <likelihood>
                 <gmrfSkyLineLikelihood idref="coalescent"/>
             </likelihood>
-		<!--	<prior>
-                <gammaPrior idref="prior.precision"/>
-			</prior> -->
+            <!--	<prior>
+                   <gammaPrior idref="prior.precision"/>
+               </prior> -->
         </posterior>
         <operators idref="operators"/>
-        <log id="logScreen" logEvery="20000">
+        <log id="logScreen" logEvery="100">
             <column dp="4">
                 <likelihood idref="coalescent"/>
-			<!--	<prior idref="prior.precision"/> -->
+                <!--	<prior idref="prior.precision"/> -->
                 <parameter idref="skyline.logPopSize"/>
                 <parameter idref="skyline.precision"/>
             </column>

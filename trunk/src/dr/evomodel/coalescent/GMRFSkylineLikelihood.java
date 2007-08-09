@@ -32,6 +32,9 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+import no.uib.cipr.matrix.DenseVector;
+import no.uib.cipr.matrix.NotConvergedException;
+import no.uib.cipr.matrix.SymmTridiagEVD;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 /**
@@ -246,39 +249,75 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         // Calculate GMRF density; here GMRF = RW(1)
         logL += -0.5 * calculateWeightedSSE() * precisionParameter.getParameterValue(0);
 
+        // Matrix operations taken from block update sampler to calculate data likelihood and field prior
+
+        double currentLike = 0;
+        DenseVector diagonal1 = new DenseVector(fieldLength);
+        DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
+        for (int i = 0; i < fieldLength; i++) {
+            currentLike += -currentGamma.get(i) - sufficientStatistics[i] * Math.exp(-currentGamma.get(i));
+        }
+
+        SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0));
+        currentQ.mult(currentGamma, diagonal1);
+
+        currentLike -= 0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1);
+        // todo the line above is missing a normalizing constant involving factors of 2*pi
+
 /*
 
-		WinBUGS code to fixed tree:  (A:4.0,(B:2.0,(C:0.5,D:1.0):1.0):2.0)
+        WinBUGS code to fixed tree:  (A:4.0,(B:2.0,(C:0.5,D:1.0):1.0):2.0)
 
-		model {
+        model {
 
-			stat1 ~ dexp(rate[1])
-			stat2 ~ dexp(rate[2])
-			stat3 ~ dexp(rate[3])
+            stat1 ~ dexp(rate[1])
+            stat2 ~ dexp(rate[2])
+            stat3 ~ dexp(rate[3])
 
-			rate[1] <- 1 / exp(theta[1])
-			rate[2] <- 1 / exp(theta[2])
-			rate[3] <- 1 / exp(theta[3])
+            rate[1] <- 1 / exp(theta[1])
+            rate[2] <- 1 / exp(theta[2])
+            rate[3] <- 1 / exp(theta[3])
 
-			theta[1] ~ dnorm(0, 0.001)
-			theta[2] ~ dnorm(theta[1], weight[1])
-			theta[3] ~ dnorm(theta[2], weight[2])
+            theta[1] ~ dnorm(0, 0.001)
+            theta[2] ~ dnorm(theta[1], weight[1])
+            theta[3] ~ dnorm(theta[2], weight[2])
 
-			weight[1] <- tau / 1.0
-			weight[2] <- tau / 1.5
+            weight[1] <- tau / 1.0
+            weight[2] <- tau / 1.5
 
-			tau ~ dgamma(1,0.3333)
+            tau ~ dgamma(1,0.3333)
 
-			stat1 <- 9 / 2
-			stat2 <- 6 / 2
-			stat3 <- 4 / 2
+            stat1 <- 9 / 2
+            stat2 <- 6 / 2
+            stat3 <- 4 / 2
 
-		} 
+        } 
 
 */
 
 //		return logL;
         return 0;
+    }
+
+    public static double logGeneralizedDeterminant(SymmTridiagMatrix X) {
+        //Set up the eigenvalue solver
+        SymmTridiagEVD eigen = new SymmTridiagEVD(X.numRows(), false);
+        //Solve for the eigenvalues
+        try {
+            eigen.factor(X);
+        } catch (NotConvergedException e) {
+            throw new RuntimeException("Not converged error in generalized determinate calculation.\n" + e.getMessage());
+        }
+
+        //Get the eigenvalues
+        double[] x = eigen.getEigenvalues();
+
+        double a = 0;
+        for (int i = 0; i < x.length; i++) {
+            if (x[i] > 0.00001)
+                a += Math.log(x[i]);
+        }
+        return a;
     }
 
 

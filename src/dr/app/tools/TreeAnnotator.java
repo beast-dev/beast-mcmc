@@ -173,7 +173,7 @@ public class TreeAnnotator {
         if (useSumCladeCredibility) {
             System.out.println("Highest Sum Clade Credibility: " + bestScore);
         } else {
-            System.out.println("Highest Total Clade Credibility: " + bestScore);
+            System.out.println("Highest Log Clade Credibility: " + bestScore);
         }
 
         return bestTree;
@@ -183,7 +183,7 @@ public class TreeAnnotator {
         if (useSumCladeCredibility) {
             return cladeSystem.getSumCladeCredibility(tree, tree.getRoot(), null);
         } else {
-            return cladeSystem.getProductCladeCredibility(tree, tree.getRoot(), null);
+            return cladeSystem.getLogCladeCredibility(tree, tree.getRoot(), null);
         }
     }
 
@@ -323,9 +323,9 @@ public class TreeAnnotator {
             return sum;
         }
 
-        public double getProductCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
+        public double getLogCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
 
-            double product = 1.0;
+            double logCladeCredibility = 0.0;
 
             if (tree.isExternal(node)) {
 
@@ -338,17 +338,17 @@ public class TreeAnnotator {
 
                     NodeRef node1 = tree.getChild(node, i);
 
-                    product *= getProductCladeCredibility(tree, node1, bits2);
+                    logCladeCredibility += getLogCladeCredibility(tree, node1, bits2);
                 }
 
-                product *= getCladeCredibility(bits2);
+                logCladeCredibility += Math.log(getCladeCredibility(bits2));
 
                 if (bits != null) {
                     bits.or(bits2);
                 }
             }
 
-            return product;
+            return logCladeCredibility;
         }
 
         private double getCladeCredibility(BitSet bits) {

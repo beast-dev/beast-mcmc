@@ -30,37 +30,39 @@ package dr.inference.operators;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: CoercableMCMCOperator.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface CoercableMCMCOperator extends MCMCOperator {
 
-	final int DEFAULT = 0;
-	final int COERCION_ON = 1;
-	final int COERCION_OFF = 2;
-	
-	public static final String AUTO_OPTIMIZE = "autoOptimize";
+    final int DEFAULT = 0;
+    final int COERCION_ON = 1;
+    final int COERCION_OFF = 2;
 
-	/**
-	 * A coercable parameter must have a range from -infinity to +infinity with a preference for
-	 * small numbers.
-	 * @return a "coercable" parameter
-	 */
-	double getCoercableParameter();
-	
-	/**
-	 * Sets the coercable parameter value. A coercable parameter must have a range from -infinity to +infinity with a preference for
-	 * small numbers.
-	 */
-	void setCoercableParameter(double value);
-	
-	/**
-	 * @return the underlying tuning parameter value
-	 */
-	double getRawParameter();
-	
-	/**
-	 * @return the mode of this operator.
+    public static final String AUTO_OPTIMIZE = "autoOptimize";
+
+    /**
+     * A coercable parameter must have a range from -infinity to +infinity with a preference for
+     * small numbers.
+     *
+     * @return a "coercable" parameter
+     */
+    double getCoercableParameter();
+
+    /**
+     * Sets the coercable parameter value. A coercable parameter must have a range from -infinity to +infinity with a preference for
+     * small numbers.
+     *
+     * @param value the value to set the coercible parameter to
+     */
+    void setCoercableParameter(double value);
+
+    /**
+     * @return the underlying tuning parameter value
+     */
+    double getRawParameter();
+
+    /**
+     * @return the mode of this operator.
 	 */
 	int getMode();
 }

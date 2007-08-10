@@ -26,24 +26,24 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.alignment.PatternList;
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.DataType;
+import dr.evoxml.DataTypeUtils;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-import dr.evoxml.DataTypeUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.text.NumberFormat;
 import java.util.logging.Logger;
 
 /**
  * A model of equlibrium frequencies
  *
- * @version $Id: FrequencyModel.java,v 1.26 2005/05/24 20:25:58 rambaut Exp $
- *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @version $Id: FrequencyModel.java,v 1.26 2005/05/24 20:25:58 rambaut Exp $
  */
 public class FrequencyModel extends AbstractModel {
 
@@ -63,19 +63,25 @@ public class FrequencyModel extends AbstractModel {
         frequencyParameter.setParameterValue(i, value);
     }
 
-    public final double getFrequency(int i) { return frequencyParameter.getParameterValue(i); }
+    public final double getFrequency(int i) {
+        return frequencyParameter.getParameterValue(i);
+    }
 
-    public int getFrequencyCount() { return frequencyParameter.getDimension(); }
+    public int getFrequencyCount() {
+        return frequencyParameter.getDimension();
+    }
 
     public final double[] getFrequencies() {
         double[] frequencies = new double[getFrequencyCount()];
-        for (int i =0; i < frequencies.length; i++) {
+        for (int i = 0; i < frequencies.length; i++) {
             frequencies[i] = getFrequency(i);
         }
         return frequencies;
     }
 
-    public DataType getDataType() { return dataType; }
+    public DataType getDataType() {
+        return dataType;
+    }
 
     // *****************************************************************
     // Interface Model
@@ -89,9 +95,14 @@ public class FrequencyModel extends AbstractModel {
         // no intermediates need recalculating....
     }
 
-    protected void storeState() {} // no state apart from parameters to store
-    protected void restoreState() {} // no state apart from parameters to restore
-    protected void acceptState() {} // no state apart from parameters to accept
+    protected void storeState() {
+    } // no state apart from parameters to store
+
+    protected void restoreState() {
+    } // no state apart from parameters to restore
+
+    protected void acceptState() {
+    } // no state apart from parameters to accept
 
     public Element createElement(Document doc) {
         throw new RuntimeException("Not implemented!");
@@ -102,19 +113,21 @@ public class FrequencyModel extends AbstractModel {
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return FREQUENCY_MODEL; }
+        public String getParserName() {
+            return FREQUENCY_MODEL;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             DataType dataType = DataTypeUtils.getDataType(xo);
 
-            Parameter freqsParam = (Parameter)xo.getSocketChild(FREQUENCIES);
+            Parameter freqsParam = (Parameter) xo.getSocketChild(FREQUENCIES);
             double[] frequencies = null;
 
-            for (int i =0; i < xo.getChildCount(); i++) {
+            for (int i = 0; i < xo.getChildCount(); i++) {
                 Object obj = xo.getChild(i);
                 if (obj instanceof PatternList) {
-                    frequencies = ((PatternList)obj).getStateFrequencies();
+                    frequencies = ((PatternList) obj).getStateFrequencies();
                 }
             }
 
@@ -131,10 +144,14 @@ public class FrequencyModel extends AbstractModel {
                 sb.append("Initial frequencies ");
             }
             sb.append("= {");
+
+            NumberFormat format = NumberFormat.getNumberInstance();
+            format.setMaximumFractionDigits(5);
+
             sb.append(freqsParam.getParameterValue(0));
             for (int j = 1; j < freqsParam.getDimension(); j++) {
                 sb.append(", ");
-                sb.append(freqsParam.getParameterValue(j));
+                sb.append(format.format(freqsParam.getParameterValue(j)));
             }
             sb.append("}");
             Logger.getLogger("dr.evomodel").info(sb.toString());
@@ -146,17 +163,21 @@ public class FrequencyModel extends AbstractModel {
             return "A model of equilibrium base frequencies.";
         }
 
-        public Class getReturnType() { return FrequencyModel.class; }
+        public Class getReturnType() {
+            return FrequencyModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new XORRule(
                         new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", DataType.getRegisteredDataTypeNames(), false),
                         new ElementRule(DataType.class)
                 ),
                 new ElementRule(FREQUENCIES,
-                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) })
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
 
         };
     };

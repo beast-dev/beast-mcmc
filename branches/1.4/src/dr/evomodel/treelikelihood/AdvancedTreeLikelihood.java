@@ -415,7 +415,8 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
             likelihoodCore.setNodeMatrixForUpdate(nodeNum);
 
-            if (tree.isExternal(node) && deltaParameter != null && deltaTips.contains(new Integer(node.getNumber()))) {
+            if (tree.isExternal(node) && deltaParameter != null &&
+                    (deltaTips.size() == 0 || deltaTips.contains(new Integer(node.getNumber())))) {
                 branchTime += deltaParameter.getParameterValue(0);
             }
 

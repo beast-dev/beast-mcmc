@@ -147,10 +147,6 @@ public class CovarionHKY extends AbstractCovarionDNAModel {
                         " hidden categories");
             }
 
-            for (int i = 0; i < freqModel.getFrequencyCount(); i++) {
-                System.out.println(HiddenNucleotides.INSTANCE.getChar(i) + "\t" + freqModel.getFrequency(i));
-            }
-
             return new CovarionHKY(dataType, kappaParam, switchingRates, rateRatioParam, freqModel);
         }
     };

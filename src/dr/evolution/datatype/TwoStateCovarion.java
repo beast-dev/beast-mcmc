@@ -32,37 +32,49 @@ package dr.evolution.datatype;
 public class TwoStateCovarion extends DataType {
 
     public static final String DESCRIPTION = "twoStateCovarion";
-	public static final int TYPE = COVARION;
-	public static final TwoStateCovarion INSTANCE = new TwoStateCovarion();
+    public static final int TYPE = COVARION;
+    public static final TwoStateCovarion INSTANCE = new TwoStateCovarion();
 
-    private TwoStateCovarion(){
-		stateCount = 4;
-		ambiguousStateCount = 6;
-	}
+    private TwoStateCovarion() {
+        stateCount = 4;
+        ambiguousStateCount = 6;
+    }
 
-	public int getState(char c){
-		switch(c){
-			case 'a': return 0;
-			case 'b': return 1;
-			case 'c': return 2;
-			case 'd': return 3;
-			case '0': return 4;
-			case '1': return 5;
-		}
-		return getGapState();
-	}
+    public int getState(char c) {
+        switch (c) {
+            case'a':
+                return 0;
+            case'b':
+                return 1;
+            case'c':
+                return 2;
+            case'd':
+                return 3;
+            case'0':
+                return 4;
+            case'1':
+                return 5;
+        }
+        return getGapState();
+    }
 
     public char getChar(int state) {
 
-	switch (state) {
-		case 0: return 'a';
-		case 1: return 'b';
-		case 2: return 'c';
-		case 3: return 'd';
-		case 4: return '0';
-		case 5: return '1';
-	}
-	return '-';
+        switch (state) {
+            case 0:
+                return 'a';
+            case 1:
+                return 'b';
+            case 2:
+                return 'c';
+            case 3:
+                return 'd';
+            case 4:
+                return '0';
+            case 5:
+                return '1';
+        }
+        return '-';
     }
 
     /**
@@ -71,83 +83,78 @@ public class TwoStateCovarion extends DataType {
      */
     public int[] getStates(int state) {
 
-	if(state >=4 && state <= 5){
-		int[] states = new int[2];
-		states[0] = state % 2;
-		states[1] = state % 2 + 2;
-		return states;
-	}
-
-	else throw new IllegalArgumentException();
+        if (state >= 4 && state <= 5) {
+            int[] states = new int[2];
+            states[0] = state % 2;
+            states[1] = state % 2 + 2;
+            return states;
+        } else throw new IllegalArgumentException();
     }
+
     /**
      * returns an array containing the non-ambiguous states that this state represents.
      */
     public boolean[] getStateSet(int state) {
 
-	boolean[] stateSet = new boolean[stateCount];
-	for (int i=0; i<stateCount; i++){
-		stateSet[i] = false;
-	}
-	if (!isAmbiguousState(state)){
-		stateSet[state] = true;
-	}
-	else if (state < (stateCount + 2)){
-		for (int i=0; i < stateCount; i++){
-			if ((i % 2) == (state % 2)){
-				stateSet[i] = true;
-			}
-		}
-	}
-	else {
-		for (int i=0; i<stateCount; i++){
-			stateSet[i] = true;
-		}
-	}
-	return stateSet;
+        boolean[] stateSet = new boolean[stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            stateSet[i] = false;
+        }
+        if (!isAmbiguousState(state)) {
+            stateSet[state] = true;
+        } else if (state < (stateCount + 2)) {
+            for (int i = 0; i < stateCount; i++) {
+                if ((i % 2) == (state % 2)) {
+                    stateSet[i] = true;
+                }
+            }
+        } else {
+            for (int i = 0; i < stateCount; i++) {
+                stateSet[i] = true;
+            }
+        }
+        return stateSet;
     }
 
-    public int getUnkownState(){
-	return stateCount + 2;
+    public int getUnkownState() {
+        return stateCount + 2;
     }
 
     public int getGapState() {
-	return stateCount + 3;
+        return stateCount + 3;
     }
 
     public boolean isAmbiguousChar(char c) {
-    	return isAmbiguousState(getState(c));
+        return isAmbiguousState(getState(c));
     }
 
-    public boolean isUnknownChar(char c){
-    	return isUnknownState(getState(c));
+    public boolean isUnknownChar(char c) {
+        return isUnknownState(getState(c));
     }
 
-    public boolean isGapChar(char c){
-    	return isGapState(getState(c));
+    public boolean isGapChar(char c) {
+        return isGapState(getState(c));
     }
 
-    public boolean isAmbiguousState(int state){
-    	return (state >= 4);
+    public boolean isAmbiguousState(int state) {
+        return (state >= 4);
     }
 
-    public boolean isUnknownState(int state){
-    	return (state == getUnknownState());
+    public boolean isUnknownState(int state) {
+        return (state == getUnknownState());
     }
 
-    public boolean isGapState(int state){
-    	return (state == getGapState());
+    public boolean isGapState(int state) {
+        return (state == getGapState());
     }
 
 
     public String getDescription() {
-//        return null;  //To change body of implemented methods use File | Settings | File Templates.
-          return DESCRIPTION; //To change body of implemented methods use File | Settings | File Templates.
+        return DESCRIPTION;
     }
 
     public int getType() {
-//        return 0;  //To change body of implemented methods use File | Settings | File Templates.
-          return TYPE;  //To change body of implemented methods use File | Settings | File Templates.
+        return TYPE;
     }
 
 }

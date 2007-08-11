@@ -51,6 +51,7 @@ abstract public class AbstractCovarionDNAModel extends AbstractSubstitutionModel
         }
         addParameter(switchingRates);
         addParameter(hiddenClassRates);
+        constructRateMatrixMap();
     }
 
     /**
@@ -77,49 +78,89 @@ abstract public class AbstractCovarionDNAModel extends AbstractSubstitutionModel
 
         double[] phi = switchingRates.getParameterValues();
         double[] rr = getRelativeDNARates();
-        double hiddenRate;
+        double[] hiddenRates = hiddenClassRates.getParameterValues();
 
-        int x = 0;
-        int y = 0;
-        for (int i = 0; i < hiddenClassCount; i++) {
-            if (i == 0) {
-                hiddenRate = 1.0;
-            } else {
-                hiddenRate = hiddenClassRates.getParameterValue(i - 1);
-            }
-            for (int j = i; j < hiddenClassCount; j++) {
-
-                if (i == j) {
-                    // within hidden rate class
-                    for (double r : rr) {
-                        relativeRates[x] = r * hiddenRate;
-                        x += 1;
-                    }
+        for (int i = 0; i < rateCount; i++) {
+            if (rateMatrixMap[i] == 0) {
+                relativeRates[i] = 0.0;
+            } else if (rateMatrixMap[i] < 7) {
+                if (hiddenClassMap[i] == 0) {
+                    relativeRates[i] = rr[rateMatrixMap[i] - 1];
                 } else {
-                    // between two hidden rate classes
-                    relativeRates[x] = phi[y];
-                    relativeRates[x + 1] = 0;
-                    relativeRates[x + 2] = 0;
-                    relativeRates[x + 3] = 0;
-                    relativeRates[x + 4] = phi[y];
-                    relativeRates[x + 5] = 0;
-                    relativeRates[x + 6] = 0;
-                    relativeRates[x + 7] = 0;
-                    relativeRates[x + 8] = phi[y];
-                    relativeRates[x + 9] = 0;
-                    relativeRates[x + 10] = 0;
-                    relativeRates[x + 11] = 0;
-                    relativeRates[x + 12] = phi[y];
-                    relativeRates[x + 13] = 0;
-                    relativeRates[x + 14] = 0;
-                    relativeRates[x + 15] = 0;
-                    x += 16;
-                    y += 1;
+                    relativeRates[i] = rr[rateMatrixMap[i] - 1] * hiddenRates[hiddenClassMap[i] - 1];
                 }
-
+            } else {
+                relativeRates[i] = phi[rateMatrixMap[i] - 7];
             }
         }
     }
+
+    /**
+     * Construct a map of the rate classes in the rate matrix:
+     * 0: class and nucleotide change
+     * 1: A <-> C
+     * 2: A <-> G
+     * 3: A <-> T
+     * 4: C <-> G
+     * 5: C <-> T
+     * 6: G <-> T
+     * 7: 0 <-> 1 class change
+     * 8: 0 <-> 2 class change
+     * et cetera
+     */
+    private void constructRateMatrixMap() {
+
+        byte rateClass;
+        int fromNuc, toNuc;
+        int fromRate, toRate;
+        int count = 0;
+
+        rateMatrixMap = new byte[rateCount];
+        hiddenClassMap = new byte[rateCount];
+
+        for (int i = 0; i < stateCount; i++) {
+
+            for (int j = i + 1; j < stateCount; j++) {
+
+                fromNuc = i % 4;
+                toNuc = j % 4;
+                fromRate = i / 4;
+                toRate = j / 4;
+
+                if (fromNuc == toNuc) {
+                    // rate transition
+                    if (fromRate == toRate) {
+                        throw new RuntimeException("Shouldn't be possible");
+                    }
+
+                    rateClass = (byte) (7 + getIndex(fromRate, toRate, hiddenClassCount));
+                } else if (fromRate != toRate) {
+                    rateClass = 0;
+                } else {
+                    rateClass = (byte) getIndex(fromNuc, toNuc, 4);
+                }
+
+                rateMatrixMap[count] = rateClass;
+                hiddenClassMap[count] = (byte) fromRate;
+                count++;
+            }
+        }
+    }
+
+    private int getIndex(int from, int to, int size) {
+        int index = 0;
+
+        int f = from;
+        while (f > 0) {
+            index += size - 1;
+            f -= 1;
+            size -= 1;
+        }
+        index += to - from - 1;
+
+        return index;
+    }
+
 
     /**
      * Normalize rate matrix to one expected substitution per unit time
@@ -162,6 +203,9 @@ abstract public class AbstractCovarionDNAModel extends AbstractSubstitutionModel
 
     Parameter switchingRates;
     Parameter hiddenClassRates;
+
+    byte[] rateMatrixMap;
+    byte[] hiddenClassMap;
 
     private int hiddenClassCount;
 }

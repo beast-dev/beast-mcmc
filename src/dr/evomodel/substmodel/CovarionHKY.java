@@ -66,7 +66,6 @@ public class CovarionHKY extends AbstractCovarionDNAModel {
     double[] getRelativeDNARates() {
         double kappa = kappaParameter.getParameterValue(0);
         return new double[]{1.0, kappa, 1.0, 1.0, kappa, 1.0};
-
     }
 
     /**

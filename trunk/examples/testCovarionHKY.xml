@@ -202,7 +202,7 @@
             <parameter id="hky.switchingRate" value="1.0" lower="0.0" upper="100.0"/>
         </switchingRates>
         <hiddenClassRates>
-            <parameter id="hky.classRate" value="0.5" lower="0.0" upper="0.0"/>
+            <parameter id="hky.classRate" value="0.5" lower="0.0" upper="1.0"/>
         </hiddenClassRates>
     </CovarionHKYModel>
 

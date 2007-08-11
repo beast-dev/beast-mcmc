@@ -139,7 +139,7 @@ public class FrequencyModel extends AbstractModel {
                 for (int j = 0; j < frequencies.length; j++) {
                     freqsParam.setParameterValue(j, frequencies[j]);
                 }
-                sb.append("Using emprical frequencies from data ");
+                sb.append("Using empirical frequencies from data ");
             } else {
                 sb.append("Initial frequencies ");
             }
@@ -148,7 +148,7 @@ public class FrequencyModel extends AbstractModel {
             NumberFormat format = NumberFormat.getNumberInstance();
             format.setMaximumFractionDigits(5);
 
-            sb.append(freqsParam.getParameterValue(0));
+            sb.append(format.format(freqsParam.getParameterValue(0)));
             for (int j = 1; j < freqsParam.getDimension(); j++) {
                 sb.append(", ");
                 sb.append(format.format(freqsParam.getParameterValue(j)));

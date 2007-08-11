@@ -85,10 +85,10 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.evoxml.TaxaParser());
         addXMLObjectParser(new dr.evoxml.DateParser());
         addXMLObjectParser(new dr.evoxml.DistanceMatrixParser());
+        addXMLObjectParser(new dr.evoxml.HiddenNucleotideParser());
 
         addXMLObjectParser(new AttributeParser());
         addXMLObjectParser(new AttributesParser());
-
 
         addXMLObjectParser(dr.evomodel.speciation.SpeciationLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.speciation.YuleModel.PARSER);
@@ -145,6 +145,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.substmodel.GeneralSubstitutionModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.HKY.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.GTR.PARSER);
+        addXMLObjectParser(dr.evomodel.substmodel.CovarionHKY.PARSER);
+        addXMLObjectParser(dr.evomodel.substmodel.CovarionGTR.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.EmpiricalAminoAcidModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.YangCodonModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.TwoStateCovarionModel.PARSER);
@@ -272,7 +274,6 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.operators.PrecisionMatrixGibbsOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.InternalTraitGibbsOperator.PARSER);
         addXMLObjectParser(dr.inference.model.CorrelationStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.continuous.BivariateDiscreteDiffusionModel.PARSER);
         addXMLObjectParser(dr.inference.operators.RandomWalkOnMapOperator.PARSER);
 
         //GMRF
@@ -280,7 +281,6 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkylineGibbsOperator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkylineBlockUpdateOperator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.GMRFTestLikelihood.PARSER);
-
     }
 
 }

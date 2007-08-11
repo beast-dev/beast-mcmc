@@ -77,17 +77,22 @@ abstract public class AbstractCovarionDNAModel extends AbstractSubstitutionModel
 
         double[] phi = switchingRates.getParameterValues();
         double[] rr = getRelativeDNARates();
+        double hiddenRate;
 
         int x = 0;
         int y = 0;
         for (int i = 0; i < hiddenClassCount; i++) {
-            double hiddenRate = hiddenClassRates.getParameterValue(i);
+            if (i == 0) {
+                hiddenRate = 1.0;
+            } else {
+                hiddenRate = hiddenClassRates.getParameterValue(i - 1);
+            }
             for (int j = i; j < hiddenClassCount; j++) {
 
                 if (i == j) {
                     // within hidden rate class
-                    for (int k = 0; k < rr.length; i++) {
-                        relativeRates[x] = rr[k] * hiddenRate;
+                    for (double r : rr) {
+                        relativeRates[x] = r * hiddenRate;
                         x += 1;
                     }
                 } else {
@@ -153,8 +158,6 @@ abstract public class AbstractCovarionDNAModel extends AbstractSubstitutionModel
                 matrix[i][j] = matrix[i][j] / (1.0 - switchingProportion);
             }
         }
-
-        System.out.println("proportion of changes that are switching = " + switchingProportion);
     }
 
     Parameter switchingRates;

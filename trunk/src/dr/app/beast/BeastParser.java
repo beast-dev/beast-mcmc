@@ -86,6 +86,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.evoxml.TaxaParser());
         addXMLObjectParser(new dr.evoxml.DateParser());
         addXMLObjectParser(new dr.evoxml.DistanceMatrixParser());
+        addXMLObjectParser(new dr.evoxml.HiddenNucleotideParser());
 
         addXMLObjectParser(new dr.xml.AttributeParser());
         addXMLObjectParser(new dr.xml.AttributesParser());
@@ -133,6 +134,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.substmodel.GeneralSubstitutionModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.HKY.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.GTR.PARSER);
+        addXMLObjectParser(dr.evomodel.substmodel.CovarionHKY.PARSER);
+        addXMLObjectParser(dr.evomodel.substmodel.CovarionGTR.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.EmpiricalAminoAcidModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.YangCodonModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.TwoStateCovarionModel.PARSER);

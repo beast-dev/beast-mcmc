@@ -131,10 +131,8 @@ public class HiddenNucleotides extends DataType {
 
         if (state >= stateCount && state <= stateCount + 3) {
             int[] states = new int[hiddenClassCount];
-            int k = 0;
             for (int i = 0; i < hiddenClassCount; i++) {
-                states[i] = state % 4 + k;
-                k += 4;
+                states[i] = state % 4 + (i * 4);
             }
             return states;
         } else throw new IllegalArgumentException();
@@ -156,6 +154,7 @@ public class HiddenNucleotides extends DataType {
                 if ((i % 4) == (state % 4)) {
                     stateSet[i] = true;
                 }
+
             }
         } else {
             for (int i = 0; i < stateCount; i++) {

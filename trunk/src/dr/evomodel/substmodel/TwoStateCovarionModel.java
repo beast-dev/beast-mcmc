@@ -1,5 +1,5 @@
 /*
- * CovarionSubstitutionModel.java
+ * TwoStateCovarionModel.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -25,65 +25,63 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.TwoStateCovarion;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
  * @author Helen Shearman
  * @author Alexei Drummond
- *
  * @version $Id$
  */
-public class CovarionSubstitutionModel extends GeneralSubstitutionModel {
+public class TwoStateCovarionModel extends GeneralSubstitutionModel {
 
     public static final String COVARION_MODEL = "covarionModel";
     public static final String ALPHA = "alpha";
-    public static final String BETA = "beta";
+    public static final String BETA = "switchingParameter";
     public static final String GAMMA = "gamma";
 
     /**
      * constructor
      *
-     * @param dataType the data type
-     * @param alphaParameter - the rate of evolution in slow mode
-     * @param betaParameter - the rate of flipping between slow and fast modes
+     * @param dataType           the data type
+     * @param freqModel          the frequencies
+     * @param alphaParameter     the rate of evolution in slow mode
+     * @param switchingParameter the rate of flipping between slow and fast modes
+     * @param gammaParameter     the rate of evolution in fast mode
      */
-    public CovarionSubstitutionModel(TwoStateCovarion dataType, FrequencyModel freqModel,
-                                     Parameter alphaParameter,
-                                     Parameter betaParameter, Parameter gammaParameter) {
+    public TwoStateCovarionModel(TwoStateCovarion dataType, FrequencyModel freqModel,
+                                 Parameter alphaParameter,
+                                 Parameter switchingParameter, Parameter gammaParameter) {
         super(COVARION_MODEL, dataType, freqModel, 5);
 
         alpha = alphaParameter;
-        beta = betaParameter;
+        this.switchingParameter = switchingParameter;
         gamma = gammaParameter;
 
-        addParameter(alpha );
-        addParameter(beta);
+        addParameter(alpha);
+        addParameter(this.switchingParameter);
         addParameter(gamma);
     }
 
     protected void setupRelativeRates() {
 
         relativeRates[0] = alpha.getParameterValue(0);
-        relativeRates[1] = beta.getParameterValue(0);
+        relativeRates[1] = switchingParameter.getParameterValue(0);
         relativeRates[2] = 0.0;
         relativeRates[3] = 0.0;
         relativeRates[4] = gamma.getParameterValue(0);
         relativeRates[5] = 1.0;
-
-        //for (int i = 0; i < 5; i++) {
-        //    System.out.print(relativeRates[i] + " ");
-        //}
-        //System.out.println();
     }
 
     /**
-     * Parses an element from an DOM document into a CovarionSubstitutionModel
+     * Parses an element from an DOM document into a TwoStateCovarionModel
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return COVARION_MODEL; }
+        public String getParserName() {
+            return COVARION_MODEL;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -91,28 +89,28 @@ public class CovarionSubstitutionModel extends GeneralSubstitutionModel {
             Parameter betaParameter;
             Parameter gammaParameter;
 
-            XMLObject cxo = (XMLObject)xo.getChild(FREQUENCIES);
-            FrequencyModel freqModel = (FrequencyModel)cxo.getChild(FrequencyModel.class);
+            XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
+            FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
             TwoStateCovarion dataType = TwoStateCovarion.INSTANCE;  // fancy new datatype courtesy of Helen
 
-            cxo = (XMLObject)xo.getChild(ALPHA);
-            alphaParameter = (Parameter)cxo.getChild(Parameter.class);
+            cxo = (XMLObject) xo.getChild(ALPHA);
+            alphaParameter = (Parameter) cxo.getChild(Parameter.class);
 
             // alpha must be positive and less than 1.0 because the fast rate is normalized to 1.0
             alphaParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
 
-            cxo = (XMLObject)xo.getChild(BETA);
-            betaParameter = (Parameter)cxo.getChild(Parameter.class);
+            cxo = (XMLObject) xo.getChild(BETA);
+            betaParameter = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject)xo.getChild(GAMMA);
-            gammaParameter = (Parameter)cxo.getChild(Parameter.class);
+            cxo = (XMLObject) xo.getChild(GAMMA);
+            gammaParameter = (Parameter) cxo.getChild(Parameter.class);
 
             if (dataType != freqModel.getDataType()) {
                 throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
             }
 
-            return new CovarionSubstitutionModel(dataType, freqModel, alphaParameter, betaParameter, gammaParameter);
+            return new TwoStateCovarionModel(dataType, freqModel, alphaParameter, betaParameter, gammaParameter);
         }
 
         //************************************************************************
@@ -123,30 +121,34 @@ public class CovarionSubstitutionModel extends GeneralSubstitutionModel {
             return "A covarion substitution model of langauge evolution with binary data and a hidden rate state with two rates.";
         }
 
-        public Class getReturnType() { return CovarionSubstitutionModel.class; }
+        public Class getReturnType() {
+            return TwoStateCovarionModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(FREQUENCIES, FrequencyModel.class),
-            new ElementRule(ALPHA,
-                new XMLSyntaxRule[] {
-                    new ElementRule(Parameter.class, true)}
-            ),
-            new ElementRule(BETA,
-                new XMLSyntaxRule[] {
-                    new ElementRule(Parameter.class, true)}
-            ),
-            new ElementRule(GAMMA,
-                new XMLSyntaxRule[] {
-                    new ElementRule(Parameter.class, true)}
-            )
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(FREQUENCIES, FrequencyModel.class),
+                new ElementRule(ALPHA,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class, true)}
+                ),
+                new ElementRule(BETA,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class, true)}
+                ),
+                new ElementRule(GAMMA,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class, true)}
+                )
         };
 
     };
 
 
     private Parameter alpha;
-    private Parameter beta;
+    private Parameter switchingParameter;
     private Parameter gamma;
 }

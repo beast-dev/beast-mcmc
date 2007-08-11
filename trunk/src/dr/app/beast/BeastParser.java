@@ -36,7 +36,6 @@ import java.util.Iterator;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: BeastParser.java,v 1.76 2006/08/30 16:01:59 rambaut Exp $
  */
 public class BeastParser extends XMLParser {
@@ -116,7 +115,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.coalescent.TwoEpochDemographicModel.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.ExponentialSawtoothModel.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.EmpiricalPiecewiseModel.PARSER);
-	    addXMLObjectParser(dr.evomodel.coalescent.operators.BayesianSkylineGibbsOperator.PARSER);
+        addXMLObjectParser(dr.evomodel.coalescent.operators.BayesianSkylineGibbsOperator.PARSER);
 
         // Structured coalescent
         addXMLObjectParser(dr.evomodel.coalescent.structure.StructuredCoalescentLikelihood.PARSER);
@@ -136,7 +135,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.substmodel.GTR.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.EmpiricalAminoAcidModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.YangCodonModel.PARSER);
-        addXMLObjectParser(dr.evomodel.substmodel.CovarionSubstitutionModel.PARSER);
+        addXMLObjectParser(dr.evomodel.substmodel.TwoStateCovarionModel.PARSER);
 
         addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.AdvancedTreeLikelihood.PARSER);

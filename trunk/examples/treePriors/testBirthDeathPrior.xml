@@ -161,7 +161,9 @@
                     <!-- Constrains birthrate>deathrate -->
                     <test>
                         <parameter idref="birthDeath.birthRate"/>
-                        <greaterThan><parameter idref="birthDeath.deathRate"/></greaterThan>
+                        <greaterThan>
+                            <parameter idref="birthDeath.deathRate"/>
+                        </greaterThan>
                     </test>
                 </booleanLikelihood>
                 <speciationLikelihood idref="speciation"/>

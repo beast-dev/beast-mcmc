@@ -196,13 +196,13 @@
             </frequencyModel>
         </frequencies>
         <kappa>
-            <parameter id="hky.kappa" value="1.0" lower="0.0" upper="100.0"/>
+            <parameter id="hky.kappa" value="4.0" lower="0.0" upper="100.0"/>
         </kappa>
         <switchingRates>
-            <parameter id="hky.switchingRate" value="1.0" lower="0.0" upper="100.0"/>
+            <parameter id="hky.switchingRate" value="1.0" lower="0.0" upper="1.0"/>
         </switchingRates>
         <hiddenClassRates>
-            <parameter id="hky.classRate" value="0.5" lower="0.0" upper="1.0"/>
+            <parameter id="hky.classRate" value="0.01" lower="0.0" upper="0.99"/>
         </hiddenClassRates>
     </CovarionHKYModel>
 
@@ -270,6 +270,12 @@
         <posterior id="posterior">
             <prior id="prior">
                 <coalescentLikelihood idref="coalescent"/>
+                <jeffreysPrior>
+                    <parameter idref="hky.kappa"/>
+                </jeffreysPrior>
+                <jeffreysPrior>
+                    <parameter idref="hky.classRate"/>
+                </jeffreysPrior>
             </prior>
             <likelihood id="likelihood">
                 <treeLikelihood idref="treeLikelihood"/>
@@ -289,9 +295,15 @@
             <column label="L(coalecent)" dp="4" width="12">
                 <coalescentLikelihood idref="coalescent"/>
             </column>
-            <parameter idref="hky.kappa"/>
-            <parameter idref="hky.switchingRate"/>
-            <parameter idref="hky.classRate"/>
+            <column label="hky.kappa" dp="4" width="12">
+                <parameter idref="hky.kappa"/>
+            </column>
+            <column label="switchRate" dp="4" width="12">
+                <parameter idref="hky.switchingRate"/>
+            </column>
+            <column label="hky.slowRate" dp="4" width="12">
+                <parameter idref="hky.classRate"/>
+            </column>
         </log>
         <log id="fileLog" logEvery="500" fileName="testCovarionHKY.log">
             <posterior idref="posterior"/>

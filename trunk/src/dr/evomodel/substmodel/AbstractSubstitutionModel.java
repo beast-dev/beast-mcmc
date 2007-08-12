@@ -233,11 +233,16 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
             for (j = i + 1; j < stateCount; j++) {
                 amat[i][j] = relativeRates[k] * freqModel.getFrequency(j);
                 amat[j][i] = relativeRates[k] * freqModel.getFrequency(i);
-                k++;
+                k += 1;
             }
         }
         makeValid(amat, stateCount);
         normalize(amat, freqModel.getFrequencies());
+
+        // copy q matrix for unit testing
+        for (i = 0; i < amat.length; i++) {
+            System.arraycopy(amat[i], 0, q[i], 0, amat[i].length);
+        }
 
         // compute eigenvalues and eigenvectors
         elmhes(amat, ordr, stateCount);
@@ -332,6 +337,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
         storedIevc = new double[stateCount][stateCount];
 
         amat = new double[stateCount][stateCount];
+        q = new double[stateCount][stateCount];
 
         ordr = new int[stateCount];
         evali = new double[stateCount];
@@ -353,6 +359,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
     private int[] ordr;
     private double[] evali;
     double amat[][];
+    double q[][];
 
     private synchronized double[][] popiexp() {
 

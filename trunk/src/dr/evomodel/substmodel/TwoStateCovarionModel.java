@@ -34,12 +34,12 @@ import dr.xml.*;
  * @author Alexei Drummond
  * @version $Id$
  */
-public class TwoStateCovarionModel extends GeneralSubstitutionModel {
+public class TwoStateCovarionModel extends AbstractSubstitutionModel {
 
     public static final String COVARION_MODEL = "covarionModel";
     public static final String ALPHA = "alpha";
-    public static final String BETA = "switchingParameter";
-    public static final String GAMMA = "gamma";
+    public static final String SWITCHING_RATE = "switchingRate";
+    public static final String FREQUENCIES = "frequencies";
 
     /**
      * constructor
@@ -48,20 +48,26 @@ public class TwoStateCovarionModel extends GeneralSubstitutionModel {
      * @param freqModel          the frequencies
      * @param alphaParameter     the rate of evolution in slow mode
      * @param switchingParameter the rate of flipping between slow and fast modes
-     * @param gammaParameter     the rate of evolution in fast mode
      */
     public TwoStateCovarionModel(TwoStateCovarion dataType, FrequencyModel freqModel,
                                  Parameter alphaParameter,
-                                 Parameter switchingParameter, Parameter gammaParameter) {
-        super(COVARION_MODEL, dataType, freqModel, 5);
+                                 Parameter switchingParameter) {
+        super(COVARION_MODEL, dataType, freqModel);
 
         alpha = alphaParameter;
         this.switchingParameter = switchingParameter;
-        gamma = gammaParameter;
 
         addParameter(alpha);
-        addParameter(this.switchingParameter);
-        addParameter(gamma);
+        addParameter(switchingParameter);
+        setupRelativeRates();
+    }
+
+    protected void frequenciesChanged() {
+        // DO NOTHING
+    }
+
+    protected void ratesChanged() {
+        setupRelativeRates();
     }
 
     protected void setupRelativeRates() {
@@ -70,9 +76,53 @@ public class TwoStateCovarionModel extends GeneralSubstitutionModel {
         relativeRates[1] = switchingParameter.getParameterValue(0);
         relativeRates[2] = 0.0;
         relativeRates[3] = 0.0;
-        relativeRates[4] = gamma.getParameterValue(0);
+        relativeRates[4] = switchingParameter.getParameterValue(0);
         relativeRates[5] = 1.0;
     }
+
+    public String toString() {
+
+        return SubstitutionModelUtils.toString(relativeRates, dataType, true, 2);
+    }
+
+    /**
+     * Normalize rate matrix to one expected substitution per unit time
+     *
+     * @param matrix the matrix to normalize to one expected substitution
+     * @param pi     the equilibrium distribution of states
+     */
+    void normalize(double[][] matrix, double[] pi) {
+
+        double subst = 0.0;
+        int dimension = pi.length;
+
+        for (int i = 0; i < dimension; i++) {
+            subst += -matrix[i][i] * pi[i];
+        }
+
+        // normalize, including switches
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                matrix[i][j] = matrix[i][j] / subst;
+            }
+        }
+
+        double switchingProportion = 0.0;
+        switchingProportion += matrix[0][2] * pi[2];
+        switchingProportion += matrix[2][0] * pi[0];
+        switchingProportion += matrix[1][3] * pi[3];
+        switchingProportion += matrix[3][1] * pi[1];
+
+        //System.out.println("switchingProportion=" + switchingProportion);
+
+        // normalize, removing switches
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                matrix[i][j] = matrix[i][j] / (1.0 - switchingProportion);
+            }
+        }
+    }
+
 
     /**
      * Parses an element from an DOM document into a TwoStateCovarionModel
@@ -86,8 +136,7 @@ public class TwoStateCovarionModel extends GeneralSubstitutionModel {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Parameter alphaParameter;
-            Parameter betaParameter;
-            Parameter gammaParameter;
+            Parameter switchingRateParameter;
 
             XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
             FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
@@ -100,17 +149,18 @@ public class TwoStateCovarionModel extends GeneralSubstitutionModel {
             // alpha must be positive and less than 1.0 because the fast rate is normalized to 1.0
             alphaParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
 
-            cxo = (XMLObject) xo.getChild(BETA);
-            betaParameter = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = (XMLObject) xo.getChild(GAMMA);
-            gammaParameter = (Parameter) cxo.getChild(Parameter.class);
+            cxo = (XMLObject) xo.getChild(SWITCHING_RATE);
+            switchingRateParameter = (Parameter) cxo.getChild(Parameter.class);
 
             if (dataType != freqModel.getDataType()) {
                 throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
             }
 
-            return new TwoStateCovarionModel(dataType, freqModel, alphaParameter, betaParameter, gammaParameter);
+            TwoStateCovarionModel model = new TwoStateCovarionModel(dataType, freqModel, alphaParameter, switchingRateParameter);
+
+            System.out.println(model);
+
+            return model;
         }
 
         //************************************************************************
@@ -118,7 +168,7 @@ public class TwoStateCovarionModel extends GeneralSubstitutionModel {
         //************************************************************************
 
         public String getParserDescription() {
-            return "A covarion substitution model of langauge evolution with binary data and a hidden rate state with two rates.";
+            return "A covarion substitution model on binary data and a hidden rate state with two rates.";
         }
 
         public Class getReturnType() {
@@ -135,14 +185,10 @@ public class TwoStateCovarionModel extends GeneralSubstitutionModel {
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class, true)}
                 ),
-                new ElementRule(BETA,
+                new ElementRule(SWITCHING_RATE,
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class, true)}
                 ),
-                new ElementRule(GAMMA,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class, true)}
-                )
         };
 
     };
@@ -150,5 +196,4 @@ public class TwoStateCovarionModel extends GeneralSubstitutionModel {
 
     private Parameter alpha;
     private Parameter switchingParameter;
-    private Parameter gamma;
 }

@@ -32,29 +32,29 @@ import dr.inference.model.Model;
  * <b>model of sequence substitution (rate matrix)</b>.
  * provides a convenient interface for the computation of transition probabilities
  *
- * @version $Id: SubstitutionModel.java,v 1.13 2005/05/24 20:25:58 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: SubstitutionModel.java,v 1.13 2005/05/24 20:25:58 rambaut Exp $
  */
 public interface SubstitutionModel extends Model {
 
-	/**
-	 * Get the complete transition probability matrix for the given distance.
-	 *
-	 * @param matrix an array to store the matrix
-	 */
-	public void getTransitionProbabilities(double distance, double[] matrix);
+    /**
+     * Get the complete transition probability matrix for the given distance.
+     *
+     * @param distance the time (branch length)
+     * @param matrix   an array to store the matrix
+     */
+    public void getTransitionProbabilities(double distance, double[] matrix);
 
-	/**
-	 * get the state frequencies
-	 *
-	 * @return the frequencies
-	 */
-	public FrequencyModel getFrequencyModel();
+    /**
+     * get the state frequencies
+     *
+     * @return the frequencies
+     */
+    public FrequencyModel getFrequencyModel();
 
-	/**
-	 * @return the data type
-	 */
-	public DataType getDataType();
+    /**
+     * @return the data type
+     */
+    public DataType getDataType();
 }

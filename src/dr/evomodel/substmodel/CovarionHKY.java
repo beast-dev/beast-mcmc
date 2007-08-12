@@ -89,7 +89,7 @@ public class CovarionHKY extends AbstractCovarionDNAModel {
         builder.append("Covarion HKY model with ");
         builder.append(getHiddenClassCount()).append(" rate classes.\n");
         builder.append("Relative rates: \n");
-        builder.append(super.toString());
+        builder.append(SubstitutionModelUtils.toString(relativeRates, dataType, true, 2));
         return builder.toString();
 
     }

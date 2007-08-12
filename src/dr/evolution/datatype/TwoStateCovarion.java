@@ -37,7 +37,7 @@ public class TwoStateCovarion extends DataType {
 
     private TwoStateCovarion() {
         stateCount = 4;
-        ambiguousStateCount = 6;
+        ambiguousStateCount = 8;
     }
 
     public int getState(char c) {

@@ -3,6 +3,8 @@ package dr.evomodel.substmodel;
 import dr.evolution.datatype.HiddenNucleotides;
 import dr.inference.model.Parameter;
 
+import java.text.NumberFormat;
+
 /**
  * A general time reversible model of nucleotide evolution with
  * covarion hidden rate categories.
@@ -137,7 +139,7 @@ abstract public class AbstractCovarionDNAModel extends AbstractSubstitutionModel
                 } else if (fromRate != toRate) {
                     rateClass = 0;
                 } else {
-                    rateClass = (byte) getIndex(fromNuc, toNuc, 4);
+                    rateClass = (byte) (1 + getIndex(fromNuc, toNuc, 4));
                 }
 
                 rateMatrixMap[count] = rateClass;
@@ -159,6 +161,65 @@ abstract public class AbstractCovarionDNAModel extends AbstractSubstitutionModel
         index += to - from - 1;
 
         return index;
+    }
+
+    public String toString() {
+
+        final int columnWidth = 7;
+
+        StringBuilder builder = new StringBuilder();
+
+        // write header
+
+
+        builder.append("   ");
+        for (int i = 0; i < stateCount; i++) {
+            builder.append(padded(dataType.getChar(i) + "", columnWidth));
+        }
+        builder.append(" \n");
+
+        // write matrix body
+
+        NumberFormat formatter = NumberFormat.getNumberInstance();
+        formatter.setMaximumFractionDigits(3);
+        int k = 0;
+        for (int i = 0; i < stateCount; i++) {
+            builder.append(dataType.getChar(i)).append(" ");
+            if (i == 0) {
+                builder.append("/");
+            } else if (i == stateCount - 1) {
+                builder.append("\\");
+            } else builder.append("|");
+            for (int l = 0; l < i; l++) {
+                builder.append(padded("*", columnWidth));
+            }
+            builder.append(padded("-", columnWidth));
+            for (int j = i + 1; j < stateCount; j++) {
+
+                builder.append(padded(formatter.format(relativeRates[k]), columnWidth));
+                k += 1;
+            }
+            //builder.append(formatter.format(relativeRates[k]));
+            if (i == 0) {
+                builder.append("\\\n");
+            } else if (i == stateCount - 1) {
+                builder.append("/\n");
+            } else builder.append("|\n");
+        }
+        return builder.toString();
+    }
+
+
+    private String padded(String s, int width) {
+        int extra = width - s.length();
+        for (int i = 0; i < (extra / 2); i++) {
+            s = " " + s;
+        }
+        extra = width - s.length();
+        for (int i = 0; i < extra; i++) {
+            s += " ";
+        }
+        return s;
     }
 
 

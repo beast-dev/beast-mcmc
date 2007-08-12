@@ -54,7 +54,7 @@ public class CovarionHKY extends AbstractCovarionDNAModel {
      * @param switchingRates   rate of switching between hidden categories
      * @param freqModel        the frequencies
      */
-    public CovarionHKY(HiddenNucleotides dataType, Parameter hiddenClassRates, Parameter switchingRates, Parameter kappaParameter, FrequencyModel freqModel) {
+    public CovarionHKY(HiddenNucleotides dataType, Parameter kappaParameter, Parameter hiddenClassRates, Parameter switchingRates, FrequencyModel freqModel) {
 
         super(COVARION_HKY, dataType, hiddenClassRates, switchingRates, freqModel);
 
@@ -82,6 +82,16 @@ public class CovarionHKY extends AbstractCovarionDNAModel {
      */
     public double getKappa() {
         return kappaParameter.getParameterValue(0);
+    }
+
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Covarion HKY model with ");
+        builder.append(getHiddenClassCount()).append(" rate classes.\n");
+        builder.append("Relative rates: \n");
+        builder.append(super.toString());
+        return builder.toString();
+
     }
 
     /**
@@ -122,12 +132,12 @@ public class CovarionHKY extends AbstractCovarionDNAModel {
 
             Parameter kappaParam;
             Parameter switchingRates;
-            Parameter rateRatioParam;
+            Parameter hiddenClassRates;
             FrequencyModel freqModel;
 
             kappaParam = (Parameter) xo.getSocketChild(KAPPA);
             switchingRates = (Parameter) xo.getSocketChild(SWITCHING_RATES);
-            rateRatioParam = (Parameter) xo.getSocketChild(HIDDEN_CLASS_RATES);
+            hiddenClassRates = (Parameter) xo.getSocketChild(HIDDEN_CLASS_RATES);
             freqModel = (FrequencyModel) xo.getSocketChild(FREQUENCIES);
 
             if (!(freqModel.getDataType() instanceof HiddenNucleotides)) {
@@ -146,7 +156,9 @@ public class CovarionHKY extends AbstractCovarionDNAModel {
                         " hidden categories");
             }
 
-            return new CovarionHKY(dataType, kappaParam, switchingRates, rateRatioParam, freqModel);
+            CovarionHKY model = new CovarionHKY(dataType, kappaParam, hiddenClassRates, switchingRates, freqModel);
+            System.out.println(model);
+            return model;
         }
     };
 }

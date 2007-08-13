@@ -80,10 +80,10 @@ public class Trace {
 	public int getCount() { return valueCount; }
 	public double getValue(int index) { return values[index]; }
 	public void getValues(int start, double[] destination) {
-		System.arraycopy(values, start, destination, 0, valueCount - start);
+		System.arraycopy(values, start, destination, 0, Math.min(valueCount - start, destination.length));
 	}
 	public void getValues(int start, double[] destination, int offset) {
-		System.arraycopy(values, start, destination, offset, valueCount - start);
+		System.arraycopy(values, start, destination, offset, Math.min(valueCount - start, destination.length - offset));
 	}
 
 	public String getName() { return name; }

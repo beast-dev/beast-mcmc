@@ -29,7 +29,9 @@ import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.DesignMatrix;
 import dr.inference.model.Likelihood;
+import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 import no.uib.cipr.matrix.DenseVector;
@@ -55,12 +57,16 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
     public static final String PRECISION_PARAMETER = "precisionParameter";
     public static final String POPULATION_TREE = "populationTree";
     public static final String LAMBDA_PARAMETER = "lambdaParameter";
-
+    public static final String BETA_PARAMETER = "betaParameter";
+    public static final String COVARIATE_MATRIX = "covariateMatrix";
+    public static final double LOG_TWO_TIMES_PI =  1.837877;
+    
     // PRIVATE STUFF
 
     protected Parameter popSizeParameter;
     protected Parameter precisionParameter;
     protected Parameter lambdaParameter;
+    protected Parameter betaParameter;
     protected double[] gmrfWeights;
     protected int fieldLength;
     protected double[] coalescentIntervals;
@@ -70,17 +76,22 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
 
     protected SymmTridiagMatrix weightMatrix;
     protected SymmTridiagMatrix storedWeightMatrix;
-
+    protected MatrixParameter dMatrix;
+    
     public GMRFSkylineLikelihood() {
         super(SKYLINE_LIKELIHOOD);
     }
 
-    public GMRFSkylineLikelihood(Tree tree, Parameter popParameter, Parameter precParameter, Parameter lambda) {
+    public GMRFSkylineLikelihood(Tree tree, Parameter popParameter, Parameter precParameter, 
+    		Parameter lambda, Parameter beta, MatrixParameter dMatrix) {
         super(SKYLINE_LIKELIHOOD);
 
         this.popSizeParameter = popParameter;
         this.precisionParameter = precParameter;
         this.lambdaParameter = lambda;
+        this.betaParameter = beta;
+        this.dMatrix = dMatrix;
+       
         int tips = tree.getExternalNodeCount();
         fieldLength = popSizeParameter.getDimension();
         if (tips - fieldLength != 1) {
@@ -94,6 +105,8 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         addParameter(popSizeParameter);
         addParameter(precisionParameter);
         addParameter(lambdaParameter);
+        addParameter(betaParameter);
+                
         setupIntervals();
         coalescentIntervals = new double[fieldLength];
         storedCoalescentIntervals = new double[fieldLength];
@@ -137,8 +150,10 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
                 length = 0;
                 weight = 0;
             }
+            
+           
         }
-
+        
         //Set up the weight Matrix
         double[] offdiag = new double[fieldLength - 1];
         double[] diag = new double[fieldLength];
@@ -149,7 +164,9 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         for (int i = 0; i < fieldLength - 1; i++) {
             offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]);
         }
-
+        
+       
+        
         //Then set up the diagonal entries;
         for (int i = 1; i < fieldLength - 1; i++)
             diag[i] = -(offdiag[i] + offdiag[i - 1]);
@@ -172,6 +189,20 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         }
         a.set(fieldLength - 1, fieldLength - 1, a.get(fieldLength - 1, fieldLength - 1) * precision);
         return a;
+    }
+    
+    public SymmTridiagMatrix getScaledWeightMatrix(double precision, double lambda){
+    	if(lambda == 1)
+    		return getScaledWeightMatrix(precision);
+    	
+    	SymmTridiagMatrix a = weightMatrix.copy();
+    	for(int i = 0; i < a.numRows() - 1; i++){
+    		a.set(i,i,precision*(1 - lambda + lambda*a.get(i, i)));
+    		a.set(i+1,i,a.get(i+1, i)*precision*lambda);
+    	}
+    	
+    	a.set(fieldLength-1,fieldLength-1,precision*(1 - lambda + lambda*a.get(fieldLength-1,fieldLength-1)));
+    	return a;
     }
 
     public SymmTridiagMatrix getCopyWeightMatrix() {
@@ -254,16 +285,25 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         double currentLike = 0;
         DenseVector diagonal1 = new DenseVector(fieldLength);
         DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
+        
         for (int i = 0; i < fieldLength; i++) {
             currentLike += -currentGamma.get(i) - sufficientStatistics[i] * Math.exp(-currentGamma.get(i));
         }
 
-        SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0));
+           
+        SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0),lambdaParameter.getParameterValue(0));
         currentQ.mult(currentGamma, diagonal1);
 
-        currentLike -= 0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1);
-        // todo the line above is missing a normalizing constant involving factors of 2*pi
-
+        currentLike += 0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1);
+        
+        if(lambdaParameter.getParameterValue(0) == 1){
+        	currentLike -= (fieldLength - 1)/2.0 * LOG_TWO_TIMES_PI; 
+        }
+        else{
+        	currentLike -= fieldLength/2.0 * LOG_TWO_TIMES_PI;
+        }
+        
+      
 /*
 
         WinBUGS code to fixed tree:  (A:4.0,(B:2.0,(C:0.5,D:1.0):1.0):2.0)
@@ -291,128 +331,141 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
             stat2 <- 6 / 2
             stat3 <- 4 / 2
 
-        } 
-
-*/
-
-//		return logL;
-        return 0;
-    }
-
-    public static double logGeneralizedDeterminant(SymmTridiagMatrix X) {
-        //Set up the eigenvalue solver
-        SymmTridiagEVD eigen = new SymmTridiagEVD(X.numRows(), false);
-        //Solve for the eigenvalues
-        try {
-            eigen.factor(X);
-        } catch (NotConvergedException e) {
-            throw new RuntimeException("Not converged error in generalized determinate calculation.\n" + e.getMessage());
         }
 
-        //Get the eigenvalues
-        double[] x = eigen.getEigenvalues();
+        */
+                return currentLike;
+//        		return logL;
+               
+            }
 
-        double a = 0;
-        for (int i = 0; i < x.length; i++) {
-            if (x[i] > 0.00001)
-                a += Math.log(x[i]);
+            public static double logGeneralizedDeterminant(SymmTridiagMatrix X) {
+                //Set up the eigenvalue solver
+                SymmTridiagEVD eigen = new SymmTridiagEVD(X.numRows(), false);
+                //Solve for the eigenvalues
+                try {
+                    eigen.factor(X);
+                } catch (NotConvergedException e) {
+                    throw new RuntimeException("Not converged error in generalized determinate calculation.\n" + e.getMessage());
+                }
+
+                //Get the eigenvalues
+                double[] x = eigen.getEigenvalues();
+
+                double a = 0;
+                for (int i = 0; i < x.length; i++) {
+                    if (x[i] > 0.00001)
+                        a += Math.log(x[i]);
+                }
+                return a;
+            }
+
+
+            public Parameter getPrecisionParameter() {
+                return precisionParameter;
+            }
+
+            public Parameter getPopSizeParameter() {
+                return popSizeParameter;
+            }
+
+            public Parameter getLambdaParameter() {
+                return lambdaParameter;
+            }
+
+            public SymmTridiagMatrix getWeightMatrix() {
+                return weightMatrix.copy();
+            }
+
+            public MatrixParameter getDesignMatrix(){
+            	return dMatrix;
+            }
+
+            public double calculateWeightedSSE() {
+                double weightedSSE = 0;
+                double currentPopSize = popSizeParameter.getParameterValue(0);
+                double currentInterval = coalescentIntervals[0];
+                for (int j = 1; j < fieldLength; j++) {
+                    double nextPopSize = popSizeParameter.getParameterValue(j);
+                    double nextInterval = coalescentIntervals[j];
+                    double delta = nextPopSize - currentPopSize;
+                    double weight = (currentInterval + nextInterval) / 2.0;
+                    weightedSSE += delta * delta / weight;
+                    currentPopSize = nextPopSize;
+                    currentInterval = nextInterval;
+                }
+                return weightedSSE;
+
+            }
+
+            // ****************************************************************
+            // Private and protected stuff
+            // ****************************************************************
+
+            public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+                public String getParserName() {
+                    return SKYLINE_LIKELIHOOD;
+                }
+
+                public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+                    XMLObject cxo = (XMLObject) xo.getChild(POPULATION_PARAMETER);
+                    Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
+
+                    cxo = (XMLObject) xo.getChild(PRECISION_PARAMETER);
+                    Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
+
+                    cxo = (XMLObject) xo.getChild(POPULATION_TREE);
+                    TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
+
+                    cxo = (XMLObject) xo.getChild(LAMBDA_PARAMETER);
+                    Parameter lambda = (Parameter) cxo.getChild(Parameter.class);
+                    
+                    cxo = (XMLObject) xo.getChild(BETA_PARAMETER);
+                    Parameter beta = (Parameter) cxo.getChild(Parameter.class);
+                    
+                    cxo = (XMLObject) xo.getChild(COVARIATE_MATRIX);
+                    MatrixParameter dMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
+                                
+                    return new GMRFSkylineLikelihood(treeModel, popParameter, precParameter, lambda, beta, dMatrix);
+                }
+
+                //************************************************************************
+                // AbstractXMLObjectParser implementation
+                //************************************************************************
+
+                public String getParserDescription() {
+                    return "This element represents the likelihood of the tree given the population size vector.";
+                }
+
+                public Class getReturnType() {
+                    return Likelihood.class;
+                }
+
+                public XMLSyntaxRule[] getSyntaxRules() {
+                    return rules;
+                }
+
+                private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                        new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class)
+                        }),
+                        new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class)
+                        }),
+                        new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
+                                new ElementRule(TreeModel.class)
+                        }),
+                        new ElementRule(LAMBDA_PARAMETER, new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class)
+                        }),
+                        new ElementRule(BETA_PARAMETER, new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class)
+                        }),
+                       
+                };
+            };
+
+
         }
-        return a;
-    }
-
-
-    public Parameter getPrecisionParameter() {
-        return precisionParameter;
-    }
-
-    public Parameter getPopSizeParameter() {
-        return popSizeParameter;
-    }
-
-    public Parameter getLambdaParameter() {
-        return lambdaParameter;
-    }
-
-    public SymmTridiagMatrix getWeightMatrix() {
-        return weightMatrix.copy();
-    }
-
-
-    public double calculateWeightedSSE() {
-        double weightedSSE = 0;
-        double currentPopSize = popSizeParameter.getParameterValue(0);
-        double currentInterval = coalescentIntervals[0];
-        for (int j = 1; j < fieldLength; j++) {
-            double nextPopSize = popSizeParameter.getParameterValue(j);
-            double nextInterval = coalescentIntervals[j];
-            double delta = nextPopSize - currentPopSize;
-            double weight = (currentInterval + nextInterval) / 2.0;
-            weightedSSE += delta * delta / weight;
-            currentPopSize = nextPopSize;
-            currentInterval = nextInterval;
-        }
-        return weightedSSE;
-
-    }
-
-    // ****************************************************************
-    // Private and protected stuff
-    // ****************************************************************
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SKYLINE_LIKELIHOOD;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject cxo = (XMLObject) xo.getChild(POPULATION_PARAMETER);
-            Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = (XMLObject) xo.getChild(PRECISION_PARAMETER);
-            Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = (XMLObject) xo.getChild(POPULATION_TREE);
-            TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
-
-            cxo = (XMLObject) xo.getChild(LAMBDA_PARAMETER);
-            Parameter lambda = (Parameter) cxo.getChild(Parameter.class);
-
-            return new GMRFSkylineLikelihood(treeModel, popParameter, precParameter, lambda);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents the likelihood of the tree given the population size vector.";
-        }
-
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
-                        new ElementRule(TreeModel.class)
-                }),
-                new ElementRule(LAMBDA_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-        };
-    };
-
-
-}

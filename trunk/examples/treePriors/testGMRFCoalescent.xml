@@ -2,6 +2,9 @@
 
 <beast>
 
+    <!-- Simple example -->
+    
+    <!--
     <taxa id="taxa1">
         <taxon id="A">
             <date value="0" direction="backwards" units="years"/>
@@ -16,11 +19,120 @@
             <date value="0" direction="backwards" units="years"/>
         </taxon>
     </taxa>
-
+     
     <newick id="startingTree">
         (A:4.0,(B:2.0,(C:0.5,D:1.0):1.0):2.0);
+    </newick> -->
+    
+    <!-- Real example -->
+    
+    <taxa id="taxa">
+		<taxon id="33">
+			<date value="0.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="2">
+			<date value="0.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="1">
+			<date value="5.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="32">
+			<date value="5.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="4">
+			<date value="5.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="3">
+			<date value="12.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="31">
+			<date value="12.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="30">
+			<date value="12.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="6">
+			<date value="18.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="7">
+			<date value="18.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="5">
+			<date value="18.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="8">
+			<date value="18.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="10">
+			<date value="30.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="9">
+			<date value="30.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="16">
+			<date value="30.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="13">
+			<date value="30.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="12">
+			<date value="30.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="21">
+			<date value="30.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="14">
+			<date value="30.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="25">
+			<date value="34.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="20">
+			<date value="34.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="18">
+			<date value="34.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="11">
+			<date value="34.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="19">
+			<date value="36.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="15">
+			<date value="36.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="27">
+			<date value="41.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="17">
+			<date value="41.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="29">
+			<date value="41.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="24">
+			<date value="41.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="28">
+			<date value="41.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="23">
+			<date value="48.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="22">
+			<date value="54.0" direction="forwards" units="months"/>
+		</taxon>
+		<taxon id="26">
+			<date value="54.0" direction="forwards" units="months"/>
+		</taxon>
+	</taxa>
+    
+    <newick id="startingTree">
+    	  (((1:12.740475687739668,2:7.740475687739668):2.954337114217388,(3:20.302008371404177,4:13.302008371404177):2.3928044305528786):4.536789201495111,(((((5:3.5719352068091865,((6:1.0125643269364488,7:1.0125643269364488):1.6523616592455568,8:2.6649259861820056):0.9070092206271809):3.4802504216837775,(9:14.8956942208276,10:14.8956942208276):4.156491407665364):7.967447742812041,(11:20.075676531178544,((12:4.187798971788368,13:4.187798971788368):4.542616052022481,((14:4.731270460845167,15:10.731270460845167):1.5185535126609153,(((16:1.276827447728536,17:12.276827447728536):1.4952101944243381,((18:4.861283443546377,19:6.861283443546377):0.8303065204001072,20:5.691589963946484):1.08044767820639):1.4944105820460365,(21:3.254736075173682,(((22:19.143979266225443,23:13.143979266225443):4.574217067578672,(24:8.749470219077004,25:1.7494702190770042):1.9687261147271116):1.0078032568918047,((26:17.60795004700678,27:4.607950047006781):5.1083543553871635,(28:4.92183490314963,29:4.92183490314963):4.794469499244315):2.0096951883019756):2.5287364844777613):1.0117121490252288):1.9833757493071715):2.480591050304767):7.345261507367695):10.94395684012646):9.300346717761421,((30:9.962929921165198,31:9.962929921165198):7.454764995982089,32:10.417694917147287):0.9022851719191394):4.271228819499008,33:10.591208908565434):4.640393094886733);
     </newick>
-
+        
+   
     <treeModel id="treeModel">
         <tree idref="startingTree"/>
         <rootHeight>
@@ -34,78 +146,82 @@
         </nodeHeights>
     </treeModel>
 
-    <!--<gmrfSkyLineLikelihood id="coalescent">-->
-    <!--<populationTree>-->
-    <!--<treeModel idref="treeModel"/>-->
-    <!--</populationTree>-->
-    <!--<populationSizes>-->
-    <!--<parameter id="skyline.logPopSize" dimension="3" value="0.0 1.0 2.0"/>-->
-    <!--</populationSizes>-->
-    <!--<precisionParameter>-->
-    <!--<parameter id="skyline.precision" value="1.0"/>-->
-    <!--</precisionParameter>-->
-    <!--<lambdaParameter>-->
-    <!--<parameter id="lambda" value="1.0" lower="0.0" upper="1.0"/>-->
-    <!--</lambdaParameter>-->
-    <!--</gmrfSkyLineLikelihood>-->
 
-    <gmrfTestLikelihood id="coalescent">
-        <populationSizes>
-            <parameter id="skyline.logPopSize" dimension="3" value="0.0 1.0 2.0"/>
-        </populationSizes>
-        <precisionParameter>
-            <parameter id="skyline.precision" value="1.0"/>
+    <matrixParameter id="designMatrix">
+    	 <parameter id="intercept"  value="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"/>
+    	 <parameter id="afterHaart" value="0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"/>
+    </matrixParameter>
+
+
+    <gmrfSkyLineLikelihood id="coalescent">
+  	  <populationTree>
+  		  <treeModel idref="treeModel"/>
+  	  </populationTree>
+  	  <!--
+  	  <populationSizes>
+  	  	<parameter id="skyline.logPopSize" dimension="3" value = "0.0 1.0 2.0"/>
+  	  </populationSizes> -->
+  	  	
+  	  <populationSizes>
+  		  <parameter id="skyline.logPopSize" dimension="32" value=" 5.05  1.89  3.50  4.74  3.77  3.59  4.43  2.51  3.48  3.31  4.08  3.08  3.51  0.79  2.28  3.13  3.21  3.87  3.55  1.24  1.91  1.11  3.07  4.75  2.99  5.21  2.94  3.06  1.73  2.62 -1.17  1.51"/>
+  	  </populationSizes>
+	
+	  <precisionParameter>
+    		<parameter id="skyline.precision" value="1.0"/>
         </precisionParameter>
-        <lambdaParameter>
-            <parameter id="lambda" value="1.0" lower="0.0" upper="1.0"/>
+    
+    	  <lambdaParameter>
+    		<parameter id="lambda" value="1.0" lower="0.0" upper="1.0"/>
         </lambdaParameter>
-        <intervals>
-            <parameter id="myIntervals" value="1.0 1.0 2.0"/>
-        </intervals>
-        <sufficientStatistics>
-            <parameter id="myStats" value="4.5 3.0 2.0"/>
-        </sufficientStatistics>
-    </gmrfTestLikelihood>
+        
+       <betaParameter>
+        	<parameter id="beta" dimension="2" value="0.0 0.0"/>
+       </betaParameter>
+       
+       <covariateMatrix>
+	       <matrixParameter idref="designMatrix"/>
+       </covariateMatrix> 
+        
+    </gmrfSkyLineLikelihood>
 
-    <gammaPrior id="prior.precision" shape="1.0" scale="3.0" offset="0.0">
+    
+    <gammaPrior id="prior.precision" shape="0.01" scale="100" offset="0.0">
         <parameter idref="skyline.precision"/>
     </gammaPrior>
 
+  
 
     <operators id="operators">
-        <!--	<randomWalkOperator windowSize="1.0" weight="10">
-              <parameter idref="skyline.logPopSize"/>
-          </randomWalkOperator>  -->
-        <!--	<gmrfGibbsOperator weight="1">
-              <gammaPrior idref="prior.precision"/>
-              <gmrfSkyLineLikelihood idref="coalescent"/>
-          </gmrfGibbsOperator> -->
-        <gmrfBlockUpdateOperator weight="1">
-            <gmrfSkyLineLikelihood idref="coalescent"/>
+     	  <gmrfBlockUpdateOperator weight="1">
+            <gmrfSkylineLikelihood idref="coalescent"/>
         </gmrfBlockUpdateOperator>
     </operators>
-
-    <mcmc id="mcmc" chainLength="10000" verbose="false">
+        
+    <mcmc id="mcmc" chainLength="1000000" verbose="false">
         <posterior>
             <likelihood>
                 <gmrfSkyLineLikelihood idref="coalescent"/>
             </likelihood>
-            <!--	<prior>
-                   <gammaPrior idref="prior.precision"/>
-               </prior> -->
+            <prior>
+                <gammaPrior idref="prior.precision"/>
+            </prior>
         </posterior>
         <operators idref="operators"/>
-        <log id="logScreen" logEvery="100">
+        <log id="logScreen" logEvery="10000">
             <column dp="4">
                 <likelihood idref="coalescent"/>
-                <!--	<prior idref="prior.precision"/> -->
-                <parameter idref="skyline.logPopSize"/>
+                <!--<prior idref="prior.precision"/> -->
                 <parameter idref="skyline.precision"/>
+                <parameter idref="skyline.logPopSize"/> 
+                <!-- <parameter idref="lambda"/> -->
+                <!-- <parameter idref="beta"/>   -->
             </column>
         </log>
-        <log id="logFile" logEvery="1000" fileName="testGMRFCoalescent.log">
+        <log id="logFile" logEvery="200" fileName="testGMRFCoalescent.log">
             <likelihood idref="coalescent"/>
+            <!-- <prior idref="prior.precision"/> -->
             <parameter idref="skyline.logPopSize"/>
+            
             <parameter idref="skyline.precision"/>
         </log>
     </mcmc>
@@ -117,7 +233,7 @@
         </property>
     </report>
 
-    <traceAnalysis fileName="testGMRFCoalescent.log" burnIn="1000"/>
+    <!-- <traceAnalysis fileName="testGMRFCoalescent.log" burnIn="10000"/> -->
 
 </beast>
 

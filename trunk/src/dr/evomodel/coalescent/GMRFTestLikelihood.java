@@ -1,6 +1,7 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.tree.Tree;
+import dr.inference.model.DesignMatrix;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -20,28 +21,31 @@ public class GMRFTestLikelihood extends GMRFSkylineLikelihood {
     public static final String INTERVAL_PARAMETER = "intervals";
     public static final String SUFFSTAT_PARAMETER = "sufficientStatistics";
 
-    public GMRFTestLikelihood(Tree tree, Parameter popParameter, Parameter precParameter, Parameter lambda) {
-        super(tree, popParameter, precParameter, lambda);
+    public GMRFTestLikelihood(Tree tree, Parameter popParameter, Parameter precParameter, Parameter lambda, Parameter beta, DesignMatrix design) {
+        super(tree, popParameter, precParameter, lambda, beta,design);
     }
 
 
     private Parameter intervalsParameter;
     private Parameter statsParameter;
-
-    public GMRFTestLikelihood(Parameter inPop, Parameter inPrec, Parameter inLambda, Parameter intervals, Parameter statParameter) {
+    private Parameter betaParameter;
+    
+    public GMRFTestLikelihood(Parameter inPop, Parameter inPrec, Parameter inLambda, Parameter inBeta, DesignMatrix design, Parameter intervals, Parameter statParameter) {
         super();
         popSizeParameter = inPop;
         precisionParameter = inPrec;
         lambdaParameter = inLambda;
         intervalsParameter = intervals;
         statsParameter = statParameter;
+        betaParameter = inBeta;
         fieldLength = popSizeParameter.getDimension();
         addParameter(popSizeParameter);
         addParameter(precisionParameter);
         addParameter(lambdaParameter);
         addParameter(intervalsParameter);
         addParameter(statsParameter);
-
+        addParameter(betaParameter);
+        
         setupGMRFWeights();
     }
 
@@ -136,7 +140,13 @@ public class GMRFTestLikelihood extends GMRFSkylineLikelihood {
             cxo = (XMLObject) xo.getChild(LAMBDA_PARAMETER);
             Parameter lambda = (Parameter) cxo.getChild(Parameter.class);
 
-            return new GMRFTestLikelihood(popParameter, precParameter, lambda, intervalParameter, statParameter);
+            cxo = (XMLObject) xo.getChild(BETA_PARAMETER);
+            Parameter betaParameter = (Parameter) cxo.getChild(Parameter.class);
+            
+            DesignMatrix designMatrix = (DesignMatrix)xo.getChild(DesignMatrix.class);
+            
+            
+            return new GMRFTestLikelihood(popParameter, precParameter, lambda, betaParameter, designMatrix, intervalParameter, statParameter);
 
         }
 

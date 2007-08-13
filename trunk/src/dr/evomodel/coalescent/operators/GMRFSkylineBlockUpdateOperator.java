@@ -8,6 +8,7 @@ import dr.xml.*;
 import no.uib.cipr.matrix.*;
 
 /**
+ * @author Marc Suchard
  * @author Erik Bloomquist
  *         <p/>
  *         Created by IntelliJ IDEA.
@@ -21,6 +22,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
     public static final String BLOCK_UPDATE_OPERATOR = "gmrfBlockUpdateOperator";
 
     private double scaleFactor;
+    private double lambdaScaleFactor;
     private int mode = CoercableMCMCOperator.DEFAULT;
     private int weight = 1;
     private int fieldLength;
@@ -33,7 +35,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 
     private DenseVector one;
     private DenseMatrix I;
-
+    
     public GMRFSkylineBlockUpdateOperator(GMRFSkylineLikelihood gmrfLikelihood, int weight, int mode) {
         super();
         this.mode = mode;
@@ -43,7 +45,8 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
         precisionParameter = gmrfLikelihood.getPrecisionParameter();
         lambdaParameter = gmrfLikelihood.getLambdaParameter();
 
-        scaleFactor = 2.0;
+        scaleFactor = 4;
+        lambdaScaleFactor = 0.0;
         fieldLength = popSizeParameter.getDimension();
 
 
@@ -57,9 +60,21 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 
     }
 
+    private double getNewLambda(double currentValue, double lambdaScale){
+		double a = MathUtils.nextDouble()*lambdaScale - lambdaScale/2;
+		double b = currentValue + a;
+		if(b > 1)
+			b = 2 - b;
+		if(b < 0)
+			b = -b;
+		
+		return b;
+	}
+    
     private double getNewPrecision(double currentValue, double scaleFactor) {
         double length = scaleFactor - 1 / scaleFactor;
         double returnValue = currentValue;
+
 
         if (scaleFactor == 1)
             return currentValue;
@@ -73,9 +88,9 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
     }
 
 
-    public double precisionPrior(double precision, double priorA, double priorB) {
-        return (priorA - 1.0) * Math.log(precision) - precision * priorB;
-    }
+    //public double precisionPrior(double precision, double priorA, double priorB) {
+    //    return (priorA - 1.0) * Math.log(precision) - precision * priorB;
+    //}
 
 
     public DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
@@ -111,7 +126,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 
         double a = 0;
         for (int i = 0; i < x.length; i++) {
-            if (x[i] > 0.00001)
+            if (x[i] > 0.00000001)
                 a += Math.log(x[i]);
         }
         return a;
@@ -133,7 +148,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
         double a = 0;
         for (int i = 0; i < x.length; i++) {
 
-            if (x[i] > 0.00001)
+            if (x[i] > 0.00000001)
                 a += Math.log(x[i]);
         }
         return a;
@@ -144,10 +159,16 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 
         DenseVector iterateGamma = currentGamma.copy();
         int numberIterations = 0;
+        int maxIterations = 200;
+        //TODO Integrate maxIterations and the stopValue into BEAST 
         while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > 0.01) {
             inverseJacobian(data, iterateGamma, proposedQ).multAdd(gradient(data, iterateGamma, proposedQ), iterateGamma);
             numberIterations++;
         }
+        
+        if(numberIterations > maxIterations)
+        	throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step.\n");
+        
         return iterateGamma;
     }
 
@@ -179,32 +200,26 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
     public double doOperation() throws OperatorFailedException {
 
         double currentPrecisionParameter = precisionParameter.getParameterValue(0);
-
+        
         //Generate a new precision.
         double newPrecisionParameter =
                 this.getNewPrecision(currentPrecisionParameter, scaleFactor);
 
         precisionParameter.setParameterValue(0, newPrecisionParameter);
 
-//        System.err.println("cur prec = "+currentPrecisionParameter);
-//        System.err.println("new prec = "+newPrecisionParameter);
-//        if( newPrecisionParameter > 1000)
-//                    System.exit(-1);
-
+        //Generate a new mixing parameter 
+        double currentLambda = lambdaParameter.getParameterValue(0);
+        double newLambda = getNewLambda(currentLambda,lambdaScaleFactor);
+        
+        lambdaParameter.setParameterValue(0, newLambda);
+        
         //Conditional on tau, generate a new value for gamma (it takes some work to do this).
         DenseVector currentGamma = new DenseVector(gmrfField.getPopSizeParameter().getParameterValues());
         DenseVector proposedGamma;
 
-//        System.err.println("currentGamma = "+currentGamma);
-
         //Get the current Precision and New Precision
-        SymmTridiagMatrix currentQ = gmrfField.getScaledWeightMatrix(currentPrecisionParameter);
-        SymmTridiagMatrix proposedQ = gmrfField.getScaledWeightMatrix(newPrecisionParameter);
-
-//        System.err.println("currentQ = "+currentQ);
-//        System.err.println("proposedQ = "+proposedQ);
-
-        //TODO Save the current value of Q.
+        SymmTridiagMatrix currentQ = gmrfField.getScaledWeightMatrix(currentPrecisionParameter, currentLambda);
+        SymmTridiagMatrix proposedQ = gmrfField.getScaledWeightMatrix(newPrecisionParameter, newLambda);
 
         //Get the data
         double[] wNative = gmrfField.getSufficientStatistics();
@@ -228,8 +243,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
         //NOT NEEDED IF EXPANDING UNDER CURRENT LOCATION
         DenseVector modeForward = newtonRaphson(wNative, currentGamma, proposedQ.copy());
 
-//        System.err.println("modeForward = "+modeForward);
-
+       
         //This part determines whether the taylor expansion
         //will occur around the current value or the mode
         for (int i = 0; i < fieldLength; i++) {
@@ -254,40 +268,37 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
         //Once we obtain the mean and Variance of the proposal
         //distribution, get a proposal!
         proposedGamma = getMultiNormal(forwardMean, inverseForwardQW);
-//        System.err.println("forwardMean = "+forwardMean);
-//        System.err.println("proposedGamma = "+proposedGamma);
-
-
+        
         for (int i = 0; i < fieldLength; i++)
             popSizeParameter.setParameterValue(i, proposedGamma.get(i));
 
         //Now do some Metropolis-Hastings stuff in 5 steps.
         double hRatio = 0;
 
-        double proposedLike = 0;
-        double currentLike = 0;
+     //     double proposedLike = 0;
+     //     double currentLike = 0;
 
         //1. First calculate the difference in the log-likelihoods
-        for (int i = 0; i < fieldLength; i++) {
-            proposedLike += -proposedGamma.get(i) - wNative[i] * Math.exp(-proposedGamma.get(i));
-            currentLike += -currentGamma.get(i) - wNative[i] * Math.exp(-currentGamma.get(i));
-        }
+     //   for (int i = 0; i < fieldLength; i++) {
+     //       proposedLike += -proposedGamma.get(i) - wNative[i] * Math.exp(-proposedGamma.get(i));
+     //       currentLike += -currentGamma.get(i) - wNative[i] * Math.exp(-currentGamma.get(i));
+     //   }
 
-        hRatio = proposedLike - currentLike;
+     //   hRatio = proposedLike - currentLike;
 
-        //2. Now the prior for gamma
-        diagonal1.zero();
-        diagonal2.zero();
+     //   2. Now the prior for gamma
+     //   diagonal1.zero();
+     //   diagonal2.zero();
 
-        proposedQ.mult(proposedGamma, diagonal1);
-        currentQ.mult(currentGamma, diagonal2);
+     //   proposedQ.mult(proposedGamma, diagonal1);
+     //  currentQ.mult(currentGamma, diagonal2);
 
-        hRatio += 0.5 * logGeneralizedDeterminant(proposedQ) - 0.5 * proposedGamma.dot(diagonal1);
-        hRatio -= 0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal2);
+     //  hRatio += 0.5 * logGeneralizedDeterminant(proposedQ) - 0.5 * proposedGamma.dot(diagonal1);
+     //  hRatio -= 0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal2);
 
-        //3. Now the prior for tau, no need for lambda prior, its 1.
-        hRatio += precisionPrior(newPrecisionParameter, 0.01, 0.01);
-        hRatio -= precisionPrior(currentPrecisionParameter, 0.01, 0.01);
+    //    //3. Now the prior for tau, no need for lambda prior, its 1.
+    //  hRatio += precisionPrior(newPrecisionParameter, 0.01, 0.01);
+    //  hRatio -= precisionPrior(currentPrecisionParameter, 0.01, 0.01);
 
         //4. Next find the difference in the proposal ratio's for gamma
         //This part sucks cuz you have to do all the backwards stuff
@@ -336,10 +347,10 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 
         hRatio -= 0.5 * logGeneralizedDeterminant(forwardQW) - 0.5 * diagonal2.dot(diagonal3);
 
-//        System.err.println("finalRatio = "+hRatio);
-//        System.exit(-1);
+       
 
 
+       
         return hRatio;
     }
 

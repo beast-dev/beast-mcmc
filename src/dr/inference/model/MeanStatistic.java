@@ -71,7 +71,6 @@ public class MeanStatistic extends Statistic.Abstract {
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String[] getParserNames() { return new String[] { getParserName(), "mean" }; }
 		public String getParserName() { return MEAN_STATISTIC; }
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {

@@ -15,102 +15,112 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
  */
 public class MultivariateNormalDistribution implements MultivariateDistribution {
 
-	private double[] mean;
-	private double[][] precision;
-	//	private int dim;
-	private double logDet;
+    public static final String TYPE = "MultivariateNormal";
 
-	public MultivariateNormalDistribution(double[] mean, double[][] precision) {
-		this.mean = mean;
-		this.precision = precision;
-		logDet = calculatePrecisionMatrixDeterminate(precision);
+    private double[] mean;
+    private double[][] precision;
+    //	private int dim;
+    private double logDet;
 
-	}
+    public MultivariateNormalDistribution(double[] mean, double[][] precision) {
+        this.mean = mean;
+        this.precision = precision;
+        logDet = calculatePrecisionMatrixDeterminate(precision);
 
-	public double[][] getScaleMatrix() {
-		return precision;
-	}
+    }
 
-	public static final double calculatePrecisionMatrixDeterminate(double[][] precision) {
-		try {
-			return (new Matrix(precision).determinant());
-		} catch (
-				IllegalDimension e) {
-			throw new RuntimeException(e.getMessage());
-		}
-	}
+    public String getType() {
+        return TYPE;
+    }
 
-	public double logPdf(Parameter x) {
-		return logPdf(x.getParameterValues(), mean, precision, logDet, 1.0);
-	}
+    public double[][] getScaleMatrix() {
+        return precision;
+    }
 
-	public static final double logPdf(double[] x, double[] mean, double[][] precision,
-	                                  double logDet, double scale) {
-		int dim = x.length;
-		double[] delta = new double[dim];
-		double[] tmp = new double[dim];
+    public double[] getMean() {
+        return mean;
+    }
 
-		for (int i = 0; i < dim; i++) {
-			delta[i] = x[i] - mean[i];
-		}
+    public static final double calculatePrecisionMatrixDeterminate(double[][] precision) {
+        try {
+            return (new Matrix(precision).determinant());
+        } catch (
+                IllegalDimension e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
 
-		for (int i = 0; i < dim; i++) {
-			for (int j = 0; j < dim; j++) {
-				tmp[i] += delta[j] * precision[j][i];
-			}
-		}
+    public double logPdf(Parameter x) {
+        return logPdf(x.getParameterValues(), mean, precision, logDet, 1.0);
+    }
 
-		double SSE = 0;
+    public static final double logPdf(double[] x, double[] mean, double[][] precision,
+                                      double logDet, double scale) {
+        int dim = x.length;
+        double[] delta = new double[dim];
+        double[] tmp = new double[dim];
 
-		for (int i = 0; i < dim; i++)
-			SSE += tmp[i] * delta[i];
+        for (int i = 0; i < dim; i++) {
+            delta[i] = x[i] - mean[i];
+        }
 
-		SSE /= scale;
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                tmp[i] += delta[j] * precision[j][i];
+            }
+        }
 
-		return dim * logNormalize + 0.5 * logDet - 0.5 * SSE;
+        double SSE = 0;
 
-	}
+        for (int i = 0; i < dim; i++)
+            SSE += tmp[i] * delta[i];
+
+        SSE /= scale;
+
+        return dim * logNormalize + 0.5 * logDet - 0.5 * SSE;
+
+    }
 
 //	public double[][] inverseScaleMatrix() {
 //			return inverseScaleMatrix;
 //		}
 
-	public double[] nextMultivariateNormal() {
-		return nextMultivariateNormal(mean, precision);
-	}
+    public double[] nextMultivariateNormal() {
+        return nextMultivariateNormal(mean, precision);
+    }
 
 
-	public static double[] nextMultivariateNormal(double[] mean, double[][] precision) {
+    public static double[] nextMultivariateNormal(double[] mean, double[][] precision) {
 
-		int dim = mean.length;
+        int dim = mean.length;
 
-		double[][] cholesky = null;
+        double[][] cholesky = null;
 
-		double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();
+        double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();
 
-		try {
-			cholesky = (new CholeskyDecomposition(variance)).getL();
-		} catch (IllegalDimension illegalDimension) {
-			// todo - check for square variance matrix before here
-		}
+        try {
+            cholesky = (new CholeskyDecomposition(variance)).getL();
+        } catch (IllegalDimension illegalDimension) {
+            // todo - check for square variance matrix before here
+        }
 
-		double[] x = new double[dim];
-		for (int i = 0; i < dim; i++)
-			x[i] = mean[i];
+        double[] x = new double[dim];
+        for (int i = 0; i < dim; i++)
+            x[i] = mean[i];
 
-		double[] epsilon = new double[dim];
-		for (int i = 0; i < dim; i++)
-			epsilon[i] = MathUtils.nextGaussian();
+        double[] epsilon = new double[dim];
+        for (int i = 0; i < dim; i++)
+            epsilon[i] = MathUtils.nextGaussian();
 
-		for (int i = 0; i < dim; i++) {
-			for (int j = i; j < dim; j++) {
-				x[i] += cholesky[j][i] * epsilon[j];
-				// caution: decomposition returns lower triangular
-			}
-		}
-		return x;
-	}
+        for (int i = 0; i < dim; i++) {
+            for (int j = i; j < dim; j++) {
+                x[i] += cholesky[j][i] * epsilon[j];
+                // caution: decomposition returns lower triangular
+            }
+        }
+        return x;
+    }
 
-	public static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);
+    public static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);
 
 }

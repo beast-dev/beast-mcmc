@@ -278,7 +278,7 @@ public class BeastParser extends XMLParser {
 
         //GMRF
         addXMLObjectParser(dr.evomodel.coalescent.GMRFSkylineLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkylineGibbsOperator.PARSER);
+        addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkylineFixedEffectsGibbsOperator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkylineBlockUpdateOperator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.GMRFTestLikelihood.PARSER);
     }

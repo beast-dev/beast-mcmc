@@ -11,8 +11,12 @@ import dr.inference.model.Parameter;
  */
 public interface MultivariateDistribution {
 
-	public double logPdf(Parameter x);
+    public double logPdf(Parameter x);
 
-	public double[][] getScaleMatrix();
+    public double[][] getScaleMatrix();
+
+    public double[] getMean();
+
+    public String getType();
 
 }

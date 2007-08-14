@@ -367,6 +367,10 @@ model {
         return weightMatrix.copy();
     }
 
+    public Parameter getBetaParameter(){
+    	return betaParameter;
+    }
+    
     public MatrixParameter getDesignMatrix() {
         return dMatrix;
     }

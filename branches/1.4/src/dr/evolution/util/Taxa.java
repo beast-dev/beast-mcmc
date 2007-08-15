@@ -40,16 +40,29 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 	public Taxa() {
 	}
 
-	public Taxa(String id) {
+    public Taxa(String id) {
 		this.id = id;
 	}
 
-	/** Adds a taxon of the given name and return its index. */
+    public Taxa(TaxonList list) {
+        addTaxa(list);
+    }
+
+    /**
+     * Adds the given taxon and returns its index. If the taxon is already in the list then it is not
+     * added and it returns -1.
+     *
+     * @param taxon the taxon to be added
+     */
 	public int addTaxon(Taxon taxon) {
-		taxa.add(taxon);
-		fireTaxonAdded(taxon);
-		return taxa.size() - 1;
-	}
+        int index = getTaxonIndex(taxon);
+        if (index == -1) {
+            taxa.add(taxon);
+            fireTaxonAdded(taxon);
+            index = taxa.size() - 1;
+        }
+        return index;
+    }
 
 	/** Removes a taxon of the given name and returns true if successful. */
 	public boolean removeTaxon(Taxon taxon) {
@@ -60,7 +73,19 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 		return success;
 	}
 
-	public void removeAllTaxa() {
+    public void addTaxa(TaxonList taxa) {
+        for(int nt = 0; nt < taxa.getTaxonCount(); ++nt) {
+            addTaxon(taxa.getTaxon(nt));
+        }
+    }
+
+    public void removeTaxa(TaxonList taxa) {
+        for(int nt = 0; nt < taxa.getTaxonCount(); ++nt) {
+            removeTaxon(taxa.getTaxon(nt));
+        }
+    }
+
+    public void removeAllTaxa() {
 		taxa.clear();
 		fireTaxonRemoved(null);
 	}

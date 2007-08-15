@@ -1,11 +1,28 @@
 /*
  * BeautiApp.java
  *
- * (c) 2002-2005 BEAST Development Core Team
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
  *
- * This package may be distributed under the
- * Lesser Gnu Public Licence (LGPL)
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  */
+
 package dr.app.beauti;
 
 import dr.app.beast.BeastVersion;
@@ -15,9 +32,9 @@ import org.virion.jam.framework.*;
 import javax.swing.*;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
  */
 public class BeautiApp extends MultiDocApplication {
 	private final static Version version = new BeastVersion();
@@ -33,13 +50,12 @@ public class BeautiApp extends MultiDocApplication {
      * None of these operations result in a file being associated with the DocumentFrame. All
      * these actions are located in the BeautiFrame class. This overriden method should never
      * be called and throw a RuntimeException if it is.
+     *
      * @return the action
      */
     public Action getOpenAction() {
         throw new UnsupportedOperationException("getOpenAction is not supported");
     }
-
-
 
     // Main entry point
     static public void main(String[] args) {

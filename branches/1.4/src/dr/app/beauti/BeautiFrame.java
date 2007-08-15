@@ -171,8 +171,11 @@ public class BeautiFrame extends DocumentFrame {
 
     public final void priorsChanged() {
         priorsPanel.getOptions(beautiOptions);
+
         operatorsPanel.setOptions(beautiOptions);
+
         priorsPanel.setOptions(beautiOptions);
+
         setDirty();
     }
 

@@ -2206,7 +2206,9 @@ public class BeastGenerator extends BeautiOptions {
                 for (int i = 0; i < taxonSets.size(); i++) {
                     TaxonList taxonSet = (TaxonList)taxonSets.get(i);
                     Parameter statistic = (Parameter)statistics.get(taxonSet);
-                    writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+                    Attribute mono = new Attribute.Default(CoalescentSimulator.IS_MONOPHYLETIC, taxonSetsMono.get(taxonSet));
+
+                    writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT, mono);
 
                     writer.writeTag(TaxaParser.TAXA,
                             new Attribute[]{new Attribute.Default("idref", taxonSet.getId())}, true);

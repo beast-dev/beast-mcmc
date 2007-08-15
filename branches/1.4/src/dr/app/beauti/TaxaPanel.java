@@ -542,7 +542,7 @@ public class TaxaPanel extends JPanel implements Exportable {
      * Returns true if taxa are all found in availableTaxa
      * @param taxa
      * @param availableTaxa
-     * @return
+     * @return true if the taxa are all found in availableTaxa
      */
     private boolean isCompatible(Taxa taxa, List availableTaxa) {
 
@@ -561,9 +561,9 @@ public class TaxaPanel extends JPanel implements Exportable {
             if (taxa2 != taxa && ((Boolean)options.taxonSetsMono.get(taxa2)).booleanValue()) {
                 if (taxa.containsAny(taxa2) && !taxa.containsAll(taxa2) && !taxa2.containsAll(taxa)) {
                     JOptionPane.showMessageDialog(frame,
-                            "You cannot enforce monophyly on this taxon set \n"+
-                                    "because it is not compatible with another taxon \n"+
-                                    "set, " + taxa2.getId() + ", for which monophyly is\n"+
+                            "You cannot enforce monophyly on this taxon set \n" +
+                                    "because it is not compatible with another taxon \n" +
+                                    "set, " + taxa2.getId() + ", for which monophyly is\n" +
                                     "enforced.",
                             "Warning",
                             JOptionPane.WARNING_MESSAGE);

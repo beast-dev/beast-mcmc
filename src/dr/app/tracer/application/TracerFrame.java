@@ -113,7 +113,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 
         topPanel = new JPanel(new BorderLayout(0, 0));
         topPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(0, 0, 6, 0)));
-        topPanel.add(new JLabel("TraceOld Files:"), BorderLayout.NORTH);
+        topPanel.add(new JLabel("Trace Files:"), BorderLayout.NORTH);
         topPanel.add(scrollPane1, BorderLayout.CENTER);
         topPanel.add(controlPanel1, BorderLayout.SOUTH);
 
@@ -434,7 +434,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
         }
 
         public String getDescription() {
-            return "Analysing TraceOld File...";
+            return "Analysing Trace File...";
         }
 
         public String getMessage() {
@@ -527,7 +527,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
     public final void doImport() {
 
         FileDialog dialog = new FileDialog(this,
-                "Import TraceOld File...",
+                "Import Trace File...",
                 FileDialog.LOAD);
 
         dialog.setVisible(true);
@@ -933,7 +933,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
         }
     };
 
-    private AbstractAction importAction = new AbstractAction("Import TraceOld File...") {
+    private AbstractAction importAction = new AbstractAction("Import Trace File...") {
         public void actionPerformed(ActionEvent ae) {
             doImport();
         }

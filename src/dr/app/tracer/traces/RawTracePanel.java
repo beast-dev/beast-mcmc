@@ -50,7 +50,7 @@ public class RawTracePanel extends JPanel implements Exportable {
                     "Right", "Bottom-Left", "Bottom", "Bottom-Right"}
     );
     private JComboBox colourByCombo = new JComboBox(
-            new String[]{"TraceOld", "TraceOld File", "All"}
+            new String[]{"Trace", "Trace File", "All"}
     );
     private JLabel messageLabel = new JLabel("No data loaded");
 

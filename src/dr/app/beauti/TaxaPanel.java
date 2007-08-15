@@ -538,6 +538,7 @@ public class TaxaPanel extends JPanel implements Exportable {
     }
 
     /**
+     * Returns true if taxa are all found in availableTaxa
      * @param taxa
      * @param availableTaxa
      * @return true if the taxa are all found in availableTaxa

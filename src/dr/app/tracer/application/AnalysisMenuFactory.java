@@ -20,7 +20,7 @@ public class AnalysisMenuFactory implements MenuFactory {
 	public static final String ADD_BAYESIAN_SKYLINE_RECONSTRUCTION = "Add Bayesian Skyline Reconstruction...";
 	public static final String ADD_TIME_DENSITY = "Add Time Density...";
 
-	public static final String CALCULATE_MARGINAL_LIKELIHOOD = "Calculate Marginal Likelihood...";
+	public static final String CALCULATE_BAYES_FACTORS = "Calculate Bayes Factors...";
 
 	public String getMenuName() {
 	    return "Analysis";
@@ -52,7 +52,7 @@ public class AnalysisMenuFactory implements MenuFactory {
 
 		    menu.addSeparator();
 
-		    item = new JMenuItem(((AnalysisMenuHandler)frame).getMarginalLikelihoodAction());
+		    item = new JMenuItem(((AnalysisMenuHandler)frame).getBayesFactorsAction());
 		    menu.add(item);
 
 	    } else {
@@ -84,7 +84,7 @@ public class AnalysisMenuFactory implements MenuFactory {
 
 		    menu.addSeparator();
 
-		    item = new JMenuItem(CALCULATE_MARGINAL_LIKELIHOOD);
+		    item = new JMenuItem(CALCULATE_BAYES_FACTORS);
 		    item.setEnabled(false);
 		    menu.add(item);
 	    }

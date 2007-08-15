@@ -51,7 +51,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
     private BayesianSkylineDialog bayesianSkylineDialog = null;
     private NewTemporalAnalysisDialog createTemporalAnalysisDialog = null;
 
-    private MarginalLikelihoodDialog marginalLikelihoodDialog = null;
+    private BayesFactorsDialog bayesFactorsDialog = null;
 
     public TracerFrame(String title) {
         super();
@@ -703,9 +703,9 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
         throw new UnsupportedOperationException("Not implemented yet...");
     }
 
-    private void doCalculateMarginalLikelihood() {
-        if (marginalLikelihoodDialog == null) {
-            marginalLikelihoodDialog = new MarginalLikelihoodDialog(this);
+    private void doCalculateBayesFactors() {
+        if (bayesFactorsDialog == null) {
+            bayesFactorsDialog = new BayesFactorsDialog(this);
         }
 
         if (currentTraceLists.size() != 1) {
@@ -715,11 +715,11 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
                     JOptionPane.INFORMATION_MESSAGE);
         }
 
-        if (marginalLikelihoodDialog.showDialog(currentTraceLists.get(0)) == JOptionPane.CANCEL_OPTION) {
+        if (bayesFactorsDialog.showDialog(currentTraceLists.get(0)) == JOptionPane.CANCEL_OPTION) {
             return;
         }
 
-        marginalLikelihoodDialog.createMarginalLikelihoodFrame(currentTraceLists.get(0), this);
+        bayesFactorsDialog.createBayesFactorsFrame(currentTraceLists.get(0), this);
 
     }
 
@@ -881,8 +881,8 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
         return addTimeDensity;
     }
 
-    public Action getMarginalLikelihoodAction() {
-        return marginalLikelihoodAction;
+    public Action getBayesFactorsAction() {
+        return bayesFactorsAction;
     }
 
     private AbstractAction demographicAction = new AbstractAction(AnalysisMenuFactory.DEMOGRAPHIC_RECONSTRUCTION) {
@@ -921,9 +921,9 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
         }
     };
 
-    private AbstractAction marginalLikelihoodAction = new AbstractAction(AnalysisMenuFactory.CALCULATE_MARGINAL_LIKELIHOOD) {
+    private AbstractAction bayesFactorsAction = new AbstractAction(AnalysisMenuFactory.CALCULATE_BAYES_FACTORS) {
         public void actionPerformed(ActionEvent ae) {
-            doCalculateMarginalLikelihood();
+            doCalculateBayesFactors();
         }
     };
 

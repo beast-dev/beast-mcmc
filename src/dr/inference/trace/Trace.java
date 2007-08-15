@@ -77,8 +77,14 @@ public class Trace {
         valueCount += values.length;
 	}
 
-	public int getCount() { return valueCount; }
-	public double getValue(int index) { return values[index]; }
+	public int getCount() {
+		return valueCount;
+	}
+
+	public double getValue(int index) {
+		return values[index];
+	}
+
 	public void getValues(int start, double[] destination) {
 		getValues(start, destination, 0);
 	}

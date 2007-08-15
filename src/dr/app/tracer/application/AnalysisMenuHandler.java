@@ -21,5 +21,5 @@ public interface AnalysisMenuHandler {
 
 	Action getAddTimeDensityAction();
 
-	Action getMarginalLikelihoodAction();
+	Action getBayesFactorsAction();
 }

@@ -308,7 +308,7 @@ public class CoalescentSimulator {
                                     int x = sizeOfIntersection(cnc.taxons, cnc1.taxons);
                                     if (x > 0) {
                                         Taxa combinedTaxa = new Taxa(cnc.taxons);
-                                        combinedTaxa.unionTaxons(cnc1.taxons);
+                                        combinedTaxa.addTaxa(cnc1.taxons);
                                         cnc = new TaxaConstraint(combinedTaxa, cnc.lower, cnc.upper, cnc.isMonophyletic);
                                         constraints.set(nc, cnc);
                                     }
@@ -355,7 +355,7 @@ public class CoalescentSimulator {
                                     final Tree tree = st.remove(k);
                                     --k;
                                     subs.add(tree);
-                                    newTaxons.removeTaxons(tree);
+                                    newTaxons.removeTaxa(tree);
                                 }
                             }
 

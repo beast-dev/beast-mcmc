@@ -26,7 +26,6 @@
 package dr.evolution.util;
 
 import dr.util.Identifiable;
-import dr.evolution.tree.Tree;
 
 import java.util.ArrayList;
 
@@ -46,15 +45,24 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 	}
 
     public Taxa(TaxonList list) {
-        addTaxons(list);
+        addTaxa(list);
     }
 
-    /** Adds a taxon of the given name and return its index. */
+    /**
+     * Adds the given taxon and returns its index. If the taxon is already in the list then it is not
+     * added but it returns its index.
+     *
+     * @param taxon the taxon to be added
+     */
 	public int addTaxon(Taxon taxon) {
-		taxa.add(taxon);
-		fireTaxonAdded(taxon);
-		return taxa.size() - 1;
-	}
+        int index = getTaxonIndex(taxon);
+        if (index == -1) {
+            taxa.add(taxon);
+            fireTaxonAdded(taxon);
+            index = taxa.size() - 1;
+        }
+        return index;
+    }
 
 	/** Removes a taxon of the given name and returns true if successful. */
 	public boolean removeTaxon(Taxon taxon) {
@@ -65,24 +73,15 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 		return success;
 	}
 
-    public void addTaxons(TaxonList list) {
-        for(int nt = 0; nt < list.getTaxonCount(); ++nt) {
-            addTaxon(list.getTaxon(nt));
+    public void addTaxa(TaxonList taxa) {
+        for(int nt = 0; nt < taxa.getTaxonCount(); ++nt) {
+            addTaxon(taxa.getTaxon(nt));
         }
     }
 
-    public void unionTaxons(TaxonList list) {
-        for(int nt = 0; nt < list.getTaxonCount(); ++nt) {
-            final Taxon taxon = list.getTaxon(nt);
-            if( getTaxonIndex(taxon) == -1 ) {
-                addTaxon(taxon);
-            }
-        }
-    }
-        
-    public void removeTaxons(TaxonList list) {
-        for(int nt = 0; nt < list.getTaxonCount(); ++nt) {
-            removeTaxon(list.getTaxon(nt));
+    public void removeTaxa(TaxonList taxa) {
+        for(int nt = 0; nt < taxa.getTaxonCount(); ++nt) {
+            removeTaxon(taxa.getTaxon(nt));
         }
     }
 

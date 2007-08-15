@@ -574,6 +574,12 @@ public class BeautiOptions {
             params.add(localClockRatesStatistic);
             params.add(localClockRateChangesStatistic);
         }
+
+        if (clockModel != STRICT_CLOCK) {
+            params.add(getParameter("meanRate"));
+            params.add(getParameter("coefficientOfVariation"));
+            params.add(getParameter("covariance"));
+        }
     }
 
     protected Parameter getParameter(String name) {

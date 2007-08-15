@@ -51,7 +51,7 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
         tabbedPane.addTab("Estimates", summaryIcon, summaryPanel);
         tabbedPane.addTab("Marginal Density", densityIcon, densityPanel);
         tabbedPane.addTab("Joint-Marginal", correlationIcon, correlationPanel);
-        tabbedPane.addTab("TraceOld", traceIcon, tracePanel);
+        tabbedPane.addTab("Trace", traceIcon, tracePanel);
 
         setLayout(new BorderLayout());
         add(tabbedPane, BorderLayout.CENTER);

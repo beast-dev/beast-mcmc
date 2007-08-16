@@ -29,6 +29,57 @@ public class TwoStateCovarionModelTest extends TestCase {
         dataType = model.dataType;
     }
 
+    public void testTransitionProbabilities() {
+
+        // with alpha == 1, the transition probability should be the same as binary jukes cantor
+        alpha.setParameterValue(0, 1.0);
+        switchingRate.setParameterValue(0, 1.0);
+
+        model.setupMatrix();
+
+        double[] matrix = new double[16];
+
+        double[] pi = model.getFrequencyModel().getFrequencies();
+
+        for (double distance = 0.01; distance <= 1.005; distance += 0.01) {
+            model.getTransitionProbabilities(distance, matrix);
+
+            double pChange =
+                    (matrix[1] + matrix[3]) * pi[0] +
+                            (matrix[4] + matrix[6]) * pi[1] +
+                            (matrix[9] + matrix[11]) * pi[2] +
+                            (matrix[12] + matrix[14]) * pi[3];
+
+            // analytical result for the probability of a mismatch in binary jukes cantor model
+            double jc = 0.5 * (1 - Math.exp(-2.0 * distance));
+
+            assertEquals(pChange, jc, 1e-14);
+        }
+
+        // with alpha < 1.0, the probability of difference should be smaller than binary jukes cantor
+        alpha.setParameterValue(0, 0.0);
+
+        model.setupMatrix();
+
+        for (double distance = 0.01; distance <= 1.005; distance += 0.01) {
+            model.getTransitionProbabilities(distance, matrix);
+
+            double pChange =
+                    (matrix[1] + matrix[3]) * pi[0] +
+                            (matrix[4] + matrix[6]) * pi[1] +
+                            (matrix[9] + matrix[11]) * pi[2] +
+                            (matrix[12] + matrix[14]) * pi[3];
+
+            // analytical result for the probability of a mismatch in binary jukes cantor model
+            double jc = 0.5 * (1 - Math.exp(-2.0 * distance));
+
+            System.out.println(distance + "\t" + jc + "\t" + pChange);
+
+            // this is an extremely weak test
+            // I need to find some analytical results for this probability!
+            assertTrue(pChange < jc);
+        }
+    }
 
     public void testSetupRelativeRates() throws Exception {
 

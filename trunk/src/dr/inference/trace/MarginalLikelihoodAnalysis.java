@@ -27,6 +27,7 @@ package dr.inference.trace;
 import dr.math.LogTricks;
 import dr.math.MathUtils;
 import dr.util.Attribute;
+import dr.util.TaskListener;
 import dr.xml.*;
 
 import java.io.File;
@@ -52,7 +53,6 @@ public class MarginalLikelihoodAnalysis {
 	private double[] sample;
 	private int burnin;
 	private boolean harmonicOnly;
-	private boolean doBootstrap;
 	private int bootstrapLength;
 
 
@@ -62,7 +62,7 @@ public class MarginalLikelihoodAnalysis {
 
 
 	public MarginalLikelihoodAnalysis(double[] sample, String traceName, int burnin) {
-		this(sample, traceName, burnin, false, true, 1000);
+		this(sample, traceName, burnin, false, 1000);
 	}
 	
 	public String getTraceName() {
@@ -80,15 +80,13 @@ public class MarginalLikelihoodAnalysis {
 	 * @param traceName used for 'toString' display purposes only
 	 * @param burnin used for 'toString' display purposes only
 	 * @param harmonicOnly
-	 * @param doBootstrap
-	 * @param bootstrapLength
+	 * @param bootstrapLength a value of zero will turn off bootstrapping
 	 */
-	public MarginalLikelihoodAnalysis(double[] sample, String traceName, int burnin, boolean harmonicOnly, boolean doBootstrap, int bootstrapLength) {
+	public MarginalLikelihoodAnalysis(double[] sample, String traceName, int burnin, boolean harmonicOnly, int bootstrapLength) {
 		this.sample = sample;
 		this.traceName = traceName;
 		this.burnin = burnin;
 		this.harmonicOnly = harmonicOnly;
-		this.doBootstrap = doBootstrap;
 		this.bootstrapLength = bootstrapLength;
 //        System.err.println("setting burnin to "+burnin);
 	}
@@ -122,33 +120,42 @@ public class MarginalLikelihoodAnalysis {
 		return sum - denominator + StrictMath.log(size);
 	}
 
-	public void update() {
+	public void calculate() {
 
 		logMarginalLikelihood = calculateLogMarginalLikelihood(sample);
-		if (doBootstrap) {
-			final int bsLength = bootstrapLength;
+		if (bootstrapLength > 1) {
 			final int sampleLength = sample.length;
 			double[] bsSample = new double[sampleLength];
-			double[] bootstrappedLogML = new double[bsLength];
+			double[] bootstrappedLogML = new double[bootstrapLength];
 			double sum = 0;
-			for (int i = 0; i < bsLength; i++) {
-				int[] indices = MathUtils.sampleIndicesWithReplacement(sampleLength);
+
+            double progress = 0.0;
+            double delta = 1.0 / bootstrapLength;
+
+            for (int i = 0; i < bootstrapLength; i++) {
+                fireProgress(progress);
+                progress += delta;
+
+                int[] indices = MathUtils.sampleIndicesWithReplacement(sampleLength);
 				for (int k = 0; k < sampleLength; k++)
 					bsSample[k] = sample[indices[k]];
 				bootstrappedLogML[i] = calculateLogMarginalLikelihood(bsSample);
 				sum += bootstrappedLogML[i];
 			}
-			sum /= bsLength;
+			sum /= bootstrapLength;
 			double bootstrappedAverage = sum;
 			// Summarize bootstrappedLogML
 			double var = 0;
-			for (int i = 0; i < bsLength; i++) {
+			for (int i = 0; i < bootstrapLength; i++) {
 				var += (bootstrappedLogML[i] - bootstrappedAverage) *
 						(bootstrappedLogML[i] - bootstrappedAverage);
 			}
-			var /= (bsLength - 1.0);
+			var /= (bootstrapLength - 1.0);
 			bootstrappedSE = Math.sqrt(var);
 		}
+
+        fireProgress(1.0);
+
 		marginalLikelihoodCalculated = true;
 	}
 
@@ -184,14 +191,14 @@ public class MarginalLikelihoodAnalysis {
 
 	public double getLogMarginalLikelihood() {
 		if (!marginalLikelihoodCalculated) {
-			update();
+			calculate();
 		}
 		return logMarginalLikelihood;
 	}
 
 	public double getBootstrappedSE() {
 		if (!marginalLikelihoodCalculated) {
-			update();
+			calculate();
 		}
 		return bootstrappedSE;
 	}
@@ -202,7 +209,7 @@ public class MarginalLikelihoodAnalysis {
 				.append(traceName)
 				.append("|Data) = ")
 				.append(String.format("%5.4f", getLogMarginalLikelihood()));
-		if (doBootstrap) {
+		if (bootstrapLength > 1) {
 			sb.append(" +/- ")
 					.append(String.format("%5.4f", getBootstrappedSE()));
 		} else {
@@ -213,7 +220,7 @@ public class MarginalLikelihoodAnalysis {
 		else
 			sb.append(" (smoothed)");
 		sb.append(" burnin=").append(burnin);
-		if (doBootstrap)
+		if (bootstrapLength > 1)
 			sb.append(" replicates=").append(bootstrapLength);
 //        sb.append("\n");
 
@@ -274,7 +281,19 @@ public class MarginalLikelihoodAnalysis {
 		return Pdata;
 	}
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    private TaskListener listener = null;
+
+    public void setTaskListener(TaskListener listener) {
+        this.listener = listener;
+    }
+
+    private void fireProgress(double progress) {
+        if (listener != null) {
+            listener.progress(progress);
+        }
+    }
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
 		public String getParserName() {
 			return ML_ANALYSIS;
@@ -330,28 +349,27 @@ public class MarginalLikelihoodAnalysis {
 					}
 				}
 
-				if (traceIndex == -1)
+				if (traceIndex == -1) {
 					throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
+                }
 
-				boolean harmonicOnly = false;
-				if (cxo.hasAttribute(ONLY_HARMONIC))
+                boolean harmonicOnly = false;
+				if (cxo.hasAttribute(ONLY_HARMONIC)) {
 					harmonicOnly = cxo.getBooleanAttribute(ONLY_HARMONIC);
+                }
 
-				boolean doBootstrap = true;
-				if (cxo.hasAttribute(DO_BOOTSTRAP))
-					doBootstrap = cxo.getBooleanAttribute(DO_BOOTSTRAP);
-
-				int bootstrapLength = 1000;
-				if (cxo.hasAttribute(BOOTSTRAP_LENGTH))
+                int bootstrapLength = 1000;
+				if (cxo.hasAttribute(BOOTSTRAP_LENGTH)) {
 					bootstrapLength = cxo.getIntegerAttribute(BOOTSTRAP_LENGTH);
+                }
 
-				double sample[] = new double[traces.getStateCount()];
+                double sample[] = new double[traces.getStateCount()];
 				traces.getValues(traceIndex, sample);
 
 				MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
 						sample,
 						traces.getTraceName(traceIndex), burnin,
-						harmonicOnly, doBootstrap, bootstrapLength);
+						harmonicOnly, bootstrapLength);
 
 				System.out.println(analysis.toString());
 

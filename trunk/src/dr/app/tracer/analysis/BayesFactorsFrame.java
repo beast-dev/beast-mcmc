@@ -18,17 +18,20 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 	private JPanel contentPanel;
 
 	private BayesFactorsModel bayesFactorsModel;
+    private JTable bayesFactorsTable;
 
-	public BayesFactorsFrame(DocumentFrame frame, String title) {
+
+    public BayesFactorsFrame(DocumentFrame frame, String title, String info, boolean hasErrors) {
 
 		super(frame);
 
 		setTitle(title);
 
-		bayesFactorsModel = new BayesFactorsModel();
-		JTable bayesFactorsTable = new JTable(bayesFactorsModel);
-
-		JScrollPane scrollPane1 = new JScrollPane(bayesFactorsTable,
+        bayesFactorsModel = new BayesFactorsModel(hasErrors);
+		bayesFactorsTable = new JTable(bayesFactorsModel);
+        bayesFactorsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        
+        JScrollPane scrollPane1 = new JScrollPane(bayesFactorsTable,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
@@ -38,6 +41,8 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 				new java.awt.Insets(0, 0, 6, 0)));
 		contentPanel.add(scrollPane1, BorderLayout.CENTER);
 
+        JLabel label = new JLabel(info);
+        contentPanel.add(label, BorderLayout.NORTH);
 
 		setContentsPanel(contentPanel);
 
@@ -57,7 +62,8 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 	public void addMarginalLikelihood(MarginalLikelihoodAnalysis marginalLikelihood) {
 		this.marginalLikelihoods.add(marginalLikelihood);
 		bayesFactorsModel.fireTableStructureChanged();
-	}
+        bayesFactorsTable.repaint();
+    }
 
 	public void initializeComponents() {
 
@@ -84,16 +90,19 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 
 	class BayesFactorsModel extends AbstractTableModel {
 
-		String[] columnNames = {"Trace", "log Marginal Likelihood"};
+		String[] columnNames = {"Trace", "log Marginal Likelihood", "S.E."};
 
 		private DecimalFormat formatter = new DecimalFormat("0.###E0");
 		private DecimalFormat formatter2 = new DecimalFormat("####0.###");
 
-		public BayesFactorsModel() {
+        private int columnCount;
+
+        public BayesFactorsModel(boolean hasErrors) {
+            this.columnCount = (hasErrors ? 3 : 2);
 		}
 
 		public int getColumnCount() {
-			return columnNames.length  + marginalLikelihoods.size();
+            return columnCount + marginalLikelihoods.size();
 		}
 
 		public int getRowCount() {
@@ -108,11 +117,13 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 
 			if (col == 1) {
 				return formatter2.format(marginalLikelihoods.get(row).getLogMarginalLikelihood());
+			} else if (columnCount > 2 && col == 2 ) {
+                return " +/- " + formatter2.format(marginalLikelihoods.get(row).getBootstrappedSE());
 			} else {
-				if (col - 2 > row) {
+				if (col - columnCount != row) {
 					double lnML1 = marginalLikelihoods.get(row).getLogMarginalLikelihood();
-					double lnML2 = marginalLikelihoods.get(col - 2).getLogMarginalLikelihood();
-					return formatter.format(lnML1 - lnML2);
+					double lnML2 = marginalLikelihoods.get(col - columnCount).getLogMarginalLikelihood();
+					return formatter2.format(lnML1 - lnML2);
 				} else {
 					return "-";
 				}
@@ -120,10 +131,10 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 		}
 
 		public String getColumnName(int column) {
-			if (column < columnNames.length) {
+			if (column < columnCount) {
 				return columnNames[column];
 			}
-			return marginalLikelihoods.get(column - 2).getTraceName();
+			return marginalLikelihoods.get(column - columnCount).getTraceName();
 		}
 
 		public Class getColumnClass(int c) {

@@ -10,11 +10,7 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MultivariateDistribution;
 import dr.math.MultivariateNormalDistribution;
 import dr.xml.*;
-import no.uib.cipr.matrix.DenseMatrix;
-import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.Matrices;
-import no.uib.cipr.matrix.SymmTridiagMatrix;
-import no.uib.cipr.matrix.UpperSPDDenseMatrix;
+import no.uib.cipr.matrix.*;
 
 /**
  * A Gibbs operator to update the population size parameters under a Gaussian Markov random field prior
@@ -41,7 +37,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
 
     private int fieldLength;
     private int dim;
-    
+
     public GMRFSkylineFixedEffectsGibbsOperator(Parameter param,
                                                 GMRFSkylineLikelihood gmrfLikelihood, MultivariateDistribution prior, int weight) {
         this.param = param;
@@ -55,43 +51,47 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
 
         this.gmrfLikelihood = gmrfLikelihood;
         this.weight = weight;
-       
+
     }
 
     public double doOperation() throws OperatorFailedException {
 
         DenseMatrix X = new DenseMatrix(gmrfLikelihood.getDesignMatrix().getParameterAsMatrix());
-        SymmTridiagMatrix Q = gmrfLikelihood.getScaledWeightMatrix(gmrfLikelihood.getPrecisionParameter().getParameterValue(0), 
-        		gmrfLikelihood.getLambdaParameter().getParameterValue(0));
+        SymmTridiagMatrix Q = gmrfLikelihood.getScaledWeightMatrix(gmrfLikelihood.getPrecisionParameter().getParameterValue(0),
+                gmrfLikelihood.getLambdaParameter().getParameterValue(0));
         DenseVector gamma = new DenseVector(gmrfLikelihood.getPopSizeParameter().getParameterValues());
-        
+
+        Parameter.Abstract beta = (Parameter.Abstract) gmrfLikelihood.getBetaParameter();
+
         //Set up the Vectors and matricies for the gibbs step
         DenseMatrix gibbsPrecision = precision.copy();
         UpperSPDDenseMatrix gibbsVariance;
         DenseVector gibbsMean = new DenseVector(dim);
-        DenseMatrix workingMatrix = new DenseMatrix(dim,fieldLength);
+        DenseMatrix workingMatrix = new DenseMatrix(dim, fieldLength);
         DenseVector workingVector = new DenseVector(dim);
-        
+
         //Get the correct forms
-        X.transAmultAdd(Q,workingMatrix);
+        X.transAmultAdd(Q, workingMatrix);
         workingMatrix.multAdd(X, gibbsPrecision);
-        
+
         precision.mult(mean, workingVector);
         workingMatrix.multAdd(gamma, workingVector);
-        
+
         workingMatrix = Matrices.identity(dim);
-                
+
         gibbsPrecision.solve(Matrices.identity(dim), workingMatrix);
         gibbsVariance = new UpperSPDDenseMatrix(workingMatrix);
         gibbsVariance.mult(workingVector, gibbsMean);
-        
+
         //Propose a new value for beta
         DenseVector betaNew = GMRFSkylineBlockUpdateOperator.getMultiNormal(gibbsMean, gibbsVariance);
-        
-        for(int i = 0; i < dim; i++){
-        	gmrfLikelihood.getBetaParameter().setParameterValueQuietly(i, betaNew.get(i));
+
+        for (int i = 0; i < dim; i++) {
+            beta.setParameterValueQuietly(i, betaNew.get(i));
         }
-        
+
+        beta.fireParameterChangedEvent();
+
         return 0;
     }
 

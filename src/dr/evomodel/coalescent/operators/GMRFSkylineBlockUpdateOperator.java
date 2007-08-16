@@ -290,7 +290,9 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
         proposedGamma = getMultiNormal(forwardMean, inverseForwardQW);
 
         for (int i = 0; i < fieldLength; i++)
-            popSizeParameter.setParameterValue(i, proposedGamma.get(i));
+            popSizeParameter.setParameterValueQuietly(i, proposedGamma.get(i));
+
+        ((Parameter.Abstract) popSizeParameter).fireParameterChangedEvent();
 
         //Now do some Metropolis-Hastings stuff in 5 steps.
         double hRatio = 0;

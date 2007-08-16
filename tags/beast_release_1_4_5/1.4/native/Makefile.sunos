@@ -1,0 +1,11 @@
+CC=gcc
+CFLAGS=-O2 -funroll-loops -fstrict-aliasing
+INCLUDES=-I${JAVA_HOME}/include/ -I${JAVA_HOME}/include/solaris
+
+OBJS = NucleotideLikelihoodCore.o
+
+.c.o:
+	${CC} ${CFLAGS} ${INCLUDES} -c $*.c
+
+libNucleotideLikelihoodCore.so: ${OBJS}
+	${CC} ${CFLAGS} ${INCLUDES} -shared -o libNucleotideLikelihoodCore.so ${OBJS}

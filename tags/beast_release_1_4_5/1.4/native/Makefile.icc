@@ -1,0 +1,11 @@
+CC=icc
+CFLAGS=-O3
+INCLUDES=-I${JAVA_HOME}/include/ -I${JAVA_HOME}/include/linux
+
+OBJS = NucleotideLikelihoodCore.o
+
+.c.o:
+	${CC} ${CFLAGS} ${INCLUDES} -c $*.c
+
+libNucleotideLikelihoodCore.so: ${OBJS}
+	${CC} -shared ${CFLAGS} -o libNucleotideLikelihoodCore.so ${OBJS}

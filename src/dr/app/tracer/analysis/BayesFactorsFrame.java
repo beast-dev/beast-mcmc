@@ -42,7 +42,14 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 		contentPanel.add(scrollPane1, BorderLayout.CENTER);
 
         JLabel label = new JLabel(info);
+        label.setFont(UIManager.getFont("SmallSystemFont"));
         contentPanel.add(label, BorderLayout.NORTH);
+
+        JLabel label2 = new JLabel("<html>If you use these results we would encourage you to cite the following paper:<br>" +
+                "Suchard MA, Weiss RE and Sinsheimer JS (2001) Bayesian Selection of Continuous-Time Markov Chain Evolutionary Models." +
+                "<i>Mol Biol and Evol</i> <b>18</b>: 1001-1013</html>");
+        label2.setFont(UIManager.getFont("SmallSystemFont"));
+        contentPanel.add(label2, BorderLayout.SOUTH);
 
 		setContentsPanel(contentPanel);
 

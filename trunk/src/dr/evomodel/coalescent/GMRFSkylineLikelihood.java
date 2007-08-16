@@ -116,6 +116,15 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         setupGMRFWeights();
 
         addStatistic(new DeltaStatistic());
+
+        initializationReport();
+
+    }
+
+    public void initializationReport() {
+        System.out.println("Creating a GMRF smoothed skyline model:");
+        System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
+        System.out.println("\tIf you publish results using this model, please reference: Minin, Bloomquist and Suchard (in submission).");
     }
 
     // **************************************************************
@@ -367,10 +376,10 @@ model {
         return weightMatrix.copy();
     }
 
-    public Parameter getBetaParameter(){
-    	return betaParameter;
+    public Parameter getBetaParameter() {
+        return betaParameter;
     }
-    
+
     public MatrixParameter getDesignMatrix() {
         return dMatrix;
     }

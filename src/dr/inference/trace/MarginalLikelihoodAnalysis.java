@@ -64,6 +64,14 @@ public class MarginalLikelihoodAnalysis {
 	public MarginalLikelihoodAnalysis(double[] sample, String traceName, int burnin) {
 		this(sample, traceName, burnin, false, true, 1000);
 	}
+	
+	public String getTraceName() {
+		return traceName;
+	}
+
+	public int getBurnin() {
+		return burnin;
+	}
 
 	/**
 	 * Constructor

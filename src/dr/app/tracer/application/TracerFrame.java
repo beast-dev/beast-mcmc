@@ -708,18 +708,11 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
             bayesFactorsDialog = new BayesFactorsDialog(this);
         }
 
-        if (currentTraceLists.size() != 1) {
-            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
-                    "this analysis on, (but not the Combined trace).",
-                    "Unable to perform analysis",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        if (bayesFactorsDialog.showDialog(currentTraceLists.get(0)) == JOptionPane.CANCEL_OPTION) {
+        if (bayesFactorsDialog.showDialog(currentTraceLists) == JOptionPane.CANCEL_OPTION) {
             return;
         }
 
-        bayesFactorsDialog.createBayesFactorsFrame(currentTraceLists.get(0), this);
+        bayesFactorsDialog.createBayesFactorsFrame(currentTraceLists, this);
 
     }
 

@@ -135,7 +135,7 @@ public class TreeAnnotator {
     private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName, boolean useSumCladeCredibility) throws IOException {
 
         Tree bestTree = null;
-        double bestScore = 0.0;
+        double bestScore = Double.NEGATIVE_INFINITY;
 
         System.out.println("Analyzing " + totalTreesUsed + " trees...");
         System.out.println("0              25             50             75            100");

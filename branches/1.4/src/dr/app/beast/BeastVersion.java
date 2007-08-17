@@ -60,6 +60,6 @@ public class BeastVersion implements Version {
     public String getBuildString() {
         // this used to parse the CVS ID string but there is no equivalent
         // for SVN. We could increment this manually?
-        return "Build r436";
+        return "Build r516";
 	}
 }

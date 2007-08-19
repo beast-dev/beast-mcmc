@@ -62,7 +62,7 @@ public class TwoStateCovarionModelTest extends TestCase {
         // with alpha < 1.0, the probability of difference should be smaller than binary jukes cantor
         alpha.setParameterValue(0, 0.5);
 
-        //model.setBranchLengthExcludesHiddenEvents(false);
+        model.setNormalized(false);
         model.setupMatrix();
 
         for (double distance = 0.01; distance <= 1.005; distance += 0.01) {

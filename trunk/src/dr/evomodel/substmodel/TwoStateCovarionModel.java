@@ -93,21 +93,21 @@ public class TwoStateCovarionModel extends AbstractSubstitutionModel {
      */
     void normalize(double[][] matrix, double[] pi) {
 
-        double subst = 0.0;
-        int dimension = pi.length;
+        if (isNormalized) {
 
-        for (int i = 0; i < dimension; i++) {
-            subst += -matrix[i][i] * pi[i];
-        }
+            double subst = 0.0;
+            int dimension = pi.length;
 
-        // normalize, including switches
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
-                matrix[i][j] = matrix[i][j] / subst;
+            for (int i = 0; i < dimension; i++) {
+                subst += -matrix[i][i] * pi[i];
             }
-        }
 
-        if (distanceExcludesSwitchingEvents) {
+            // normalize, including switches
+            for (int i = 0; i < dimension; i++) {
+                for (int j = 0; j < dimension; j++) {
+                    matrix[i][j] = matrix[i][j] / subst;
+                }
+            }
 
             double switchingProportion = 0.0;
             switchingProportion += matrix[0][2] * pi[2];
@@ -125,11 +125,6 @@ public class TwoStateCovarionModel extends AbstractSubstitutionModel {
             }
         }
     }
-
-    void setBranchLengthExcludesHiddenEvents(boolean excludes) {
-        distanceExcludesSwitchingEvents = excludes;
-    }
-
 
     /**
      * Parses an element from an DOM document into a TwoStateCovarionModel
@@ -204,7 +199,10 @@ public class TwoStateCovarionModel extends AbstractSubstitutionModel {
     private Parameter alpha;
     private Parameter switchingParameter;
 
-    // if this parameter is true then branch lengths are in substitutions only
-    // otherwise the branch lengths include switching events
-    private boolean distanceExcludesSwitchingEvents = true;
+    // if true then matrix will be normalized to output 1 substitution per unit time
+    private boolean isNormalized = true;
+
+    public void setNormalized(boolean normalized) {
+        isNormalized = normalized;
+    }
 }

@@ -33,13 +33,11 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
     private DenseVector mean;
     private DenseMatrix precision;
 
-    private int weight = 1;
-
     private int fieldLength;
     private int dim;
 
     public GMRFSkylineFixedEffectsGibbsOperator(Parameter param,
-                                                GMRFSkylineLikelihood gmrfLikelihood, MultivariateDistribution prior, int weight) {
+                                                GMRFSkylineLikelihood gmrfLikelihood, MultivariateDistribution prior, double weight) {
         this.param = param;
         this.gmrfLikelihood = gmrfLikelihood;
         this.prior = prior;
@@ -50,8 +48,8 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
         this.dim = param.getDimension();
 
         this.gmrfLikelihood = gmrfLikelihood;
-        this.weight = weight;
 
+        setWeight(weight);
     }
 
     public double doOperation() throws OperatorFailedException {
@@ -120,7 +118,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 
-            int weight = xo.getIntegerAttribute(WEIGHT);
+            double weight = xo.getDoubleAttribute(WEIGHT);
 
             GMRFSkylineLikelihood gmrfLikelihood = (GMRFSkylineLikelihood) xo.getChild(GMRFSkylineLikelihood.class);
 
@@ -156,7 +154,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newIntegerRule(WEIGHT),
+                AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(MultivariateDistributionLikelihood.class),
                 new ElementRule(Parameter.class),
                 new ElementRule(GMRFSkylineLikelihood.class)

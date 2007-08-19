@@ -1,7 +1,7 @@
 /*
  * SimpleMCMCOperator.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -32,74 +32,96 @@ import dr.evomodel.tree.TreeModel;
 
 public abstract class SimpleMCMCOperator implements MCMCOperator {
 
-	public double getTargetAcceptanceProbability() { return targetAcceptanceProb; }
-	public void setTargetAcceptanceProbability(double tap) {
+    public double getTargetAcceptanceProbability() {
+        return targetAcceptanceProb;
+    }
+
+    public void setTargetAcceptanceProbability(double tap) {
         targetAcceptanceProb = tap;
     }
 
-    public double getMinimumAcceptanceLevel() { return 0.10; }
-	public double getMaximumAcceptanceLevel() { return 0.40; }
-	public double getMinimumGoodAcceptanceLevel() { return 0.20; }
-	public double getMaximumGoodAcceptanceLevel() { return 0.30; }
+    public double getMinimumAcceptanceLevel() {
+        return 0.10;
+    }
 
-	public abstract String getOperatorName();
+    public double getMaximumAcceptanceLevel() {
+        return 0.40;
+    }
 
-	/**
-	 * @return the weight of this operator.
-	 */
-	public int getWeight() { return weight; }
+    public double getMinimumGoodAcceptanceLevel() {
+        return 0.20;
+    }
 
-	/** 
-	 * Sets the weight of this operator.
-	 */
-	public void setWeight(int w) {
-		if (w > 0) {
-			weight = w;
-		} else throw new IllegalArgumentException("Weight must be a positive integer."); 
-	}
+    public double getMaximumGoodAcceptanceLevel() {
+        return 0.30;
+    }
 
-	public final void accept(double deviation) {
-		lastDeviation = deviation;
-			
-		if (!operateAllowed) {
-			operateAllowed = true;
-			accepted += 1;
-			sumDeviation += deviation;
-		} else throw new RuntimeException("Accept/reject methods called twice without operate called in between!");
-	}
-	
-	public void reject() {
-		if (!operateAllowed) {
-			operateAllowed = true;
-			rejected += 1;
-		} else throw new RuntimeException("Accept/reject methods called twice without operate called in between!");	
-	}
-	
-	public final void reset() {
-		operateAllowed = true;
-		accepted = 0;
-		rejected = 0;
+    public abstract String getOperatorName();
+
+    /**
+     * @return the weight of this operator.
+     */
+    public final double getWeight() {
+        return weight;
+    }
+
+    /**
+     * Sets the weight of this operator.
+     */
+    public final void setWeight(double w) {
+        if (w > 0) {
+            weight = w;
+        } else throw new IllegalArgumentException("Weight must be a positive real.");
+    }
+
+    public final void accept(double deviation) {
+        lastDeviation = deviation;
+
+        if (!operateAllowed) {
+            operateAllowed = true;
+            accepted += 1;
+            sumDeviation += deviation;
+        } else throw new RuntimeException("Accept/reject methods called twice without operate called in between!");
+    }
+
+    public void reject() {
+        if (!operateAllowed) {
+            operateAllowed = true;
+            rejected += 1;
+        } else throw new RuntimeException("Accept/reject methods called twice without operate called in between!");
+    }
+
+    public final void reset() {
+        operateAllowed = true;
+        accepted = 0;
+        rejected = 0;
         lastDeviation = 0.0;
         sumDeviation = 0.0;
-	}
-	
-	public final int getAccepted() { return accepted; }
+    }
+
+    public final int getAccepted() {
+        return accepted;
+    }
 
     public final void setAccepted(int accepted) {
         this.accepted = accepted;
     }
 
-    public final int getRejected() { return rejected; }
+    public final int getRejected() {
+        return rejected;
+    }
 
     public final void setRejected(int rejected) {
         this.rejected = rejected;
     }
 
-    public final double getMeanDeviation() { return sumDeviation / accepted; }
-	
-	public final double getDeviation() {
-		return lastDeviation;
-	}
+    public final double getMeanDeviation() {
+        return sumDeviation / accepted;
+    }
+
+    public final double getDeviation() {
+        return lastDeviation;
+    }
 
     public final double getSumDeviation() {
         return sumDeviation;
@@ -109,93 +131,97 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         this.sumDeviation = sumDeviation;
     }
 
-	public final double operate() throws OperatorFailedException {
-		if (operateAllowed) {
-			operateAllowed = false;
-			return doOperation();
-		} else throw new RuntimeException("Operate called twice without accept/reject in between!");
-	}
-	
-	public final double getAcceptanceProbability() {
-		return (double)accepted / (double)(accepted + rejected);
-	}
-	
-	/**
-	 * Called by operate(), does the actual operation. 
-	 * @return the hastings ratio
-     * @throws OperatorFailedException
-	 */
-	public abstract double doOperation() throws OperatorFailedException;
+    public final double operate() throws OperatorFailedException {
+        if (operateAllowed) {
+            operateAllowed = false;
+            return doOperation();
+        } else throw new RuntimeException("Operate called twice without accept/reject in between!");
+    }
 
-   /* exchange subtrees whose root are i and j */
-   protected void exchangeNodes(TreeModel tree, NodeRef i, NodeRef j,
-         NodeRef iP, NodeRef jP) throws OperatorFailedException {
+    public final double getAcceptanceProbability() {
+        return (double) accepted / (double) (accepted + rejected);
+    }
 
-      tree.beginTreeEdit();
-      tree.removeChild(iP, i);
-      tree.removeChild(jP, j);
-      tree.addChild(jP, i);
-      tree.addChild(iP, j);
+    /**
+     * Called by operate(), does the actual operation.
+     *
+     * @return the hastings ratio
+     * @throws OperatorFailedException if operator fails and should be rejected
+     */
+    public abstract double doOperation() throws OperatorFailedException;
 
-      try {
-         tree.endTreeEdit();
-      } catch (MutableTree.InvalidTreeException ite) {
-         throw new OperatorFailedException(ite.toString());
-      }
-   }
+    /* exchange subtrees whose root are i and j */
+    protected void exchangeNodes(TreeModel tree, NodeRef i, NodeRef j,
+                                 NodeRef iP, NodeRef jP) throws OperatorFailedException {
 
-   
-   /**
-    * @return the other child of the given parent.
-    */
-   protected NodeRef getOtherChild(Tree tree, NodeRef parent, NodeRef child) {
+        tree.beginTreeEdit();
+        tree.removeChild(iP, i);
+        tree.removeChild(jP, j);
+        tree.addChild(jP, i);
+        tree.addChild(iP, j);
 
-      if (tree.getChild(parent, 0) == child) {
-         return tree.getChild(parent, 1);
-      } else {
-         return tree.getChild(parent, 0);
-      }
-   }
+        try {
+            tree.endTreeEdit();
+        } catch (MutableTree.InvalidTreeException ite) {
+            throw new OperatorFailedException(ite.toString());
+        }
+    }
 
-   /**
-    * Scales the subtree by the given factor starting from the node 
-    * subtreeRoot. The tips stay unchanged.
-    * 
-    * @param TreeModel - the tree on which the operation is transformed
-    * @param NodeRef - the root of the subtree to scale
-    * @param double - the scaling factor
-    */
-   protected void scaleSubtree(TreeModel tree, NodeRef subtreeRoot,
-         double factor) {
-      if (tree.getChildCount(subtreeRoot) > 0) {
-         double height = tree.getNodeHeight(subtreeRoot);
-         double newHeight = height * factor;
-         tree.setNodeHeight(subtreeRoot, newHeight);
 
-         for (int i = 0; i < tree.getChildCount(subtreeRoot); i++) {
-            if (tree.getChild(subtreeRoot, i) != null) {
-               scaleSubtree(tree, tree.getChild(subtreeRoot, i), factor);
-            } else {
-               scaleSubtree(tree, tree.getChild(subtreeRoot, 1), factor);
+    /**
+     * @param tree   the tree
+     * @param parent the parent
+     * @param child  the child that you want the sister of
+     * @return the other child of the given parent.
+     */
+    protected NodeRef getOtherChild(Tree tree, NodeRef parent, NodeRef child) {
+
+        if (tree.getChild(parent, 0) == child) {
+            return tree.getChild(parent, 1);
+        } else {
+            return tree.getChild(parent, 0);
+        }
+    }
+
+    /**
+     * Scales the subtree by the given factor starting from the node
+     * subtreeRoot. The tips stay unchanged.
+     *
+     * @param tree        the tree on which the operation is transformed
+     * @param subtreeRoot the root of the subtree to scale
+     * @param factor      the scaling factor
+     */
+    protected void scaleSubtree(TreeModel tree, NodeRef subtreeRoot,
+                                double factor) {
+        if (tree.getChildCount(subtreeRoot) > 0) {
+            double height = tree.getNodeHeight(subtreeRoot);
+            double newHeight = height * factor;
+            tree.setNodeHeight(subtreeRoot, newHeight);
+
+            for (int i = 0; i < tree.getChildCount(subtreeRoot); i++) {
+                if (tree.getChild(subtreeRoot, i) != null) {
+                    scaleSubtree(tree, tree.getChild(subtreeRoot, i), factor);
+                } else {
+                    scaleSubtree(tree, tree.getChild(subtreeRoot, 1), factor);
+                }
             }
-         }
 
-         assert (newHeight != Double.NaN);
-         if (factor < 1) {
-            assert (height >= newHeight);
-         } else {
-            assert (height <= newHeight);
-         }
-      }
-   }
+            assert (newHeight != Double.NaN);
+            if (factor < 1) {
+                assert (height >= newHeight);
+            } else {
+                assert (height <= newHeight);
+            }
+        }
+    }
 
-   
-	protected int weight = 1;
-	private int accepted = 0;
-	private int rejected = 0;
-	private double sumDeviation = 0.0;
-	private double lastDeviation = 0.0;
-	private boolean operateAllowed = true;
+
+    private double weight = 1.0;
+    private int accepted = 0;
+    private int rejected = 0;
+    private double sumDeviation = 0.0;
+    private double lastDeviation = 0.0;
+    private boolean operateAllowed = true;
     private double targetAcceptanceProb = 0.234;
 }
 

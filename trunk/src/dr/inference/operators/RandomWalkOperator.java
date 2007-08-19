@@ -1,7 +1,7 @@
 /*
  * RandomWalkOperator.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -41,198 +41,185 @@ import java.util.List;
  */
 public class RandomWalkOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
-	public static final String WINDOW_SIZE = "windowSize";
-	public static final String UPDATE_INDEX = "updateIndex";
+    public static final String WINDOW_SIZE = "windowSize";
+    public static final String UPDATE_INDEX = "updateIndex";
 
-	public RandomWalkOperator(Parameter parameter, double windowSize, int weight, int mode) {
-		this.parameter = parameter;
-		this.windowSize = windowSize;
-		this.weight = weight;
-		this.mode = mode;
-	}
-
-
-	public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, int weight, int mode) {
-		this.parameter = parameter;
-//		this.updateIndex = updateIndex;
-		this.windowSize = windowSize;
-		this.weight = weight;
-		this.mode = mode;
-//		int cnt = 0;
-		updateMap = new ArrayList<Integer>();
-		for (int i = 0; i < updateIndex.getDimension(); i++) {
-			if (updateIndex.getParameterValue(i) == 1.0)
-				updateMap.add(i);
-		}
-	}
-
-	/**
-	 * @return the parameter this operator acts on.
-	 */
-	public Parameter getParameter() {
-		return parameter;
-	}
-
-	public final double getWindowSize() {
-		return windowSize;
-	}
-
-	/**
-	 * change the parameter and return the hastings ratio.
-	 */
-	public final double doOperation() throws OperatorFailedException {
-
-		// a random dimension to perturb
-		int index;
-		if (updateMap == null)
-			index = MathUtils.nextInt(parameter.getDimension());
-		else
-			index = updateMap.get(MathUtils.nextInt(updateMap.size()));
-
-		// a random point around old value within windowSize * 2
-		double newValue = parameter.getParameterValue(index) + ((2.0 * MathUtils.nextDouble() - 1.0) * windowSize);
-
-		// check boundary
-		if (newValue < parameter.getBounds().getLowerLimit(index) || newValue > parameter.getBounds().getUpperLimit(index)) {
-			throw new OperatorFailedException("proposed value outside boundaries");
-		}
-
-		parameter.setParameterValue(index, newValue);
-
-		return 0.0;
-	}
-
-	//MCMCOperator INTERFACE
-	public final String getOperatorName() {
-		return parameter.getParameterName();
-	}
+    public RandomWalkOperator(Parameter parameter, double windowSize, double weight, int mode) {
+        this.parameter = parameter;
+        this.windowSize = windowSize;
+        setWeight(weight);
+        this.mode = mode;
+    }
 
 
-	public double getCoercableParameter() {
-		return Math.log(windowSize);
-	}
+    public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, double weight, int mode) {
+        this.parameter = parameter;
+        this.windowSize = windowSize;
+        setWeight(weight);
+        this.mode = mode;
+        updateMap = new ArrayList<Integer>();
+        for (int i = 0; i < updateIndex.getDimension(); i++) {
+            if (updateIndex.getParameterValue(i) == 1.0)
+                updateMap.add(i);
+        }
+    }
 
-	public void setCoercableParameter(double value) {
-		windowSize = Math.exp(value);
-	}
+    /**
+     * @return the parameter this operator acts on.
+     */
+    public Parameter getParameter() {
+        return parameter;
+    }
 
-	public double getRawParameter() {
-		return windowSize;
-	}
+    public final double getWindowSize() {
+        return windowSize;
+    }
 
-	public int getMode() {
-		return mode;
-	}
+    /**
+     * change the parameter and return the hastings ratio.
+     */
+    public final double doOperation() throws OperatorFailedException {
 
-	public double getTargetAcceptanceProbability() {
-		return 0.234;
-	}
+        // a random dimension to perturb
+        int index;
+        if (updateMap == null)
+            index = MathUtils.nextInt(parameter.getDimension());
+        else
+            index = updateMap.get(MathUtils.nextInt(updateMap.size()));
 
-	public double getMinimumAcceptanceLevel() {
-		return 0.1;
-	}
+        // a random point around old value within windowSize * 2
+        double newValue = parameter.getParameterValue(index) + ((2.0 * MathUtils.nextDouble() - 1.0) * windowSize);
 
-	public double getMaximumAcceptanceLevel() {
-		return 0.4;
-	}
+        // check boundary
+        if (newValue < parameter.getBounds().getLowerLimit(index) || newValue > parameter.getBounds().getUpperLimit(index)) {
+            throw new OperatorFailedException("proposed value outside boundaries");
+        }
 
-	public double getMinimumGoodAcceptanceLevel() {
-		return 0.20;
-	}
+        parameter.setParameterValue(index, newValue);
 
-	public double getMaximumGoodAcceptanceLevel() {
-		return 0.30;
-	}
+        return 0.0;
+    }
 
-	public int getWeight() {
-		return weight;
-	}
+    //MCMCOperator INTERFACE
+    public final String getOperatorName() {
+        return parameter.getParameterName();
+    }
 
-	public void setWeight(int w) {
-		weight = w;
-	}
 
-	public final String getPerformanceSuggestion() {
+    public double getCoercableParameter() {
+        return Math.log(windowSize);
+    }
 
-		double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-		double targetProb = getTargetAcceptanceProbability();
+    public void setCoercableParameter(double value) {
+        windowSize = Math.exp(value);
+    }
 
-		double ws = OperatorUtils.optimizeWindowSize(windowSize, parameter.getParameterValue(0) * 2.0, prob, targetProb);
+    public double getRawParameter() {
+        return windowSize;
+    }
 
-		if (prob < getMinimumGoodAcceptanceLevel()) {
-			return "Try decreasing windowSize to about " + ws;
-		} else if (prob > getMaximumGoodAcceptanceLevel()) {
-			return "Try increasing windowSize to about " + ws;
-		} else return "";
-	}
+    public int getMode() {
+        return mode;
+    }
 
-	public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public double getTargetAcceptanceProbability() {
+        return 0.234;
+    }
 
-		public String getParserName() {
-			return "randomWalkOperator";
-		}
+    public double getMinimumAcceptanceLevel() {
+        return 0.1;
+    }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    public double getMaximumAcceptanceLevel() {
+        return 0.4;
+    }
 
-			int mode = CoercableMCMCOperator.DEFAULT;
-			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-					mode = CoercableMCMCOperator.COERCION_ON;
-				} else {
-					mode = CoercableMCMCOperator.COERCION_OFF;
-				}
-			}
+    public double getMinimumGoodAcceptanceLevel() {
+        return 0.20;
+    }
 
-			int weight = xo.getIntegerAttribute(WEIGHT);
-			double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
-			Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+    public double getMaximumGoodAcceptanceLevel() {
+        return 0.30;
+    }
 
-			if (xo.hasSocket(UPDATE_INDEX)) {
-				XMLObject cxo = (XMLObject) xo.getChild(UPDATE_INDEX);
-				Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
-				return new RandomWalkOperator(parameter, updateIndex, windowSize,
-						weight, mode);
-			}
+    public final String getPerformanceSuggestion() {
 
-			return new RandomWalkOperator(parameter, windowSize, weight, mode);
-		}
+        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+        double targetProb = getTargetAcceptanceProbability();
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        double ws = OperatorUtils.optimizeWindowSize(windowSize, parameter.getParameterValue(0) * 2.0, prob, targetProb);
 
-		public String getParserDescription() {
-			return "This element returns a random walk operator on a given parameter.";
-		}
+        if (prob < getMinimumGoodAcceptanceLevel()) {
+            return "Try decreasing windowSize to about " + ws;
+        } else if (prob > getMaximumGoodAcceptanceLevel()) {
+            return "Try increasing windowSize to about " + ws;
+        } else return "";
+    }
 
-		public Class getReturnType() {
-			return MCMCOperator.class;
-		}
+    public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        public String getParserName() {
+            return "randomWalkOperator";
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				AttributeRule.newDoubleRule(WINDOW_SIZE),
-				AttributeRule.newIntegerRule(WEIGHT),
-				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-				new ElementRule(Parameter.class)
-		};
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-	};
+            int mode = CoercableMCMCOperator.DEFAULT;
+            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
+                if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
+                    mode = CoercableMCMCOperator.COERCION_ON;
+                } else {
+                    mode = CoercableMCMCOperator.COERCION_OFF;
+                }
+            }
 
-	public String toString() {
-		return "randomWalkOperator(" + parameter.getParameterName() + ", " + windowSize + ", " + weight + ")";
-	}
+            double weight = xo.getDoubleAttribute(WEIGHT);
+            double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
+            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-	//PRIVATE STUFF
+            if (xo.hasSocket(UPDATE_INDEX)) {
+                XMLObject cxo = (XMLObject) xo.getChild(UPDATE_INDEX);
+                Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
+                return new RandomWalkOperator(parameter, updateIndex, windowSize,
+                        weight, mode);
+            }
 
-	private Parameter parameter = null;
-	private double windowSize = 0.01;
-	private int mode = CoercableMCMCOperator.DEFAULT;
-	private int weight = 1;
-	//	private Parameter updateIndex = null;
-	//	private int numberToUpdate;
-	private List<Integer> updateMap = null;
+            return new RandomWalkOperator(parameter, windowSize, weight, mode);
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "This element returns a random walk operator on a given parameter.";
+        }
+
+        public Class getReturnType() {
+            return MCMCOperator.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule(WINDOW_SIZE),
+                AttributeRule.newDoubleRule(WEIGHT),
+                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+                new ElementRule(Parameter.class)
+        };
+
+    };
+
+    public String toString() {
+        return "randomWalkOperator(" + parameter.getParameterName() + ", " + windowSize + ", " + getWeight() + ")";
+    }
+
+    //PRIVATE STUFF
+
+    private Parameter parameter = null;
+    private double windowSize = 0.01;
+    private int mode = CoercableMCMCOperator.DEFAULT;
+    private List<Integer> updateMap = null;
 }

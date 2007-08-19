@@ -46,145 +46,142 @@ import org.w3c.dom.Element;
  * The narrow exchange is very similar to a rooted-tree
  * nearest-neighbour interchange but with the restriction
  * that node height must remain consistent.
- *
  */
 public class IstvanOperator extends SimpleMCMCOperator {
 
-	private double tuning = 0.1;
-	private double exponent = 1.5;
-	private double gapPenalty = -10;
-	private TKF91Likelihood likelihood;
-	private dr.evomodel.indel.IstvansProposal proposal = new dr.evomodel.indel.IstvansProposal();
-	private Alignment alignment;
+    private double tuning = 0.1;
+    private double exponent = 1.5;
+    private double gapPenalty = -10;
+    private TKF91Likelihood likelihood;
+    private dr.evomodel.indel.IstvansProposal proposal = new dr.evomodel.indel.IstvansProposal();
+    private Alignment alignment;
 
-	int[][] iAlignment;
-	double[][][] iProbs;
-	double[] iBaseFreqs;
-	int[] iParent;
-	double[] iTau;
+    int[][] iAlignment;
+    double[][][] iProbs;
+    double[] iBaseFreqs;
+    int[] iParent;
+    double[] iTau;
 
-	public IstvanOperator(double iP, double exponent, double gapPenalty, int weight, TKF91Likelihood likelihood) {
-		this.tuning = iP;
-		this.exponent = exponent;
-		this.gapPenalty = gapPenalty;
-		this.likelihood = likelihood;
-		setWeight(weight);
-	}
+    public IstvanOperator(double iP, double exponent, double gapPenalty, double weight, TKF91Likelihood likelihood) {
+        this.tuning = iP;
+        this.exponent = exponent;
+        this.gapPenalty = gapPenalty;
+        this.likelihood = likelihood;
+        setWeight(weight);
+    }
 
-	public double doOperation() throws OperatorFailedException {
+    public double doOperation() throws OperatorFailedException {
 
-		Tree tree = likelihood.getTreeModel();
-		alignment = likelihood.getAlignment();
+        Tree tree = likelihood.getTreeModel();
+        alignment = likelihood.getAlignment();
 
-		//System.out.println("Incoming alignment");
-		//System.out.println(alignment);
-		//System.out.println();
+        //System.out.println("Incoming alignment");
+        //System.out.println(alignment);
+        //System.out.println();
 
-		SubstitutionModel substModel = likelihood.getSiteModel().getSubstitutionModel();
+        SubstitutionModel substModel = likelihood.getSiteModel().getSubstitutionModel();
 
-		// initialize the iParent and iTau arrays based on the given tree.
-  		initTree(tree, likelihood.getSiteModel().getMu());
+        // initialize the iParent and iTau arrays based on the given tree.
+        initTree(tree, likelihood.getSiteModel().getMu());
 
-  		int[] treeIndex = new int[tree.getTaxonCount()];
-  		for (int i =0; i < treeIndex.length; i++) {
-  			treeIndex[i] = tree.getTaxonIndex(alignment.getTaxonId(i));
-  		}
+        int[] treeIndex = new int[tree.getTaxonCount()];
+        for (int i = 0; i < treeIndex.length; i++) {
+            treeIndex[i] = tree.getTaxonIndex(alignment.getTaxonId(i));
+        }
 
-    	// initialize the iAlignment array from the given alignment.
-    	initAlignment(alignment, treeIndex);
+        // initialize the iAlignment array from the given alignment.
+        initAlignment(alignment, treeIndex);
 
-    	// initialize the iProbs array from the substitution model -- must be called after populating tree!
-    	initSubstitutionModel(substModel);
+        // initialize the iProbs array from the substitution model -- must be called after populating tree!
+        initSubstitutionModel(substModel);
 
-    	DataType dataType = substModel.getDataType();
-    	proposal.setGapSymbol(dataType.getGapState());
+        DataType dataType = substModel.getDataType();
+        proposal.setGapSymbol(dataType.getGapState());
 
-		int[][] returnedAlignment = new int[iAlignment.length][];
+        int[][] returnedAlignment = new int[iAlignment.length][];
 
-		//System.out.println("Initialization done, starting proposal proper...");
-
-
-		double logq = proposal.propose(iAlignment, iProbs, iBaseFreqs, iParent, iTau, returnedAlignment, tuning, exponent, gapPenalty);
-
-		//System.out.println("Proposal finished, logq=" + logq);
-
-		//create new alignment object
-		SimpleAlignment newAlignment = new SimpleAlignment();
-		for (int i = 0; i < alignment.getTaxonCount(); i++) {
-
-			StringBuffer seqBuffer = new StringBuffer();
-			for (int j = 0; j < returnedAlignment[i].length; j++) {
-				seqBuffer.append(dataType.getChar(returnedAlignment[treeIndex[i]][j]));
-			}
+        //System.out.println("Initialization done, starting proposal proper...");
 
 
+        double logq = proposal.propose(iAlignment, iProbs, iBaseFreqs, iParent, iTau, returnedAlignment, tuning, exponent, gapPenalty);
 
-			// add sequences in order of tree
-			String seqString = seqBuffer.toString();
-			Sequence sequence = new Sequence(alignment.getTaxon(i), seqString);
-			newAlignment.addSequence(sequence);
+        //System.out.println("Proposal finished, logq=" + logq);
 
-			String oldunaligned = alignment.getUnalignedSequenceString(i);
-			String unaligned = newAlignment.getUnalignedSequenceString(i);
-			if (!unaligned.equals(oldunaligned)) {
-				System.err.println("Sequence changed from:");
-				System.err.println("old:'"+oldunaligned+"'");
-				System.err.println("new:'"+unaligned+"'");
-				throw new RuntimeException();
-			}
-		}
-		//System.out.println("Outgoing alignment");
-		//System.out.println(newAlignment);
-		//System.out.println();
+        //create new alignment object
+        SimpleAlignment newAlignment = new SimpleAlignment();
+        for (int i = 0; i < alignment.getTaxonCount(); i++) {
+
+            StringBuffer seqBuffer = new StringBuffer();
+            for (int j = 0; j < returnedAlignment[i].length; j++) {
+                seqBuffer.append(dataType.getChar(returnedAlignment[treeIndex[i]][j]));
+            }
+
+            // add sequences in order of tree
+            String seqString = seqBuffer.toString();
+            Sequence sequence = new Sequence(alignment.getTaxon(i), seqString);
+            newAlignment.addSequence(sequence);
+
+            String oldunaligned = alignment.getUnalignedSequenceString(i);
+            String unaligned = newAlignment.getUnalignedSequenceString(i);
+            if (!unaligned.equals(oldunaligned)) {
+                System.err.println("Sequence changed from:");
+                System.err.println("old:'" + oldunaligned + "'");
+                System.err.println("new:'" + unaligned + "'");
+                throw new RuntimeException();
+            }
+        }
+        //System.out.println("Outgoing alignment");
+        //System.out.println(newAlignment);
+        //System.out.println();
 
 
-		likelihood.setAlignment(newAlignment);
+        likelihood.setAlignment(newAlignment);
 
-		return logq;
-	}
+        return logq;
+    }
 
-	// MUST RESET ALIGNMENT IF REJECTED!!
-	public void reject() {
-		super.reject();
-		likelihood.setAlignment(alignment);
-	}
+    // MUST RESET ALIGNMENT IF REJECTED!!
+    public void reject() {
+        super.reject();
+        likelihood.setAlignment(alignment);
+    }
 
-	private void initTree(Tree tree, double mutationRate) {
-		iParent = new int[tree.getNodeCount()];
-		iTau = new double[tree.getNodeCount()-1];
-		populate(tree, tree.getRoot(), new int[] {tree.getExternalNodeCount()}, mutationRate);
-		iParent[tree.getNodeCount()-1] = -1;
+    private void initTree(Tree tree, double mutationRate) {
+        iParent = new int[tree.getNodeCount()];
+        iTau = new double[tree.getNodeCount() - 1];
+        populate(tree, tree.getRoot(), new int[]{tree.getExternalNodeCount()}, mutationRate);
+        iParent[tree.getNodeCount() - 1] = -1;
 
-	}
+    }
 
-   /**
-    * initialize the iProbs array from the substitution model -- must be called after populating tree!
-    */
+    /**
+     * initialize the iProbs array from the substitution model -- must be called after populating tree!
+     */
     private void initSubstitutionModel(SubstitutionModel model) {
 
-    	DataType dataType = model.getDataType();
-    	int stateCount = dataType.getStateCount();
+        DataType dataType = model.getDataType();
+        int stateCount = dataType.getStateCount();
 
-    	iProbs = new double[iTau.length][stateCount][stateCount];
+        iProbs = new double[iTau.length][stateCount][stateCount];
 
-    	double[] transProb = new double[stateCount*stateCount];
-    	int count;
-    	for (int i =0; i < iTau.length; i++) {
-    		model.getTransitionProbabilities(iTau[i], transProb);
-    		count = 0;
-    		for (int j = 0; j < stateCount; j++) {
-    			for (int k = 0; k < stateCount; k++) {
-    				iProbs[i][j][k] = transProb[count];
-    				count += 1;
-    			}
-    		}
-    	}
+        double[] transProb = new double[stateCount * stateCount];
+        int count;
+        for (int i = 0; i < iTau.length; i++) {
+            model.getTransitionProbabilities(iTau[i], transProb);
+            count = 0;
+            for (int j = 0; j < stateCount; j++) {
+                for (int k = 0; k < stateCount; k++) {
+                    iProbs[i][j][k] = transProb[count];
+                    count += 1;
+                }
+            }
+        }
 
-    	// initialize equlibrium distribution
-    	iBaseFreqs = new double[stateCount];
-    	for (int k = 0; k < stateCount; k++) {
-			iBaseFreqs[k] = model.getFrequencyModel().getFrequency(k);
-		}
+        // initialize equlibrium distribution
+        iBaseFreqs = new double[stateCount];
+        for (int k = 0; k < stateCount; k++) {
+            iBaseFreqs[k] = model.getFrequencyModel().getFrequency(k);
+        }
     }
 
     /**
@@ -192,118 +189,130 @@ public class IstvanOperator extends SimpleMCMCOperator {
      */
     private void initAlignment(Alignment alignment, int[] treeIndex) {
 
-    	int numSeqs = alignment.getSequenceCount();
-    	int numSites = alignment.getSiteCount();
-    	DataType dataType = alignment.getDataType();
-    	int numStates = dataType.getStateCount();
+        int numSeqs = alignment.getSequenceCount();
+        int numSites = alignment.getSiteCount();
+        DataType dataType = alignment.getDataType();
+        int numStates = dataType.getStateCount();
 
-    	iAlignment = new int[numSeqs][numSites];
+        iAlignment = new int[numSeqs][numSites];
 
-    	// populate alignment in order of tree
-    	for (int i =0; i < numSeqs; i++) {
-    		for (int j =0; j < numSites; j++) {
-    			iAlignment[treeIndex[i]][j] = alignment.getState(i, j);
-    		}
-    	}
+        // populate alignment in order of tree
+        for (int i = 0; i < numSeqs; i++) {
+            for (int j = 0; j < numSites; j++) {
+                iAlignment[treeIndex[i]][j] = alignment.getState(i, j);
+            }
+        }
     }
 
     /**
      * Populates the iParent and iTau arrays.
+     *
      * @return the node number of the given node.
      */
     private int populate(Tree tree, NodeRef node, int[] current, double mutationRate) {
 
-    	int nodeNumber = node.getNumber();
+        int nodeNumber = node.getNumber();
 
-    	// if its an external node just return the number
-    	if (tree.isExternal(node)) {
-    		iTau[nodeNumber] =
-    			(tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node))  * mutationRate;
-    		return nodeNumber;
-    	}
+        // if its an external node just return the number
+        if (tree.isExternal(node)) {
+            iTau[nodeNumber] =
+                    (tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node)) * mutationRate;
+            return nodeNumber;
+        }
 
-    	// if internal node, first let your children be assigned numbers
-    	int[] childNumbers = new int[tree.getChildCount(node)];
-    	for (int i = 0; i < tree.getChildCount(node); i++) {
-    		childNumbers[i] = populate(tree, tree.getChild(node, i), current, mutationRate);
-    	}
+        // if internal node, first let your children be assigned numbers
+        int[] childNumbers = new int[tree.getChildCount(node)];
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            childNumbers[i] = populate(tree, tree.getChild(node, i), current, mutationRate);
+        }
 
-    	// now, pick the next available number
-    	nodeNumber = current[0];
-    	// if you are not the root, then record the branch length above you.
-    	if (!tree.isRoot(node)) {
-    		//iTau[nodeNumber] = tree.getBranchLength(node) * mutationRate;
-    		iTau[nodeNumber] =
-    			(tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node))  * mutationRate;
-    	}
-    	// increment the next available number
-    	current[0] += 1;
+        // now, pick the next available number
+        nodeNumber = current[0];
+        // if you are not the root, then record the branch length above you.
+        if (!tree.isRoot(node)) {
+            //iTau[nodeNumber] = tree.getBranchLength(node) * mutationRate;
+            iTau[nodeNumber] =
+                    (tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node)) * mutationRate;
+        }
+        // increment the next available number
+        current[0] += 1;
 
-    	// now that you have your number, populate the iParent entries of your children.
-    	for (int i = 0; i < tree.getChildCount(node); i++) {
-    		iParent[childNumbers[i]] = nodeNumber;
-    	}
+        // now that you have your number, populate the iParent entries of your children.
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            iParent[childNumbers[i]] = nodeNumber;
+        }
 
-    	// finally return your number so your parent can do the same.
-    	return nodeNumber;
+        // finally return your number so your parent can do the same.
+        return nodeNumber;
     }
 
-	public String getOperatorName() {
-		return "IstvansOperator";
-	}
+    public String getOperatorName() {
+        return "IstvansOperator";
+    }
 
-	public double getMinimumAcceptanceLevel() { return 0.1; }
-	public double getMinimumGoodAcceptanceLevel() { return 0.4; }
+    public double getMinimumAcceptanceLevel() {
+        return 0.1;
+    }
 
-	public String getPerformanceSuggestion() {
-		if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-			return "";
-		} else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()){
-			return "";
-		} else {
-			return "";
-		}
-	}
+    public double getMinimumGoodAcceptanceLevel() {
+        return 0.4;
+    }
 
-	public Element createOperatorElement(Document doc) {
-		throw new RuntimeException();
-	}
+    public String getPerformanceSuggestion() {
+        if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
+            return "";
+        } else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
+            return "";
+        } else {
+            return "";
+        }
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public Element createOperatorElement(Document doc) {
+        throw new RuntimeException();
+    }
 
-		public String getParserName() { return "alignmentChunkOperator"; }
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public String getParserName() {
+            return "alignmentChunkOperator";
+        }
 
-			TKF91Likelihood likelihood = (TKF91Likelihood)xo.getChild(TKF91Likelihood.class);
-			int weight = xo.getIntegerAttribute("weight");
-			double iP = xo.getDoubleAttribute("iP");
-			double exponent = xo.getDoubleAttribute("exponent");
-			double gapPenalty = xo.getDoubleAttribute("gapPenalty");
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TKF91Likelihood likelihood = (TKF91Likelihood) xo.getChild(TKF91Likelihood.class);
+            double weight = xo.getDoubleAttribute("weight");
+            double iP = xo.getDoubleAttribute("iP");
+            double exponent = xo.getDoubleAttribute("exponent");
+            double gapPenalty = xo.getDoubleAttribute("gapPenalty");
 
 
-			return new IstvanOperator(iP, exponent, gapPenalty, weight, likelihood);
-		}
+            return new IstvanOperator(iP, exponent, gapPenalty, weight, likelihood);
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element represents an operator that re-aligns a small chunk of an alignment.";
-		}
+        public String getParserDescription() {
+            return "This element represents an operator that re-aligns a small chunk of an alignment.";
+        }
 
-		public Class getReturnType() { return IstvanOperator.class; }
+        public Class getReturnType() {
+            return IstvanOperator.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newIntegerRule("weight"),
-			AttributeRule.newDoubleRule("iP", false, "tuning probability, values near zero resamples entire alignment and near 1.0 resamples single columns."),
-			AttributeRule.newDoubleRule("exponent", false, "tuning parameter, value of 1.0 samples random alignments, large values (e.g. 2.7) sample alignment peaked around 'best' alignment"),
-			AttributeRule.newDoubleRule("gapPenalty", false, "tuning parameter, must be negative, large values penalize gaps more in the alignment proposal."),
-			new ElementRule(TKF91Likelihood.class)
-		};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule("weight"),
+                AttributeRule.newDoubleRule("iP", false, "tuning probability, values near zero resamples entire alignment and near 1.0 resamples single columns."),
+                AttributeRule.newDoubleRule("exponent", false, "tuning parameter, value of 1.0 samples random alignments, large values (e.g. 2.7) sample alignment peaked around 'best' alignment"),
+                AttributeRule.newDoubleRule("gapPenalty", false, "tuning parameter, must be negative, large values penalize gaps more in the alignment proposal."),
+                new ElementRule(TKF91Likelihood.class)
+        };
 
-	};
+    };
 }

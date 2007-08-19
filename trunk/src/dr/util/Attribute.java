@@ -26,43 +26,54 @@
 package dr.util;
 
 
-
 /**
  * An immutable attribute has a name and value.
  *
- * @version $Id: Attribute.java,v 1.24 2005/05/24 20:26:01 rambaut Exp $
- *
  * @author Alexei Drummond
+ * @version $Id: Attribute.java,v 1.24 2005/05/24 20:26:01 rambaut Exp $
  */
 
 
 public interface Attribute {
 
-	public final static String ATTRIBUTE = "att";
-	public final static String NAME = "name";
-	public final static String VALUE = "value";
+    public final static String ATTRIBUTE = "att";
+    public final static String NAME = "name";
+    public final static String VALUE = "value";
 
-	String getAttributeName();
-		
-	Object getAttributeValue();
+    String getAttributeName();
 
-	public class Default implements Attribute {
-	
+    Object getAttributeValue();
 
-		public Default(String name, Object value) {
-			this.name = name;
-			this.value = value;
-		}
+    public class Default implements Attribute {
 
-		public String getAttributeName() { return name; }
-		
-		public Object getAttributeValue() { return value; }
-		
-		public String toString() { return name + ": " + value; }
-		
-		private String name;
-		private Object value;
-		
-	}
+
+        public Default(String name, Object value) {
+            this.name = name;
+            this.value = value;
+        }
+
+        public String getAttributeName() {
+            return name;
+        }
+
+        public Object getAttributeValue() {
+            return value;
+        }
+
+        public String toString() {
+            return name + ": " + value;
+        }
+
+        private String name;
+        private Object value;
+
+    }
+
+    public class Double extends Default {
+
+        public Double(String name, double value) {
+            super(name, java.lang.Double.toString(value));
+        }
+    }
 }
 

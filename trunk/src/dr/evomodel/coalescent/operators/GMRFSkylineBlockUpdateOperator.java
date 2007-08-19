@@ -21,7 +21,6 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
     private double scaleFactor;
     private double lambdaScaleFactor;
     private int mode = CoercableMCMCOperator.DEFAULT;
-    private int weight = 1;
     private int fieldLength;
 
     private int maxIterations;
@@ -37,11 +36,10 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
     private DenseMatrix I;
 
     public GMRFSkylineBlockUpdateOperator(GMRFSkylineLikelihood gmrfLikelihood,
-                                          int weight, int mode, double scaleFactor,
+                                          double weight, int mode, double scaleFactor,
                                           int maxIterations, double stopValue) {
         super();
         this.mode = mode;
-        this.weight = weight;
         gmrfField = gmrfLikelihood;
         popSizeParameter = gmrfLikelihood.getPopSizeParameter();
         precisionParameter = gmrfLikelihood.getPrecisionParameter();
@@ -61,7 +59,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 //            one.set(i, 1);
             I.set(i, i, 1.0);
         }
-
+        setWeight(weight);
     }
 
     private double getNewLambda(double currentValue, double lambdaScale) {
@@ -419,15 +417,6 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
         return 0.30;
     }
 
-    public int getWeight() {
-        return weight;
-    }
-
-    public void setWeight(int w) {
-        weight = w;
-    }
-
-
     public final String getPerformanceSuggestion() {
 
         double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
@@ -463,7 +452,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
                 }
             }
 
-            int weight = xo.getIntegerAttribute(WEIGHT);
+            double weight = xo.getDoubleAttribute(WEIGHT);
             double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
             if (scaleFactor <= 0.0) {
@@ -513,7 +502,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
-                AttributeRule.newIntegerRule(WEIGHT),
+                AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newDoubleRule(STOP_VALUE, true),
                 AttributeRule.newIntegerRule(MAX_ITERATIONS, true),

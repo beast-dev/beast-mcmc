@@ -755,7 +755,7 @@ public class BeautiOptions {
      * Read options from a file
      *
      * @param includeData include a data block?
-     * @param guessDates guess dates?
+     * @param guessDates  guess dates?
      * @return the Document
      */
     public Document create(boolean includeData, boolean guessDates) {
@@ -806,7 +806,7 @@ public class BeautiOptions {
             Element taxonSetElement = new Element("taxonSet");
             taxonSetElement.addContent(createChild("id", taxonSet.getId()));
             taxonSetElement.addContent(createChild("enforceMonophyly",
-                    ((Boolean)taxonSetsMono.get(taxonSet)).booleanValue() ? "true" : "false"));
+                    taxonSetsMono.get(taxonSet) ? "true" : "false"));
             for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
                 Element taxonElement = new Element("taxon");
                 taxonElement.addContent(createChild("id", taxonSet.getTaxon(j).getId()));
@@ -874,7 +874,7 @@ public class BeautiOptions {
             Element e = new Element(name);
             e.addContent(createChild("tuning", operator.tuning));
             e.addContent(createChild("tuningEdited", operator.tuningEdited));
-            e.addContent(createChild("weight", (int) operator.weight));
+            e.addContent(createChild("weight", operator.weight));
             operatorsElement.addContent(e);
         }
 
@@ -1078,7 +1078,7 @@ public class BeautiOptions {
 
                 operator.tuning = getDoubleChild(e, "tuning", 1.0);
                 operator.tuningEdited = getBooleanChild(e, "tuningEdited", false);
-                operator.weight = getIntegerChild(e, "weight", 1);
+                operator.weight = getDoubleChild(e, "weight", 1);
             }
         }
 

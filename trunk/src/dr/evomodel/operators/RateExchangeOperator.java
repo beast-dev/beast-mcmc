@@ -27,9 +27,11 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.*;
-import dr.xml.*;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
+import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -37,12 +39,11 @@ import org.w3c.dom.Element;
  * Implements the RateExchange move.
  *
  * @author Alexei Drummond
- *
  * @version $Id: RateExchangeOperator.java,v 1.3 2005/01/06 14:46:36 rambaut Exp $
  */
 public class RateExchangeOperator extends SimpleMCMCOperator {
 
-	public static final String RATE_EXCHANGE = "rateExchange";
+    public static final String RATE_EXCHANGE = "rateExchange";
     public static final String SWAP_TRAITS = "swapTraits";
     public static final String SWAP_RATES = "swapRates";
     public static final String SWAP_AT_ROOT = "swapAtRoot";
@@ -56,20 +57,21 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
     private final boolean swapAtRoot;
     private final boolean moveHeight;
 
-	public RateExchangeOperator(TreeModel tree, int weight, boolean swapRates, boolean swapTraits, boolean swapAtRoot, boolean moveHeight) {
-		this.tree = tree;
-		setWeight(weight);
+    public RateExchangeOperator(TreeModel tree, double weight, boolean swapRates, boolean swapTraits, boolean swapAtRoot, boolean moveHeight) {
+        this.tree = tree;
+        setWeight(weight);
         this.swapRates = swapRates;
         this.swapTraits = swapTraits;
         this.swapAtRoot = swapAtRoot;
         this.moveHeight = moveHeight;
-	}
+    }
 
     /**
      * Do a probablistic subtree slide move.
+     *
      * @return the log-transformed hastings ratio
      */
-	public double doOperation() throws OperatorFailedException {
+    public double doOperation() throws OperatorFailedException {
 
         NodeRef node0 = tree.getInternalNode(MathUtils.nextInt(tree.getInternalNodeCount()));
         NodeRef node1 = tree.getChild(node0, 0);
@@ -77,7 +79,7 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
 
         if (swapRates) {
             if (swapAtRoot) {
-                double[] rates = new double[] { tree.getNodeRate(node0), tree.getNodeRate(node1), tree.getNodeRate(node2) };
+                double[] rates = new double[]{tree.getNodeRate(node0), tree.getNodeRate(node1), tree.getNodeRate(node2)};
 
                 int r1 = MathUtils.nextInt(3);
                 tree.setNodeRate(node0, rates[r1]);
@@ -100,7 +102,7 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
 
         if (swapTraits) {
             if (swapAtRoot) {
-                double[] traits = new double[] { tree.getNodeTrait(node0, TRAIT), tree.getNodeTrait(node1, TRAIT), tree.getNodeTrait(node2, TRAIT) };
+                double[] traits = new double[]{tree.getNodeTrait(node0, TRAIT), tree.getNodeTrait(node1, TRAIT), tree.getNodeTrait(node2, TRAIT)};
 
                 int r1 = MathUtils.nextInt(3);
                 tree.setNodeTrait(node0, TRAIT, traits[r1]);
@@ -132,58 +134,66 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
         return 0.0;
     }
 
-	public double getTargetAcceptanceProbability() { return 0.234; }
+    public double getTargetAcceptanceProbability() {
+        return 0.234;
+    }
 
 
-	public String getPerformanceSuggestion() {
+    public String getPerformanceSuggestion() {
         if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
             return "";
-        } else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()){
+        } else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
             return "";
         } else {
             return "";
         }
-	}
+    }
 
-	public String getOperatorName() {
-		return RATE_EXCHANGE;
-	}
+    public String getOperatorName() {
+        return RATE_EXCHANGE;
+    }
 
-	public Element createOperatorElement(Document d) {
+    public Element createOperatorElement(Document d) {
         return d.createElement(RATE_EXCHANGE);
-	}
+    }
 
-	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
-		public String getParserName() { return RATE_EXCHANGE; }
+        public String getParserName() {
+            return RATE_EXCHANGE;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
-			int weight = xo.getIntegerAttribute("weight");
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            double weight = xo.getDoubleAttribute("weight");
             boolean swapRates = xo.getBooleanAttribute(SWAP_RATES);
             boolean swapTraits = xo.getBooleanAttribute(SWAP_TRAITS);
             boolean swapAtRoot = xo.getBooleanAttribute(SWAP_AT_ROOT);
             boolean moveHeight = xo.getBooleanAttribute(MOVE_HEIGHT);
-			return new RateExchangeOperator(treeModel, weight, swapRates, swapTraits, swapAtRoot, moveHeight);
-		}
+            return new RateExchangeOperator(treeModel, weight, swapRates, swapTraits, swapAtRoot, moveHeight);
+        }
 
-		public String getParserDescription() {
-			return "An operator that exchanges rates and traits on a tree.";
-		}
+        public String getParserDescription() {
+            return "An operator that exchanges rates and traits on a tree.";
+        }
 
-		public Class getReturnType() { return SubtreeSlideOperator.class; }
+        public Class getReturnType() {
+            return SubtreeSlideOperator.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newIntegerRule("weight"),
-            AttributeRule.newBooleanRule(SWAP_RATES),
-            AttributeRule.newBooleanRule(SWAP_TRAITS),
-            AttributeRule.newBooleanRule(SWAP_AT_ROOT),
-            AttributeRule.newBooleanRule(MOVE_HEIGHT),
-			new ElementRule(TreeModel.class)
-		};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule("weight"),
+                AttributeRule.newBooleanRule(SWAP_RATES),
+                AttributeRule.newBooleanRule(SWAP_TRAITS),
+                AttributeRule.newBooleanRule(SWAP_AT_ROOT),
+                AttributeRule.newBooleanRule(MOVE_HEIGHT),
+                new ElementRule(TreeModel.class)
+        };
 	};
 
 }

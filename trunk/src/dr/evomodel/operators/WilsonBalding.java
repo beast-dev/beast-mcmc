@@ -25,15 +25,13 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.ConstantPopulationModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.SimpleMCMCOperator;
 import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -43,71 +41,69 @@ import dr.xml.*;
  * move only works for constant populations!!!
  *
  * @author Alexei Drummond
- *
  * @version $Id: WilsonBalding.java,v 1.38 2005/06/14 10:40:34 rambaut Exp $
  */
 public class WilsonBalding extends SimpleMCMCOperator {
 
-	public static final String WILSON_BALDING = "wilsonBalding";
-	public static final String DEMOGRAPHIC_MODEL = "demographicModel";
+    public static final String WILSON_BALDING = "wilsonBalding";
+    public static final String DEMOGRAPHIC_MODEL = "demographicModel";
 
-	private double logq;
-	private TreeModel tree = null;
-	private ConstantPopulationModel demoModel;
-	private int tipCount;
+    private double logq;
+    private TreeModel tree = null;
+    private ConstantPopulationModel demoModel;
+    private int tipCount;
 
 
-	public WilsonBalding(TreeModel tree, ConstantPopulationModel demoModel, int weight) {
-		this.tree = tree;
-		this.demoModel = demoModel;
-		tipCount = tree.getExternalNodeCount();
-		setWeight(weight);
-	}
+    public WilsonBalding(TreeModel tree, ConstantPopulationModel demoModel, double weight) {
+        this.tree = tree;
+        this.demoModel = demoModel;
+        tipCount = tree.getExternalNodeCount();
+        setWeight(weight);
+    }
 
-	public double doOperation() throws OperatorFailedException {
+    public double doOperation() throws OperatorFailedException {
 
-		proposeTree();
-		if (tree.getExternalNodeCount() != tipCount) {
-			int newCount = tree.getExternalNodeCount();
-			throw new RuntimeException("Lost some tips in modified SPR! (" +
-				tipCount + "-> " + newCount + ")" );
-		}
-		//System.out.println("last accepted deviation: " + getDeviation());
-		//System.out.println("logq=" + logq);
-		return logq;
-	}
+        proposeTree();
+        if (tree.getExternalNodeCount() != tipCount) {
+            int newCount = tree.getExternalNodeCount();
+            throw new RuntimeException("Lost some tips in modified SPR! (" +
+                    tipCount + "-> " + newCount + ")");
+        }
+        //System.out.println("last accepted deviation: " + getDeviation());
+        //System.out.println("logq=" + logq);
+        return logq;
+    }
 
-	/**
-	 * WARNING: Assumes strictly bifurcating tree.
-	 */
-	public void proposeTree()  throws OperatorFailedException {
+    /**
+     * WARNING: Assumes strictly bifurcating tree.
+     */
+    public void proposeTree() throws OperatorFailedException {
 
-		NodeRef i;
-		double delta, oldMinAge, newMinAge, newRange, oldRange, newAge, q;
+        NodeRef i;
+        double delta, oldMinAge, newMinAge, newRange, oldRange, newAge, q;
 
-		//Bchoose
+        //Bchoose
 
-		//for (int n =0; n < tree.getNodeCount(); n++) {
-		//	System.out.println(n + " " + ( (tree.getNode(n) == null) ? "null" : tree.getNode(n).getId()));
-		//}
+        //for (int n =0; n < tree.getNodeCount(); n++) {
+        //	System.out.println(n + " " + ( (tree.getNode(n) == null) ? "null" : tree.getNode(n).getId()));
+        //}
 
-		// choose a random node avoiding root
+        // choose a random node avoiding root
         final int nodeCount = tree.getNodeCount();
         do {
-			i = tree.getNode(MathUtils.nextInt(nodeCount));
-		} while (tree.getRoot() == i);
-		final NodeRef iP = tree.getParent(i);
+            i = tree.getNode(MathUtils.nextInt(nodeCount));
+        } while (tree.getRoot() == i);
+        final NodeRef iP = tree.getParent(i);
 
-		// choose another random node to insert i above
-		NodeRef j = tree.getNode(MathUtils.nextInt(nodeCount));
-		NodeRef k = tree.getParent(j);
-
+        // choose another random node to insert i above
+        NodeRef j = tree.getNode(MathUtils.nextInt(nodeCount));
+        NodeRef k = tree.getParent(j);
 
         // make sure that the target branch <k, j> is above the subtree being moved
-		while ((k != null && tree.getNodeHeight(k) <= tree.getNodeHeight(i)) || (i == j)) {
-			j = tree.getNode(MathUtils.nextInt(nodeCount));
-			k = tree.getParent(j);
-		}
+        while ((k != null && tree.getNodeHeight(k) <= tree.getNodeHeight(i)) || (i == j)) {
+            j = tree.getNode(MathUtils.nextInt(nodeCount));
+            k = tree.getParent(j);
+        }
 
         // disallow moves that change the root.
         if (j == tree.getRoot() || iP == tree.getRoot()) {
@@ -116,8 +112,8 @@ public class WilsonBalding extends SimpleMCMCOperator {
 
         if (k == iP || j == iP || k == i) throw new OperatorFailedException("move failed");
 
-		final NodeRef CiP = getOtherChild(tree, iP, i);
-		NodeRef PiP = tree.getParent(iP);
+        final NodeRef CiP = getOtherChild(tree, iP, i);
+        NodeRef PiP = tree.getParent(iP);
 
 //		ConstantPopulation demoFunc = null;
 //		if (demoModel != null && demoModel.getDemographicFunction() instanceof ConstantPopulation) {
@@ -154,120 +150,127 @@ public class WilsonBalding extends SimpleMCMCOperator {
 //				q = (tree.getNodeHeight(CiP)-tree.getNodeHeight(iP))/demoFunc.getN0() + Math.log(newRange/demoFunc.getN0());
 //			}
 //		} else {
-			newMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(j));
-			newRange = tree.getNodeHeight(k) - newMinAge;
-			newAge = newMinAge + (MathUtils.nextDouble()*newRange);
-			oldMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(CiP));
-			oldRange = tree.getNodeHeight(PiP) - oldMinAge;
-			q = newRange/Math.abs(oldRange);
-			//System.out.println(newRange + "/" + oldRange + "=" + q);
+        newMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(j));
+        newRange = tree.getNodeHeight(k) - newMinAge;
+        newAge = newMinAge + (MathUtils.nextDouble() * newRange);
+        oldMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(CiP));
+        oldRange = tree.getNodeHeight(PiP) - oldMinAge;
+        q = newRange / Math.abs(oldRange);
+        //System.out.println(newRange + "/" + oldRange + "=" + q);
 //		}
 
-		//Bupdate
+        //Bupdate
 
-		tree.beginTreeEdit();
+        tree.beginTreeEdit();
 
-		if (j == tree.getRoot()) {
+        if (j == tree.getRoot()) {
 
-			// 1. remove edges <iP, CiP>
-			tree.removeChild(iP, CiP);
-			tree.removeChild(PiP, iP);
+            // 1. remove edges <iP, CiP>
+            tree.removeChild(iP, CiP);
+            tree.removeChild(PiP, iP);
 
-			// 2. add edges <k, iP>, <iP, j>, <PiP, CiP>
-			tree.addChild(iP, j);
-			tree.addChild(PiP, CiP);
+            // 2. add edges <k, iP>, <iP, j>, <PiP, CiP>
+            tree.addChild(iP, j);
+            tree.addChild(PiP, CiP);
 
-			// iP is the new root
-			tree.setRoot(iP);
+            // iP is the new root
+            tree.setRoot(iP);
 
-		} else if (iP == tree.getRoot()) {
+        } else if (iP == tree.getRoot()) {
 
+            // 1. remove edges <k, j>, <iP, CiP>, <PiP, iP>
+            tree.removeChild(k, j);
+            tree.removeChild(iP, CiP);
 
-			// 1. remove edges <k, j>, <iP, CiP>, <PiP, iP>
-			tree.removeChild(k, j);
-			tree.removeChild(iP, CiP);
+            // 2. add edges <k, iP>, <iP, j>, <PiP, CiP>
+            tree.addChild(iP, j);
+            tree.addChild(k, iP);
 
-			// 2. add edges <k, iP>, <iP, j>, <PiP, CiP>
-			tree.addChild(iP, j);
-			tree.addChild(k, iP);
+            //CiP is the new root
+            tree.setRoot(CiP);
 
-			//CiP is the new root
-			tree.setRoot(CiP);
+        } else {
+            // 1. remove edges <k, j>, <iP, CiP>, <PiP, iP>
+            tree.removeChild(k, j);
+            tree.removeChild(iP, CiP);
+            tree.removeChild(PiP, iP);
 
-		} else {
-			// 1. remove edges <k, j>, <iP, CiP>, <PiP, iP>
-			tree.removeChild(k, j);
-			tree.removeChild(iP, CiP);
-			tree.removeChild(PiP, iP);
+            // 2. add edges <k, iP>, <iP, j>, <PiP, CiP>
+            tree.addChild(iP, j);
+            tree.addChild(k, iP);
+            tree.addChild(PiP, CiP);
+        }
 
-			// 2. add edges <k, iP>, <iP, j>, <PiP, CiP>
-			tree.addChild(iP,j);
-			tree.addChild(k, iP);
-			tree.addChild(PiP, CiP);
-		}
+        tree.setNodeHeight(iP, newAge);
 
-		tree.setNodeHeight(iP, newAge);
+        try {
+            tree.endTreeEdit();
+        } catch (MutableTree.InvalidTreeException ite) {
+            throw new OperatorFailedException(ite.toString());
+        }
 
-		try {
-			tree.endTreeEdit();
-		} catch(MutableTree.InvalidTreeException ite) {
-			throw new OperatorFailedException(ite.toString());
-		}
+        logq = Math.log(q);
+    }
 
-		logq = Math.log(q);
-	}
+    public double getMinimumAcceptanceLevel() {
+        return 0.01;
+    }
 
-	public double getMinimumAcceptanceLevel() { return 0.01; }
+    public String getPerformanceSuggestion() {
+        if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
+            return "";
+        } else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
+            return "";
+        } else {
+            return "";
+        }
+    }
 
-	public String getPerformanceSuggestion() {
-		if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-			return "";
-		} else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()){
-			return "";
-		} else {
-			return "";
-		}
-	}
+    public String getOperatorName() {
+        return WILSON_BALDING;
+    }
 
-	public String getOperatorName() {
-		return WILSON_BALDING;
-	}
+    public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-	public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        public String getParserName() {
+            return WILSON_BALDING;
+        }
 
-		public String getParserName() { return WILSON_BALDING; }
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            ConstantPopulationModel demoModel = null;
+            if (xo.hasAttribute(DEMOGRAPHIC_MODEL)) {
+                demoModel = (ConstantPopulationModel) xo.getSocketChild(DEMOGRAPHIC_MODEL);
+            }
 
-			ConstantPopulationModel demoModel = null;
-			if (xo.hasAttribute(DEMOGRAPHIC_MODEL)) {
-				demoModel = (ConstantPopulationModel)xo.getSocketChild(DEMOGRAPHIC_MODEL);
-			}
+            double weight = xo.getDoubleAttribute(WEIGHT);
 
-			int weight = xo.getIntegerAttribute(WEIGHT);
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-			TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
+            return new WilsonBalding(treeModel, demoModel, weight);
+        }
 
-			return new WilsonBalding(treeModel, demoModel, weight);
-		}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule(WEIGHT),
+                new ElementRule(DEMOGRAPHIC_MODEL,
+                        new XMLSyntaxRule[]{new ElementRule(ConstantPopulationModel.class)}, true),
+                new ElementRule(TreeModel.class)
+        };
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newIntegerRule(WEIGHT),
-			new ElementRule(DEMOGRAPHIC_MODEL,
-				new XMLSyntaxRule[] { new ElementRule(ConstantPopulationModel.class) }, true),
-			new ElementRule(TreeModel.class)
-		};
+        public String getParserDescription() {
+            return "An operator which performs the Wilson-Balding move on a tree";
+        }
 
-		public String getParserDescription() {
-			return "An operator which performs the Wilson-Balding move on a tree";
-		}
-
-		public Class getReturnType() { return WilsonBalding.class; }
-	};
+        public Class getReturnType() {
+            return WilsonBalding.class;
+        }
+    };
 }

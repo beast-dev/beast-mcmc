@@ -25,23 +25,24 @@
 
 package dr.inference.operators;
 
-import java.util.Vector;
+import java.util.List;
 
 /**
  * An interface the defines an operator schedule for use in
  * choosing the next operator during an MCMC run.
  *
  * @author Alexei Drummond
- *
  * @version $Id: OperatorSchedule.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface OperatorSchedule {
 
-	public int getNextOperatorIndex();
+    public int getNextOperatorIndex();
 
-	public MCMCOperator getOperator(int index);
-	public int getOperatorCount();
+    public MCMCOperator getOperator(int index);
 
-	public void addOperator(MCMCOperator op);
-	public void addOperators(Vector v);
+    public int getOperatorCount();
+
+    public void addOperator(MCMCOperator op);
+
+    public void addOperators(List<MCMCOperator> v);
 }

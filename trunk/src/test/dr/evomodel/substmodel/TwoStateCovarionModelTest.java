@@ -7,6 +7,9 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import static java.lang.Math.exp;
+import static java.lang.Math.sqrt;
+
 /**
  * TwoStateCovarionModel Tester.
  *
@@ -57,8 +60,9 @@ public class TwoStateCovarionModelTest extends TestCase {
         }
 
         // with alpha < 1.0, the probability of difference should be smaller than binary jukes cantor
-        alpha.setParameterValue(0, 0.0);
+        alpha.setParameterValue(0, 0.5);
 
+        //model.setBranchLengthExcludesHiddenEvents(false);
         model.setupMatrix();
 
         for (double distance = 0.01; distance <= 1.005; distance += 0.01) {
@@ -70,14 +74,21 @@ public class TwoStateCovarionModelTest extends TestCase {
                             (matrix[9] + matrix[11]) * pi[2] +
                             (matrix[12] + matrix[14]) * pi[3];
 
-            // analytical result for the probability of a mismatch in binary jukes cantor model
-            double jc = 0.5 * (1 - Math.exp(-2.0 * distance));
+            // analytical result for the probability of a mismatch in two-state covarion model
 
-            System.out.println(distance + "\t" + jc + "\t" + pChange);
+            double t = distance;
+            double a = switchingRate.getParameterValue(0);
+            double s = alpha.getParameterValue(0);
+            double r = 1.0;
+            double u = (a * a) + (s * s) + (r * r) - 2 * r * s;
 
-            // this is an extremely weak test
-            // I need to find some analytical results for this probability!
-            assertTrue(pChange < jc);
+            // unnormalized p - includes switching events
+            double analyticalP = (0.75 - 0.25 * exp(-2 * a * t) - 0.25 * exp((-a - s - r + sqrt(u)) * t) - 0.25 *
+                    exp((-a - s - r - sqrt(u)) * t));
+
+            System.out.println(distance + "\t" + analyticalP + "\t" + pChange + "\t" + (analyticalP / pChange));
+
+            //assertEquals(pChange, analyticalP, 1e-8);
         }
     }
 

@@ -1,13 +1,13 @@
 package dr.evomodel.coalescent.operators;
 
-import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.GibbsOperator;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
-import dr.xml.*;
+import dr.inference.operators.GibbsOperator;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
+import dr.xml.*;
 
 /**
 
@@ -21,11 +21,11 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
     private Parameter data;
     private Parameter indicators;
 
-    public SampleNonActiveGibbsOperator(ParametricDistributionModel distribution, Parameter data, Parameter indicators, int weight) {
+    public SampleNonActiveGibbsOperator(ParametricDistributionModel distribution, Parameter data, Parameter indicators, double weight) {
         this.distribution = distribution;
         this.data = data;
         this.indicators = indicators;
-        this.weight = weight;
+        setWeight(weight);
     }
 
 
@@ -47,7 +47,7 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
 
         for (int i = 0; i < idim; i++) {
             final double value = indicators.getStatisticValue(i);
-            if( value == 0 ) {
+            if (value == 0) {
                 loc[nLoc] = i + 1;
                 ++nLoc;
             }
@@ -69,7 +69,7 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final int weight = xo.getIntegerAttribute(WEIGHT);
+            final double weight = xo.getDoubleAttribute(WEIGHT);
 
             XMLObject cxo = (XMLObject) xo.getChild("distribution");
             ParametricDistributionModel distribution =
@@ -101,14 +101,14 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule("distribution",
-                        new XMLSyntaxRule[] { new ElementRule(ParametricDistributionModel.class) }),
+                        new XMLSyntaxRule[]{new ElementRule(ParametricDistributionModel.class)}),
                 new ElementRule(INDICATOR_PARAMETER,
-                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(DATA_PARAMETER,
-                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-                AttributeRule.newIntegerRule(WEIGHT),
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                AttributeRule.newDoubleRule(WEIGHT),
         };
 
     };

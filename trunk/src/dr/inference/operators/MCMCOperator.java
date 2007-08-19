@@ -30,126 +30,135 @@ package dr.inference.operators;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: MCMCOperator.java,v 1.6 2005/06/14 10:40:34 rambaut Exp $
  */
 public interface MCMCOperator {
 
-	public static final String WEIGHT = "weight";
+    public static final String WEIGHT = "weight";
 
 // This attribute is now called AUTO_OPTIMIZE and is in CoercableMCMCOperator	
 //	public static final String ADAPT = "adapt";
-	
-	/** 
-	 * operates on the model.
-	 * @return the hastings ratio of this operator.
-	 */
-	double operate() throws OperatorFailedException;
-	
-	/**
-	 * Called to tell operator that operation was accepted
-	 */
-	void accept(double deviation);
-	
-	/**
-	 * Called to tell operator that operation was rejected
-	 */
-	void reject();
-	
-	/**
-	 * Reset operator acceptance records.
-	 */
-	void reset();
-	
-	/**
-	 * @return the number of acceptances since last call to reset().
-	 */
-	int getAccepted();
+
+    /**
+     * operates on the model.
+     *
+     * @return the hastings ratio of this operator.
+     * @throws OperatorFailedException if the operator failed and should be rejected
+     */
+    double operate() throws OperatorFailedException;
+
+    /**
+     * Called to tell operator that operation was accepted
+     *
+     * @param deviation the log ratio accepted on
+     */
+    void accept(double deviation);
+
+    /**
+     * Called to tell operator that operation was rejected
+     */
+    void reject();
+
+    /**
+     * Reset operator acceptance records.
+     */
+    void reset();
+
+    /**
+     * @return the number of acceptances since last call to reset().
+     */
+    int getAccepted();
 
     /**
      * Set the number of acceptances since last call to reset(). This is used
      * to restore the state of the operator
+     *
+     * @param accepted number of acceptances
      */
     void setAccepted(int accepted);
 
-	/**
-	 * @return the number of rejections since last call to reset().
-	 */
-	int getRejected();
-	
+    /**
+     * @return the number of rejections since last call to reset().
+     */
+    int getRejected();
+
     /**
      * Set the number of rejections since last call to reset(). This is used
      * to restore the state of the operator
+     *
+     * @param rejected number of rejections
      */
     void setRejected(int rejected);
-    
-	/**
-	 * @return the mean deviation in log posterior per accepted operations.
-	 */
-	double getMeanDeviation();
-	
+
+    /**
+     * @return the mean deviation in log posterior per accepted operations.
+     */
+    double getMeanDeviation();
+
     double getSumDeviation();
 
     void setDumDeviation(double sumDeviation);
-    
-	/**
-	 * @return the optimal acceptance probability
-	 */
-	double getTargetAcceptanceProbability();
-	
-	/**
-	 * @return the minimum acceptable acceptance probability
-	 */
-	double getMinimumAcceptanceLevel();
 
-	/**
-	 * @return the maximum acceptable acceptance probability
-	 */
-	double getMaximumAcceptanceLevel();
-	
-	/**
-	 * @return the minimum good acceptance probability
-	 */
-	double getMinimumGoodAcceptanceLevel();
+    /**
+     * @return the optimal acceptance probability
+     */
+    double getTargetAcceptanceProbability();
 
-	/**
-	 * @return the maximum good acceptance probability
-	 */
-	double getMaximumGoodAcceptanceLevel();
-	
-	/**
-	 * @return a short descriptive message of the performance of this operator.
-	 */
-	String getPerformanceSuggestion();
+    /**
+     * @return the minimum acceptable acceptance probability
+     */
+    double getMinimumAcceptanceLevel();
 
-	/**
-	 * @return the weight of this operator.
-	 */
-	int getWeight();
+    /**
+     * @return the maximum acceptable acceptance probability
+     */
+    double getMaximumAcceptanceLevel();
 
-	/**
-	 * sets the weight of this operator. The weight
-	 * determines the proportion of time spent using
-	 * this operator. This is relative to a 'standard'
-	 * operator weight of 1. 
-	 */
-	void setWeight(int w);
+    /**
+     * @return the minimum good acceptance probability
+     */
+    double getMinimumGoodAcceptanceLevel();
 
-	/**
-	 * @return the name of this operator 
-	 */
-	String getOperatorName();
+    /**
+     * @return the maximum good acceptance probability
+     */
+    double getMaximumGoodAcceptanceLevel();
 
-	class Utils {
-	
-		public static double getAcceptanceProbability(MCMCOperator op) {
-			int accepted = op.getAccepted();
-			int rejected = op.getRejected();
-			return (double)accepted / (double)(accepted + rejected);
-		}
-		
-		public static int getOperationCount(MCMCOperator op) {
-			return op.getAccepted() + op.getRejected();
+    /**
+     * @return a short descriptive message of the performance of this operator.
+     */
+    String getPerformanceSuggestion();
+
+    /**
+     * @return the relative weight of this operator.
+     */
+    double getWeight();
+
+    /**
+     * sets the weight of this operator. The weight
+     * determines the proportion of time spent using
+     * this operator. This is relative to a 'standard'
+     * operator weight of 1.
+     *
+     * @param weight the relative weight of this parameter - should be positive.
+     */
+    void setWeight(double weight);
+
+    /**
+     * @return the name of this operator
+     */
+    String getOperatorName();
+
+    class Utils {
+
+        public static double getAcceptanceProbability(MCMCOperator op) {
+            int accepted = op.getAccepted();
+            int rejected = op.getRejected();
+            return (double) accepted / (double) (accepted + rejected);
+        }
+
+        public static int getOperationCount(MCMCOperator op) {
+            return op.getAccepted() + op.getRejected();
 		}
 	}
 

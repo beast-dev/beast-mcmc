@@ -28,8 +28,8 @@ package dr.evomodel.operators;
 import dr.evolution.alignment.Alignment;
 import dr.evomodel.sitemodel.CategorySampleModel;
 import dr.inference.model.Parameter;
-import dr.inference.operators.SimpleMCMCOperator;
 import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -42,112 +42,123 @@ import org.w3c.dom.Element;
  */
 public class CategoryOperator extends SimpleMCMCOperator {
 
-	public static final String CATEGORY_OPERATOR = "categoryOperator";
+    public static final String CATEGORY_OPERATOR = "categoryOperator";
 
-	// dimension of categoryParameter should be set beforehand
-	public CategoryOperator(CategorySampleModel siteModel, int siteCount,
-								Parameter categoryParameter, int weight) {
-		this.categoryParameter = categoryParameter;
-		this.weight = weight;
-		this.siteModel = siteModel;
-		this.categoryCount = siteModel.getCategoryCount();
-		this.siteCount = siteCount;
-	}
-
-
-	/**
-	 * Alter the category of one site
-	 */
-	public final double doOperation() throws OperatorFailedException {
-
-		int randomSite = (int)(Math.random()*siteCount);
-
-		int currentCategory = (int)categoryParameter.getParameterValue(randomSite);
-
-		siteModel.subtractSitesInCategoryCount(currentCategory);
-
-		int[] temp = new int[categoryCount-1];
-
-		int count = 0;
-
-		for(int i = 0; i<categoryCount; i++){
-			if(i != currentCategory){
-				temp[count] = i;
-				count++;
-			}
-		}
-
-		int newCategory = temp[(int)(Math.random()*temp.length)];
-
-		categoryParameter.setParameterValue(randomSite, newCategory);
-		siteModel.addSitesInCategoryCount(newCategory);
-
-		return 0.0;
-
-	}
+    // dimension of categoryParameter should be set beforehand
+    public CategoryOperator(CategorySampleModel siteModel, int siteCount,
+                            Parameter categoryParameter, double weight) {
+        this.categoryParameter = categoryParameter;
+        setWeight(weight);
+        this.siteModel = siteModel;
+        this.categoryCount = siteModel.getCategoryCount();
+        this.siteCount = siteCount;
+    }
 
 
+    /**
+     * Alter the category of one site
+     */
+    public final double doOperation() throws OperatorFailedException {
 
-	// Interface MCMCOperator
-	public final String getOperatorName() { return CATEGORY_OPERATOR; }
+        int randomSite = (int) (Math.random() * siteCount);
+
+        int currentCategory = (int) categoryParameter.getParameterValue(randomSite);
+
+        siteModel.subtractSitesInCategoryCount(currentCategory);
+
+        int[] temp = new int[categoryCount - 1];
+
+        int count = 0;
+
+        for (int i = 0; i < categoryCount; i++) {
+            if (i != currentCategory) {
+                temp[count] = i;
+                count++;
+            }
+        }
+
+        int newCategory = temp[(int) (Math.random() * temp.length)];
+
+        categoryParameter.setParameterValue(randomSite, newCategory);
+        siteModel.addSitesInCategoryCount(newCategory);
+
+        return 0.0;
+
+    }
 
 
-	/**
-	 * Create the Operator part of this model parameter!
-	 */
-	public Element createOperatorElement(Document d) {
-		throw new RuntimeException("Not implemented!");
-	}
+    // Interface MCMCOperator
+    public final String getOperatorName() {
+        return CATEGORY_OPERATOR;
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return CATEGORY_OPERATOR; }
+    /**
+     * Create the Operator part of this model parameter!
+     */
+    public Element createOperatorElement(Document d) {
+        throw new RuntimeException("Not implemented!");
+    }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-			Parameter catParam = (Parameter)xo.getChild(Parameter.class);
-			CategorySampleModel siteModel = (CategorySampleModel)xo.getChild(CategorySampleModel.class);
-			Alignment alignment = (Alignment)xo.getChild(Alignment.class);
+        public String getParserName() {
+            return CATEGORY_OPERATOR;
+        }
 
-			int weight = xo.getIntegerAttribute(WEIGHT);
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			return new CategoryOperator(siteModel, alignment.getSiteCount(),
-										catParam, weight);
-		}
+            Parameter catParam = (Parameter) xo.getChild(Parameter.class);
+            CategorySampleModel siteModel = (CategorySampleModel) xo.getChild(CategorySampleModel.class);
+            Alignment alignment = (Alignment) xo.getChild(Alignment.class);
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            double weight = xo.getDoubleAttribute(WEIGHT);
 
-		public String getParserDescription() {
-			return "An operator on categories of sites.";
-		}
+            return new CategoryOperator(siteModel, alignment.getSiteCount(),
+                    catParam, weight);
+        }
 
-		public Class getReturnType() { return CategoryOperator.class; }
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public String getParserDescription() {
+            return "An operator on categories of sites.";
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newIntegerRule("weight"),
-			new ElementRule(Parameter.class),
-			new ElementRule(CategorySampleModel.class),
-			new ElementRule(Alignment.class)
-		};
+        public Class getReturnType() {
+            return CategoryOperator.class;
+        }
 
-	};
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-	public String toString() { return getOperatorName();}
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule("weight"),
+                new ElementRule(Parameter.class),
+                new ElementRule(CategorySampleModel.class),
+                new ElementRule(Alignment.class)
+        };
 
-	public String getPerformanceSuggestion() { return ""; }
+    };
 
-	// Private instance variables
-	private Parameter categoryParameter;
+    public String toString() {
+        return getOperatorName();
+    }
 
-	private CategorySampleModel siteModel;
+    public String getPerformanceSuggestion() {
+        return "";
+    }
 
-	private int categoryCount;
+    // Private instance variables
+    private Parameter categoryParameter;
 
-	private int siteCount;
+    private CategorySampleModel siteModel;
+
+    private int categoryCount;
+
+    private int siteCount;
 
 }
 

@@ -1,7 +1,7 @@
 /*
  * FixedColouredOperator.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -34,94 +34,107 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- * An operator that wraps another operator, and allows parameters upon which the tree colouring proposal distribution depends 
- * (other than the tree) to change without changing the current colouring.  It ensures that the proposal probability of the tree 
+ * An operator that wraps another operator, and allows parameters upon which the tree colouring proposal distribution depends
+ * (other than the tree) to change without changing the current colouring.  It ensures that the proposal probability of the tree
  * colouring is re-computed when necessary.
  *
  * @author Gerton Lunter
  * @author Alexei Drummond
- *
  * @version $Id: FixedColouredOperator.java,v 1.1 2006/08/12 12:55:44 gerton Exp $
  */
 public class FixedColouredOperator implements CoercableMCMCOperator {
 
     public static final double ACCEPTANCE_FACTOR = 0.5;
 
-	public static final String FIXED_COLOURED_OPERATOR = "fixedColouredOperator";
+    public static final String FIXED_COLOURED_OPERATOR = "fixedColouredOperator";
 
     private ColourSamplerModel colouringModel;
 
     private MCMCOperator innerOperator;
 
-	public FixedColouredOperator(ColourSamplerModel colouringModel, MCMCOperator operator) {
+    public FixedColouredOperator(ColourSamplerModel colouringModel, MCMCOperator operator) {
 
         this.colouringModel = colouringModel;
         this.innerOperator = operator;
-	}
+    }
 
     public final double operate() throws OperatorFailedException {
 
-    	colouringModel.invalidateProposalProbability();
-    	
-        double logO = innerOperator.operate();
+        colouringModel.invalidateProposalProbability();
 
-        return logO;
-	}
+        return innerOperator.operate();
+    }
 
     public double getCoercableParameter() {
-		if (innerOperator instanceof CoercableMCMCOperator) {
-            return ((CoercableMCMCOperator)innerOperator).getCoercableParameter();
-        }
-        throw new IllegalArgumentException();
-	}
-
-	public void setCoercableParameter(double value) {
         if (innerOperator instanceof CoercableMCMCOperator) {
-            ((CoercableMCMCOperator)innerOperator).setCoercableParameter(value);
-            return;
-        }
-        throw new IllegalArgumentException();
-	}
-
-	public double getRawParameter() {
-
-        if (innerOperator instanceof CoercableMCMCOperator) {
-            return ((CoercableMCMCOperator)innerOperator).getRawParameter();
+            return ((CoercableMCMCOperator) innerOperator).getCoercableParameter();
         }
         throw new IllegalArgumentException();
     }
 
-	public int getMode() {
+    public void setCoercableParameter(double value) {
         if (innerOperator instanceof CoercableMCMCOperator) {
-            return ((CoercableMCMCOperator)innerOperator).getMode();
+            ((CoercableMCMCOperator) innerOperator).setCoercableParameter(value);
+            return;
+        }
+        throw new IllegalArgumentException();
+    }
+
+    public double getRawParameter() {
+
+        if (innerOperator instanceof CoercableMCMCOperator) {
+            return ((CoercableMCMCOperator) innerOperator).getRawParameter();
+        }
+        throw new IllegalArgumentException();
+    }
+
+    public int getMode() {
+        if (innerOperator instanceof CoercableMCMCOperator) {
+            return ((CoercableMCMCOperator) innerOperator).getMode();
         }
         return CoercableMCMCOperator.COERCION_OFF;
-	}
+    }
 
-	public String getOperatorName() {
-		return "Coloured(" + innerOperator.getOperatorName() + ")";
-	}
+    public String getOperatorName() {
+        return "Coloured(" + innerOperator.getOperatorName() + ")";
+    }
 
-	public Element createOperatorElement(Document d) {
-		throw new RuntimeException("not implemented");
-	}
+    public Element createOperatorElement(Document d) {
+        throw new RuntimeException("not implemented");
+    }
 
-    public double getTargetAcceptanceProbability() { return innerOperator.getTargetAcceptanceProbability(); }
-    public double getMinimumAcceptanceLevel() { return innerOperator.getMinimumAcceptanceLevel(); }
-    public double getMaximumAcceptanceLevel() { return innerOperator.getMaximumAcceptanceLevel(); }
-    public double getMinimumGoodAcceptanceLevel() { return innerOperator.getMinimumGoodAcceptanceLevel(); }
-    public double getMaximumGoodAcceptanceLevel() { return innerOperator.getMaximumGoodAcceptanceLevel(); }
+    public double getTargetAcceptanceProbability() {
+        return innerOperator.getTargetAcceptanceProbability();
+    }
+
+    public double getMinimumAcceptanceLevel() {
+        return innerOperator.getMinimumAcceptanceLevel();
+    }
+
+    public double getMaximumAcceptanceLevel() {
+        return innerOperator.getMaximumAcceptanceLevel();
+    }
+
+    public double getMinimumGoodAcceptanceLevel() {
+        return innerOperator.getMinimumGoodAcceptanceLevel();
+    }
+
+    public double getMaximumGoodAcceptanceLevel() {
+        return innerOperator.getMaximumGoodAcceptanceLevel();
+    }
 
     // All of this is copied and modified from SimpleMCMCOperator
     /**
      * @return the weight of this operator.
      */
-    public final int getWeight() { return innerOperator.getWeight(); }
+    public final double getWeight() {
+        return innerOperator.getWeight();
+    }
 
     /**
      * Sets the weight of this operator.
      */
-    public final void setWeight(int w) {
+    public final void setWeight(double w) {
         innerOperator.setWeight(w);
     }
 
@@ -137,19 +150,25 @@ public class FixedColouredOperator implements CoercableMCMCOperator {
         innerOperator.reset();
     }
 
-    public final int getAccepted() { return innerOperator.getAccepted(); }
+    public final int getAccepted() {
+        return innerOperator.getAccepted();
+    }
 
     public final void setAccepted(int accepted) {
         innerOperator.setAccepted(accepted);
     }
 
-    public final int getRejected() { return innerOperator.getRejected(); }
+    public final int getRejected() {
+        return innerOperator.getRejected();
+    }
 
     public final void setRejected(int rejected) {
         innerOperator.setRejected(rejected);
     }
 
-    public final double getMeanDeviation() { return innerOperator.getMeanDeviation(); }
+    public final double getMeanDeviation() {
+        return innerOperator.getMeanDeviation();
+    }
 
     public final double getSumDeviation() {
         return innerOperator.getSumDeviation();
@@ -159,38 +178,44 @@ public class FixedColouredOperator implements CoercableMCMCOperator {
         innerOperator.setDumDeviation(sumDeviation);
     }
 
-	public String getPerformanceSuggestion() {
+    public String getPerformanceSuggestion() {
         return innerOperator.getPerformanceSuggestion();
-	}
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return FIXED_COLOURED_OPERATOR; }
+        public String getParserName() {
+            return FIXED_COLOURED_OPERATOR;
+        }
 
-		public Object parseXMLObject(XMLObject xo) {
+        public Object parseXMLObject(XMLObject xo) {
 
-            MCMCOperator operator = (MCMCOperator)xo.getChild(MCMCOperator.class);
-            ColourSamplerModel colourSamplerModel = (ColourSamplerModel)xo.getChild(ColourSamplerModel.class);
+            MCMCOperator operator = (MCMCOperator) xo.getChild(MCMCOperator.class);
+            ColourSamplerModel colourSamplerModel = (ColourSamplerModel) xo.getChild(ColourSamplerModel.class);
 
-			return new ColouredOperator(colourSamplerModel, operator);
-		}
+            return new ColouredOperator(colourSamplerModel, operator);
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element (or a ColouredOperator) must wrap any operator that changes a parameter upon which the colouring proposal distribution depends";
-		}
+        public String getParserDescription() {
+            return "This element (or a ColouredOperator) must wrap any operator that changes a parameter upon which the colouring proposal distribution depends";
+        }
 
-		public Class getReturnType() { return ColouredOperator.class; }
+        public Class getReturnType() {
+            return ColouredOperator.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(MCMCOperator.class),
-            new ElementRule(ColourSamplerModel.class)
-		};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(MCMCOperator.class),
+                new ElementRule(ColourSamplerModel.class)
+        };
 
-	};
+    };
 }

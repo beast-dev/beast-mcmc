@@ -107,20 +107,27 @@ public class TwoStateCovarionModel extends AbstractSubstitutionModel {
             }
         }
 
-        double switchingProportion = 0.0;
-        switchingProportion += matrix[0][2] * pi[2];
-        switchingProportion += matrix[2][0] * pi[0];
-        switchingProportion += matrix[1][3] * pi[3];
-        switchingProportion += matrix[3][1] * pi[1];
+        if (distanceExcludesSwitchingEvents) {
 
-        //System.out.println("switchingProportion=" + switchingProportion);
+            double switchingProportion = 0.0;
+            switchingProportion += matrix[0][2] * pi[2];
+            switchingProportion += matrix[2][0] * pi[0];
+            switchingProportion += matrix[1][3] * pi[3];
+            switchingProportion += matrix[3][1] * pi[1];
 
-        // normalize, removing switches
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
-                matrix[i][j] = matrix[i][j] / (1.0 - switchingProportion);
+            //System.out.println("switchingProportion=" + switchingProportion);
+
+            // normalize, removing switches
+            for (int i = 0; i < dimension; i++) {
+                for (int j = 0; j < dimension; j++) {
+                    matrix[i][j] = matrix[i][j] / (1.0 - switchingProportion);
+                }
             }
         }
+    }
+
+    void setBranchLengthExcludesHiddenEvents(boolean excludes) {
+        distanceExcludesSwitchingEvents = excludes;
     }
 
 
@@ -196,4 +203,8 @@ public class TwoStateCovarionModel extends AbstractSubstitutionModel {
 
     private Parameter alpha;
     private Parameter switchingParameter;
+
+    // if this parameter is true then branch lengths are in substitutions only
+    // otherwise the branch lengths include switching events
+    private boolean distanceExcludesSwitchingEvents = true;
 }

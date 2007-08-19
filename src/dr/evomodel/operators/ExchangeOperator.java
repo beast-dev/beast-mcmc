@@ -28,7 +28,9 @@ package dr.evomodel.operators;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.*;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -38,84 +40,88 @@ import dr.xml.*;
  * The narrow exchange is very similar to a rooted-tree
  * nearest-neighbour interchange but with the restriction
  * that node height must remain consistent.
- *
+ * <p/>
  * KNOWN BUGS: WIDE operator cannot be used on trees with 4 or less tips!
  */
 public class ExchangeOperator extends SimpleMCMCOperator {
 
-	public static final String NARROW_EXCHANGE = "narrowExchange";
-	public static final String WIDE_EXCHANGE = "wideExchange";
+    public static final String NARROW_EXCHANGE = "narrowExchange";
+    public static final String WIDE_EXCHANGE = "wideExchange";
 
-	public static final int NARROW = 0;
-	public static final int WIDE = 1;
+    public static final int NARROW = 0;
+    public static final int WIDE = 1;
 
-	private static final int MAX_TRIES = 10000;
+    private static final int MAX_TRIES = 10000;
 
-	private int mode = NARROW;
-	private TreeModel tree;
+    private int mode = NARROW;
+    private TreeModel tree;
 
-	public ExchangeOperator(int mode, TreeModel tree, int weight) {
-		this.mode = mode;
-		this.tree = tree;
-		setWeight(weight);
-	}
+    public ExchangeOperator(int mode, TreeModel tree, double weight) {
+        this.mode = mode;
+        this.tree = tree;
+        setWeight(weight);
+    }
 
-	public double doOperation() throws OperatorFailedException {
+    public double doOperation() throws OperatorFailedException {
 
-		int tipCount = tree.getExternalNodeCount();
+        int tipCount = tree.getExternalNodeCount();
 
-		switch (mode) {
-			case NARROW: narrow(); break;
-			case WIDE: wide(); break;
-		}
+        switch (mode) {
+            case NARROW:
+                narrow();
+                break;
+            case WIDE:
+                wide();
+                break;
+        }
 
-		if (tree.getExternalNodeCount() != tipCount) {
-			throw new RuntimeException("Lost some tips in " + ((mode == NARROW) ? "NARROW mode." : "WIDE mode."));
-		}
+        if (tree.getExternalNodeCount() != tipCount) {
+            throw new RuntimeException("Lost some tips in " + ((mode == NARROW) ? "NARROW mode." : "WIDE mode."));
+        }
 
-		return 0.0;
-	}
+        return 0.0;
+    }
 
-	/**
-	 * WARNING: Assumes strictly bifurcating tree.
-	 */
-	public void narrow() throws OperatorFailedException {
+    /**
+     * WARNING: Assumes strictly bifurcating tree.
+     */
+    public void narrow() throws OperatorFailedException {
         final int nNodes = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 
-        for(int tries = 0; tries < MAX_TRIES; ++tries) {
+        for (int tries = 0; tries < MAX_TRIES; ++tries) {
             NodeRef i = tree.getNode(MathUtils.nextInt(nNodes));
 
             while (root == i || tree.getParent(i) == root) {
-				i = tree.getNode(MathUtils.nextInt(nNodes));
-			}
+                i = tree.getNode(MathUtils.nextInt(nNodes));
+            }
 
-			final NodeRef iParent = tree.getParent(i);
-			final NodeRef iGrandParent = tree.getParent(iParent);
-			NodeRef iUncle = tree.getChild(iGrandParent, 0);
-			if (iUncle == iParent) {
-				iUncle = tree.getChild(iGrandParent, 1);
-			}
+            final NodeRef iParent = tree.getParent(i);
+            final NodeRef iGrandParent = tree.getParent(iParent);
+            NodeRef iUncle = tree.getChild(iGrandParent, 0);
+            if (iUncle == iParent) {
+                iUncle = tree.getChild(iGrandParent, 1);
+            }
 
             assert tree.getNodeHeight(i) < tree.getNodeHeight(iGrandParent);
 
-            if ( tree.getNodeHeight(iUncle) < tree.getNodeHeight(iParent) ) {
+            if (tree.getNodeHeight(iUncle) < tree.getNodeHeight(iParent)) {
                 eupdate(i, iUncle, iParent, iGrandParent);
 
                 tree.pushTreeChangedEvent(iParent);
                 tree.pushTreeChangedEvent(iGrandParent);
                 return;
             }
-		}
-		//System.out.println("tries = " + tries);
+        }
+        //System.out.println("tries = " + tries);
 
         throw new OperatorFailedException("Couldn't find valid narrow move on this tree!!");
-	}
-                                  
-	/**
-	 * WARNING: Assumes strictly bifurcating tree.
-	 */
-	public void wide() throws OperatorFailedException {
+    }
+
+    /**
+     * WARNING: Assumes strictly bifurcating tree.
+     */
+    public void wide() throws OperatorFailedException {
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
@@ -123,133 +129,152 @@ public class ExchangeOperator extends SimpleMCMCOperator {
         // I don't know how to prove this but it seems that there are exactly k(k-1) permissable pairs for k+1
         // contemporaneous tips, and since the total is 2k * (2k-1) / 2, so the average number of tries is 2.
         // With serial data the average number of tries can be made arbitrarily high as tree becomes less balanced.
-            
-        for(int tries = 0; tries < MAX_TRIES; ++tries) {
+
+        for (int tries = 0; tries < MAX_TRIES; ++tries) {
 
             NodeRef i = tree.getNode(MathUtils.nextInt(nodeCount));
 
             while (root == i) {
-				i = tree.getNode(MathUtils.nextInt(nodeCount));
-			}
+                i = tree.getNode(MathUtils.nextInt(nodeCount));
+            }
 
-			NodeRef j = tree.getNode(MathUtils.nextInt(nodeCount));
-			while (j == i || j == root) {
-				j = tree.getNode(MathUtils.nextInt(nodeCount));
-			}
+            NodeRef j = tree.getNode(MathUtils.nextInt(nodeCount));
+            while (j == i || j == root) {
+                j = tree.getNode(MathUtils.nextInt(nodeCount));
+            }
 
-			final NodeRef iP = tree.getParent(i);
-			final NodeRef jP = tree.getParent(j);
+            final NodeRef iP = tree.getParent(i);
+            final NodeRef jP = tree.getParent(j);
 
-			if ((iP != jP) && (i != jP) && (j != iP) &&
-				(tree.getNodeHeight(j) < tree.getNodeHeight(iP)) &&
-				(tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
+            if ((iP != jP) && (i != jP) && (j != iP) &&
+                    (tree.getNodeHeight(j) < tree.getNodeHeight(iP)) &&
+                    (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
                 eupdate(i, j, iP, jP);
                 //System.out.println("tries = " + tries+1);
                 return;
-			}
-		}
+            }
+        }
 
         throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
-	}
+    }
 
-	public int getMode() {
-		return mode;
-	}
+    public int getMode() {
+        return mode;
+    }
 
-	public String getOperatorName() {
-		return ((mode == NARROW) ? "Narrow" : "Wide") + " Exchange";
-	}
+    public String getOperatorName() {
+        return ((mode == NARROW) ? "Narrow" : "Wide") + " Exchange";
+    }
 
     /* exchange subtrees whose root are i and j */
     private void eupdate(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP) throws OperatorFailedException {
 
-		tree.beginTreeEdit();
-		tree.removeChild(iP, i);
-		tree.removeChild(jP, j);
-		tree.addChild(jP, i);
-		tree.addChild(iP, j);
+        tree.beginTreeEdit();
+        tree.removeChild(iP, i);
+        tree.removeChild(jP, j);
+        tree.addChild(jP, i);
+        tree.addChild(iP, j);
 
-		try {
-			tree.endTreeEdit();
-		} catch(MutableTree.InvalidTreeException ite) {
-			throw new OperatorFailedException(ite.toString());
-		}
-	}
+        try {
+            tree.endTreeEdit();
+        } catch (MutableTree.InvalidTreeException ite) {
+            throw new OperatorFailedException(ite.toString());
+        }
+    }
 
-	public double getMinimumAcceptanceLevel() { if (mode == NARROW) return 0.05; else return 0.01; }
-	public double getMinimumGoodAcceptanceLevel() { if (mode == NARROW) return 0.05; else return 0.01; }
+    public double getMinimumAcceptanceLevel() {
+        if (mode == NARROW) return 0.05;
+        else return 0.01;
+    }
 
-	public String getPerformanceSuggestion() {
-		if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-			return "";
-		} else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()){
-			return "";
-		} else {
-			return "";
-		}
-	}
+    public double getMinimumGoodAcceptanceLevel() {
+        if (mode == NARROW) return 0.05;
+        else return 0.01;
+    }
 
-	public static XMLObjectParser NARROW_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
+    public String getPerformanceSuggestion() {
+        if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
+            return "";
+        } else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
+            return "";
+        } else {
+            return "";
+        }
+    }
 
-		public String getParserName() { return NARROW_EXCHANGE; }
+    public static XMLObjectParser NARROW_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public String getParserName() {
+            return NARROW_EXCHANGE;
+        }
 
-			TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
-			int weight = xo.getIntegerAttribute("weight");
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			return new ExchangeOperator(NARROW, treeModel, weight);
-		}
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            double weight = xo.getDoubleAttribute("weight");
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            return new ExchangeOperator(NARROW, treeModel, weight);
+        }
 
-		public String getParserDescription() {
-			return "This element represents a narrow exchange operator. " +
-				"This operator swaps a random subtree with its uncle.";
-		}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public Class getReturnType() { return ExchangeOperator.class; }
+        public String getParserDescription() {
+            return "This element represents a narrow exchange operator. " +
+                    "This operator swaps a random subtree with its uncle.";
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public Class getReturnType() {
+            return ExchangeOperator.class;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newIntegerRule("weight"),
-			new ElementRule(TreeModel.class)
-		};
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-	};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule("weight"),
+                new ElementRule(TreeModel.class)
+        };
 
-	public static XMLObjectParser WIDE_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
+    };
 
-		public String getParserName() { return WIDE_EXCHANGE; }
+    public static XMLObjectParser WIDE_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public String getParserName() {
+            return WIDE_EXCHANGE;
+        }
 
-			TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
-			int weight = xo.getIntegerAttribute("weight");
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			return new ExchangeOperator(WIDE, treeModel, weight);
-		}
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            double weight = xo.getDoubleAttribute("weight");
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            return new ExchangeOperator(WIDE, treeModel, weight);
+        }
 
-		public String getParserDescription() {
-			return "This element represents a wide exchange operator. " +
-				"This operator swaps two random subtrees.";
-		}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public Class getReturnType() { return ExchangeOperator.class; }
+        public String getParserDescription() {
+            return "This element represents a wide exchange operator. " +
+                    "This operator swaps two random subtrees.";
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public Class getReturnType() {
+            return ExchangeOperator.class;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newIntegerRule("weight"),
-			new ElementRule(TreeModel.class)
-		};
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-	};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule("weight"),
+                new ElementRule(TreeModel.class)
+        };
+
+    };
 }

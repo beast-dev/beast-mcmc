@@ -38,17 +38,16 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  */
 public class SwapOperator extends SimpleMCMCOperator {
 
     public final static String SWAP_OPERATOR = "swapOperator";
     private int size = 1;
 
-	public SwapOperator(Parameter parameter, int size) {
-		this.parameter = parameter;
+    public SwapOperator(Parameter parameter, int size) {
+        this.parameter = parameter;
         this.size = size;
-        if (parameter.getDimension() < 2*size) {
+        if (parameter.getDimension() < 2 * size) {
             throw new IllegalArgumentException();
         }
 
@@ -58,15 +57,19 @@ public class SwapOperator extends SimpleMCMCOperator {
             list.add(i);
         }
         masterList = Collections.unmodifiableList(list);
-	}
-	
-	/** @return the parameter this operator acts on. */
-	public Parameter getParameter() { return parameter; }
+    }
 
-	/**
-	 * swap the values in two random parameter slots.
-	 */
-	public final double doOperation() {
+    /**
+     * @return the parameter this operator acts on.
+     */
+    public Parameter getParameter() {
+        return parameter;
+    }
+
+    /**
+     * swap the values in two random parameter slots.
+     */
+    public final double doOperation() {
 
         List<Integer> allIndices = new ArrayList<Integer>(masterList);
         int left, right;
@@ -80,17 +83,19 @@ public class SwapOperator extends SimpleMCMCOperator {
             parameter.setParameterValue(right, value1);
         }
 
-		return 0.0;
-	}
+        return 0.0;
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return SWAP_OPERATOR; }
-		
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			Parameter parameter = (Parameter)xo.getChild(Parameter.class);
-            int weight = xo.getIntegerAttribute("weight");
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return SWAP_OPERATOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+            double weight = xo.getDoubleAttribute("weight");
             int size = xo.getIntegerAttribute("size");
 
             boolean autoOptimize = xo.getBooleanAttribute("autoOptimize");
@@ -102,37 +107,43 @@ public class SwapOperator extends SimpleMCMCOperator {
             so.setWeight(weight);
 
             return so;
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return "This element represents an operator that swaps values in a multi-dimensional parameter.";
-		}
-		
-		public Class getReturnType() { return SwapOperator.class; }
-		
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        }
 
-            AttributeRule.newIntegerRule("weight"),
-            AttributeRule.newIntegerRule("size"),
-            AttributeRule.newBooleanRule("autoOptimize"),
-            new ElementRule(Parameter.class)
-		};
-	};
-	
-	public String getOperatorName() { return "swapOperator(" + parameter.getParameterName() + ")"; }
-	
-	public String getPerformanceSuggestion() {
-		return "No suggestions";
-	}
-	
-	//PRIVATE STUFF
-	
-	private Parameter parameter = null;
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "This element represents an operator that swaps values in a multi-dimensional parameter.";
+        }
+
+        public Class getReturnType() {
+            return SwapOperator.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+
+                AttributeRule.newDoubleRule("weight"),
+                AttributeRule.newIntegerRule("size"),
+                AttributeRule.newBooleanRule("autoOptimize"),
+                new ElementRule(Parameter.class)
+        };
+    };
+
+    public String getOperatorName() {
+        return "swapOperator(" + parameter.getParameterName() + ")";
+    }
+
+    public String getPerformanceSuggestion() {
+        return "No suggestions";
+    }
+
+    //PRIVATE STUFF
+
+    private Parameter parameter = null;
     private List<Integer> masterList = null;
 }

@@ -46,7 +46,6 @@ import java.util.List;
  * Implements the subtree slide move.
  *
  * @author Alexei Drummond
- *
  * @version $Id: ColouredSubtreeSlideOperator.java,v 1.4 2006/09/11 09:33:01 gerton Exp $
  */
 public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
@@ -63,7 +62,7 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
 
     private ColourSamplerModel colouringModel;
 
-    public ColouredSubtreeSlideOperator(TreeModel tree, ColourSamplerModel colouringModel, int weight, double size, boolean gaussian, boolean swapRates, boolean swapTraits, int mode) {
+    public ColouredSubtreeSlideOperator(TreeModel tree, ColourSamplerModel colouringModel, double weight, double size, boolean gaussian, boolean swapRates, boolean swapTraits, int mode) {
         this.tree = tree;
         setWeight(weight);
 
@@ -80,6 +79,7 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
 
     /**
      * Do a probablistic subtree slide move.
+     *
      * @return the log-transformed hastings ratio
      */
     public double doOperation() throws OperatorFailedException {
@@ -95,7 +95,7 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
             i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
         } while (tree.getRoot() == i);
         NodeRef iP = tree.getParent(i);
-        NodeRef CiP = getOtherChild(tree,iP, i);
+        NodeRef CiP = getOtherChild(tree, iP, i);
         NodeRef PiP = tree.getParent(iP);
 
         // 2. choose a delta to move
@@ -110,7 +110,8 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
             if (PiP != null && tree.getNodeHeight(PiP) < newHeight) {
 
                 // find new parent
-                newParent = PiP; newChild = iP;
+                newParent = PiP;
+                newChild = iP;
                 while (tree.getNodeHeight(newParent) < newHeight) {
                     newChild = newParent;
                     newParent = tree.getParent(newParent);
@@ -121,7 +122,8 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
 
                 // 3.1.1 if creating a new root
                 if (tree.isRoot(newChild)) {
-                    tree.removeChild(iP, CiP); tree.removeChild(PiP, iP);  // remove iP from in between PiP and CiP
+                    tree.removeChild(iP, CiP);
+                    tree.removeChild(PiP, iP);  // remove iP from in between PiP and CiP
                     tree.addChild(iP, newChild);                           // add new edge from iP to newChild (old root) 
                     tree.addChild(PiP, CiP);                               // formerly two edges
                     tree.setRoot(iP);
@@ -129,7 +131,8 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
                 }
                 // 3.1.2 no new root
                 else {
-                    tree.removeChild(iP, CiP); tree.removeChild(PiP, iP);  // remove iP from in between PiP and CiP
+                    tree.removeChild(iP, CiP);
+                    tree.removeChild(PiP, iP);  // remove iP from in between PiP and CiP
                     tree.removeChild(newParent, newChild);                 // split edge: first remove old one
                     tree.addChild(iP, newChild);                           // split edge: put iP in middle 
                     tree.addChild(PiP, CiP);                               // formerly two edges
@@ -141,7 +144,7 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
 
                 try {
                     tree.endTreeEdit();
-                } catch(MutableTree.InvalidTreeException ite) {
+                } catch (MutableTree.InvalidTreeException ite) {
                     throw new RuntimeException(ite.toString());
                 }
 
@@ -149,7 +152,7 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
                 int possibleSources = intersectingEdges(tree, newChild, oldHeight, null);
                 //System.out.println("possible sources = " + possibleSources);
 
-                logq = Math.log(1.0/(double)possibleSources);
+                logq = Math.log(1.0 / (double) possibleSources);
 
             } else {
                 // just change the node height
@@ -172,7 +175,9 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
                 int possibleDestinations = intersectingEdges(tree, CiP, newHeight, newChildren);
 
                 // if no valid destinations then return a failure
-                if (newChildren.size() == 0) { return Double.NEGATIVE_INFINITY; }
+                if (newChildren.size() == 0) {
+                    return Double.NEGATIVE_INFINITY;
+                }
 
                 // pick a random parent/child destination edge uniformly from options
                 int childIndex = MathUtils.nextInt(newChildren.size());
@@ -184,14 +189,18 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
                 // 4.1.1 if iP was root
                 if (tree.isRoot(iP)) {
                     // new root is CiP
-                    tree.removeChild(iP, CiP); tree.removeChild(newParent, newChild);
-                    tree.addChild(iP, newChild); tree.addChild(newParent, iP);
+                    tree.removeChild(iP, CiP);
+                    tree.removeChild(newParent, newChild);
+                    tree.addChild(iP, newChild);
+                    tree.addChild(newParent, iP);
                     tree.setRoot(CiP);
                     //System.err.println("DOWN: Creating new root!");
                 } else {
-                    tree.removeChild(iP, CiP); tree.removeChild(PiP, iP);
+                    tree.removeChild(iP, CiP);
+                    tree.removeChild(PiP, iP);
                     tree.removeChild(newParent, newChild);
-                    tree.addChild(iP, newChild); tree.addChild(PiP, CiP);
+                    tree.addChild(iP, newChild);
+                    tree.addChild(PiP, CiP);
                     tree.addChild(newParent, iP);
                     //System.err.println("DOWN: no new root!");
                 }
@@ -200,11 +209,11 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
 
                 try {
                     tree.endTreeEdit();
-                } catch(MutableTree.InvalidTreeException ite) {
+                } catch (MutableTree.InvalidTreeException ite) {
                     throw new RuntimeException(ite.toString());
                 }
 
-                logq = Math.log((double)possibleDestinations);
+                logq = Math.log((double) possibleDestinations);
             } else {
                 tree.setNodeHeight(iP, newHeight);
                 logq = 0.0;
@@ -242,7 +251,7 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
 
     private double getDelta() {
         if (!gaussian) {
-            return (MathUtils.nextDouble() * size) - (size/2.0);
+            return (MathUtils.nextDouble() * size) - (size / 2.0);
         } else {
             return MathUtils.nextGaussian() * size;
         }
@@ -266,8 +275,13 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
         return count;
     }
 
-    public double getSize() { return size; }
-    public void setSize(double size) { this.size = size; }
+    public double getSize() {
+        return size;
+    }
+
+    public void setSize(double size) {
+        this.size = size;
+    }
 
     public double getCoercableParameter() {
         return Math.log(getSize());
@@ -277,13 +291,17 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
         setSize(Math.exp(value));
     }
 
-    public double getRawParameter() { return getSize(); }
+    public double getRawParameter() {
+        return getSize();
+    }
 
     public int getMode() {
         return mode;
     }
 
-    public double getTargetAcceptanceProbability() { return 0.234; }
+    public double getTargetAcceptanceProbability() {
+        return 0.234;
+    }
 
 
     public String getPerformanceSuggestion() {
@@ -309,7 +327,9 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return SUBTREE_SLIDE; }
+        public String getParserName() {
+            return SUBTREE_SLIDE;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -332,9 +352,9 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
                 swapTraits = xo.getBooleanAttribute(SWAP_TRAITS);
             }
 
-            TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
-            ColourSamplerModel colourSamplerModel = (ColourSamplerModel)xo.getChild(ColourSamplerModel.class);
-            int weight = xo.getIntegerAttribute("weight");
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            ColourSamplerModel colourSamplerModel = (ColourSamplerModel) xo.getChild(ColourSamplerModel.class);
+            double weight = xo.getDoubleAttribute("weight");
             double size = xo.getDoubleAttribute("size");
             boolean gaussian = xo.getBooleanAttribute("gaussian");
             return new ColouredSubtreeSlideOperator(treeModel, colourSamplerModel, weight, size, gaussian, swapRates, swapTraits, mode);
@@ -344,19 +364,23 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
             return "An operator that slides a subtree.";
         }
 
-        public Class getReturnType() { return ColouredSubtreeSlideOperator.class; }
+        public Class getReturnType() {
+            return ColouredSubtreeSlideOperator.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            AttributeRule.newIntegerRule("weight"),
-            AttributeRule.newDoubleRule("size"),
-            AttributeRule.newBooleanRule("gaussian"),
-            AttributeRule.newBooleanRule(SWAP_RATES, true),
-            AttributeRule.newBooleanRule(SWAP_TRAITS, true),
-            AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-            new ElementRule(TreeModel.class),
-            new ElementRule(ColourSamplerModel.class)
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule("weight"),
+                AttributeRule.newDoubleRule("size"),
+                AttributeRule.newBooleanRule("gaussian"),
+                AttributeRule.newBooleanRule(SWAP_RATES, true),
+                AttributeRule.newBooleanRule(SWAP_TRAITS, true),
+                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+                new ElementRule(TreeModel.class),
+                new ElementRule(ColourSamplerModel.class)
         };
     };
 

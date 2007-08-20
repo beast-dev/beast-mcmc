@@ -551,7 +551,7 @@
 
     </operators>
 
-    <mcmc id="mcmc" chainLength="10000" verbose="false">
+    <mcmc id="mcmc" chainLength="100000" verbose="false">
         <posterior id="posterior">
             <likelihood id="likelihood">
                 <treeLikelihood idref="treeLikelihood"/>

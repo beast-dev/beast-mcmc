@@ -111,10 +111,10 @@ public class TreeAnnotator {
             }
         } else if (targetOption == MAX_CLADE_CREDIBILITY) {
             System.out.println("Finding maximum credibility tree...");
-            targetTree = new FlexibleTree(summarizeTrees( burnin, cladeSystem, inputFileName, false));
+            targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, false));
         } else if (targetOption == MAX_SUM_CLADE_CREDIBILITY) {
             System.out.println("Finding maximum sum clade credibility tree...");
-            targetTree = new FlexibleTree(summarizeTrees( burnin, cladeSystem, inputFileName, true));
+            targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, true));
         } else {
             throw new RuntimeException("Unknown target tree option");
         }
@@ -162,7 +162,7 @@ public class TreeAnnotator {
                     System.out.print("*");
                     System.out.flush();
                 }
-                counter ++;
+                counter++;
             }
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
@@ -187,25 +187,24 @@ public class TreeAnnotator {
         }
     }
 
-    private class CladeSystem
-    {
+    private class CladeSystem {
         //
         // Public stuff
         //
 
         /**
          */
-        public CladeSystem()
-        {
+        public CladeSystem() {
         }
 
         public void setAttributeNames(String[] attributeNames) {
             this.attributeNames = attributeNames;
         }
 
-        /** adds all the clades in the tree */
-        public void add(Tree tree)
-        {
+        /**
+         * adds all the clades in the tree
+         */
+        public void add(Tree tree) {
             if (taxonList == null) {
                 taxonList = tree;
             }
@@ -251,7 +250,7 @@ public class TreeAnnotator {
         }
 
         private void addClade(BitSet bits, Tree tree, NodeRef node) {
-            Clade clade = (Clade)cladeMap.get(bits);
+            Clade clade = (Clade) cladeMap.get(bits);
             if (clade == null) {
                 clade = new Clade(bits);
                 cladeMap.put(bits, clade);
@@ -290,8 +289,8 @@ public class TreeAnnotator {
         public void calculateCladeCredibilities(int totalTreesUsed) {
             Iterator iter = cladeMap.values().iterator();
             while (iter.hasNext()) {
-                Clade clade = (Clade)iter.next();
-                clade.setCredibility(((double)clade.getCount()) / totalTreesUsed);
+                Clade clade = (Clade) iter.next();
+                clade.setCredibility(((double) clade.getCount()) / totalTreesUsed);
             }
         }
 
@@ -352,7 +351,7 @@ public class TreeAnnotator {
         }
 
         private double getCladeCredibility(BitSet bits) {
-            Clade clade = (Clade)cladeMap.get(bits);
+            Clade clade = (Clade) cladeMap.get(bits);
             if (clade == null) {
                 return 0.0;
             }
@@ -387,7 +386,7 @@ public class TreeAnnotator {
         }
 
         private void annotateNode(MutableTree tree, NodeRef node, BitSet bits, boolean isTip, int heightsOption) {
-            Clade clade = (Clade)cladeMap.get(bits);
+            Clade clade = (Clade) cladeMap.get(bits);
             if (clade == null) {
                 throw new RuntimeException("Clade missing");
             }
@@ -405,14 +404,28 @@ public class TreeAnnotator {
                 boolean isHeight = attributeNames[i].equals("height");
                 boolean isBoolean = attributeTypes[i].equals(Boolean.class);
 
+                boolean isDiscrete = attributeTypes[i].equals(String.class);
+
                 double[] values = new double[clade.attributeLists[i].size()];
+                HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
+
                 if (values.length > 0) {
                     double minValue = Double.MAX_VALUE;
                     double maxValue = -Double.MAX_VALUE;
                     for (int j = 0; j < clade.attributeLists[i].size(); j++) {
-                        values[j] = ((Number)clade.attributeLists[i].get(j)).doubleValue();
-                        if (values[j] < minValue) minValue = values[j];
-                        if (values[j] > maxValue) maxValue = values[j];
+                        if (!isDiscrete) {
+                            values[j] = ((Number) clade.attributeLists[i].get(j)).doubleValue();
+                            if (values[j] < minValue) minValue = values[j];
+                            if (values[j] > maxValue) maxValue = values[j];
+                        } else {
+                            String value = (String) clade.attributeLists[i].get(j);
+                            if (hashMap.containsKey(value)) {
+                                int count = hashMap.get(value);
+                                hashMap.put(value, count + 1);
+                            } else {
+                                hashMap.put(value, 1);
+                            }
+                        }
                     }
                     if (isHeight) {
                         if (heightsOption == MEAN_HEIGHTS) {
@@ -427,8 +440,11 @@ public class TreeAnnotator {
                     }
 
                     if (!filter) {
-                        annotateMeanAttribute(tree, node, attributeNames[i], values);
-                        if (!isBoolean && minValue < maxValue) {
+                        if (!isDiscrete)
+                            annotateMeanAttribute(tree, node, attributeNames[i], values);
+                        else
+                            annotateModeAttribute(tree, node, attributeNames[i], hashMap);
+                        if (!isBoolean && minValue < maxValue && !isDiscrete) {
                             // Basically, if it is a boolean (0, 1) then we don't need the distribution information
                             // Likewise if it doesn't vary.
                             annotateMedianAttribute(tree, node, attributeNames[i] + "_median", values);
@@ -451,10 +467,30 @@ public class TreeAnnotator {
 
         }
 
+        private void annotateModeAttribute(MutableTree tree, NodeRef node, String label, HashMap<String, Integer> values) {
+            String mode = null;
+            int maxCount = 0;
+            int totalCount = 0;
+
+            for (String key : values.keySet()) {
+                int thisCount = values.get(key);
+                if (thisCount == maxCount)
+                    mode.concat("+" + key);
+                else if (thisCount > maxCount) {
+                    mode = key;
+                    maxCount = thisCount;
+                }
+                totalCount += thisCount;
+            }
+            double freq = (double) maxCount / (double) totalCount;
+            tree.setNodeAttribute(node, label, mode);
+            tree.setNodeAttribute(node, label + ".prob", new Double(freq));
+        }
+
         private void annotateRangeAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
             double min = DiscreteStatistics.min(values);
             double max = DiscreteStatistics.max(values);
-            tree.setNodeAttribute(node, label, new Object[] { new Double(min), new Double(max) });
+            tree.setNodeAttribute(node, label, new Object[]{new Double(min), new Double(max)});
         }
 
         private void annotateHPDAttribute(MutableTree tree, NodeRef node, String label, double hpd, double[] values) {
@@ -464,10 +500,10 @@ public class TreeAnnotator {
             double minRange = Double.MAX_VALUE;
             int hpdIndex = 0;
 
-            int diff = (int)Math.round(hpd * (double)values.length);
-            for (int i =0; i <= (values.length - diff); i++) {
+            int diff = (int) Math.round(hpd * (double) values.length);
+            for (int i = 0; i <= (values.length - diff); i++) {
                 double minValue = values[indices[i]];
-                double maxValue = values[indices[i+diff-1]];
+                double maxValue = values[indices[i + diff - 1]];
                 double range = Math.abs(maxValue - minValue);
                 if (range < minRange) {
                     minRange = range;
@@ -475,8 +511,8 @@ public class TreeAnnotator {
                 }
             }
             double lower = values[indices[hpdIndex]];
-            double upper = values[indices[hpdIndex+diff-1]];
-            tree.setNodeAttribute(node, label, new Object[] { new Double(lower), new Double(upper) });
+            double upper = values[indices[hpdIndex + diff - 1]];
+            tree.setNodeAttribute(node, label, new Object[]{new Double(lower), new Double(upper)});
         }
 
         class Clade {
@@ -535,8 +571,8 @@ public class TreeAnnotator {
     int totalTrees = 0;
     int totalTreesUsed = 0;
     double posteriorLimit = 0.0;
-    String[] attributeNames = new String[] { "height", "rate", "changed" };
-    Class[] attributeTypes = new Class[] { Double.class, Double.class, Boolean.class};
+    String[] attributeNames = new String[]{"height", "rate", "changed", "state"};
+    Class[] attributeTypes = new Class[]{Double.class, Double.class, Boolean.class, String.class};
     TaxonList taxa = null;
 
     public static void printTitle() {
@@ -560,7 +596,9 @@ public class TreeAnnotator {
     public static void centreLine(String line, int pageWidth) {
         int n = pageWidth - line.length();
         int n1 = n / 2;
-        for (int i = 0; i < n1; i++) { System.out.print(" "); }
+        for (int i = 0; i < n1; i++) {
+            System.out.print(" ");
+        }
         System.out.println(line);
     }
 
@@ -583,9 +621,9 @@ public class TreeAnnotator {
         String outputFileName = null;
 
         if (args.length == 0) {
-            System.setProperty("com.apple.macos.useScreenMenuBar","true");
-            System.setProperty("apple.laf.useScreenMenuBar","true");
-            System.setProperty("apple.awt.showGrowBox","true");
+            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+            System.setProperty("apple.awt.showGrowBox", "true");
 
             java.net.URL url = LogCombiner.class.getResource("/images/utility.png");
             javax.swing.Icon icon = null;
@@ -596,7 +634,7 @@ public class TreeAnnotator {
 
             final String versionString = version.getVersionString();
             String nameString = "TreeAnnotator " + versionString;
-            String aboutString = "<html><center><p>" + versionString + ", " + version.getDateString() +"</p>" +
+            String aboutString = "<html><center><p>" + versionString + ", " + version.getDateString() + "</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
@@ -660,9 +698,9 @@ public class TreeAnnotator {
         printTitle();
 
         Arguments arguments = new Arguments(
-                new Arguments.Option[] {
+                new Arguments.Option[]{
                         //new Arguments.StringOption("target", new String[] { "maxclade", "maxtree" }, false, "an option of 'maxclade' or 'maxtree'"),
-                        new Arguments.StringOption("heights", new String[] { "keep", "median", "mean" }, false, "an option of 'keep', 'median' or 'mean'"),
+                        new Arguments.StringOption("heights", new String[]{"keep", "median", "mean"}, false, "an option of 'keep', 'median' or 'mean'"),
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annoated"),
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),

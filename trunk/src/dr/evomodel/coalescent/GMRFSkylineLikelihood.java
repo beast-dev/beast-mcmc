@@ -25,7 +25,6 @@
 
 package dr.evomodel.coalescent;
 
-//import dr.evolution.coalescent.ConstantPopulation;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -39,8 +38,7 @@ import no.uib.cipr.matrix.SymmTridiagEVD;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 /**
- * A likelihood function for the Gaussian Markov random field population trajectory.
- * *
+ * A likelihood function for a Gaussian Markov random field on a log population size trajectory.
  *
  * @author Erik Bloomquist
  * @author Vladimir Minin
@@ -165,8 +163,6 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         double[] offdiag = new double[fieldLength - 1];
         double[] diag = new double[fieldLength];
 
-//        double precision = precisionParameter.getParameterValue(0);
-
         //First set up the offdiagonal entries;
         for (int i = 0; i < fieldLength - 1; i++) {
             offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]);
@@ -250,31 +246,6 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
             setupGMRFWeights();
         }
 
-//        double logL = 0.0;
-//
-//        double currentTime = 0.0;
-//
-//        int popIndex = 0;
-//
-//        ConstantPopulation cp = new ConstantPopulation(Units.Type.YEARS);
-//
-//        for (int j = 0; j < intervalCount; j++) {
-//
-//            cp.setN0(Math.exp(popSizeParameter.getParameterValue(popIndex)));
-//            if (getIntervalType(j) == CoalescentEventType.COALESCENT) {
-//                popIndex += 1;
-//            }
-//
-//            logL += calculateIntervalLikelihood(cp, intervals[j], currentTime, lineageCounts[j], getIntervalType(j));
-//
-//            currentTime += intervals[j];
-//
-//        }
-//
-//        // Calculate GMRF density; here GMRF = RW(1)
-//        logL += -0.5 * calculateWeightedSSE() * precisionParameter.getParameterValue(0);
-//        		return logL;
-
         // Matrix operations taken from block update sampler to calculate data likelihood and field prior
 
         double currentLike = 0;
@@ -350,11 +321,6 @@ model {
             if (d > 0.00001)
                 a += Math.log(d);
         }
-
-//        for (int i = 0; i < x.length; i++) {
-//            if (x[i] > 0.00001)
-//                a += Math.log(x[i]);
-//        }
 
         return a;
     }
@@ -481,14 +447,7 @@ model {
                 }),
                 new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
                         new ElementRule(TreeModel.class)
-                }),
-//                        new ElementRule(LAMBDA_PARAMETER, new XMLSyntaxRule[]{
-//                                new ElementRule(Parameter.class)
-//                        }),
-//                new ElementRule(BETA_PARAMETER, new XMLSyntaxRule[]{
-//                        new ElementRule(Parameter.class)
-//                }),
-
+                })
         };
     };
 

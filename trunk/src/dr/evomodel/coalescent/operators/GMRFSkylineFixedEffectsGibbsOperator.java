@@ -26,9 +26,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
 
     public static final String GMRF_GIBBS_OPERATOR = "gmrfFixedEffectsGibbsOperator";
 
-    private Parameter param;
     private GMRFSkylineLikelihood gmrfLikelihood;
-    private MultivariateDistribution prior;
 
     private DenseVector mean;
     private DenseMatrix precision;
@@ -38,9 +36,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
 
     public GMRFSkylineFixedEffectsGibbsOperator(Parameter param,
                                                 GMRFSkylineLikelihood gmrfLikelihood, MultivariateDistribution prior, double weight) {
-        this.param = param;
         this.gmrfLikelihood = gmrfLikelihood;
-        this.prior = prior;
         mean = new DenseVector(prior.getMean());
         precision = new DenseMatrix(prior.getScaleMatrix());
 

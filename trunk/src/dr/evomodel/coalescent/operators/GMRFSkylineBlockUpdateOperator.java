@@ -7,9 +7,11 @@ import dr.math.MathUtils;
 import dr.xml.*;
 import no.uib.cipr.matrix.*;
 
-/**
- * @author Marc Suchard
+/* A Metropolis-Hastings operator to update the log population sizes and precision parameter jointly under a Gaussian Markov random field prior
+ *
  * @author Erik Bloomquist
+ * @author Marc Suchard
+ * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
 public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
@@ -32,7 +34,6 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 
     GMRFSkylineLikelihood gmrfField;
 
-    //    private DenseVector one;
     private DenseMatrix I;
 
     public GMRFSkylineBlockUpdateOperator(GMRFSkylineLikelihood gmrfLikelihood,
@@ -52,11 +53,9 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
         this.maxIterations = maxIterations;
         this.stopValue = stopValue;
 
-//        one = new DenseVector(fieldLength);
         I = new DenseMatrix(fieldLength, fieldLength);
 
         for (int i = 0; i < fieldLength; i++) {
-//            one.set(i, 1);
             I.set(i, i, 1.0);
         }
         setWeight(weight);
@@ -88,10 +87,6 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 
         return returnValue;
     }
-
-    //public double precisionPrior(double precision, double priorA, double priorB) {
-    //    return (priorA - 1.0) * Math.log(precision) - precision * priorB;
-    //}
 
 
     public static DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
@@ -132,10 +127,6 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
                 a += Math.log(d);
         }
 
-//        for (int i = 0; i < x.length; i++) {
-//            if (x[i] > 0.00000001)
-//                a += Math.log(x[i]);
-//        }
         return a;
     }
 
@@ -159,11 +150,6 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
                 a += Math.log(d);
         }
 
-//        for (int i = 0; i < x.length; i++) {
-//
-//            if (x[i] > 0.00000001)
-//                a += Math.log(x[i]);
-//        }
         return a;
 
     }
@@ -179,7 +165,6 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 
         DenseVector iterateGamma = currentGamma.copy();
         int numberIterations = 0;
-//        int maxIterations = 200;
         while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > stopValue) {
             inverseJacobian(data, iterateGamma, proposedQ).multAdd(gradient(data, iterateGamma, proposedQ), iterateGamma);
             numberIterations++;
@@ -459,15 +444,6 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
                 throw new XMLParseException("scaleFactor must be greater than 0.0");
             }
 
-//            XMLObject cxo = (XMLObject) xo.getChild(POPULATION_PARAMETER);
-//            Parameter populationSizeParameter = (Parameter) cxo.getChild(Parameter.class);
-
-//            cxo = (XMLObject) xo.getChild(PRECISION_PARAMETER);
-//            Parameter precisionParameter = (Parameter) cxo.getChild(Parameter.class);
-
-//			XMLObject cxo = (XMLObject) xo.getChild(PRECISION_PRIOR);
-//            DistributionLikelihood precisionPrior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
-
             int maxIterations = 200;
             if (xo.hasAttribute(MAX_ITERATIONS))
                 maxIterations = xo.getIntegerAttribute(MAX_ITERATIONS);
@@ -478,8 +454,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 
             GMRFSkylineLikelihood gmrfLikelihood = (GMRFSkylineLikelihood) xo.getChild(GMRFSkylineLikelihood.class);
 
-            return new GMRFSkylineBlockUpdateOperator(//populationSizeParameter, precisionParameter,
-                    gmrfLikelihood, weight, mode, scaleFactor,
+            return new GMRFSkylineBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                     maxIterations, stopValue);
 
         }
@@ -506,15 +481,6 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newDoubleRule(STOP_VALUE, true),
                 AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
-//				new ElementRule(PRECISION_PRIOR, new XMLSyntaxRule[]{
-//                new ElementRule(DistributionLikelihood.class),
-//				}),
-//                new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
-//                        new ElementRule(Parameter.class)
-//                }),
-//                new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
-//                        new ElementRule(Parameter.class)
-//                }),
                 new ElementRule(GMRFSkylineLikelihood.class)
         };
 

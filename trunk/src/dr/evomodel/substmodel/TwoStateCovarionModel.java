@@ -202,7 +202,4 @@ public class TwoStateCovarionModel extends AbstractSubstitutionModel {
     // if true then matrix will be normalized to output 1 substitution per unit time
     private boolean isNormalized = true;
 
-    public void setNormalized(boolean normalized) {
-        isNormalized = normalized;
-    }
 }

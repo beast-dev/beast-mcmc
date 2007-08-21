@@ -21,8 +21,8 @@ public class TwoStateCovarionModelTest extends TestCase {
         super.setUp();
 
         frequencies = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
-        alpha = new Parameter.Default(0.1);
-        switchingRate = new Parameter.Default(0.5);
+        alpha = new Parameter.Default(0.0);
+        switchingRate = new Parameter.Default(1.0);
 
         FrequencyModel freqModel = new FrequencyModel(TwoStateCovarion.INSTANCE, frequencies);
         model = new TwoStateCovarionModel(TwoStateCovarion.INSTANCE, freqModel, alpha, switchingRate);

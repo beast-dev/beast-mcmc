@@ -53,10 +53,29 @@ public class FrequencyModel extends AbstractModel {
     public FrequencyModel(DataType dataType, Parameter frequencyParameter) {
 
         super(FREQUENCY_MODEL);
+
+        double sum = getSumOfFrequencies(frequencyParameter);
+
+        if (Math.abs(sum - 1.0) > 1e-8) {
+            throw new IllegalArgumentException("Frequencies do not sum to 1, the sum to " + sum);
+        }
+
         this.frequencyParameter = frequencyParameter;
         addParameter(frequencyParameter);
         frequencyParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, dataType.getStateCount()));
         this.dataType = dataType;
+    }
+
+    /**
+     * @param frequencies the frequencies
+     * @return return the sum of frequencies
+     */
+    private double getSumOfFrequencies(Parameter frequencies) {
+        double total = 0.0;
+        for (int i = 0; i < frequencies.getDimension(); i++) {
+            total += frequencies.getParameterValue(i);
+        }
+        return total;
     }
 
     public final void setFrequency(int i, double value) {

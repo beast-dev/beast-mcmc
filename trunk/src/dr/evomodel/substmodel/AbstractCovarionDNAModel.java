@@ -186,12 +186,15 @@ abstract public class AbstractCovarionDNAModel extends AbstractSubstitutionModel
         for (int i = 0; i < hiddenClassCount; i++) {
             for (int j = i + 1; j < hiddenClassCount; j++) {
                 for (int l = 0; l < 4; l++) {
-                    switchingProportion += matrix[i * 4 + l][j * 4 + l] * pi[j * 4 + l];
-                    switchingProportion += matrix[j * 4 + l][i * 4 + l] * pi[i * 4 + l];
+
+                    int x = i * 4 + l;
+                    int y = j * 4 + l;
+
+                    switchingProportion += matrix[x][y] * pi[y];
+                    switchingProportion += matrix[y][x] * pi[x];
                 }
             }
         }
-
         // normalize, removing switches
         for (int i = 0; i < dimension; i++) {
             for (int j = 0; j < dimension; j++) {

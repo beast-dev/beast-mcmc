@@ -77,7 +77,7 @@ public class TwoStateCovarionModelTest extends TestCase {
 
             double pChangeIndependent = matLabPChange[index];
 
-            assertEquals(pChange, pChangeIndependent, 1e-12);
+            assertEquals(pChange, pChangeIndependent, 1e-14);
 
             index += 1;
         }

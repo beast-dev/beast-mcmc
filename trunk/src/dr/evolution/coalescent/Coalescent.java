@@ -94,16 +94,20 @@ public class Coalescent implements MultivariateFunction, Units {
                 // This is protection against cases where you get ridiculous coalescent values with infitisimal
                 // population size at the end of a linear interval
 
-                if( demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
-                    logL += - Math.log(demographicAtCoalPoint);
+	            // AR: This was rejecting some initial coalescent intervals (presumably zero intervals?)...
+	            
+//                if( demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
+//                    logL += - Math.log(demographicAtCoalPoint);
+//
+//                } else {
+//                    // remove this at some stage
+//                    System.err.println("Interval ignored: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
+//                    return Double.NEGATIVE_INFINITY;
+//                    //double d =  duration / intervalArea;
+//                    //logL += Math.log(kover2 / d);
+//                }
 
-                } else {
-                    // remove this at some stage
-                    System.err.println("Interval ignored: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
-                    return Double.NEGATIVE_INFINITY;
-                    //double d =  duration / intervalArea;
-                    //logL += Math.log(kover2 / d);
-                }
+	            logL += - Math.log(demographicAtCoalPoint);
             }
 
             startTime = finishTime;

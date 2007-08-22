@@ -69,9 +69,9 @@ public interface Attribute {
 
     }
 
-    public class Double extends Default {
+    public class DoubleAttribute extends Default {
 
-        public Double(String name, double value) {
+        public DoubleAttribute(String name, double value) {
             super(name, java.lang.Double.toString(value));
         }
     }

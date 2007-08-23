@@ -33,6 +33,9 @@ import dr.inference.model.BooleanStatistic;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 
 /**
  * A statistic for the compatibility of a viruses tree with a transmission
@@ -126,17 +129,27 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
     public void setTree(Tree tree) { this.virusTree = tree; }
     public Tree getTree() { return virusTree; }
 
-    public int getDimension() { return 1; }
+    public String getDimensionName(int dim) {
+        String recipient = transmissionHistoryModel.getHost(dim).getId();
+
+        String donor = (donorHost[dim] == -1 ? "" : transmissionHistoryModel.getHost(donorHost[dim]).getId() + "->");
+        return "transmission(" + donor + recipient +")";
+    }
+
+    public int getDimension() { return hostCount; }
 
     /**
      * @return true if the population tree is compatible with the species tree
      */
     public boolean getBoolean(int dim) {
+        Set<Integer> incompatibleSet = new HashSet<Integer>();
 
-        return (isCompatible(virusTree.getRoot()) != -1);
+        isCompatible(virusTree.getRoot(), incompatibleSet);
+
+        return !incompatibleSet.contains(dim);
     }
 
-    private int isCompatible(NodeRef node) {
+    private int isCompatible(NodeRef node, Set<Integer> incompatibleSet) {
 
         double height = virusTree.getNodeHeight(node);
         int host;
@@ -149,29 +162,48 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
                 host = hostTree.getTaxonIndex(hostTaxon);
             }
 
-            if (height > transmissionTime[host]) return -1;
+            if (host != -1 && height > transmissionTime[host]) {
+                // This means that the sequence was sampled
+                // before the host was infected so we should probably flag
+                // this as an error before we get to this point...
+                throw new RuntimeException("Sequence " + virusTree.getNodeTaxon(node) + ", was sampled before host, "+ hostTaxon +", was infected");
+            }
 
         } else {
 
             // Tree should be bifurcating...
-            int host1 = isCompatible(virusTree.getChild(node, 0));
-            if (host1 == -1) return -1;
+            int host1 = isCompatible(virusTree.getChild(node, 0), incompatibleSet);
 
-            int host2 = isCompatible(virusTree.getChild(node, 1));
-            if (host2 == -1) return -1;
+            int host2 = isCompatible(virusTree.getChild(node, 1), incompatibleSet);
 
-            if (host1 == -1 || host2 == -1);
-            while (height > transmissionTime[host1]) {
-                host1 = donorHost[host1];
+            if (host1 == host2) {
+
+                host = host1;
+                while (height > transmissionTime[host]) {
+                    host = donorHost[host];
+                }
+
+            } else {
+                while (height > transmissionTime[host1]) {
+                    host1 = donorHost[host1];
+                }
+
+                while (height > transmissionTime[host2]) {
+                    host2 = donorHost[host2];
+                }
+
+                if (host1 != host2) {
+                    if (transmissionTime[host1] < transmissionTime[host2]) {
+                        incompatibleSet.add(host1);
+                        host = host2;
+                    } else {
+                        incompatibleSet.add(host2);
+                        host = host1;
+                    }
+                } else {
+                    host = host1;                    
+                }
             }
-
-            while (height > transmissionTime[host2]) {
-                host2 = donorHost[host2];
-            }
-
-            if (host1 != host2) return -1;
-
-            host = host1;
         }
 
         return host;

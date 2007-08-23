@@ -54,6 +54,7 @@
             <include name="dr/evomodel/sitemodel/**"/>
             <include name="dr/evomodel/speciation/**"/>
             <include name="dr/evomodel/substmodel/**"/>
+            <include name="dr/evomodel/transmission/**"/>
             <include name="dr/evomodel/tree/**"/>
             <include name="dr/evomodel/treelikelihood/**"/>
             <include name="dr/evoxml/**"/>
@@ -102,6 +103,7 @@
                 <include name="dr/evomodel/sitemodel/**/*.class"/>
                 <include name="dr/evomodel/speciation/**/*.class"/>
                 <include name="dr/evomodel/substmodel/**/*.class"/>
+                <include name="dr/evomodel/transmission/**/*.class"/>
                 <include name="dr/evomodel/tree/**/*.class"/>
                 <include name="dr/evomodel/treelikelihood/**/*.class"/>
                 <include name="dr/evoxml/**/*.class"/>

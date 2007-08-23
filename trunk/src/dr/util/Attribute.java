@@ -34,7 +34,7 @@ package dr.util;
  */
 
 
-public interface Attribute {
+public interface Attribute<T> {
 
     public final static String ATTRIBUTE = "att";
     public final static String NAME = "name";
@@ -42,12 +42,12 @@ public interface Attribute {
 
     String getAttributeName();
 
-    Object getAttributeValue();
+    T getAttributeValue();
 
-    public class Default implements Attribute {
+    public class Default<T> implements Attribute<T> {
 
 
-        public Default(String name, Object value) {
+        public Default(String name, T value) {
             this.name = name;
             this.value = value;
         }
@@ -56,7 +56,7 @@ public interface Attribute {
             return name;
         }
 
-        public Object getAttributeValue() {
+        public T getAttributeValue() {
             return value;
         }
 
@@ -65,15 +65,8 @@ public interface Attribute {
         }
 
         private String name;
-        private Object value;
+        private T value;
 
-    }
-
-    public class DoubleAttribute extends Default {
-
-        public DoubleAttribute(String name, double value) {
-            super(name, java.lang.Double.toString(value));
-        }
     }
 }
 

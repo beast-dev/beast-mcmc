@@ -163,7 +163,7 @@ public interface MutableTree extends Tree, MutableTaxonList {
 
 				if (parentHeight <= tree.getNodeHeight(node)) {
                     // set the parent height to be slightly above this node's height
-                    tree.setNodeHeight(tree.getParent(node), tree.getNodeHeight(node) + 1.0E-6);
+                    tree.setNodeHeight(tree.getParent(node), tree.getNodeHeight(node) + (tree.getNodeHeight(tree.getRoot())* 0.05));
 				}
 			}
 		}

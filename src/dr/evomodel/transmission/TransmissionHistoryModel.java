@@ -236,6 +236,10 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
 
     };
 
+    public Taxon getHost(int index) {
+        return hosts.get(index);
+    }
+
     public int getHostIndex(Taxon host) {
         return hosts.indexOf(host);
     }
@@ -347,7 +351,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
         }
     }
 
-    private List transmissionEvents = new ArrayList();
-    private Map transmissionEventMap = new HashMap();
-    private List hosts = new ArrayList();
+    private List<TransmissionEvent> transmissionEvents = new ArrayList<TransmissionEvent>();
+    private Map<Taxon, TransmissionEvent> transmissionEventMap = new HashMap<Taxon, TransmissionEvent>();
+    private List<Taxon> hosts = new ArrayList<Taxon>();
 }

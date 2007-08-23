@@ -71,6 +71,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(UserInput.DOUBLE_PARSER);
         addXMLObjectParser(UserInput.INTEGER_PARSER);
 
+        //addXMLObjectParser(ColouringTest.PARSER);
+
         addXMLObjectParser(new dr.evoxml.GeneralDataTypeParser());
         addXMLObjectParser(new dr.evoxml.AlignmentParser());
         addXMLObjectParser(new dr.evoxml.SitePatternsParser());
@@ -129,6 +131,14 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.ColouredSubtreeSlideOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.ColouredOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.FixedColouredOperator.PARSER);
+
+        //addXMLObjectParser(dr.evomodel.coalescent.PopulationSizeGraph.PARSER);
+
+        // Transmission models
+        addXMLObjectParser(dr.evomodel.transmission.TransmissionLikelihood.PARSER);
+        addXMLObjectParser(dr.evomodel.transmission.TransmissionDemographicModel.PARSER);
+        addXMLObjectParser(dr.evomodel.transmission.TransmissionHistoryModel.PARSER);
+        addXMLObjectParser(dr.evomodel.transmission.TransmissionStatistic.PARSER);
 
         addXMLObjectParser(dr.evomodel.substmodel.FrequencyModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.GeneralSubstitutionModel.PARSER);

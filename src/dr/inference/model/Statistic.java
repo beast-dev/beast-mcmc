@@ -65,14 +65,6 @@ public interface Statistic extends Attribute, Identifiable, Loggable {
 		public Abstract() { this.name = null; }
 		public Abstract(String name) { this.name = name; }
 		
-		public final String getAttributeName() { return getStatisticName(); }
-		public final Object getAttributeValue() { 
-			double[] stats = new double[getDimension()];
-			for (int i =0; i < stats.length; i++) { stats[i] = getStatisticValue(i); }
-			
-			return stats;
-		}
-	
 		public String getStatisticName() {
 			if (name != null) {
 				return name;
@@ -99,6 +91,21 @@ public interface Statistic extends Attribute, Identifiable, Loggable {
 			}
 			return buffer.toString();
 		}
+
+        // **************************************************************
+        // Attribute IMPLEMENTATION
+        // **************************************************************
+
+        public final String getAttributeName() {
+            return getStatisticName();
+        }
+        
+        public final Object getAttributeValue() {
+            double[] stats = new double[getDimension()];
+            for (int i =0; i < stats.length; i++) { stats[i] = getStatisticValue(i); }
+
+            return stats;
+        }
 
 	    // **************************************************************
 	    // Identifiable IMPLEMENTATION

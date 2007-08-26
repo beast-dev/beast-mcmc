@@ -130,7 +130,9 @@ public class TwoStateCovarionModelTest extends TestCase {
 
 
     /*
-      The following Matlab code was written by David Bryant to generate these probabilities:
+      The following Matlab code was written by David Bryant to generate these probabilities.
+      I believe this code is currently incorrect because the visible state equilibrium
+      frequencies are not being incorporated in the R matrix... AJD
 
       format long;
       Q = [-1 1; 1 -1]; %Rate matrix

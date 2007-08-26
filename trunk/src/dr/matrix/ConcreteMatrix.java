@@ -26,11 +26,7 @@
 package dr.matrix;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alexei
- * Date: Jun 15, 2006
- * Time: 11:29:12 AM
- * To change this template use File | Settings | File Templates.
+ * @author Alexei Drummond
  */
 class ConcreteMatrix extends MutableMatrix.AbstractMutableMatrix {
 
@@ -38,9 +34,7 @@ class ConcreteMatrix extends MutableMatrix.AbstractMutableMatrix {
 
         this.values = new double[v.length][v[0].length];
         for (int i = 0; i < values.length; i++) {
-            for (int j = 0; j < values[0].length; j++) {
-                values[i][j] = v[i][j];
-            }
+            System.arraycopy(v[i], 0, values[i], 0, values[0].length);
         }
     }
 
@@ -49,23 +43,31 @@ class ConcreteMatrix extends MutableMatrix.AbstractMutableMatrix {
         if (values.length != rows || values[0].length != columns) {
             values = new double[rows][columns];
         }
-     }
+    }
 
     public final void setElement(int rows, int column, double value) {
         values[rows][column] = value;
     }
 
 
-    public final int getRowCount() { return values.length; }
-    public final int getColumnCount() { return values[0].length; }
-    public final double getElement(int i, int j) { return values[i][j]; }
+    public final int getRowCount() {
+        return values.length;
+    }
+
+    public final int getColumnCount() {
+        return values[0].length;
+    }
+
+    public final double getElement(int i, int j) {
+        return values[i][j];
+    }
 
     public String toString() {
 
         StringBuffer buffer = new StringBuffer();
         for (int i = 0; i < values.length; i++) {
             for (int j = 0; j < values[0].length; j++) {
-                buffer.append(values[i][j]+"\t");
+                buffer.append(values[i][j]).append("\t");
             }
             buffer.append("\n");
         }

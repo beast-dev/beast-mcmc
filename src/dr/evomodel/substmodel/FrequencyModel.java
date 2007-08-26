@@ -62,7 +62,7 @@ public class FrequencyModel extends AbstractModel {
 
         this.frequencyParameter = frequencyParameter;
         addParameter(frequencyParameter);
-        frequencyParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, dataType.getStateCount()));
+        frequencyParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, frequencyParameter.getDimension()));
         this.dataType = dataType;
     }
 
@@ -78,11 +78,11 @@ public class FrequencyModel extends AbstractModel {
         return total;
     }
 
-    public final void setFrequency(int i, double value) {
+    public void setFrequency(int i, double value) {
         frequencyParameter.setParameterValue(i, value);
     }
 
-    public final double getFrequency(int i) {
+    public double getFrequency(int i) {
         return frequencyParameter.getParameterValue(i);
     }
 
@@ -90,7 +90,7 @@ public class FrequencyModel extends AbstractModel {
         return frequencyParameter.getDimension();
     }
 
-    public final double[] getFrequencies() {
+    public double[] getFrequencies() {
         double[] frequencies = new double[getFrequencyCount()];
         for (int i = 0; i < frequencies.length; i++) {
             frequencies[i] = getFrequency(i);
@@ -202,6 +202,6 @@ public class FrequencyModel extends AbstractModel {
     };
 
     private DataType dataType = null;
-    private Parameter frequencyParameter = null;
+    Parameter frequencyParameter = null;
 
 }

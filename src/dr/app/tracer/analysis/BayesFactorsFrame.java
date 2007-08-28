@@ -16,22 +16,40 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 
 	private List<MarginalLikelihoodAnalysis> marginalLikelihoods = new ArrayList<MarginalLikelihoodAnalysis>();
 	private JPanel contentPanel;
+	private JComboBox transformCombo;
 
 	private BayesFactorsModel bayesFactorsModel;
-    private JTable bayesFactorsTable;
+	private JTable bayesFactorsTable;
+
+	enum Transform {
+		LOG10_BF("log10 Bayes Factors"),
+		LN_BF("ln Bayes Factors"),
+		BF("Bayes Factors");
 
 
-    public BayesFactorsFrame(DocumentFrame frame, String title, String info, boolean hasErrors) {
+		Transform(String name) {
+			this.name = name;
+		}
+
+		public String toString() {
+			return name;
+		}
+
+		private String name;
+
+	};
+
+	public BayesFactorsFrame(DocumentFrame frame, String title, String info, boolean hasErrors) {
 
 		super(frame);
 
 		setTitle(title);
 
-        bayesFactorsModel = new BayesFactorsModel(hasErrors);
+		bayesFactorsModel = new BayesFactorsModel(hasErrors);
 		bayesFactorsTable = new JTable(bayesFactorsModel);
-        bayesFactorsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        
-        JScrollPane scrollPane1 = new JScrollPane(bayesFactorsTable,
+		bayesFactorsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+		JScrollPane scrollPane1 = new JScrollPane(bayesFactorsTable,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
@@ -39,17 +57,48 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 		contentPanel.setOpaque(false);
 		contentPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
 				new java.awt.Insets(0, 0, 6, 0)));
-		contentPanel.add(scrollPane1, BorderLayout.CENTER);
 
-        JLabel label = new JLabel(info);
-        label.setFont(UIManager.getFont("SmallSystemFont"));
-        contentPanel.add(label, BorderLayout.NORTH);
+		JToolBar toolBar = new JToolBar();
+		toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
+		toolBar.setFloatable(false);
 
-        JLabel label2 = new JLabel("<html>If you use these results we would encourage you to cite the following paper:<br>" +
-                "Suchard MA, Weiss RE and Sinsheimer JS (2001) Bayesian Selection of Continuous-Time Markov Chain Evolutionary Models." +
-                "<i>Mol Biol and Evol</i> <b>18</b>: 1001-1013</html>");
-        label2.setFont(UIManager.getFont("SmallSystemFont"));
-        contentPanel.add(label2, BorderLayout.SOUTH);
+		transformCombo = new JComboBox(Transform.values());
+		transformCombo.setFont(UIManager.getFont("SmallSystemFont"));
+
+		JLabel label = new JLabel("Show:");
+		label.setFont(UIManager.getFont("SmallSystemFont"));
+		label.setLabelFor(transformCombo);
+		toolBar.add(label);
+		toolBar.add(transformCombo);
+
+		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
+
+		contentPanel.add(toolBar, BorderLayout.NORTH);
+
+		transformCombo.addItemListener(
+				new java.awt.event.ItemListener() {
+					public void itemStateChanged(java.awt.event.ItemEvent ev) {
+						bayesFactorsModel.fireTableDataChanged();
+					}
+				}
+		);
+
+		JPanel panel1 = new JPanel(new BorderLayout(0, 0));
+		panel1.setOpaque(false);
+
+		label = new JLabel(info);
+		label.setFont(UIManager.getFont("SmallSystemFont"));
+
+		panel1.add(label, BorderLayout.NORTH);
+		panel1.add(scrollPane1, BorderLayout.CENTER);
+
+		contentPanel.add(panel1, BorderLayout.CENTER);
+
+		label = new JLabel("<html>Marginal likelihood estimated using the method Newton & Raftery (ref)" +
+				"with the modifications proprosed by Suchard et al (2001, <i>MBE</i> <b>18</b>: 1001-1013)</html>");
+		label.setFont(UIManager.getFont("SmallSystemFont"));
+
+		contentPanel.add(label, BorderLayout.SOUTH);
 
 		setContentsPanel(contentPanel);
 
@@ -69,8 +118,8 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 	public void addMarginalLikelihood(MarginalLikelihoodAnalysis marginalLikelihood) {
 		this.marginalLikelihoods.add(marginalLikelihood);
 		bayesFactorsModel.fireTableStructureChanged();
-        bayesFactorsTable.repaint();
-    }
+		bayesFactorsTable.repaint();
+	}
 
 	public void initializeComponents() {
 
@@ -97,19 +146,19 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 
 	class BayesFactorsModel extends AbstractTableModel {
 
-		String[] columnNames = {"Trace", "log Marginal Likelihood", "S.E."};
+		String[] columnNames = {"Trace", "ln P(model | data)", "S.E."};
 
 		private DecimalFormat formatter = new DecimalFormat("0.###E0");
 		private DecimalFormat formatter2 = new DecimalFormat("####0.###");
 
-        private int columnCount;
+		private int columnCount;
 
-        public BayesFactorsModel(boolean hasErrors) {
-            this.columnCount = (hasErrors ? 3 : 2);
+		public BayesFactorsModel(boolean hasErrors) {
+			this.columnCount = (hasErrors ? 3 : 2);
 		}
 
 		public int getColumnCount() {
-            return columnCount + marginalLikelihoods.size();
+			return columnCount + marginalLikelihoods.size();
 		}
 
 		public int getRowCount() {
@@ -125,12 +174,28 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 			if (col == 1) {
 				return formatter2.format(marginalLikelihoods.get(row).getLogMarginalLikelihood());
 			} else if (columnCount > 2 && col == 2 ) {
-                return " +/- " + formatter2.format(marginalLikelihoods.get(row).getBootstrappedSE());
+				return " +/- " + formatter2.format(marginalLikelihoods.get(row).getBootstrappedSE());
 			} else {
 				if (col - columnCount != row) {
 					double lnML1 = marginalLikelihoods.get(row).getLogMarginalLikelihood();
 					double lnML2 = marginalLikelihoods.get(col - columnCount).getLogMarginalLikelihood();
-					return formatter2.format(lnML1 - lnML2);
+					double lnRatio = lnML1 - lnML2;
+					double value;
+					switch ((Transform)transformCombo.getSelectedItem()) {
+						case BF:
+							value = Math.exp(lnRatio);
+							break;
+						case LN_BF:
+							value = lnRatio;
+							break;
+						case LOG10_BF:
+							value = lnRatio / Math.log(10.0);
+							break;
+						default:
+							throw new IllegalArgumentException("Unknown transform type");
+					}
+
+					return formatter2.format(value);
 				} else {
 					return "-";
 				}

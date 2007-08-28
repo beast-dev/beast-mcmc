@@ -40,7 +40,7 @@ public class BayesFactorsDialog {
         harmonicOnlyCheck = new JCheckBox("Calculate harmonic mean only (no smoothing)");
         bootstrapCountField = new WholeNumberField(0, Integer.MAX_VALUE);
         bootstrapCountField.setValue(1000);
-        
+
         optionPanel = new OptionsPanel(12, 12);
     }
 
@@ -146,7 +146,7 @@ public class BayesFactorsDialog {
         boolean harmonicOnly = harmonicOnlyCheck.isSelected();
         int bootstrapLength = bootstrapCountField.getValue();
 
-        String info = "log P(" + likelihoodTrace + "|Data): ";
+        String info = "trace: " + likelihoodTrace + ", ";
         if (harmonicOnly) {
             info += "harmonic mean";
         } else {
@@ -155,7 +155,7 @@ public class BayesFactorsDialog {
         if (bootstrapLength > 1) {
             info += " (S.E. estimated using " + bootstrapLength + " bootstrap replicates)";
         }
-        
+
         BayesFactorsFrame frame = new BayesFactorsFrame(parent, "Bayes Factors", info, bootstrapLength > 1);
         frame.initialize();
         frame.setVisible(true);

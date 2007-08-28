@@ -171,15 +171,19 @@ public class BinaryCovarionModelTest extends TestCase {
 
 
     public void testTransitionProbabilitiesAgainstMatLab() {
-        // test againt Matlab results for alpha = 0.0 and switching rate = 1.0
+        // test againt Matlab results for alpha = 0.5 and switching rate = 1.0
+        // and visible state base frequencies = 0.25, 0.75
 
-        alpha.setParameterValue(0, 0.0);
+        alpha.setParameterValue(0, 0.5);
         switchingRate.setParameterValue(0, 1.0);
+        frequencies.setParameterValue(0, 0.25);
+        frequencies.setParameterValue(1, 0.75);
 
         model.setupMatrix();
         double[] matrix = new double[16];
 
         double[] pi = model.getFrequencyModel().getFrequencies();
+        System.out.println(pi[0] + " " + pi[1] + " " + pi[2] + " " + pi[3]);
 
         System.out.println(SubstitutionModelUtils.toString(model.q, dataType, 2));
 

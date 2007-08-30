@@ -105,8 +105,7 @@ public class RatioStatistic extends Statistic.Abstract {
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                new ElementRule(Statistic.class, "The numerator statistic" ),
-                new ElementRule(Statistic.class, "The denominator statistic" )
+                new ElementRule(Statistic.class, "The statistics", 2, 2),
 		};
 	};
 

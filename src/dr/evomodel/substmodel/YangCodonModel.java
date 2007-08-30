@@ -28,6 +28,7 @@ package dr.evomodel.substmodel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.GeneticCode;
 import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 import dr.xml.*;
 
 /**
@@ -71,6 +72,8 @@ public class YangCodonModel extends AbstractCodonModel
 		kappaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
 		constructRateMap();
+
+        addStatistic(synonymousRateStatistic);
 	}
 	
 	/**
@@ -99,6 +102,16 @@ public class YangCodonModel extends AbstractCodonModel
 	 * @return dN/dS
 	 */
 	public double getOmega() { return omegaParameter.getParameterValue(0); }
+
+    public double getSynonymousRate() {
+        double k = getKappa();
+        double o = getOmega();
+        return ((31.0 * k) + 36.0) / ((31.0 * k) + 36.0 + (138.0 * o) + (58.0 * o * k));
+    }
+
+    public double getNonSynonymousRate() {
+        return 0;
+    }
 
 	/**
 	 * setup substitution matrix
@@ -309,4 +322,31 @@ public class YangCodonModel extends AbstractCodonModel
 		return buffer.toString();
 	}
 
+    private Statistic synonymousRateStatistic = new Statistic.Abstract() {
+
+        public String getStatisticName() {
+            return "synonymousRate";
+        }
+
+        public int getDimension() { return 1; }
+
+        public double getStatisticValue(int dim) {
+            return getSynonymousRate();
+        }
+
+    };
+
+    private Statistic nonsynonymousRateStatistic = new Statistic.Abstract() {
+
+        public String getStatisticName() {
+            return "nonSynonymousRate";
+        }
+
+        public int getDimension() { return 1; }
+
+        public double getStatisticValue(int dim) {
+            return getNonSynonymousRate();
+        }
+
+    };
 }

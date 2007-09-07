@@ -63,13 +63,13 @@ public class TracerApp extends MultiDocApplication {
                     "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                     "<p>Source code distributed under the GNU LGPL:<br>" +
                     "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
+                    "<p>Thanks for contributions to: Oliver Pybus, Benjamin Redelings & Marc Suchard</p>" +
                     "</center></html>";
 
             String websiteURLString = "http://beast.bio.ed.ac.uk/";
-            String helpURLString = "http://beast.bio.ed.ac.uk/Tracer/";
+            String helpURLString = "http://beast.bio.ed.ac.uk/Tracer";
 
-            TracerApp app = new TracerApp(nameString, aboutString, icon,
-                    websiteURLString, helpURLString);
+            TracerApp app = new TracerApp(nameString, aboutString, icon, websiteURLString, helpURLString);
             app.setDocumentFrameFactory(new DocumentFrameFactory() {
                 public DocumentFrame createDocumentFrame(Application app, MenuBarFactory menuBarFactory) {
                     return new TracerFrame("Tracer");

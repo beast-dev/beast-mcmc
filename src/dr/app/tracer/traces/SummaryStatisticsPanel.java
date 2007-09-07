@@ -52,7 +52,6 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
         statisticsTable.getColumnModel().getColumn(1).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        currentPanel = statisticsTable;
         scrollPane1 = new JScrollPane(statisticsTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -156,6 +155,9 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
     }
 
     public JComponent getExportableComponent() {
+        if (currentPanel instanceof Exportable) {
+           return ((Exportable)currentPanel).getExportableComponent();
+        }
         return currentPanel;
     }
 

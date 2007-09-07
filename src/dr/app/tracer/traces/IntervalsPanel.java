@@ -8,6 +8,8 @@ import dr.inference.trace.TraceList;
 import javax.swing.*;
 import java.awt.*;
 
+import org.virion.jam.framework.Exportable;
+
 
 /**
  * A panel that displays frequency distributions of traces
@@ -16,7 +18,7 @@ import java.awt.*;
  * @author Alexei Drummond
  * @version $Id: IntervalsPanel.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
-public class IntervalsPanel extends JPanel {
+public class IntervalsPanel extends JPanel implements Exportable {
 
     private JIntervalsChart intervalsChart = new JIntervalsChart(new LinearAxis());
     private JChartPanel chartPanel = new JChartPanel(intervalsChart, null, "", "");

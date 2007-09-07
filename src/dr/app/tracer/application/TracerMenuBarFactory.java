@@ -7,13 +7,13 @@ public class TracerMenuBarFactory extends DefaultMenuBarFactory {
 
     public TracerMenuBarFactory() {
         if (org.virion.jam.mac.Utils.isMacOSX()) {
-            registerMenuFactory(new MacFileMenuFactory(true));
+            registerMenuFactory(new TracerMacFileMenuFactory());
             registerMenuFactory(new DefaultEditMenuFactory());
 	        registerMenuFactory(new AnalysisMenuFactory());
             registerMenuFactory(new MacWindowMenuFactory());
             registerMenuFactory(new MacHelpMenuFactory());
         } else {
-            registerMenuFactory(new DefaultFileMenuFactory(true));
+            registerMenuFactory(new TracerDefaultFileMenuFactory());
             registerMenuFactory(new DefaultEditMenuFactory());
 	        registerMenuFactory(new AnalysisMenuFactory());
             registerMenuFactory(new DefaultHelpMenuFactory());

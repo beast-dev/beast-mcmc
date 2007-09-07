@@ -8,6 +8,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
+import org.virion.jam.framework.Exportable;
+
 
 /**
  * A panel that displays frequency distributions of traces
@@ -16,7 +18,7 @@ import java.awt.event.ActionEvent;
  * @author Alexei Drummond
  * @version $Id: FrequencyPanel.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
-public class FrequencyPanel extends JPanel {
+public class FrequencyPanel extends JPanel implements Exportable {
 
     private ChartSetupDialog chartSetupDialog = null;
 

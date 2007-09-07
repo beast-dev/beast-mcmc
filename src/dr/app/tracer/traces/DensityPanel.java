@@ -2,6 +2,7 @@ package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
 import dr.inference.trace.TraceList;
+import dr.util.Variate;
 import org.virion.jam.framework.Exportable;
 
 import javax.swing.*;
@@ -295,18 +296,36 @@ public class DensityPanel extends JPanel implements Exportable {
         return chartPanel;
     }
 
-    public void copyToClipboard() {
-        java.awt.datatransfer.Clipboard clipboard =
-                Toolkit.getDefaultToolkit().getSystemClipboard();
-
-        java.awt.datatransfer.StringSelection selection =
-                new java.awt.datatransfer.StringSelection(this.toString());
-
-        clipboard.setContents(selection, selection);
-    }
-
     public String toString() {
-        return "";
+        if (traceChart.getPlotCount() == 0) {
+            return "no plot available";
+        }
+
+        StringBuffer buffer = new StringBuffer();
+
+        Plot plot = traceChart.getPlot(0);
+        Variate xData = plot.getXData();
+
+        buffer.append(chartPanel.getXAxisTitle());
+        for (int i = 0; i < traceChart.getPlotCount(); i++) {
+            plot = traceChart.getPlot(i);
+            buffer.append("\t");
+            buffer.append(plot.getName());
+        }
+        buffer.append("\n");
+
+        for (int i = 0; i < xData.getCount(); i++) {
+            buffer.append(String.valueOf(xData.get(i)));
+            for (int j = 0; j < traceChart.getPlotCount(); j++) {
+                plot = traceChart.getPlot(j);
+                Variate yData = plot.getYData();
+                buffer.append("\t");
+                buffer.append(String.valueOf(yData.get(i)));
+            }
+            buffer.append("\n");
+        }
+
+        return buffer.toString();
     }
 
 }

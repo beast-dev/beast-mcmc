@@ -87,7 +87,18 @@ public class JChartPanel extends JPanel implements Printable {
 			add(yAxisLabel, "YLabel");
 		}
 	}
-	
+
+    public String getTitle() {
+        return titleLabel.getText();
+    }
+
+    public String getXAxisTitle() {
+        return xAxisLabel.getText();
+    }
+
+    public String getYAxisTitle() {
+        return yAxisLabel.getText();
+    }
     //********************************************************************
     //********************************************************************
 	// Printable interface

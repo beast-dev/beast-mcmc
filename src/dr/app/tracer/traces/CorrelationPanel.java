@@ -3,6 +3,7 @@ package dr.app.tracer.traces;
 import dr.gui.chart.*;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
+import dr.util.Variate;
 import org.virion.jam.framework.Exportable;
 
 import javax.swing.*;
@@ -216,19 +217,33 @@ public class CorrelationPanel extends JPanel implements Exportable {
         repaint();
     }
 
-    public void copyToClipboard() {
-        /*
-          java.awt.datatransfer.Clipboard clipboard =
-              Toolkit.getDefaultToolkit().getSystemClipboard();
-
-          java.awt.datatransfer.StringSelection selection =
-              new java.awt.datatransfer.StringSelection(statisticsTable.toString());
-
-          clipboard.setContents(selection, selection);
-      */
-    }
-
     public JComponent getExportableComponent() {
         return chartPanel;
     }
+
+    public String toString() {
+        if (correlationChart.getPlotCount() == 0) {
+            return "no plot available";
+        }
+
+        StringBuffer buffer = new StringBuffer();
+
+        Plot plot = correlationChart.getPlot(0);
+        Variate xData = plot.getXData();
+        Variate yData = plot.getYData();
+
+        buffer.append(chartPanel.getXAxisTitle());
+        buffer.append("\t");
+        buffer.append(chartPanel.getYAxisTitle());
+        buffer.append("\n");
+
+        for (int i = 0; i < xData.getCount(); i++) {
+            buffer.append(String.valueOf(xData.get(i)));
+            buffer.append("\t");
+            buffer.append(String.valueOf(yData.get(i)));
+            buffer.append("\n");
+	}
+
+        return buffer.toString();
+	}
 }

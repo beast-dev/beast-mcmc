@@ -1,9 +1,6 @@
 package dr.app.tracer.traces;
 
-import dr.gui.chart.Axis;
-import dr.gui.chart.ChartSetupDialog;
-import dr.gui.chart.JChartPanel;
-import dr.gui.chart.LinearAxis;
+import dr.gui.chart.*;
 import dr.inference.trace.TraceList;
 import org.virion.jam.framework.Exportable;
 
@@ -274,18 +271,58 @@ public class RawTracePanel extends JPanel implements Exportable {
         return chartPanel;
     }
 
-    public void copyToClipboard() {
-        java.awt.datatransfer.Clipboard clipboard =
-                Toolkit.getDefaultToolkit().getSystemClipboard();
-
-        java.awt.datatransfer.StringSelection selection =
-                new java.awt.datatransfer.StringSelection(this.toString());
-
-        clipboard.setContents(selection, selection);
-    }
-
     public String toString() {
-        return "";
+        if (traceChart.getPlotCount() == 0) {
+            return "no plot available";
+        }
+
+        StringBuffer buffer = new StringBuffer();
+
+        Plot plot = traceChart.getPlot(0);
+
+        double[][] traceStates = new double[traceChart.getPlotCount()][];
+        double[][] traceValues = new double[traceChart.getPlotCount()][];
+        int maxLength = 0;
+
+        for (int i = 0; i < traceChart.getPlotCount(); i++) {
+            plot = traceChart.getPlot(i);
+            if (i > 0) {
+                buffer.append("\t");
+            }
+            buffer.append("state");
+            buffer.append("\t");
+            buffer.append(plot.getName());
+
+            traceStates[i] = traceChart.getTraceStates(i);
+            traceValues[i] = traceChart.getTraceValues(i);
+            if (traceStates[i].length > maxLength) {
+                maxLength = traceStates[i].length;
+            }
+        }
+        buffer.append("\n");
+
+        for (int i = 0; i < maxLength; i++) {
+            if (traceStates[0].length > i) {
+                buffer.append(Integer.toString((int)traceStates[0][i]));
+                buffer.append("\t");
+                buffer.append(String.valueOf(traceValues[0][i]));
+            } else {
+                buffer.append("\t");
+            }
+            for (int j = 1; j < traceStates.length; j++) {
+                if (traceStates[j].length > i) {
+                    buffer.append("\t");
+                    buffer.append(Integer.toString((int)traceStates[j][i]));
+                    buffer.append("\t");
+                    buffer.append(String.valueOf(traceValues[j][i]));
+                } else {
+                    buffer.append("\t\t");
+                }
+            }
+            buffer.append("\n");
+        }
+
+        return buffer.toString();
     }
 
 }

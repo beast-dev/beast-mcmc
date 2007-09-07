@@ -68,6 +68,18 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
         tracePanel.setTraces(traceLists, traces);
     }
 
+    public void doCopy() {
+
+        java.awt.datatransfer.Clipboard clipboard =
+                Toolkit.getDefaultToolkit().getSystemClipboard();
+
+        java.awt.datatransfer.StringSelection selection =
+                new java.awt.datatransfer.StringSelection(getExportText());
+
+        clipboard.setContents(selection, selection);
+
+    }
+
     public String getExportText() {
         switch (tabbedPane.getSelectedIndex()) {
             case 0:
@@ -82,23 +94,6 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
         return "";
     }
 
-    public void doCopy() {
-        summaryPanel.copyToClipboard();
-        switch (tabbedPane.getSelectedIndex()) {
-            case 0:
-                summaryPanel.copyToClipboard();
-                break;
-            case 1:
-                densityPanel.copyToClipboard();
-                break;
-            case 2:
-                correlationPanel.copyToClipboard();
-                break;
-            case 3:
-                tracePanel.copyToClipboard();
-                break;
-        }
-    }
 
     public JComponent getExportableComponent() {
 

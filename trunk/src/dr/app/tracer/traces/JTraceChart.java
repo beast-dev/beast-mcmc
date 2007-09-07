@@ -86,6 +86,16 @@ public class JTraceChart extends JChart {
 		repaint();
 	}
 
+    public double[] getTraceStates(int index) {
+        Trace trace = (Trace)traces.get(index);
+        return trace.states;
+    }
+
+    public double[] getTraceValues(int index) {
+        Trace trace = (Trace)traces.get(index);
+        return trace.values;
+	}
+
 	public void removeAllTraces() {
 		traces.clear();
 		xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);

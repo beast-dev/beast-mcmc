@@ -432,6 +432,11 @@ public class DemographicDialog {
             double delta = (maxTime - minTime) / (binCount - 1);
             String title = "";
 
+            for (int j = 0; j < argIndices.length; j++) {
+                index = traceList.getTraceIndex(argumentTraces[argIndices[j]]);
+                traceList.getValues(index, values[j]);
+            }
+
             if (demographicCombo.getSelectedIndex() == 0) { // Constant Size
                 title = "Constant Population Size";
                 ConstantPopulation demo = new ConstantPopulation();

@@ -144,16 +144,6 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
         repaint();
     }
 
-    public void copyToClipboard() {
-        java.awt.datatransfer.Clipboard clipboard =
-                Toolkit.getDefaultToolkit().getSystemClipboard();
-
-        java.awt.datatransfer.StringSelection selection =
-                new java.awt.datatransfer.StringSelection(statisticsModel.toString());
-
-        clipboard.setContents(selection, selection);
-    }
-
     public JComponent getExportableComponent() {
         if (currentPanel instanceof Exportable) {
            return ((Exportable)currentPanel).getExportableComponent();

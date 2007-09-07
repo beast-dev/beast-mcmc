@@ -132,6 +132,10 @@ public interface Plot {
 	*/
 	public void pointClicked(Point2D point);
 
+    Variate getXData();
+
+    Variate getYData();
+
     public interface Listener {
 
         void pointClicked(double x, double y);

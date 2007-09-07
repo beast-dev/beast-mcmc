@@ -1,5 +1,11 @@
 package dr.app.tracer.application;
 
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.pdf.DefaultFontMapper;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfTemplate;
+import com.lowagie.text.pdf.PdfWriter;
 import dr.app.tracer.analysis.*;
 import dr.app.tracer.traces.CombinedTraces;
 import dr.app.tracer.traces.TracePanel;
@@ -20,11 +26,12 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
+public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler, AnalysisMenuHandler {
 
     private TracePanel tracePanel = null;
 
@@ -72,7 +79,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
         getZoomWindowAction().setEnabled(false);
 
         setImportAction(importAction);
-        setExportAction(exportAction);
+        setExportAction(exportDataAction);
 
         setAnalysesEnabled(false);
     }
@@ -190,7 +197,15 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
     public void setAnalysesEnabled(boolean enabled) {
         getDemographicAction().setEnabled(enabled);
         getBayesianSkylineAction().setEnabled(enabled);
+        getBayesFactorsAction().setEnabled(enabled);
+        getCreateTemporalAnalysisAction().setEnabled(enabled);
+        getAddDemographicAction().setEnabled(enabled);
+        getAddBayesianSkylineAction().setEnabled(enabled);
+        getAddTimeDensityAction().setEnabled(enabled);
+
         getExportAction().setEnabled(enabled);
+        getExportDataAction().setEnabled(enabled);
+        getExportPDFAction().setEnabled(enabled);
         getCopyAction().setEnabled(true);
     }
 
@@ -495,7 +510,7 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 
     ;
 
-    public final void doExport() {
+    public final void doExportData() {
 
         FileDialog dialog = new FileDialog(this,
                 "Export Data...",
@@ -506,7 +521,9 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
             File file = new File(dialog.getDirectory(), dialog.getFile());
 
             try {
-                exportToFile(file);
+                FileWriter writer = new FileWriter(file);
+                writer.write(tracePanel.getExportText());
+                writer.close();
 
 
             } catch (IOException ioe) {
@@ -518,11 +535,46 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
 
     }
 
-    protected void exportToFile(File file) throws IOException {
-        FileWriter writer = new FileWriter(file);
-        writer.write(tracePanel.getExportText());
-        writer.close();
+    public final void doExportPDF() {
+        FileDialog dialog = new FileDialog(this,
+                "Export PDF Image...",
+                FileDialog.SAVE);
+
+        dialog.setVisible(true);
+        if (dialog.getFile() != null) {
+            File file = new File(dialog.getDirectory(), dialog.getFile());
+
+            Rectangle2D bounds = tracePanel.getExportableComponent().getBounds();
+            Document document = new Document(new com.lowagie.text.Rectangle((float)bounds.getWidth(), (float)bounds.getHeight()));
+            try {
+                // step 2
+                PdfWriter writer;
+                writer = PdfWriter.getInstance(document, new FileOutputStream(file));
+                // step 3
+                document.open();
+                // step 4
+                PdfContentByte cb = writer.getDirectContent();
+                PdfTemplate tp = cb.createTemplate((float)bounds.getWidth(), (float)bounds.getHeight());
+                Graphics2D g2d = tp.createGraphics((float)bounds.getWidth(), (float)bounds.getHeight(), new DefaultFontMapper());
+                tracePanel.getExportableComponent().print(g2d);
+                g2d.dispose();
+                cb.addTemplate(tp, 0, 0);
+            }
+            catch(DocumentException de) {
+                JOptionPane.showMessageDialog(this, "Error writing PDF file: " + de,
+                        "Export PDF Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+            catch (FileNotFoundException e) {
+                JOptionPane.showMessageDialog(this, "Error writing PDF file: " + e,
+                        "Export PDF Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+            document.close();
+        }
     }
+
+
 
     public final void doImport() {
 
@@ -845,6 +897,14 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
         }
     }
 
+    public Action getExportDataAction() {
+        return exportDataAction;
+    }
+
+    public Action getExportPDFAction() {
+        return exportPDFAction;
+    }
+
 
     public Action getRemoveTraceAction() {
         return removeTraceAction;
@@ -932,9 +992,15 @@ public class TracerFrame extends DocumentFrame implements AnalysisMenuHandler {
         }
     };
 
-    private AbstractAction exportAction = new AbstractAction("Export...") {
+    private AbstractAction exportDataAction = new AbstractAction("Export Data...") {
         public void actionPerformed(ActionEvent ae) {
-            doExport();
+            doExportData();
+        }
+    };
+
+    private AbstractAction exportPDFAction = new AbstractAction("Export PDF...") {
+        public void actionPerformed(ActionEvent ae) {
+            doExportPDF();
         }
     };
 

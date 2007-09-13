@@ -744,19 +744,19 @@ The {\it MCMC} tab in \texttt{BEAUti} provides settings to control the MCMC chai
 finishing. How long this should be depends on the size of the dataset, the complexity of the
 model and the precision of the answer required. The default value of 10,000,000 is entirely
 arbitrary and should be adjusted according to the size of your dataset. We will see later how
-the resulting log file can be analysed using \texttt{Tracer} In order to examine whether a particular 
+the resulting log file can be analysed using \texttt{Tracer}. In order to examine whether a particular 
 chain length is adequate.
 
 The next couple of options specify how often the current parameter values should be displayed
 on the screen and recorded in the log file. The screen output is simply for monitoring the
-programs progress so can be set to any value (although if set too small, the sheer quantity
+program's progress so can be set to any value (although if set too small, the sheer quantity
 of information being displayed on the screen will slow the program down). For the log
 file, the value should be set relative to the total length of the chain. Sampling too often
 will result in very large files with little extra benefit in terms of the precision of the
 estimates. Sample too infrequently and the log file will not contain much information about
 the distributions of the parameters. You probably want to aim to store no more than 10,000
 samples so this should be set to the chain length / 10,000. For this dataset let's initially
-setting the chain length to 100,000 as this will run reasonably quickly on most modern
+set the chain length to 100,000 as this will run reasonably quickly on most modern
 computers. The final two options give the file names of the log files for the parameters and the trees.
 These will be set to a default based on the name of the imported NEXUS file but feel free
 to change these.
@@ -778,6 +778,9 @@ from the File menu or click the similarly labelled button at the bottom of the w
 Choose a name for the file (for example, \texttt{RSVA.xml}) and save the file. For
 convenience, leave the \texttt{BEAUti} window open so that you can change the values and re-generate
 the \texttt{BEAST} file as required later in this tutorial.
+
+**** run beast here ***
+
 
 \subsection{Analysing the \texttt{BEAST} output}
 
@@ -880,11 +883,11 @@ tab and look at the raw trace plot (Figure~\ref{fig:figure7}).
 Again we have chosen options that produce 1000 samples and with an ESS
 of about 500 there is still auto-correlation between the samples but 500 effectively independent
 samples will now provide a good estimate of the posterior distribution. There are no obvious trends
-in the plot suggesting that the MCMC has converged and there are no large-scale fluctuations in the 
+in the plot which would suggest that the MCMC has not yet converged, and there are no large-scale fluctuations in the 
 trace which would suggest poor mixing.
 As we are happy with the behaviour of log-likelihood we can now move on to one of the
 parameters of interest: substitution rate. Select \texttt{clock.rate} in the left-hand table. This
-is the mutation rate of the first codon position. Now choose the density plot by selecting
+is the average substitution rate across all sites in the alignment. Now choose the density plot by selecting
 the tab labeled Density. This shows a plot of the posterior probability density of this
 parameter. You should see a plot similar to Figure~\ref{fig:figure8}.
 
@@ -904,7 +907,7 @@ the density plots of multiple traces in order to compare them (it is up to the u
 whether they are comparable on the the same axis or not). Select the relative substitution rates for all three
 codon positions in the table to the left (labelled \texttt{siteModel1.mu}, \texttt{siteModel2.mu} and \texttt{siteModel3.mu}. You will now see
 the posterior probability densities for the relative substitution rate at all three codon positions
-over-layed (Figure~\ref{fig:figure9}).
+overlaid (Figure~\ref{fig:figure9}).
 
 \begin{figure}[htbp]
 \begin{center}
@@ -990,7 +993,7 @@ program.
 
 Run \texttt{FigTree} now and select the {\it Open...} command from the {\it File} menu. Select the tree file
 you created using \texttt{TreeAnnotator} in the previous section. The tree will be displayed in the \texttt{FigTree}
-window. On the left hand side of the window are the options and setting which control how the
+window. On the left hand side of the window are the options and settings which control how the
 tree is displayed. In this case we want to display the posterior probabilities of each of the clades
 present in the tree and estimates of the age of each node (see Figure~\ref{fig:figure11}). In order
 to do this you need to change some of the settings.
@@ -1024,7 +1027,7 @@ so that when you load it into \texttt{FigTree} again it will be displayed exactl
 \subsection{Conclusion and Resources}
 
 This chapter only scratches the surface of the analyses that are possible to undertake using
-\texttt{BEAST}. It has hopefully provided a relatively gentle introduction to the fundimental steps that will
+\texttt{BEAST}. It has hopefully provided a relatively gentle introduction to the fundamental steps that will
 be common to all \texttt{BEAST} analyses and provide a basis for more challenging investigations. \texttt{BEAST} is an
 ongoing development project with new models and techniques being added on a regular basis. The \texttt{BEAST} website
 provides details of the mailing list that is used to announce new features and to discuss the use

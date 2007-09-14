@@ -82,8 +82,8 @@ optimization based on the \textbf{\textit{maximum likelihood}} criterion.
 
 \texttt{BEAST} can be compared to a number of other software packages with
 similar goals, such as \texttt{MrBayes} \cite{HR2001}, which
-currently focuses on phylogenetic inference and \texttt{BATWING}
-\cite{WWB2003} (Comment: Maybe also cite \texttt{LAMARC} here, which is discussed in the chapter following yours), which focuses predominantly on \textbf{\textit{coalescent}}-based population
+currently focuses on phylogenetic inference and  \texttt{LAMARC} \cite{Kuhner2006} (discussed in the next chapter)  and \texttt{BATWING}
+\cite{WWB2003}, which focus predominantly on \textbf{\textit{coalescent}}-based population
 genetics. Like these software packages, the core algorithm implemented
 in \texttt{BEAST} is Metropolis-Hastings MCMC \cite{MRRTT1953,Hastings1970}.
 MCMC is a stochastic algorithm that produces sample-based estimates
@@ -132,7 +132,8 @@ sequences are sampled from the same time. Both of these assumptions can be relax
 It is also possible to devise more complex coalescent models so that the population size
 is a function of time. \texttt{BEAST} supports a number of demographic models including
 constant size, exponential growth, logistic growth, expansion and the highly parameteric
-Bayesian skyline plot \cite{DRSP2005}. (comment: Since this chapter is grouped with the LAMARC chapter in the population genetics section, it might be useful to stress on the distinguishing features from the LAMARC package. The fact that the coalescent is implemented as a prior is one of these, so maybe something like the following could be added: In \texttt{BEAST}, the coalescent is treated as a prior distribution for the unknown true genealogy, whereas in \texttt{LAMARC} (see next chapter) the coalescent is treatedas part of the observation process defining the likelihood of population parameters.)
+Bayesian skyline plot \cite{DRSP2005}.  Currently \texttt{BEAST} does not include coalescent models
+of migration or recombination but these processes will be included in a future version. For the case of contemporaneously sampled sequences these processes can be investigated using \texttt{LAMARC} (see next chapter).
 
 The purpose behind the development of \texttt{BEAST} is to bring a large number
 of complementary evolutionary models (e.g. substitution models, demographic tree priors,
@@ -393,7 +394,7 @@ various coalescent \cite{Kingman1982,GT1994} models of demographic
 history can be used in \texttt{BEAST} to model population size changes through
 time. At present the simple parametric models available include constant
 size $N(t)=N_{e}$ (1 parameter), exponential growth $N(t)=N_{e}e^{-gt}$
-(2 parameters) and logistic growth (3 parameters) (Comment: expansion is also available to set up in BEAUti).
+(2 parameters), expansion or logistic growth (3 parameters).
 
 In addition, the highly parametric Bayesian skyline plot \cite{DRSP2005}
 is also available, but this model can only be used when the data are
@@ -653,7 +654,7 @@ numerical field (such as the RSVA sequences, above) then you can specify how to 
 corresponds to the date of sampling. You can either specify the order that the date field comes (e.g.,
 first, last or various positions in between) or specify a prefix (some characters that come immediately
 before the date field in each name). For the RSVA sequences you can select 'last' from the drop-down menu
-for the order or use the prefix option and specify '@' as the prefix. (Comment: Maybe add:  ('@' is the prefix used for dates by PAML, see Chapter 11))
+for the order or use the prefix option and specify '@' as the prefix ('@' is the prefix used for dates by PAML, see Chapter 11).
 
 In this dialog box, you can also get \texttt{BEAUti} to add a fixed value to each guessed date. In this case the
 value ``1900'' has been added to turn the dates from 2 digit years to 4 digit. Any dates in the taxon names
@@ -786,7 +787,12 @@ Choose a name for the file (for example, \texttt{RSVA.xml}) and save the file. F
 convenience, leave the \texttt{BEAUti} window open so that you can change the values and re-generate
 the \texttt{BEAST} file as required later in this tutorial.
 
-(Comment: maybe add a line or two about running BEAST itself..  running the graphical version and selecting the xml input file, or   running the command line version in a terminal specifying the path to the beast shell script in beast/bin and the xml input file)
+Once the \texttt{BEAST} XML file has been created the analysis itself can be performed using \texttt{BEAST} . 
+The exact instructions for running \texttt{BEAST} depends on the computer you are using, but in most 
+cases a standard file dialog box will appear in which you select the XML file. If the command line version is being
+used then the name of the XML file is given after the name of the \texttt{BEAST} executable. The analysis will
+then be performed with detailed information about the progress of the run being written to the screen. When it
+has finished, the log file and the trees file will have been created in the same location as your XML file.
 
 \subsection{Analysing the \texttt{BEAST} output}
 
@@ -873,7 +879,7 @@ The simple response to this situation is that we need to run the chain for longe
 ESS (for the \texttt{prior}) is 9, it would suggest that we have to run it at least 12
 times longer to get ESSs that are $>$100. However it would be better to aim higher so lets
 go for a chain length of 5,000,000. Go back to Section~\ref{MCMC_options}
-and create a new \texttt{BEAST} XML file with a longer chain length. (Comment: the short run gave also suggestions to tweak the operators. Should this be pointed out and followed up before engaging in the larger run?) Now run \texttt{BEAST} and load the new
+and create a new \texttt{BEAST} XML file with a longer chain length. Now run \texttt{BEAST} and load the new
 log file into \texttt{Tracer} (you can leave the old one loaded for comparison). Click on the Trace
 tab and look at the raw trace plot (Figure~\ref{fig:figure7}).
 

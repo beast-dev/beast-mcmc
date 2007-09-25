@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A generic operator that moves k 1 bits to k zero locations.
+ * A generic operator swaps a randomly selected rate change from parent to offspring or vice versa.
  *
  * @author Alexei Drummond
  * @version $Id$
@@ -28,7 +28,8 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
     }
 
     /**
-     * Pick a random k ones in the vector and move them to a random k zero positions.
+     * Pick a parent-child node pair involving a single rate change and swap the rate change location
+     * and corresponding rate parameters.
      */
     public final double doOperation() throws OperatorFailedException {
 
@@ -37,6 +38,7 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
         // 1. collect nodes that form a pair with parent such that
         // one of them has a one and one has a zero
         List<NodeRef> candidates = new ArrayList<NodeRef>();
+
 
         for (int i = 0; i < tree.getNodeCount(); i++) {
 

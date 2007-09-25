@@ -151,12 +151,12 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
     public double pdf(double x) {
         if (x - offset <= 0.0) return 0.0;
-        return NormalDistribution.pdf(Math.log(x - offset), getM(), getStDev());
+        return NormalDistribution.pdf(Math.log(x - offset), getM(), getStDev()) / (x - offset);
     }
 
     public double logPdf(double x) {
         if (x - offset <= 0.0) return Double.NEGATIVE_INFINITY;
-        return NormalDistribution.logPdf(Math.log(x - offset), getM(), getStDev());
+        return NormalDistribution.logPdf(Math.log(x - offset), getM(), getStDev()) - Math.log(x - offset);
     }
 
     public double cdf(double x) {
@@ -264,7 +264,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
             }
 
             cxo = (XMLObject) xo.getChild(PRECISION);
-            if ( cxo != null) {
+            if (cxo != null) {
                 if (cxo.getChild(0) instanceof Parameter) {
                     precParam = (Parameter) cxo.getChild(Parameter.class);
                 } else {

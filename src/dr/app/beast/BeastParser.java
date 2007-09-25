@@ -149,6 +149,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.substmodel.EmpiricalAminoAcidModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.YangCodonModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.TwoStateCovarionModel.PARSER);
+        addXMLObjectParser(dr.evomodel.substmodel.BinaryCovarionModel.PARSER);
 
         addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.AdvancedTreeLikelihood.PARSER);
@@ -185,6 +186,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.SPR.SPR_PARSER);
         addXMLObjectParser(dr.evomodel.operators.ECR.ECR_PARSER);
         addXMLObjectParser(dr.evomodel.operators.RateExchangeOperator.PARSER);
+        addXMLObjectParser(dr.evomodel.operators.TreeBitMoveOperator.PARSER);
 
         addXMLObjectParser(dr.evomodel.indel.TKF91Likelihood.PARSER);
         addXMLObjectParser(dr.evomodel.indel.TKF91Model.PARSER);
@@ -243,12 +245,14 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.operators.RandomWalkOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.ScaleOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.UniformOperator.PARSER);
+        addXMLObjectParser(dr.inference.operators.UniformIntegerOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.UpDownOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.SetOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.SwapOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.DeltaExchangeOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.CenteredScaleOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.BitFlipOperator.PARSER);
+        addXMLObjectParser(dr.inference.operators.BitMoveOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.BitSwapOperator.PARSER);
 
         addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());

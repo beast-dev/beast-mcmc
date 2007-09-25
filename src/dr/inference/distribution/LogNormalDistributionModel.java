@@ -44,300 +44,300 @@ import org.w3c.dom.Element;
 public class LogNormalDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
 
-	public static final String NORMAL_DISTRIBUTION_MODEL = "logNormalDistributionModel";
-	public static final String MEAN = "mean";
-	public static final String STDEV = "stdev";
-	public static final String PRECISION = "prec";
-	public static final String OFFSET = "offset";
-	public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
+    public static final String NORMAL_DISTRIBUTION_MODEL = "logNormalDistributionModel";
+    public static final String MEAN = "mean";
+    public static final String STDEV = "stdev";
+    public static final String PRECISION = "prec";
+    public static final String OFFSET = "offset";
+    public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
 
-	boolean isMeanInRealSpace = true;
-	boolean usesStDev = true;
+    boolean isMeanInRealSpace = true;
+    boolean usesStDev = true;
 
-	/**
-	 * Constructor.
-	 */
-	public LogNormalDistributionModel(Parameter meanParameter, Parameter stdevParameter, double offset, boolean meanInRealSpace) {
+    /**
+     * Constructor.
+     */
+    public LogNormalDistributionModel(Parameter meanParameter, Parameter stdevParameter, double offset, boolean meanInRealSpace) {
 
-		super(NORMAL_DISTRIBUTION_MODEL);
+        super(NORMAL_DISTRIBUTION_MODEL);
 
-		isMeanInRealSpace = meanInRealSpace;
+        isMeanInRealSpace = meanInRealSpace;
 
-		this.meanParameter = meanParameter;
-		this.scaleParameter = stdevParameter;
-		this.offset = offset;
-		addParameter(meanParameter);
-		if (isMeanInRealSpace) {
-			meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-		} else {
-			meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-		}
-		addParameter(stdevParameter);
-		stdevParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-	}
+        this.meanParameter = meanParameter;
+        this.scaleParameter = stdevParameter;
+        this.offset = offset;
+        addParameter(meanParameter);
+        if (isMeanInRealSpace) {
+            meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        } else {
+            meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+        }
+        addParameter(stdevParameter);
+        stdevParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+    }
 
-	public LogNormalDistributionModel(Parameter meanParameter, Parameter scaleParameter,
-	                                  double offset, boolean meanInRealSpace, boolean usesStDev) {
+    public LogNormalDistributionModel(Parameter meanParameter, Parameter scaleParameter,
+                                      double offset, boolean meanInRealSpace, boolean usesStDev) {
 
-		super(NORMAL_DISTRIBUTION_MODEL);
+        super(NORMAL_DISTRIBUTION_MODEL);
 
-		isMeanInRealSpace = meanInRealSpace;
-		this.usesStDev = usesStDev;
+        isMeanInRealSpace = meanInRealSpace;
+        this.usesStDev = usesStDev;
 
-		this.meanParameter = meanParameter;
-		this.scaleParameter = scaleParameter;
-		this.offset = offset;
-		addParameter(meanParameter);
-		if (isMeanInRealSpace) {
-			meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-		} else {
-			meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-		}
-		addParameter(this.scaleParameter);
-		this.scaleParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-	}
-
-
-	public final double getS() {
-		return scaleParameter.getParameterValue(0);
-	}
-
-	public final void setS(double S) {
-		scaleParameter.setParameterValue(0, S);
-	}
-
-	public final Parameter getSParameter() {
-		return scaleParameter;
-	}
+        this.meanParameter = meanParameter;
+        this.scaleParameter = scaleParameter;
+        this.offset = offset;
+        addParameter(meanParameter);
+        if (isMeanInRealSpace) {
+            meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        } else {
+            meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+        }
+        addParameter(this.scaleParameter);
+        this.scaleParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+    }
 
 
-	private double getStDev() {
-		if (usesStDev)
-			return getS();
-		else
-			return Math.sqrt(1.0 / getS());
-	}
+    public final double getS() {
+        return scaleParameter.getParameterValue(0);
+    }
 
-	/**
-	 * @return the mean (always in log space)
-	 */
-	public final double getM() {
-		if (isMeanInRealSpace) {
-			double stDev = getStDev();
-			double M = Math.log(meanParameter.getParameterValue(0)) - (0.5 * stDev * stDev);
-			return M;
-		} else {
-			return meanParameter.getParameterValue(0);
+    public final void setS(double S) {
+        scaleParameter.setParameterValue(0, S);
+    }
 
-		}
-	}
-
-	public final void setM(double M) {
-		if (isMeanInRealSpace) {
-			double stDev = getStDev();
-			meanParameter.setParameterValue(0, Math.exp(M + (0.5 * stDev * stDev)));
-		} else {
-			meanParameter.setParameterValue(0, M);
-		}
-	}
-
-	public final Parameter getMnParameter() {
-		return meanParameter;
-	}
-
-	// *****************************************************************
-	// Interface Distribution
-	// *****************************************************************
-
-	public double pdf(double x) {
-		if (x - offset <= 0.0) return 0.0;
-		return NormalDistribution.pdf(Math.log(x - offset), getM(), getStDev());
-	}
-
-	public double logPdf(double x) {
-		if (x - offset <= 0.0) return Double.NEGATIVE_INFINITY;
-		return NormalDistribution.logPdf(Math.log(x - offset), getM(), getStDev());
-	}
-
-	public double cdf(double x) {
-		if (x - offset <= 0.0) return 0.0;
-		return NormalDistribution.cdf(Math.log(x - offset), getM(), getStDev());
-	}
-
-	public double quantile(double y) {
-		return Math.exp(NormalDistribution.quantile(y, getM(), getStDev())) + offset;
-	}
-
-	/**
-	 * @return the mean of the distribution
-	 */
-	public double mean() {
-		return Math.exp(getM() + (getStDev() * getStDev() / 2)) + offset;
-	}
-
-	/**
-	 * @return the variance of the log normal distribution.
-	 */
-	public double variance() {
-		double S2 = getStDev();
-		S2 *= S2;
-
-		return Math.exp(S2 + 2 * getM()) * (Math.exp(S2) - 1);
-	}
-
-	public final UnivariateFunction getProbabilityDensityFunction() {
-		return pdfFunction;
-	}
-
-	private UnivariateFunction pdfFunction = new UnivariateFunction() {
-		public final double evaluate(double x) {
-			return pdf(Math.log(x));
-		}
-
-		public final double getLowerBound() {
-			return Double.NEGATIVE_INFINITY;
-		}
-
-		public final double getUpperBound() {
-			return Double.POSITIVE_INFINITY;
-		}
-	};
-
-	// *****************************************************************
-	// Interface Model
-	// *****************************************************************
-
-	public void handleModelChangedEvent(Model model, Object object, int index) {
-		// no intermediates need to be recalculated...
-	}
-
-	public void handleParameterChangedEvent(Parameter parameter, int index) {
-		// no intermediates need to be recalculated...
-	}
-
-	protected void storeState() {
-	} // no additional state needs storing
-
-	protected void restoreState() {
-	} // no additional state needs restoring
-
-	protected void acceptState() {
-	} // no additional state needs accepting
-
-	// **************************************************************
-	// XMLElement IMPLEMENTATION
-	// **************************************************************
-
-	public Element createElement(Document document) {
-		throw new RuntimeException("Not implemented!");
-	}
-
-	/**
-	 * Reads a normal distribution model from a DOM Document element.
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-		public String getParserName() {
-			return NORMAL_DISTRIBUTION_MODEL;
-		}
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			Parameter meanParam;
-			Parameter stdevParam;
-			Parameter precParam;
-			double offset = 0.0;
-
-			final boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
-			//boolean useStDev = true;
+    public final Parameter getSParameter() {
+        return scaleParameter;
+    }
 
 
-			XMLObject cxo = (XMLObject) xo.getChild(MEAN);
-			if (cxo.getChild(0) instanceof Parameter) {
-				meanParam = (Parameter) cxo.getChild(Parameter.class);
-			} else {
-				meanParam = new Parameter.Default(cxo.getDoubleChild(0));
-			}
+    private double getStDev() {
+        if (usesStDev)
+            return getS();
+        else
+            return Math.sqrt(1.0 / getS());
+    }
 
-			if (xo.hasAttribute(OFFSET)) {
-				offset = xo.getDoubleAttribute(OFFSET);
-			}
+    /**
+     * @return the mean (always in log space)
+     */
+    public final double getM() {
+        if (isMeanInRealSpace) {
+            double stDev = getStDev();
+            double M = Math.log(meanParameter.getParameterValue(0)) - (0.5 * stDev * stDev);
+            return M;
+        } else {
+            return meanParameter.getParameterValue(0);
+
+        }
+    }
+
+    public final void setM(double M) {
+        if (isMeanInRealSpace) {
+            double stDev = getStDev();
+            meanParameter.setParameterValue(0, Math.exp(M + (0.5 * stDev * stDev)));
+        } else {
+            meanParameter.setParameterValue(0, M);
+        }
+    }
+
+    public final Parameter getMnParameter() {
+        return meanParameter;
+    }
+
+    // *****************************************************************
+    // Interface Distribution
+    // *****************************************************************
+
+    public double pdf(double x) {
+        if (x - offset <= 0.0) return 0.0;
+        return NormalDistribution.pdf(Math.log(x - offset), getM(), getStDev()) / (x - offset);
+    }
+
+    public double logPdf(double x) {
+        if (x - offset <= 0.0) return Double.NEGATIVE_INFINITY;
+        return NormalDistribution.logPdf(Math.log(x - offset), getM(), getStDev()) - Math.log(x - offset);
+    }
+
+    public double cdf(double x) {
+        if (x - offset <= 0.0) return 0.0;
+        return NormalDistribution.cdf(Math.log(x - offset), getM(), getStDev());
+    }
+
+    public double quantile(double y) {
+        return Math.exp(NormalDistribution.quantile(y, getM(), getStDev())) + offset;
+    }
+
+    /**
+     * @return the mean of the distribution
+     */
+    public double mean() {
+        return Math.exp(getM() + (getStDev() * getStDev() / 2)) + offset;
+    }
+
+    /**
+     * @return the variance of the log normal distribution.
+     */
+    public double variance() {
+        double S2 = getStDev();
+        S2 *= S2;
+
+        return Math.exp(S2 + 2 * getM()) * (Math.exp(S2) - 1);
+    }
+
+    public final UnivariateFunction getProbabilityDensityFunction() {
+        return pdfFunction;
+    }
+
+    private UnivariateFunction pdfFunction = new UnivariateFunction() {
+        public final double evaluate(double x) {
+            return pdf(Math.log(x));
+        }
+
+        public final double getLowerBound() {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        public final double getUpperBound() {
+            return Double.POSITIVE_INFINITY;
+        }
+    };
+
+    // *****************************************************************
+    // Interface Model
+    // *****************************************************************
+
+    public void handleModelChangedEvent(Model model, Object object, int index) {
+        // no intermediates need to be recalculated...
+    }
+
+    public void handleParameterChangedEvent(Parameter parameter, int index) {
+        // no intermediates need to be recalculated...
+    }
+
+    protected void storeState() {
+    } // no additional state needs storing
+
+    protected void restoreState() {
+    } // no additional state needs restoring
+
+    protected void acceptState() {
+    } // no additional state needs accepting
+
+    // **************************************************************
+    // XMLElement IMPLEMENTATION
+    // **************************************************************
+
+    public Element createElement(Document document) {
+        throw new RuntimeException("Not implemented!");
+    }
+
+    /**
+     * Reads a normal distribution model from a DOM Document element.
+     */
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return NORMAL_DISTRIBUTION_MODEL;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            Parameter meanParam;
+            Parameter stdevParam;
+            Parameter precParam;
+            double offset = 0.0;
+
+            final boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
+            //boolean useStDev = true;
+
+
+            XMLObject cxo = (XMLObject) xo.getChild(MEAN);
+            if (cxo.getChild(0) instanceof Parameter) {
+                meanParam = (Parameter) cxo.getChild(Parameter.class);
+            } else {
+                meanParam = new Parameter.Default(cxo.getDoubleChild(0));
+            }
+
+            if (xo.hasAttribute(OFFSET)) {
+                offset = xo.getDoubleAttribute(OFFSET);
+            }
 
             cxo = (XMLObject) xo.getChild(PRECISION);
-			if ( cxo != null) {
-				if (cxo.getChild(0) instanceof Parameter) {
-					precParam = (Parameter) cxo.getChild(Parameter.class);
-				} else {
-					precParam = new Parameter.Default(cxo.getDoubleChild(0));
-				}
+            if (cxo != null) {
+                if (cxo.getChild(0) instanceof Parameter) {
+                    precParam = (Parameter) cxo.getChild(Parameter.class);
+                } else {
+                    precParam = new Parameter.Default(cxo.getDoubleChild(0));
+                }
 
-				return new LogNormalDistributionModel(meanParam, precParam, offset, false);
-			} else {
+                return new LogNormalDistributionModel(meanParam, precParam, offset, false);
+            } else {
 
-				cxo = (XMLObject) xo.getChild(STDEV);
-				if (cxo.getChild(0) instanceof Parameter) {
-					stdevParam = (Parameter) cxo.getChild(Parameter.class);
-				} else {
-					stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
-				}
+                cxo = (XMLObject) xo.getChild(STDEV);
+                if (cxo.getChild(0) instanceof Parameter) {
+                    stdevParam = (Parameter) cxo.getChild(Parameter.class);
+                } else {
+                    stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
+                }
 
-				return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace);
-			}
-		}
+                return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace);
+            }
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE),
-				AttributeRule.newDoubleRule(OFFSET, true),
-				new ElementRule(MEAN,
-						new XMLSyntaxRule[]{
-								new XORRule(
-										new ElementRule(Parameter.class),
-										new ElementRule(Double.class)
-								)}
-				),
-				new XORRule(
-						new ElementRule(STDEV,
-								new XMLSyntaxRule[]{
-										new XORRule(
-												new ElementRule(Parameter.class),
-												new ElementRule(Double.class)
-										)}
-						),
-						new ElementRule(PRECISION,
-								new XMLSyntaxRule[]{
-										new XORRule(
-												new ElementRule(Parameter.class),
-												new ElementRule(Double.class)
-										)}
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE),
+                AttributeRule.newDoubleRule(OFFSET, true),
+                new ElementRule(MEAN,
+                        new XMLSyntaxRule[]{
+                                new XORRule(
+                                        new ElementRule(Parameter.class),
+                                        new ElementRule(Double.class)
+                                )}
+                ),
+                new XORRule(
+                        new ElementRule(STDEV,
+                                new XMLSyntaxRule[]{
+                                        new XORRule(
+                                                new ElementRule(Parameter.class),
+                                                new ElementRule(Double.class)
+                                        )}
+                        ),
+                        new ElementRule(PRECISION,
+                                new XMLSyntaxRule[]{
+                                        new XORRule(
+                                                new ElementRule(Parameter.class),
+                                                new ElementRule(Double.class)
+                                        )}
 
-						))
-		};
+                        ))
+        };
 
-		public String getParserDescription() {
-			return "Describes a normal distribution with a given mean and standard deviation " +
-					"that can be used in a distributionLikelihood element";
-		}
+        public String getParserDescription() {
+            return "Describes a normal distribution with a given mean and standard deviation " +
+                    "that can be used in a distributionLikelihood element";
+        }
 
-		public Class getReturnType() {
-			return LogNormalDistributionModel.class;
-		}
-	};
+        public Class getReturnType() {
+            return LogNormalDistributionModel.class;
+        }
+    };
 
-	// **************************************************************
-	// Private instance variables
-	// **************************************************************
+    // **************************************************************
+    // Private instance variables
+    // **************************************************************
 
-	private Parameter meanParameter;
-	private Parameter scaleParameter;
-	//	private Parameter precParameter;
-	private final double offset;
+    private Parameter meanParameter;
+    private Parameter scaleParameter;
+    //	private Parameter precParameter;
+    private final double offset;
 
 }

@@ -49,7 +49,6 @@ import java.util.regex.Pattern;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- *
  * @version $Id:$
  */
 public class LogCombiner {
@@ -81,7 +80,7 @@ public class LogCombiner {
             if (!inputFile.exists()) {
                 System.err.println(inputFileNames[i] + " does not exist!");
                 return;
-            }  else if (inputFile.isDirectory()) {
+            } else if (inputFile.isDirectory()) {
                 System.err.println(inputFileNames[i] + " is a directory.");
                 return;
             }
@@ -112,11 +111,11 @@ public class LogCombiner {
                 TreeImporter importer = new NexusImporter(new FileReader(inputFile));
                 try {
                     while (importer.hasTree()) {
-	                    Tree tree = importer.importNextTree();
-	                    if (firstTree) {
-	                        startLog(tree, writer);
-		                    firstTree = false;
-	                    }
+                        Tree tree = importer.importNextTree();
+                        if (firstTree) {
+                            startLog(tree, writer);
+                            firstTree = false;
+                        }
 
                         String name = tree.getId();
                         // split on underscore in STATE_xxxx
@@ -134,7 +133,7 @@ public class LogCombiner {
 
                             if (resample < 0 || stateCount % resample == 0) {
                                 if (useScale) {
-                                   rescaleTree(tree, scale);
+                                    rescaleTree(tree, scale);
                                 }
 
                                 writeTree(stateCount, tree, convertToDecimal, writer);
@@ -150,18 +149,27 @@ public class LogCombiner {
                 BufferedReader reader = new BufferedReader(new FileReader(inputFile));
                 int lineCount = 1;
                 String line = reader.readLine();
+
+                // lines starting with [ are ignored, assuming comments in MrBayes file
+                // lines starting with # are ignored, assuming comments in Migrate or BEAST file
+                while (line.startsWith("[") || line.startsWith("#")) {
+
+                    line = reader.readLine();
+                }
+
+
                 if (firstFile) {
                     titles = line.split("\t");
                     writer.println(line);
                 } else {
                     String[] newTitles = line.split("\t");
                     if (newTitles.length != titles.length) {
-                        System.err.println("ERROR: The number of columns in file, " + inputFileNames[i]+ ", does not match that of the first file");
+                        System.err.println("ERROR: The number of columns in file, " + inputFileNames[i] + ", does not match that of the first file");
                         return;
                     }
                     for (int k = 0; k < newTitles.length; k++) {
                         if (!newTitles[k].equals(titles[k])) {
-                            System.err.println("WARNING: The column heading, " + newTitles[k] + " in file, " + inputFileNames[i]+ ", does not match the first file's heading, " + titles[k]);
+                            System.err.println("WARNING: The column heading, " + newTitles[k] + " in file, " + inputFileNames[i] + ", does not match the first file's heading, " + titles[k]);
                         }
                     }
                 }
@@ -217,7 +225,7 @@ public class LogCombiner {
 
     private void rescaleTree(Tree tree, double scale) {
         if (tree instanceof MutableTree) {
-            MutableTree mutableTree = (MutableTree)tree;
+            MutableTree mutableTree = (MutableTree) tree;
 
             for (int i = 0; i < tree.getNodeCount(); i++) {
                 NodeRef node = tree.getNode(i);
@@ -268,7 +276,7 @@ public class LogCombiner {
 
         StringBuffer buffer = new StringBuffer("tree STATE_");
         buffer.append(state);
-        Double lnP = (Double)tree.getAttribute("lnP");
+        Double lnP = (Double) tree.getAttribute("lnP");
         if (lnP != null) {
             buffer.append(" [&lnP=").append(lnP).append("]");
         }
@@ -287,10 +295,10 @@ public class LogCombiner {
 
         if (tree.isExternal(node)) {
             String taxon = tree.getNodeTaxon(node).getId();
-	        Integer taxonNo = (Integer)taxonMap.get(taxon);
-	        if (taxonNo == null) {
-		        throw new IllegalArgumentException("Taxon, " + taxon + ", not recognized from first tree file");
-	        }
+            Integer taxonNo = (Integer) taxonMap.get(taxon);
+            if (taxonNo == null) {
+                throw new IllegalArgumentException("Taxon, " + taxon + ", not recognized from first tree file");
+            }
             buffer.append(taxonNo);
         } else {
             buffer.append("(");
@@ -305,7 +313,7 @@ public class LogCombiner {
         boolean hasAttribute = false;
         Iterator iter = tree.getNodeAttributeNames(node);
         while (iter != null && iter.hasNext()) {
-            String name = (String)iter.next();
+            String name = (String) iter.next();
             Object value = tree.getNodeAttribute(node, name);
 
             if (!hasAttribute) {
@@ -322,9 +330,9 @@ public class LogCombiner {
         }
 
         if (parent != null) {
-	        if (!hasAttribute) {
-		        buffer.append(":");
-	        }
+            if (!hasAttribute) {
+                buffer.append(":");
+            }
             double length = tree.getBranchLength(node);
             buffer.append(convertToDecimal ? decimalFormatter.format(length) : scientificFormatter.format(length));
         }
@@ -344,7 +352,7 @@ public class LogCombiner {
         Matcher matcher = pattern.matcher(line);
 
         int lastEnd = 0;
-        while(matcher.find()) {
+        while (matcher.find()) {
             int start = matcher.start();
             String token = matcher.group();
             double value = Double.parseDouble(token);
@@ -364,7 +372,7 @@ public class LogCombiner {
 
     public static void printTitle() {
         System.out.println();
-	    centreLine("LogCombiner "+ version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("LogCombiner " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("MCMC Output Combiner", 60);
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
@@ -383,7 +391,9 @@ public class LogCombiner {
     public static void centreLine(String line, int pageWidth) {
         int n = pageWidth - line.length();
         int n1 = n / 2;
-        for (int i = 0; i < n1; i++) { System.out.print(" "); }
+        for (int i = 0; i < n1; i++) {
+            System.out.print(" ");
+        }
         System.out.println(line);
     }
 
@@ -410,9 +420,9 @@ public class LogCombiner {
         boolean useScale = false;
 
         if (args.length == 0) {
-            System.setProperty("com.apple.macos.useScreenMenuBar","true");
-            System.setProperty("apple.laf.useScreenMenuBar","true");
-            System.setProperty("apple.awt.showGrowBox","true");
+            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+            System.setProperty("apple.awt.showGrowBox", "true");
 
             java.net.URL url = LogCombiner.class.getResource("/images/utility.png");
             javax.swing.Icon icon = null;
@@ -421,8 +431,8 @@ public class LogCombiner {
                 icon = new javax.swing.ImageIcon(url);
             }
 
-	        final String versionString = version.getVersionString();
-            String nameString = "LogCombiner "+versionString;
+            final String versionString = version.getVersionString();
+            String nameString = "LogCombiner " + versionString;
             String aboutString = "<html><center><p>" + versionString + ", " + version.getDateString() + "</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
@@ -478,7 +488,7 @@ public class LogCombiner {
             printTitle();
 
             Arguments arguments = new Arguments(
-                    new Arguments.Option[] {
+                    new Arguments.Option[]{
                             new Arguments.Option("trees", "use this option to combine tree log files"),
                             new Arguments.Option("decimal", "this option converts numbers from scientific to decimal notation"),
                             new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
@@ -539,7 +549,7 @@ public class LogCombiner {
             }
             outputFileName = args2[args2.length - 1];
 
-            new LogCombiner(new int[] { burnin }, resample, inputFileNames, outputFileName, treeFiles, convertToDecimal, useScale, scale);
+            new LogCombiner(new int[]{burnin}, resample, inputFileNames, outputFileName, treeFiles, convertToDecimal, useScale, scale);
 
             System.out.println("Finished.");
         }

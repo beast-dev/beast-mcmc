@@ -27,162 +27,190 @@ package dr.evolution.coalescent;
 
 /**
  * This class models logistic growth.
- * 
- * @version $Id: LogisticGrowth.java,v 1.15 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @version $Id: LogisticGrowth.java,v 1.15 2005/05/24 20:25:56 rambaut Exp $
  */
 public class LogisticGrowth extends ExponentialGrowth {
-	
-	/**
-	 * Construct demographic model with default settings
-	 */
-	public LogisticGrowth(Type units) {
-	
-		super(units);
-	}
-	
-	public void setShape(double value) { c = value; }
-	public double getShape() { return c; }
-						
-	/**
-	 * An alternative parameterization of this model. This
-	 * function sets the time at which there is a 0.5 proportion
-	 * of N0.
-	 */
-	public void setTime50(double time50) { 
-	
-		c = 1.0 / (Math.exp(getGrowthRate() * time50) - 2.0);
-		
+
+    /**
+     * Construct demographic model with default settings
+     */
+    public LogisticGrowth(Type units) {
+
+        super(units);
+    }
+
+    public void setShape(double value) {
+        c = value;
+    }
+
+    public double getShape() {
+        return c;
+    }
+
+    /**
+     * An alternative parameterization of this model. This
+     * function sets the time at which there is a 0.5 proportion
+     * of N0.
+     */
+    public void setTime50(double time50) {
+
+        c = 1.0 / (Math.exp(getGrowthRate() * time50) - 2.0);
+
         // The general form for any k where t50 is the time at which Nt = N0/k:
         //		c = (k - 1.0) / (Math.exp(getGrowthRate() * time50) - k);
-	}
-						
-	// Implementation of abstract methods
+    }
+
+    // Implementation of abstract methods
 
     /**
      * Gets the value of the demographic function N(t) at time t.
+     *
      * @param t the time
      * @return the value of the demographic function N(t) at time t.
      */
-	public double getDemographic(double t) {
+    public double getDemographic(double t) {
 
-		double nZero = getN0();
-		double r = getGrowthRate();
-		double c = getShape();
+        double nZero = getN0();
+        double r = getGrowthRate();
+        double c = getShape();
 
 //		return nZero * (1 + c) / (1 + (c * Math.exp(r*t)));
 //		AER rearranging this to use exp(-rt) may help
 // 		with some overflow situations...
 
-		double common = Math.exp(-r*t);
-		return (nZero * (1 + c) * common) / (c + common);
-	}
+        double common = Math.exp(-r * t);
+        return (nZero * (1 + c) * common) / (c + common);
+    }
 
-	/**
-	 * Returns value of demographic intensity function at time t
-	 * (= integral 1/N(x) dx from 0 to t).
-	 */
-	public double getIntensity(double t) {
-		throw new RuntimeException("Not implemented!");
-	}
+    /**
+     * Returns value of demographic intensity function at time t
+     * (= integral 1/N(x) dx from 0 to t).
+     */
+    public double getIntensity(double t) {
 
-	/**
-	 * Returns value of demographic intensity function at time t
-	 * (= integral 1/N(x) dx from 0 to t).
-	 */
-	public double getInverseIntensity(double x) {
-		
-		throw new RuntimeException("Not implemented!");
-	}
-	
-	public double getIntegral(double start, double finish) {
-		
-		double intervalLength = finish - start;
-		
-		double nZero = getN0();
-		double r = getGrowthRate();
-		double c = getShape();
-		double expOfMinusRT = Math.exp(-r*start);
-		double expOfMinusRG = Math.exp(-r*intervalLength);
+        double nZero = getN0();
+        double r = getGrowthRate();
+        double c = getShape();
 
-		double term1 = nZero*(1.0+c);
-		if (term1==0.0) {
-			throw new RuntimeException("Infinite integral!");
-		}
+        double ert = Math.exp(r * t);
+        double emrt = Math.exp(-r * t);
 
-		double term2 = c*(1.0 - expOfMinusRG);
+        return ert * t / ((c + 1.0) * (c + emrt) * nZero);
+    }
 
-		double term3 = (term1*expOfMinusRT) * r * expOfMinusRG;
-		if (term3==0.0 && term2>0.0) {
-			throw new RuntimeException("Infinite integral!");
-		}
+    /**
+     * Returns value of demographic intensity function at time t
+     * (= integral 1/N(x) dx from 0 to t).
+     */
+    public double getInverseIntensity(double x) {
 
-		double term4;
-		if (term3!=0.0 && term2==0.0) {term4=0.0;}
-		else if (term3==0.0 && term2==0.0) {
-		    throw new RuntimeException("term3 and term2 are both zeros. N0=" + getN0() + " growthRate=" +  getGrowthRate() + "c=" + c);
-		}    
-		else {term4 = term2 / term3;}
+        throw new RuntimeException("Not implemented!");
+    }
 
-		double term5 = intervalLength / term1;
+    public double getIntegral(double start, double finish) {
 
-		return term5 + term4;
-	}
-	
-	public int getNumArguments() {
-		return 3;
-	}
-	
-	public String getArgumentName(int n) {
-		switch (n) {
-			case 0: return "N0";
-			case 1: return "r";
-			case 2: return "c";
-		}
-		throw new IllegalArgumentException("Argument " + n + " does not exist");
-	}
-	
-	public double getArgument(int n) {
-		switch (n) {
-			case 0: return getN0();
-			case 1: return getGrowthRate();
-			case 2: return getShape();
-		}
-		throw new IllegalArgumentException("Argument " + n + " does not exist");
-	}
-	
-	public void setArgument(int n, double value) {
-		switch (n) {
-			case 0: setN0(value); break;
-			case 1: setGrowthRate(value); break;
-			case 2: setShape(value); break;
-			default: throw new IllegalArgumentException("Argument " + n + " does not exist");
+        double intervalLength = finish - start;
 
-		}
-	}
+        double nZero = getN0();
+        double r = getGrowthRate();
+        double c = getShape();
+        double expOfMinusRT = Math.exp(-r * start);
+        double expOfMinusRG = Math.exp(-r * intervalLength);
 
-	public double getLowerBound(int n) {
-		return 0.0;
-	}
-	
-	public double getUpperBound(int n) {
-		return Double.POSITIVE_INFINITY;
-	}
+        double term1 = nZero * (1.0 + c);
+        if (term1 == 0.0) {
+            throw new RuntimeException("Infinite integral!");
+        }
 
-	public DemographicFunction getCopy() {
-		LogisticGrowth df = new LogisticGrowth(getUnits());
-		df.setN0(getN0());
-		df.setGrowthRate(getGrowthRate());
-		df.c = c;
-		
-		return df;
-	}
+        double term2 = c * (1.0 - expOfMinusRG);
 
-	//
-	// private stuff
-	//
+        double term3 = (term1 * expOfMinusRT) * r * expOfMinusRG;
+        if (term3 == 0.0 && term2 > 0.0) {
+            throw new RuntimeException("Infinite integral!");
+        }
 
-	private double c;	
+        double term4;
+        if (term3 != 0.0 && term2 == 0.0) {
+            term4 = 0.0;
+        } else if (term3 == 0.0 && term2 == 0.0) {
+            throw new RuntimeException("term3 and term2 are both zeros. N0=" + getN0() + " growthRate=" + getGrowthRate() + "c=" + c);
+        } else {
+            term4 = term2 / term3;
+        }
+
+        double term5 = intervalLength / term1;
+
+        return term5 + term4;
+    }
+
+    public int getNumArguments() {
+        return 3;
+    }
+
+    public String getArgumentName(int n) {
+        switch (n) {
+            case 0:
+                return "N0";
+            case 1:
+                return "r";
+            case 2:
+                return "c";
+        }
+        throw new IllegalArgumentException("Argument " + n + " does not exist");
+    }
+
+    public double getArgument(int n) {
+        switch (n) {
+            case 0:
+                return getN0();
+            case 1:
+                return getGrowthRate();
+            case 2:
+                return getShape();
+        }
+        throw new IllegalArgumentException("Argument " + n + " does not exist");
+    }
+
+    public void setArgument(int n, double value) {
+        switch (n) {
+            case 0:
+                setN0(value);
+                break;
+            case 1:
+                setGrowthRate(value);
+                break;
+            case 2:
+                setShape(value);
+                break;
+            default:
+                throw new IllegalArgumentException("Argument " + n + " does not exist");
+
+        }
+    }
+
+    public double getLowerBound(int n) {
+        return 0.0;
+    }
+
+    public double getUpperBound(int n) {
+        return Double.POSITIVE_INFINITY;
+    }
+
+    public DemographicFunction getCopy() {
+        LogisticGrowth df = new LogisticGrowth(getUnits());
+        df.setN0(getN0());
+        df.setGrowthRate(getGrowthRate());
+        df.c = c;
+
+        return df;
+    }
+
+    //
+    // private stuff
+    //
+
+    private double c;
 }

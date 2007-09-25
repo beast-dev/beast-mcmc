@@ -25,140 +25,161 @@
 
 package dr.math;
 
-import dr.math.iterations.BisectionZeroFinder;
 import dr.math.interfaces.OneVariableFunction;
+import dr.math.iterations.BisectionZeroFinder;
 
 /**
  * normal distribution (pdf, cdf, quantile)
  *
- * @version $Id: LogNormalDistribution.java,v 1.3 2005/06/21 16:25:15 beth Exp $
- *
  * @author Korbinian Strimmer
+ * @version $Id: LogNormalDistribution.java,v 1.3 2005/06/21 16:25:15 beth Exp $
  */
-public class LogNormalDistribution implements Distribution
-{
-	//
-	// Public stuff
-	//
+public class LogNormalDistribution implements Distribution {
+    //
+    // Public stuff
+    //
 
-	/**
-	 * Constructor
-	 */
-	public LogNormalDistribution(double M, double S) {
-		this.M = M;
-		this.S = S;
-	}
-	
-    public final double getM() { return M; }
+    /**
+     * Constructor
+     */
+    public LogNormalDistribution(double M, double S) {
+        this.M = M;
+        this.S = S;
+    }
 
-    public final void setM(double M) { this.M = M; }
+    public final double getM() {
+        return M;
+    }
 
-    public final double getS() { return S; }
+    public final void setM(double M) {
+        this.M = M;
+    }
 
-    public final void setS(double S) { this.S = S; }
+    public final double getS() {
+        return S;
+    }
 
-	public double pdf(double x) { return pdf(x, M, S); }
-	public double logPdf(double x) { return logPdf(x, M, S); }
-	public double cdf(double x) { return cdf(x, M, S); }
-	public double quantile(double y) { return quantile(y, M, S); }
-	public double mean() { return mean(M, S); }
-	public double variance() { return variance(M, S); }
+    public final void setS(double S) {
+        this.S = S;
+    }
 
-	public final UnivariateFunction getProbabilityDensityFunction() { return pdfFunction; }
-	
-	private UnivariateFunction pdfFunction = new UnivariateFunction() {
-		public final double evaluate(double x) { return pdf(x); }
-		public final double getLowerBound() { return Double.NEGATIVE_INFINITY; }
-		public final double getUpperBound() { return Double.POSITIVE_INFINITY; }
-	};
+    public double pdf(double x) {
+        return pdf(x, M, S);
+    }
 
-	/**
-	 * probability density function
-	 *
-	 * @param x argument
-	 * @param M log mean
-	 * @param S log standard deviation
-	 *
-	 * @return pdf at x
-	 */
-	public static double pdf(double x, double M, double S)
-	{
-        return NormalDistribution.pdf(Math.log(x), M, S);
-	}
+    public double logPdf(double x) {
+        return logPdf(x, M, S);
+    }
 
-	/**
-	 * the natural log of the probability density function of the distribution 
-	 *
-	 * @param x argument
+    public double cdf(double x) {
+        return cdf(x, M, S);
+    }
+
+    public double quantile(double y) {
+        return quantile(y, M, S);
+    }
+
+    public double mean() {
+        return mean(M, S);
+    }
+
+    public double variance() {
+        return variance(M, S);
+    }
+
+    public final UnivariateFunction getProbabilityDensityFunction() {
+        return pdfFunction;
+    }
+
+    private UnivariateFunction pdfFunction = new UnivariateFunction() {
+        public final double evaluate(double x) {
+            return pdf(x);
+        }
+
+        public final double getLowerBound() {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        public final double getUpperBound() {
+            return Double.POSITIVE_INFINITY;
+        }
+    };
+
+    /**
+     * probability density function
+     *
+     * @param x argument
      * @param M log mean
      * @param S log standard deviation
-	 *
-	 * @return log pdf at x
-	 */
-	public static double logPdf(double x, double M, double S)
-	{
-        return NormalDistribution.logPdf(Math.log(x), M, S);
-	}
+     * @return pdf at x
+     */
+    public static double pdf(double x, double M, double S) {
+        return NormalDistribution.pdf(Math.log(x), M, S) / x;
+    }
 
-	/**
-	 * cumulative density function
-	 *
-	 * @param x argument
+    /**
+     * the natural log of the probability density function of the distribution
+     *
+     * @param x argument
      * @param M log mean
      * @param S log standard deviation
-	 *
-	 * @return cdf at x
-	 */
-	public static double cdf(double x, double M, double S)
-	{
+     * @return log pdf at x
+     */
+    public static double logPdf(double x, double M, double S) {
+        return NormalDistribution.logPdf(Math.log(x), M, S) - Math.log(x);
+    }
+
+    /**
+     * cumulative density function
+     *
+     * @param x argument
+     * @param M log mean
+     * @param S log standard deviation
+     * @return cdf at x
+     */
+    public static double cdf(double x, double M, double S) {
         return NormalDistribution.cdf(Math.log(x), M, S);
-	}
-	
-	/**
-	 * quantiles (=inverse cumulative density function)
-	 *
-	 * @param z argument
+    }
+
+    /**
+     * quantiles (=inverse cumulative density function)
+     *
+     * @param z argument
      * @param M log mean
      * @param S log standard deviation
-	 *
-	 * @return icdf at z
-	 */
-	public static double quantile(double z, double M, double S)
-	{
+     * @return icdf at z
+     */
+    public static double quantile(double z, double M, double S) {
         return Math.exp(NormalDistribution.quantile(z, M, S));
-	}
-	
-	/**
-	 * mean
-	 *
+    }
+
+    /**
+     * mean
+     *
      * @param M log mean
      * @param S log standard deviation
-	 *
-	 * @return mean
-	 */
-	public static double mean(double M, double S)
-	{
-        return Math.exp(M + (S*S/2));
-	}
+     * @return mean
+     */
+    public static double mean(double M, double S) {
+        return Math.exp(M + (S * S / 2));
+    }
 
-	/**
-	 * variance
-	 *
+    /**
+     * variance
+     *
      * @param M log mean
      * @param S log standard deviation
-	 *
-	 * @return variance
-	 */
-	public static double variance(double M, double S)
-	{
-        double S2 = S*S;
+     * @return variance
+     */
+    public static double variance(double M, double S) {
+        double S2 = S * S;
 
-        return Math.exp(S2+2*M)*(Math.exp(S2)-1);
-	}
+        return Math.exp(S2 + 2 * M) * (Math.exp(S2) - 1);
+    }
 
-	// Private
-	
-	protected double M, S;
+    // Private
+
+    protected double M, S;
 
 
     public static void main(String[] args) {

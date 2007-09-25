@@ -167,6 +167,7 @@ public class BeautiOptions {
         createOperator("branchRates.categories", SWAP, 1, branchWeights);
         createOperator("localClock.rates", SCALE, 0.75, treeWeights);
         createOperator("localClock.changes", BITFLIP, 1, treeWeights);
+	    createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree", TREE_BIT_MOVE, -1.0, treeWeights);
 
         createOperator("hky.kappa", SCALE, 0.75, substWeights);
         createOperator("hky1.kappa", SCALE, 0.75, substWeights);
@@ -665,6 +666,7 @@ public class BeautiOptions {
                     ops.add(getOperator("upDownRateHeights"));
                     ops.add(getOperator("localClock.rates"));
                     ops.add(getOperator("localClock.changes"));
+	                ops.add(getOperator("treeBitMove"));
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
                         ops.add(getOperator("uced.mean"));
@@ -684,6 +686,7 @@ public class BeautiOptions {
                 } else if (clockModel == RANDOM_LOCAL_CLOCK) {
                     ops.add(getOperator("localClock.rates"));
                     ops.add(getOperator("localClock.changes"));
+	                ops.add(getOperator("treeBitMove"));
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
                         // no parameter to operator on
@@ -1577,6 +1580,8 @@ public class BeautiOptions {
     public static final String INTEGER_DELTA_EXCHANGE = "integerDeltaExchange";
     public static final String SWAP = "swap";
     public static final String BITFLIP = "bitFlip";
+	public static final String TREE_BIT_MOVE = "treeBitMove";
+
     public static final String UNIFORM = "uniform";
     public static final String SUBTREE_SLIDE = "subtreeSlide";
     public static final String NARROW_EXCHANGE = "narrowExchange";

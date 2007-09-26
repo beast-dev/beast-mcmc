@@ -201,6 +201,9 @@
 			<nodeTraits rootNode="true" internalNodes="false" leafNodes="false" traitDimension="2">
 				<parameter id="rootTrait"/>
 			</nodeTraits> -->
+		<leafTrait taxon="1">
+			<parameter id="trait.1"/>
+		</leafTrait>
 	</treeModel>
 	<!--
 	 <multivariateNormalPrior id="rootPrior">

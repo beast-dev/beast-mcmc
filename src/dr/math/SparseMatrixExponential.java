@@ -28,6 +28,7 @@ public class SparseMatrixExponential {
 
 	private int order;
 	private int nonZeroEntries;
+	private int krylovBasisSize;
 
 	private double[] workSpace;
 	private int[] intWorkSpace;
@@ -55,7 +56,12 @@ public class SparseMatrixExponential {
 
 	private void setUpWorkspace() {
 
-		lengthIntWorkspace = maxKrylovBasisSize + 2;
+		if (order < maxKrylovBasisSize)
+			krylovBasisSize = order - 10; // todo determine correct cut-off, consider Pade approximation for small order
+		else
+			krylovBasisSize = maxKrylovBasisSize - 1;
+
+		lengthIntWorkspace = krylovBasisSize + 2;
 		lengthWorkspace = order * (lengthIntWorkspace)
 				+ 5 * (lengthIntWorkspace) * (lengthIntWorkspace) + 7;
 
@@ -91,7 +97,7 @@ public class SparseMatrixExponential {
 		start[x] = 1.0;
 		int flag = 0;
 
-		executeDGEXPV(order, nonZeroEntries, maxKrylovBasisSize, time, start, stop, tolerance, norm,
+		executeDGEXPV(order, nonZeroEntries, krylovBasisSize, time, start, stop, tolerance, norm,
 				rate, fortranIndexX, fortranIndexY,
 				workSpace, lengthWorkspace, intWorkSpace, lengthIntWorkspace, flag
 		);

@@ -31,6 +31,16 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 	/**
 	 * Constructor.
 	 * Now also takes a DataType so that ancestral states are printed using data codes
+	 *
+	 * @param patternList     -
+	 * @param treeModel       -
+	 * @param siteModel       -
+	 * @param branchRateModel -
+	 * @param useAmbiguities  -
+	 * @param useScaling      -
+	 * @param storePartials   -
+	 * @param dataType        - need to provide the data-type, so that corrent data characters can be returned
+	 * @param tag             - string label for reconstruction characters in tree log
 	 */
 	public AncestralStateTreeLikelihood(PatternList patternList, TreeModel treeModel,
 	                                    SiteModel siteModel, BranchRateModel branchRateModel,
@@ -70,15 +80,21 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 
 	private static String formattedState(int[] state, DataType dataType) {
 		StringBuffer sb = new StringBuffer();
+		sb.append("\"");
 		for (int i : state) {
 			sb.append(dataType.getChar(i));
 		}
+		sb.append("\"");
 		return sb.toString();
 	}
 
 
 	/**
 	 * Traverse (pre-order) the tree sampling the internal node states.
+	 *
+	 * @param tree        - TreeModel on which to perform sampling
+	 * @param node        - current node
+	 * @param parentState - character state of the parent node to 'node'
 	 */
 	public void traverseSample(TreeModel tree, NodeRef node, int[] parentState) {
 
@@ -146,8 +162,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 				}
 			}
 
-
-			int nodeCount = tree.getChildCount(node);
+//			int nodeCount = tree.getChildCount(node);
 
 			// Traverse down the two child nodes
 			NodeRef child1 = tree.getChild(node, 0);
@@ -224,6 +239,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 				AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
 				AttributeRule.newBooleanRule(STORE_PARTIALS, true),
 				AttributeRule.newBooleanRule(USE_SCALING, true),
+				AttributeRule.newStringRule(TAG_NAME, true),
 				new ElementRule(PatternList.class),
 				new ElementRule(TreeModel.class),
 				new ElementRule(SiteModel.class),

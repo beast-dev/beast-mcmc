@@ -153,8 +153,8 @@ public class BivariateDiscreteDiffusionModel extends MultivariateDiffusionModel 
 			double[][] evec = null;
 
 			try {
-				eval = BivariateDiscreteMapMaker.readEigenvalues(evalFile.getAbsolutePath());
-				evec = BivariateDiscreteMapMaker.readEigenvectors(evecFile.getAbsolutePath());
+				eval = TopographicalMap.readEigenvalues(evalFile.getAbsolutePath());
+				evec = TopographicalMap.readEigenvectors(evecFile.getAbsolutePath());
 			} catch (IOException e) {
 				e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
 			}

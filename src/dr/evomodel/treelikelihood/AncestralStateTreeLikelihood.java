@@ -64,8 +64,8 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 		TreeModel treeModel = (TreeModel) tree;
 
 		if (redrawTime == 0) {
-			makeDirty();
-			calculateLogLikelihood();
+//			makeDirty();
+//			calculateLogLikelihood();    // should do longer need these, now that rootPartials is properly collected
 			traverseSample(treeModel, tree.getRoot(), null);
 		}
 
@@ -107,8 +107,6 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 		NodeRef parent = tree.getParent(node);
 
 		// This function assumes that all partial likelihoods have already been calculated
-		// This function also assumes that # of patterns = 1
-
 		// If the node is internal, then sample its state given the state of its parent (pre-order traversal).
 
 		double[] conditionalProbabilities = new double[stateCount];
@@ -118,61 +116,13 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 
 			if (parent == null) {
 
-
 				double[] rootPartials = getRootPartials();
 
 				// This is the root node
 				for (int j = 0; j < patternCount; j++) {
+
 					System.arraycopy(rootPartials, j * stateCount, conditionalProbabilities, 0, stateCount);
-//					try {
 					state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
-//					} catch (Error e) {
-//						System.err.println(e);
-//						SVSGeneralSubstitutionModel subModel = (SVSGeneralSubstitutionModel) ((GammaSiteModel)siteModel).getSubstitutionModel();
-//					    Parameter indicator = subModel.getRateIndicators();
-//						System.err.println(indicator);
-//
-//						double[] probs = new double[36];
-//						subModel.getTransitionProbabilities(1.0,probs);
-//						for(int i=0; i<6; i++) {
-//							for(int k=0; k<6; k++) {
-//								System.err.printf(" %5.3f",probs[i*6+k]);
-//
-//							}
-//							System.err.println("");
-//						}
-//
-//						System.err.println("");
-//						for(int i=0; i<rootPartials.length; i++)
-//							System.err.printf(" %5.3f",rootPartials[i]);
-//
-//						System.err.println("");
-//						makeDirty();
-//						updateAllNodes();
-//						updateAllPatterns();
-//
-//						sendMe = true;
-//						System.err.println(calculateLogLikelihood());
-//
-//
-//						for(int i=0; i<rootPartials.length; i++)
-//													System.err.printf(" %5.3f",rootPartials[i]);
-//
-//						System.err.println("");
-//
-////						        if(sum == 0.0) {
-//			             System.err.println("zero sum from pre-order");
-//			              System.err.println(patternLogLikelihoods[0]);
-////			              SVSGeneralSubstitutionModel subModel = (SVSGeneralSubstitutionModel) ((GammaSiteModel)siteModel).getSubstitutionModel();
-////							                  Parameter indicator = subModel.getRateIndicators();
-//						  for(int i=0;i<indicator.getDimension();i++)
-//							  System.err.printf(" %1f",indicator.getParameterValue(i));
-//			              System.err.println("");
-//			              System.exit(-1);
-////		              }
-//
-//						System.exit(-1);
-//					}
 					reconstructedStates[nodeNum][j] = state[j];
 				}
 
@@ -225,13 +175,12 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 		} else {
 
 			// This is an external leaf
-			//patternList.
+
 			((AbstractLikelihoodCore) likelihoodCore).getNodeStates(nodeNum, reconstructedStates[nodeNum]);
 
 		}
 	}
 
-	private boolean sendMe = false;
 
 	/**
 	 * The XML parser

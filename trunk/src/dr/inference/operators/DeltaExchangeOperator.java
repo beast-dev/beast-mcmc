@@ -82,20 +82,24 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
         double scalar1 = parameter.getParameterValue(dim1);
         double scalar2 = parameter.getParameterValue(dim2);
 
-        // exchange a random delta
-        final double d = MathUtils.nextDouble() * delta;
-        scalar1 -= d;
-        if (parameterWeights[dim1] != parameterWeights[dim2]) {
-            scalar2 += d * (double) parameterWeights[dim1] / (double) parameterWeights[dim2];
-        } else {
-            scalar2 += d;
-        }
-
         if (isIntegerOperator) {
-            scalar1 = Math.round(scalar1);
-            scalar2 = Math.round(scalar2);
-        }
+            int d = MathUtils.nextInt((int) Math.round(delta)) + 1;
 
+            if (parameterWeights[dim1] != parameterWeights[dim2]) throw new RuntimeException();
+            scalar1 = Math.round(scalar1 - d);
+            scalar2 = Math.round(scalar2 + d);
+        } else {
+
+            // exchange a random delta
+            final double d = MathUtils.nextDouble() * delta;
+            scalar1 -= d;
+            if (parameterWeights[dim1] != parameterWeights[dim2]) {
+                scalar2 += d * (double) parameterWeights[dim1] / (double) parameterWeights[dim2];
+            } else {
+                scalar2 += d;
+            }
+
+        }
         Bounds bounds = parameter.getBounds();
 
         if (scalar1 < bounds.getLowerLimit(dim1) ||

@@ -26,7 +26,6 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.*;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -34,13 +33,12 @@ import dr.xml.*;
  * <b>A general model of sequence substitution</b>. A general reversible class for any
  * data type.
  *
- * @version $Id: GeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 alexei Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: GeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 alexei Exp $
  */
-public class GeneralSubstitutionModel extends AbstractSubstitutionModel 
-										implements dr.util.XHTMLable {
+public class GeneralSubstitutionModel extends AbstractSubstitutionModel
+		implements dr.util.XHTMLable {
 
 	public static final String GENERAL_SUBSTITUTION_MODEL = "generalSubstitutionModel";
 	public static final String DATA_TYPE = "dataType";
@@ -49,7 +47,9 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 	public static final String FREQUENCIES = "frequencies";
 	public static final String NAME = "name";
 
-	/** the rate which the others are set relative to */
+	/**
+	 * the rate which the others are set relative to
+	 */
 	protected int ratesRelativeTo;
 
 	/**
@@ -63,23 +63,23 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 
 		ratesParameter = parameter;
 		if (ratesParameter != null) {
-            addParameter(ratesParameter);
-            ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, ratesParameter.getDimension()));
-        }
+			addParameter(ratesParameter);
+			ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, ratesParameter.getDimension()));
+		}
 		setRatesRelativeTo(relativeTo);
 	}
 
-    /**
-     * constructor
-     *
-     * @param dataType the data type
-     */
-    protected GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {
+	/**
+	 * constructor
+	 *
+	 * @param dataType the data type
+	 */
+	protected GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {
 
-        super(name, dataType, freqModel);
+		super(name, dataType, freqModel);
 
-        setRatesRelativeTo(relativeTo);
-    }
+		setRatesRelativeTo(relativeTo);
+	}
 
 	protected void frequenciesChanged() {
 		// Nothing to precalculate
@@ -91,13 +91,13 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 
 	protected void setupRelativeRates() {
 
-        for (int i = 0; i < relativeRates.length; i++) {
+		for (int i = 0; i < relativeRates.length; i++) {
 			if (i == ratesRelativeTo) {
 				relativeRates[i] = 1.0;
 			} else if (i < ratesRelativeTo) {
 				relativeRates[i] = ratesParameter.getParameterValue(i);
 			} else {
-				relativeRates[i] = ratesParameter.getParameterValue(i-1);
+				relativeRates[i] = ratesParameter.getParameterValue(i - 1);
 			}
 		}
 	}
@@ -112,48 +112,52 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 	// *****************************************************************
 	// Interface Model
 	// *****************************************************************
-	
-	
-	protected void storeState() { } // nothing to do
-	
+
+
+	protected void storeState() {
+	} // nothing to do
+
 	/**
 	 * Restore the additional stored state
 	 */
 	protected void restoreState() {
 		updateMatrix = true;
 	}
-	
-	protected void acceptState() { } // nothing to do
-			
-    // **************************************************************
-    // XHTMLable IMPLEMENTATION
-    // **************************************************************
+
+	protected void acceptState() {
+	} // nothing to do
+
+	// **************************************************************
+	// XHTMLable IMPLEMENTATION
+	// **************************************************************
 
 	public String toXHTML() {
 		StringBuffer buffer = new StringBuffer();
-		
+
 		buffer.append("<em>General Model</em>");
-		
+
 		return buffer.toString();
 	}
-	
+
 	/**
 	 * Parses an element from an DOM document into a DemographicModel. Recognises
 	 * ConstantPopulation and ExponentialGrowth.
 	 */
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return GENERAL_SUBSTITUTION_MODEL; }
-			
+
+		public String getParserName() {
+			return GENERAL_SUBSTITUTION_MODEL;
+		}
+
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-				
+
 			Parameter ratesParameter;
-			
-			XMLObject cxo = (XMLObject)xo.getChild(FREQUENCIES);
-			FrequencyModel freqModel = (FrequencyModel)cxo.getChild(FrequencyModel.class);
-			
+
+			XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
+			FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+
 			DataType dataType = null;
-				
+
 			if (xo.hasAttribute(DataType.DATA_TYPE)) {
 				String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
 				if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
@@ -166,64 +170,68 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 					dataType = TwoStates.INSTANCE;
 				}
 			}
-							
-			if (dataType == null) dataType = (DataType)xo.getChild(DataType.class);
-						
-			cxo = (XMLObject)xo.getChild(RATES);
 
-            int relativeTo = cxo.getIntegerAttribute(RELATIVE_TO) - 1;
-            if (relativeTo < 0) throw new XMLParseException(RELATIVE_TO + " must be 1 or greater");
+			if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
+
+			cxo = (XMLObject) xo.getChild(RATES);
+
+			int relativeTo = cxo.getIntegerAttribute(RELATIVE_TO) - 1;
+			if (relativeTo < 0) throw new XMLParseException(RELATIVE_TO + " must be 1 or greater");
 
 
-            ratesParameter = (Parameter)cxo.getChild(Parameter.class);
+			ratesParameter = (Parameter) cxo.getChild(Parameter.class);
 
 			if (dataType != freqModel.getDataType()) {
-				throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel."); 
+				throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
 			}
-			
+
 			int rateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount()) / 2;
 
-            if (ratesParameter == null) {
+			if (ratesParameter == null) {
 
-                if (rateCount == 1) {
-                    // simplest model for binary traits...
-                } else {
-                    throw new XMLParseException("No rates parameter found in " + getParserName());
-                }
-            } else if (ratesParameter.getDimension() != rateCount - 1) {
-				throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount - 1) + " dimensions."); 
+				if (rateCount == 1) {
+					// simplest model for binary traits...
+				} else {
+					throw new XMLParseException("No rates parameter found in " + getParserName());
+				}
+			} else if (ratesParameter.getDimension() != rateCount - 1) {
+				throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount - 1) + " dimensions.");
 			}
-			
+
 			return new GeneralSubstitutionModel(dataType, freqModel, ratesParameter, relativeTo);
 		}
-		
+
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
-		
+
 		public String getParserDescription() {
 			return "A general reversible model of sequence substitution for any data type.";
 		}
 
-		public Class getReturnType() { return SubstitutionModel.class; }
+		public Class getReturnType() {
+			return SubstitutionModel.class;
+		}
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new XORRule(
-				new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[] { Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
-				new ElementRule(DataType.class)
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
+
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				new XORRule(
+						new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
+						new ElementRule(DataType.class)
 				),
-			new StringAttributeRule(NAME, "A name for this general substitution model"),
-			new ElementRule(FREQUENCIES, FrequencyModel.class),
-			new ElementRule(RATES, 
-				new XMLSyntaxRule[] {
-					AttributeRule.newIntegerRule(RELATIVE_TO, false, "The index of the implicit rate (value 1.0) that all other rates are relative to. In DNA this is usually G<->T (6)"),
-					new ElementRule(Parameter.class, true)}
-			)
+				new StringAttributeRule(NAME, "A name for this general substitution model"),
+				new ElementRule(FREQUENCIES, FrequencyModel.class),
+				new ElementRule(RATES,
+						new XMLSyntaxRule[]{
+								AttributeRule.newIntegerRule(RELATIVE_TO, false, "The index of the implicit rate (value 1.0) that all other rates are relative to. In DNA this is usually G<->T (6)"),
+								new ElementRule(Parameter.class, true)}
+				)
 		};
 
 	};
-	
+
 	protected Parameter ratesParameter = null;
 }

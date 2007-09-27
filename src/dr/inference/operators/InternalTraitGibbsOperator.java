@@ -46,7 +46,7 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 //	public static final String PRIOR = "prior";
 
 //	private Parameter outcomeParam;
-//	private Parameter meanParam;
+	//	private Parameter meanParam;
 	//	private MatrixParameter precisionParam;
 	//	private WishartDistribution priorDistribution;
 	//	private int priorDf;
@@ -55,6 +55,8 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 	private TreeModel treeModel;
 	private MatrixParameter precisionMatrixParameter;
 	private int dim;
+//	private String traitName;
+
 //	private int numberObservations;
 //	private int weight;
 

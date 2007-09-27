@@ -1,7 +1,7 @@
 package dr.evomodel.tree;
 
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 
 /**
  * @author Andrew Rambaut
@@ -9,7 +9,7 @@ import dr.evolution.tree.NodeRef;
  */
 public interface NodeAttributeProvider {
 
-	String getNodeAttributeLabel();
+	String[] getNodeAttributeLabel();
 
-	String getAttributeForNode(Tree tree, NodeRef node);
+	String[] getAttributeForNode(Tree tree, NodeRef node);
 }

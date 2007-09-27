@@ -1,6 +1,8 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evomodel.tree.NodeAttributeProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.xml.*;
@@ -13,15 +15,11 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Jul 3, 2007
- * Time: 4:07:48 PM
- * To change this template use File | Settings | File Templates.
+ * @author Marc Suchard
  */
 
 
-public class MultivariateTraitLikelihood extends AbstractModel implements Likelihood {
+public class MultivariateTraitLikelihood extends AbstractModel implements Likelihood, NodeAttributeProvider {
 
 	public static final String TRAIT_LIKELIHOOD = "multivariateTraitLikelihood";
 	public static final String TRAIT_NAME = "traitName";
@@ -33,7 +31,8 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 	public static final String MISSING = "missingIndicator";
 	public static final String CACHE_BRANCHES = "cacheBranches";
 
-	public MultivariateTraitLikelihood(TreeModel treeModel,
+	public MultivariateTraitLikelihood(String traitName,
+	                                   TreeModel treeModel,
 	                                   MultivariateDiffusionModel diffusionModel,
 	                                   CompoundParameter traitParameter,
 	                                   List<Integer> missingIndices,
@@ -41,6 +40,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
 		super(TRAIT_LIKELIHOOD);
 
+		this.traitName = traitName;
 		this.treeModel = treeModel;
 		this.diffusionModel = diffusionModel;
 		this.traitParameter = traitParameter;
@@ -202,6 +202,40 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 		};
 	}
 
+	private String[] attributeLabel = null;
+
+	public String[] getNodeAttributeLabel() {
+		if (attributeLabel == null) {
+			double[] trait = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), "trait");
+			attributeLabel = new String[trait.length];
+			if (trait.length == 1)
+				attributeLabel[0] = traitName;
+			else {
+				for (int i = 1; i <= trait.length; i++)
+					attributeLabel[i - 1] = new String(traitName + i);
+			}
+		}
+		return attributeLabel;
+	}
+
+	public String[] getAttributeForNode(Tree tree, NodeRef node) {
+		double trait[] = treeModel.getMultivariateNodeTrait(node, "trait");
+//		StringBuffer sb = new StringBuffer();
+//		sb.append("{");
+//		for(int i=0; i<trait.length-1; i++) {
+//			sb.append(trait[i]);
+//			sb.append(",");
+//		}
+//		sb.append(trait[trait.length-1]);
+//		sb.append("}");
+		String[] value = new String[trait.length];
+		for (int i = 0; i < trait.length; i++)
+			value[i] = new Double(trait[i]).toString();
+
+//		return new String[] {sb.toString()};  //To change body of implemented methods use File | Settings | File Templates.
+		return value;
+	}
+
 	private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
 		public LikelihoodColumn(String label) {
 			super(label);
@@ -241,10 +275,11 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 				cacheBranches = xo.getBooleanAttribute(CACHE_BRANCHES);
 
 			List<Integer> missingIndices = null;
+			String traitName = "trait";
 
 			if (xo.hasAttribute(TRAIT_NAME)) {
 
-				String traitName = xo.getStringAttribute(TRAIT_NAME);
+				traitName = xo.getStringAttribute(TRAIT_NAME);
 
 				// Fill in attributeValues
 				int taxonCount = treeModel.getTaxonCount();
@@ -308,7 +343,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
 
 			}
-			return new MultivariateTraitLikelihood(treeModel, diffusionModel,
+			return new MultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
 					traitParameter, missingIndices, cacheBranches);
 		}
 

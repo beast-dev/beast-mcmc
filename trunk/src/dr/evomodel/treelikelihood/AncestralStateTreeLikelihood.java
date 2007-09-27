@@ -55,11 +55,11 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 	}
 
 
-	public String getNodeAttributeLabel() {
-		return tag;
+	public String[] getNodeAttributeLabel() {
+		return new String[]{tag};
 	}
 
-	public String getAttributeForNode(Tree tree, NodeRef node) {
+	public String[] getAttributeForNode(Tree tree, NodeRef node) {
 
 		TreeModel treeModel = (TreeModel) tree;
 
@@ -75,7 +75,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 		if (redrawTime == tree.getNodeCount())
 			redrawTime = 0;
 
-		return formattedState(reconstructedStates[node.getNumber()], dataType);
+		return new String[]{formattedState(reconstructedStates[node.getNumber()], dataType)};
 
 
 	}

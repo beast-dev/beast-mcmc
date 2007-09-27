@@ -240,10 +240,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      */
     protected double calculateLogLikelihood() {
 
-        if (rootPartials == null) {
-            rootPartials = new double[patternCount * stateCount];
-        }
-
         if (patternLogLikelihoods == null) {
             patternLogLikelihoods = new double[patternCount];
         }
@@ -296,7 +292,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             // Get the operational time of the branch
             final double branchTime = branchRate * ( tree.getNodeHeight(parent) - tree.getNodeHeight(node) );
-            
+
             if (branchTime < 0.0) {
                 throw new RuntimeException("Negative branch length: " + branchTime);
             }
@@ -345,16 +341,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     // calculate the pattern likelihoods
                     double[] frequencies = frequencyModel.getFrequencies();
 
-                    if (integrateAcrossCategories) {
+                    double[] partials = getRootPartials();
 
-                        // moved this call to here, because non-integrating siteModels don't need to support it - AD
-                        double[] proportions = siteModel.getCategoryProportions();
-                        likelihoodCore.integratePartials(nodeNum, proportions, rootPartials);
-                    } else {
-                        likelihoodCore.getPartials(nodeNum, rootPartials);
-                    }
-
-                    likelihoodCore.calculateLogLikelihoods(rootPartials, frequencies, patternLogLikelihoods);
+                    likelihoodCore.calculateLogLikelihoods(partials, frequencies, patternLogLikelihoods);
                 }
 
                 update = true;
@@ -364,6 +353,29 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         return update;
 
     }
+
+	public final double[] getRootPartials() {
+		if (rootPartials == null) {
+		    rootPartials = new double[patternCount * stateCount];
+		}
+
+		int nodeNum = treeModel.getRoot().getNumber();
+		if (integrateAcrossCategories) {
+
+		    // moved this call to here, because non-integrating siteModels don't need to support it - AD
+		    double[] proportions = siteModel.getCategoryProportions();
+		    likelihoodCore.integratePartials(nodeNum, proportions, rootPartials);
+		} else {
+		    likelihoodCore.getPartials(nodeNum, rootPartials);
+		}
+
+		return rootPartials;
+	}
+	/** the root partial likelihoods (a temporary array that is used
+	 * to fetch the partials - it should not be examined directly -
+	 * use getRootPartials() instead).
+	 */
+	private double[] rootPartials = null;
 
     /**
      * The XML parser
@@ -439,8 +451,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     /** the categories for each site */
     protected int[] siteCategories = null;
 
-    /** the root partial likelihoods */
-    protected double[] rootPartials = null;
 
     /** the pattern likelihoods */
     protected double[] patternLogLikelihoods = null;

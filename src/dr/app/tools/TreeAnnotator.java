@@ -63,15 +63,23 @@ public class TreeAnnotator {
 
 		this.posteriorLimit = posteriorLimit;
 
+		attributeNames.add("height");
+		attributeNames.add("length");
+
 		System.out.println("Reading trees...");
 
 		CladeSystem cladeSystem = new CladeSystem();
-		cladeSystem.setAttributeNames(attributeNames);
 
+		boolean firstTree = true;
 		TreeImporter importer = new NexusImporter(new FileReader(inputFileName));
 		try {
 			while (importer.hasTree()) {
 				Tree tree = importer.importNextTree();
+
+				if (firstTree) {
+					setupAttributes(tree);
+					firstTree = false;
+				}
 
 				if (totalTrees >= burnin) {
 					cladeSystem.add(tree);
@@ -79,6 +87,7 @@ public class TreeAnnotator {
 					totalTreesUsed += 1;
 				}
 				totalTrees += 1;
+
 			}
 		} catch (Importer.ImportException e) {
 			System.err.println("Error Parsing Input Tree: " + e.getMessage());
@@ -129,6 +138,18 @@ public class TreeAnnotator {
 		} else {
 			NexusExporter exporter = new NexusExporter(System.out);
 			exporter.exportTree(targetTree);
+		}
+	}
+
+	private void setupAttributes(Tree tree) {
+		for (int i = 0; i < tree.getNodeCount(); i++) {
+			NodeRef node = tree.getNode(i);
+			Iterator iter = tree.getNodeAttributeNames(node);
+			while (iter.hasNext()) {
+				String name = (String)iter.next();
+				attributeNames.add(name);
+				Object value = tree.getNodeAttribute(node, name);
+			}
 		}
 	}
 
@@ -197,10 +218,6 @@ public class TreeAnnotator {
 		public CladeSystem() {
 		}
 
-		public void setAttributeNames(String[] attributeNames) {
-			this.attributeNames = attributeNames;
-		}
-
 		/**
 		 * adds all the clades in the tree
 		 */
@@ -259,20 +276,21 @@ public class TreeAnnotator {
 
 			if (attributeNames != null) {
 				if (clade.attributeLists == null) {
-					clade.attributeLists = new List[attributeNames.length];
-					for (int i = 0; i < attributeNames.length; i++) {
+					clade.attributeLists = new List[attributeNames.size()];
+					for (int i = 0; i < attributeNames.size(); i++) {
 						clade.attributeLists[i] = new ArrayList();
 					}
 				}
 
-				for (int i = 0; i < attributeNames.length; i++) {
+				for (int i = 0; i < attributeNames.size(); i++) {
+					String attributeName = attributeNames.get(i);
 					Object value;
-					if (attributeNames[i].equals("height")) {
+					if (attributeName.equals("height")) {
 						value = new Double(tree.getNodeHeight(node));
-					} else if (attributeNames[i].equals("length")) {
+					} else if (attributeName.equals("length")) {
 						value = new Double(tree.getBranchLength(node));
 					} else {
-						value = tree.getNodeAttribute(node, attributeNames[i]);
+						value = tree.getNodeAttribute(node, attributeName);
 					}
 
 					//if (value == null) {
@@ -400,16 +418,21 @@ public class TreeAnnotator {
 				}
 			}
 
-			for (int i = 0; i < clade.attributeLists.length; i++) {
-				boolean isHeight = attributeNames[i].equals("height");
-				boolean isBoolean = attributeTypes[i].equals(Boolean.class);
+			for (int i = 0; i < attributeNames.size(); i++) {
+				String attributeName = attributeNames.get(i);
 
-				boolean isDiscrete = attributeTypes[i].equals(String.class);
 
 				double[] values = new double[clade.attributeLists[i].size()];
 				HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
 
 				if (values.length > 0) {
+					Object v = clade.attributeLists[i].get(0);
+
+					boolean isHeight = attributeName.equals("height");
+					boolean isBoolean = v instanceof Boolean;
+
+					boolean isDiscrete = v instanceof String;
+
 					double minValue = Double.MAX_VALUE;
 					double maxValue = -Double.MAX_VALUE;
 					for (int j = 0; j < clade.attributeLists[i].size(); j++) {
@@ -444,15 +467,15 @@ public class TreeAnnotator {
 
 					if (!filter) {
 						if (!isDiscrete)
-							annotateMeanAttribute(tree, node, attributeNames[i], values);
+							annotateMeanAttribute(tree, node, attributeName, values);
 						else
-							annotateModeAttribute(tree, node, attributeNames[i], hashMap);
+							annotateModeAttribute(tree, node, attributeName, hashMap);
 						if (!isBoolean && minValue < maxValue && !isDiscrete) {
 							// Basically, if it is a boolean (0, 1) then we don't need the distribution information
 							// Likewise if it doesn't vary.
-							annotateMedianAttribute(tree, node, attributeNames[i] + "_median", values);
-							annotateHPDAttribute(tree, node, attributeNames[i] + "_95%_HPD", 0.95, values);
-							annotateRangeAttribute(tree, node, attributeNames[i] + "_range", values);
+							annotateMedianAttribute(tree, node, attributeName + "_median", values);
+							annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
+							annotateRangeAttribute(tree, node, attributeName + "_range", values);
 						}
 					}
 				}
@@ -566,16 +589,14 @@ public class TreeAnnotator {
 		// Private stuff
 		//
 		TaxonList taxonList = null;
-
 		Map cladeMap = new HashMap();
-		String[] attributeNames = new String[0];
 	}
 
 	int totalTrees = 0;
 	int totalTreesUsed = 0;
 	double posteriorLimit = 0.0;
-	String[] attributeNames = new String[]{"height", "rate", "changed", "state"};
-	Class[] attributeTypes = new Class[]{Double.class, Double.class, Boolean.class, String.class};
+
+	List<String> attributeNames = new ArrayList<String>();
 	TaxonList taxa = null;
 
 	public static void printTitle() {

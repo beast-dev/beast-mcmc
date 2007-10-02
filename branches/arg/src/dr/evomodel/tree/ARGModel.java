@@ -1261,6 +1261,11 @@ public class ARGModel extends AbstractModel
 
 			storedInternalAndRootNodeHeights.removeParameter(addedParameters[0]);
 			storedInternalAndRootNodeHeights.removeParameter(addedParameters[1]);
+
+			removeParameter(addedParameters[2]);
+			removeParameter(addedParameters[3]);
+			storedNodeRates.removeParameter(addedParameters[2]);
+			storedNodeRates.removeParameter(addedParameters[3]);
 		}
 
 		if (addedPartitioningParameter != null) {
@@ -1275,6 +1280,11 @@ public class ARGModel extends AbstractModel
 
 			storedInternalAndRootNodeHeights.addParameter(removedParameters[0]);
 			storedInternalAndRootNodeHeights.addParameter(removedParameters[1]);
+
+			addParameter(removedParameters[2]);
+			addParameter(removedParameters[3]);
+			storedNodeRates.addParameter(removedParameters[2]);
+			storedNodeRates.addParameter(removedParameters[3]);
 
 
 		}
@@ -1321,14 +1331,30 @@ public class ARGModel extends AbstractModel
 
 	public void expandARGWithRecombinant(Node newbie1, Node newbie2,
 	                                     VariableSizeCompoundParameter internalNodeParameters,
-	                                     VariableSizeCompoundParameter internalAndRootNodeParameters) {
+	                                     VariableSizeCompoundParameter internalAndRootNodeParameters,
+	                                     VariableSizeCompoundParameter nodeRates) {
+//		System.err.println("attempting to expand");
+
 		addParameter(newbie1.heightParameter);
 		addParameter(newbie2.heightParameter);
 		addParameter(newbie2.partitioning);
-		addedParameters = new Parameter[2];
+
+//		System.err.println("expand 0");
+
+		addParameter(newbie1.rateParameter);
+		addParameter(newbie2.rateParameter);
+
+//		System.err.println("expand 1");
+
+
+		addedParameters = new Parameter[4];
 		addedParameters[0] = newbie1.heightParameter;
 		addedParameters[1] = newbie2.heightParameter;
+		addedParameters[2] = newbie1.rateParameter;
+		addedParameters[3] = newbie2.rateParameter;
 		addedPartitioningParameter = newbie2.partitioning;
+
+//		System.err.println("expand 2");
 
 		storedInternalNodeHeights = internalNodeParameters;
 		storedInternalNodeHeights.addParameter(newbie1.heightParameter);
@@ -1338,12 +1364,21 @@ public class ARGModel extends AbstractModel
 		storedInternalAndRootNodeHeights.addParameter(newbie1.heightParameter);
 		storedInternalAndRootNodeHeights.addParameter(newbie2.heightParameter);
 
+		storedNodeRates = nodeRates;
+		storedNodeRates.addParameter(newbie1.rateParameter);
+		storedNodeRates.addParameter(newbie2.rateParameter);
+
+//		System.err.println("expand 3");
+
 		partitioningParameters.addParameter(newbie2.partitioning);
 		nodes.add(newbie1);
 		nodes.add(newbie2);
 		internalNodeCount += 2;
 		//sanityNodeCheck(internalNodeParameters);
 		pushTreeSizeChangedEvent();
+
+//		System.err.println("done expand");
+
 	}
 
 	public void sanityNodeCheck(VariableSizeCompoundParameter inodes) {
@@ -1367,13 +1402,21 @@ public class ARGModel extends AbstractModel
 
 	public void contractARGWithRecombinant(Node oldie1, Node oldie2,
 	                                       VariableSizeCompoundParameter internalNodeParameters,
-	                                       VariableSizeCompoundParameter internalAndRootNodeParameters) {
+	                                       VariableSizeCompoundParameter internalAndRootNodeParameters,
+	                                       VariableSizeCompoundParameter nodeRates) {
 		removeParameter(oldie1.heightParameter);
 		removeParameter(oldie2.heightParameter);
 		removeParameter(oldie2.partitioning);
-		removedParameters = new Parameter[2];
+
+		removeParameter(oldie1.rateParameter);
+		removeParameter(oldie2.rateParameter);
+
+		removedParameters = new Parameter[4];
 		removedParameters[0] = oldie1.heightParameter;
 		removedParameters[1] = oldie2.heightParameter;
+		removedParameters[2] = oldie1.rateParameter;
+		removedParameters[3] = oldie2.rateParameter;
+
 		partitioningParameters.removeParameter(oldie2.partitioning);
 		removedPartitioningParameter = oldie2.partitioning;
 		storedInternalNodeHeights = internalNodeParameters;
@@ -1383,6 +1426,10 @@ public class ARGModel extends AbstractModel
 		storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
 		storedInternalAndRootNodeHeights.removeParameter(oldie1.heightParameter);
 		storedInternalAndRootNodeHeights.removeParameter(oldie2.heightParameter);
+
+		storedNodeRates = nodeRates;
+		storedNodeRates.removeParameter(oldie1.rateParameter);
+		storedNodeRates.removeParameter(oldie2.rateParameter);
 
 		nodes.remove(oldie1);
 		nodes.remove(oldie2);
@@ -2278,7 +2325,8 @@ public class ARGModel extends AbstractModel
 			throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
 		}
 
-		CompoundParameter parameter = new CompoundParameter("nodeRates");
+//		CompoundParameter parameter = new CompoundParameter("nodeRates");
+		VariableSizeCompoundParameter parameter = new VariableSizeCompoundParameter("nodeRates");
 
 		hasRates = true;
 
@@ -3503,6 +3551,7 @@ public class ARGModel extends AbstractModel
 
 	protected VariableSizeCompoundParameter storedInternalNodeHeights;
 	protected VariableSizeCompoundParameter storedInternalAndRootNodeHeights;
+	protected VariableSizeCompoundParameter storedNodeRates;
 	protected Node[] addedNodes = null;
 	protected Node[] removedNodes = null;
 }

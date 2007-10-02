@@ -41,6 +41,7 @@ public class NewARGEventOperator extends SimpleMCMCOperator implements Coercable
 
 	public static final String JUST_INTERNAL = "justInternalNodes";
 	public static final String INTERNAL_AND_ROOT = "internalAndRootNodes";
+	public static final String NODE_RATES = "nodeRates";
 
 	private ARGModel arg = null;
 	private double size = 1.0;
@@ -52,12 +53,14 @@ public class NewARGEventOperator extends SimpleMCMCOperator implements Coercable
 	private int mode = CoercableMCMCOperator.DEFAULT;
 	private VariableSizeCompoundParameter internalNodeParameters;
 	private VariableSizeCompoundParameter internalAndRootNodeParameters;
+	private VariableSizeCompoundParameter nodeRates;
 //	private int maxTips = 1;
 
 	public NewARGEventOperator(ARGModel arg, int weight, double size, boolean gaussian,
 	                           boolean swapRates, boolean swapTraits, int mode,
 	                           VariableSizeCompoundParameter param1,
 	                           VariableSizeCompoundParameter param2,
+	                           VariableSizeCompoundParameter param3,
 	                           double singlePartitionProbability, boolean isRecombination) {
 		this.arg = arg;
 		setWeight(weight);
@@ -68,6 +71,7 @@ public class NewARGEventOperator extends SimpleMCMCOperator implements Coercable
 //        this.swapTraits = swapTraits;
 		this.internalNodeParameters = param1;
 		this.internalAndRootNodeParameters = param2;
+		this.nodeRates = param3;
 		this.singlePartitionProbability = singlePartitionProbability;
 		this.isRecombination = isRecombination;
 
@@ -90,6 +94,7 @@ public class NewARGEventOperator extends SimpleMCMCOperator implements Coercable
 			else
 				logq = RemoveOperation();
 		} catch (Exception ofe) {
+//			System.err.println(ofe);
 			if (ofe.getMessage().compareTo("No reassortment nodes to remove.") != 0) {
 				System.err.println("Catch: " + ofe.getMessage());
 				System.exit(-1);
@@ -239,7 +244,14 @@ public class NewARGEventOperator extends SimpleMCMCOperator implements Coercable
 		reverseBifurcationHeight = arg.getNodeHeight(recParent);
 
 		if (doneSomething) {
-			arg.contractARGWithRecombinant(recParent, recNode, internalNodeParameters, internalAndRootNodeParameters);
+			try {
+				arg.contractARGWithRecombinant(recParent, recNode,
+						internalNodeParameters, internalAndRootNodeParameters, nodeRates);
+			} catch (Exception e) {
+				System.err.println("here");
+				System.err.println(e);
+
+			}
 		}
 
 		arg.pushTreeSizeChangedEvent();
@@ -444,13 +456,18 @@ public class NewARGEventOperator extends SimpleMCMCOperator implements Coercable
 				sisParent = sisParentR;
 		}
 
+		double newBifurcationRateCategory = 1.0;
+		double newReassortmentRateCategory = 1.0;
+
 		Node newBifurcation = arg.new Node();
 		newBifurcation.heightParameter = new Parameter.Default(newBifurcationHeight);
+		newBifurcation.rateParameter = new Parameter.Default(newBifurcationRateCategory);
 		newBifurcation.setupHeightBounds();
 
 		Node newReassortment = arg.new Node();
 		newReassortment.bifurcation = false;
 		newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
+		newReassortment.rateParameter = new Parameter.Default(newReassortmentRateCategory);
 		newReassortment.setupHeightBounds();
 
 		arg.beginTreeEdit();
@@ -476,6 +493,7 @@ public class NewARGEventOperator extends SimpleMCMCOperator implements Coercable
 
 //        logq +=
 		drawRandomPartitioning(partitioning);
+//		System.err.println("point 1");
 
 		if (sisNode != recNode) {
 			arg.addChildAsRecombinant(newBifurcation, recParent,
@@ -487,7 +505,10 @@ public class NewARGEventOperator extends SimpleMCMCOperator implements Coercable
 
 		arg.expandARGWithRecombinant(newBifurcation, newReassortment,
 				internalNodeParameters,
-				internalAndRootNodeParameters);
+				internalAndRootNodeParameters,
+				nodeRates);
+
+//		System.err.println("point 2");
 
 		arg.pushTreeSizeChangedEvent();
 
@@ -667,6 +688,7 @@ public class NewARGEventOperator extends SimpleMCMCOperator implements Coercable
 
 			VariableSizeCompoundParameter parameter1 = (VariableSizeCompoundParameter) xo.getSocketChild(JUST_INTERNAL);
 			VariableSizeCompoundParameter parameter2 = (VariableSizeCompoundParameter) xo.getSocketChild(INTERNAL_AND_ROOT);
+			VariableSizeCompoundParameter parameter3 = (VariableSizeCompoundParameter) xo.getSocketChild(NODE_RATES);
 
 			//VariableSizeTreeModel treeModel = (VariableSizeTreeModel)xo.getChild(TreeModel.class);
 			int weight = xo.getIntegerAttribute("weight");
@@ -674,7 +696,7 @@ public class NewARGEventOperator extends SimpleMCMCOperator implements Coercable
 			double size = xo.getDoubleAttribute("size");
 			boolean gaussian = xo.getBooleanAttribute("gaussian");
 			return new NewARGEventOperator(treeModel, weight, size, gaussian, swapRates, swapTraits,
-					mode, parameter1, parameter2, singlePartitionProbability, isRecombination);
+					mode, parameter1, parameter2, parameter3, singlePartitionProbability, isRecombination);
 		}
 
 		public String getParserDescription() {

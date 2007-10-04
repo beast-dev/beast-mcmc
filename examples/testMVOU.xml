@@ -1,0 +1,87 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <matrixParameter id="scaleMatrix">
+		<parameter value="10.0 1.5"/>
+		<parameter value="1.5 2.0"/>
+	</matrixParameter>
+
+
+
+    <multivariateInverseWishartPrior id="wishartPrior1" df="5">
+		<scaleMatrix>
+		    <matrixParameter idref="scaleMatrix"/>
+		</scaleMatrix>
+		<data>
+		    <matrixParameter id="precisionMatrix1">
+		        <parameter id="col1a" value="5.0 1.5"/>
+		        <parameter id="col2a" value="1.5 2.0"/>
+	        </matrixParameter>
+		</data>
+	</multivariateInverseWishartPrior>
+
+     <multivariateInverseWishartPrior id="wishartPrior2" df="5">
+		<scaleMatrix>
+		    <matrixParameter idref="scaleMatrix"/>
+		</scaleMatrix>
+		<data>
+		    <matrixParameter id="precisionMatrix2">
+		        <parameter id="col1b" value="6.0 2.5"/>
+		        <parameter id="col2b" value="2.5 2.0"/>
+	        </matrixParameter>
+		</data>
+	</multivariateInverseWishartPrior>
+
+    <dummyModel id="dummy">
+        <matrixParameter idref="precisionMatrix1"/>
+    </dummyModel>
+
+    <report>
+        <multivariateInverseWishartPrior idref="wishartPrior1"/>
+    </report>
+
+     <report>
+        <multivariateInverseWishartPrior idref="wishartPrior2"/>
+    </report>
+
+    <operators id="operators">
+
+        <mvouOperator mixingFactor="0.5" priorDf="2" weight="1" autoOptimize="true">
+            <matrixParamter idref="precisionMatrix1"/>
+        </mvouOperator>
+        
+    </operators>
+
+    <mcmc id="mcmc" chainLength="1000" autoOptimize="true">
+        <posterior>
+        <!--<compoundLikelihood id="likelihood">
+			<multivariateInverseWishartPrior idref="wishartPrior1"/>
+		</compoundLikelihood>-->
+        <compoundLikelihood id="likelihood">
+            <dummyModel idref="dummy"/>
+        </compoundLikelihood>
+        <prior id="prior">
+            <multivariateInverseWishartPrior idref="wishartPrior1"/>
+        </prior>
+        </posterior>
+        <operators idref="operators"/>
+		<log logEvery="10">
+			<column label="Likelihood" dp="4" width="12">
+				<compoundLikelihood idref="prior"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testMVOU.log">
+			<compoundLikelihood idref="prior"/>
+			<parameter idref="precisionMatrix1"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testMVOU.log"/>
+
+</beast>

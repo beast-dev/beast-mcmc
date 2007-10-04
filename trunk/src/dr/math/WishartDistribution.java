@@ -1,22 +1,24 @@
 package dr.math;
 
 import dr.inference.model.Parameter;
+import dr.inference.model.MatrixParameter;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Jun 12, 2007
- * Time: 9:01:16 PM
- * To change this template use File | Settings | File Templates.
+ * @author Marc Suchard
  */
 public class WishartDistribution implements MultivariateDistribution {
 
     public static final String TYPE = "Wishart";
 
     private int df;
+    private int dim;
     private double[][] inverseScaleMatrix;
+    private Matrix S;
+    private Matrix Sinv;
+    private double logNormalizationConstant;
 
     /**
      * A Wishart distribution class for \nu degrees of freedom and inverse scale matrix S
@@ -29,8 +31,36 @@ public class WishartDistribution implements MultivariateDistribution {
     public WishartDistribution(int df, double[][] inverseScaleMatrix) {
         this.df = df;
         this.inverseScaleMatrix = inverseScaleMatrix;
+        this.dim = inverseScaleMatrix.length;
+        
+        S = new Matrix(inverseScaleMatrix);
+        Sinv = S.inverse();
+
+        computeNormalizationConstant();
 //		testMe();
     }
+
+
+
+    private void computeNormalizationConstant() {
+        logNormalizationConstant = 0;
+        try {
+            logNormalizationConstant = -df / 2.0 * Math.log(new Matrix(inverseScaleMatrix).determinant());
+        } catch (IllegalDimension illegalDimension) {
+            illegalDimension.printStackTrace();
+        }
+        logNormalizationConstant -= df * dim / 2.0 * Math.log(2);
+        logNormalizationConstant -= dim * (dim-1) / 4.0 * Math.log(Math.PI);
+        System.err.println("df = "+df);
+        for(int i=1; i<=dim; i++) {
+            logNormalizationConstant -= GammaFunction.lnGamma( (df+1-i)/2.0 );
+            System.err.println(GammaFunction.lnGamma( (df+1-i)/2.0 ));
+        }
+      
+    }
+   
+
+
 
     public String getType() {
         return TYPE;
@@ -141,12 +171,30 @@ public class WishartDistribution implements MultivariateDistribution {
         }
 
         return draw;
-//		return result;
     }
 
     public double logPdf(Parameter x) {
-//		MatrixParameter matrix = (MatrixParameter)x;
-        // Currently Wishart distributions are only used in Gibbs steps, so calculating densities is not necessary
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        Matrix W = new Matrix(((MatrixParameter)x).getParameterAsMatrix());
+        double logDensity = 0;
+
+        int dim = Sinv.rows();
+        try {
+            logDensity = Math.log(W.determinant());
+
+            logDensity *= 0.5;
+            logDensity *= df - dim - 1;
+
+            Matrix product = Sinv.product(W);
+
+            for(int i=0; i<dim; i++)
+                logDensity -= 0.5 * product.component(i,i);
+
+        } catch (IllegalDimension illegalDimension) {
+            illegalDimension.printStackTrace();
+        }
+
+        logDensity += logNormalizationConstant;
+        return logDensity;
     }
+
 }

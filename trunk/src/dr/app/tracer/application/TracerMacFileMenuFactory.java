@@ -74,7 +74,7 @@ public class TracerMacFileMenuFactory implements MenuFactory {
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK + KeyEvent.ALT_MASK));
             menu.add(item);
         } else {
-            // If the frame is not a BeautiFrame then create a dummy set of disabled menu options.
+            // If the frame is not a TracerFileMenuHandler then create a dummy set of disabled menu options.
             // At present the only situation where this may happen is in Mac OS X when no windows
             // are open and the menubar is created by the hidden frame.
 

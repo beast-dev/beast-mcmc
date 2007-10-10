@@ -36,19 +36,40 @@ public class TracerDefaultFileMenuFactory implements MenuFactory {
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, MenuBarFactory.MENU_MASK));
         menu.add(item);
 
-        item = new JMenuItem(frame.getImportAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
-        menu.add(item);
+	    if (frame instanceof TracerFileMenuHandler) {
+	        item = new JMenuItem(frame.getImportAction());
+	        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+	        menu.add(item);
 
-        menu.addSeparator();
+	        menu.addSeparator();
 
-        item = new JMenuItem(((TracerFileMenuHandler)frame).getExportDataAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
-        menu.add(item);
+	        item = new JMenuItem(((TracerFileMenuHandler)frame).getExportDataAction());
+	        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
+	        menu.add(item);
 
-        item = new JMenuItem(((TracerFileMenuHandler)frame).getExportPDFAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK + KeyEvent.ALT_MASK));
-        menu.add(item);
+	        item = new JMenuItem(((TracerFileMenuHandler)frame).getExportPDFAction());
+	        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK + KeyEvent.ALT_MASK));
+	        menu.add(item);
+	    } else {
+	        // If the frame is not a TracerFileMenuHandler then create a dummy set of disabled menu options.
+
+	        item = new JMenuItem("Import Trace File...");
+	        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+	        item.setEnabled(false);
+	        menu.add(item);
+
+	        menu.addSeparator();
+
+	        item = new JMenuItem("Export Data...");
+	        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
+	        item.setEnabled(false);
+	        menu.add(item);
+
+	        item = new JMenuItem("Export PDF...");
+	        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK + KeyEvent.ALT_MASK));
+	        item.setEnabled(false);
+	        menu.add(item);
+	    }
 
         menu.addSeparator();
 

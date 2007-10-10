@@ -3,6 +3,7 @@ package dr.app.tracer.analysis;
 import org.virion.jam.framework.AuxilaryFrame;
 import org.virion.jam.framework.DocumentFrame;
 import dr.util.Variate;
+import dr.app.tracer.application.TracerFileMenuHandler;
 
 import javax.swing.*;
 import java.awt.*;

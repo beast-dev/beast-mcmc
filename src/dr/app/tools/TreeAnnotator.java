@@ -27,13 +27,8 @@ package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
-import dr.evolution.io.Importer;
-import dr.evolution.io.NexusImporter;
-import dr.evolution.io.TreeImporter;
-import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.io.*;
+import dr.evolution.tree.*;
 import dr.evolution.util.TaxonList;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
@@ -41,10 +36,7 @@ import dr.util.Version;
 import org.virion.jam.console.ConsoleApplication;
 
 import javax.swing.*;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 
 public class TreeAnnotator {
@@ -59,7 +51,18 @@ public class TreeAnnotator {
 	public final static int MEAN_HEIGHTS = 1;
 	public final static int MEDIAN_HEIGHTS = 2;
 
-	public TreeAnnotator(int burnin, int heightsOption, double posteriorLimit, int targetOption, String targetTreeFileName, String inputFileName, String outputFileName) throws IOException {
+	public TreeAnnotator(int burnin,
+	                     int heightsOption,
+	                     double posteriorLimit,
+	                     int targetOption,
+	                     String targetTreeFileName,
+	                     String inputFileName,
+	                     String outputFileName,
+	                     String densityAttributeName,
+	                     int timeBinCount,
+	                     int valueBinCount,
+	                     String densityFileName
+	) throws IOException {
 
 		this.posteriorLimit = posteriorLimit;
 
@@ -68,10 +71,15 @@ public class TreeAnnotator {
 
 		System.out.println("Reading trees...");
 
+		DensityMap densityMap = null;
+		if (densityAttributeName != null) {
+			densityMap = new DensityMap(timeBinCount, valueBinCount, 0.01);
+		}
 		CladeSystem cladeSystem = new CladeSystem();
 
 		boolean firstTree = true;
-		TreeImporter importer = new NexusImporter(new FileReader(inputFileName));
+		FileReader fileReader = new FileReader(inputFileName);
+		TreeImporter importer = new NexusImporter(fileReader);
 		try {
 			while (importer.hasTree()) {
 				Tree tree = importer.importNextTree();
@@ -84,6 +92,10 @@ public class TreeAnnotator {
 				if (totalTrees >= burnin) {
 					cladeSystem.add(tree);
 
+					if (densityMap != null) {
+						densityMap.calibrate(tree, densityAttributeName);
+					}
+
 					totalTreesUsed += 1;
 				}
 				totalTrees += 1;
@@ -93,7 +105,37 @@ public class TreeAnnotator {
 			System.err.println("Error Parsing Input Tree: " + e.getMessage());
 			return;
 		}
+		fileReader.close();
 
+		if (densityMap != null) {
+			// If we want a density plot then we have to read the trees
+			// again - the first time was to get the range of values,
+			// this read actually creates the map.
+			fileReader = new FileReader(inputFileName);
+			importer = new NexusImporter(fileReader);
+			try {
+				totalTrees = 0;
+				while (importer.hasTree()) {
+					Tree tree = importer.importNextTree();
+
+					if (totalTrees >= burnin) {
+						densityMap.addTree(tree, densityAttributeName);
+					}
+					totalTrees += 1;
+
+				}
+			} catch (Importer.ImportException e) {
+				System.err.println("Error Parsing Input Tree: " + e.getMessage());
+				return;
+			}
+		}
+
+		if (densityMap != null && densityFileName != null) {
+			PrintWriter printWriter = new PrintWriter(densityFileName);
+			printWriter.println(densityMap.toString());
+			printWriter.close();
+		}
+		
 		cladeSystem.calculateCladeCredibilities(totalTreesUsed);
 
 		System.out.println("Total trees read: " + totalTrees);
@@ -139,16 +181,18 @@ public class TreeAnnotator {
 			NexusExporter exporter = new NexusExporter(System.out);
 			exporter.exportTree(targetTree);
 		}
+
 	}
 
 	private void setupAttributes(Tree tree) {
 		for (int i = 0; i < tree.getNodeCount(); i++) {
 			NodeRef node = tree.getNode(i);
 			Iterator iter = tree.getNodeAttributeNames(node);
-			while (iter.hasNext()) {
-				String name = (String)iter.next();
-				attributeNames.add(name);
-				Object value = tree.getNodeAttribute(node, name);
+			if (iter != null) {
+				while (iter.hasNext()) {
+					String name = (String)iter.next();
+					attributeNames.add(name);
+				}
 			}
 		}
 	}
@@ -629,7 +673,7 @@ public class TreeAnnotator {
 
 	public static void printUsage(Arguments arguments) {
 
-		arguments.printUsage("treeannotator", "[-burnin <burnin>] [-heights <height_option>] [-limit <posterior_limit>] [-target <target-tree-file-name>] <input-file-name> [<output-file-name>]");
+		arguments.printUsage("treeannotator", "<input-file-name> [<output-file-name>]");
 		System.out.println();
 		System.out.println("  Example: treeannotator test.trees out.txt");
 		System.out.println("  Example: treeannotator -burnin 100 -heights mean test.trees out.txt");
@@ -703,7 +747,17 @@ public class TreeAnnotator {
 			}
 
 			try {
-				new TreeAnnotator(burnin, heightsOption, posteriorLimit, targetOption, targetTreeFileName, inputFileName, outputFileName);
+				new TreeAnnotator(burnin,
+						heightsOption,
+						posteriorLimit,
+						targetOption,
+						targetTreeFileName,
+						inputFileName,
+						outputFileName,
+						null,
+						0,
+						0,
+						null);
 
 			} catch (Exception ex) {
 				System.err.println("Exception: " + ex.getMessage());
@@ -728,6 +782,10 @@ public class TreeAnnotator {
 						new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
 						new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annoated"),
 						new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
+						new Arguments.StringOption("density", "density_attribute", "specifies an attribute to use to create a density map"),
+						new Arguments.IntegerOption("time_bins", "the number of bins for the time axis of the density map"),
+						new Arguments.IntegerOption("value_bins", "the number of bins for the value axis of the density map"),
+						new Arguments.StringOption("density_file", "density_file_name", "specifies a file name for the density map"),
 						new Arguments.Option("help", "option to print this message")
 				});
 
@@ -770,6 +828,25 @@ public class TreeAnnotator {
 			targetTreeFileName = arguments.getStringOption("target");
 		}
 
+		String densityAttributeName = null;
+		int timeBinCount = 100;
+		int valueBinCount = 25;
+		String densityFileName = "density.map";
+		if (arguments.hasOption("density")) {
+			densityAttributeName = arguments.getStringOption("density");
+		}
+
+		if (arguments.hasOption("time_bins")) {
+			timeBinCount = arguments.getIntegerOption("time_bins");
+		}
+
+		if (arguments.hasOption("value_bins")) {
+			valueBinCount = arguments.getIntegerOption("value_bins");
+		}
+
+		if (arguments.hasOption("density_file")) {
+			densityFileName = arguments.getStringOption("density_file");
+		}
 
 		String[] args2 = arguments.getLeftoverArguments();
 
@@ -785,11 +862,22 @@ public class TreeAnnotator {
 			inputFileName = args2[0];
 			outputFileName = args2[1];
 		} else {
+			System.err.println("Missing output file name");
 			printUsage(arguments);
 			System.exit(1);
 		}
 
-		new TreeAnnotator(burnin, heights, posteriorLimit, target, targetTreeFileName, inputFileName, outputFileName);
+		new TreeAnnotator(burnin,
+				heights,
+				posteriorLimit,
+				target,
+				targetTreeFileName,
+				inputFileName,
+				outputFileName,
+				densityAttributeName,
+				timeBinCount,
+				valueBinCount,
+				densityFileName);
 
 		System.exit(0);
 	}

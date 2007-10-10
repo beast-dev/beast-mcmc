@@ -10,7 +10,8 @@ import java.util.logging.Logger;
 
 /**
  * Implements a model where time is broken into 'epochs' each with a different but
- * constant rate.
+ * constant rate. Parameters can be used to sample transition times but it is up
+ * to the user to keep them bounded and in strict order...
  * @author Andrew Rambaut
  *
  * @version $Id$
@@ -22,19 +23,24 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 	public static final String EPOCH = "epoch";
 	public static final String TRANSITION_TIME = "transitionTime";
 
-	private final double[] epochTransitionTimes;
+	private final Parameter[] timeParameters;
 	private final Parameter[] rateParameters;
 
 	/**
 	 * The constructor. For an N-epoch model, there should be N rate paramters and N-1 transition times.
-	 * @param epochTransitionTimes an array of transition times
+	 * @param timeParameters an array of transition time parameters
 	 * @param rateParameters an array of rate parameters
 	 */
-	public RateEpochBranchRateModel(double[] epochTransitionTimes, Parameter[] rateParameters) {
+	public RateEpochBranchRateModel(Parameter[] timeParameters,
+	                                Parameter[] rateParameters) {
 
 		super(RATE_EPOCH_BRANCH_RATES);
 
-		this.epochTransitionTimes = epochTransitionTimes;
+		this.timeParameters = timeParameters;
+		for (Parameter parameter : timeParameters) {
+			addParameter(parameter);
+		}
+
 		this.rateParameters = rateParameters;
 		for (Parameter parameter : rateParameters) {
 			addParameter(parameter);
@@ -74,15 +80,15 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 			double lastHeight = height0;
 
 			// First find the epoch which contains the node height
-			while (i < epochTransitionTimes.length && height0 > epochTransitionTimes[i]) {
+			while (i < timeParameters.length && height0 > timeParameters[i].getParameterValue(0)) {
 				i++;
 			}
 
 			// Now walk up the branch until we reach the last epoch or the height of the parent
-			while (i < epochTransitionTimes.length && height1 > epochTransitionTimes[i]) {
+			while (i < timeParameters.length && height1 > timeParameters[i].getParameterValue(0)) {
 				// add the rate for that epoch multiplied by the time spent at that rate
-				rate += rateParameters[i].getParameterValue(0) * (epochTransitionTimes[i] - lastHeight);
-				lastHeight = epochTransitionTimes[i];
+				rate += rateParameters[i].getParameterValue(0) * (timeParameters[i].getParameterValue(0) - lastHeight);
+				lastHeight = timeParameters[i].getParameterValue(0);
 				i++;
 			}
 
@@ -118,37 +124,54 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 			for (int i = 0; i < xo.getChildCount(); i++) {
 				XMLObject xoc = (XMLObject)xo.getChild(i);
 				if (xoc.getName().equals(EPOCH)) {
-					double t = xoc.getDoubleAttribute(TRANSITION_TIME);
+					double t = 0.0;
+
+					if (xoc.hasAttribute(TRANSITION_TIME)) {
+						t = xoc.getDoubleAttribute(TRANSITION_TIME);
+					}
+					
 					Parameter p = (Parameter)xoc.getChild(Parameter.class);
-					epochs.add(new Epoch(t, p));
+
+					Parameter tt = null;
+					if (xoc.hasSocket(TRANSITION_TIME)) {
+						tt = (Parameter)xoc.getSocketChild(TRANSITION_TIME);
+					}
+					epochs.add(new Epoch(t, p, tt));
 				}
 			}
 
 			Parameter ancestralRateParameter = (Parameter)xo.getSocketChild(RATE);
 
 			Collections.sort(epochs);
-			double[] epochTransitionTimes = new double[epochs.size()];
 			Parameter[] rateParameters = new Parameter[epochs.size() + 1];
+			Parameter[] timeParameters = new Parameter[epochs.size()];
 
 			int i = 0;
 			for (Epoch epoch : epochs) {
-				epochTransitionTimes[i] = epoch.transitionTime;
-				rateParameters[i] = epoch.parameter;
+				rateParameters[i] = epoch.rateParameter;
+				if (epoch.timeParameter != null) {
+					timeParameters[i] = epoch.timeParameter;
+				} else {
+					timeParameters[i] = new Parameter.Default(1);
+					timeParameters[i].setParameterValue(0, epoch.transitionTime);
+				}
 				i++;
 			}
 			rateParameters[i] = ancestralRateParameter;
 
-			return new RateEpochBranchRateModel(epochTransitionTimes, rateParameters);
+			return new RateEpochBranchRateModel(timeParameters, rateParameters);
 		}
 
 		class Epoch implements Comparable {
 
 			private final double transitionTime;
-			private final Parameter parameter;
+			private final Parameter rateParameter;
+			private final Parameter timeParameter;
 
-			public Epoch(double transitionTime, Parameter parameter) {
+			public Epoch(double transitionTime, Parameter rateParameter, Parameter timeParameter) {
 				this.transitionTime = transitionTime;
-				this.parameter = parameter;
+				this.rateParameter = rateParameter;
+				this.timeParameter = timeParameter;
 			}
 
 			public int compareTo(Object o) {
@@ -163,7 +186,10 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 		public String getParserDescription() {
 			return
 					"This element provides a multiple epoch molecular clock model. " +
-							"All branches (or portions of them) have the same rate of molecular evolution within a given epoch.";
+					"All branches (or portions of them) have the same rate of molecular " +
+					"evolution within a given epoch. If parameters are used to sample " +
+					"transition times, these must be kept in ascending order by judicious " +
+					"use of bounds or priors.";
 		}
 
 		public Class getReturnType() { return RateEpochBranchRateModel.class; }
@@ -173,8 +199,9 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 				new ElementRule(EPOCH,
 						new XMLSyntaxRule[] {
-								AttributeRule.newDoubleRule(TRANSITION_TIME, false, "The time of transition between this epoch and the previous one"),
+								AttributeRule.newDoubleRule(TRANSITION_TIME, true, "The time of transition between this epoch and the previous one"),
 								new ElementRule(Parameter.class, "The evolutionary rate parameter for this epoch"),
+								new ElementRule(TRANSITION_TIME, Parameter.class, "The transition time parameter for this epoch", true)
 						}, "An epoch that lasts until transitionTime",
 						1, Integer.MAX_VALUE
 				),

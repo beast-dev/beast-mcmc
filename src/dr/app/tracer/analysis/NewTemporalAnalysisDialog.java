@@ -64,7 +64,6 @@ public class NewTemporalAnalysisDialog {
 		}
 
 		if (result == JOptionPane.OK_OPTION) {
-
 		}
 
 		return result;

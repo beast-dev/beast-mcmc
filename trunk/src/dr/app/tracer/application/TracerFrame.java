@@ -24,8 +24,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.DecimalFormat;
@@ -199,9 +198,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         getBayesianSkylineAction().setEnabled(enabled);
         getBayesFactorsAction().setEnabled(enabled);
         getCreateTemporalAnalysisAction().setEnabled(enabled);
-        getAddDemographicAction().setEnabled(enabled);
-        getAddBayesianSkylineAction().setEnabled(enabled);
-        getAddTimeDensityAction().setEnabled(enabled);
+        getAddDemographicAction().setEnabled(enabled && temporalAnalysisFrame != null);
+        getAddBayesianSkylineAction().setEnabled(enabled && temporalAnalysisFrame != null);
+        //getAddTimeDensityAction().setEnabled(enabled && temporalAnalysisFrame != null);
+        getAddTimeDensityAction().setEnabled(false);
 
         getExportAction().setEnabled(enabled);
         getExportDataAction().setEnabled(enabled);
@@ -362,8 +362,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         int[] selRows = statisticTable.getSelectedRows();
 
         boolean isIncomplete = false;
-        for (TraceList tl : currentTraceLists) {
-            if (tl.getTraceCount() == 0 || tl.getStateCount() == 0)
+        for (TraceList tl : currentTraceLists) {            
+            if (tl == null || tl.getTraceCount() == 0 || tl.getStateCount() == 0)
                 isIncomplete = true;
         }
 
@@ -694,6 +694,23 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         temporalAnalysisFrame = createTemporalAnalysisDialog.createTemporalAnalysisFrame(this);
+
+        createTemporalAnalysisAction.setEnabled(false);
+
+        addBayesianSkylineAction.setEnabled(true);
+        addDemographicAction.setEnabled(true);
+        // addTimeDensity.setEnabled(true);
+
+        temporalAnalysisFrame.addWindowListener(new WindowAdapter() {
+
+            public void windowClosing(WindowEvent event) {
+                temporalAnalysisFrame = null;
+                createTemporalAnalysisAction.setEnabled(true);
+                addBayesianSkylineAction.setEnabled(false);
+                addDemographicAction.setEnabled(false);
+                addTimeDensity.setEnabled(false);
+            }
+        });
     }
 
     public void doDemographic(boolean add) {
@@ -853,7 +870,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         public int getRowCount() {
-            if (currentTraceLists.size() == 0) return 0;
+            if (currentTraceLists.size() == 0 || currentTraceLists.get(0) == null) return 0;
             return currentTraceLists.get(0).getTraceCount();
         }
 

@@ -447,7 +447,7 @@ public class DemographicDialog {
                     current++;
                 }
 
-            } else
+            } else      
             if (demographicCombo.getSelectedIndex() == 1) { // Exponential Growth (Growth Rate)
                 title = "Exponential Growth";
                 ExponentialGrowth demo = new ExponentialGrowth();

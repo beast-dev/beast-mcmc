@@ -45,7 +45,7 @@ public class TemporalAnalysisFrame extends AuxilaryFrame implements TracerFileMe
 
 		setContentsPanel(temporalAnalysisPlotPanel);
 
-		getSaveAction().setEnabled(false);
+        getSaveAction().setEnabled(false);
 		getSaveAsAction().setEnabled(false);
 
 		getCutAction().setEnabled(false);

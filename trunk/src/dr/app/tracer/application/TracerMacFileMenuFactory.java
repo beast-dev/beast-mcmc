@@ -59,10 +59,21 @@ public class TracerMacFileMenuFactory implements MenuFactory {
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, MenuBarFactory.MENU_MASK));
         menu.add(item);
 
+        // On Windows and Linux platforms, each window has its own menu so items which are not needed
+        // are simply missing. In contrast, on Mac, the menu is for the application so items should
+        // be enabled/disabled as frames come to the front.
         if (frame instanceof TracerFileMenuHandler) {
-            item = new JMenuItem(frame.getImportAction());
-            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
-            menu.add(item);
+            Action action = frame.getImportAction();
+            if (action != null) {
+                item = new JMenuItem(action);
+                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+                menu.add(item);
+            } else {
+                item = new JMenuItem("Import Trace File...");
+                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+                item.setEnabled(false);
+                menu.add(item);
+            }
 
             menu.addSeparator();
 

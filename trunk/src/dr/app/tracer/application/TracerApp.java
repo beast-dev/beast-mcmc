@@ -42,7 +42,7 @@ public class TracerApp extends MultiDocApplication {
         }
 
         try {
-            java.net.URL url = TracerApp.class.getResource("images/tracer.png");
+            java.net.URL url = TracerApp.class.getResource("images/Tracer.png");
             Icon icon = null;
 
             if (url != null) {

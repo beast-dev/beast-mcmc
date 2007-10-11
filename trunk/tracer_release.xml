@@ -31,7 +31,7 @@
     <target name="compile-basic" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
         <javac source="1.5" srcdir="${src}" destdir="${build}"
-               classpath="${lib}/commons-math-1.1.jar:${lib}/jebl-0.4.jar:${lib}/itext-1.4.5.jar">
+               classpath="${lib}/commons-math-1.1.jar:${lib}/jebl-0.4.jar:${lib}/itext-1.4.5.jar:${lib}/jdom.jar">
             <include name="dr/app/tracer/**"/>
             <include name="dr/app/util/**"/>
             <include name="dr/evolution/alignment/**"/>
@@ -51,7 +51,6 @@
             <include name="dr/stats/**"/>
             <include name="dr/util/**"/>
             <include name="dr/xml/**"/>
-            <include name="org/virion/jam/**"/>
         </javac>
     </target>
 
@@ -86,11 +85,11 @@
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
                 <include name="dr/xml/**/*.class"/>
-                <include name="org/virion/jam/**/*.class"/>
             </fileset>
             <fileset dir="${src}">
                 <include name="dr/app/tracer/**/*.png"/>
                 <include name="dr/app/tracer/**/*.gif"/>
+                <include name="dr/app/tracer/**/*.tiff"/>
                 <include name="org/virion/jam/**/*.png"/>
             </fileset>
             <zipgroupfileset dir="${lib}" includes="jebl-0.4.jar"/>

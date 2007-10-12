@@ -1,11 +1,36 @@
+/*
+ * DemographicPlotPanel.java
+ *
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.tracer.analysis;
+
+import dr.gui.chart.*;
+import dr.util.Variate;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-
-import dr.gui.chart.*;
-import dr.util.Variate;
 
 
 /**
@@ -17,33 +42,37 @@ import dr.util.Variate;
  */
 public class DemographicPlotPanel extends JPanel {
 
-	private JChart demoChart = new JChart(new LinearAxis(Axis.AT_DATA, Axis.AT_DATA), new LogAxis());
-	private JChartPanel chartPanel = new JChartPanel(demoChart, null, "", "");
+    private JChart demoChart = new JChart(new LinearAxis(Axis.AT_DATA, Axis.AT_DATA), new LogAxis());
+    private JChartPanel chartPanel = new JChartPanel(demoChart, null, "", "");
 
-    private JComboBox meanMedianComboBox = new JComboBox(new String[] { "Median", "Mean" });
-	private JCheckBox solidIntervalCheckBox = new JCheckBox("Solid interval");
+    private JComboBox meanMedianComboBox = new JComboBox(new String[]{"Median", "Mean"});
+    private JCheckBox solidIntervalCheckBox = new JCheckBox("Solid interval");
 
-	private ChartSetupDialog chartSetupDialog = null;
+    private ChartSetupDialog chartSetupDialog = null;
 
-	private Variate xData = null;
-	private Variate yDataMean = null;
+    private Variate xData = null;
+    private Variate yDataMean = null;
     private Variate yDataMedian = null;
-	private Variate yDataUpper = null;
-	private Variate yDataLower = null;
+    private Variate yDataUpper = null;
+    private Variate yDataLower = null;
 
     private double timeMedian = -1;
     private double timeMean = -1;
     private double timeUpper = -1;
     private double timeLower = -1;
 
-	/** Creates new FrequencyPanel */
-	public DemographicPlotPanel(final JFrame frame) {
-		setMinimumSize(new Dimension(300,150));
-		setLayout(new BorderLayout());
+    /**
+     * Creates new DemographicPlotPanel
+     *
+     * @param frame the parent frame
+     */
+    public DemographicPlotPanel(final JFrame frame) {
+        setMinimumSize(new Dimension(300, 150));
+        setLayout(new BorderLayout());
 
-		JToolBar toolBar = new JToolBar();
-		toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
-		toolBar.setFloatable(false);
+        JToolBar toolBar = new JToolBar();
+        toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
+        toolBar.setFloatable(false);
 
         JLabel label = new JLabel("Show:");
         label.setLabelFor(meanMedianComboBox);
@@ -51,114 +80,114 @@ public class DemographicPlotPanel extends JPanel {
 
         toolBar.add(meanMedianComboBox);
 
-		JButton chartSetupButton = new JButton("Setup Axes");
-		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
-		toolBar.add(chartSetupButton);
+        JButton chartSetupButton = new JButton("Setup Axes");
+        toolBar.add(new JToolBar.Separator(new Dimension(8, 8)));
+        toolBar.add(chartSetupButton);
 
-        toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
+        toolBar.add(new JToolBar.Separator(new Dimension(8, 8)));
         toolBar.add(solidIntervalCheckBox);
 
-		toolBar.add(new JToolBar.Separator(new Dimension(8,8)));
+        toolBar.add(new JToolBar.Separator(new Dimension(8, 8)));
 
         meanMedianComboBox.setFont(UIManager.getFont("SmallSystemFont"));
 
-		add(chartPanel, BorderLayout.CENTER);
-		add(toolBar, BorderLayout.SOUTH);
+        add(chartPanel, BorderLayout.CENTER);
+        add(toolBar, BorderLayout.SOUTH);
 
         meanMedianComboBox.addItemListener(
-            new java.awt.event.ItemListener() {
-                public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                    updatePlots();
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                        updatePlots();
+                    }
                 }
-            }
         );
 
-		chartSetupButton.addActionListener(
-			new java.awt.event.ActionListener() {
-				public void actionPerformed(ActionEvent actionEvent) {
-					if (chartSetupDialog == null) {
-						chartSetupDialog = new ChartSetupDialog(frame, false, true,
-								Axis.AT_DATA, Axis.AT_DATA, Axis.AT_DATA, Axis.AT_DATA);
-					}
+        chartSetupButton.addActionListener(
+                new java.awt.event.ActionListener() {
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        if (chartSetupDialog == null) {
+                            chartSetupDialog = new ChartSetupDialog(frame, false, true,
+                                    Axis.AT_DATA, Axis.AT_DATA, Axis.AT_DATA, Axis.AT_DATA);
+                        }
 
-					chartSetupDialog.showDialog(demoChart);
-					validate();
-					repaint();
-				}
-			}
-		);
+                        chartSetupDialog.showDialog(demoChart);
+                        validate();
+                        repaint();
+                    }
+                }
+        );
 
-		solidIntervalCheckBox.addItemListener(
-			new java.awt.event.ItemListener() {
-				public void itemStateChanged(java.awt.event.ItemEvent ev) {
-					updatePlots();
-				}
-			}
-		);
+        solidIntervalCheckBox.addItemListener(
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                        updatePlots();
+                    }
+                }
+        );
 
-	}
+    }
 
-	public void setupPlot(String title, Variate xData,
-	                      Variate yDataMean, Variate yDataMedian,
-	                      Variate yDataUpper, Variate yDataLower,
-	                      double timeMean, double timeMedian,
-	                      double timeUpper, double timeLower) {
+    public void setupPlot(String title, Variate xData,
+                          Variate yDataMean, Variate yDataMedian,
+                          Variate yDataUpper, Variate yDataLower,
+                          double timeMean, double timeMedian,
+                          double timeUpper, double timeLower) {
 
-		this.xData = xData;
-		this.yDataMean = yDataMean;
+        this.xData = xData;
+        this.yDataMean = yDataMean;
         this.yDataMedian = yDataMedian;
-		this.yDataUpper = yDataUpper;
-		this.yDataLower = yDataLower;
+        this.yDataUpper = yDataUpper;
+        this.yDataLower = yDataLower;
 
         this.timeMean = timeMean;
         this.timeMedian = timeMedian;
         this.timeUpper = timeUpper;
         this.timeLower = timeLower;
 
-		if (xData == null) {
-			demoChart.removeAllPlots();
-			chartPanel.setTitle("");
-			chartPanel.setXAxisTitle("");
-			chartPanel.setYAxisTitle("");
-			return;
-		}
+        if (xData == null) {
+            demoChart.removeAllPlots();
+            chartPanel.setTitle("");
+            chartPanel.setXAxisTitle("");
+            chartPanel.setYAxisTitle("");
+            return;
+        }
 
-		chartPanel.setTitle(title);
+        chartPanel.setTitle(title);
 
-		updatePlots();
+        updatePlots();
 
-		chartPanel.setXAxisTitle("Time");
-		chartPanel.setYAxisTitle("Population Size");
-	}
+        chartPanel.setXAxisTitle("Time");
+        chartPanel.setYAxisTitle("Population Size");
+    }
 
-	public void updatePlots() {
+    public void updatePlots() {
 
-		demoChart.removeAllPlots();
+        demoChart.removeAllPlots();
 
-		if (solidIntervalCheckBox.isSelected()) {
+        if (solidIntervalCheckBox.isSelected()) {
 
-			AreaPlot areaPlot = new AreaPlot(xData, yDataUpper, xData, yDataLower);
-			areaPlot.setLineColor(new Color(0x9999FF));
-			demoChart.addPlot(areaPlot);
-		} else {
-			LinePlot plot = new LinePlot(xData, yDataLower);
-			plot.setLineStyle(new BasicStroke(1.0F), new Color(0x9999FF));
-			demoChart.addPlot(plot);
+            AreaPlot areaPlot = new AreaPlot(xData, yDataUpper, xData, yDataLower);
+            areaPlot.setLineColor(new Color(0x9999FF));
+            demoChart.addPlot(areaPlot);
+        } else {
+            LinePlot plot = new LinePlot(xData, yDataLower);
+            plot.setLineStyle(new BasicStroke(1.0F), new Color(0x9999FF));
+            demoChart.addPlot(plot);
 
-			plot = new LinePlot(xData, yDataUpper);
-			plot.setLineStyle(new BasicStroke(1.0F), new Color(0x9999FF));
-			demoChart.addPlot(plot);
+            plot = new LinePlot(xData, yDataUpper);
+            plot.setLineStyle(new BasicStroke(1.0F), new Color(0x9999FF));
+            demoChart.addPlot(plot);
 
-		}
+        }
 
-        LinePlot linePlot = null;
+        LinePlot linePlot;
         if (meanMedianComboBox.getSelectedItem().equals("Median")) {
             linePlot = new LinePlot(xData, yDataMedian);
         } else {
             linePlot = new LinePlot(xData, yDataMean);
         }
-		linePlot.setLineStyle(new BasicStroke(2.0F), Color.black);
-		demoChart.addPlot(linePlot);
+        linePlot.setLineStyle(new BasicStroke(2.0F), Color.black);
+        demoChart.addPlot(linePlot);
 
         Variate y1 = new Variate.Double();
         y1.add(demoChart.getYAxis().getMinAxis());
@@ -176,7 +205,7 @@ public class DemographicPlotPanel extends JPanel {
             }
             LinePlot linePlot2 = new LinePlot(x1, y1);
             linePlot2.setLineStyle(new BasicStroke(2F, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0.0F,
-                                    new float[] {0.5F, 3.0F}, 0.0F), Color.black);
+                    new float[]{0.5F, 3.0F}, 0.0F), Color.black);
             demoChart.addPlot(linePlot2);
         }
 
@@ -187,7 +216,7 @@ public class DemographicPlotPanel extends JPanel {
 
             LinePlot linePlot3 = new LinePlot(x2, y1);
             linePlot3.setLineStyle(new BasicStroke(1.0F, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0.0F,
-                                    new float[] {0.5F, 2.0F}, 0.0F), Color.black);
+                    new float[]{0.5F, 2.0F}, 0.0F), Color.black);
             demoChart.addPlot(linePlot3);
         }
 
@@ -198,16 +227,16 @@ public class DemographicPlotPanel extends JPanel {
 
             LinePlot linePlot4 = new LinePlot(x3, y1);
             linePlot4.setLineStyle(new BasicStroke(1.0F, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0.0F,
-                                    new float[] {0.5F, 2.0F}, 0.0F), Color.black);
+                    new float[]{0.5F, 2.0F}, 0.0F), Color.black);
             demoChart.addPlot(linePlot4);
         }
 
-		validate();
-		repaint();
-	}
+        validate();
+        repaint();
+    }
 
     public JComponent getExportableComponent() {
-		return chartPanel;
+        return chartPanel;
 	}
 
 }

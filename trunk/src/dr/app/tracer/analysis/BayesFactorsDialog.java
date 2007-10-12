@@ -1,21 +1,47 @@
+/*
+ * BayesFactorsDialog.java
+ *
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.tracer.analysis;
 
-import dr.inference.trace.TraceList;
 import dr.inference.trace.MarginalLikelihoodAnalysis;
+import dr.inference.trace.TraceList;
 import dr.util.TaskListener;
+import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.util.LongTask;
-import org.virion.jam.components.WholeNumberField;
 
 import javax.swing.*;
-import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class BayesFactorsDialog {
 
@@ -192,8 +218,6 @@ public class BayesFactorsDialog {
 
         private int lengthOfTask = 0;
         private int current = 0;
-        private String message;
-
 
         public MarginalLikelihoodTask(BayesFactorsFrame frame, List<TraceList> traceLists, boolean harmonicOnly, int bootstrapLength) {
             this.traceLists = traceLists;
@@ -216,7 +240,7 @@ public class BayesFactorsDialog {
         }
 
         public String getMessage() {
-            return message;
+            return null;
         }
 
         public Object doWork() {
@@ -238,7 +262,7 @@ public class BayesFactorsDialog {
 
                 analysis.setTaskListener(new TaskListener() {
                     public void progress(double progress) {
-                        current = offset + (int)(progress * 100);
+                        current = offset + (int) (progress * 100);
                     }
                 });
 

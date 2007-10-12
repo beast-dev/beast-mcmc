@@ -25,9 +25,9 @@
 
 package dr.evomodel.branchratemodel;
 
+import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.NodeAttributeProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -43,199 +43,200 @@ import java.util.logging.Logger;
  */
 public class RandomLocalClockModel extends AbstractModel implements BranchRateModel, NodeAttributeProvider {
 
-	public static final String LOCAL_BRANCH_RATES = "randomLocalClockModel";
-	public static final String RATE_INDICATORS = "rateIndicator";
-	public static final String RATES = "rates";
-	public static final String CLOCK_RATE = "clockRate";
-	public static final String RATES_ARE_MULTIPLIERS = "ratesAreMultipliers";
+    public static final String LOCAL_BRANCH_RATES = "randomLocalClockModel";
+    public static final String RATE_INDICATORS = "rateIndicator";
+    public static final String RATES = "rates";
+    public static final String CLOCK_RATE = "clockRate";
+    public static final String RATES_ARE_MULTIPLIERS = "ratesAreMultipliers";
 
-	// The rate categories of each branch
+    // The rate categories of each branch
 
-	double scaleFactor;
-	TreeModel treeModel;
-	private boolean ratesAreMultipliers = false;
+    double scaleFactor;
+    TreeModel treeModel;
+    private boolean ratesAreMultipliers = false;
 
-	public RandomLocalClockModel(TreeModel treeModel, Parameter meanRateParameter, Parameter rateIndicatorParameter, Parameter ratesParameter, boolean ratesAreMultipliers) {
+    public RandomLocalClockModel(TreeModel treeModel, Parameter meanRateParameter, Parameter rateIndicatorParameter, Parameter ratesParameter, boolean ratesAreMultipliers) {
 
-		super(LOCAL_BRANCH_RATES);
+        super(LOCAL_BRANCH_RATES);
 
-		this.ratesAreMultipliers = ratesAreMultipliers;
+        this.ratesAreMultipliers = ratesAreMultipliers;
 
-		if (rateIndicatorParameter.getDimension() != treeModel.getNodeCount() - 1) {
-			throw new IllegalArgumentException("The rate category parameter must be of length nodeCount-1");
-		}
+        if (rateIndicatorParameter.getDimension() != treeModel.getNodeCount() - 1) {
+            throw new IllegalArgumentException("The rate category parameter must be of length nodeCount-1");
+        }
 
-		for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
-			rateIndicatorParameter.setParameterValue(i, 0.0);
-			ratesParameter.setParameterValue(i, 1.0);
-		}
+        for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
+            rateIndicatorParameter.setParameterValue(i, 0.0);
+            ratesParameter.setParameterValue(i, 1.0);
+        }
 
-		this.meanRateParameter = meanRateParameter;
-
-
-		addModel(treeModel);
-		this.treeModel = treeModel;
-
-		addParameter(rateIndicatorParameter);
-		addParameter(ratesParameter);
-		if (meanRateParameter != null) addParameter(meanRateParameter);
-
-		recalculateScaleFactor();
-	}
-
-	private void recalculateScaleFactor() {
-
-		double timeTotal = 0.0;
-		double branchTotal = 0.0;
-
-		for (int i = 0; i < treeModel.getNodeCount(); i++) {
-			NodeRef node = treeModel.getNode(i);
-			if (!treeModel.isRoot(node)) {
-
-				double branchInTime =
-						treeModel.getNodeHeight(treeModel.getParent(node)) -
-								treeModel.getNodeHeight(node);
-
-				double branchLength = branchInTime * getUnscaledBranchRate(treeModel, node);
-
-				timeTotal += branchInTime;
-				branchTotal += branchLength;
-			}
-		}
-
-		scaleFactor = timeTotal / branchTotal;
-
-		if (meanRateParameter != null) scaleFactor *= meanRateParameter.getParameterValue(0);
-	}
-
-	public void handleModelChangedEvent(Model model, Object object, int index) {
-		recalculateScaleFactor();
-		fireModelChanged();
-	}
-
-	protected void handleParameterChangedEvent(Parameter parameter, int index) {
-		recalculateScaleFactor();
-		fireModelChanged();
-	}
-
-	protected void storeState() {
-	}
-
-	protected void restoreState() {
-		recalculateScaleFactor();
-	}
-
-	protected void acceptState() {
-	}
-
-	public double getBranchRate(Tree tree, NodeRef node) {
-
-		return getUnscaledBranchRate(tree, node) * scaleFactor;
-	}
-
-	private double getUnscaledBranchRate(Tree tree, NodeRef node) {
-
-		if (tree.isRoot(node)) {
-			return 1.0;
-		} else {
-
-			double rate;
-			if (isRateChangeOnBranchAbove(tree, node)) {
-				rate = tree.getNodeRate(node);
-				if (ratesAreMultipliers) {
-					rate *= getUnscaledBranchRate(tree, tree.getParent(node));
-				}
-			} else {
-				rate = getUnscaledBranchRate(tree, tree.getParent(node));
-			}
-			return rate;
-		}
-	}
-
-	public final boolean isRateChangeOnBranchAbove(Tree tree, NodeRef node) {
-		return (int) Math.round(((TreeModel) tree).getNodeTrait(node, "trait")) == 1;
-	}
-
-	private static String[] attributeLabel = {"changed"};
-
-	public String[] getNodeAttributeLabel() {
-		return attributeLabel;
-	}
-
-	public String[] getAttributeForNode(Tree tree, NodeRef node) {
-
-		if (tree.isRoot(node)) {
-			return new String[]{"false"};
-		}
-
-		return new String[]{(isRateChangeOnBranchAbove(tree, node) ? "true" : "false")};
-	}
-
-	public String getBranchAttributeLabel() {
-		return "rate";
-	}
-
-	public String getAttributeForBranch(Tree tree, NodeRef node) {
-		return Double.toString(getBranchRate(tree, node));
-	}
+        this.meanRateParameter = meanRateParameter;
 
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        addModel(treeModel);
+        this.treeModel = treeModel;
 
-		public String getParserName() {
-			return LOCAL_BRANCH_RATES;
-		}
+        addParameter(rateIndicatorParameter);
+        addParameter(ratesParameter);
+        if (meanRateParameter != null) addParameter(meanRateParameter);
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        recalculateScaleFactor();
+    }
 
-			TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+    private void recalculateScaleFactor() {
 
-			Parameter rateIndicatorParameter = (Parameter) xo.getSocketChild(RATE_INDICATORS);
-			Parameter ratesParameter = (Parameter) xo.getSocketChild(RATES);
-			Parameter meanRateParameter = null;
+        double timeTotal = 0.0;
+        double branchTotal = 0.0;
 
-			if (xo.hasSocket(CLOCK_RATE)) {
-				meanRateParameter = (Parameter) xo.getSocketChild(CLOCK_RATE);
-			}
+        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+            NodeRef node = treeModel.getNode(i);
+            if (!treeModel.isRoot(node)) {
 
-			boolean ratesAreMultipliers = false;
-			if (xo.hasAttribute(RATES_ARE_MULTIPLIERS)) {
-				ratesAreMultipliers = xo.getBooleanAttribute(RATES_ARE_MULTIPLIERS);
-			}
+                double branchInTime =
+                        treeModel.getNodeHeight(treeModel.getParent(node)) -
+                                treeModel.getNodeHeight(node);
 
-			Logger.getLogger("dr.evomodel").info("Using random local clock (RLC) model.");
-			Logger.getLogger("dr.evomodel").info("  rates at change points are parameterized to be " + (ratesAreMultipliers ? " multipliers of parent rates." : "independent of parent rates."));
+                double branchLength = branchInTime * getUnscaledBranchRate(treeModel, node);
 
-			return new RandomLocalClockModel(tree, meanRateParameter, rateIndicatorParameter, ratesParameter, ratesAreMultipliers);
-		}
+                timeTotal += branchInTime;
+                branchTotal += branchLength;
+            }
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        scaleFactor = timeTotal / branchTotal;
 
-		public String getParserDescription() {
-			return
-					"This element returns an random local clock (RLC) model." +
-							"Each branch either has a new independent rate or " +
-							"inherits the rate of the branch above it depending on the indicator vector.";
-		}
+        if (meanRateParameter != null)
+            scaleFactor *= meanRateParameter.getParameterValue(0);
+    }
 
-		public Class getReturnType() {
-			return RandomLocalClockModel.class;
-		}
+    public void handleModelChangedEvent(Model model, Object object, int index) {
+        recalculateScaleFactor();
+        fireModelChanged();
+    }
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+        recalculateScaleFactor();
+        fireModelChanged();
+    }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new ElementRule(TreeModel.class),
-				new ElementRule(RATE_INDICATORS, Parameter.class, "The rate change indicators parameter", false),
-				new ElementRule(RATES, Parameter.class, "The rate changes parameter", false),
-				new ElementRule(CLOCK_RATE, Parameter.class, "The mean rate across all local clocks", true),
-				AttributeRule.newBooleanRule(RATES_ARE_MULTIPLIERS, false)
-		};
-	};
+    protected void storeState() {
+    }
 
-	Parameter meanRateParameter;
+    protected void restoreState() {
+        recalculateScaleFactor();
+    }
+
+    protected void acceptState() {
+    }
+
+    public double getBranchRate(Tree tree, NodeRef node) {
+
+        return getUnscaledBranchRate(tree, node) * scaleFactor;
+    }
+
+    private double getUnscaledBranchRate(Tree tree, NodeRef node) {
+
+        if (tree.isRoot(node)) {
+            return 1.0;
+        } else {
+
+            double rate;
+            if (isRateChangeOnBranchAbove(tree, node)) {
+                rate = tree.getNodeRate(node);
+                if (ratesAreMultipliers) {
+                    rate *= getUnscaledBranchRate(tree, tree.getParent(node));
+                }
+            } else {
+                rate = getUnscaledBranchRate(tree, tree.getParent(node));
+            }
+            return rate;
+        }
+    }
+
+    public final boolean isRateChangeOnBranchAbove(Tree tree, NodeRef node) {
+        return (int) Math.round(((TreeModel) tree).getNodeTrait(node, "trait")) == 1;
+    }
+
+    private static String[] attributeLabel = {"changed"};
+
+    public String[] getNodeAttributeLabel() {
+        return attributeLabel;
+    }
+
+    public String[] getAttributeForNode(Tree tree, NodeRef node) {
+
+        if (tree.isRoot(node)) {
+            return new String[]{"false"};
+        }
+
+        return new String[]{(isRateChangeOnBranchAbove(tree, node) ? "true" : "false")};
+    }
+
+    public String getBranchAttributeLabel() {
+        return "rate";
+    }
+
+    public String getAttributeForBranch(Tree tree, NodeRef node) {
+        return Double.toString(getBranchRate(tree, node));
+    }
+
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return LOCAL_BRANCH_RATES;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+
+            Parameter rateIndicatorParameter = (Parameter) xo.getSocketChild(RATE_INDICATORS);
+            Parameter ratesParameter = (Parameter) xo.getSocketChild(RATES);
+            Parameter meanRateParameter = null;
+
+            if (xo.hasSocket(CLOCK_RATE)) {
+                meanRateParameter = (Parameter) xo.getSocketChild(CLOCK_RATE);
+            }
+
+            boolean ratesAreMultipliers = false;
+            if (xo.hasAttribute(RATES_ARE_MULTIPLIERS)) {
+                ratesAreMultipliers = xo.getBooleanAttribute(RATES_ARE_MULTIPLIERS);
+            }
+
+            Logger.getLogger("dr.evomodel").info("Using random local clock (RLC) model.");
+            Logger.getLogger("dr.evomodel").info("  rates at change points are parameterized to be " + (ratesAreMultipliers ? " multipliers of parent rates." : "independent of parent rates."));
+
+            return new RandomLocalClockModel(tree, meanRateParameter, rateIndicatorParameter, ratesParameter, ratesAreMultipliers);
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return
+                    "This element returns an random local clock (RLC) model." +
+                            "Each branch either has a new independent rate or " +
+                            "inherits the rate of the branch above it depending on the indicator vector.";
+        }
+
+        public Class getReturnType() {
+            return RandomLocalClockModel.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(TreeModel.class),
+                new ElementRule(RATE_INDICATORS, Parameter.class, "The rate change indicators parameter", false),
+                new ElementRule(RATES, Parameter.class, "The rate changes parameter", false),
+                new ElementRule(CLOCK_RATE, Parameter.class, "The mean rate across all local clocks", true),
+                AttributeRule.newBooleanRule(RATES_ARE_MULTIPLIERS, false)
+        };
+    };
+
+    Parameter meanRateParameter;
 }

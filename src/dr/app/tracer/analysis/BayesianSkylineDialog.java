@@ -1,3 +1,28 @@
+/*
+ * BayesianSkylineDialog.java
+ *
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.tracer.analysis;
 
 import dr.inference.trace.TraceDistribution;
@@ -27,7 +52,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Set;
 
 public class BayesianSkylineDialog {
 
@@ -113,8 +138,7 @@ public class BayesianSkylineDialog {
             ch = argument.charAt(i);
         }
 
-        String suffix = argument.substring(i + 1, argument.length());
-        return suffix;
+        return argument.substring(i + 1, argument.length());
     }
 
     private int getTraceRange(TraceList traceList, int first) {
@@ -133,7 +157,7 @@ public class BayesianSkylineDialog {
 
     public int showDialog(TraceList traceList, TemporalAnalysisFrame temporalAnalysisFrame) {
 
-        HashSet roots = new HashSet();
+        Set<String> roots = new HashSet<String>();
         for (int j = 0; j < traceList.getTraceCount(); j++) {
             String statistic = traceList.getTraceName(j);
             String suffix = getNumericalSuffix(statistic);
@@ -149,9 +173,8 @@ public class BayesianSkylineDialog {
         for (int i = 0; i < argumentCombos.length; i++) {
             argumentCombos[i].removeAllItems();
 
-            Iterator iter = roots.iterator();
-            while (iter.hasNext()) {
-                argumentCombos[i].addItem((String) iter.next());
+            for (String root : roots) {
+                argumentCombos[i].addItem(root);
             }
 
             int index = findArgument(argumentCombos[i], argumentTraces[i]);
@@ -211,14 +234,14 @@ public class BayesianSkylineDialog {
 
         int result = JOptionPane.CANCEL_OPTION;
 
-        boolean done = true;
+        boolean done;
         do {
             done = true;
             dialog.setVisible(true);
 
             Integer value = (Integer) optionPane.getValue();
-            if (value != null && value.intValue() != -1) {
-                result = value.intValue();
+            if (value != null && value != -1) {
+                result = value;
             }
 
             if (result == JOptionPane.OK_OPTION) {
@@ -229,7 +252,7 @@ public class BayesianSkylineDialog {
                     done = false;
                 } else {
                     for (int i = 0; i < argumentCombos.length; i++) {
-                        argumentTraces[i] = (String) argumentCombos[i].getSelectedItem() + "1";
+                        argumentTraces[i] = argumentCombos[i].getSelectedItem() + "1";
                     }
                     rootHeightTrace = (String) rootHeightCombo.getSelectedItem();
                 }
@@ -333,8 +356,8 @@ public class BayesianSkylineDialog {
         TemporalAnalysisFrame frame;
 
         int binCount = binCountField.getValue();
-        double minTime = 0.0;
-        double maxTime = 0.0;
+        double minTime;
+        double maxTime;
         boolean manualRange = manualRangeCheckBox.isSelected();
         if (manualRange) {
             minTime = minTimeField.getValue();
@@ -439,7 +462,6 @@ public class BayesianSkylineDialog {
 
         private int lengthOfTask = 0;
         private int current = 0;
-        private String message;
         private boolean isLinear;
 
         public AnalyseBayesianSkylineTask(TraceList traceList, File treeFile, int firstPopSize, int popSizeCount,
@@ -487,7 +509,7 @@ public class BayesianSkylineDialog {
         }
 
         public String getMessage() {
-            return message;
+            return null;
         }
 
         public Object doWork() {
@@ -567,7 +589,7 @@ public class BayesianSkylineDialog {
 
                 String line = reader.readLine();
 
-                TreeImporter importer = null;
+                TreeImporter importer;
                 if (line.toUpperCase().startsWith("#NEXUS")) {
                     importer = new NexusImporter(reader);
                 } else {
@@ -651,7 +673,7 @@ public class BayesianSkylineDialog {
                 }
 
                 Variate[] bins = new Variate[binCount];
-                double height = 0.0;
+                double height;
                 if (ageOfYoungest > 0.0) {
                     height = ageOfYoungest - maxTime;
                 } else {
@@ -717,13 +739,13 @@ public class BayesianSkylineDialog {
                 } else {
                     t = minTime;
                 }
-                for (int i = 0; i < bins.length; i++) {
+                for (Variate bin : bins) {
                     xData.add(t);
-                    if (bins[i].getCount() > 0) {
-                        yDataMean.add(bins[i].getMean());
-                        yDataMedian.add(bins[i].getQuantile(0.5));
-                        yDataLower.add(bins[i].getQuantile(0.025));
-                        yDataUpper.add(bins[i].getQuantile(0.975));
+                    if (bin.getCount() > 0) {
+                        yDataMean.add(bin.getMean());
+                        yDataMedian.add(bin.getQuantile(0.5));
+                        yDataLower.add(bin.getQuantile(0.025));
+                        yDataUpper.add(bin.getQuantile(0.975));
                     } else {
                         yDataMean.add(Double.NaN);
                         yDataMedian.add(Double.NaN);
@@ -761,7 +783,4 @@ public class BayesianSkylineDialog {
             return popSizes[index][state];
         }
     }
-
-    ;
-
 }

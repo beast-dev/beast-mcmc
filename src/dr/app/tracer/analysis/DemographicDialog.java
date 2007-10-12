@@ -1,3 +1,28 @@
+/*
+ * DemographicDialog.java
+ *
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.tracer.analysis;
 
 import dr.inference.trace.TraceDistribution;
@@ -161,8 +186,8 @@ public class DemographicDialog {
 
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();
-        if (value != null && value.intValue() != -1) {
-            result = value.intValue();
+        if (value != null && value != -1) {
+            result = value;
         }
 
         if (result == JOptionPane.OK_OPTION) {
@@ -257,8 +282,8 @@ public class DemographicDialog {
         TemporalAnalysisFrame frame;
 
         int binCount = binCountField.getValue();
-        double minTime = 0.0;
-        double maxTime = 0.0;
+        double minTime;
+        double maxTime;
         boolean manualRange = manualRangeCheckBox.isSelected();
         if (manualRange) {
             minTime = minTimeField.getValue();
@@ -317,7 +342,6 @@ public class DemographicDialog {
 
         private int lengthOfTask = 0;
         private int current = 0;
-        private String message;
 
         public AnalyseDemographicTask(TraceList traceList, TemporalAnalysisFrame frame) {
             this.traceList = traceList;
@@ -342,7 +366,7 @@ public class DemographicDialog {
         }
 
         public String getMessage() {
-            return message;
+            return null;
         }
 
         public Object doWork() {
@@ -447,7 +471,7 @@ public class DemographicDialog {
                     current++;
                 }
 
-            } else      
+            } else
             if (demographicCombo.getSelectedIndex() == 1) { // Exponential Growth (Growth Rate)
                 title = "Exponential Growth";
                 ExponentialGrowth demo = new ExponentialGrowth();
@@ -551,13 +575,13 @@ public class DemographicDialog {
             } else {
                 t = minTime;
             }
-            for (int i = 0; i < bins.length; i++) {
+            for (Variate bin : bins) {
                 xData.add(t);
-                if (bins[i].getCount() > 0) {
-                    yDataMean.add(bins[i].getMean());
-                    yDataMedian.add(bins[i].getQuantile(0.5));
-                    yDataLower.add(bins[i].getQuantile(0.025));
-                    yDataUpper.add(bins[i].getQuantile(0.975));
+                if (bin.getCount() > 0) {
+                    yDataMean.add(bin.getMean());
+                    yDataMedian.add(bin.getQuantile(0.5));
+                    yDataLower.add(bin.getQuantile(0.025));
+                    yDataUpper.add(bin.getQuantile(0.975));
                 } else {
                     yDataMean.add(Double.NaN);
                     yDataMedian.add(Double.NaN);
@@ -581,7 +605,7 @@ public class DemographicDialog {
         }
 
         private void addDemographic(Variate[] bins, int binCount, double maxHeight, double delta, DemographicFunction demo) {
-            double height = 0.0;
+            double height;
             if (ageOfYoungest > 0.0) {
                 height = ageOfYoungest - maxTime;
             } else {
@@ -597,7 +621,4 @@ public class DemographicDialog {
             current++;
         }
     }
-
-    ;
-
 }

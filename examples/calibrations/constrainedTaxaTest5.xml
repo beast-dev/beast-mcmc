@@ -1,5 +1,5 @@
 <?xml version="1.0" standalone="yes"?>
-<!-- simple test 4: double containment -->
+<!-- simple test 4: two disjoint constraints inside another constraint -->
 <beast>
 
     <taxa id="taxa">

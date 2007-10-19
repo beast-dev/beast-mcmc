@@ -1,5 +1,5 @@
 <?xml version="1.0" standalone="yes"?>
-<!-- simple test 6: two constraints -->
+<!-- simple test 6: two constraints, both with root heights -->
 <beast>
 
     <taxa id="taxa">

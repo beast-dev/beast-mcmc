@@ -1,5 +1,5 @@
 <?xml version="1.0" standalone="yes"?>
-<!-- simple test 3: when constraints contain all taxa -->
+<!-- simple test 3: two none ovelapping constraints -->
 <beast>
 
     <taxa id="taxa">

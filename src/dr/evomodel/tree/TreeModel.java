@@ -340,6 +340,10 @@ public class TreeModel extends AbstractModel implements MutableTree {
 	public final NodeRef getNode(int i) {
 		return nodes[i];
 	}
+   
+   public NodeRef [] getNodes() {
+      return nodes;
+   }
 
 	/**
 	 * Returns the number of external nodes.

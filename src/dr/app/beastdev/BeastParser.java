@@ -271,16 +271,23 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.model.MatrixParameter.PARSER);
 		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.MVN_PRIOR_PARSER);
 		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.WISHART_PRIOR_PARSER);
+		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.INV_WISHART_PRIOR_PARSER);
 		addXMLObjectParser(dr.inference.operators.PrecisionMatrixGibbsOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.InternalTraitGibbsOperator.PARSER);
 		addXMLObjectParser(dr.inference.model.CorrelationStatistic.PARSER);
 		addXMLObjectParser(dr.inference.operators.RandomWalkOnMapOperator.PARSER);
+		addXMLObjectParser(dr.inference.model.DesignMatrix.PARSER);
+		addXMLObjectParser(dr.inference.distribution.GeneralizedLinearModel.PARSER);
 
+		//Multivariate OU Process
+		addXMLObjectParser(dr.inference.operators.MVOUCovarianceOperator.PARSER);
+		addXMLObjectParser(dr.inference.model.DummyModel.PARSER);
+		addXMLObjectParser(dr.inference.operators.RegressionGibbsOperator.PARSER);
+		addXMLObjectParser(dr.inference.distribution.MultivariateOUModel.PARSER);
+		addXMLObjectParser(dr.evomodel.substmodel.PositiveDefiniteSubstitutionModel.PARSER);
+		addXMLObjectParser(dr.inference.model.DiagonalMatrix.PARSER);
+		addXMLObjectParser(dr.inference.model.CompoundSymmetricMatrix.PARSER);
 
-	        //Multivariate OU Process
-        	addXMLObjectParser(dr.inference.operators.MVOUCovarianceOperator.PARSER);
-        	addXMLObjectParser(dr.inference.model.DummyModel.PARSER);
-	
 		//GMRF
 		addXMLObjectParser(dr.evomodel.coalescent.GMRFSkylineLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkylineFixedEffectsGibbsOperator.PARSER);

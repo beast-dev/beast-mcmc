@@ -15,112 +15,129 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
  */
 public class MultivariateNormalDistribution implements MultivariateDistribution {
 
-    public static final String TYPE = "MultivariateNormal";
+	public static final String TYPE = "MultivariateNormal";
 
-    private double[] mean;
-    private double[][] precision;
-    //	private int dim;
-    private double logDet;
+	private double[] mean;
+	private double[][] precision;
+	//	private int dim;
+	private double logDet;
 
-    public MultivariateNormalDistribution(double[] mean, double[][] precision) {
-        this.mean = mean;
-        this.precision = precision;
-        logDet = calculatePrecisionMatrixDeterminate(precision);
+	public MultivariateNormalDistribution(double[] mean, double[][] precision) {
+		this.mean = mean;
+		this.precision = precision;
+		logDet = calculatePrecisionMatrixDeterminate(precision);
 
-    }
+	}
 
-    public String getType() {
-        return TYPE;
-    }
+	public String getType() {
+		return TYPE;
+	}
 
-    public double[][] getScaleMatrix() {
-        return precision;
-    }
+	public double[][] getScaleMatrix() {
+		return precision;
+	}
 
-    public double[] getMean() {
-        return mean;
-    }
+	public double[] getMean() {
+		return mean;
+	}
 
-    public static final double calculatePrecisionMatrixDeterminate(double[][] precision) {
-        try {
-            return (new Matrix(precision).determinant());
-        } catch (
-                IllegalDimension e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }
+	public static final double calculatePrecisionMatrixDeterminate(double[][] precision) {
+		try {
+			return Math.log(new Matrix(precision).determinant());
+		} catch (
+				IllegalDimension e) {
+			throw new RuntimeException(e.getMessage());
+		}
+	}
 
-    public double logPdf(Parameter x) {
-        return logPdf(x.getParameterValues(), mean, precision, logDet, 1.0);
-    }
+	public double logPdf(double[] x) {
+		return logPdf(x, mean, precision, logDet, 1.0);
+	}
 
-    public static final double logPdf(double[] x, double[] mean, double[][] precision,
-                                      double logDet, double scale) {
-        int dim = x.length;
-        double[] delta = new double[dim];
-        double[] tmp = new double[dim];
+	public double logPdf(Parameter x) {
+		return logPdf(x.getParameterValues(), mean, precision, logDet, 1.0);
+	}
 
-        for (int i = 0; i < dim; i++) {
-            delta[i] = x[i] - mean[i];
-        }
+	public static final double logPdf(double[] x, double[] mean, double[][] precision,
+	                                  double logDet, double scale) {
+		int dim = x.length;
+		double[] delta = new double[dim];
+		double[] tmp = new double[dim];
 
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-                tmp[i] += delta[j] * precision[j][i];
-            }
-        }
+		for (int i = 0; i < dim; i++) {
+			delta[i] = x[i] - mean[i];
+		}
 
-        double SSE = 0;
+		for (int i = 0; i < dim; i++) {
+			for (int j = 0; j < dim; j++) {
+				tmp[i] += delta[j] * precision[j][i];
+			}
+		}
 
-        for (int i = 0; i < dim; i++)
-            SSE += tmp[i] * delta[i];
+		double SSE = 0;
 
-        SSE /= scale;
+		for (int i = 0; i < dim; i++)
+			SSE += tmp[i] * delta[i];
 
-        return dim * logNormalize + 0.5 * logDet - 0.5 * SSE;
+		SSE /= scale;
+//	    System.err.println("here");
+//	    System.err.println("x = "+new Vector(x));
+//	    System.err.println("mean = "+new Vector(mean));
+//	    System.err.println("precision = "+new Matrix(precision));
+//	    System.err.println("SSE = "+SSE);
+//	    System.err.println("logDet = "+logDet);
+//	    System.err.println("dim = "+dim);
+//	    System.err.println("logN = "+logNormalize);
 
-    }
+		return dim * logNormalize + 0.5 * logDet - 0.5 * SSE;
+
+	}
 
 //	public double[][] inverseScaleMatrix() {
 //			return inverseScaleMatrix;
 //		}
 
-    public double[] nextMultivariateNormal() {
-        return nextMultivariateNormal(mean, precision);
-    }
+	public double[] nextMultivariateNormal() {
+		return nextMultivariateNormalPrecision(mean, precision);
+	}
 
 
-    public static double[] nextMultivariateNormal(double[] mean, double[][] precision) {
+	public static double[] nextMultivariateNormalPrecision(double[] mean, double[][] precision) {
 
-        int dim = mean.length;
+		double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();
+		return nextMultivariateNormalVariance(mean, variance);
 
-        double[][] cholesky = null;
+	}
 
-        double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();
+	public static double[] nextMultivariateNormalVariance(double[] mean, double[][] variance) {
 
-        try {
-            cholesky = (new CholeskyDecomposition(variance)).getL();
-        } catch (IllegalDimension illegalDimension) {
-            // todo - check for square variance matrix before here
-        }
+		int dim = mean.length;
 
-        double[] x = new double[dim];
-        for (int i = 0; i < dim; i++)
-            x[i] = mean[i];
+		double[][] cholesky = null;
 
-        double[] epsilon = new double[dim];
-        for (int i = 0; i < dim; i++)
-            epsilon[i] = MathUtils.nextGaussian();
+		try {
+			cholesky = (new CholeskyDecomposition(variance)).getL();
+		} catch (IllegalDimension illegalDimension) {
+			// todo - check for square variance matrix before here
+		}
 
-        for (int i = 0; i < dim; i++) {
-            for (int j = i; j < dim; j++) {
-                x[i] += cholesky[j][i] * epsilon[j];
-                // caution: decomposition returns lower triangular
-            }
-        }
-        return x;
-    }
+		double[] x = new double[dim];
+		for (int i = 0; i < dim; i++)
+			x[i] = mean[i];
 
-    public static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);
+		double[] epsilon = new double[dim];
+		for (int i = 0; i < dim; i++)
+			epsilon[i] = MathUtils.nextGaussian();
+
+		for (int i = 0; i < dim; i++) {
+			for (int j = i; j < dim; j++) {
+				x[i] += cholesky[j][i] * epsilon[j];
+				// caution: decomposition returns lower triangular
+			}
+		}
+		return x;
+	}
+
+	public static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);
 
 }

@@ -9,7 +9,7 @@ import dr.xml.*;
  * data type.
  *
  * @author Marc Suchard
- * @version $Id: SVSGeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 alexei Exp $
+ * @version $Id: SVSGeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 msuchard Exp $
  */
 
 public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {

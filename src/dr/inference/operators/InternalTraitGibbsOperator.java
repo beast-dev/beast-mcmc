@@ -45,7 +45,7 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 //	public static final String MEAN = "mean";
 //	public static final String PRIOR = "prior";
 
-//	private Parameter outcomeParam;
+	//	private Parameter outcomeParam;
 	//	private Parameter meanParam;
 	//	private MatrixParameter precisionParam;
 	//	private WishartDistribution priorDistribution;
@@ -94,7 +94,7 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 //		double weightTotal = 0;
 
 //		double[] weights = new double[childCount+1];
-		double weight = 1.0 / treeModel.getBranchLength(node);
+		double weight = 1.0 / treeModel.getBranchLength(node) / treeModel.getNodeRate(node);
 		double[] trait = treeModel.getMultivariateNodeTrait(parent, "trait");
 
 		for (int i = 0; i < dim; i++)
@@ -105,7 +105,7 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 		for (int j = 0; j < treeModel.getChildCount(node); j++) {
 			NodeRef child = treeModel.getChild(node, j);
 			trait = treeModel.getMultivariateNodeTrait(child, "trait");
-			weight = 1.0 / treeModel.getBranchLength(child);
+			weight = 1.0 / treeModel.getBranchLength(child) / treeModel.getNodeRate(child);
 			for (int i = 0; i < dim; i++)
 				weightedAverage[i] += trait[i] * weight;
 			weightTotal += weight;
@@ -117,7 +117,7 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 				precision[j][i] = precision[i][j] *= weightTotal;
 		}
 
-		double[] draw = MultivariateNormalDistribution.nextMultivariateNormal(
+		double[] draw = MultivariateNormalDistribution.nextMultivariateNormalPrecision(
 				weightedAverage, precision);
 
 		treeModel.setMultivariateTrait(node, "trait", draw);

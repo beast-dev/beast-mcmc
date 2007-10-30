@@ -1,55 +1,47 @@
 package dr.inference.distribution;
 
-import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Jan 2, 2007
- * Time: 3:58:50 PM
- * To change this template use File | Settings | File Templates.
+ * @author Marc Suchard
  */
 public class LinearRegression extends GeneralizedLinearModel {
 
-    protected double calculateLogLikelihood() {
-        return 0;
-    }
+	private static final double normalizingConstant = -0.5 * Math.log(2 * Math.PI);
 
-    public LinearRegression(Parameter dependentParam, Parameter independentParam, DesignMatrix designMatrix) {
-        super(dependentParam, independentParam, designMatrix);
-    }
+	protected double calculateLogLikelihood() {
+		double logLikelihood = 0;
+		double[] xBeta = getXBeta();
+		double[] precision = getScale();
 
-    protected double calculateLogLikelihoodAndGradient(double[] beta, double[] gradient) {
-        return 0;
-    }
+		for (int i = 0; i < N; i++) {    // assumes that all observations are independent given fixed and random effects
+
+			double y = dependentParam.getParameterValue(i);
+			logLikelihood += 0.5 * Math.log(precision[i]) - 0.5 * (y - xBeta[i]) * (y - xBeta[i]) * precision[i];
+
+		}
+		return N * normalizingConstant + logLikelihood;
+	}
+
+	public LinearRegression(Parameter dependentParam) { //, Parameter independentParam, DesignMatrix designMatrix) {
+		super(dependentParam); //, independentParam, designMatrix);
+		System.out.println("Constructing a linear regression model");
+	}
+
+	protected double calculateLogLikelihoodAndGradient(double[] beta, double[] gradient) {
+		return 0;
+	}
 
 
-    protected boolean requiresScale() {
-        return true;
-    }
+	protected boolean requiresScale() {
+		return true;
+	}
 
-    protected double calculateLogLikelihood(double[] beta) {
-        double logLikelihood = 0;
+	protected double calculateLogLikelihood(double[] beta) {
+		throw new RuntimeException("Optimization not yet implemented.");
+	}
 
-        final int K = beta.length;
-        final int N = dependentParam.getDimension();
-
-        for (int i = 0; i < N; i++) {
-            // for each "pseudo"-datum
-            double xBeta = 0;
-            for (int k = 0; k < K; k++) {
-                xBeta += designMatrix.getParameterValue(i, k) * beta[k];
-            }
-
-//            logLikelihood += dependentParam.getParameterValue(i) * xBeta
-//                    - Math.log(1.0 + Math.exp(xBeta));
-//                                               todo
-        }
-        return logLikelihood;
-    }
-
-    protected boolean confirmIndependentParameters() {
-        return true;
-    }
+	protected boolean confirmIndependentParameters() {
+		return true;
+	}
 }

@@ -1,6 +1,5 @@
 package dr.inference.distribution;
 
-import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
 
 /**
@@ -13,64 +12,42 @@ import dr.inference.model.Parameter;
 public class LogisticRegression extends GeneralizedLinearModel {
 
 
-    public LogisticRegression(Parameter dependentParam, Parameter independentParam, DesignMatrix designMatrix) {
-        super(dependentParam, independentParam, designMatrix);
-    }
+	public LogisticRegression(Parameter dependentParam) { //, Parameter independentParam, DesignMatrix designMatrix) {
+		super(dependentParam);//, independentParam, designMatrix);
+	}
 
 
-    protected double calculateLogLikelihoodAndGradient(double[] beta, double[] gradient) {
-        return 0;  // todo
-    }
+	protected double calculateLogLikelihoodAndGradient(double[] beta, double[] gradient) {
+		return 0;  // todo
+	}
 
-    protected double calculateLogLikelihood(double[] beta) {
-        // logLikelihood calculation for logistic regression
-        double logLikelihood = 0;
+	protected double calculateLogLikelihood(double[] beta) {
+		// logLikelihood calculation for logistic regression
+		throw new RuntimeException("Not yet implemented for optimization");
+	}
 
-        final int K = beta.length;
-        final int N = dependentParam.getDimension();
+	protected boolean requiresScale() {
+		return false;
+	}
 
-        for (int i = 0; i < N; i++) {
-            // for each "pseudo"-datum
-            double xBeta = 0;
-            for (int k = 0; k < K; k++) {
-                xBeta += designMatrix.getParameterValue(i, k) * beta[k];
-            }
+	protected double calculateLogLikelihood() {
+		// logLikelihood calculation for logistic regression
+		double logLikelihood = 0;
 
-            logLikelihood += dependentParam.getParameterValue(i) * xBeta
-                    - Math.log(1.0 + Math.exp(xBeta));
+		double[] xBeta = getXBeta();
 
-        }
-        return logLikelihood;
-    }
+		for (int i = 0; i < N; i++) {
+			// for each "pseudo"-datum
+			logLikelihood += dependentParam.getParameterValue(i) * xBeta[i]
+					- Math.log(1.0 + Math.exp(xBeta[i]));
 
-    protected boolean requiresScale() {
-        return false;
-    }
-
-    protected double calculateLogLikelihood() {
-        // logLikelihood calculation for logistic regression
-        double logLikelihood = 0;
-
-        final int K = independentParam.getDimension();
-        final int N = dependentParam.getDimension();
-
-        for (int i = 0; i < N; i++) {
-            // for each "pseudo"-datum
-            double xBeta = 0;
-            for (int k = 0; k < K; k++) {
-                xBeta += designMatrix.getParameterValue(i, k) * independentParam.getParameterValue(k);
-            }
-
-            logLikelihood += dependentParam.getParameterValue(i) * xBeta
-                    - Math.log(1.0 + Math.exp(xBeta));
-
-        }
-        return logLikelihood;
-    }
+		}
+		return logLikelihood;
+	}
 
 
-    public boolean confirmIndependentParameters() {
-        // todo -- check that independent parameters \in {0,1} only
-        return true;
-    }
+	public boolean confirmIndependentParameters() {
+		// todo -- check that independent parameters \in {0,1} only
+		return true;
+	}
 }

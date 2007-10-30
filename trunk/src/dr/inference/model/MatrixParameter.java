@@ -6,11 +6,7 @@ import dr.xml.*;
 //import dr.xml.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Dec 29, 2006
- * Time: 11:50:21 AM
- * To change this template use File | Settings | File Templates.
+ * @author Marc Suchard
  */
 public class MatrixParameter extends CompoundParameter {
 

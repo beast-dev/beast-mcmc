@@ -37,25 +37,28 @@ public class WishartDistribution implements MultivariateDistribution {
 		Sinv = S.inverse();
 
 		computeNormalizationConstant();
-//		testMe();
+
 	}
 
 
 	private void computeNormalizationConstant() {
-		logNormalizationConstant = 0;
+		logNormalizationConstant = computeNormalizationConstant(new Matrix(inverseScaleMatrix), df, dim);
+	}
+
+	public static double computeNormalizationConstant(Matrix Sinv, int df, int dim) {
+
+		double logNormalizationConstant = 0;
 		try {
-			logNormalizationConstant = -df / 2.0 * Math.log(new Matrix(inverseScaleMatrix).determinant());
+			logNormalizationConstant = -df / 2.0 * Math.log(Sinv.determinant());
 		} catch (IllegalDimension illegalDimension) {
 			illegalDimension.printStackTrace();
 		}
 		logNormalizationConstant -= df * dim / 2.0 * Math.log(2);
 		logNormalizationConstant -= dim * (dim - 1) / 4.0 * Math.log(Math.PI);
-		System.err.println("df = " + df);
 		for (int i = 1; i <= dim; i++) {
 			logNormalizationConstant -= GammaFunction.lnGamma((df + 1 - i) / 2.0);
-			System.err.println(GammaFunction.lnGamma((df + 1 - i) / 2.0));
 		}
-
+		return logNormalizationConstant;
 	}
 
 
@@ -179,8 +182,28 @@ public class WishartDistribution implements MultivariateDistribution {
 
 		double logDensity = 0;
 
+//		System.err.println("yoyo "+df+" "+dim);
+
+		double det = 0;
 		try {
-			logDensity = Math.log(W.determinant());
+			if (!W.isPD())
+				return Double.NEGATIVE_INFINITY;
+
+			det = W.determinant();
+//		} catch (IllegalDimension illegalDimension) {
+//			illegalDimension.printStackTrace();
+//		}
+
+			if (det <= 0) {
+//			System.err.println("Not PD:\n"+W);
+//			System.err.println("det = "+det);
+//			System.exit(-1);
+				return Double.NEGATIVE_INFINITY;
+			}
+
+//		try {
+//			logDensity = Math.log(W.determinant());
+			logDensity = Math.log(det);
 
 			logDensity *= 0.5;
 			logDensity *= df - dim - 1;

@@ -40,139 +40,139 @@ import dr.xml.*;
  */
 public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    public static final String VARIANCE_OPERATOR = "precisionGibbsOperator";
-    public static final String PRECISION_MATRIX = "precisionMatrix";
-    public static final String TREE_MODEL = "treeModel";
-    public static final String OUTCOME = "outcome";
-    public static final String MEAN = "mean";
-    public static final String PRIOR = "prior";
+	public static final String VARIANCE_OPERATOR = "precisionGibbsOperator";
+	public static final String PRECISION_MATRIX = "precisionMatrix";
+	public static final String TREE_MODEL = "treeModel";
+	public static final String OUTCOME = "outcome";
+	public static final String MEAN = "mean";
+	public static final String PRIOR = "prior";
 
-    //	private Parameter outcomeParam;
-    //	private Parameter meanParam;
-    private MatrixParameter precisionParam;
-    private WishartDistribution priorDistribution;
-    private int priorDf;
-    //	private double[][] priorScaleMatrix;
-    private SymmetricMatrix priorScaleMatrix;
-    private TreeModel treeModel;
-    private int dim;
-    private int numberObservations;
+	//	private Parameter outcomeParam;
+	//	private Parameter meanParam;
+	private MatrixParameter precisionParam;
+	private WishartDistribution priorDistribution;
+	private int priorDf;
+	//	private double[][] priorScaleMatrix;
+	private SymmetricMatrix priorScaleMatrix;
+	private TreeModel treeModel;
+	private int dim;
+	private int numberObservations;
 //	private int weight;
 
-    public PrecisionMatrixGibbsOperator(//Parameter outcomeParam, Parameter meanParam,
-                                        MatrixParameter precisionParam,
-                                        WishartDistribution priorDistribution,
-                                        TreeModel treeModel,
-                                        double weight) {
-        super();
+	public PrecisionMatrixGibbsOperator(//Parameter outcomeParam, Parameter meanParam,
+	                                    MatrixParameter precisionParam,
+	                                    WishartDistribution priorDistribution,
+	                                    TreeModel treeModel,
+	                                    double weight) {
+		super();
 //		this.outcomeParam = outcomeParam;
 //		this.meanParam = meanParam;
-        this.precisionParam = precisionParam;
-        this.priorDistribution = priorDistribution;
-        this.priorDf = priorDistribution.df();
+		this.precisionParam = precisionParam;
+		this.priorDistribution = priorDistribution;
+		this.priorDf = priorDistribution.df();
 //		this.priorScaleMatrix = (SymmetricMatrix)(new SymmetricMatrix(priorDistribution.inverseScaleMatrix())).inverse();
-        this.priorScaleMatrix = new SymmetricMatrix(priorDistribution.inverseScaleMatrix());
-        setWeight(weight);
-        this.treeModel = treeModel;
-        dim = precisionParam.getRowDimension(); // assumed to be square
-        numberObservations = treeModel.getNodeCount() - 1; // do not count the root
+		this.priorScaleMatrix = new SymmetricMatrix(priorDistribution.inverseScaleMatrix());
+		setWeight(weight);
+		this.treeModel = treeModel;
+		dim = precisionParam.getRowDimension(); // assumed to be square
+		numberObservations = treeModel.getNodeCount() - 1; // do not count the root
 
 
-    }
+	}
 
 
-    public int getStepCount() {
-        return 1;
-    }
+	public int getStepCount() {
+		return 1;
+	}
 
-    private void incrementsOuterProduct(double[][] S, NodeRef node) {
+	private void incrementsOuterProduct(double[][] S, NodeRef node) {
 
 //		System.err.println("CALLED");
-        if (!treeModel.isRoot(node)) {
-            NodeRef parent = treeModel.getParent(node);
-            double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, "trait");
-            // todo fix trait name
-            double[] childTrait = treeModel.getMultivariateNodeTrait(node, "trait");
-            double time = treeModel.getBranchLength(node);
+		if (!treeModel.isRoot(node)) {
+			NodeRef parent = treeModel.getParent(node);
+			double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, "trait");
+			// todo fix trait name
+			double[] childTrait = treeModel.getMultivariateNodeTrait(node, "trait");
+			double time = treeModel.getBranchLength(node) * treeModel.getNodeRate(node);
 
-            double sqrtTime = Math.sqrt(time);
+			double sqrtTime = Math.sqrt(time);
 
-            double[] delta = new double[dim];
+			double[] delta = new double[dim];
 
-            for (int i = 0; i < dim; i++)
-                delta[i] = (childTrait[i] - parentTrait[i]) / sqrtTime; // todo check is * time?
+			for (int i = 0; i < dim; i++)
+				delta[i] = (childTrait[i] - parentTrait[i]) / sqrtTime; // todo check is * time?
 
-            for (int i = 0; i < dim; i++) {            // symmetric matrix,
-                for (int j = i; j < dim; j++)
-                    S[j][i] = S[i][j] += delta[i] * delta[j];
+			for (int i = 0; i < dim; i++) {            // symmetric matrix,
+				for (int j = i; j < dim; j++)
+					S[j][i] = S[i][j] += delta[i] * delta[j];
 //				for(int j=0; j<dim; j++)
 //					S[i][j] += delta[i] * delta[j];
-            }
-        }
-        // recurse down tree
-        for (int i = 0; i < treeModel.getChildCount(node); i++)
-            incrementsOuterProduct(S, treeModel.getChild(node, i));
-    }
+			}
+		}
+		// recurse down tree
+		for (int i = 0; i < treeModel.getChildCount(node); i++)
+			incrementsOuterProduct(S, treeModel.getChild(node, i));
+	}
 
 
-    public double doOperation() throws OperatorFailedException {
-        // calculate sum-of-the-weighted-squares matrix over tree
+	public double doOperation() throws OperatorFailedException {
+		// calculate sum-of-the-weighted-squares matrix over tree
 
 //		System.err.println("DRAWING NEW PRECISION");
-        double[][] S = new double[dim][dim];
-        SymmetricMatrix S2 = null;
-        SymmetricMatrix inverseS2 = null;
+		double[][] S = new double[dim][dim];
+		SymmetricMatrix S2 = null;
+		SymmetricMatrix inverseS2 = null;
 //		Matrix S = new Matrix(dim,dim)l
-        incrementsOuterProduct(S, treeModel.getRoot());
+		incrementsOuterProduct(S, treeModel.getRoot());
 
 //		System.err.println("S = \n"+(new SymmetricMatrix(S)).toString());
-        try {
-            S2 = priorScaleMatrix.add(new SymmetricMatrix(S));
-            inverseS2 = (SymmetricMatrix) S2.inverse();
+		try {
+			S2 = priorScaleMatrix.add(new SymmetricMatrix(S));
+			inverseS2 = (SymmetricMatrix) S2.inverse();
 //			System.err.println(priorScaleMatrix.toString());
 //			System.err.println(S2.toString());
 //			System.err.println(inverseS2.toString());
 
-        } catch (IllegalDimension illegalDimension) {
-            illegalDimension.printStackTrace();
-        }
+		} catch (IllegalDimension illegalDimension) {
+			illegalDimension.printStackTrace();
+		}
 
-        int df = priorDf + numberObservations;
+		int df = priorDf + numberObservations;
 
-        double[][] draw = WishartDistribution.nextWishart(df, inverseS2.toComponents());
+		double[][] draw = WishartDistribution.nextWishart(df, inverseS2.toComponents());
 //		System.err.println("SETTING VALUES");
 
-        for (int i = 0; i < dim; i++) {
-            Parameter column = precisionParam.getParameter(i);
-            for (int j = 0; j < dim; j++)
-                column.setParameterValueQuietly(j, draw[j][i]);
-        }
+		for (int i = 0; i < dim; i++) {
+			Parameter column = precisionParam.getParameter(i);
+			for (int j = 0; j < dim; j++)
+				column.setParameterValueQuietly(j, draw[j][i]);
+		}
 //		System.err.println("FIRING CHANGE");
-        precisionParam.fireParameterChangedEvent();
+		precisionParam.fireParameterChangedEvent();
 //		System.err.println("CHANGE DONE");
 
 //		System.exit(0);
 
 
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+		return 0;  //To change body of implemented methods use File | Settings | File Templates.
 
-    }
+	}
 
-    public String getPerformanceSuggestion() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+	public String getPerformanceSuggestion() {
+		return null;  //To change body of implemented methods use File | Settings | File Templates.
+	}
 
-    public String getOperatorName() {
-        return VARIANCE_OPERATOR;
-    }
+	public String getOperatorName() {
+		return VARIANCE_OPERATOR;
+	}
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
-        public String getParserName() {
-            return VARIANCE_OPERATOR;
-        }
+		public String getParserName() {
+			return VARIANCE_OPERATOR;
+		}
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 //			int mode = CoercableMCMCOperator.DEFAULT;
 //
@@ -184,7 +184,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 //				}
 //			}
 
-            double weight = xo.getDoubleAttribute(WEIGHT);
+			double weight = xo.getDoubleAttribute(WEIGHT);
 //			double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 //
 //			if (scaleFactor <= 0.0) {
@@ -198,20 +198,20 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 //			Parameter meanParam = (Parameter) cxo.getChild(Parameter.class);
 
 //			XMLObject cxo = (XMLObject) xo.getChild(TREE_MODEL);
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
 //			cxo = (XMLObject) xo.getChild(PRECISION_MATRIX);
-            MatrixParameter precMatrix = (MatrixParameter) xo.getChild(MatrixParameter.class);
-            MultivariateDistributionLikelihood prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
-            if (!(prior.getDistribution() instanceof WishartDistribution))
-                throw new RuntimeException("Only a Wishart distribution is conjugate for Gibbs sampling");
+			MatrixParameter precMatrix = (MatrixParameter) xo.getChild(MatrixParameter.class);
+			MultivariateDistributionLikelihood prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
+			if (!(prior.getDistribution() instanceof WishartDistribution))
+				throw new RuntimeException("Only a Wishart distribution is conjugate for Gibbs sampling");
 
 //			WishartDistribution prior = (WishartDistribution) xo.getChild(WishartDistribution.class);
 
-            // Make sure precMatrix is square and dim(precMatrix) = dim(parameter)
+			// Make sure precMatrix is square and dim(precMatrix) = dim(parameter)
 
-            if (precMatrix.getColumnDimension() != precMatrix.getRowDimension())
-                throw new XMLParseException("The variance matrix is not square");
+			if (precMatrix.getColumnDimension() != precMatrix.getRowDimension())
+				throw new XMLParseException("The variance matrix is not square");
 
 //			if (precMatrix.getColumnDimension() != outcomeParam.getDimension())
 //				throw new XMLParseException("The parameter and variance matrix have differing dimensions");
@@ -220,29 +220,29 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 //				throw new XMLParseException("The outcome and mean parameters have differing dimensions.");
 
 //			return new MultivariateNormalOperator(parameter, scaleFactor, precMatrix, weight, mode);
-            return new PrecisionMatrixGibbsOperator(
-                    precMatrix, (WishartDistribution) prior.getDistribution(), treeModel, weight);
-        }
+			return new PrecisionMatrixGibbsOperator(
+					precMatrix, (WishartDistribution) prior.getDistribution(), treeModel, weight);
+		}
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
 
-        public String getParserDescription() {
-            return "This element returns a multivariate normal random walk operator on a given parameter.";
-        }
+		public String getParserDescription() {
+			return "This element returns a multivariate normal random walk operator on a given parameter.";
+		}
 
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
+		public Class getReturnType() {
+			return MCMCOperator.class;
+		}
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 //				AttributeRule.newDoubleRule(SCALE_FACTOR),
-                AttributeRule.newDoubleRule(WEIGHT),
+				AttributeRule.newDoubleRule(WEIGHT),
 //				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
 //				new ElementRule(OUTCOME,
 //						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
@@ -250,18 +250,18 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 //								new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
 //				new ElementRule(TREE_MODEL,
 //								new XMLSyntaxRule[]{
-                new ElementRule(TreeModel.class),
+				new ElementRule(TreeModel.class),
 //										)}),
 //				new ElementRule(PRIOR,
 //								new XMLSyntaxRule[]{new ElementRule(WishartDistribution.class)}),
 //
 //				new ElementRule(Parameter.class),
-                new ElementRule(MultivariateDistributionLikelihood.class),
+				new ElementRule(MultivariateDistributionLikelihood.class),
 //				new ElementRule(PRECISION_MATRIX,
 //						new XMLSyntaxRule[]{
-                new ElementRule(MatrixParameter.class)
-        };
+				new ElementRule(MatrixParameter.class)
+		};
 
-    };
+	};
 
 }

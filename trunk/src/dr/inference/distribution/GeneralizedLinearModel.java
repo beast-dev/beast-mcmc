@@ -7,12 +7,11 @@ import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Dec 29, 2006
- * Time: 11:01:02 AM
- * To change this template use File | Settings | File Templates.
+ * @author Marc Suchard
  */
 public abstract class GeneralizedLinearModel extends AbstractModel implements Likelihood, MultivariateFunction {
 //		, RealFunctionOfSeveralVariablesWithGradient {
@@ -23,22 +22,139 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 	public static final String INDEPENDENT_VARIABLES = "independentVariables";
 	public static final String BASIS_MATRIX = "basis";
 	public static final String FAMILY = "family";
-	public static final String SCALE = "scaleParameter";
+	public static final String SCALE_VARIABLES = "scaleVariables";
 	public static final String LOGISTIC_REGRESSION = "logistic";
+	public static final String NORMAL_REGRESSION = "normal";
+//	public static final String RANDOM_EFFECTS = "randomEffects";
 
 	protected Parameter dependentParam;
-	protected Parameter independentParam;
-	protected DesignMatrix designMatrix;
+	protected List<Parameter> independentParam;
+	protected List<double[][]> designMatrix; // fixed constants, access as double[][] to save overhead
+
+	protected double[][] scaleDesignMatrix;
 	protected Parameter scaleParameter;
 
-	public GeneralizedLinearModel(Parameter dependentParam, Parameter independentParam,
-	                              DesignMatrix designMatrix) {
+	protected int numIndependentVariables = 0;
+	protected int N;
+
+	protected List<Parameter> randomEffects;
+
+	public GeneralizedLinearModel(Parameter dependentParam) { //, Parameter independentParam,
+//	                              DesignMatrix designMatrix) {
 		super(GLM_LIKELIHOOD);
 		this.dependentParam = dependentParam;
-		this.independentParam = independentParam;
-		this.designMatrix = designMatrix;
-		addParameter(independentParam);
+//		this.independentParam = independentParam;
+//		this.designMatrix = designMatrix;
+//		addParameter(independentParam);
 		addParameter(dependentParam);
+		N = dependentParam.getDimension();
+	}
+
+	public void addIndependentParameter(Parameter effect, DesignMatrix matrix) {
+		if (designMatrix == null)
+			designMatrix = new ArrayList<double[][]>();
+		if (independentParam == null)
+			independentParam = new ArrayList<Parameter>();
+		designMatrix.add(matrix.getParameterAsMatrix());
+		independentParam.add(effect);
+		if (designMatrix.size() != independentParam.size())
+			throw new RuntimeException("Independent variables and their design matrices are out of sync");
+		addParameter(effect);
+		numIndependentVariables++;
+		System.out.println("\tAdding independent predictors '" + effect.getStatisticName() + "' with design matrix '" + matrix.getStatisticName() + "'");
+	}
+
+	public int getNumberOfEffects() {
+		return numIndependentVariables;
+	}
+
+	public double[] getXBeta() {
+
+		double[] xBeta = new double[N];
+
+		for (int j = 0; j < numIndependentVariables; j++) {
+			Parameter beta = independentParam.get(j);
+			double[][] X = designMatrix.get(j);
+			final int K = beta.getDimension();
+			for (int k = 0; k < K; k++) {
+				final double betaK = beta.getParameterValue(k);
+				for (int i = 0; i < N; i++)
+					xBeta[i] += X[i][k] * betaK;
+			}
+		}
+
+		return xBeta;
+
+	}
+
+	public Parameter getEffect(int j) {
+		return independentParam.get(j);
+	}
+
+	public Parameter getDependentVariable() {
+		return dependentParam;
+	}
+
+	public double[] getXBeta(int j) {
+
+		double[] xBeta = new double[N];
+
+		Parameter beta = independentParam.get(j);
+		double[][] X = designMatrix.get(j);
+		final int K = beta.getDimension();
+		for (int k = 0; k < K; k++) {
+			final double betaK = beta.getParameterValue(k);
+			for (int i = 0; i < N; i++)
+				xBeta[i] += X[i][k] * betaK;
+		}
+
+		return xBeta;
+
+	}
+
+	public int getEffectNumber(Parameter effect) {
+		return independentParam.indexOf(effect);
+	}
+
+//	public double[][] getXtScaleX(int j) {
+//
+//		final Parameter beta = independentParam.get(j);
+//		double[][] X = designMatrix.get(j);
+//		final int dim = X[0].length;
+//
+//		if( dim != beta.getDimension() )
+//			throw new RuntimeException("should have checked eariler");
+//
+//		double[] scale = getScale();
+//
+//
+//	}
+
+	public double[][] getX(int j) {
+		return designMatrix.get(j);
+	}
+
+
+	public double[] getScale() {
+
+		double[] scale = new double[N];
+
+		final int K = scaleParameter.getDimension();
+		for (int k = 0; k < K; k++) {
+			final double scaleK = scaleParameter.getParameterValue(k);
+			for (int i = 0; i < N; i++)
+				scale[i] += scaleDesignMatrix[i][k] * scaleK;
+		}
+
+		return scale;
+	}
+
+
+	public double[][] getScaleAsMatrix() {
+
+		double[][] scale = new double[N][N];
+
+		return scale;
 	}
 
 //	protected abstract double calculateLogLikelihoodAndGradient(double[] beta, double[] gradient);
@@ -51,8 +167,9 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 
 	protected abstract boolean requiresScale();
 
-	private void addScaleParameter(Parameter scaleParameter) {
+	private void addScaleParameter(Parameter scaleParameter, DesignMatrix matrix) {
 		this.scaleParameter = scaleParameter;
+		this.scaleDesignMatrix = matrix.getParameterAsMatrix();
 		addParameter(scaleParameter);
 	}
 
@@ -85,15 +202,30 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 	}
 
 	public int getNumArguments() {
-		return independentParam.getDimension();
+		int total = 0;
+		for (Parameter effect : independentParam)
+			total += effect.getDimension();
+		return total;
 	}
 
 	public double getLowerBound(int n) {
-		return independentParam.getBounds().getLowerLimit(n);
+		int which = n;
+		int k = 0;
+		while (which > independentParam.get(k).getDimension()) {
+			which -= independentParam.get(k).getDimension();
+			k++;
+		}
+		return independentParam.get(k).getBounds().getLowerLimit(which);
 	}
 
 	public double getUpperBound(int n) {
-		return independentParam.getBounds().getUpperLimit(n);
+		int which = n;
+		int k = 0;
+		while (which > independentParam.get(k).getDimension()) {
+			which -= independentParam.get(k).getDimension();
+			k++;
+		}
+		return independentParam.get(k).getBounds().getUpperLimit(which);
 	}
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -101,6 +233,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 	}
 
 	protected void handleParameterChangedEvent(Parameter parameter, int index) {
+		// todo store and restore Xbeta and Scale
 	}
 
 	protected void storeState() {
@@ -120,7 +253,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 	}
 
 	public double getLogLikelihood() {
-		return calculateLogLikelihood(independentParam.getParameterValues());
+		return calculateLogLikelihood();
 	}
 
 
@@ -178,35 +311,56 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 			XMLObject cxo = (XMLObject) xo.getChild(DEPENDENT_VARIABLES);
 			Parameter dependentParam = (Parameter) cxo.getChild(Parameter.class);
 
-			cxo = (XMLObject) xo.getChild(INDEPENDENT_VARIABLES);
-			Parameter independentParam = (Parameter) cxo.getChild(Parameter.class);
-
-			cxo = (XMLObject) xo.getChild(BASIS_MATRIX);
-			DesignMatrix designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
-
-			if ((dependentParam.getDimension() != designMatrix.getRowDimension()) ||
-					(independentParam.getDimension() != designMatrix.getColumnDimension()))
-				throw new XMLParseException(
-						"dim(" + DEPENDENT_VARIABLES + ") != dim(" + BASIS_MATRIX + " %*% " + INDEPENDENT_VARIABLES + ")"
-				);
-
-
 			String family = xo.getStringAttribute(FAMILY);
 			GeneralizedLinearModel glm;
 			if (family.compareTo(LOGISTIC_REGRESSION) == 0) {
-				glm = new LogisticRegression(dependentParam, independentParam, designMatrix);
+				glm = new LogisticRegression(dependentParam);
+			} else if (family.compareTo(NORMAL_REGRESSION) == 0) {
+				glm = new LinearRegression(dependentParam);
 			} else
 				throw new XMLParseException("Family '" + family + "' is not currently implemented");
 
 			if (glm.requiresScale()) {
-				cxo = (XMLObject) xo.getChild(SCALE);
-				Parameter scaleParameter = (Parameter) cxo.getChild(Parameter.class);
-				if (scaleParameter == null)
-					throw new XMLParseException("Family '" + family + "' requires a scale parameter");
-				glm.addScaleParameter(scaleParameter);
+				cxo = (XMLObject) xo.getChild(SCALE_VARIABLES);
+				Parameter scaleParameter = null;
+				DesignMatrix designMatrix = null;
+				if (cxo != null) {
+					scaleParameter = (Parameter) cxo.getChild(Parameter.class);
+					designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
+				}
+				if (scaleParameter == null || designMatrix == null)
+					throw new XMLParseException("Family '" + family + "' requires scale parameters");
+				checkDimensions(scaleParameter, dependentParam, designMatrix);
+				glm.addScaleParameter(scaleParameter, designMatrix);
 			}
 
+			addIndependentParameters(xo, glm, dependentParam);
+
 			return glm;
+		}
+
+		public void addIndependentParameters(XMLObject xo, GeneralizedLinearModel glm,
+		                                     Parameter dependentParam) throws XMLParseException {
+			int totalCount = xo.getChildCount();
+
+			for (int i = 0; i < totalCount; i++) {
+				if (xo.getChildName(i).compareTo(INDEPENDENT_VARIABLES) == 0) {
+					XMLObject cxo = (XMLObject) xo.getChild(i);
+					Parameter independentParam = (Parameter) cxo.getChild(Parameter.class);
+					DesignMatrix designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
+					checkDimensions(independentParam, dependentParam, designMatrix);
+					glm.addIndependentParameter(independentParam, designMatrix);
+				}
+			}
+		}
+
+		private void checkDimensions(Parameter independentParam, Parameter dependentParam, DesignMatrix designMatrix)
+				throws XMLParseException {
+			if ((dependentParam.getDimension() != designMatrix.getRowDimension()) ||
+					(independentParam.getDimension() != designMatrix.getColumnDimension()))
+				throw new XMLParseException(
+						"dim(" + dependentParam.getId() + ") != dim(" + designMatrix.getId() + " %*% " + independentParam.getId() + ")"
+				);
 		}
 
 		//************************************************************************
@@ -222,13 +376,13 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 				new ElementRule(DEPENDENT_VARIABLES,
 						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
 				new ElementRule(INDEPENDENT_VARIABLES,
-						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-				new ElementRule(BASIS_MATRIX,
-						new XMLSyntaxRule[]{new ElementRule(DesignMatrix.class)})
+						new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, 1, 3),
+//				new ElementRule(BASIS_MATRIX,
+//						new XMLSyntaxRule[]{new ElementRule(DesignMatrix.class)})
 		};
 
 		public String getParserDescription() {
-			return "Calculates the generalized linear model likelihood of the dependent parameters given the indepenent parameters and design matrix.";
+			return "Calculates the generalized linear model likelihood of the dependent parameters given one or more blocks of independent parameters and their design matrix.";
 		}
 
 		public Class getReturnType() {

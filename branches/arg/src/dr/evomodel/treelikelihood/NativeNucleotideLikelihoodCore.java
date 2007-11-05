@@ -31,128 +31,146 @@ package dr.evomodel.treelikelihood;
  * a shared library called "NucleotideLikelihoodCore" but the exact name will be system
  * dependent (i.e. "libNucleotideLikelihoodCore.so" or "NucleotideLikelihoodCore.dll").
  *
- * @version $Id: NativeNucleotideLikelihoodCore.java,v 1.14 2006/08/31 14:57:24 rambaut Exp $
- *
  * @author Andrew Rambaut
+ * @version $Id: NativeNucleotideLikelihoodCore.java,v 1.14 2006/08/31 14:57:24 rambaut Exp $
  */
 
 public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 
-	/**
-	 * Constructor
-	 */
-	public NativeNucleotideLikelihoodCore() {
+    /**
+     * Constructor
+     */
+    public NativeNucleotideLikelihoodCore() {
 
-		super(4);
+        super(4);
 
-	}
+    }
 
-	protected void calculateStatesStatesPruning(int[] states1, double[] matrices1,
-												int[] states2, double[] matrices2,
-												double[] partials3) {
+    protected void calculateStatesStatesPruning(int[] states1, double[] matrices1,
+                                                int[] states2, double[] matrices2,
+                                                double[] partials3) {
         nativeStatesStatesPruning(states1, matrices1, states2, matrices2, patternCount, matrixCount, partials3);
     }
 
-    protected void calculateStatesPartialsPruning(	int[] states1, double[] matrices1,
-													double[] partials2, double[] matrices2,
-													double[] partials3) {
+    protected void calculateStatesPartialsPruning(int[] states1, double[] matrices1,
+                                                  double[] partials2, double[] matrices2,
+                                                  double[] partials3) {
         nativeStatesPartialsPruning(states1, matrices1, partials2, matrices2, patternCount, matrixCount, partials3);
     }
 
+    /*
+    private void out(PrintStream s, double[] a, String name) {
+        s.print("double " + name + "["  + a.length + "] = {");
+        for( double f : a )  s.print(f + ", ");
+        s.println("};");
+    }
+    */
     protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-													double[] partials2, double[] matrices2,
-													double[] partials3) {
+                                                    double[] partials2, double[] matrices2,
+                                                    double[] partials3) {
+        /* if( false ) {
+        System.out.println("*//*nativePartialsPartialsPruning*//* int patternCount = " +
+                    patternCount + "; int matrixCount = " + matrixCount);
+            out(System.out, partials1, "partials1");
+            out(System.out, partials2, "partials2");
+            out(System.out, partials2, "matrices1");
+            out(System.out, partials2, "matrices2");
+        }*/
         nativePartialsPartialsPruning(partials1, matrices1, partials2, matrices2, patternCount, matrixCount, partials3);
     }
 
-	/**
-	 * Calculates partial likelihoods at a node when both children have states.
-	 */
-	protected void calculateStatesStatesPruning(int[] states1, double[] matrices1,
-												int[] states2, double[] matrices2,
-												double[] partials3, int[] matrixMap)
-	{
-		throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");
-	}
+    /**
+     * Calculates partial likelihoods at a node when both children have states.
+     */
+    protected void calculateStatesStatesPruning(int[] states1, double[] matrices1,
+                                                int[] states2, double[] matrices2,
+                                                double[] partials3, int[] matrixMap) {
+        throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");
+    }
 
-	/**
-	 * Calculates partial likelihoods at a node when one child has states and one has partials.
-	 */
-	protected void calculateStatesPartialsPruning(	int[] states1, double[] matrices1,
-													double[] partials2, double[] matrices2,
-													double[] partials3, int[] matrixMap)
-	{
-		throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");
-	}
+    /**
+     * Calculates partial likelihoods at a node when one child has states and one has partials.
+     */
+    protected void calculateStatesPartialsPruning(int[] states1, double[] matrices1,
+                                                  double[] partials2, double[] matrices2,
+                                                  double[] partials3, int[] matrixMap) {
+        throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");
+    }
 
-	/**
-	 * Calculates partial likelihoods at a node when both children have partials.
-	 */
-	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-													double[] partials2, double[] matrices2,
-													double[] partials3, int[] matrixMap)
-	{
-		throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");
-	}
+    /**
+     * Calculates partial likelihoods at a node when both children have partials.
+     */
+    protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
+                                                    double[] partials2, double[] matrices2,
+                                                    double[] partials3, int[] matrixMap) {
+        throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");
+    }
 
-	protected void calculateIntegratePartials(double[] inPartials, double[] proportions, double[] outPartials)
-	{
-		nativeIntegratePartials(inPartials, proportions, patternCount, matrixCount, outPartials);
-	}
+    protected void calculateIntegratePartials(double[] inPartials, double[] proportions, double[] outPartials) {
+        nativeIntegratePartials(inPartials, proportions, patternCount, matrixCount, outPartials);
+    }
 
 
-	/**
-	 * Calculates partial likelihoods at a node when both children have states.
-	 */
-	protected native void nativeStatesStatesPruning(	int[] states1, double[] matrices1,
-														int[] states2, double[] matrices2,
-														int patternCount, int matrixCount,
-														double[] partials3);
-	protected native void nativeStatesPartialsPruning(	int[] states1, double[] matrices1,
-														double[] partials2, double[] matrices2,
-														int patternCount, int matrixCount,
-														double[] partials3);
-	protected native void nativePartialsPartialsPruning(double[] partials1, double[] matrices1,
-														double[] partials2, double[] matrices2,
-														int patternCount, int matrixCount,
-														double[] partials3);
-	public native void nativeIntegratePartials(			double[] partials, double[] proportions,
-														int patternCount, int matrixCount,
-														double[] outPartials);
+    /**
+     * Calculates partial likelihoods at a node when both children have states.
+     */
+    protected native void nativeStatesStatesPruning(int[] states1, double[] matrices1,
+                                                    int[] states2, double[] matrices2,
+                                                    int patternCount, int matrixCount,
+                                                    double[] partials3);
 
-	public void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods)
-	{
+    protected native void nativeStatesPartialsPruning(int[] states1, double[] matrices1,
+                                                      double[] partials2, double[] matrices2,
+                                                      int patternCount, int matrixCount,
+                                                      double[] partials3);
+
+    protected native void nativePartialsPartialsPruning(double[] partials1, double[] matrices1,
+                                                        double[] partials2, double[] matrices2,
+                                                        int patternCount, int matrixCount,
+                                                        double[] partials3);
+
+    public native void nativeIntegratePartials(double[] partials, double[] proportions,
+                                               int patternCount, int matrixCount,
+                                               double[] outPartials);
+
+    public void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods) {
         int v = 0;
-		for (int k = 0; k < patternCount; k++) {
+        for (int k = 0; k < patternCount; k++) {
             double logScalingFactor = getLogScalingFactor(k);
 
-			double sum = frequencies[0] * partials[v];	v++;
-			sum += frequencies[1] * partials[v];	v++;
-			sum += frequencies[2] * partials[v];	v++;
-			sum += frequencies[3] * partials[v];	v++;
+            double sum = frequencies[0] * partials[v];
+            v++;
+            sum += frequencies[1] * partials[v];
+            v++;
+            sum += frequencies[2] * partials[v];
+            v++;
+            sum += frequencies[3] * partials[v];
+            v++;
             outLogLikelihoods[k] = Math.log(sum) + logScalingFactor;
-		}
+        }
 
         checkScaling();
     }
 
-	public static boolean isAvailable() { return isNativeAvailable; }
+    public static boolean isAvailable() {
+        return isNativeAvailable;
+    }
 
-	private static boolean isNativeAvailable = false;
+    private static boolean isNativeAvailable = false;
 
-	static {
+    static {
 
-		try {
-			System.loadLibrary("NucleotideLikelihoodCore");
+        try {
+            System.loadLibrary("NucleotideLikelihoodCore");
 
-			// System.err.println("Native nucleotide likelihood core found");
+            // System.err.println("Native nucleotide likelihood core found");
 
-			isNativeAvailable = true;
-		} catch (UnsatisfiedLinkError e) {
+            isNativeAvailable = true;
+        } catch (UnsatisfiedLinkError e) {
 
-			// System.err.println("Using Java nucleotide likelihood core");
-		}
+            System.err.println("Using Java nucleotide likelihood core " + e.toString());
+        }
 
-	}
+    }
 }
 

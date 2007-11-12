@@ -32,33 +32,35 @@ import dr.inference.model.Statistic;
 import java.util.ArrayList;
 
 /**
- * @version $Id: AbstractDistributionLikelihood.java,v 1.4 2005/05/24 20:25:59 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: AbstractDistributionLikelihood.java,v 1.4 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public abstract class AbstractDistributionLikelihood extends Likelihood.Abstract {	
-	
-	public AbstractDistributionLikelihood(Model model) {
-	
-		super(model);
-	}
-	
-	/**
-	 * Adds a statistic, this is the data for which the likelihood is calculated.
+public abstract class AbstractDistributionLikelihood extends Likelihood.Abstract {
+
+    public AbstractDistributionLikelihood(Model model) {
+
+        super(model);
+    }
+
+    /**
+     * Adds a statistic, this is the data for which the likelihood is calculated.
+     *
      * @param data to add
      */
-	public void addData(Statistic data) { dataList.add(data); }
-	
-	
-	protected ArrayList<Statistic> dataList = new ArrayList<Statistic>();
+    public void addData(Statistic data) {
+        dataList.add(data);
+    }
 
-	/**
-	 * Overridden to always return false.
-	 */
-	protected boolean getLikelihoodKnown() {
-		return false;
+
+    protected ArrayList<Statistic> dataList = new ArrayList<Statistic>();
+
+    /**
+     * Overridden to always return false.
+     */
+    protected boolean getLikelihoodKnown() {
+        return false;
 	}
 	
 }

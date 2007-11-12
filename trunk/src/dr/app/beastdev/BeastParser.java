@@ -278,6 +278,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.operators.RandomWalkOnMapOperator.PARSER);
 		addXMLObjectParser(dr.inference.model.DesignMatrix.PARSER);
 		addXMLObjectParser(dr.inference.distribution.GeneralizedLinearModel.PARSER);
+		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.MVGAMMA_PRIOR_PARSER);
 
 		//Multivariate OU Process
 		addXMLObjectParser(dr.inference.operators.MVOUCovarianceOperator.PARSER);

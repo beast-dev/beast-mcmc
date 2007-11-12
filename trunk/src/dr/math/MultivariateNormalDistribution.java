@@ -7,11 +7,7 @@ import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Jun 13, 2007
- * Time: 1:47:26 PM
- * To change this template use File | Settings | File Templates.
+ * @author Marc Suchard
  */
 public class MultivariateNormalDistribution implements MultivariateDistribution {
 
@@ -80,22 +76,10 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 			SSE += tmp[i] * delta[i];
 
 		SSE /= scale;
-//	    System.err.println("here");
-//	    System.err.println("x = "+new Vector(x));
-//	    System.err.println("mean = "+new Vector(mean));
-//	    System.err.println("precision = "+new Matrix(precision));
-//	    System.err.println("SSE = "+SSE);
-//	    System.err.println("logDet = "+logDet);
-//	    System.err.println("dim = "+dim);
-//	    System.err.println("logN = "+logNormalize);
 
 		return dim * logNormalize + 0.5 * logDet - 0.5 * SSE;
 
 	}
-
-//	public double[][] inverseScaleMatrix() {
-//			return inverseScaleMatrix;
-//		}
 
 	public double[] nextMultivariateNormal() {
 		return nextMultivariateNormalPrecision(mean, precision);

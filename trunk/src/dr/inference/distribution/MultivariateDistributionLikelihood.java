@@ -3,10 +3,7 @@ package dr.inference.distribution;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.math.InverseWishartDistribution;
-import dr.math.MultivariateDistribution;
-import dr.math.MultivariateNormalDistribution;
-import dr.math.WishartDistribution;
+import dr.math.*;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -19,10 +16,15 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 	public static final String MVN_PRIOR = "multivariateNormalPrior";
 	public static final String MVN_MEAN = "meanParameter";
 	public static final String MVN_PRECISION = "precisionParameter";
+	public static final String MVN_CV = "coefficientOfVariation";
 	public static final String WISHART_PRIOR = "multivariateWishartPrior";
 	public static final String INV_WISHART_PRIOR = "multivariateInverseWishartPrior";
 	public static final String DF = "df";
 	public static final String SCALE_MATRIX = "scaleMatrix";
+	public static final String MVGAMMA_PRIOR = "multivariateGammaPrior";
+	public static final String MVGAMMA_SHAPE = "shapeParameter";
+	public static final String MVGAMMA_SCALE = "scaleParameter";
+
 	public static final String DATA = "data";
 
 	private MultivariateDistribution distribution;
@@ -212,6 +214,94 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
 		public String getParserDescription() {
 			return "Calculates the likelihood of some data under a given multivariate-normal distribution.";
+		}
+
+		public Class getReturnType() {
+			return MultivariateDistributionLikelihood.class;
+		}
+	};
+
+	public static XMLObjectParser MVGAMMA_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+		public String getParserName() {
+			return MVGAMMA_PRIOR;
+		}
+
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+			XMLObject cxo;
+			double[] shape = null;
+			double[] scale = null;
+
+
+			if (xo.hasSocket(MVGAMMA_SHAPE)) {
+
+				cxo = (XMLObject) xo.getChild(MVGAMMA_SHAPE);
+				shape = ((Parameter) cxo.getChild(Parameter.class)).getParameterValues();
+
+				cxo = (XMLObject) xo.getChild(MVGAMMA_SCALE);
+				scale = ((Parameter) cxo.getChild(Parameter.class)).getParameterValues();
+
+				if (shape.length != scale.length)
+					throw new XMLParseException("Shape and scale have wrong dimensions in " + xo.getName() + " element");
+
+			} else {
+
+				cxo = (XMLObject) xo.getChild(MVN_MEAN);
+				double[] mean = ((Parameter) cxo.getChild(Parameter.class)).getParameterValues();
+
+				cxo = (XMLObject) xo.getChild(MVN_CV);
+				double[] cv = ((Parameter) cxo.getChild(Parameter.class)).getParameterValues();
+
+				if (mean.length != cv.length)
+					throw new XMLParseException("Mean and CV have wrong dimensions in " + xo.getName() + " element");
+
+				final int dim = mean.length;
+				shape = new double[dim];
+				scale = new double[dim];
+
+				for (int i = 0; i < dim; i++) {
+					double c2 = cv[i] * cv[i];
+					shape[i] = 1.0 / c2;
+					scale[i] = c2 * mean[i];
+				}
+			}
+
+			MultivariateDistributionLikelihood likelihood =
+					new MultivariateDistributionLikelihood(
+							new MultivariateGammaDistribution(shape, scale)
+					);
+			cxo = (XMLObject) xo.getChild(DATA);
+			for (int j = 0; j < cxo.getChildCount(); j++) {
+				if (cxo.getChild(j) instanceof Parameter) {
+					Parameter data = (Parameter) cxo.getChild(j);
+					likelihood.addData(data);
+					if (data.getDimension() != shape.length)
+						throw new XMLParseException("dim(" + data.getStatisticName() + ") != " + shape.length + " in " + xo.getName() + "element");
+				} else {
+					throw new XMLParseException("illegal element in " + xo.getName() + " element");
+				}
+			}
+			return likelihood;
+		}
+
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
+
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+
+				new XORRule(
+						new ElementRule(MVGAMMA_SHAPE,
+								new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+						new ElementRule(MVN_MEAN,
+								new XMLSyntaxRule[]{new ElementRule(Parameter.class)})),
+				new ElementRule(DATA,
+						new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)})
+		};
+
+		public String getParserDescription() {
+			return "Calculates the likelihood of some data under a given multivariate-gamma distribution.";
 		}
 
 		public Class getReturnType() {

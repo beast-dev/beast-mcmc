@@ -94,6 +94,26 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
 //		fireModelChanged();
 //	}
 
+	void normalize(double[][] matrix, double[] pi) {
+		double subst = 0.0;
+		int dimension = pi.length;
+
+		final int dim = rateIndicator.getDimension();
+		int sum = 0;
+		for (int i = 0; i < dim; i++)
+			sum += rateIndicator.getParameterValue(i);
+
+
+		for (int i = 0; i < dimension; i++)
+			subst += -matrix[i][i] * pi[i];
+
+		for (int i = 0; i < dimension; i++) {
+			for (int j = 0; j < dimension; j++) {
+				matrix[i][j] = matrix[i][j] / subst; // / sum;
+			}
+		}
+	}
+
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
 		public String getParserName() {

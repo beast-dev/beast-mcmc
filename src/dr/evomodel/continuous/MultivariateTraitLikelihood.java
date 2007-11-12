@@ -346,7 +346,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 					System.err.println("TRAIT: "+traitParameter.toString());
 					System.err.println("CNT:   "+traitParameter.getNumberOfParameters());
 					for(int i : missingIndices) {
-						Parameter thisParameter = traitParameter.getParameter(i);
+						Parameter thisParameter = traitParameter.getIndicatorParameter(i);
 						missingParameter.addParameter(thisParameter);
 					}*/
 					replaceParameter(cxo, missingParameter);

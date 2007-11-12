@@ -1,11 +1,7 @@
 package dr.math;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Jan 18, 2007
- * Time: 9:00:50 AM
- * To change this template use File | Settings | File Templates.
+ * @author Marc Suchard
  */
 public class LogTricks {
 

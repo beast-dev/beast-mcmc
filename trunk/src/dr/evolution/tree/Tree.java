@@ -203,6 +203,21 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             return leafCount;
         }
 
+        public static double getTreeLength(Tree tree, NodeRef node) {
+
+            int childCount = tree.getChildCount(node);
+            if (childCount == 0) return tree.getBranchLength(node);
+
+            double length = 0;
+            for (int i = 0; i < childCount; i++) {
+                length += getTreeLength(tree, tree.getChild(node, i));
+            }
+            if (node != tree.getRoot())
+                length += tree.getBranchLength(node);
+            return length;
+
+        }
+
         public static double getMinNodeHeight(Tree tree, NodeRef node) {
 
             int childCount = tree.getChildCount(node);

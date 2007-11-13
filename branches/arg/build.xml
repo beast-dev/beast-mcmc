@@ -4,7 +4,7 @@
               To include a user specific buildfile here, simply create one in the same
               directory with the processing instruction <?eclipse.ant.import?>
               as the first entry and export the buildfile again. -->
-<project basedir="." default="build" name="BEAST">
+<project basedir="." default="build" name="BEAST-arg">
     <property environment="env"/>
     <property name="ECLIPSE_HOME" value="../../../../Applications/eclipse"/>
     <property name="debuglevel" value="source,lines,vars"/>

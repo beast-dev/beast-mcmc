@@ -39,7 +39,8 @@ public class Expansion extends ExponentialGrowth {
 
 	/**
 	 * Construct demographic model with default settings
-	 */
+     * @param units time units
+     */
 	public Expansion(int units) {
 	
 		super(units);
@@ -63,14 +64,24 @@ public class Expansion extends ExponentialGrowth {
 		return N1 + ((N0 - N1) * Math.exp(-r*t));
 	}
 
-	/**
-	 * Returns value of demographic intensity function at time t
-	 * (= integral 1/N(x) dx from 0 to t).
-	 */
-	public double getIntensity(double t) {
-	
-		throw new RuntimeException("Not implemented!");
-	}
+    /**
+     * @param t integral upper limit
+     * @return value of demographic intensity function at time t
+     * (= integral 1/N(x) dx from 0 to t).
+     */
+
+    public double getIntensity(double t) {
+        double N0 = getN0();
+        double N1 = getN1();
+        double b = (N0 - N1);
+        double r = getGrowthRate();
+
+        if ( r == 0 ) {
+            return t / N0;
+        }
+
+        return Math.log(b + N1 * Math.exp(r * t)) / (r * N1);
+    }
 
 	public double getInverseIntensity(double x) {
 		
@@ -90,10 +101,9 @@ public class Expansion extends ExponentialGrowth {
 		throw new RuntimeException("Not implemented!");
 	}
 	
-	public double getIntegral(double start, double finish) {
-		
-		return getNumericalIntegral(start, finish);
-	}
+    public double getIntegral(double start, double finish) {
+        return getIntensity(finish) - getIntensity(start);
+    }
 	
 	public int getNumArguments() {
 		return 3;

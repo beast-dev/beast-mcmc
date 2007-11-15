@@ -25,7 +25,7 @@
 
 package dr.app.beast;
 
-import dr.evomodel.speciation.MrBayesDefaultModel;
+import dr.evomodel.operators.*;
 import dr.xml.*;
 
 import java.util.Iterator;
@@ -263,10 +263,10 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.model.MatrixParameter.PARSER);
 		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.MVN_PRIOR_PARSER);
 		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.WISHART_PRIOR_PARSER);
-		addXMLObjectParser(dr.inference.operators.PrecisionMatrixGibbsOperator.PARSER);
-		addXMLObjectParser(dr.inference.operators.InternalTraitGibbsOperator.PARSER);
+		addXMLObjectParser(PrecisionMatrixGibbsOperator.PARSER);
+		addXMLObjectParser(InternalTraitGibbsOperator.PARSER);
 		addXMLObjectParser(dr.inference.model.CorrelationStatistic.PARSER);
-		addXMLObjectParser(dr.inference.operators.RandomWalkOnMapOperator.PARSER);
+		addXMLObjectParser(RandomWalkOnMapOperator.PARSER);
 
 		//GMRF
 		addXMLObjectParser(dr.evomodel.coalescent.GMRFSkylineLikelihood.PARSER);

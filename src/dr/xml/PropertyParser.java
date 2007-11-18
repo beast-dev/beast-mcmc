@@ -40,7 +40,7 @@ public class PropertyParser extends AbstractXMLObjectParser {
 				
 		if (xo.hasAttribute("index")) {
 			int index = xo.getIntegerAttribute("index");					
-			property = new Property(object, name, new Integer(index));
+			property = new Property(object, name, index);
 		} else if (xo.hasAttribute("label")) {
 			String label = xo.getStringAttribute("label");					
 			property = new Property(object, name, label);

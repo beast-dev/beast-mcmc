@@ -98,9 +98,7 @@ public class MLLogger extends MCLogger {
 
 				values[0] = Integer.toString(bestState);
 
-				for (int i = 0; i < getColumnCount(); i++) {
-					values[i+1] = bestValues[i];
-				}
+                System.arraycopy(bestValues, 0, values, 1, getColumnCount());
 
 				logValues(values);
 			}
@@ -112,9 +110,7 @@ public class MLLogger extends MCLogger {
 
 			values[0] = Integer.toString(bestState);
 
-			for (int i = 0; i < getColumnCount(); i++) {
-				values[i+1] = bestValues[i];
-			}
+            System.arraycopy(bestValues, 0, values, 1, getColumnCount());
 
 			logValues(values);
 		}
@@ -127,9 +123,7 @@ public class MLLogger extends MCLogger {
 		values[0] = Integer.toString(bestState);
 		values[1] = Double.toString(bestLikelihood);
 
-		for (int i = 0; i < columnCount; i++) {
-			values[i+2] = bestValues[i];
-		}
+        System.arraycopy(bestValues, 0, values, 2, columnCount);
 
 		if (logEvery > 0) {
 			logValues(values);

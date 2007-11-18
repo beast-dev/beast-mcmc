@@ -246,7 +246,7 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 			selectedTaxonSet = null;
 			removeTaxonSetAction.setEnabled(false);
 		} else {
-			selectedTaxonSet = (TreeStatData.TaxonSet)treeStatData.taxonSets.get(taxonSetsTable.getSelectedRow());
+			selectedTaxonSet = treeStatData.taxonSets.get(taxonSetsTable.getSelectedRow());
 			removeTaxonSetAction.setEnabled(true);
 		}
 		includedTaxaTableModel.fireTableDataChanged();
@@ -322,9 +322,9 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 			int[] rows = excludedTaxaTable.getSelectedRows();
 			ArrayList exclList = new ArrayList(treeStatData.allTaxa);
 			exclList.removeAll(selectedTaxonSet.taxa);
-			for (int i = 0; i < rows.length; i++) {
-				selectedTaxonSet.taxa.add(exclList.get(rows[i]));
-			}
+            for (int row : rows) {
+                selectedTaxonSet.taxa.add(exclList.get(row));
+            }
 			dataChanged();
 			taxonSetsTable.setRowSelectionInterval(saved, saved);
   		}
@@ -367,11 +367,11 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 		}
 		
 		public Object getValueAt(int row, int col) {	
-			return ((TreeStatData.TaxonSet)treeStatData.taxonSets.get(row)).name;
+			return (treeStatData.taxonSets.get(row)).name;
 		}
 
 		public void setValueAt(Object value, int row, int col) {	
-			((TreeStatData.TaxonSet)treeStatData.taxonSets.get(row)).name = (String)value;
+			(treeStatData.taxonSets.get(row)).name = (String)value;
 		}
 
         public boolean isCellEditable(int row, int col) {
@@ -383,9 +383,9 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 		}
 		
 		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-	};
+	}
 
-	class TaxaTableModel extends AbstractTableModel {
+    class TaxaTableModel extends AbstractTableModel {
 		
 		/**
 		 * 
@@ -414,11 +414,11 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 		public Object getValueAt(int row, int col) {
 		
 			if (included) {
-				return (String)selectedTaxonSet.taxa.get(row);
+				return selectedTaxonSet.taxa.get(row);
 			} else {
-				ArrayList exclList = new ArrayList(treeStatData.allTaxa);
+				ArrayList<String> exclList = new ArrayList<String>(treeStatData.allTaxa);
 				exclList.removeAll(selectedTaxonSet.taxa);
-				return (String)exclList.get(row);
+				return exclList.get(row);
 			}
 		}
 
@@ -432,6 +432,5 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 		}
 		
 		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-	};
-
+	}
 }

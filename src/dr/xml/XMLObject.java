@@ -46,7 +46,7 @@ public class XMLObject {
 	/**
 	 * Creates an XMLObject from the given element and the given object store.
 	 */
-	public XMLObject(Element e, ObjectStore store) {
+	public XMLObject(Element e /*, ObjectStore store*/) {
 		this.element = e;
 //		this.store = store;
 	}

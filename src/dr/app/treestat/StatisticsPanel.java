@@ -28,12 +28,12 @@ package dr.app.treestat;
 import dr.app.treestat.statistics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
+import dr.gui.table.TableSorter;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.TableRenderer;
-import dr.gui.table.TableSorter;
 import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
@@ -46,7 +46,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 
 public class StatisticsPanel extends OptionsPanel implements Exportable {
@@ -57,7 +56,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 	 */
 	private static final long serialVersionUID = -8026203872020056264L;
 	TreeStatFrame frame;
-	ArrayList availableStatistics = new ArrayList();
+	ArrayList<TreeSummaryStatistic.Factory> availableStatistics = new ArrayList<TreeSummaryStatistic.Factory>();
 	TreeStatData treeStatData = null;
 
 	JScrollPane scrollPane1 = null;
@@ -241,7 +240,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 			int index = includedStatisticsTable.getSelectedRow();
 			if (index != -1) {
 				availableStatisticsTable.clearSelection();
-				SummaryStatisticDescription ssd = (SummaryStatisticDescription)treeStatData.statistics.get(index);
+				SummaryStatisticDescription ssd = treeStatData.statistics.get(index);
 				statisticLabel.setSummaryStatisticDescription(ssd);
 				excludeStatisticAction.setEnabled(true);
 			} else {
@@ -251,7 +250,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 			int index = availableStatisticsTable.getSelectedRow();
 			if (index != -1) {
 				includedStatisticsTable.clearSelection();
-				SummaryStatisticDescription ssd = (SummaryStatisticDescription)availableStatistics.get(index);
+				SummaryStatisticDescription ssd = availableStatistics.get(index);
 				statisticLabel.setSummaryStatisticDescription(ssd);
 				includeStatisticAction.setEnabled(true);
 			} else {
@@ -269,7 +268,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 		public void actionPerformed(ActionEvent ae) {
 			int[] indices = availableStatisticsTable.getSelectedRows();
 			for (int i = indices.length-1; i >= 0; i--) {
-				TreeSummaryStatistic.Factory ssd = (TreeSummaryStatistic.Factory)availableStatistics.get(indices[i]);
+				TreeSummaryStatistic.Factory ssd = availableStatistics.get(indices[i]);
 				TreeSummaryStatistic tss = createStatistic(ssd);
 				if (tss != null) {
 					treeStatData.statistics.add(tss);
@@ -308,20 +307,20 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 			final JRadioButton characterRadio = new JRadioButton("Using a given character", false);
 
 			final JComboBox characterCombo = new JComboBox();
-			for (int i = 0; i < treeStatData.characters.size(); i++) {
-				characterCombo.addItem(treeStatData.characters.get(i));
-			}
+            for (Object character : treeStatData.characters) {
+                characterCombo.addItem(character);
+            }
 
-			final JComboBox characterStateCombo = new JComboBox();
+            final JComboBox characterStateCombo = new JComboBox();
 
 			characterCombo.addItemListener( new ItemListener() {
 				public void itemStateChanged(ItemEvent e) {
 					TreeStatData.Character c = (TreeStatData.Character)characterCombo.getSelectedItem();
 					if (c != null) {
-						for (int i = 0; i < c.states.size(); i++) {
-							characterCombo.addItem(c.states.get(i));
-						}
-					}
+                        for (Object state : c.states) {
+                            characterCombo.addItem(state);
+                        }
+                    }
 				}
 			});
 			if (characterCombo.getItemCount() > 0) {
@@ -330,11 +329,11 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
 			final JRadioButton taxonSetRadio = new JRadioButton("Using a given taxon set", false);
 			final JComboBox taxonSetCombo = new JComboBox();
-			for (int i = 0; i < treeStatData.taxonSets.size(); i++) {
-				taxonSetCombo.addItem(treeStatData.taxonSets.get(i));
-			}
+            for (Object taxonSet : treeStatData.taxonSets) {
+                taxonSetCombo.addItem(taxonSet);
+            }
 
-			ButtonGroup group = new ButtonGroup();
+            ButtonGroup group = new ButtonGroup();
 
 			ItemListener listener = new ItemListener() {
 				public void itemStateChanged(ItemEvent e) {
@@ -396,7 +395,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 				return null;
 			}
 
-			int value = ((Integer)optionPane.getValue()).intValue();
+			int value = (Integer) optionPane.getValue();
 			if (value == -1 || value == JOptionPane.CANCEL_OPTION) {
 				return null;
 			}
@@ -404,7 +403,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 			if (wholeTreeRadio.isSelected()) {
 				return factory.createStatistic();
 			} else if (characterRadio.isSelected()) {
-				TreeStatData.Character c = (TreeStatData.Character)characterCombo.getSelectedItem();
+				//TreeStatData.Character c = (TreeStatData.Character)characterCombo.getSelectedItem();
 				if (factory.allowsCharacterState()) {
 					return factory.createStatistic();
 				} else {
@@ -414,13 +413,13 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 				TreeStatData.TaxonSet t = (TreeStatData.TaxonSet)taxonSetCombo.getSelectedItem();
 				Taxa taxa = new Taxa();
 				taxa.setId(t.name);
-				Iterator iter = t.taxa.iterator();
-				while (iter.hasNext()) {
-					String id = (String)iter.next();
-					Taxon taxon = new Taxon(id);
-					taxa.addTaxon(taxon);
-				}
-				return factory.createStatistic(taxa);
+				//Iterator iter = t.taxa.iterator();
+                for (Object aTaxa : t.taxa) {
+                    String id = (String) aTaxa;
+                    Taxon taxon = new Taxon(id);
+                    taxa.addTaxon(taxon);
+                }
+                return factory.createStatistic(taxa);
 			} else {
 				return null;
 			}
@@ -457,16 +456,20 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 				return null;
 			}
 
-			int result = ((Integer)optionPane.getValue()).intValue();
+			int result = (Integer) optionPane.getValue();
 			if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
 				return null;
 			}
 
 			if (factory.allowsDouble()) {
-				Double value = ((RealNumberField)valueField).getValue();
-				return factory.createStatistic(value.doubleValue());
+                assert valueField instanceof RealNumberField;
+                
+                Double value = ((RealNumberField)valueField).getValue();
+				return factory.createStatistic(value);
 			} else {
-				Integer value = ((WholeNumberField)valueField).getValue();
+                assert valueField instanceof WholeNumberField;
+
+                Integer value = ((WholeNumberField)valueField).getValue();
 				return factory.createStatistic(value.intValue());
 			}
 
@@ -495,8 +498,8 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 		}
 
 		public Object getValueAt(int row, int col) {
-			if (col == 0) return ((SummaryStatisticDescription)availableStatistics.get(row)).getSummaryStatisticName();
-			return ((SummaryStatisticDescription)availableStatistics.get(row)).getCategory();
+			if (col == 0) return availableStatistics.get(row).getSummaryStatisticName();
+			return availableStatistics.get(row).getCategory();
 		}
 
 		public boolean isCellEditable(int row, int col) {
@@ -509,9 +512,9 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 		}
 
 		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-	};
+	}
 
-	class IncludedStatisticsTableModel extends AbstractTableModel {
+    class IncludedStatisticsTableModel extends AbstractTableModel {
 
 		/**
 		 *
@@ -533,8 +536,8 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
 		public Object getValueAt(int row, int col) {
 			if (treeStatData == null || treeStatData.statistics == null) return null;
-			if (col == 0) return ((TreeSummaryStatistic)treeStatData.statistics.get(row)).getSummaryStatisticName();
-			return ((TreeSummaryStatistic)treeStatData.statistics.get(row)).getSummaryStatisticDescription();
+			if (col == 0) return treeStatData.statistics.get(row).getSummaryStatisticName();
+			return treeStatData.statistics.get(row).getSummaryStatisticDescription();
 		}
 
 		public boolean isCellEditable(int row, int col) {
@@ -547,9 +550,9 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 		}
 
 		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-	};
+	}
 
-	class TreeSummaryStatisticLabel extends JLabel {
+    class TreeSummaryStatisticLabel extends JLabel {
 
 		/**
 		 *

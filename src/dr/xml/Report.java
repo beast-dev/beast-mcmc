@@ -41,18 +41,18 @@ public class Report {
 	public static final String REPORT = "report";
 
 	protected String title = "";
-	protected ArrayList objects = new ArrayList();
+	protected ArrayList<Object> objects = new ArrayList<Object>();
 	
 	public void createReport() {
 		System.out.println(getTitle());
 		System.out.println();
-		
-		for (int i = 0; i < objects.size(); i++) {
-			String item = objects.get(i).toString();
-			System.out.print(item.trim());
-			System.out.print(" ");
-		}
-		System.out.println();
+
+        for (Object object : objects) {
+            final String item = object.toString();
+            System.out.print(item.trim());
+            System.out.print(" ");
+        }
+        System.out.println();
 	}
 
 	/** set the report's title. */

@@ -311,7 +311,7 @@ public class TreeAnnotator {
 		}
 
 		private void addClade(BitSet bits, Tree tree, NodeRef node) {
-			Clade clade = (Clade) cladeMap.get(bits);
+			Clade clade = cladeMap.get(bits);
 			if (clade == null) {
 				clade = new Clade(bits);
 				cladeMap.put(bits, clade);
@@ -330,9 +330,9 @@ public class TreeAnnotator {
 					String attributeName = attributeNames.get(i);
 					Object value;
 					if (attributeName.equals("height")) {
-						value = new Double(tree.getNodeHeight(node));
+						value = tree.getNodeHeight(node);
 					} else if (attributeName.equals("length")) {
-						value = new Double(tree.getBranchLength(node));
+						value = tree.getBranchLength(node);
 					} else {
 						value = tree.getNodeAttribute(node, attributeName);
 					}
@@ -349,12 +349,10 @@ public class TreeAnnotator {
 		}
 
 		public void calculateCladeCredibilities(int totalTreesUsed) {
-			Iterator iter = cladeMap.values().iterator();
-			while (iter.hasNext()) {
-				Clade clade = (Clade) iter.next();
-				clade.setCredibility(((double) clade.getCount()) / totalTreesUsed);
-			}
-		}
+            for (Clade clade : cladeMap.values()) {
+                clade.setCredibility(((double) clade.getCount()) / totalTreesUsed);
+            }
+        }
 
 		public double getSumCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
 
@@ -413,7 +411,7 @@ public class TreeAnnotator {
 		}
 
 		private double getCladeCredibility(BitSet bits) {
-			Clade clade = (Clade) cladeMap.get(bits);
+			Clade clade = cladeMap.get(bits);
 			if (clade == null) {
 				return 0.0;
 			}
@@ -448,7 +446,7 @@ public class TreeAnnotator {
 		}
 
 		private void annotateNode(MutableTree tree, NodeRef node, BitSet bits, boolean isTip, int heightsOption) {
-			Clade clade = (Clade) cladeMap.get(bits);
+			Clade clade = cladeMap.get(bits);
 			if (clade == null) {
 				throw new RuntimeException("Clade missing");
 			}
@@ -456,7 +454,7 @@ public class TreeAnnotator {
 			boolean filter = false;
 			if (!isTip) {
 				double posterior = clade.getCredibility();
-				tree.setNodeAttribute(node, "posterior", new Double(posterior));
+				tree.setNodeAttribute(node, "posterior", posterior);
 				if (posterior < posteriorLimit) {
 					filter = true;
 				}
@@ -528,12 +526,12 @@ public class TreeAnnotator {
 
 		private void annotateMeanAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
 			double mean = DiscreteStatistics.mean(values);
-			tree.setNodeAttribute(node, label, new Double(mean));
+			tree.setNodeAttribute(node, label, mean);
 		}
 
 		private void annotateMedianAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
 			double median = DiscreteStatistics.median(values);
-			tree.setNodeAttribute(node, label, new Double(median));
+			tree.setNodeAttribute(node, label, median);
 
 		}
 
@@ -554,13 +552,13 @@ public class TreeAnnotator {
 			}
 			double freq = (double) maxCount / (double) totalCount;
 			tree.setNodeAttribute(node, label, mode);
-			tree.setNodeAttribute(node, label + ".prob", new Double(freq));
+			tree.setNodeAttribute(node, label + ".prob", freq);
 		}
 
 		private void annotateRangeAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
 			double min = DiscreteStatistics.min(values);
 			double max = DiscreteStatistics.max(values);
-			tree.setNodeAttribute(node, label, new Object[]{new Double(min), new Double(max)});
+			tree.setNodeAttribute(node, label, new Object[]{min, max});
 		}
 
 		private void annotateHPDAttribute(MutableTree tree, NodeRef node, String label, double hpd, double[] values) {
@@ -582,7 +580,7 @@ public class TreeAnnotator {
 			}
 			double lower = values[indices[hpdIndex]];
 			double upper = values[indices[hpdIndex + diff - 1]];
-			tree.setNodeAttribute(node, label, new Object[]{new Double(lower), new Double(upper)});
+			tree.setNodeAttribute(node, label, new Object[]{lower, upper});
 		}
 
 		class Clade {
@@ -614,10 +612,9 @@ public class TreeAnnotator {
 
 				final Clade clade = (Clade) o;
 
-				if (bits != null ? !bits.equals(clade.bits) : clade.bits != null) return false;
+                return !(bits != null ? !bits.equals(clade.bits) : clade.bits != null);
 
-				return true;
-			}
+            }
 
 			public int hashCode() {
 				return (bits != null ? bits.hashCode() : 0);
@@ -633,7 +630,7 @@ public class TreeAnnotator {
 		// Private stuff
 		//
 		TaxonList taxonList = null;
-		Map cladeMap = new HashMap();
+        Map<BitSet, Clade> cladeMap = new HashMap<BitSet, Clade>();
 	}
 
 	int totalTrees = 0;
@@ -713,7 +710,7 @@ public class TreeAnnotator {
 					"<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
 					"</center></html>";
 
-			ConsoleApplication consoleApp = new ConsoleApplication(nameString, aboutString, icon, true);
+			/*ConsoleApplication consoleApp = */ new ConsoleApplication(nameString, aboutString, icon, true);
 
 			printTitle();
 

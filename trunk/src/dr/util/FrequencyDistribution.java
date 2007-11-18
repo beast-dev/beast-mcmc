@@ -56,10 +56,10 @@ public class FrequencyDistribution {
 
 	public FrequencyDistribution(double[] stats, int numBins, double binSize) {
 		init(0.0, numBins, binSize);
-		for (int i = 0; i < stats.length; i++) {
-			addValue(stats[i]);
-		}
-	}
+        for (double stat : stats) {
+            addValue(stat);
+        }
+    }
 
 	/**
 	 * Returns the number of bins.
@@ -98,14 +98,14 @@ public class FrequencyDistribution {
 
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
-		buffer.append("< " + start + "\t" + smaller + "\n");
+        buffer.append("< ").append(start).append("\t").append(smaller).append("\n");
 		double mean;
 		for (int i = 0; i < bins.length; i++) {
 			mean = start + (binSize * ((double)i + 0.5));
-			buffer.append(mean + "\t" + bins[i] + "\n");
+            buffer.append(mean).append("\t").append(bins[i]).append("\n");
 		}
 		double end = start + (binSize * bins.length);
-		buffer.append(">= " + end + "\t" + larger + "\n");
+        buffer.append(">= ").append(end).append("\t").append(larger).append("\n");
 		return new String(buffer);
 	}
 

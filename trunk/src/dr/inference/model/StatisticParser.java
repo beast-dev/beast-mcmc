@@ -41,14 +41,14 @@ public class StatisticParser extends dr.xml.AbstractXMLObjectParser {
 
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		StatisticList statList = (StatisticList)xo.getChild(StatisticList.class);
-		String name = xo.getStringAttribute("name");
-		Statistic stat = statList.getStatistic(name);
+		final StatisticList statList = (StatisticList)xo.getChild(StatisticList.class);
+		final String name = xo.getStringAttribute("name");
+		final Statistic stat = statList.getStatistic(name);
 		if (stat == null) {
 			StringBuffer buffer = new StringBuffer("Unknown statistic name, " + name + "\n");
 			buffer.append("Valid statistics are:");
-			for (int i =0; i < statList.getStatisticCount(); i++) {
-				buffer.append("\n  " + statList.getStatistic(i).getStatisticName());
+			for (int i = 0; i < statList.getStatisticCount(); i++) {
+                buffer.append("\n  ").append(statList.getStatistic(i).getStatisticName());
 			}
 			throw new XMLParseException(buffer.toString());
 		}

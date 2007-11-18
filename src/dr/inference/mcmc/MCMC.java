@@ -252,8 +252,6 @@ public class MCMC implements Runnable, Identifiable {
                         } else message = "slightly high";
                     }
 
-                    String suggestion = op.getPerformanceSuggestion();
-
                     String pString = "        ";
                     if (op instanceof CoercableMCMCOperator && ((CoercableMCMCOperator)op).getMode() != CoercableMCMCOperator.COERCION_OFF) {
                         pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator)op).getRawParameter(), 3), 8);
@@ -263,6 +261,7 @@ public class MCMC implements Runnable, Identifiable {
                     if( op instanceof GibbsOperator ) {
                         performacsMsg = "none (Gibbs operator)";
                     } else {
+                        final String suggestion = op.getPerformanceSuggestion();
                         performacsMsg = message + "\t" + suggestion;
                     }
 
@@ -386,13 +385,13 @@ public class MCMC implements Runnable, Identifiable {
             double initialScore = mc.getCurrentScore();
 
             if (initialScore == Double.NEGATIVE_INFINITY) {
+                String message = "The initial posterior is zero";
                 if (likelihood instanceof CompoundLikelihood) {
-                    String message = ((CompoundLikelihood)likelihood).getDiagnosis();
-
-                    throw new IllegalArgumentException("The initial posterior is zero: " + message);
+                    message += ": " + ((CompoundLikelihood)likelihood).getDiagnosis();
                 } else {
-                    throw new IllegalArgumentException("The initial posterior is zero!");
+                    message += "!";
                 }
+                throw new IllegalArgumentException(message);
             }
 
 

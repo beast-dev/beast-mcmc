@@ -52,7 +52,7 @@ public class RawTracePanel extends JPanel implements Exportable {
     private JLabel messageLabel = new JLabel("No data loaded");
 
     private int colourBy = COLOUR_BY_TRACE;
-    private boolean sampleOnly = true;
+    //private boolean sampleOnly = true;
 
     /**
      * Creates new RawTracePanel
@@ -231,10 +231,10 @@ public class RawTracePanel extends JPanel implements Exportable {
             int stateStart = tl.getBurnIn();
             int stateStep = tl.getStepSize();
 
-            for (int j = 0; j < traceIndices.length; j++) {
+            for (int traceIndice : traceIndices) {
                 double values[] = new double[n];
-                tl.getValues(traceIndices[j], values);
-                String name = tl.getTraceName(traceIndices[j]);
+                tl.getValues(traceIndice, values);
+                String name = tl.getTraceName(traceIndice);
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;
                 }
@@ -278,14 +278,14 @@ public class RawTracePanel extends JPanel implements Exportable {
 
         StringBuffer buffer = new StringBuffer();
 
-        Plot plot = traceChart.getPlot(0);
+        //Plot plot = traceChart.getPlot(0);
 
         double[][] traceStates = new double[traceChart.getPlotCount()][];
         double[][] traceValues = new double[traceChart.getPlotCount()][];
         int maxLength = 0;
 
         for (int i = 0; i < traceChart.getPlotCount(); i++) {
-            plot = traceChart.getPlot(i);
+            Plot plot = traceChart.getPlot(i);
             if (i > 0) {
                 buffer.append("\t");
             }

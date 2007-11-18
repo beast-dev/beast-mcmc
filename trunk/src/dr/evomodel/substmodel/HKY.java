@@ -25,7 +25,6 @@
 
 package dr.evomodel.substmodel;
 
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.xml.*;
@@ -117,18 +116,29 @@ public class HKY extends AbstractNucleotideModel
 
         calculateFreqRY();
 
-        tab1A = freqA*((1/freqR)-1);
-        tab2A = (freqR-freqA)/freqR;
+        // small speed up - reduce calculations. Comments show original code
+
+        // (C+T) / (A+G)
+        final double r1 = (1 / freqR) - 1;
+        tab1A = freqA * r1;
+
         tab3A = freqA/freqR;
-        tab1C = freqC*((1/freqY)-1);
-        tab2C = (freqY-freqC)/freqY;
+        tab2A = 1 - tab3A;        // (freqR-freqA)/freqR;
+
+        final double r2 = 1 / r1; // ((1 / freqY) - 1);
+        tab1C = freqC * r2;
+        
         tab3C = freqC/freqY;
-        tab1G = freqG*((1/freqR)-1);
-        tab2G = (freqR-freqG)/freqR;
-        tab3G = freqG/freqR;
-        tab1T = freqT*((1/freqY)-1);
-        tab2T = (freqY-freqT)/freqY;
-        tab3T = freqT/freqY;
+        tab2C = 1 - tab3C ;       // (freqY-freqC)/freqY; assert  tab2C + tab3C == 1.0;
+
+        tab1G = freqG * r1;
+        tab3G = tab2A;            // 1 - tab3A; // freqG/freqR;
+        tab2G = tab3A;            // 1 - tab3G; // (freqR-freqG)/freqR;
+
+        tab1T = freqT * r2;
+
+        tab3T = tab2C;            // 1 - tab3C;  // freqT/freqY;
+        tab2T = tab3C;            // 1 - tab3T; // (freqY-freqT)/freqY; //assert tab2T + tab3T == 1.0 ;
 
         updateMatrix = true;
         updateIntermediates = false;
@@ -157,28 +167,32 @@ public class HKY extends AbstractNucleotideModel
         final double bbY = Math.exp(xx*A_Y);
 
         final double aa = Math.exp(xx);
-        final double oneminusa = (1 - aa);
+        final double oneminusa = 1 - aa;
 
-        matrix[0] =	freqA+(tab1A*aa)+(tab2A*bbR);
+        final double t1Aaa = (tab1A * aa);
+        matrix[0] =	freqA+ t1Aaa +(tab2A*bbR);
 
         matrix[1] =	freqC* oneminusa;
-        matrix[2] =	freqG+(tab1G*aa)-(tab3G*bbR);
+        final double t1Gaa = (tab1G * aa);
+        matrix[2] =	freqG+ t1Gaa -(tab3G*bbR);
         matrix[3] =	freqT* oneminusa;
 
         matrix[4] =	freqA* oneminusa;
-        matrix[5] =	freqC+(tab1C*aa)+(tab2C*bbY);
+        final double t1Caa = (tab1C * aa);
+        matrix[5] =	freqC+ t1Caa +(tab2C*bbY);
         matrix[6] =	freqG* oneminusa;
-        matrix[7] =	freqT+(tab1T*aa)-(tab3T*bbY);
+        final double t1Taa = (tab1T * aa);
+        matrix[7] =	freqT+ t1Taa -(tab3T*bbY);
 
-        matrix[8] =	freqA+(tab1A*aa)-(tab3A*bbR);
+        matrix[8] =	freqA+ t1Aaa -(tab3A*bbR);
         matrix[9] =	matrix[1];
-        matrix[10] =freqG+(tab1G*aa)+(tab2G*bbR);
+        matrix[10] =freqG+ t1Gaa +(tab2G*bbR);
         matrix[11] =matrix[3];
 
         matrix[12] =matrix[4];
-        matrix[13] =freqC+(tab1C*aa)-(tab3C*bbY);
+        matrix[13] =freqC+ t1Caa -(tab3C*bbY);
         matrix[14] =matrix[6];
-        matrix[15] =freqT+(tab1T*aa)+(tab2T*bbY);
+        matrix[15] =freqT+ t1Taa +(tab2T*bbY);
     }
 
     /**
@@ -186,9 +200,8 @@ public class HKY extends AbstractNucleotideModel
      */
     protected void setupMatrix()
     {
-        double kappa = getKappa();
-        beta = -1.0 / (2.0*(freqR*freqY + kappa*(freqA*freqG +
-                                                    freqC*freqT)));
+        final double kappa = getKappa();
+        beta = -1.0 / (2.0*(freqR*freqY + kappa*(freqA*freqG + freqC*freqT)));
 
         A_R = 1.0 +freqR*(kappa-1);
         A_Y = 1.0 +freqY*(kappa-1);

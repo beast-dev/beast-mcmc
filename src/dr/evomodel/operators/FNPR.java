@@ -28,7 +28,7 @@ import dr.xml.XMLSyntaxRule;
  */
 public class FNPR extends SimpleMCMCOperator {
 
-   private TreeModel _tree = null;
+   private TreeModel tree = null;
 
    public static final String FNPR = "FixedNodeheightSubtreePruneRegraft";
 
@@ -38,9 +38,8 @@ public class FNPR extends SimpleMCMCOperator {
     * 
     */
    public FNPR(TreeModel tree, int weight) {
-      _tree = tree;
+      this.tree = tree;
       setWeight(weight);
-
       // distances = new int[tree.getNodeCount()];
    }
 
@@ -51,83 +50,80 @@ public class FNPR extends SimpleMCMCOperator {
     */
    @Override
    public double doOperation() throws OperatorFailedException {
-      NodeRef iFather, iGrandfather, iBrother;
+      NodeRef iGrandfather, iBrother;
       double heightFather;
-      int tipCount = _tree.getExternalNodeCount();
+      final int tipCount = tree.getExternalNodeCount();
 
-      final int nNodes = _tree.getNodeCount();
-      final NodeRef root = _tree.getRoot();
+      final int nNodes = tree.getNodeCount();
+      final NodeRef root = tree.getRoot();
 
       NodeRef i;
 
       int MAX_TRIES = 1000;
 
       for (int tries = 0; tries < MAX_TRIES; ++tries) {
-         // get a random node where you are not the root
+         // get a random node whose father is not the root - otherwise
+         // the operation is not possible
          do {
-            i = _tree.getNode(MathUtils.nextInt(nNodes));
-            // i and his father should not be the root because then you
-            // can
-            // not
-            // find a new node which is older
-         } while (root == i || _tree.getParent(i) == root);
+            i = tree.getNode(MathUtils.nextInt(nNodes));
+         } while (root == i || tree.getParent(i) == root);
 
          // int childIndex = (MathUtils.nextDouble() >= 0.5 ? 1 : 0);
          // int otherChildIndex = 1 - childIndex;
-         // NodeRef iOtherChild = _tree.getChild(i, otherChildIndex);
+         // NodeRef iOtherChild = tree.getChild(i, otherChildIndex);
 
-         iFather = _tree.getParent(i);
-         iGrandfather = _tree.getParent(iFather);
-         iBrother = getOtherChild(_tree, iFather, i);
-         heightFather = _tree.getNodeHeight(iFather);
+         NodeRef iFather = tree.getParent(i);
+         iGrandfather = tree.getParent(iFather);
+         iBrother = getOtherChild(tree, iFather, i);
+         heightFather = tree.getNodeHeight(iFather);
 
          // NodeRef newChild = getRandomNode(possibleChilds, iFather);
-         NodeRef newChild = _tree.getNode(MathUtils.nextInt(nNodes));
+         NodeRef newChild = tree.getNode(MathUtils.nextInt(nNodes));
 
-         if (_tree.getNodeHeight(newChild) < heightFather
+         if (tree.getNodeHeight(newChild) < heightFather
                && root != newChild
-               && _tree.getNodeHeight(_tree.getParent(newChild)) > heightFather
+               && tree.getNodeHeight(tree.getParent(newChild)) > heightFather
                && newChild != iFather
-               && _tree.getParent(newChild) != iFather) {
-            NodeRef newGrandfather = _tree.getParent(newChild);
+               && tree.getParent(newChild) != iFather) {
+            NodeRef newGrandfather = tree.getParent(newChild);
 
-            _tree.beginTreeEdit();
+            tree.beginTreeEdit();
 
             // prune
-            _tree.removeChild(iFather, iBrother);
-            _tree.removeChild(iGrandfather, iFather);
-            _tree.addChild(iGrandfather, iBrother);
+            tree.removeChild(iFather, iBrother);
+            tree.removeChild(iGrandfather, iFather);
+            tree.addChild(iGrandfather, iBrother);
 
             // reattach
-            _tree.removeChild(newGrandfather, newChild);
-            _tree.addChild(iFather, newChild);
-            _tree.addChild(newGrandfather, iFather);
+            tree.removeChild(newGrandfather, newChild);
+            tree.addChild(iFather, newChild);
+            tree.addChild(newGrandfather, iFather);
 
             // ****************************************************
 
             try {
-               _tree.endTreeEdit();
+               tree.endTreeEdit();
             } catch (MutableTree.InvalidTreeException ite) {
                throw new OperatorFailedException(ite.toString());
             }
 
             // TODO
-            _tree.pushTreeChangedEvent(i);
-            // _tree.pushTreeChangedEvent(newGrandfather);
-            // _tree.pushTreeChangedEvent(newGrandfather);
+            tree.pushTreeChangedEvent(i);
+            // tree.pushTreeChangedEvent(newGrandfather);
+            // tree.pushTreeChangedEvent(newGrandfather);
 
-            if (_tree.getExternalNodeCount() != tipCount) {
-               throw new RuntimeException(
-                     "Lost some tips in SPR operation");
-            }
+            assert tree.getExternalNodeCount() == tipCount;
+//            if (tree.getExternalNodeCount() != tipCount) {
+//               throw new RuntimeException(
+//                     "Lost some tips in SPR operation");
+//            }
 
             // return hastingsRatio;
             return 0.0;
          }
       }
 
-      throw new OperatorFailedException(
-            "Couldn't find valid SPR move on this tree!");
+      throw new OperatorFailedException("Couldn't find valid SPR move on this tree!");
    }
 
    /*

@@ -26,6 +26,7 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
+import dr.inference.model.Bounds;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -55,10 +56,11 @@ public class UniformOperator extends SimpleMCMCOperator {
      */
     public final double doOperation() {
 
-        int index = MathUtils.nextInt(parameter.getDimension());
-        double lower = parameter.getBounds().getLowerLimit(index);
-        double upper = parameter.getBounds().getUpperLimit(index);
-        double newValue = (MathUtils.nextDouble() * (upper - lower)) + lower;
+        final int index = MathUtils.nextInt(parameter.getDimension());
+        final Bounds bounds = parameter.getBounds();
+        final double lower = bounds.getLowerLimit(index);
+        final double upper = bounds.getUpperLimit(index);
+        final double newValue = (MathUtils.nextDouble() * (upper - lower)) + lower;
 
         parameter.setParameterValue(index, newValue);
 

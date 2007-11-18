@@ -35,12 +35,24 @@ import java.util.List;
  * @version $Id: OperatorSchedule.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface OperatorSchedule {
-
+    /**
+     *
+     * @return Choose the next operator.
+     */
     public int getNextOperatorIndex();
 
-    public MCMCOperator getOperator(int index);
-
+    /**
+     *
+     * @return  Total number of operators
+     */
     public int getOperatorCount();
+
+    /**
+     *
+     * @param index
+     * @return  the index'th operator
+     */
+    public MCMCOperator getOperator(int index);
 
     public void addOperator(MCMCOperator op);
 

@@ -83,7 +83,7 @@ public class XMLParser {
 
     public void storeObject(String name, Object object) {
 
-        XMLObject xo = new XMLObject(null, objectStore);
+        XMLObject xo = new XMLObject(null /*, objectStore*/);
         xo.setNativeObject(object);
         store.put(name, xo);
     }
@@ -140,7 +140,7 @@ public class XMLParser {
                 repeats = Integer.parseInt(e.getAttribute("count"));
             }
 
-            XMLObject xo = new XMLObject(e, objectStore);
+            XMLObject xo = new XMLObject(e /*, objectStore*/);
 
             String id = null;
             NodeList nodes = e.getChildNodes();
@@ -225,7 +225,7 @@ public class XMLParser {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            ArrayList list = new ArrayList();
+            List<Object> list = new ArrayList<Object>();
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 list.add(xo.getChild(i));

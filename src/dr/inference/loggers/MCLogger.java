@@ -211,6 +211,43 @@ public class MCLogger implements Logger {
     }
 
     /**
+     * Resolve file from name.
+     *
+     * Keep A fully qualified (i.e. absolute path) as is. A name starting with a "./" is
+     * relative to the master BEAST directory. Any other name is stripped of any directory
+     * component and placed in the "user.dir" directory.
+     *
+     * @param fileName
+     * @return
+     */
+    public static File getFile(String fileName) {
+        final boolean localFile = fileName.startsWith("./");
+        final boolean relative = masterBeastDirectory != null && localFile;
+        if (localFile) {
+            fileName = fileName.substring(2);
+        }
+
+        final File file = new File(fileName);
+        final String name = file.getName();
+        String parent = file.getParent();
+
+        if (!file.isAbsolute()) {
+            String p;
+            if (relative) {
+                p = masterBeastDirectory.getAbsolutePath();
+            } else {
+                p = System.getProperty("user.dir");
+            }
+            if( parent != null && parent.length() > 0 ) {
+                parent = p + '/' + parent;
+            } else {
+                parent = p;
+            }
+        }
+        return new File(parent, name);
+    }
+
+    /**
      * Allow a file relative to beast xml file with a prefix of ./
      *
      * @param xo         log element
@@ -221,26 +258,9 @@ public class MCLogger implements Logger {
     protected static PrintWriter getLogFile(XMLObject xo, String parserName) throws XMLParseException {
         if (xo.hasAttribute(FILE_NAME)) {
 
-            String fileName = xo.getStringAttribute(FILE_NAME);
+            final String fileName = xo.getStringAttribute(FILE_NAME);
 
-            final boolean localFile = fileName.startsWith("./");
-            final boolean relative = masterBeastDirectory != null && localFile;
-            if (localFile) {
-                fileName = fileName.substring(2);
-            }
-
-            final File file = new File(fileName);
-            final String name = file.getName();
-            String parent = file.getParent();
-
-            if (!file.isAbsolute()) {
-                if (relative) {
-                    parent = masterBeastDirectory.getAbsolutePath();
-                } else {
-                    parent = System.getProperty("user.dir");
-                }
-            }
-            final File logFile = new File(parent, name);
+            final File logFile = getFile(fileName);
 
 //	         System.out.println("Writing log file to "+parent+System.getProperty("path.separator")+name);
             try {
@@ -268,21 +288,21 @@ public class MCLogger implements Logger {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             // You must say how often you want to log
-            int logEvery = xo.getIntegerAttribute(LOG_EVERY);
+            final int logEvery = xo.getIntegerAttribute(LOG_EVERY);
 
-            PrintWriter pw = getLogFile(xo, getParserName());
+            final PrintWriter pw = getLogFile(xo, getParserName());
 
-            LogFormatter formatter = new TabDelimitedFormatter(pw);
+            final LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-            MCLogger logger = new MCLogger(formatter, logEvery);
+            final MCLogger logger = new MCLogger(formatter, logEvery);
 
             if (xo.hasAttribute(TITLE)) {
                 logger.setTitle(xo.getStringAttribute(TITLE));
             } else {
 
-                BeastVersion version = new BeastVersion();
+                final BeastVersion version = new BeastVersion();
 
-                String title = "BEAST " + version.getVersionString() +
+                final String title = "BEAST " + version.getVersionString() +
                         ", " + version.getBuildString() + "\n" +
 
                         "Generated " + (new Date()).toString();
@@ -291,7 +311,7 @@ public class MCLogger implements Logger {
 
             for (int i = 0; i < xo.getChildCount(); i++) {
 
-                Object child = xo.getChild(i);
+                final Object child = xo.getChild(i);
 
                 if (child instanceof Columns) {
 

@@ -1016,6 +1016,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
         public static boolean allDisjoint(SimpleNode[] nodes) {
 
+            // check with java 1.6
             Set<String>[] ids = new Set[nodes.length];
             for (int k = 0; k < nodes.length; ++k) {
                 ids[k] = Tree.Utils.getLeafSet(new SimpleTree(nodes[k]));

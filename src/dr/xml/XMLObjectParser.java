@@ -27,30 +27,59 @@ package dr.xml;
 
 public interface XMLObjectParser {
 
-	/**
-	 * @param store contains all named objects that have already been parsed.
-	 */
-	Object parseXMLObject(XMLObject xo, String id, ObjectStore store) throws XMLParseException;
+    /**
+     *
+     * @return  (Java) class of parsed element (i.e. class of object retuned in  parseXMLObject)
+     */
+    Class getReturnType();
 
-	String getParserName();
+    /**
+     * @param store contains all named objects that have already been parsed.
+     */
+    Object parseXMLObject(XMLObject xo, String id, ObjectStore store) throws XMLParseException;
 
+    /**
+     *
+     * @return Parser name, which is identical to name of xml element parsed by it.
+     */
+    String getParserName();
+
+    /**
+     *
+     * @return A list of parser name synonyms (including name returned by getParserName)
+     */
     String[] getParserNames();
 
-	String getParserDescription();
+    /**
+     *
+     * @return  Human readable description of xml element parsed by parser.
+     */
+    String getParserDescription();
 
-	boolean hasExample();
+    /**
+     *
+     * @return true if an example is available.
+     */
+    boolean hasExample();
 
-	String getExample();
+    /**
+     *
+     * @return element example
+     */
+    String getExample();
 
 
-	/**
-	 * @return a description of this parser as HTML.
-	 */
-	String toHTML(XMLDocumentationHandler handler);
+    /**
+     * @return a description of this parser as HTML.
+     */
+    String toHTML(XMLDocumentationHandler handler);
 
-	String toWiki(XMLDocumentationHandler handler);
-	
-	Class getReturnType();
+    String toWiki(XMLDocumentationHandler handler);
 
-	XMLSyntaxRule[] getSyntaxRules();
+
+    /**
+     * @return an array of syntax rules required by this element.
+     * Order is not important.
+     */
+    XMLSyntaxRule[] getSyntaxRules();
 }

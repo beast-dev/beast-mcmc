@@ -60,6 +60,23 @@ public class DiscreteStatistics {
 		return m/(double) len;
 	}
 
+     /**
+     * compute median
+     *
+     * @param x list of numbers
+     * @param indices index sorting x
+     *
+     * @return median
+     */
+    public static double median(double[] x, int[] indices) {
+
+        int pos = x.length/2;
+        if (x.length % 2 == 1) {
+            return x[indices[pos]];
+        } else {
+            return (x[indices[pos-1]]+x[indices[pos]])/2.0;
+        }
+    }
     /**
      * compute median
      *
@@ -69,19 +86,14 @@ public class DiscreteStatistics {
      */
     public static double median(double[] x) {
 
-        int[] indices = new int[x.length];
-        HeapSort.sort(x, indices);
-
         if (x == null || x.length == 0) {
 	        throw new IllegalArgumentException();
         }
 
-        int pos = x.length/2;
-        if (x.length % 2 == 1) {
-            return x[indices[pos]];
-        } else {
-            return (x[indices[pos-1]]+x[indices[pos]])/2.0;
-        }
+        int[] indices = new int[x.length];
+        HeapSort.sort(x, indices);
+
+        return median(x, indices);
     }
 
 
@@ -169,15 +181,14 @@ public class DiscreteStatistics {
 		double skew = 0.0;
 		double len = x.length;
 
-		for (int i = 0; i < x.length; i++)
-		{
-			double diff = x[i]-mean;
-			diff /= stdev;
+        for (double xv : x) {
+            double diff = xv - mean;
+            diff /= stdev;
 
-			skew += (diff*diff*diff);
-		}
+            skew += (diff * diff * diff);
+        }
 
-		skew *= (len / ((len - 1) * (len - 2)));
+        skew *= (len / ((len - 1) * (len - 2)));
 
 		return skew;
 	}
@@ -291,7 +302,35 @@ public class DiscreteStatistics {
         return quantile(q, x, indices);
     }
 
-	/**
+    /**
+     * Determine the highest posterior density for a list of values.
+     * The HPD is the smallest interval containing the required amount of elements.
+     *
+     * @param proportion  of elements inside the interval
+     * @param x values
+     * @param indices index sorting x
+     * @return  the interval, an array of {low, high} values.
+     */
+    public static double[] HPDInterval(double proportion, double[] x, int[] indices) {
+
+        double minRange = Double.MAX_VALUE;
+        int hpdIndex = 0;
+
+        final int diff = (int) Math.round(proportion * (double) x.length);
+        for (int i = 0; i <= (x.length - diff); i++) {
+            final double minValue = x[indices[i]];
+            final double maxValue = x[indices[i + diff - 1]];
+            final double range = Math.abs(maxValue - minValue);
+            if (range < minRange) {
+                minRange = range;
+                hpdIndex = i;
+            }
+        }
+
+        return new double[] { x[indices[hpdIndex]] , x[indices[hpdIndex + diff - 1]] };
+    }
+
+    /**
 	 * compute the cumulative probability Pr(x <= z) for a given z
 	 * and a distribution of x
 	 *
@@ -329,7 +368,7 @@ public class DiscreteStatistics {
 		return cdf(z, x, indices);
 	}
 
-    public static final double max(double[] x) {
+    public static double max(double[] x) {
         double max = x[0];
         for (int i = 1; i < x.length; i++) {
             if (x[i] > max) max = x[i];
@@ -337,7 +376,7 @@ public class DiscreteStatistics {
         return max;
     }
 
-    public static final double min(double[] x) {
+    public static double min(double[] x) {
         double min = x[0];
         for (int i = 1; i < x.length; i++) {
             if (x[i] < min) min = x[i];

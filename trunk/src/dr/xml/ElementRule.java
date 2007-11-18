@@ -239,7 +239,15 @@ public class ElementRule implements XMLSyntaxRule {
 		if (c != null) {
 			return "ELEMENT of type " + getTypeName() + " REQUIRED";
 		} else {
-			StringBuffer buffer = new StringBuffer("Exactly one ELEMENT of name " + name + " REQUIRED containing");
+            String howMany;
+            if( min == 1 && max == 1 ) {
+                howMany = "Exactly one";
+            } else if( (min <= 1) && max == Integer.MAX_VALUE ) {
+                howMany = "Any number of";
+            } else {
+                howMany = "between " + min + " and " + max;
+            }
+            StringBuffer buffer = new StringBuffer(howMany + " ELEMENT of name " + name + " REQUIRED containing");
             for (XMLSyntaxRule rule : rules) {
                 buffer.append("\n    ").append(rule.ruleString());
             }

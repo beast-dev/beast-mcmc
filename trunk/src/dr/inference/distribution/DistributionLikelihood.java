@@ -234,8 +234,8 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			double mean = xo.getDoubleAttribute(MEAN);
-			double offset = xo.getDoubleAttribute(OFFSET);
+			final double mean = xo.getDoubleAttribute(MEAN);
+			final double offset = xo.hasAttribute(OFFSET) ? xo.getDoubleAttribute(OFFSET) : 0.0;
 
 			DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0 / mean), offset);
 			for (int j = 0; j < xo.getChildCount(); j++) {
@@ -255,7 +255,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 				AttributeRule.newDoubleRule(MEAN),
-				AttributeRule.newDoubleRule(OFFSET),
+				AttributeRule.newDoubleRule(OFFSET, true),
 				new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
 		};
 

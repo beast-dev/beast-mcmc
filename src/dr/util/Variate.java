@@ -152,10 +152,10 @@ public interface Variate
 		 * add all the values
 		 */
 		public void add(double[] values) {
-			for (int i = 0; i < values.length; i++) {
-				add(values[i]);
-			}
-		}
+            for (double value : values) {
+                add(value);
+            }
+        }
 		
 	
 		/**
@@ -255,7 +255,7 @@ public interface Variate
 			return DiscreteStatistics.quantile(q, values, valueCount);
 		}
 
-	};
+	}
 	
 	/**
 	 * A single precision concrete implementation of Variate
@@ -294,10 +294,10 @@ public interface Variate
 		 * add all the values
 		 */
 		public void add(double[] values) {
-			for (int i = 0; i < values.length; i++) {
-				add(values[i]);
-			}
-		}
+            for (double value : values) {
+                add(value);
+            }
+        }
 		
 	
 		/**
@@ -402,5 +402,5 @@ public interface Variate
 			return DiscreteStatistics.quantile(q, dv);
 		}
 
-	};
+    }
 }

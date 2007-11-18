@@ -208,6 +208,8 @@ public class WishartDistribution implements MultivariateDistribution {
             logDensity *= 0.5;
             logDensity *= df - dim - 1;
 
+            // need only diagonal, no? seems a waste to compute
+            // the whole matrix
             Matrix product = Sinv.product(W);
 
             for (int i = 0; i < dim; i++)

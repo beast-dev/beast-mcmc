@@ -490,11 +490,7 @@ public class TreeAnnotator {
 					double minValue = Double.MAX_VALUE;
 					double maxValue = -Double.MAX_VALUE;
 					for (int j = 0; j < clade.attributeLists[i].size(); j++) {
-						if (!isDiscrete) {
-							values[j] = ((Number) clade.attributeLists[i].get(j)).doubleValue();
-							if (values[j] < minValue) minValue = values[j];
-							if (values[j] > maxValue) maxValue = values[j];
-						} else {
+						if (isDiscrete) {
 							String value = (String) clade.attributeLists[i].get(j);
 							if (value.startsWith("\"")) {
 								value = value.replaceAll("\"", "");
@@ -505,6 +501,12 @@ public class TreeAnnotator {
 							} else {
 								hashMap.put(value, 1);
 							}
+						} else if (isBoolean) {
+							values[j] = (((Boolean) clade.attributeLists[i].get(j)) ? 1.0 : 0.0);
+						} else {
+							values[j] = ((Number) clade.attributeLists[i].get(j)).doubleValue();
+							if (values[j] < minValue) minValue = values[j];
+							if (values[j] > maxValue) maxValue = values[j];
 						}
 					}
 					if (isHeight) {

@@ -148,7 +148,10 @@ class MersenneTwisterFast implements Serializable {
 	 * @param seed from constructor
 	 */
 	public final void setSeed(long seed) {
-		initializationSeed = seed;
+        if( seed == 0 ) {
+            throw new IllegalArgumentException("Non zero random seed required."); 
+        }
+        initializationSeed = seed;
 		haveNextNextGaussian = false;
 
 		mt = new int[N];

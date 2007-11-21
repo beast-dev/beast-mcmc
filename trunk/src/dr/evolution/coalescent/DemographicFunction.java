@@ -68,12 +68,12 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
      * @return integral value
      */
 	double getIntegral(double start, double finish);
-				
+
 	/**
 	 * @return the number of arguments for this function.
 	 */
 	int getNumArguments();
-	
+
 	/**
 	 * @return the name of the n'th argument of this function.
 	 */
@@ -93,7 +93,7 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 	 * @return the lower bound of the nth argument of this function.
 	 */
 	double getLowerBound(int n);
-	
+
 	/**
 	 * Returns the upper bound of the nth argument of this function.
 	 */
@@ -103,7 +103,7 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 	 * Returns a copy of this function.
 	 */
 	DemographicFunction getCopy();
-	
+
 	public abstract class Abstract implements DemographicFunction
 	{
        // private static final double LARGE_POSITIVE_NUMBER = 1.0e50;
@@ -113,7 +113,7 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 
         // With the release of commons-maths 1.2 we will be able to use this...
         // RombergIntegrator numericalIntegrator;
-        
+
         /**
 		 * Construct demographic model with default settings
 		 */
@@ -124,19 +124,19 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 		// general functions
 
 		/**
-		 * Calculates the integral 1/N(x) dx between start and finish. 
+		 * Calculates the integral 1/N(x) dx between start and finish.
 		 */
 		public double getIntegral(double start, double finish)
 		{
 			return getIntensity(finish) - getIntensity(start);
 		}
-			
+
         /**
          * Returns the integral of 1/N(x) between start and finish, calling either the getAnalyticalIntegral or
          * getNumericalIntegral function as appropriate.
          */
 		public double getNumericalIntegral(double start, double finish) {
-        
+
             double lastST = LARGE_NEGATIVE_NUMBER;
             double lastS = LARGE_NEGATIVE_NUMBER;
 
@@ -249,14 +249,21 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 		public static double getSimulatedInterval(DemographicFunction demographicFunction, int lineageCount, double timeOfLastCoalescent)
 		{
 			final double U = MathUtils.nextDouble(); // create unit uniform random variate
-				
+
 			final double tmp = -Math.log(U)/Binomial.choose2(lineageCount) + demographicFunction.getIntensity(timeOfLastCoalescent);
 
             return demographicFunction.getInverseIntensity(tmp) - timeOfLastCoalescent;
 		}
-		
+
+		public static double getMedianInterval(DemographicFunction demographicFunction, int lineageCount, double timeOfLastCoalescent)
+		{
+			final double tmp = -Math.log(0.5)/Binomial.choose2(lineageCount) + demographicFunction.getIntensity(timeOfLastCoalescent);
+
+            return demographicFunction.getInverseIntensity(tmp) - timeOfLastCoalescent;
+		}
+
 		/**
-		 * This function tests the consistency of the 
+		 * This function tests the consistency of the
 		 * getIntensity and getInverseIntensity methods
 		 * of this demographic model. If the model is
 		 * inconsistent then a RuntimeException will be thrown.
@@ -265,18 +272,18 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 		 * @param maxTime the maximum time to test.
 		 */
 		public static void testConsistency(DemographicFunction demographicFunction, int steps, double maxTime) {
-			
+
 			double delta = maxTime / (double)steps;
-			
+
 			for (int i = 0; i <= steps; i++) {
 				double time = (double)i * delta;
 				double intensity = demographicFunction.getIntensity(time);
 				double newTime = demographicFunction.getInverseIntensity(intensity);
-							
+
 				if (Math.abs(time - newTime) > 1e-12) {
 					throw new RuntimeException(
-						"Demographic model not consistent! error size = " + 
-						Math.abs(time-newTime)); 
+						"Demographic model not consistent! error size = " +
+						Math.abs(time-newTime));
 				}
 			}
 		}

@@ -61,6 +61,7 @@ public class TreeAnnotator {
 	                     String densityAttributeName,
 	                     int timeBinCount,
 	                     int valueBinCount,
+	                     double timeLimit,
 	                     String densityFileName
 	) throws IOException {
 
@@ -73,9 +74,14 @@ public class TreeAnnotator {
 
 		DensityMap densityMap = null;
 		if (densityAttributeName != null) {
-			densityMap = new DensityMap(timeBinCount, valueBinCount, 0.01);
+			densityMap = new DensityMap(timeBinCount, valueBinCount, timeLimit,0.01);
 		}
-		CladeSystem cladeSystem = new CladeSystem();
+
+		CladeSystem cladeSystem = null;
+
+		if (outputFileName != null) {
+			cladeSystem = new CladeSystem();
+		}
 
 		boolean firstTree = true;
 		FileReader fileReader = new FileReader(inputFileName);
@@ -90,7 +96,9 @@ public class TreeAnnotator {
 				}
 
 				if (totalTrees >= burnin) {
-					cladeSystem.add(tree);
+					if (cladeSystem != null) {
+						cladeSystem.add(tree);
+					}
 
 					if (densityMap != null) {
 						densityMap.calibrate(tree, densityAttributeName);
@@ -135,7 +143,11 @@ public class TreeAnnotator {
 			printWriter.println(densityMap.toString());
 			printWriter.close();
 		}
-		
+
+		if (outputFileName == null) {
+			return;
+		}
+
 		cladeSystem.calculateCladeCredibilities(totalTreesUsed);
 
 		System.out.println("Total trees read: " + totalTrees);
@@ -349,10 +361,10 @@ public class TreeAnnotator {
 		}
 
 		public void calculateCladeCredibilities(int totalTreesUsed) {
-            for (Clade clade : cladeMap.values()) {
-                clade.setCredibility(((double) clade.getCount()) / totalTreesUsed);
-            }
-        }
+			for (Clade clade : cladeMap.values()) {
+				clade.setCredibility(((double) clade.getCount()) / totalTreesUsed);
+			}
+		}
 
 		public double getSumCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
 
@@ -612,9 +624,9 @@ public class TreeAnnotator {
 
 				final Clade clade = (Clade) o;
 
-                return !(bits != null ? !bits.equals(clade.bits) : clade.bits != null);
+				return !(bits != null ? !bits.equals(clade.bits) : clade.bits != null);
 
-            }
+			}
 
 			public int hashCode() {
 				return (bits != null ? bits.hashCode() : 0);
@@ -630,7 +642,7 @@ public class TreeAnnotator {
 		// Private stuff
 		//
 		TaxonList taxonList = null;
-        Map<BitSet, Clade> cladeMap = new HashMap<BitSet, Clade>();
+		Map<BitSet, Clade> cladeMap = new HashMap<BitSet, Clade>();
 	}
 
 	int totalTrees = 0;
@@ -754,6 +766,7 @@ public class TreeAnnotator {
 						null,
 						0,
 						0,
+						0.0,
 						null);
 
 			} catch (Exception ex) {
@@ -782,6 +795,7 @@ public class TreeAnnotator {
 						new Arguments.StringOption("density", "density_attribute", "specifies an attribute to use to create a density map"),
 						new Arguments.IntegerOption("time_bins", "the number of bins for the time axis of the density map"),
 						new Arguments.IntegerOption("value_bins", "the number of bins for the value axis of the density map"),
+						new Arguments.RealOption("time_limit", "the upper time bound for the density map"),
 						new Arguments.StringOption("density_file", "density_file_name", "specifies a file name for the density map"),
 						new Arguments.Option("help", "option to print this message")
 				});
@@ -828,6 +842,7 @@ public class TreeAnnotator {
 		String densityAttributeName = null;
 		int timeBinCount = 100;
 		int valueBinCount = 25;
+		double timeLimit = -1.0;
 		String densityFileName = "density.map";
 		if (arguments.hasOption("density")) {
 			densityAttributeName = arguments.getStringOption("density");
@@ -839,6 +854,10 @@ public class TreeAnnotator {
 
 		if (arguments.hasOption("value_bins")) {
 			valueBinCount = arguments.getIntegerOption("value_bins");
+		}
+
+		if (arguments.hasOption("time_limit")) {
+			timeLimit = arguments.getRealOption("time_limit");
 		}
 
 		if (arguments.hasOption("density_file")) {
@@ -858,8 +877,12 @@ public class TreeAnnotator {
 			targetTreeFileName = null;
 			inputFileName = args2[0];
 			outputFileName = args2[1];
+		} else if (args2.length == 1) {
+			targetTreeFileName = null;
+			inputFileName = args2[0];
+			outputFileName = null;
 		} else {
-			System.err.println("Missing output file name");
+			System.err.println("Missing input file name");
 			printUsage(arguments);
 			System.exit(1);
 		}
@@ -874,6 +897,7 @@ public class TreeAnnotator {
 				densityAttributeName,
 				timeBinCount,
 				valueBinCount,
+				timeLimit,
 				densityFileName);
 
 		System.exit(0);

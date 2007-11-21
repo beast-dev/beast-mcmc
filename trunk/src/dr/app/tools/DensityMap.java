@@ -18,6 +18,7 @@ class DensityMap {
 	private int[][] data;
 	private int[] counts;
 	private double startX;
+	private double endX;
 	private double startY;
 	private double scaleX;
 	private double scaleY;
@@ -27,15 +28,17 @@ class DensityMap {
 	private double maxValue = Double.NEGATIVE_INFINITY;
 
 	private double edgeFraction;
+	private double timeLimit;
 
 	private boolean isCalibrated = false;
 
-	public DensityMap(int binX, int binY, double edgeFraction) {
+	public DensityMap(int binX, int binY, double timeLimit, double edgeFraction) {
 		this.binX = binX;
 		this.binY = binY;
 		data = new int[binX][binY];
 		counts = new int[binX];
 		this.edgeFraction = edgeFraction;
+		this.timeLimit = timeLimit;
 	}
 
 	public void calibrate(Tree tree, String attributeName) {
@@ -70,7 +73,10 @@ class DensityMap {
 
 			startX = 0.0;
 			startY = minValue;
-			double endX = maxTreeHeight * (1.0 + edgeFraction);
+			endX = maxTreeHeight * (1.0 + edgeFraction);
+			if (timeLimit > 0.0) {
+				endX = timeLimit;
+			}
 			double endY = maxValue;
 
 			scaleX = (endX - startX) / (double) binX;
@@ -90,11 +96,21 @@ class DensityMap {
 	}
 
 	private void addBranch(double start, double end, double y) {
+		if (start >= endX) {
+			// branch is outside bounds...
+			return;
+		}
+		if (end > endX) {
+			end = endX;
+		}
 		// determine bin for y
 		int Y = (int) ((y - startY) / scaleY);
 		// determine start and end bin for x
 		int START = (int) ((start - startX) / scaleX);
 		int END = (int) ((end - startX) / scaleX);
+		if (END >= counts.length) {
+			END = counts.length - 1;
+		}
 //			System.out.println(start+":"+end+" -> "+START+":"+END);
 		for (int i = START; i <= END; i++) {
 			data[i][Y] += 1;

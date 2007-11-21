@@ -25,15 +25,13 @@
 
 package dr.evolution.coalescent;
 
-import dr.evolution.tree.SimpleNode;
-import dr.evolution.tree.SimpleTree;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
-import dr.evolution.util.TimeScale;
+import dr.evolution.tree.*;
+import dr.evolution.util.*;
+import dr.evolution.util.Date;
 import dr.math.MathUtils;
 import dr.util.HeapSort;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * This class provides the basic engine for coalescent simulation of a given demographic model over a given time period.
@@ -46,14 +44,14 @@ import java.util.ArrayList;
  *
  */
 public class CoalescentSimulator {
-	
+
 	public static final String COALESCENT_TREE = "coalescentTree";
 	public static final String COALESCENT_SIMULATOR = "coalescentSimulator";
 	public static final String ROOT_HEIGHT = "rootHeight";
-	
+
 	public CoalescentSimulator() {}
-	
-	
+
+
 	/**
 	 * Simulates a coalescent tree, given a taxon list.
 	 * @param taxa the set of taxa to simulate a coalescent tree between
@@ -68,10 +66,10 @@ public class CoalescentSimulator {
 			nodes[i] = new SimpleNode();
 			nodes[i].setTaxon(taxa.getTaxon(i));
 		}
-		
+
 		dr.evolution.util.Date mostRecent = null;
 		boolean usingDates = false;
-		
+
 		for (int i = 0; i < taxa.getTaxonCount(); i++) {
 			if (TaxonList.Utils.hasAttribute(taxa, i, dr.evolution.util.Date.DATE)) {
 				usingDates = true;
@@ -84,27 +82,27 @@ public class CoalescentSimulator {
 				nodes[i].setHeight(0.0);
 			}
 		}
-		
+
 		if (usingDates && mostRecent != null ) {
 			TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
-			
+
 			for (int i =0; i < taxa.getTaxonCount(); i++) {
 				dr.evolution.util.Date date = (dr.evolution.util.Date)taxa.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
-				
+
 				if (date == null) {
 					throw new IllegalArgumentException("Taxon, " + taxa.getTaxonId(i) + ", is missing its date");
 				}
-				
+
 				nodes[i].setHeight(timeScale.convertTime(date.getTimeValue(), date));
 			}
 			if (demoFunction.getUnits() != mostRecent.getUnits()) {
 				//throw new IllegalArgumentException("The units of the demographic model and the most recent date must match!");
 			}
 		}
-		
+
 		return new SimpleTree(simulateCoalescent(nodes, demoFunction));
 	}
-	
+
 	/**
 	 * @return the root node of the given array of nodes after simulation of the coalescent under the given demographic model.
 	 */
@@ -128,38 +126,38 @@ public class CoalescentSimulator {
 
         throw new RuntimeException("failed to merge trees after 1000 tries!");
 	}
-	
+
 	public SimpleNode[] simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic, double currentHeight, double maxHeight) {
         // If only one node, return it
         // continuing results in an infinite loop
         if( nodes.length == 1 ) return nodes;
-        
+
         double[] heights = new double[nodes.length];
 		for (int i = 0; i < nodes.length; i++) {
 			heights[i] = nodes[i].getHeight();
 		}
 		int[] indices = new int[nodes.length];
 		HeapSort.sort(heights, indices);
-		
+
 		// node list
 		nodeList.clear();
 		activeNodeCount = 0;
 		for (int i = 0; i < nodes.length; i++) {
 			nodeList.add(nodes[indices[i]]);
-		}		
+		}
 		setCurrentHeight(currentHeight);
-		
+
 		// get at least two tips
 		while (getActiveNodeCount() < 2) {
-			currentHeight = getMinimumInactiveHeight(); 
+			currentHeight = getMinimumInactiveHeight();
 			setCurrentHeight(currentHeight);
 		}
-		
+
 		// simulate coalescent events
 		double nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getSimulatedInterval(demographic, getActiveNodeCount(), currentHeight);
 
 		while (nextCoalescentHeight < maxHeight && (getNodeCount() > 1)) {
-		
+
 			if (nextCoalescentHeight >= getMinimumInactiveHeight()) {
 				currentHeight = getMinimumInactiveHeight();
 				setCurrentHeight(currentHeight);
@@ -167,26 +165,27 @@ public class CoalescentSimulator {
 				currentHeight = nextCoalescentHeight;
 				coalesceTwoActiveNodes(currentHeight);
 			}
-			
+
 			if (getNodeCount() > 1) {
 				// get at least two tips
 				while (getActiveNodeCount() < 2) {
-					currentHeight = getMinimumInactiveHeight(); 
+					currentHeight = getMinimumInactiveHeight();
 					setCurrentHeight(currentHeight);
 				}
-			
+
+	//			nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getMedianInterval(demographic, getActiveNodeCount(), currentHeight);
 				nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getSimulatedInterval(demographic, getActiveNodeCount(), currentHeight);
 			}
 		}
-		
+
 		SimpleNode[] nodesLeft = new SimpleNode[nodeList.size()];
 		for (int i = 0; i < nodesLeft.length; i++) {
 			nodesLeft[i] = nodeList.get(i);
 		}
-		
+
 		return nodesLeft;
 	}
-	
+
 	/**
 	 * @return the height of youngest inactive node.
 	 */
@@ -195,7 +194,7 @@ public class CoalescentSimulator {
 			return (nodeList.get(activeNodeCount)).getHeight();
 		} else return Double.POSITIVE_INFINITY;
 	}
-	
+
 	/**
 	 * Set the current height.
 	 */
@@ -204,21 +203,21 @@ public class CoalescentSimulator {
 			activeNodeCount += 1;
 		}
 	}
-	
+
 	/**
 	 * @return the numver of active nodes (equate to lineages)
 	 */
 	private int getActiveNodeCount() {
 		return activeNodeCount;
 	}
-	
+
 	/**
 	 * @return the total number of nodes both active and inactive
 	 */
 	private int getNodeCount() {
 		return nodeList.size();
 	}
-	
+
 	/**
 	 * Coalesce two nodes in the active list. This method removes the two (randomly selected) active nodes
 	 * and replaces them with the new node at the top of the active list.
@@ -229,10 +228,10 @@ public class CoalescentSimulator {
 		while (node2 == node1) {
 			node2 = MathUtils.nextInt(activeNodeCount);
 		}
-		
+
 		SimpleNode left = nodeList.get(node1);
 		SimpleNode right = nodeList.get(node2);
-		
+
 		SimpleNode newNode = new SimpleNode();
 		newNode.setHeight(height);
 		newNode.addChild(left);
@@ -240,18 +239,56 @@ public class CoalescentSimulator {
 
 		nodeList.remove(left);
 		nodeList.remove(right);
-		
+
 		activeNodeCount -= 2;
-		
+
 		nodeList.add(activeNodeCount, newNode);
-		
+
 		activeNodeCount += 1;
-		
+
 		if (getMinimumInactiveHeight() < height) {
 			throw new RuntimeException("This should never happen! Somehow the current active node is older than the next inactive node!");
 		}
-	}	
+	}
 
 	private ArrayList<SimpleNode> nodeList = new ArrayList<SimpleNode>();
 	private int activeNodeCount = 0;
+
+	public static void main(String[] args) {
+
+		double[] samplingTimes = new double[] {
+				0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0
+		};
+
+		ExponentialGrowth exponentialGrowth = new ExponentialGrowth(Units.Type.YEARS);
+		exponentialGrowth.setN0(10);
+		exponentialGrowth.setGrowthRate(0.5);
+
+		ConstantPopulation constantPopulation = new ConstantPopulation(Units.Type.YEARS);
+		constantPopulation.setN0(10);
+
+		Taxa taxa = new Taxa();
+		int i = 1;
+		for (double time : samplingTimes) {
+			Taxon taxon = new Taxon("tip" + i);
+			taxon.setAttribute("date", new Date(time, Units.Type.YEARS, true));
+			i++;
+			taxa.addTaxon(taxon);
+		}
+		CoalescentSimulator simulator = new CoalescentSimulator();
+		Tree tree = simulator.simulateTree(taxa, exponentialGrowth);
+
+		List<Double> heights = new ArrayList<Double>();
+		for (int j = 0; j < tree.getInternalNodeCount(); j++) {
+			heights.add(tree.getNodeHeight(tree.getInternalNode(j)));
+		}
+
+		Collections.sort(heights);
+
+		for (int j = 0; j < heights.size(); j++) {
+			System.out.println(j + "\t" + heights.get(j));
+		}
+
+	}
+
 }

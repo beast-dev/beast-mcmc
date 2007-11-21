@@ -190,6 +190,10 @@ public class TreeModel extends AbstractModel implements MutableTree {
 			return parameter;
 		}
 
+		public boolean isTreeChanged() {
+			return parameter == null;
+		}
+
 		public boolean isNodeChanged() {
 			return node != null;
 		}
@@ -340,7 +344,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
 	public final NodeRef getNode(int i) {
 		return nodes[i];
 	}
-   
+
    public NodeRef [] getNodes() {
       return nodes;
    }
@@ -753,12 +757,15 @@ public class TreeModel extends AbstractModel implements MutableTree {
 			if (hasRates && node.rateParameter == parameter) {
 				return node;
 			}
-
+		}
+		for (Node node : nodes) {
 			if (hasTraits && node.traitParameters.containsValue(parameter)) {
 				return node;
 			}
 		}
 		throw new RuntimeException("Parameter not found in any nodes:" + parameter.getId() + " " + parameter.hashCode());
+		// assume it is a trait parameter and return null
+//		return null;
 	}
 
 	/**
@@ -837,7 +844,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
 	/**
 	 * Create a node traits parameter. Is private because it can only be called by the XMLParser
 	 */
-	public Parameter createNodeTraitsParameter(String name, int dim, boolean rootNode, boolean internalNodes, boolean leafNodes) {
+	public Parameter createNodeTraitsParameter(String name, int dim, boolean rootNode, boolean internalNodes, boolean leafNodes, boolean firesTreeEvents) {
 
 		if (!rootNode && !internalNodes && !leafNodes) {
 			throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
@@ -848,14 +855,14 @@ public class TreeModel extends AbstractModel implements MutableTree {
 		hasTraits = true;
 
 		for (int i = externalNodeCount; i < nodeCount; i++) {
-			nodes[i].createTraitParameter(name, dim);
+			nodes[i].createTraitParameter(name, dim, firesTreeEvents);
 			if ((rootNode && nodes[i] == root) || (internalNodes && nodes[i] != root)) {
 				parameter.addParameter(nodes[i].getTraitParameter(name));
 			}
 		}
 
 		for (int i = 0; i < externalNodeCount; i++) {
-			nodes[i].createTraitParameter(name, dim);
+			nodes[i].createTraitParameter(name, dim, firesTreeEvents);
 			if (leafNodes) {
 				parameter.addParameter(nodes[i].getTraitParameter(name));
 			}
@@ -985,7 +992,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
 		}
 
 
-		public final void createTraitParameter(String name, int dim) {
+		public final void createTraitParameter(String name, int dim, boolean firesTreeEvents) {
 
 			if (!traitParameters.containsKey(name)) {
 
@@ -1001,7 +1008,9 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
 				traitParameters.put(name, trait);
 
-				addParameter(trait);
+				if (firesTreeEvents) {
+					addParameter(trait);
+				}
 			}
 		}
 

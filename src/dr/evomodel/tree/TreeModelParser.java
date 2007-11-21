@@ -50,6 +50,8 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public static final String ROOT_NODE = "rootNode";
     public static final String INTERNAL_NODES = "internalNodes";
     public static final String LEAF_NODES = "leafNodes";
+	public static final String FIRE_TREE_EVENTS = "fireTreeEvents";
+
     public static final String TAXON = "taxon";
     public static final String NAME = "name";
 
@@ -149,6 +151,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                     boolean rootNode = false;
                     boolean internalNodes = false;
                     boolean leafNodes = false;
+	                boolean fireTreeEvents = false;
                     String name = "trait";
 
                     int dim = 1;
@@ -169,6 +172,10 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
                     }
 
+	                if (cxo.hasAttribute(FIRE_TREE_EVENTS)) {
+	                    fireTreeEvents = cxo.getBooleanAttribute(FIRE_TREE_EVENTS);
+	                }
+
                     if (cxo.hasAttribute(NAME)) {
                         name = cxo.getStringAttribute(NAME);
                     }
@@ -177,7 +184,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeTraits element");
                     }
 
-                    replaceParameter(cxo, treeModel.createNodeTraitsParameter(name, dim, rootNode, internalNodes, leafNodes));
+                    replaceParameter(cxo, treeModel.createNodeTraitsParameter(name, dim, rootNode, internalNodes, leafNodes, fireTreeEvents));
 
                 } else if (cxo.getName().equals(LEAF_TRAIT)) {
 

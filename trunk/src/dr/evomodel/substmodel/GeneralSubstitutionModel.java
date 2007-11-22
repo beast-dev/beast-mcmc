@@ -45,7 +45,6 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 	public static final String RATES = "rates";
 	public static final String RELATIVE_TO = "relativeTo";
 	public static final String FREQUENCIES = "frequencies";
-	public static final String NAME = "name";
 
 	/**
 	 * the rate which the others are set relative to
@@ -156,34 +155,14 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 			XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
 			FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
-			DataType dataType = null;
-
-			if (xo.hasAttribute(DataType.DATA_TYPE)) {
-				String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
-				if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
-					dataType = Nucleotides.INSTANCE;
-				} else if (dataTypeStr.equals(AminoAcids.DESCRIPTION)) {
-					dataType = AminoAcids.INSTANCE;
-				} else if (dataTypeStr.equals(Codons.DESCRIPTION)) {
-					dataType = Codons.UNIVERSAL;
-				} else if (dataTypeStr.equals(TwoStates.DESCRIPTION)) {
-					dataType = TwoStates.INSTANCE;
-				}
-			}
-
-			if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
+			DataType dataType = freqModel.getDataType();
 
 			cxo = (XMLObject) xo.getChild(RATES);
 
 			int relativeTo = cxo.getIntegerAttribute(RELATIVE_TO) - 1;
 			if (relativeTo < 0) throw new XMLParseException(RELATIVE_TO + " must be 1 or greater");
 
-
 			ratesParameter = (Parameter) cxo.getChild(Parameter.class);
-
-			if (dataType != freqModel.getDataType()) {
-				throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
-			}
 
 			int rateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount()) / 2;
 
@@ -218,11 +197,6 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 		}
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new XORRule(
-						new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
-						new ElementRule(DataType.class)
-				),
-				new StringAttributeRule(NAME, "A name for this general substitution model"),
 				new ElementRule(FREQUENCIES, FrequencyModel.class),
 				new ElementRule(RATES,
 						new XMLSyntaxRule[]{

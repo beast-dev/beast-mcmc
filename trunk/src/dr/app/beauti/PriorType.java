@@ -14,7 +14,8 @@ public enum PriorType {
     LOGNORMAL_PRIOR,
     GAMMA_PRIOR,
     JEFFREYS_PRIOR,
-    POISSON_PRIOR;
+    POISSON_PRIOR,
+    TRUNC_NORMAL_PRIOR;
 
     public String toString() {
 
@@ -27,6 +28,7 @@ public enum PriorType {
             case GAMMA_PRIOR: return "Gamma";
             case JEFFREYS_PRIOR: return "Jeffreys'";
             case POISSON_PRIOR: return "Poisson";
+            case TRUNC_NORMAL_PRIOR: return "Truncated Normal";
             default: return "";
         }
     }
@@ -87,6 +89,19 @@ public enum PriorType {
                 buffer.append("Poisson [");
                 buffer.append(formatter.format(param.poissonMean));
                 buffer.append("]");
+                break;
+            case TRUNC_NORMAL_PRIOR:
+                buffer.append("Truncated Normal [");
+                buffer.append(formatter.format(param.normalMean));
+                buffer.append(", ");
+                buffer.append(formatter.format(param.normalStdev));
+                buffer.append("]");
+                buffer.append(" in [");
+                buffer.append(formatter.format(param.uniformLower));
+                buffer.append(", ");
+                buffer.append(formatter.format(param.uniformUpper));
+                buffer.append("]");
+
                 break;
             default:
                 throw new IllegalArgumentException("Unknown prior type");

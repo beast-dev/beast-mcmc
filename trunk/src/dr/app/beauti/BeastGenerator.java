@@ -28,6 +28,8 @@ package dr.app.beauti;
 import dr.app.beast.BeastVersion;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.TwoStateCovarion;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
@@ -274,6 +276,37 @@ public class BeastGenerator extends BeautiOptions {
     }
 
     /**
+     * Determine and return the datatype description for these beast options
+     * note that the datatype in XML may differ from the actual datatype
+     * @return description
+     */
+
+    private String getAlignmentDataTypeDescription() {
+        String description;
+
+        switch (dataType){
+            case DataType.TWO_STATES:
+            case DataType.COVARION:
+
+                switch(binarySubstitutionModel){
+                    case BIN_COVARION:
+                        description = TwoStateCovarion.DESCRIPTION;
+                         break;
+
+                    default:
+                        description= alignment.getDataType().getDescription();
+                }
+                break;
+
+            default:
+                description= alignment.getDataType().getDescription();
+        }
+
+        return description;
+    }
+
+
+    /**
      * Generate an alignment block from these beast options
      *
      * @param writer the writer
@@ -286,11 +319,13 @@ public class BeastGenerator extends BeautiOptions {
         if (samplePriorOnly) {
             writer.writeComment("Null sequences generated in order to sample from the prior only.");
         }
+
+
         writer.writeOpenTag(
                 "alignment",
                 new Attribute[]{
                         new Attribute.Default<String>("id", "alignment"),
-                        new Attribute.Default<String>("dataType", alignment.getDataType().getDescription())
+                        new Attribute.Default<String>("dataType", getAlignmentDataTypeDescription())
                 }
         );
 
@@ -671,96 +706,114 @@ public class BeastGenerator extends BeautiOptions {
      */
     public void writeSubstitutionModel(XMLWriter writer) {
 
-        if (alignment.getDataType() == Nucleotides.INSTANCE) {
 
-            // Jukes-Cantor model
-            if (nucSubstitutionModel == JC) {
-                writer.writeComment("The JC substitution model (Jukes & Cantor, 1969)");
-                writer.writeOpenTag(
-                        dr.evomodel.substmodel.HKY.HKY_MODEL,
-                        new Attribute[]{new Attribute.Default<String>("id", "jc")}
-                );
-                writer.writeOpenTag(dr.evomodel.substmodel.HKY.FREQUENCIES);
-                writer.writeOpenTag(
-                        FrequencyModel.FREQUENCY_MODEL,
-                        new Attribute[]{
-                                new Attribute.Default<String>("dataType", alignment.getDataType().getDescription())
-                        }
-                );
-                writer.writeOpenTag(FrequencyModel.FREQUENCIES);
-                writer.writeTag(
-                        ParameterParser.PARAMETER,
-                        new Attribute[]{
-                                new Attribute.Default<String>("id", "jc.frequencies"),
-                                new Attribute.Default<String>("value", "0.25 0.25 0.25 0.25")
-                        },
-                        true
-                );
-                writer.writeCloseTag(FrequencyModel.FREQUENCIES);
+        switch(dataType){
+            case DataType.NUCLEOTIDES:
+                // Jukes-Cantor model
+                if (nucSubstitutionModel == JC) {
+                    writer.writeComment("The JC substitution model (Jukes & Cantor, 1969)");
+                    writer.writeOpenTag(
+                            dr.evomodel.substmodel.HKY.HKY_MODEL,
+                            new Attribute[]{new Attribute.Default<String>("id", "jc")}
+                    );
+                    writer.writeOpenTag(dr.evomodel.substmodel.HKY.FREQUENCIES);
+                    writer.writeOpenTag(
+                            FrequencyModel.FREQUENCY_MODEL,
+                            new Attribute[]{
+                                    new Attribute.Default<String>("dataType", alignment.getDataType().getDescription())
+                            }
+                    );
+                    writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+                    writer.writeTag(
+                            ParameterParser.PARAMETER,
+                            new Attribute[]{
+                                    new Attribute.Default<String>("id", "jc.frequencies"),
+                                    new Attribute.Default<String>("value", "0.25 0.25 0.25 0.25")
+                            },
+                            true
+                    );
+                    writer.writeCloseTag(FrequencyModel.FREQUENCIES);
 
-                writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
-                writer.writeCloseTag(dr.evomodel.substmodel.HKY.FREQUENCIES);
+                    writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
+                    writer.writeCloseTag(dr.evomodel.substmodel.HKY.FREQUENCIES);
 
-                writer.writeOpenTag(dr.evomodel.substmodel.HKY.KAPPA);
-                writeParameter("jc.kappa", 1, 1.0, Double.NaN, Double.NaN, writer);
-                writer.writeCloseTag(dr.evomodel.substmodel.HKY.KAPPA);
-                writer.writeCloseTag(dr.evomodel.substmodel.HKY.HKY_MODEL);
+                    writer.writeOpenTag(dr.evomodel.substmodel.HKY.KAPPA);
+                    writeParameter("jc.kappa", 1, 1.0, Double.NaN, Double.NaN, writer);
+                    writer.writeCloseTag(dr.evomodel.substmodel.HKY.KAPPA);
+                    writer.writeCloseTag(dr.evomodel.substmodel.HKY.HKY_MODEL);
 
-            } else {
-                // Hasegawa Kishino and Yano 85 model
-                if (nucSubstitutionModel == HKY) {
-                    if (unlinkedSubstitutionModel) {
-                        for (int i = 1; i <= partitionCount; i++) {
-                            writeHKYModel(i, writer);
-                        }
-                    } else {
-                        writeHKYModel(-1, writer);
-                    }
                 } else {
-                    // General time reversible model
-                    if (nucSubstitutionModel == GTR) {
+                    // Hasegawa Kishino and Yano 85 model
+                    if (nucSubstitutionModel == HKY) {
                         if (unlinkedSubstitutionModel) {
                             for (int i = 1; i <= partitionCount; i++) {
-                                writeGTRModel(i, writer);
+                                writeHKYModel(i, writer);
                             }
                         } else {
-                            writeGTRModel(-1, writer);
+                            writeHKYModel(-1, writer);
+                        }
+                    } else {
+                        // General time reversible model
+                        if (nucSubstitutionModel == GTR) {
+                            if (unlinkedSubstitutionModel) {
+                                for (int i = 1; i <= partitionCount; i++) {
+                                    writeGTRModel(i, writer);
+                                }
+                            } else {
+                                writeGTRModel(-1, writer);
+                            }
                         }
                     }
                 }
-            }
-        } else {
-            // Amino Acid model
-            String aaModel = "";
+                break;
 
-            switch (aaSubstitutionModel) {
-                case 0:
-                    aaModel = EmpiricalAminoAcidModel.BLOSUM_62;
-                    break;
-                case 1:
-                    aaModel = EmpiricalAminoAcidModel.DAYHOFF;
-                    break;
-                case 2:
-                    aaModel = EmpiricalAminoAcidModel.JTT;
-                    break;
-                case 3:
-                    aaModel = EmpiricalAminoAcidModel.MT_REV_24;
-                    break;
-                case 4:
-                    aaModel = EmpiricalAminoAcidModel.CP_REV_45;
-                    break;
-                case 5:
-                    aaModel = EmpiricalAminoAcidModel.WAG;
-                    break;
-            }
+            case DataType.AMINO_ACIDS:
+                // Amino Acid model
+                String aaModel = "";
 
-            writer.writeComment("The " + aaModel + " substitution model");
-            writer.writeTag(
-                    EmpiricalAminoAcidModel.EMPIRICAL_AMINO_ACID_MODEL,
-                    new Attribute[]{new Attribute.Default<String>("id", "aa"),
-                            new Attribute.Default<String>("type", aaModel)}, true
-            );
+                switch (aaSubstitutionModel) {
+                    case 0:
+                        aaModel = EmpiricalAminoAcidModel.BLOSUM_62;
+                        break;
+                    case 1:
+                        aaModel = EmpiricalAminoAcidModel.DAYHOFF;
+                        break;
+                    case 2:
+                        aaModel = EmpiricalAminoAcidModel.JTT;
+                        break;
+                    case 3:
+                        aaModel = EmpiricalAminoAcidModel.MT_REV_24;
+                        break;
+                    case 4:
+                        aaModel = EmpiricalAminoAcidModel.CP_REV_45;
+                        break;
+                    case 5:
+                        aaModel = EmpiricalAminoAcidModel.WAG;
+                        break;
+                }
 
+                writer.writeComment("The " + aaModel + " substitution model");
+                writer.writeTag(
+                        EmpiricalAminoAcidModel.EMPIRICAL_AMINO_ACID_MODEL,
+                        new Attribute[]{new Attribute.Default<String>("id", "aa"),
+                                new Attribute.Default<String>("type", aaModel)}, true
+                );
+
+                break;
+
+            case DataType.TWO_STATES:
+            case DataType.COVARION:
+
+                switch (binarySubstitutionModel) {
+                 case BIN_SIMPLE:
+                      writeBinarySimpleModel(writer);
+                     break;
+                 case BIN_COVARION:
+                      writeBinaryCovarionModel(writer);
+                     break;
+                }
+
+                break;
         }
     }
 
@@ -790,14 +843,10 @@ public class BeastGenerator extends BeautiOptions {
         );
         writer.writeTag("alignment", new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
-        writer.writeTag(
-                ParameterParser.PARAMETER,
-                new Attribute[]{
-                        new Attribute.Default<String>("id", id + ".frequencies"),
-                        new Attribute.Default<String>("dimension", "4")
-                },
-                true
-        );
+        if (frequencyPolicy == ALLEQUAL)
+            writeParameter(id + ".frequencies", 4, writer);
+        else
+            writeParameter(id + ".frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
         writer.writeCloseTag(dr.evomodel.substmodel.HKY.FREQUENCIES);
@@ -834,14 +883,10 @@ public class BeastGenerator extends BeautiOptions {
         );
         writer.writeTag("alignment", new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
-        writer.writeTag(
-                ParameterParser.PARAMETER,
-                new Attribute[]{
-                        new Attribute.Default<String>("id", id + ".frequencies"),
-                        new Attribute.Default<String>("dimension", "4")
-                },
-                true
-        );
+        if (frequencyPolicy == ALLEQUAL)
+            writeParameter(id + ".frequencies", 4, writer);
+        else
+            writeParameter(id + ".frequencies", 4,  Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
         writer.writeCloseTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
@@ -868,14 +913,82 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeCloseTag(dr.evomodel.substmodel.GTR.GTR_MODEL);
     }
 
+
+        /**
+     * Write the Binary  simple model XML block.
+     *
+     * @param writer the writer
+     */
+    public void writeBinarySimpleModel(XMLWriter writer) {
+        String id = "bsimple";
+
+        writer.writeComment("The Binary simple model (based on the general substitution model)");
+        writer.writeOpenTag(
+                dr.evoxml.BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL,
+                new Attribute[]{new Attribute.Default<String>("id", id)}
+        );
+        writer.writeOpenTag(dr.evomodel.substmodel.GeneralSubstitutionModel.FREQUENCIES);
+        writer.writeOpenTag(
+                FrequencyModel.FREQUENCY_MODEL,
+                new Attribute[]{
+                        new Attribute.Default<String>("dataType", alignment.getDataType().getDescription())
+                }
+        );
+        writer.writeTag("alignment", new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
+        writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+        writeParameter(id + ".frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
+        writer.writeCloseTag(FrequencyModel.FREQUENCIES);
+        writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
+        writer.writeCloseTag(dr.evomodel.substmodel.GeneralSubstitutionModel.FREQUENCIES);
+
+        writer.writeCloseTag(dr.evoxml.BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL);
+    }
+
+
+    /**
+     * Write the Binary covarion model XML block
+     *
+     * @param writer the writer
+     */
+
+    public void writeBinaryCovarionModel(XMLWriter writer) {
+        String id = "bcov";
+
+        writer.writeComment("The Binary covarion model");
+        writer.writeOpenTag(
+                dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL,
+                new Attribute[]{new Attribute.Default<String>("id", id)}
+        );
+
+        writer.writeOpenTag(dr.evomodel.substmodel.BinaryCovarionModel.FREQUENCIES);
+        writeParameter(id + ".frequencies", 2 , 0.5, 0.0, 1.0, writer);
+        writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.FREQUENCIES);
+
+        writer.writeOpenTag(dr.evomodel.substmodel.BinaryCovarionModel.HIDDEN_FREQUENCIES);
+        writeParameter(id + ".hfrequencies", 2 , 0.5, 0.0, 1.0, writer);
+        writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.HIDDEN_FREQUENCIES);
+
+        writer.writeOpenTag(dr.evomodel.substmodel.BinaryCovarionModel.ALPHA);
+        writeParameter(id + ".alpha", writer);
+        writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.ALPHA);
+
+        writer.writeOpenTag(dr.evomodel.substmodel.BinaryCovarionModel.SWITCHING_RATE);
+        writeParameter(id + ".s", writer);
+        writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.SWITCHING_RATE);
+
+        writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL);
+    }
+
     /**
      * Write the site model XML block.
      *
      * @param writer the writer
      */
     public void writeSiteModel(XMLWriter writer) {
-        if (alignment.getDataType() == Nucleotides.INSTANCE) {
-            if (codonHeteroPattern != null) {
+
+        switch(dataType){
+            case DataType.NUCLEOTIDES:
+                if (codonHeteroPattern != null) {
                 for (int i = 1; i <= partitionCount; i++) {
                     writeNucSiteModel(i, writer);
                 }
@@ -889,8 +1002,19 @@ public class BeastGenerator extends BeautiOptions {
             } else {
                 writeNucSiteModel(-1, writer);
             }
-        } else {
-            writeAASiteModel(writer);
+                break;
+
+            case DataType.AMINO_ACIDS:
+                writeAASiteModel(writer);
+                break;
+
+            case DataType.TWO_STATES:
+            case DataType.COVARION:                
+                writeTwoStateSiteModel(writer);
+                break;
+          
+             default:
+                  throw new IllegalArgumentException("Unknown data type");
         }
     }
 
@@ -987,6 +1111,51 @@ public class BeastGenerator extends BeautiOptions {
     }
 
     /**
+     * Write the two states site model XML block.
+     *
+     * @param writer the writer
+     */
+    public void writeTwoStateSiteModel(XMLWriter writer) {
+
+        String id = "siteModel";
+
+        writer.writeComment("site model");
+        writer.writeOpenTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>("id", id)});
+
+
+        writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
+
+             switch (binarySubstitutionModel) {
+                case BIN_SIMPLE:
+                    //writer.writeTag(dr.evomodel.substmodel.GeneralSubstitutionModel.GENERAL_SUBSTITUTION_MODEL, new Attribute.Default<String>("idref", "bsimple"), true);
+                    writer.writeTag(dr.evoxml.BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, new Attribute.Default<String>("idref", "bsimple"), true);                    
+                    break;
+                case BIN_COVARION:
+                    writer.writeTag(dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL, new Attribute.Default<String>("idref", "bcov"), true);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown substitution model.");
+            }
+
+        writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
+
+        if (gammaHetero) {
+            writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + gammaCategories));
+            writeParameter(id + ".alpha", writer);
+            writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
+        }
+
+        if (invarHetero) {
+            writer.writeOpenTag(GammaSiteModel.PROPORTION_INVARIANT);
+            writeParameter(id + ".pInv", writer);
+            writer.writeCloseTag(GammaSiteModel.PROPORTION_INVARIANT);
+        }
+
+        writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
+    }
+    
+
+    /**
      * Write the AA site model XML block.
      *
      * @param writer the writer
@@ -1019,6 +1188,9 @@ public class BeastGenerator extends BeautiOptions {
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
     }
+
+
+
 
     /**
      * Write the relaxed clock branch rates block.
@@ -1320,12 +1492,14 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeCloseTag(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL);
     }
 
+
     /**
      * Write the tree likelihood XML block.
      *
      * @param writer the writer
      */
     public void writeTreeLikelihood(XMLWriter writer) {
+
         boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
         if (nucs && codonHeteroPattern != null) {
             for (int i = 1; i <= partitionCount; i++) {
@@ -1334,6 +1508,38 @@ public class BeastGenerator extends BeautiOptions {
         } else {
             writeTreeLikelihood(-1, writer);
         }
+    }
+
+
+
+
+    /**
+     * Determine and return the datatype description for these beast options
+     * note that the datatype in XML may differ from the actual datatype
+     * @return description
+     */
+
+    private Boolean useAmbiguities() {
+        Boolean useAmbiguities = false;
+
+        switch (dataType){
+            case DataType.TWO_STATES:
+            case DataType.COVARION:
+
+                switch(binarySubstitutionModel){
+                    case BIN_COVARION:
+                         useAmbiguities = true;
+                         break;
+
+                    default:
+                }
+                break;
+
+            default:
+                useAmbiguities = false;
+        }
+
+        return useAmbiguities;
     }
 
     /**
@@ -1347,7 +1553,9 @@ public class BeastGenerator extends BeautiOptions {
         if (num > 0) {
             writer.writeOpenTag(
                     TreeLikelihood.TREE_LIKELIHOOD,
-                    new Attribute[]{new Attribute.Default<String>("id", "treeLikelihood" + num)}
+                    new Attribute[]{
+                            new Attribute.Default<String>("id", "treeLikelihood" + num),
+                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities())}
             );
             if (codonHeteroPattern.equals("112")) {
                 if (num == 1) {
@@ -1363,7 +1571,10 @@ public class BeastGenerator extends BeautiOptions {
         } else {
             writer.writeOpenTag(
                     TreeLikelihood.TREE_LIKELIHOOD,
-                    new Attribute[]{new Attribute.Default<String>("id", "treeLikelihood")}
+                    new Attribute[]{
+                            new Attribute.Default<String>("id", "treeLikelihood"),
+                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities())
+                    }
             );
             writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[]{new Attribute.Default<String>("idref", "patterns")}, true);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
@@ -1427,7 +1638,8 @@ public class BeastGenerator extends BeautiOptions {
         );
 
         for (Operator operator : operators) {
-            writeOperator(operator, writer);
+            if (operator.weight > 0. && operator.inUse)
+                writeOperator(operator, writer);
         }
 
         writer.writeCloseTag(SimpleOperatorSchedule.OPERATOR_SCHEDULE);
@@ -1545,7 +1757,7 @@ public class BeastGenerator extends BeautiOptions {
             );
         } else {
             writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
-                    new Attribute[]{
+                    new Attribute[]{             
                             new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
                             new Attribute.Default<Double>("weight", operator.weight),
                     }
@@ -1923,6 +2135,22 @@ public class BeastGenerator extends BeautiOptions {
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(DistributionLikelihood.POISSON_PRIOR);
                 break;
+            case TRUNC_NORMAL_PRIOR:
+                writer.writeOpenTag(DistributionLikelihood.UNIFORM_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(DistributionLikelihood.LOWER, "" + parameter.uniformLower),
+                                new Attribute.Default<String>(DistributionLikelihood.UPPER, "" + parameter.uniformUpper)
+                        });
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(DistributionLikelihood.UNIFORM_PRIOR);
+                writer.writeOpenTag(DistributionLikelihood.NORMAL_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(DistributionLikelihood.MEAN, "" + parameter.normalMean),
+                                new Attribute.Default<String>(DistributionLikelihood.STDEV, "" + parameter.normalStdev)
+                        });
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(DistributionLikelihood.NORMAL_PRIOR);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown priorType");
         }
@@ -2151,40 +2379,64 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "birthDeath.deathRate"), true);
         }
 
-        if (alignment != null) {
-            boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
-            if (nucs) {
-                if (partitionCount > 1) {
-                    for (int i = 1; i <= partitionCount; i++) {
-                        writer.writeTag(ParameterParser.PARAMETER,
-                                new Attribute.Default<String>("idref", "siteModel" + i + ".mu"), true);
-                    }
-                }
-                if (nucSubstitutionModel == HKY) {
-                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
+        if (alignment != null){
+            switch(dataType){
+                case DataType.NUCLEOTIDES:
+                    if (partitionCount > 1) {
                         for (int i = 1; i <= partitionCount; i++) {
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "hky" + i + ".kappa"), true);
+                            writer.writeTag(ParameterParser.PARAMETER,
+                                    new Attribute.Default<String>("idref", "siteModel" + i + ".mu"), true);
                         }
-                    } else {
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "hky.kappa"), true);
                     }
-                } else if (nucSubstitutionModel == GTR) {
-                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
-                        for (int i = 1; i <= partitionCount; i++) {
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".ac"), true);
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".ag"), true);
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".at"), true);
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".cg"), true);
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".gt"), true);
-                        }
-                    } else {
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.ac"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.ag"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.at"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.cg"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.gt"), true);
+                    switch(nucSubstitutionModel){
+                        case HKY:
+                            if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                                for (int i = 1; i <= partitionCount; i++) {
+                                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "hky" + i + ".kappa"), true);
+                                }
+                            } else {
+                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "hky.kappa"), true);
+                            }
+                            break;
+
+                        case GTR:
+                            if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                                for (int i = 1; i <= partitionCount; i++) {
+                                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".ac"), true);
+                                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".ag"), true);
+                                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".at"), true);
+                                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".cg"), true);
+                                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".gt"), true);
+                                }
+                            } else {
+                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.ac"), true);
+                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.ag"), true);
+                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.at"), true);
+                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.cg"), true);
+                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.gt"), true);
+                            }
+                            break;
                     }
-                }
+                    break;//NUCLEOTIDES
+
+                case DataType.AMINO_ACIDS:
+                    break;//AMINO_ACIDS
+
+                case DataType.TWO_STATES:
+                case DataType.COVARION:
+
+                    switch(binarySubstitutionModel){
+                        case BIN_SIMPLE:
+                            break;
+                        case BIN_COVARION:
+                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "bcov.alpha"), true);
+                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "bcov.s"), true);
+                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "bcov.frequencies"), true);
+                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "bcov.hfrequencies"), true);
+                            break;
+
+                    }
+                    break;//BINARY
             }
 
             if (gammaHetero) {
@@ -2262,6 +2514,17 @@ public class BeastGenerator extends BeautiOptions {
         parameter.initial = value;
     }
 
+
+    private String multiDimensionValue(int dimension, double value){
+        String multi= "";
+
+        multi += value + "";
+        for (int i=2; i <= dimension; i++)
+            multi +=  " " + value;
+
+        return multi;
+    }
+
     /**
      * write a parameter
      *
@@ -2276,7 +2539,7 @@ public class BeastGenerator extends BeautiOptions {
         if (parameter.isFixed) {
             writeParameter(id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
         } else {
-            if (parameter.priorType == PriorType.UNIFORM_PRIOR) {
+            if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
                 writeParameter(id, 1, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
             } else {
                 writeParameter(id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
@@ -2298,9 +2561,9 @@ public class BeastGenerator extends BeautiOptions {
         }
         if (parameter.isFixed) {
             writeParameter(id, dimension, parameter.initial, Double.NaN, Double.NaN, writer);
-        } else if (parameter.priorType == PriorType.UNIFORM_PRIOR) {
+        } else if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
             writeParameter(id, dimension, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
-        } else {
+        }  else {
             writeParameter(id, dimension, parameter.initial, parameter.lower, parameter.upper, writer);
         }
     }
@@ -2322,13 +2585,13 @@ public class BeastGenerator extends BeautiOptions {
             attributes.add(new Attribute.Default<String>("dimension", dimension + ""));
         }
         if (!Double.isNaN(value)) {
-            attributes.add(new Attribute.Default<String>("value", value + ""));
+            attributes.add(new Attribute.Default<String>("value", multiDimensionValue(dimension, value)));
         }
         if (!Double.isNaN(lower)) {
-            attributes.add(new Attribute.Default<String>("lower", lower + ""));
+            attributes.add(new Attribute.Default<String>("lower", multiDimensionValue(dimension, lower)));
         }
         if (!Double.isNaN(upper)) {
-            attributes.add(new Attribute.Default<String>("upper", upper + ""));
+            attributes.add(new Attribute.Default<String>("upper", multiDimensionValue(dimension, upper)));
         }
 
         Attribute[] attrArray = new Attribute[attributes.size()];
@@ -2412,12 +2675,15 @@ public class BeastGenerator extends BeautiOptions {
 
                     writer.writeTag(TaxaParser.TAXA,
                             new Attribute[]{new Attribute.Default<String>("idref", taxonSet.getId())}, true);
-                    if (statistic.isNodeHeight && statistic.priorType == PriorType.UNIFORM_PRIOR) {
-                        writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
-                        writer.writeTag(UniformDistributionModel.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
-                        writer.writeTag(UniformDistributionModel.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
-                        writer.writeCloseTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+                    if (statistic.isNodeHeight) {
+                        if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+                            writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+                            writer.writeTag(UniformDistributionModel.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
+                            writer.writeTag(UniformDistributionModel.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
+                            writer.writeCloseTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+                        }
                     }
+
                     writer.writeCloseTag(CoalescentSimulator.TMRCA_CONSTRAINT);
                 }
                 writer.writeCloseTag(CoalescentSimulator.CONSTRAINED_TAXA);

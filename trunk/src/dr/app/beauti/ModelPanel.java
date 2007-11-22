@@ -32,6 +32,8 @@ import org.virion.jam.panels.OptionsPanel;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
+import dr.evolution.datatype.DataType;
+
 /**
  * @author			Andrew Rambaut
  * @author			Alexei Drummond
@@ -43,8 +45,13 @@ public class ModelPanel extends OptionsPanel implements Exportable {
      *
      */
     private static final long serialVersionUID = 2778103564318492601L;
+
     JComboBox nucSubstCombo = new JComboBox(new String[] {"HKY", "GTR"});
     JComboBox aaSubstCombo = new JComboBox(new String[] {"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
+    JComboBox binarySubstCombo = new JComboBox(new String[] {"Simple", "Covarion"});
+
+    JComboBox frequencyCombo =new JComboBox(new String[] {"Estimated", "Empirical", "All equal"});
+
     JComboBox heteroCombo = new JComboBox(new String[] {"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
 
     JComboBox gammaCatCombo = new JComboBox(new String[] {"4", "5", "6", "7", "8", "9", "10"});
@@ -78,7 +85,8 @@ public class ModelPanel extends OptionsPanel implements Exportable {
     boolean settingOptions = false;
 
     boolean hasAlignment = false;
-    boolean isNucleotides = true;
+  
+    int dataType = DataType.NUCLEOTIDES;
 
     public ModelPanel(BeautiFrame parent) {
 
@@ -115,6 +123,14 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         aaSubstCombo.setOpaque(false);
         aaSubstCombo.addItemListener(listener);
         aaSubstCombo.setToolTipText("<html>Select the type of amino acid substitution model.</html>");
+
+        binarySubstCombo.setOpaque(false);
+        binarySubstCombo.addItemListener(listener);
+        binarySubstCombo.setToolTipText("<html>Select the type of binay substitution model.</html>");
+
+        frequencyCombo.setOpaque(false);
+        frequencyCombo.addItemListener(listener);
+        frequencyCombo.setToolTipText("<html>Select the policy for determining the base frequencies.</html>");
 
         heteroCombo.setOpaque(false);
         heteroCombo.setToolTipText("<html>Select the type of site-specific rate<br>heterogeneity model.</html>");
@@ -208,33 +224,65 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         removeAll();
 
         if (hasAlignment) {
-            if (isNucleotides) {
-                addComponentWithLabel("Substitution Model:", nucSubstCombo);
-            } else {
-                addComponentWithLabel("Substitution Model:", aaSubstCombo);
+
+            switch (dataType){
+                case DataType.NUCLEOTIDES: 
+                    addComponentWithLabel("Substitution Model:", nucSubstCombo);
+                    addComponentWithLabel("Base frequencies:", frequencyCombo);
+                    addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                    gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+
+                    addSeparator();
+
+                    addComponentWithLabel("Partition into codon positions", codingCombo);
+                    addComponent(substUnlinkCheck);
+                    addComponent(heteroUnlinkCheck);
+                    //		addComponent(freqsUnlinkCheck);
+                    addComponent(setSRD06Button);
+
+                    addSeparator();
+
+                    addComponent(fixedSubstitutionRateCheck);
+                    addComponents(substitutionRateLabel, substitutionRateField);
+                    substitutionRateField.setColumns(10);
+
+                    addSeparator();
+                    break;
+
+                case DataType.AMINO_ACIDS:
+                    addComponentWithLabel("Substitution Model:", aaSubstCombo);
+                    addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                    gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+
+                    addSeparator();
+
+                    addComponent(fixedSubstitutionRateCheck);
+                    addComponents(substitutionRateLabel, substitutionRateField);
+                    substitutionRateField.setColumns(10);
+
+                    addSeparator();
+                    break;
+
+                case DataType.TWO_STATES:
+                case DataType.COVARION:
+                    addComponentWithLabel("Substitution Model:", binarySubstCombo);
+                    addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                    gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+
+                    addSeparator();
+
+                    addComponent(fixedSubstitutionRateCheck);
+                    addComponents(substitutionRateLabel, substitutionRateField);
+                    substitutionRateField.setColumns(10);
+
+                    addSeparator();
+                    break;
+
+                default:
+                  throw new IllegalArgumentException("Unknown data type");
+
             }
 
-            addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
-            gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
-
-            if (isNucleotides) {
-                addSeparator();
-
-                addComponentWithLabel("Partition into codon positions", codingCombo);
-
-                addComponent(substUnlinkCheck);
-                addComponent(heteroUnlinkCheck);
-                //		addComponent(freqsUnlinkCheck);
-                addComponent(setSRD06Button);
-            }
-
-            addSeparator();
-
-            addComponent(fixedSubstitutionRateCheck);
-            addComponents(substitutionRateLabel, substitutionRateField);
-            substitutionRateField.setColumns(10);
-
-            addSeparator();
         }
 
         addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
@@ -256,20 +304,33 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
         if (options.alignment != null) {
             hasAlignment = true;
-            if (options.alignment.getDataType() == dr.evolution.datatype.Nucleotides.INSTANCE) {
 
-                if (options.nucSubstitutionModel == BeautiOptions.GTR) {
-                    nucSubstCombo.setSelectedIndex(1);
-                } else {
-                    nucSubstCombo.setSelectedIndex(0);
-                }
+            dataType=options.dataType;
+            switch(dataType){
+                case DataType.NUCLEOTIDES:
+                    if (options.nucSubstitutionModel == BeautiOptions.GTR) {
+                        nucSubstCombo.setSelectedIndex(1);
+                    } else {
+                        nucSubstCombo.setSelectedIndex(0);
+                    }
 
-                isNucleotides = true;
-            } else {
+                    frequencyCombo.setSelectedIndex(options.frequencyPolicy);
 
-                aaSubstCombo.setSelectedIndex(options.aaSubstitutionModel);
-                isNucleotides = false;
+                    break;
+
+                case DataType.AMINO_ACIDS:
+                    aaSubstCombo.setSelectedIndex(options.aaSubstitutionModel);
+                    break;
+
+                case DataType.TWO_STATES:
+                case DataType.COVARION:                    
+                    binarySubstCombo.setSelectedIndex(options.binarySubstitutionModel);
+                    break;
+
+               default:
+                  throw new IllegalArgumentException("Unknown data type");
             }
+
         } else {
             hasAlignment = false;
         }
@@ -347,17 +408,13 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         }
         options.aaSubstitutionModel = aaSubstCombo.getSelectedIndex();
 
-        if (heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3) {
-            options.gammaHetero = true;
-        } else {
-            options.gammaHetero = false;
-        }
+        options.binarySubstitutionModel = binarySubstCombo.getSelectedIndex();
 
-        if (heteroCombo.getSelectedIndex() == 2 || heteroCombo.getSelectedIndex() == 3) {
-            options.invarHetero = true;
-        } else {
-            options.invarHetero = false;
-        }
+        options.frequencyPolicy = frequencyCombo.getSelectedIndex();
+
+        options.gammaHetero = heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3;
+
+        options.invarHetero = heteroCombo.getSelectedIndex() == 2 || heteroCombo.getSelectedIndex() == 3;
 
         options.gammaCategories = gammaCatCombo.getSelectedIndex() + 4;
 
@@ -375,7 +432,7 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
         options.hasSetFixedSubstitutionRate = hasSetFixedSubstitutionRate;
         options.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
-        options.meanSubstitutionRate = substitutionRateField.getValue().doubleValue();
+        options.meanSubstitutionRate = substitutionRateField.getValue();
 
         boolean fixed = fixedSubstitutionRateCheck.isSelected();
         if (!warningShown && !fixed && options.maximumTipHeight == 0.0) {

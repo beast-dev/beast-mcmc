@@ -150,7 +150,6 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
 //			int relativeTo = cxo.getIntegerAttribute(RELATIVE_TO) - 1;
 //			if (relativeTo < 0) throw new XMLParseException(RELATIVE_TO + " must be 1 or greater");
 
-
 			ratesParameter = (Parameter) cxo.getChild(Parameter.class);
 
 			if (dataType != freqModel.getDataType()) {
@@ -202,7 +201,6 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
 						new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
 						new ElementRule(DataType.class)
 				),
-				new StringAttributeRule(NAME, "A name for this general substitution model"),
 				new ElementRule(FREQUENCIES, FrequencyModel.class),
 				new ElementRule(RATES,
 						new XMLSyntaxRule[]{

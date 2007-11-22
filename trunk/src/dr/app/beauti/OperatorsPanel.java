@@ -55,14 +55,6 @@ public class OperatorsPanel extends JPanel implements Exportable {
 
     public ArrayList operators = new ArrayList();
 
-    class Operator {
-        String name;
-        String type;
-        double tuning;
-        double weight;
-        String description;
-    }
-
     BeautiFrame frame = null;
 
     public OperatorsPanel(BeautiFrame parent) {
@@ -78,29 +70,32 @@ public class OperatorsPanel extends JPanel implements Exportable {
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
 //		operatorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
-        operatorTable.getColumnModel().getColumn(0).setCellRenderer(
-                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        operatorTable.getColumnModel().getColumn(0).setPreferredWidth(180);
+
+        operatorTable.getColumnModel().getColumn(0).setPreferredWidth(50);
 
         operatorTable.getColumnModel().getColumn(1).setCellRenderer(
-                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        operatorTable.getColumnModel().getColumn(1).setPreferredWidth(140);
+                new OperatorTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        operatorTable.getColumnModel().getColumn(1).setPreferredWidth(180);
 
         operatorTable.getColumnModel().getColumn(2).setCellRenderer(
-                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        operatorTable.getColumnModel().getColumn(2).setCellEditor(
-                new RealNumberCellEditor(0, Double.POSITIVE_INFINITY));
-        operatorTable.getColumnModel().getColumn(2).setPreferredWidth(50);
+                new OperatorTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        operatorTable.getColumnModel().getColumn(2).setPreferredWidth(140);
 
         operatorTable.getColumnModel().getColumn(3).setCellRenderer(
-                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+                new OperatorTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         operatorTable.getColumnModel().getColumn(3).setCellEditor(
-                new RealNumberCellEditor(Double.MIN_VALUE, Double.MAX_VALUE));
+                new RealNumberCellEditor(0, Double.POSITIVE_INFINITY));
         operatorTable.getColumnModel().getColumn(3).setPreferredWidth(50);
 
         operatorTable.getColumnModel().getColumn(4).setCellRenderer(
-                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        operatorTable.getColumnModel().getColumn(4).setPreferredWidth(400);
+                new OperatorTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        operatorTable.getColumnModel().getColumn(4).setCellEditor(
+                new RealNumberCellEditor(0, Double.MAX_VALUE));
+        operatorTable.getColumnModel().getColumn(4).setPreferredWidth(50);
+
+        operatorTable.getColumnModel().getColumn(5).setCellRenderer(
+                new OperatorTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        operatorTable.getColumnModel().getColumn(5).setPreferredWidth(400);
 
         scrollPane = new JScrollPane(operatorTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -152,7 +147,7 @@ public class OperatorsPanel extends JPanel implements Exportable {
          *
          */
         private static final long serialVersionUID = -575580804476182225L;
-        String[] columnNames = {"Operates on", "Type", "Tuning", "Weight", "Description"};
+        String[] columnNames = {"In use", "Operates on", "Type", "Tuning", "Weight", "Description"};
 
         public OperatorTableModel() {
         }
@@ -169,18 +164,20 @@ public class OperatorsPanel extends JPanel implements Exportable {
             BeastGenerator.Operator op = (BeastGenerator.Operator) operators.get(row);
             switch (col) {
                 case 0:
-                    return op.name;
+                    return op.inUse;
                 case 1:
-                    return op.type;
+                    return op.name;
                 case 2:
+                    return op.type;
+                case 3:
                     if (op.isTunable()) {
                         return op.tuning;
                     } else {
                         return "n/a";
                     }
-                case 3:
-                    return op.weight;
                 case 4:
+                    return op.weight;
+                case 5:
                     return op.getDescription();
             }
             return null;
@@ -189,11 +186,14 @@ public class OperatorsPanel extends JPanel implements Exportable {
         public void setValueAt(Object aValue, int row, int col) {
             BeastGenerator.Operator op = (BeastGenerator.Operator) operators.get(row);
             switch (col) {
-                case 2:
+                case 0:
+                    op.inUse = (Boolean) aValue;
+                    break;
+                case 3:
                     op.tuning = (Double) aValue;
                     op.tuningEdited = true;
                     break;
-                case 3:
+                case 4:
                     op.weight = (Double) aValue;
                     break;
             }
@@ -209,13 +209,25 @@ public class OperatorsPanel extends JPanel implements Exportable {
         }
 
         public boolean isCellEditable(int row, int col) {
-            if (col == 2) {
-                BeastGenerator.Operator op = (BeastGenerator.Operator) operators.get(row);
-                return op.isTunable();
-            } else if (col == 3) {
-                return true;
+            boolean editable;
+
+            BeastGenerator.Operator op = (BeastGenerator.Operator) operators.get(row);
+
+            switch (col){
+                case 0:// Check box
+                    editable = true;
+                    break;
+                case 3:
+                    editable = op.inUse && op.isTunable();
+                    break;
+                case 4:
+                    editable = op.inUse;
+                    break;
+                default:
+                    editable = false;
             }
-            return false;
+            
+            return editable;
         }
 
         public String toString() {
@@ -239,5 +251,35 @@ public class OperatorsPanel extends JPanel implements Exportable {
 
             return buffer.toString();
         }
+    }
+
+    class OperatorTableCellRenderer extends TableRenderer{
+
+        public OperatorTableCellRenderer( int alignment, Insets insets){
+                super(alignment, insets);
+        }
+
+        public Component getTableCellRendererComponent(JTable aTable,
+                                                       Object value,
+                                                       boolean aIsSelected,
+                                                       boolean aHasFocus,
+                                                       int aRow, int aColumn) {
+
+            if (value == null) return this;
+
+            Component renderer = super.getTableCellRendererComponent(aTable,
+                    value,
+                    aIsSelected,
+                    aHasFocus,
+                    aRow, aColumn);
+
+            BeastGenerator.Operator op = (BeastGenerator.Operator) operators.get(aRow);
+            if (! op.inUse && aColumn > 0)
+                renderer.setForeground(Color.gray);
+            else
+                renderer.setForeground(Color.black);
+            return this;
+        }
+
     }
 }

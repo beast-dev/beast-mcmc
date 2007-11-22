@@ -66,9 +66,9 @@ public class FrequencyModel extends AbstractModel {
 		addParameter(frequencyParameter);
 		frequencyParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, frequencyParameter.getDimension()));
 		this.dataType = dataType;
-	}
+    }
 
-	/**
+    /**
 	 * @param frequencies the frequencies
 	 * @return return the sum of frequencies
 	 */

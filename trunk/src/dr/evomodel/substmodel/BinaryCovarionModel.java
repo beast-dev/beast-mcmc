@@ -162,6 +162,8 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
 
             // alpha must be positive and less than 1.0 because the fast rate is normalized to 1.0
             alphaParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+            hiddenFrequencies.addBounds(new Parameter.DefaultBounds(1.0, 0.0, hiddenFrequencies.getDimension()));
+            frequencies.addBounds(new Parameter.DefaultBounds(1.0, 0.0, frequencies.getDimension()));
 
             cxo = (XMLObject) xo.getChild(SWITCHING_RATE);
             switchingRateParameter = (Parameter) cxo.getChild(Parameter.class);

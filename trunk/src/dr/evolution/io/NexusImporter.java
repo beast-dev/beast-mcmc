@@ -30,6 +30,7 @@ import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.datatype.TwoStates;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.sequence.SequenceList;
 import dr.evolution.sequence.Sequences;
@@ -76,13 +77,13 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 		private static final long serialVersionUID = -6287423449717453999L;
 		public MissingBlockException() { super(); }
 		public MissingBlockException(String message) { super(message); }
-	};
+	}
 
 	public static class NexusBlock {
 		private final String name;
 		public NexusBlock(String name) { this.name = name; }
 		public String toString() { return name; }
-	};
+	}
 
 	/**
 	 * Constructor
@@ -499,11 +500,15 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
 							dataType = Nucleotides.INSTANCE;
 
-						} else if (token3.equalsIgnoreCase("PROTEIN")) {
+                        } else if (token3.equalsIgnoreCase("STANDARD")) {
 
-							dataType = AminoAcids.INSTANCE;
+                            dataType = TwoStates.INSTANCE;
 
-						} else if (token3.equalsIgnoreCase("CONTINUOUS")) {
+                        }else if (token3.equalsIgnoreCase("PROTEIN")) {
+
+                            dataType = AminoAcids.INSTANCE;
+
+                        }else if (token3.equalsIgnoreCase("CONTINUOUS")) {
 
 							throw new UnparsableDataException("Continuous data cannot be parsed at present");
 

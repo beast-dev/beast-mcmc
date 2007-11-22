@@ -92,10 +92,21 @@ public class BeautiOptions {
         createParameter("localClock.rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("localClock.changes", "random local clock rate change indicator");
 
+        //Substitution model parameters
+        createParameter("hky.frequencies",  "HKY base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("hky1.frequencies",  "HKY base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("hky2.frequencies",  "HKY base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("hky3.frequencies",  "HKY base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
+
         createScaleParameter("hky.kappa", "HKY transition-transversion parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createScaleParameter("hky1.kappa", "HKY transition-transversion parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createScaleParameter("hky2.kappa", "HKY transition-transversion parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createScaleParameter("hky3.kappa", "HKY transition-transversion parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+
+        createParameter("gtr.frequencies",  "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("gtr1.frequencies",  "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("gtr2.frequencies",  "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("gtr3.frequencies",  "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
         createScaleParameter("gtr.ac", "GTR A-C substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createScaleParameter("gtr.ag", "GTR A-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -120,6 +131,13 @@ public class BeautiOptions {
         createScaleParameter("gtr3.at", "GTR A-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createScaleParameter("gtr3.cg", "GTR C-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createScaleParameter("gtr3.gt", "GTR G-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+
+        createParameter("bsimple.frequencies",  "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);        
+
+        createParameter("bcov.frequencies",  "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
+        createParameter("bcov.hfrequencies", "Binary Covarion frequencies of the hidden rates", UNITY_SCALE, 0.5, 0.0, 1.0);
+        createParameter("bcov.alpha",  "Binary Covarion rate of evolution in slow mode", UNITY_SCALE, 0.5, 0.0, 1.0);
+        createParameter("bcov.s",      "Binary Covarion rate of flipping between slow and fast modes", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 100.0);
 
         createParameter("siteModel.alpha", "gamma shape parameter", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
         createParameter("siteModel1.alpha", "gamma shape parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
@@ -173,6 +191,10 @@ public class BeautiOptions {
         createOperator("hky1.kappa", SCALE, 0.75, substWeights);
         createOperator("hky2.kappa", SCALE, 0.75, substWeights);
         createOperator("hky3.kappa", SCALE, 0.75, substWeights);
+        createOperator("hky.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("hky1.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("hky2.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("hky3.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
 
         createOperator("gtr.ac", SCALE, 0.75, substWeights);
         createOperator("gtr.ag", SCALE, 0.75, substWeights);
@@ -197,6 +219,16 @@ public class BeautiOptions {
         createOperator("gtr3.at", SCALE, 0.75, substWeights);
         createOperator("gtr3.cg", SCALE, 0.75, substWeights);
         createOperator("gtr3.gt", SCALE, 0.75, substWeights);
+
+        createOperator("gtr.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("gtr1.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("gtr2.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("gtr3.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
+
+        createOperator("bcov.alpha", SCALE, 0.75, substWeights);
+        createOperator("bcov.s", SCALE, 0.75, substWeights);
+        createOperator("bcov.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("bcov.hfrequencies", DELTA_EXCHANGE, 0.01, substWeights);
 
         createOperator("siteModel.alpha", SCALE, 0.75, substWeights);
         createOperator("siteModel1.alpha", SCALE, 0.75, substWeights);
@@ -352,6 +384,12 @@ public class BeautiOptions {
                         param.uniformLower = 0.0;
                         param.uniformUpper = substitutionParameterMaximum;
                         break;
+
+                    case UNITY_SCALE:
+                        param.uniformLower = 0.0;
+                        param.uniformUpper = 1.0;
+                    break;
+
                 }
                 if (param.isNodeHeight) {
                     param.lower = maximumTipHeight;
@@ -416,35 +454,62 @@ public class BeautiOptions {
                     params.add(getParameter("siteModel" + i + ".mu"));
                 }
             }
+            switch(dataType){
+                case DataType.NUCLEOTIDES:
+                    switch(nucSubstitutionModel){
+                        case  HKY:
+                            if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                                for (int i = 1; i <= partitionCount; i++) {
+                                    params.add(getParameter("hky" + i + ".kappa"));
+                                }
+                            } else {
+                                params.add(getParameter("hky.kappa"));
+                            }
+                            break;
+                        case GTR:
+                            if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                                for (int i = 1; i <= partitionCount; i++) {
+                                    params.add(getParameter("gtr" + i + ".ac"));
+                                    params.add(getParameter("gtr" + i + ".ag"));
+                                    params.add(getParameter("gtr" + i + ".at"));
+                                    params.add(getParameter("gtr" + i + ".cg"));
+                                    params.add(getParameter("gtr" + i + ".gt"));
+                                }
+                            } else {
+                                params.add(getParameter("gtr.ac"));
+                                params.add(getParameter("gtr.ag"));
+                                params.add(getParameter("gtr.at"));
+                                params.add(getParameter("gtr.cg"));
+                                params.add(getParameter("gtr.gt"));
+                            }
+                            break;
 
-            boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
+                        default:
+                            throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                    }
+                    break;
 
-            if (nucs) {
-                if (nucSubstitutionModel == HKY) {
-                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
-                        for (int i = 1; i <= partitionCount; i++) {
-                            params.add(getParameter("hky" + i + ".kappa"));
-                        }
-                    } else {
-                        params.add(getParameter("hky.kappa"));
+                case DataType.AMINO_ACIDS:
+                    break;
+
+                case DataType.TWO_STATES:
+                case DataType.COVARION:
+                    switch (binarySubstitutionModel) {
+                        case BIN_SIMPLE:
+                            break;
+
+                        case BIN_COVARION:
+                            params.add(getParameter("bcov.alpha"));
+                            params.add(getParameter("bcov.s"));
+                            break;
+
+                        default:
+                            throw new IllegalArgumentException("Unknown binary substitution model");
                     }
-                } else if (nucSubstitutionModel == GTR) {
-                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
-                        for (int i = 1; i <= partitionCount; i++) {
-                            params.add(getParameter("gtr" + i + ".ac"));
-                            params.add(getParameter("gtr" + i + ".ag"));
-                            params.add(getParameter("gtr" + i + ".at"));
-                            params.add(getParameter("gtr" + i + ".cg"));
-                            params.add(getParameter("gtr" + i + ".gt"));
-                        }
-                    } else {
-                        params.add(getParameter("gtr.ac"));
-                        params.add(getParameter("gtr.ag"));
-                        params.add(getParameter("gtr.at"));
-                        params.add(getParameter("gtr.cg"));
-                        params.add(getParameter("gtr.gt"));
-                    }
-                }
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unknown data type");
             }
 
             // if gamma do shape move
@@ -597,36 +662,93 @@ public class BeautiOptions {
     private void selectOperators(ArrayList<Operator> ops) {
 
         if (alignment != null) {
+            switch(dataType){
+                case DataType.NUCLEOTIDES:
 
-            boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
+                    switch(nucSubstitutionModel){
+                        case HKY:
+                           // if (frequencyPolicy == BeautiOptions.ESTIMATED || frequencyPolicy == BeautiOptions.EMPIRICAL){
+                                if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                                    for (int i = 1; i <= partitionCount; i++) {
+                                        ops.add(getOperator("hky" + i + ".kappa"));
+                                    }
+                                } else {
+                                    ops.add(getOperator("hky.kappa"));
+                                }
+                            //}
+                            if(frequencyPolicy == BeautiOptions.ESTIMATED){
+                                if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                                    for (int i = 1; i <= partitionCount; i++) {
+                                        ops.add(getOperator("hky" + i + ".frequencies"));
+                                    }
+                                } else {
+                                    ops.add(getOperator("hky.frequencies"));
+                                }
+                            }
+                        break;
 
-            if (nucs) {
-                if (nucSubstitutionModel == HKY) {
-                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
-                        for (int i = 1; i <= partitionCount; i++) {
-                            ops.add(getOperator("hky" + i + ".kappa"));
-                        }
-                    } else {
-                        ops.add(getOperator("hky.kappa"));
+                        case GTR:
+                            //if (frequencyPolicy == BeautiOptions.ESTIMATED || frequencyPolicy == BeautiOptions.EMPIRICAL){
+                                if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                                    for (int i = 1; i <= partitionCount; i++) {
+                                        ops.add(getOperator("gtr" + i + ".ac"));
+                                        ops.add(getOperator("gtr" + i + ".ag"));
+                                        ops.add(getOperator("gtr" + i + ".at"));
+                                        ops.add(getOperator("gtr" + i + ".cg"));
+                                        ops.add(getOperator("gtr" + i + ".gt"));
+                                    }
+                                }
+                                else {
+                                    ops.add(getOperator("gtr.ac"));
+                                    ops.add(getOperator("gtr.ag"));
+                                    ops.add(getOperator("gtr.at"));
+                                    ops.add(getOperator("gtr.cg"));
+                                    ops.add(getOperator("gtr.gt"));
+                                }
+                            //}
+
+                            if (frequencyPolicy == BeautiOptions.ESTIMATED){
+                                if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                                    for (int i = 1; i <= partitionCount; i++) {
+                                        ops.add(getOperator("gtr" + i + ".frequencies"));
+                                    }
+                                } else {
+                                    ops.add(getOperator("gtr.frequencies"));
+                                }
+                            }
+                            break;
+
+                        default:
+                            throw new IllegalArgumentException("Unknown nucleotides substitution model");
                     }
-                } else if (nucSubstitutionModel == GTR) {
-                    if (partitionCount > 1 && unlinkedSubstitutionModel) {
-                        for (int i = 1; i <= partitionCount; i++) {
-                            ops.add(getOperator("gtr" + i + ".ac"));
-                            ops.add(getOperator("gtr" + i + ".ag"));
-                            ops.add(getOperator("gtr" + i + ".at"));
-                            ops.add(getOperator("gtr" + i + ".cg"));
-                            ops.add(getOperator("gtr" + i + ".gt"));
-                        }
-                    } else {
-                        ops.add(getOperator("gtr.ac"));
-                        ops.add(getOperator("gtr.ag"));
-                        ops.add(getOperator("gtr.at"));
-                        ops.add(getOperator("gtr.cg"));
-                        ops.add(getOperator("gtr.gt"));
+
+                    break;
+
+                case DataType.AMINO_ACIDS:
+                    break;
+
+                case DataType.TWO_STATES:
+                case DataType.COVARION:
+                    switch (binarySubstitutionModel) {
+                        case BIN_SIMPLE:
+                            break;
+
+                        case BIN_COVARION:
+                            ops.add(getOperator("bcov.alpha"));
+                            ops.add(getOperator("bcov.s"));
+                            ops.add(getOperator("bcov.frequencies"));
+                            ops.add(getOperator("bcov.hfrequencies"));
+                            break;
+
+                        default:
+                            throw new IllegalArgumentException("Unknown binary substitution model");
                     }
-                }
+                    break;
+            
+                default:
+                    throw new IllegalArgumentException("Unknown data type");
             }
+
 
             // if gamma do shape move
             if (gammaHetero) {
@@ -666,7 +788,7 @@ public class BeautiOptions {
                     ops.add(getOperator("upDownRateHeights"));
                     ops.add(getOperator("localClock.rates"));
                     ops.add(getOperator("localClock.changes"));
-	                ops.add(getOperator("treeBitMove"));
+                    ops.add(getOperator("treeBitMove"));
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
                         ops.add(getOperator("uced.mean"));
@@ -686,7 +808,7 @@ public class BeautiOptions {
                 } else if (clockModel == RANDOM_LOCAL_CLOCK) {
                     ops.add(getOperator("localClock.rates"));
                     ops.add(getOperator("localClock.changes"));
-	                ops.add(getOperator("treeBitMove"));
+                    ops.add(getOperator("treeBitMove"));
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
                         // no parameter to operator on
@@ -824,6 +946,8 @@ public class BeautiOptions {
 
         modelElement.addContent(createChild("nucSubstitutionModel", nucSubstitutionModel));
         modelElement.addContent(createChild("aaSubstitutionModel", aaSubstitutionModel));
+        modelElement.addContent(createChild("binarySubstitutionModel", binarySubstitutionModel));
+        modelElement.addContent(createChild("frequencyPolicy", frequencyPolicy));
         modelElement.addContent(createChild("gammaHetero", gammaHetero));
         modelElement.addContent(createChild("gammaCategories", gammaCategories));
         modelElement.addContent(createChild("invarHetero", invarHetero));
@@ -867,6 +991,27 @@ public class BeautiOptions {
             priorsElement.addContent(e);
         }
 
+        for (Taxa taxonSet : taxonSets) {
+            Parameter statistic = statistics.get(taxonSet);
+            Element e = new Element(statistic.getXMLName());
+            e.addContent(createChild("initial", statistic.initial));
+            e.addContent(createChild("priorType", statistic.priorType));
+            e.addContent(createChild("priorEdited", statistic.priorEdited));
+            e.addContent(createChild("uniformLower", statistic.uniformLower));
+            e.addContent(createChild("uniformUpper", statistic.uniformUpper));
+            e.addContent(createChild("exponentialMean", statistic.exponentialMean));
+            e.addContent(createChild("exponentialOffset", statistic.exponentialOffset));
+            e.addContent(createChild("normalMean", statistic.normalMean));
+            e.addContent(createChild("normalStdev", statistic.normalStdev));
+            e.addContent(createChild("logNormalMean", statistic.logNormalMean));
+            e.addContent(createChild("logNormalStdev", statistic.logNormalStdev));
+            e.addContent(createChild("logNormalOffset", statistic.logNormalOffset));
+            e.addContent(createChild("gammaAlpha", statistic.gammaAlpha));
+            e.addContent(createChild("gammaBeta", statistic.gammaBeta));
+            e.addContent(createChild("gammaOffset", statistic.gammaOffset));
+            priorsElement.addContent(e);
+        }
+
         root.addContent(priorsElement);
 
         Element operatorsElement = new Element("operators");
@@ -878,6 +1023,7 @@ public class BeautiOptions {
             e.addContent(createChild("tuning", operator.tuning));
             e.addContent(createChild("tuningEdited", operator.tuningEdited));
             e.addContent(createChild("weight", operator.weight));
+            e.addContent(createChild("inUse", operator.inUse));
             operatorsElement.addContent(e);
         }
 
@@ -978,7 +1124,7 @@ public class BeautiOptions {
                     case DataType.AMINO_ACIDS:
                         originalAlignment.setDataType(AminoAcids.INSTANCE);
                         break;
-                    case DataType.TWO_STATES:
+                    case DataType.TWO_STATES:                        
                         originalAlignment.setDataType(TwoStates.INSTANCE);
                         break;
                     default:
@@ -1043,6 +1189,8 @@ public class BeautiOptions {
         if (modelElement != null) {
             nucSubstitutionModel = getIntegerChild(modelElement, "nucSubstitutionModel", HKY);
             aaSubstitutionModel = getIntegerChild(modelElement, "aaSubstitutionModel", BLOSUM_62);
+            binarySubstitutionModel = getIntegerChild(modelElement, "binarySubstitutionModel", BIN_SIMPLE);            
+            frequencyPolicy =  getIntegerChild(modelElement, "frequencyPolicy", ESTIMATED);
             gammaHetero = getBooleanChild(modelElement, "gammaHetero", false);
             gammaCategories = getIntegerChild(modelElement, "gammaCategories", 5);
             invarHetero = getBooleanChild(modelElement, "invarHetero", false);
@@ -1082,6 +1230,7 @@ public class BeautiOptions {
                 operator.tuning = getDoubleChild(e, "tuning", 1.0);
                 operator.tuningEdited = getBooleanChild(e, "tuningEdited", false);
                 operator.weight = getDoubleChild(e, "weight", 1);
+                operator.inUse = getBooleanChild(e, "inUse", true);
             }
         }
 
@@ -1109,7 +1258,33 @@ public class BeautiOptions {
                 parameter.gammaBeta = getDoubleChild(e, "gammaBeta", parameter.gammaBeta);
                 parameter.gammaOffset = getDoubleChild(e, "gammaOffset", parameter.gammaOffset);
             }
+
+            for (Taxa taxonSet : taxonSets) {
+                Parameter statistic = statistics.get(taxonSet);
+                if (statistic == null) {
+                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
+                    statistics.put(taxonSet, statistic);
+                }
+                Element e = priorsElement.getChild(statistic.getXMLName());                
+                statistic.initial = getDoubleChild(e, "initial", 1.0);
+                statistic.priorType = PriorType.valueOf(getStringChild(e, "priorType", PriorType.UNIFORM_PRIOR.name()));
+                statistic.priorEdited = getBooleanChild(e, "priorEdited", false);
+                statistic.uniformLower = getDoubleChild(e, "uniformLower", statistic.uniformLower);
+                statistic.uniformUpper = getDoubleChild(e, "uniformUpper", statistic.uniformUpper);
+                statistic.exponentialMean = getDoubleChild(e, "exponentialMean", statistic.exponentialMean);
+                statistic.exponentialOffset = getDoubleChild(e, "exponentialOffset", statistic.exponentialOffset);
+                statistic.normalMean = getDoubleChild(e, "normalMean", statistic.normalMean);
+                statistic.normalStdev = getDoubleChild(e, "normalStdev", statistic.normalStdev);
+                statistic.logNormalMean = getDoubleChild(e, "logNormalMean", statistic.logNormalMean);
+                statistic.logNormalStdev = getDoubleChild(e, "logNormalStdev", statistic.logNormalStdev);
+                statistic.logNormalOffset = getDoubleChild(e, "logNormalOffset", statistic.logNormalOffset);
+                statistic.gammaAlpha = getDoubleChild(e, "gammaAlpha", statistic.gammaAlpha);
+                statistic.gammaBeta = getDoubleChild(e, "gammaBeta", statistic.gammaBeta);
+                statistic.gammaOffset = getDoubleChild(e, "gammaOffset", statistic.gammaOffset);
+            }
+
         }
+
 
         if (mcmcElement != null) {
             upgmaStartingTree = getBooleanChild(mcmcElement, "upgmaStartingTree", true);
@@ -1307,7 +1482,7 @@ public class BeautiOptions {
         }
     }
 
-    public class Parameter {
+    public class   Parameter {
 
         /**
          * A constructor for "special" parameters which are not user-configurable
@@ -1427,6 +1602,14 @@ public class BeautiOptions {
             }
         }
 
+         public String getXMLName() {
+            if (taxa != null) {
+                return "tmrca_" + taxa.getId();
+            } else {
+                return name;
+            }
+        }
+
         public String getDescription() {
             if (taxa != null) {
                 return description + taxa.getId();
@@ -1480,6 +1663,8 @@ public class BeautiOptions {
             this.tuningEdited = false;
             this.tuning = tuning;
             this.weight = weight;
+
+            this.inUse = true;
         }
 
         public Operator(String name, String description,
@@ -1494,6 +1679,8 @@ public class BeautiOptions {
             this.tuningEdited = false;
             this.tuning = tuning;
             this.weight = weight;
+
+            this.inUse = true;
         }
 
         public String getDescription() {
@@ -1521,6 +1708,7 @@ public class BeautiOptions {
         public boolean tuningEdited;
         public double tuning;
         public double weight;
+        public boolean inUse;
 
         public final Parameter parameter1;
         public final Parameter parameter2;
@@ -1545,6 +1733,13 @@ public class BeautiOptions {
     public static final int MT_REV_24 = 3;
     public static final int CP_REV_45 = 4;
     public static final int WAG = 5;
+
+    public static final int BIN_SIMPLE=0;
+    public static final int BIN_COVARION=1;
+
+    public static final int ESTIMATED=0;
+    public static final int EMPIRICAL=1;
+    public static final int ALLEQUAL=2;
 
     public static final int CONSTANT = 0;
     public static final int EXPONENTIAL = 1;
@@ -1571,6 +1766,8 @@ public class BeautiOptions {
     public static final int LOG_STDEV_SCALE = 4;
     public static final int SUBSTITUTION_PARAMETER_SCALE = 5;
     public static final int T50_SCALE = 6;
+    public static final int UNITY_SCALE = 7;
+
     public static final String SCALE = "scale";
     public static final String RANDOM_WALK = "randomWalk";
     public static final String UP_DOWN = "upDown";
@@ -1596,6 +1793,8 @@ public class BeautiOptions {
     public String substTreeFileName = null;
 
     // Data options
+    public int dataType = DataType.NUCLEOTIDES;
+    
     public TaxonList taxonList = null;
     public SimpleAlignment originalAlignment = null;
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
@@ -1623,6 +1822,10 @@ public class BeautiOptions {
     public int partitionCount = 1;
     public int nucSubstitutionModel = HKY;
     public int aaSubstitutionModel = BLOSUM_62;
+    public int binarySubstitutionModel = BIN_SIMPLE;
+
+    public int frequencyPolicy = ESTIMATED;
+
     public boolean gammaHetero = false;
     public int gammaCategories = 4;
     public boolean invarHetero = false;

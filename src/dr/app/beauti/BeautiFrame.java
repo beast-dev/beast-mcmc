@@ -67,6 +67,10 @@ public class BeautiFrame extends DocumentFrame {
 
         setTitle(title);
 
+        // Prevent the application to close in requestClose()
+        // after a user cancel or a failure in beast file generation 
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+
         getOpenAction().setEnabled(false);
         getSaveAction().setEnabled(false);
 
@@ -195,7 +199,7 @@ public class BeautiFrame extends DocumentFrame {
 
             if (option == JOptionPane.YES_OPTION) {
                 return !doGenerate();
-            } else if (option == JOptionPane.CANCEL_OPTION || option == -1) {
+            } else if (option == JOptionPane.CANCEL_OPTION || option == JOptionPane.DEFAULT_OPTION) {
                 return false;
             }
             return true;
@@ -224,7 +228,7 @@ public class BeautiFrame extends DocumentFrame {
         }
     }
 
-    protected boolean readFromFile(File file) throws FileNotFoundException, IOException {
+    protected boolean readFromFile(File file) throws IOException {
         try {
             SAXBuilder parser = new SAXBuilder();
             Document doc = parser.build(file);
@@ -308,7 +312,7 @@ public class BeautiFrame extends DocumentFrame {
 
     }
 
-    protected void importFromFile(File file) throws FileNotFoundException, IOException {
+    protected void importFromFile(File file) throws IOException {
 
         try {
             FileReader reader = new FileReader(file);
@@ -464,6 +468,7 @@ public class BeautiFrame extends DocumentFrame {
 
             statusLabel.setText("Alignment: " + beautiOptions.alignment.getTaxonCount() + " taxa, " +
                     beautiOptions.alignment.getSiteCount() + " sites");
+            beautiOptions.dataType = beautiOptions.alignment.getDataType().getType();
         } else {
             statusLabel.setText("Taxa only: " + beautiOptions.taxonList.getTaxonCount() + " taxa");
             beautiOptions.meanDistance = 0.0;

@@ -43,21 +43,35 @@ public class DensityPlotter {
 	                      String trait1AttributeName,
 	                      String trait2AttributeName,
 	                      int timeBinCount,
-	                      int valueBinCount,
+	                      int value1BinCount,
+	                      int value2BinCount,
 	                      double timeUpper,
 	                      double timeLower,
-	                      double valueUpper,
-	                      double valueLower
+	                      double value1Upper,
+	                      double value1Lower,
+	                      double value2Upper,
+	                      double value2Lower
 	) throws IOException {
 
 		System.out.println("Reading trees...");
 
-		DensityMap densityMap = new DensityMap(timeBinCount, valueBinCount,
-					timeUpper, timeLower, valueUpper, valueLower,
-					0.01);
+		DensityMap[] densityMaps;
 
+		if (trait2AttributeName != null) {
+			densityMaps = new DensityMap[timeBinCount];
+			for (int i = 0; i < densityMaps.length; i++) {
+				densityMaps[i] = new DensityMap(value1BinCount, value2BinCount,
+						value1Upper, value1Lower, value2Upper, value2Lower);
+			}
+		} else {
+			densityMaps = new DensityMap[] {
+					new DensityMap(timeBinCount, value1BinCount,
+							timeUpper, timeLower, value1Upper, value1Lower)
+			};
+		}
 
 		boolean firstTree = true;
+		double maxTreeHeight = 0.0;
 		FileReader fileReader = new FileReader(inputFileName);
 		TreeImporter importer = new NexusImporter(fileReader);
 		try {
@@ -70,9 +84,14 @@ public class DensityPlotter {
 
 				if (totalTrees >= burnin) {
 					if (trait2AttributeName != null) {
-						densityMap.calibrate(tree, trait1AttributeName, trait2AttributeName);
+						for (int i = 0; i < densityMaps.length; i++) {
+							densityMaps[i].calibrate(tree, trait1AttributeName, trait2AttributeName);
+						}
 					} else {
-						densityMap.calibrate(tree, trait1AttributeName);
+						densityMaps[0].calibrate(tree, trait1AttributeName);
+					}
+					if (tree.getNodeHeight(tree.getRoot()) > maxTreeHeight) {
+						maxTreeHeight = tree.getNodeHeight(tree.getRoot());
 					}
 
 					totalTreesUsed += 1;
@@ -86,6 +105,16 @@ public class DensityPlotter {
 		}
 		fileReader.close();
 
+		double startTime = 0.0;
+		double endTime = maxTreeHeight;
+		if (timeUpper != Double.POSITIVE_INFINITY) {
+			endTime = timeUpper;
+		}
+		if (timeLower != Double.NEGATIVE_INFINITY) {
+			startTime = timeLower;
+		}
+		double deltaTime = (endTime - startTime) / (double) (timeBinCount);
+
 		// If we want a density plot then we have to read the trees
 		// again - the first time was to get the range of values,
 		// this read actually creates the map.
@@ -97,7 +126,15 @@ public class DensityPlotter {
 				Tree tree = importer.importNextTree();
 
 				if (totalTrees >= burnin) {
-					densityMap.addTree(tree, trait1AttributeName);
+					if (trait2AttributeName != null) {
+						double sampleTime = startTime;
+						for (int i = 0; i < densityMaps.length; i++) {
+							densityMaps[i].addTree(tree, sampleTime, trait1AttributeName, trait2AttributeName);
+							sampleTime += deltaTime;
+						}
+					} else {
+						densityMaps[0].addTree(tree, trait1AttributeName);
+					}
 				}
 				totalTrees += 1;
 
@@ -108,7 +145,13 @@ public class DensityPlotter {
 		}
 
 		PrintWriter printWriter = new PrintWriter(outputFileName);
-		printWriter.println(densityMap.toString());
+		if (trait2AttributeName != null) {
+			for (int i = 0; i < densityMaps.length; i++) {
+				printWriter.println(densityMaps[i].toString());
+			}
+		} else {
+			printWriter.println(densityMaps[0].toString());
+		}
 		printWriter.close();
 
 
@@ -164,6 +207,8 @@ public class DensityPlotter {
 						new Arguments.RealOption("time_lower", "the lower time bound for the density map [default = 0]"),
 						new Arguments.RealOption("value_upper", "the upper value bound for the density map [default = max value]"),
 						new Arguments.RealOption("value_lower", "the lower value bound for the density map [default = min value]"),
+						new Arguments.RealOption("value2_upper", "the upper second value bound for the density map [default = max value]"),
+						new Arguments.RealOption("value2_lower", "the lower second value bound for the density map [default = min value]"),
 						new Arguments.Option("help", "option to print this message")
 				});
 
@@ -189,10 +234,13 @@ public class DensityPlotter {
 		String trait2AttributeName = null;
 		int timeBinCount = 100;
 		int valueBinCount = 25;
+		int value2BinCount = 25;
 		double timeUpper = Double.POSITIVE_INFINITY;
 		double timeLower = Double.NEGATIVE_INFINITY;
 		double valueUpper = Double.POSITIVE_INFINITY;
 		double valueLower = Double.NEGATIVE_INFINITY;
+		double value2Upper = Double.POSITIVE_INFINITY;
+		double value2Lower = Double.NEGATIVE_INFINITY;
 
 		if (arguments.hasOption("trait")) {
 			trait1AttributeName = arguments.getStringOption("trait");
@@ -209,6 +257,11 @@ public class DensityPlotter {
 		if (arguments.hasOption("value_bins")) {
 			valueBinCount = arguments.getIntegerOption("value_bins");
 		}
+		value2BinCount = valueBinCount;
+
+		if (arguments.hasOption("value2_bins")) {
+			value2BinCount = arguments.getIntegerOption("value2_bins");
+		}
 
 		if (arguments.hasOption("time_upper")) {
 			timeUpper = arguments.getRealOption("time_upper");
@@ -224,6 +277,14 @@ public class DensityPlotter {
 
 		if (arguments.hasOption("value_lower")) {
 			valueLower = arguments.getRealOption("value_lower");
+		}
+
+		if (arguments.hasOption("value2_upper")) {
+			value2Upper = arguments.getRealOption("value2_upper");
+		}
+
+		if (arguments.hasOption("value2_lower")) {
+			value2Lower = arguments.getRealOption("value2_lower");
 		}
 
 		String[] args2 = arguments.getLeftoverArguments();
@@ -251,10 +312,13 @@ public class DensityPlotter {
 				trait2AttributeName,
 				timeBinCount,
 				valueBinCount,
+				value2BinCount,
 				timeUpper,
 				timeLower,
 				valueUpper,
-				valueLower);
+				valueLower,
+				value2Upper,
+				value2Lower);
 
 		System.exit(0);
 	}

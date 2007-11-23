@@ -57,12 +57,7 @@ public class TreeAnnotator {
 	                     int targetOption,
 	                     String targetTreeFileName,
 	                     String inputFileName,
-	                     String outputFileName,
-	                     String densityAttributeName,
-	                     int timeBinCount,
-	                     int valueBinCount,
-	                     double timeLimit,
-	                     String densityFileName
+	                     String outputFileName
 	) throws IOException {
 
 		this.posteriorLimit = posteriorLimit;
@@ -72,16 +67,7 @@ public class TreeAnnotator {
 
 		System.out.println("Reading trees...");
 
-		DensityMap densityMap = null;
-		if (densityAttributeName != null) {
-			densityMap = new DensityMap(timeBinCount, valueBinCount, timeLimit,0.01);
-		}
-
-		CladeSystem cladeSystem = null;
-
-		if (outputFileName != null) {
-			cladeSystem = new CladeSystem();
-		}
+		CladeSystem cladeSystem = new CladeSystem();
 
 		boolean firstTree = true;
 		FileReader fileReader = new FileReader(inputFileName);
@@ -96,13 +82,7 @@ public class TreeAnnotator {
 				}
 
 				if (totalTrees >= burnin) {
-					if (cladeSystem != null) {
-						cladeSystem.add(tree);
-					}
-
-					if (densityMap != null) {
-						densityMap.calibrate(tree, densityAttributeName);
-					}
+					cladeSystem.add(tree);
 
 					totalTreesUsed += 1;
 				}
@@ -114,39 +94,6 @@ public class TreeAnnotator {
 			return;
 		}
 		fileReader.close();
-
-		if (densityMap != null) {
-			// If we want a density plot then we have to read the trees
-			// again - the first time was to get the range of values,
-			// this read actually creates the map.
-			fileReader = new FileReader(inputFileName);
-			importer = new NexusImporter(fileReader);
-			try {
-				totalTrees = 0;
-				while (importer.hasTree()) {
-					Tree tree = importer.importNextTree();
-
-					if (totalTrees >= burnin) {
-						densityMap.addTree(tree, densityAttributeName);
-					}
-					totalTrees += 1;
-
-				}
-			} catch (Importer.ImportException e) {
-				System.err.println("Error Parsing Input Tree: " + e.getMessage());
-				return;
-			}
-		}
-
-		if (densityMap != null && densityFileName != null) {
-			PrintWriter printWriter = new PrintWriter(densityFileName);
-			printWriter.println(densityMap.toString());
-			printWriter.close();
-		}
-
-		if (outputFileName == null) {
-			return;
-		}
 
 		cladeSystem.calculateCladeCredibilities(totalTreesUsed);
 
@@ -764,12 +711,7 @@ public class TreeAnnotator {
 						targetOption,
 						targetTreeFileName,
 						inputFileName,
-						outputFileName,
-						null,
-						0,
-						0,
-						0.0,
-						null);
+						outputFileName);
 
 			} catch (Exception ex) {
 				System.err.println("Exception: " + ex.getMessage());
@@ -794,11 +736,6 @@ public class TreeAnnotator {
 						new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
 						new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annoated"),
 						new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
-						new Arguments.StringOption("density", "density_attribute", "specifies an attribute to use to create a density map"),
-						new Arguments.IntegerOption("time_bins", "the number of bins for the time axis of the density map"),
-						new Arguments.IntegerOption("value_bins", "the number of bins for the value axis of the density map"),
-						new Arguments.RealOption("time_limit", "the upper time bound for the density map"),
-						new Arguments.StringOption("density_file", "density_file_name", "specifies a file name for the density map"),
 						new Arguments.Option("help", "option to print this message")
 				});
 
@@ -841,31 +778,6 @@ public class TreeAnnotator {
 			targetTreeFileName = arguments.getStringOption("target");
 		}
 
-		String densityAttributeName = null;
-		int timeBinCount = 100;
-		int valueBinCount = 25;
-		double timeLimit = -1.0;
-		String densityFileName = "density.map";
-		if (arguments.hasOption("density")) {
-			densityAttributeName = arguments.getStringOption("density");
-		}
-
-		if (arguments.hasOption("time_bins")) {
-			timeBinCount = arguments.getIntegerOption("time_bins");
-		}
-
-		if (arguments.hasOption("value_bins")) {
-			valueBinCount = arguments.getIntegerOption("value_bins");
-		}
-
-		if (arguments.hasOption("time_limit")) {
-			timeLimit = arguments.getRealOption("time_limit");
-		}
-
-		if (arguments.hasOption("density_file")) {
-			densityFileName = arguments.getStringOption("density_file");
-		}
-
 		String[] args2 = arguments.getLeftoverArguments();
 
 		if (args2.length > 2) {
@@ -879,12 +791,8 @@ public class TreeAnnotator {
 			targetTreeFileName = null;
 			inputFileName = args2[0];
 			outputFileName = args2[1];
-		} else if (args2.length == 1) {
-			targetTreeFileName = null;
-			inputFileName = args2[0];
-			outputFileName = null;
 		} else {
-			System.err.println("Missing input file name");
+			System.err.println("Missing input or output file name");
 			printUsage(arguments);
 			System.exit(1);
 		}
@@ -895,12 +803,7 @@ public class TreeAnnotator {
 				target,
 				targetTreeFileName,
 				inputFileName,
-				outputFileName,
-				densityAttributeName,
-				timeBinCount,
-				valueBinCount,
-				timeLimit,
-				densityFileName);
+				outputFileName);
 
 		System.exit(0);
 	}

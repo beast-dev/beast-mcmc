@@ -16,6 +16,7 @@ class DensityMap {
 
 	private int[][] data;
 	private int[] counts;
+	private int count;
 	private double startX;
 	private double endX;
 	private double startY;
@@ -23,69 +24,100 @@ class DensityMap {
 	private double scaleX;
 	private double scaleY;
 
-	private double maxTreeHeight = 0;
-	private double minValue = Double.POSITIVE_INFINITY;
-	private double maxValue = Double.NEGATIVE_INFINITY;
+	private double minX = Double.POSITIVE_INFINITY;
+	private double maxX = Double.NEGATIVE_INFINITY;
+	private double minY = Double.POSITIVE_INFINITY;
+	private double maxY = Double.NEGATIVE_INFINITY;
 
-	private double edgeFraction;
-	private double timeUpper;
-	private double timeLower;
-	private double valueUpper;
-	private double valueLower;
+	private double upperX;
+	private double lowerX;
+	private double upperY;
+	private double lowerY;
 
+	private boolean jointDensity = false;
 	private boolean isCalibrated = false;
 
 	public DensityMap(int binX, int binY,
-	                  double timeUpper, double timeLower,
-	                  double valueUpper, double valueLower,
-	                  double edgeFraction) {
+	                  double upperX, double lowerX,
+	                  double upperY, double lowerY) {
 		this.binX = binX;
 		this.binY = binY;
 		data = new int[binX][binY];
 		counts = new int[binX];
-		this.edgeFraction = edgeFraction;
-		this.timeUpper = timeUpper;
-		this.timeLower = timeLower;
-		this.valueUpper = valueUpper;
-		this.valueLower = valueLower;
+		count = 0;
+		this.upperX = upperX;
+		this.lowerX = lowerX;
+		this.upperY = upperY;
+		this.lowerY = lowerY;
 	}
 
 	public void calibrate(Tree tree, String attributeName) {
-		calibrate(tree, attributeName, null);
+		boolean foundAttribute = false;
+
+		if (isCalibrated) {
+			throw new RuntimeException("Already calibrated");
+		}
+
+		if (jointDensity) {
+			throw new RuntimeException("Already calibrated as a joint density map");
+		}
+
+		double height = tree.getNodeHeight(tree.getRoot());
+		if (height > maxX) {
+			maxX = height;
+		}
+		minX = 0.0;
+		for (int i = 0; i < tree.getNodeCount(); i++) {
+			NodeRef node = tree.getNode(i);
+			if (node != tree.getRoot()) {
+				Double value = (Double)tree.getNodeAttribute(node, attributeName);
+				if (value != null) {
+					if (value < minY)
+						minY = value;
+					if (value > maxY)
+						maxY = value;
+					foundAttribute = true;
+				}
+			}
+		}
+		if (!foundAttribute) {
+			throw new RuntimeException("Can't find any attributes, " + attributeName + ", in tree " + tree.getId());
+		}
+
 	}
 
 	public void calibrate(Tree tree, String attributeName1, String attributeName2) {
 		boolean foundAttribute1 = false;
 		boolean foundAttribute2 = false;
 
+		jointDensity = true;
+
 		if (isCalibrated) {
 			throw new RuntimeException("Already calibrated");
 		}
 
 		double height = tree.getNodeHeight(tree.getRoot());
-		if (height > maxTreeHeight) {
-			maxTreeHeight = height;
+		if (height > maxX) {
+			maxX = height;
 		}
 		for (int i = 0; i < tree.getNodeCount(); i++) {
 			NodeRef node = tree.getNode(i);
 			if (node != tree.getRoot()) {
 				Double value = (Double)tree.getNodeAttribute(node, attributeName1);
 				if (value != null) {
-					if (value < minValue)
-						minValue = value;
-					if (value > maxValue)
-						maxValue = value;
+					if (value < minY)
+						minY = value;
+					if (value > maxY)
+						maxY = value;
 					foundAttribute1 = true;
 				}
-				if (attributeName2 != null) {
-					value = (Double)tree.getNodeAttribute(node, attributeName2);
-					if (value != null) {
-						if (value < minValue)
-							minValue = value;
-						if (value > maxValue)
-							maxValue = value;
-						foundAttribute2 = true;
-					}
+				value = (Double)tree.getNodeAttribute(node, attributeName2);
+				if (value != null) {
+					if (value < minY)
+						minY = value;
+					if (value > maxY)
+						maxY = value;
+					foundAttribute2 = true;
 				}
 			}
 		}
@@ -93,39 +125,31 @@ class DensityMap {
 			throw new RuntimeException("Can't find any attributes, " + attributeName1 + ", in tree " + tree.getId());
 		}
 
-		if (attributeName2 != null && !foundAttribute2) {
+		if (!foundAttribute2) {
 			throw new RuntimeException("Can't find any attributes, " + attributeName2 + ", in tree " + tree.getId());
 		}
 	}
 
 	public void addTree(Tree tree, String attributeName) {
-		addTree(tree, attributeName, null);
-	}
-
-	public void addTree(Tree tree, String attributeName1, String attributeName2) {
 		if (!isCalibrated) {
-			double spread = maxValue - minValue;
-			minValue -= spread * edgeFraction;
-			maxValue += spread * edgeFraction;
-
-			startX = 0.0;
-			if (timeLower != Double.NEGATIVE_INFINITY) {
-				startX = timeLower;
+			startX = minX;
+			if (lowerX != Double.NEGATIVE_INFINITY) {
+				startX = lowerX;
 			}
 
-			endX = maxTreeHeight * (1.0 + edgeFraction);
-			if (timeUpper != Double.POSITIVE_INFINITY) {
-				endX = timeUpper;
+			endX = maxX;
+			if (upperX != Double.POSITIVE_INFINITY) {
+				endX = upperX;
 			}
 
-			startY = minValue;
-			if (valueLower != Double.NEGATIVE_INFINITY) {
-				startY = valueLower;
+			startY = minY;
+			if (lowerY != Double.NEGATIVE_INFINITY) {
+				startY = lowerY;
 			}
 
-			endY = maxValue;
-			if (valueUpper != Double.POSITIVE_INFINITY) {
-				endY = valueUpper;
+			endY = maxY;
+			if (upperY != Double.POSITIVE_INFINITY) {
+				endY = upperY;
 			}
 
 			scaleX = (endX - startX) / (double) (binX);
@@ -137,14 +161,55 @@ class DensityMap {
 		for (int i = 0; i < tree.getNodeCount(); i++) {
 			NodeRef node = tree.getNode(i);
 			if (node != tree.getRoot()) {
-				Double value = (Double)tree.getNodeAttribute(node, attributeName1);
+				Double value = (Double)tree.getNodeAttribute(node, attributeName);
 				if (value != null) {
 					addBranch(tree.getNodeHeight(node), tree.getNodeHeight(tree.getParent(node)), value);
 				}
-				if (attributeName2 != null) {
-					value = (Double)tree.getNodeAttribute(node, attributeName2);
-					if (value != null) {
-						addBranch(tree.getNodeHeight(node), tree.getNodeHeight(tree.getParent(node)), value);
+			}
+		}
+	}
+
+	public void addTree(Tree tree, double sampleTime, String attributeName1, String attributeName2) {
+		if (!isCalibrated) {
+			startX = minX;
+			if (lowerX != Double.NEGATIVE_INFINITY) {
+				startX = lowerX;
+			}
+
+			endX = maxX;
+			if (upperX != Double.POSITIVE_INFINITY) {
+				endX = upperX;
+			}
+
+			startY = minY;
+			if (lowerY != Double.NEGATIVE_INFINITY) {
+				startY = lowerY;
+			}
+
+			endY = maxY;
+			if (upperY != Double.POSITIVE_INFINITY) {
+				endY = upperY;
+			}
+
+			scaleX = (endX - startX) / (double) (binX);
+			scaleY = (endY - startY) / (double) (binY);
+
+			isCalibrated = true;
+		}
+
+		for (int i = 0; i < tree.getNodeCount(); i++) {
+			NodeRef node = tree.getNode(i);
+			if (node != tree.getRoot()) {
+				NodeRef parent = tree.getParent(node);
+				double t1 = tree.getNodeHeight(node);
+				double t2 = tree.getNodeHeight(parent);
+				if (t1 <= sampleTime && t2 >= sampleTime) {
+					Double valueX1 = (Double)tree.getNodeAttribute(node, attributeName1);
+					Double valueY1 = (Double)tree.getNodeAttribute(node, attributeName2);
+					Double valueX2 = (Double)tree.getNodeAttribute(parent, attributeName1);
+					Double valueY2 = (Double)tree.getNodeAttribute(parent, attributeName2);
+					if (valueX1 != null && valueY1 != null && valueX2 != null && valueY2 != null) {
+						addPoint(sampleTime, t1, t2, valueX1, valueY1, valueX2, valueY2);
 					}
 				}
 			}
@@ -182,8 +247,27 @@ class DensityMap {
 		}
 	}
 
+	private void addPoint(double t, double startTime, double endTime, double x0, double y0, double x1, double y1) {
+		double t0 = t - startTime;
+		double t1 = endTime - t;
+		double x = ((x0/t0) + (x1/t1)) / ((1.0/t0) + (1.0/t1));
+		double y = ((y0/t0) + (y1/t1)) / ((1.0/t0) + (1.0/t1));
+
+		if (x > endX || x < startX || y > endY || y < startY) {
+			// point is outside bounds...
+			return;
+		}
+
+		// determine bin for x
+		int X = (int) ((x - startX) / scaleX);
+		// determine bin for y
+		int Y = (int) ((y - startY) / scaleY);
+
+		data[X][Y] += 1;
+		count += 1;
+	}
+
 	public String toString() {
-//			double dblTotal = (double) total;
 		StringBuilder sb = new StringBuilder();
 		sb.append("0.0");
 		for (int i = 0; i < binX; i++) {
@@ -193,16 +277,22 @@ class DensityMap {
 		sb.append("\n");
 		for (int i = 0; i < binY; i++) {
 			sb.append(String.format("%7.5f", startY + scaleY * i));
-			//double dblCounts = (double)counts[i];
+
 			for (int j = 0; j < binX; j++) {
 				sb.append(SEP);
-				double dblCounts = (double) counts[j];
-				if (dblCounts > 0)
+				double dblCount;
+				if (jointDensity) {
+					dblCount = (double) count;
+				} else {
+					dblCount = (double) counts[j];
+				}
+				if (dblCount > 0) {
 					sb.append(String.format(DBL,
-							(double) data[j][i] / (double) counts[j]
+							(double) data[j][i] / dblCount
 					));
-				else
+				} else {
 					sb.append(String.format(DBL, 0.0));
+				}
 			}
 			sb.append("\n");
 		}

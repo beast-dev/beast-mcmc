@@ -1,11 +1,18 @@
 package dr.app.tools;
 
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.inference.model.MatrixParameter;
+import dr.math.matrixAlgebra.Matrix;
+import dr.util.TIFFWriter;
+
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 
 /**
  * @author Marc Suchard
- * Based on the class CalculateSplitRates in JEBL
+ *         Based on the class CalculateSplitRates in JEBL
  */
 class DensityMap {
 	private final String SEP = "\t";
@@ -37,9 +44,12 @@ class DensityMap {
 	private boolean jointDensity = false;
 	private boolean isCalibrated = false;
 
-	public DensityMap(int binX, int binY,
+	private int slice;
+
+	public DensityMap(int slice, int binX, int binY,
 	                  double upperX, double lowerX,
 	                  double upperY, double lowerY) {
+		this.slice = slice;
 		this.binX = binX;
 		this.binY = binY;
 		data = new int[binX][binY];
@@ -70,7 +80,7 @@ class DensityMap {
 		for (int i = 0; i < tree.getNodeCount(); i++) {
 			NodeRef node = tree.getNode(i);
 			if (node != tree.getRoot()) {
-				Double value = (Double)tree.getNodeAttribute(node, attributeName);
+				Double value = (Double) tree.getNodeAttribute(node, attributeName);
 				if (value != null) {
 					if (value < minY)
 						minY = value;
@@ -96,22 +106,22 @@ class DensityMap {
 			throw new RuntimeException("Already calibrated");
 		}
 
-		double height = tree.getNodeHeight(tree.getRoot());
-		if (height > maxX) {
-			maxX = height;
-		}
+//		double height = tree.getNodeHeight(tree.getRoot());
+//		if (height > maxX) {
+//			maxX = height;
+//		}
 		for (int i = 0; i < tree.getNodeCount(); i++) {
 			NodeRef node = tree.getNode(i);
 			if (node != tree.getRoot()) {
-				Double value = (Double)tree.getNodeAttribute(node, attributeName1);
+				Double value = (Double) tree.getNodeAttribute(node, attributeName1);
 				if (value != null) {
-					if (value < minY)
-						minY = value;
-					if (value > maxY)
-						maxY = value;
+					if (value < minX)
+						minX = value;
+					if (value > maxX)
+						maxX = value;
 					foundAttribute1 = true;
 				}
-				value = (Double)tree.getNodeAttribute(node, attributeName2);
+				value = (Double) tree.getNodeAttribute(node, attributeName2);
 				if (value != null) {
 					if (value < minY)
 						minY = value;
@@ -128,40 +138,18 @@ class DensityMap {
 		if (!foundAttribute2) {
 			throw new RuntimeException("Can't find any attributes, " + attributeName2 + ", in tree " + tree.getId());
 		}
+//		System.err.printf("Calibrated: minY = %3.2f, maxY = %3.2f, minX = %3.2f, maxX = %3.2f\n",minY,maxY,minX,maxX);
+//		System.exit(-1);
 	}
 
 	public void addTree(Tree tree, String attributeName) {
-		if (!isCalibrated) {
-			startX = minX;
-			if (lowerX != Double.NEGATIVE_INFINITY) {
-				startX = lowerX;
-			}
 
-			endX = maxX;
-			if (upperX != Double.POSITIVE_INFINITY) {
-				endX = upperX;
-			}
-
-			startY = minY;
-			if (lowerY != Double.NEGATIVE_INFINITY) {
-				startY = lowerY;
-			}
-
-			endY = maxY;
-			if (upperY != Double.POSITIVE_INFINITY) {
-				endY = upperY;
-			}
-
-			scaleX = (endX - startX) / (double) (binX);
-			scaleY = (endY - startY) / (double) (binY);
-
-			isCalibrated = true;
-		}
+		checkCalibration();
 
 		for (int i = 0; i < tree.getNodeCount(); i++) {
 			NodeRef node = tree.getNode(i);
 			if (node != tree.getRoot()) {
-				Double value = (Double)tree.getNodeAttribute(node, attributeName);
+				Double value = (Double) tree.getNodeAttribute(node, attributeName);
 				if (value != null) {
 					addBranch(tree.getNodeHeight(node), tree.getNodeHeight(tree.getParent(node)), value);
 				}
@@ -169,7 +157,7 @@ class DensityMap {
 		}
 	}
 
-	public void addTree(Tree tree, double sampleTime, String attributeName1, String attributeName2) {
+	private void checkCalibration() {
 		if (!isCalibrated) {
 			startX = minX;
 			if (lowerX != Double.NEGATIVE_INFINITY) {
@@ -191,12 +179,26 @@ class DensityMap {
 				endY = upperY;
 			}
 
-			scaleX = (endX - startX) / (double) (binX);
-			scaleY = (endY - startY) / (double) (binY);
+			scaleX = (endX - startX) / (double) (binX - 1);  // -1 necessary to ensure that maxValue falls in the last box
+			scaleY = (endY - startY) / (double) (binY - 1);
 
 			isCalibrated = true;
 		}
 
+
+	}
+
+	public void addTree(Tree tree, double sampleTime, String attributeName1, String attributeName2) {
+
+		checkCalibration();
+
+		double[][] variance = null;
+		Object[] obj = (Object[]) tree.getAttribute(MultivariateDiffusionModel.PRECISION_TREE_ATTRIBUTE);
+		if (obj != null) {
+			variance = new Matrix(
+					MatrixParameter.parseFromSymmetricDoubleArray(obj).getParameterAsMatrix()
+			).inverse().toComponents();
+		}
 		for (int i = 0; i < tree.getNodeCount(); i++) {
 			NodeRef node = tree.getNode(i);
 			if (node != tree.getRoot()) {
@@ -204,16 +206,20 @@ class DensityMap {
 				double t1 = tree.getNodeHeight(node);
 				double t2 = tree.getNodeHeight(parent);
 				if (t1 <= sampleTime && t2 >= sampleTime) {
-					Double valueX1 = (Double)tree.getNodeAttribute(node, attributeName1);
-					Double valueY1 = (Double)tree.getNodeAttribute(node, attributeName2);
-					Double valueX2 = (Double)tree.getNodeAttribute(parent, attributeName1);
-					Double valueY2 = (Double)tree.getNodeAttribute(parent, attributeName2);
+					Double valueX1 = (Double) tree.getNodeAttribute(node, attributeName1);
+					Double valueY1 = (Double) tree.getNodeAttribute(node, attributeName2);
+					Double valueX2 = (Double) tree.getNodeAttribute(parent, attributeName1);
+					Double valueY2 = (Double) tree.getNodeAttribute(parent, attributeName2);
 					if (valueX1 != null && valueY1 != null && valueX2 != null && valueY2 != null) {
-						addPoint(sampleTime, t1, t2, valueX1, valueY1, valueX2, valueY2);
+						addPoint(sampleTime, t1, t2, valueX1, valueY1, valueX2, valueY2, variance);
 					}
 				}
 			}
 		}
+	}
+
+	public int[][] getDensityMap() {
+		return data;
 	}
 
 	private void addBranch(double start, double end, double y) {
@@ -247,11 +253,24 @@ class DensityMap {
 		}
 	}
 
-	private void addPoint(double t, double startTime, double endTime, double x0, double y0, double x1, double y1) {
+	private void addPoint(double t, double startTime, double endTime, double x0, double y0, double x1, double y1, double[][] variance) {
 		double t0 = t - startTime;
 		double t1 = endTime - t;
-		double x = ((x0/t0) + (x1/t1)) / ((1.0/t0) + (1.0/t1));
-		double y = ((y0/t0) + (y1/t1)) / ((1.0/t0) + (1.0/t1));
+		double x, y;
+		if (t0 == 0) {
+			x = x0;
+			y = y0;
+		} else if (t1 == 0) {
+			x = x1;
+			y = y1;
+		} else {
+			x = ((x0 / t0) + (x1 / t1)) / ((1.0 / t0) + (1.0 / t1));
+			y = ((y0 / t0) + (y1 / t1)) / ((1.0 / t0) + (1.0 / t1));
+
+			if (variance != null) {
+				// todo add stochastic noise
+			}
+		}
 
 		if (x > endX || x < startX || y > endY || y < startY) {
 			// point is outside bounds...
@@ -268,31 +287,82 @@ class DensityMap {
 	}
 
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("0.0");
-		for (int i = 0; i < binX; i++) {
-			sb.append(SEP);
-			sb.append(String.format("%7.5f", startX + scaleX * i));
-		}
-		sb.append("\n");
-		for (int i = 0; i < binY; i++) {
-			sb.append(String.format("%7.5f", startY + scaleY * i));
+		return toString(true);
+	}
 
+	public void writeAsTIFF(String fileName) {
+
+		double[][] matrix = normalize(256);
+		try {
+			DataOutputStream tiffOut = new DataOutputStream(new FileOutputStream(fileName));
+			TIFFWriter.writeDoubleArray(tiffOut, matrix);
+			tiffOut.close();
+		} catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
+		}
+	}
+
+
+	private double[][] normalize(double max) {
+
+		double[][] matrix = new double[binX][binY];
+
+		for (int i = 0; i < binY; i++) {
 			for (int j = 0; j < binX; j++) {
-				sb.append(SEP);
 				double dblCount;
 				if (jointDensity) {
 					dblCount = (double) count;
 				} else {
 					dblCount = (double) counts[j];
 				}
-				if (dblCount > 0) {
-					sb.append(String.format(DBL,
-							(double) data[j][i] / dblCount
-					));
-				} else {
-					sb.append(String.format(DBL, 0.0));
-				}
+				if (dblCount > 0)
+					matrix[j][i] = (double) data[j][i] / dblCount * max;
+				else
+					matrix[j][i] = 0.0;
+			}
+		}
+
+		return matrix;
+
+	}
+
+	public String toString(boolean printHeaders) {
+
+		StringBuilder sb = new StringBuilder();
+		if (printHeaders) {
+			sb.append(String.format("%7.5f", (double) slice));  // todo should return 3rd dimension coordinate
+			for (int i = 0; i < binX; i++) {
+				sb.append(SEP);
+				sb.append(String.format("%7.5f", startX + scaleX * i));
+			}
+			sb.append("\n");
+		}
+
+		double[][] matrix = normalize(1.0);
+
+		for (int i = 0; i < binY; i++) {
+			if (printHeaders)
+				sb.append(String.format("%7.5f", startY + scaleY * i));
+
+			for (int j = 0; j < binX; j++) {
+
+				if (j > 0 || printHeaders)
+					sb.append(SEP);
+
+//				double dblCount;
+//				if (jointDensity) {
+//					dblCount = (double) count;
+//				} else {
+//					dblCount = (double) counts[j];
+//				}
+//				if (dblCount > 0) {
+//					sb.append(String.format(DBL,
+//							(double) data[j][i] / dblCount
+//					));
+//				} else {
+//					sb.append(String.format(DBL, 0.0));
+//				}
+				sb.append(String.format(DBL, matrix[j][i]));
 			}
 			sb.append("\n");
 		}

@@ -1,6 +1,8 @@
 package dr.inference.model;
 
 import dr.xml.*;
+
+import java.util.StringTokenizer;
 //import org.w3c.dom.Document;
 //import org.w3c.dom.Element;
 //import dr.xml.*;
@@ -41,6 +43,59 @@ public class MatrixParameter extends CompoundParameter {
 
 	public int getRowDimension() {
 		return getParameter(0).getDimension();
+	}
+
+	public String toSymmetricString() {
+		StringBuffer sb = new StringBuffer("{");
+		int dim = getRowDimension();
+		int total = dim * (dim + 1) / 2;
+		for (int i = 0; i < dim; i++) {
+			for (int j = i; j < dim; j++) {
+				sb.append(String.format("%5.4e", getParameterValue(i, j)));
+				total--;
+				if (total > 0)
+					sb.append(",");
+			}
+		}
+		sb.append("}");
+//		System.err.println("reit = "+new Matrix(parseFromSymmetricString(sb.toString()).getParameterAsMatrix()));
+//		return sb.toString();
+		return String.format("%5.4f", getParameterValue(0, 0));
+	}
+
+	public static MatrixParameter parseFromSymmetricString(String string) {
+		String clip = string.replace("{", "").replace("}", "").trim();
+		StringTokenizer st = new StringTokenizer(clip, ",");
+		int count = st.countTokens();
+		int dim = (-1 + (int) Math.sqrt(1 + 8 * count)) / 2;
+		Parameter[] parameter = new Parameter[dim];
+		for (int i = 0; i < dim; i++)
+			parameter[i] = new Parameter.Default(dim);
+		for (int i = 0; i < dim; i++) {
+			for (int j = i; j < dim; j++) {
+				double datum = new Double(st.nextToken());
+				parameter[i].setParameterValue(j, datum);
+				parameter[j].setParameterValue(i, datum);
+			}
+		}
+		return new MatrixParameter(null, parameter);
+	}
+
+	public static MatrixParameter parseFromSymmetricDoubleArray(Object[] data) {
+
+		int dim = (-1 + (int) Math.sqrt(1 + 8 * data.length)) / 2;
+		Parameter[] parameter = new Parameter[dim];
+		for (int i = 0; i < dim; i++)
+			parameter[i] = new Parameter.Default(dim);
+		int index = 0;
+		for (int i = 0; i < dim; i++) {
+			for (int j = i; j < dim; j++) {
+				double datum = (Double) data[index++];
+				parameter[i].setParameterValue(j, datum);
+				parameter[j].setParameterValue(i, datum);
+			}
+		}
+		return new MatrixParameter(null, parameter);
 	}
 
 	// **************************************************************

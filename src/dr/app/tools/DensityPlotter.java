@@ -27,11 +27,15 @@ package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
-import dr.evolution.io.*;
+import dr.evolution.io.Importer;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.Tree;
 import dr.util.Version;
 
-import java.io.*;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 public class DensityPlotter {
 
@@ -50,7 +54,10 @@ public class DensityPlotter {
 	                      double value1Upper,
 	                      double value1Lower,
 	                      double value2Upper,
-	                      double value2Lower
+	                      double value2Lower,
+	                      boolean printHeaders,
+	                      boolean outputTIFF
+
 	) throws IOException {
 
 		System.out.println("Reading trees...");
@@ -60,12 +67,12 @@ public class DensityPlotter {
 		if (trait2AttributeName != null) {
 			densityMaps = new DensityMap[timeBinCount];
 			for (int i = 0; i < densityMaps.length; i++) {
-				densityMaps[i] = new DensityMap(value1BinCount, value2BinCount,
+				densityMaps[i] = new DensityMap(i, value1BinCount, value2BinCount,
 						value1Upper, value1Lower, value2Upper, value2Lower);
 			}
 		} else {
-			densityMaps = new DensityMap[] {
-					new DensityMap(timeBinCount, value1BinCount,
+			densityMaps = new DensityMap[]{
+					new DensityMap(0, timeBinCount, value1BinCount,
 							timeUpper, timeLower, value1Upper, value1Lower)
 			};
 		}
@@ -144,15 +151,25 @@ public class DensityPlotter {
 			return;
 		}
 
-		PrintWriter printWriter = new PrintWriter(outputFileName);
+//		PrintWriter printWriter = null;
 		if (trait2AttributeName != null) {
 			for (int i = 0; i < densityMaps.length; i++) {
-				printWriter.println(densityMaps[i].toString());
+				if (outputTIFF) {
+					densityMaps[i].writeAsTIFF(outputFileName + "." + String.format("%03d", i) + ".tif");
+
+				} else {
+					PrintWriter printWriter = new PrintWriter(outputFileName + "." + String.format("%03d", i));
+					printWriter.println(densityMaps[i].toString(printHeaders));
+					printWriter.close();
+				}
+
 			}
 		} else {
-			printWriter.println(densityMaps[0].toString());
+			PrintWriter printWriter = new PrintWriter(outputFileName);
+			printWriter.println(densityMaps[0].toString(printHeaders));
+			printWriter.close();
 		}
-		printWriter.close();
+//		printWriter.close();
 
 
 	}
@@ -165,7 +182,7 @@ public class DensityPlotter {
 		centreLine("DensityPlotter " + version.getVersionString() + ", " + version.getDateString(), 60);
 		centreLine("BEAST time vs. parameter density analysis", 60);
 		centreLine("by", 60);
-		centreLine("Andrew Rambaut, Marc Suchard and Alexei J. Drummond", 60);
+		centreLine("Andrew Rambaut, Marc A. Suchard and Alexei J. Drummond", 60);
 		System.out.println();
 		System.out.println();
 	}
@@ -184,7 +201,7 @@ public class DensityPlotter {
 
 		arguments.printUsage("densityplotter", "<input-file-name> [<output-file-name>]");
 		System.out.println();
-		System.out.println("  Example: densityplotter -burnin 100 -density rate test.trees density.plot");
+		System.out.println("  Example: densityplotter -burnin 100 -trait rate test.trees density.plot");
 		System.out.println();
 	}
 
@@ -209,6 +226,8 @@ public class DensityPlotter {
 						new Arguments.RealOption("value_lower", "the lower value bound for the density map [default = min value]"),
 						new Arguments.RealOption("value2_upper", "the upper second value bound for the density map [default = max value]"),
 						new Arguments.RealOption("value2_lower", "the lower second value bound for the density map [default = min value]"),
+						new Arguments.StringOption("headers", "with_headers", "prints row/column labels in output [default = true"),
+						new Arguments.Option("tiff", "output in TIFF format"),
 						new Arguments.Option("help", "option to print this message")
 				});
 
@@ -287,6 +306,17 @@ public class DensityPlotter {
 			value2Lower = arguments.getRealOption("value2_lower");
 		}
 
+		boolean printHeaders = true;
+		if (arguments.hasOption("headers")) {
+			String text = arguments.getStringOption("headers");
+			if (text.toUpperCase().compareTo("FALSE") == 0)
+				printHeaders = false;
+		}
+
+		boolean outputTIFF = false;
+		if (arguments.hasOption("tiff"))
+			outputTIFF = true;
+
 		String[] args2 = arguments.getLeftoverArguments();
 
 		if (args2.length > 2) {
@@ -318,7 +348,9 @@ public class DensityPlotter {
 				valueUpper,
 				valueLower,
 				value2Upper,
-				value2Lower);
+				value2Lower,
+				printHeaders, outputTIFF
+		);
 
 		System.exit(0);
 	}

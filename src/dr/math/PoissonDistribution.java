@@ -20,7 +20,13 @@ public class PoissonDistribution implements Distribution {
     }
 
     public double logPdf(double x) {
-        return Math.log(distribution.probability(x));
+
+        double pdf = distribution.probability(x);
+        if( pdf == 0 ) { // bad estimate
+            final double mean = mean();
+            return x * Math.log(mean) - Poisson.gammln(x+1) - mean;            
+        }
+        return Math.log(pdf);
         
     }
 

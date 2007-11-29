@@ -25,8 +25,11 @@
 
 package dr.app.beastdev;
 
+import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
+import dr.evomodel.operators.InternalTraitGibbsOperator;
+import dr.evomodel.operators.PrecisionMatrixGibbsOperator;
+import dr.evomodel.operators.RandomWalkOnMapOperator;
 import dr.xml.*;
-import dr.evomodel.operators.*;
 
 import java.io.File;
 import java.util.Iterator;
@@ -280,8 +283,9 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.model.DesignMatrix.PARSER);
 		addXMLObjectParser(dr.inference.distribution.GeneralizedLinearModel.PARSER);
 		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.MVGAMMA_PRIOR_PARSER);
+        addXMLObjectParser(dr.evomodel.continuous.InhibitionAssayLikelihood.PARSER);
 
-		//Multivariate OU Process
+        //Multivariate OU Process
 		addXMLObjectParser(dr.inference.operators.MVOUCovarianceOperator.PARSER);
 		addXMLObjectParser(dr.inference.model.DummyModel.PARSER);
 		addXMLObjectParser(dr.inference.operators.RegressionGibbsOperator.PARSER);

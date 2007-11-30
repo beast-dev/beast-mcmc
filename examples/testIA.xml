@@ -15,16 +15,16 @@
 		</taxon>
 	</taxa>
 
-    <matrixParameter id="dataIA">      <!-- indices are ordered by taxa-listing, matrix defined by its columns -->
-        <parameter id="dataIA.col1" value="1 2 3 4"/>
-        <parameter id="dataIA.col2" value="5 6 7 8"/>
-        <parameter id="dataIA.col3" value="5 6 7 8"/>
-        <parameter id="dataIA.col4" value="1 2 3 4"/>
-    </matrixParameter>
+	<matrixParameter id="dataIA">      <!-- indices are ordered by taxa-listing, matrix defined by its columns -->
+		<parameter id="dataIA.col1" value="1 2 3 4"/>
+		<parameter id="dataIA.col2" value="5 6 7 8"/>
+		<parameter id="dataIA.col3" value="5 6 7 8"/>
+		<parameter id="dataIA.col4" value="1 2 3 4"/>
+	</matrixParameter>
 
-    <newick id="dinosaurTree">
-	    (1:3,(2:2,(3:1,4:1):1):1);
-    </newick>
+	<newick id="dinosaurTree">
+		(1:3,(2:2,(3:1,4:1):1):1);
+	</newick>
 
 	<treeModel id="treeModel">
 		<coalescentTree idref="dinosaurTree"/>
@@ -40,96 +40,75 @@
 		<nodeTraits rootNode="true" internalNodes="true" leafNodes="true" name="indicator">
 			<parameter id="clusterIndicator"/>
 		</nodeTraits>
-        <nodeTraits rootNode="true" internalNodes="true" leafNodes="true" name="mean">
-            <parameter id="clusterMean"/>
-        </nodeTraits>
-    </treeModel>
+		<nodeTraits rootNode="true" internalNodes="true" leafNodes="true" name="mean">
+			<parameter id="clusterMean"/>
+		</nodeTraits>
+	</treeModel>
 
-	<multivariateDiffusionModel id="diffusionModel">
-		<precisionMatrix>
-			<matrixParameter id="precisionMatrix">
-				<parameter id="col1" value="5.0 1.5"/>
-				<parameter id="col2" value="1.5 2.0"/>
-			</matrixParameter>
-		</precisionMatrix>
-	</multivariateDiffusionModel>
-
-	<multivariateWishartPrior id="precisionPrior" df="2">
-		<scaleMatrix>
-			<matrixParameter>
-				<parameter value="1.0 0.0"/>
-				<parameter value="0.0 1.0"/>
-			</matrixParameter>
-		</scaleMatrix>
-		<data>
-			<matrixParameter idref="precisionMatrix"/>
-		</data>
-	</multivariateWishartPrior>
 
 	<inhibitionLikelihood id="traitLikelihood">
 		<treeModel idref="treeModel"/>
-        <matrixParameter idref="dataIA"/>
-        <precision>
-            <parameter id="precision" value="0.1"/>
-        </precision>
-    </inhibitionLikelihood>
+		<matrixParameter idref="dataIA"/>
+		<precision>
+			<parameter id="precision" value="0.1"/>
+		</precision>
+	</inhibitionLikelihood>
 
-    <report>
-        lnP = <inhibitionLikelihood idref="traitLikelihood"/>
-    </report>
+	<sumStatistic id="clusterChanges" elementwise="true">
+		<parameter idref="clusterIndicator"/>
+	</sumStatistic>
 
-    <!--
-	 <operators id="operators">
-	   <randomWalkOperator windowSize="1.0" weight="10">
-	 <parameter idref="internalTraits"/>
-	   </randomWalkOperator>
+	<report>
+		lnP =
+		<inhibitionLikelihood idref="traitLikelihood"/>
+	</report>
 
-	   <randomWalkOperator windowSize="1.0" weight="20">
-	 <parameter idref="leafTraits"/>
-	 <updateIndex>
-	   <parameter idref="missingTraitValues"/>
-	 </updateIndex>
-	   </randomWalkOperator>
+	<operators id="operators">
+		<bitFlipOperator weight="15.0">
+			<parameter idref="clusterIndicator"/>
+		</bitFlipOperator>
+		<randomWalkOperator windowSize="0.75" weight="15.0">  <!-- should be able to Gibbs sample these -->
+			<parameter idref="clusterMean"/>
+		</randomWalkOperator>
+	</operators>
 
-	   <precisionGibbsOperator weight="2">
-	 <treeModel idref="treeModel"/>
-	 <matrixParameter idref="precisionMatrix"/>
-	 <multivariateWishartPrior idref="precisionPrior"/>
-	   </precisionGibbsOperator>
+	<dummyModel id="dummyModel">  <!-- not needed once treeModel is used -->
+		<parameter idref="clusterIndicator"/>
+		<parameter idref="clusterMean"/>
+	</dummyModel>
 
-	   <randomWalkOperator windowSize="1.0" weight="1">
-	 <parameter idref="rootTrait"/>
-	   </randomWalkOperator>
 
-	  <internalTraitGibbsOperator weight="10">
-	 <treeModel idref="treeModel"/>
-	 <multivariateDiffusionModel idref="diffusionModel"/>
-	   </internalTraitGibbsOperator>
-	 </operators>
- -->
-	<correlation id="corStatistic" dimension1="1" dimension2="2">
-		<matrixParameter idref="precisionMatrix"/>
-	</correlation>
-	<!--
-		<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
-		  <posterior id="posterior">
-		<likelihood id="likelihood"
-	`	  <inhibitionLikelihood idref="traitLikelihood"/>
-		</likelihood>
-		<prior id="prior">
-		  <multivariateNormalPrior idref="rootPrior"/>
-		</prior>
-		  </posterior>
-		  <operators idref="operators"/>
-		  <log id="fileLog" logEvery="1000" fileName="testMultivariateTraits.log">
-		<posterior idref="posterior"/>
-			<matrixParameter idref="precisionMatrix"/>
-		<parameter idref="allTraits"/>
-		<correlation idref="corStatistic"/>
-		  </log>
-		</mcmc>
+	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+		<posterior id="posterior">
+			<likelihood id="likelihood">
+				<dummyModel idref="dummyModel"/>
+				<inhibitionLikelihood idref="traitLikelihood"/>
+			</likelihood>
+			<prior id="prior">
+				<normalPrior mean="0.0" stdev="1.0">
+					<parameter idref="clusterMean"/>
+				</normalPrior>
+				<poissonPrior mean="2.0" offset="0.0">
+					<statistic idref="clusterChanges"/>
+				</poissonPrior>
+			</prior>
+		</posterior>
+		<operators idref="operators"/>
+		<log id="screenLog" logEvery="1000">
+			<statistics idref="clusterChanges"/>
+			<inhibitionLikelihood idref="traitLikelihood"/>
+		</log>
+		<log id="fileLog" logEvery="1000" fileName="testIA.log">
+			<posterior idref="posterior"/>
+			<statistics idref="clusterChanges"/>
+			<parameter idref="clusterMean"/>
+		</log>
+		<log id="restrictedGrowth" logEvery="1000" fileName="testGrowth.log">
+			<inhibitionLikelihood idref="traitLikelihood"/>
+		</log>
+	</mcmc>
 
-		<traceAnalysis fileName="testMultivariateTraits.log"/>
-	  -->
+	<traceAnalysis fileName="testIA.log"/>
+
 
 </beast>

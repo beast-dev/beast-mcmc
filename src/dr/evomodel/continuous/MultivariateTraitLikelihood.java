@@ -34,6 +34,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 	public static final String MISSING = "missingIndicator";
 	public static final String CACHE_BRANCHES = "cacheBranches";
 	public static final String IN_REAL_TIME = "inRealTime";
+	public static final String DEFAULT_TRAIT_NAME = "trait";
 
 	public MultivariateTraitLikelihood(String traitName,
 	                                   TreeModel treeModel,
@@ -63,7 +64,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 		sb.append("\tTrait: " + traitName + "\n");
 		sb.append("\tDiffusion process: " + diffusionModel.getId() + "\n");
 		sb.append("\tUsing clock time: " + (!inSubstitutionTime) + "\n");
-		sb.append("\tPlease cite Suchard and Lemey (in preparation) if you publish results using this model.");
+		sb.append("\tPlease cite Suchard, Lemey and Rambaut (in preparation) if you publish results using this model.");
 
 		Logger.getLogger("dr.evomodel").info(sb.toString());
 
@@ -72,59 +73,28 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
 	}
 
+	public String getTraitName() {
+		return traitName;
+	}
+
+	public double getRescaledBranchLength(NodeRef node) {
+		return treeModel.getBranchLength(node) / treeLength;
+	}
+
 	// **************************************************************
 	// ModelListener IMPLEMENTATION
 	// **************************************************************
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		// todo should cache branch-specific calculations
-		// todo should cache branch-specific calculations
+
 		likelihoodKnown = false;
 		if (model == treeModel)
-		    recalculateTreeLength();
-
-//		if (model == treeModel) {
-//			if (object != null && ((TreeModel.TreeChangedEvent)object).isNodeChanged()) {
-//				if (cachedLikelihoods != null) {
-//					NodeRef node = ((TreeModel.TreeChangedEvent)object).getNode();
-//				}
-//				recalculateTreeLength();
-//				likelihoodKnown = false;
-//			} else {
-//				Parameter parameter = ((TreeModel.TreeChangedEvent)object).getParameter();
-//				String paramName = parameter.getDimensionName(index);
-//				if (paramName.startsWith("root")) {
-//					System.err.println("ROOT");
-////				treeModel.setNodeAttribute();
-//				} else if (paramName.startsWith("node")) {
-//					System.err.println("INTERNAL " + paramName);
-////				NodeRef node = treeModel.getNodeOfParameter()
-//				} else { // leaf
-//					System.err.println("LEAF " + paramName);
-//
-//				}
-//				likelihoodKnown = false;
-//			}
-//		} else {
-//			likelihoodKnown = false;
-//		}
+			recalculateTreeLength();
 	}
 
 
 	public void recalculateTreeLength() {
-//        treeLength = Tree.Utils.getTreeLength(treeModel,treeModel.getRoot());
 		treeLength = treeModel.getNodeHeight(treeModel.getRoot());
-	}
-
-	/**
-	 * Clear any cached log likelihood for a node and work back up to the root
-	 * @param node
-	 */
-	private void clearCachedLikelihood(NodeRef node) {
-		if (node != null) {
-			cachedLikelihoods.remove(node);
-			clearCachedLikelihood(treeModel.getParent(node));
-		}
 	}
 
 	// **************************************************************
@@ -134,25 +104,6 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 	protected void handleParameterChangedEvent(Parameter parameter, int index) {
 
 		likelihoodKnown = false;
-		// Should recalculate the matrix-functions (determinant) of diffusion once
-		// Maybe do this in the MultivariateDiffusionModel class
-
-		// todo should cache branch-specific calculations
-
-		if (cachedLikelihoods != null) {
-			String paramName = parameter.getDimensionName(index);
-			if (paramName.startsWith("root")) {
-				System.err.println("ROOT");
-//				treeModel.setNodeAttribute();
-			} else if (paramName.startsWith("node")) {
-				System.err.println("INTERNAL " + paramName);
-//				NodeRef node = treeModel.getNodeOfParameter()
-			} else { // leaf
-				System.err.println("LEAF " + paramName);
-
-			}
-		}
-//		System.err.println("P changed = "+parameter.getDimensionName(index)+" "+index);
 
 	}
 
@@ -239,35 +190,32 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 	private double traitLogLikelihood(NodeRef node) {
 
 		double logL = 0.0;
-		double[] childTrait = treeModel.getMultivariateNodeTrait(node, "trait");
-		// todo need to read in trait name in XML
+		double[] childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
 
 		if (!treeModel.isRoot(node)) {
 			NodeRef parent = treeModel.getParent(node);
-			double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, "trait");
-			// todo need to read in trait name in XML
+			double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
 
-			double time = (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(node));
-			time /= treeLength;
+			double time = getRescaledBranchLength(node);
 
-			if (inSubstitutionTime) {
-				time *= treeModel.getNodeRate(node);
+//			if (inSubstitutionTime) {
+//				time *= treeModel.getNodeRate(node);
+//			}
+
+//			if (cachedLikelihoods != null && cachedLikelihoods.containsKey(node)) {
+//				logL = cachedLikelihoods.get(node);
+//			} else {
+			logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
+			if (new Double(logL).isNaN()) {
+				System.err.println("time = " + time);
+				System.err.println("parent = " + new Vector(parentTrait));
+				System.err.println("child = " + new Vector(childTrait));
+				System.err.println(new Matrix(diffusionModel.getPrecisionmatrix()));
 			}
-
-			if (cachedLikelihoods != null && cachedLikelihoods.containsKey(node)) {
-				logL = cachedLikelihoods.get(node);
-			} else {
-				logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
-				if (new Double(logL).isNaN()) {
-					System.err.println("time = " + time);
-					System.err.println("parent = " + new Vector(parentTrait));
-					System.err.println("child = " + new Vector(childTrait));
-					System.err.println(new Matrix(diffusionModel.getPrecisionmatrix()));
-				}
-				if (cachedLikelihoods != null) {
-					cachedLikelihoods.put(node, logL);
-				}
-			}
+//				if (cachedLikelihoods != null) {
+//					cachedLikelihoods.put(node, logL);
+//				}
+//			}
 		}
 		int childCount = treeModel.getChildCount(node);
 		for (int i = 0; i < childCount; i++) {
@@ -300,33 +248,23 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
 	public String[] getNodeAttributeLabel() {
 		if (attributeLabel == null) {
-			double[] trait = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), "trait");
+			double[] trait = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName);
 			attributeLabel = new String[trait.length];
 			if (trait.length == 1)
 				attributeLabel[0] = traitName;
 			else {
 				for (int i = 1; i <= trait.length; i++)
-					attributeLabel[i - 1] = new String(traitName + i);
+					attributeLabel[i - 1] = traitName + i;
 			}
 		}
 		return attributeLabel;
 	}
 
 	public String[] getAttributeForNode(Tree tree, NodeRef node) {
-		double trait[] = treeModel.getMultivariateNodeTrait(node, "trait");
-//		StringBuffer sb = new StringBuffer();
-//		sb.append("{");
-//		for(int i=0; i<trait.length-1; i++) {
-//			sb.append(trait[i]);
-//			sb.append(",");
-//		}
-//		sb.append(trait[trait.length-1]);
-//		sb.append("}");
+		double trait[] = treeModel.getMultivariateNodeTrait(node, traitName);
 		String[] value = new String[trait.length];
 		for (int i = 0; i < trait.length; i++)
-			value[i] = new Double(trait[i]).toString();
-
-//		return new String[] {sb.toString()};  //To change body of implemented methods use File | Settings | File Templates.
+			value[i] = Double.toString(trait[i]);
 		return value;
 	}
 
@@ -373,7 +311,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 				inSubstitutionTime = !xo.getBooleanAttribute(IN_REAL_TIME);
 
 			List<Integer> missingIndices = null;
-			String traitName = "trait";
+			String traitName = DEFAULT_TRAIT_NAME;
 
 			if (xo.hasAttribute(TRAIT_NAME)) {
 
@@ -383,7 +321,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 				int taxonCount = treeModel.getTaxonCount();
 				for (int i = 0; i < taxonCount; i++) {
 					String taxonName = treeModel.getTaxonId(i);
-					String paramName = taxonName + ".trait";
+					String paramName = taxonName + "." + traitName;
 					Parameter traitParam = getTraitParameterByName(traitParameter, paramName);
 					if (traitParam == null)
 						throw new RuntimeException("Missing trait parameters at tree tips");
@@ -402,7 +340,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 								// Missing values not yet handled.
 							} else {
 								try {
-									value = (new Double(oneValue)).doubleValue();
+									value = new Double(oneValue);
 								} catch (NumberFormatException e) {
 									throw new RuntimeException(e.getMessage());
 								}
@@ -491,7 +429,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
 				if (xo.getChild(i) instanceof Parameter) {
 
-					XMLObject rxo = null;
+					XMLObject rxo;
 					Object obj = xo.getRawChild(i);
 
 					if (obj instanceof Reference) {

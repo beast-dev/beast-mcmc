@@ -296,6 +296,11 @@ public class TreeModel extends AbstractModel implements MutableTree {
 		return ((Node) node).getMultivariateTrait(name);
 	}
 
+	public final void swapAllTraits(NodeRef node1, NodeRef node2) {
+		if (!hasTraits) throw new IllegalArgumentException("Trait parameters have not been created");
+		swapAllTraits((Node) node1, (Node) node2);
+	}
+
 	public final Taxon getNodeTaxon(NodeRef node) {
 		return ((Node) node).taxon;
 	}
@@ -345,9 +350,9 @@ public class TreeModel extends AbstractModel implements MutableTree {
 		return nodes[i];
 	}
 
-   public NodeRef [] getNodes() {
-      return nodes;
-   }
+	public NodeRef[] getNodes() {
+		return nodes;
+	}
 
 	/**
 	 * Returns the number of external nodes.
@@ -871,6 +876,22 @@ public class TreeModel extends AbstractModel implements MutableTree {
 		return parameter;
 	}
 
+	private void swapAllTraits(Node n1, Node n2) {
+
+		for (Map.Entry<String, Parameter> entry : n1.traitParameters.entrySet()) {
+			Parameter p1 = n1.traitParameters.get(entry.getKey());
+			Parameter p2 = n2.traitParameters.get(entry.getKey());
+			final int dim = p1.getDimension();
+			for (int i = 0; i < dim; i++) {
+				double transfer = p1.getParameterValue(i);
+				p1.setParameterValue(i, p2.getParameterValue(i));
+				p2.setParameterValue(i, transfer);
+			}
+
+		}
+
+	}
+
 	/**
 	 * This method swaps the parameter objects of the two nodes
 	 * but maintains the values in each node.
@@ -1028,6 +1049,10 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
 		public final double[] getMultivariateTrait(String name) {
 			return traitParameters.get(name).getParameterValues();
+		}
+
+		public final Map<String, Parameter> getTraitMap() {
+			return traitParameters;
 		}
 
 		public final void setHeight(double height) {

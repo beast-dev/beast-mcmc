@@ -2,32 +2,39 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.inference.model.*;
+import dr.evomodel.tree.TreeModelParser;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
  * Implements a model where time is broken into 'epochs' each with a different but
  * constant rate. Parameters can be used to sample transition times but it is up
  * to the user to keep them bounded and in strict order...
- * @author Andrew Rambaut
  *
+ * @author Andrew Rambaut
  * @version $Id$
  */
-public class RateEpochBranchRateModel extends AbstractModel implements BranchRateModel  {
+public class RateEpochBranchRateModel extends AbstractModel implements BranchRateModel {
 
 	public static final String RATE_EPOCH_BRANCH_RATES = "rateEpochBranchRates";
 	public static final String RATE = "rate";
 	public static final String EPOCH = "epoch";
 	public static final String TRANSITION_TIME = "transitionTime";
+	public static final String CONTINUOUS_NORMALIZATION = "continuousNormalization";
 
-	private final Parameter[] timeParameters;
-	private final Parameter[] rateParameters;
+	protected final Parameter[] timeParameters;
+	protected final Parameter[] rateParameters;
 
 	/**
 	 * The constructor. For an N-epoch model, there should be N rate paramters and N-1 transition times.
+	 *
 	 * @param timeParameters an array of transition time parameters
 	 * @param rateParameters an array of rate parameters
 	 */
@@ -113,7 +120,9 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return RATE_EPOCH_BRANCH_RATES; }
+		public String getParserName() {
+			return RATE_EPOCH_BRANCH_RATES;
+		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -122,25 +131,25 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 			List<Epoch> epochs = new ArrayList<Epoch>();
 
 			for (int i = 0; i < xo.getChildCount(); i++) {
-				XMLObject xoc = (XMLObject)xo.getChild(i);
+				XMLObject xoc = (XMLObject) xo.getChild(i);
 				if (xoc.getName().equals(EPOCH)) {
 					double t = 0.0;
 
 					if (xoc.hasAttribute(TRANSITION_TIME)) {
 						t = xoc.getDoubleAttribute(TRANSITION_TIME);
 					}
-					
-					Parameter p = (Parameter)xoc.getChild(Parameter.class);
+
+					Parameter p = (Parameter) xoc.getChild(Parameter.class);
 
 					Parameter tt = null;
 					if (xoc.hasSocket(TRANSITION_TIME)) {
-						tt = (Parameter)xoc.getSocketChild(TRANSITION_TIME);
+						tt = (Parameter) xoc.getSocketChild(TRANSITION_TIME);
 					}
 					epochs.add(new Epoch(t, p, tt));
 				}
 			}
 
-			Parameter ancestralRateParameter = (Parameter)xo.getSocketChild(RATE);
+			Parameter ancestralRateParameter = (Parameter) xo.getSocketChild(RATE);
 
 			Collections.sort(epochs);
 			Parameter[] rateParameters = new Parameter[epochs.size() + 1];
@@ -159,6 +168,11 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 			}
 			rateParameters[i] = ancestralRateParameter;
 
+			if (xo.hasAttribute(CONTINUOUS_NORMALIZATION) && xo.getBooleanAttribute(CONTINUOUS_NORMALIZATION)) {
+				Parameter rootHeight = (Parameter) ((XMLObject) xo.getChild(TreeModelParser.ROOT_HEIGHT)).getChild(Parameter.class);
+				return new ContinuousEpochBranchRateModel(timeParameters, rateParameters, rootHeight);
+			}
+
 			return new RateEpochBranchRateModel(timeParameters, rateParameters);
 		}
 
@@ -175,7 +189,7 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 			}
 
 			public int compareTo(Object o) {
-				return Double.compare(transitionTime, ((Epoch)o).transitionTime);
+				return Double.compare(transitionTime, ((Epoch) o).transitionTime);
 			}
 
 		}
@@ -186,26 +200,35 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 		public String getParserDescription() {
 			return
 					"This element provides a multiple epoch molecular clock model. " +
-					"All branches (or portions of them) have the same rate of molecular " +
-					"evolution within a given epoch. If parameters are used to sample " +
-					"transition times, these must be kept in ascending order by judicious " +
-					"use of bounds or priors.";
+							"All branches (or portions of them) have the same rate of molecular " +
+							"evolution within a given epoch. If parameters are used to sample " +
+							"transition times, these must be kept in ascending order by judicious " +
+							"use of bounds or priors.";
 		}
 
-		public Class getReturnType() { return RateEpochBranchRateModel.class; }
+		public Class getReturnType() {
+			return RateEpochBranchRateModel.class;
+		}
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 				new ElementRule(EPOCH,
-						new XMLSyntaxRule[] {
+						new XMLSyntaxRule[]{
 								AttributeRule.newDoubleRule(TRANSITION_TIME, true, "The time of transition between this epoch and the previous one"),
 								new ElementRule(Parameter.class, "The evolutionary rate parameter for this epoch"),
 								new ElementRule(TRANSITION_TIME, Parameter.class, "The transition time parameter for this epoch", true)
 						}, "An epoch that lasts until transitionTime",
 						1, Integer.MAX_VALUE
 				),
-				new ElementRule(RATE, Parameter.class, "The ancestral molecular evolutionary rate parameter", false)
+				new ElementRule(RATE, Parameter.class, "The ancestral molecular evolutionary rate parameter", false),
+				AttributeRule.newBooleanRule(CONTINUOUS_NORMALIZATION, true, "Special rate normalization for a Brownian diffusion process"),
+				new ElementRule(TreeModelParser.ROOT_HEIGHT,
+						new XMLSyntaxRule[]{
+								new ElementRule(Parameter.class, "The tree root height")
+						}, "Parameterization may require the root height", 0, 1)
 		};
 	};
 

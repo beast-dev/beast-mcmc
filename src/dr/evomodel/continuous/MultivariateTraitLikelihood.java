@@ -3,6 +3,7 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
@@ -42,21 +43,28 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 	                                   CompoundParameter traitParameter,
 	                                   List<Integer> missingIndices,
 	                                   boolean cacheBranches,
-	                                   boolean inSubstitutionTime) {
+	                                   boolean inSubstitutionTime,
+	                                   BranchRateModel rateModel) {
 
 		super(TRAIT_LIKELIHOOD);
 
 		this.traitName = traitName;
 		this.treeModel = treeModel;
+		this.rateModel = rateModel;
 		this.diffusionModel = diffusionModel;
 		this.traitParameter = traitParameter;
 		this.missingIndices = missingIndices;
 		addModel(treeModel);
 		addModel(diffusionModel);
+
+		if (rateModel != null) {
+			hasRateModel = true;
+			addModel(rateModel);
+		}
 		addParameter(traitParameter);
 
-		if (cacheBranches)
-			cachedLikelihoods = new HashMap<NodeRef, Double>();
+//		if (cacheBranches)
+//			cachedLikelihoods = new HashMap<NodeRef, Double>();
 
 		this.inSubstitutionTime = inSubstitutionTime;
 
@@ -64,12 +72,12 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 		sb.append("\tTrait: " + traitName + "\n");
 		sb.append("\tDiffusion process: " + diffusionModel.getId() + "\n");
 		sb.append("\tUsing clock time: " + (!inSubstitutionTime) + "\n");
+		sb.append("\tTime scaling: " + (hasRateModel ? rateModel.getId() : "homogeneous") + "\n");
 		sb.append("\tPlease cite Suchard, Lemey and Rambaut (in preparation) if you publish results using this model.");
 
 		Logger.getLogger("dr.evomodel").info(sb.toString());
 
 		recalculateTreeLength();
-
 
 	}
 
@@ -78,7 +86,12 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 	}
 
 	public double getRescaledBranchLength(NodeRef node) {
-		return treeModel.getBranchLength(node) / treeLength;
+
+		if (hasRateModel)
+			return rateModel.getBranchRate(treeModel, node);
+		else
+			return treeModel.getBranchLength(node) / treeLength;
+
 	}
 
 	// **************************************************************
@@ -310,6 +323,8 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 			if (xo.hasAttribute(IN_REAL_TIME))
 				inSubstitutionTime = !xo.getBooleanAttribute(IN_REAL_TIME);
 
+			BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+
 			List<Integer> missingIndices = null;
 			String traitName = DEFAULT_TRAIT_NAME;
 
@@ -380,16 +395,14 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
 			}
 			return new MultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
-					traitParameter, missingIndices, cacheBranches, inSubstitutionTime);
+					traitParameter, missingIndices, cacheBranches, inSubstitutionTime, rateModel);
 		}
 
 
 		private Parameter getTraitParameterByName(CompoundParameter traits, String name) {
-//			Parameter found = null;
-//			System.err.println("LOOKING FOR: "+name);
+
 			for (int i = 0; i < traits.getNumberOfParameters(); i++) {
 				Parameter found = traits.getParameter(i);
-//				System.err.println("COMPARE TO: "+found.getStatisticName());
 				if (found.getStatisticName().compareTo(name) == 0)
 					return found;
 			}
@@ -413,9 +426,10 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 				new StringAttributeRule(TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
 				AttributeRule.newBooleanRule(IN_REAL_TIME, true),
 				new ElementRule(MultivariateDiffusionModel.class),
-				new ElementRule(TreeModel.class)
-
-
+				new ElementRule(TreeModel.class),
+				new ElementRule(BranchRateModel.class, true),
+				AttributeRule.newDoubleArrayRule("cut", true),
+				new ElementRule(Parameter.class, true)
 		};
 
 
@@ -487,6 +501,11 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 	private double storedLogLikelihood;
 	private boolean likelihoodKnown = false;
 	private boolean storedLikelihoodKnown = false;
+	private BranchRateModel rateModel = null;
+	private boolean hasRateModel = false;
+
+	private Parameter cut;
+	private Parameter scale;
 
 	//	private double[] cachedLikelihoods = null;
 	private HashMap<NodeRef, Double> cachedLikelihoods = null;

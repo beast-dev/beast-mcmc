@@ -124,7 +124,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleModelChangedEvent(Model model, Object object, int index) {
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
             // treeModel has changed so recalculate the intervals
             intervalsKnown = false;
@@ -139,7 +139,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected void handleParameterChangedEvent(Parameter parameter, int index) {
     } // No parameters to respond to
 
     // **************************************************************
@@ -149,7 +149,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
     /**
      * Stores the precalculated state: in this case the intervals
      */
-    protected final void storeState() {
+    protected void storeState() {
         System.arraycopy(intervals, 0, storedIntervals, 0, intervals.length);
         System.arraycopy(lineageCounts, 0, storedLineageCounts, 0, lineageCounts.length);
         storedIntervalsKnown = intervalsKnown;
@@ -161,7 +161,7 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
     /**
      * Restores the precalculated state: that is the intervals of the tree.
      */
-    protected final void restoreState() {
+    protected void restoreState() {
         System.arraycopy(storedIntervals, 0, intervals, 0, storedIntervals.length);
         System.arraycopy(storedLineageCounts, 0, lineageCounts, 0, storedLineageCounts.length);
         intervalsKnown = storedIntervalsKnown;

@@ -33,6 +33,8 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	
 	public ARGCoalescentLikelihood(Parameter popSize, Parameter recomRate, 
 			Parameter clockRate, ARGModel arg, boolean setupIntervals) {
+		//To make the super store state work correctly, we need to initalize the
+		//the intervals first.
 		super(ARG_COALESCENT_MODEL);
 		
 		this.popSize = popSize;
@@ -75,15 +77,14 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		}
 		dr.util.HeapSort.sort(intervals);
 		
-		
 		double a;
 		for(int i = 0; i < intervals.size() - 1; i++ ){
 			 a = intervals.get(i).length;
 			 intervals.get(i).length = a - intervals.get(i+1).length;
 		}
-		intervals.remove(intervals.size() - 1);
+		
 		intervalsKnown = true;
-				
+		
 	}
 	
 	 public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -98,16 +99,14 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	 }
 	 
 	 public void storeState(){
-//		 super.storeState();
 		 storedIntervals = new ArrayList<CoalescentInterval>(intervals.size());
 		 for(CoalescentInterval interval : intervals){
 			 storedIntervals.add(interval.clone());
 		 }
 		 makeDirty();
-	 }
+	}
 	 
 	 public void restoreState(){
-//		 super.restoreState();
 		 intervals = storedIntervals;
 		 storedIntervals.clear();
 		 makeDirty();
@@ -133,14 +132,14 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 int numberOfTaxa = 2;
 		 
 		 for(CoalescentInterval interval: intervals){
-			 double rate = (double)numberOfTaxa * (numberOfTaxa - 1)
-			 	+ rRate * numberOfTaxa;
-			 rate /= (2.0*pSize);
-			 logLike += Math.log(rate) - rate * interval.length / clock
-			 		 - Math.log(numberOfTaxa - 1 + rRate);
+			 double rate = (double)numberOfTaxa * (numberOfTaxa - 1);
+			 rate = rate/pSize;
 			 
+			 logLike += Math.log(rate) - rate * interval.length * clock;
+			 		 
+					
 			 if(interval.type == COALESCENT){
-				 logLike += Math.log(numberOfTaxa - 1);
+				 logLike += 0;
 				 numberOfTaxa++;
 			 }else if(interval.type == RECOMBINATION){
 				 logLike += Math.log(rRate);
@@ -148,8 +147,9 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 			 }else{
 				 throw new RuntimeException("Not implemented yet");
 			 }
-		  }
-		 
+					 
+		 }
+		 		 
 		 return logLike;
 	 }
 	 
@@ -175,7 +175,10 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 }
 		
 		public String toString(){
-			return "(" + length + "," + type + ")";
+			if(type == 0){
+				return "(" + length + ", Coalescent)";
+			}
+			return "(" + length + ",Recombination)";
 		}
 		
 		public CoalescentInterval clone(){

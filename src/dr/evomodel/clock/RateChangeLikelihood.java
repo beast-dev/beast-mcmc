@@ -38,7 +38,6 @@ import java.util.logging.Logger;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: RateChangeLikelihood.java,v 1.13 2005/07/11 14:06:25 rambaut Exp $
  */
 public abstract class RateChangeLikelihood extends AbstractModel implements BranchRateModel, Likelihood {
@@ -47,15 +46,18 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
     public static final int ROOT_RATE_MEAN_OF_ALL = 1;
     public static final int ROOT_RATE_EQUAL_TO_CHILD = 2;
     public static final int ROOT_RATE_IGNORE_ROOT = 3;
-    public static final int ROOT_RATE_NONE = 4;
+    public static final int ROOT_RATE_FIXED_ROOT = 4;
+    public static final int ROOT_RATE_NONE = 5;
 
     public static final String RATES = "rates";
     public static final String EPISODIC = "episodic";
     public static final String ROOT_MODEL = "rootModel";
+    public static final String NORMALIZED = "isNormalized";
     public static final String MEAN_OF_CHILDREN = "meanOfChildren";
     public static final String MEAN_OF_ALL = "meanOfAll";
     public static final String EQUAL_TO_CHILD = "equalToChild";
     public static final String IGNORE_ROOT = "ignoreRoot";
+    public static final String FIXED_ROOT = "fixedRoot";
     public static final String NONE = "none";
 
     // the index of the root node.
@@ -64,22 +66,26 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
     private final int rateCount;
     private final double[] rates;
 
+    private boolean isNormalized = true;
+
     private boolean ratesKnown = false;
 
-    public RateChangeLikelihood(String name, TreeModel treeModel, Parameter ratesParameter, int rootModel, boolean isEpisodic) {
+    public RateChangeLikelihood(String name, TreeModel treeModel, Parameter ratesParameter, int rootModel, boolean isEpisodic, boolean isNormalized) {
 
-		super(name);
+        super(name);
 
-		this.treeModel = treeModel;
+        this.treeModel = treeModel;
         addModel(treeModel);
 
         this.ratesParameter = ratesParameter;
         addParameter(ratesParameter);
 
-        rateCount = treeModel.getNodeCount() - 1;
-        rates = new double[rateCount];
+        this.isNormalized = isNormalized;
 
-        if (ratesParameter.getDimension() != rateCount ) {
+        rateCount = treeModel.getNodeCount() - 1;
+        rates = new double[rateCount + 1];
+
+        if (ratesParameter.getDimension() != rateCount) {
             throw new IllegalArgumentException("The rate category parameter must be of dimension nodeCount-1");
         }
 
@@ -99,8 +105,9 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
         if (rootModel == ROOT_RATE_MEAN_OF_ALL) rootModelName = MEAN_OF_ALL;
         if (rootModel == ROOT_RATE_EQUAL_TO_CHILD) rootModelName = EQUAL_TO_CHILD;
         if (rootModel == ROOT_RATE_IGNORE_ROOT) rootModelName = IGNORE_ROOT;
+        if (rootModel == ROOT_RATE_FIXED_ROOT) rootModelName = FIXED_ROOT;
         if (rootModel == ROOT_RATE_NONE) rootModelName = NONE;
-	    Logger.getLogger("dr.evomodel").info("Relaxed clock: " + name + " model, root model = " + rootModelName + (isEpisodic? " (episodic).": "."));
+        Logger.getLogger("dr.evomodel").info("Relaxed clock: " + name + " model, root model = " + rootModelName + (isEpisodic ? " (episodic)." : "."));
 
     }
 
@@ -111,21 +118,26 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
     public final void handleModelChangedEvent(Model model, Object object, int index) {
 
         ratesKnown = false;
+        likelihoodKnown = false;
         fireModelChanged();
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index) {
         ratesKnown = false;
+        likelihoodKnown = false;
         fireModelChanged();
+        //fireModelChanged(null, getNodeNumberFromCategoryIndex(index));
     }
 
-    protected void storeState() { }
+    protected void storeState() {
+    }
 
     protected void restoreState() {
         ratesKnown = false;
     }
 
-    protected void acceptState() {}
+    protected void acceptState() {
+    }
 
     // **************************************************************
     // Likelihood IMPLEMENTATION
@@ -133,9 +145,12 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
     /**
      * Get the model.
+     *
      * @return the model.
      */
-    public Model getModel() { return this; }
+    public Model getModel() {
+        return this;
+    }
 
     public final double getLogLikelihood() {
         if (!getLikelihoodKnown()) {
@@ -159,6 +174,7 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
     /**
      * Get the log likelihood of the rate changes in this tree.
+     *
      * @return the log likelihood.
      */
     private final double calculateLogLikelihood() {
@@ -168,12 +184,12 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
         if (rootModel == ROOT_RATE_IGNORE_ROOT || rootModel == ROOT_RATE_NONE) {
 
-            double  logL = 0.0;
+            double logL = 0.0;
 
             if (rootModel == ROOT_RATE_IGNORE_ROOT) {
                 logL += branchRateChangeLogLikelihood(getBranchRate(treeModel, node1), getBranchRate(treeModel, node2),
-                                                        (treeModel.getBranchLength(node1)) +
-                                                        (treeModel.getBranchLength(node2)));
+                        (treeModel.getBranchLength(node1)) +
+                                (treeModel.getBranchLength(node2)));
             }
 
             for (int i = 0; i < treeModel.getChildCount(node1); i++) {
@@ -194,13 +210,14 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
     /**
      * Recursively calculate the log likelihood of the rate changes in the given tree.
+     *
      * @return the partial log likelihood of the rate changes below the given node plus the
-     * branch directly above.
+     *         branch directly above.
      */
     private final double calculateLogLikelihood(NodeRef parent, NodeRef node) {
 
         double logL = branchRateChangeLogLikelihood(getBranchRate(treeModel, parent), getBranchRate(treeModel, node),
-                                                    treeModel.getBranchLength(node));
+                treeModel.getBranchLength(node));
 
         for (int i = 0; i < treeModel.getChildCount(node); i++) {
             logL += calculateLogLikelihood(node, treeModel.getChild(node, i));
@@ -220,14 +237,19 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
      * @return the log columns.
      */
     public dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[] {
-            new LikelihoodColumn(getId())
+        return new dr.inference.loggers.LogColumn[]{
+                new LikelihoodColumn(getId())
         };
     }
 
     private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) { super(label); }
-        public double getDoubleValue() { return getLogLikelihood(); }
+        public LikelihoodColumn(String label) {
+            super(label);
+        }
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
     }
 
     public double getBranchRate(Tree tree, NodeRef node) {
@@ -302,6 +324,10 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
                 rootRate = nodeRate1;
 
+            } else if (rootModel == ROOT_RATE_FIXED_ROOT) {
+
+                rootRate = 1.0;
+
             } else if (rootModel == ROOT_RATE_IGNORE_ROOT || rootModel == ROOT_RATE_NONE) {
 
                 // The root rate is not used so set it to something silly...
@@ -311,10 +337,39 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
         rates[rootNodeNumber] = rootRate;
 
-
+        if (isNormalized) normalizeRates();
     }
 
-     public String getBranchAttributeLabel() {
+    private void normalizeRates() {
+        double timeTotal = 0.0;
+        double branchTotal = 0.0;
+
+        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+            NodeRef node = treeModel.getNode(i);
+            if (!treeModel.isRoot(node)) {
+
+                double branchInTime =
+                        treeModel.getNodeHeight(treeModel.getParent(node)) -
+                                treeModel.getNodeHeight(node);
+
+                double branchInSubstitutions = branchInTime * rates[node.getNumber()];
+
+                timeTotal += branchInTime;
+                branchTotal += branchInSubstitutions;
+            }
+        }
+
+        double scaleFactor = timeTotal / branchTotal;
+
+        meanRate = 0.0;
+        for (int i = 0; i < rates.length; i++) {
+            rates[i] *= scaleFactor;
+            meanRate += rates[i];
+        }
+        meanRate /= rates.length;
+    }
+
+    public String getBranchAttributeLabel() {
         return "rate";
     }
 
@@ -330,5 +385,6 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
     private final Parameter ratesParameter;
     private final int rootModel;
     private final boolean isEpisodic;
+    private double meanRate = 0.0;
 
 }

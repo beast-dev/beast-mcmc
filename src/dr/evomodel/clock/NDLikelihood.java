@@ -32,25 +32,24 @@ import dr.inference.model.Parameter;
 
 
 /**
- * Calculates the likelihood of a set of rate changes in a tree, assuming a normally distributed 
+ * Calculates the likelihood of a set of rate changes in a tree, assuming a normally distributed
  * change in rate at each node, with a mean of the previous rate and a variance proportional to branch length.
  *
  * @author Alexei Drummond
- *
  * @version $Id: NDLikelihood.java,v 1.11 2005/05/24 20:25:57 rambaut Exp $
  */
 public class NDLikelihood extends RateChangeLikelihood {
-		
-	public static final String ND_LIKELIHOOD = "NDLikelihood";	
-	public static final String STDEV = "stdev";
-		
-	public NDLikelihood(TreeModel tree, Parameter ratesParameter, double stdev, int rootModel, boolean isEpisodic) {
 
-        super("Normally Distributed", tree, ratesParameter, rootModel, isEpisodic);
+    public static final String ND_LIKELIHOOD = "NDLikelihood";
+    public static final String STDEV = "stdev";
 
-		this.stdev = stdev;
-	}
-	
+    public NDLikelihood(TreeModel tree, Parameter ratesParameter, double stdev, int rootModel, boolean isEpisodic) {
+
+        super("Normally Distributed", tree, ratesParameter, rootModel, isEpisodic, false);
+
+        this.stdev = stdev;
+    }
+
     /**
      * @return the log likelihood of the rate change from the parent to the child.
      */
@@ -63,17 +62,19 @@ public class NDLikelihood extends RateChangeLikelihood {
         }
     }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return ND_LIKELIHOOD; }
-		
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			TreeModel tree = (TreeModel)xo.getChild(TreeModel.class);
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-            Parameter ratesParameter = (Parameter)xo.getSocketChild(RATES);
+        public String getParserName() {
+            return ND_LIKELIHOOD;
+        }
 
-			double stdev = xo.getDoubleAttribute(STDEV);
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+
+            Parameter ratesParameter = (Parameter) xo.getSocketChild(RATES);
+
+            double stdev = xo.getDoubleAttribute(STDEV);
             boolean isEpisodic = xo.getBooleanAttribute(EPISODIC);
 
             String rootModelString = MEAN_OF_CHILDREN;
@@ -87,39 +88,43 @@ public class NDLikelihood extends RateChangeLikelihood {
                 if (rootModelString.equals(NONE)) rootModel = ROOT_RATE_NONE;
             }
 
-			NDLikelihood ed = new NDLikelihood(tree, ratesParameter, stdev, rootModel, isEpisodic);
-	
-			return ed;
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return 
-				"This element returns an object that can calculate the likelihood " + 
-				"of rate changes in a tree under the assumption of " + 
-				"normally distributed rate changes among lineages. " + 
-				"Specifically, each branch is assumed to draw a rate from a " + 
-				"normal distribution with mean of the rate in the " +
-				"parent branch and the given standard deviation (the variance can be optionally proportional to " +
-                "branch length).";
-		}
-		
-		public Class getReturnType() { return NDLikelihood.class; }
+            NDLikelihood ed = new NDLikelihood(tree, ratesParameter, stdev, rootModel, isEpisodic);
+
+            return ed;
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return
+                    "This element returns an object that can calculate the likelihood " +
+                            "of rate changes in a tree under the assumption of " +
+                            "normally distributed rate changes among lineages. " +
+                            "Specifically, each branch is assumed to draw a rate from a " +
+                            "normal distribution with mean of the rate in the " +
+                            "parent branch and the given standard deviation (the variance can be optionally proportional to " +
+                            "branch length).";
+        }
+
+        public Class getReturnType() {
+            return NDLikelihood.class;
+        }
 
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(TreeModel.class ),
-            new ElementRule(RATES, Parameter.class, "The branch rates parameter", false),
-            AttributeRule.newDoubleRule(STDEV, false, "The unit stdev of the model. The variance is scaled by the branch length to get the actual variance in the non-episodic version of the model."),
-            AttributeRule.newStringRule(ROOT_MODEL, true, "specify the rate model to use at the root. Should be one of: 'meanOfChildren', 'meanOfAll', 'equalToChild', 'ignoreRoot' or 'none'."),
-            AttributeRule.newBooleanRule(EPISODIC, false, "true if model is branch length independent, false if length-dependent.")
-		};
-	};
-	
-	double stdev = 1.0;
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(TreeModel.class),
+                new ElementRule(RATES, Parameter.class, "The branch rates parameter", false),
+                AttributeRule.newDoubleRule(STDEV, false, "The unit stdev of the model. The variance is scaled by the branch length to get the actual variance in the non-episodic version of the model."),
+                AttributeRule.newStringRule(ROOT_MODEL, true, "specify the rate model to use at the root. Should be one of: 'meanOfChildren', 'meanOfAll', 'equalToChild', 'ignoreRoot' or 'none'."),
+                AttributeRule.newBooleanRule(EPISODIC, false, "true if model is branch length independent, false if length-dependent.")
+        };
+    };
+
+    double stdev = 1.0;
 }

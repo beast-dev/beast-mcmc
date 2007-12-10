@@ -29,26 +29,22 @@ import dr.evomodel.tree.TreeModel;
 import dr.math.ExponentialDistribution;
 import dr.xml.*;
 import dr.inference.model.Parameter;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.NodeRef;
 
 
 /**
- * Calculates the likelihood of a set of rate changes in a tree, assuming an exponentially distributed 
+ * Calculates the likelihood of a set of rate changes in a tree, assuming an exponentially distributed
  * change in rate at each node, with a mean of the previous rate. This model ignores the branch lengths.
  *
- *
- * @version $Id: EDLikelihood.java,v 1.14 2005/05/24 20:25:57 rambaut Exp $
- *
  * @author Alexei Drummond
+ * @version $Id: EDLikelihood.java,v 1.14 2005/05/24 20:25:57 rambaut Exp $
  */
 public class EDLikelihood extends RateChangeLikelihood {
 
     public static final String ED_LIKELIHOOD = "EDLikelihood";
 
-    public EDLikelihood(TreeModel tree, Parameter ratesParameter, int rootRatePrior, boolean episodicModel) {
+    public EDLikelihood(TreeModel tree, Parameter ratesParameter, int rootRatePrior, boolean isNormalized) {
 
-        super("Exponentially Distributed", tree, ratesParameter, rootRatePrior, episodicModel);
+        super("Exponentially Distributed", tree, ratesParameter, rootRatePrior, true, isNormalized);
 
 
     }
@@ -62,13 +58,17 @@ public class EDLikelihood extends RateChangeLikelihood {
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return ED_LIKELIHOOD; }
+        public String getParserName() {
+            return ED_LIKELIHOOD;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel tree = (TreeModel)xo.getChild(TreeModel.class);
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
-            Parameter ratesParameter = (Parameter)xo.getSocketChild(RATES);
+            Parameter ratesParameter = (Parameter) xo.getSocketChild(RATES);
+
+            boolean isNormalized = xo.getBooleanAttribute(NORMALIZED);
 
             String rootModelString = MEAN_OF_CHILDREN;
             int rootModel = ROOT_RATE_MEAN_OF_CHILDREN;
@@ -78,6 +78,7 @@ public class EDLikelihood extends RateChangeLikelihood {
                 if (rootModelString.equals(MEAN_OF_ALL)) rootModel = ROOT_RATE_MEAN_OF_ALL;
                 if (rootModelString.equals(EQUAL_TO_CHILD)) rootModel = ROOT_RATE_EQUAL_TO_CHILD;
                 if (rootModelString.equals(IGNORE_ROOT)) rootModel = ROOT_RATE_IGNORE_ROOT;
+                if (rootModelString.equals(FIXED_ROOT)) rootModel = ROOT_RATE_FIXED_ROOT;
                 if (rootModelString.equals(NONE)) rootModel = ROOT_RATE_NONE;
             }
 
@@ -85,7 +86,7 @@ public class EDLikelihood extends RateChangeLikelihood {
             System.out.println("  parametric model = exponential distribution");
             System.out.println("  root rate model = " + rootModelString);
 
-            return new EDLikelihood(tree, ratesParameter, rootModel, true);
+            return new EDLikelihood(tree, ratesParameter, rootModel, isNormalized);
         }
 
         //************************************************************************
@@ -94,22 +95,27 @@ public class EDLikelihood extends RateChangeLikelihood {
 
         public String getParserDescription() {
             return
-                "This element returns an object that can calculate the likelihood " +
-                "of rate changes in a tree under the assumption of " +
-                "exponentially distributed rate changes among lineages. " +
-                "Specifically, each branch is assumed to draw a rate from an " +
-                "exponential distribution with mean of the rate in the " +
-                "parent branch.";
+                    "This element returns an object that can calculate the likelihood " +
+                            "of rate changes in a tree under the assumption of " +
+                            "exponentially distributed rate changes among lineages. " +
+                            "Specifically, each branch is assumed to draw a rate from an " +
+                            "exponential distribution with mean of the rate in the " +
+                            "parent branch.";
         }
 
-        public Class getReturnType() { return EDLikelihood.class; }
+        public Class getReturnType() {
+            return EDLikelihood.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(TreeModel.class),
-            AttributeRule.newStringRule(ROOT_MODEL, true, "specify the rate model to use at the root. Should be one of: 'meanOfChildren', 'meanOfAll', 'equalToChild', 'ignoreRoot' or 'none'."),
-            new ElementRule(RATES, Parameter.class, "The branch rates parameter", false)
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(TreeModel.class),
+                AttributeRule.newStringRule(ROOT_MODEL, true, "specify the rate model to use at the root. Should be one of: 'meanOfChildren', 'meanOfAll', 'equalToChild', 'ignoreRoot', 'fixedRoot' or 'none'."),
+                AttributeRule.newBooleanRule(NORMALIZED, false, "true if relative rates"),
+                new ElementRule(RATES, Parameter.class, "The branch rates parameter", false)
         };
     };
 

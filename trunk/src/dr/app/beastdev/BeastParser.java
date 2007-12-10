@@ -276,6 +276,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.MVN_PRIOR_PARSER);
 		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.WISHART_PRIOR_PARSER);
 		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.INV_WISHART_PRIOR_PARSER);
+		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.DIRICHLET_PRIOR_PARSER);
 		addXMLObjectParser(PrecisionMatrixGibbsOperator.PARSER);
 		addXMLObjectParser(InternalTraitGibbsOperator.PARSER);
 		addXMLObjectParser(dr.inference.model.CorrelationStatistic.PARSER);
@@ -283,9 +284,10 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.model.DesignMatrix.PARSER);
 		addXMLObjectParser(dr.inference.distribution.GeneralizedLinearModel.PARSER);
 		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.MVGAMMA_PRIOR_PARSER);
-        addXMLObjectParser(dr.evomodel.continuous.InhibitionAssayLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.continuous.InhibitionAssayLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.NodeTraitLogger.PARSER);
 
-        //Multivariate OU Process
+		//Multivariate OU Process
 		addXMLObjectParser(dr.inference.operators.MVOUCovarianceOperator.PARSER);
 		addXMLObjectParser(dr.inference.model.DummyModel.PARSER);
 		addXMLObjectParser(dr.inference.operators.RegressionGibbsOperator.PARSER);

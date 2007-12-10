@@ -281,6 +281,11 @@ public class TreeModel extends AbstractModel implements MutableTree {
 		return hasTraits;
 	}
 
+	public Map<String, Parameter> getTraitMap(NodeRef node) {
+		if (!hasTraits) throw new IllegalArgumentException("Trait parameters have not been created");
+		return ((Node) node).getTraitMap();
+	}
+
 	public double getNodeTrait(NodeRef node, String name) {
 		if (!hasTraits) throw new IllegalArgumentException("Trait parameters have not been created");
 		return ((Node) node).getTrait(name);

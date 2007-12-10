@@ -16,6 +16,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
 
 	public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
 	public static final String INDICATOR = "rateIndicator";
+	public static final String ROOT_FREQ = "rootFrequencies";
 
 
 	public SVSGeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter,
@@ -47,52 +48,17 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
 				valid = false; // must be fully connected
 		}
 
-//		if (!valid) {
-//			double sum = 0;
-//			for(int i=0;i<rateIndicator.getDimension();i++)
-//				sum += rateIndicator.getParameterValue(i);
-//			System.err.println("total = "+sum);
-//			for(int i=0;i<stateCount;i++) {
-//				for(int j=0; j<stateCount;j++)
-//					System.err.printf(" %5.3f",probs[i*stateCount+j]);
-//				System.err.println("");
-//			}
-//			System.err.println("");
-//		}
-
 		return valid;
 	}
 
 	protected void setupRelativeRates() {
 
-//		boolean allZero = true;
-
 		for (int i = 0; i < relativeRates.length; i++) {
-//			if (i == ratesRelativeTo) {
-//				relativeRates[i] = 1.0;
-//			} else if (i < ratesRelativeTo) {
-//				relativeRates[i] = ratesParameter.getParameterValue(i) * rateIndicator.getParameterValue(i);
-//			} else {
-//				relativeRates[i] = ratesParameter.getParameterValue(i - 1) * rateIndicator.getParameterValue(i - 1);
-//			}
 			relativeRates[i] = ratesParameter.getParameterValue(i) * rateIndicator.getParameterValue(i);
-
-//			if (rateIndicator.getParameterValue(i) != 0.0)
-//				allZero = false;
-//
 		}
-//		if (allZero)
-//			throw new RuntimeException("All rates went to zero");
-//		fireModelChanged();
+
 	}
 
-//	public void restoreState() {
-//		setupMatrix();
-//		updateMatrix = true;
-//		System.err.println("Restoring");
-//		setupRelativeRates();
-//		fireModelChanged();
-//	}
 
 	void normalize(double[][] matrix, double[] pi) {
 		double subst = 0.0;
@@ -176,8 +142,20 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
 			if (indicatorParameter.getDimension() != ratesParameter.getDimension())
 				throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
 
+			if (xo.hasSocket(ROOT_FREQ)) {
 
-			return new SVSGeneralSubstitutionModel(dataType, freqModel, ratesParameter, indicatorParameter);//, relativeTo);
+				cxo = (XMLObject) xo.getChild(ROOT_FREQ);
+				FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+
+				if (dataType != rootFreq.getDataType()) {
+					throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
+				}
+
+				return new SVSIrreversibleSubstitutionModel(dataType, freqModel, rootFreq, ratesParameter, indicatorParameter);
+
+			}
+
+			return new SVSGeneralSubstitutionModel(dataType, freqModel, ratesParameter, indicatorParameter);
 		}
 
 		//************************************************************************
@@ -204,13 +182,16 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
 				new ElementRule(FREQUENCIES, FrequencyModel.class),
 				new ElementRule(RATES,
 						new XMLSyntaxRule[]{
-//								AttributeRule.newIntegerRule(RELATIVE_TO, false, "The index of the implicit rate (value 1.0) that all other rates are relative to. In DNA this is usually G<->T (6)"),
 								new ElementRule(Parameter.class)}
 				),
 				new ElementRule(INDICATOR,
 						new XMLSyntaxRule[]{
 								new ElementRule(Parameter.class)
-						})
+						}),
+				new ElementRule(ROOT_FREQ,
+						new XMLSyntaxRule[]{
+								new ElementRule(FrequencyModel.class)
+						}, 0, 1)
 		};
 
 	};

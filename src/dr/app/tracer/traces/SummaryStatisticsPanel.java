@@ -146,7 +146,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
     public JComponent getExportableComponent() {
         if (currentPanel instanceof Exportable) {
-           return ((Exportable)currentPanel).getExportableComponent();
+            return ((Exportable) currentPanel).getExportableComponent();
         }
         return currentPanel;
     }
@@ -257,7 +257,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                 return "-";
             }
 
-            if (Math.abs(value) < 0.1 || Math.abs(value) >= 10000.0) {
+            if (value > 0 && (Math.abs(value) < 0.1 || Math.abs(value) >= 10000.0)) {
                 return formatter.format(value);
             } else return formatter2.format(value);
         }

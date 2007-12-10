@@ -31,24 +31,23 @@ import dr.xml.*;
 import dr.inference.model.Parameter;
 
 /**
- * Calculates the likelihood of a set of rate changes in a tree, assuming a gamma distributed 
+ * Calculates the likelihood of a set of rate changes in a tree, assuming a gamma distributed
  * change in rate at each node, with a mean of the previous rate and a variance proportional to branch length.
  *
  * @author Alexei Drummond
- *
  * @version $Id: GDLikelihood.java,v 1.11 2005/05/24 20:25:57 rambaut Exp $
  */
 public class GDLikelihood extends RateChangeLikelihood {
-		
-	public static final String GD_LIKELIHOOD = "GDLikelihood";	
-	public static final String STDEV = "stdev";
 
-	public GDLikelihood(TreeModel tree, Parameter ratesParameter, double stdev, int rootModel, boolean isEpisodic) {
-		
-		super("Gamma Distributed", tree, ratesParameter, rootModel, isEpisodic);
-		this.unitVariance = stdev * stdev;
-	}
-	
+    public static final String GD_LIKELIHOOD = "GDLikelihood";
+    public static final String STDEV = "stdev";
+
+    public GDLikelihood(TreeModel tree, Parameter ratesParameter, double stdev, int rootModel, boolean isEpisodic) {
+
+        super("Gamma Distributed", tree, ratesParameter, rootModel, isEpisodic, true);
+        this.unitVariance = stdev * stdev;
+    }
+
     /**
      * @return the log likelihood of the rate change from the parent to the child.
      */
@@ -68,17 +67,19 @@ public class GDLikelihood extends RateChangeLikelihood {
     }
 
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return GD_LIKELIHOOD; }
-		
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			TreeModel tree = (TreeModel)xo.getChild(TreeModel.class);
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-            Parameter ratesParameter = (Parameter)xo.getSocketChild(RATES);
+        public String getParserName() {
+            return GD_LIKELIHOOD;
+        }
 
-			double stdev = xo.getDoubleAttribute(STDEV);
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+
+            Parameter ratesParameter = (Parameter) xo.getSocketChild(RATES);
+
+            double stdev = xo.getDoubleAttribute(STDEV);
             boolean episodic = xo.getBooleanAttribute(EPISODIC);
 
             String rootModelString = MEAN_OF_CHILDREN;
@@ -93,36 +94,40 @@ public class GDLikelihood extends RateChangeLikelihood {
             }
 
             System.out.println("Using auto-correlated relaxed clock model.");
-            System.out.println("  parametric model = exponential distribution");
+            System.out.println("  parametric model = Gamma distribution");
             System.out.println("  root rate model = " + rootModelString);
 
             return new GDLikelihood(tree, ratesParameter, stdev, rootModel, episodic);
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return 
-				"The likelihood of a set of rate changes in a tree, assuming "+
-				"a gamma-distributed change in rate at each node, with a " + 
-				"mean of the previous rate and a given variance (variance can be optionally proportional to " +
-				"branch length).";
-		}
+        }
 
-		public Class getReturnType() { return GDLikelihood.class; }
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-	
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(TreeModel.class),
-            new ElementRule(RATES, Parameter.class, "The branch rates parameter", false),
-			AttributeRule.newDoubleRule(STDEV, false, "The unit stdev of the model. The variance is scaled by the branch length to get the actual variance in the non-episodic version of the model."),
-            AttributeRule.newStringRule(ROOT_MODEL, true, "specify the rate model to use at the root. Should be one of: 'meanOfChildren', 'meanOfAll', 'equalToChild', 'ignoreRoot' or 'none'."),
-            AttributeRule.newBooleanRule(EPISODIC, false, "true if model is branch length independent, false if length-dependent.")
-		};
-	};
-	
-	double unitVariance = 1.0;
+        public String getParserDescription() {
+            return
+                    "The likelihood of a set of rate changes in a tree, assuming " +
+                            "a gamma-distributed change in rate at each node, with a " +
+                            "mean of the previous rate and a given variance (variance can be optionally proportional to " +
+                            "branch length).";
+        }
+
+        public Class getReturnType() {
+            return GDLikelihood.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(TreeModel.class),
+                new ElementRule(RATES, Parameter.class, "The branch rates parameter", false),
+                AttributeRule.newDoubleRule(STDEV, false, "The unit stdev of the model. The variance is scaled by the branch length to get the actual variance in the non-episodic version of the model."),
+                AttributeRule.newStringRule(ROOT_MODEL, true, "specify the rate model to use at the root. Should be one of: 'meanOfChildren', 'meanOfAll', 'equalToChild', 'ignoreRoot' or 'none'."),
+                AttributeRule.newBooleanRule(EPISODIC, false, "true if model is branch length independent, false if length-dependent.")
+        };
+    };
+
+    double unitVariance = 1.0;
 }

@@ -19,11 +19,13 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 	public static final String MVN_CV = "coefficientOfVariation";
 	public static final String WISHART_PRIOR = "multivariateWishartPrior";
 	public static final String INV_WISHART_PRIOR = "multivariateInverseWishartPrior";
+	public static final String DIRICHLET_PRIOR = "dirichletPrior";
 	public static final String DF = "df";
 	public static final String SCALE_MATRIX = "scaleMatrix";
 	public static final String MVGAMMA_PRIOR = "multivariateGammaPrior";
 	public static final String MVGAMMA_SHAPE = "shapeParameter";
 	public static final String MVGAMMA_SCALE = "scaleParameter";
+	public static final String COUNTS = "countsParameter";
 
 	public static final String DATA = "data";
 
@@ -58,6 +60,53 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 		return distribution;
 	}
 
+	public static XMLObjectParser DIRICHLET_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+		public String getParserName() {
+			return DIRICHLET_PRIOR;
+		}
+
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+
+			XMLObject cxo = (XMLObject) xo.getChild(COUNTS);
+			Parameter counts = (Parameter) cxo.getChild(Parameter.class);
+
+			DirichletDistribution dirichlet = new DirichletDistribution(counts.getParameterValues());
+
+			MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(
+					dirichlet);
+
+			cxo = (XMLObject) xo.getChild(DATA);
+			for (int j = 0; j < cxo.getChildCount(); j++) {
+				if (cxo.getChild(j) instanceof Parameter) {
+					likelihood.addData((Parameter) cxo.getChild(j));
+				} else {
+					throw new XMLParseException("illegal element in " + xo.getName() + " element " + cxo.getName());
+				}
+			}
+
+
+			return likelihood;
+		}
+
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
+
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				new ElementRule(COUNTS,
+						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+		};
+
+		public String getParserDescription() {
+			return "Calculates the likelihood of some data under an Inverse-Wishart distribution.";
+		}
+
+		public Class getReturnType() {
+			return Likelihood.class;
+		}
+	};
 
 	public static XMLObjectParser INV_WISHART_PRIOR_PARSER = new AbstractXMLObjectParser() {
 

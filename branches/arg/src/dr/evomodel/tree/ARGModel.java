@@ -32,13 +32,12 @@ import java.util.logging.Logger;
 
 /**
  * A model component for trees.
- *
+ * 
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: ARGModel.java,v 1.18.2.4 2006/11/06 01:38:30 msuchard Exp $
  */
-public class ARGModel extends AbstractModel
-		implements MutableTree, Loggable {
+public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 	//
 	// Public stuff
@@ -47,20 +46,29 @@ public class ARGModel extends AbstractModel
 	public static final String TREE_MODEL = "argTreeModel";
 
 	public static final String ROOT_HEIGHT = "rootHeight";
+
 	public static final String LEAF_HEIGHT = "leafHeight";
 
 	public static final String NODE_HEIGHTS = "nodeHeights";
+
 	public static final String NODE_RATES = "nodeRates";
+
 	public static final String NODE_TRAITS = "nodeTraits";
 
 	public static final String ROOT_NODE = "rootNode";
+
 	public static final String INTERNAL_NODES = "internalNodes";
+
 	public static final String LEAF_NODES = "leafNodes";
+
 	public static final String TAXON = "taxon";
 
+	public static final int LEFT = 0;
+
+	public static final int RIGHT = 1;
 
 	public ARGModel(ArrayList<Node> nodes, Node root, int numberPartitions,
-	                int externalNodeCount) {
+			int externalNodeCount) {
 		super(TREE_MODEL);
 		this.nodes = nodes;
 		this.root = root;
@@ -74,14 +82,15 @@ public class ARGModel extends AbstractModel
 	public ARGModel(Tree tree) {
 
 		super(TREE_MODEL);
-//        System.err.println("constructor for TreeModel");
-		partitioningParameters = new VariableSizeCompoundParameter("partitioning");
-		//     initialize(tree);
-		//}
+		// System.err.println("constructor for TreeModel");
+		partitioningParameters = new VariableSizeCompoundParameter(
+				"partitioning");
+		// initialize(tree);
+		// }
 
-		//protected void initialize(Tree tree) {
-		//System.err.println("init for TreeModel");
-		//System.exit(-1);
+		// protected void initialize(Tree tree) {
+		// System.err.println("init for TreeModel");
+		// System.exit(-1);
 		// get a rooted version of the tree to clone
 		FlexibleTree binaryTree = new FlexibleTree(tree);
 		binaryTree.resolveTree();
@@ -94,8 +103,8 @@ public class ARGModel extends AbstractModel
 
 		nodeCount = internalNodeCount + externalNodeCount;
 
-		//nodes = new Node[nodeCount];
-		//storedNodes = new Node[nodeCount];
+		// nodes = new Node[nodeCount];
+		// storedNodes = new Node[nodeCount];
 		nodes = new ArrayList<Node>(nodeCount);
 		storedNodes = new ArrayList<Node>(nodeCount);
 		for (int i = 0; i < nodeCount; i++) {
@@ -107,7 +116,7 @@ public class ARGModel extends AbstractModel
 
 		root = node;
 
-		//System.err.println("Going to do postOrder");
+		// System.err.println("Going to do postOrder");
 
 		do {
 			node = (Node) Tree.Utils.postorderSuccessor(this, node);
@@ -115,10 +124,10 @@ public class ARGModel extends AbstractModel
 			if (node.isExternal()) {
 				node.number = i;
 
-				//nodes[i] = node;
-				//storedNodes[i] = new Node();
-				//storedNodes[i].taxon = node.taxon;
-				//storedNodes[i].number = i;
+				// nodes[i] = node;
+				// storedNodes[i] = new Node();
+				// storedNodes[i].taxon = node.taxon;
+				// storedNodes[i].number = i;
 				nodes.set(i, node);
 				Node copy = new Node();
 				copy.taxon = node.taxon;
@@ -129,9 +138,9 @@ public class ARGModel extends AbstractModel
 			} else {
 				node.number = j;
 
-				//nodes[j] = node;
-				//storedNodes[j] = new Node();
-				//storedNodes[j].number = j;
+				// nodes[j] = node;
+				// storedNodes[j] = new Node();
+				// storedNodes[j].number = j;
 				nodes.set(j, node);
 				Node copy = new Node();
 				copy.number = j;
@@ -141,19 +150,19 @@ public class ARGModel extends AbstractModel
 			}
 		} while (node != root);
 
-		//       System.err.println("Succeed in post-order");
+		// System.err.println("Succeed in post-order");
 
-		//       ARGTree t = new ARGTree(this,0);
-		//       System.err.println(Tree.Utils.uniqueNewick(t, t.getRoot()));
-		//       System.err.println(this.toGraphString());
+		// ARGTree t = new ARGTree(this,0);
+		// System.err.println(Tree.Utils.uniqueNewick(t, t.getRoot()));
+		// System.err.println(this.toGraphString());
 		// System.exit(-1);
 
 	}
 
 	/**
-	 * Packs and sends ARG state, including connectedness, heightparameters
-	 * and partitioning parameters.
-	 *
+	 * Packs and sends ARG state, including connectedness, heightparameters and
+	 * partitioning parameters.
+	 * 
 	 * @param toRank
 	 */
 
@@ -205,18 +214,19 @@ public class ARGModel extends AbstractModel
 			else
 				intMsg[indexNode++] = 0;
 
-			doubleMsg[indexHeight++] = node.heightParameter.getParameterValue(0);
+			doubleMsg[indexHeight++] = node.heightParameter
+					.getParameterValue(0);
 		}
 		MPIServices.sendIntArray(intMsg, toRank);
 		MPIServices.sendDoubleArray(doubleMsg, toRank);
 		MPIServices.sendInt(partList.size(), toRank);
 		for (Parameter partition : partList) {
-//			System.err.println("Sending a partition.");
+			// System.err.println("Sending a partition.");
 			double[] values = partition.getParameterValues();
-//			System.err.println("length = "+values.length);
+			// System.err.println("length = "+values.length);
 			MPIServices.sendDoubleArray(partition.getParameterValues(), toRank);
 		}
-		//partitioningParameters.sendState(toRank);
+		// partitioningParameters.sendState(toRank);
 		MPIServices.sendInt(((Node) getRoot()).number, toRank);
 	}
 
@@ -224,14 +234,16 @@ public class ARGModel extends AbstractModel
 	public void receiveState(int fromRank) {
 		super.receiveStateNoParameters(fromRank);
 		final int newNodeCount = MPIServices.receiveInt(fromRank);
-//		while (newNodeCount < nodes.size())
-//			nodes.remove(0);
+		// while (newNodeCount < nodes.size())
+		// nodes.remove(0);
 		int[] intMsg = MPIServices.receiveIntArray(fromRank, newNodeCount * 7);
-		double[] doubleMsg = MPIServices.receiveDoubleArray(fromRank, newNodeCount);
+		double[] doubleMsg = MPIServices.receiveDoubleArray(fromRank,
+				newNodeCount);
 		int partitionLength = MPIServices.receiveInt(fromRank);
-//		System.err.println("Attemping to receive "+partitionLength+" partitions.");
+		// System.err.println("Attemping to receive "+partitionLength+"
+		// partitions.");
 		final int length = getNumberOfPartitions();
-//		System.err.println("Expected length = "+length);
+		// System.err.println("Expected length = "+length);
 		while (partitionLength > partitioningParameters.getNumParameters()) {
 			Parameter newPartition = new Parameter.Default(length);
 			partitioningParameters.addParameter(newPartition);
@@ -239,20 +251,20 @@ public class ARGModel extends AbstractModel
 
 		for (int i = 0; i < partitionLength; i++) {
 			double[] values = MPIServices.receiveDoubleArray(fromRank, length);
-//			System.err.println("Received.");
+			// System.err.println("Received.");
 			Parameter param = partitioningParameters.getParameter(i);
-//			System.err.println("null? "+ (param == null ? "Yes" : "No"));
+			// System.err.println("null? "+ (param == null ? "Yes" : "No"));
 			for (int j = 0; j < length; j++) {
-//				System.err.println("setting value #"+j+ " = "+values[j]);
+				// System.err.println("setting value #"+j+ " = "+values[j]);
 
 				param.setParameterValueQuietly(j, values[j]);
 			}
-//			System.err.println("Values set");
+			// System.err.println("Values set");
 		}
-//		System.err.println("Done with partition receive.");
+		// System.err.println("Done with partition receive.");
 
 		int root = MPIServices.receiveInt(fromRank);
-//		System.err.println("Start reconstructing ARG");
+		// System.err.println("Start reconstructing ARG");
 
 		beginTreeEdit();
 		while (newNodeCount > nodes.size()) {
@@ -260,7 +272,7 @@ public class ARGModel extends AbstractModel
 			newNode.heightParameter = new Parameter.Default(0.0);
 			nodes.add(newNode);
 		}
-		//System.err.println("extra height added");
+		// System.err.println("extra height added");
 		int nodeInt;
 		int indexNode = 0;
 		int indexHeight = 0;
@@ -289,14 +301,16 @@ public class ARGModel extends AbstractModel
 				node.rightChild = nodes.get(nodeInt);
 			else
 				node.rightChild = null;
-			//Parameter heightParam =
-			node.heightParameter.setParameterValueQuietly(0, doubleMsg[indexHeight++]);
+			// Parameter heightParam =
+			node.heightParameter.setParameterValueQuietly(0,
+					doubleMsg[indexHeight++]);
 			int whichPartitionParameter = intMsg[indexNode++];
 			if (whichPartitionParameter != -1) {
-//				System.err.println("Setting partition para");
+				// System.err.println("Setting partition para");
 
-				node.partitioning = partitioningParameters.getParameter(whichPartitionParameter);
-//				System.err.println("Done setting param");
+				node.partitioning = partitioningParameters
+						.getParameter(whichPartitionParameter);
+				// System.err.println("Done setting param");
 			}
 
 			if (intMsg[indexNode++] == 1)
@@ -305,16 +319,17 @@ public class ARGModel extends AbstractModel
 				node.bifurcation = false;
 
 		}
-//		System.err.println("Recovered all nodes");
+		// System.err.println("Recovered all nodes");
 		setRoot(nodes.get(root));
-		//	try {
+		// try {
 		endTreeEditFast();
 		// todo fire an ARG changed event???
 
-		//	} catch (InvalidTreeException e) {
-		//		throw new RuntimeException("Unable to unpack ARG correctly");
-//			e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-		//	}
+		// } catch (InvalidTreeException e) {
+		// throw new RuntimeException("Unable to unpack ARG correctly");
+		// e.printStackTrace(); //To change body of catch statement use File |
+		// Settings | File Templates.
+		// }
 
 	}
 
@@ -328,36 +343,56 @@ public class ARGModel extends AbstractModel
 		}
 	}
 
-
 	public static final String GRAPH_ELEMENT = "graph";
+
 	public static final String NODE_ELEMENT = "node";
+
 	public static final String EDGE_ELEMENT = "edge";
+
 	public static final String ID_ATTRIBUTE = "id";
+
 	public static final String EDGE_FROM = "source";
+
 	public static final String EDGE_TO = "target";
+
 	public static final String TAXON_NAME = "taxonName";
+
 	public static final String EDGE_LENGTH = "len";
+
 	public static final String EDGE_PARTITIONS = "edgePartitions";
+
 	public static final String IS_TIP = "isTip";
+
 	public static final String IS_ROOT = "isRoot";
+
 	public static final String LEFT_PARENT = "leftParent";
+
 	public static final String RIGHT_PARENT = "rightParent";
+
 	public static final String LEFT_CHILD = "leftChild";
+
 	public static final String RIGHT_CHILD = "rightChild";
+
 	public static final String NODE_HEIGHT = "nodeHeight";
+
 	public static final String IS_REASSORTMENT = "true";
+
 	public static final String NUM_PARTITIONS = "numbersOfPartitions";
+
 	public static final String GRAPH_SIZE = "size=\"6,6\"";
+
 	public static final String DOT_EDGE_DEF = "edge[style=\"setlinewidth(2)\",arrowhead=none]";
+
 	public static final String DOT_NODE_DEF = "node[shape=plaintext,width=auto,fontname=Helvitica,fontsize=10]";
-//	public static final String
+
+	// public static final String
 
 	private String getNameOfNode(Node node) {
 		if (node.taxon == null)
 			return "n" + Integer.toString(node.number);
 		else
 			return node.taxon.getId();
-//	    return Integer.toString(node.number);
+		// return Integer.toString(node.number);
 	}
 
 	public static final int MAX_LABEL_COUNT = 10;
@@ -366,7 +401,8 @@ public class ARGModel extends AbstractModel
 		Element edgeElement = new Element(EDGE_ELEMENT);
 		edgeElement.setAttribute(EDGE_FROM, getNameOfNode(from));
 		edgeElement.setAttribute(EDGE_TO, getNameOfNode(to));
-		edgeElement.setAttribute(EDGE_LENGTH, Double.toString(getNodeHeight(from) - getNodeHeight(to)));
+		edgeElement.setAttribute(EDGE_LENGTH, Double
+				.toString(getNodeHeight(from) - getNodeHeight(to)));
 		if (to.isReassortment()) {
 			double[] bits = to.partitioning.getParameterValues();
 			int length = bits.length;
@@ -393,8 +429,8 @@ public class ARGModel extends AbstractModel
 		if (node.taxon != null) {
 			nodeElement.setAttribute(IS_TIP, "true");
 			nodeElement.setAttribute(TAXON_NAME, node.taxon.getId());
-//			nodeElement.setAttribute("style","filled");
-//			nodeElement.setAttribute("fillcolor","blue");
+			// nodeElement.setAttribute("style","filled");
+			// nodeElement.setAttribute("fillcolor","blue");
 		}
 		if (node.isRoot()) {
 			nodeElement.setAttribute(IS_ROOT, "true");
@@ -402,7 +438,8 @@ public class ARGModel extends AbstractModel
 		if (node.isReassortment()) {
 			nodeElement.setAttribute(IS_REASSORTMENT, "true");
 		}
-		nodeElement.setAttribute(NODE_HEIGHT, Double.toString(node.getHeight()));
+		nodeElement
+				.setAttribute(NODE_HEIGHT, Double.toString(node.getHeight()));
 		return nodeElement;
 	}
 
@@ -413,8 +450,10 @@ public class ARGModel extends AbstractModel
 		if (node.isRoot()) {
 			nodeElement.setAttribute(IS_ROOT, "true");
 		} else {
-			nodeElement.setAttribute(LEFT_PARENT, getNameOfNode(node.leftParent));
-			nodeElement.setAttribute(RIGHT_PARENT, getNameOfNode(node.rightParent));
+			nodeElement.setAttribute(LEFT_PARENT,
+					getNameOfNode(node.leftParent));
+			nodeElement.setAttribute(RIGHT_PARENT,
+					getNameOfNode(node.rightParent));
 		}
 
 		if (node.taxon != null) {
@@ -422,37 +461,41 @@ public class ARGModel extends AbstractModel
 			nodeElement.setAttribute(TAXON_NAME, node.taxon.getId());
 		} else {
 			nodeElement.setAttribute(LEFT_CHILD, getNameOfNode(node.leftChild));
-			nodeElement.setAttribute(RIGHT_CHILD, getNameOfNode(node.rightChild));
+			nodeElement.setAttribute(RIGHT_CHILD,
+					getNameOfNode(node.rightChild));
 		}
-		nodeElement.setAttribute(NODE_HEIGHT, Double.toString(node.getHeight()));
-
+		nodeElement
+				.setAttribute(NODE_HEIGHT, Double.toString(node.getHeight()));
 
 		return nodeElement;
 	}
 
 	public ARGModel fromXML(Element rootElement) {
 
-		int numPartitions = Integer.parseInt(rootElement.getAttributeValue(NUM_PARTITIONS));
+		int numPartitions = Integer.parseInt(rootElement
+				.getAttributeValue(NUM_PARTITIONS));
 		int external = 0;
 
 		// count # of nodeElements
 		List<Element> nodeList = rootElement.getChildren(NODE_ELEMENT);
 		ArrayList<Node> nodes = new ArrayList<Node>();
 		Node rootNode = null;
-//		System.err.println("node # = "+nodeList.size());
-//		System.exit(-1);
+		// System.err.println("node # = "+nodeList.size());
+		// System.exit(-1);
 		for (Element nodeElement : nodeList) {
 			Node node = new Node();
 			nodes.add(node);
 			String isRoot = nodeElement.getAttributeValue(IS_ROOT);
 			if (isRoot != null && isRoot.compareTo("true") == 0)
 				rootNode = node;
-			String isReassortment = nodeElement.getAttributeValue(IS_REASSORTMENT);
+			String isReassortment = nodeElement
+					.getAttributeValue(IS_REASSORTMENT);
 			if (isReassortment != null && isReassortment.compareTo("true") == 0)
 				node.bifurcation = false;
 			else
 				node.bifurcation = true;
-			double height = Double.parseDouble(nodeElement.getAttributeValue(NODE_HEIGHT));
+			double height = Double.parseDouble(nodeElement
+					.getAttributeValue(NODE_HEIGHT));
 
 			node.heightParameter = new Parameter.Default(height);
 			node.setHeight(height);
@@ -467,11 +510,12 @@ public class ARGModel extends AbstractModel
 
 		List<Element> edgeList = rootElement.getChildren(EDGE_ELEMENT);
 		for (Element edgeElement : edgeList) {
-			int target = Integer.parseInt(edgeElement.getAttributeValue(EDGE_TO));
-			int source = Integer.parseInt(edgeElement.getAttributeValue(EDGE_FROM));
+			int target = Integer.parseInt(edgeElement
+					.getAttributeValue(EDGE_TO));
+			int source = Integer.parseInt(edgeElement
+					.getAttributeValue(EDGE_FROM));
 			Node targetNode = nodes.get(target);
 			Node sourceNode = nodes.get(source);
-
 
 			if (targetNode.isBifurcation()) {
 				targetNode.leftParent = targetNode.rightParent = sourceNode;
@@ -480,40 +524,40 @@ public class ARGModel extends AbstractModel
 					targetNode.leftParent = sourceNode;
 				else {
 					targetNode.rightParent = sourceNode;
-					String partitionInfo = edgeElement.getAttributeValue(EDGE_PARTITIONS);
+					String partitionInfo = edgeElement
+							.getAttributeValue(EDGE_PARTITIONS);
 					Parameter partitioning = null;
-//					if (partitionInfo != null && sourceNode.leftChild != null) {
+					// if (partitionInfo != null && sourceNode.leftChild !=
+					// null) {
 					partitioning = new Parameter.Default(numPartitions, 0.0);
 					StringTokenizer st = new StringTokenizer(partitionInfo);
 					while (st.hasMoreTokens()) {
 						int which = Integer.parseInt(st.nextToken());
 						partitioning.setParameterValueQuietly(which, 1.0);
 					}
-//					}
+					// }
 					targetNode.partitioning = partitioning;
 
 				}
 			}
 
-
 			if (sourceNode.leftChild == null)
 				sourceNode.leftChild = targetNode;
-//				sourceNode.
-//			}
+			// sourceNode.
+			// }
 			else {
 				sourceNode.rightChild = targetNode;
-//				sourceNode.partitioning = partitioning;
+				// sourceNode.partitioning = partitioning;
 			}
 			// todo parse partition info
 		}
-
 
 		return new ARGModel(nodes, rootNode, numPartitions, external);
 	}
 
 	public Element toXML() {
 
-//	    toGraphStringCompressed(true);
+		// toGraphStringCompressed(true);
 
 		int cnt = 0;
 		for (Node node : nodes)
@@ -521,7 +565,8 @@ public class ARGModel extends AbstractModel
 
 		Element graphElement = new Element(GRAPH_ELEMENT);
 		graphElement.setAttribute("edgedefault", "directed");
-		graphElement.setAttribute(NUM_PARTITIONS, Integer.toString(getNumberOfPartitions()));
+		graphElement.setAttribute(NUM_PARTITIONS, Integer
+				.toString(getNumberOfPartitions()));
 
 		for (Node node : nodes) {
 
@@ -531,30 +576,29 @@ public class ARGModel extends AbstractModel
 				graphElement.addContent(makeEdge(node.leftParent, node));
 
 			}
-//             Add edge to right parent if reassortment
+			// Add edge to right parent if reassortment
 			if (node.rightParent != null && node.isReassortment()) {
 				graphElement.addContent(makeEdge(node.rightParent, node));
 			}
 
 		}
 
-//	    System.err.println("start = "+nodes.size());
-//	    ARGModel test = fromXML(graphElement);
-//	    System.err.println(test.toGraphString());
+		// System.err.println("start = "+nodes.size());
+		// ARGModel test = fromXML(graphElement);
+		// System.err.println(test.toGraphString());
 
-//	    System.err.println("old 0:"+getNewick(0));
-//	    System.err.println("old 1:"+getNewick(1));
-//	    System.err.println("old 2:"+getNewick(2));
-//	    System.err.println("new 0:"+test.getNewick(0));
+		// System.err.println("old 0:"+getNewick(0));
+		// System.err.println("old 1:"+getNewick(1));
+		// System.err.println("old 2:"+getNewick(2));
+		// System.err.println("new 0:"+test.getNewick(0));
 
 		return graphElement;
 	}
 
 	public String toExtendedNewick() {
-		//StringBuffer sb = new StringBuffer();
+		// StringBuffer sb = new StringBuffer();
 		return root.toExtendedNewick() + ";";
 	}
-
 
 	/**
 	 * Push a tree changed event into the event stack.
@@ -562,7 +606,6 @@ public class ARGModel extends AbstractModel
 	public void pushTreeChangedEvent() {
 		pushTreeChangedEvent(new TreeChangedEvent());
 	}
-
 
 	public void pushTreeSizeChangedEvent() {
 		pushTreeChangedEvent(new TreeChangedEvent(this));
@@ -593,7 +636,6 @@ public class ARGModel extends AbstractModel
 		}
 	}
 
-
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
 		// no submodels so nothing to do
 	}
@@ -608,16 +650,15 @@ public class ARGModel extends AbstractModel
 	}
 
 	private ArrayList<ARGLikelihood> likelihoodCalculators;
-	private int maxNumberOfPartitions;
 
+	private int maxNumberOfPartitions;
 
 	public int getNumberOfPartitions() {
 		return maxNumberOfPartitions;
 	}
 
-
 	public int addLikelihoodCalculator(ARGLikelihood calc) {
-		//int len = 0;
+		// int len = 0;
 		if (likelihoodCalculators == null) {
 			likelihoodCalculators = new ArrayList<ARGLikelihood>();
 		}
@@ -638,8 +679,11 @@ public class ARGModel extends AbstractModel
 	public class TreeChangedEvent {
 
 		Node node;
+
 		Parameter parameter;
+
 		int index;
+
 		boolean size = false;
 
 		public TreeChangedEvent() {
@@ -704,8 +748,9 @@ public class ARGModel extends AbstractModel
 
 	public LogColumn[] getColumns() {
 		int numColumns = 3;
-		//numColumns += this.getMaxPartitionNumber();
-		//LogColumn[] logColumns = new LogColumn[numColumns + getMaxPartitionNumber()];
+		// numColumns += this.getMaxPartitionNumber();
+		// LogColumn[] logColumns = new LogColumn[numColumns +
+		// getMaxPartitionNumber()];
 		LogColumn[] logColumns = new LogColumn[4];
 		logColumns[0] = new IsReassortmentColumn("isReassortment");
 		logColumns[1] = new CountReassortmentColumn("numberReassortments");
@@ -732,9 +777,10 @@ public class ARGModel extends AbstractModel
 			}
 		};
 
-//        logColumns[2] = new IsRootTooHighColumn("isRootTooHigh");
-//        for (int i = 0; i < getMaxPartitionNumber(); i++)
-//            logColumns[4 + i] = new ArgTreeHeightColumn("argTreeHeight", this, i);
+		// logColumns[2] = new IsRootTooHighColumn("isRootTooHigh");
+		// for (int i = 0; i < getMaxPartitionNumber(); i++)
+		// logColumns[4 + i] = new ArgTreeHeightColumn("argTreeHeight", this,
+		// i);
 		return logColumns;
 	}
 
@@ -745,11 +791,10 @@ public class ARGModel extends AbstractModel
 		}
 
 		abstract double compare(double currentValue, double newValue);
-		/* {
-					  if (newValue > currentValue)
-						  return newValue;
-					  return currentValue;
-				  }*/
+
+		/*
+		 * { if (newValue > currentValue) return newValue; return currentValue; }
+		 */
 
 		abstract double getStartValue();
 
@@ -768,9 +813,11 @@ public class ARGModel extends AbstractModel
 	private class ArgTreeHeightColumn extends NumberColumn {
 
 		private int partition;
+
 		private ARGModel argModel;
 
-		public ArgTreeHeightColumn(String label, ARGModel argModel, int partition) {
+		public ArgTreeHeightColumn(String label, ARGModel argModel,
+				int partition) {
 			super(label + partition);
 			this.argModel = argModel;
 			this.partition = partition;
@@ -779,15 +826,15 @@ public class ARGModel extends AbstractModel
 		public double getDoubleValue() {
 			ARGTree argTree = new ARGTree(argModel, partition);
 			return argTree.getNodeHeight(argTree.getRoot());
-//			return  (new ARGTree(
+			// return (new ARGTree(
 		}
 	}
-
 
 	private class IsReassortmentColumn extends NumberColumn {
 
 		public IsReassortmentColumn(String label) {
-			super(label);    //To change body of overridden methods use File | Settings | File Templates.
+			super(label); // To change body of overridden methods use File |
+							// Settings | File Templates.
 		}
 
 		public double getDoubleValue() {
@@ -798,7 +845,8 @@ public class ARGModel extends AbstractModel
 	private class IsRootTooHighColumn extends NumberColumn {
 
 		public IsRootTooHighColumn(String label) {
-			super(label);    //To change body of overridden methods use File | Settings | File Templates.
+			super(label); // To change body of overridden methods use File |
+							// Settings | File Templates.
 		}
 
 		public double getDoubleValue() {
@@ -809,7 +857,8 @@ public class ARGModel extends AbstractModel
 	private class CountReassortmentColumn extends NumberColumn {
 
 		public CountReassortmentColumn(String label) {
-			super(label);    //To change body of overridden methods use File | Settings | File Templates.
+			super(label); // To change body of overridden methods use File |
+							// Settings | File Templates.
 		}
 
 		public double getDoubleValue() {
@@ -849,17 +898,17 @@ public class ARGModel extends AbstractModel
 
 	public final double getNodeHeight(NodeRef node) {
 
-		//System.err.println(Tree.Utils.uniqueNewick(this, node));
-		//((Node)node))
+		// System.err.println(Tree.Utils.uniqueNewick(this, node));
+		// ((Node)node))
 
 		return ((Node) node).getHeight();
 	}
 
 	public final double getMinParentNodeHeight(NodeRef nr) {
 		Node node = (Node) nr;
-		return Math.min(node.leftParent.getHeight(), node.rightParent.getHeight());
+		return Math.min(node.leftParent.getHeight(), node.rightParent
+				.getHeight());
 	}
-
 
 	public final double getNodeHeightUpper(NodeRef node) {
 		return ((Node) node).heightParameter.getBounds().getUpperLimit(0);
@@ -868,7 +917,6 @@ public class ARGModel extends AbstractModel
 	public final double getNodeHeightLower(NodeRef node) {
 		return ((Node) node).heightParameter.getBounds().getLowerLimit(0);
 	}
-
 
 	/**
 	 * @param node
@@ -882,15 +930,19 @@ public class ARGModel extends AbstractModel
 	}
 
 	public Object getNodeAttribute(NodeRef node, String name) {
-		throw new UnsupportedOperationException("ARGModel does not use NodeAttributes");
+		throw new UnsupportedOperationException(
+				"ARGModel does not use NodeAttributes");
 	}
 
 	public Iterator getNodeAttributeNames(NodeRef node) {
-		throw new UnsupportedOperationException("ARGModel does not use NodeAttributes");
+		throw new UnsupportedOperationException(
+				"ARGModel does not use NodeAttributes");
 	}
 
 	public double getNodeTrait(NodeRef node) {
-		if (!hasTraits) throw new IllegalArgumentException("Trait parameters have not been created");
+		if (!hasTraits)
+			throw new IllegalArgumentException(
+					"Trait parameters have not been created");
 		return ((Node) node).getTrait();
 	}
 
@@ -921,7 +973,7 @@ public class ARGModel extends AbstractModel
 	public final int countReassortmentNodes(NodeRef nr) {
 		Node node = (Node) nr;
 		int count = node.countReassortmentChild(this);
-		//int count = 0;
+		// int count = 0;
 		return (count / 2);
 	}
 
@@ -929,6 +981,12 @@ public class ARGModel extends AbstractModel
 		return ((Node) node).getChildCount();
 	}
 
+	/**
+	 * If i = 0, the left child is returned, else if i = 1, the right child is
+	 * returned.
+	 * 
+	 * @return The child of the entered node.
+	 */
 	public final NodeRef getChild(NodeRef node, int i) {
 		return ((Node) node).getChild(i);
 	}
@@ -937,24 +995,34 @@ public class ARGModel extends AbstractModel
 		return ((Node) node).getChild(i, partition);
 	}
 
-	//public final NodeRef getParent(NodeRef node) { return ((Node)node).parent; }
+	// public final NodeRef getParent(NodeRef node) { return
+	// ((Node)node).parent; }
 	public final NodeRef getParent(NodeRef node) {
 		Node left = ((Node) node).leftParent;
 		Node right = ((Node) node).rightParent;
 		if (left == right)
 			return left;
 		else
-			throw new IllegalArgumentException("No single parent for reassorted node");
+			throw new IllegalArgumentException(
+					"No single parent for reassorted node");
 	}
 
+	/**
+	 * 
+	 * @param node
+	 *            The child noderef
+	 * @param i
+	 *            i = 0 (left parent) i = 1 (right parent)
+	 * @return The corresponding parent noderef
+	 */
 	public final NodeRef getParent(NodeRef node, int i) {
 		if (i == 0)
 			return ((Node) node).leftParent;
 		if (i == 1)
 			return ((Node) node).rightParent;
-		throw new IllegalArgumentException("ARGModel.Node can only have two parents");
+		throw new IllegalArgumentException(
+				"ARGModel.Node can only have two parents");
 	}
-
 
 	public final boolean hasBranchLengths() {
 		return true;
@@ -995,8 +1063,8 @@ public class ARGModel extends AbstractModel
 		return internalNodeCount;
 	}
 
-
 	private int nullCounter = 0;
+
 	private int storedNullCounter;
 
 	public final int getReassortmentNodeCount() {
@@ -1008,7 +1076,7 @@ public class ARGModel extends AbstractModel
 		return cnt;
 	}
 
-//    public final int getReassortmentNodeCount() { return nullCounter; }
+	// public final int getReassortmentNodeCount() { return nullCounter; }
 
 	public void addNullCounter() {
 		nullCounter++;
@@ -1017,7 +1085,6 @@ public class ARGModel extends AbstractModel
 	public void removeNullCounter() {
 		nullCounter--;
 	}
-
 
 	/**
 	 * Returns the root node of this tree.
@@ -1040,11 +1107,14 @@ public class ARGModel extends AbstractModel
 	 */
 	public final void setRoot(NodeRef newRoot) {
 
-		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+		if (!inEdit)
+			throw new RuntimeException(
+					"Must be in edit transaction to call this method!");
 
 		root = (Node) newRoot;
 
-		// We shouldn't need this because the addChild will already have fired appropriate events.
+		// We shouldn't need this because the addChild will already have fired
+		// appropriate events.
 		// pushTreeChangedEvent();
 	}
 
@@ -1061,27 +1131,79 @@ public class ARGModel extends AbstractModel
 
 	}
 
-	public void addChild(NodeRef p, NodeRef c) {
-
-		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
-
-		Node parent = (Node) p;
-		Node child = (Node) c;
-		parent.doubleAddChild(child);
+	/**
+	 * Links <code>parent</code> with <code>child</code>.  If
+	 * <code>parent</code> is a bifurcation node,
+	 * the method calls <code>singleAddChild(parent,child)</code>,
+	 * otherwise, the method calls <code>doubleAddChild(parent,child)</code>.
+	 * @throws RuntimeException if not in edit mode. 
+	 * @see <code>singleAddChild(NodeRef parent, NodeRef child)</code>
+	 * @see <code>doubleAddChild(NodeRef parent, NodeRef child)</code>
+	 */
+	public void addChild(NodeRef parent, NodeRef child) {
+		checkEditMode();
+		
+		Node p = (Node) parent;
+		Node c = (Node) child;
+		
+		if(p.bifurcation){
+			p.singleAddChild(c);
+		}else{
+			p.doubleAddChild(c);
+		}
 	}
+	
+	public void addChildWithSingleParent(NodeRef parent, NodeRef child){
+		checkEditMode();
+		
+		Node p = (Node) parent;
+		Node c = (Node) child;
+		
+		if(p.bifurcation){
+			p.singleAddChildWithOneParent(c);
+		}else{
+			p.doubleAddChildWithOneParent(c);
+		}
+		
+	}
+	
+	
 
-	public void singleAddChild(NodeRef p, NodeRef c) {
+	/**
+	 * Makes a link between <code>parent</code> and <code>child</code>.  
+	 * By default, if <code>parent</code> has a null reference for both 
+	 * it's children, <code>child</code> will become the left child of 
+	 * <code>parent</code>, otherwise <code>child</code> will become 
+	 * the right child of <code>parent</code>.  <br><br>If the right parent
+	 * of <code>child</code> is <code>null</code>, <code>parent</code> 
+	 * will become the parent, the same thing will happen for the left parent
+	 * of <code>child</code>.
+	 *  
+	 * @param parent the <code>NodeRef</code> that will become the parent of <code>child</code>
+	 * @param child the <code>NodeRef</code> that will become the child of <code>parent</code>
+	 * @throws RuntimeException 
+	 * 		if the you are not in edit transaction mode
+	 * @throws IllegalArgumentException
+	 * 		if <code>parent</code> already has two children.
+	 * 					
+	 */
+	public void singleAddChild(NodeRef parent, NodeRef child) {
 
-		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+		if (!inEdit){
+			throw new RuntimeException(
+					"must be in edit transaction to call this method!");
+		}
 
-		Node parent = (Node) p;
-		Node child = (Node) c;
-		parent.singleAddChild(child);
+		Node p = (Node) parent;
+		Node c = (Node) child;
+		p.singleAddChild(c);
 	}
 
 	public void singleAddChildWithOneParent(NodeRef p, NodeRef c) {
 
-		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+		if (!inEdit)
+			throw new RuntimeException(
+					"Must be in edit transaction to call this method!");
 
 		Node parent = (Node) p;
 		Node child = (Node) c;
@@ -1090,7 +1212,9 @@ public class ARGModel extends AbstractModel
 
 	public void doubleAddChild(NodeRef p, NodeRef c) {
 
-		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+		if (!inEdit)
+			throw new RuntimeException(
+					"Must be in edit transaction to call this method!");
 
 		Node parent = (Node) p;
 		Node child = (Node) c;
@@ -1099,7 +1223,9 @@ public class ARGModel extends AbstractModel
 
 	public void doubleAddChildWithOneParent(NodeRef p, NodeRef c) {
 
-		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+		if (!inEdit)
+			throw new RuntimeException(
+					"Must be in edit transaction to call this method!");
 
 		Node parent = (Node) p;
 		Node child = (Node) c;
@@ -1107,44 +1233,71 @@ public class ARGModel extends AbstractModel
 	}
 
 	public void addChildAsRecombinant(NodeRef p1, NodeRef p2, NodeRef c,
-	                                  Parameter partitioning) {
-//    public void addChildAsRecombinant(NodeRef p1, NodeRef p2, NodeRef c, BitSet bs1, BitSet bs2) {
-		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+			Parameter partitioning) {
+		// public void addChildAsRecombinant(NodeRef p1, NodeRef p2, NodeRef c,
+		// BitSet bs1, BitSet bs2) {
+		if (!inEdit)
+			throw new RuntimeException(
+					"Must be in edit transaction to call this method!");
 		Node parent1 = (Node) p1;
 		Node parent2 = (Node) p2;
 		Node child = (Node) c;
-		//if (parent1.hasChild(child) || parent2.hasChild(child)) throw new IllegalArgumentException("Child already exists in parent");
-		//if (parent2.hasChild(child)) throw new IllegalArgumentException("Child already exists in")
+		// if (parent1.hasChild(child) || parent2.hasChild(child)) throw new
+		// IllegalArgumentException("Child already exists in parent");
+		// if (parent2.hasChild(child)) throw new
+		// IllegalArgumentException("Child already exists in")
 		parent1.addChildRecombinant(child, partitioning);
 		parent2.addChildRecombinant(child, partitioning);
-		//if( parent2.getChildCount() == 1 )
-		//	parent2.addChildNoParentConnection(node);
+		// if( parent2.getChildCount() == 1 )
+		// parent2.addChildNoParentConnection(node);
 	}
 
-	public void removeChild(NodeRef p, NodeRef c) {
+	/**
+	 * Removes the link between <code>parent</code> and 
+	 * <code>child</code>.  If <code>parent</code> is a bifurcation node,
+	 * the method calls <code>singleRemoveChild(parent, child)</code>,
+	 * otherwise, the method calls <code>doubleRemoveChild(parent,child)</code>.
+	 * 
+	 * @see <code>singleRemoveChild(NodeRef parent, NodeRef child)</code>
+	 * @see <code>doubleRemoveChild(NodeRef parent, NodeRef child)</code>
+	 * @throws RuntimeException if not in edit mode.
+	 */
+	public void removeChild(NodeRef parent, NodeRef child) {
+		checkEditMode();
 
-		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+		Node p = (Node) parent;
+		Node c = (Node) child;
 
-		Node parent = (Node) p;
-		Node child = (Node) c;
-
-		parent.doubleRemoveChild(child);
+		p.doubleRemoveChild(c);
 	}
 
-	public void doubleRemoveChild(NodeRef p, NodeRef c) {
+	/**
+	 * Removes the link between the parent and the child. This method should be
+	 * called when the child's parents are both the same. After the method is
+	 * called the parent will have two null references for children, and the
+	 * child will have two null references for parents.
+	 * 
+	 * @param parent
+	 *            The parent NodeRef
+	 * @param chidl
+	 *            The child NodeRef
+	 * @see doubleAddChild()
+	 * @see singleAddChild()
+	 * @see removeChild()
+	 * @see singleRemoveChild()
+	 */
+	public void doubleRemoveChild(NodeRef parent, NodeRef child) {
+		checkEditMode();
 
-		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+		Node p = (Node) parent;
+		Node c = (Node) child;
 
-		Node parent = (Node) p;
-		Node child = (Node) c;
-
-		parent.doubleRemoveChild(child);
+		p.doubleRemoveChild(c);
 	}
 
 	public void singleRemoveChild(NodeRef p, NodeRef c) {
-
-		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
-
+		checkEditMode();
+		
 		Node parent = (Node) p;
 		Node child = (Node) c;
 
@@ -1154,7 +1307,8 @@ public class ARGModel extends AbstractModel
 	protected Node oldRoot;
 
 	public void beginTreeEdit() {
-		if (inEdit) throw new RuntimeException("Alreading in edit transaction mode!");
+		if (inEdit)
+			throw new RuntimeException("Alreading in edit transaction mode!");
 
 		oldRoot = root;
 
@@ -1162,7 +1316,8 @@ public class ARGModel extends AbstractModel
 	}
 
 	public void endTreeEdit() throws MutableTree.InvalidTreeException {
-		if (!inEdit) throw new RuntimeException("Not in edit transaction mode!");
+		if (!inEdit)
+			throw new RuntimeException("Not in edit transaction mode!");
 
 		inEdit = false;
 
@@ -1170,20 +1325,21 @@ public class ARGModel extends AbstractModel
 			swapParameterObjects(oldRoot, root);
 		}
 
-		//for (int i =0; i < nodes.length; i++) {
+		// for (int i =0; i < nodes.length; i++) {
 		for (Node node : nodes) {
 			if (!node.heightParameter.isWithinBounds()) {
-				throw new MutableTree.InvalidTreeException("height parameter out of bounds");
+				throw new MutableTree.InvalidTreeException(
+						"height parameter out of bounds");
 			}
 		}
-//ystem.err.println("There are "+treeChangedEvents.size()+" events waiting");
-//System.exit(-1);
+		// ystem.err.println("There are "+treeChangedEvents.size()+" events
+		// waiting");
+		// System.exit(-1);
 		for (int i = 0; i < treeChangedEvents.size(); i++) {
 			listenerHelper.fireModelChanged(this, treeChangedEvents.get(i));
 		}
 		treeChangedEvents.clear();
 	}
-
 
 	private void endTreeEditFast() {
 		inEdit = false;
@@ -1193,24 +1349,29 @@ public class ARGModel extends AbstractModel
 		((Node) n).setHeight(height);
 	}
 
-
 	public void setNodeRate(NodeRef n, double rate) {
-		if (!hasRates) throw new IllegalArgumentException("Rate parameters have not been created");
+		if (!hasRates)
+			throw new IllegalArgumentException(
+					"Rate parameters have not been created");
 		((Node) n).setRate(rate);
 
 	}
 
 	public void setNodeTrait(NodeRef n, double value) {
-		if (!hasTraits) throw new IllegalArgumentException("Trait parameters have not been created");
+		if (!hasTraits)
+			throw new IllegalArgumentException(
+					"Trait parameters have not been created");
 		((Node) n).setTrait(value);
 	}
 
 	public void setBranchLength(NodeRef node, double length) {
-		throw new UnsupportedOperationException("ARGModel cannot have branch lengths set");
+		throw new UnsupportedOperationException(
+				"ARGModel cannot have branch lengths set");
 	}
 
 	public void setNodeAttribute(NodeRef node, String name, Object value) {
-		throw new UnsupportedOperationException("ARGModel does not use NodeAttributes");
+		throw new UnsupportedOperationException(
+				"ARGModel does not use NodeAttributes");
 	}
 
 	// *****************************************************************
@@ -1221,11 +1382,12 @@ public class ARGModel extends AbstractModel
 	 * Store current state
 	 */
 	protected void storeState() {
-/*		System.err.println("Storing state");
-		this.checkBranchSanity();
-		System.err.println("sane before operation");*/
+		/*
+		 * System.err.println("Storing state"); this.checkBranchSanity();
+		 * System.err.println("sane before operation");
+		 */
 		copyNodeStructure(storedNodes);
-		//storedRootNumber = storedNodes.indexOf(root.getNumber();
+		// storedRootNumber = storedNodes.indexOf(root.getNumber();
 		storedRootNumber = nodes.indexOf(root);
 		storedNodeCount = nodeCount;
 		storedInternalNodeCount = internalNodeCount;
@@ -1236,15 +1398,16 @@ public class ARGModel extends AbstractModel
 		removedPartitioningParameter = null;
 		removedNodes = null;
 		storedNullCounter = nullCounter;
-		//System.err.println("Stored: "+Tree.Utils.uniqueNewick(this, getRoot()));
-		//System.err.println("Stored : "+this.toString());
+		// System.err.println("Stored: "+Tree.Utils.uniqueNewick(this,
+		// getRoot()));
+		// System.err.println("Stored : "+this.toString());
 	}
 
 	/**
 	 * Restore the stored state
 	 */
 	protected void restoreState() {
-//		System.err.println("Restoring state.");
+		// System.err.println("Restoring state.");
 		ArrayList<Node> tmp = storedNodes;
 		storedNodes = nodes;
 		nodes = tmp;
@@ -1259,8 +1422,10 @@ public class ARGModel extends AbstractModel
 			removeParameter(addedParameters[0]);
 			removeParameter(addedParameters[1]);
 
-			storedInternalAndRootNodeHeights.removeParameter(addedParameters[0]);
-			storedInternalAndRootNodeHeights.removeParameter(addedParameters[1]);
+			storedInternalAndRootNodeHeights
+					.removeParameter(addedParameters[0]);
+			storedInternalAndRootNodeHeights
+					.removeParameter(addedParameters[1]);
 
 			removeParameter(addedParameters[2]);
 			removeParameter(addedParameters[3]);
@@ -1286,15 +1451,15 @@ public class ARGModel extends AbstractModel
 			storedNodeRates.addParameter(removedParameters[2]);
 			storedNodeRates.addParameter(removedParameters[3]);
 
-
 		}
 
 		if (removedPartitioningParameter != null) {
 			partitioningParameters.addParameter(removedPartitioningParameter);
 			addParameter(removedPartitioningParameter);
 		}
-		//System.err.println("Restore: "+Tree.Utils.uniqueNewick(this, getRoot()));
-		//System.err.println("Restore: "+this.toString());
+		// System.err.println("Restore: "+Tree.Utils.uniqueNewick(this,
+		// getRoot()));
+		// System.err.println("Restore: "+this.toString());
 		nullCounter = storedNullCounter;
 	}
 
@@ -1302,7 +1467,7 @@ public class ARGModel extends AbstractModel
 	 * accept the stored state
 	 */
 	protected void acceptState() {
-		//System.err.println("Accepted ARG\n"+this.toGraphString());
+		// System.err.println("Accepted ARG\n"+this.toGraphString());
 	} // nothing to do
 
 	/**
@@ -1310,42 +1475,42 @@ public class ARGModel extends AbstractModel
 	 */
 	protected void adoptState(Model source) {
 	}
-/*
-	public void addNewHeightParameters(Parameter newbie1, Parameter newbie2,
-	                                   VariableSizeCompoundParameter internalNodeParameters,
-                                       VariableSizeCompoundParameter internalAndRootNodeParameters) {
-		addParameter(newbie1);
-		addParameter(newbie2);
-		addedParameters = new Parameter[2];
-		addedParameters[0] = newbie1;
-		addedParameters[1] = newbie2;
 
-        storedInternalNodeHeights = internalNodeParameters;
-		storedInternalNodeHeights.addParameter(newbie1);
-		storedInternalNodeHeights.addParameter(newbie2);
-
- *//*       storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
-		storedInternalAndRootNodeHeights.addParameter(newbie1);
-		storedInternalAndRootNodeHeights.addParameter(newbie2);*//*
-    }*/
+	/*
+	 * public void addNewHeightParameters(Parameter newbie1, Parameter newbie2,
+	 * VariableSizeCompoundParameter internalNodeParameters,
+	 * VariableSizeCompoundParameter internalAndRootNodeParameters) {
+	 * addParameter(newbie1); addParameter(newbie2); addedParameters = new
+	 * Parameter[2]; addedParameters[0] = newbie1; addedParameters[1] = newbie2;
+	 * 
+	 * storedInternalNodeHeights = internalNodeParameters;
+	 * storedInternalNodeHeights.addParameter(newbie1);
+	 * storedInternalNodeHeights.addParameter(newbie2);
+	 * 
+	 *//*
+		 * storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
+		 * storedInternalAndRootNodeHeights.addParameter(newbie1);
+		 * storedInternalAndRootNodeHeights.addParameter(newbie2);
+		 *//*
+																 * }
+																 */
 
 	public void expandARGWithRecombinant(Node newbie1, Node newbie2,
-	                                     VariableSizeCompoundParameter internalNodeParameters,
-	                                     VariableSizeCompoundParameter internalAndRootNodeParameters,
-	                                     VariableSizeCompoundParameter nodeRates) {
-//		System.err.println("attempting to expand");
+			VariableSizeCompoundParameter internalNodeParameters,
+			VariableSizeCompoundParameter internalAndRootNodeParameters,
+			VariableSizeCompoundParameter nodeRates) {
+		// System.err.println("attempting to expand");
 
 		addParameter(newbie1.heightParameter);
 		addParameter(newbie2.heightParameter);
 		addParameter(newbie2.partitioning);
 
-//		System.err.println("expand 0");
+		// System.err.println("expand 0");
 
 		addParameter(newbie1.rateParameter);
 		addParameter(newbie2.rateParameter);
 
-//		System.err.println("expand 1");
-
+		// System.err.println("expand 1");
 
 		addedParameters = new Parameter[4];
 		addedParameters[0] = newbie1.heightParameter;
@@ -1354,7 +1519,7 @@ public class ARGModel extends AbstractModel
 		addedParameters[3] = newbie2.rateParameter;
 		addedPartitioningParameter = newbie2.partitioning;
 
-//		System.err.println("expand 2");
+		// System.err.println("expand 2");
 
 		storedInternalNodeHeights = internalNodeParameters;
 		storedInternalNodeHeights.addParameter(newbie1.heightParameter);
@@ -1368,16 +1533,16 @@ public class ARGModel extends AbstractModel
 		storedNodeRates.addParameter(newbie1.rateParameter);
 		storedNodeRates.addParameter(newbie2.rateParameter);
 
-//		System.err.println("expand 3");
+		// System.err.println("expand 3");
 
 		partitioningParameters.addParameter(newbie2.partitioning);
 		nodes.add(newbie1);
 		nodes.add(newbie2);
 		internalNodeCount += 2;
-		//sanityNodeCheck(internalNodeParameters);
+		// sanityNodeCheck(internalNodeParameters);
 		pushTreeSizeChangedEvent();
 
-//		System.err.println("done expand");
+		// System.err.println("done expand");
 
 	}
 
@@ -1389,21 +1554,28 @@ public class ARGModel extends AbstractModel
 				Node node = (Node) getInternalNode(j);
 				if (node.heightParameter == p) {
 					if (isRoot(node)) {
-						System.err.println("Root height found in internal nodes");
+						System.err
+								.println("Root height found in internal nodes");
 						System.exit(-1);
 					}
 				}
-
 
 			}
 		}
 	}
 
-
+	/**
+	 * Cleans up the arg model after a deletion event.
+	 * @param oldie1 
+	 * @param oldie2
+	 * @param internalNodeParameters
+	 * @param internalAndRootNodeParameters
+	 * @param nodeRates
+	 */
 	public void contractARGWithRecombinant(Node oldie1, Node oldie2,
-	                                       VariableSizeCompoundParameter internalNodeParameters,
-	                                       VariableSizeCompoundParameter internalAndRootNodeParameters,
-	                                       VariableSizeCompoundParameter nodeRates) {
+			VariableSizeCompoundParameter internalNodeParameters,
+			VariableSizeCompoundParameter internalAndRootNodeParameters,
+			VariableSizeCompoundParameter nodeRates) {
 		removeParameter(oldie1.heightParameter);
 		removeParameter(oldie2.heightParameter);
 		removeParameter(oldie2.partitioning);
@@ -1424,8 +1596,10 @@ public class ARGModel extends AbstractModel
 		storedInternalNodeHeights.removeParameter(oldie2.heightParameter);
 
 		storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
-		storedInternalAndRootNodeHeights.removeParameter(oldie1.heightParameter);
-		storedInternalAndRootNodeHeights.removeParameter(oldie2.heightParameter);
+		storedInternalAndRootNodeHeights
+				.removeParameter(oldie1.heightParameter);
+		storedInternalAndRootNodeHeights
+				.removeParameter(oldie2.heightParameter);
 
 		storedNodeRates = nodeRates;
 		storedNodeRates.removeParameter(oldie1.rateParameter);
@@ -1437,26 +1611,25 @@ public class ARGModel extends AbstractModel
 		pushTreeSizeChangedEvent();
 	}
 
-
 	/**
 	 * Copies the node connections from this ARGModel's nodes array to the
-	 * destination array. Basically it connects up the nodes in destination
-	 * in the same way as this ARGModel is set up. This method is package
-	 * private.
+	 * destination array. Basically it connects up the nodes in destination in
+	 * the same way as this ARGModel is set up. This method is package private.
 	 */
 	void copyNodeStructure(ArrayList<Node> destination) {
 
-		//if ( nodes.length != destination.length ) {
-		//    throw new IllegalArgumentException("Node arrays are of different lengths");
-		//}
+		// if ( nodes.length != destination.length ) {
+		// throw new IllegalArgumentException("Node arrays are of different
+		// lengths");
+		// }
 		while (destination.size() < nodes.size())
 			destination.add(new Node());
 		while (destination.size() > nodes.size())
 			destination.remove(0);
 		int n = nodes.size();
-//	    System.err.println("node.size = "+n);
+		// System.err.println("node.size = "+n);
 		for (int i = 0; i < n; i++) {
-			//for( Node node0 : nodes ) {
+			// for( Node node0 : nodes ) {
 			Node node0 = nodes.get(i);
 			Node node1 = destination.get(i);
 
@@ -1470,44 +1643,43 @@ public class ARGModel extends AbstractModel
 			node1.taxon = node0.taxon;
 			node1.bifurcation = node0.bifurcation;
 			node1.number = node0.number;
-			//node1.partitionSet = (BitSet)node0.partitionSet.clone();
-//			if (node0.leftPartition != null) {
-//				node1.leftPartition = (BitSet) node0.leftPartition.clone();
-//			} else {
-//				node1.leftPartition = null;
-//			}
-//			if (node0.rightPartition != null) {
-//				node1.rightPartition = (BitSet) node0.rightPartition.clone();
-//			} else {
-//				node1.rightPartition = null;
-//			}
-//            
-
+			// node1.partitionSet = (BitSet)node0.partitionSet.clone();
+			// if (node0.leftPartition != null) {
+			// node1.leftPartition = (BitSet) node0.leftPartition.clone();
+			// } else {
+			// node1.leftPartition = null;
+			// }
+			// if (node0.rightPartition != null) {
+			// node1.rightPartition = (BitSet) node0.rightPartition.clone();
+			// } else {
+			// node1.rightPartition = null;
+			// }
+			//            
 
 			if (node0.leftParent != null) {
-				node1.leftParent = //storedNodes.get(node0.leftParent.getNumber());
-						storedNodes.get(nodes.indexOf(node0.leftParent));
+				node1.leftParent = // storedNodes.get(node0.leftParent.getNumber());
+				storedNodes.get(nodes.indexOf(node0.leftParent));
 			} else {
 				node1.leftParent = null;
 			}
 
 			if (node0.rightParent != null) {
-				node1.rightParent = //storedNodes.get(node0.rightParent.getNumber());
-						storedNodes.get(nodes.indexOf(node0.rightParent));
+				node1.rightParent = // storedNodes.get(node0.rightParent.getNumber());
+				storedNodes.get(nodes.indexOf(node0.rightParent));
 			} else {
 				node1.rightParent = null;
 			}
 
 			if (node0.leftChild != null) {
-				node1.leftChild = //storedNodes.get(node0.leftChild.getNumber());
-						storedNodes.get(nodes.indexOf(node0.leftChild));
+				node1.leftChild = // storedNodes.get(node0.leftChild.getNumber());
+				storedNodes.get(nodes.indexOf(node0.leftChild));
 			} else {
 				node1.leftChild = null;
 			}
 
 			if (node0.rightChild != null) {
-				node1.rightChild = //storedNodes.get(node0.rightChild.getNumber());
-						storedNodes.get(nodes.indexOf(node0.rightChild));
+				node1.rightChild = // storedNodes.get(node0.rightChild.getNumber());
+				storedNodes.get(nodes.indexOf(node0.rightChild));
 			} else {
 				node1.rightChild = null;
 			}
@@ -1518,7 +1690,6 @@ public class ARGModel extends AbstractModel
 		Node node = (Node) nr;
 		node.setPartitionRecursively(partition);
 	}
-
 
 	/**
 	 * @return the number of statistics of this component.
@@ -1531,7 +1702,8 @@ public class ARGModel extends AbstractModel
 	 * @return the ith statistic of the component
 	 */
 	public Statistic getStatistic(int i) {
-		if (i == 0) return root.heightParameter;
+		if (i == 0)
+			return root.heightParameter;
 		throw new IllegalArgumentException();
 	}
 
@@ -1575,7 +1747,8 @@ public class ARGModel extends AbstractModel
 	 */
 	public int getTaxonIndex(String id) {
 		for (int i = 0, n = getTaxonCount(); i < n; i++) {
-			if (getTaxonId(i).equals(id)) return i;
+			if (getTaxonId(i).equals(id))
+				return i;
 		}
 		return -1;
 	}
@@ -1585,17 +1758,20 @@ public class ARGModel extends AbstractModel
 	 */
 	public int getTaxonIndex(Taxon taxon) {
 		for (int i = 0, n = getTaxonCount(); i < n; i++) {
-			if (getTaxon(i) == taxon) return i;
+			if (getTaxon(i) == taxon)
+				return i;
 		}
 		return -1;
 	}
 
 	/**
-	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
-	 * @param name       the name of the attribute of interest.
-	 * @return an object representing the named attributed for the taxon of the given
-	 *         external node. If the node doesn't have a taxon then the nodes own attribute
-	 *         is returned.
+	 * @param taxonIndex
+	 *            the index of the taxon whose attribute is being fetched.
+	 * @param name
+	 *            the name of the attribute of interest.
+	 * @return an object representing the named attributed for the taxon of the
+	 *         given external node. If the node doesn't have a taxon then the
+	 *         nodes own attribute is returned.
 	 */
 	public final Object getTaxonAttribute(int taxonIndex, String name) {
 		Taxon taxon = getTaxon(taxonIndex);
@@ -1622,7 +1798,8 @@ public class ARGModel extends AbstractModel
 	}
 
 	public void setTaxonAttribute(int taxonIndex, String name, Object value) {
-		throw new IllegalArgumentException("Cannot set taxon attribute in a ARGModel");
+		throw new IllegalArgumentException(
+				"Cannot set taxon attribute in a ARGModel");
 	}
 
 	public void addMutableTreeListener(MutableTreeListener listener) {
@@ -1659,9 +1836,11 @@ public class ARGModel extends AbstractModel
 
 	/**
 	 * Sets an named attribute for this object.
-	 *
-	 * @param name  the name of the attribute.
-	 * @param value the new value of the attribute.
+	 * 
+	 * @param name
+	 *            the name of the attribute.
+	 * @param value
+	 *            the new value of the attribute.
 	 */
 	public void setAttribute(String name, Object value) {
 		if (treeAttributes == null)
@@ -1670,7 +1849,8 @@ public class ARGModel extends AbstractModel
 	}
 
 	/**
-	 * @param name the name of the attribute of interest.
+	 * @param name
+	 *            the name of the attribute of interest.
 	 * @return an object representing the named attributed for this object.
 	 */
 	public Object getAttribute(String name) {
@@ -1695,9 +1875,19 @@ public class ARGModel extends AbstractModel
 	 */
 	public final String getNewick(int partition) {
 		return Tree.Utils.newick(new ARGTree(this, partition));
-		//return Tree.Utils.newick(this);
+		// return Tree.Utils.newick(this);
 	}
 
+	/**
+	 * Checks whether <code>ARGMode</code> is in edit mode.
+	 * @throws RuntimeException
+	 * 		if the <code>ARGModel</code> is not in edit mode.
+	 */
+	private void checkEditMode() throws RuntimeException{
+		if(!inEdit)
+			throw new RuntimeException("Not in edit transaction mode!");
+	}
+	
 	public void checkBranchSanity() {
 		boolean plotted = false;
 		for (Node node : nodes) {
@@ -1705,17 +1895,23 @@ public class ARGModel extends AbstractModel
 				double length1 = 0;
 				double length2 = 0;
 				if (node.leftParent != null)
-					length1 = getNodeHeight(node.leftParent) - getNodeHeight(node);
+					length1 = getNodeHeight(node.leftParent)
+							- getNodeHeight(node);
 				if (node.rightParent != null)
-					length2 = getNodeHeight(node.rightParent) - getNodeHeight(node);
-				if (String.valueOf(length1).equals("NaN") || String.valueOf(length2).equals("NaN")) {
+					length2 = getNodeHeight(node.rightParent)
+							- getNodeHeight(node);
+				if (String.valueOf(length1).equals("NaN")
+						|| String.valueOf(length2).equals("NaN")) {
 					if (!plotted) {
 						System.err.println(toGraphString());
 						plotted = true;
 					}
-					System.err.println("Caught the NaN: node=" + node.number + " (" + node.getHeight() + ") lp=" + node.leftParent.number +
-							" (" + node.leftParent.getHeight() + ") rp=" + node.rightParent.number +
-							" (" + node.rightParent.getHeight() + ")");
+					System.err.println("Caught the NaN: node=" + node.number
+							+ " (" + node.getHeight() + ") lp="
+							+ node.leftParent.number + " ("
+							+ node.leftParent.getHeight() + ") rp="
+							+ node.rightParent.number + " ("
+							+ node.rightParent.getHeight() + ")");
 					System.exit(-1);
 				}
 			}
@@ -1723,22 +1919,20 @@ public class ARGModel extends AbstractModel
 
 	}
 
-
 	/**
 	 * @return a string containing an extended newick representation of the tree
 	 */
 	public String toString() {
-//        StringBuffer sb = new StringBuffer();
-//        for (int i = 0; i < maxNumberOfPartitions; i++) {
-//            sb.append(i + ": ");
-//            sb.append(getNewick(i));
-//        }
-//        return new String(sb);
+		// StringBuffer sb = new StringBuffer();
+		// for (int i = 0; i < maxNumberOfPartitions; i++) {
+		// sb.append(i + ": ");
+		// sb.append(getNewick(i));
+		// }
+		// return new String(sb);
 		return toExtendedNewick();
 	}
 
 	public static final String nullEdge = " -";
-
 
 	public void appendGraphStringOld(StringBuffer sb) {
 		int cnt = 0;
@@ -1771,24 +1965,24 @@ public class ARGModel extends AbstractModel
 				sb.append(nullEdge);
 			else
 				sb.append(" " + node.rightChild.number);
-//			sb.append(" " + node.bifurcation);
+			// sb.append(" " + node.bifurcation);
 			if (node.taxon != null)
 				sb.append(" " + node.taxon.toString());
-//            if (node.leftPartition != null)
-//                sb.append(" l");
-//            if (node.rightPartition != null)
-//                sb.append(" r");
+			// if (node.leftPartition != null)
+			// sb.append(" l");
+			// if (node.rightPartition != null)
+			// sb.append(" r");
 			sb.append("]");
-//
-//            );
+			//
+			// );
 		}
-//        sb.append("Root = " + ((Node) getRoot()).number + "\n");
-//		sb.append("\n");
+		// sb.append("Root = " + ((Node) getRoot()).number + "\n");
+		// sb.append("\n");
 	}
 
-
 	public boolean validRoot() {
-		// todo -- there must be a way to some graph properties to do this check.
+		// todo -- there must be a way to some graph properties to do this
+		// check.
 		boolean valid = true;
 		for (int i = 0; valid && i < maxNumberOfPartitions; i++) {
 			ARGTree argTree = new ARGTree(this, i);
@@ -1797,7 +1991,6 @@ public class ARGModel extends AbstractModel
 		}
 		return valid;
 	}
-
 
 	public String toGraphString() {
 		int cnt = 1;
@@ -1829,22 +2022,21 @@ public class ARGModel extends AbstractModel
 				sb.append(" 0");
 			else
 				sb.append(" " + node.rightChild.number);
-//			sb.append(" " + node.bifurcation);
+			// sb.append(" " + node.bifurcation);
 			if (node.taxon != null)
 				sb.append(" " + node.taxon.toString());
 			if (node.partitioning != null)
 				sb.append(" p");
-			/*		if (node.leftPartition != null)
-											  sb.append(" l");
-										  if (node.rightPartition != null)
-											  sb.append(" r");*/
+			/*
+			 * if (node.leftPartition != null) sb.append(" l"); if
+			 * (node.rightPartition != null) sb.append(" r");
+			 */
 			sb.append("\t" + getNodeHeight(node));
 			sb.append("\n");
 		}
 		sb.append("Root = " + ((Node) getRoot()).number + "\n");
 		return new String(sb);
 	}
-
 
 	public ARGModel fromGraphStringCompressed(String source) {
 		StringTokenizer st1 = new StringTokenizer(source, ":");
@@ -1889,15 +2081,18 @@ public class ARGModel extends AbstractModel
 			else {
 				node.bifurcation = false;
 				node.partitioning = new Parameter.Default(numberPartitions, 0.0);
-				node.partitioning.setParameterValueQuietly(Integer.parseInt(p), 1.0);
+				node.partitioning.setParameterValueQuietly(Integer.parseInt(p),
+						1.0);
 				while (st2.hasMoreTokens())
-					node.partitioning.setParameterValueQuietly(Integer.parseInt(st2.nextToken()), 1.0);
+					node.partitioning.setParameterValueQuietly(Integer
+							.parseInt(st2.nextToken()), 1.0);
 			}
 		}
 
-		return new ARGModel(nodes, nodes.get(rootNumber), numberPartitions, external);
+		return new ARGModel(nodes, nodes.get(rootNumber), numberPartitions,
+				external);
 
-//		return null;
+		// return null;
 	}
 
 	public String toGraphStringCompressed(boolean recurse) {
@@ -1907,7 +2102,7 @@ public class ARGModel extends AbstractModel
 			cnt++;
 		}
 		StringBuffer sb = new StringBuffer();
-//	     sb.append("Total length: " + nodes.size() + "\n");
+		// sb.append("Total length: " + nodes.size() + "\n");
 		sb.append(nodes.size());
 		sb.append(":");
 		sb.append(maxNumberOfPartitions);
@@ -1936,13 +2131,13 @@ public class ARGModel extends AbstractModel
 			else
 				sb.append(" " + node.rightChild.number);
 			sb.append(" " + getNodeHeight(node));
-//  			 sb.append(" " + node.bifurcation);
+			// sb.append(" " + node.bifurcation);
 			if (node.taxon != null)
 				sb.append(" " + node.taxon.toString());
 			else
 				sb.append(" NA");
 			if (node.partitioning != null) {
-//	             sb.append(" p");
+				// sb.append(" p");
 				double[] bits = node.partitioning.getParameterValues();
 				for (int i = 0; i < bits.length; i++) {
 					if (bits[i] == 1) {
@@ -1950,35 +2145,35 @@ public class ARGModel extends AbstractModel
 					}
 				}
 
-
 			} else {
 				sb.append(" NA");
 			}
 
-			/*		if (node.leftPartition != null)
-											   sb.append(" l");
-										   if (node.rightPartition != null)
-											   sb.append(" r");*/
-//	         sb.append("\t" + getNodeHeight(node));
-//	         sb.append("\n");
+			/*
+			 * if (node.leftPartition != null) sb.append(" l"); if
+			 * (node.rightPartition != null) sb.append(" r");
+			 */
+			// sb.append("\t" + getNodeHeight(node));
+			// sb.append("\n");
 		}
-//	     sb.append("Root = " + ((Node) getRoot()).number + "\n");
+		// sb.append("Root = " + ((Node) getRoot()).number + "\n");
 
 		String rtn = new String(sb);
 
-/*		if ( recurse ) {
-		ARGModel test = fromGraphStringCompressed(rtn);
-		System.err.println("OLD 0: "+getNewick(0));
-		System.err.println("NEW 0: "+test.getNewick(0));
-		System.err.println("OLD: "+toGraphStringCompressed(false));
-		System.err.println("NEW: "+test.toGraphStringCompressed(false));
-		}*/
+		/*
+		 * if ( recurse ) { ARGModel test = fromGraphStringCompressed(rtn);
+		 * System.err.println("OLD 0: "+getNewick(0)); System.err.println("NEW
+		 * 0: "+test.getNewick(0)); System.err.println("OLD:
+		 * "+toGraphStringCompressed(false)); System.err.println("NEW:
+		 * "+test.toGraphStringCompressed(false)); }
+		 */
 
 		return new String(sb);
 	}
 
 	public Tree getCopy() {
-		throw new UnsupportedOperationException("please don't call this function");
+		throw new UnsupportedOperationException(
+				"please don't call this function");
 	}
 
 	// **************************************************************
@@ -1988,7 +2183,6 @@ public class ARGModel extends AbstractModel
 	public Element createElement(Document document) {
 		throw new RuntimeException("Not implemented yet");
 	}
-
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -2004,7 +2198,8 @@ public class ARGModel extends AbstractModel
 			Tree tree = (Tree) xo.getChild(Tree.class);
 			ARGModel treeModel = new ARGModel(tree);
 
-			Logger.getLogger("dr.evomodel").info("Creating the tree model, '" + xo.getId() + "'");
+			Logger.getLogger("dr.evomodel").info(
+					"Creating the tree model, '" + xo.getId() + "'");
 
 			for (int i = 0; i < xo.getChildCount(); i++) {
 				if (xo.getChild(i) instanceof XMLObject) {
@@ -2013,7 +2208,8 @@ public class ARGModel extends AbstractModel
 
 					if (cxo.getName().equals(ROOT_HEIGHT)) {
 
-						replaceParameter(cxo, treeModel.getRootHeightParameter());
+						replaceParameter(cxo, treeModel
+								.getRootHeightParameter());
 
 					} else if (cxo.getName().equals(LEAF_HEIGHT)) {
 
@@ -2021,15 +2217,20 @@ public class ARGModel extends AbstractModel
 						if (cxo.hasAttribute(TAXON)) {
 							taxonName = cxo.getStringAttribute(TAXON);
 						} else {
-							throw new XMLParseException("taxa element missing from leafHeight element in treeModel element");
+							throw new XMLParseException(
+									"taxa element missing from leafHeight element in treeModel element");
 						}
 
 						int index = treeModel.getTaxonIndex(taxonName);
 						if (index == -1) {
-							throw new XMLParseException("taxon " + taxonName + " not found for leafHeight element in treeModel element");
+							throw new XMLParseException(
+									"taxon "
+											+ taxonName
+											+ " not found for leafHeight element in treeModel element");
 						}
 						NodeRef node = treeModel.getExternalNode(index);
-						replaceParameter(cxo, treeModel.getLeafHeightParameter(node));
+						replaceParameter(cxo, treeModel
+								.getLeafHeightParameter(node));
 
 					} else if (cxo.getName().equals(NODE_HEIGHTS)) {
 
@@ -2042,7 +2243,8 @@ public class ARGModel extends AbstractModel
 						}
 
 						if (cxo.hasAttribute(INTERNAL_NODES)) {
-							internalNodes = cxo.getBooleanAttribute(INTERNAL_NODES);
+							internalNodes = cxo
+									.getBooleanAttribute(INTERNAL_NODES);
 						}
 
 						if (cxo.hasAttribute(LEAF_NODES)) {
@@ -2050,10 +2252,13 @@ public class ARGModel extends AbstractModel
 						}
 
 						if (!rootNode && !internalNodes && !leafNodes) {
-							throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeHeights element");
+							throw new XMLParseException(
+									"one or more of root, internal or leaf nodes must be selected for the nodeHeights element");
 						}
 
-						replaceParameter(cxo, treeModel.createNodeHeightsParameter(rootNode, internalNodes, leafNodes));
+						replaceParameter(cxo, treeModel
+								.createNodeHeightsParameter(rootNode,
+										internalNodes, leafNodes));
 
 					} else if (cxo.getName().equals(NODE_RATES)) {
 
@@ -2066,22 +2271,27 @@ public class ARGModel extends AbstractModel
 						}
 
 						if (cxo.hasAttribute(INTERNAL_NODES)) {
-							internalNodes = cxo.getBooleanAttribute(INTERNAL_NODES);
+							internalNodes = cxo
+									.getBooleanAttribute(INTERNAL_NODES);
 						}
 
 						if (cxo.hasAttribute(LEAF_NODES)) {
 							leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
 						}
 
-						//if (rootNode) {
-						//	throw new XMLParseException("root node does not have a rate parameter");
-						//}
+						// if (rootNode) {
+						// throw new XMLParseException("root node does not have
+						// a rate parameter");
+						// }
 
 						if (!rootNode && !internalNodes && !leafNodes) {
-							throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeRates element");
+							throw new XMLParseException(
+									"one or more of root, internal or leaf nodes must be selected for the nodeRates element");
 						}
 
-						replaceParameter(cxo, treeModel.createNodeRatesParameter(rootNode, internalNodes, leafNodes));
+						replaceParameter(cxo, treeModel
+								.createNodeRatesParameter(rootNode,
+										internalNodes, leafNodes));
 
 					} else if (cxo.getName().equals(NODE_TRAITS)) {
 
@@ -2094,7 +2304,8 @@ public class ARGModel extends AbstractModel
 						}
 
 						if (cxo.hasAttribute(INTERNAL_NODES)) {
-							internalNodes = cxo.getBooleanAttribute(INTERNAL_NODES);
+							internalNodes = cxo
+									.getBooleanAttribute(INTERNAL_NODES);
 						}
 
 						if (cxo.hasAttribute(LEAF_NODES)) {
@@ -2102,57 +2313,64 @@ public class ARGModel extends AbstractModel
 						}
 
 						if (!rootNode && !internalNodes && !leafNodes) {
-							throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeTraits element");
+							throw new XMLParseException(
+									"one or more of root, internal or leaf nodes must be selected for the nodeTraits element");
 						}
 
-						replaceParameter(cxo, treeModel.createNodeTraitsParameter(rootNode, internalNodes, leafNodes));
+						replaceParameter(cxo, treeModel
+								.createNodeTraitsParameter(rootNode,
+										internalNodes, leafNodes));
 
 					} else {
-						throw new XMLParseException("illegal child element in " + getParserName() + ": " + cxo.getName());
+						throw new XMLParseException("illegal child element in "
+								+ getParserName() + ": " + cxo.getName());
 					}
 
 				} else if (xo.getChild(i) instanceof Tree) {
 					// do nothing - already handled
 				} else {
-					throw new XMLParseException("illegal child element in  " + getParserName() + ": " + xo.getChildName(i) + " " + xo.getChild(i));
+					throw new XMLParseException("illegal child element in  "
+							+ getParserName() + ": " + xo.getChildName(i) + " "
+							+ xo.getChild(i));
 				}
 			}
 
 			treeModel.setupHeightBounds();
 
-			Logger.getLogger("dr.evomodel").info("  initial tree topology = " + Tree.Utils.uniqueNewick(treeModel, treeModel.getRoot()));
+			Logger.getLogger("dr.evomodel").info(
+					"  initial tree topology = "
+							+ Tree.Utils.uniqueNewick(treeModel, treeModel
+									.getRoot()));
 			return treeModel;
 		}
 
-		//************************************************************************
+		// ************************************************************************
 		// AbstractXMLObjectParser implementation
-		//************************************************************************
+		// ************************************************************************
 
 		public String getParserDescription() {
-			return "This element represents a model of the tree. The tree model includes and attributes of the nodes " +
-					"including the age (or <i>height</i>) and the rate of evolution at each node in the tree.";
+			return "This element represents a model of the tree. The tree model includes and attributes of the nodes "
+					+ "including the age (or <i>height</i>) and the rate of evolution at each node in the tree.";
 		}
 
 		public String getExample() {
-			return
-					"<!-- the tree model as special sockets for attaching parameters to various aspects of the tree     -->\n" +
-							"<!-- The treeModel below shows the standard setup with a parameter associated with the root height -->\n" +
-							"<!-- a parameter associated with the internal node heights (minus the root height) and             -->\n" +
-							"<!-- a parameter associates with all the internal node heights                                     -->\n" +
-							"<!-- Notice that these parameters are overlapping                                                  -->\n" +
-							"<!-- The parameters are subsequently used in operators to propose changes to the tree node heights -->\n" +
-							"<treeModel id=\"treeModel1\">\n" +
-							"	<tree idref=\"startingTree\"/>\n" +
-							"	<rootHeight>\n" +
-							"		<parameter id=\"treeModel1.rootHeight\"/>\n" +
-							"	</rootHeight>\n" +
-							"	<nodeHeights internalNodes=\"true\" rootNode=\"false\">\n" +
-							"		<parameter id=\"treeModel1.internalNodeHeights\"/>\n" +
-							"	</nodeHeights>\n" +
-							"	<nodeHeights internalNodes=\"true\" rootNode=\"true\">\n" +
-							"		<parameter id=\"treeModel1.allInternalNodeHeights\"/>\n" +
-							"	</nodeHeights>\n" +
-							"</treeModel>";
+			return "<!-- the tree model as special sockets for attaching parameters to various aspects of the tree     -->\n"
+					+ "<!-- The treeModel below shows the standard setup with a parameter associated with the root height -->\n"
+					+ "<!-- a parameter associated with the internal node heights (minus the root height) and             -->\n"
+					+ "<!-- a parameter associates with all the internal node heights                                     -->\n"
+					+ "<!-- Notice that these parameters are overlapping                                                  -->\n"
+					+ "<!-- The parameters are subsequently used in operators to propose changes to the tree node heights -->\n"
+					+ "<treeModel id=\"treeModel1\">\n"
+					+ "	<tree idref=\"startingTree\"/>\n"
+					+ "	<rootHeight>\n"
+					+ "		<parameter id=\"treeModel1.rootHeight\"/>\n"
+					+ "	</rootHeight>\n"
+					+ "	<nodeHeights internalNodes=\"true\" rootNode=\"false\">\n"
+					+ "		<parameter id=\"treeModel1.internalNodeHeights\"/>\n"
+					+ "	</nodeHeights>\n"
+					+ "	<nodeHeights internalNodes=\"true\" rootNode=\"true\">\n"
+					+ "		<parameter id=\"treeModel1.allInternalNodeHeights\"/>\n"
+					+ "	</nodeHeights>\n" + "</treeModel>";
 
 		}
 
@@ -2164,16 +2382,27 @@ public class ARGModel extends AbstractModel
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 				new ElementRule(Tree.class),
-				new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
-				new ElementRule(NODE_HEIGHTS,
-						new XMLSyntaxRule[]{
-								AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root height is included in the parameter"),
-								AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node heights (minus the root) are included in the parameter"),
-								new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-						}, 1, Integer.MAX_VALUE)
-		};
+				new ElementRule(
+						ROOT_HEIGHT,
+						Parameter.class,
+						"A parameter definition with id only (cannot be a reference!)",
+						false),
+				new ElementRule(
+						NODE_HEIGHTS,
+						new XMLSyntaxRule[] {
+								AttributeRule
+										.newBooleanRule(ROOT_NODE, true,
+												"If true the root height is included in the parameter"),
+								AttributeRule
+										.newBooleanRule(
+												INTERNAL_NODES,
+												true,
+												"If true the internal node heights (minus the root) are included in the parameter"),
+								new ElementRule(Parameter.class,
+										"A parameter definition with id only (cannot be a reference!)") },
+						1, Integer.MAX_VALUE) };
 
 		public Parameter getParameter(XMLObject xo) throws XMLParseException {
 
@@ -2187,16 +2416,20 @@ public class ARGModel extends AbstractModel
 			}
 
 			if (paramCount == 0) {
-				throw new XMLParseException("no parameter element in treeModel " + xo.getName() + " element");
+				throw new XMLParseException(
+						"no parameter element in treeModel " + xo.getName()
+								+ " element");
 			} else if (paramCount > 1) {
-				throw new XMLParseException("More than one parameter element in treeModel " + xo.getName() + " element");
+				throw new XMLParseException(
+						"More than one parameter element in treeModel "
+								+ xo.getName() + " element");
 			}
-
 
 			return param;
 		}
 
-		public void replaceParameter(XMLObject xo, Parameter newParam) throws XMLParseException {
+		public void replaceParameter(XMLObject xo, Parameter newParam)
+				throws XMLParseException {
 
 			for (int i = 0; i < xo.getChildCount(); i++) {
 
@@ -2210,27 +2443,37 @@ public class ARGModel extends AbstractModel
 					} else if (obj instanceof XMLObject) {
 						rxo = (XMLObject) obj;
 					} else {
-						throw new XMLParseException("object reference not available");
+						throw new XMLParseException(
+								"object reference not available");
 					}
 
 					if (rxo.getChildCount() > 0) {
-						throw new XMLParseException("No child elements allowed in parameter element.");
+						throw new XMLParseException(
+								"No child elements allowed in parameter element.");
 					}
 
 					if (rxo.hasAttribute(XMLParser.IDREF)) {
-						throw new XMLParseException("References to " + xo.getName() + " parameters are not allowed in treeModel.");
+						throw new XMLParseException("References to "
+								+ xo.getName()
+								+ " parameters are not allowed in treeModel.");
 					}
 
 					if (rxo.hasAttribute(ParameterParser.VALUE)) {
-						throw new XMLParseException("Parameters in " + xo.getName() + " have values set automatically.");
+						throw new XMLParseException("Parameters in "
+								+ xo.getName()
+								+ " have values set automatically.");
 					}
 
 					if (rxo.hasAttribute(ParameterParser.UPPER)) {
-						throw new XMLParseException("Parameters in " + xo.getName() + " have bounds set automatically.");
+						throw new XMLParseException("Parameters in "
+								+ xo.getName()
+								+ " have bounds set automatically.");
 					}
 
 					if (rxo.hasAttribute(ParameterParser.LOWER)) {
-						throw new XMLParseException("Parameters in " + xo.getName() + " have bounds set automatically.");
+						throw new XMLParseException("Parameters in "
+								+ xo.getName()
+								+ " have bounds set automatically.");
 					}
 
 					if (rxo.hasAttribute(XMLParser.ID)) {
@@ -2255,7 +2498,8 @@ public class ARGModel extends AbstractModel
 	 */
 	protected Node getNodeOfParameter(Parameter parameter) {
 
-		if (parameter == null) throw new IllegalArgumentException("Parameter is null!");
+		if (parameter == null)
+			throw new IllegalArgumentException("Parameter is null!");
 
 		// for (int i =0; i < nodes.length; i++) {
 		for (Node node : nodes) {
@@ -2269,11 +2513,13 @@ public class ARGModel extends AbstractModel
 				return node;
 			}
 		}
-		throw new RuntimeException("Parameter not found in any nodes:" + parameter.getId());
+		throw new RuntimeException("Parameter not found in any nodes:"
+				+ parameter.getId());
 	}
 
 	/**
-	 * Get the root height parameter. Is private because it can only be called by the XMLParser
+	 * Get the root height parameter. Is private because it can only be called
+	 * by the XMLParser
 	 */
 	protected Parameter getRootHeightParameter() {
 
@@ -2281,16 +2527,20 @@ public class ARGModel extends AbstractModel
 	}
 
 	/**
-	 * @return the relevant node height parameter. Is private because it can only be called by the XMLParser
+	 * @return the relevant node height parameter. Is private because it can
+	 *         only be called by the XMLParser
 	 */
-	protected Parameter createNodeHeightsParameter(boolean rootNode, boolean internalNodes, boolean leafNodes) {
+	protected Parameter createNodeHeightsParameter(boolean rootNode,
+			boolean internalNodes, boolean leafNodes) {
 
 		if (!rootNode && !internalNodes && !leafNodes) {
-			throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
+			throw new IllegalArgumentException(
+					"At least one of rootNode, internalNodes or leafNodes must be true");
 		}
 
-		VariableSizeCompoundParameter parameter = new VariableSizeCompoundParameter("nodeHeights");
-//        System.err.println("Constructed nodeHeights");
+		VariableSizeCompoundParameter parameter = new VariableSizeCompoundParameter(
+				"nodeHeights");
+		// System.err.println("Constructed nodeHeights");
 		for (int i = externalNodeCount; i < nodeCount; i++) {
 			Node node = nodes.get(i);
 			if ((rootNode && node == root) || (internalNodes && node != root)) {
@@ -2310,23 +2560,28 @@ public class ARGModel extends AbstractModel
 	protected Parameter getLeafHeightParameter(NodeRef nr) {
 		Node node = (Node) nr;
 		if (!isExternal(node)) {
-			throw new RuntimeException("only root and leaves can be used with setNodeHeightParameter");
+			throw new RuntimeException(
+					"only root and leaves can be used with setNodeHeightParameter");
 		}
 
 		return nodes.get(nodes.indexOf(node)).heightParameter;
 	}
 
 	/**
-	 * @return the relevant node rate parameter. Is private because it can only be called by the XMLParser
+	 * @return the relevant node rate parameter. Is private because it can only
+	 *         be called by the XMLParser
 	 */
-	protected Parameter createNodeRatesParameter(boolean rootNode, boolean internalNodes, boolean leafNodes) {
+	protected Parameter createNodeRatesParameter(boolean rootNode,
+			boolean internalNodes, boolean leafNodes) {
 
 		if (!rootNode && !internalNodes && !leafNodes) {
-			throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
+			throw new IllegalArgumentException(
+					"At least one of rootNode, internalNodes or leafNodes must be true");
 		}
 
-//		CompoundParameter parameter = new CompoundParameter("nodeRates");
-		VariableSizeCompoundParameter parameter = new VariableSizeCompoundParameter("nodeRates");
+		// CompoundParameter parameter = new CompoundParameter("nodeRates");
+		VariableSizeCompoundParameter parameter = new VariableSizeCompoundParameter(
+				"nodeRates");
 
 		hasRates = true;
 
@@ -2350,12 +2605,15 @@ public class ARGModel extends AbstractModel
 	}
 
 	/**
-	 * Create a node traits parameter. Is private because it can only be called by the XMLParser
+	 * Create a node traits parameter. Is private because it can only be called
+	 * by the XMLParser
 	 */
-	public Parameter createNodeTraitsParameter(boolean rootNode, boolean internalNodes, boolean leafNodes) {
+	public Parameter createNodeTraitsParameter(boolean rootNode,
+			boolean internalNodes, boolean leafNodes) {
 
 		if (!rootNode && !internalNodes && !leafNodes) {
-			throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
+			throw new IllegalArgumentException(
+					"At least one of rootNode, internalNodes or leafNodes must be true");
 		}
 
 		CompoundParameter parameter = new CompoundParameter("nodeTraits");
@@ -2382,10 +2640,9 @@ public class ARGModel extends AbstractModel
 	}
 
 	/**
-	 * This method swaps the parameter objects of the two nodes
-	 * but maintains the values in each node.
-	 * This method is used to ensure that root node of the tree
-	 * always has the same parameter object.
+	 * This method swaps the parameter objects of the two nodes but maintains
+	 * the values in each node. This method is used to ensure that root node of
+	 * the tree always has the same parameter object.
 	 */
 	private void swapParameterObjects(Node n1, Node n2) {
 
@@ -2436,56 +2693,64 @@ public class ARGModel extends AbstractModel
 
 	}
 
-
 	// **************************************************************
 	// Private inner classes
 	// **************************************************************
 	public class Node implements NodeRef {
 
 		public Node leftParent, rightParent;
+
 		public Node leftChild, rightChild;
+
 		public int number;
+
 		public Parameter heightParameter;
+
 		public Parameter rateParameter = null;
+
 		public Parameter traitParameter = null;
+
 		public Taxon taxon = null;
 
-//		public BitSet leftPartition = null;
-//		public BitSet rightPartition = null;
-		//       public Node dupSister = null;
-		//       public Node linkSister = null;
-		//       public Node dupParent = null;
+		// public BitSet leftPartition = null;
+		// public BitSet rightPartition = null;
+		// public Node dupSister = null;
+		// public Node linkSister = null;
+		// public Node dupParent = null;
 
-		//       public Node leftParent;
-		//       public Node rightParent;
+		// public Node leftParent;
+		// public Node rightParent;
 
-		//       public int leftPartition;
-		//       public int rightPartition;
+		// public int leftPartition;
+		// public int rightPartition;
 
 		public Parameter partitioning;
 
 		public boolean bifurcation = true;
 
 		public int countReassortmentChild(Tree tree) {
-			//int cnt = 0;
+			// int cnt = 0;
 			if (isExternal())
 				return 0;
-//        	if( leftChild == null ) {
-//        		System.err.println("left is null");
-//        		System.err.println("is reassort = "+isReassortment());
-//        		System.err.println("right child = "+Tree.Utils.uniqueNewick(tree, rightChild));
-//        	}
-//        	if( rightChild == null ) {
-//        		System.err.println("right is null");
-//        		System.err.println("is reassort = "+isReassortment());
-//        		System.err.println("left child = "+Tree.Utils.uniqueNewick(tree, leftChild));
-//        	}
+			// if( leftChild == null ) {
+			// System.err.println("left is null");
+			// System.err.println("is reassort = "+isReassortment());
+			// System.err.println("right child = "+Tree.Utils.uniqueNewick(tree,
+			// rightChild));
+			// }
+			// if( rightChild == null ) {
+			// System.err.println("right is null");
+			// System.err.println("is reassort = "+isReassortment());
+			// System.err.println("left child = "+Tree.Utils.uniqueNewick(tree,
+			// leftChild));
+			// }
 			if (isReassortment()) {
 				return 1 + leftChild.countReassortmentChild(tree);
 			} else if (isBifurcationDoublyLinked()) {
 				return leftChild.countReassortmentChild(tree);
 			} else {
-				return leftChild.countReassortmentChild(tree) + rightChild.countReassortmentChild(tree);
+				return leftChild.countReassortmentChild(tree)
+						+ rightChild.countReassortmentChild(tree);
 			}
 		}
 
@@ -2495,14 +2760,14 @@ public class ARGModel extends AbstractModel
 			heightParameter = null;
 			number = 0;
 			taxon = null;
-//			leftPartition = null;
-//			rightPartition = null;
+			// leftPartition = null;
+			// rightPartition = null;
 			partitioning = null;
 		}
 
 		/**
 		 * Constructor to build an ARG into a bifurcating tree
-		 *
+		 * 
 		 * @param node
 		 */
 		public Node(Node node) {
@@ -2511,11 +2776,11 @@ public class ARGModel extends AbstractModel
 			heightParameter = node.heightParameter;
 			taxon = node.taxon;
 			number = node.number;
-			//	if( node.isReassortment() ) {
-			//Node parent = leftParent;
-			//parent.removeChild(this);
-			//	return new Node(leftChild);
-			//	} else {
+			// if( node.isReassortment() ) {
+			// Node parent = leftParent;
+			// parent.removeChild(this);
+			// return new Node(leftChild);
+			// } else {
 			if (node.leftChild != null) {
 				if (node.leftChild.isReassortment())
 					singleAddChild(new Node(node.leftChild.leftChild));
@@ -2528,21 +2793,22 @@ public class ARGModel extends AbstractModel
 				else
 					singleAddChild(new Node(node.rightChild));
 			}
-			//	}
+			// }
 		}
 
 		/**
-		 * constructor used to clone a node and all children with no reassortments
+		 * constructor used to clone a node and all children with no
+		 * reassortments
 		 */
 		public Node(Tree tree, NodeRef node) {
 			leftParent = rightParent = null;
 			leftChild = rightChild = null;
-			//leftPartition = new BitSet();
-			//leftPartition.set(0);
-//			leftPartition = null;
-			//rightPartition = new BitSet();
-			//rightPartition.set(0);
-//			rightPartition = null;
+			// leftPartition = new BitSet();
+			// leftPartition.set(0);
+			// leftPartition = null;
+			// rightPartition = new BitSet();
+			// rightPartition.set(0);
+			// rightPartition = null;
 			partitioning = null;
 			heightParameter = new Parameter.Default(tree.getNodeHeight(node));
 			addParameter(heightParameter);
@@ -2553,43 +2819,43 @@ public class ARGModel extends AbstractModel
 			for (int i = 0; i < tree.getChildCount(node); i++) {
 				singleAddChild(new Node(tree, tree.getChild(node, i)));
 			}
-//            System.err.println("Built initial tree");
-			//System.exit(-1);
+			// System.err.println("Built initial tree");
+			// System.exit(-1);
 		}
 
-//       public Node(Node node, int partition)
-//       {
-//            leftParent = rightParent = null;
-//            leftChild = rightChild = null;
-//            leftPartition = node.leftPartition;
-//            rightPartition = node.rightPartition;
-//            //leftPartition = rightPartition = null;
-//            heightParameter = node.heightParameter;
-//            number = node.number;
-//            taxon = node.taxon;
-//            bifurcation = node.bifurcation;
-//  //          System.err.println("Examinging "+number);
-//            Node left;
-//            if( node.leftChild != null ) {
-//            	Node left = node.getChild(0,partition);
-//            }
-//            Node right;
-//            if( node.rightChild != null ) {
-//            	Node right = node.getChild(1,partition);
-//            }
-//            
-//            	if( left != null ) {
-//  //          		System.err.println("Adding "+number+"->"+left.number);
-//            		singleAddChild(new Node(left,partition));
-//            	}
-//            }
-//           
-//            	if( right != null ) {
-//  //          		System.err.println("Adding "+number+"->"+right.number);
-//            		singleAddChild(new Node(right,partition));
-//            	}
-//            }
-//        }
+		// public Node(Node node, int partition)
+		// {
+		// leftParent = rightParent = null;
+		// leftChild = rightChild = null;
+		// leftPartition = node.leftPartition;
+		// rightPartition = node.rightPartition;
+		// //leftPartition = rightPartition = null;
+		// heightParameter = node.heightParameter;
+		// number = node.number;
+		// taxon = node.taxon;
+		// bifurcation = node.bifurcation;
+		// // System.err.println("Examinging "+number);
+		// Node left;
+		// if( node.leftChild != null ) {
+		// Node left = node.getChild(0,partition);
+		// }
+		// Node right;
+		// if( node.rightChild != null ) {
+		// Node right = node.getChild(1,partition);
+		// }
+		//            
+		// if( left != null ) {
+		// // System.err.println("Adding "+number+"->"+left.number);
+		// singleAddChild(new Node(left,partition));
+		// }
+		// }
+		//           
+		// if( right != null ) {
+		// // System.err.println("Adding "+number+"->"+right.number);
+		// singleAddChild(new Node(right,partition));
+		// }
+		// }
+		// }
 
 		public Node(Node inode, int partition, ArrayList<Node> nodes) {
 			leftParent = rightParent = null;
@@ -2597,23 +2863,23 @@ public class ARGModel extends AbstractModel
 			Node node = inode;
 			while (node.isBifurcationDoublyLinked()) {
 				node = node.leftChild.leftChild;
-				//        	System.err.println("Does this do anything?");
+				// System.err.println("Does this do anything?");
 			}
-			//else
-			//	node = inode;
-			//if( node.bifurcation ) {
-			//leftPartition = node.leftPartition;
-			//rightPartition = node.rightPartition;
-			//leftPartition = rightPartition = null;
+			// else
+			// node = inode;
+			// if( node.bifurcation ) {
+			// leftPartition = node.leftPartition;
+			// rightPartition = node.rightPartition;
+			// leftPartition = rightPartition = null;
 			heightParameter = node.heightParameter;
 			number = node.number;
-			//rightParent = leftParent = inode.leftParent;
-			//rightParent = inode;
-			//nodes.add(this);
-			//number = nodes.size();
+			// rightParent = leftParent = inode.leftParent;
+			// rightParent = inode;
+			// nodes.add(this);
+			// number = nodes.size();
 			taxon = node.taxon;
 			bifurcation = true;
-			//          System.err.println("Examinging "+number);
+			// System.err.println("Examinging "+number);
 			if (node.isExternal())
 				nodes.add(this);
 			else {
@@ -2622,50 +2888,47 @@ public class ARGModel extends AbstractModel
 				right = node.getChild(1, partition);
 				if (left != null || right != null) {
 					if (left != null) {
-						//leftChild = new Node(left,partition,nodes);
-						//this.leftChild
-						//          		System.err.println("Adding "+number+"->"+left.number);
+						// leftChild = new Node(left,partition,nodes);
+						// this.leftChild
+						// System.err.println("Adding
+						// "+number+"->"+left.number);
 						singleAddChild(new Node(left, partition, nodes));
 					}
-					//}}
-					//f( node.rightChild != null ) {
-					//Node right = node.getChild(1,partition);
+					// }}
+					// f( node.rightChild != null ) {
+					// Node right = node.getChild(1,partition);
 					if (right != null) {
-						//          		System.err.println("Adding "+number+"->"+right.number);
+						// System.err.println("Adding
+						// "+number+"->"+right.number);
 						singleAddChild(new Node(right, partition, nodes));
-						//rightChild = new Node(right,partition,nodes);
+						// rightChild = new Node(right,partition,nodes);
 					}
-					//rightParent = leftParent = inode.leftParent;
+					// rightParent = leftParent = inode.leftParent;
 					nodes.add(this);
 				}
 			}
 		}
 
-		/*		public void setPartitionRecursively(int partition) {
-								if (leftChild != null) {
-									if (leftPartition != null)
-										leftPartition.set(partition);
-									leftChild.setPartitionRecursively(partition);
-								}
-								if (rightChild != null) {
-									if (leftPartition != null)
-										rightPartition.set(partition);
-									rightChild.setPartitionRecursively(partition);
-								}
-
-							}*/
+		/*
+		 * public void setPartitionRecursively(int partition) { if (leftChild !=
+		 * null) { if (leftPartition != null) leftPartition.set(partition);
+		 * leftChild.setPartitionRecursively(partition); } if (rightChild !=
+		 * null) { if (leftPartition != null) rightPartition.set(partition);
+		 * rightChild.setPartitionRecursively(partition); }
+		 *  }
+		 */
 		public void setPartitionRecursively(int partition) {
 			boolean onLeft = MathUtils.nextBoolean();
 			if (leftChild != null) {
-				//if( leftPartition != null )
-				//	leftPartition.set(partition);
+				// if( leftPartition != null )
+				// leftPartition.set(partition);
 				if (partitioning != null && onLeft)
 					partitioning.setParameterValue(partition, 1);
 				leftChild.setPartitionRecursively(partition);
 			}
 			if (rightChild != null) {
-				//if( leftPartition != null )
-				//	rightPartition.set(partition);
+				// if( leftPartition != null )
+				// rightPartition.set(partition);
 				if (partitioning != null && !onLeft)
 					partitioning.setParameterValue(partition, 1);
 				rightChild.setPartitionRecursively(partition);
@@ -2673,175 +2936,187 @@ public class ARGModel extends AbstractModel
 
 		}
 
-		/*      public Node findPartitionTreeRoot(int partition) {
-								if (leftPartition.get(partition) && rightPartition.get(partition))
-									return this;
-								if (leftPartition.get(partition))
-									return leftChild.findPartitionTreeRoot(partition);
-								if (rightPartition.get(partition))
-									return rightChild.findPartitionTreeRoot(partition);
-								throw new IllegalArgumentException("Partition " + partition + " never found in " + this.toString());
-							}*/
+		/*
+		 * public Node findPartitionTreeRoot(int partition) { if
+		 * (leftPartition.get(partition) && rightPartition.get(partition))
+		 * return this; if (leftPartition.get(partition)) return
+		 * leftChild.findPartitionTreeRoot(partition); if
+		 * (rightPartition.get(partition)) return
+		 * rightChild.findPartitionTreeRoot(partition); throw new
+		 * IllegalArgumentException("Partition " + partition + " never found in " +
+		 * this.toString()); }
+		 */
 
-//        private boolean doesBifurcate(int partition) {
-//        	if( leftChild.parent != null ) {
-//        		if( rightChild.parent != null )
-//        			return true;
-//        		if( (rightChild.leftParent == this) ||
-//        			(rightChild.rightParent == this) )
-//        			return true;
-//        	}
-//        	if( rightChild.parent != null ) {
-//        		if( (leftChild.leftParent == this) ||
-//        			(leftChild.rightParent == this) )
-//        			return true;
-//        	}
-//        	return false;
-//        }
-//        
-//        private boolean isRecombinantParent(Node parent) {
-//        	if( leftParent == parent || rightParent == parent )
-//        		return true;
-//        	return false;
-//        }
-//        
-//        public boolean isBifurcatingOrExternal(int partition) {
-//        	// TODO protect against null errors at tips
-//        	if( isExternal() )
-//        		return true;
-//        	if( leftChild.parent !=null && rightChild.parent !=null ) // standard case
-//        		return true;
-//        	if( leftChild.parent !=null &&
-//        			(	(rightChild.leftParent == this && rightChild.leftPartition == partition) ||
-//        				(rightChild.rightParent == this && rightChild.rightPartition == partition)
-//        			) ) return true;
-//        	if( rightChild.parent !=null &&
-//        			(	(leftChild.leftParent == this && leftChild.leftPartition == partition) ||
-//        				(leftChild.rightParent == this && leftChild.rightPartition == partition)
-//        			) ) return true;
-//        	return false;
-//        }
-//        
-//        public Node straightDescendent(int partition) {
-//        	// TODO protect against two direct children
-//        	if( leftChild.parent != null )
-//        		return leftChild;
-//        	else {
-//        		if( (leftChild.leftParent == this && leftChild.leftPartition == partition ) ||
-//        			(leftChild.rightParent == this && leftChild.rightPartition == partition) )
-//        			return leftChild;
-//        	}
-//        	if( rightChild.parent != null )
-//        		return rightChild;
-//        	else {
-//        		if( (rightChild.leftParent == this && rightChild.leftPartition == partition) ||
-//        		    (rightChild.rightParent == this && rightChild.rightPartition == partition) )
-//        			return rightChild;
-//        	}
-//        	throw new IllegalArgumentException("No straight descendent found.");
-//        }
-//        
-//        /** constructor used to clone a node and all children for a particular partition */
-//        public Node(Node n, int partition) {
-//        	Node node = n;
-//        	parent = leftParent = rightParent = null;
-//        	leftChild = rightChild = null;
-//        	if( !node.isBifurcatingOrExternal(partition) )
-//        		node = node.straightDescendent(partition);
-//        	heightParameter = node.heightParameter;
-//        	taxon = node.taxon;
-//        	//boolean tip = true;
-//        	Node lc = node.leftChild;
-//        	Node rc = node.rightChild;
-//         	if( lc != null ) {
-//        		// LeftChild exists.  
-//        		// Does lc bifurcate or do we skip for this partition
-//  //      		if( lc.isBifurcatingOrExternal(partition) ) {
-//        			addChild(new Node(lc, partition));
-//        			//System.err.println(Tree.Utils.newick(lc)+" is bifurcating with P = "+partition);
-//  //      		} else {
-//  //      			addChild(new Node(lc.straightDescendent(partition),partition));
-//        			//System.err.println(lc.straightDescendent(partition)+" is descendent.");
-//  //      		}
-//         	}
-//        	if( rc != null ) {
-//           		// RightChild exists.  
-//        		// Does rc bifurcate or do we skip for this partition
-//  //      		if( rc.isBifurcatingOrExternal(partition) ) {
-//        			addChild(new Node(rc, partition));
-//        			//System.err.println(rc.toString()+" is bifurcating with P = "+partition);
-//  //      		} else {
-//  //      			addChild(new Node(rc.straightDescendent(partition),partition));
-//        			//System.err.println(rc.straightDescendent(partition)+" is descendent.");
-//  //      		}
-//         	}
-//  		
-//        }
-//        
-//        
-//        /** constructor used to clone a subtree without duplicating height parameters
-//         * 
-//         *
-//         */
-//        public Node(Tree tree, Node node, int[] bits) {
-//        	parent = null;
-//        	leftChild = rightChild = null;
-//        	heightParameter = node.heightParameter;
-//        	linkSister = node;
-//        	linkSister.linkSister = this;
-//        	//for(int i=0; i < tree.getChildCount())
-//        	boolean tip = true;
-//        	if( node.leftChild != null ) {
-//        		addChild(new Node(tree, node.leftChild, bits));
-//        		tip = false;
-//        	}
-//        	if( node.rightChild != null ) {
-//        		addChild(new Node(tree, node.rightChild, bits));
-//        		tip = false;
-//        	}
-//        	if( tip ) {
-//        		taxon = node.taxon;
-//        		partitionSet = new BitSet();
-//        		int len = bits.length;
-//        		for(int i=0; i<len; i++) 
-//        			partitionSet.set(bits[i]);
-//        	}
-//        }
-//        
-//        public final void setDupParent(Node parent) {
-//        	this.dupParent = parent;
-//        	if( leftChild != null )
-//        		leftChild.setDupParent(parent);
-//        	if( rightChild != null )
-//        		rightChild.setDupParent(parent);
-//        }
-//        
-//        public final void clearLinkSister() {
-//        	this.linkSister = null;
-//        	if( leftChild != null )
-//        		leftChild.clearLinkSister();
-//        	if( rightChild != null )
-//        		rightChild.clearLinkSister();
-//        }
-//        
-//        public final void clearDupParent() {
-//        	this.dupParent = null;
-//        	if( leftChild != null )
-//        		leftChild.clearDupParent();
-//        	if( rightChild != null )
-//        		rightChild.clearDupParent();
-//        }
-//        
-
-/*		public final void recursiveSetPartition(int partition) {
-			leftPartition.set(partition);
-			rightPartition.set(partition);
-			if (leftChild != null)
-				leftChild.recursiveSetPartition(partition);
-			if (rightChild != null)
-				rightChild.recursiveSetPartition(partition);
-		}*/
-
+		// private boolean doesBifurcate(int partition) {
+		// if( leftChild.parent != null ) {
+		// if( rightChild.parent != null )
+		// return true;
+		// if( (rightChild.leftParent == this) ||
+		// (rightChild.rightParent == this) )
+		// return true;
+		// }
+		// if( rightChild.parent != null ) {
+		// if( (leftChild.leftParent == this) ||
+		// (leftChild.rightParent == this) )
+		// return true;
+		// }
+		// return false;
+		// }
+		//        
+		// private boolean isRecombinantParent(Node parent) {
+		// if( leftParent == parent || rightParent == parent )
+		// return true;
+		// return false;
+		// }
+		//        
+		// public boolean isBifurcatingOrExternal(int partition) {
+		// // TODO protect against null errors at tips
+		// if( isExternal() )
+		// return true;
+		// if( leftChild.parent !=null && rightChild.parent !=null ) // standard
+		// case
+		// return true;
+		// if( leftChild.parent !=null &&
+		// ( (rightChild.leftParent == this && rightChild.leftPartition ==
+		// partition) ||
+		// (rightChild.rightParent == this && rightChild.rightPartition ==
+		// partition)
+		// ) ) return true;
+		// if( rightChild.parent !=null &&
+		// ( (leftChild.leftParent == this && leftChild.leftPartition ==
+		// partition) ||
+		// (leftChild.rightParent == this && leftChild.rightPartition ==
+		// partition)
+		// ) ) return true;
+		// return false;
+		// }
+		//        
+		// public Node straightDescendent(int partition) {
+		// // TODO protect against two direct children
+		// if( leftChild.parent != null )
+		// return leftChild;
+		// else {
+		// if( (leftChild.leftParent == this && leftChild.leftPartition ==
+		// partition ) ||
+		// (leftChild.rightParent == this && leftChild.rightPartition ==
+		// partition) )
+		// return leftChild;
+		// }
+		// if( rightChild.parent != null )
+		// return rightChild;
+		// else {
+		// if( (rightChild.leftParent == this && rightChild.leftPartition ==
+		// partition) ||
+		// (rightChild.rightParent == this && rightChild.rightPartition ==
+		// partition) )
+		// return rightChild;
+		// }
+		// throw new IllegalArgumentException("No straight descendent found.");
+		// }
+		//        
+		// /** constructor used to clone a node and all children for a
+		// particular partition */
+		// public Node(Node n, int partition) {
+		// Node node = n;
+		// parent = leftParent = rightParent = null;
+		// leftChild = rightChild = null;
+		// if( !node.isBifurcatingOrExternal(partition) )
+		// node = node.straightDescendent(partition);
+		// heightParameter = node.heightParameter;
+		// taxon = node.taxon;
+		// //boolean tip = true;
+		// Node lc = node.leftChild;
+		// Node rc = node.rightChild;
+		// if( lc != null ) {
+		// // LeftChild exists.
+		// // Does lc bifurcate or do we skip for this partition
+		// // if( lc.isBifurcatingOrExternal(partition) ) {
+		// addChild(new Node(lc, partition));
+		// //System.err.println(Tree.Utils.newick(lc)+" is bifurcating with P =
+		// "+partition);
+		// // } else {
+		// // addChild(new Node(lc.straightDescendent(partition),partition));
+		// //System.err.println(lc.straightDescendent(partition)+" is
+		// descendent.");
+		// // }
+		// }
+		// if( rc != null ) {
+		// // RightChild exists.
+		// // Does rc bifurcate or do we skip for this partition
+		// // if( rc.isBifurcatingOrExternal(partition) ) {
+		// addChild(new Node(rc, partition));
+		// //System.err.println(rc.toString()+" is bifurcating with P =
+		// "+partition);
+		// // } else {
+		// // addChild(new Node(rc.straightDescendent(partition),partition));
+		// //System.err.println(rc.straightDescendent(partition)+" is
+		// descendent.");
+		// // }
+		// }
+		//  		
+		// }
+		//        
+		//        
+		// /** constructor used to clone a subtree without duplicating height
+		// parameters
+		// *
+		// *
+		// */
+		// public Node(Tree tree, Node node, int[] bits) {
+		// parent = null;
+		// leftChild = rightChild = null;
+		// heightParameter = node.heightParameter;
+		// linkSister = node;
+		// linkSister.linkSister = this;
+		// //for(int i=0; i < tree.getChildCount())
+		// boolean tip = true;
+		// if( node.leftChild != null ) {
+		// addChild(new Node(tree, node.leftChild, bits));
+		// tip = false;
+		// }
+		// if( node.rightChild != null ) {
+		// addChild(new Node(tree, node.rightChild, bits));
+		// tip = false;
+		// }
+		// if( tip ) {
+		// taxon = node.taxon;
+		// partitionSet = new BitSet();
+		// int len = bits.length;
+		// for(int i=0; i<len; i++)
+		// partitionSet.set(bits[i]);
+		// }
+		// }
+		//        
+		// public final void setDupParent(Node parent) {
+		// this.dupParent = parent;
+		// if( leftChild != null )
+		// leftChild.setDupParent(parent);
+		// if( rightChild != null )
+		// rightChild.setDupParent(parent);
+		// }
+		//        
+		// public final void clearLinkSister() {
+		// this.linkSister = null;
+		// if( leftChild != null )
+		// leftChild.clearLinkSister();
+		// if( rightChild != null )
+		// rightChild.clearLinkSister();
+		// }
+		//        
+		// public final void clearDupParent() {
+		// this.dupParent = null;
+		// if( leftChild != null )
+		// leftChild.clearDupParent();
+		// if( rightChild != null )
+		// rightChild.clearDupParent();
+		// }
+		//        
+		/*
+		 * public final void recursiveSetPartition(int partition) {
+		 * leftPartition.set(partition); rightPartition.set(partition); if
+		 * (leftChild != null) leftChild.recursiveSetPartition(partition); if
+		 * (rightChild != null) rightChild.recursiveSetPartition(partition); }
+		 */
 
 		public void stripOutDeadEnds() {
 			if (leftChild != null)
@@ -2853,7 +3128,7 @@ public class ARGModel extends AbstractModel
 		}
 
 		public Node stripOutSingleChildNodes(Node cRoot) {
-			//Node rtn = cRoot;
+			// Node rtn = cRoot;
 			int childCount = getChildCount();
 			if (childCount == 0) {
 				return cRoot;
@@ -2875,7 +3150,7 @@ public class ARGModel extends AbstractModel
 					return rightChild.stripOutSingleChildNodes(rightChild);
 				}
 			}
-			//       	System.err.println("Unlinking "+number);
+			// System.err.println("Unlinking "+number);
 			Node parent = leftParent;
 			Node child = leftChild;
 			if (child == null)
@@ -2900,7 +3175,8 @@ public class ARGModel extends AbstractModel
 				} else {
 					rateParameter.setId("node" + getNumber() + ".rate");
 				}
-				rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+				rateParameter.addBounds(new Parameter.DefaultBounds(
+						Double.POSITIVE_INFINITY, 0.0, 1));
 				addParameter(rateParameter);
 			}
 		}
@@ -2915,7 +3191,8 @@ public class ARGModel extends AbstractModel
 				} else {
 					traitParameter.setId("node" + getNumber() + ".trait");
 				}
-				rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+				rateParameter.addBounds(new Parameter.DefaultBounds(
+						Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
 
 				addParameter(traitParameter);
 			}
@@ -2938,12 +3215,14 @@ public class ARGModel extends AbstractModel
 		}
 
 		public final void setRate(double rate) {
-			//System.out.println("Rate set for parameter " + rateParameter.getParameterName());
+			// System.out.println("Rate set for parameter " +
+			// rateParameter.getParameterName());
 			rateParameter.setParameterValue(0, rate);
 		}
 
 		public final void setTrait(double trait) {
-			//System.out.println("Trait set for parameter " + traitParameter.getParameterName());
+			// System.out.println("Trait set for parameter " +
+			// traitParameter.getParameterName());
 			traitParameter.setParameterValue(0, trait);
 		}
 
@@ -2956,134 +3235,143 @@ public class ARGModel extends AbstractModel
 		 */
 		public final int getChildCount() {
 			int n = 0;
-			if (leftChild != null) n++;
-			if (rightChild != null && bifurcation) n++;
+			if (leftChild != null)
+				n++;
+			if (rightChild != null && bifurcation)
+				n++;
 			return n;
 		}
 
 		public final int getParentCount() {
 			int n = 0;
-			if (leftParent != null) n++;
-			if (rightParent != null) n++;
+			if (leftParent != null)
+				n++;
+			if (rightParent != null)
+				n++;
 			return n;
 		}
 
 		public Node getChild(int n) {
-			if (n == 0) return leftChild;
-			if (n == 1) return rightChild;
-			throw new IllegalArgumentException("ARGModel.Nodes can only have up to 2 children");
+			if (n == 0)
+				return leftChild;
+			if (n == 1)
+				return rightChild;
+			throw new IllegalArgumentException(
+					"ARGModel.Nodes can only have up to 2 children");
 		}
 
-//        private Node getChild(int n, int partition) {
-//        	//if( isExternal() )
-//        	//	return null;
-//        	if (n == 0) { // Handle left side
-//        		Node left = leftChild;
-//        		if( left.isExternal() )
-//        			return left;
-//        		Node grandLeft = left.leftChild;
-//        		Node grandRight = left.rightChild;
-//        		boolean grandLeftValid = false;
-//        		boolean grandRightValid = true;
-//        		if( (grandLeft.leftParent == left && grandLeft.partitionSet.get(partition)) || 
-//        			(grandLeft.rightParent == left && !grandLeft.partitionSet.get(partition)) )
-//        			grandLeftValid = true;
-//        		if( (grandRight.leftParent == left && grandRight.partitionSet.get(partition)) ||
-//        			(grandRight.rightParent == left && !grandRight.partitionSet.get(partition)) )
-//        			grandRightValid = true;
-//        		if( grandLeftValid && grandRightValid )
-//        			return left;
-//        		if( grandLeftValid )
-//        			return grandLeft;
-//        		else
-//        			return grandRight;
-//        	}
-//          	if (n == 1) { // Handle right side
-//        		Node right = rightChild;
-//        		if( right.isExternal() )
-//        			return right;
-//        		Node grandLeft = right.leftChild;
-//        		Node grandRight = right.rightChild;
-//        		boolean grandLeftValid = false;
-//        		boolean grandRightValid = true;
-//        		if( (grandLeft.leftParent == right && grandLeft.partitionSet.get(partition)) || 
-//        			(grandLeft.rightParent == right && !grandLeft.partitionSet.get(partition)) )
-//        			grandLeftValid = true;
-//        		if( (grandRight.leftParent == right && grandRight.partitionSet.get(partition)) ||
-//        			(grandRight.rightParent == right && !grandRight.partitionSet.get(partition)) )
-//        			grandRightValid = true;
-//        		if( grandLeftValid && grandRightValid )
-//        			return right;
-//        		if( grandLeftValid )
-//        			return grandLeft;
-//        		else
-//        			return grandRight;
-//        	}
-//           	throw new IllegalArgumentException("ARGModel.Nodes can only have 2 children");      
-//        }
-//        
+		// private Node getChild(int n, int partition) {
+		// //if( isExternal() )
+		// // return null;
+		// if (n == 0) { // Handle left side
+		// Node left = leftChild;
+		// if( left.isExternal() )
+		// return left;
+		// Node grandLeft = left.leftChild;
+		// Node grandRight = left.rightChild;
+		// boolean grandLeftValid = false;
+		// boolean grandRightValid = true;
+		// if( (grandLeft.leftParent == left &&
+		// grandLeft.partitionSet.get(partition)) ||
+		// (grandLeft.rightParent == left &&
+		// !grandLeft.partitionSet.get(partition)) )
+		// grandLeftValid = true;
+		// if( (grandRight.leftParent == left &&
+		// grandRight.partitionSet.get(partition)) ||
+		// (grandRight.rightParent == left &&
+		// !grandRight.partitionSet.get(partition)) )
+		// grandRightValid = true;
+		// if( grandLeftValid && grandRightValid )
+		// return left;
+		// if( grandLeftValid )
+		// return grandLeft;
+		// else
+		// return grandRight;
+		// }
+		// if (n == 1) { // Handle right side
+		// Node right = rightChild;
+		// if( right.isExternal() )
+		// return right;
+		// Node grandLeft = right.leftChild;
+		// Node grandRight = right.rightChild;
+		// boolean grandLeftValid = false;
+		// boolean grandRightValid = true;
+		// if( (grandLeft.leftParent == right &&
+		// grandLeft.partitionSet.get(partition)) ||
+		// (grandLeft.rightParent == right &&
+		// !grandLeft.partitionSet.get(partition)) )
+		// grandLeftValid = true;
+		// if( (grandRight.leftParent == right &&
+		// grandRight.partitionSet.get(partition)) ||
+		// (grandRight.rightParent == right &&
+		// !grandRight.partitionSet.get(partition)) )
+		// grandRightValid = true;
+		// if( grandLeftValid && grandRightValid )
+		// return right;
+		// if( grandLeftValid )
+		// return grandLeft;
+		// else
+		// return grandRight;
+		// }
+		// throw new IllegalArgumentException("ARGModel.Nodes can only have 2
+		// children");
+		// }
+		//        
 
-/*
-		private boolean isRecombinantLinkedToMe(Node node, int partition) {
-			if (node.leftParent == this && node.leftPartition.get(partition))
-				return true;
-			if (node.rightParent == this && node.rightPartition.get(partition))
-				return true;
-			return false;
-		}
-*/
+		/*
+		 * private boolean isRecombinantLinkedToMe(Node node, int partition) {
+		 * if (node.leftParent == this && node.leftPartition.get(partition))
+		 * return true; if (node.rightParent == this &&
+		 * node.rightPartition.get(partition)) return true; return false; }
+		 */
 
 		private boolean isBifurcationDoublyLinked() {
-			return bifurcation && (leftChild == rightChild) && leftChild != null;
+			return bifurcation && (leftChild == rightChild)
+					&& leftChild != null;
 		}
 
 		private boolean recombinantIsLinked(Node parent, int partition) {
 			boolean left = leftParent == parent;
 			boolean right = rightParent == parent;
-			//       	System.err.println("Testing links on "+number);
-//        	if( left && right ) {
-//        		System.err.println("Doubly linked recombinant.");
-//        		if( side == 0 ) {
-//        			System.err.println("Going left");
-//        			return true;
-//        		}
-//        		else {
-//        			System.err.println("Not going right");
-//        			return false;
-//        		}
-//        	//		return false;
-//        	}
+			// System.err.println("Testing links on "+number);
+			// if( left && right ) {
+			// System.err.println("Doubly linked recombinant.");
+			// if( side == 0 ) {
+			// System.err.println("Going left");
+			// return true;
+			// }
+			// else {
+			// System.err.println("Not going right");
+			// return false;
+			// }
+			// // return false;
+			// }
 
-/*            if (leftPartition == null) {
-                System.err.println("no left Partition");
-                //System.exit(-1);
-            }
-            if (rightPartition == null) {
-                System.err.println("no right Partition");
-                //System.exit(-1);
-            }
-            if (left && leftPartition.get(partition))
-                return true;
-            if (right && rightPartition.get(partition))
-                return true;
+			/*
+			 * if (leftPartition == null) { System.err.println("no left
+			 * Partition"); //System.exit(-1); } if (rightPartition == null) {
+			 * System.err.println("no right Partition"); //System.exit(-1); } if
+			 * (left && leftPartition.get(partition)) return true; if (right &&
+			 * rightPartition.get(partition)) return true;
+			 * 
+			 * return false;
+			 */
 
-            return false;*/
-
-			final double partitionSide = partitioning.getParameterValue(partition);
+			final double partitionSide = partitioning
+					.getParameterValue(partition);
 			if (left && partitionSide == 0)
 				return true;
 			if (right && partitionSide == 1)
 				return true;
 			return false;
 
-
 		}
-
 
 		public int getDescendentTipCount() {
 			if (isExternal())
 				return 1;
-			return leftChild.getDescendentTipCount() + rightChild.getDescendentTipCount();
+			return leftChild.getDescendentTipCount()
+					+ rightChild.getDescendentTipCount();
 		}
 
 		public boolean checkForNullRights() {
@@ -3092,11 +3380,16 @@ public class ARGModel extends AbstractModel
 			if (rightChild == null)
 				return true;
 			else
-				return rightChild.checkForNullRights() || leftChild.checkForNullRights();
+				return rightChild.checkForNullRights()
+						|| leftChild.checkForNullRights();
 		}
 
-
-		private Node findNextTreeNode(Node parent, int partition) { // searches down the ARG for the next bifurcation or tip
+		private Node findNextTreeNode(Node parent, int partition) { // searches
+																	// down the
+																	// ARG for
+																	// the next
+																	// bifurcation
+																	// or tip
 			if (isExternal())
 				return this;
 			Node next = this;
@@ -3106,7 +3399,7 @@ public class ARGModel extends AbstractModel
 				else
 					return null;
 			}
-			//if( leftChild.findNextTreeMode())
+			// if( leftChild.findNextTreeMode())
 			next = leftChild.findNextTreeNode(parent, partition);
 			if (next == null)
 				next = rightChild.findNextTreeNode(parent, partition);
@@ -3115,17 +3408,18 @@ public class ARGModel extends AbstractModel
 			return next;
 		}
 
-
-		private Node getChild(int n, int partition) { // Assuming an acyclic bifurcating tree
+		private Node getChild(int n, int partition) { // Assuming an acyclic
+														// bifurcating tree
 			Node child = null;
-			if (n == 0)  // Handle left side
+			if (n == 0) // Handle left side
 				child = leftChild;
 			if (n == 1) // Handle right side
 				child = rightChild;
 			if (child.isExternal())
 				return child;
 			if (child.isBifurcationDoublyLinked()) {
-				//System.err.println("Passing double from "+number+"->"+child.leftChild.number);
+				// System.err.println("Passing double from
+				// "+number+"->"+child.leftChild.number);
 				return child.leftChild.getChild(0, partition);
 			}
 			if (child.isReassortment()) {
@@ -3134,7 +3428,8 @@ public class ARGModel extends AbstractModel
 				else
 					return null;
 			}
-			if (child.leftChild.isReassortment() && child.rightChild.isReassortment()) {
+			if (child.leftChild.isReassortment()
+					&& child.rightChild.isReassortment()) {
 				if (child.leftChild.recombinantIsLinked(child, partition))
 					return child;
 				if (child.rightChild.recombinantIsLinked(child, partition))
@@ -3144,55 +3439,60 @@ public class ARGModel extends AbstractModel
 			return child;
 		}
 
-//        		if( child.isExternal() )
-//        			return child;
-//        		//if( left.isReassortment() )
-//        		//while( left.isReassortment() )
-//        		//	left = left.leftChild; // Just pass through
-//        		//if( left.isExternal() )
-//        		//	return left;
-//        		//if( left.isReassortment() )
-//        		//	;
-//        		Node grandLeft = child.leftChild.findNextTreeNode(child.leftChild, partition);
-//        		Node grandRight = child.rightChild;
-//        		boolean grandLeftValid = false;
-//        		boolean grandRightValid = false;
-//        		while( ! (grandLeftValid || grandRightValid) ) {
-//        			
-//        		}
-//        			left.leftPartition.get(partition);
-//        		boolean grandRightValid = left.rightPartition.get(partition);
-//        		if( grandLeftValid && grandRightValid )
-//        			return left;
-//        		if( grandLeftValid )
-//        			return left.leftChild;
-//        		if( grandRightValid )
-//        			return left.rightChild;
-//        		throw new IllegalArgumentException("Partition not found");
-//        	}
-//          	if (n == 1) { // Handle right side
-//          		if( !rightPartition.get(partition) )
-//          			throw new IllegalArgumentException("Partition not found");
-//        		Node right = rightChild;
-//        		if( right.isExternal() )
-//        			return right;
-//        		boolean grandLeftValid = right.leftPartition.get(partition);
-//        		boolean grandRightValid = right.rightPartition.get(partition);
-//        		if( grandLeftValid && grandRightValid )
-//        			return right;
-//        		if( grandLeftValid )
-//        			return right.leftChild;
-//        		if( grandRightValid )
-//        			return right.rightChild;
-//        		throw new IllegalArgumentException("Partition not found");
-//        	}
-//           	throw new IllegalArgumentException("ARGModel.Nodes can only have 2 children");      
-//        }
+		// if( child.isExternal() )
+		// return child;
+		// //if( left.isReassortment() )
+		// //while( left.isReassortment() )
+		// // left = left.leftChild; // Just pass through
+		// //if( left.isExternal() )
+		// // return left;
+		// //if( left.isReassortment() )
+		// // ;
+		// Node grandLeft = child.leftChild.findNextTreeNode(child.leftChild,
+		// partition);
+		// Node grandRight = child.rightChild;
+		// boolean grandLeftValid = false;
+		// boolean grandRightValid = false;
+		// while( ! (grandLeftValid || grandRightValid) ) {
+		//        			
+		// }
+		// left.leftPartition.get(partition);
+		// boolean grandRightValid = left.rightPartition.get(partition);
+		// if( grandLeftValid && grandRightValid )
+		// return left;
+		// if( grandLeftValid )
+		// return left.leftChild;
+		// if( grandRightValid )
+		// return left.rightChild;
+		// throw new IllegalArgumentException("Partition not found");
+		// }
+		// if (n == 1) { // Handle right side
+		// if( !rightPartition.get(partition) )
+		// throw new IllegalArgumentException("Partition not found");
+		// Node right = rightChild;
+		// if( right.isExternal() )
+		// return right;
+		// boolean grandLeftValid = right.leftPartition.get(partition);
+		// boolean grandRightValid = right.rightPartition.get(partition);
+		// if( grandLeftValid && grandRightValid )
+		// return right;
+		// if( grandLeftValid )
+		// return right.leftChild;
+		// if( grandRightValid )
+		// return right.rightChild;
+		// throw new IllegalArgumentException("Partition not found");
+		// }
+		// throw new IllegalArgumentException("ARGModel.Nodes can only have 2
+		// children");
+		// }
 
 		public Node getParent(int n) {
-			if (n == 0) return leftParent;
-			if (n == 1) return rightParent;
-			throw new IllegalArgumentException("ARGModel.Nodes can only have 2 parents");
+			if (n == 0)
+				return leftParent;
+			if (n == 1)
+				return rightParent;
+			throw new IllegalArgumentException(
+					"ARGModel.Nodes can only have 2 parents");
 		}
 
 		public boolean hasChild(Node node) {
@@ -3201,8 +3501,9 @@ public class ARGModel extends AbstractModel
 
 		/**
 		 * add new child node
-		 *
-		 * @param node new child node
+		 * 
+		 * @param node
+		 *            new child node
 		 */
 		public void singleAddChild(Node node) {
 			if (leftChild == null) {
@@ -3210,9 +3511,10 @@ public class ARGModel extends AbstractModel
 			} else if (rightChild == null) {
 				rightChild = node;
 			} else {
-				throw new IllegalArgumentException("ARGModel.Nodes can only have 2 children");
+				throw new IllegalArgumentException(
+						"ARGModel.Nodes can only have 2 children");
 			}
-			//if( node.leftParent == null )
+			// if( node.leftParent == null )
 			if (node.leftParent == null)
 				node.leftParent = this;
 			if (node.rightParent == null)
@@ -3225,15 +3527,17 @@ public class ARGModel extends AbstractModel
 			} else if (rightChild == null) {
 				rightChild = node;
 			} else {
-				throw new IllegalArgumentException("ARGModel.Node " + number + " can only have 2 children");
+				throw new IllegalArgumentException("ARGModel.Node " + number
+						+ " can only have 2 children");
 			}
-			//if( node.leftParent == null )
+			// if( node.leftParent == null )
 			if (node.leftParent == null) {
 				node.leftParent = this;
 			} else if (node.rightParent == null) {
 				node.rightParent = this;
 			} else {
-				throw new IllegalArgumentException("ARGModel.Nodes can only have 2 parents");
+				throw new IllegalArgumentException(
+						"ARGModel.Nodes can only have 2 parents");
 			}
 		}
 
@@ -3244,9 +3548,10 @@ public class ARGModel extends AbstractModel
 			if (rightChild == null) {
 				rightChild = node;
 			}// else {
-			//  throw new IllegalArgumentException("ARGModel.Nodes can only have 2 children");
-			//}
-			//if( node.leftParent == null )
+			// throw new IllegalArgumentException("ARGModel.Nodes can only have
+			// 2 children");
+			// }
+			// if( node.leftParent == null )
 			if (node.leftParent == null)
 				node.leftParent = this;
 			if (node.rightParent == null)
@@ -3260,14 +3565,16 @@ public class ARGModel extends AbstractModel
 			if (rightChild == null) {
 				rightChild = node;
 			}// else {
-			//  throw new IllegalArgumentException("ARGModel.Nodes can only have 2 children");
-			//}
+			// throw new IllegalArgumentException("ARGModel.Nodes can only have
+			// 2 children");
+			// }
 			if (node.leftParent == null) {
 				node.leftParent = this;
 			} else if (node.rightParent == null) {
 				node.rightParent = this;
 			} else {
-				throw new IllegalArgumentException("ARGModel.Nodes can only have 2 parents");
+				throw new IllegalArgumentException(
+						"ARGModel.Nodes can only have 2 parents");
 			}
 		}
 
@@ -3277,85 +3584,89 @@ public class ARGModel extends AbstractModel
 			else if (rightChild == null)
 				rightChild = node;
 			else
-				throw new IllegalArgumentException("Nodes can only have 2 children.");
+				throw new IllegalArgumentException(
+						"Nodes can only have 2 children.");
 		}
 
-		//public void addChild()
+		// public void addChild()
 
-		//		public void addChildRecombinant(Node node, BitSet partition) {
+		// public void addChildRecombinant(Node node, BitSet partition) {
 
 		public void addChildRecombinant(Node node, Parameter partition) {
-			//if( leftChild == null && rightChild == null ) {
-			//	leftChild = rightChild = node;
-			//} else
-			//if( leftChild == null && rightChild == null ) {
-			//	System.err.println("yep");
-			//	//System.exit(-1);
-			//	leftChild = rightChild = node;
-			//}
+			// if( leftChild == null && rightChild == null ) {
+			// leftChild = rightChild = node;
+			// } else
+			// if( leftChild == null && rightChild == null ) {
+			// System.err.println("yep");
+			// //System.exit(-1);
+			// leftChild = rightChild = node;
+			// }
 			if (leftChild == null)
 				leftChild = node;
-			//leftPartition = partition;
+			// leftPartition = partition;
 			if (rightChild == null)
 				rightChild = node;
-			//rightPartition = partition;
-			//} else {
-			//	throw new IllegalArgumentException("Nodes can only have 2 children.");
-			//}
-//        	node.parent = null;
+			// rightPartition = partition;
+			// } else {
+			// throw new IllegalArgumentException("Nodes can only have 2
+			// children.");
+			// }
+			// node.parent = null;
 			if (node.leftParent == null) {
 				node.leftParent = this;
-//				node.leftPartition = partition;
+				// node.leftPartition = partition;
 				node.partitioning = partition;
 			} else if (node.rightParent == null) {
 				node.rightParent = this;
-//				node.rightPartition = partition;
+				// node.rightPartition = partition;
 				node.partitioning = partition;
 			} else {
-				throw new IllegalArgumentException("Recombinant nodes can only have 2 parents.");
+				throw new IllegalArgumentException(
+						"Recombinant nodes can only have 2 parents.");
 			}
 		}
 
 		/**
 		 * remove child
-		 *
-		 * @param node child to be removed
+		 * 
+		 * @param node
+		 *            child to be removed
 		 */
 		public Node doubleRemoveChild(Node node) {
 			boolean found = false;
 			if (leftChild == node) {
 				leftChild = null;
-				//leftPartition = null;
+				// leftPartition = null;
 				found = true;
 			}
 			if (rightChild == node) {
 				rightChild = null;
-				//rightPartition = null;
+				// rightPartition = null;
 				found = true;
 			}
 			if (!found)
 				throw new IllegalArgumentException("Unknown child node");
 			if (node.leftParent == this)
 				node.leftParent = null;
-			//node.leftPartition = null;
+			// node.leftPartition = null;
 			if (node.rightParent == this)
 				node.rightParent = null;
-			//node.rightPartition = null;
+			// node.rightPartition = null;
 			return node;
 		}
 
 		public Node singleRemoveChild(Node node) {
-			//boolean found = false;
+			// boolean found = false;
 			if (leftChild == node) {
 				leftChild = null;
-				//leftPartition = null;
-				//found = true;
+				// leftPartition = null;
+				// found = true;
 			} else if (rightChild == node) {
 				rightChild = null;
-				//rightPartition = null;
-				//found = true;
+				// rightPartition = null;
+				// found = true;
 			}
-			//if( !found )
+			// if( !found )
 			else
 				throw new IllegalArgumentException("Unknown child node");
 			if (node.bifurcation) {
@@ -3364,17 +3675,18 @@ public class ARGModel extends AbstractModel
 			}
 			if (node.leftParent == this)
 				node.leftParent = null;
-				//node.leftPartition = null;
+			// node.leftPartition = null;
 			else if (node.rightParent == this)
 				node.rightParent = null;
-			//node.rightPartition = null;
+			// node.rightPartition = null;
 			return node;
 		}
 
 		/**
 		 * remove child
-		 *
-		 * @param n number of child to be removed
+		 * 
+		 * @param n
+		 *            number of child to be removed
 		 */
 		public Node removeChild(int n) {
 			Node node;
@@ -3385,7 +3697,8 @@ public class ARGModel extends AbstractModel
 				node = rightChild;
 				rightChild = null;
 			} else {
-				throw new IllegalArgumentException("TreeModel.Nodes can only have 2 children");
+				throw new IllegalArgumentException(
+						"TreeModel.Nodes can only have 2 children");
 			}
 			if (node.leftParent == this)
 				node.leftParent = null;
@@ -3414,11 +3727,11 @@ public class ARGModel extends AbstractModel
 			return bifurcation;
 		}
 
-		//public boolean isReassortment() { return hasChildren() && (leftChild == rightChild); }
+		// public boolean isReassortment() { return hasChildren() && (leftChild
+		// == rightChild); }
 		public boolean isReassortment() {
 			return !bifurcation;
 		}
-
 
 		private String toExtendedNewick() {
 
@@ -3443,8 +3756,8 @@ public class ARGModel extends AbstractModel
 	}
 
 	/**
-	 * This class provides bounds for parameters that represent a node height
-	 * in this tree model.
+	 * This class provides bounds for parameters that represent a node height in
+	 * this tree model.
 	 */
 	private class NodeHeightBounds implements Bounds {
 
@@ -3461,38 +3774,45 @@ public class ARGModel extends AbstractModel
 
 			if (node.isRoot()) {
 				return Double.POSITIVE_INFINITY;
-//                return 10.0;
+				// return 10.0;
 			} else {
 				if (node.leftParent == null) {
-					System.err.println("leftParent of " + node.number + " is null");
+					System.err.println("leftParent of " + node.number
+							+ " is null");
 				}
 				if (node.rightParent == null) {
-					System.err.println("rightParent of " + node.number + " is null");
+					System.err.println("rightParent of " + node.number
+							+ " is null");
 				}
-				return Math.min(node.leftParent.getHeight(), node.rightParent.getHeight());
+				return Math.min(node.leftParent.getHeight(), node.rightParent
+						.getHeight());
 			}
 		}
 
 		public double getLowerLimit(int i) {
 
 			Node node = getNodeOfParameter(nodeHeightParameter);
-			// System.err.println("Is node recombinant? "+node.isReassortment());
+			// System.err.println("Is node recombinant?
+			// "+node.isReassortment());
 			if (node.isExternal()) {
 				return 0.0;
 			} else {
 				if (node.leftChild == null)
-					System.err.println("Node " + node.number + " has null leftChild");
+					System.err.println("Node " + node.number
+							+ " has null leftChild");
 				if (node.rightChild == null)
-					System.err.println("Node " + node.number + " has null rightChild");
-				//System.err.println(node.number+" "+(node.leftChild==null)+" "+(node.rightChild==null));
-				return Math.max(node.leftChild.getHeight(), node.rightChild.getHeight());
+					System.err.println("Node " + node.number
+							+ " has null rightChild");
+				// System.err.println(node.number+" "+(node.leftChild==null)+"
+				// "+(node.rightChild==null));
+				return Math.max(node.leftChild.getHeight(), node.rightChild
+						.getHeight());
 			}
 		}
 
 		public int getBoundsDimension() {
 			return 1;
 		}
-
 
 		private Parameter nodeHeightParameter = null;
 	}
@@ -3501,25 +3821,27 @@ public class ARGModel extends AbstractModel
 	// Private members
 	// ***********************************************************************
 
-
 	/**
 	 * root node
 	 */
 	protected Node root = null;
+
 	protected int storedRootNumber;
 
 	/**
 	 * list of internal nodes (including root)
 	 */
-	//protected Node[] nodes = null;
-	//protected Node[] storedNodes = null;
+	// protected Node[] nodes = null;
+	// protected Node[] storedNodes = null;
 	protected ArrayList<Node> nodes = null;
+
 	protected ArrayList<Node> storedNodes = null;
 
 	/**
 	 * number of nodes (including root and tips)
 	 */
 	protected int nodeCount;
+
 	protected int storedNodeCount;
 
 	/**
@@ -3531,6 +3853,7 @@ public class ARGModel extends AbstractModel
 	 * number of internal nodes (including root)
 	 */
 	protected int internalNodeCount;
+
 	protected int storedInternalNodeCount;
 
 	/**
@@ -3541,17 +3864,26 @@ public class ARGModel extends AbstractModel
 	protected boolean inEdit = false;
 
 	private boolean hasRates = false;
+
 	private boolean hasTraits = false;
 
 	protected Parameter[] addedParameters = null;
+
 	protected Parameter[] removedParameters = null;
+
 	protected Parameter addedPartitioningParameter = null;
+
 	protected Parameter removedPartitioningParameter = null;
+
 	protected VariableSizeCompoundParameter partitioningParameters;
 
 	protected VariableSizeCompoundParameter storedInternalNodeHeights;
+
 	protected VariableSizeCompoundParameter storedInternalAndRootNodeHeights;
+
 	protected VariableSizeCompoundParameter storedNodeRates;
+
 	protected Node[] addedNodes = null;
+
 	protected Node[] removedNodes = null;
 }

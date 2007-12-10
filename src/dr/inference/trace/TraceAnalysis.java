@@ -121,13 +121,14 @@ public class TraceAnalysis {
      * @param burnin     the number of states of burnin or if -1 then use 10%
      * @param filename   the file name of the log file to report on
      * @param drawHeader if true then draw header
+     * @param stdErr     if true then report the standard deviation of the mean
      * @param hpds       if true then report 95% hpd upper and lower
      * @return the traces loaded from given file to create this short report
      * @throws java.io.IOException if general error reading file
      * @throws TraceException      if trace file in wrong format or corrupted
      */
     public static TraceList shortReport(String filename,
-                                        final int burnin, boolean drawHeader, boolean hpds) throws java.io.IOException, TraceException {
+                                        final int burnin, boolean drawHeader, boolean hpds, boolean stdErr) throws java.io.IOException, TraceException {
 
         TraceList traces = analyzeLogFile(filename, burnin);
 
@@ -140,6 +141,8 @@ public class TraceAnalysis {
             for (int i = 0; i < traces.getTraceCount(); i++) {
                 String traceName = traces.getTraceName(i);
                 System.out.print(traceName + "\t");
+                if (stdErr)
+                    System.out.print(traceName + " stdErr\t");
                 if (hpds) {
                     System.out.print(traceName + " hpdLower\t");
                     System.out.print(traceName + " hpdUpper\t");
@@ -150,8 +153,11 @@ public class TraceAnalysis {
 
         System.out.print(filename + "\t");
         for (int i = 0; i < traces.getTraceCount(); i++) {
-            TraceDistribution distribution = traces.getDistributionStatistics(i);
+            //TraceDistribution distribution = traces.getDistributionStatistics(i);
+            TraceCorrelation distribution = traces.getCorrelationStatistics(i);
             System.out.print(distribution.getMean() + "\t");
+            if (stdErr)
+                System.out.print(distribution.getStdErrorOfMean() + "\t");
             if (hpds) {
                 System.out.print(distribution.getLowerHPD() + "\t");
                 System.out.print(distribution.getUpperHPD() + "\t");
@@ -162,9 +168,8 @@ public class TraceAnalysis {
             }
         }
         System.out.println(minESS + "\t" + maxState);
-		return traces;
-	}
-
+        return traces;
+    }
 
 
 }

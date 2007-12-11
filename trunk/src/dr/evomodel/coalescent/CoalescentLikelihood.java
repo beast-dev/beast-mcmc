@@ -25,9 +25,9 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.Coalescent;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.TreeIntervals;
-import dr.evolution.coalescent.Coalescent;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
@@ -43,27 +43,28 @@ import java.util.ArrayList;
 
 /**
  * A likelihood function for the coalescent. Takes a tree and a demographic model.
- *
+ * <p/>
  * Parts of this class were derived from C++ code provided by Oliver Pybus.
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- *
  * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
 public class CoalescentLikelihood extends AbstractModel implements Likelihood, Units {
 
-	// PUBLIC STUFF
+    // PUBLIC STUFF
 
-	public static final String COALESCENT_LIKELIHOOD = "coalescentLikelihood";
-	public static final String ANALYTICAL = "analytical";
-	public static final String MODEL = "model";
+    public static final String COALESCENT_LIKELIHOOD = "coalescentLikelihood";
+    public static final String ANALYTICAL = "analytical";
+    public static final String MODEL = "model";
 
     public static final String POPULATION_TREE = "populationTree";
 
     public enum CoalescentEventType {
-        /** Denotes an interval after which a coalescent event is observed
-         * (i.e. the number of lineages is smaller in the next interval) */
+        /**
+         * Denotes an interval after which a coalescent event is observed
+         * (i.e. the number of lineages is smaller in the next interval)
+         */
         COALESCENT,
         /**
          * Denotes an interval at the end of which a new sample addition is
@@ -77,91 +78,96 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
         NOTHING
     }
 
-	public CoalescentLikelihood(Tree tree, DemographicModel demoModel) {
-		this(COALESCENT_LIKELIHOOD, tree, demoModel, true);
-	}
+    public CoalescentLikelihood(Tree tree, DemographicModel demoModel) {
+        this(COALESCENT_LIKELIHOOD, tree, demoModel, true);
+    }
 
-	public CoalescentLikelihood(String name, Tree tree, DemographicModel demoModel, boolean setupIntervals) {
+    public CoalescentLikelihood(String name, Tree tree, DemographicModel demoModel, boolean setupIntervals) {
 
         super(name);
 
         this.demoModel = demoModel;
-        if( demoModel != null && demoModel instanceof VariableDemographicModel ) {
+        if (demoModel != null && demoModel instanceof VariableDemographicModel) {
             final VariableDemographicModel vdModel = ((VariableDemographicModel) demoModel);
-            if( vdModel.nLoci() == 1 && vdModel.getTree(0) == tree ) {
+            if (vdModel.nLoci() == 1 && vdModel.getTree(0) == tree) {
                 tree = null;
             }
-        } else if( tree == null ) {
-               throw new RuntimeException("Tree is optional only when using  Variable Demographic Model");
+        } else if (tree == null) {
+            throw new RuntimeException("Tree is optional only when using  Variable Demographic Model");
         }
 
         this.tree = tree;
-        if( tree == null ) {
+        if (tree == null) {
             setupIntervals = false;
         }
-        
+
         if (tree instanceof TreeModel) {
-            addModel((TreeModel)tree);
+            addModel((TreeModel) tree);
         }
         if (demoModel != null) {
             addModel(demoModel);
-		}
-		if (setupIntervals) setupIntervals();
+        }
+        if (setupIntervals) setupIntervals();
 
-		addStatistic(new DeltaStatistic());
-	}
+        addStatistic(new DeltaStatistic());
+    }
 
-	CoalescentLikelihood(String name) {
-		super(name);
-	}
+    CoalescentLikelihood(String name) {
+        super(name);
+    }
 
-	// **************************************************************
+    // **************************************************************
     // Extendable methods
     // **************************************************************
 
-	/**
-	 * @return the node ref of the MRCA of this coalescent prior in the given tree (i.e. root of tree)
+    /**
      * @param tree given tree
-	 */
-	public NodeRef getMRCAOfCoalescent(Tree tree) { return tree.getRoot(); }
+     * @return the node ref of the MRCA of this coalescent prior in the given tree (i.e. root of tree)
+     */
+    public NodeRef getMRCAOfCoalescent(Tree tree) {
+        return tree.getRoot();
+    }
 
-	/**
-	 * @return an array of noderefs that represent the MRCAs of subtrees to exclude from coalescent prior.
-	 * May return null if no subtrees should be excluded.
+    /**
      * @param tree given tree
-	 */
-	public NodeRef[] getExcludedMRCAs(Tree tree) { return null; }
+     * @return an array of noderefs that represent the MRCAs of subtrees to exclude from coalescent prior.
+     *         May return null if no subtrees should be excluded.
+     */
+    public NodeRef[] getExcludedMRCAs(Tree tree) {
+        return null;
+    }
 
-	// **************************************************************
+    // **************************************************************
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		if (model == tree) {
-			// treeModel has changed so recalculate the intervals
-			intervalsKnown = false;
-		} else {
-			// demoModel has changed so we don't need to recalculate the intervals
-		}
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == tree) {
+            // treeModel has changed so recalculate the intervals
+            intervalsKnown = false;
+        } else {
+            // demoModel has changed so we don't need to recalculate the intervals
+        }
 
-		likelihoodKnown = false;
-	}
+        likelihoodKnown = false;
+    }
 
-	// **************************************************************
+    // **************************************************************
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-	protected  void handleParameterChangedEvent(Parameter parameter, int index) { } // No parameters to respond to
+    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    } // No parameters to respond to
 
-	// **************************************************************
+    // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * Stores the precalculated state: in this case the intervals
-	 */
-	protected void storeState() {
-        if( tree != null ) {
+    /**
+     * Stores the precalculated state: in this case the intervals
+     */
+    protected void storeState() {
+        if (tree != null) {
             System.arraycopy(intervals, 0, storedIntervals, 0, intervals.length);
             System.arraycopy(lineageCounts, 0, storedLineageCounts, 0, lineageCounts.length);
             storedIntervalsKnown = intervalsKnown;
@@ -169,13 +175,13 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
             storedLikelihoodKnown = likelihoodKnown;
         }
         storedLogLikelihood = logLikelihood;
-	}
+    }
 
-	/**
-	 * Restores the precalculated state: that is the intervals of the tree.
-	 */
-	protected  void restoreState() {
-        if( tree != null ) {
+    /**
+     * Restores the precalculated state: that is the intervals of the tree.
+     */
+    protected void restoreState() {
+        if (tree != null) {
             System.arraycopy(storedIntervals, 0, intervals, 0, storedIntervals.length);
             System.arraycopy(storedLineageCounts, 0, lineageCounts, 0, storedLineageCounts.length);
             intervalsKnown = storedIntervalsKnown;
@@ -184,170 +190,173 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
 
-		if (!intervalsKnown) {
-			likelihoodKnown = false;
-		}
-	}
+        if (!intervalsKnown) {
+            likelihoodKnown = false;
+        }
+    }
 
-	protected final void acceptState() { } // nothing to do
+    protected final void acceptState() {
+    } // nothing to do
 
-	// **************************************************************
+    // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-	public final Model getModel() { return this; }
+    public final Model getModel() {
+        return this;
+    }
 
-	public double getLogLikelihood() {
-		if (!likelihoodKnown) {
-			logLikelihood = calculateLogLikelihood();
-			likelihoodKnown = true;
-		}
-		return logLikelihood;
-	}
+    public double getLogLikelihood() {
+        if (!likelihoodKnown) {
+            logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+        return logLikelihood;
+    }
 
-	public final void makeDirty() {
-		likelihoodKnown = false;
-		intervalsKnown = false;
-	}
+    public final void makeDirty() {
+        likelihoodKnown = false;
+        intervalsKnown = false;
+    }
 
-	/**
+    /**
      * @return the log likelihood of this set of coalescent intervals,
-	 * given a demographic model
+     *         given a demographic model
      */
-	public double calculateLogLikelihood() {
+    public double calculateLogLikelihood() {
 
-        if( tree == null ) {
+        if (tree == null) {
             final VariableDemographicModel demo = ((VariableDemographicModel) demoModel);
-            if( false ) {
+            if (false) {
                 System.err.println("pop " + demo.popSizeParameter + " ind " + demo.indicatorParameter);
             }
-            
+
             final int nTrees = demo.nLoci();
             VariableDemographicModel.VD demogFunction = demo.getDemographicFunction();
             double logLike = 0.0;
-            for(int nt = 0; nt < nTrees; ++nt  ) {
+            for (int nt = 0; nt < nTrees; ++nt) {
                 TreeIntervals ti = demo.getTreeIntervals(nt);
                 Coalescent coalescent = new Coalescent(ti, demogFunction);
-                logLike +=  coalescent.calculateLogLikelihood();
+                logLike += coalescent.calculateLogLikelihood();
             }
             return logLike;
         }
 
         if (!intervalsKnown) setupIntervals();
 
-		if (demoModel == null) return calculateAnalyticalLogLikelihood();
+        if (demoModel == null) return calculateAnalyticalLogLikelihood();
 
-		double logL = 0.0;
+        double logL = 0.0;
 
-		double currentTime = 0.0;
+        double currentTime = 0.0;
 
-		DemographicFunction demoFunction = demoModel.getDemographicFunction();
+        DemographicFunction demoFunction = demoModel.getDemographicFunction();
 
-		for (int j = 0; j < intervalCount; j++) {
+        for (int j = 0; j < intervalCount; j++) {
 
-			logL += calculateIntervalLikelihood(demoFunction, intervals[j], currentTime, lineageCounts[j],
-			getIntervalType(j));
+            logL += calculateIntervalLikelihood(demoFunction, intervals[j], currentTime, lineageCounts[j],
+                    getIntervalType(j));
 
-			// insert zero-length coalescent intervals
-			int diff = getCoalescentEvents(j)-1;
-			for (int k = 0; k < diff; k++) {
-				logL += calculateIntervalLikelihood(demoFunction, 0.0, currentTime, lineageCounts[j]-k-1,
+            // insert zero-length coalescent intervals
+            int diff = getCoalescentEvents(j) - 1;
+            for (int k = 0; k < diff; k++) {
+                logL += calculateIntervalLikelihood(demoFunction, 0.0, currentTime, lineageCounts[j] - k - 1,
                         CoalescentEventType.COALESCENT);
-			}
+            }
 
-			currentTime += intervals[j];
-		}
+            currentTime += intervals[j];
+        }
 
-		return logL;
-	}
+        return logL;
+    }
 
-	private double calculateAnalyticalLogLikelihood() {
+    private double calculateAnalyticalLogLikelihood() {
 
-		final double lambda = getLambda();
-		final int n = tree.getExternalNodeCount();
+        final double lambda = getLambda();
+        final int n = tree.getExternalNodeCount();
 
-		// assumes a 1/theta prior
-		//logLikelihood = Math.log(1.0/Math.pow(lambda,n));
+        // assumes a 1/theta prior
+        //logLikelihood = Math.log(1.0/Math.pow(lambda,n));
 
-		// assumes a flat prior
-		//double logL = Math.log(1.0/Math.pow(lambda,n-1));
+        // assumes a flat prior
+        //double logL = Math.log(1.0/Math.pow(lambda,n-1));
         //final double logL = - Math.log(Math.pow(lambda,n-1));
-        return - (n-1) * Math.log(lambda);
-	}
+        return -(n - 1) * Math.log(lambda);
+    }
 
-	/**
-	 * Returns the likelihood of a given *coalescent* interval
-	 */
-	public final double calculateIntervalLikelihood(DemographicFunction demoFunction, double width, double timeOfPrevCoal, int lineageCount) {
+    /**
+     * Returns the likelihood of a given *coalescent* interval
+     */
+    public final double calculateIntervalLikelihood(DemographicFunction demoFunction, double width, double timeOfPrevCoal, int lineageCount) {
 
-		return calculateIntervalLikelihood(demoFunction, width, timeOfPrevCoal, lineageCount,
+        return calculateIntervalLikelihood(demoFunction, width, timeOfPrevCoal, lineageCount,
                 CoalescentEventType.COALESCENT);
-	}
+    }
 
-	/**
+    /**
      * k - number of lineages
      * N - population size
      * kingsman coalescent: interval to next coalescent event x ~ exp(lambda), where lambda = C(k,2) / N
      * Like(x ; lambda) = lambda * exp(-lambda * x)
      * so Like(N) = (C(k,2)/N) * exp(- x * C(k,2)/N)
      * lg(Like(N)) = lg(C(k,2)) - lg(N) -C(k,2) * x/N
-     *
+     * <p/>
      * When N changes over time N = N(t) we have lambda(t) = C(k,2)/N(t) and the likelihood equation is
      * Like(t) = lambda(t) * exp(- integral_0^t(lambda(x) dx) )
-     *
+     * <p/>
      * lg(Like(t)) = -C(k,2) * integral_0^t(1/N(x) dx) + lg(C(k,2)/N(t))
-     *
+     * <p/>
      * For a sample event, the likelihood is for no event until time t, and is just the first term of the above.
      *
-     * @return likelihood of a given interval,coalescent or otherwise
      * @param demogFunction
      * @param width
      * @param timeOfPrevCoal
      * @param lineageCount
      * @param type
+     * @return likelihood of a given interval,coalescent or otherwise
      */
-	public static double calculateIntervalLikelihood(DemographicFunction demogFunction,
-                                                    double width, double timeOfPrevCoal, int lineageCount,
-                                                    CoalescentEventType type)
-	{
-		//binom.setMax(lineageCount);
+    public static double calculateIntervalLikelihood(DemographicFunction demogFunction,
+                                                     double width, double timeOfPrevCoal, int lineageCount,
+                                                     CoalescentEventType type) {
+        //binom.setMax(lineageCount);
 
-		final double timeOfThisCoal = width + timeOfPrevCoal;
+        final double timeOfThisCoal = width + timeOfPrevCoal;
 
-		final double intervalArea = demogFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
+        final double intervalArea = demogFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
         final double kchoose2 = Binomial.choose2(lineageCount);
         double like = -kchoose2 * intervalArea;
-        if( false ) {
+        if (false) {
             System.err.print("l = " + lineageCount + " width " + width + " int " + intervalArea);
         }
         switch (type) {
-			case COALESCENT:
+            case COALESCENT:
                 final double demographic = demogFunction.getDemographic(timeOfThisCoal);
-                like +=  -Math.log(demographic);
+                like += -Math.log(demographic);
                 //Math.log(kchoose2 / demographic);
-                if( false ) { System.err.print(" vatend " + demographic); }
+                if (false) {
+                    System.err.print(" vatend " + demographic);
+                }
                 break;
-			case NEW_SAMPLE:
-				break;
-		}
+            case NEW_SAMPLE:
+                break;
+        }
 
-		return like;
-	}
+        return like;
+    }
 
     /**
      * @return the exponent of the population size parameter (shape parameter of Gamma distribution) associated to the
      *         likelihood for this interval, coalescent or otherwise
      */
     public final double calculateIntervalShapeParameter(DemographicFunction demogFunction,
-    		double width, double timeOfPrevCoal, int lineageCount, CoalescentEventType type)
-    {
-    	switch (type) {
-    	case COALESCENT:
-    		return 1.0;
-    	case NEW_SAMPLE:
-    		return 0.0;
-    	}
-    	throw new Error("Unknown event found");
+                                                        double width, double timeOfPrevCoal, int lineageCount, CoalescentEventType type) {
+        switch (type) {
+            case COALESCENT:
+                return 1.0;
+            case NEW_SAMPLE:
+                return 0.0;
+        }
+        throw new Error("Unknown event found");
     }
 
     /**
@@ -355,86 +364,86 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
      *         to the likelihood for this interval, coalescent or otherwise
      */
     public final double calculateIntervalRateParameter(DemographicFunction demogFunction,
-                                                       double width, double timeOfPrevCoal, int lineageCount, CoalescentEventType type)
-    {
+                                                       double width, double timeOfPrevCoal, int lineageCount, CoalescentEventType type) {
         final double timeOfThisCoal = width + timeOfPrevCoal;
         final double intervalArea = demogFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
-        return Binomial.choose2(lineageCount)*intervalArea;
+        return Binomial.choose2(lineageCount) * intervalArea;
     }
 
 
-	/**
-	 * @return a factor lambda such that the likelihood can be expressed as
-	 * 1/theta^(n-1) * exp(-lambda/theta). This allows theta to be integrated
-	 * out analytically. :-)
-	 */
-	private double getLambda() {
-		double lambda = 0.0;
-		for (int i= 0; i < getIntervalCount(); i++) {
-			lambda += (intervals[i] * lineageCounts[i]);
-		}
-		lambda /= 2;
+    /**
+     * @return a factor lambda such that the likelihood can be expressed as
+     *         1/theta^(n-1) * exp(-lambda/theta). This allows theta to be integrated
+     *         out analytically. :-)
+     */
+    private double getLambda() {
+        double lambda = 0.0;
+        for (int i = 0; i < getIntervalCount(); i++) {
+            lambda += (intervals[i] * lineageCounts[i]);
+        }
+        lambda /= 2;
 
-		return lambda;
-	}
+        return lambda;
+    }
 
-	/**
-	 * Recalculates all the intervals from the tree model.
-	 * GL: made public, to give BayesianSkylineGibbsOperator access
-	 */
-	public final void setupIntervals() {
+    /**
+     * Recalculates all the intervals from the tree model.
+     * GL: made public, to give BayesianSkylineGibbsOperator access
+     */
+    public final void setupIntervals() {
 
-		if (intervals == null) {
+        if (intervals == null) {
             int maxIntervalCount = tree.getNodeCount();
 
             intervals = new double[maxIntervalCount];
-			lineageCounts = new int[maxIntervalCount];
-			storedIntervals = new double[maxIntervalCount];
-			storedLineageCounts = new int[maxIntervalCount];
-		}
+            lineageCounts = new int[maxIntervalCount];
+            storedIntervals = new double[maxIntervalCount];
+            storedLineageCounts = new int[maxIntervalCount];
+        }
 
         XTreeIntervals ti = new XTreeIntervals(intervals, lineageCounts);
         getTreeIntervals(tree, getMRCAOfCoalescent(tree), getExcludedMRCAs(tree), ti);
         intervalCount = ti.nIntervals;
 
-		intervalsKnown = true;
-	}
+        intervalsKnown = true;
+    }
 
 
-	/**
-	 * Extract coalescent times and tip information into ArrayList times from tree.
+    /**
+     * Extract coalescent times and tip information into ArrayList times from tree.
      * Upon return times contain the time of each node in the subtree below top, and at the corrosponding index
      * of childs is the descendent count for that time.
      *
-	 * @param top the node to start from
-	 * @param excludeBelow an optional array of nodes to exclude (corresponding subtrees) from density.
-     * @param tree given tree
-     * @param times array to fill with times
-     * @param childs array to fill with descendents count
-	 */
-	private static void collectAllTimes(Tree tree, NodeRef top, NodeRef[] excludeBelow,
+     * @param top          the node to start from
+     * @param excludeBelow an optional array of nodes to exclude (corresponding subtrees) from density.
+     * @param tree         given tree
+     * @param times        array to fill with times
+     * @param childs       array to fill with descendents count
+     */
+    private static void collectAllTimes(Tree tree, NodeRef top, NodeRef[] excludeBelow,
                                         ArrayList<ComparableDouble> times, ArrayList<Integer> childs) {
 
-		times.add(new ComparableDouble(tree.getNodeHeight(top)));
-		childs.add(tree.getChildCount(top));
+        times.add(new ComparableDouble(tree.getNodeHeight(top)));
+        childs.add(tree.getChildCount(top));
 
-		for (int i = 0; i < tree.getChildCount(top); i++) {
-			NodeRef child = tree.getChild(top, i);
-			if (excludeBelow == null) {
-				collectAllTimes(tree, child, excludeBelow, times, childs);
-			} else {
-				// check if this subtree is included in the coalescent density
-				boolean include = true;
+        for (int i = 0; i < tree.getChildCount(top); i++) {
+            NodeRef child = tree.getChild(top, i);
+            if (excludeBelow == null) {
+                collectAllTimes(tree, child, excludeBelow, times, childs);
+            } else {
+                // check if this subtree is included in the coalescent density
+                boolean include = true;
                 for (NodeRef anExcludeBelow : excludeBelow) {
                     if (anExcludeBelow.getNumber() == child.getNumber()) {
                         include = false;
                         break;
                     }
                 }
-                if (include) collectAllTimes(tree, child, excludeBelow, times, childs);
-			}
-		}
-	}
+                if (include)
+                    collectAllTimes(tree, child, excludeBelow, times, childs);
+            }
+        }
+    }
 
     class XTreeIntervals {
 
@@ -453,283 +462,291 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
     }
 
     public static void getTreeIntervals(Tree tree, NodeRef root, NodeRef[] exclude, XTreeIntervals ti) {
-       double MULTIFURCATION_LIMIT = 1e-9;
+        double MULTIFURCATION_LIMIT = 1e-9;
 
-		ArrayList<ComparableDouble> times = new ArrayList<ComparableDouble>();
-		ArrayList<Integer> childs = new ArrayList<Integer>();
-		collectAllTimes(tree, root, exclude, times, childs);
-		int[] indices = new int[times.size()];
+        ArrayList<ComparableDouble> times = new ArrayList<ComparableDouble>();
+        ArrayList<Integer> childs = new ArrayList<Integer>();
+        collectAllTimes(tree, root, exclude, times, childs);
+        int[] indices = new int[times.size()];
 
-		HeapSort.sort(times, indices);
+        HeapSort.sort(times, indices);
 
         final double[] intervals = ti.intervals;
         final int[] lineageCounts = ti.lineagesCount;
 
-		// start is the time of the first tip
-		double start = times.get(indices[0]).doubleValue();
-		int numLines = 0;
-		int i = 0;
-		int intervalCount = 0;
-		while (i < times.size()) {
+        // start is the time of the first tip
+        double start = times.get(indices[0]).doubleValue();
+        int numLines = 0;
+        int i = 0;
+        int intervalCount = 0;
+        while (i < times.size()) {
 
-			int lineagesRemoved = 0;
-			int lineagesAdded = 0;
+            int lineagesRemoved = 0;
+            int lineagesAdded = 0;
 
-			final double finish = times.get(indices[i]).doubleValue();
-			double next = finish;
+            final double finish = times.get(indices[i]).doubleValue();
+            double next = finish;
 
-			while (Math.abs(next - finish) < MULTIFURCATION_LIMIT) {
-				final int children = childs.get(indices[i]);
-				if (children == 0) {
-					lineagesAdded += 1;
-				} else {
-					lineagesRemoved += (children - 1);
-				}
-				i += 1;
-				if (i == times.size())  break;
+            while (Math.abs(next - finish) < MULTIFURCATION_LIMIT) {
+                final int children = childs.get(indices[i]);
+                if (children == 0) {
+                    lineagesAdded += 1;
+                } else {
+                    lineagesRemoved += (children - 1);
+                }
+                i += 1;
+                if (i == times.size()) break;
 
                 next = times.get(indices[i]).doubleValue();
-			}
-			//System.out.println("time = " + finish + " removed = " + lineagesRemoved + " added = " + lineagesAdded);
-			if (lineagesAdded > 0) {
+            }
+            //System.out.println("time = " + finish + " removed = " + lineagesRemoved + " added = " + lineagesAdded);
+            if (lineagesAdded > 0) {
 
-				if (intervalCount > 0 || ((finish - start) > MULTIFURCATION_LIMIT)) {
-					intervals[intervalCount] = finish - start;
-					lineageCounts[intervalCount] = numLines;
-					intervalCount += 1;
-				}
+                if (intervalCount > 0 || ((finish - start) > MULTIFURCATION_LIMIT)) {
+                    intervals[intervalCount] = finish - start;
+                    lineageCounts[intervalCount] = numLines;
+                    intervalCount += 1;
+                }
 
-				start = finish;
-			}
-			// add sample event
-			numLines += lineagesAdded;
+                start = finish;
+            }
+            // add sample event
+            numLines += lineagesAdded;
 
-			if (lineagesRemoved > 0) {
+            if (lineagesRemoved > 0) {
 
-				intervals[intervalCount] = finish - start;
-				lineageCounts[intervalCount] = numLines;
-				intervalCount += 1;
-				start = finish;
-			}
-			// coalescent event
-			numLines -= lineagesRemoved;
-		}
+                intervals[intervalCount] = finish - start;
+                lineageCounts[intervalCount] = numLines;
+                intervalCount += 1;
+                start = finish;
+            }
+            // coalescent event
+            numLines -= lineagesRemoved;
+        }
 
         ti.nIntervals = intervalCount;
     }
 
     /**
-	 * @return number of intervals
-	 */
-	public final int getIntervalCount() {
-		return intervalCount;
-	}
+     * @return number of intervals
+     */
+    public final int getIntervalCount() {
+        return intervalCount;
+    }
 
-	/**
-	 * Gets an interval.
-     * @return interval length
+    /**
+     * Gets an interval.
+     *
      * @param i index of interval
+     * @return interval length
      */
-	public final double getInterval(int i) {
-		if (i >= intervalCount) throw new IllegalArgumentException();
-		return intervals[i];
-	}
+    public final double getInterval(int i) {
+        if (i >= intervalCount) throw new IllegalArgumentException();
+        return intervals[i];
+    }
 
-	/**
-	 * Returns the number of uncoalesced lineages within this interval.
-	 * Required for s-coalescents, where new lineages are added as
-	 * earlier samples are come across.
-     * @return number of uncoalesced lineages within this interval.
+    /**
+     * Returns the number of uncoalesced lineages within this interval.
+     * Required for s-coalescents, where new lineages are added as
+     * earlier samples are come across.
+     *
      * @param i lineage index
+     * @return number of uncoalesced lineages within this interval.
      */
-	public final int getLineageCount(int i) {
-		if (i >= intervalCount) throw new IllegalArgumentException();
-		return lineageCounts[i];
-	}
+    public final int getLineageCount(int i) {
+        if (i >= intervalCount) throw new IllegalArgumentException();
+        return lineageCounts[i];
+    }
 
-	/**
-	 * @return the number coalescent events in an interval
+    /**
      * @param i interval index
-	 */
-	public final int getCoalescentEvents(int i) {
+     * @return the number coalescent events in an interval
+     */
+    public final int getCoalescentEvents(int i) {
 
-		if (i >= intervalCount) throw new IllegalArgumentException();
-		if (i < intervalCount-1) {
-			return lineageCounts[i]-lineageCounts[i+1];
-		} else {
-			return lineageCounts[i]-1;
-		}
-	}
+        if (i >= intervalCount) throw new IllegalArgumentException();
+        if (i < intervalCount - 1) {
+            return lineageCounts[i] - lineageCounts[i + 1];
+        } else {
+            return lineageCounts[i] - 1;
+        }
+    }
 
-	/**
-	 * @return the type of interval observed.
+    /**
      * @param i interval index
-	 */
-	public final CoalescentEventType getIntervalType(int i) {
+     * @return the type of interval observed.
+     */
+    public final CoalescentEventType getIntervalType(int i) {
 
-		if (i >= intervalCount) throw new IllegalArgumentException();
-		int numEvents = getCoalescentEvents(i);
+        if (i >= intervalCount) throw new IllegalArgumentException();
+        int numEvents = getCoalescentEvents(i);
 
-		if (numEvents > 0) return CoalescentEventType.COALESCENT;
-		else if (numEvents < 0) return CoalescentEventType.NEW_SAMPLE;
-		else return CoalescentEventType.NOTHING;
-	}
+        if (numEvents > 0) return CoalescentEventType.COALESCENT;
+        else if (numEvents < 0) return CoalescentEventType.NEW_SAMPLE;
+        else return CoalescentEventType.NOTHING;
+    }
 
-	/**
-	 * @return total height of the genealogy represented by these
-	 * intervals.
-	 */
-	public final double getTotalHeight() {
+    /**
+     * @return total height of the genealogy represented by these
+     *         intervals.
+     */
+    public final double getTotalHeight() {
 
-		double height=0.0;
-		for (int j=0; j < intervalCount; j++) {
-			height += intervals[j];
-		}
-		return height;
-	}
+        double height = 0.0;
+        for (int j = 0; j < intervalCount; j++) {
+            height += intervals[j];
+        }
+        return height;
+    }
 
-	/**
-	 * @return whether this set of coalescent intervals is fully resolved
-	 * (i.e. whether is has exactly one coalescent event in each
-	 * subsequent interval)
-	 */
-	public final boolean isBinaryCoalescent() {
-		for (int i = 0; i < intervalCount; i++) {
-			if (getCoalescentEvents(i) != 1) return false;
-		}
+    /**
+     * @return whether this set of coalescent intervals is fully resolved
+     *         (i.e. whether is has exactly one coalescent event in each
+     *         subsequent interval)
+     */
+    public final boolean isBinaryCoalescent() {
+        for (int i = 0; i < intervalCount; i++) {
+            if (getCoalescentEvents(i) != 1) return false;
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	/**
-	 * @return whether this set of coalescent intervals coalescent only
-	 * (i.e. whether is has exactly one or more coalescent event in each
-	 * subsequent interval)
-	 */
-	public final boolean isCoalescentOnly() {
-		for (int i = 0; i < intervalCount; i++) {
-			if (getCoalescentEvents(i) < 1) return false;
-		}
-		return true;
-	}
+    /**
+     * @return whether this set of coalescent intervals coalescent only
+     *         (i.e. whether is has exactly one or more coalescent event in each
+     *         subsequent interval)
+     */
+    public final boolean isCoalescentOnly() {
+        for (int i = 0; i < intervalCount; i++) {
+            if (getCoalescentEvents(i) < 1) return false;
+        }
+        return true;
+    }
 
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * @return the log columns.
-	 */
-	public final dr.inference.loggers.LogColumn[] getColumns() {
-		return new dr.inference.loggers.LogColumn[] {
-			new LikelihoodColumn(getId())
-		};
-	}
+    /**
+     * @return the log columns.
+     */
+    public final dr.inference.loggers.LogColumn[] getColumns() {
+        return new dr.inference.loggers.LogColumn[]{
+                new LikelihoodColumn(getId())
+        };
+    }
 
-	private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-		public LikelihoodColumn(String label) { super(label); }
-		public double getDoubleValue() { return getLogLikelihood(); }
-	}
+    private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
+        public LikelihoodColumn(String label) {
+            super(label);
+        }
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
+    }
 
     public String toString() {
         return Double.toString(getLogLikelihood());
 
     }
 
-
     // **************************************************************
     // Units IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * Sets the units these coalescent intervals are
-	 * measured in.
-	 */
-	public final void setUnits(Type u)
-	{
-		demoModel.setUnits(u);
-	}
+    /**
+     * Sets the units these coalescent intervals are
+     * measured in.
+     */
+    public final void setUnits(Type u) {
+        demoModel.setUnits(u);
+    }
 
-	/**
-	 * Returns the units these coalescent intervals are
-	 * measured in.
-	 */
-	public final Type getUnits()
-	{
-		return demoModel.getUnits();
-	}
+    /**
+     * Returns the units these coalescent intervals are
+     * measured in.
+     */
+    public final Type getUnits() {
+        return demoModel.getUnits();
+    }
 
-	public final boolean getIntervalsKnown()
-	{
-		return intervalsKnown;
-	}
+    public final boolean getIntervalsKnown() {
+        return intervalsKnown;
+    }
 
+    // ****************************************************************
+    // Inner classes
+    // ****************************************************************
 
-	// ****************************************************************
-	// Inner classes
-	// ****************************************************************
+    public class DeltaStatistic extends Statistic.Abstract {
 
-	public class DeltaStatistic extends Statistic.Abstract {
+        public DeltaStatistic() {
+            super("delta");
+        }
 
-		public DeltaStatistic() {
-			super("delta");
-		}
+        public int getDimension() {
+            return 1;
+        }
 
-		public int getDimension() { return 1; }
-
-		public double getStatisticValue(int i) {
-			throw new RuntimeException("Not implemented");
+        public double getStatisticValue(int i) {
+            throw new RuntimeException("Not implemented");
 //			return IntervalList.Utils.getDelta(intervals);
-		}
+        }
 
-	}
+    }
 
-	// ****************************************************************
-	// Private and protected stuff
-	// ****************************************************************
+    // ****************************************************************
+    // Private and protected stuff
+    // ****************************************************************
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return COALESCENT_LIKELIHOOD; }
+        public String getParserName() {
+            return COALESCENT_LIKELIHOOD;
+        }
 
-		public Object parseXMLObject(XMLObject xo) {
+        public Object parseXMLObject(XMLObject xo) {
 
-			XMLObject cxo = (XMLObject)xo.getChild(MODEL);
-			DemographicModel demoModel = (DemographicModel)cxo.getChild(DemographicModel.class);
+            XMLObject cxo = (XMLObject) xo.getChild(MODEL);
+            DemographicModel demoModel = (DemographicModel) cxo.getChild(DemographicModel.class);
 
-			cxo = (XMLObject)xo.getChild(POPULATION_TREE);
-            TreeModel treeModel = cxo != null ? (TreeModel)cxo.getChild(TreeModel.class) : null;
+            cxo = (XMLObject) xo.getChild(POPULATION_TREE);
+            TreeModel treeModel = cxo != null ? (TreeModel) cxo.getChild(TreeModel.class) : null;
 
             return new CoalescentLikelihood(treeModel, demoModel);
-		}
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element represents the likelihood of the tree given the demographic function.";
-		}
+        public String getParserDescription() {
+            return "This element represents the likelihood of the tree given the demographic function.";
+        }
 
-		public Class getReturnType() { return Likelihood.class; }
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(MODEL, new XMLSyntaxRule[] {
-				new ElementRule(DemographicModel.class)
-			}),
-			new ElementRule(POPULATION_TREE, new XMLSyntaxRule[] {
-				new ElementRule(TreeModel.class)
-			}, true),
-		};
-	};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(MODEL, new XMLSyntaxRule[]{
+                        new ElementRule(DemographicModel.class)
+                }),
+                new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
+                        new ElementRule(TreeModel.class)
+                }, true),
+        };
+    };
 
-
-
-	// ****************************************************************
-	// Private and protected stuff
-	// ****************************************************************
+    // ****************************************************************
+    // Private and protected stuff
+    // ****************************************************************
 
 /*	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -766,22 +783,30 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 		};
 	};*/
 
-	/** The demographic model. */
-	DemographicModel demoModel = null;
+    /**
+     * The demographic model.
+     */
+    DemographicModel demoModel = null;
 
-	/** The tree. */
-	Tree tree = null;
+    /**
+     * The tree.
+     */
+    Tree tree = null;
 
-	/** The widths of the intervals. */
-	double[] intervals;
-	private double[] storedIntervals;
+    /**
+     * The widths of the intervals.
+     */
+    double[] intervals;
+    private double[] storedIntervals;
 
-	/** The number of uncoalesced lineages within a particular interval. */
-	int[] lineageCounts;
-	private int[] storedLineageCounts;
+    /**
+     * The number of uncoalesced lineages within a particular interval.
+     */
+    int[] lineageCounts;
+    private int[] storedLineageCounts;
 
-	boolean intervalsKnown = false;
-	private boolean storedIntervalsKnown = false;
+    boolean intervalsKnown = false;
+    private boolean storedIntervalsKnown = false;
 
 	double logLikelihood;
 	private double storedLogLikelihood;

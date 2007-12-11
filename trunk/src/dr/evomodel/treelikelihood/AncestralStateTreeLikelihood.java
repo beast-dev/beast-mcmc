@@ -18,119 +18,119 @@ import dr.xml.*;
  */
 public class AncestralStateTreeLikelihood extends TreeLikelihood implements NodeAttributeProvider {
 
-    public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
-    public static final String RECONSTRUCTION_TAG = "state";
-    public static final String TAG_NAME = "tagName";
+	public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
+	public static final String RECONSTRUCTION_TAG = "state";
+	public static final String TAG_NAME = "tagName";
 
-    private DataType dataType;
-    private int[][] reconstructedStates;
-    private int redrawTime = 0;
-    private String tag;
-
-
-    /**
-     * Constructor.
-     * Now also takes a DataType so that ancestral states are printed using data codes
-     *
-     * @param patternList     -
-     * @param treeModel       -
-     * @param siteModel       -
-     * @param branchRateModel -
-     * @param useAmbiguities  -
-     * @param useScaling      -
-     * @param storePartials   -
-     * @param dataType        - need to provide the data-type, so that corrent data characters can be returned
-     * @param tag             - string label for reconstruction characters in tree log
-     */
-    public AncestralStateTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                        SiteModel siteModel, BranchRateModel branchRateModel,
-                                        boolean useAmbiguities, boolean storePartials,
-                                        boolean useScaling,
-                                        DataType dataType,
-                                        String tag) {
-        super(patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling);
-        this.dataType = dataType;
-        this.tag = tag;
-
-    }
+	private DataType dataType;
+	private int[][] reconstructedStates;
+	private int redrawTime = 0;
+	private String tag;
 
 
-    public String[] getNodeAttributeLabel() {
-        return new String[]{tag};
-    }
+	/**
+	 * Constructor.
+	 * Now also takes a DataType so that ancestral states are printed using data codes
+	 *
+	 * @param patternList     -
+	 * @param treeModel       -
+	 * @param siteModel       -
+	 * @param branchRateModel -
+	 * @param useAmbiguities  -
+	 * @param useScaling      -
+	 * @param storePartials   -
+	 * @param dataType        - need to provide the data-type, so that corrent data characters can be returned
+	 * @param tag             - string label for reconstruction characters in tree log
+	 */
+	public AncestralStateTreeLikelihood(PatternList patternList, TreeModel treeModel,
+	                                    SiteModel siteModel, BranchRateModel branchRateModel,
+	                                    boolean useAmbiguities, boolean storePartials,
+	                                    boolean useScaling,
+	                                    DataType dataType,
+	                                    String tag) {
+		super(patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling);
+		this.dataType = dataType;
+		this.tag = tag;
 
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
+	}
 
-        TreeModel treeModel = (TreeModel) tree;
 
-        if (redrawTime == 0) {
+	public String[] getNodeAttributeLabel() {
+		return new String[]{tag};
+	}
+
+	public String[] getAttributeForNode(Tree tree, NodeRef node) {
+
+		TreeModel treeModel = (TreeModel) tree;
+
+		if (redrawTime == 0) {
 //			makeDirty();
 //			calculateLogLikelihood();    // should do longer need these, now that rootPartials is properly collected
-            traverseSample(treeModel, tree.getRoot(), null);
-        }
+			traverseSample(treeModel, tree.getRoot(), null);
+		}
 
-        // Function gets called once for each node to log tree
-        // After one log, prepare to redraw states
-        redrawTime++;
-        if (redrawTime == tree.getNodeCount())
-            redrawTime = 0;
+		// Function gets called once for each node to log tree
+		// After one log, prepare to redraw states
+		redrawTime++;
+		if (redrawTime == tree.getNodeCount())
+			redrawTime = 0;
 
-        return new String[]{formattedState(reconstructedStates[node.getNumber()], dataType)};
+		return new String[]{formattedState(reconstructedStates[node.getNumber()], dataType)};
 
 
-    }
+	}
 
-    private static String formattedState(int[] state, DataType dataType) {
-        StringBuffer sb = new StringBuffer();
-        sb.append("\"");
-        for (int i : state) {
-            sb.append(dataType.getChar(i));
-        }
-        sb.append("\"");
-        return sb.toString();
-    }
+	private static String formattedState(int[] state, DataType dataType) {
+		StringBuffer sb = new StringBuffer();
+		sb.append("\"");
+		for (int i : state) {
+			sb.append(dataType.getChar(i));
+		}
+		sb.append("\"");
+		return sb.toString();
+	}
 
-    /**
-     * Traverse (pre-order) the tree sampling the internal node states.
-     *
-     * @param tree        - TreeModel on which to perform sampling
-     * @param node        - current node
-     * @param parentState - character state of the parent node to 'node'
-     */
-    public void traverseSample(TreeModel tree, NodeRef node, int[] parentState) {
+	/**
+	 * Traverse (pre-order) the tree sampling the internal node states.
+	 *
+	 * @param tree        - TreeModel on which to perform sampling
+	 * @param node        - current node
+	 * @param parentState - character state of the parent node to 'node'
+	 */
+	public void traverseSample(TreeModel tree, NodeRef node, int[] parentState) {
 
-        if (reconstructedStates == null)
-            reconstructedStates = new int[tree.getNodeCount()][patternCount];
+		if (reconstructedStates == null)
+			reconstructedStates = new int[tree.getNodeCount()][patternCount];
 
-        int nodeNum = node.getNumber();
+		int nodeNum = node.getNumber();
 
-        NodeRef parent = tree.getParent(node);
+		NodeRef parent = tree.getParent(node);
 
-        // This function assumes that all partial likelihoods have already been calculated
-        // If the node is internal, then sample its state given the state of its parent (pre-order traversal).
+		// This function assumes that all partial likelihoods have already been calculated
+		// If the node is internal, then sample its state given the state of its parent (pre-order traversal).
 
-        double[] conditionalProbabilities = new double[stateCount];
-        int[] state = new int[patternCount];
+		double[] conditionalProbabilities = new double[stateCount];
+		int[] state = new int[patternCount];
 
-        if (!tree.isExternal(node)) {
+		if (!tree.isExternal(node)) {
 
-            if (parent == null) {
+			if (parent == null) {
 
-                double[] rootPartials = getRootPartials();
+				double[] rootPartials = getRootPartials();
 
-                // This is the root node
-                for (int j = 0; j < patternCount; j++) {
+				// This is the root node
+				for (int j = 0; j < patternCount; j++) {
 
-                    System.arraycopy(rootPartials, j * stateCount, conditionalProbabilities, 0, stateCount);
-                    state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
-                    reconstructedStates[nodeNum][j] = state[j];
-                }
+					System.arraycopy(rootPartials, j * stateCount, conditionalProbabilities, 0, stateCount);
+					state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
+					reconstructedStates[nodeNum][j] = state[j];
+				}
 
-            } else {
+			} else {
 
-                // This is an internal node, but not the root
-                double[] partialLikelihood = new double[stateCount * patternCount];
-                likelihoodCore.getPartials(nodeNum, partialLikelihood);
+				// This is an internal node, but not the root
+				double[] partialLikelihood = new double[stateCount * patternCount];
+				likelihoodCore.getPartials(nodeNum, partialLikelihood);
 
 //				final double branchRate = branchRateModel.getBranchRate(tree, node);
 //
@@ -145,110 +145,126 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 //
 
 
-                if (categoryCount > 1)
-                    throw new RuntimeException("Reconstruction not implemented for multiple categories yet.");
+				if (categoryCount > 1)
+					throw new RuntimeException("Reconstruction not implemented for multiple categories yet.");
 
-                ((AbstractLikelihoodCore) likelihoodCore).getNodeMatrix(nodeNum, 0, probabilities);
+				((AbstractLikelihoodCore) likelihoodCore).getNodeMatrix(nodeNum, 0, probabilities);
 
 
-                for (int j = 0; j < patternCount; j++) {
+				for (int j = 0; j < patternCount; j++) {
 
-                    int parentIndex = parentState[j] * stateCount;
+					int parentIndex = parentState[j] * stateCount;
 
-                    for (int i = 0; i < stateCount; i++)
-                        conditionalProbabilities[i] = partialLikelihood[i] * probabilities[parentIndex + i];
+					for (int i = 0; i < stateCount; i++)
+						conditionalProbabilities[i] = partialLikelihood[i] * probabilities[parentIndex + i];
 
-                    state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
-                    reconstructedStates[nodeNum][j] = state[j];
+					state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
+					reconstructedStates[nodeNum][j] = state[j];
 
-                }
-            }
+				}
+			}
 
 //			int nodeCount = tree.getChildCount(node);
 
-            // Traverse down the two child nodes
-            NodeRef child1 = tree.getChild(node, 0);
-            traverseSample(tree, child1, state);
+			// Traverse down the two child nodes
+			NodeRef child1 = tree.getChild(node, 0);
+			traverseSample(tree, child1, state);
 
-            NodeRef child2 = tree.getChild(node, 1);
-            traverseSample(tree, child2, state);
-        } else {
+			NodeRef child2 = tree.getChild(node, 1);
+			traverseSample(tree, child2, state);
+		} else {
 
-            // This is an external leaf
+			// This is an external leaf
 
-            ((AbstractLikelihoodCore) likelihoodCore).getNodeStates(nodeNum, reconstructedStates[nodeNum]);
+			((AbstractLikelihoodCore) likelihoodCore).getNodeStates(nodeNum, reconstructedStates[nodeNum]);
 
-        }
-    }
+			// Check for ambiguity codes and sample them
+
+			for (int j = 0; j < patternCount; j++) {
+
+				final int thisState = reconstructedStates[nodeNum][j];
+
+				if (dataType.isAmbiguousState(thisState)) {
+
+					int parentIndex = parentState[j] * stateCount;
+					((AbstractLikelihoodCore) likelihoodCore).getNodeMatrix(nodeNum, 0, probabilities);
+					System.arraycopy(probabilities, parentIndex, conditionalProbabilities, 0, stateCount);
+					reconstructedStates[nodeNum][j] = MathUtils.randomChoicePDF(conditionalProbabilities);
+
+				}
+
+			}
+		}
+	}
 
 
-    /**
-     * The XML parser
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+	/**
+	 * The XML parser
+	 */
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() {
-            return RECONSTRUCTING_TREE_LIKELIHOOD;
-        }
+		public String getParserName() {
+			return RECONSTRUCTING_TREE_LIKELIHOOD;
+		}
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            boolean useAmbiguities = false;
-            boolean storePartials = true;
-            boolean useScaling = false;
-            if (xo.hasAttribute(USE_AMBIGUITIES)) {
-                useAmbiguities = xo.getBooleanAttribute(USE_AMBIGUITIES);
-            }
-            if (xo.hasAttribute(STORE_PARTIALS)) {
-                storePartials = xo.getBooleanAttribute(STORE_PARTIALS);
-            }
-            if (xo.hasAttribute(USE_SCALING)) {
-                useScaling = xo.getBooleanAttribute(USE_SCALING);
-            }
+			boolean useAmbiguities = false;
+			boolean storePartials = true;
+			boolean useScaling = false;
+			if (xo.hasAttribute(USE_AMBIGUITIES)) {
+				useAmbiguities = xo.getBooleanAttribute(USE_AMBIGUITIES);
+			}
+			if (xo.hasAttribute(STORE_PARTIALS)) {
+				storePartials = xo.getBooleanAttribute(STORE_PARTIALS);
+			}
+			if (xo.hasAttribute(USE_SCALING)) {
+				useScaling = xo.getBooleanAttribute(USE_SCALING);
+			}
 
-            PatternList patternList = (PatternList) xo.getChild(PatternList.class);
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
+			PatternList patternList = (PatternList) xo.getChild(PatternList.class);
+			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+			SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
 
-            BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+			BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-            DataType dataType = ((SubstitutionModel) xo.getChild(SubstitutionModel.class)).getDataType();
+			DataType dataType = ((SubstitutionModel) xo.getChild(SubstitutionModel.class)).getDataType();
 
-            String tag = RECONSTRUCTION_TAG;
-            if (xo.hasAttribute(TAG_NAME))
-                tag = xo.getStringAttribute(TAG_NAME);
+			String tag = RECONSTRUCTION_TAG;
+			if (xo.hasAttribute(TAG_NAME))
+				tag = xo.getStringAttribute(TAG_NAME);
 
-            return new AncestralStateTreeLikelihood(patternList, treeModel, siteModel,
-                    branchRateModel, useAmbiguities, storePartials, useScaling, dataType, tag);
-        }
+			return new AncestralStateTreeLikelihood(patternList, treeModel, siteModel,
+					branchRateModel, useAmbiguities, storePartials, useScaling, dataType, tag);
+		}
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
 
-        public String getParserDescription() {
-            return "This element represents the likelihood of a patternlist on a tree given the site model.";
-        }
+		public String getParserDescription() {
+			return "This element represents the likelihood of a patternlist on a tree given the site model.";
+		}
 
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
+		public Class getReturnType() {
+			return Likelihood.class;
+		}
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-                AttributeRule.newBooleanRule(STORE_PARTIALS, true),
-                AttributeRule.newBooleanRule(USE_SCALING, true),
-                AttributeRule.newStringRule(TAG_NAME, true),
-                new ElementRule(PatternList.class),
-                new ElementRule(TreeModel.class),
-                new ElementRule(SiteModel.class),
-                new ElementRule(BranchRateModel.class, true),
-                new ElementRule(SubstitutionModel.class)
-        };
-    };
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
+				AttributeRule.newBooleanRule(STORE_PARTIALS, true),
+				AttributeRule.newBooleanRule(USE_SCALING, true),
+				AttributeRule.newStringRule(TAG_NAME, true),
+				new ElementRule(PatternList.class),
+				new ElementRule(TreeModel.class),
+				new ElementRule(SiteModel.class),
+				new ElementRule(BranchRateModel.class, true),
+				new ElementRule(SubstitutionModel.class)
+		};
+	};
 
 }

@@ -25,14 +25,11 @@
 
 package dr.evolution.tree;
 
-import dr.evomodel.tree.TreeModel;
-
 /**
  * Date: Dec 13, 2004
  * Time: 1:59:24 PM
  *
  * @author Andrew Rambaut
- *
  * @version $Id: BranchRateController.java,v 1.2 2005/03/22 21:51:51 rambaut Exp $
  */
 public interface BranchRateController {

@@ -43,10 +43,9 @@ import java.util.Set;
  * hosts with known history of transmission. The viruses tree should have tip
  * attributes specifying which host they are from (host="").
  *
- * @version $Id: TransmissionStatistic.java,v 1.11 2005/06/27 21:19:15 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: TransmissionStatistic.java,v 1.11 2005/06/27 21:19:15 rambaut Exp $
  */
 public class TransmissionStatistic extends BooleanStatistic implements TreeStatistic {
 
@@ -86,10 +85,11 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
         donorHost = new int[hostCount];
         donorHost[0] = -1;
         transmissionTime = new double[hostCount];
-        transmissionTime[0] = Double.POSITIVE_INFINITY;
+        transmissionTime[0] = java.lang.Double.POSITIVE_INFINITY;
 
         if (transmissionHistoryModel != null) {
-            for (int i = 0; i < transmissionHistoryModel.getTransmissionEventCount(); i++) {
+            for (int i = 0; i < transmissionHistoryModel.getTransmissionEventCount(); i++)
+            {
                 TransmissionHistoryModel.TransmissionEvent event = transmissionHistoryModel.getTransmissionEvent(i);
 
                 int host1 = transmissionHistoryModel.getHostIndex(event.getDonor());
@@ -126,17 +126,24 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
         return host;
     }
 
-    public void setTree(Tree tree) { this.virusTree = tree; }
-    public Tree getTree() { return virusTree; }
+    public void setTree(Tree tree) {
+        this.virusTree = tree;
+    }
+
+    public Tree getTree() {
+        return virusTree;
+    }
 
     public String getDimensionName(int dim) {
         String recipient = transmissionHistoryModel.getHost(dim).getId();
 
         String donor = (donorHost[dim] == -1 ? "" : transmissionHistoryModel.getHost(donorHost[dim]).getId() + "->");
-        return "transmission(" + donor + recipient +")";
+        return "transmission(" + donor + recipient + ")";
     }
 
-    public int getDimension() { return hostCount; }
+    public int getDimension() {
+        return hostCount;
+    }
 
     /**
      * @return true if the population tree is compatible with the species tree
@@ -155,7 +162,7 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
         int host;
 
         if (virusTree.isExternal(node)) {
-            Taxon hostTaxon = (Taxon)virusTree.getTaxonAttribute(node.getNumber(), "host");
+            Taxon hostTaxon = (Taxon) virusTree.getTaxonAttribute(node.getNumber(), "host");
             if (transmissionHistoryModel != null) {
                 host = transmissionHistoryModel.getHostIndex(hostTaxon);
             } else {
@@ -166,7 +173,7 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
                 // This means that the sequence was sampled
                 // before the host was infected so we should probably flag
                 // this as an error before we get to this point...
-                throw new RuntimeException("Sequence " + virusTree.getNodeTaxon(node) + ", was sampled before host, "+ hostTaxon +", was infected");
+                throw new RuntimeException("Sequence " + virusTree.getNodeTaxon(node) + ", was sampled before host, " + hostTaxon + ", was infected");
             }
 
         } else {
@@ -201,7 +208,7 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
                         host = host1;
                     }
                 } else {
-                    host = host1;                    
+                    host = host1;
                 }
             }
         }
@@ -215,18 +222,20 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return TRANSMISSION_STATISTIC; }
+        public String getParserName() {
+            return TRANSMISSION_STATISTIC;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             String name = xo.getStringAttribute("name");
-            Tree virusTree = (Tree)xo.getSocketChild("parasiteTree");
+            Tree virusTree = (Tree) xo.getSocketChild("parasiteTree");
 
             if (xo.getChild(TransmissionHistoryModel.class) != null) {
-                TransmissionHistoryModel history = (TransmissionHistoryModel)xo.getChild(TransmissionHistoryModel.class);
+                TransmissionHistoryModel history = (TransmissionHistoryModel) xo.getChild(TransmissionHistoryModel.class);
                 return new TransmissionStatistic(name, history, virusTree);
             } else {
-                Tree hostTree = (Tree)xo.getSocketChild("hostTree");
+                Tree hostTree = (Tree) xo.getSocketChild("hostTree");
                 return new TransmissionStatistic(name, hostTree, virusTree);
             }
 
@@ -236,37 +245,51 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
             return "A statistic that returns true if the given parasite tree is compatible with the host tree.";
         }
 
-        public Class getReturnType() { return Statistic.class; }
+        public Class getReturnType() {
+            return Statistic.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new StringAttributeRule("name", "A name for this statistic for the purpose of logging"),
                 new XORRule(
                         new ElementRule("hostTree",
-                                new XMLSyntaxRule[] { new ElementRule(Tree.class) }),
+                                new XMLSyntaxRule[]{new ElementRule(Tree.class)}),
                         new ElementRule(TransmissionHistoryModel.class,
                                 "This describes the transmission history of the patients.")
                 ),
                 new ElementRule("parasiteTree",
-                        new XMLSyntaxRule[] { new ElementRule(Tree.class) })
+                        new XMLSyntaxRule[]{new ElementRule(Tree.class)})
         };
     };
 
-    /** The host tree. */
+    /**
+     * The host tree.
+     */
     private Tree hostTree = null;
 
     private TransmissionHistoryModel transmissionHistoryModel = null;
 
-    /** The viruses tree. */
+    /**
+     * The viruses tree.
+     */
     private Tree virusTree = null;
 
-    /** The number of hosts. */
+    /**
+     * The number of hosts.
+     */
     private int hostCount;
 
-    /** The donor host for each recipient host (-1 for initial host). */
+    /**
+     * The donor host for each recipient host (-1 for initial host).
+     */
     private int[] donorHost;
 
-    /** The time of transmission into this host (POSITIVE_INFINITY for initial host). */
+    /**
+     * The time of transmission into this host (POSITIVE_INFINITY for initial host).
+     */
     private double[] transmissionTime;
 }

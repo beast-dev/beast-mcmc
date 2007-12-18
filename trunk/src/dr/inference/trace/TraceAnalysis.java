@@ -35,141 +35,142 @@ import java.io.File;
  */
 public class TraceAnalysis {
 
-    /**
-     * @param fileName the name of the log file to analyze
-     * @param burnin   the state to discard up to
-     * @return an array og analyses of the statistics in a log file.
-     * @throws java.io.IOException if general error reading file
-     * @throws TraceException      if trace file in wrong format or corrupted
-     */
-    public static TraceList analyzeLogFile(String fileName, int burnin) throws java.io.IOException, TraceException {
+	/**
+	 * @param fileName the name of the log file to analyze
+	 * @param burnin   the state to discard up to
+	 * @return an array og analyses of the statistics in a log file.
+	 * @throws java.io.IOException if general error reading file
+	 * @throws TraceException      if trace file in wrong format or corrupted
+	 */
+	public static TraceList analyzeLogFile(String fileName, int burnin) throws java.io.IOException, TraceException {
 
-        File file = new File(fileName);
-        LogFileTraces traces = new LogFileTraces(fileName, file);
-        traces.loadTraces();
-        traces.setBurnIn(burnin);
+		File file = new File(fileName);
+		LogFileTraces traces = new LogFileTraces(fileName, file);
+		traces.loadTraces();
+		traces.setBurnIn(burnin);
 
-        for (int i = 0; i < traces.getTraceCount(); i++) {
-            traces.analyseTrace(i);
-        }
-        return traces;
-    }
+		for (int i = 0; i < traces.getTraceCount(); i++) {
+			traces.analyseTrace(i);
+		}
+		return traces;
+	}
 
-    public static TraceList report(String fileName) throws java.io.IOException, TraceException {
+	public static TraceList report(String fileName) throws java.io.IOException, TraceException {
 
-        return report(fileName, -1);
-    }
+		return report(fileName, -1);
+	}
 
-    public static TraceList report(String fileName, int burnin) throws java.io.IOException, TraceException {
+	public static TraceList report(String fileName, int burnin) throws java.io.IOException, TraceException {
 
-        int fieldWidth = 14;
-        int firstField = 25;
-        NumberFormatter formatter = new NumberFormatter(6);
-        formatter.setPadding(true);
-        formatter.setFieldWidth(fieldWidth);
+		int fieldWidth = 14;
+		int firstField = 25;
+		NumberFormatter formatter = new NumberFormatter(6);
+		formatter.setPadding(true);
+		formatter.setFieldWidth(fieldWidth);
 
-        File file = new File(fileName);
+		File file = new File(fileName);
 
-        LogFileTraces traces = new LogFileTraces(fileName, file);
-        traces.loadTraces();
-        traces.setBurnIn(burnin);
+		LogFileTraces traces = new LogFileTraces(fileName, file);
+		traces.loadTraces();
+		if (burnin != -1)
+			traces.setBurnIn(burnin);
 
-        System.out.println();
-        System.out.println("burnIn   = " + burnin);
-        System.out.println("maxState = " + traces.getMaxState());
-        System.out.println();
+		System.out.println();
+		System.out.println("burnIn   = " + burnin);
+		System.out.println("maxState = " + traces.getMaxState());
+		System.out.println();
 
-        System.out.print(formatter.formatToFieldWidth("statistic", firstField));
-        String[] names = new String[]{"mean", "hpdLower", "hpdUpper", "ESS"};
+		System.out.print(formatter.formatToFieldWidth("statistic", firstField));
+		String[] names = new String[]{"mean", "hpdLower", "hpdUpper", "ESS"};
 
-        for (String name : names) {
-            System.out.print(formatter.formatToFieldWidth(name, fieldWidth));
-        }
-        System.out.println();
+		for (String name : names) {
+			System.out.print(formatter.formatToFieldWidth(name, fieldWidth));
+		}
+		System.out.println();
 
-        int warning = 0;
-        for (int i = 0; i < traces.getTraceCount(); i++) {
+		int warning = 0;
+		for (int i = 0; i < traces.getTraceCount(); i++) {
 
-            traces.analyseTrace(i);
-            TraceDistribution distribution = traces.getDistributionStatistics(i);
+			traces.analyseTrace(i);
+			TraceDistribution distribution = traces.getDistributionStatistics(i);
 
-            double ess = distribution.getESS();
-            System.out.print(formatter.formatToFieldWidth(traces.getTraceName(i), firstField));
-            System.out.print(formatter.format(distribution.getMean()));
-            System.out.print(formatter.format(distribution.getLowerHPD()));
-            System.out.print(formatter.format(distribution.getUpperHPD()));
-            System.out.print(formatter.format(ess));
-            if (ess < 100) {
-                warning += 1;
-                System.out.println("*");
-            } else {
-                System.out.println();
-            }
-        }
-        System.out.println();
+			double ess = distribution.getESS();
+			System.out.print(formatter.formatToFieldWidth(traces.getTraceName(i), firstField));
+			System.out.print(formatter.format(distribution.getMean()));
+			System.out.print(formatter.format(distribution.getLowerHPD()));
+			System.out.print(formatter.format(distribution.getUpperHPD()));
+			System.out.print(formatter.format(ess));
+			if (ess < 100) {
+				warning += 1;
+				System.out.println("*");
+			} else {
+				System.out.println();
+			}
+		}
+		System.out.println();
 
-        if (warning > 0) {
-            System.out.println(" * WARNING: The results of this MCMC analysis may be invalid as ");
-            System.out.println("            one or more statistics had very low effective sample sizes (ESS)");
-        }
+		if (warning > 0) {
+			System.out.println(" * WARNING: The results of this MCMC analysis may be invalid as ");
+			System.out.println("            one or more statistics had very low effective sample sizes (ESS)");
+		}
 
-        System.out.flush();
-        return traces;
-    }
+		System.out.flush();
+		return traces;
+	}
 
-    /**
-     * @param burnin     the number of states of burnin or if -1 then use 10%
-     * @param filename   the file name of the log file to report on
-     * @param drawHeader if true then draw header
-     * @param stdErr     if true then report the standard deviation of the mean
-     * @param hpds       if true then report 95% hpd upper and lower
-     * @return the traces loaded from given file to create this short report
-     * @throws java.io.IOException if general error reading file
-     * @throws TraceException      if trace file in wrong format or corrupted
-     */
-    public static TraceList shortReport(String filename,
-                                        final int burnin, boolean drawHeader, boolean hpds, boolean stdErr) throws java.io.IOException, TraceException {
+	/**
+	 * @param burnin     the number of states of burnin or if -1 then use 10%
+	 * @param filename   the file name of the log file to report on
+	 * @param drawHeader if true then draw header
+	 * @param stdErr     if true then report the standard deviation of the mean
+	 * @param hpds       if true then report 95% hpd upper and lower
+	 * @return the traces loaded from given file to create this short report
+	 * @throws java.io.IOException if general error reading file
+	 * @throws TraceException      if trace file in wrong format or corrupted
+	 */
+	public static TraceList shortReport(String filename,
+	                                    final int burnin, boolean drawHeader, boolean hpds, boolean stdErr) throws java.io.IOException, TraceException {
 
-        TraceList traces = analyzeLogFile(filename, burnin);
+		TraceList traces = analyzeLogFile(filename, burnin);
 
-        int maxState = traces.getMaxState();
+		int maxState = traces.getMaxState();
 
-        double minESS = Double.MAX_VALUE;
+		double minESS = Double.MAX_VALUE;
 
-        if (drawHeader) {
-            System.out.print("file\t");
-            for (int i = 0; i < traces.getTraceCount(); i++) {
-                String traceName = traces.getTraceName(i);
-                System.out.print(traceName + "\t");
-                if (stdErr)
-                    System.out.print(traceName + " stdErr\t");
-                if (hpds) {
-                    System.out.print(traceName + " hpdLower\t");
-                    System.out.print(traceName + " hpdUpper\t");
-                }
-            }
-            System.out.println("minESS\tchainLength");
-        }
+		if (drawHeader) {
+			System.out.print("file\t");
+			for (int i = 0; i < traces.getTraceCount(); i++) {
+				String traceName = traces.getTraceName(i);
+				System.out.print(traceName + "\t");
+				if (stdErr)
+					System.out.print(traceName + " stdErr\t");
+				if (hpds) {
+					System.out.print(traceName + " hpdLower\t");
+					System.out.print(traceName + " hpdUpper\t");
+				}
+			}
+			System.out.println("minESS\tchainLength");
+		}
 
-        System.out.print(filename + "\t");
-        for (int i = 0; i < traces.getTraceCount(); i++) {
-            //TraceDistribution distribution = traces.getDistributionStatistics(i);
-            TraceCorrelation distribution = traces.getCorrelationStatistics(i);
-            System.out.print(distribution.getMean() + "\t");
-            if (stdErr)
-                System.out.print(distribution.getStdErrorOfMean() + "\t");
-            if (hpds) {
-                System.out.print(distribution.getLowerHPD() + "\t");
-                System.out.print(distribution.getUpperHPD() + "\t");
-            }
-            double ess = distribution.getESS();
-            if (ess < minESS) {
-                minESS = ess;
-            }
-        }
-        System.out.println(minESS + "\t" + maxState);
-        return traces;
-    }
+		System.out.print(filename + "\t");
+		for (int i = 0; i < traces.getTraceCount(); i++) {
+			//TraceDistribution distribution = traces.getDistributionStatistics(i);
+			TraceCorrelation distribution = traces.getCorrelationStatistics(i);
+			System.out.print(distribution.getMean() + "\t");
+			if (stdErr)
+				System.out.print(distribution.getStdErrorOfMean() + "\t");
+			if (hpds) {
+				System.out.print(distribution.getLowerHPD() + "\t");
+				System.out.print(distribution.getUpperHPD() + "\t");
+			}
+			double ess = distribution.getESS();
+			if (ess < minESS) {
+				minESS = ess;
+			}
+		}
+		System.out.println(minESS + "\t" + maxState);
+		return traces;
+	}
 
 
 }

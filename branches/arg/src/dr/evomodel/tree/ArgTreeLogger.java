@@ -71,9 +71,15 @@ public class ArgTreeLogger extends TreeLogger {
 	protected String additionalInfo() {
 		return " [&PARTITION=" + partition + "]"
 				+ " [&YULE=" + getLogYuleProbabilityString() + "]"
+				+ " [&NUM_REC=" + getNumberOfReassortments() + "]"
 				;
 	}
 
+	private int getNumberOfReassortments() {
+		ARGModel arg = (ARGModel) getTree();
+		return arg.getReassortmentNodeCount();
+	}
+	
 	private String getLogYuleProbabilityString() {
 		ARGTree tree = new ARGTree((ARGModel) getTree(), partition);
 //		BetaSplittingModel betaModel = new BetaSplittingModel(

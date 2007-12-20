@@ -2,12 +2,12 @@ package dr.evomodel.coalescent;
 
 import java.util.ArrayList;
 import java.util.logging.Logger;
-
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.ARGModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;
+import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;
@@ -16,6 +16,7 @@ import dr.xml.XMLSyntaxRule;
 public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 
 	public static final int RECOMBINATION = 3;
+	
 	
 	public static final String ARG_COALESCENT_MODEL = "argCoalescentLikelihood";
 	public static final String RECOMBINATION_RATE = "recombinationRate";
@@ -33,19 +34,17 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	
 	public ARGCoalescentLikelihood(Parameter popSize, Parameter recomRate, 
 			Parameter clockRate, ARGModel arg, boolean setupIntervals) {
-		//To make the super store state work correctly, we need to initalize the
-		//the intervals first.
 		super(ARG_COALESCENT_MODEL);
 		
 		this.popSize = popSize;
 		this.recomRate = recomRate;
 		this.clockRate = clockRate;
 		this.arg = arg;
-		addModel(arg);
 		addParameter(popSize);
 		addParameter(recomRate);
 		addParameter(clockRate);
 		
+		addModel(arg);
 		intervals = new ArrayList<CoalescentInterval>(arg.getNodeCount());
 		intervalsKnown = false;
 		likelihoodKnown = false;
@@ -88,10 +87,10 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	}
 	
 	 public void handleModelChangedEvent(Model model, Object object, int index) {
-	        if (model == tree) {
-	            intervalsKnown = false;
-	        }
-	        likelihoodKnown = false;
+	     if (model == arg) {
+	        intervalsKnown = false;
+	     }
+	     likelihoodKnown = false;
 	 }
 	 
 	 public void handleParameterChangedEvent(Parameter parameter, int index){
@@ -103,13 +102,21 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 for(CoalescentInterval interval : intervals){
 			 storedIntervals.add(interval.clone());
 		 }
-		 makeDirty();
-	}
+		 storedIntervalsKnown = intervalsKnown;
+		 storedLikelihoodKnown = likelihoodKnown;
+		 storedLogLikelihood = logLikelihood;
+	 }
 	 
 	 public void restoreState(){
 		 intervals = storedIntervals;
 		 storedIntervals.clear();
-		 makeDirty();
+		 intervalsKnown = storedIntervalsKnown;
+	     likelihoodKnown = storedLikelihoodKnown;
+	     logLikelihood = storedLogLikelihood;
+
+	     if (!intervalsKnown) {
+	         likelihoodKnown = false;
+	     }
 	 }
 	 
 	 public double getLogLikelihood(){
@@ -120,7 +127,8 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 			 calculateIntervals();
 		 }
 		 likelihoodKnown = true;
-		 logLikelihood = calculateLogLikelihood(popSize.getParameterValue(0), 
+		 logLikelihood = calculateLogLikelihood(
+				 popSize.getParameterValue(0), 
 				 recomRate.getParameterValue(0),
 				 clockRate.getParameterValue(0)); 
 	 
@@ -132,24 +140,20 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 int numberOfTaxa = 2;
 		 
 		 for(CoalescentInterval interval: intervals){
-			 double rate = (double)numberOfTaxa * (numberOfTaxa - 1);
-			 rate = rate/pSize;
+			 double rate = (double)numberOfTaxa * (numberOfTaxa - 1 + rRate)/(2.0 * pSize);
 			 
-			 logLike += Math.log(rate) - rate * interval.length * clock;
-			 		 
-					
+			 logLike += Math.log(rate) - rate * interval.length;
+		
 			 if(interval.type == COALESCENT){
-				 logLike += 0;
-				 numberOfTaxa++;
+				logLike += Math.log((double)(numberOfTaxa - 1)/(numberOfTaxa - 1 + rRate));
+			 	numberOfTaxa ++;
 			 }else if(interval.type == RECOMBINATION){
-				 logLike += Math.log(rRate);
-				 numberOfTaxa--;
+				 logLike += Math.log(rRate/(numberOfTaxa - 1 + rRate));
+			 	 numberOfTaxa--;
 			 }else{
 				 throw new RuntimeException("Not implemented yet");
 			 }
-					 
 		 }
-		 		 
 		 return logLike;
 	 }
 	 
@@ -178,7 +182,7 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 			if(type == 0){
 				return "(" + length + ", Coalescent)";
 			}
-			return "(" + length + ",Recombination)";
+			return "(" + length + ", Recombination)";
 		}
 		
 		public CoalescentInterval clone(){
@@ -198,16 +202,23 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		public String getParserName() {
 			return ARG_COALESCENT_MODEL;
 		}
-
 		
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return null;
+		public XMLSyntaxRule[] getSyntaxRules(){
+			return rules;
 		}
-
+				
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				new ElementRule(CLOCK_RATE, 
+						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+				new ElementRule(POPULATION_SIZE, 
+						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+				new ElementRule(RECOMBINATION_RATE,
+						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+				new ElementRule(ARG_MODEL,
+						new XMLSyntaxRule[]{new ElementRule(ARGModel.class)}),
+		};
 		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-					
-			
 			XMLObject cxo = (XMLObject) xo.getChild(RECOMBINATION_RATE);
 			Parameter rRate = (Parameter) cxo.getChild(Parameter.class);
 			
@@ -227,7 +238,9 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 
 	 };
 	 
-	 
+	 public String toString(){
+		 return getClass().getSimpleName() + " " + super.toString();
+	 }
 	
 	
 

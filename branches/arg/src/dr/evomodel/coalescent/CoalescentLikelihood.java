@@ -224,18 +224,19 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 
         for (int j = 0; j < intervalCount; j++) {
 
+        	
             logL += calculateIntervalLikelihood(demoFunction, intervals[j], currentTime, lineageCounts[j],
                     getIntervalType(j));
-
+            
             // insert zero-length coalescent intervals
             int diff = getCoalescentEvents(j) - 1;
             for (int k = 0; k < diff; k++) {
-                logL += calculateIntervalLikelihood(demoFunction, 0.0, currentTime, lineageCounts[j] - k - 1, COALESCENT);
+            	logL += calculateIntervalLikelihood(demoFunction, 0.0, currentTime, lineageCounts[j] - k - 1, COALESCENT);
             }
 
             currentTime += intervals[j];
         }
-
+        
         return logL;
     }
 
@@ -270,19 +271,21 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
         //binom.setMax(lineageCount);
 
         double timeOfThisCoal = width + timeOfPrevCoal;
+       
 //        System.err.printf("s: %7.6f   f: %7.6f,  %d, %d\n", timeOfPrevCoal, timeOfThisCoal, lineageCount, type);
         double intervalArea = demoFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
         double like = 0;
         switch (type) {
             case COALESCENT:
-                like = -Math.log(demoFunction.getDemographic(timeOfThisCoal)) -
+                like =  
+                		-Math.log(demoFunction.getDemographic(timeOfThisCoal)) -
                         (Binomial.choose2(lineageCount) * intervalArea);
                 break;
             case NEW_SAMPLE:
                 like = -(Binomial.choose2(lineageCount) * intervalArea);
                 break;
         }
-
+       
         return like;
     }
 
@@ -674,12 +677,12 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
     private int[] storedLineageCounts;
 
     boolean intervalsKnown = false;
-    private boolean storedIntervalsKnown = false;
+    protected boolean storedIntervalsKnown = false;
 
     double logLikelihood;
-    private double storedLogLikelihood;
+    protected double storedLogLikelihood;
     boolean likelihoodKnown = false;
-    private boolean storedLikelihoodKnown = false;
+    protected boolean storedLikelihoodKnown = false;
 
     int intervalCount = 0;
 	private int storedIntervalCount = 0;

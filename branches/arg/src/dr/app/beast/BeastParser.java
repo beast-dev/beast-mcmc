@@ -178,7 +178,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.AddRemoveARGEventOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TossPartitioningOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.NewARGEventOperator.PARSER);
-
+        addXMLObjectParser(dr.evomodel.operators.NewerARGEventOperator.PARSER);
+        
         addXMLObjectParser(dr.evomodel.indel.TKF91Likelihood.PARSER);
         addXMLObjectParser(dr.evomodel.indel.TKF91Model.PARSER);
         addXMLObjectParser(dr.evomodel.indel.IstvanOperator.PARSER);
@@ -221,7 +222,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.model.NegateStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.ExponentiationStatistic.PARSER);
         addXMLObjectParser(dr.inference.model.ExpressionStatistic.PARSER);
-
+                
         addXMLObjectParser(dr.inference.ml.MLOptimizer.PARSER);
         addXMLObjectParser(dr.inference.mcmc.MCMC.PARSER);
         addXMLObjectParser(dr.inference.loggers.MCLogger.PARSER);

@@ -20,9 +20,11 @@ import dr.inference.model.*;
 import dr.inference.parallel.MPIServices;
 import dr.math.MathUtils;
 import dr.util.Attributable;
+import dr.util.NumberFormatter;
 import dr.xml.*;
 import org.jdom.Document;
 import org.jdom.Element;
+
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -767,10 +769,15 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		};
 		logColumns[3] = new ExtremeNodeHeightColumn("minNodeHeight") {
 			double getStartValue() {
-				return 1;
+				return 0;
 			}
 
 			double compare(double currentValue, double newValue) {
+				if(newValue == 0){
+					return currentValue;
+				}else if(currentValue == 0){
+					return newValue;
+				}
 				if (newValue < currentValue)
 					return newValue;
 				return currentValue;
@@ -2095,6 +2102,48 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		// return null;
 	}
 
+	public String getARGSummary(){
+		NumberFormatter format = new NumberFormatter(4);
+		
+		String space = "   ";
+		
+		String a = "----------------------\n" + 
+			"ARG Summary \n---------------------- \n";
+				
+		a += "Number of nodes: " + nodes.size() + "\n";
+		a += "Number of partitions: " + maxNumberOfPartitions + "\n";
+		a += "Root number: " + getRoot().getNumber() + "\n";
+		
+		a += "Extended Newick Format: " + this.toExtendedNewick() + "\n\n";
+		a += "Node Summary" 
+	         + "\n----------------------------------------\n" + 
+		     "ID  LP   RP   LC   RC   Height" + space + "TX  \n" + 
+		     "----------------------------------------\n" ;
+			
+		for(Node node : nodes){
+			a += node.getNumber() + space;
+			
+			if (node.leftParent == null) a += "-1" + space;
+			else a += " " + node.leftParent.number + space;
+			if (node.rightParent == null) a += "-1" + space;
+			else a += " " + node.rightParent.number + space;
+			if (node.leftChild == null)	a += "-1" + space;
+			else a += " " + node.leftChild.number + space;
+			if (node.rightChild == null) a += "-1" + space;
+			else a += " " + node.rightChild.number + space;
+			
+			a += format.formatDecimal(getNodeHeight(node),4) + space;
+
+			if(node.taxon == null){
+				a += "internal" + space;
+			}else{
+				a += node.taxon + space;
+			}
+			a += "\n";
+		}
+		return a;
+	}
+	
 	public String toGraphStringCompressed(boolean recurse) {
 		int cnt = 0;
 		for (Node node : nodes) {
@@ -3751,7 +3800,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		}
 
 		public String toString() {
-			return taxon.getId();
+			if(taxon == null){
+				return "" + number;
+			}
+			return "" + number + " (" + taxon.getId() + ")";
 		}
 	}
 
@@ -3820,7 +3872,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	// ***********************************************************************
 	// Private members
 	// ***********************************************************************
-
+	
 	/**
 	 * root node
 	 */

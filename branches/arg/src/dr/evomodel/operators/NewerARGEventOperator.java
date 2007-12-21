@@ -1,7 +1,7 @@
 package dr.evomodel.operators;
 
 import java.util.ArrayList;
-import java.util.logging.Logger;
+import java.util.List;
 
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
@@ -34,6 +34,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	public static final String JUST_INTERNAL = "justInternalNodes";
 	public static final String INTERNAL_AND_ROOT = "internalAndRootNodes";
 	public static final String NODE_RATES = "nodeRates";
+	public static final double LOG_TWO = 0.693147181;
 	
 	private double size = 0.0;
 	private double singlePartitionProbability = 0.0;
@@ -98,14 +99,12 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		int count = 0;
 		int totalNumberOfNodes = arg.getNodeCount();
 
-		NodeRef root = arg.getRoot();
 		for (int i = 0; i < totalNumberOfNodes; i++) {
 			NodeRef node = arg.getNode(i);
 			NodeRef leftParent = arg.getParent(node,ARGModel.LEFT);
 			NodeRef rightParent = arg.getParent(node,ARGModel.RIGHT);
-			if (arg.isReassortment(node) && 
-					((leftParent != root && arg.isBifurcation(leftParent)) ||
-					  (rightParent != root && arg.isBifurcation(rightParent)))){
+			if(  arg.isReassortment(node) && 
+			    (arg.isBifurcation(leftParent) || arg.isBifurcation(rightParent))){
 				if (list != null){
 					list.add(node);
 				}
@@ -160,12 +159,13 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
 				
-		double probabilityBeyondRoot = 0.05;
+		double probabilityBeyondRoot = 0;
 		double addHeightParm = 2 / treeHeight; //This is 1/mean of the additional height
-		double newBifurcationHeight;
-		double newReassortmentHeight;
+		double newReassortmentHeight = treeHeight * MathUtils.nextDouble();
+		logq += Math.log(treeHeight);;
 		
-		//Choose locations for the new event.
+		double newBifurcationHeight;
+				
 		if(MathUtils.nextDouble() < probabilityBeyondRoot){
 			newBifurcationHeight = - Math.log(1 - MathUtils.nextDouble())
 															/addHeightParm;
@@ -176,16 +176,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			newBifurcationHeight = treeHeight * MathUtils.nextDouble();
 			logq += Math.log(treeHeight/(1-probabilityBeyondRoot));
 		}
-		if(MathUtils.nextDouble() < probabilityBeyondRoot){
-			newReassortmentHeight = -Math.log(1 - MathUtils.nextDouble())
-															/addHeightParm;
-			logq += addHeightParm*(newReassortmentHeight) 
-				- Math.log(probabilityBeyondRoot*addHeightParm);
-			newReassortmentHeight += treeHeight;
-		}else{
-			newReassortmentHeight = treeHeight * MathUtils.nextDouble();
-			logq += Math.log(treeHeight/(1-probabilityBeyondRoot));
-		}
+
 		
 		if (newReassortmentHeight > newBifurcationHeight) {
 			double temp = newReassortmentHeight;
@@ -198,86 +189,95 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		int totalPotentialReassortmentChildren = findPotentialAttachmentPoints(
 				newReassortmentHeight, potentialReassortmentChildren);
 	
-		//TODO Marc, should this be an assert?
+		
 		assert totalPotentialBifurcationChildren > 0 && totalPotentialReassortmentChildren > 0; 
 			
-		Node recNode = (Node) potentialReassortmentChildren.get(MathUtils
+		Node reassortChild = (Node) potentialReassortmentChildren.get(MathUtils
 				.nextInt(totalPotentialReassortmentChildren));
 	    logq += Math.log(totalPotentialReassortmentChildren);
 
 	    
-		Node recParentL = recNode.leftParent;
-		Node recParentR = recNode.rightParent;
-		Node recParent = recParentL;
+		Node reassortLeftParent = reassortChild.leftParent;
+		Node reassortRightParent = reassortChild.rightParent;
+		Node reassortParent = reassortLeftParent;
 		
-		if (recParentL != recParentR){
-			if (arg.getNodeHeight(recParentL) < newReassortmentHeight){
-				recParent = recParentR;
-			}else if (arg.getNodeHeight(recParentR) > newReassortmentHeight
+		if (reassortLeftParent != reassortRightParent){
+			if (arg.getNodeHeight(reassortLeftParent) < newReassortmentHeight){
+				reassortParent = reassortRightParent;
+			}else if (arg.getNodeHeight(reassortRightParent) > newReassortmentHeight
 					&& MathUtils.nextDouble() > 0.5){
-				recParent = recParentR;
+				reassortParent = reassortRightParent;
 				logq += Math.log(2);
 			}
 		}
 
 
-		Node sisNode = (Node) potentialBifurcationChildren.get(MathUtils
+		Node bifurcateChild = (Node) potentialBifurcationChildren.get(MathUtils
 				.nextInt(totalPotentialBifurcationChildren));
 	    logq += Math.log(totalPotentialBifurcationChildren);
 
 	   
-		Node sisParentL = sisNode.leftParent;
-		Node sisParentR = sisNode.rightParent;
-		Node sisParent = sisParentL;
-		if (sisParentL != sisParentR) {
-			if (arg.getNodeHeight(sisParentL) < newBifurcationHeight)
-				sisParent = sisParentR;
-			else if (arg.getNodeHeight(sisParentR) > newBifurcationHeight
+		Node bifurcateLeftParent = bifurcateChild.leftParent;
+		Node bifurcateRightParent = bifurcateChild.rightParent;
+		Node bifurcateParent = bifurcateLeftParent;
+		if (bifurcateLeftParent != bifurcateRightParent) {
+			if (arg.getNodeHeight(bifurcateLeftParent) < newBifurcationHeight)
+				bifurcateParent = bifurcateRightParent;
+			else if (arg.getNodeHeight(bifurcateRightParent) > newBifurcationHeight
 					&& MathUtils.nextDouble() > 0.5){
-				sisParent = sisParentR;
+				bifurcateParent = bifurcateRightParent;
 				logq += Math.log(2);
+				
 			}
 		}
 
+		
 		double newBifurcationRateCategory = 1.0;
 		double newReassortmentRateCategory = 1.0;
 
 		Node newBifurcation = arg.new Node();
 		newBifurcation.heightParameter = new Parameter.Default(newBifurcationHeight);
 		newBifurcation.rateParameter = new Parameter.Default(newBifurcationRateCategory);
+		newBifurcation.number = arg.getNodeCount();
 		newBifurcation.setupHeightBounds();
 
 		Node newReassortment = arg.new Node();
 		newReassortment.bifurcation = false;
 		newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
 		newReassortment.rateParameter = new Parameter.Default(newReassortmentRateCategory);
+		newReassortment.number = arg.getNodeCount() + 1;
 		newReassortment.setupHeightBounds();
-
+		
+		
 		//Begin mutating the tree.
 		arg.beginTreeEdit(); 
-		arg.removeChild(sisParent, sisNode);
-		if (sisNode != recNode){
-			arg.removeChild(recParent, recNode);
+		if(bifurcateParent != null){
+			arg.removeChild(bifurcateParent, bifurcateChild);
+			arg.addChild(bifurcateParent,newBifurcation);
 		}
-		arg.addChild(sisParent,newBifurcation);
 		
-		if (sisNode != recNode)
-			arg.singleAddChild(newBifurcation, sisNode);
-		arg.doubleAddChild(newReassortment, recNode);
-
+		if (bifurcateChild != reassortChild){
+			arg.removeChild(reassortParent, reassortChild);
+			arg.singleAddChild(newBifurcation, bifurcateChild);
+		}
+		arg.doubleAddChild(newReassortment, reassortChild);
+		
 		VariableSizeParameter partitioning = new VariableSizeParameter(arg.getNumberOfPartitions());
 
         logq += drawRandomPartitioning(partitioning);
 
 
-		if (sisNode != recNode) {
-			arg.addChildAsRecombinant(newBifurcation, recParent,
+		if (bifurcateChild != reassortChild) {
+			arg.addChildAsRecombinant(newBifurcation, reassortParent,
 					newReassortment, partitioning);
 		} else {
 			arg.addChildAsRecombinant(newBifurcation, newBifurcation,
 					newReassortment, partitioning);
 		}
 
+		if(bifurcateParent == null){
+			arg.setRoot(newBifurcation);
+		}
 		arg.expandARGWithRecombinant(newBifurcation, newReassortment,
 				internalNodeParameters,
 				internalAndRootNodeParameters,
@@ -292,11 +292,11 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					+ "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
 		}
 		//End mutating the tree.
-
-
+		
+		
         logq -= Math.log(findPotentialNodesToRemove(null));
-        if (!(recNode.leftParent.isBifurcation() && recNode.rightParent.isRoot()) &&
-                !(recNode.rightParent.isBifurcation() && recNode.leftParent.isRoot())){
+        if (!(reassortChild.leftParent.isBifurcation() && reassortChild.rightParent.isRoot()) &&
+                !(reassortChild.rightParent.isBifurcation() && reassortChild.leftParent.isRoot())){
             logq -= Math.log(2.0);
         }
 		return logq;
@@ -371,80 +371,92 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		NoReassortmentNodeException{
 		double logq = 0;
 
-		// 1. Get a list of all the reassortment nodes.
+		
 		ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
 		int totalPotentials = findPotentialNodesToRemove(potentialNodes);
 				
-		//2. If there aren't any, throw a failure exception.
 		if (totalPotentials == 0){
 			throw new NoReassortmentNodeException("No reassortment nodes to remove.");
 		}
+		
 		arg.beginTreeEdit();
 		boolean doneSomething = false;
 		
-		//3. Choose a reassortment node randomly
-		NodeRef recNode = potentialNodes.get(MathUtils.nextInt(totalPotentials));
-
-		double reverseReassortmentHeight = arg.getNodeHeight(recNode);
+		NodeRef removeNode = potentialNodes.get(MathUtils.nextInt(totalPotentials));
+		double reverseReassortmentHeight = arg.getNodeHeight(removeNode);
 		double reverseBifurcationHeight = 0;
 
-		NodeRef recLeftParent = arg.getParent(recNode, ARGModel.LEFT);
-		NodeRef recLeftChild  = arg.getChild(recNode, ARGModel.RIGHT);
+		NodeRef removeLeftParent = arg.getParent(removeNode, ARGModel.LEFT);
+		NodeRef removeLeftChild  = arg.getChild(removeNode, ARGModel.LEFT);
 		
-		if(arg.getParent(recNode,ARGModel.LEFT) == arg.getParent(recNode,ARGModel.RIGHT)){
-			NodeRef recGrandParent = arg.getParent(recLeftParent,ARGModel.LEFT);
+		if(arg.getParent(removeNode,ARGModel.LEFT) == arg.getParent(removeNode,ARGModel.RIGHT)){
+			assert !arg.isRoot(removeLeftParent);
+			
+			NodeRef recGrandParent = arg.getParent(removeLeftParent,ARGModel.LEFT);
 						
-			arg.doubleRemoveChild(recGrandParent, recLeftParent);
-			arg.doubleRemoveChild(recNode, recLeftChild);
-			arg.addChild(recGrandParent,recLeftChild);
+			arg.doubleRemoveChild(recGrandParent, removeLeftParent);
+			arg.doubleRemoveChild(removeNode, removeLeftChild);
+			arg.addChild(recGrandParent,removeLeftChild);
 			
 			doneSomething = true;
 		}else{ 
-			NodeRef recParent1 = recLeftParent;
-			NodeRef recParent2 = arg.getParent(recNode,ARGModel.RIGHT);
-						
-			//TODO Figure out what these orientations are.
-			if(arg.isReassortment(recParent1) || arg.isRoot(recParent2)){ 
-				recParent1 = arg.getParent(recNode,ARGModel.RIGHT);
-				recParent2 = arg.getParent(recNode,ARGModel.LEFT);
-			}else if(arg.isBifurcation(recParent1) && !arg.isRoot(recParent2)){ 
-				if (MathUtils.nextDouble() < 0.5) { 
-					recParent1 = arg.getParent(recNode,ARGModel.RIGHT);
-					recParent2 = arg.getParent(recNode,ARGModel.LEFT);
+			NodeRef keptParent = removeLeftParent;
+			NodeRef removeParent = arg.getParent(removeNode,ARGModel.RIGHT);
+									
+			if(arg.isBifurcation(keptParent) 
+					&& arg.isBifurcation(removeParent)){
+				if(MathUtils.nextBoolean()){
+					removeParent = removeLeftParent;
+					keptParent = arg.getParent(removeNode,ARGModel.RIGHT);
 				}
-				logq += Math.log(2);
+				logq += LOG_TWO;
+			}else if(arg.isBifurcation(removeParent)){
+				removeParent = removeLeftParent;
+				keptParent = arg.getParent(removeNode,ARGModel.RIGHT);
 			}
-			NodeRef recGrandParent = arg.getParent(recParent1, ARGModel.LEFT);
-			NodeRef otherChild = arg.getChild(recParent1, ARGModel.LEFT);
-					
-			if (otherChild == recNode){
-				otherChild = arg.getChild(recParent1, ARGModel.RIGHT);
-			}
-			//This part takes care of removing and readjusting the arg model after the deletion.
-			arg.removeChild(recGrandParent, recParent1);
-			arg.singleRemoveChild(recParent1, otherChild);
-			arg.removeChild(recParent2,recNode);
-			arg.doubleRemoveChild(recNode, recLeftChild);
 			
-			if(otherChild != recLeftChild){
-				arg.addChild(recGrandParent, otherChild);
-				arg.addChild(recParent2, recLeftChild);
+			if(arg.isRoot(removeParent)){
+				NodeRef otherChild = arg.getOtherChild(removeParent, removeNode);
+				
+				arg.singleRemoveChild(removeParent, otherChild);
+				arg.removeChild(keptParent, removeNode);
+				arg.doubleRemoveChild(removeNode, removeLeftChild);
+				
+				//TODO Figure out how to link keptParent and removeLeftChild.
+//				arg.addChild(keptParent, child)
+				
+				arg.setRoot(otherChild);
 			}else{
-				arg.addChildWithSingleParent(recGrandParent, otherChild);
-				arg.addChildWithSingleParent(recParent2, recLeftChild);
+				NodeRef removeGrandParent = arg.getParent(removeParent, ARGModel.LEFT);
+				NodeRef otherChild = arg.getOtherChild(removeParent, removeNode);
+						
+				arg.removeChild(removeGrandParent, removeParent);
+				arg.singleRemoveChild(removeParent, otherChild);
+				arg.removeChild(keptParent,removeNode);
+				arg.doubleRemoveChild(removeNode, removeLeftChild);
+			
+				
+				if(otherChild != removeLeftChild){
+					arg.addChild(removeGrandParent, otherChild);
+					arg.addChild(keptParent, removeLeftChild);
+				}else{
+					System.exit(-1);
+					arg.addChildWithSingleParent(removeGrandParent, otherChild);
+					arg.addChildWithSingleParent(keptParent, removeLeftChild);
+				}
 			}
-
 			doneSomething = true;
-
-			recLeftParent = recParent1;
+			removeLeftParent = removeParent;
 		}
+		
+		
 		assert sanityCheck();
 
-		reverseBifurcationHeight = arg.getNodeHeight(recLeftParent);
+		reverseBifurcationHeight = arg.getNodeHeight(removeLeftParent);
 
 		if (doneSomething) {
 			try {
-				arg.contractARGWithRecombinant((Node)recLeftParent, (Node)recNode,
+				arg.contractARGWithRecombinant((Node)removeLeftParent, (Node)removeNode,
 						internalNodeParameters, internalAndRootNodeParameters, nodeRates);
 			} catch (Exception e) {
 				System.err.println("here");
@@ -461,6 +473,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					+ "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
 		}
 
+		
 //	    double d1 = findPotentialAttachmentPoints(reverseBifurcationHeight,null);
 //	    double d2 = findPotentialAttachmentPoints(reverseReassortmentHeight,null);
 //	    System.err.printf("d1 = %5.4f, d2 = %5.4f\n",d1,d2);

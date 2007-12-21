@@ -13,6 +13,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.treelikelihood.ARGLikelihood;
+import dr.gui.tree.SquareTreePainter;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
@@ -988,6 +989,31 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		return ((Node) node).getChildCount();
 	}
 
+	
+	public final NodeRef getOtherChild(NodeRef parent, NodeRef wrongChild){
+		Node p  = (Node) parent;
+		Node c =  (Node) wrongChild;
+		
+		if(p.leftChild == c){
+			return p.rightChild;
+		}
+		return p.leftChild;
+	}
+	
+	public final NodeRef getBrother(NodeRef node){
+		Node n = (Node)node;
+		
+		if(n.isReassortment()){
+			return node;
+		}
+		Node p = n.leftParent;
+		
+		if(p.leftChild == n){
+			return p.rightChild;
+		}
+		
+		return p.leftChild;
+	}
 	/**
 	 * If i = 0, the left child is returned, else if i = 1, the right child is
 	 * returned.
@@ -2101,8 +2127,14 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 		// return null;
 	}
-
-	public String getARGSummary(){
+	
+	
+	/**
+	 * Gives a summary of the ARG model.  Should only 
+	 * be used for debugging purposes because it's really slow.
+	 * @return a summary of the ARG model.
+	 */
+	public String toARGSummary(){
 		NumberFormatter format = new NumberFormatter(4);
 		
 		String space = "   ";
@@ -2114,7 +2146,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		a += "Number of partitions: " + maxNumberOfPartitions + "\n";
 		a += "Root number: " + getRoot().getNumber() + "\n";
 		
-		a += "Extended Newick Format: " + this.toExtendedNewick() + "\n\n";
 		a += "Node Summary" 
 	         + "\n----------------------------------------\n" + 
 		     "ID  LP   RP   LC   RC   Height" + space + "TX  \n" + 
@@ -2141,6 +2172,13 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			}
 			a += "\n";
 		}
+		a += "\nInduced Trees" + 
+			"\n----------------------------------------\n";
+		for(int i = 0; i < maxNumberOfPartitions; i++){
+			ARGTree tree = new ARGTree(this,i);
+			a += "Partition " + i + "\n  " + tree.toString() + "\n";
+		}
+				
 		return a;
 	}
 	

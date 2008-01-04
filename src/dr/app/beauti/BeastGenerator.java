@@ -42,6 +42,7 @@ import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.coalescent.*;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
+import dr.evomodel.operators.TreeBitMoveOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.speciation.BirthDeathModel;
@@ -1664,6 +1665,8 @@ public class BeastGenerator extends BeautiOptions {
             writeSwapOperator(operator, writer);
         } else if (operator.type.equals(BITFLIP)) {
             writeBitFlipOperator(operator, writer);
+        } else if (operator.type.equals(TREE_BIT_MOVE)) {
+            writeTreeBitMoveOperator(operator, writer);
         } else if (operator.type.equals(UNIFORM)) {
             writeUniformOperator(operator, writer);
         } else if (operator.type.equals(SUBTREE_SLIDE)) {
@@ -1801,6 +1804,16 @@ public class BeastGenerator extends BeautiOptions {
         );
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>("idref", operator.parameter1.getName())}, true);
         writer.writeCloseTag(BitFlipOperator.BIT_FLIP_OPERATOR);
+    }
+
+    private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR,
+                new Attribute[]{
+                        new Attribute.Default<Double>("weight", operator.weight),
+                }
+        );
+        writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
+        writer.writeCloseTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR);
     }
 
     private void writeUniformOperator(Operator operator, XMLWriter writer) {

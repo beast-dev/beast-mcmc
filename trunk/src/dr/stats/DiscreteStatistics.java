@@ -156,7 +156,7 @@ public class DiscreteStatistics {
 	 */
 	public static double covariance(double[] x, double[] y, double xmean, double ymean, double xstdev, double ystdev) {
 
-		if (x.length != y.length) throw new IllegalArgumentException("x and y arrays must be same length!");
+        if (x.length != y.length) throw new IllegalArgumentException("x and y arrays must be same length!");
 
 		double covar = 0.0;
 		for (int i =0; i < x.length; i++) {

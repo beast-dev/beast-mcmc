@@ -33,8 +33,7 @@ import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmc.MCMCCriterion;
 import dr.inference.mcmc.MCMCOptions;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
+import dr.inference.model.*;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
@@ -42,8 +41,8 @@ import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 import dr.util.NumberFormatter;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.

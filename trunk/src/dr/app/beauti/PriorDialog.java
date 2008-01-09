@@ -128,7 +128,7 @@ public class PriorDialog {
             truncatedCheck.setSelected(isTruncated);
             priorType = PriorType.NORMAL_PRIOR;
         }
-        
+
         if (parameter.isNodeHeight) {
             if (priorType != PriorType.NONE) {
                 rootHeightPriorCombo.setSelectedItem(priorType);
@@ -389,7 +389,7 @@ public class PriorDialog {
                 double truncNormalStdev = getValue(argumentFields[5].getValue(), 1.0);
                 double truncLower = getValue(argumentFields[0].getValue(), 0.0);
                 double truncUpper = getValue(argumentFields[1].getValue(), 1.0);
-                distribution = new TruncatedNormalDistribution(truncNormalMean, truncNormalStdev, truncLower, truncUpper);
+//                distribution = new TruncatedNormalDistribution(truncNormalMean, truncNormalStdev, truncLower, truncUpper);
                 break;
             default: throw new IllegalArgumentException("Unknown prior index");
 

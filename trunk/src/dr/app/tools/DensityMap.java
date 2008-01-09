@@ -292,7 +292,7 @@ class DensityMap {
 
 	public void writeAsTIFF(String fileName) {
 
-		double[][] matrix = normalize(256);
+		double[][] matrix = normalize(255);
 		try {
 			DataOutputStream tiffOut = new DataOutputStream(new FileOutputStream(fileName));
 			TIFFWriter.writeDoubleArray(tiffOut, matrix);
@@ -307,18 +307,29 @@ class DensityMap {
 
 		double[][] matrix = new double[binX][binY];
 
+		double maxValue = 0;
 		for (int i = 0; i < binY; i++) {
 			for (int j = 0; j < binX; j++) {
-				double dblCount;
-				if (jointDensity) {
-					dblCount = (double) count;
-				} else {
-					dblCount = (double) counts[j];
+				if (data[j][i] > maxValue) {
+					maxValue = data[j][i];
 				}
-				if (dblCount > 0)
-					matrix[j][i] = (double) data[j][i] / dblCount * max;
-				else
-					matrix[j][i] = 0.0;
+			}
+		}
+
+		for (int i = 0; i < binY; i++) {
+			for (int j = 0; j < binX; j++) {
+				matrix[j][i] = ((double) data[j][i] / maxValue) * max;
+//				double dblCount;
+//				if (jointDensity) {
+//					dblCount = (double) count;
+//				} else {
+//					dblCount = (double) counts[j];
+//				}
+//				if (dblCount > 0) {
+//					matrix[j][i] = (double) data[j][i] / dblCount * max;
+//				} else {
+//					matrix[j][i] = 0.0;
+//				}
 			}
 		}
 

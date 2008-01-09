@@ -27,6 +27,8 @@ package dr.inference.mcmcmc;
 
 import dr.inference.markovchain.MarkovChain;
 
+import java.util.concurrent.Callable;
+
 /**
  * @author rambaut
  *         Date: Jan 5, 2005
@@ -78,7 +80,8 @@ public class MCMCMCRunner extends Thread {
 	    notify();
     }
 
-    private final MarkovChain markovChain;
+
+	private final MarkovChain markovChain;
 	private final int length;
     private final int totalLength;
     private final boolean disableCoerce;

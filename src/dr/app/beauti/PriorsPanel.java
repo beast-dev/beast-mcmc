@@ -134,7 +134,7 @@ public class PriorsPanel extends JPanel implements Exportable {
 					//"Speciation: Birth-Death Process"
 			});
 		}
-		treePriorCombo.setOpaque(false);
+		setupComponent(treePriorCombo);
 		treePriorCombo.addItemListener(
 				new java.awt.event.ItemListener() {
 					public void itemStateChanged(java.awt.event.ItemEvent ev) {
@@ -152,13 +152,13 @@ public class PriorsPanel extends JPanel implements Exportable {
 				if (!settingOptions) frame.priorsChanged();
 			}});
 
-		parameterizationCombo.setOpaque(false);
+		setupComponent(parameterizationCombo);
 		parameterizationCombo.addItemListener(listener);
 
-		bayesianSkylineCombo.setOpaque(false);
+		setupComponent(bayesianSkylineCombo);
 		bayesianSkylineCombo.addItemListener(listener);
 
-		upgmaStartingTreeCheck.setOpaque(false);
+		setupComponent(upgmaStartingTreeCheck);
 
 		setOpaque(false);
 		setLayout(new BorderLayout(0,0));
@@ -174,6 +174,19 @@ public class PriorsPanel extends JPanel implements Exportable {
 		treePriorPanel.setBorder(null);
 		add(treePriorPanel, BorderLayout.NORTH);
 		add(panel, BorderLayout.CENTER);
+	}
+
+	private void setupComponent(JComponent comp) {
+		comp.setOpaque(false);
+
+		//comp.setFont(UIManager.getFont("SmallSystemFont"));
+		//comp.putClientProperty("JComponent.sizeVariant", "small");
+		if (comp instanceof JButton) {
+			comp.putClientProperty("JButton.buttonType", "roundRect");
+		}
+		if (comp instanceof JComboBox) {
+			comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+		}
 	}
 
 	private void setupPanel() {

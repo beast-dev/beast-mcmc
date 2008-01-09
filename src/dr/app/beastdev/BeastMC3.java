@@ -278,7 +278,7 @@ public class BeastMC3 {
         arguments.printUsage("beastmc3", " [-chains <chain-count>] [-delta <temperature-delta>|-temperatures <temperature-list>] [-swap <swap-every>] [-verbose] [-window] [-working] [-help] [<input-file-name>]");
         System.out.println();
         System.out.println("  Example: beastmc3 -chains 3 -delta 1.0 -swap 100 test.xml");
-        System.out.println("  Example: beast -temperatures 0.2,0.4 -swap 200 -window test.xml");
+        System.out.println("  Example: beastmc3 -temperatures 0.2,0.4 -swap 200 -window test.xml");
         System.out.println();
     }
 

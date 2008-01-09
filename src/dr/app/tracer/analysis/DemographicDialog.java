@@ -28,6 +28,7 @@ package dr.app.tracer.analysis;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.util.Variate;
+import dr.evolution.coalescent.ConstExpConst;
 import jebl.evolution.coalescent.*;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.components.WholeNumberField;
@@ -58,22 +59,45 @@ public class DemographicDialog {
             "Logistic Growth (Doubling Time)",
             "Expansion (Growth Rate)",
             "Expansion (Doubling Time)",
+		    "Constant-Exponential",
+		    "Constant-Logistic",
+		    "Constant-Exponential-Constant",
             "Boom-Bust"};
 
     private String[][] argumentGuesses = {
             {"populationsize", "population", "popsize", "n0", "size", "pop"},
-            {"ancestralsize", "ancestralproportion", "proportion", "ancestral", "n1"},
+            {"ancestralsize", "ancestralproportion", "ancpopsize", "proportion", "ancestral", "n1"},
             {"growthrate", "growth", "rate", "r"},
             {"doublingtime", "doubling", "time", "t"},
             {"logisticshape", "halflife", "t50", "time50", "shape"},
             {"spikefactor", "spike", "factor", "f"},
-            {"cataclysmtime", "cataclysm", "time", "t"}};
-
-    private String[] argumentNames = new String[]{
-            "Population Size", "Ancestral Proportion", "Growth Rate", "Doubling Time", "Logistic Shape", "Spike Factor", "Spike Time"
+            {"cataclysmtime", "cataclysm", "time", "t"},
+		    {"transitiontime", "time1", "time", "t1", "t"}
     };
 
-    private int[][] argumentIndices = {{0}, {0, 2}, {0, 3}, {0, 2, 4}, {0, 3, 4}, {0, 1, 2}, {0, 1, 3}, {0, 2, 5, 6}};
+    private String[] argumentNames = new String[]{
+            "Population Size",
+		    "Ancestral Proportion",
+		    "Growth Rate",
+		    "Doubling Time",
+		    "Logistic Shape",
+		    "Spike Factor",
+		    "Spike Time",
+		    "Transition Time"
+    };
+
+    private int[][] argumentIndices = {
+		    {0},            // const
+		    {0, 2},         // exp
+		    {0, 3},         // exp doubling time
+		    {0, 2, 4},      // logistic
+		    {0, 3, 4},      // logistic doubling time
+		    {0, 1, 2},      // expansion
+		    {0, 1, 3},      // expansion doubling time
+		    {0, 1, 2},      // const-exp
+		    {0, 1, 2, 4},   // const-log
+		    {0, 1, 2, 7},   // const-exp-const
+		    {0, 2, 5, 6}};  // boom bust
 
     private String[] argumentTraces = new String[argumentNames.length];
     private JComboBox[] argumentCombos = new JComboBox[argumentNames.length];
@@ -549,7 +573,50 @@ public class DemographicDialog {
                     current++;
                 }
 
-            } else if (demographicCombo.getSelectedIndex() == 7) { // Cataclysm
+            } else
+
+            if (demographicCombo.getSelectedIndex() == 7) { // ConstExponential Growth
+                title = "Constant-Exponential Growth";
+                ConstExponential demo = new ConstExponential();
+                for (int i = 0; i < n; i++) {
+                    demo.setN0(values[0][i]);
+	                demo.setN1(values[1][i]);
+                    demo.setGrowthRate(values[2][i]);
+
+                    addDemographic(bins, binCount, maxHeight, delta, demo);
+                    current++;
+                }
+
+            } else
+            if (demographicCombo.getSelectedIndex() == 7) { // ConstLogistic Growth
+                title = "Constant-Logistic Growth";
+                ConstLogistic demo = new ConstLogistic();
+                for (int i = 0; i < n; i++) {
+                    demo.setN0(values[0][i]);
+	                demo.setN1(values[1][i]);
+                    demo.setGrowthRate(values[2][i]);
+                    demo.setTime50(values[3][i]);
+
+                    addDemographic(bins, binCount, maxHeight, delta, demo);
+                    current++;
+                }
+
+            } else
+            if (demographicCombo.getSelectedIndex() == 7) { // ConstExpConst
+//                title = "Constant-Exponential-Constant";
+//                ConstExpConst demo = new ConstExpConst();
+//                for (int i = 0; i < n; i++) {
+//                    demo.setN0(values[0][i]);
+//	                demo.setN1(values[1][i]);
+//                    demo.setGrowthRate(values[2][i]);
+//                    //demo.setTime50(values[3][i]);
+//
+//                    addDemographic(bins, binCount, maxHeight, delta, demo);
+//                    current++;
+//                }
+
+            } else
+            if (demographicCombo.getSelectedIndex() == 8) { // Cataclysm
                 title = "Boom-Bust";
                 CataclysmicDemographic demo = new CataclysmicDemographic();
                 for (int i = 0; i < n; i++) {

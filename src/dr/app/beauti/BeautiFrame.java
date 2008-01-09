@@ -68,7 +68,7 @@ public class BeautiFrame extends DocumentFrame {
         setTitle(title);
 
         // Prevent the application to close in requestClose()
-        // after a user cancel or a failure in beast file generation 
+        // after a user cancel or a failure in beast file generation
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
         getOpenAction().setEnabled(false);
@@ -110,7 +110,7 @@ public class BeautiFrame extends DocumentFrame {
 
         getExportAction().setEnabled(false);
         JButton generateButton = new JButton(getExportAction());
-        generateButton.putClientProperty("JButton.buttonType", "icon");
+	    generateButton.putClientProperty("JButton.buttonType", "roundRect");
 
         JPanel panel2 = new JPanel(new BorderLayout(6, 6));
         panel2.add(statusLabel, BorderLayout.CENTER);

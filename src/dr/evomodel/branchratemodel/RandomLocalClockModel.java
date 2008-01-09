@@ -154,7 +154,8 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
     }
 
     public final boolean isRateChangeOnBranchAbove(Tree tree, NodeRef node) {
-        return (int) Math.round(((TreeModel) tree).getNodeTrait(node, "trait")) == 1;
+	    return ((TreeModel) tree).getNodeTrait(node, "trait") > 0.5;
+//        return (int) Math.round(((TreeModel) tree).getNodeTrait(node, "trait")) == 1;
     }
 
     private static String[] attributeLabel = {"changed"};

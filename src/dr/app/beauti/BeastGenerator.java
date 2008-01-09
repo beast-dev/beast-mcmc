@@ -1010,10 +1010,10 @@ public class BeastGenerator extends BeautiOptions {
                 break;
 
             case DataType.TWO_STATES:
-            case DataType.COVARION:                
+            case DataType.COVARION:
                 writeTwoStateSiteModel(writer);
                 break;
-          
+
              default:
                   throw new IllegalArgumentException("Unknown data type");
         }
@@ -1129,7 +1129,7 @@ public class BeastGenerator extends BeautiOptions {
              switch (binarySubstitutionModel) {
                 case BIN_SIMPLE:
                     //writer.writeTag(dr.evomodel.substmodel.GeneralSubstitutionModel.GENERAL_SUBSTITUTION_MODEL, new Attribute.Default<String>("idref", "bsimple"), true);
-                    writer.writeTag(dr.evoxml.BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, new Attribute.Default<String>("idref", "bsimple"), true);                    
+                    writer.writeTag(dr.evoxml.BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, new Attribute.Default<String>("idref", "bsimple"), true);
                     break;
                 case BIN_COVARION:
                     writer.writeTag(dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL, new Attribute.Default<String>("idref", "bcov"), true);
@@ -1154,7 +1154,7 @@ public class BeastGenerator extends BeautiOptions {
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
     }
-    
+
 
     /**
      * Write the AA site model XML block.
@@ -1760,7 +1760,7 @@ public class BeastGenerator extends BeautiOptions {
             );
         } else {
             writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
-                    new Attribute[]{             
+                    new Attribute[]{
                             new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
                             new Attribute.Default<Double>("weight", operator.weight),
                     }

@@ -49,7 +49,9 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
      */
 	double getDemographic(double t);
 
-	/**
+    double getLogDemographic(double t);
+
+    /**
      * @return value of demographic intensity function at time t (= integral 1/N(x) dx from 0 to t).
      * @param t time
      */
@@ -123,7 +125,16 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 
 		// general functions
 
-		/**
+        /**
+         * Default implementation
+         * @param t
+         * @return log(demographic at t)
+         */
+        public double getLogDemographic(double t) {
+            return Math.log(getDemographic(t));
+        }
+
+        /**
 		 * Calculates the integral 1/N(x) dx between start and finish.
 		 */
 		public double getIntegral(double start, double finish)

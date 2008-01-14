@@ -27,6 +27,7 @@ package dr.app.beast;
 
 import dr.evomodel.operators.*;
 import dr.xml.*;
+import dr.inference.trace.VariableDemographicAnalysis;
 
 import java.util.Iterator;
 
@@ -258,8 +259,9 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());
 		addXMLObjectParser(new dr.inference.trace.TraceAnalysisParser());
 		addXMLObjectParser(dr.inference.trace.MarginalLikelihoodAnalysis.PARSER);
+        addXMLObjectParser(dr.inference.trace.VariableDemographicAnalysis.PARSER);
 
-		// Trait models
+        // Trait models
 		addXMLObjectParser(dr.evomodel.continuous.MultivariateDiffusionModel.PARSER);
 		addXMLObjectParser(dr.evomodel.continuous.MultivariateTraitLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.model.MatrixParameter.PARSER);
@@ -276,7 +278,9 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkylineBlockUpdateOperator.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.GMRFTestLikelihood.PARSER);
 
-	}
+        // exporters
+        addXMLObjectParser(new dr.exporters.CSVExporter());
+    }
 
 }
 

@@ -25,18 +25,17 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.tree.Tree;
 import dr.evolution.coalescent.ConstantPopulation;
-import dr.evolution.coalescent.Coalescent;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
-import dr.inference.model.Parameter;
-import dr.inference.model.Likelihood;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.logging.Logger;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A likelihood function for the variable skyline plot coalescent.
@@ -79,8 +78,8 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
         this.logSpace = logSpace;
 
         if (paramDim1 != events) {
-            throw new IllegalArgumentException("Dimension of population parameter must be the same as the number of internal nodes in the tree. ("
-            + paramDim1 + " != " + events + ")");
+            throw new IllegalArgumentException("Dimension of population parameter (" +  paramDim1 + ") must be the same as the number of internal nodes in the tree ("
+            + events + ").");
         }
         if (paramDim2 != events - 1) {
             throw new IllegalArgumentException("Dimension of indicator parameter must one less than the number of internal nodes in the tree. ("
@@ -130,7 +129,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
             };
         }
 
-        if( false ) { System.err.println("Old:"); }
+        //if( false ) { System.err.println("Old:"); }
 
         for (int j = 0; j < intervalCount; j++) {
 
@@ -150,7 +149,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
 
             logL += calculateIntervalLikelihood(cp, intervals[j], currentTime, lineageCounts[j], iType);
 
-            if( false ) { System.err.println(" lgl " + logL); }
+            //if( false ) { System.err.println(" lgl " + logL); }
 
             if( logL > 0 && j > 1 ) {
                 System.out.println(logL);
@@ -206,7 +205,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
 
         final double height = tree.getNodeHeight(tree.getRoot());
         double hstep = height / popPoints.length;
-        double h = 0;
+
         int groupIndex = 0;
         double currentTime = 0.0;
         double switchAt = groupEnds.get(groupIndex);

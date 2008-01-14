@@ -50,17 +50,19 @@ public class LogisticGrowth extends ExponentialGrowth {
         return c;
     }
 
+    double lowLimit = 0; // 1e-6;
+
     /**
      * An alternative parameterization of this model. This
      * function sets the time at which there is a 0.5 proportion
      * of N0.
+     *
+     * The general form for any k where tk is the time at which Nt = N0/k:
+     *		c = (k - 1.0) / (exp(r * tk) - k);
      */
     public void setTime50(double time50) {
-
         c = 1.0 / (Math.exp(getGrowthRate() * time50) - 2.0);
 
-        // The general form for any k where t50 is the time at which Nt = N0/k:
-        //		c = (k - 1.0) / (Math.exp(getGrowthRate() * time50) - k);
     }
 
     // Implementation of abstract methods
@@ -81,10 +83,38 @@ public class LogisticGrowth extends ExponentialGrowth {
 //		AER rearranging this to use exp(-rt) may help
 // 		with some overflow situations...
 
-        double common = Math.exp(-r * t);
-        return (nZero * (1 + c) * common) / (c + common);
+        double expOfMRT = Math.exp(-r * t);
+        return lowLimit + (nZero * (1 + c) * expOfMRT) / (c + expOfMRT);
     }
 
+    public double getLogDemographic(double t) {
+        final double d = getDemographic(t);
+        if( d == 0.0 && lowLimit == 0.0 ) {
+            double nZero = getN0();
+            double r = getGrowthRate();
+            double c = getShape();
+            int sign = c > 0 ? 1 : -1;
+
+            final double v1 = Math.log(c * sign) + r * t;
+            double ld = Math.log(nZero);
+            if( v1 < 600 ) {
+                double v = sign * Math.exp(v1);
+
+                if( c > -1 ) {
+                    ld += Math.log1p(c) - Math.log1p(v);
+                } else {
+                    ld += Math.log((1+c)/(1+v));
+                }
+            } else {
+                 ld += Math.log1p(c) - sign * v1;
+            }
+            return ld;
+        }
+//        if(  ! (Math.abs(Math.log(d) - ld) < 1e-12) ) {
+//           return Math.log(d);
+//        }
+        return Math.log(d);
+    }
     /**
      * Returns value of demographic intensity function at time t
      * (= integral 1/N(x) dx from 0 to t).
@@ -96,9 +126,12 @@ public class LogisticGrowth extends ExponentialGrowth {
         double c = getShape();
 
         double ert = Math.exp(r * t);
-        double emrt = Math.exp(-r * t);
-
-        return ert * t / ((c + 1.0) * (c + emrt) * nZero);
+        if( lowLimit == 0 ) {
+       // double emrt = Math.exp(-r * t);
+          return (c * (ert - 1)/r + t)  / ((1+c) * nZero);
+        }
+        double z = lowLimit;
+        return (r*t*z + (1 + c)*nZero*Math.log(nZero + c*nZero + z + c*ert*z))/(r*z*(nZero + c*nZero + z));
     }
 
     /**
@@ -111,7 +144,11 @@ public class LogisticGrowth extends ExponentialGrowth {
     }
 
     public double getIntegral(double start, double finish) {
-
+        if( lowLimit > 0 ) {
+            double v1 = getNumericalIntegral(start, finish);
+            final double v2 = getIntensity(finish) - getIntensity(start);
+            return v2;
+        }
         double intervalLength = finish - start;
 
         double nZero = getN0();
@@ -128,22 +165,34 @@ public class LogisticGrowth extends ExponentialGrowth {
         double term2 = c * (1.0 - expOfMinusRG);
 
         double term3 = (term1 * expOfMinusRT) * r * expOfMinusRG;
-        if (term3 == 0.0 && term2 > 0.0) {
-            throw new RuntimeException("Infinite integral!");
-        }
+        double term2over3;
+        if (term3 == 0.0) {
+            double l1 = expOfMinusRG < 1e-8 ?  -r * intervalLength : Math.log1p(expOfMinusRG);
+            final int sign = c > 0 ? 1 : -1;
+            term2over3 = (sign/term1) * Math.exp(l1 + r * start + Math.log(c*sign) - Math.log(r));
 
-        double term4;
-        if (term3 != 0.0 && term2 == 0.0) {
-            term4 = 0.0;
-        } else if (term3 == 0.0 && term2 == 0.0) {
-            throw new RuntimeException("term3 and term2 are both zeros. N0=" + getN0() + " growthRate=" + getGrowthRate() + "c=" + c);
+           // throw new RuntimeException("Infinite integral!");
         } else {
-            term4 = term2 / term3;
+//            if (term3 != 0.0 && term2 == 0.0) {
+//                term2over3 = 0.0;
+//            } else if (term3 == 0.0 && term2 == 0.0) {
+//                throw new RuntimeException("term3 and term2 are both zeros. N0=" + getN0() + " growthRate=" + getGrowthRate() + "c=" + c);
+//            } else {
+                term2over3 = term2 / term3;
+//            }
         }
 
-        double term5 = intervalLength / term1;
+        final double term5 = intervalLength / term1;
 
-        return term5 + term4;
+//        double v0 = 1/term1 * (finish + c * (Math.exp(r*finish) - 1) /r);
+//        double v1 = 1/term1 * (start + c * (Math.exp(r*start) - 1) /r);
+//        double v =  1/term1 * ((finish + c * (Math.exp(r*finish) - 1) /r)  - (start + c * (Math.exp(r*start) - 1) /r));
+//        double v2 = 1/term1 * ((finish-start) + (c * (Math.exp(r*finish) - 1) /r)  - (c * (Math.exp(r*start) - 1) /r));
+//        double v3 = 1/term1 * ((finish-start) + (c/r)* ( Math.exp(r*finish) - 1)   - (c/r) * (Math.exp(r*start) - 1) );
+//        double v4 =  1/term1 * ((finish-start) + (c/r) * (Math.exp(r*finish) - Math.exp(r*start) ) );
+       // double v = ( (c * (Math.exp(r*finish) - Math.exp(r*start)) / r) + (start - finish)) / term1;
+
+        return term5 + term2over3;
     }
 
     public int getNumArguments() {

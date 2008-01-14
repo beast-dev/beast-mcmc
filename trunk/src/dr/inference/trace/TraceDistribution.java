@@ -123,22 +123,9 @@ public class TraceDistribution {
      * @param indices    the indices of the ranks of the values (sort order)
      */
     private void calculateHPDInterval(double proportion, double[] array, int[] indices) {
-
-        double minRange = Double.MAX_VALUE;
-        int hpdIndex = 0;
-
-        int diff = (int) Math.round(proportion * (double) array.length);
-        for (int i = 0; i <= (array.length - diff); i++) {
-            double minValue = array[indices[i]];
-            double maxValue = array[indices[i + diff - 1]];
-            double range = Math.abs(maxValue - minValue);
-            if (range < minRange) {
-                minRange = range;
-                hpdIndex = i;
-            }
-        }
-        hpdLower = array[indices[hpdIndex]];
-        hpdUpper = array[indices[hpdIndex + diff - 1]];
+        final double[] hpd = DiscreteStatistics.HPDInterval(proportion, array, indices);
+        hpdLower = hpd[0];
+        hpdUpper = hpd[1];
     }
 
     //************************************************************************

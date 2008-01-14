@@ -124,8 +124,9 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.coalescent.ExponentialSawtoothModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.EmpiricalPiecewiseModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.PopulationSizeGraph.PARSER);
+        //addXMLObjectParser(dr.evomodel.coalescent.PopulationRatioStatistic.PARSER);
 
-		// Structured coalescent
+        // Structured coalescent
 		addXMLObjectParser(dr.evomodel.coalescent.structure.StructuredCoalescentLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.structure.ConstantMigrationModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.structure.ColourSamplerModel.PARSER);
@@ -200,7 +201,11 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.operators.SubtreeSlideOperator.PARSER);
 		addXMLObjectParser(dr.evomodel.operators.RateExchangeOperator.PARSER);
 
-		addXMLObjectParser(dr.evomodel.indel.TKF91Likelihood.PARSER);
+        addXMLObjectParser(dr.evomodel.operators.ExchangeOperator.INTERMEDIATE_EXCHANGE_PARSER);
+        addXMLObjectParser(dr.evomodel.operators.NNI.NNI_PARSER);
+        addXMLObjectParser(dr.evomodel.operators.FNPR.FNPR_PARSER);
+
+        addXMLObjectParser(dr.evomodel.indel.TKF91Likelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.indel.TKF91Model.PARSER);
 		addXMLObjectParser(dr.evomodel.indel.IstvanOperator.PARSER);
 
@@ -267,9 +272,12 @@ public class BeastParser extends XMLParser {
 
 		addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());
 		addXMLObjectParser(new dr.inference.trace.TraceAnalysisParser());
-		addXMLObjectParser(dr.inference.trace.MarginalLikelihoodAnalysis.PARSER);
+        addXMLObjectParser(dr.inference.trace.LogFileTraceExporter.PARSER);
 
-		// Trait models
+        addXMLObjectParser(dr.inference.trace.MarginalLikelihoodAnalysis.PARSER);
+        addXMLObjectParser(dr.inference.trace.VariableDemographicAnalysis.PARSER);
+
+        // Trait models
 		addXMLObjectParser(dr.evomodel.continuous.MultivariateDiffusionModel.PARSER);
 		addXMLObjectParser(dr.evomodel.continuous.MultivariateTraitLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.model.MatrixParameter.PARSER);
@@ -306,7 +314,9 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.substmodel.SVSGeneralSubstitutionModel.PARSER);
 		addXMLObjectParser(BitFlipInSubstitutionModelOperator.PARSER);
 
-	}
+        // exporters
+        addXMLObjectParser(new dr.exporters.CSVExporter());
+    }
 
 }
 

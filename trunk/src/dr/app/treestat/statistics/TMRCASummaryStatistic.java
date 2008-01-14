@@ -39,22 +39,20 @@ import java.util.*;
  */
 public class TMRCASummaryStatistic extends AbstractTreeSummaryStatistic {
 
-	private TMRCASummaryStatistic(Map characterMap, String characterState) {
+	private TMRCASummaryStatistic(Map<String, Object> characterMap, String characterState) {
 		taxonList = new Taxa();
-		this.characterState = characterState;
-		Iterator i = characterMap.entrySet().iterator();
-		while (i.hasNext()) {
-			Map.Entry entry = (Map.Entry)i.next();
-			if (entry.getValue().equals(characterState)) {
-				Object o = entry.getKey();
-				if (o instanceof String) {
-					((Taxa)taxonList).addTaxon(new Taxon((String)o));
-				} else if (o instanceof Taxon) {
-					((Taxa)taxonList).addTaxon((Taxon)o);
-				} else throw new RuntimeException("Unknown key type!");
-			}
-		}
-	}
+        this.characterState = characterState;
+        for (Map.Entry entry : characterMap.entrySet()) {
+            if (entry.getValue().equals(characterState)) {
+                Object o = entry.getKey();
+                if (o instanceof String) {
+                    ((Taxa) taxonList).addTaxon(new Taxon((String) o));
+                } else if (o instanceof Taxon) {
+                    ((Taxa) taxonList).addTaxon((Taxon) o);
+                } else throw new RuntimeException("Unknown key type!");
+            }
+        }
+    }
 
 	private TMRCASummaryStatistic(TaxonList taxonList) {
 		this.taxonList = taxonList;
@@ -64,9 +62,11 @@ public class TMRCASummaryStatistic extends AbstractTreeSummaryStatistic {
 	}
 
 	public double[] getSummaryStatistic(Tree tree) {
-		if (taxonList == null) return new double[] { tree.getNodeHeight(tree.getRoot()) };
+		if (taxonList == null) {
+            return new double[] { tree.getNodeHeight(tree.getRoot()) };
+        }
 		try {
-			Set leafSet = Tree.Utils.getLeavesForTaxa(tree, taxonList);
+			Set<String> leafSet = Tree.Utils.getLeavesForTaxa(tree, taxonList);
 			NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
 			if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
 			return new double[] { tree.getNodeHeight(node) };
@@ -102,7 +102,7 @@ public class TMRCASummaryStatistic extends AbstractTreeSummaryStatistic {
 
 	public static final TreeSummaryStatistic.Factory FACTORY = new TreeSummaryStatistic.Factory() {
 
-		public TreeSummaryStatistic createStatistic(Map characterMap, String characterState) {
+		public TreeSummaryStatistic createStatistic(Map<String, Object> characterMap, String characterState) {
 			return new TMRCASummaryStatistic(characterMap, characterState);
 		}
 
@@ -134,11 +134,14 @@ public class TMRCASummaryStatistic extends AbstractTreeSummaryStatistic {
 
 		public SummaryStatisticDescription.Category getCategory() { return SummaryStatisticDescription.Category.GENERAL; }
 
-		public boolean allowsWholeTree() { return true; };
-		public boolean allowsCharacter() { return false; };
-		public boolean allowsCharacterState() { return false; };
-		public boolean allowsTaxonList() { return true; };
-	};
+		public boolean allowsWholeTree() { return true; }
+
+        public boolean allowsCharacter() { return false; }
+
+        public boolean allowsCharacterState() { return false; }
+
+        public boolean allowsTaxonList() { return true; }
+    };
 
 	private String characterState = null;
 	private TaxonList taxonList = null;

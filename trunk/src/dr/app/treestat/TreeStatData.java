@@ -25,12 +25,14 @@
 
 package dr.app.treestat;
 
-import dr.evolution.util.Taxon;
 import dr.app.treestat.statistics.SummaryStatisticDescription;
 import org.jdom.Document;
 import org.jdom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class TreeStatData {
 	public static final String version = "1.0";
@@ -48,20 +50,20 @@ public class TreeStatData {
 		String name;
 		List taxa;
 		public String toString() { return name; }
-	};
+	}
 
 	public static class Character {
 		String name;
-		List states;
+		List<TreeStatData.State> states;
 		public String toString() { return name; }
-	};
+	}
 
 	public static class State {
 		String name;
 		String description;
-		List taxa;
+		List<String> taxa;
 		public String toString() { return name; }
-	};
+	}
 
 	/**
 	 * Read options from a file
@@ -79,8 +81,7 @@ public class TreeStatData {
 		root.addContent(charactersElement);
 		root.addContent(statisticsElement);
 
-		Document doc = new Document(root);
-		return doc;
+        return new Document(root);
 	}
 
 	/**

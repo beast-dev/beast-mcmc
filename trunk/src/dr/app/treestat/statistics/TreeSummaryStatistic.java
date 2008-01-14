@@ -53,7 +53,7 @@ public interface TreeSummaryStatistic extends SummaryStatisticDescription {
 			throw new RuntimeException("This factory method is not implemented");
 		}
 
-		public TreeSummaryStatistic createStatistic(Map characterMap, String characterState) {
+		public TreeSummaryStatistic createStatistic(Map<String, Object> characterMap, String characterState) {
 			throw new RuntimeException("This factory method is not implemented");
 		}
 

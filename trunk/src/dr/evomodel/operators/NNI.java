@@ -84,11 +84,9 @@ public class NNI extends SimpleMCMCOperator {
 
       double heightGrandfather = _tree.getNodeHeight(iGrandParent);
       double heightUncle = _tree.getNodeHeight(iUncle);
-      double minHeightFather = Math.max(heightUncle, _tree
-            .getNodeHeight(getOtherChild(_tree, iParent, i)));
+      double minHeightFather = Math.max(heightUncle, _tree.getNodeHeight(getOtherChild(_tree, iParent, i)));
       double heightI = _tree.getNodeHeight(i);
-      double minHeightReverse = Math.max(heightI, _tree
-            .getNodeHeight(getOtherChild(_tree, iParent, i)));
+      double minHeightReverse = Math.max(heightI, _tree.getNodeHeight(getOtherChild(_tree, iParent, i)));
 
       double ran;
       do {

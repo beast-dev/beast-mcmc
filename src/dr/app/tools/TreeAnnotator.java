@@ -285,8 +285,8 @@ public class TreeAnnotator {
 					}
 				}
 
-				for (int i = 0; i < attributeNames.size(); i++) {
-					String attributeName = attributeNames.get(i);
+                int i = 0;
+                for (String attributeName : attributeNames) {
 					Object value;
 					if (attributeName.equals("height")) {
 						value = tree.getNodeHeight(node);
@@ -303,7 +303,8 @@ public class TreeAnnotator {
 					if (value != null) {
 						clade.attributeLists[i].add(value);
 					}
-				}
+                    i++;
+                }
 			}
 		}
 
@@ -419,10 +420,8 @@ public class TreeAnnotator {
 				}
 			}
 
-			for (int i = 0; i < attributeNames.size(); i++) {
-				String attributeName = attributeNames.get(i);
-
-
+            int i = 0;
+            for (String attributeName : attributeNames) {
 				double[] values = new double[clade.attributeLists[i].size()];
 				HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
 
@@ -482,7 +481,8 @@ public class TreeAnnotator {
 						}
 					}
 				}
-			}
+                i++;
+            }
 		}
 
 		private void annotateMeanAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
@@ -598,7 +598,7 @@ public class TreeAnnotator {
 	int totalTreesUsed = 0;
 	double posteriorLimit = 0.0;
 
-	List<String> attributeNames = new ArrayList<String>();
+	Set<String> attributeNames = new HashSet<String>();
 	TaxonList taxa = null;
 
 	public static void printTitle() {

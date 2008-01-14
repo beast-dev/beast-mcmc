@@ -130,6 +130,20 @@ public class LogFileTraces implements TraceList {
         return getTrace(trace).getValue(index + (burnIn / stepSize));
     }
 
+    /**
+     *  Read several consecutive values of one state into a destination array
+     *
+     * @param nState  State index number
+     * @param destination array to store result
+     * @param offset  first trace index
+     */
+    public void getStateValues(int nState, double[] destination, int offset) {
+        final int index1 = nState + (burnIn / stepSize);
+        for(int k = 0; k < destination.length; ++k) {
+            destination[k] = getTrace(k+offset).getValue(index1);
+        }
+    }
+
     public void getValues(int index, double[] destination) {
         getTrace(index).getValues((burnIn / stepSize), destination, 0);
     }

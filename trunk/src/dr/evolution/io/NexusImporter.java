@@ -128,9 +128,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 			nextBlock = UNALIGNED_BLOCK;
 		} else if (blockName.equalsIgnoreCase(DISTANCES_BLOCK.toString())) {
 			nextBlock = DISTANCES_BLOCK;
-		} else if (blockName.equalsIgnoreCase(TREES_BLOCK.toString().toString())) {
+		} else if (blockName.equalsIgnoreCase(TREES_BLOCK.toString())) {
 			nextBlock = TREES_BLOCK;
-		} else if (blockName.equalsIgnoreCase(CALIBRATION_BLOCK.toString().toString())) {
+		} else if (blockName.equalsIgnoreCase(CALIBRATION_BLOCK.toString())) {
 			nextBlock = CALIBRATION_BLOCK;
 		}
 
@@ -158,7 +158,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 	 */
 	public Alignment parseDataBlock(TaxonList taxonList) throws ImportException, IOException
 	{
-		return readDataBlock(taxonList);
+		return readDataBlock(/*taxonList*/);
 	}
 
 	/**
@@ -220,7 +220,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
 					// A data block doesn't need a taxon block before it
 					// but if one exists then it will use it.
-					alignment = readDataBlock(taxonList);
+					alignment = readDataBlock(/*taxonList*/);
 					done = true;
 
 				} else {
@@ -381,9 +381,11 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 			do {
 				token = readToken(";");
 			} while ( !token.equalsIgnoreCase("END") && !token.equalsIgnoreCase("ENDBLOCK") );
-		} catch (EOFException e) { } // Doesn't matter if the End is missing
+		} catch (EOFException e) {
+            // Doesn't matter if the End is missing
+        }
 
-		nextBlock = UNKNOWN_BLOCK;
+        nextBlock = UNKNOWN_BLOCK;
 	}
 
 	/**
@@ -559,7 +561,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 						sequence.setDataType(dataType);
 						sequences.addSequence(sequence);
 
-						Taxon taxon = null;
+						Taxon taxon;
 
 						if (taxonList != null) {
 							int index = taxonList.getTaxonIndex(token);
@@ -630,7 +632,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 				sequence.setDataType(dataType);
 				sequences.addSequence(sequence);
 
-				Taxon taxon = null;
+				Taxon taxon;
 
 				if (taxonList != null) {
 					int index = taxonList.getTaxonIndex(token);
@@ -729,7 +731,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 	/**
 	 * Reads a 'DATA' block.
 	 */
-	private Alignment readDataBlock(TaxonList taxonList) throws ImportException, IOException
+	private Alignment readDataBlock(/*TaxonList taxonList*/) throws ImportException, IOException
 	{
 
 		taxonCount = 0;
@@ -798,7 +800,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 				}
 
 				String token3 = readToken(",;");
-				Taxon taxon = null;
+				Taxon taxon;
 
 				if (getLastDelimiter() != ',' && getLastDelimiter() != ';') {
 					throw new BadFormatException("Expecting ',' or ';' after taxon label in TRANSLATE command of TREES block");
@@ -1003,24 +1005,24 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 		return node;
 	}
 
-	private void labelNode(FlexibleNode node, String label, String value) {
-		// Attempt to format the value as a number
-		Number number = null;
-		try {
-			number = Integer.valueOf(value);
-		} catch (NumberFormatException nfe1) {
-			try {
-				number = Double.valueOf(value);
-			} catch (NumberFormatException nfe2) {
-				//
-			}
-		}
-		if (number != null) {
-			node.setAttribute(label, number);
-		} else {
-			node.setAttribute(label, value);
-		}
-	}
+//	private void labelNode(FlexibleNode node, String label, String value) {
+//		// Attempt to format the value as a number
+//		Number number = null;
+//		try {
+//			number = Integer.valueOf(value);
+//		} catch (NumberFormatException nfe1) {
+//			try {
+//				number = Double.valueOf(value);
+//			} catch (NumberFormatException nfe2) {
+//				//
+//			}
+//		}
+//		if (number != null) {
+//			node.setAttribute(label, number);
+//		} else {
+//			node.setAttribute(label, value);
+//		}
+//	}
 
 	/**
 	 * Reads an external node in.
@@ -1031,7 +1033,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
 		String label = readToken(":(),;");
 
-		Taxon taxon = null;
+		Taxon taxon;
 
 		if (translationList.size() > 0) {
 			taxon = (Taxon)translationList.get(label);
@@ -1154,7 +1156,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
 					do {
 						String token3 = readToken( ",;" );
-						Taxon taxon = null;
+						Taxon taxon;
 
 						int index = taxonList.getTaxonIndex(token3);
 						if (index == -1) {
@@ -1309,7 +1311,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 			if (!isNexus) line = reader.readLine();
 			while (line != null || (isNexus && nexusImporter.hasTree())) {
 
-				Tree tree = null;
+				Tree tree;
 				if (isNexus) {
 					tree = nexusImporter.importNextTree();
 				} else {

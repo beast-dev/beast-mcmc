@@ -250,8 +250,12 @@ public class AttributeRule implements XMLSyntaxRule {
 	private String getTypeName() {
 
 		if (c == null) return "Object";
-		String name = c.getName();
-		return name.substring(name.lastIndexOf('.')+1);
+		final String name = c.getName();
+        final String cBaseName = name.substring(name.lastIndexOf('.') + 1);
+        if( c.isArray() ) {
+            return "Array of " + cBaseName;
+        }
+        return cBaseName;
 	}
 
 	private String name;

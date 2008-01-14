@@ -453,7 +453,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         public String getMessage() {
-            return message;
+            return null;
         }
 
         public Object doWork() {
@@ -503,12 +503,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             } while (true);
         }
 
-        private int lengthOfTask = 0;
+        //private int lengthOfTask = 0;
         private int current = 0;
-        private String message;
+        //private String message;
     }
-
-    ;
 
     public final void doExportData() {
 
@@ -670,7 +668,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
     }
 
-    protected boolean readFromFile(File file) throws FileNotFoundException, IOException {
+    protected boolean readFromFile(File file) throws IOException {
         throw new RuntimeException("Cannot read file - use import instead");
     }
 

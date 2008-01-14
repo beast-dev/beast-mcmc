@@ -291,6 +291,7 @@ public class DiscreteStatistics {
      *
      * @param q quantile (0 <= q <= 1)
      * @param x discrete distribution (an unordered list of numbers)
+     * @param count use only first count entries in x
      *
      * @return q-th quantile
      */

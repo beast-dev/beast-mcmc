@@ -297,7 +297,7 @@ public class CharactersPanel extends JPanel implements Exportable {
             removeCharacterAction.setEnabled(false);
             addStateAction.setEnabled(false);
         } else {
-            selectedCharacter = (TreeStatData.Character)treeStatData.characters.get(charactersTable.getSelectedRow());
+            selectedCharacter = treeStatData.characters.get(charactersTable.getSelectedRow());
             removeCharacterAction.setEnabled(true);
             addStateAction.setEnabled(true);
         }
@@ -347,7 +347,7 @@ public class CharactersPanel extends JPanel implements Exportable {
 		public void actionPerformed(ActionEvent ae) {
             TreeStatData.Character character = new TreeStatData.Character();
             character.name = "untitled";
-            character.states = new ArrayList();
+            character.states = new ArrayList<TreeStatData.State>();
             treeStatData.characters.add(character);
             dataChanged();
 
@@ -408,10 +408,10 @@ public class CharactersPanel extends JPanel implements Exportable {
             int saved1 = charactersTable.getSelectedRow();
             int saved2 = statesTable.getSelectedRow();
             int[] rows = excludedTaxaTable.getSelectedRows();
-            ArrayList exclList = new ArrayList(treeStatData.allTaxa);
+            ArrayList<String> exclList = new ArrayList<String>(treeStatData.allTaxa);
             exclList.removeAll(selectedState.taxa);
-            for (int i = 0; i < rows.length; i++) {
-                selectedState.taxa.add(exclList.get(rows[i]));
+            for (int row : rows) {
+                selectedState.taxa.add(exclList.get(row));
             }
             dataChanged();
             charactersTable.setRowSelectionInterval(saved1, saved1);
@@ -458,11 +458,11 @@ public class CharactersPanel extends JPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
-            return ((TreeStatData.Character)treeStatData.characters.get(row)).name;
+            return treeStatData.characters.get(row).name;
         }
 
         public void setValueAt(Object value, int row, int col) {
-            ((TreeStatData.Character)treeStatData.characters.get(row)).name = (String)value;
+            treeStatData.characters.get(row).name = (String)value;
         }
 
         public boolean isCellEditable(int row, int col) {
@@ -474,7 +474,7 @@ public class CharactersPanel extends JPanel implements Exportable {
         }
 
         public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-    };
+    }
 
     class StatesTableModel extends AbstractTableModel {
 
@@ -497,18 +497,20 @@ public class CharactersPanel extends JPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
+            final TreeStatData.State state = selectedCharacter.states.get(row);
             if (col == 0) {
-                return ((TreeStatData.State)selectedCharacter.states.get(row)).name;
+                return state.name;
             } else {
-                return ((TreeStatData.State)selectedCharacter.states.get(row)).description;
+                return state.description;
             }
         }
 
         public void setValueAt(Object value, int row, int col) {
+            final TreeStatData.State state = selectedCharacter.states.get(row);
             if (col == 0) {
-                ((TreeStatData.State)selectedCharacter.states.get(row)).name = (String)value;
+                state.name = (String)value;
             } else {
-                ((TreeStatData.State)selectedCharacter.states.get(row)).description = (String)value;
+                state.description = (String)value;
             }
         }
 
@@ -521,7 +523,7 @@ public class CharactersPanel extends JPanel implements Exportable {
         }
 
         public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-    };
+    }
 
     class TaxaTableModel extends AbstractTableModel {
 
@@ -552,11 +554,11 @@ public class CharactersPanel extends JPanel implements Exportable {
         public Object getValueAt(int row, int col) {
 
             if (included) {
-                return (String)selectedState.taxa.get(row);
+                return selectedState.taxa.get(row);
             } else {
-                ArrayList exclList = new ArrayList(treeStatData.allTaxa);
+                ArrayList<String> exclList = new ArrayList<String>(treeStatData.allTaxa);
                 exclList.removeAll(selectedState.taxa);
-                return (String)exclList.get(row);
+                return exclList.get(row);
             }
         }
 
@@ -570,5 +572,5 @@ public class CharactersPanel extends JPanel implements Exportable {
         }
 
         public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-    };
+    }
 }

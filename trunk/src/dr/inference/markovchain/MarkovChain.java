@@ -27,6 +27,7 @@ package dr.inference.markovchain;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.operators.*;
 import dr.inference.prior.Prior;
 
@@ -145,6 +146,7 @@ public final class MarkovChain {
             final MCMCOperator mcmcOperator = schedule.getOperator(op);
 
             final double oldScore = currentScore;
+            String oldMessage = ((CompoundLikelihood)likelihood).getDiagnosis();
 
 //            assert Profiler.startProfile("Store");
 

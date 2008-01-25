@@ -144,7 +144,7 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
 				offset = xo.getDoubleAttribute(OFFSET);
 			}
 			
-			Parameter meanParameter = null;
+			Parameter meanParameter;
 			try {
 				double mean = object.getDoubleChild(0);
 				meanParameter = new Parameter.Default(mean);
@@ -175,7 +175,7 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
     // Private methods
     // **************************************************************
 
-	private final double getMean() { return meanParameter.getParameterValue(0);}
+	private double getMean() { return meanParameter.getParameterValue(0);}
 
 	// **************************************************************
     // Private instance variables

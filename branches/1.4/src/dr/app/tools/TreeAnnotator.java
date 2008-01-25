@@ -719,7 +719,10 @@ public class TreeAnnotator {
         }
 
         if (args2.length == 2) {
-            targetTreeFileName = null;
+
+            // why was this assignment to null here?
+            // It stops the command line version of TreeAnnotator from working!
+            // targetTreeFileName = null;
             inputFileName = args2[0];
             outputFileName = args2[1];
         } else {

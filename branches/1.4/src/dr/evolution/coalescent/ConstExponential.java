@@ -27,7 +27,7 @@ package dr.evolution.coalescent;
 
 /**
  * This class models exponential growth from an initial population size.
- * 
+ *
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
@@ -36,41 +36,41 @@ package dr.evolution.coalescent;
  */
 public class ConstExponential extends ExponentialGrowth {
 
-	/**
-	 * Construct demographic model with default settings
-	 */
-	public ConstExponential(int units) {
-	
-		super(units);
-	}
-	
-	public double getN1() { return N1; }
-	public void setN1(double N1) { this.N1 = N1; }
-			
-	public void setProportion(double p) { this.N1 = getN0() * p; }
-	
-	// Implementation of abstract methods
+    /**
+     * Construct demographic model with default settings
+     */
+    public ConstExponential(int units) {
 
-	public double getDemographic(double t) {
-		
-		double N0 = getN0();
-		double N1 = getN1();
-		double r = getGrowthRate();
-		
-		//return nOne + ((nZero - nOne) * Math.exp(-r*t));
-	
-		double time = Math.log(N0/N1)/r;
+        super(units);
+    }
+
+    public double getN1() { return N1; }
+    public void setN1(double N1) { this.N1 = N1; }
+
+    public void setProportion(double p) { this.N1 = getN0() * p; }
+
+    // Implementation of abstract methods
+
+    public double getDemographic(double t) {
+
+        double N0 = getN0();
+        double N1 = getN1();
+        double r = getGrowthRate();
+
+        //return nOne + ((nZero - nOne) * Math.exp(-r*t));
+
+        double time = Math.log(N0/N1)/r;
 
         if (t < time) return N0 * Math.exp(-r*t);
-		
-		return N1;
-	}
 
-	/**
-	 * Returns value of demographic intensity function at time t
-	 * (= integral 1/N(x) dx from 0 to t).
-	 */
-	public double getIntensity(double t) {
+        return N1;
+    }
+
+    /**
+     * Returns value of demographic intensity function at time t
+     * (= integral 1/N(x) dx from 0 to t).
+     */
+    public double getIntensity(double t) {
 
         double r = getGrowthRate();
         double time = Math.log(getN0()/getN1())/r;
@@ -82,69 +82,69 @@ public class ConstExponential extends ExponentialGrowth {
         } else {
             return super.getIntensity(time) + (t-time)/getN1();
         }
-  	}
+    }
 
-	public double getInverseIntensity(double x) {
-		
-	/* AER - I think this is right but until someone checks it... 
-		double nZero = getN0();
-		double nOne = getN1();
-		double r = getGrowthRate();
-		
-		if (r == 0) {
-			return nZero*x;
-		} else if (alpha == 0) {
-			return Math.log(1.0+nZero*x*r)/r;
-		} else {
-			return Math.log(-(nOne/nZero) + Math.exp(nOne*x*r))/r;
-		}
-	*/
-		throw new RuntimeException("Not implemented!");
-	}
-	
-	public int getNumArguments() {
-		return 3;
-	}
-	
-	public String getArgumentName(int n) {
-		switch (n) {
-			case 0: return "N0";
-			case 1: return "r";
-			case 2: return "N1";
-		}
-		throw new IllegalArgumentException("Argument " + n + " does not exist");
-	}
-	
-	public double getArgument(int n) {
-		switch (n) {
-			case 0: return getN0();
-			case 1: return getGrowthRate();
-			case 2: return getN1();
-		}
-		throw new IllegalArgumentException("Argument " + n + " does not exist");
-	}
-	
-	public void setArgument(int n, double value) {
-		switch (n) {
-			case 0: setN0(value); break;
-			case 1: setGrowthRate(value); break;
-			case 2: setN1(value); break;
-			default: throw new IllegalArgumentException("Argument " + n + " does not exist");
+    public double getInverseIntensity(double x) {
 
-		}
-	}
+        /* AER - I think this is right but until someone checks it...
+          double nZero = getN0();
+          double nOne = getN1();
+          double r = getGrowthRate();
 
-	public double getLowerBound(int n) {
-		return 0.0;
-	}
-	
-	public double getUpperBound(int n) {
-		return Double.POSITIVE_INFINITY;
-	}
+          if (r == 0) {
+              return nZero*x;
+          } else if (alpha == 0) {
+              return Math.log(1.0+nZero*x*r)/r;
+          } else {
+              return Math.log(-(nOne/nZero) + Math.exp(nOne*x*r))/r;
+          }
+      */
+        throw new RuntimeException("Not implemented!");
+    }
 
-	//
-	// private stuff
-	//
-	
-	private double N1 = 0.0;
+    public int getNumArguments() {
+        return 3;
+    }
+
+    public String getArgumentName(int n) {
+        switch (n) {
+            case 0: return "N0";
+            case 1: return "r";
+            case 2: return "N1";
+        }
+        throw new IllegalArgumentException("Argument " + n + " does not exist");
+    }
+
+    public double getArgument(int n) {
+        switch (n) {
+            case 0: return getN0();
+            case 1: return getGrowthRate();
+            case 2: return getN1();
+        }
+        throw new IllegalArgumentException("Argument " + n + " does not exist");
+    }
+
+    public void setArgument(int n, double value) {
+        switch (n) {
+            case 0: setN0(value); break;
+            case 1: setGrowthRate(value); break;
+            case 2: setN1(value); break;
+            default: throw new IllegalArgumentException("Argument " + n + " does not exist");
+
+        }
+    }
+
+    public double getLowerBound(int n) {
+        return 0.0;
+    }
+
+    public double getUpperBound(int n) {
+        return Double.POSITIVE_INFINITY;
+    }
+
+    //
+    // private stuff
+    //
+
+    private double N1 = 0.0;
 }

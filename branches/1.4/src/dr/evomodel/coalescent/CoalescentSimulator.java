@@ -227,7 +227,7 @@ public class CoalescentSimulator {
 
             // should have one child that is node
             for (int i = 0; i < xo.getChildCount(); i++) {
-                Object child = xo.getChild(i);
+                final Object child = xo.getChild(i);
 
                 // AER - swapped the order of these round because Trees are TaxonLists...
                 if (child instanceof Tree) {

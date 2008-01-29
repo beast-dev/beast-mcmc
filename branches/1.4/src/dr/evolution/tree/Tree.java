@@ -25,11 +25,11 @@
 
 package dr.evolution.tree;
 
-import dr.evolution.colouring.BranchColouring;
-import dr.evolution.colouring.TreeColouring;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.evolution.colouring.TreeColouring;
+import dr.evolution.colouring.BranchColouring;
 import dr.util.Attributable;
 import dr.util.Identifiable;
 
@@ -40,50 +40,53 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- *
  * @version $Id: Tree.java,v 1.59 2006/09/08 17:34:23 rambaut Exp $
  */
 public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
     /**
-     * @return the index of root node of this tree.
+     * @return root node of this tree.
      */
     NodeRef getRoot();
 
     /**
      * @return a count of the number of nodes (internal + external) in this
-     * tree, currently connected from the root node.
+     *         tree, currently connected from the root node.
      */
     int getNodeCount();
 
     /**
+     * @param i
      * @return the ith node.
      */
     NodeRef getNode(int i);
 
     /**
+     * @param i
      * @return the ith internal node.
      */
     NodeRef getInternalNode(int i);
 
     /**
+     * @param i
      * @return the ith internal node.
      */
     NodeRef getExternalNode(int i);
 
     /**
      * @return a count of the number of external nodes (tips) in this
-     * tree, currently connected from the root node.
+     *         tree, currently connected from the root node.
      */
     int getExternalNodeCount();
 
     /**
      * @return a count of the number of internal nodes in this
-     * tree, currently connected from the root node.
+     *         tree, currently connected from the root node.
      */
     int getInternalNodeCount();
 
     /**
+     * @param node
      * @return the taxon of this node.
      */
     Taxon getNodeTaxon(NodeRef node);
@@ -94,7 +97,8 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
     boolean hasNodeHeights();
 
     /**
-     * @return the height of the ith node in the tree (where the first n are internal).
+     * @param node
+     * @return the height of node in the tree.
      */
     double getNodeHeight(NodeRef node);
 
@@ -104,45 +108,52 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
     boolean hasBranchLengths();
 
     /**
-     * @return the length of the branch from the ith node in the tree to its parent.
+     * @param node
+     * @return the length of the branch from node to its parent.
      */
     double getBranchLength(NodeRef node);
 
     /**
-     * @return the rate of the ith node in the tree (where the first n are internal).
+     * @param node
+     * @return the rate of node in the tree.
      */
     double getNodeRate(NodeRef node);
 
     /**
-     * @return an object representing the named attributed for the given node.
      * @param node the node whose attribute is being fetched.
      * @param name the name of the attribute of interest.
+     * @return an object representing the named attributed for the given node.
      */
     Object getNodeAttribute(NodeRef node, String name);
 
     /**
-     * @return an interator of attribute names available for this node.
      * @param node the node whose attribute is being fetched.
+     * @return an interator of attribute names available for this node.
      */
     Iterator getNodeAttributeNames(NodeRef node);
 
     /**
+     * @param node
      * @return whether the node is external.
      */
     boolean isExternal(NodeRef node);
 
     /**
+     * @param node
      * @return whether the node is the root.
      */
     boolean isRoot(NodeRef node);
 
     /**
-     * @return the number of children of the ith node.
+     * @param node
+     * @return the number of children of node.
      */
     int getChildCount(NodeRef node);
 
     /**
-     * @return the jth child of the ith node
+     * @param node
+     * @param j
+     * @return the jth child of node
      */
     NodeRef getChild(NodeRef node, int j);
 
@@ -159,12 +170,13 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          */
         private static final long serialVersionUID = 8468656622238269963L;
 
-        public MissingTaxonException(Taxon taxon) { super(taxon.getId()); }
+        public MissingTaxonException(Taxon taxon) {
+            super(taxon.getId());
+        }
     }
 
     /**
      * Static utility functions for trees.
-     *
      */
     public class Utils {
 
@@ -173,12 +185,13 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         public static final int LENGTHS_AS_SUBSTITUTIONS = 2;
 
         /**
-         * Return the number of leaves under this node.
+         * Count number of leaves in subtree whose root is node.
+         *
          * @param tree
          * @param node
          * @return the number of leaves under this node.
          */
-        public static final int getLeafCount(Tree tree, NodeRef node) {
+        public static int getLeafCount(Tree tree, NodeRef node) {
 
             int childCount = tree.getChildCount(node);
             if (childCount == 0) return 1;
@@ -188,6 +201,21 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 leafCount += getLeafCount(tree, tree.getChild(node, i));
             }
             return leafCount;
+        }
+
+        public static double getTreeLength(Tree tree, NodeRef node) {
+
+            int childCount = tree.getChildCount(node);
+            if (childCount == 0) return tree.getBranchLength(node);
+
+            double length = 0;
+            for (int i = 0; i < childCount; i++) {
+                length += getTreeLength(tree, tree.getChild(node, i));
+            }
+            if (node != tree.getRoot())
+                length += tree.getBranchLength(node);
+            return length;
+
         }
 
         public static double getMinNodeHeight(Tree tree, NodeRef node) {
@@ -206,26 +234,31 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
+         * @param tree
          * @return true only if all tips have height 0.0
          */
         public static boolean isUltrametric(Tree tree) {
             for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-                if (tree.getNodeHeight(tree.getExternalNode(i)) != 0.0) return false;
+                if (tree.getNodeHeight(tree.getExternalNode(i)) != 0.0)
+                    return false;
             }
             return true;
         }
 
         /**
+         * @param tree
          * @return true only if internal nodes have 2 children
          */
         public static boolean isBinary(Tree tree) {
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                if (tree.getChildCount(tree.getInternalNode(i)) > 2) return false;
+                if (tree.getChildCount(tree.getInternalNode(i)) > 2)
+                    return false;
             }
             return true;
         }
 
         /**
+         * @param tree
          * @return a set of strings which are the taxa of the tree.
          */
         public static Set getLeafSet(Tree tree) {
@@ -243,8 +276,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
-         * Gets an array of booleans, true for the leaf nodes that are associated with
-         * the taxa in taxa.
+         * @param tree
+         * @param taxa
+         * @return Set of taxaon names (id's) associated with the taxa in taxa.
          */
         public static Set getLeavesForTaxa(Tree tree, TaxonList taxa) throws MissingTaxonException {
 
@@ -307,7 +341,8 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
         /**
          * Gets the most recent common ancestor (MRCA) node of a set of leaf nodes.
-         * @param tree the Tree
+         *
+         * @param tree      the Tree
          * @param leafNodes a set of names
          * @return the NodeRef of the MRCA
          */
@@ -325,9 +360,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             return mrca[0];
         }
 
-        /**
-         * Private recursive function used by getCommonAncestorNode.
-         */
+        /*
+                     * Private recursive function used by getCommonAncestorNode.
+                     */
         private static int getCommonAncestorNode(Tree tree, NodeRef node,
                                                  Set leafNodes, int cardinality,
                                                  NodeRef[] mrca) {
@@ -352,7 +387,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
                 matches += getCommonAncestorNode(tree, node1, leafNodes, cardinality, mrca);
 
-                if (mrca[0] != null) { break; }
+                if (mrca[0] != null) {
+                    break;
+                }
             }
 
             if (mrca[0] == null) {
@@ -369,7 +406,8 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          * Performs the a monophyly test on a set of leaf nodes. The nodes are monophyletic
          * if there is a node in the tree which subtends all the taxa in the set (and
          * only those taxa).
-         * @param tree a tree object to perform test on
+         *
+         * @param tree      a tree object to perform test on
          * @param leafNodes a array with one boolean for each leaf node.
          * @return boolean is monophyletic?
          */
@@ -399,9 +437,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             return isMono[0];
         }
 
-        /**
-         * Private recursive function used by isMonophyletic.
-         */
+        /*
+                     * Private recursive function used by isMonophyletic.
+                     */
         private static boolean isMonophyletic(Tree tree, NodeRef node,
                                               Set leafNodes, int cardinality,
                                               int[] matchCount, int[] leafCount,
@@ -429,7 +467,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 mc += matchCount[0];
                 lc += leafCount[0];
 
-                if (done) { return true; }
+                if (done) {
+                    return true;
+                }
             }
 
             matchCount[0] = mc;
@@ -445,6 +485,8 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
+         * @param tree
+         * @param range
          * @return the size of the largest clade with tips in the given range of times.
          */
         public static int largestClade(Tree tree, double range) {
@@ -489,7 +531,8 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         /**
          * Calculates the minimum number of steps for the parsimony reconstruction of a
          * binary character defined by leafStates.
-         * @param tree a tree object to perform test on
+         *
+         * @param tree       a tree object to perform test on
          * @param leafStates a set of booleans, one for each leaf node
          * @return number of parsimony steps
          */
@@ -531,8 +574,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         /**
          * Calculates the parsimony reconstruction of a binary character defined
          * by leafStates at a given node.
-         * @param tree a tree object to perform test on
-         * @param node a NodeRef object from tree
+         *
+         * @param tree       a tree object to perform test on
+         * @param node       a NodeRef object from tree
          * @param leafStates a set of booleans, one for each leaf node
          * @return number of parsimony steps
          */
@@ -540,9 +584,12 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
             int state = getParsimonyStateAtNode(tree, node, leafStates);
             switch (state) {
-                case 1: return 0.0;
-                case 2: return 1.0;
-                default: return 0.5;
+                case 1:
+                    return 0.0;
+                case 2:
+                    return 1.0;
+                default:
+                    return 0.5;
             }
         }
 
@@ -591,15 +638,15 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                     ln = cn;
                     cn = tree.getParent(cn);
                 }
-                while (tree.getChild(cn, tree.getChildCount(cn)-1) == ln);
+                while (tree.getChild(cn, tree.getChildCount(cn) - 1) == ln);
 
                 // Determine next node
                 if (next == null) {
                     // Go down one node
-                    for (int i = 0; i < tree.getChildCount(cn)-1; i++) {
+                    for (int i = 0; i < tree.getChildCount(cn) - 1; i++) {
 
                         if (tree.getChild(cn, i) == ln) {
-                            next = tree.getChild(cn, i+1);
+                            next = tree.getChild(cn, i + 1);
                             break;
                         }
                     }
@@ -626,14 +673,14 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             } else {
 
                 // Go up one node
-                if (tree.getChild(parent, tree.getChildCount(parent)-1) == node) {
+                if (tree.getChild(parent, tree.getChildCount(parent) - 1) == node) {
                     return parent;
                 }
 
                 // Go down one node
-                for (int i = 0; i < tree.getChildCount(parent)-1; i++) {
+                for (int i = 0; i < tree.getChildCount(parent) - 1; i++) {
                     if (tree.getChild(parent, i) == node) {
-                        cn = tree.getChild(parent, i+1);
+                        cn = tree.getChild(parent, i + 1);
                         break;
                     }
                 }
@@ -675,10 +722,10 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
             dr.evolution.util.Date mostRecent = null;
 
-            for (int i =0; i < tree.getExternalNodeCount(); i++) {
+            for (int i = 0; i < tree.getExternalNodeCount(); i++) {
                 Taxon taxon = tree.getNodeTaxon(tree.getExternalNode(i));
 
-                dr.evolution.util.Date date = (dr.evolution.util.Date)taxon.getAttribute(dr.evolution.util.Date.DATE);
+                dr.evolution.util.Date date = (dr.evolution.util.Date) taxon.getAttribute(dr.evolution.util.Date.DATE);
                 if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
                     mostRecent = date;
                 }
@@ -884,7 +931,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         private static SimpleNode rotateNodeByName(Tree tree, NodeRef node) {
 
             if (tree.isExternal(node)) {
-                return  new SimpleNode(tree, node);
+                return new SimpleNode(tree, node);
             } else {
 
                 SimpleNode parent = new SimpleNode(tree, node);
@@ -978,6 +1025,23 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                     return 0;
                 }
             };
+        }
+
+        public static boolean allDisjoint(SimpleNode[] nodes) {
+
+            // check with java 1.6
+            Set[] ids = new Set[nodes.length];
+            for (int k = 0; k < nodes.length; ++k) {
+                ids[k] = Tree.Utils.getLeafSet(new SimpleTree(nodes[k]));
+                for (int j = 0; j < k; ++j) {
+                    Set intersection = new HashSet(ids[j]);
+                    intersection.retainAll(ids[k]);
+                    if (intersection.size() > 0) {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         /**

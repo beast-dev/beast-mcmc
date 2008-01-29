@@ -134,7 +134,6 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 				Epoch epoch = (Epoch)epochs.get(i);
 				epochTransitionTimes[i] = epoch.transitionTime;
 				rateParameters[i] = epoch.parameter;
-				i++;
 			}
 			rateParameters[epochs.size()] = ancestralRateParameter;
 

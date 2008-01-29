@@ -47,7 +47,7 @@ public class BeastVersion implements Version {
 	 * Version string: assumed to be in format x.x.x
 	 */
 	private static String VERSION = "1.4.7";
-	private static String DATE_STRING = "2002-2007";
+	private static String DATE_STRING = "2002-2008";
 
 	public String getVersionString() {
 		return "v" + VERSION;
@@ -59,7 +59,9 @@ public class BeastVersion implements Version {
 
     public String getBuildString() {
         // this used to parse the CVS ID string but there is no equivalent
-        // for SVN. We could increment this manually?
-        return "Build r587";
+        // for SVN. I am currently updating it manually to match the SVN
+        // version number (i.e., the current version number plus one for
+        // when this change gets committed).
+        return "Build r590";
 	}
 }

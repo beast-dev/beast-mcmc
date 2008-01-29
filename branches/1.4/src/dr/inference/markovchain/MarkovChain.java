@@ -144,6 +144,7 @@ public final class MarkovChain {
             final MCMCOperator mcmcOperator = schedule.getOperator(op);
 
             final double oldScore = currentScore;
+            String oldMessage = ((CompoundLikelihood)likelihood).getDiagnosis();
 
 //            assert Profiler.startProfile("Store");
 
@@ -230,6 +231,9 @@ public final class MarkovChain {
                         System.err.println("State was not correctly restored after reject step.");
                         System.err.println("Likelihood before: " + oldScore + " Likelihood after: " + testScore);
                         System.err.println("Operator: " + mcmcOperator + " " + mcmcOperator.getOperatorName());
+                        String newMessage = ((CompoundLikelihood)likelihood).getDiagnosis();
+                        System.err.println(oldMessage);
+                        System.err.println(newMessage);
                         testFailureCount ++;
                     }
 

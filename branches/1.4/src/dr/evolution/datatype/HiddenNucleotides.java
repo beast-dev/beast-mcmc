@@ -28,175 +28,214 @@ package dr.evolution.datatype;
 /**
  * implements DataType for nucleotides with hidden state(s)
  *
- * @version $Id: HiddenNucleotides.java,v 1.4 2005/05/24 20:25:56 rambaut Exp $
- *
  * @author Alexei Drummond
+ * @version $Id: HiddenNucleotides.java,v 1.4 2005/05/24 20:25:56 rambaut Exp $
  */
- public class HiddenNucleotides extends DataType {
-	
-	public static final String DESCRIPTION = "hiddenNucleotide";
-	public static final HiddenNucleotides INSTANCE = new HiddenNucleotides(2);
+public class HiddenNucleotides extends DataType {
+
+    public static final String DESCRIPTION = "hiddenNucleotide";
+    public static final HiddenNucleotides INSTANCE = new HiddenNucleotides(2);
 
     public HiddenNucleotides(int numHiddenStates) {
-		hiddenStateCount = numHiddenStates;
+        hiddenClassCount = numHiddenStates;
 
-        // @todo generalize this data type to allow more than two hidden states!
-        if (hiddenStateCount != 2) throw new IllegalArgumentException("Haven't implemented more than 2 yet!");
-		stateCount = 4 * hiddenStateCount;
-		ambiguousStateCount = stateCount + 6;
-	}
+        stateCount = 4 * hiddenClassCount;
+        ambiguousStateCount = stateCount + 6;
+    }
 
-	/**
-	 * Get state corresponding to a character
-	 *
-	 * @param c character
-	 *
-	 * @return state
-	 */
-	public int getState(char c) {
-	
-		switch (c) {
-			case '0': return 0;
-			case '1': return 1;
-			case '2': return 2;
-			case '3': return 3;
-			case '4': return 4;
-			case '5': return 5;
-			case '6': return 6;
-			case '7': return 7;
-			case 'a': case 'A': return 8;
-			case 'c': case 'C': return 9;
-			case 'g': case 'G': return 10;
-			case 't': case 'T': case 'u': case 'U': return 11;
-		}
-		return getGapState();
-	}
+    /**
+     * Get state corresponding to a character
+     *
+     * @param c character
+     * @return state
+     */
+    public int getState(char c) {
 
-	/**
-	 * Get character corresponding to a given state
-	 *
-	 * @param state state
-	 *
-	 * return corresponding character
-	 */
-	public char getChar(int state) {
-		
-		switch (state) {
-			case 0: return '0';
-			case 1: return '1';
-			case 2: return '2';
-			case 3: return '3';
-			case 4: return '4';
-			case 5: return '5';
-			case 6: return '6';
-			case 7: return '7';
-			case 8: return 'A';
-			case 9: return 'C';
-			case 10: return 'G';
-			case 11: return 'T';
-		}
-		
-		return '-';
-	}
-	
-	public int[] getStates(int state) {
-		if (state >= 8 && state <=11) {
-			int[] states = new int[2];
-			states[0] = state % 4;
-			states[1] = state % 4 + 4;
-			return states;
-		} else throw new IllegalArgumentException();
-	}
-	
-	/**
-	 * returns an array containing the non-ambiguous states that this state represents.
-	 */
-	public boolean[] getStateSet(int state) {
-	
-		boolean[] stateSet = new boolean[stateCount];
-		for (int i = 0; i < stateCount; i++) {
-			stateSet[i] = false;
-		}
-		if (!isAmbiguousState(state)) {
-			stateSet[state] = true;
-		} else if (state < (stateCount + 4)) {
-			for (int i = 0; i < stateCount; i++) {
-				if ((i % 4) == (state % 4)) {
-					stateSet[i] = true;
-				}
-			}
-		} else {
-			for (int i = 0; i < stateCount; i++) {
-				stateSet[i] = true;
-			}
-		}
-		
-		return stateSet;
-	}
-	
-	/**
-	 * Get state corresponding to an unknown
-	 *
-	 * @return state
-	 */
-	public int getUnknownState() {
-		return stateCount + 4;
-	}
+        switch (c) {
+            case'A':
+            case'a':
+                return stateCount;
+            case'C':
+            case'c':
+                return stateCount + 1;
+            case'G':
+            case'g':
+                return stateCount + 2;
+            case'T':
+            case't':
+            case'U':
+            case'u':
+                return stateCount + 3;
+            case'-':
+            case'?':
+                return getGapState();
+            default: {
+                int state = (int) c - '0';
+                if (c > '?') state -= 1;
+                if (c > 'A') state -= 1;
+                if (c > 'C') state -= 1;
+                if (c > 'G') state -= 1;
+                if (c > 'T') state -= 1;
+                if (c > 'U') state -= 1;
+                if (c > 'a') state -= 1;
+                if (c > 'g') state -= 1;
+                if (c > 'c') state -= 1;
+                if (c > 't') state -= 1;
+                if (c > 'u') state -= 1;
+                return state;
+            }
+        }
 
-	/**
-	 * Get state corresponding to a gap
-	 *
-	 * @return state
-	 */
-	public int getGapState() {
-		return stateCount + 5;
-	}
-	
-		/**
-	 * @return true if this character is an ambiguous state
-	 */
-	public boolean isAmbiguousChar(char c) {
-		return isAmbiguousState(getState(c));
-	}
+    }
 
-	/**
-	 * @return true if this character is a gap
-	 */
-	public boolean isUnknownChar(char c) {
-		return isUnknownState(getState(c));
-	}
+    /**
+     * Get character corresponding to a given state
+     *
+     * @param state state
+     *              <p/>
+     *              return corresponding character
+     */
+    public char getChar(int state) {
 
-	/**
-	 * @return true if this character is a gap
-	 */
-	public boolean isGapChar(char c) {
-		return isGapState(getState(c));
-	}
+        if (state >= stateCount) {
+            switch (state - stateCount) {
+                case 0:
+                    return 'A';
+                case 1:
+                    return 'C';
+                case 2:
+                    return 'G';
+                case 3:
+                    return 'T';
+                default:
+                    return '-';
+            }
+        } else {
+            char c = (char) (state + '0');
+            if (c >= '?') c += 1;
+            if (c >= 'A') c += 1;
+            if (c >= 'C') c += 1;
+            if (c >= 'G') c += 1;
+            if (c >= 'T') c += 1;
+            if (c >= 'U') c += 1;
+            if (c >= 'a') c += 1;
+            if (c >= 'g') c += 1;
+            if (c >= 'c') c += 1;
+            if (c >= 't') c += 1;
+            if (c >= 'u') c += 1;
+            return c;
+        }
+    }
 
-	/**
-	 * returns true if this state is an ambiguous state.
-	 */
-	public boolean isAmbiguousState(int state) {
-		return (state >= 8);
-	}
+    public int[] getStates(int state) {
 
-	/**
-	 * @return true if this state is an unknown state
-	 */
-	public boolean isUnknownState(int state) {
-		return (state == getUnknownState());
-	}
-	
-	/**
-	 * @return true if this state is a gap
-	 */
-	public boolean isGapState(int state) {
-		return (state == getGapState());
-	}
+        if (state >= stateCount && state <= stateCount + 3) {
+            int[] states = new int[hiddenClassCount];
+            for (int i = 0; i < hiddenClassCount; i++) {
+                states[i] = state % 4 + (i * 4);
+            }
+            return states;
+        } else throw new IllegalArgumentException();
+    }
 
-	public int getType() { return 999; }
-		
-	public String getDescription() { return "Hidden-state Nucleotides"; }	
-		
-	private int hiddenStateCount;
+    /**
+     * returns an array containing the non-ambiguous states that this state represents.
+     */
+    public boolean[] getStateSet(int state) {
+
+        boolean[] stateSet = new boolean[stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            stateSet[i] = false;
+        }
+        if (!isAmbiguousState(state)) {
+            stateSet[state] = true;
+        } else if (state < (stateCount + 4)) {
+            for (int i = 0; i < stateCount; i++) {
+                if ((i % 4) == (state % 4)) {
+                    stateSet[i] = true;
+                }
+
+            }
+        } else {
+            for (int i = 0; i < stateCount; i++) {
+                stateSet[i] = true;
+            }
+        }
+
+        return stateSet;
+    }
+
+    /**
+     * Get state corresponding to an unknown
+     *
+     * @return state
+     */
+    public int getUnknownState() {
+        return stateCount + 4;
+    }
+
+    /**
+     * Get state corresponding to a gap
+     *
+     * @return state
+     */
+    public int getGapState() {
+        return stateCount + 5;
+    }
+
+    /**
+     * @return true if this character is an ambiguous state
+     */
+    public boolean isAmbiguousChar(char c) {
+        return isAmbiguousState(getState(c));
+    }
+
+    /**
+     * @return true if this character is a gap
+     */
+    public boolean isUnknownChar(char c) {
+        return isUnknownState(getState(c));
+    }
+
+    /**
+     * @return true if this character is a gap
+     */
+    public boolean isGapChar(char c) {
+        return isGapState(getState(c));
+    }
+
+    /**
+     * returns true if this state is an ambiguous state.
+     */
+    public boolean isAmbiguousState(int state) {
+        return (state >= stateCount);
+    }
+
+    /**
+     * @return true if this state is an unknown state
+     */
+    public boolean isUnknownState(int state) {
+        return (state == getUnknownState());
+    }
+
+    /**
+     * @return true if this state is a gap
+     */
+    public boolean isGapState(int state) {
+        return (state == getGapState());
+    }
+
+    public int getType() {
+        return 999;
+    }
+
+    public String getDescription() {
+        return "Hidden-state Nucleotides";
+    }
+
+    private int hiddenClassCount;
+
+    public int getHiddenClassCount() {
+        return hiddenClassCount;
+    }
 }

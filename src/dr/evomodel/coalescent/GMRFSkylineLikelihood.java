@@ -40,6 +40,7 @@ import no.uib.cipr.matrix.SymmTridiagMatrix;
 /**
  * A likelihood function for a Gaussian Markov random field on a log population size trajectory.
  *
+ * @author Jen Tom
  * @author Erik Bloomquist
  * @author Vladimir Minin
  * @author Marc Suchard

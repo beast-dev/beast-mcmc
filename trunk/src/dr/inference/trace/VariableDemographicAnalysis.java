@@ -160,6 +160,7 @@ public class VariableDemographicAnalysis extends TabularData {
                 } else {
                     final double[] hpd = DiscreteStatistics.HPDInterval(HPDLevels[i], popValues, indices);
                     hpdLower[i][nx] = hpd[0];
+                    hpdHigh[i][nx] = hpd[1];
                 }
             }
             medians[nx] =  DiscreteStatistics.median(popValues, indices);

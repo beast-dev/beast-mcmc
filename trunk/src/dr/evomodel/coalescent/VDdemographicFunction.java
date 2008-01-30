@@ -99,7 +99,7 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
                 while( nti.getIntervalType(iCount) != IntervalType.COALESCENT ) {
                     ++iCount;
                     timeToCoal += nti.getInterval(iCount);
-                    assert k == 0;
+//                    assert k == 0: k;
                 }
 
                 int linAtStart = nti.getLineageCount(iCount);

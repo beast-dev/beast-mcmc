@@ -26,6 +26,7 @@
 package dr.app.tools;
 
 import dr.app.util.Utils;
+import dr.gui.table.TableEditorStopper;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.panels.OptionsPanel;
@@ -83,7 +84,9 @@ public class LogCombinerDialog {
 		filesTable.getColumnModel().getColumn(0).setPreferredWidth(120);
 		filesTable.getColumnModel().getColumn(0).setPreferredWidth(80);
 
-		filesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(filesTable);
+        
+        filesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent evt) { filesTableSelectionChanged(); }
 		});
 
@@ -182,7 +185,7 @@ public class LogCombinerDialog {
 	}
 
 	public int[] getBurnins() {
-		int[] burnins = new int[files.size()];
+        int[] burnins = new int[files.size()];
 		for (int i = 0; i < files.size(); i++) {
 			FileInfo fileInfo = (FileInfo)files.get(i);
 			burnins[i] = fileInfo.burnin.intValue();

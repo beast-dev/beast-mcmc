@@ -70,6 +70,13 @@ public class PDFPlot extends Plot.AbstractPlot {
 
         xMin = distribution.quantile(0.005);
         xMax = distribution.quantile(0.995);
+
+	    if (Double.isInfinite(xMin)) {
+	        xMin = 0.0;
+	    }
+	    if (Double.isInfinite(xMax)) {
+	        xMax = 1.0;
+	    }
         if (xMin == xMax) xMax += 1;
 
         double x = xMin + offset;

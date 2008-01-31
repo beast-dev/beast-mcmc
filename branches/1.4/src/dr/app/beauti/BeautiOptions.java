@@ -318,41 +318,41 @@ public class BeautiOptions {
 
         Iterator iter = ops.iterator();
         while (iter.hasNext()) {
-            Parameter param = (Parameter)iter.next();
+            final Parameter param = (Parameter)iter.next();
             if (alignmentReset) param.priorEdited = false;
 
             if (!param.priorEdited) {
                 switch (param.scale) {
                     case TIME_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = timeScaleMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
                         param.initial = initialRootHeight;
                         break;
                     case T50_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = timeScaleMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
                         param.initial = initialRootHeight / 5.0;
                         break;
                     case GROWTH_RATE_SCALE:
-                        param.uniformLower = -growthRateMaximum;
-                        param.uniformUpper = growthRateMaximum;
+                        param.uniformLower = Math.max(-growthRateMaximum, param.lower);
+                        param.uniformUpper = Math.min(growthRateMaximum, param.upper);
                         break;
                     case BIRTH_RATE_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = birthRateMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(birthRateMaximum, param.upper);
                         break;
                     case SUBSTITUTION_RATE_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = substitutionRateMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(substitutionRateMaximum, param.upper);
                         param.initial = initialRate;
                         break;
                     case LOG_STDEV_SCALE:
-                        param.uniformLower = 0;
-                        param.uniformUpper = logStdevMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(logStdevMaximum, param.upper);
                         break;
                     case SUBSTITUTION_PARAMETER_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = substitutionParameterMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(substitutionParameterMaximum, param.upper);
                         break;
                 }
                 if (param.isNodeHeight) {
@@ -1075,8 +1075,8 @@ public class BeautiOptions {
                 parameter.initial = getDoubleChild(e, "initial", 1.0);
                 parameter.priorType = getIntegerChild(e, "priorType", UNIFORM_PRIOR);
                 parameter.priorEdited = getBooleanChild(e, "priorEdited", false);
-                parameter.uniformLower = getDoubleChild(e, "uniformLower", parameter.uniformLower);
-                parameter.uniformUpper = getDoubleChild(e, "uniformUpper", parameter.uniformUpper);
+                parameter.uniformLower = Math.max(getDoubleChild(e, "uniformLower", parameter.uniformLower), parameter.lower);
+                parameter.uniformUpper = Math.min(getDoubleChild(e, "uniformUpper", parameter.uniformUpper), parameter.upper);
                 parameter.exponentialMean = getDoubleChild(e, "exponentialMean", parameter.exponentialMean);
                 parameter.exponentialOffset = getDoubleChild(e, "exponentialOffset", parameter.exponentialOffset);
                 parameter.normalMean = getDoubleChild(e, "normalMean", parameter.normalMean);
@@ -1376,6 +1376,9 @@ public class BeautiOptions {
             this.initial = Double.NaN;
             this.lower = lower;
             this.upper = upper;
+
+            uniformLower = lower;
+            uniformUpper = upper;
         }
 
         public Parameter(String name, String description, boolean isNodeHeight,

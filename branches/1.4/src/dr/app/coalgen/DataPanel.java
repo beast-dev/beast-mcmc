@@ -280,13 +280,13 @@ public class DataPanel extends JPanel implements Exportable {
 									"third from last", "second from last", "last"});
 								
 		optionPanel.addComponents(orderLabel, orderCombo);
-		optionPanel.addSeperator();
+		optionPanel.addSeparator();
 									
 		final JCheckBox prefixCheckBox = new JCheckBox("Defined by a prefix", false);
  		final JTextField prefixText = new JTextField(16);
 		prefixText.setEnabled(false);
 		optionPanel.addComponents(prefixCheckBox, prefixText);
- 		optionPanel.addSeperator();
+ 		optionPanel.addSeparator();
 	
 		final JCheckBox offsetCheck = new JCheckBox("Add the following value to each: ", false);
  		final RealNumberField offsetText = new RealNumberField();

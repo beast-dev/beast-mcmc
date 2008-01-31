@@ -131,11 +131,11 @@ public class ModelPanel extends OptionsPanel implements Exportable {
  		
         optionPanel.addComponentWithLabel("Number of replicates (ignored if using a trace file):", replicatesField);
 
-        optionPanel.addSeperator();
+        optionPanel.addSeparator();
 
 		optionPanel.addComponents(new JLabel("Demographic Model:"), demographicCombo);
 
-        optionPanel.addSeperator();
+        optionPanel.addSeparator();
 
  		optionPanel.addLabel("Select the parameter values (or obtain from a trace file):");
 

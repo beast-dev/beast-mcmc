@@ -1,31 +1,4 @@
 /*
- * RealNumberField.java
- *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-package org.virion.jam.components;
-
-/*
 * The contents of this file are subject to the BT "ZEUS" Open Source
 * Licence (L77741), Version 1.0 (the "Licence"); you may not use this file
 * except in compliance with the Licence. You may obtain a copy of the Licence
@@ -45,6 +18,8 @@ package org.virion.jam.components;
 *
 * THIS NOTICE MUST BE INCLUDED ON ANY COPY OF THIS FILE
 */
+
+package org.virion.jam.components;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -192,7 +167,7 @@ public class RealNumberField extends JTextField
 
             int length = getLength();
             String buf = getText(0, offs) + str + getText(offs, length - offs);
-            buf = buf.trim();
+            buf = buf.trim().toUpperCase();
             char[] array = buf.toCharArray();
 
             if (array.length > 0) {
@@ -204,11 +179,19 @@ public class RealNumberField extends JTextField
             }
 
             boolean period_found = (array.length > 0 && array[0] == PERIOD);
+            boolean exponent_found =  false;
+            int exponent_index = -1;
+            boolean exponent_sign_found =  false;
 
             for (int i = 1; i < array.length; i++) {
                 if (!member(array[i], numberSet)) {
                     if (!period_found && array[i] == PERIOD) {
                         period_found = true;
+                    } else if (!exponent_found && array[i] == 'E') {
+                        exponent_found = true;
+                        exponent_index = i;
+                    } else if (exponent_found && i == (exponent_index + 1) && !exponent_sign_found && array[i] == '-') {
+                        exponent_sign_found = true;
                     } else {
                         Toolkit.getDefaultToolkit().beep();
                         return;

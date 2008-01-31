@@ -98,39 +98,39 @@ public class BeautiOptions {
         createParameter("hky2.frequencies",  "HKY base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
         createParameter("hky3.frequencies",  "HKY base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
-        createScaleParameter("hky.kappa", "HKY transition-transversion parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("hky1.kappa", "HKY transition-transversion parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("hky2.kappa", "HKY transition-transversion parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("hky3.kappa", "HKY transition-transversion parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
+        createScaleParameter("hky.kappa", "HKY transition-transversion parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("hky1.kappa", "HKY transition-transversion parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("hky2.kappa", "HKY transition-transversion parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("hky3.kappa", "HKY transition-transversion parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
         createParameter("gtr.frequencies",  "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
         createParameter("gtr1.frequencies",  "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
         createParameter("gtr2.frequencies",  "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
         createParameter("gtr3.frequencies",  "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
-        createScaleParameter("gtr.ac", "GTR A-C substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr.ag", "GTR A-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr.at", "GTR A-T substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr.cg", "GTR C-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr.gt", "GTR G-T substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr.ac", "GTR A-C substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr.ag", "GTR A-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr.at", "GTR A-T substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr.cg", "GTR C-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr.gt", "GTR G-T substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createScaleParameter("gtr1.ac", "GTR A-C substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr1.ag", "GTR A-G substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr1.at", "GTR A-T substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr1.cg", "GTR C-G substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr1.gt", "GTR G-T substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr1.ac", "GTR A-C substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr1.ag", "GTR A-G substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr1.at", "GTR A-T substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr1.cg", "GTR C-G substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr1.gt", "GTR G-T substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createScaleParameter("gtr2.ac", "GTR A-C substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr2.ag", "GTR A-G substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr2.at", "GTR A-T substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr2.cg", "GTR C-G substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr2.gt", "GTR G-T substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr2.ac", "GTR A-C substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr2.ag", "GTR A-G substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr2.at", "GTR A-T substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr2.cg", "GTR C-G substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr2.gt", "GTR G-T substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createScaleParameter("gtr3.ac", "GTR A-C substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr3.ag", "GTR A-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr3.at", "GTR A-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr3.cg", "GTR C-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr3.gt", "GTR G-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-6, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr3.ac", "GTR A-C substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr3.ag", "GTR A-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr3.at", "GTR A-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr3.cg", "GTR C-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gtr3.gt", "GTR G-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
         createParameter("bsimple.frequencies",  "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);        
 
@@ -354,35 +354,35 @@ public class BeautiOptions {
             if (!param.priorEdited) {
                 switch (param.scale) {
                     case TIME_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = timeScaleMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
                         param.initial = initialRootHeight;
                         break;
                     case T50_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = timeScaleMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
                         param.initial = initialRootHeight / 5.0;
                         break;
                     case GROWTH_RATE_SCALE:
-                        param.uniformLower = -growthRateMaximum;
-                        param.uniformUpper = growthRateMaximum;
+                        param.uniformLower = Math.max(-growthRateMaximum, param.lower);
+                        param.uniformUpper = Math.min(growthRateMaximum, param.upper);
                         break;
                     case BIRTH_RATE_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = birthRateMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(birthRateMaximum, param.upper);
                         break;
                     case SUBSTITUTION_RATE_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = substitutionRateMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(substitutionRateMaximum, param.upper);
                         param.initial = initialRate;
                         break;
                     case LOG_STDEV_SCALE:
-                        param.uniformLower = 0;
-                        param.uniformUpper = logStdevMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(logStdevMaximum, param.upper);
                         break;
                     case SUBSTITUTION_PARAMETER_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = substitutionParameterMaximum;
+                        param.uniformLower = Math.max(0.0, param.lower);
+                        param.uniformUpper = Math.min(substitutionParameterMaximum, param.upper);
                         break;
 
                     case UNITY_SCALE:
@@ -1245,8 +1245,8 @@ public class BeautiOptions {
                 parameter.initial = getDoubleChild(e, "initial", 1.0);
                 parameter.priorType = PriorType.valueOf(getStringChild(e, "priorType", PriorType.UNIFORM_PRIOR.name()));
                 parameter.priorEdited = getBooleanChild(e, "priorEdited", false);
-                parameter.uniformLower = getDoubleChild(e, "uniformLower", parameter.uniformLower);
-                parameter.uniformUpper = getDoubleChild(e, "uniformUpper", parameter.uniformUpper);
+                parameter.uniformLower = Math.max(getDoubleChild(e, "uniformLower", parameter.uniformLower), parameter.lower);
+                parameter.uniformUpper = Math.min(getDoubleChild(e, "uniformUpper", parameter.uniformUpper), parameter.upper);
                 parameter.exponentialMean = getDoubleChild(e, "exponentialMean", parameter.exponentialMean);
                 parameter.exponentialOffset = getDoubleChild(e, "exponentialOffset", parameter.exponentialOffset);
                 parameter.normalMean = getDoubleChild(e, "normalMean", parameter.normalMean);
@@ -1572,6 +1572,9 @@ public class BeautiOptions {
             this.initial = Double.NaN;
             this.lower = lower;
             this.upper = upper;
+
+            uniformLower = lower;
+            uniformUpper = upper;
         }
 
         public Parameter(String name, String description, boolean isNodeHeight,

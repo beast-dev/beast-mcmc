@@ -257,6 +257,11 @@ public class BeastMain {
         long seed = MathUtils.getSeed();
         if (arguments.hasOption("seed")) {
             seed = arguments.getLongOption("seed");
+            if (seed <= 0) {
+                printTitle();
+                System.err.println("The random number seed should be > 0");
+                System.exit(1);
+            }
             MathUtils.setSeed(seed);
         }
 

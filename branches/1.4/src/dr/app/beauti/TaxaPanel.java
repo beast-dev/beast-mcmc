@@ -26,6 +26,7 @@
 package dr.app.beauti;
 
 import dr.evolution.util.*;
+import dr.gui.table.TableEditorStopper;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.TableRenderer;
@@ -105,6 +106,8 @@ public class TaxaPanel extends JPanel implements Exportable {
         tableColumn0.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         tableColumn0.setMinWidth(20);
 
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(taxonSetsTable);
+
         //final TableColumn tableColumn1 = model.getColumn(1);
 
         taxonSetsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -128,7 +131,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         // Excluded Taxon List
         excludedTaxaTableModel = new TaxaTableModel(false);
         excludedTaxaTable = new JTable(excludedTaxaTableModel);
-
+          
         excludedTaxaTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         excludedTaxaTable.getColumnModel().getColumn(0).setMinWidth(20);

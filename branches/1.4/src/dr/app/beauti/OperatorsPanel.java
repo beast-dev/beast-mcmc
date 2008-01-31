@@ -37,6 +37,8 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 
+import dr.gui.table.TableEditorStopper;
+
 /**
  * @author			Andrew Rambaut
  * @author			Alexei Drummond
@@ -102,6 +104,8 @@ public class OperatorsPanel extends JPanel implements Exportable {
 		operatorTable.getColumnModel().getColumn(4).setCellRenderer(
 			new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 		operatorTable.getColumnModel().getColumn(4).setPreferredWidth(400);
+
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(operatorTable);
 
  		scrollPane = new JScrollPane(operatorTable,
 										JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,

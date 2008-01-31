@@ -26,6 +26,7 @@
 package dr.app.beauti;
 
 import dr.util.NumberFormatter;
+import dr.gui.table.TableEditorStopper;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.framework.Exportable;
@@ -100,7 +101,9 @@ public class PriorsPanel extends JPanel implements Exportable {
 				new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 		priorTable.getColumnModel().getColumn(2).setPreferredWidth(400);
 
-		scrollPane = new JScrollPane(priorTable,
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(priorTable);
+
+        scrollPane = new JScrollPane(priorTable,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 

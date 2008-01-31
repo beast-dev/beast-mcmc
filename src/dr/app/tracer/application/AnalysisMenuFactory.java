@@ -14,6 +14,7 @@ public class AnalysisMenuFactory implements MenuFactory {
 
 	public static final String DEMOGRAPHIC_RECONSTRUCTION = "Demographic Reconstruction...";
 	public static final String BAYESIAN_SKYLINE_RECONSTRUCTION = "Bayesian Skyline Reconstruction...";
+	public static final String LINEAGES_THROUGH_TIME = "Lineages Through Time...";
 
 	public static final String CREATE_TEMPORAL_ANALYSIS = "Create Temporal Analysis...";
 	public static final String ADD_DEMOGRAPHIC_RECONSTRUCTION = "Add Demographic Reconstruction...";
@@ -35,6 +36,9 @@ public class AnalysisMenuFactory implements MenuFactory {
 
 	        item = new JMenuItem(((AnalysisMenuHandler)frame).getBayesianSkylineAction());
 	        menu.add(item);
+
+		    item = new JMenuItem(((AnalysisMenuHandler)frame).getLineagesThroughTimeAction());
+		    menu.add(item);
 
 		    menu.addSeparator();
 
@@ -63,6 +67,10 @@ public class AnalysisMenuFactory implements MenuFactory {
 	        item = new JMenuItem(BAYESIAN_SKYLINE_RECONSTRUCTION);
 	        item.setEnabled(false);
 	        menu.add(item);
+
+		    item = new JMenuItem(LINEAGES_THROUGH_TIME);
+		    item.setEnabled(false);
+		    menu.add(item);
 
 		    menu.addSeparator();
 

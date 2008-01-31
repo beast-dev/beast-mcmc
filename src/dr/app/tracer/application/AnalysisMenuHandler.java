@@ -13,6 +13,8 @@ public interface AnalysisMenuHandler {
 
 	Action getBayesianSkylineAction();
 
+	Action getLineagesThroughTimeAction();
+
 	Action getCreateTemporalAnalysisAction();
 
 	Action getAddDemographicAction();

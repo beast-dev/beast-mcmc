@@ -55,6 +55,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private DemographicDialog demographicDialog = null;
     private BayesianSkylineDialog bayesianSkylineDialog = null;
+	private LineagesThroughTimeDialog lineagesThroughTimeDialog = null;
     private NewTemporalAnalysisDialog createTemporalAnalysisDialog = null;
 
     private BayesFactorsDialog bayesFactorsDialog = null;
@@ -362,7 +363,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         int[] selRows = statisticTable.getSelectedRows();
 
         boolean isIncomplete = false;
-        for (TraceList tl : currentTraceLists) {            
+        for (TraceList tl : currentTraceLists) {
             if (tl == null || tl.getTraceCount() == 0 || tl.getStateCount() == 0)
                 isIncomplete = true;
         }
@@ -766,7 +767,35 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
     }
 
-    private void doAddTimeDensity() {
+
+	public void doLineagesThroughTime(boolean add) {
+	    if (lineagesThroughTimeDialog == null) {
+	        lineagesThroughTimeDialog = new LineagesThroughTimeDialog(this);
+	    }
+
+	    if (currentTraceLists.size() != 1) {
+	        JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
+	                "this analysis on, (but not the Combined trace).",
+	                "Unable to perform analysis",
+	                JOptionPane.INFORMATION_MESSAGE);
+	    }
+
+	    if (add) {
+	        if (lineagesThroughTimeDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
+	            return;
+	        }
+
+	        lineagesThroughTimeDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
+	    } else {
+	        if (lineagesThroughTimeDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
+	            return;
+	        }
+
+	        lineagesThroughTimeDialog.createBayesianSkylineFrame(currentTraceLists.get(0), this);
+	    }
+	}
+
+	private void doAddTimeDensity() {
         throw new UnsupportedOperationException("Not implemented yet...");
     }
 
@@ -933,6 +962,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return bayesianSkylineAction;
     }
 
+	public Action getLineagesThroughTimeAction() {
+	    return lineagesThroughTimeAction;
+	}
+
     public Action getCreateTemporalAnalysisAction() {
         return createTemporalAnalysisAction;
     }
@@ -964,6 +997,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             doBayesianSkyline(false);
         }
     };
+
+	private AbstractAction lineagesThroughTimeAction = new AbstractAction(AnalysisMenuFactory.LINEAGES_THROUGH_TIME) {
+	    public void actionPerformed(ActionEvent ae) {
+	        doLineagesThroughTime(false);
+	    }
+	};
 
     private AbstractAction createTemporalAnalysisAction = new AbstractAction(AnalysisMenuFactory.CREATE_TEMPORAL_ANALYSIS) {
         public void actionPerformed(ActionEvent ae) {

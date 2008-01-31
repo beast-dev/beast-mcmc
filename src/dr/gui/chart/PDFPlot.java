@@ -32,37 +32,37 @@ import java.awt.*;
 
 public class PDFPlot extends Plot.AbstractPlot {
 
-	private Distribution distribution = null;
+    private Distribution distribution = null;
     private double offset;
-	private double xMax, xMin;
+    private double xMax, xMin;
     private double yMax;
     private int stepCount = 100;
 
-	/**
-	* Constructor
-	*/
-	public PDFPlot(Distribution distribution, double offset) {
-		this.distribution = distribution;
+    /**
+     * Constructor
+     */
+    public PDFPlot(Distribution distribution, double offset) {
+        this.distribution = distribution;
         this.offset = offset;
-	}
+    }
 
     /**
-    *	Set data
-    */
+     *	Set data
+     */
     public void setData(double[] xData, double[] yData) {
         throw new UnsupportedOperationException("Not available");
     }
 
     /**
-    *	Set data
-    */
+     *	Set data
+     */
     public void setData(Variate xData, Variate yData) {
         throw new UnsupportedOperationException("Not available");
     }
 
     /**
-    *	Set up the axis with some data
-    */
+     *	Set up the axis with some data
+     */
     public void setupAxis(Axis xAxis, Axis yAxis, Variate xData, Variate yData) {
         if (distribution == null) {
             return;
@@ -70,16 +70,22 @@ public class PDFPlot extends Plot.AbstractPlot {
 
         xMin = distribution.quantile(0.005);
         xMax = distribution.quantile(0.995);
+        if (Double.isInfinite(xMin)) {
+            xMin = 0.0;
+        }
+        if (Double.isInfinite(xMax)) {
+            xMax = 1.0;
+        }
         if (xMin == xMax) xMax += 1;
 
         double x = xMin + offset;
         yMax = distribution.pdf(x - offset);
         double step = (xMax - xMin) / stepCount;
-		for (int i = 1; i < stepCount; i++) {
+        for (int i = 1; i < stepCount; i++) {
             x += step;
             double y = distribution.pdf(x - offset);
             if (y > yMax) yMax = y;
-		}
+        }
 
         if (xAxis instanceof LogAxis) {
             throw new IllegalArgumentException("Log axis are not compatible to PDFPlot");
@@ -93,37 +99,37 @@ public class PDFPlot extends Plot.AbstractPlot {
         }
     }
 
-	/**
-	*	Paint actual plot
-	*/
-	public void paintPlot(Graphics2D g2, double xScale, double yScale,
-											double xOffset, double yOffset) {
+    /**
+     *	Paint actual plot
+     */
+    public void paintPlot(Graphics2D g2, double xScale, double yScale,
+                          double xOffset, double yOffset) {
 
-		if (distribution == null) {
-			return;
-		}
+        if (distribution == null) {
+            return;
+        }
 
-		super.paintPlot(g2, xScale, yScale, xOffset, yOffset);
+        super.paintPlot(g2, xScale, yScale, xOffset, yOffset);
 
-		g2.setPaint(linePaint);
-		g2.setStroke(lineStroke);
+        g2.setPaint(linePaint);
+        g2.setStroke(lineStroke);
 
         double x1 = xMin + offset;
         double y1 = distribution.pdf(x1 - offset);
         double step = (xMax - xMin) / stepCount;
-		for (int i = 1; i < stepCount; i++) {
+        for (int i = 1; i < stepCount; i++) {
             double x2 = x1 + step;
             double y2 = distribution.pdf(x2 - offset);
-			drawLine(g2, x1, y1, x2, y2);
+            drawLine(g2, x1, y1, x2, y2);
             x1 = x2;
             y1 = y2;
-		}
-	}
+        }
+    }
 
-	/**
-	*	Paint data series
-	*/
-	protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
-		// do nothing because paintPlot is overridden
-	}
+    /**
+     *	Paint data series
+     */
+    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+        // do nothing because paintPlot is overridden
+    }
 }

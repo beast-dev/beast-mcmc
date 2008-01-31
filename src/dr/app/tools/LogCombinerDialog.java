@@ -30,6 +30,7 @@ import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.TableRenderer;
+import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -82,6 +83,8 @@ public class LogCombinerDialog {
 				new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 		filesTable.getColumnModel().getColumn(0).setPreferredWidth(120);
 		filesTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(filesTable);
 
 		filesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent evt) { filesTableSelectionChanged(); }

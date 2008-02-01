@@ -183,6 +183,16 @@ public class MathUtils {
     /**
      * Access a default instance of this class, access is synchronized
      */
+    public static double nextExponential(double lambda){
+    	synchronized (random) {
+    		return -1.0*Math.log(1 - random.nextDouble()) / lambda;
+    	}
+    }
+		
+    
+    /**
+     * Access a default instance of this class, access is synchronized
+     */
     public static final double nextGaussian() {
         synchronized (random) {
             return random.nextGaussian();

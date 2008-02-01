@@ -1,7 +1,6 @@
 package dr.evomodel.operators;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
@@ -146,35 +145,39 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		return count;
 	}
 	
+	private static double nextExponential(double mean){
+		return -1.0*Math.log(1 - MathUtils.nextDouble())*mean;
+	}
+	
 	/**
-	 * Attempts to add a reassortment event to <code>ARGModel</code>
+	 * Attempts to add a re-assortment event to <code>ARGModel</code>
 	 * @return the hastings ratio
 	 * @throws OperatorFailedException if something goes totally wrong
 	 */
 	private double addOperation() throws OperatorFailedException {
-		double logq = 0;
-		
 		ArrayList<NodeRef> potentialBifurcationChildren = new ArrayList<NodeRef>();
 		ArrayList<NodeRef> potentialReassortmentChildren = new ArrayList<NodeRef>();
-
-		double treeHeight = arg.getNodeHeight(arg.getRoot());
-				
-		double probabilityBeyondRoot = 0;
-		double addHeightParm = 2 / treeHeight; //This is 1/mean of the additional height
-		double newReassortmentHeight = treeHeight * MathUtils.nextDouble();
-		logq += Math.log(treeHeight);;
 		
+		double logq = 0;
+		double treeHeight = arg.getNodeHeight(arg.getRoot());
+		double probabilityBeyondRoot = 0;
+		double additionalHeightParameter = treeHeight / 4; 
+		
+		////Start of operator/////
+		
+		//This value always needs to fall below the current treeHeight.
+		double newReassortmentHeight = treeHeight * MathUtils.nextDouble();
+//		logq += Math.log(treeHeight);
+				
 		double newBifurcationHeight;
 				
 		if(MathUtils.nextDouble() < probabilityBeyondRoot){
-			newBifurcationHeight = - Math.log(1 - MathUtils.nextDouble())
-															/addHeightParm;
-			logq += addHeightParm*(newBifurcationHeight) 
-				- Math.log(probabilityBeyondRoot*addHeightParm);
-			newBifurcationHeight += treeHeight;
+			newBifurcationHeight = nextExponential(additionalHeightParameter) +	treeHeight;
+//			logq += additionalHeightParameter*(newBifurcationHeight) 
+//				- Math.log(probabilityBeyondRoot*additionalHeightParameter);
 		}else{
 			newBifurcationHeight = treeHeight * MathUtils.nextDouble();
-			logq += Math.log(treeHeight/(1-probabilityBeyondRoot));
+//			logq += Math.log(treeHeight/(1-probabilityBeyondRoot));
 		}
 
 		
@@ -183,39 +186,46 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			newReassortmentHeight = newBifurcationHeight;
 			newBifurcationHeight = temp;
 		}
-		
+				
 		int totalPotentialBifurcationChildren = findPotentialAttachmentPoints(
 				newBifurcationHeight, potentialBifurcationChildren);
 		int totalPotentialReassortmentChildren = findPotentialAttachmentPoints(
 				newReassortmentHeight, potentialReassortmentChildren);
 	
 		
-		assert totalPotentialBifurcationChildren > 0 && totalPotentialReassortmentChildren > 0; 
-			
-		Node reassortChild = (Node) potentialReassortmentChildren.get(MathUtils
-				.nextInt(totalPotentialReassortmentChildren));
-	    logq += Math.log(totalPotentialReassortmentChildren);
-
-	    
-		Node reassortLeftParent = reassortChild.leftParent;
-		Node reassortRightParent = reassortChild.rightParent;
-		Node reassortParent = reassortLeftParent;
 		
+		assert totalPotentialBifurcationChildren > 0 && totalPotentialReassortmentChildren > 0; 
+
+		Node reassortChild = (Node) potentialReassortmentChildren
+			.get(MathUtils.nextInt(totalPotentialReassortmentChildren));
+		NodeRef reassortLeftParent = arg.getParent(reassortChild, 0);
+		NodeRef reassortRightParent =  arg.getParent(reassortChild, 1);
+		NodeRef reassortParent = reassortLeftParent;
+//	    logq += Math.log(totalPotentialReassortmentChildren);
+
+		
+
 		if (reassortLeftParent != reassortRightParent){
 			if (arg.getNodeHeight(reassortLeftParent) < newReassortmentHeight){
 				reassortParent = reassortRightParent;
-			}else if (arg.getNodeHeight(reassortRightParent) > newReassortmentHeight
-					&& MathUtils.nextDouble() > 0.5){
-				reassortParent = reassortRightParent;
-				logq += Math.log(2);
+			}else if (arg.getNodeHeight(reassortRightParent) > newReassortmentHeight){
+				
+				if(MathUtils.nextDouble() > 0.5)	
+					reassortParent = reassortRightParent;
+//				logq += Math.log(2);
 			}
 		}
 
-
 		Node bifurcateChild = (Node) potentialBifurcationChildren.get(MathUtils
 				.nextInt(totalPotentialBifurcationChildren));
-	    logq += Math.log(totalPotentialBifurcationChildren);
+//	    logq += Math.log(totalPotentialBifurcationChildren);
 
+		
+		System.out.println(arg.toARGSummary());
+		System.out.println(bifurcateChild);
+		System.out.println(reassortLeftParent);
+		System.out.println(reassortRightParent);
+		System.exit(-1);
 	   
 		Node bifurcateLeftParent = bifurcateChild.leftParent;
 		Node bifurcateRightParent = bifurcateChild.rightParent;
@@ -641,7 +651,6 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	}
 
 	private class NoReassortmentNodeException extends OperatorFailedException{
-		
 		private static final long serialVersionUID = 1L;
 
 		public NoReassortmentNodeException(String a){

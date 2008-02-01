@@ -26,16 +26,17 @@ public class ArgLogger extends MCLogger {
 	public static final String LOG_ARG = "logArg";
 	public static final String DOT_FORMAT = "dotFormat";
 	public static final String COMPRESSED_STRING = "compressedString";
-
+	public static final String EXTENDED_NEWICK = "extendedNewick";
+	public static final String FULL_STRING = "fullString";
+	public static final String FORMAT = "format";
+	
 	private ARGModel argModel;
-	private boolean dotFormat;
-	private boolean newickFormat;
-
-	public ArgLogger(ARGModel argModel, LogFormatter formatter, int logEvery, boolean dotFormat, boolean newickFormat) {
+	private String formatType;
+		
+	public ArgLogger(ARGModel argModel, LogFormatter formatter, int logEvery, String formatType) {
 		super(formatter, logEvery);
 		this.argModel = argModel;
-		this.dotFormat = dotFormat;
-		this.newickFormat = newickFormat;
+		this.formatType = formatType;
 	}
 
 
@@ -43,15 +44,23 @@ public class ArgLogger extends MCLogger {
 	public static final String GRAPHML_FOOTER = "</graphml>";
 
 	public void startLogging() {
-		if (!dotFormat && !newickFormat)
-			logLine(GRAPHML_HEADER);
-		if (newickFormat)
+		if(formatType.equals(EXTENDED_NEWICK)){
 			logLine("state ARG.string");
+		}else{
+			logLine(GRAPHML_HEADER);
+		}
+//		if (!dotFormat && !newickFormat)
+//			logLine(GRAPHML_HEADER);
+//		if (newickFormat)
+//			logLine("state ARG.string");
 	}
 
 	public void stopLogging() {
-		if (!dotFormat && !newickFormat)
+		if(!formatType.equals(EXTENDED_NEWICK)){
 			logLine(GRAPHML_FOOTER);
+		}
+//		if (!dotFormat && !newickFormat)
+//			logLine(GRAPHML_FOOTER);
 	}
 
 	static XMLOutputter outputter = new XMLOutputter(org.jdom.output.Format.getPrettyFormat());
@@ -60,15 +69,17 @@ public class ArgLogger extends MCLogger {
 		if (logEvery <= 0 || ((state % logEvery) == 0)) {
 			Element graphElement = argModel.toXML();
 			graphElement.setAttribute(ARGModel.ID_ATTRIBUTE, "STATE_" + state);
-			if (dotFormat)
+			if(formatType.equals(DOT_FORMAT))
 				logLine(GraphMLUtils.dotFormat(graphElement));
-			else if (newickFormat)
-				logLine("ARG STATE_" + state + " = " + argModel.toGraphStringCompressed(false));
-			else
+			else if(formatType.equals(COMPRESSED_STRING))
+				logLine("ARG STATE_" + state + " = " + argModel.toGraphStringCompressed(false));	
+			else if(formatType.equals(FULL_STRING))
 				logLine(outputter.outputString(graphElement));
+			else
+				logLine("ARG STATE_" + state + " = " + argModel.toExtendedNewick());
 		}
 	}
-
+	
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -85,10 +96,11 @@ public class ArgLogger extends MCLogger {
 
 			String fileName = null;
 			String title = null;
-			boolean dotFormat = false;
-			boolean newickFormat = false;
+			String argModelLoggerFormat = null;
+//			boolean dotFormat = false;
+//			boolean newickFormat = false;
 //			boolean nexusFormat = false;
-
+//
 //			String colouringLabel = "demes";
 //			String rateLabel = "rate";
 //			String likelihoodLabel = "lnP";
@@ -101,17 +113,11 @@ public class ArgLogger extends MCLogger {
 				fileName = xo.getStringAttribute(FILE_NAME);
 			}
 
-			if (xo.hasAttribute(DOT_FORMAT)) {
-				dotFormat = xo.getBooleanAttribute(DOT_FORMAT);
+			if (xo.hasAttribute(FORMAT)) {
+				argModelLoggerFormat = xo.getStringAttribute(FORMAT);
 			}
 
-			if (xo.hasAttribute(COMPRESSED_STRING)) {
-				newickFormat = xo.getBooleanAttribute(COMPRESSED_STRING);
-			}
-
-			if (dotFormat && newickFormat) {
-				throw new XMLParseException("An ARG logger may only return one graphic representation.");
-			}
+			
 
 //			boolean substitutions = false;
 //			if (xo.hasAttribute(BRANCH_LENGTHS)) {
@@ -155,7 +161,7 @@ public class ArgLogger extends MCLogger {
 
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-			ArgLogger logger = new ArgLogger(argModel, formatter, logEvery, dotFormat, newickFormat);
+			ArgLogger logger = new ArgLogger(argModel, formatter, logEvery, argModelLoggerFormat);
 
 //			TreeLogger logger = new TreeLogger(tree, branchRateModel, rateLabel,
 //					colourSamplerModel, colouringLabel, likelihood, likelihoodLabel,
@@ -175,8 +181,14 @@ public class ArgLogger extends MCLogger {
 			return rules;
 		}
 
+		String[] validFormats = {DOT_FORMAT, EXTENDED_NEWICK,
+				 COMPRESSED_STRING, FULL_STRING};
+		
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				
 				AttributeRule.newIntegerRule(LOG_EVERY),
+				new StringAttributeRule(FORMAT,"The type logger's output type",
+						validFormats,false),
 				new StringAttributeRule(FILE_NAME,
 						"The name of the file to send log output to. " +
 								"If no file name is specified then log is sent to standard output", true),

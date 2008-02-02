@@ -1338,6 +1338,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	}
 
 	protected Node oldRoot;
+	
 
 	public void beginTreeEdit() {
 		if (inEdit)
@@ -1441,6 +1442,14 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	 */
 	protected void restoreState() {
 		// System.err.println("Restoring state.");
+		boolean rootReplacement = false;
+		if(storedRootNumber != root.number){
+			rootReplacement = true;
+		}
+		
+		
+		
+		
 		ArrayList<Node> tmp = storedNodes;
 		storedNodes = nodes;
 		nodes = tmp;
@@ -1449,9 +1458,15 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		nodeCount = storedNodeCount;
 		internalNodeCount = storedInternalNodeCount;
 
+		
+		
 		if (addedParameters != null) {
+			
+			
 			storedInternalNodeHeights.removeParameter(addedParameters[0]);
-			storedInternalNodeHeights.removeParameter(addedParameters[1]);
+			if(!rootReplacement){
+				storedInternalNodeHeights.removeParameter(addedParameters[1]);
+			}
 			removeParameter(addedParameters[0]);
 			removeParameter(addedParameters[1]);
 
@@ -1494,6 +1509,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		// getRoot()));
 		// System.err.println("Restore: "+this.toString());
 		nullCounter = storedNullCounter;
+		
 	}
 
 	/**
@@ -1528,6 +1544,48 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 																 * }
 																 */
 
+	public void expandARGWithRecombinantNewRoot(Node newbie, Node newRoot,
+		VariableSizeCompoundParameter internalNodeParameters,
+		VariableSizeCompoundParameter internalAndRootNodeParameters,
+		VariableSizeCompoundParameter nodeRates){
+		
+		
+		addParameter(newbie.heightParameter);
+		addParameter(newbie.partitioning);
+		addParameter(newRoot.heightParameter);
+		
+		addParameter(newbie.rateParameter);
+		addParameter(newRoot.rateParameter);
+		
+		addedParameters = new Parameter[4];
+		addedParameters[0] = newbie.heightParameter;
+		addedParameters[1] = newRoot.heightParameter;
+		addedParameters[2] = newbie.rateParameter;
+		addedParameters[3] = newRoot.rateParameter;
+		addedPartitioningParameter = newbie.partitioning;
+		
+		storedInternalNodeHeights = internalNodeParameters;
+		storedInternalNodeHeights.addParameter(newbie.heightParameter);
+		
+		storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
+		storedInternalAndRootNodeHeights.addParameter(newbie.heightParameter);
+		storedInternalAndRootNodeHeights.addParameter(newRoot.heightParameter);
+		
+		
+		storedNodeRates = nodeRates;
+		storedNodeRates.addParameter(newbie.rateParameter);
+		storedNodeRates.addParameter(newRoot.rateParameter);
+		
+		partitioningParameters.addParameter(addedPartitioningParameter);
+		nodes.add(newbie);
+		nodes.add(newRoot);
+		internalNodeCount += 2;
+		
+		this.setRoot(newRoot);
+		
+		pushTreeSizeChangedEvent();
+	}
+	
 	public void expandARGWithRecombinant(Node newbie1, Node newbie2,
 			VariableSizeCompoundParameter internalNodeParameters,
 			VariableSizeCompoundParameter internalAndRootNodeParameters,
@@ -2144,8 +2202,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 				
 		a += "Number of nodes: " + nodes.size() + "\n";
 		a += "Number of partitions: " + maxNumberOfPartitions + "\n";
+		a += "Number of Reassorments: " + this.getReassortmentNodeCount() + "\n";
 		a += "Root number: " + getRoot().getNumber() + "\n";
-		
 		a += "Node Summary" 
 	         + "\n----------------------------------------\n" + 
 		     "ID  LP   RP   LC   RC   Height" + space + "TX  \n" + 
@@ -3962,7 +4020,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	protected Parameter[] removedParameters = null;
 
 	protected Parameter addedPartitioningParameter = null;
-
+		
 	protected Parameter removedPartitioningParameter = null;
 
 	protected VariableSizeCompoundParameter partitioningParameters;

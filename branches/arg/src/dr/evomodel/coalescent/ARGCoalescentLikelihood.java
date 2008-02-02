@@ -21,28 +21,24 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	public static final String ARG_COALESCENT_MODEL = "argCoalescentLikelihood";
 	public static final String RECOMBINATION_RATE = "recombinationRate";
 	public static final String POPULATION_SIZE = "populationSize";
-	public static final String CLOCK_RATE = "clockRate";
 	public static final String ARG_MODEL = "argModel";
 		
 	private Parameter popSize;
 	private Parameter recomRate;
-	private Parameter clockRate;
 	private ARGModel arg;
 	
 	private ArrayList<CoalescentInterval> intervals;
 	private ArrayList<CoalescentInterval> storedIntervals;
 	
 	public ARGCoalescentLikelihood(Parameter popSize, Parameter recomRate, 
-			Parameter clockRate, ARGModel arg, boolean setupIntervals) {
+			ARGModel arg, boolean setupIntervals) {
 		super(ARG_COALESCENT_MODEL);
 		
 		this.popSize = popSize;
 		this.recomRate = recomRate;
-		this.clockRate = clockRate;
 		this.arg = arg;
 		addParameter(popSize);
 		addParameter(recomRate);
-		addParameter(clockRate);
 		
 		addModel(arg);
 		intervals = new ArrayList<CoalescentInterval>(arg.getNodeCount());
@@ -129,23 +125,26 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 likelihoodKnown = true;
 		 logLikelihood = calculateLogLikelihood(
 				 popSize.getParameterValue(0), 
-				 recomRate.getParameterValue(0),
-				 clockRate.getParameterValue(0)); 
-	 
+				 recomRate.getParameterValue(0)); 
+	 		 
 		 return logLikelihood;
 	 }
 	 
-	 private double calculateLogLikelihood(double pSize, double rRate, double clock){
+	 private double calculateLogLikelihood(double pSize, double rRate){
+
+		 
 		 double logLike = 0.0;
 		 int numberOfTaxa = 2;
 		 
 		 for(CoalescentInterval interval: intervals){
-			 double rate = (double)numberOfTaxa * (numberOfTaxa - 1 + rRate)/(2.0 * pSize);
+			 double rate = (double)numberOfTaxa * 
+			 					(numberOfTaxa - 1 + rRate)/(2.0 * pSize);
 			 
 			 logLike += Math.log(rate) - rate * interval.length;
 		
 			 if(interval.type == COALESCENT){
-				logLike += Math.log((double)(numberOfTaxa - 1)/(numberOfTaxa - 1 + rRate));
+				logLike += Math.log((double)(numberOfTaxa - 1)/
+											 (numberOfTaxa - 1 + rRate));
 			 	numberOfTaxa ++;
 			 }else if(interval.type == RECOMBINATION){
 				 logLike += Math.log(rRate/(numberOfTaxa - 1 + rRate));
@@ -154,10 +153,12 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 				 throw new RuntimeException("Not implemented yet");
 			 }
 		 }
+		
 		 return logLike;
 	 }
 	 
-	 private class CoalescentInterval implements Comparable<CoalescentInterval>, Cloneable{
+	 private class CoalescentInterval implements Comparable<CoalescentInterval>,
+	 															Cloneable{
 		 public int type;
 		 public double length;
 		 
@@ -171,8 +172,9 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 if(a.length < this.length){
 				return -1;
 			}else if(a.length == this.length){
-				Logger.getLogger("dr.evomodel.coalescent").severe("The current ARG Model " + 
-						"has 2 internal nodes at the same height");
+				Logger.getLogger("dr.evomodel.coalescent").severe(
+						"The current ARG Model has 2 internal nodes " +
+						"at the same height");
 				return 0;
 			}
 			return 1;
@@ -208,8 +210,6 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		}
 				
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new ElementRule(CLOCK_RATE, 
-						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
 				new ElementRule(POPULATION_SIZE, 
 						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
 				new ElementRule(RECOMBINATION_RATE,
@@ -221,17 +221,14 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			XMLObject cxo = (XMLObject) xo.getChild(RECOMBINATION_RATE);
 			Parameter rRate = (Parameter) cxo.getChild(Parameter.class);
-			
-			cxo = (XMLObject) xo.getChild(CLOCK_RATE);
-			Parameter clock = (Parameter)cxo.getChild(Parameter.class);
-			
+						
 			cxo = (XMLObject) xo.getChild(POPULATION_SIZE);
 			Parameter pSize = (Parameter)cxo.getChild(Parameter.class);
 			
 			cxo = (XMLObject) xo.getChild(ARG_MODEL);
 			ARGModel argModel = (ARGModel)cxo.getChild(ARGModel.class);
 			
-			return new ARGCoalescentLikelihood(pSize,rRate,clock,argModel,false);
+			return new ARGCoalescentLikelihood(pSize,rRate,argModel,false);
 		}
 
 		

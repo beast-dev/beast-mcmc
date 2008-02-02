@@ -1,6 +1,12 @@
+/*
+ * AddRemoveSubtreeOperator.java
+ *
+ * (c) 2002-2005 BEAST Development Core Team
+ *
+ * This package may be distributed under the
+ * Lesser Gnu Public Licence (LGPL)
+ */
 package dr.evomodel.operators;
-
-import java.util.ArrayList;
 
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
@@ -10,308 +16,318 @@ import dr.evomodel.tree.ARGModel.Node;
 import dr.inference.model.Parameter;
 import dr.inference.model.VariableSizeCompoundParameter;
 import dr.inference.model.VariableSizeParameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.SimpleMCMCOperator;
+import dr.inference.operators.*;
 import dr.math.MathUtils;
-import dr.math.NormalDistribution;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.math.functionEval.GammaFunction;
+import dr.xml.*;
 
-public class NewerARGEventOperator extends SimpleMCMCOperator implements CoercableMCMCOperator{
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Implements the subtree slide move.
+ *
+ * @author Erik Bloomquist
+ * @version $Id: AddRemoveARGEventOperator.java,v 1.18.2.4 2006/11/06 01:38:30 msuchard Exp $
+ */
+
+public class NewerARGEventOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
 	public static final String NEWER_ARG_EVENT = "newerARGEvent";
-	public static final String SWAP_RATES = "swapRates";
-	public static final String SWAP_TRAITS = "swapTraits";
-	public static final String MAX_VALUE = "maxTips";
-	public static final String SINGLE_PARTITION = "singlePartitionProbability";
-	public static final String IS_RECOMBINATION = "isRecombination";
-
-	public static final String JUST_INTERNAL = "justInternalNodes";
-	public static final String INTERNAL_AND_ROOT = "internalAndRootNodes";
+	public static final String JUST_INTERNAL = "internalNodes";
+	public static final String INTERNAL_AND_ROOT = "internalNodesPlusRoot";
 	public static final String NODE_RATES = "nodeRates";
-	public static final double LOG_TWO = 0.693147181;
-	
-	private double size = 0.0;
-	private double singlePartitionProbability = 0.0;
-	
 
+	private ARGModel arg = null;
+	private double size = 1.0;
+	private double singlePartitionProbability = 0.0;
 	private boolean isRecombination = false;
 	private int mode = CoercableMCMCOperator.DEFAULT;
-	private ARGModel arg;
 	private VariableSizeCompoundParameter internalNodeParameters;
 	private VariableSizeCompoundParameter internalAndRootNodeParameters;
 	private VariableSizeCompoundParameter nodeRates;
 
 	
-	public NewerARGEventOperator(ARGModel arg, int weight, double size, boolean gaussian,
-            boolean swapRates, boolean swapTraits, int mode,
-            VariableSizeCompoundParameter param1,
-            VariableSizeCompoundParameter param2,
-            VariableSizeCompoundParameter param3,
-            double singlePartitionProbability, boolean isRecombination) {
+	public NewerARGEventOperator(ARGModel arg, int weight, double size, int mode,
+	                           VariableSizeCompoundParameter param1,
+	                           VariableSizeCompoundParameter param2,
+	                           VariableSizeCompoundParameter param3,
+	                           double singlePartitionProbability, boolean isRecombination) {
+		this.arg = arg;
+		setWeight(weight);
+//		this.maxTips = maxTips;
+		this.size = size;
+		
+//        this.swapRates = swapRates;
+//        this.swapTraits = swapTraits;
+		this.internalNodeParameters = param1;
+		this.internalAndRootNodeParameters = param2;
+		this.nodeRates = param3;
+		this.singlePartitionProbability = singlePartitionProbability;
+		this.isRecombination = isRecombination;
 
-			setWeight(weight);
-
-			this.arg = arg;
-			this.size = size;
-
-			this.internalNodeParameters = param1;
-			this.internalAndRootNodeParameters = param2;
-			this.nodeRates = param3;
-			this.singlePartitionProbability = singlePartitionProbability;
-			this.isRecombination = isRecombination;
-			this.mode = mode;
+		this.mode = mode;
 	}
-	
-	public double doOperation() throws OperatorFailedException {
-		double logHastings = 0;
-		try {
-			if (MathUtils.nextGaussian() < size){
-				logHastings = addOperation() + getAddLogQ();
-			}else{
-				logHastings = removeOperation() - getAddLogQ();
-			}
-		}catch (NoReassortmentNodeException ofe) {
-					
-		}catch (OperatorFailedException ofe){
-			System.err.println("Catch: " + ofe.getMessage());
-			System.exit(-1);
-		}
 
-		return logHastings;
-	}
-	
+
 	/**
-	 * Fills <code>list</code> with the <code>NodeRef</code> of nodes
-	 * that can be removed.  As a by-product, this method also returns
-	 * the size of <code>list</code>.  If <code>list</code> is <code>null</code>,
-	 * the method will still return the number of nodes, it just
-	 * will not fill <code>list</code> as it's <code>null</code>
-	 * @param list an <code>ArrayList<NodeRef></code> that will be filled.
-	 * @return The number of nodes that can be removed.
+	 * Do a add/remove reassortment node operation
+	 *
+	 * @return the log-transformed hastings ratio
 	 */
+	public double doOperation() throws OperatorFailedException {
+//		System.err.println("Starting AddRemove Operation");
+		
+		double logq = 0;
+		try {
+			if (true)
+				logq = AddOperation();
+			else
+				logq = RemoveOperation();
+		} catch (Exception ofe) {
+//			System.err.println(ofe);
+			if (ofe.getMessage().compareTo("No reassortment nodes to remove.") != 0) {
+				System.err.println("Catch: " + ofe.getMessage());
+				System.exit(-1);
+			}
+		}
+//        if (arg.isBifurcationDoublyLinked(arg.getRoot()))
+//            throw new OperatorFailedException("trouble with double-rooted root");
+//	    System.err.println("logq = "+logq);
+		
+		return 0;
+//		return logq;
+	}
+
 	private int findPotentialNodesToRemove(ArrayList<NodeRef> list) {
 		int count = 0;
-		int totalNumberOfNodes = arg.getNodeCount();
-
-		for (int i = 0; i < totalNumberOfNodes; i++) {
-			NodeRef node = arg.getNode(i);
-			NodeRef leftParent = arg.getParent(node,ARGModel.LEFT);
-			NodeRef rightParent = arg.getParent(node,ARGModel.RIGHT);
-			if(  arg.isReassortment(node) && 
-			    (arg.isBifurcation(leftParent) || arg.isBifurcation(rightParent))){
-				if (list != null){
+		int n = arg.getNodeCount();
+//	    int max = arg.getReassortmentNodeCount();
+		Node root = (Node) arg.getRoot();
+		for (int i = 0; i < n; i++) {
+			Node node = (Node) arg.getNode(i);
+			if (node.isReassortment()
+					&& ((node.leftParent != root && node.leftParent.isBifurcation()) ||
+					(node.rightParent != root && node.rightParent.isBifurcation()))
+//	                && !(
+//		                    (node.leftParent == root && node.rightParent.isReassortment()) ||
+//				            (node.rightParent== root && node.leftParent.isReassortment()))
+//		            && !(node.leftParent == root && node.rightParent == root)
+//		            && (node.leftParent.isBifurcation() || node.rightParent.isBifurcation())
+					) {
+				if (list != null)
 					list.add(node);
-				}
 				count++;
 			}
 		}
+//	    System.err.printf("max = %d, available = %d\n",max,count);
 		return count;
 	}
-	
-	
-	/**
-	 * Fills <code>list</code> with possible <code>NodeRef</code> that can 
-	 * become possible attachment points for a new arg-event.  
-	 * @param time the point on the tree where the arg-event will occur
-	 * @param list the <code>ArrayList<NodeRef></code> that get's filled
-	 * @return the number of possible attachment points
-	 */
-	private int findPotentialAttachmentPoints(double time, ArrayList<NodeRef> list) {
-		if(time >= arg.getNodeHeight(arg.getRoot())){
-			list.add(arg.getRoot());
-			return 1;
-		}
-		int count = 0;
-		for (int i = 0, n = arg.getNodeCount(); i < n; i++) {
-			NodeRef nr = arg.getNode(i);
-			if (!arg.isRoot(nr) && arg.getNodeHeight(nr) < time) {
-				if (arg.getNodeHeight(arg.getParent(nr, ARGModel.LEFT)) > time) {
-					if (list != null)
-						list.add(nr);
-					count++;
-				}
-				if (arg.isReassortment(nr) && arg.getNodeHeight(arg.getParent(nr, ARGModel.RIGHT)) > time) {
-					if (list != null)
-						list.add(nr);
-					count++;
-				}
-			}
-		}
-		return count;
-	}
-	
-	private static double nextExponential(double mean){
-		return -1.0*Math.log(1 - MathUtils.nextDouble())*mean;
-	}
-	
-	/**
-	 * Attempts to add a re-assortment event to <code>ARGModel</code>
-	 * @return the hastings ratio
-	 * @throws OperatorFailedException if something goes totally wrong
-	 */
-	private double addOperation() throws OperatorFailedException {
-		ArrayList<NodeRef> potentialBifurcationChildren = new ArrayList<NodeRef>();
-		ArrayList<NodeRef> potentialReassortmentChildren = new ArrayList<NodeRef>();
-		
+
+	private double RemoveOperation() throws OperatorFailedException {
 		double logq = 0;
+
+//	    System.err.println("Starting remove ARG operation.");
+//	    System.err.println("Before remove:\n"+arg.toGraphString());
+
+		// 1. Draw reassortment node uniform randomly
+
+		ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
+
+		int totalPotentials = findPotentialNodesToRemove(potentialNodes);
+		if (totalPotentials == 0)
+			throw new OperatorFailedException("No reassortment nodes to remove.");
+//	    System.err.println("potentials exist!");
+		Node recNode = (Node) potentialNodes.get(MathUtils.nextInt(totalPotentials));
+//        logq += Math.log(totalPotentials);
+
+		double reverseReassortmentHeight = 0;
+		double reverseBifurcationHeight = 0;
+
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
-		double probabilityBeyondRoot = 0;
-		double additionalHeightParameter = treeHeight / 4; 
-		
-		////Start of operator/////
-		
-		//This value always needs to fall below the current treeHeight.
-		double newReassortmentHeight = treeHeight * MathUtils.nextDouble();
-//		logq += Math.log(treeHeight);
-				
-		double newBifurcationHeight;
-				
-		if(MathUtils.nextDouble() < probabilityBeyondRoot){
-			newBifurcationHeight = nextExponential(additionalHeightParameter) +	treeHeight;
-//			logq += additionalHeightParameter*(newBifurcationHeight) 
-//				- Math.log(probabilityBeyondRoot*additionalHeightParameter);
-		}else{
-			newBifurcationHeight = treeHeight * MathUtils.nextDouble();
-//			logq += Math.log(treeHeight/(1-probabilityBeyondRoot));
-		}
 
-		
-		if (newReassortmentHeight > newBifurcationHeight) {
-			double temp = newReassortmentHeight;
-			newReassortmentHeight = newBifurcationHeight;
-			newBifurcationHeight = temp;
-		}
-				
-		int totalPotentialBifurcationChildren = findPotentialAttachmentPoints(
-				newBifurcationHeight, potentialBifurcationChildren);
-		int totalPotentialReassortmentChildren = findPotentialAttachmentPoints(
-				newReassortmentHeight, potentialReassortmentChildren);
-	
-		
-		
-		assert totalPotentialBifurcationChildren > 0 && totalPotentialReassortmentChildren > 0; 
+//	    System.err.println("RecNode to remove = "+recNode.number);
+		reverseReassortmentHeight = arg.getNodeHeight(recNode);
 
-		Node reassortChild = (Node) potentialReassortmentChildren
-			.get(MathUtils.nextInt(totalPotentialReassortmentChildren));
-		NodeRef reassortLeftParent = arg.getParent(reassortChild, 0);
-		NodeRef reassortRightParent =  arg.getParent(reassortChild, 1);
-		NodeRef reassortParent = reassortLeftParent;
-//	    logq += Math.log(totalPotentialReassortmentChildren);
+		arg.beginTreeEdit();
+		boolean doneSomething = false;
+		Node recParent = recNode.leftParent;
+		Node recChild = recNode.leftChild;
+		if (recNode.leftParent == recNode.rightParent) { // Doubly linked.
+			Node recGrandParent = recParent.leftParent;
+//	        reverseBifurcationHeight = arg.getNodeHeight(recParent);
 
-		
-
-		if (reassortLeftParent != reassortRightParent){
-			if (arg.getNodeHeight(reassortLeftParent) < newReassortmentHeight){
-				reassortParent = reassortRightParent;
-			}else if (arg.getNodeHeight(reassortRightParent) > newReassortmentHeight){
-				
-				if(MathUtils.nextDouble() > 0.5)	
-					reassortParent = reassortRightParent;
-//				logq += Math.log(2);
-			}
-		}
-
-		Node bifurcateChild = (Node) potentialBifurcationChildren.get(MathUtils
-				.nextInt(totalPotentialBifurcationChildren));
-//	    logq += Math.log(totalPotentialBifurcationChildren);
-
-		
-		System.out.println(arg.toARGSummary());
-		System.out.println(bifurcateChild);
-		System.out.println(reassortLeftParent);
-		System.out.println(reassortRightParent);
-		System.exit(-1);
-	   
-		Node bifurcateLeftParent = bifurcateChild.leftParent;
-		Node bifurcateRightParent = bifurcateChild.rightParent;
-		Node bifurcateParent = bifurcateLeftParent;
-		if (bifurcateLeftParent != bifurcateRightParent) {
-			if (arg.getNodeHeight(bifurcateLeftParent) < newBifurcationHeight)
-				bifurcateParent = bifurcateRightParent;
-			else if (arg.getNodeHeight(bifurcateRightParent) > newBifurcationHeight
-					&& MathUtils.nextDouble() > 0.5){
-				bifurcateParent = bifurcateRightParent;
+//            reverseReassortmentSpan = arg.getNodeHeight(recParent) - arg.getNodeHeight(recChild);
+//            reverseBifurcationSpan = arg.getNodeHeight(recGrandParent) - arg.getNodeHeight(recChild);
+//            if (arg.isRoot(recParent)) { // This case should never happen as double links
+//                arg.setRoot(recChild);    // to root can not be added or removed.
+//	            System.err.println("doubled link root?");
+//	            System.exit(-1);
+//            } else {
+			//Node recGrandParent = recParent1.leftParent; // And currently recParent must be a bifurcatio
+			//System.err.println("recGrand   ="+recGrandParent.number);
+			arg.doubleRemoveChild(recGrandParent, recParent);
+			arg.doubleRemoveChild(recNode, recChild);
+			if (recGrandParent.bifurcation)
+				arg.singleAddChild(recGrandParent, recChild);
+			else
+				arg.doubleAddChild(recGrandParent, recChild);
+//            }
+			doneSomething = true;
+			// There are not left/right choices to be made for doubly linked removals.
+			// End doubly linked.
+		} else { // Two different parents.
+			Node recParent1 = recNode.leftParent;
+			Node recParent2 = recNode.rightParent;
+			if (!recParent1.bifurcation || recParent1.isRoot()) { // One orientation is valid
+				recParent1 = recNode.rightParent;
+				recParent2 = recNode.leftParent;
+			} else if (recParent2.bifurcation && !recParent2.isRoot()) { // Both orientations are valid
+				if (MathUtils.nextDouble() < 0.5) { // choose equally likely
+					recParent1 = recNode.rightParent;
+					recParent2 = recNode.leftParent;
+				}
 				logq += Math.log(2);
-				
+			}
+
+			Node recGrandParent = recParent1.leftParent; // And currently recParent must be a bifurcatio
+
+			Node otherChild = recParent1.leftChild;
+			if (otherChild == recNode)
+				otherChild = recParent1.rightChild;
+
+			if (recGrandParent.bifurcation)
+				arg.singleRemoveChild(recGrandParent, recParent1);
+			else
+				arg.doubleRemoveChild(recGrandParent, recParent1);
+
+			arg.singleRemoveChild(recParent1, otherChild);
+			if (recParent2.bifurcation)
+				arg.singleRemoveChild(recParent2, recNode);
+			else
+				arg.doubleRemoveChild(recParent2, recNode);
+			arg.doubleRemoveChild(recNode, recChild);
+			if (otherChild != recChild) {
+				if (recGrandParent.bifurcation)
+					arg.singleAddChild(recGrandParent, otherChild);
+				else
+					arg.doubleAddChild(recGrandParent, otherChild);
+				if (recParent2.bifurcation)
+					arg.singleAddChild(recParent2, recChild);
+				else
+					arg.doubleAddChild(recParent2, recChild);
+			} else {
+				if (recGrandParent.bifurcation)
+					arg.singleAddChildWithOneParent(recGrandParent, otherChild);
+				else
+					arg.doubleAddChildWithOneParent(recGrandParent, otherChild);
+				if (recParent2.bifurcation)
+					arg.singleAddChildWithOneParent(recParent2, recChild);
+				else
+					arg.doubleAddChildWithOneParent(recParent2, recChild);
+			}
+//			System.err.println("Sanity check in Remove Operator");
+//			sanityCheck();
+//			System.err.println("End Remove Operator in sanity check");
+			doneSomething = true;
+
+			recParent = recParent1;
+		}
+
+		reverseBifurcationHeight = arg.getNodeHeight(recParent);
+
+		if (doneSomething) {
+			try {
+				arg.contractARGWithRecombinant(recParent, recNode,
+						internalNodeParameters, internalAndRootNodeParameters, nodeRates);
+			} catch (Exception e) {
+				System.err.println("here");
+				System.err.println(e);
+
 			}
 		}
 
-		
-		double newBifurcationRateCategory = 1.0;
-		double newReassortmentRateCategory = 1.0;
-
-		Node newBifurcation = arg.new Node();
-		newBifurcation.heightParameter = new Parameter.Default(newBifurcationHeight);
-		newBifurcation.rateParameter = new Parameter.Default(newBifurcationRateCategory);
-		newBifurcation.number = arg.getNodeCount();
-		newBifurcation.setupHeightBounds();
-
-		Node newReassortment = arg.new Node();
-		newReassortment.bifurcation = false;
-		newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
-		newReassortment.rateParameter = new Parameter.Default(newReassortmentRateCategory);
-		newReassortment.number = arg.getNodeCount() + 1;
-		newReassortment.setupHeightBounds();
-		
-		
-		//Begin mutating the tree.
-		arg.beginTreeEdit(); 
-		if(bifurcateParent != null){
-			arg.removeChild(bifurcateParent, bifurcateChild);
-			arg.addChild(bifurcateParent,newBifurcation);
-		}
-		
-		if (bifurcateChild != reassortChild){
-			arg.removeChild(reassortParent, reassortChild);
-			arg.singleAddChild(newBifurcation, bifurcateChild);
-		}
-		arg.doubleAddChild(newReassortment, reassortChild);
-		
-		VariableSizeParameter partitioning = new VariableSizeParameter(arg.getNumberOfPartitions());
-
-        logq += drawRandomPartitioning(partitioning);
-
-
-		if (bifurcateChild != reassortChild) {
-			arg.addChildAsRecombinant(newBifurcation, reassortParent,
-					newReassortment, partitioning);
-		} else {
-			arg.addChildAsRecombinant(newBifurcation, newBifurcation,
-					newReassortment, partitioning);
-		}
-
-		if(bifurcateParent == null){
-			arg.setRoot(newBifurcation);
-		}
-		arg.expandARGWithRecombinant(newBifurcation, newReassortment,
-				internalNodeParameters,
-				internalAndRootNodeParameters,
-				nodeRates);
-		
-		arg.pushTreeSizeChangedEvent(); 
-
+		arg.pushTreeSizeChangedEvent();
 		try {
 			arg.endTreeEdit();
 		} catch (MutableTree.InvalidTreeException ite) {
 			throw new RuntimeException(ite.toString() + "\n" + arg.toString()
 					+ "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
 		}
-		//End mutating the tree.
-		
-		
-        logq -= Math.log(findPotentialNodesToRemove(null));
-        if (!(reassortChild.leftParent.isBifurcation() && reassortChild.rightParent.isRoot()) &&
-                !(reassortChild.rightParent.isBifurcation() && reassortChild.leftParent.isRoot())){
-            logq -= Math.log(2.0);
-        }
-		return logq;
+
+//	    double d1 = findPotentialAttachmentPoints(reverseBifurcationHeight,null);
+//	    double d2 = findPotentialAttachmentPoints(reverseReassortmentHeight,null);
+//	    System.err.printf("d1 = %5.4f, d2 = %5.4f\n",d1,d2);
+
+//	    logq -= Math.log(findPotentialAttachmentPoints(reverseBifurcationHeight,null));
+//	    logq -= Math.log(findPotentialAttachmentPoints(reverseReassortmentHeight,null));
+
+//        int nodes = arg.getInternalNodeCount() - 1;
+//
+//        logq += 3*Math.log(2);
+//
+//        logq = 100;
+
+//	    System.err.println("logq remove = "+logq);
+		logq = 0;
+//	    logq -= 10;
+//	    logq += Math.log(totalPotentials);
+		return logq; // 1 / total potentials * 1 / 2 (if valid) * length1 * length2 * attachmentSisters
 	}
-	
+
+	private static double lnGamma(double x) {
+		if (x == 1 || x == 2)
+			return 0.0;
+		return GammaFunction.logGamma(x);
+	}
+
+	private void checkAllHeights() {
+		int len = arg.getInternalNodeCount();
+		System.err.println("# internal nodes = " + len);
+		int n = internalNodeParameters.getNumParameters();
+		System.err.println("VSCP (" + n + ")");
+		for (int i = 0; i < n; i++) {
+			System.err.println(internalNodeParameters.getParameterValue(i));
+		}
+		n = arg.getInternalNodeCount();
+		System.err.println("Checking all internal nodes (" + n + ") via tree:");
+		for (int i = 0; i < n; i++) {
+			NodeRef node = arg.getInternalNode(i);
+			System.err.print(Tree.Utils.uniqueNewick(arg, node) + " ");
+			System.err.println(((Node) node).getHeight());
+		}
+	}
+
+	private int findPotentialAttachmentPoints(double time, List<NodeRef> list) {
+		int count = 0;
+		for(int i = 0, n = arg.getNodeCount(); i < n; i++){
+			NodeRef nr = arg.getNode(i);
+			if (!arg.isRoot(nr) && arg.getNodeHeight(nr) < time){
+				if (arg.getNodeHeight(arg.getParent(nr, 0)) > time) {
+					if (list != null){
+						list.add(nr);
+					}
+					count++;
+				}
+				if (arg.isReassortment(nr) && arg.getNodeHeight(arg.getParent(nr, 1)) > time) {
+					if (list != null){
+						list.add(nr);
+					}
+					count++;
+				}
+			}else{
+				if(arg.getNodeHeight(nr) < time){
+					if(list != null){
+						list.add(nr);
+					}
+					count++;
+				}
+			}
+		}
+		
+		return count;
+	}
+
 	private double drawRandomPartitioning(Parameter partitioning) {
 		double logq = 0;
 		int len = arg.getNumberOfPartitions();
@@ -332,7 +348,13 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		}
 		return logq;
 	}
-	
+
+
+	/* Draws a new partitioning.
+	 * With probability singlePartitionProbability, one bit is set;
+	 * otherwise, all bits are selected via a random permutation
+	 *
+	 */
 	private double drawRandomReassortment(Parameter partitioning) {
 		int len = arg.getNumberOfPartitions();
 		double logq = 0;
@@ -351,7 +373,11 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		logq += Math.log(len - 1);
 		return logq;
 	}
-	
+
+	/* Draws a new partitioning.
+	 * A break-pt is drawn uniformly
+	 *
+	 */
 	private double drawRandomRecombination(Parameter partitioning) {
 		int len = arg.getNumberOfPartitions();
 		double logq = 0;
@@ -369,113 +395,152 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		return logq;
 	}
 
-	/**
-	 * Attemps to remove a reassortment node from the <code>ARGModel</code>.
-	 * @return The hastings ratio.
-	 * @throws OperatorFailedException 
-	 * 		if something goes totally wrong
-	 * @throws NoReassortmentNodeException
-	 * 		if there are no reassortment nodes to remove.
-	 */
-	private double removeOperation() throws OperatorFailedException,
-		NoReassortmentNodeException{
+
+	private double AddOperation() throws OperatorFailedException {
 		double logq = 0;
-
 		
-		ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
-		int totalPotentials = findPotentialNodesToRemove(potentialNodes);
-				
-		if (totalPotentials == 0){
-			throw new NoReassortmentNodeException("No reassortment nodes to remove.");
+		
+		//1.  Get the new bifurcation and re-assortment heights.
+		double treeHeight = arg.getNodeHeight(arg.getRoot());
+		double newRootProbability = 1.0;
+		
+		double newReassortmentHeight = treeHeight * MathUtils.nextDouble();
+		double newBifurcationHeight;
+		
+		if(MathUtils.nextDouble() < newRootProbability)
+			newBifurcationHeight = treeHeight + MathUtils.nextExponential(4.0/treeHeight);
+		else
+			newBifurcationHeight = treeHeight * MathUtils.nextDouble();
+		
+		newBifurcationHeight = 10;
+		
+		if (newReassortmentHeight > newBifurcationHeight) {
+			double temp = newReassortmentHeight;
+			newReassortmentHeight = newBifurcationHeight;
+			newBifurcationHeight = temp;
 		}
+
+		//2. Find the possible reassortment and bifurcation points.
+		ArrayList<NodeRef> potentialBifurcationChildren = new ArrayList<NodeRef>();
+		ArrayList<NodeRef> potentialReassortmentChildren = new ArrayList<NodeRef>();
+
+		int totalPotentialBifurcationChildren = findPotentialAttachmentPoints(
+				newBifurcationHeight, potentialBifurcationChildren);
+		int totalPotentialReassortmentChildren = findPotentialAttachmentPoints(
+				newReassortmentHeight, potentialReassortmentChildren);
+
+		assert totalPotentialBifurcationChildren > 0;
+		assert totalPotentialReassortmentChildren > 0;
 		
+
+		//3.  Choose your re-assortment location.
+		Node recNode = (Node) potentialReassortmentChildren.get(MathUtils
+				.nextInt(totalPotentialReassortmentChildren));
+
+
+		Node recParentL = recNode.leftParent;
+		Node recParentR = recNode.rightParent;
+		Node recParent = recParentL;
+		if (recParentL != recParentR) {
+			if (arg.getNodeHeight(recParentL) < newReassortmentHeight)
+				recParent = recParentR;
+			else if (arg.getNodeHeight(recParentR) > newReassortmentHeight
+					&& MathUtils.nextDouble() > 0.5)
+				recParent = recParentR;
+		}
+
+		//4. Choose your bifurcation location.
+		Node sisNode = (Node) potentialBifurcationChildren.get(MathUtils
+				.nextInt(totalPotentialBifurcationChildren));
+
+
+		Node sisParentL = sisNode.leftParent;
+		Node sisParentR = sisNode.rightParent;
+		Node sisParent = sisParentL;
+		if (sisParentL != sisParentR) {
+			if (arg.getNodeHeight(sisParentL) < newBifurcationHeight)
+				sisParent = sisParentR;
+			else if (arg.getNodeHeight(sisParentR) > newBifurcationHeight
+					&& MathUtils.nextDouble() > 0.5)
+				sisParent = sisParentR;
+		}
+
+		//5. Make the new nodes.
+		
+
+		Node newReassortment = arg.new Node();
+		newReassortment.bifurcation = false;
+		newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
+		newReassortment.rateParameter = new Parameter.Default(1.0);
+		newReassortment.setupHeightBounds();
+		newReassortment.number = arg.getNodeCount();
+		
+		Node newBifurcation = arg.new Node();
+		newBifurcation.heightParameter = new Parameter.Default(newBifurcationHeight);
+		newBifurcation.rateParameter = new Parameter.Default(1.0);
+		newBifurcation.setupHeightBounds();
+		newBifurcation.number = arg.getNodeCount() + 1; 
+		
+		//6. Begin editing the tree.
 		arg.beginTreeEdit();
-		boolean doneSomething = false;
 		
-		NodeRef removeNode = potentialNodes.get(MathUtils.nextInt(totalPotentials));
-		double reverseReassortmentHeight = arg.getNodeHeight(removeNode);
-		double reverseBifurcationHeight = 0;
+		//6a. This is when we do not create a new root.
+		if(newBifurcationHeight < treeHeight){
+			if (sisParent.bifurcation)
+				arg.singleRemoveChild(sisParent, sisNode);
+			else
+				arg.doubleRemoveChild(sisParent, sisNode);
+			if (sisNode != recNode) {
+				if (recParent.bifurcation)
+					arg.singleRemoveChild(recParent, recNode);
+				else
+					arg.doubleRemoveChild(recParent, recNode);
+			}
+			if (sisParent.bifurcation)
+				arg.singleAddChild(sisParent, newBifurcation);
+			else
+				arg.doubleAddChild(sisParent, newBifurcation);
+			if (sisNode != recNode)
+				arg.singleAddChild(newBifurcation, sisNode);
+			arg.doubleAddChild(newReassortment, recNode);
 
-		NodeRef removeLeftParent = arg.getParent(removeNode, ARGModel.LEFT);
-		NodeRef removeLeftChild  = arg.getChild(removeNode, ARGModel.LEFT);
-		
-		if(arg.getParent(removeNode,ARGModel.LEFT) == arg.getParent(removeNode,ARGModel.RIGHT)){
-			assert !arg.isRoot(removeLeftParent);
-			
-			NodeRef recGrandParent = arg.getParent(removeLeftParent,ARGModel.LEFT);
-						
-			arg.doubleRemoveChild(recGrandParent, removeLeftParent);
-			arg.doubleRemoveChild(removeNode, removeLeftChild);
-			arg.addChild(recGrandParent,removeLeftChild);
-			
-			doneSomething = true;
-		}else{ 
-			NodeRef keptParent = removeLeftParent;
-			NodeRef removeParent = arg.getParent(removeNode,ARGModel.RIGHT);
-									
-			if(arg.isBifurcation(keptParent) 
-					&& arg.isBifurcation(removeParent)){
-				if(MathUtils.nextBoolean()){
-					removeParent = removeLeftParent;
-					keptParent = arg.getParent(removeNode,ARGModel.RIGHT);
-				}
-				logq += LOG_TWO;
-			}else if(arg.isBifurcation(removeParent)){
-				removeParent = removeLeftParent;
-				keptParent = arg.getParent(removeNode,ARGModel.RIGHT);
+			VariableSizeParameter partitioning = new VariableSizeParameter(arg.getNumberOfPartitions());
+			drawRandomPartitioning(partitioning);
+
+			if (sisNode != recNode) {
+				arg.addChildAsRecombinant(newBifurcation, recParent,
+						newReassortment, partitioning);
+			} else {
+				arg.addChildAsRecombinant(newBifurcation, newBifurcation,
+						newReassortment, partitioning);
 			}
+			arg.expandARGWithRecombinant(newBifurcation, newReassortment,
+					internalNodeParameters,
+					internalAndRootNodeParameters,
+					nodeRates);
+		//6b. But here we do.
+		}else{
+			if (recParent.bifurcation)
+				arg.singleRemoveChild(recParent, recNode);
+			else
+				arg.doubleRemoveChild(recParent, recNode);
 			
-			if(arg.isRoot(removeParent)){
-				NodeRef otherChild = arg.getOtherChild(removeParent, removeNode);
-				
-				arg.singleRemoveChild(removeParent, otherChild);
-				arg.removeChild(keptParent, removeNode);
-				arg.doubleRemoveChild(removeNode, removeLeftChild);
-				
-				//TODO Figure out how to link keptParent and removeLeftChild.
-//				arg.addChild(keptParent, child)
-				
-				arg.setRoot(otherChild);
-			}else{
-				NodeRef removeGrandParent = arg.getParent(removeParent, ARGModel.LEFT);
-				NodeRef otherChild = arg.getOtherChild(removeParent, removeNode);
-						
-				arg.removeChild(removeGrandParent, removeParent);
-				arg.singleRemoveChild(removeParent, otherChild);
-				arg.removeChild(keptParent,removeNode);
-				arg.doubleRemoveChild(removeNode, removeLeftChild);
+			arg.singleAddChild(newBifurcation, sisNode);
+			arg.doubleAddChild(newReassortment, recNode);
 			
-				
-				if(otherChild != removeLeftChild){
-					arg.addChild(removeGrandParent, otherChild);
-					arg.addChild(keptParent, removeLeftChild);
-				}else{
-					System.exit(-1);
-					arg.addChildWithSingleParent(removeGrandParent, otherChild);
-					arg.addChildWithSingleParent(keptParent, removeLeftChild);
-				}
-			}
-			doneSomething = true;
-			removeLeftParent = removeParent;
+			VariableSizeParameter partitioning = new VariableSizeParameter(arg.getNumberOfPartitions());
+			drawRandomPartitioning(partitioning);
+			
+			arg.addChildAsRecombinant(newBifurcation,recParent,newReassortment, partitioning);
+			arg.expandARGWithRecombinantNewRoot(newReassortment, newBifurcation, 
+					internalNodeParameters,	internalAndRootNodeParameters,
+					nodeRates);
+			
 		}
 		
-		
-		assert sanityCheck();
-
-		reverseBifurcationHeight = arg.getNodeHeight(removeLeftParent);
-
-		if (doneSomething) {
-			try {
-				arg.contractARGWithRecombinant((Node)removeLeftParent, (Node)removeNode,
-						internalNodeParameters, internalAndRootNodeParameters, nodeRates);
-			} catch (Exception e) {
-				System.err.println("here");
-				System.err.println(e);
-
-			}
-		}
 
 		arg.pushTreeSizeChangedEvent();
+
 		try {
 			arg.endTreeEdit();
 		} catch (MutableTree.InvalidTreeException ite) {
@@ -483,31 +548,15 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					+ "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
 		}
 
-		
-//	    double d1 = findPotentialAttachmentPoints(reverseBifurcationHeight,null);
-//	    double d2 = findPotentialAttachmentPoints(reverseReassortmentHeight,null);
-//	    System.err.printf("d1 = %5.4f, d2 = %5.4f\n",d1,d2);
 
-	    logq -= Math.log(findPotentialAttachmentPoints(reverseBifurcationHeight,null));
-	    logq -= Math.log(findPotentialAttachmentPoints(reverseReassortmentHeight,null));
-
-//        int nodes = arg.getInternalNodeCount() - 1;
-//
-        logq += 3*Math.log(2);
-//
-//        logq = 100;
-
-//	    System.err.println("logq remove = "+logq);
-//		logq = 0;
-//	    logq -= 10;
-	    logq += Math.log(totalPotentials);
-		return logq; // 1 / total potentials * 1 / 2 (if valid) * length1 * length2 * attachmentSisters
+		logq = 0;
+		return logq;
 	}
-	/**
-	 * Checks whether an ARGmodel makes sense after an operator has occured
-	 * @return If the model makes sense.
-	 */
-	public boolean sanityCheck() {
+
+//	if( !recParent1.bifurcation || recParent1.isRoot() ) { // One orientation is valid
+
+
+	public void sanityCheck() {
 		int len = arg.getNodeCount();
 		for (int i = 0; i < len; i++) {
 			Node node = (Node) arg.getNode(i);
@@ -517,12 +566,16 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					if (!node.leftChild.bifurcation && ((node.leftChild).leftParent == node))
 						;
 					else {
-						return false;
+						System.err.println("Node " + (i + 1) + " is insane.");
+						System.err.println(arg.toGraphString());
+						System.exit(-1);
 					}
 				}
 			} else {
 				if ((node.leftChild != node.rightChild)) {
-					return false;
+					System.err.println("Node " + (i + 1) + " is insane.");
+					System.err.println(arg.toGraphString());
+					System.exit(-1);
 				}
 			}
 			if (!node.isRoot()) {
@@ -530,9 +583,65 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				d = node.getHeight();
 			}
 		}
-		return true;
 	}
-	
+
+	private int times = 0;
+
+//	private double getDelta() {
+//		if (!gaussian) {
+//			return (MathUtils.nextDouble() * size) - (size / 2.0);
+//		} else {
+//			return MathUtils.nextGaussian() * size;
+//		}
+//	}
+
+
+	public double getSize() {
+		return size;
+	}
+
+	public void setSize(double size) {
+		this.size = size;
+	}
+
+	public double getCoercableParameter() {
+		return Math.log(getSize());
+	}
+
+	public void setCoercableParameter(double value) {
+		setSize(Math.exp(value));
+	}
+
+	public double getRawParameter() {
+		return getSize();
+	}
+
+	public int getMode() {
+		return mode;
+	}
+
+	public double getTargetAcceptanceProbability() {
+		return 0.234;
+	}
+
+
+	public String getPerformanceSuggestion() {
+		double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+		double targetProb = getTargetAcceptanceProbability();
+
+		double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
+
+		if (prob < getMinimumGoodAcceptanceLevel()) {
+			return "Try decreasing size to about " + ws;
+		} else if (prob > getMaximumGoodAcceptanceLevel()) {
+			return "Try increasing size to about " + ws;
+		} else return "";
+	}
+
+	public String getOperatorName() {
+		return NEWER_ARG_EVENT;
+	}
+
 	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
 		public String getParserName() {
@@ -540,13 +649,14 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
 			boolean swapRates = false;
 			boolean swapTraits = false;
-			boolean isRecombination = false;
 
 			double singlePartitionProbability = 0.0;
-
-			//Get Attributes
+			boolean isRecombination = false;
+			
+			
 			int mode = CoercableMCMCOperator.DEFAULT;
 			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
 				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
@@ -556,45 +666,34 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				}
 			}
 
-			if (xo.hasAttribute(SINGLE_PARTITION)) {
-				singlePartitionProbability = xo.getDoubleAttribute(SINGLE_PARTITION);
-			}
-
-			if (xo.hasAttribute(IS_RECOMBINATION)) {
-				isRecombination = xo.getBooleanAttribute(IS_RECOMBINATION);
-
-			}
-
-			if (xo.hasAttribute(SWAP_RATES)) {
-				swapRates = xo.getBooleanAttribute(SWAP_RATES);
-			}
-			if (xo.hasAttribute(SWAP_TRAITS)) {
-				swapTraits = xo.getBooleanAttribute(SWAP_TRAITS);
-			}
-						
-			int weight = xo.getIntegerAttribute("weight");
-			double size = xo.getDoubleAttribute("size");
-			boolean gaussian = xo.getBooleanAttribute("gaussian");
-
-			//Get the arg model
 			Object obj = xo.getChild(ARGModel.class);
-			
+//			TreeModel tmp = (TreeModel)xo.getChild(TreeModel.class);
 			ARGModel treeModel = null;
-			
+			//if( (tmp.TREE_MODEL).compareTo(VariableSizeTreeModel.TREE_MODEL) == 0) {
 			if (obj instanceof ARGModel) {
+				//System.err.println("Found VSTM");
 				treeModel = (ARGModel) obj;
-			} 
-			
+			} else {
+				System.err.println("Must specify a variable size tree model to use the AddRemoveSubtreeOperators");
+				System.exit(-1);
+			}
+//        	VariableSizeCompoundParameter parameter = (VariableSizeCompoundParameter)xo.getChild(Parameter.class);
+
 			VariableSizeCompoundParameter parameter1 = (VariableSizeCompoundParameter) xo.getSocketChild(JUST_INTERNAL);
 			VariableSizeCompoundParameter parameter2 = (VariableSizeCompoundParameter) xo.getSocketChild(INTERNAL_AND_ROOT);
 			VariableSizeCompoundParameter parameter3 = (VariableSizeCompoundParameter) xo.getSocketChild(NODE_RATES);
 
-			return new NewerARGEventOperator(treeModel, weight, size, gaussian, swapRates, swapTraits,
+			//VariableSizeTreeModel treeModel = (VariableSizeTreeModel)xo.getChild(TreeModel.class);
+			int weight = xo.getIntegerAttribute("weight");
+//            int maxTips = xo.getIntegerAttribute(MAX_VALUE);
+			double size = xo.getDoubleAttribute("size");
+			boolean gaussian = xo.getBooleanAttribute("gaussian");
+			return new NewerARGEventOperator(treeModel, weight, size, 
 					mode, parameter1, parameter2, parameter3, singlePartitionProbability, isRecombination);
 		}
 
 		public String getParserDescription() {
-			return "An operator that adds and removes reassortment nodes.";
+			return "An operator that slides a subarg.";
 		}
 
 		public Class getReturnType() {
@@ -606,57 +705,9 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		}
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				AttributeRule.newIntegerRule("weight"),
-				AttributeRule.newDoubleRule("size"),
-				AttributeRule.newBooleanRule("gaussian"),
-				AttributeRule.newBooleanRule(SWAP_RATES, true),
-				AttributeRule.newBooleanRule(SWAP_TRAITS, true),
-				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
 				new ElementRule(ARGModel.class)
 		};
 	};
 
-	public String getOperatorName() {
-		return NEWER_ARG_EVENT;
-	}
-
-	public double getCoercableParameter() {
-		return Math.log(size);
-	}
-	
-	private double getAddLogQ(){
-		double c = NormalDistribution.cdf(size, 0, 1);
-		return Math.log((1-c)/c);
-	}
-	
-	public double getSize() {
-		return size;
-	}
-
-	public int getMode() {
-		return mode;
-	}
-
-	public double getRawParameter() {
-		return size;
-	}
-
-	public void setCoercableParameter(double value) {
-		size = Math.exp(value);
-	}
-
-	public String getPerformanceSuggestion() {
-		// TODO Get this guy working.
-		return null;
-	}
-
-	private class NoReassortmentNodeException extends OperatorFailedException{
-		private static final long serialVersionUID = 1L;
-
-		public NoReassortmentNodeException(String a){
-			super(a);
-		}
-	}
-
-	
 }
+

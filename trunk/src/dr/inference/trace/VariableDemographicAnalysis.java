@@ -137,6 +137,7 @@ public class VariableDemographicAnalysis extends TabularData {
         medians = new double[nXaxisPoints];
         hpdLower = new double[HPDLevels.length][];
         hpdHigh = new double[HPDLevels.length][];
+
         for(int i = 0; i < HPDLevels.length; ++i) {
             hpdLower[i] = new double[nXaxisPoints];
             hpdHigh[i] = new double[nXaxisPoints];
@@ -185,7 +186,7 @@ public class VariableDemographicAnalysis extends TabularData {
         nColumn -= fixed;
         double p = HPDLevels[nColumn/2];
         String s = ( nColumn % 2 == 0 ) ? "lower" : "upper";
-        return "hpd " + s + " " + Math.round(p*100);
+        return (quantiles ? "cpd " : "hpd ") + s + " " + Math.round(p*100);
     }
 
     public int nRows() {

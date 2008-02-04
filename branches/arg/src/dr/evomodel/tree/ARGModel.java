@@ -42,34 +42,73 @@ import java.util.logging.Logger;
  */
 public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
-	//
-	// Public stuff
-	//
-
+	
 	public static final String TREE_MODEL = "argTreeModel";
-
 	public static final String ROOT_HEIGHT = "rootHeight";
-
 	public static final String LEAF_HEIGHT = "leafHeight";
-
 	public static final String NODE_HEIGHTS = "nodeHeights";
-
 	public static final String NODE_RATES = "nodeRates";
-
 	public static final String NODE_TRAITS = "nodeTraits";
-
 	public static final String ROOT_NODE = "rootNode";
-
 	public static final String INTERNAL_NODES = "internalNodes";
-
 	public static final String LEAF_NODES = "leafNodes";
-
 	public static final String TAXON = "taxon";
-
+	public static final String GRAPH_ELEMENT = "graph";
+	public static final String NODE_ELEMENT = "node";
+	public static final String EDGE_ELEMENT = "edge";
+	public static final String ID_ATTRIBUTE = "id";
+	public static final String EDGE_FROM = "source";
+	public static final String EDGE_TO = "target";
+	public static final String TAXON_NAME = "taxonName";
+	public static final String EDGE_LENGTH = "len";
+	public static final String EDGE_PARTITIONS = "edgePartitions";
+	public static final String IS_TIP = "isTip";
+	public static final String IS_ROOT = "isRoot";
+	public static final String LEFT_PARENT = "leftParent";
+	public static final String RIGHT_PARENT = "rightParent";
+	public static final String LEFT_CHILD = "leftChild";
+	public static final String RIGHT_CHILD = "rightChild";
+	public static final String NODE_HEIGHT = "nodeHeight";
+	public static final String IS_REASSORTMENT = "true";
+	public static final String NUM_PARTITIONS = "numbersOfPartitions";
+	public static final String GRAPH_SIZE = "size=\"6,6\"";
+	public static final String DOT_EDGE_DEF = "edge[style=\"setlinewidth(2)\",arrowhead=none]";
+	public static final String DOT_NODE_DEF = "node[shape=plaintext,width=auto,fontname=Helvitica,fontsize=10]";
+	
 	public static final int LEFT = 0;
-
 	public static final int RIGHT = 1;
 
+	// ***********************************************************************
+	// Private members
+	// ***********************************************************************
+	
+	protected int storedRootNumber;
+	protected int nodeCount;
+	protected int storedNodeCount;
+	protected int externalNodeCount;
+	protected int internalNodeCount;
+	protected int storedInternalNodeCount;
+	protected boolean inEdit = false;
+
+	protected Node root = null;
+	protected ArrayList<Node> nodes = null;
+	protected ArrayList<Node> storedNodes = null;
+	protected Parameter[] addedParameters = null;
+	protected Parameter[] removedParameters = null;
+	protected Parameter addedPartitioningParameter = null;
+	protected Parameter removedPartitioningParameter = null;
+	protected VariableSizeCompoundParameter partitioningParameters;
+	protected VariableSizeCompoundParameter storedInternalNodeHeights;
+	protected VariableSizeCompoundParameter storedInternalAndRootNodeHeights;
+	protected VariableSizeCompoundParameter storedNodeRates;
+	protected Node[] addedNodes = null;
+	protected Node[] removedNodes = null;
+
+	private int units = SUBSTITUTIONS;
+	private boolean hasRates = false;
+	private boolean hasTraits = false;
+
+	
 	public ARGModel(ArrayList<Node> nodes, Node root, int numberPartitions,
 			int externalNodeCount) {
 		super(TREE_MODEL);
@@ -346,47 +385,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		}
 	}
 
-	public static final String GRAPH_ELEMENT = "graph";
-
-	public static final String NODE_ELEMENT = "node";
-
-	public static final String EDGE_ELEMENT = "edge";
-
-	public static final String ID_ATTRIBUTE = "id";
-
-	public static final String EDGE_FROM = "source";
-
-	public static final String EDGE_TO = "target";
-
-	public static final String TAXON_NAME = "taxonName";
-
-	public static final String EDGE_LENGTH = "len";
-
-	public static final String EDGE_PARTITIONS = "edgePartitions";
-
-	public static final String IS_TIP = "isTip";
-
-	public static final String IS_ROOT = "isRoot";
-
-	public static final String LEFT_PARENT = "leftParent";
-
-	public static final String RIGHT_PARENT = "rightParent";
-
-	public static final String LEFT_CHILD = "leftChild";
-
-	public static final String RIGHT_CHILD = "rightChild";
-
-	public static final String NODE_HEIGHT = "nodeHeight";
-
-	public static final String IS_REASSORTMENT = "true";
-
-	public static final String NUM_PARTITIONS = "numbersOfPartitions";
-
-	public static final String GRAPH_SIZE = "size=\"6,6\"";
-
-	public static final String DOT_EDGE_DEF = "edge[style=\"setlinewidth(2)\",arrowhead=none]";
-
-	public static final String DOT_NODE_DEF = "node[shape=plaintext,width=auto,fontname=Helvitica,fontsize=10]";
+	
 
 	// public static final String
 
@@ -1655,6 +1654,49 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		}
 	}
 
+	public void contractARGWithRecombinantNewRoot(Node oldie, 
+			Node oldRoot, Node newRoot,
+			VariableSizeCompoundParameter internalNodeParameters,
+			VariableSizeCompoundParameter internalAndRootNodeParameters,
+			VariableSizeCompoundParameter nodeRates) {
+		removeParameter(oldie.heightParameter);
+		removeParameter(oldRoot.heightParameter);
+		removeParameter(oldie.partitioning);
+		
+		removeParameter(oldie.rateParameter);
+		removeParameter(oldie.rateParameter);
+		
+		removedParameters = new Parameter[4];
+		removedParameters[0] = oldie.heightParameter;
+		removedParameters[1] = oldRoot.heightParameter;
+		removedParameters[2] = oldie.rateParameter;
+		removedParameters[3] = oldRoot.rateParameter;
+		
+		partitioningParameters.removeParameter(oldie.partitioning);
+		removedPartitioningParameter = oldie.partitioning;
+		storedInternalNodeHeights = internalNodeParameters;
+		
+		storedInternalNodeHeights.removeParameter(oldie.heightParameter);
+
+		storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
+		storedInternalAndRootNodeHeights
+				.removeParameter(oldie.heightParameter);
+		storedInternalAndRootNodeHeights
+				.removeParameter(oldRoot.heightParameter);
+
+		storedNodeRates = nodeRates;
+		storedNodeRates.removeParameter(oldie.rateParameter);
+		storedNodeRates.removeParameter(oldRoot.rateParameter);
+
+		nodes.remove(oldie);
+		nodes.remove(oldRoot);
+		internalNodeCount -= 2;
+		
+		this.setRoot(newRoot);
+		pushTreeSizeChangedEvent();
+	
+	}
+	
 	/**
 	 * Cleans up the arg model after a deletion event.
 	 * @param oldie1 
@@ -3965,73 +4007,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		private Parameter nodeHeightParameter = null;
 	}
 
-	// ***********************************************************************
-	// Private members
-	// ***********************************************************************
 	
-	/**
-	 * root node
-	 */
-	protected Node root = null;
-
-	protected int storedRootNumber;
-
-	/**
-	 * list of internal nodes (including root)
-	 */
-	// protected Node[] nodes = null;
-	// protected Node[] storedNodes = null;
-	protected ArrayList<Node> nodes = null;
-
-	protected ArrayList<Node> storedNodes = null;
-
-	/**
-	 * number of nodes (including root and tips)
-	 */
-	protected int nodeCount;
-
-	protected int storedNodeCount;
-
-	/**
-	 * number of external nodes
-	 */
-	protected int externalNodeCount;
-
-	/**
-	 * number of internal nodes (including root)
-	 */
-	protected int internalNodeCount;
-
-	protected int storedInternalNodeCount;
-
-	/**
-	 * holds the units of the trees branches.
-	 */
-	private int units = SUBSTITUTIONS;
-
-	protected boolean inEdit = false;
-
-	private boolean hasRates = false;
-
-	private boolean hasTraits = false;
-
-	protected Parameter[] addedParameters = null;
-
-	protected Parameter[] removedParameters = null;
-
-	protected Parameter addedPartitioningParameter = null;
-		
-	protected Parameter removedPartitioningParameter = null;
-
-	protected VariableSizeCompoundParameter partitioningParameters;
-
-	protected VariableSizeCompoundParameter storedInternalNodeHeights;
-
-	protected VariableSizeCompoundParameter storedInternalAndRootNodeHeights;
-
-	protected VariableSizeCompoundParameter storedNodeRates;
-
-	protected Node[] addedNodes = null;
-
-	protected Node[] removedNodes = null;
+	
+	
 }

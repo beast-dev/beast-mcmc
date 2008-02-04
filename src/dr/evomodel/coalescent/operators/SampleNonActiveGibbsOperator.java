@@ -13,10 +13,11 @@ import dr.xml.*;
 
  */
 public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
-    private static String SAMPLE_NONACTIVE_GIBBS_OPERATOR = "sampleNoneActiveOperator";
+    public static String SAMPLE_NONACTIVE_GIBBS_OPERATOR = "sampleNoneActiveOperator";
+    public static String DISTRIBUTION = "distribution";
 
-    private static String INDICATOR_PARAMETER = "indicators";
-    private static String DATA_PARAMETER = "data";
+    public static String INDICATOR_PARAMETER = "indicators";
+    public static String DATA_PARAMETER = "data";
     private ParametricDistributionModel distribution;
     private Parameter data;
     private Parameter indicators;
@@ -71,7 +72,7 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final double weight = xo.getDoubleAttribute(WEIGHT);
 
-            XMLObject cxo = (XMLObject) xo.getChild("distribution");
+            XMLObject cxo = (XMLObject) xo.getChild(DISTRIBUTION);
             ParametricDistributionModel distribution =
                     (ParametricDistributionModel) cxo.getChild(ParametricDistributionModel.class);
 

@@ -27,8 +27,8 @@ package dr.app.beauti;
 
 import dr.app.beast.BeastVersion;
 import dr.evolution.alignment.SitePatterns;
-import dr.evolution.datatype.Nucleotides;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.datatype.TwoStateCovarion;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -40,6 +40,7 @@ import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.coalescent.*;
+import dr.evomodel.coalescent.operators.SampleNonActiveGibbsOperator;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.TreeBitMoveOperator;
@@ -53,10 +54,7 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evoxml.*;
-import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.ExponentialMarkovModel;
-import dr.inference.distribution.LogNormalDistributionModel;
-import dr.inference.distribution.UniformDistributionModel;
+import dr.inference.distribution.*;
 import dr.inference.loggers.Columns;
 import dr.inference.loggers.MCLogger;
 import dr.inference.model.*;
@@ -921,7 +919,7 @@ public class BeastGenerator extends BeautiOptions {
      * @param writer the writer
      */
     public void writeBinarySimpleModel(XMLWriter writer) {
-        String id = "bsimple";
+        final String id = "bsimple";
 
         writer.writeComment("The Binary simple model (based on the general substitution model)");
         writer.writeOpenTag(
@@ -1311,11 +1309,12 @@ public class BeastGenerator extends BeautiOptions {
                     fixParameter("uced.mean", meanSubstitutionRate);
                 }
 
-                writer.writeOpenTag("exponentialDistributionModel");
+                final String eModelName = ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL;
+                writer.writeOpenTag(eModelName);
                 writer.writeOpenTag("mean");
                 writeParameter("uced.mean", writer);
                 writer.writeCloseTag("mean");
-                writer.writeCloseTag("exponentialDistributionModel");
+                writer.writeCloseTag(eModelName);
             } else if (clockModel == UNCORRELATED_LOGNORMAL) {
                 if (fixedSubstitutionRate) {
                     fixParameter("ucld.mean", meanSubstitutionRate);
@@ -1439,6 +1438,65 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
 
             writer.writeCloseTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD);
+        } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
+            final String tagName = VariableDemographicModel.PARSER.getParserName();
+            final String demoElementName = "demographic";
+            writer.writeOpenTag(
+                    tagName,
+                    new Attribute[]{
+                            new Attribute.Default<String>("id", demoElementName),
+                            new Attribute.Default<String>(VariableDemographicModel.TYPE, extendedSkylineModel)
+                    }
+            );
+
+            writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);
+            final int nTax = taxonList.getTaxonCount();
+            final int nPops = nTax - (extendedSkylineModel.equals(VariableDemographicModel.STEPWISE) ? 1 : 0);
+            writeParameter(demoElementName + ".popSize", nPops, writer);
+            writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
+
+            writer.writeOpenTag(VariableDemographicModel.INDICATOR_PARAMETER);
+            writeParameter(demoElementName + ".indicators", nPops-1, writer);
+            writer.writeCloseTag(VariableDemographicModel.INDICATOR_PARAMETER);
+
+            writer.writeOpenTag(VariableDemographicModel.POPULATION_TREES);
+
+            writer.writeOpenTag(VariableDemographicModel.POP_TREE);
+            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
+            writer.writeCloseTag(VariableDemographicModel.POP_TREE);
+
+            writer.writeCloseTag(VariableDemographicModel.POPULATION_TREES);
+
+            writer.writeCloseTag(tagName);
+
+            writer.writeOpenTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("id", "coalescent"));
+            writer.writeOpenTag(CoalescentLikelihood.MODEL);
+            writer.writeTag(tagName, new Attribute.Default<String>("idref", demoElementName), true);
+            writer.writeCloseTag(CoalescentLikelihood.MODEL);
+            writer.writeComment("Take population Tree from demographic");
+            writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
+
+            writer.writeOpenTag(SumStatistic.SUM_STATISTIC,
+                    new Attribute[]{
+                            new Attribute.Default<String>("id", demoElementName + ".populationSizeChanges"),
+                            new Attribute.Default<String>("elementwise", "true")
+                    });
+            writer.writeTag(ParameterParser.PARAMETER,
+                    new Attribute.Default<String>("idref", demoElementName + ".indicators"), true);
+            writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
+            writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
+                    new Attribute[]{
+                            new Attribute.Default<String>("id", demoElementName + ".populationMeanDist"),
+                            new Attribute.Default<String>("elementwise", "true")
+                    });
+            writer.writeOpenTag(ExponentialDistributionModel.MEAN);
+            writer.writeTag(ParameterParser.PARAMETER,
+                     new Attribute[]{
+                             new Attribute.Default<String>("id", demoElementName + ".populationMean"),
+                             new Attribute.Default<String>("value", "1")}, true);
+            writer.writeCloseTag(ExponentialDistributionModel.MEAN) ;
+            writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+
         } else {
             // generate a coalescent process
 
@@ -1677,7 +1735,23 @@ public class BeastGenerator extends BeautiOptions {
             writeWideExchangeOperator(operator, writer);
         } else if (operator.type.equals(WILSON_BALDING)) {
             writeWilsonBaldingOperator(operator, writer);
+        } else if (operator.type.equals(SAMPLE_NONACTIVE)) {
+            writeSampleNoneActiveOperator(operator, writer);
+        } else if (operator.type.equals(SCALE_WITH_INDICATORS)) {
+            writeScaleWithIndicatorsOperator(operator, writer);
         }
+    }
+
+    private Attribute getRef(String name) {
+        return new Attribute.Default<String>("idref", name);
+    }
+
+    private void writeParameterRefByName(XMLWriter writer, String name) {
+        writer.writeTag(ParameterParser.PARAMETER, getRef(name), true);
+    }
+
+    private void writeParameter1Ref(XMLWriter writer, Operator operator) {
+        writeParameterRefByName(writer, operator.parameter1.getName());
     }
 
     private void writeScaleOperator(Operator operator, XMLWriter writer) {
@@ -1687,7 +1761,7 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default<Double>("scaleFactor", operator.tuning),
                         new Attribute.Default<Double>("weight", operator.weight),
                 });
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", operator.parameter1.getName()), true);
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
     }
 
@@ -1698,7 +1772,7 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default<Double>("windowSize", operator.tuning),
                         new Attribute.Default<Double>("weight", operator.weight)
                 });
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", operator.parameter1.getName()), true);
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag("randomWalkOperator");
     }
 
@@ -1711,7 +1785,7 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default<Double>("weight", operator.weight),
                 });
         writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER);
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>("idref", operator.parameter1.getName())}, true);
+        writeParameter1Ref(writer, operator);
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>("idref", operator.parameter2.getName())}, true);
         writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
@@ -1726,7 +1800,7 @@ public class BeastGenerator extends BeautiOptions {
         );
 
         writer.writeOpenTag(UpDownOperator.UP);
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>("idref", operator.parameter1.getName())}, true);
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(UpDownOperator.UP);
 
         writer.writeOpenTag(UpDownOperator.DOWN);
@@ -1743,7 +1817,7 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default<Double>("weight", operator.weight),
                 }
         );
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>("idref", operator.parameter1.getName())}, true);
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(CenteredScaleOperator.CENTERED_SCALE);
     }
 
@@ -1767,7 +1841,7 @@ public class BeastGenerator extends BeautiOptions {
             );
         }
 
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>("idref", operator.parameter1.getName())}, true);
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(DeltaExchangeOperator.DELTA_EXCHANGE);
     }
 
@@ -1780,7 +1854,7 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default<String>("autoOptimize", "false")
                 }
         );
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>("idref", operator.parameter1.getName())}, true);
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(DeltaExchangeOperator.DELTA_EXCHANGE);
     }
 
@@ -1792,7 +1866,7 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default<String>("autoOptimize", "false")
                 }
         );
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>("idref", operator.parameter1.getName())}, true);
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(SwapOperator.SWAP_OPERATOR);
     }
 
@@ -1802,7 +1876,7 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default<Double>("weight", operator.weight),
                 }
         );
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>("idref", operator.parameter1.getName())}, true);
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(BitFlipOperator.BIT_FLIP_OPERATOR);
     }
 
@@ -1819,7 +1893,7 @@ public class BeastGenerator extends BeautiOptions {
     private void writeUniformOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag("uniformOperator",
                 new Attribute.Default<Double>("weight", operator.weight));
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", operator.parameter1.getName()), true);
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag("uniformOperator");
     }
 
@@ -1847,6 +1921,39 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeCloseTag(WilsonBalding.WILSON_BALDING);
     }
 
+    private void writeSampleNoneActiveOperator(Operator operator, XMLWriter writer) {
+       writer.writeOpenTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR,
+                new Attribute.Default<Double>("weight", operator.weight));
+
+       writer.writeOpenTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
+       writeParameterRefByName(writer, operator.name); 
+       writer.writeCloseTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
+
+       writer.writeOpenTag(SampleNonActiveGibbsOperator.DATA_PARAMETER);
+       writeParameter1Ref(writer, operator);
+       writer.writeCloseTag(SampleNonActiveGibbsOperator.DATA_PARAMETER);
+
+       writer.writeOpenTag(SampleNonActiveGibbsOperator.INDICATOR_PARAMETER);
+       writeParameterRefByName(writer, operator.parameter2.getName());
+       writer.writeCloseTag(SampleNonActiveGibbsOperator.INDICATOR_PARAMETER);
+
+       writer.writeCloseTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR);
+    }
+
+    private void writeScaleWithIndicatorsOperator(Operator operator, XMLWriter writer) {
+         writer.writeOpenTag(
+                ScaleOperator.SCALE_OPERATOR,
+                new Attribute[]{
+                        new Attribute.Default<Double>("scaleFactor", operator.tuning),
+                        new Attribute.Default<Double>("weight", operator.weight),
+                });
+        writeParameter1Ref(writer, operator);
+        writer.writeOpenTag(ScaleOperator.INDICATORS, new Attribute.Default<String>(ScaleOperator.PICKONEPROB, "1.0"));
+        writeParameterRefByName(writer, operator.parameter2.getName());
+	    writer.writeCloseTag(ScaleOperator.INDICATORS);
+        writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
+    }
+    
     private void writeSubtreeSlideOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(SubtreeSlideOperator.SUBTREE_SLIDE,
                 new Attribute[]{
@@ -1911,6 +2018,7 @@ public class BeastGenerator extends BeautiOptions {
 
         writeParameterPriors(writer);
 
+
         if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
             writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default<String>("idref", "speciation"), true);
         } else if (nodeHeightPrior == SKYLINE) {
@@ -1926,7 +2034,31 @@ public class BeastGenerator extends BeautiOptions {
         if (nodeHeightPrior == SKYLINE) {
             writer.writeTag(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL, new Attribute.Default<String>("idref", "eml1"), true);
         }
+        if (nodeHeightPrior == EXTENDED_SKYLINE) {
+            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
 
+            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION0);
+            writer.writeTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
+                    new Attribute.Default<String>("idref", "demographic.populationMeanDist"), true);
+            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION0);
+
+            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION1);
+            writer.writeTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
+                    new Attribute.Default<String>("idref", "demographic.populationMeanDist"), true);
+            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION1);
+
+            writer.writeOpenTag(MixedDistributionLikelihood.DATA);
+            writer.writeTag(ParameterParser.PARAMETER,
+                    new Attribute.Default<String>("idref", "demographic.popSize"), true);
+            writer.writeCloseTag(MixedDistributionLikelihood.DATA);
+
+            writer.writeOpenTag(MixedDistributionLikelihood.INDICATORS);
+            writer.writeTag(ParameterParser.PARAMETER,
+                    new Attribute.Default<String>("idref", "demographic.indicators"), true);
+            writer.writeCloseTag(MixedDistributionLikelihood.INDICATORS);
+
+            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
+        }
         writer.writeCloseTag(CompoundLikelihood.PRIOR);
 
         if (alignment != null) {
@@ -2385,6 +2517,9 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == SKYLINE) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "skyline.popSize"), true);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "skyline.groupSize"), true);
+        } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.popSize"), true);
+             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.indicators"), true); 
         } else if (nodeHeightPrior == YULE) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "yule.birthRate"), true);
         } else if (nodeHeightPrior == BIRTH_DEATH) {

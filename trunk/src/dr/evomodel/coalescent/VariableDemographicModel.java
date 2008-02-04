@@ -16,11 +16,11 @@ import java.util.logging.Logger;
  */
 public class VariableDemographicModel extends DemographicModel implements MultiLociTreeSet {
     static final String MODEL_NAME = "variableDemographic";
-    static final String POPULATION_SIZES = "populationSizes";
-    static final String INDICATOR_PARAMETER = "indicators";
-    static final String POPULATION_TREES = "trees";
+    public static final String POPULATION_SIZES = "populationSizes";
+    public static final String INDICATOR_PARAMETER = "indicators";
+    public static final String POPULATION_TREES = "trees";
     private static String PLOIDY = "ploidy";
-    private static String POP_TREE = "ptree";
+    public static String POP_TREE = "ptree";
 
     public static final String LOG_SPACE = "logUnits";
 
@@ -250,7 +250,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
                 }
             }
 
-            boolean logSpace = xo.getBooleanAttribute(LOG_SPACE);
+            boolean logSpace = xo.hasAttribute(LOG_SPACE) ? xo.getBooleanAttribute(LOG_SPACE) : false;
 
             Logger.getLogger("dr.evomodel").info("Variable demographic: " + type.toString() + " control points");
 
@@ -276,7 +276,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         private XMLSyntaxRule[] rules =
         new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(VariableSkylineLikelihood.TYPE, true),
-                 AttributeRule.newBooleanRule(LOG_SPACE),
+                 AttributeRule.newBooleanRule(LOG_SPACE, true),
 
                 new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)

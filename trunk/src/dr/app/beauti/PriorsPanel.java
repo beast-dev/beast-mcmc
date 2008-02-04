@@ -112,14 +112,16 @@ public class PriorsPanel extends JPanel implements Exportable {
 			}
 		};
 
-		if (BeautiApp.developer) {
+        // order here must match corrosponding BeautiOptions constant, i.e. BeautiOptions.CONSTANT == 0 etc
+        if (BeautiApp.developer) {
 			treePriorCombo = new JComboBox(new String[] {
 					"Coalescent: Constant Size",
 					"Coalescent: Exponential Growth",
 					"Coalescent: Logistic Growth",
 					"Coalescent: Expansion Growth",
 					"Coalescent: Bayesian Skyline",
-					"Speciation: Yule Process",
+                    "Coalescent: Extended Bayesian Skyline",
+                    "Speciation: Yule Process",
 					"Speciation: Birth-Death Process"
 			});
 		} else {
@@ -129,7 +131,8 @@ public class PriorsPanel extends JPanel implements Exportable {
 					"Coalescent: Logistic Growth",
 					"Coalescent: Expansion Growth",
 					"Coalescent: Bayesian Skyline",
-					"Speciation: Yule Process"
+                    "Coalescent: Extended Bayesian Skyline",
+                    "Speciation: Yule Process"
 					// Until we have tested the Birth-Death process properly, I have hidden this option
 					//"Speciation: Birth-Death Process"
 			});
@@ -220,22 +223,26 @@ public class PriorsPanel extends JPanel implements Exportable {
 		parameters = options.selectParameters();
 		priorTableModel.fireTableDataChanged();
 
-		if (options.nodeHeightPrior == BeautiOptions.CONSTANT) {
-			treePriorCombo.setSelectedIndex(0);
-		} else if (options.nodeHeightPrior == BeautiOptions.EXPONENTIAL) {
-			treePriorCombo.setSelectedIndex(1);
-		} else if (options.nodeHeightPrior == BeautiOptions.LOGISTIC) {
-			treePriorCombo.setSelectedIndex(2);
-		} else if (options.nodeHeightPrior == BeautiOptions.EXPANSION) {
-			treePriorCombo.setSelectedIndex(3);
-		} else if (options.nodeHeightPrior == BeautiOptions.SKYLINE) {
-			treePriorCombo.setSelectedIndex(4);
-		} else if (options.nodeHeightPrior == BeautiOptions.YULE) {
-			treePriorCombo.setSelectedIndex(5);
-		} else if (options.nodeHeightPrior == BeautiOptions.BIRTH_DEATH) {
-			treePriorCombo.setSelectedIndex(6);
-		}
-		groupCountField.setValue(options.skylineGroupCount);
+//		if (options.nodeHeightPrior == BeautiOptions.CONSTANT) {
+//			treePriorCombo.setSelectedIndex(0);
+//		} else if (options.nodeHeightPrior == BeautiOptions.EXPONENTIAL) {
+//			treePriorCombo.setSelectedIndex(1);
+//		} else if (options.nodeHeightPrior == BeautiOptions.LOGISTIC) {
+//			treePriorCombo.setSelectedIndex(2);
+//		} else if (options.nodeHeightPrior == BeautiOptions.EXPANSION) {
+//			treePriorCombo.setSelectedIndex(3);
+//		} else if (options.nodeHeightPrior == BeautiOptions.SKYLINE) {
+//			treePriorCombo.setSelectedIndex(4);
+//        } else if (options.nodeHeightPrior == BeautiOptions.SKYLINE) {
+//			treePriorCombo.setSelectedIndex(5);
+//        } else if (options.nodeHeightPrior == BeautiOptions.YULE) {
+//			treePriorCombo.setSelectedIndex(6);
+//		} else if (options.nodeHeightPrior == BeautiOptions.BIRTH_DEATH) {
+//			treePriorCombo.setSelectedIndex(7);
+//		}
+        treePriorCombo.setSelectedIndex(options.nodeHeightPrior);
+
+        groupCountField.setValue(options.skylineGroupCount);
 		samplingProportionField.setValue(options.birthDeathSamplingProportion);
 
 		parameterizationCombo.setSelectedIndex(options.parameterization);
@@ -282,15 +289,15 @@ public class PriorsPanel extends JPanel implements Exportable {
 	public void getOptions(BeautiOptions options) {
 		if (settingOptions) return;
 
-		if (treePriorCombo.getSelectedIndex() == 0) {
+		if (treePriorCombo.getSelectedIndex() == BeautiOptions.CONSTANT) {
 			options.nodeHeightPrior = BeautiOptions.CONSTANT;
-		} else if (treePriorCombo.getSelectedIndex() == 1) {
+		} else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXPONENTIAL) {
 			options.nodeHeightPrior = BeautiOptions.EXPONENTIAL;
-		} else if (treePriorCombo.getSelectedIndex() == 2) {
+		} else if (treePriorCombo.getSelectedIndex() == BeautiOptions.LOGISTIC) {
 			options.nodeHeightPrior = BeautiOptions.LOGISTIC;
-		} else if (treePriorCombo.getSelectedIndex() == 3) {
+		} else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXPANSION) {
 			options.nodeHeightPrior = BeautiOptions.EXPANSION;
-		} else if (treePriorCombo.getSelectedIndex() == 4) {
+		} else if (treePriorCombo.getSelectedIndex() == BeautiOptions.SKYLINE) {
 			options.nodeHeightPrior = BeautiOptions.SKYLINE;
 			Integer groupCount = groupCountField.getValue();
 			if (groupCount != null) {
@@ -298,9 +305,11 @@ public class PriorsPanel extends JPanel implements Exportable {
 			} else {
 				options.skylineGroupCount = 5;
 			}
-		} else if (treePriorCombo.getSelectedIndex() == 5) {
+		} else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXTENDED_SKYLINE ) {
+			options.nodeHeightPrior = BeautiOptions.EXTENDED_SKYLINE;
+        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.YULE) {
 			options.nodeHeightPrior = BeautiOptions.YULE;
-		} else if (treePriorCombo.getSelectedIndex() == 6) {
+        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.BIRTH_DEATH) {
 			options.nodeHeightPrior = BeautiOptions.BIRTH_DEATH;
 			Double samplingProportion = samplingProportionField.getValue();
 			if (samplingProportion != null) {

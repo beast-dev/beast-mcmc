@@ -34,6 +34,7 @@ import dr.evolution.datatype.TwoStates;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
+import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.util.NumberFormatter;
 import dr.xml.XMLParseException;
 import org.jdom.Document;
@@ -79,6 +80,15 @@ public class BeautiOptions {
         createParameter("expansion.ancestralProportion", "ancestral population proportion", NONE, 0.1, 0.0, 1.0);
         createParameter("skyline.popSize", "Bayesian Skyline population sizes", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
+
+        createParameter("demographic.popSize", "Extended Bayesian Skyline population sizes",TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("demographic.indicators", "Extended Bayesian Skyline population switch");
+        createScaleParameter("demographic.populationMean", "Extended Bayesian Skyline population prior mean", TIME_SCALE, 1, 0,  Double.POSITIVE_INFINITY);
+        {
+            final Parameter p = createStatistic("demographic.populationSizeChanges", "Average number of population change points", true);
+            p.priorType = PriorType.POISSON_PRIOR;
+            p.poissonMean = Math.log(2);
+        }
         createParameter("yule.birthRate", "Yule speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("birthDeath.birthRate", "Birth-Death speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("birthDeath.deathRate", "Birth-Death speciation process death rate", BIRTH_RATE_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
@@ -173,6 +183,13 @@ public class BeautiOptions {
         createOperator("expansion.ancestralProportion", SCALE, 0.75, demoWeights);
         createOperator("skyline.popSize", SCALE, 0.75, demoWeights * 5);
         createOperator("skyline.groupSize", INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
+
+        createOperator("demographic.populationMean", SCALE, 0.9, demoWeights);
+        createOperator("demographic.indicators", BITFLIP, 1, 2*treeWeights);
+        // hack pass distribution in name
+        createOperator("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize", "demographic.indicators", SAMPLE_NONACTIVE, 1, 5*demoWeights);
+        createOperator("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize", "demographic.indicators", SCALE_WITH_INDICATORS, 0.5, 2*demoWeights);
+
         createOperator("yule.birthRate", SCALE, 0.75, demoWeights);
         createOperator("birthDeath.birthRate", SCALE, 0.75, demoWeights);
         createOperator("birthDeath.deathRate", SCALE, 0.75, demoWeights);
@@ -256,20 +273,26 @@ public class BeautiOptions {
     }
 
     protected void createScaleParameter(String name, String description, int scale, double value, double lower, double upper) {
-        createParameter(name, description, scale, value, lower, upper);
-        parameters.get(name).priorType = PriorType.JEFFREYS_PRIOR;
+        Parameter p = createParameter(name, description, scale, value, lower, upper);
+        p.priorType = PriorType.JEFFREYS_PRIOR;
     }
 
-    protected void createParameter(String name, String description, int scale, double value, double lower, double upper) {
-        parameters.put(name, new Parameter(name, description, scale, value, lower, upper));
+    protected Parameter createParameter(String name, String description, int scale, double value, double lower, double upper) {
+        final Parameter parameter = new Parameter(name, description, scale, value, lower, upper);
+        parameters.put(name, parameter);
+        return parameter;
     }
 
-    protected void createParameter(String name, String description) {
-        parameters.put(name, new Parameter(name, description));
+    protected Parameter createParameter(String name, String description) {
+        final Parameter parameter = new Parameter(name, description);
+        parameters.put(name, parameter);
+        return parameter;
     }
 
-    protected void createStatistic(String name, String description, boolean isDiscrete) {
-        parameters.put(name, new Parameter(name, description, isDiscrete));
+    protected Parameter createStatistic(String name, String description, boolean isDiscrete) {
+        final Parameter parameter = new Parameter(name, description, isDiscrete);
+        parameters.put(name, parameter);
+        return parameter;
     }
 
     protected void createStatistic(String name, String description, double lower, double upper) {
@@ -599,6 +622,9 @@ public class BeautiOptions {
             params.add(getParameter("expansion.ancestralProportion"));
         } else if (nodeHeightPrior == SKYLINE) {
             params.add(getParameter("skyline.popSize"));
+        } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
+            params.add(getParameter("demographic.populationSizeChanges"));
+             params.add(getParameter("demographic.populationMean"));
         } else if (nodeHeightPrior == YULE) {
             params.add(getParameter("yule.birthRate"));
         } else if (nodeHeightPrior == BIRTH_DEATH) {
@@ -850,6 +876,11 @@ public class BeautiOptions {
         } else if (nodeHeightPrior == SKYLINE) {
             ops.add(getOperator("skyline.popSize"));
             ops.add(getOperator("skyline.groupSize"));
+        } else if( nodeHeightPrior == EXTENDED_SKYLINE ) {
+            ops.add(getOperator("demographic.populationMean"));
+            ops.add(getOperator("demographic.popSize"));
+            ops.add(getOperator("demographic.indicators"));
+            ops.add(getOperator("demographic.scaleActive"));
         } else if (nodeHeightPrior == YULE) {
             ops.add(getOperator("yule.birthRate"));
         } else if (nodeHeightPrior == BIRTH_DEATH) {
@@ -1339,6 +1370,7 @@ public class BeautiOptions {
                 }
 
             } catch (GuessDatesException gfe) {
+                //
             }
 
             if (offset > 0) {
@@ -1749,8 +1781,9 @@ public class BeautiOptions {
     public static final int LOGISTIC = 2;
     public static final int EXPANSION = 3;
     public static final int SKYLINE = 4;
-    public static final int YULE = 5;
-    public static final int BIRTH_DEATH = 6;
+    public static final int EXTENDED_SKYLINE = 5;
+    public static final int YULE = 6;
+    public static final int BIRTH_DEATH = 7;
 
     public static final int STRICT_CLOCK = 0;
     public static final int UNCORRELATED_EXPONENTIAL = 1;
@@ -1781,6 +1814,8 @@ public class BeautiOptions {
     public static final String SWAP = "swap";
     public static final String BITFLIP = "bitFlip";
 	public static final String TREE_BIT_MOVE = "treeBitMove";
+    public static final String SAMPLE_NONACTIVE = "sampleNoneActiveOperator";
+    public static final String SCALE_WITH_INDICATORS = "scaleWithIndicators";
 
     public static final String UNIFORM = "uniform";
     public static final String SUBTREE_SLIDE = "subtreeSlide";
@@ -1841,6 +1876,7 @@ public class BeautiOptions {
     public int parameterization = GROWTH_RATE;
     public int skylineGroupCount = 10;
     public int skylineModel = CONSTANT_SKYLINE;
+    public String extendedSkylineModel =  VariableDemographicModel.LINEAR;
     public double birthDeathSamplingProportion = 1.0;
     public boolean fixedTree = false;
     public Units.Type units = Units.Type.SUBSTITUTIONS;

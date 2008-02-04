@@ -71,7 +71,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     public final void setWeight(double w) {
         if (w > 0) {
             weight = w;
-        } else throw new IllegalArgumentException("Weight must be a positive real.");
+        } else throw new IllegalArgumentException("Weight must be a positive real. (called with " + w + ")");
     }
 
     public final void accept(double deviation) {

@@ -46,7 +46,8 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
     public static final String SCALE_ALL = "scaleAll";
     public static final String SCALE_FACTOR = "scaleFactor";
     public static final String DEGREES_OF_FREEDOM = "df";
-    private static final String PICKONEPROB = "pickoneprob";
+    public static final String INDICATORS = "indicators";
+    public static final String PICKONEPROB = "pickoneprob";
 
     private Parameter indicator;
     private double indicatorOnProb;
@@ -255,7 +256,7 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 
             Parameter indicator = null;
             double indicatorOnProb = 1.0;
-            final XMLObject cxo = (XMLObject) xo.getChild("indicators");
+            final XMLObject cxo = (XMLObject) xo.getChild(INDICATORS);
 
             if (cxo != null) {
                 indicator = (Parameter) cxo.getChild(Parameter.class);

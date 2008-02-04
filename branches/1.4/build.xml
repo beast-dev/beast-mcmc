@@ -59,6 +59,7 @@
             <include name="dr/evoxml/**"/>
             <include name="dr/gui/chart/**"/>
             <include name="dr/gui/tree/**"/>
+	        <include name="dr/gui/table/**"/>
             <include name="dr/inference/**"/>
             <include name="dr/math/**"/>
             <include name="dr/matrix/**"/>
@@ -105,6 +106,7 @@
 		        <include name="dr/evomodel/treelikelihood/**/*.class"/>
                 <include name="dr/evoxml/**/*.class"/>
                 <include name="dr/gui/tree/**/*.class"/>
+	            <include name="dr/gui/table/**/*.class"/>
                 <include name="dr/inference/**/*.class"/>
                 <include name="dr/math/**/*.class"/>
                 <include name="dr/matrix/**/*.class"/>

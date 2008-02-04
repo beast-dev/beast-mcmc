@@ -30,6 +30,7 @@ import dr.util.Version;
 import org.virion.jam.framework.*;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Andrew Rambaut
@@ -82,7 +83,10 @@ public class BeautiApp extends MultiDocApplication {
 
             System.setProperty("com.apple.macos.useScreenMenuBar","true");
             System.setProperty("apple.laf.useScreenMenuBar","true");
-
+            System.setProperty("apple.awt.graphics.UseQuartz","true");
+            UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
+            UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
+             
             try {
 
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

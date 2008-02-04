@@ -31,6 +31,9 @@ import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.*;
+
+import dr.evolution.datatype.DataType;
 
 /**
  * @author			Andrew Rambaut
@@ -43,8 +46,12 @@ public class ModelPanel extends OptionsPanel implements Exportable {
      *
      */
     private static final long serialVersionUID = 2778103564318492601L;
+
     JComboBox nucSubstCombo = new JComboBox(new String[] {"HKY", "GTR"});
     JComboBox aaSubstCombo = new JComboBox(new String[] {"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
+
+    JComboBox frequencyCombo =new JComboBox(new String[] {"Estimated", "Empirical", "All equal"});
+
     JComboBox heteroCombo = new JComboBox(new String[] {"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
 
     JComboBox gammaCatCombo = new JComboBox(new String[] {"4", "5", "6", "7", "8", "9", "10"});
@@ -60,13 +67,13 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
     JButton setSRD06Button;
 
-    JCheckBox fixedSubstitutionRateCheck = new JCheckBox("Fix mean substitution rate");
+    JCheckBox fixedSubstitutionRateCheck = new JCheckBox("Fix mean substitution rate:");
     JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY);
 
     JComboBox clockModelCombo = new JComboBox(new String[] {
             "Strict Clock",
-		    "Relaxed Clock: Uncorrelated Lognormal",
+            "Relaxed Clock: Uncorrelated Lognormal",
             "Relaxed Clock: Uncorrelated Exponential" } );
 
     BeautiFrame frame = null;
@@ -77,7 +84,8 @@ public class ModelPanel extends OptionsPanel implements Exportable {
     boolean settingOptions = false;
 
     boolean hasAlignment = false;
-    boolean isNucleotides = true;
+
+    int dataType = DataType.NUCLEOTIDES;
 
     public ModelPanel(BeautiFrame parent) {
 
@@ -87,17 +95,17 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
         setOpaque(false);
 
-        substUnlinkCheck.setOpaque(false);
+        setupComponent(substUnlinkCheck);
         substUnlinkCheck.setEnabled(false);
         substUnlinkCheck.setToolTipText("" +
-		        "<html>Gives each codon position partition different<br>" +
-		        "substitution model parameters.</html>");
+                "<html>Gives each codon position partition different<br>" +
+                "substitution model parameters.</html>");
 
-        heteroUnlinkCheck.setOpaque(false);
+        setupComponent(heteroUnlinkCheck);
         heteroUnlinkCheck.setEnabled(false);
         heteroUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>rate heterogeneity model parameters.</html>");
 
-        freqsUnlinkCheck.setOpaque(false);
+        setupComponent(freqsUnlinkCheck);
         freqsUnlinkCheck.setEnabled(false);
         freqsUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>nucleotide frequency parameters.</html>");
 
@@ -107,15 +115,19 @@ public class ModelPanel extends OptionsPanel implements Exportable {
             }
         };
 
-        nucSubstCombo.setOpaque(false);
+        setupComponent(nucSubstCombo);
         nucSubstCombo.addItemListener(listener);
         nucSubstCombo.setToolTipText("<html>Select the type of nucleotide substitution model.</html>");
 
-        aaSubstCombo.setOpaque(false);
+        setupComponent(aaSubstCombo);
         aaSubstCombo.addItemListener(listener);
         aaSubstCombo.setToolTipText("<html>Select the type of amino acid substitution model.</html>");
 
-        heteroCombo.setOpaque(false);
+        setupComponent(frequencyCombo);
+        frequencyCombo.addItemListener(listener);
+        frequencyCombo.setToolTipText("<html>Select the policy for determining the base frequencies.</html>");
+
+        setupComponent(heteroCombo);
         heteroCombo.setToolTipText("<html>Select the type of site-specific rate<br>heterogeneity model.</html>");
         heteroCombo.addItemListener(
                 new java.awt.event.ItemListener() {
@@ -134,11 +146,11 @@ public class ModelPanel extends OptionsPanel implements Exportable {
                 }
         );
 
-        gammaCatCombo.setOpaque(false);
+        setupComponent(gammaCatCombo);
         gammaCatCombo.setToolTipText("<html>Select the number of categories to use for<br>the discrete gamma rate heterogeneity model.</html>");
         gammaCatCombo.addItemListener(listener);
 
-        codingCombo.setOpaque(false);
+        setupComponent(codingCombo);
         codingCombo.setToolTipText("<html>Select how to partition the codon positions.</html>");
         codingCombo.addItemListener(
                 new java.awt.event.ItemListener() {
@@ -167,10 +179,11 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         freqsUnlinkCheck.addItemListener(listener);
 
         setSRD06Button = new JButton(setSRD06Action);
-        setSRD06Button.setOpaque(false);
+        setupComponent(setSRD06Button);
         setSRD06Button.setToolTipText("<html>Sets the SRD06 model as described in<br>" +
                 "Shapiro, Rambaut & Drummond (2006) <i>MBE</i> <b>23</b>: 7-9.</html>");
-        fixedSubstitutionRateCheck.setOpaque(false);
+
+        setupComponent(fixedSubstitutionRateCheck);
         fixedSubstitutionRateCheck.setToolTipText(
                 "<html>Select this option to fix the substitution rate<br>" +
                         "rather than try to infer it. If this option is<br>" +
@@ -189,17 +202,31 @@ public class ModelPanel extends OptionsPanel implements Exportable {
                 }
         );
 
+        setupComponent(substitutionRateField);
         substitutionRateField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
                 frame.mcmcChanged();
             }});
         substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
 
-        clockModelCombo.setOpaque(false);
+        setupComponent(clockModelCombo);
         clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
         clockModelCombo.addItemListener(listener);
 
         setupPanel();
+    }
+
+    private void setupComponent(JComponent comp) {
+        comp.setOpaque(false);
+
+        //comp.setFont(UIManager.getFont("SmallSystemFont"));
+        //comp.putClientProperty("JComponent.sizeVariant", "small");
+        if (comp instanceof JButton) {
+            comp.putClientProperty("JButton.buttonType", "roundRect");
+        }
+        if (comp instanceof JComboBox) {
+//            comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+        }
     }
 
     private void setupPanel() {
@@ -207,31 +234,50 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         removeAll();
 
         if (hasAlignment) {
-            if (isNucleotides) {
-                addComponentWithLabel("Substitution Model:", nucSubstCombo);
-            } else {
-                addComponentWithLabel("Substitution Model:", aaSubstCombo);
-            }
 
-            addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
-            gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+            switch (dataType){
+                case DataType.NUCLEOTIDES:
+                    addComponentWithLabel("Substitution Model:", nucSubstCombo);
+                    addComponentWithLabel("Base frequencies:", frequencyCombo);
+                    addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                    gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
 
-            if (isNucleotides) {
-                addSeparator();
+                    addSeparator();
 
-                addComponentWithLabel("Partition into codon positions", codingCombo);
+                    JPanel panel = new JPanel(new BorderLayout(6,6));
+                    panel.setOpaque(false);
+                    panel.add(codingCombo, BorderLayout.CENTER);
+                    panel.add(setSRD06Button, BorderLayout.EAST);
+                    addComponentWithLabel("Partition into codon positions:", panel);
 
-                addComponent(substUnlinkCheck);
-                addComponent(heteroUnlinkCheck);
-                //		addComponent(freqsUnlinkCheck);
-                addComponent(setSRD06Button);
+                    panel = new JPanel();
+                    panel.setOpaque(false);
+                    panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+                    panel.setBorder(BorderFactory.createTitledBorder("Link/Unlink parameters:"));
+                    panel.add(substUnlinkCheck);
+                    panel.add(heteroUnlinkCheck);
+                    panel.add(freqsUnlinkCheck);
+
+                    addComponent(panel);
+                    break;
+
+                case DataType.AMINO_ACIDS:
+                    addComponentWithLabel("Substitution Model:", aaSubstCombo);
+                    addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                    gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unknown data type");
+
             }
 
             addSeparator();
 
-            addComponent(fixedSubstitutionRateCheck);
-            addComponents(substitutionRateLabel, substitutionRateField);
+            //addComponent(fixedSubstitutionRateCheck);
             substitutionRateField.setColumns(10);
+            addComponents(fixedSubstitutionRateCheck, substitutionRateField);
 
             addSeparator();
         }
@@ -255,20 +301,28 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
         if (options.alignment != null) {
             hasAlignment = true;
-            if (options.alignment.getDataType() == dr.evolution.datatype.Nucleotides.INSTANCE) {
 
-                if (options.nucSubstitutionModel == BeautiOptions.GTR) {
-                    nucSubstCombo.setSelectedIndex(1);
-                } else {
-                    nucSubstCombo.setSelectedIndex(0);
-                }
+            dataType=options.dataType;
+            switch(dataType){
+                case DataType.NUCLEOTIDES:
+                    if (options.nucSubstitutionModel == BeautiOptions.GTR) {
+                        nucSubstCombo.setSelectedIndex(1);
+                    } else {
+                        nucSubstCombo.setSelectedIndex(0);
+                    }
 
-                isNucleotides = true;
-            } else {
+                    frequencyCombo.setSelectedIndex(options.frequencyPolicy);
 
-                aaSubstCombo.setSelectedIndex(options.aaSubstitutionModel);
-                isNucleotides = false;
+                    break;
+
+                case DataType.AMINO_ACIDS:
+                    aaSubstCombo.setSelectedIndex(options.aaSubstitutionModel);
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unknown data type");
             }
+
         } else {
             hasAlignment = false;
         }
@@ -312,16 +366,16 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         substitutionRateField.setValue(options.meanSubstitutionRate);
         substitutionRateField.setEnabled(options.fixedSubstitutionRate);
 
-	    switch (options.clockModel) {
-		    case BeautiOptions.STRICT_CLOCK:
-			    clockModelCombo.setSelectedIndex(0); break;
-		    case BeautiOptions.UNCORRELATED_LOGNORMAL:
-			    clockModelCombo.setSelectedIndex(1); break;
-		    case BeautiOptions.UNCORRELATED_EXPONENTIAL:
-			    clockModelCombo.setSelectedIndex(2); break;
-		    default:
-			    throw new IllegalArgumentException("Unknown option for clock model");
-	    }
+        switch (options.clockModel) {
+            case BeautiOptions.STRICT_CLOCK:
+                clockModelCombo.setSelectedIndex(0); break;
+            case BeautiOptions.UNCORRELATED_LOGNORMAL:
+                clockModelCombo.setSelectedIndex(1); break;
+            case BeautiOptions.UNCORRELATED_EXPONENTIAL:
+                clockModelCombo.setSelectedIndex(2); break;
+            default:
+                throw new IllegalArgumentException("Unknown option for clock model");
+        }
         setupPanel();
 
         settingOptions = false;
@@ -344,17 +398,11 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         }
         options.aaSubstitutionModel = aaSubstCombo.getSelectedIndex();
 
-        if (heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3) {
-            options.gammaHetero = true;
-        } else {
-            options.gammaHetero = false;
-        }
+        options.frequencyPolicy = frequencyCombo.getSelectedIndex();
 
-        if (heteroCombo.getSelectedIndex() == 2 || heteroCombo.getSelectedIndex() == 3) {
-            options.invarHetero = true;
-        } else {
-            options.invarHetero = false;
-        }
+        options.gammaHetero = heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3;
+
+        options.invarHetero = heteroCombo.getSelectedIndex() == 2 || heteroCombo.getSelectedIndex() == 3;
 
         options.gammaCategories = gammaCatCombo.getSelectedIndex() + 4;
 
@@ -386,16 +434,16 @@ public class ModelPanel extends OptionsPanel implements Exportable {
             warningShown = true;
         }
 
-	    switch (clockModelCombo.getSelectedIndex()) {
-		    case 0:
-			    options.clockModel = BeautiOptions.STRICT_CLOCK; break;
-		    case 1:
-			    options.clockModel = BeautiOptions.UNCORRELATED_LOGNORMAL; break;
-		    case 2:
-			    options.clockModel = BeautiOptions.UNCORRELATED_EXPONENTIAL; break;
-		    default:
-			    throw new IllegalArgumentException("Unknown option for clock model");
-	    }
+        switch (clockModelCombo.getSelectedIndex()) {
+            case 0:
+                options.clockModel = BeautiOptions.STRICT_CLOCK; break;
+            case 1:
+                options.clockModel = BeautiOptions.UNCORRELATED_LOGNORMAL; break;
+            case 2:
+                options.clockModel = BeautiOptions.UNCORRELATED_EXPONENTIAL; break;
+            default:
+                throw new IllegalArgumentException("Unknown option for clock model");
+        }
     }
 
     public JComponent getExportableComponent() {

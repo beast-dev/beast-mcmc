@@ -141,11 +141,12 @@ public class OptionsPanel extends JPanel {
 		c.fill = fill1 ? GridBagConstraints.HORIZONTAL : GridBagConstraints.NONE;
 
 		c.insets = new Insets(vGap / 2, 0, vGap / 2, hGap / 2);
-		c.gridwidth = GridBagConstraints.RELATIVE;
+		c.gridwidth = 1;
 		c.anchor = GridBagConstraints.EAST;
 		gridbag.setConstraints(comp1, c);
 		add(comp1);
 
+		c.weightx = 1.0;
 		c.insets = new Insets(vGap / 2, hGap / 2, vGap / 2, 0);
 		c.fill = fill2 ? GridBagConstraints.HORIZONTAL : GridBagConstraints.NONE;
 		c.gridwidth = GridBagConstraints.REMAINDER;

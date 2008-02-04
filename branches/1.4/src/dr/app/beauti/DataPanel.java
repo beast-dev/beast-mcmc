@@ -123,9 +123,9 @@ public class DataPanel extends JPanel implements Exportable {
         clearDatesAction.setEnabled(false);
 
         guessDatesAction.setEnabled(false);
-        unitsCombo.setOpaque(false);
+	    setupComponent(unitsCombo);
         unitsCombo.setEnabled(false);
-        directionCombo.setOpaque(false);
+	    setupComponent(directionCombo);
         directionCombo.setEnabled(false);
         //originField.setEnabled(false);
         //originField.setValue(0.0);
@@ -136,9 +136,12 @@ public class DataPanel extends JPanel implements Exportable {
         toolBar1.setOpaque(false);
 //		toolBar1.setLayout(new BoxLayout(toolBar1, javax.swing.BoxLayout.X_AXIS));
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-        toolBar1.add(clearDatesAction);
-        toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
-        toolBar1.add(guessDatesAction);
+	    JButton button = new JButton(clearDatesAction);
+	    setupComponent(button);
+        toolBar1.add(button);
+	    button = new JButton(guessDatesAction);
+	    setupComponent(button);
+        toolBar1.add(button);
         toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
         toolBar1.add(new JLabel("Dates specified as "));
         toolBar1.add(unitsCombo);
@@ -147,6 +150,7 @@ public class DataPanel extends JPanel implements Exportable {
 
 
         translationCombo.setOpaque(false);
+	    setupComponent(translationCombo);
         translationCombo.addItem("None");
         for (int i = 0; i < GeneticCode.GENETIC_CODE_DESCRIPTIONS.length; i++) {
             translationCombo.addItem(GeneticCode.GENETIC_CODE_DESCRIPTIONS[i]);
@@ -183,6 +187,20 @@ public class DataPanel extends JPanel implements Exportable {
         //	}});
 
     }
+
+	private void setupComponent(JComponent comp) {
+		comp.setOpaque(false);
+
+		//comp.setFont(UIManager.getFont("SmallSystemFont"));
+		//comp.putClientProperty("JComponent.sizeVariant", "small");
+		if (comp instanceof JButton) {
+			comp.putClientProperty("JButton.buttonType", "roundRect");
+		}
+		if (comp instanceof JComboBox) {
+			comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+		}
+
+	}
 
     public final void dataChanged() {
         calculateHeights();

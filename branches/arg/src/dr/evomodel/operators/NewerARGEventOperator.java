@@ -175,6 +175,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			newBifurcation.heightParameter = new Parameter.Default(newBifurcationHeight);
 			newBifurcation.setupHeightBounds();
 			
+			
 			if (sisParent.bifurcation)
 				arg.singleRemoveChild(sisParent, sisNode);
 			else
@@ -210,7 +211,9 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		//6b. But here we do.
 		}else{
 			
-			System.out.println(arg.toARGSummary());
+			sisNode = newBifurcation;
+			if(arg.isRoot(recParent))
+				recParent = newBifurcation;
 			
 			
 			Node root = (Node) arg.getRoot();
@@ -221,19 +224,19 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			arg.singleRemoveChild(root, rootRightChild);
 			arg.singleAddChild(newBifurcation, rootLeftChild);
 			arg.singleAddChild(newBifurcation, rootRightChild);
-			arg.singleAddChild(root, newBifurcation);
 			
-			if(!recParent.isRoot()){
-				if (recParent.bifurcation)
-					arg.singleRemoveChild(recParent, recNode);
-				else
-					arg.doubleRemoveChild(recParent, recNode);
-			}
+			if(recParent.isBifurcation())
+				arg.singleRemoveChild(recParent, recNode);
+			else
+				arg.doubleRemoveChild(recParent, recNode);
+			
 			arg.doubleAddChild(newReassortment, recNode);
-
+			arg.singleAddChild(root, newBifurcation);
 			
 			VariableSizeParameter partitioning = new VariableSizeParameter(arg.getNumberOfPartitions());
 			drawRandomPartitioning(partitioning);
+			
+			
 			arg.addChildAsRecombinant(root,recParent,newReassortment, partitioning);
 			
 			newBifurcation.heightParameter = new Parameter.Default(root.getHeight());
@@ -246,7 +249,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					internalNodeParameters,	internalAndRootNodeParameters,
 					nodeRates);
 			
-			System.out.println(arg.toARGSummary());
+
+			assert nodeCheck();
 			
 		}
 		
@@ -260,7 +264,9 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					+ "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
 		}
 		
+//		System.out.println(arg.toARGSummary());
 		
+		assert nodeCheck();
 		logq = 0;
 		return logq;
 	}
@@ -347,7 +353,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		arg.beginTreeEdit();
 		
 //		System.out.println(arg.toARGSummary());
-		System.out.println(internalNodeParameters);
+		
 		
 		boolean doneSomething = false;
 		Node recParent = recNode.leftParent;
@@ -480,7 +486,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		} 
 		
 		
-		
+		assert nodeCheck();
 		
 		logq = 0;
 		return logq; // 1 / total potentials * 1 / 2 (if valid) * length1 * length2 * attachmentSisters
@@ -697,37 +703,70 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	}
 
 
+	public boolean nodeCheck(){
+		for(int i = 0, n = arg.getNodeCount(); i < n; i++){
+			Node x = (Node) arg.getNode(i);
+			
+			if(x.leftParent != x.rightParent && 
+					x.leftChild != x.rightChild){
+						return false;
+			}
+			if(x.leftParent != null){
+				if(x.leftParent.leftChild.getNumber() != i &&
+				   x.leftParent.rightChild.getNumber() != i)
+						return false;
+			}
+			if(x.rightParent != null){
+				if(x.rightParent.leftChild.getNumber() != i &&
+				   x.rightParent.rightChild.getNumber() != i)
+						return false;
+			}
+			if(x.leftChild != null){
+				if(x.leftChild.leftParent.getNumber() != i &&
+				   x.leftChild.rightParent.getNumber() != i)
+						return false;
+			}
+			if(x.rightChild != null){
+				if(x.rightChild.leftParent.getNumber() != i &&
+				   x.rightChild.rightParent.getNumber() != i)
+						return false;
+			}		
+			}
+		return true;
+		
+	}
+		
 	
 
 
-//	public void sanityCheck() {
-//		int len = arg.getNodeCount();
-//		for (int i = 0; i < len; i++) {
-//			Node node = (Node) arg.getNode(i);
-//			if (node.bifurcation) {
-//				boolean equalChild = (node.leftChild == node.rightChild);
-//				if ((equalChild && node.leftChild != null)) {
-//					if (!node.leftChild.bifurcation && ((node.leftChild).leftParent == node))
-//						;
-//					else {
-//						System.err.println("Node " + (i + 1) + " is insane.");
-//						System.err.println(arg.toGraphString());
-//						System.exit(-1);
-//					}
-//				}
-//			} else {
-//				if ((node.leftChild != node.rightChild)) {
-//					System.err.println("Node " + (i + 1) + " is insane.");
-//					System.err.println(arg.toGraphString());
-//					System.exit(-1);
-//				}
-//			}
-//			if (!node.isRoot()) {
-//				double d;
-//				d = node.getHeight();
-//			}
-//		}
-//	}
+	public void sanityCheck() {
+		int len = arg.getNodeCount();
+		for (int i = 0; i < len; i++) {
+			Node node = (Node) arg.getNode(i);
+			if (node.bifurcation) {
+				boolean equalChild = (node.leftChild == node.rightChild);
+				if ((equalChild && node.leftChild != null)) {
+					if (!node.leftChild.bifurcation && ((node.leftChild).leftParent == node))
+						;
+					else {
+						System.err.println("Node " + (i + 1) + " is insane.");
+						System.err.println(arg.toGraphString());
+						System.exit(-1);
+					}
+				}
+			} else {
+				if ((node.leftChild != node.rightChild)) {
+					System.err.println("Node " + (i + 1) + " is insane.");
+					System.err.println(arg.toGraphString());
+					System.exit(-1);
+				}
+			}
+			if (!node.isRoot()) {
+				double d;
+				d = node.getHeight();
+			}
+		}
+	}
 
 
 	////

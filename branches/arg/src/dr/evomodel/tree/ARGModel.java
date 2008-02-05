@@ -13,7 +13,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.treelikelihood.ARGLikelihood;
-import dr.gui.tree.SquareTreePainter;
+//import dr.gui.tree.SquareTreePainter;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
@@ -25,8 +25,6 @@ import dr.util.NumberFormatter;
 import dr.xml.*;
 import org.jdom.Document;
 import org.jdom.Element;
-
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -107,6 +105,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	private int units = SUBSTITUTIONS;
 	private boolean hasRates = false;
 	private boolean hasTraits = false;
+	private int nullCounter = 0;
+	private int storedNullCounter;
 
 	
 	public ARGModel(ArrayList<Node> nodes, Node root, int numberPartitions,
@@ -1095,9 +1095,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		return internalNodeCount;
 	}
 
-	private int nullCounter = 0;
-
-	private int storedNullCounter;
+	
 
 	public final int getReassortmentNodeCount() {
 		int cnt = 0;
@@ -1357,6 +1355,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		if (root != oldRoot) {
 			swapParameterObjects(oldRoot, root);
 		}
+		
 
 		// for (int i =0; i < nodes.length; i++) {
 		for (Node node : nodes) {
@@ -1440,15 +1439,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	 * Restore the stored state
 	 */
 	protected void restoreState() {
-		// System.err.println("Restoring state.");
-		boolean rootReplacement = false;
-		if(storedRootNumber != root.number){
-			rootReplacement = true;
-		}
-		
-		
-		
-		
+				
 		ArrayList<Node> tmp = storedNodes;
 		storedNodes = nodes;
 		nodes = tmp;
@@ -1457,58 +1448,68 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		nodeCount = storedNodeCount;
 		internalNodeCount = storedInternalNodeCount;
 
+		//This part occurs true when we add a new arg event
+		//onto the root.
 		
-		
-		if (addedParameters != null) {
-			
-			
-			storedInternalNodeHeights.removeParameter(addedParameters[0]);
-			if(!rootReplacement){
-				storedInternalNodeHeights.removeParameter(addedParameters[1]);
+			if (addedParameters != null) {
+				if(addedParameters.length == 5){
+					removeParameter(addedParameters[0]);
+					removeParameter(addedParameters[1]);
+					removeParameter(addedParameters[2]);
+					removeParameter(addedParameters[3]);
+				
+					storedInternalNodeHeights.removeParameter(addedParameters[0]);
+					storedInternalNodeHeights.removeParameter(addedParameters[4]);
+				
+					storedInternalAndRootNodeHeights.removeParameter(addedParameters[0]);
+					storedInternalAndRootNodeHeights.removeParameter(addedParameters[1]);
+
+					storedNodeRates.removeParameter(addedParameters[2]);
+				}else{
+					storedInternalNodeHeights.removeParameter(addedParameters[0]);
+					storedInternalNodeHeights.removeParameter(addedParameters[1]);
+					
+					removeParameter(addedParameters[0]);
+					removeParameter(addedParameters[1]);
+
+					storedInternalAndRootNodeHeights
+							.removeParameter(addedParameters[0]);
+					storedInternalAndRootNodeHeights
+							.removeParameter(addedParameters[1]);
+
+					removeParameter(addedParameters[2]);
+					removeParameter(addedParameters[3]);
+					storedNodeRates.removeParameter(addedParameters[2]);
+					storedNodeRates.removeParameter(addedParameters[3]);
+				}
 			}
-			removeParameter(addedParameters[0]);
-			removeParameter(addedParameters[1]);
+			if (addedPartitioningParameter != null) {
+				partitioningParameters.removeParameter(addedPartitioningParameter);
+				removeParameter(addedPartitioningParameter);
+			}
+			if (removedParameters != null) {
+				storedInternalNodeHeights.addParameter(removedParameters[0]);
+				storedInternalNodeHeights.addParameter(removedParameters[1]);
+				addParameter(removedParameters[0]);
+				addParameter(removedParameters[1]);
 
-			storedInternalAndRootNodeHeights
-					.removeParameter(addedParameters[0]);
-			storedInternalAndRootNodeHeights
-					.removeParameter(addedParameters[1]);
+				storedInternalAndRootNodeHeights.addParameter(removedParameters[0]);
+				storedInternalAndRootNodeHeights.addParameter(removedParameters[1]);
 
-			removeParameter(addedParameters[2]);
-			removeParameter(addedParameters[3]);
-			storedNodeRates.removeParameter(addedParameters[2]);
-			storedNodeRates.removeParameter(addedParameters[3]);
-		}
+				addParameter(removedParameters[2]);
+				addParameter(removedParameters[3]);
+				storedNodeRates.addParameter(removedParameters[2]);
+				storedNodeRates.addParameter(removedParameters[3]);
 
-		if (addedPartitioningParameter != null) {
-			partitioningParameters.removeParameter(addedPartitioningParameter);
-			removeParameter(addedPartitioningParameter);
-		}
-		if (removedParameters != null) {
-			storedInternalNodeHeights.addParameter(removedParameters[0]);
-			storedInternalNodeHeights.addParameter(removedParameters[1]);
-			addParameter(removedParameters[0]);
-			addParameter(removedParameters[1]);
+			}
 
-			storedInternalAndRootNodeHeights.addParameter(removedParameters[0]);
-			storedInternalAndRootNodeHeights.addParameter(removedParameters[1]);
-
-			addParameter(removedParameters[2]);
-			addParameter(removedParameters[3]);
-			storedNodeRates.addParameter(removedParameters[2]);
-			storedNodeRates.addParameter(removedParameters[3]);
-
-		}
-
-		if (removedPartitioningParameter != null) {
-			partitioningParameters.addParameter(removedPartitioningParameter);
-			addParameter(removedPartitioningParameter);
-		}
-		// System.err.println("Restore: "+Tree.Utils.uniqueNewick(this,
-		// getRoot()));
-		// System.err.println("Restore: "+this.toString());
-		nullCounter = storedNullCounter;
+			if (removedPartitioningParameter != null) {
+				partitioningParameters.addParameter(removedPartitioningParameter);
+				addParameter(removedPartitioningParameter);
+			}
 		
+				
+		nullCounter = storedNullCounter;
 	}
 
 	/**
@@ -1543,28 +1544,31 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 																 * }
 																 */
 
-	public void expandARGWithRecombinantNewRoot(Node newbie, Node newRoot,
+	public void expandARGWithRecombinantNewRoot(Node newRoot, Node newbie,
 		VariableSizeCompoundParameter internalNodeParameters,
 		VariableSizeCompoundParameter internalAndRootNodeParameters,
 		VariableSizeCompoundParameter nodeRates){
 		
+		Node olderRoot = (Node) this.getRoot();
 		
-		addParameter(newbie.heightParameter);
-		addParameter(newbie.partitioning);
 		addParameter(newRoot.heightParameter);
-		
-		addParameter(newbie.rateParameter);
+		addParameter(newbie.heightParameter);
 		addParameter(newRoot.rateParameter);
+		addParameter(newbie.rateParameter);
+		addParameter(newbie.partitioning);
 		
-		addedParameters = new Parameter[4];
+		
+		addedParameters = new Parameter[5];
 		addedParameters[0] = newbie.heightParameter;
 		addedParameters[1] = newRoot.heightParameter;
 		addedParameters[2] = newbie.rateParameter;
 		addedParameters[3] = newRoot.rateParameter;
+		addedParameters[4] = olderRoot.heightParameter;
 		addedPartitioningParameter = newbie.partitioning;
 		
 		storedInternalNodeHeights = internalNodeParameters;
 		storedInternalNodeHeights.addParameter(newbie.heightParameter);
+		storedInternalNodeHeights.addParameter(olderRoot.heightParameter);
 		
 		storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
 		storedInternalAndRootNodeHeights.addParameter(newbie.heightParameter);
@@ -1582,6 +1586,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		
 		this.setRoot(newRoot);
 		
+		
+		
 		pushTreeSizeChangedEvent();
 	}
 	
@@ -1590,7 +1596,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			VariableSizeCompoundParameter internalAndRootNodeParameters,
 			VariableSizeCompoundParameter nodeRates) {
 		// System.err.println("attempting to expand");
-
+		
 		addParameter(newbie1.heightParameter);
 		addParameter(newbie2.heightParameter);
 		addParameter(newbie2.partitioning);
@@ -1694,6 +1700,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		
 		this.setRoot(newRoot);
 		pushTreeSizeChangedEvent();
+		
+		
 	
 	}
 	
@@ -1709,41 +1717,72 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			VariableSizeCompoundParameter internalNodeParameters,
 			VariableSizeCompoundParameter internalAndRootNodeParameters,
 			VariableSizeCompoundParameter nodeRates) {
+		
 		removeParameter(oldie1.heightParameter);
 		removeParameter(oldie2.heightParameter);
 		removeParameter(oldie2.partitioning);
-
+		
+		
 		removeParameter(oldie1.rateParameter);
 		removeParameter(oldie2.rateParameter);
-
+		
+		
 		removedParameters = new Parameter[4];
 		removedParameters[0] = oldie1.heightParameter;
 		removedParameters[1] = oldie2.heightParameter;
 		removedParameters[2] = oldie1.rateParameter;
 		removedParameters[3] = oldie2.rateParameter;
-
+		
+		System.out.println(oldie1);
+		if(oldie1 == null) {
+			System.out.println("oldie1 is null");
+			System.exit(-1);
+		}
+		if(oldie1.heightParameter == null) {
+			System.out.println("hp is null");
+			System.exit(-1);
+		}
+		
 		partitioningParameters.removeParameter(oldie2.partitioning);
 		removedPartitioningParameter = oldie2.partitioning;
 		storedInternalNodeHeights = internalNodeParameters;
+		try{
+		
 		storedInternalNodeHeights.removeParameter(oldie1.heightParameter);
+		}catch(Exception e){
+			System.out.println("except with removing oldie1");
+			System.out.println(oldie1.heightParameter);
+			System.exit(-1);
+		}
 		storedInternalNodeHeights.removeParameter(oldie2.heightParameter);
-
+		
+		
+		
 		storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
 		storedInternalAndRootNodeHeights
 				.removeParameter(oldie1.heightParameter);
 		storedInternalAndRootNodeHeights
 				.removeParameter(oldie2.heightParameter);
-
+		
+		
+		
 		storedNodeRates = nodeRates;
 		storedNodeRates.removeParameter(oldie1.rateParameter);
 		storedNodeRates.removeParameter(oldie2.rateParameter);
-
+		
 		nodes.remove(oldie1);
 		nodes.remove(oldie2);
+		
 		internalNodeCount -= 2;
 		pushTreeSizeChangedEvent();
 	}
 
+	public boolean argStoreCheck(){
+		if(storedInternalNodeHeights.getDimension() == this.internalNodeCount)
+			return true;
+		return false;
+	}
+	
 	/**
 	 * Copies the node connections from this ARGModel's nodes array to the
 	 * destination array. Basically it connects up the nodes in destination in
@@ -2274,10 +2313,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		}
 		a += "\nInduced Trees" + 
 			"\n----------------------------------------\n";
-		for(int i = 0; i < maxNumberOfPartitions; i++){
-			ARGTree tree = new ARGTree(this,i);
-			a += "Partition " + i + "\n  " + tree.toString() + "\n";
-		}
+//		for(int i = 0; i < maxNumberOfPartitions; i++){
+//			ARGTree tree = new ARGTree(this,i);
+//			a += "Partition " + i + "\n  " + tree.toString() + "\n";
+//		}
 				
 		return a;
 	}
@@ -2385,9 +2424,11 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			Tree tree = (Tree) xo.getChild(Tree.class);
 			ARGModel treeModel = new ARGModel(tree);
 
+			
 			Logger.getLogger("dr.evomodel").info(
 					"Creating the tree model, '" + xo.getId() + "'");
-
+			
+			
 			for (int i = 0; i < xo.getChildCount(); i++) {
 				if (xo.getChild(i) instanceof XMLObject) {
 

@@ -117,7 +117,9 @@ public class MrBayesDefaultWithHgtModel extends SpeciationModel {
 		  System.err.printf("logGamma(%d) = %5.4f\n",count,logGamma(count));
   */
 //	    System.err.println(lambda);
+		
 		return -lambda + count * Math.log(lambda) - logFactorial(count);
+				
 	}
 
 

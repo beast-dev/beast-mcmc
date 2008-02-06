@@ -341,11 +341,13 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		int count = 0;
 		int n = arg.getNodeCount();
 		Node root = (Node) arg.getRoot();
+		
 		if(rootDeleteOK){
 			for (int i = 0; i < n; i++) {
 				Node node = (Node) arg.getNode(i);
-				if (node.isReassortment() && (node.leftParent.isBifurcation()) 
-						|| node.rightParent.isBifurcation()) {
+				
+				if (node.isReassortment() && (node.leftParent.isBifurcation() 
+						|| node.rightParent.isBifurcation())) {
 					if (list != null)
 						list.add(node);
 					count++;
@@ -376,15 +378,15 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 		ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
 
-		boolean rootDeleteOK = false;
+		boolean rootDeleteOK = true;
 		
 		int totalPotentials = findPotentialNodesToRemove(potentialNodes,rootDeleteOK);
 		
-		if(arg.getChild(arg.getRoot(),ARGModel.LEFT) == 
-			arg.getChild(arg.getRoot(),ARGModel.RIGHT)){
-				totalPotentials++;
-				potentialNodes.add(arg.getChild(arg.getRoot(),0)); 
-		}
+//		if(arg.getChild(arg.getRoot(),ARGModel.LEFT) == 
+//			arg.getChild(arg.getRoot(),ARGModel.RIGHT)){
+//				totalPotentials++;
+//				potentialNodes.add(arg.getChild(arg.getRoot(),0)); 
+//		}
 		
 		if (totalPotentials == 0)
 			throw new OperatorFailedException("No reassortment nodes to remove.");
@@ -444,66 +446,107 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			
 			Node recParent1 = recNode.leftParent;
 			Node recParent2 = recNode.rightParent;
-			if (recParent1.bifurcation || recParent1.isRoot() ){
+			if (recParent1.bifurcation || (recParent1.isRoot() && !rootDeleteOK)){
 				recParent1 = recNode.rightParent;
 				recParent2 = recNode.leftParent;
-			} else if (recParent2.bifurcation && !recParent2.isRoot()) { // Both orientations are valid
-				if (MathUtils.nextDouble() < 0.5) { // choose equally likely
+			} else if (recParent2.bifurcation && (!recParent2.isRoot() || rootDeleteOK)) { 
+				if (MathUtils.nextDouble() < 0.5) {
 					recParent1 = recNode.rightParent;
 					recParent2 = recNode.leftParent;
 				}
 				logq += Math.log(2);
 			}
 
-			
-			
-			Node recGrandParent = recParent1.leftParent; // And currently recParent must be a bifurcatio
+			if(arg.isRoot(recParent1)){
+				Node otherChild = recParent1.leftChild;
+				if(otherChild == recNode)
+					otherChild = recParent1.rightChild;
+				
+				Node otherChildLeft = otherChild.leftChild;
+				Node otherChildRight = otherChild.rightChild;
+				
+				
+				
+				if(otherChild == recParent2){
+					arg.singleRemoveChild(recParent1, recNode);
+					arg.singleRemoveChild(recParent1, otherChild);
+					arg.singleRemoveChild(otherChild, otherChildLeft);
+					arg.singleRemoveChild(otherChild, otherChildRight);
+					arg.singleAddChild(recParent1, otherChildLeft);
+					arg.singleAddChild(recParent1, otherChildRight);
+					
+					arg.doubleRemoveChild(recNode, recChild);
+					arg.singleRemoveChild(recParent1,recNode);
+					
+					arg.singleAddChild(recParent1, recChild);
+					
+				}else{
+					arg.singleRemoveChild(recParent1, recNode);
+					arg.singleRemoveChild(recParent1, otherChild);
+					arg.singleRemoveChild(otherChild, otherChildLeft);
+					arg.singleRemoveChild(otherChild, otherChildRight);
+					arg.singleAddChild(recParent1, otherChildLeft);
+					arg.singleAddChild(recParent1, otherChildRight);
+					
+					if(recParent2.bifurcation)
+						arg.singleRemoveChild(recParent2, recNode);
+					else
+						arg.doubleRemoveChild(recParent2, recNode);
+					arg.doubleRemoveChild(recNode, recChild);
+					
+					if(recParent2.bifurcation)
+						arg.singleAddChild(recParent2, recChild);
+					else
+						arg.doubleAddChild(recParent2, recChild);
+					
+				}
+				recParent1.setHeight(otherChild.getHeight());
+				
+				recParent1 = otherChild;
+			}else{
+				Node recGrandParent = recParent1.leftParent; 
 
-			Node otherChild = recParent1.leftChild;
-			if (otherChild == recNode)
-				otherChild = recParent1.rightChild;
-
-			
-			
-			if (recGrandParent.bifurcation)
-				arg.singleRemoveChild(recGrandParent, recParent1);
-			else
-				arg.doubleRemoveChild(recGrandParent, recParent1);
-
-			
-			
-			
-			
-			
-			arg.singleRemoveChild(recParent1, otherChild);
-			if (recParent2.bifurcation)
-				arg.singleRemoveChild(recParent2, recNode);
-			else
-				arg.doubleRemoveChild(recParent2, recNode);
-			arg.doubleRemoveChild(recNode, recChild);
-			
-			
-			
-			
-			if (otherChild != recChild) {
+				Node otherChild = recParent1.leftChild;
+				if (otherChild == recNode)
+					otherChild = recParent1.rightChild;
+				
+				
+				
 				if (recGrandParent.bifurcation)
-					arg.singleAddChild(recGrandParent, otherChild);
+					arg.singleRemoveChild(recGrandParent, recParent1);
 				else
-					arg.doubleAddChild(recGrandParent, otherChild);
+					arg.doubleRemoveChild(recGrandParent, recParent1);
+				
+				arg.singleRemoveChild(recParent1, otherChild);
 				if (recParent2.bifurcation)
-					arg.singleAddChild(recParent2, recChild);
+					arg.singleRemoveChild(recParent2, recNode);
 				else
-					arg.doubleAddChild(recParent2, recChild);
-			} else {
-				if (recGrandParent.bifurcation)
-					arg.singleAddChildWithOneParent(recGrandParent, otherChild);
-				else
-					arg.doubleAddChildWithOneParent(recGrandParent, otherChild);
-				if (recParent2.bifurcation)
-					arg.singleAddChildWithOneParent(recParent2, recChild);
-				else
-					arg.doubleAddChildWithOneParent(recParent2, recChild);
+					arg.doubleRemoveChild(recParent2, recNode);
+				arg.doubleRemoveChild(recNode, recChild);
+				
+				
+				if (otherChild != recChild) {
+					if (recGrandParent.bifurcation)
+						arg.singleAddChild(recGrandParent, otherChild);
+					else
+						arg.doubleAddChild(recGrandParent, otherChild);
+					if (recParent2.bifurcation)
+						arg.singleAddChild(recParent2, recChild);
+					else
+						arg.doubleAddChild(recParent2, recChild);
+				} else {
+					if (recGrandParent.bifurcation)
+						arg.singleAddChildWithOneParent(recGrandParent, otherChild);
+					else
+						arg.doubleAddChildWithOneParent(recGrandParent, otherChild);
+					if (recParent2.bifurcation)
+						arg.singleAddChildWithOneParent(recParent2, recChild);
+					else
+						arg.doubleAddChildWithOneParent(recParent2, recChild);
+				}
 			}
+			
+			
 			
 			doneSomething = true;
 
@@ -550,7 +593,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					+ "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
 		} 
 				
-		assert nodeCheck();
+		assert nodeCheck() : arg.toARGSummary();
 		
 		logq = 0;
 		return logq; // 1 / total potentials * 1 / 2 (if valid) * length1 * length2 * attachmentSisters

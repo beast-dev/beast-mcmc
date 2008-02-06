@@ -1543,53 +1543,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		 *//*
 																 * }
 																 */
-
-	public void expandARGWithRecombinantNewRoot(Node newRoot, Node newbie,
-		VariableSizeCompoundParameter internalNodeParameters,
-		VariableSizeCompoundParameter internalAndRootNodeParameters,
-		VariableSizeCompoundParameter nodeRates){
-		
-		Node olderRoot = (Node) this.getRoot();
-		
-		addParameter(newRoot.heightParameter);
-		addParameter(newbie.heightParameter);
-		addParameter(newRoot.rateParameter);
-		addParameter(newbie.rateParameter);
-		addParameter(newbie.partitioning);
-		
-		
-		addedParameters = new Parameter[5];
-		addedParameters[0] = newbie.heightParameter;
-		addedParameters[1] = newRoot.heightParameter;
-		addedParameters[2] = newbie.rateParameter;
-		addedParameters[3] = newRoot.rateParameter;
-		addedParameters[4] = olderRoot.heightParameter;
-		addedPartitioningParameter = newbie.partitioning;
-		
-		storedInternalNodeHeights = internalNodeParameters;
-		storedInternalNodeHeights.addParameter(newbie.heightParameter);
-		storedInternalNodeHeights.addParameter(olderRoot.heightParameter);
-		
-		storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
-		storedInternalAndRootNodeHeights.addParameter(newbie.heightParameter);
-		storedInternalAndRootNodeHeights.addParameter(newRoot.heightParameter);
-		
-		
-		storedNodeRates = nodeRates;
-		storedNodeRates.addParameter(newbie.rateParameter);
-		storedNodeRates.addParameter(newRoot.rateParameter);
-		
-		partitioningParameters.addParameter(addedPartitioningParameter);
-		nodes.add(newbie);
-		nodes.add(newRoot);
-		internalNodeCount += 2;
-		
-		this.setRoot(newRoot);
-		
-		
-		
-		pushTreeSizeChangedEvent();
-	}
 	
 	public void expandARGWithRecombinant(Node newbie1, Node newbie2,
 			VariableSizeCompoundParameter internalNodeParameters,
@@ -1733,27 +1686,11 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		removedParameters[2] = oldie1.rateParameter;
 		removedParameters[3] = oldie2.rateParameter;
 		
-		System.out.println(oldie1);
-		if(oldie1 == null) {
-			System.out.println("oldie1 is null");
-			System.exit(-1);
-		}
-		if(oldie1.heightParameter == null) {
-			System.out.println("hp is null");
-			System.exit(-1);
-		}
 		
 		partitioningParameters.removeParameter(oldie2.partitioning);
 		removedPartitioningParameter = oldie2.partitioning;
 		storedInternalNodeHeights = internalNodeParameters;
-		try{
-		
 		storedInternalNodeHeights.removeParameter(oldie1.heightParameter);
-		}catch(Exception e){
-			System.out.println("except with removing oldie1");
-			System.out.println(oldie1.heightParameter);
-			System.exit(-1);
-		}
 		storedInternalNodeHeights.removeParameter(oldie2.heightParameter);
 		
 		

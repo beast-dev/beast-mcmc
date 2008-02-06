@@ -21,6 +21,7 @@ import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.math.NormalDistribution;
 import dr.xml.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,10 +32,12 @@ import java.util.List;
 
 public class NewerARGEventOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
-	public static final String NEWER_ARG_EVENT = "ARGEventOperator";
-	public static final String JUST_INTERNAL = "internalNodes";
+	public static final String ADD_PROBABILITY = "addProbability";
+	public static final String ARG_EVENT_OPERATOR = "ARGEventOperator";
+	public static final String INTERNAL_NODES = "internalNodes";
 	public static final String INTERNAL_AND_ROOT = "internalNodesPlusRoot";
 	public static final String NODE_RATES = "nodeRates";
+	public static final String ROOT_MOVES_OK = "rootMovesOk";
 
 	private ARGModel arg = null;
 	private double size = 1.0;
@@ -44,14 +47,15 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	private VariableSizeCompoundParameter internalNodeParameters;
 	private VariableSizeCompoundParameter internalAndRootNodeParameters;
 	private VariableSizeCompoundParameter nodeRates;
-
-	
+	private boolean rootMovesOK = false;
+		
 	public NewerARGEventOperator(ARGModel arg, int weight, double size, int mode,
 	                           VariableSizeCompoundParameter param1,
 	                           VariableSizeCompoundParameter param2,
 	                           VariableSizeCompoundParameter param3,
 	                           double singlePartitionProbability, 
-	                           boolean isRecombination) {
+	                           boolean isRecombination,
+	                           boolean rootMovesOK) {
 		this.arg = arg;
 		this.size = size;
 		this.internalNodeParameters = param1;
@@ -59,7 +63,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		this.nodeRates = param3;
 		this.singlePartitionProbability = singlePartitionProbability;
 		this.isRecombination = isRecombination;
-		this.mode = CoercableMCMCOperator.COERCION_OFF;
+		this.mode = CoercableMCMCOperator.COERCION_ON;
+		this.rootMovesOK = rootMovesOK;
 		
 		setWeight(weight);
 	}
@@ -70,13 +75,13 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	 * @return the log-transformed hastings ratio
 	 */
 	public double doOperation() throws OperatorFailedException {
-		double logq = 0;
+		double logq;
 		try {
-			if (MathUtils.nextGaussian() < size)
-				logq = AddOperation() - addDeleteLogQ();
+			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
+				logq = AddOperation() - size;
 			else
-				logq = RemoveOperation() + addDeleteLogQ();
-		}catch (NoReassortmentEventException ofe){
+				logq = RemoveOperation() + size;
+		} catch (NoReassortmentEventException ofe) {
 			return Double.NEGATIVE_INFINITY; 
 		}
 		
@@ -93,9 +98,14 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		//1.  Get the new bifurcation and re-assortment heights.
 		double newReassortmentHeight, newBifurcationHeight, logq = 0;
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
-		double aboveRootBifurcationProbability = 0.08;
-		double aboveRootReassortmentProbability = 0.02;
-				
+		double aboveRootBifurcationProbability = 0.0;
+		double aboveRootReassortmentProbability = 0.0;
+		
+		if(rootMovesOK){
+			aboveRootBifurcationProbability = 0.08;
+			aboveRootReassortmentProbability = 0.02;
+		}
+		
 		if(MathUtils.nextDouble() < aboveRootBifurcationProbability)
 			newBifurcationHeight = treeHeight + 3.0;//MathUtils.nextExponential(treeHeight);
 		else
@@ -302,8 +312,6 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					+ "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
 		}
 		
-//		System.out.println(arg.toARGSummary());
-		
 		assert nodeCheck();
 		logq = 0;
 		return logq;
@@ -382,26 +390,18 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		
 		int totalPotentials = findPotentialNodesToRemove(potentialNodes,rootDeleteOK);
 		
-//		if(arg.getChild(arg.getRoot(),ARGModel.LEFT) == 
-//			arg.getChild(arg.getRoot(),ARGModel.RIGHT)){
-//				totalPotentials++;
-//				potentialNodes.add(arg.getChild(arg.getRoot(),0)); 
-//		}
-		
 		if (totalPotentials == 0)
 			throw new OperatorFailedException("No reassortment nodes to remove.");
-
-		
 		
 		Node recNode = (Node) potentialNodes.get(MathUtils.nextInt(totalPotentials));
 
 		double reverseReassortmentHeight = 0;
 		double reverseBifurcationHeight = 0;
-
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
 
 		reverseReassortmentHeight = arg.getNodeHeight(recNode);
 				
+		
 		arg.beginTreeEdit();
 		
 		boolean doneSomething = false;
@@ -443,88 +443,101 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			
 		} else { 
 			
-			
 			Node recParent1 = recNode.leftParent;
 			Node recParent2 = recNode.rightParent;
-			if (recParent1.bifurcation || (recParent1.isRoot() && !rootDeleteOK)){
-				recParent1 = recNode.rightParent;
-				recParent2 = recNode.leftParent;
-			} else if (recParent2.bifurcation && (!recParent2.isRoot() || rootDeleteOK)) { 
-				if (MathUtils.nextDouble() < 0.5) {
+			
+			//This is the easiest way of integrating 
+			//root delete moves :)
+			if(rootDeleteOK){
+				if (!recParent1.bifurcation){
 					recParent1 = recNode.rightParent;
 					recParent2 = recNode.leftParent;
+				}else if(recParent2.bifurcation){
+					if (MathUtils.nextDouble() < 0.5) { 
+						recParent1 = recNode.rightParent;
+						recParent2 = recNode.leftParent;
+					}
+					logq += Math.log(2);
 				}
-				logq += Math.log(2);
+			}else{
+				if (!recParent1.bifurcation || recParent1.isRoot()) { 
+					recParent1 = recNode.rightParent;
+					recParent2 = recNode.leftParent;
+				} else if (recParent2.bifurcation && !recParent2.isRoot()) { 
+					if (MathUtils.nextDouble() < 0.5) { 
+						recParent1 = recNode.rightParent;
+						recParent2 = recNode.leftParent;
+					}
+					logq += Math.log(2);
+				}
+				
 			}
-
+			
 			if(arg.isRoot(recParent1)){
-				Node otherChild = recParent1.leftChild;
-				if(otherChild == recNode)
-					otherChild = recParent1.rightChild;
+				Node oldRoot = (Node) arg.getOtherChild(recParent1, recNode);
+				Node oldRootLeft = oldRoot.leftChild;
+				Node oldRootRight = oldRoot.rightChild;
 				
-				Node otherChildLeft = otherChild.leftChild;
-				Node otherChildRight = otherChild.rightChild;
-				
-				
-				
-				if(otherChild == recParent2){
+				if(oldRoot == recParent2){
 					arg.singleRemoveChild(recParent1, recNode);
-					arg.singleRemoveChild(recParent1, otherChild);
-					arg.singleRemoveChild(otherChild, otherChildLeft);
-					arg.singleRemoveChild(otherChild, otherChildRight);
-					arg.singleAddChild(recParent1, otherChildLeft);
-					arg.singleAddChild(recParent1, otherChildRight);
+					arg.singleRemoveChild(recParent1, oldRoot);
+					arg.singleRemoveChild(oldRoot, oldRootLeft);
+					arg.singleRemoveChild(oldRoot, oldRootRight);
 					
+					arg.singleAddChild(recParent1, oldRootLeft);
+					arg.singleAddChild(recParent1, oldRootRight);
+					
+					arg.singleRemoveChild(recParent1, recNode);
 					arg.doubleRemoveChild(recNode, recChild);
-					arg.singleRemoveChild(recParent1,recNode);
 					
 					arg.singleAddChild(recParent1, recChild);
 					
+					recParent1.setHeight(oldRoot.getHeight());
+										
+					recParent1 = oldRoot;
 				}else{
 					arg.singleRemoveChild(recParent1, recNode);
-					arg.singleRemoveChild(recParent1, otherChild);
-					arg.singleRemoveChild(otherChild, otherChildLeft);
-					arg.singleRemoveChild(otherChild, otherChildRight);
-					arg.singleAddChild(recParent1, otherChildLeft);
-					arg.singleAddChild(recParent1, otherChildRight);
+					arg.singleRemoveChild(recParent1, oldRoot);
+					arg.singleRemoveChild(oldRoot, oldRootLeft);
+					arg.singleRemoveChild(oldRoot, oldRootRight);
+					
+					arg.singleAddChild(recParent1, oldRootLeft);
+					arg.singleAddChild(recParent1, oldRootRight);
 					
 					if(recParent2.bifurcation)
 						arg.singleRemoveChild(recParent2, recNode);
 					else
 						arg.doubleRemoveChild(recParent2, recNode);
-					arg.doubleRemoveChild(recNode, recChild);
+					
+					arg.doubleRemoveChild(recNode,recChild);
 					
 					if(recParent2.bifurcation)
 						arg.singleAddChild(recParent2, recChild);
 					else
 						arg.doubleAddChild(recParent2, recChild);
 					
+					recParent1.setHeight(oldRoot.getHeight());
+					recParent1 = oldRoot;
+						
 				}
-				recParent1.setHeight(otherChild.getHeight());
-				
-				recParent1 = otherChild;
 			}else{
 				Node recGrandParent = recParent1.leftParent; 
 
 				Node otherChild = recParent1.leftChild;
 				if (otherChild == recNode)
 					otherChild = recParent1.rightChild;
-				
-				
-				
+
 				if (recGrandParent.bifurcation)
 					arg.singleRemoveChild(recGrandParent, recParent1);
 				else
 					arg.doubleRemoveChild(recGrandParent, recParent1);
-				
+
 				arg.singleRemoveChild(recParent1, otherChild);
 				if (recParent2.bifurcation)
 					arg.singleRemoveChild(recParent2, recNode);
 				else
 					arg.doubleRemoveChild(recParent2, recNode);
 				arg.doubleRemoveChild(recNode, recChild);
-				
-				
 				if (otherChild != recChild) {
 					if (recGrandParent.bifurcation)
 						arg.singleAddChild(recGrandParent, otherChild);
@@ -545,11 +558,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 						arg.doubleAddChildWithOneParent(recParent2, recChild);
 				}
 			}
-			
-			
-			
+						
 			doneSomething = true;
-
 			recParent = recParent1;
 		}
 		
@@ -567,8 +577,6 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				System.exit(-1);
 			}
 		}
-		
-		
 		
 		
 		int max = Math.max(recParent.getNumber(), recNode.getNumber());
@@ -879,12 +887,6 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	////
 	////Coercible MCMC Operator stuff
 	////
-
-	private double addDeleteLogQ(){
-		double addProbability = NormalDistribution.cdf(size,0,1);
-		
-		return Math.log(addProbability / (1.0 - addProbability));
-	}
 	
 	
 	public double getSize() {
@@ -924,30 +926,26 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 		
 		if (prob < getMinimumGoodAcceptanceLevel()) {
-			return "Try setting the value closer to 0.0";
+			return "Try setting addProbability closer to 0.5";
 		} else if (prob > getMaximumGoodAcceptanceLevel()) {
-			return "Try setting the value closer to 0.0";
+			return "Try setting addProbability value closer to 0.5";
 		} else return "";
 	}
 
 	public String getOperatorName() {
-		return NEWER_ARG_EVENT;
+		return ARG_EVENT_OPERATOR;
 	}
 
 	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
 		public String getParserName() {
-			return NEWER_ARG_EVENT;
+			return ARG_EVENT_OPERATOR;
 		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			boolean swapRates = false;
-			boolean swapTraits = false;
-
 			double singlePartitionProbability = 0.0;
 			boolean isRecombination = false;
-			
 			
 			int mode = CoercableMCMCOperator.DEFAULT;
 			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
@@ -957,31 +955,31 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					mode = CoercableMCMCOperator.COERCION_OFF;
 				}
 			}
-
-			Object obj = xo.getChild(ARGModel.class);
-//			TreeModel tmp = (TreeModel)xo.getChild(TreeModel.class);
-			ARGModel treeModel = null;
-			//if( (tmp.TREE_MODEL).compareTo(VariableSizeTreeModel.TREE_MODEL) == 0) {
-			if (obj instanceof ARGModel) {
-				//System.err.println("Found VSTM");
-				treeModel = (ARGModel) obj;
-			} else {
-				System.err.println("Must specify a variable size tree model to use the AddRemoveSubtreeOperators");
-				System.exit(-1);
+			
+			boolean rootMovesOK = false;
+			if (xo.hasAttribute(ROOT_MOVES_OK) 
+					&& xo.getBooleanAttribute(ROOT_MOVES_OK)) {
+					rootMovesOK = true;
 			}
-//        	VariableSizeCompoundParameter parameter = (VariableSizeCompoundParameter)xo.getChild(Parameter.class);
 
-			VariableSizeCompoundParameter parameter1 = (VariableSizeCompoundParameter) xo.getSocketChild(JUST_INTERNAL);
-			VariableSizeCompoundParameter parameter2 = (VariableSizeCompoundParameter) xo.getSocketChild(INTERNAL_AND_ROOT);
-			VariableSizeCompoundParameter parameter3 = (VariableSizeCompoundParameter) xo.getSocketChild(NODE_RATES);
-
-			//VariableSizeTreeModel treeModel = (VariableSizeTreeModel)xo.getChild(TreeModel.class);
+			ARGModel treeModel = (ARGModel) xo.getChild(ARGModel.class);
+			VariableSizeCompoundParameter parameter1 = 
+				(VariableSizeCompoundParameter) xo.getSocketChild(INTERNAL_NODES);
+			VariableSizeCompoundParameter parameter2 = 
+				(VariableSizeCompoundParameter) xo.getSocketChild(INTERNAL_AND_ROOT);
+			VariableSizeCompoundParameter parameter3 = 
+				(VariableSizeCompoundParameter) xo.getSocketChild(NODE_RATES);
+			
 			int weight = xo.getIntegerAttribute("weight");
-//            int maxTips = xo.getIntegerAttribute(MAX_VALUE);
-			double size = xo.getDoubleAttribute("size");
-			boolean gaussian = xo.getBooleanAttribute("gaussian");
+			double size = xo.getDoubleAttribute(ADD_PROBABILITY);
+			if(size > 0 && size < 1)
+				size = Math.log(size / (1.0- size));
+			else
+				throw new XMLParseException(ADD_PROBABILITY + " must be between 0 and 1");
+						
 			return new NewerARGEventOperator(treeModel, weight, size, 
-					mode, parameter1, parameter2, parameter3, singlePartitionProbability, isRecombination);
+					mode, parameter1, parameter2, parameter3, 
+					singlePartitionProbability, isRecombination, rootMovesOK);
 		}
 
 		public String getParserDescription() {
@@ -997,7 +995,19 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		}
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new ElementRule(ARGModel.class)
+				AttributeRule.newDoubleRule(ADD_PROBABILITY, false,
+						"The probability that the operator adds a new"
+						+ " reassortment event"),
+				new ElementRule(ARGModel.class),
+				new ElementRule(INTERNAL_NODES, 
+						new XMLSyntaxRule[]{
+						new ElementRule(VariableSizeCompoundParameter.class)}),
+				new ElementRule(INTERNAL_AND_ROOT, 
+						new XMLSyntaxRule[]{
+						new ElementRule(VariableSizeCompoundParameter.class)}),
+				new ElementRule(NODE_RATES, 
+						new XMLSyntaxRule[]{
+						new ElementRule(VariableSizeCompoundParameter.class)}),
 		};
 	};
 	

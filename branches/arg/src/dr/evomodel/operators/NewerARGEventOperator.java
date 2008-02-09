@@ -159,7 +159,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				if(MathUtils.nextBoolean()){
 					recParent = recParentR;
 				}
-				logHastings += Math.log(2.0);
+				logHastings += 0.6931472; //Math.log(2.0);
 			}else{
 				throw new OperatorFailedException("There is something wrong");
 			}
@@ -180,7 +180,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				if(MathUtils.nextBoolean()){
 					sisParent = sisParentR;
 				}
-				logHastings += Math.log(2.0);
+				logHastings += 0.6931472; //Math.log(2.0);
 			}else{
 				throw new OperatorFailedException("There is something wrong");
 			}

@@ -1,0 +1,240 @@
+<beast>
+
+
+<taxa id="taxa">
+      <taxon id="seq1"/> 
+	<taxon id="seq2"/> 
+	<taxon id="seq3"/> 
+	<taxon id="seq4"/> 
+</taxa>
+
+
+<alignment id="align.data" dataType="nucleotide">
+     <sequence>
+          <taxon idref="seq1"/>
+          NNNNNNNNNN
+     </sequence>
+     <sequence>
+          <taxon idref="seq2"/>
+          NNNNNNNNNN
+     </sequence>
+     <sequence>
+          <taxon idref="seq3"/>
+          NNNNNNNNNN
+     </sequence>
+     <sequence>
+          <taxon idref="seq4"/>
+          NNNNNNNNNN
+     </sequence>
+</alignment>
+
+
+
+<patterns id="patterns.1" from="1" to="5">
+    <alignment idref="align.data"/>
+</patterns>
+<patterns id="patterns.2" from="5">
+    <alignment idref="align.data"/>
+</patterns>
+
+<newick id="startingTree">
+((seq1:0.9,seq2:0.9):0.1,(seq3:0.8,seq4:0.8):0.2);
+</newick>
+	
+<argTreeModel id="argModel">
+	<coalescentTree idref="startingTree"/>
+	<rootHeight>
+		<parameter id="argModel.rootHeight"/>
+	</rootHeight>
+	<nodeHeights internalNodes="true">
+		<parameter id="argModel.internalNodeHeights"/>
+	</nodeHeights>
+	<nodeHeights internalNodes="true" rootNode="true">
+		<parameter id="argModel.allInternalNodeHeights"/>
+	</nodeHeights>
+       <nodeRates internalNodes="true" leafNodes="true">
+           <parameter id="argModel.rates"/>
+        </nodeRates>
+</argTreeModel>
+
+<strictClockBranchRates id="branchRates">
+     <rate>
+	 <parameter id="clock.rate" value="1" lower="0" upper="Infinity"/>
+     </rate>
+</strictClockBranchRates>
+
+
+
+     
+
+
+<hkyModel id="hky.1">
+	<frequencies>
+		<frequencyModel dataType="nucleotide">
+			<alignment idref="align.data"/>
+			<frequencies>
+				<parameter id="hky.frequencies.1" dimension="4"/>
+			</frequencies>
+		</frequencyModel>
+	</frequencies>
+	<kappa>
+        	<parameter id="hky.kappa"/>
+	</kappa>
+</hkyModel>
+
+<hkyModel id="hky.2">
+	<frequencies>
+		<frequencyModel dataType="nucleotide">
+			<alignment idref="align.data"/>
+			<frequencies>
+				<parameter id="hky.frequencies.2" dimension="4"/>
+			</frequencies>
+		</frequencyModel>
+	</frequencies>
+	<kappa>
+        	<parameter idref="hky.kappa"/>
+	</kappa>
+</hkyModel>
+
+  <siteModel id="siteModel.1">
+		<substitutionModel>
+			<hkyModel idref="hky.1"/>
+		</substitutionModel>
+		<relativeRate>
+			<parameter id="siteModel.mu.1" value="1.0" lower="0.0" upper="Infinity"/>
+		</relativeRate>
+     </siteModel>
+
+
+  <siteModel id="siteModel.2">
+		<substitutionModel>
+			<hkyModel idref="hky.2"/>
+		</substitutionModel>
+		<relativeRate>
+			<parameter id="siteModel.mu.2" value="1.0" lower="0.0" upper="Infinity"/>
+		</relativeRate>
+     </siteModel>
+
+ 
+    <argTreeLikelihood id="treeLikelihood.1" useAmbiguities="true">
+		<patterns idref="patterns.1"/>
+		<argTreeModel idref="argModel"/>
+		<siteModel idref="siteModel.1"/>
+		<strictClockBranchRates idref="branchRates"/>
+     </argTreeLikelihood>
+
+     <argTreeLikelihood id="treeLikelihood.2" useAmbiguities="true">
+		<patterns idref="patterns.2"/>
+		<argTreeModel idref="argModel"/>
+		<siteModel idref="siteModel.2"/>
+		<strictClockBranchRates idref="branchRates"/>
+    </argTreeLikelihood>
+
+<mrbayesDefaultModel id="yule" units="substitutions">
+	<birthRate>
+		<parameter id="birthrate" value="1"/>
+	</birthRate>
+	<hgtRate>
+		<parameter id="hgtrate" value="2"/>
+	</hgtRate>
+</mrbayesDefaultModel>
+
+<speciationLikelihood id="speciation">
+     <model>
+	<mrbayesDefaultModel idref="yule"/>
+     </model>
+     <speciesTree>
+	<argModel idref="argModel"/>
+     </speciesTree>
+</speciationLikelihood>
+
+<argCoalescentLikelihood id="arg.prior">
+      <populationSize>
+	      <parameter id="pop.size" value="5" lower="0.0" upper="Infinity"/>
+      </populationSize>
+      <recombinationRate>
+   		<parameter id="recom.rate" value="1" lower="0.0" upper="Infinity"/>
+	</recombinationRate>
+      <argModel>
+    		<argTreeModel idref="argModel"/>
+    	</argModel>
+</argCoalescentLikelihood>
+
+    <operators id="operators">
+
+	<scaleOperator id="rootOperator" scaleFactor="0.5" weight="25">
+		<parameter idref="argModel.rootHeight"/>
+	</scaleOperator>
+	
+	<scaleOperator scaleFactor="0.95" weight="25">
+		<parameter idref="argModel.internalNodeHeights"/>
+	</scaleOperator>
+     
+     <argNarrowExchange weight="50">
+		<argModel idref="argModel"/>
+	</argNarrowExchange>
+     
+     <ARGEventOperator weight="1" addProbability="0.2" rootMovesOk="false">
+		<argTreeModel idref="argModel"/>
+		<internalNodes>
+ 			<parameter idref="argModel.internalNodeHeights"/>
+		</internalNodes>
+		<internalNodesPlusRoot>
+			<parameter idref="argModel.allInternalNodeHeights"/>
+		</internalNodesPlusRoot>
+            <nodeRates>
+                <parameter idref="argModel.rates"/>
+            </nodeRates>
+            <scaleOperator idref="rootOperator"/>
+     </ARGEventOperator>
+
+    </operators>                            
+
+	
+		
+
+    <mcmc id="mcmc" chainLength="5000000" autoOptimize="true">
+		<posterior id="posterior">
+			<prior id="prior">
+<!--				<uniformPrior lower="0.5" upper="500000.0">-->
+<!--					<parameter idref="argModel.rootHeight"/>-->
+<!--				</uniformPrior>-->
+<!--				<speciationLikelihood idref="speciation"/>-->
+			      <argCoalescentLikelihood idref="arg.prior"/>
+			</prior>
+			<likelihood id="likelihood">
+                  	<treeLikelihood idref="treeLikelihood.1"/>
+				<treeLikelihood idref="treeLikelihood.2"/>
+                 </likelihood>
+		</posterior>
+		<operators idref="operators"/>
+		<log id="screenLog" logEvery="50000">
+			 <column label="Coalescent" sf="4" width="12">
+                        <argCoalescentLikelihood idref="arg.prior"/>
+                  </column>
+			<column label="ARG" dp="4" width="12">
+                        <argModel idref="argModel"/>
+                  </column>
+                  <column label="Root Height" sf="4" width="12">
+				<parameter idref="argModel.rootHeight"/>
+                  </column>
+                </log>
+		<log id="fileLog" logEvery="1000" fileName="prior.log">
+		           <argTreeModel idref="argModel"/>
+		           <statistic idref="argModel.rootHeight"/>
+		</log>
+		<logArg logEvery="1000" format="fullString" fileName="prior.args">
+			<argTreeModel idref="argModel"/>
+		</logArg>
+	</mcmc>
+
+<report>
+	<property name="timer">
+		<object idref="mcmc"/>
+	</property>
+</report>
+	
+ <traceAnalysis fileName="prior.log"/>
+  
+ 
+</beast>

@@ -116,17 +116,16 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	 }
 	 
 	 public double getLogLikelihood(){
-		 if(likelihoodKnown){
+		 if(likelihoodKnown)
 			 return logLikelihood;
-		 }
-		 if(!intervalsKnown){
+		 if(!intervalsKnown)
 			 calculateIntervals();
-		 }
+		 
 		 likelihoodKnown = true;
 		 logLikelihood = calculateLogLikelihood(
 				 popSize.getParameterValue(0), 
 				 recomRate.getParameterValue(0)); 
-	 		 
+	 	
 		 return logLikelihood;
 	 }
 	 
@@ -154,6 +153,8 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 			 }
 		 }
 		
+		 assert !Double.isInfinite(logLike);
+		 
 		 return logLike;
 	 }
 	 

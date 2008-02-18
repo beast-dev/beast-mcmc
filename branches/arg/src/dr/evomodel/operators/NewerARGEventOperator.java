@@ -50,6 +50,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	private VariableSizeCompoundParameter nodeRates;
 	private boolean rootMovesOK = false;
 	
+	private ScaleOperator rootGuy;
 	/**
 	 * The first position refers to the bifurcation.
 	 * The second one is for the reassortment.
@@ -67,7 +68,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	                           VariableSizeCompoundParameter param3,
 	                           double singlePartitionProbability, 
 	                           boolean isRecombination,
-	                           boolean rootMovesOK) {
+	                           boolean rootMovesOK, ScaleOperator rootGuy) {
 		this.arg = arg;
 		this.size = size;
 		this.internalNodeParameters = param1;
@@ -77,6 +78,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		this.isRecombination = isRecombination;
 		this.mode = CoercableMCMCOperator.COERCION_ON;
 		this.rootMovesOK = rootMovesOK;
+		this.rootGuy = rootGuy;
 		
 		if(rootMovesOK){
 			aboveRootProbability[0] = 0.08;
@@ -93,6 +95,10 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	 */
 	public double doOperation() throws OperatorFailedException {
 		double logq = 0;
+		
+		if(arg.getReassortmentNodeCount() == 2){
+			return rootGuy.doOperation();
+		}
 		try {
 			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
 				logq = AddOperation() - size;
@@ -978,10 +984,12 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				size = Math.log(size / (1.0- size));
 			else
 				throw new XMLParseException(ADD_PROBABILITY + " must be between 0 and 1");
-						
+				
+			ScaleOperator rootGuy = (ScaleOperator) xo.getChild(ScaleOperator.class);
+			
 			return new NewerARGEventOperator(treeModel, weight, size, 
 					mode, parameter1, parameter2, parameter3, 
-					singlePartitionProbability, isRecombination, rootMovesOK);
+					singlePartitionProbability, isRecombination, rootMovesOK, rootGuy);
 		}
 
 		public String getParserDescription() {

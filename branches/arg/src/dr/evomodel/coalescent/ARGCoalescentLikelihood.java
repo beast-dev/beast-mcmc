@@ -129,6 +129,10 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 return logLikelihood;
 	 }
 	 
+	 private double chooseTwo(int n){
+		 return n*(n-1)/2.0;
+	 }
+	 
 	 private double calculateLogLikelihood(double pSize, double rRate){
 
 		 
@@ -143,10 +147,12 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		
 			 if(interval.type == COALESCENT){
 				logLike += Math.log((double)(numberOfTaxa - 1)/
-											 (numberOfTaxa - 1 + rRate));
+											 (numberOfTaxa - 1 + rRate))
+						- Math.log(chooseTwo(numberOfTaxa));
 			 	numberOfTaxa ++;
 			 }else if(interval.type == RECOMBINATION){
-				 logLike += Math.log(rRate/(numberOfTaxa - 1 + rRate));
+				 logLike += Math.log(rRate/(numberOfTaxa - 1 + rRate))
+				 		- Math.log((double)numberOfTaxa);
 			 	 numberOfTaxa--;
 			 }else{
 				 throw new RuntimeException("Not implemented yet");

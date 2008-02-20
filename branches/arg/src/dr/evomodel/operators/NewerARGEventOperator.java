@@ -108,7 +108,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		}
 		
 		
-		return 0;//logq;
+		return logq;
 	}
 
 	
@@ -150,13 +150,13 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 								    (Math.exp(temp1) + Math.exp(temp2)));
 		}else if(heightAboveRoot[0] || heightAboveRoot[1]){
 			double[] additionalHeight = {newBifurcationHeight - treeHeight,
-					 newReassortmentHeight - treeHeight};
-			logHastings += Math.log(treeHeight) - Math.log(
-					aboveRootProbability[0]*(1 - aboveRootProbability[1])*
-					(extraAmountBeyondOldRoot[0]*Math.exp(extraAmountBeyondOldRoot[0]*additionalHeight[0])) 
+					newReassortmentHeight - treeHeight};
+			logHastings += Math.log(treeHeight) 
+					- Math.log(aboveRootProbability[0]*(1 - aboveRootProbability[1])*
+					(extraAmountBeyondOldRoot[0]*Math.exp(-extraAmountBeyondOldRoot[0]*additionalHeight[0])) 
 					+ 
 					aboveRootProbability[1]*(1 - aboveRootProbability[0])*
-					(extraAmountBeyondOldRoot[1]*Math.exp(extraAmountBeyondOldRoot[1]*additionalHeight[0])));
+					(extraAmountBeyondOldRoot[1]*Math.exp(-extraAmountBeyondOldRoot[1]*additionalHeight[0])));
 		}else{
 			logHastings += 2.0*Math.log(treeHeight) - 
 				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])*2.0);
@@ -175,6 +175,9 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 		assert totalPotentialBifurcationChildren > 0;
 		assert totalPotentialReassortmentChildren > 0;
+		assert totalPotentialBifurcationChildren == potentialBifurcationChildren.size();
+		assert totalPotentialReassortmentChildren == potentialReassortmentChildren.size();
+		
 		
 		logHastings += Math.log((double)totalPotentialBifurcationChildren *
 								  totalPotentialReassortmentChildren);
@@ -733,10 +736,10 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		}else if(aboveRoot[0] || aboveRoot[1]){
 			logHastings += -Math.log(afterTreeHeight) + Math.log(
 					aboveRootProbability[0]*(1 - aboveRootProbability[1])*
-					(extraAmountBeyondOldRoot[0]*Math.exp(extraAmountBeyondOldRoot[0]*additionalHeight[0])) 
+					(extraAmountBeyondOldRoot[0]*Math.exp(-extraAmountBeyondOldRoot[0]*additionalHeight[0])) 
 					+ 
 					aboveRootProbability[1]*(1 - aboveRootProbability[0])*
-					(extraAmountBeyondOldRoot[1]*Math.exp(extraAmountBeyondOldRoot[1]*additionalHeight[0])));
+					(extraAmountBeyondOldRoot[1]*Math.exp(-extraAmountBeyondOldRoot[1]*additionalHeight[0])));
 		}else{
 			logHastings += -2.0*Math.log(afterTreeHeight) + 
 				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])/2.0);

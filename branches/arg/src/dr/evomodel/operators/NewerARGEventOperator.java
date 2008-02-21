@@ -742,7 +742,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					(extraAmountBeyondOldRoot[1]*Math.exp(-extraAmountBeyondOldRoot[1]*additionalHeight[0])));
 		}else{
 			logHastings += -2.0*Math.log(afterTreeHeight) + 
-				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])/2.0);
+				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])*2.0);
 		}
 		
 		logHastings -= Math.log((double)findPotentialAttachmentPoints(beforeBifurcationHeight, null)

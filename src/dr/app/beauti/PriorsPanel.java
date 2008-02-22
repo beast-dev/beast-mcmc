@@ -49,68 +49,68 @@ import java.util.ArrayList;
  */
 public class PriorsPanel extends JPanel implements Exportable {
 
-	/**
-	 *
-	 */
-	private static final long serialVersionUID = -2936049032365493416L;
-	JScrollPane scrollPane = new JScrollPane();
-	JTable priorTable = null;
-	PriorTableModel priorTableModel = null;
+    /**
+     *
+     */
+    private static final long serialVersionUID = -2936049032365493416L;
+    JScrollPane scrollPane = new JScrollPane();
+    JTable priorTable = null;
+    PriorTableModel priorTableModel = null;
 
-	OptionsPanel treePriorPanel = new OptionsPanel();
-	JComboBox treePriorCombo;
-	JComboBox parameterizationCombo = new JComboBox(new String[] {
-			"Growth Rate", "Doubling Time"});
-	JComboBox bayesianSkylineCombo = new JComboBox(new String[] {
-			"Constant", "Linear"});
-	WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
+    OptionsPanel treePriorPanel = new OptionsPanel();
+    JComboBox treePriorCombo;
+    JComboBox parameterizationCombo = new JComboBox(new String[] {
+            "Growth Rate", "Doubling Time"});
+    JComboBox bayesianSkylineCombo = new JComboBox(new String[] {
+            "Constant", "Linear"});
+    WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
-	RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
+    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
 
-	JCheckBox upgmaStartingTreeCheck = new JCheckBox("Use UPGMA to construct a starting tree");
+    JCheckBox upgmaStartingTreeCheck = new JCheckBox("Use UPGMA to construct a starting tree");
 
-	public ArrayList parameters = new ArrayList();
+    public ArrayList parameters = new ArrayList();
 
-	BeautiFrame frame = null;
+    BeautiFrame frame = null;
 
-	public PriorsPanel(BeautiFrame parent) {
+    public PriorsPanel(BeautiFrame parent) {
 
-		this.frame = parent;
+        this.frame = parent;
 
-		priorTableModel = new PriorTableModel();
-		priorTable = new JTable(priorTableModel);
+        priorTableModel = new PriorTableModel();
+        priorTable = new JTable(priorTableModel);
 
-		priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
-		priorTable.getTableHeader().setReorderingAllowed(false);
-		priorTable.getTableHeader().setDefaultRenderer(
-				new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        priorTable.getTableHeader().setReorderingAllowed(false);
+        priorTable.getTableHeader().setDefaultRenderer(
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-		priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
-		priorTable.getColumnModel().getColumn(0).setCellRenderer(
-				new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-		priorTable.getColumnModel().getColumn(0).setPreferredWidth(160);
+        priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
+        priorTable.getColumnModel().getColumn(0).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        priorTable.getColumnModel().getColumn(0).setPreferredWidth(160);
 
-		priorTable.getColumnModel().getColumn(1).setCellRenderer(
-				new ButtonRenderer(SwingConstants.LEFT, new Insets(0, 8, 0, 8)));
-		priorTable.getColumnModel().getColumn(1).setCellEditor(
-				new ButtonEditor(SwingConstants.LEFT, new Insets(0, 8, 0, 8)));
-		priorTable.getColumnModel().getColumn(1).setPreferredWidth(260);
+        priorTable.getColumnModel().getColumn(1).setCellRenderer(
+                new ButtonRenderer(SwingConstants.LEFT, new Insets(0, 8, 0, 8)));
+        priorTable.getColumnModel().getColumn(1).setCellEditor(
+                new ButtonEditor(SwingConstants.LEFT, new Insets(0, 8, 0, 8)));
+        priorTable.getColumnModel().getColumn(1).setPreferredWidth(260);
 
-		priorTable.getColumnModel().getColumn(2).setCellRenderer(
-				new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-		priorTable.getColumnModel().getColumn(2).setPreferredWidth(400);
+        priorTable.getColumnModel().getColumn(2).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        priorTable.getColumnModel().getColumn(2).setPreferredWidth(400);
 
-		scrollPane = new JScrollPane(priorTable,
-				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        scrollPane = new JScrollPane(priorTable,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-		scrollPane.setOpaque(false);
+        scrollPane.setOpaque(false);
 
-		java.awt.event.ItemListener listener = new java.awt.event.ItemListener() {
-			public void itemStateChanged(java.awt.event.ItemEvent ev) {
-				if (!settingOptions) frame.priorsChanged();
-			}
-		};
+        java.awt.event.ItemListener listener = new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                if (!settingOptions) frame.priorsChanged();
+            }
+        };
 
         // order here must match corrosponding BeautiOptions constant, i.e. BeautiOptions.CONSTANT == 0 etc
         if (BeautiApp.developer) {
@@ -155,73 +155,73 @@ public class PriorsPanel extends JPanel implements Exportable {
 				if (!settingOptions) frame.priorsChanged();
 			}});
 
-		setupComponent(parameterizationCombo);
-		parameterizationCombo.addItemListener(listener);
+        setupComponent(parameterizationCombo);
+        parameterizationCombo.addItemListener(listener);
 
-		setupComponent(bayesianSkylineCombo);
-		bayesianSkylineCombo.addItemListener(listener);
+        setupComponent(bayesianSkylineCombo);
+        bayesianSkylineCombo.addItemListener(listener);
 
-		setupComponent(upgmaStartingTreeCheck);
+        setupComponent(upgmaStartingTreeCheck);
 
-		setOpaque(false);
-		setLayout(new BorderLayout(0,0));
-		setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
+        setOpaque(false);
+        setLayout(new BorderLayout(0,0));
+        setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
 
-		JPanel panel = new JPanel(new BorderLayout(0,0));
-		panel.setOpaque(false);
-		panel.add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);
-		panel.add(scrollPane, BorderLayout.CENTER);
-		panel.add(new JLabel("* Marked parameters currently have a default prior distribution. " +
-				"You could check that these are appropriate."), BorderLayout.SOUTH);
+        JPanel panel = new JPanel(new BorderLayout(0,0));
+        panel.setOpaque(false);
+        panel.add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(new JLabel("* Marked parameters currently have a default prior distribution. " +
+                "You could check that these are appropriate."), BorderLayout.SOUTH);
 
-		treePriorPanel.setBorder(null);
-		add(treePriorPanel, BorderLayout.NORTH);
-		add(panel, BorderLayout.CENTER);
-	}
+        treePriorPanel.setBorder(null);
+        add(treePriorPanel, BorderLayout.NORTH);
+        add(panel, BorderLayout.CENTER);
+    }
 
-	private void setupComponent(JComponent comp) {
-		comp.setOpaque(false);
+    private void setupComponent(JComponent comp) {
+        comp.setOpaque(false);
 
-		//comp.setFont(UIManager.getFont("SmallSystemFont"));
-		//comp.putClientProperty("JComponent.sizeVariant", "small");
-		if (comp instanceof JButton) {
-			comp.putClientProperty("JButton.buttonType", "roundRect");
-		}
-		if (comp instanceof JComboBox) {
-			comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
-		}
-	}
+        //comp.setFont(UIManager.getFont("SmallSystemFont"));
+        //comp.putClientProperty("JComponent.sizeVariant", "small");
+        if (comp instanceof JButton) {
+            comp.putClientProperty("JButton.buttonType", "roundRect");
+        }
+        if (comp instanceof JComboBox) {
+            comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+        }
+    }
 
-	private void setupPanel() {
+    private void setupPanel() {
 
-		treePriorPanel.removeAll();
+        treePriorPanel.removeAll();
 
-		treePriorPanel.addComponentWithLabel("Tree Prior:", treePriorCombo);
-		if (treePriorCombo.getSelectedIndex() == 1 || // exponential
-				treePriorCombo.getSelectedIndex() == 2 || // logistic
-				treePriorCombo.getSelectedIndex() == 3 ) { // expansion
-			treePriorPanel.addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
-		} else if (treePriorCombo.getSelectedIndex() == 4 ) { // bayesian skyline
-			groupCountField.setColumns(6);
-			treePriorPanel.addComponentWithLabel("Number of groups:", groupCountField);
-			treePriorPanel.addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
-		} else if (treePriorCombo.getSelectedIndex() == 6 ) { // birth-death
-			samplingProportionField.setColumns(8);
-			treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
-		}
+        treePriorPanel.addComponentWithLabel("Tree Prior:", treePriorCombo);
+        if (treePriorCombo.getSelectedIndex() == 1 || // exponential
+                treePriorCombo.getSelectedIndex() == 2 || // logistic
+                treePriorCombo.getSelectedIndex() == 3 ) { // expansion
+            treePriorPanel.addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
+        } else if (treePriorCombo.getSelectedIndex() == 4 ) { // bayesian skyline
+            groupCountField.setColumns(6);
+            treePriorPanel.addComponentWithLabel("Number of groups:", groupCountField);
+            treePriorPanel.addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
+        } else if (treePriorCombo.getSelectedIndex() == 6 ) { // birth-death
+            samplingProportionField.setColumns(8);
+            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
+        }
 
-		treePriorPanel.addComponent(upgmaStartingTreeCheck);
+        treePriorPanel.addComponent(upgmaStartingTreeCheck);
 
-		validate();
-		repaint();
-	}
+        validate();
+        repaint();
+    }
 
-	private boolean settingOptions = false;
+    private boolean settingOptions = false;
 
-	public void setOptions(BeautiOptions options) {
-		settingOptions = true;
-		parameters = options.selectParameters();
-		priorTableModel.fireTableDataChanged();
+    public void setOptions(BeautiOptions options) {
+        settingOptions = true;
+        parameters = options.selectParameters();
+        priorTableModel.fireTableDataChanged();
 
 //		if (options.nodeHeightPrior == BeautiOptions.CONSTANT) {
 //			treePriorCombo.setSelectedIndex(0);
@@ -245,49 +245,49 @@ public class PriorsPanel extends JPanel implements Exportable {
         groupCountField.setValue(options.skylineGroupCount);
 		samplingProportionField.setValue(options.birthDeathSamplingProportion);
 
-		parameterizationCombo.setSelectedIndex(options.parameterization);
-		bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
+        parameterizationCombo.setSelectedIndex(options.parameterization);
+        bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
 
-		upgmaStartingTreeCheck.setSelected(options.upgmaStartingTree);
+        upgmaStartingTreeCheck.setSelected(options.upgmaStartingTree);
 
-		setupPanel();
+        setupPanel();
 
-		settingOptions = false;
+        settingOptions = false;
 
-		validate();
-		repaint();
-	}
+        validate();
+        repaint();
+    }
 
-	private PriorDialog priorDialog = null;
-	private DiscretePriorDialog discretePriorDialog = null;
+    private PriorDialog priorDialog = null;
+    private DiscretePriorDialog discretePriorDialog = null;
 
-	private void priorButtonPressed(int row) {
-		BeautiOptions.Parameter param = (BeautiOptions.Parameter)parameters.get(row);
+    private void priorButtonPressed(int row) {
+        BeautiOptions.Parameter param = (BeautiOptions.Parameter)parameters.get(row);
 
-		if (param.isDiscrete) {
-			if (discretePriorDialog == null) {
-				discretePriorDialog = new DiscretePriorDialog(frame);
-			}
+        if (param.isDiscrete) {
+            if (discretePriorDialog == null) {
+                discretePriorDialog = new DiscretePriorDialog(frame);
+            }
 
-			if (discretePriorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
-				return;
-			}
-		} else {
-			if (priorDialog == null) {
-				priorDialog = new PriorDialog(frame);
-			}
+            if (discretePriorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+        } else {
+            if (priorDialog == null) {
+                priorDialog = new PriorDialog(frame);
+            }
 
-			if (priorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
-				return;
-			}
-		}
-		param.priorEdited = true;
+            if (priorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+        }
+        param.priorEdited = true;
 
-		priorTableModel.fireTableDataChanged();
-	}
+        priorTableModel.fireTableDataChanged();
+    }
 
-	public void getOptions(BeautiOptions options) {
-		if (settingOptions) return;
+    public void getOptions(BeautiOptions options) {
+        if (settingOptions) return;
 
 		if (treePriorCombo.getSelectedIndex() == BeautiOptions.CONSTANT) {
 			options.nodeHeightPrior = BeautiOptions.CONSTANT;
@@ -321,193 +321,193 @@ public class PriorsPanel extends JPanel implements Exportable {
 			throw new RuntimeException("Unexpected value from treePriorCombo");
 		}
 
-		options.parameterization = parameterizationCombo.getSelectedIndex();
-		options.skylineModel = bayesianSkylineCombo.getSelectedIndex();
+        options.parameterization = parameterizationCombo.getSelectedIndex();
+        options.skylineModel = bayesianSkylineCombo.getSelectedIndex();
 
-		options.upgmaStartingTree = upgmaStartingTreeCheck.isSelected();
-	}
+        options.upgmaStartingTree = upgmaStartingTreeCheck.isSelected();
+    }
 
-	public JComponent getExportableComponent() {
-		return priorTable;
-	}
+    public JComponent getExportableComponent() {
+        return priorTable;
+    }
 
-	NumberFormatter formatter = new NumberFormatter(4);
+    NumberFormatter formatter = new NumberFormatter(4);
 
-	class PriorTableModel extends AbstractTableModel {
+    class PriorTableModel extends AbstractTableModel {
 
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = -8864178122484971872L;
-		String[] columnNames = { "Parameter", "Prior", "Description" };
+        /**
+         *
+         */
+        private static final long serialVersionUID = -8864178122484971872L;
+        String[] columnNames = { "Parameter", "Prior", "Description" };
 
-		public PriorTableModel() {
-		}
+        public PriorTableModel() {
+        }
 
-		public int getColumnCount() {
-			return columnNames.length;
-		}
+        public int getColumnCount() {
+            return columnNames.length;
+        }
 
-		public int getRowCount() {
-			return parameters.size();
-		}
+        public int getRowCount() {
+            return parameters.size();
+        }
 
-		public Object getValueAt(int row, int col) {
-			BeastGenerator.Parameter param = (BeastGenerator.Parameter)parameters.get(row);
-			switch (col) {
-				case 0: return param.getName();
-				case 1: return param.priorType.getPriorString(param);
-				case 2: return param.getDescription();
-			}
-			return null;
-		}
+        public Object getValueAt(int row, int col) {
+            BeastGenerator.Parameter param = (BeastGenerator.Parameter)parameters.get(row);
+            switch (col) {
+                case 0: return param.getName();
+                case 1: return param.priorType.getPriorString(param);
+                case 2: return param.getDescription();
+            }
+            return null;
+        }
 
-		public String getColumnName(int column) {
-			return columnNames[column];
-		}
+        public String getColumnName(int column) {
+            return columnNames[column];
+        }
 
-		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
+        public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
 
-		public boolean isCellEditable(int row, int col) {
+        public boolean isCellEditable(int row, int col) {
             return col == 1;
         }
 
-		public String toString() {
-			StringBuffer buffer = new StringBuffer();
+        public String toString() {
+            StringBuffer buffer = new StringBuffer();
 
-			buffer.append(getColumnName(0));
-			for (int j = 1; j < getColumnCount(); j++) {
-				buffer.append("\t");
-				buffer.append(getColumnName(j));
-			}
-			buffer.append("\n");
+            buffer.append(getColumnName(0));
+            for (int j = 1; j < getColumnCount(); j++) {
+                buffer.append("\t");
+                buffer.append(getColumnName(j));
+            }
+            buffer.append("\n");
 
-			for (int i = 0; i < getRowCount(); i++) {
-				buffer.append(getValueAt(i, 0));
-				for (int j = 1; j < getColumnCount(); j++) {
-					buffer.append("\t");
-					buffer.append(getValueAt(i, j));
-				}
-				buffer.append("\n");
-			}
+            for (int i = 0; i < getRowCount(); i++) {
+                buffer.append(getValueAt(i, 0));
+                for (int j = 1; j < getColumnCount(); j++) {
+                    buffer.append("\t");
+                    buffer.append(getValueAt(i, j));
+                }
+                buffer.append("\n");
+            }
 
-			return buffer.toString();
-		}
-	}
+            return buffer.toString();
+        }
+    }
 
-	class DoubleRenderer extends TableRenderer {
+    class DoubleRenderer extends TableRenderer {
 
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = -2614341608257369805L;
+        /**
+         *
+         */
+        private static final long serialVersionUID = -2614341608257369805L;
 
-		public DoubleRenderer(int alignment, Insets insets) {
+        public DoubleRenderer(int alignment, Insets insets) {
 
-			super(true, alignment, insets);
-		}
+            super(true, alignment, insets);
+        }
 
-		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-		                                               boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                       boolean hasFocus, int row, int column) {
 
-			String s;
-			if (((Double)value).isNaN()) {
-				s = "random";
-			} else {
-				s = formatter.format((Double)value);
-			}
-			return super.getTableCellRendererComponent(table, s, isSelected, hasFocus, row, column);
+            String s;
+            if (((Double)value).isNaN()) {
+                s = "random";
+            } else {
+                s = formatter.format((Double)value);
+            }
+            return super.getTableCellRendererComponent(table, s, isSelected, hasFocus, row, column);
 
-		}
-	}
+        }
+    }
 
-	public class ButtonRenderer extends JButton implements TableCellRenderer {
+    public class ButtonRenderer extends JButton implements TableCellRenderer {
 
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = -2416184092883649169L;
+        /**
+         *
+         */
+        private static final long serialVersionUID = -2416184092883649169L;
 
-		public ButtonRenderer(int alignment, Insets insets) {
-			setOpaque(true);
-			setHorizontalAlignment(alignment);
-			setMargin(insets);
-		}
+        public ButtonRenderer(int alignment, Insets insets) {
+            setOpaque(true);
+            setHorizontalAlignment(alignment);
+            setMargin(insets);
+        }
 
-		public Component getTableCellRendererComponent(JTable table, Object value,
-		                                               boolean isSelected, boolean hasFocus, int row, int column) {
-			setEnabled(table.isEnabled());
-			setFont(table.getFont());
-			if (isSelected) {
-				setForeground(table.getSelectionForeground());
-				setBackground(table.getSelectionBackground());
-			} else{
-				setForeground(table.getForeground());
-				setBackground(UIManager.getColor("Button.background"));
-			}
-			setText( (value ==null) ? "" : value.toString() );
-			return this;
-		}
-	}
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
+            setEnabled(table.isEnabled());
+            setFont(table.getFont());
+            if (isSelected) {
+                setForeground(table.getSelectionForeground());
+                setBackground(table.getSelectionBackground());
+            } else{
+                setForeground(table.getForeground());
+                setBackground(UIManager.getColor("Button.background"));
+            }
+            setText( (value ==null) ? "" : value.toString() );
+            return this;
+        }
+    }
 
-	public class ButtonEditor extends DefaultCellEditor {
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = 6372738480075411674L;
-		protected JButton button;
-		private String label;
-		private boolean isPushed;
-		private int row;
+    public class ButtonEditor extends DefaultCellEditor {
+        /**
+         *
+         */
+        private static final long serialVersionUID = 6372738480075411674L;
+        protected JButton button;
+        private String label;
+        private boolean isPushed;
+        private int row;
 
-		public ButtonEditor(int alignment, Insets insets) {
-			super(new JCheckBox());
-			button = new JButton();
-			button.setOpaque(true);
-			button.setHorizontalAlignment(alignment);
-			button.setMargin(insets);
-			button.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					fireEditingStopped();
-				}
-			});
-		}
+        public ButtonEditor(int alignment, Insets insets) {
+            super(new JCheckBox());
+            button = new JButton();
+            button.setOpaque(true);
+            button.setHorizontalAlignment(alignment);
+            button.setMargin(insets);
+            button.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    fireEditingStopped();
+                }
+            });
+        }
 
-		public Component getTableCellEditorComponent(JTable table, Object value,
-		                                             boolean isSelected, int row, int column) {
-			button.setEnabled(table.isEnabled());
-			button.setFont(table.getFont());
-			if (isSelected) {
-				button.setForeground(table.getSelectionForeground());
-				button.setBackground(table.getSelectionBackground());
-			} else{
-				button.setForeground(table.getForeground());
-				button.setBackground(table.getBackground());
-			}
-			label = (value ==null) ? "" : value.toString();
-			button.setText( label );
-			isPushed = true;
-			this.row = row;
-			return button;
-		}
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            button.setEnabled(table.isEnabled());
+            button.setFont(table.getFont());
+            if (isSelected) {
+                button.setForeground(table.getSelectionForeground());
+                button.setBackground(table.getSelectionBackground());
+            } else{
+                button.setForeground(table.getForeground());
+                button.setBackground(table.getBackground());
+            }
+            label = (value ==null) ? "" : value.toString();
+            button.setText( label );
+            isPushed = true;
+            this.row = row;
+            return button;
+        }
 
-		public Object getCellEditorValue() {
-			if (isPushed)  {
-				priorButtonPressed(row);
-			}
-			isPushed = false;
-			return label;
-		}
+        public Object getCellEditorValue() {
+            if (isPushed)  {
+                priorButtonPressed(row);
+            }
+            isPushed = false;
+            return label;
+        }
 
-		public boolean stopCellEditing() {
-			isPushed = false;
-			return super.stopCellEditing();
-		}
+        public boolean stopCellEditing() {
+            isPushed = false;
+            return super.stopCellEditing();
+        }
 
-		protected void fireEditingStopped() {
-			super.fireEditingStopped();
-		}
-	}
+        protected void fireEditingStopped() {
+            super.fireEditingStopped();
+        }
+    }
 
 
 }

@@ -15,17 +15,17 @@ import dr.xml.XMLSyntaxRule;
 
 public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 
-	public static final int RECOMBINATION = 3;
-	
-	
 	public static final String ARG_COALESCENT_MODEL = "argCoalescentLikelihood";
 	public static final String RECOMBINATION_RATE = "recombinationRate";
 	public static final String POPULATION_SIZE = "populationSize";
 	public static final String ARG_MODEL = "argModel";
-		
+	
+	public static final int RECOMBINATION = 3;
+			
 	private Parameter popSize;
 	private Parameter recomRate;
 	private ARGModel arg;
+	private int taxaNumber;
 	
 	private ArrayList<CoalescentInterval> intervals;
 	private ArrayList<CoalescentInterval> storedIntervals;
@@ -49,6 +49,8 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 			intervalsKnown = true;
 			calculateIntervals();
 		}
+		
+		taxaNumber = arg.getExternalNodeCount();
 	}
 	
 	public void calculateIntervals(){
@@ -72,14 +74,15 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		}
 		dr.util.HeapSort.sort(intervals);
 		
-		double a;
-		for(int i = 0; i < intervals.size() - 1; i++ ){
-			 a = intervals.get(i).length;
-			 intervals.get(i).length = a - intervals.get(i+1).length;
+		
+		double a = 0, b = 0; 
+		for(int i = 0; i < intervals.size(); i++ ){
+			b = intervals.get(i).length;
+			intervals.get(i).length = intervals.get(i).length - a;
+			a = b;
 		}
-		
+				
 		intervalsKnown = true;
-		
 	}
 	
 	 public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -137,7 +140,7 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 
 		 
 		 double logLike = 0.0;
-		 int numberOfTaxa = 2;
+		 int numberOfTaxa = taxaNumber;
 		 
 		 for(CoalescentInterval interval: intervals){
 			 double rate = (double)numberOfTaxa * 
@@ -149,17 +152,15 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 				logLike += Math.log((double)(numberOfTaxa - 1)/
 											 (numberOfTaxa - 1 + rRate))
 						- Math.log(chooseTwo(numberOfTaxa));
-			 	numberOfTaxa ++;
+			 	numberOfTaxa--;
 			 }else if(interval.type == RECOMBINATION){
 				 logLike += Math.log(rRate/(numberOfTaxa - 1 + rRate))
 				 		- Math.log((double)numberOfTaxa);
-			 	 numberOfTaxa--;
+			 	 numberOfTaxa++;
 			 }else{
 				 throw new RuntimeException("Not implemented yet");
 			 }
 		 }
-		
-		 assert !Double.isInfinite(logLike);
 		 
 		 return logLike;
 	 }
@@ -176,7 +177,7 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 
 		 public int compareTo(CoalescentInterval a){
 		 
-		 if(a.length < this.length){
+		 if(a.length > this.length){
 				return -1;
 			}else if(a.length == this.length){
 				Logger.getLogger("dr.evomodel.coalescent").severe(

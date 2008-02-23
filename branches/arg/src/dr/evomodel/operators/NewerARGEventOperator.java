@@ -118,14 +118,16 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		double newReassortmentHeight, newBifurcationHeight, logHastings = 0;
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
 		boolean[] heightAboveRoot = {false,false};
-	
+		double[] theta = {extraAmountBeyondOldRoot[0]/treeHeight,
+						  extraAmountBeyondOldRoot[1]/treeHeight};
+		
+		
 		for(int i = 0; i < 2; i++){
 			if(MathUtils.nextDouble() < aboveRootProbability[i])
 				heightAboveRoot[i] = true;
 			
 			if(heightAboveRoot[i]){
-				double theta = extraAmountBeyondOldRoot[i]/treeHeight;
-				newHeight.add(treeHeight + MathUtils.nextExponential(theta));
+				newHeight.add(treeHeight + MathUtils.nextExponential(theta[i]));
 			}else{
 				newHeight.add(treeHeight * MathUtils.nextDouble());
 			}
@@ -138,25 +140,22 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		if(heightAboveRoot[0] && heightAboveRoot[1]){
 			double[] additionalHeight = {newBifurcationHeight - treeHeight,
 										 newReassortmentHeight - treeHeight};
-			double temp1 = -extraAmountBeyondOldRoot[0]*additionalHeight[0] -
-			                extraAmountBeyondOldRoot[1]*additionalHeight[1];
-			double temp2 = -extraAmountBeyondOldRoot[0]*additionalHeight[1] -
-						  	extraAmountBeyondOldRoot[1]*additionalHeight[0];
+			double temp1 = -theta[0]*additionalHeight[0] - theta[1]*additionalHeight[1];
+			double temp2 = -theta[0]*additionalHeight[1] - theta[1]*additionalHeight[0];
 			
 			logHastings -= Math.log(aboveRootProbability[0]*
 								    aboveRootProbability[1]*
-								    extraAmountBeyondOldRoot[0]*
-								    extraAmountBeyondOldRoot[1]*
+								    theta[0]*theta[1]*
 								    (Math.exp(temp1) + Math.exp(temp2)));
 		}else if(heightAboveRoot[0] || heightAboveRoot[1]){
 			double[] additionalHeight = {newBifurcationHeight - treeHeight,
 					newReassortmentHeight - treeHeight};
 			logHastings += Math.log(treeHeight) 
 					- Math.log(aboveRootProbability[0]*(1 - aboveRootProbability[1])*
-					(extraAmountBeyondOldRoot[0]*Math.exp(-extraAmountBeyondOldRoot[0]*additionalHeight[0])) 
+					(theta[0]*Math.exp(-theta[0]*additionalHeight[0])) 
 					+ 
 					aboveRootProbability[1]*(1 - aboveRootProbability[0])*
-					(extraAmountBeyondOldRoot[1]*Math.exp(-extraAmountBeyondOldRoot[1]*additionalHeight[0])));
+					(theta[1]*Math.exp(-theta[1]*additionalHeight[0])));
 		}else{
 			logHastings += 2.0*Math.log(treeHeight) - 
 				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])*2.0);
@@ -207,6 +206,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				.nextInt(totalPotentialBifurcationChildren));
 
 
+		
+		
 		Node sisParentL = sisNode.leftParent;
 		Node sisParentR = sisNode.rightParent;
 		Node sisParent = sisParentL;
@@ -517,6 +518,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		Node attachParent = (Node) arg.getOtherChild(recParent, recNode);
 		
 		
+		
 		if (recNode.leftParent == recNode.rightParent) {
 			if(!arg.isRoot(recNode.leftParent)){
 				Node recGrandParent = recParent.leftParent;
@@ -531,7 +533,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				beforeBifurcationHeight = recParent.getHeight();
 			}else{
 				assert recChild.bifurcation;
-				
+								
 				Node recChildLeft = recChild.leftChild;
 				Node recChildRight = recChild.rightChild;
 				
@@ -551,6 +553,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				beforeBifurcationHeight = beforeTreeHeight;
 			}
 			
+			attachParent = recChild;
 		} else { 
 			
 			Node recParent1 = recNode.leftParent;
@@ -631,6 +634,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 						
 				}
 				beforeBifurcationHeight = beforeTreeHeight;
+				attachParent = (Node) arg.getRoot();
 			}else{
 				Node recGrandParent = recParent1.leftParent; 
 
@@ -721,25 +725,24 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 							   beforeReassortmentHeight > afterTreeHeight};
 		double[] additionalHeight = {beforeBifurcationHeight - afterTreeHeight,
 				                     beforeReassortmentHeight - afterTreeHeight};
+		double[] theta = {extraAmountBeyondOldRoot[0]/afterTreeHeight, 
+						  extraAmountBeyondOldRoot[1]/afterTreeHeight};
 		
 		if(aboveRoot[0] && aboveRoot[1]){
-			double temp1 = -extraAmountBeyondOldRoot[0]*additionalHeight[0] -
-			                extraAmountBeyondOldRoot[1]*additionalHeight[1];
-			double temp2 = -extraAmountBeyondOldRoot[0]*additionalHeight[1] -
-						  	extraAmountBeyondOldRoot[1]*additionalHeight[0];
+			double temp1 = -theta[0]*additionalHeight[0] - theta[1]*additionalHeight[1];
+			double temp2 = -theta[0]*additionalHeight[1] - theta[1]*additionalHeight[0];
 			
 			logHastings += Math.log(aboveRootProbability[0]*
 								    aboveRootProbability[1]*
-								    extraAmountBeyondOldRoot[0]*
-								    extraAmountBeyondOldRoot[1]*
+								    theta[0]*theta[1]*
 								    (Math.exp(temp1) + Math.exp(temp2)));
 		}else if(aboveRoot[0] || aboveRoot[1]){
 			logHastings += -Math.log(afterTreeHeight) + Math.log(
 					aboveRootProbability[0]*(1 - aboveRootProbability[1])*
-					(extraAmountBeyondOldRoot[0]*Math.exp(-extraAmountBeyondOldRoot[0]*additionalHeight[0])) 
+					(theta[0]*Math.exp(-theta[0]*additionalHeight[0])) 
 					+ 
 					aboveRootProbability[1]*(1 - aboveRootProbability[0])*
-					(extraAmountBeyondOldRoot[1]*Math.exp(-extraAmountBeyondOldRoot[1]*additionalHeight[0])));
+					(theta[1]*Math.exp(-theta[1]*additionalHeight[0])));
 		}else{
 			logHastings += -2.0*Math.log(afterTreeHeight) + 
 				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])*2.0);
@@ -749,19 +752,19 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				*findPotentialAttachmentPoints(beforeReassortmentHeight, null));
 						
 		
-//		Node recParentL = attachChild.leftParent;
-//		Node recParentR = attachChild.rightParent;
-//		if (recParentL != recParentR) {
-//			if (arg.getNodeHeight(recParentL) < beforeReassortmentHeight){
-//			}else if (arg.getNodeHeight(recParentR) > beforeReassortmentHeight){
-//				logHastings -= LOG_TWO;
-//			}
-//		}
-
+		Node recParentL = attachChild.leftParent;
+		Node recParentR = attachChild.rightParent;
+		if (recParentL != recParentR) {
+			if (arg.getNodeHeight(recParentL) < beforeReassortmentHeight){
+			}else if (arg.getNodeHeight(recParentR) > beforeReassortmentHeight){
+				logHastings -= LOG_TWO;
+			}
+		}
+		
 //		Node sisParentL = attachParent.leftParent;
 //		Node sisParentR = attachParent.rightParent;
+//		
 //		if (sisParentL != sisParentR) {
-//			
 //			if (arg.getNodeHeight(sisParentL) < beforeBifurcationHeight){
 //			}else if (arg.getNodeHeight(sisParentR) > beforeBifurcationHeight){
 //				logHastings -= LOG_TWO;

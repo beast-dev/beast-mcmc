@@ -49,6 +49,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	private VariableSizeCompoundParameter nodeRates;
 	private boolean rootMovesOK = false;
 	
+	int[] test = {0,0};
+	
 	/**
 	 * The first position refers to the bifurcation.
 	 * The second one is for the reassortment.
@@ -154,6 +156,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		Node recParentL = recNode.leftParent;
 		Node recParentR = recNode.rightParent;
 		Node recParent = recParentL;
+		
 		if (recParentL != recParentR) {
 			boolean[] tester = {arg.getNodeHeight(recParentL) > newReassortmentHeight,
 					arg.getNodeHeight(recParentR) > newReassortmentHeight};
@@ -162,6 +165,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				if(MathUtils.nextBoolean()){
 					recParent = recParentR;
 				}
+				
 				logHastings += LOG_TWO;
 			}else if(tester[0]){
 				recParent = recParentL;
@@ -169,6 +173,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				recParent = recParentR;
 			}
 		}
+		
 
 		//4. Choose your bifurcation location.
 		Node sisNode = (Node) potentialBifurcationChildren.get(MathUtils
@@ -432,9 +437,10 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		if(rootMovesOK){
 			for (int i = 0; i < n; i++) {
 				Node node = (Node) arg.getNode(i);
+				Node lp = node.leftParent;
+				Node rp = node.rightParent;
 				
-				if (node.isReassortment() && (node.leftParent.isBifurcation() 
-						|| node.rightParent.isBifurcation())) {
+				if (node.isReassortment() && (lp.bifurcation || rp.bifurcation)) {
 					if (list != null)
 						list.add(node);
 					count++;
@@ -705,15 +711,18 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			
 		assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
 		
+		
 		if(attachChild.leftParent != attachChild.rightParent &&
 		   arg.getNodeHeight(attachChild.leftParent) > beforeReassortmentHeight &&
 		   arg.getNodeHeight(attachChild.rightParent) > beforeReassortmentHeight){
 				logHastings -= LOG_TWO;
+				
 		}
 		
+		
 		if(attachParent.leftParent != attachParent.rightParent &&
-			arg.getNodeHeight(attachParent.leftParent) > beforeReassortmentHeight &&
-			arg.getNodeHeight(attachParent.rightParent) > beforeReassortmentHeight	){
+			arg.getNodeHeight(attachParent.leftParent) > beforeBifurcationHeight &&
+			arg.getNodeHeight(attachParent.rightParent) > beforeBifurcationHeight	){
 				logHastings -= LOG_TWO;
 		}
 		assert nodeCheck();

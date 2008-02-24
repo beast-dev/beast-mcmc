@@ -117,7 +117,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		double newReassortmentHeight, newBifurcationHeight, logHastings = 0;
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
 
-		double theta = 0.1053605 / treeHeight;
+		double theta = -Math.log(0.85) / treeHeight; //10% of the time, it will propose above the root.
 		
 		newHeight.add(MathUtils.nextExponential(theta));
 		newHeight.add(MathUtils.nextExponential(theta));
@@ -126,55 +126,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		newReassortmentHeight = newHeight.get(0);
 		newBifurcationHeight  = newHeight.get(1);
 
-		logHastings += theta*(newHeight.get(0) + newHeight.get(1)) - 2.0*Math.log(2.0*theta);
-		
-		
-		
-		
-//		boolean[] heightAboveRoot = {false,false};
-//		double[] theta = {extraAmountBeyondOldRoot[0]/treeHeight,
-//						  extraAmountBeyondOldRoot[1]/treeHeight};
-//		
-//		
-//		for(int i = 0; i < 2; i++){
-//			if(MathUtils.nextDouble() < aboveRootProbability[i])
-//				heightAboveRoot[i] = true;
-//			
-//			if(heightAboveRoot[i]){
-//				newHeight.add(treeHeight + MathUtils.nextExponential(theta[i]));
-//			}else{
-//				newHeight.add(treeHeight * MathUtils.nextDouble());
-//			}
-//		}	
-//		HeapSort.sort(newHeight);
-//		
-//		newBifurcationHeight  = newHeight.get(1);
-//		newReassortmentHeight = newHeight.get(0);
-//		
-//		
-//		if(heightAboveRoot[0] && heightAboveRoot[1]){
-//			double[] additionalHeight = {newBifurcationHeight - treeHeight,
-//										 newReassortmentHeight - treeHeight};
-//			double temp1 = -theta[0]*additionalHeight[0] - theta[1]*additionalHeight[1];
-//			double temp2 = -theta[0]*additionalHeight[1] - theta[1]*additionalHeight[0];
-//			
-//			logHastings -= Math.log(aboveRootProbability[0]*
-//								    aboveRootProbability[1]*
-//								    theta[0]*theta[1]*
-//								    (Math.exp(temp1) + Math.exp(temp2)));
-//		}else if(heightAboveRoot[0] || heightAboveRoot[1]){
-//			double[] additionalHeight = {newBifurcationHeight - treeHeight,
-//					newReassortmentHeight - treeHeight};
-//			logHastings += Math.log(treeHeight) 
-//					- Math.log(aboveRootProbability[0]*(1 - aboveRootProbability[1])*
-//					(theta[0]*Math.exp(-theta[0]*additionalHeight[0])) 
-//					+ 
-//					aboveRootProbability[1]*(1 - aboveRootProbability[0])*
-//					(theta[1]*Math.exp(-theta[1]*additionalHeight[0])));
-//		}else{
-//			logHastings += 2.0*Math.log(treeHeight) - 
-//				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])*2.0);
-//		}
+		logHastings += theta*(newHeight.get(0) + newHeight.get(1)) - 2.0*Math.log(theta) - LOG_TWO;
+
 		
 		//2. Find the possible re-assortment and bifurcation points.
 		ArrayList<NodeRef> potentialBifurcationChildren = new ArrayList<NodeRef>();
@@ -202,13 +155,18 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		Node recParentR = recNode.rightParent;
 		Node recParent = recParentL;
 		if (recParentL != recParentR) {
-			if (arg.getNodeHeight(recParentL) < newReassortmentHeight)
-				recParent = recParentR;
-			else if (arg.getNodeHeight(recParentR) > newReassortmentHeight){
+			boolean[] tester = {arg.getNodeHeight(recParentL) > newReassortmentHeight,
+					arg.getNodeHeight(recParentR) > newReassortmentHeight};
+			
+			if(tester[0] && tester[1]){
 				if(MathUtils.nextBoolean()){
 					recParent = recParentR;
 				}
 				logHastings += LOG_TWO;
+			}else if(tester[0]){
+				recParent = recParentL;
+			}else{
+				recParent = recParentR;
 			}
 		}
 
@@ -222,16 +180,23 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		Node sisParentL = sisNode.leftParent;
 		Node sisParentR = sisNode.rightParent;
 		Node sisParent = sisParentL;
+		
 		if (sisParentL != sisParentR) {
-			if (arg.getNodeHeight(sisParentL) < newBifurcationHeight)
-				sisParent = sisParentR;
-			else if (arg.getNodeHeight(sisParentR) > newBifurcationHeight){
+			boolean[] tester = {arg.getNodeHeight(sisParentL) > newBifurcationHeight,
+					arg.getNodeHeight(sisParentR) > newBifurcationHeight};
+			
+			if(tester[0] && tester[1]){
 				if(MathUtils.nextBoolean()){
 					sisParent = sisParentR;
 				}
 				logHastings += LOG_TWO;
+			}else if(tester[0]){
+				sisParent = sisParentL;
+			}else{
+				sisParent = sisParentR;
 			}
 		}
+		
 
 		//5. Make the new nodes.
 		//Note: The height stuff is taken care of below.
@@ -384,25 +349,18 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		assert nodeCheck();
 				
 		logHastings -= Math.log((double)findPotentialNodesToRemove(null));
-	
-		
-		if(newReassortment.leftParent != newReassortment.rightParent){
-			Node recParent1 = newReassortment.leftParent;
-			Node recParent2 = newReassortment.rightParent;
-			if(rootMovesOK){
-				if(recParent1.bifurcation && recParent2.bifurcation){
+			
+		if(newReassortment.leftParent != newReassortment.rightParent 
+				&& newReassortment.leftParent.bifurcation 
+				&& newReassortment.rightParent.bifurcation){
 					logHastings -= LOG_TWO;
-				}
-			}else{
-				throw new RuntimeException("Get me to work");
-			}
-		}
+		}	
+			
 		assert nodeCheck();
 		
 		assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
 		
 		//You're done, return the hastings ratio!
-		
 		
 		
 		return logHastings ;
@@ -413,7 +371,42 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		if(rootMovesOK){
 			for (int i = 0, n = arg.getNodeCount(); i < n; i++){
 				NodeRef nr = arg.getNode(i);
-				if(!arg.isRoot(nr) && arg.getNodeHeight(nr) < time){
+				if(!arg.isRoot(nr)){
+					if(arg.getNodeHeight(nr) < time){
+						Node left = (Node) arg.getParent(nr, 0);
+						Node right = (Node) arg.getParent(nr, 1);
+						if(arg.isBifurcation(nr)){
+							assert left == right;
+							if(arg.getNodeHeight(left) > time){
+								if (list != null)
+									list.add(nr);
+								count++;
+							}
+						}else{
+							if(arg.getNodeHeight(left) > time){
+								if (list != null)
+									list.add(nr);
+								count++;
+							}
+							if(arg.getNodeHeight(right) > time){
+								if (list != null)
+									list.add(nr);
+								count++;
+							}
+						}
+					}
+				}else{
+					if(arg.getNodeHeight(nr) < time){
+						if (list != null)
+							list.add(nr);
+						count++;
+					}
+				}
+			}
+		}else{
+			for (int i = 0, n = arg.getNodeCount(); i < n; i++) {
+				NodeRef nr = arg.getNode(i);
+				if (!arg.isRoot(nr) && arg.getNodeHeight(nr) < time) {
 					if (arg.getNodeHeight(arg.getParent(nr, 0)) > time) {
 						if (list != null)
 							list.add(nr);
@@ -424,25 +417,6 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 							list.add(nr);
 						count++;
 					}
-				}else if(arg.getNodeHeight(nr) < time){
-					if (list != null)
-						list.add(nr);
-					count++;
-				}
-			}
-		}
-		for (int i = 0, n = arg.getNodeCount(); i < n; i++) {
-			NodeRef nr = arg.getNode(i);
-			if (!arg.isRoot(nr) && arg.getNodeHeight(nr) < time) {
-				if (arg.getNodeHeight(arg.getParent(nr, 0)) > time) {
-					if (list != null)
-						list.add(nr);
-					count++;
-				}
-				if (arg.isReassortment(nr) && arg.getNodeHeight(arg.getParent(nr, 1)) > time) {
-					if (list != null)
-						list.add(nr);
-					count++;
 				}
 			}
 		}
@@ -556,15 +530,16 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			
 			//This is the easiest way of integrating root delete moves :)
 			if(rootMovesOK){
-				if (!recParent1.bifurcation){
-					recParent1 = recNode.rightParent;
-					recParent2 = recNode.leftParent;
-				}else if(recParent2.bifurcation){
+				
+				if(recParent1.bifurcation && recParent2.bifurcation){
 					if (MathUtils.nextBoolean()) { 
 						recParent1 = recNode.rightParent;
 						recParent2 = recNode.leftParent;
 					}
 					logHastings += LOG_TWO;
+				}else if(recParent2.bifurcation){
+					recParent1 = recNode.rightParent;
+					recParent2 = recNode.leftParent;
 				}
 			}else{
 				if (!recParent1.bifurcation || recParent1.isRoot()) { 
@@ -719,41 +694,9 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		
 		//Do the backwards stuff now :(
 		double afterTreeHeight = arg.getNodeHeight(arg.getRoot());
-		double theta = 0.1053605 / afterTreeHeight;
+		double theta = -Math.log(0.85) / afterTreeHeight; //10% of the time, it will propose above the root.
 		logHastings += -theta*(beforeBifurcationHeight + beforeReassortmentHeight) 
-			+ 2.0*Math.log(2.0*theta);
-		
-		
-//		boolean[] aboveRoot = {beforeBifurcationHeight > afterTreeHeight,
-//							   beforeReassortmentHeight > afterTreeHeight};
-//		double[] additionalHeight = {beforeBifurcationHeight - afterTreeHeight,
-//				                     beforeReassortmentHeight - afterTreeHeight};
-//		double[] theta = {extraAmountBeyondOldRoot[0]/afterTreeHeight, 
-//						  extraAmountBeyondOldRoot[1]/afterTreeHeight};
-//		
-//		
-//		if(aboveRoot[0] && aboveRoot[1]){
-//			double temp1 = -theta[0]*additionalHeight[0] - theta[1]*additionalHeight[1];
-//			double temp2 = -theta[0]*additionalHeight[1] - theta[1]*additionalHeight[0];
-//			
-//			logHastings += Math.log(aboveRootProbability[0]*
-//								    aboveRootProbability[1]*
-//								    theta[0]*theta[1]*
-//								    (Math.exp(temp1) + Math.exp(temp2)));
-//			assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
-//		}else if(aboveRoot[0] || aboveRoot[1]){
-//			logHastings += -Math.log(afterTreeHeight) + Math.log(
-//					aboveRootProbability[0]*(1 - aboveRootProbability[1])*
-//					(theta[0]*Math.exp(-theta[0]*additionalHeight[0])) 
-//					+ 
-//					aboveRootProbability[1]*(1 - aboveRootProbability[0])*
-//					(theta[1]*Math.exp(-theta[1]*additionalHeight[0])));
-//			assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
-//		}else{
-//			logHastings += -2.0*Math.log(afterTreeHeight) + 
-//				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])*2.0);
-//			assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
-//		}
+			+ 2.0*Math.log(theta) + LOG_TWO;
 		
 		assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
 		

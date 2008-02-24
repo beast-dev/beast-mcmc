@@ -93,7 +93,6 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	 */
 	public double doOperation() throws OperatorFailedException {
 		double logq = 0;
-		assert nodeCheck();
 		
 		try {
 			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
@@ -117,50 +116,65 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		ArrayList<Double> newHeight = new ArrayList<Double>(2);
 		double newReassortmentHeight, newBifurcationHeight, logHastings = 0;
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
-		boolean[] heightAboveRoot = {false,false};
-		double[] theta = {extraAmountBeyondOldRoot[0]/treeHeight,
-						  extraAmountBeyondOldRoot[1]/treeHeight};
+
+		double theta = 0.1053605 / treeHeight;
 		
-		
-		for(int i = 0; i < 2; i++){
-			if(MathUtils.nextDouble() < aboveRootProbability[i])
-				heightAboveRoot[i] = true;
-			
-			if(heightAboveRoot[i]){
-				newHeight.add(treeHeight + MathUtils.nextExponential(theta[i]));
-			}else{
-				newHeight.add(treeHeight * MathUtils.nextDouble());
-			}
-		}	
+		newHeight.add(MathUtils.nextExponential(theta));
+		newHeight.add(MathUtils.nextExponential(theta));
 		HeapSort.sort(newHeight);
 		
-		newBifurcationHeight  = newHeight.get(1);
 		newReassortmentHeight = newHeight.get(0);
+		newBifurcationHeight  = newHeight.get(1);
+
+		logHastings += theta*(newHeight.get(0) + newHeight.get(1)) - 2.0*Math.log(2.0*theta);
 		
 		
-		if(heightAboveRoot[0] && heightAboveRoot[1]){
-			double[] additionalHeight = {newBifurcationHeight - treeHeight,
-										 newReassortmentHeight - treeHeight};
-			double temp1 = -theta[0]*additionalHeight[0] - theta[1]*additionalHeight[1];
-			double temp2 = -theta[0]*additionalHeight[1] - theta[1]*additionalHeight[0];
-			
-			logHastings -= Math.log(aboveRootProbability[0]*
-								    aboveRootProbability[1]*
-								    theta[0]*theta[1]*
-								    (Math.exp(temp1) + Math.exp(temp2)));
-		}else if(heightAboveRoot[0] || heightAboveRoot[1]){
-			double[] additionalHeight = {newBifurcationHeight - treeHeight,
-					newReassortmentHeight - treeHeight};
-			logHastings += Math.log(treeHeight) 
-					- Math.log(aboveRootProbability[0]*(1 - aboveRootProbability[1])*
-					(theta[0]*Math.exp(-theta[0]*additionalHeight[0])) 
-					+ 
-					aboveRootProbability[1]*(1 - aboveRootProbability[0])*
-					(theta[1]*Math.exp(-theta[1]*additionalHeight[0])));
-		}else{
-			logHastings += 2.0*Math.log(treeHeight) - 
-				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])*2.0);
-		}
+		
+		
+//		boolean[] heightAboveRoot = {false,false};
+//		double[] theta = {extraAmountBeyondOldRoot[0]/treeHeight,
+//						  extraAmountBeyondOldRoot[1]/treeHeight};
+//		
+//		
+//		for(int i = 0; i < 2; i++){
+//			if(MathUtils.nextDouble() < aboveRootProbability[i])
+//				heightAboveRoot[i] = true;
+//			
+//			if(heightAboveRoot[i]){
+//				newHeight.add(treeHeight + MathUtils.nextExponential(theta[i]));
+//			}else{
+//				newHeight.add(treeHeight * MathUtils.nextDouble());
+//			}
+//		}	
+//		HeapSort.sort(newHeight);
+//		
+//		newBifurcationHeight  = newHeight.get(1);
+//		newReassortmentHeight = newHeight.get(0);
+//		
+//		
+//		if(heightAboveRoot[0] && heightAboveRoot[1]){
+//			double[] additionalHeight = {newBifurcationHeight - treeHeight,
+//										 newReassortmentHeight - treeHeight};
+//			double temp1 = -theta[0]*additionalHeight[0] - theta[1]*additionalHeight[1];
+//			double temp2 = -theta[0]*additionalHeight[1] - theta[1]*additionalHeight[0];
+//			
+//			logHastings -= Math.log(aboveRootProbability[0]*
+//								    aboveRootProbability[1]*
+//								    theta[0]*theta[1]*
+//								    (Math.exp(temp1) + Math.exp(temp2)));
+//		}else if(heightAboveRoot[0] || heightAboveRoot[1]){
+//			double[] additionalHeight = {newBifurcationHeight - treeHeight,
+//					newReassortmentHeight - treeHeight};
+//			logHastings += Math.log(treeHeight) 
+//					- Math.log(aboveRootProbability[0]*(1 - aboveRootProbability[1])*
+//					(theta[0]*Math.exp(-theta[0]*additionalHeight[0])) 
+//					+ 
+//					aboveRootProbability[1]*(1 - aboveRootProbability[0])*
+//					(theta[1]*Math.exp(-theta[1]*additionalHeight[0])));
+//		}else{
+//			logHastings += 2.0*Math.log(treeHeight) - 
+//				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])*2.0);
+//		}
 		
 		//2. Find the possible re-assortment and bifurcation points.
 		ArrayList<NodeRef> potentialBifurcationChildren = new ArrayList<NodeRef>();
@@ -389,7 +403,9 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		
 		//You're done, return the hastings ratio!
 		
-		return logHastings;
+		
+		
+		return logHastings ;
 	}
 	
 	private int findPotentialAttachmentPoints(double time, ArrayList<NodeRef> list) {
@@ -703,37 +719,41 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		
 		//Do the backwards stuff now :(
 		double afterTreeHeight = arg.getNodeHeight(arg.getRoot());
-		
-		boolean[] aboveRoot = {beforeBifurcationHeight > afterTreeHeight,
-							   beforeReassortmentHeight > afterTreeHeight};
-		double[] additionalHeight = {beforeBifurcationHeight - afterTreeHeight,
-				                     beforeReassortmentHeight - afterTreeHeight};
-		double[] theta = {extraAmountBeyondOldRoot[0]/afterTreeHeight, 
-						  extraAmountBeyondOldRoot[1]/afterTreeHeight};
+		double theta = 0.1053605 / afterTreeHeight;
+		logHastings += -theta*(beforeBifurcationHeight + beforeReassortmentHeight) 
+			+ 2.0*Math.log(2.0*theta);
 		
 		
-		if(aboveRoot[0] && aboveRoot[1]){
-			double temp1 = -theta[0]*additionalHeight[0] - theta[1]*additionalHeight[1];
-			double temp2 = -theta[0]*additionalHeight[1] - theta[1]*additionalHeight[0];
-			
-			logHastings += Math.log(aboveRootProbability[0]*
-								    aboveRootProbability[1]*
-								    theta[0]*theta[1]*
-								    (Math.exp(temp1) + Math.exp(temp2)));
-			assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
-		}else if(aboveRoot[0] || aboveRoot[1]){
-			logHastings += -Math.log(afterTreeHeight) + Math.log(
-					aboveRootProbability[0]*(1 - aboveRootProbability[1])*
-					(theta[0]*Math.exp(-theta[0]*additionalHeight[0])) 
-					+ 
-					aboveRootProbability[1]*(1 - aboveRootProbability[0])*
-					(theta[1]*Math.exp(-theta[1]*additionalHeight[0])));
-			assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
-		}else{
-			logHastings += -2.0*Math.log(afterTreeHeight) + 
-				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])*2.0);
-			assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
-		}
+//		boolean[] aboveRoot = {beforeBifurcationHeight > afterTreeHeight,
+//							   beforeReassortmentHeight > afterTreeHeight};
+//		double[] additionalHeight = {beforeBifurcationHeight - afterTreeHeight,
+//				                     beforeReassortmentHeight - afterTreeHeight};
+//		double[] theta = {extraAmountBeyondOldRoot[0]/afterTreeHeight, 
+//						  extraAmountBeyondOldRoot[1]/afterTreeHeight};
+//		
+//		
+//		if(aboveRoot[0] && aboveRoot[1]){
+//			double temp1 = -theta[0]*additionalHeight[0] - theta[1]*additionalHeight[1];
+//			double temp2 = -theta[0]*additionalHeight[1] - theta[1]*additionalHeight[0];
+//			
+//			logHastings += Math.log(aboveRootProbability[0]*
+//								    aboveRootProbability[1]*
+//								    theta[0]*theta[1]*
+//								    (Math.exp(temp1) + Math.exp(temp2)));
+//			assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
+//		}else if(aboveRoot[0] || aboveRoot[1]){
+//			logHastings += -Math.log(afterTreeHeight) + Math.log(
+//					aboveRootProbability[0]*(1 - aboveRootProbability[1])*
+//					(theta[0]*Math.exp(-theta[0]*additionalHeight[0])) 
+//					+ 
+//					aboveRootProbability[1]*(1 - aboveRootProbability[0])*
+//					(theta[1]*Math.exp(-theta[1]*additionalHeight[0])));
+//			assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
+//		}else{
+//			logHastings += -2.0*Math.log(afterTreeHeight) + 
+//				Math.log((1-aboveRootProbability[0])*(1-aboveRootProbability[1])*2.0);
+//			assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
+//		}
 		
 		assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
 		
@@ -745,20 +765,20 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		if(attachChild.leftParent != attachChild.rightParent &&
 		   arg.getNodeHeight(attachChild.leftParent) > beforeReassortmentHeight &&
 		   arg.getNodeHeight(attachChild.rightParent) > beforeReassortmentHeight){
-					logHastings -= LOG_TWO;
+				logHastings -= LOG_TWO;
 		}
 		
 		if(attachParent.leftParent != attachParent.rightParent &&
 			arg.getNodeHeight(attachParent.leftParent) > beforeReassortmentHeight &&
 			arg.getNodeHeight(attachParent.rightParent) > beforeReassortmentHeight	){
-					logHastings -= LOG_TWO;
+				logHastings -= LOG_TWO;
 		}
-
 		assert nodeCheck();
 		assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
 	    
 		
-		return logHastings;
+		
+		return logHastings ;
 	}
 
 	

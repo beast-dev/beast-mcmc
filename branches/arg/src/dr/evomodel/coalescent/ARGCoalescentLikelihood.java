@@ -137,20 +137,15 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	 }
 	 
 	 private double calculateLogLikelihood(double pSize, double rRate){
-
-		 
-		
 		 
 		 double logLike = 0.0;
 		 int numberOfTaxa = taxaNumber;
 		 
 		 for(CoalescentInterval interval: intervals){
 			
-			 //This is needed when the coalescent process stops early.
 			 if(numberOfTaxa == 1)
 				 return Double.NEGATIVE_INFINITY;
-			 
-			 
+			 			 
 			 double rate = (double)numberOfTaxa * 
 			 					(numberOfTaxa - 1 + rRate)/(2.0 * pSize);
 			 

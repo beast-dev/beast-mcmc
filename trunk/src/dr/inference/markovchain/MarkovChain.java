@@ -146,7 +146,8 @@ public final class MarkovChain {
             final MCMCOperator mcmcOperator = schedule.getOperator(op);
 
             final double oldScore = currentScore;
-            String oldMessage = ((CompoundLikelihood)likelihood).getDiagnosis();
+             // not used and why must it be a "compund like"?
+            //String oldMessage = ((CompoundLikelihood)likelihood).getDiagnosis();
 
 //            assert Profiler.startProfile("Store");
 

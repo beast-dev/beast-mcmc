@@ -15,7 +15,7 @@ Some notes on work and plans for future work on BEAST.
   * Some development of Rannala & Yang - Birth, Death & sampling?
 
 ==Population history models== 
-  * New variable dimension Bayesian skyline plot by JH and AJD (handles multiple loci) - submitted to BMC Evolutionary Biology
+  * New variable dimension Bayesian skyline plot by Joseph Heled (JH) and AJD (handles multiple loci) - submitted to BMC Evolutionary Biology
   * Gaussian Markov random field - Marc's group
 
 ==Continuous models==

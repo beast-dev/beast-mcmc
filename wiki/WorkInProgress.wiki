@@ -14,8 +14,8 @@ Some notes on work and plans for future work on BEAST.
   * Nee et al: in progress
   * Some development of Rannala & Yang - Birth, Death & sampling?
 
-==Skyline-type models== 
-  * New variable group model in progress - Alexei's group
+==Population history models== 
+  * New variable dimension Bayesian skyline plot by JH and AJD (handles multiple loci) - submitted to BMC Evolutionary Biology
   * Gaussian Markov random field - Marc's group
 
 ==Continuous models==

@@ -97,7 +97,7 @@ public class YuleModel extends SpeciationModel {
     public double logNodeProbability(Tree tree, NodeRef node) {
 
         double nodeHeight = tree.getNodeHeight(node);
-        double lambda = getBirthRate();
+        final double lambda = getBirthRate();
 
         double logP = 0;
 

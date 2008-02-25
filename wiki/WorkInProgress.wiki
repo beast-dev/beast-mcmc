@@ -19,7 +19,7 @@ Some notes on work and plans for future work on BEAST.
   * Gaussian Markov random field - Marc's group
 
 ==Continuous models==
-  * Multivariate diffusion models - Marc & Philippe
+  * Multivariate diffusion models - Marc & Philippe (MAS and AJD have submitted a preliminary application for funding for this project -- anybody else interested if we get to the second round?)
   * Visualization - DensityPlotter & new GoogleEarth exporter.
 
 ==Structured Coalescent==

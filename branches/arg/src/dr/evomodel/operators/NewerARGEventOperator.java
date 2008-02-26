@@ -81,12 +81,13 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	 */
 	public double doOperation() throws OperatorFailedException {
 		double logq = 0;
-				
+		
 		try {
 			if(arg.getReassortmentNodeCount() == 0)
 				logq = AddOperation();
-			else 
+			else
 				logq = RemoveOperation();
+			
 //			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
 //				logq = AddOperation() - size;
 //			else
@@ -142,8 +143,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		assert totalPotentialBifurcationChildren > 0;
 		assert totalPotentialReassortmentChildren > 0;
 				
-		logHastings += Math.log((double)totalPotentialBifurcationChildren *
-								  totalPotentialReassortmentChildren);
+		logHastings += Math.log((double)potentialBifurcationChildren.size() *
+								 potentialReassortmentChildren.size());
 
 		
 			
@@ -353,6 +354,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		assert nodeCheck();
 				
 		logHastings -= Math.log((double)findPotentialNodesToRemove(null));
+				
 		
 		if(newReassortment.leftParent != newReassortment.rightParent 
 				&& newReassortment.leftParent.bifurcation 
@@ -656,10 +658,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		assert nodeCheck() : arg.toARGSummary();
 		
 		//Do the backwards stuff now :(
-		
-		System.out.println(beforeBifurcationHeight);
-		System.out.println(beforeReassortmentHeight);
-		
+				
 		double theta = -arg.getNodeHeight(arg.getRoot()) / Math.log(0.1); 
 		logHastings += -theta*(beforeBifurcationHeight + beforeReassortmentHeight) 
 			+ 2.0*Math.log(theta) + LOG_TWO;

@@ -67,14 +67,12 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 
         int tipCount = tree.getExternalNodeCount();
 
-        switch (mode) {
-            case NARROW:
-                narrow();
-                break;
-            case WIDE:
-                wide();
-                break;
+        if(mode == NARROW){
+        	narrow();
+        }else{
+        	wide();
         }
+        
 
         if (tree.getExternalNodeCount() != tipCount) {
             throw new RuntimeException("Lost some tips in " + ((mode == NARROW) ? "NARROW mode." : "WIDE mode."));

@@ -22,7 +22,7 @@ import dr.math.MathUtils;
 import dr.util.HeapSort;
 import dr.xml.*;
 import java.util.ArrayList;
-import java.util.List;
+
 
 /**
  * Adds and removes re-assortment events.
@@ -37,7 +37,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	public static final String INTERNAL_AND_ROOT = "internalNodesPlusRoot";
 	public static final String NODE_RATES = "nodeRates";
 	public static final String ROOT_MOVES_OK = "rootMovesOk";
-	public static final double LOG_TWO = 0.693147181;
+	public static final double LOG_TWO = Math.log(2.0);
 
 	private ARGModel arg = null;
 	private double size = 1.0;
@@ -48,19 +48,9 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	private VariableSizeCompoundParameter internalAndRootNodeParameters;
 	private VariableSizeCompoundParameter nodeRates;
 	private boolean rootMovesOK = false;
+	private ScaleOperator rootDude;
 	
-	int[] test = {0,0};
 	
-	/**
-	 * The first position refers to the bifurcation.
-	 * The second one is for the reassortment.
-	 */
-	private double[] aboveRootProbability = {0.0,0.0};
-	/**
-	 * The first position refers to the bifurcation.
-	 * The second one is for the reassortment.
-	 */
-	private double[] extraAmountBeyondOldRoot = {20.0,20.0};
 	
 	public NewerARGEventOperator(ARGModel arg, int weight, double size, int mode,
 	                           VariableSizeCompoundParameter param1,
@@ -68,7 +58,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	                           VariableSizeCompoundParameter param3,
 	                           double singlePartitionProbability, 
 	                           boolean isRecombination,
-	                           boolean rootMovesOK) {
+	                           boolean rootMovesOK, ScaleOperator rootDude) {
 		this.arg = arg;
 		this.size = size;
 		this.internalNodeParameters = param1;
@@ -79,13 +69,9 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		this.mode = mode;
 		this.rootMovesOK = rootMovesOK;
 		
-		
-		if(rootMovesOK){
-			aboveRootProbability[0] = 0.08;
-			aboveRootProbability[1] = 0.02;
-		}
-		
 		setWeight(weight);
+		
+		this.rootDude = rootDude;
 	}
 
 
@@ -95,12 +81,16 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	 */
 	public double doOperation() throws OperatorFailedException {
 		double logq = 0;
-		
+				
 		try {
-			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
-				logq = AddOperation() - size;
-			else
-				logq = RemoveOperation() + size;
+			if(arg.getReassortmentNodeCount() == 0)
+				logq = AddOperation() + LOG_TWO;
+			else 
+				logq = RemoveOperation() - LOG_TWO;
+//			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
+//				logq = AddOperation() - size;
+//			else
+//				logq = RemoveOperation() + size;
 		} catch (NoReassortmentEventException ofe) {
 			return Double.NEGATIVE_INFINITY; 
 		} catch (OperatorFailedException e) {
@@ -119,7 +109,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		double newReassortmentHeight, newBifurcationHeight, logHastings = 0;
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
 
-		double theta = -Math.log(0.85) / treeHeight; //10% of the time, it will propose above the root.
+		double theta = -treeHeight / Math.log(0.1); //10% of the time, it will propose above the root.
 		
 		newHeight.add(MathUtils.nextExponential(theta));
 		newHeight.add(MathUtils.nextExponential(theta));
@@ -128,7 +118,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		newReassortmentHeight = newHeight.get(0);
 		newBifurcationHeight  = newHeight.get(1);
 
-		logHastings += theta*(newHeight.get(0) + newHeight.get(1)) - 2.0*Math.log(theta) - LOG_TWO;
+		logHastings += theta*(newReassortmentHeight + newBifurcationHeight) - 2.0*Math.log(theta) - LOG_TWO;
 
 		
 		//2. Find the possible re-assortment and bifurcation points.
@@ -140,14 +130,23 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		int totalPotentialReassortmentChildren = findPotentialAttachmentPoints(
 				newReassortmentHeight, potentialReassortmentChildren);
 
+		
+//		System.out.println(arg.toARGSummary());
+//		System.out.println(newBifurcationHeight);
+//		System.out.println(potentialBifurcationChildren);
+//		System.out.println(newReassortmentHeight);
+//		System.out.println(potentialReassortmentChildren + "\n\n");
+		
+		
+		
 		assert totalPotentialBifurcationChildren > 0;
 		assert totalPotentialReassortmentChildren > 0;
 				
-		
 		logHastings += Math.log((double)totalPotentialBifurcationChildren *
 								  totalPotentialReassortmentChildren);
 
 		
+			
 		//3.  Choose your re-assortment location.
 		Node recNode = (Node) potentialReassortmentChildren.get(MathUtils
 				.nextInt(totalPotentialReassortmentChildren));
@@ -354,12 +353,12 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		assert nodeCheck();
 				
 		logHastings -= Math.log((double)findPotentialNodesToRemove(null));
-			
+		
 		if(newReassortment.leftParent != newReassortment.rightParent 
 				&& newReassortment.leftParent.bifurcation 
 				&& newReassortment.rightParent.bifurcation){
 					logHastings -= LOG_TWO;
-		}	
+		}
 			
 		assert nodeCheck();
 		
@@ -373,58 +372,42 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	
 	private int findPotentialAttachmentPoints(double time, ArrayList<NodeRef> list) {
 		int count = 0;
-		if(rootMovesOK){
-			for (int i = 0, n = arg.getNodeCount(); i < n; i++){
-				NodeRef nr = arg.getNode(i);
-				if(!arg.isRoot(nr)){
-					if(arg.getNodeHeight(nr) < time){
-						Node left = (Node) arg.getParent(nr, 0);
-						Node right = (Node) arg.getParent(nr, 1);
-						if(arg.isBifurcation(nr)){
-							assert left == right;
-							if(arg.getNodeHeight(left) > time){
-								if (list != null)
-									list.add(nr);
-								count++;
-							}
-						}else{
-							if(arg.getNodeHeight(left) > time){
-								if (list != null)
-									list.add(nr);
-								count++;
-							}
-							if(arg.getNodeHeight(right) > time){
-								if (list != null)
-									list.add(nr);
-								count++;
-							}
+		
+		for (int i = 0, n = arg.getNodeCount(); i < n; i++){
+			NodeRef nr = arg.getNode(i);
+			if(!arg.isRoot(nr)){
+				if(arg.getNodeHeight(nr) < time){
+					Node left = (Node) arg.getParent(nr, 0);
+					Node right = (Node) arg.getParent(nr, 1);
+					if(arg.isBifurcation(nr)){
+						assert left == right;
+						if(arg.getNodeHeight(left) > time){
+							if (list != null)
+								list.add(nr);
+							count++;
+						}
+					}else{
+						if(arg.getNodeHeight(left) > time){
+							if (list != null)
+								list.add(nr);
+							count++;
+						}
+						if(arg.getNodeHeight(right) > time){
+							if (list != null)
+								list.add(nr);
+							count++;
 						}
 					}
-				}else{
-					if(arg.getNodeHeight(nr) < time){
-						if (list != null)
-							list.add(nr);
-						count++;
-					}
 				}
-			}
-		}else{
-			for (int i = 0, n = arg.getNodeCount(); i < n; i++) {
-				NodeRef nr = arg.getNode(i);
-				if (!arg.isRoot(nr) && arg.getNodeHeight(nr) < time) {
-					if (arg.getNodeHeight(arg.getParent(nr, 0)) > time) {
-						if (list != null)
-							list.add(nr);
-						count++;
-					}
-					if (arg.isReassortment(nr) && arg.getNodeHeight(arg.getParent(nr, 1)) > time) {
-						if (list != null)
-							list.add(nr);
-						count++;
-					}
+			}else{
+				if(arg.getNodeHeight(nr) < time){
+					if (list != null)
+						list.add(nr);
+					count++;
 				}
 			}
 		}
+		
 		return count;
 	}
 	
@@ -432,33 +415,20 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	private int findPotentialNodesToRemove(ArrayList<NodeRef> list) {
 		int count = 0;
 		int n = arg.getNodeCount();
-		Node root = (Node) arg.getRoot();
 		
-		if(rootMovesOK){
-			for (int i = 0; i < n; i++) {
-				Node node = (Node) arg.getNode(i);
-				Node lp = node.leftParent;
-				Node rp = node.rightParent;
+		
+		for (int i = 0; i < n; i++) {
+			Node node = (Node) arg.getNode(i);
+			Node lp = node.leftParent;
+			Node rp = node.rightParent;
 				
-				if (node.isReassortment() && (lp.bifurcation || rp.bifurcation)) {
-					if (list != null)
-						list.add(node);
-					count++;
-				}
-			}
-		}else{
-			for (int i = 0; i < n; i++) {
-				Node node = (Node) arg.getNode(i);
-				if (node.isReassortment()
-				&& ((node.leftParent != root && node.leftParent.isBifurcation()) ||
-				   (node.rightParent != root  && node.rightParent.isBifurcation()))) {
-					if (list != null)
-						list.add(node);
-					count++;
-				}
+			if (node.isReassortment() && (lp.bifurcation || rp.bifurcation)) {
+				if (list != null)
+					list.add(node);
+				count++;
 			}
 		}
-
+	
 		return count;
 	}
 	
@@ -466,14 +436,15 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 	private double RemoveOperation() throws OperatorFailedException {
 		double logHastings = 0;
-		
+				
 		// 1. Draw reassortment node uniform randomly
 
 		ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
 		int totalPotentials = findPotentialNodesToRemove(potentialNodes);
 		
-		if (totalPotentials == 0) 
+		if (totalPotentials == 0)		
 			throw new NoReassortmentEventException();
+		
 		
 		logHastings += Math.log((double)totalPotentials);
 		
@@ -493,7 +464,6 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		Node attachParent = (Node) arg.getOtherChild(recParent, recNode);
 		
 		
-		
 		if (recNode.leftParent == recNode.rightParent) {
 			if(!arg.isRoot(recNode.leftParent)){
 				Node recGrandParent = recParent.leftParent;
@@ -508,7 +478,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				beforeBifurcationHeight = recParent.getHeight();
 			}else{
 				assert recChild.bifurcation;
-								
+				
 				Node recChildLeft = recChild.leftChild;
 				Node recChildRight = recChild.rightChild;
 				
@@ -535,31 +505,18 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			Node recParent2 = recNode.rightParent;
 			
 			//This is the easiest way of integrating root delete moves :)
-			if(rootMovesOK){
 				
-				if(recParent1.bifurcation && recParent2.bifurcation){
-					if (MathUtils.nextBoolean()) { 
-						recParent1 = recNode.rightParent;
-						recParent2 = recNode.leftParent;
-					}
-					logHastings += LOG_TWO;
-				}else if(recParent2.bifurcation){
+			if(recParent1.bifurcation && recParent2.bifurcation){
+				if (MathUtils.nextBoolean()) { 
 					recParent1 = recNode.rightParent;
 					recParent2 = recNode.leftParent;
 				}
-			}else{
-				if (!recParent1.bifurcation || recParent1.isRoot()) { 
-					recParent1 = recNode.rightParent;
-					recParent2 = recNode.leftParent;
-				} else if (recParent2.bifurcation && !recParent2.isRoot()) { 
-					if (MathUtils.nextBoolean()) { 
-						recParent1 = recNode.rightParent;
-						recParent2 = recNode.leftParent;
-					}
-					logHastings += LOG_TWO;
-				}
-				
+				logHastings += LOG_TWO;
+			}else if(recParent2.bifurcation){
+				recParent1 = recNode.rightParent;
+				recParent2 = recNode.leftParent;
 			}
+			
 			
 			attachParent = (Node) arg.getOtherChild(recParent1, recNode);
 			
@@ -699,8 +656,11 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		assert nodeCheck() : arg.toARGSummary();
 		
 		//Do the backwards stuff now :(
-		double afterTreeHeight = arg.getNodeHeight(arg.getRoot());
-		double theta = -Math.log(0.85) / afterTreeHeight; //10% of the time, it will propose above the root.
+		
+		System.out.println(beforeBifurcationHeight);
+		System.out.println(beforeReassortmentHeight);
+		
+		double theta = -arg.getNodeHeight(arg.getRoot()) / Math.log(0.1); 
 		logHastings += -theta*(beforeBifurcationHeight + beforeReassortmentHeight) 
 			+ 2.0*Math.log(theta) + LOG_TWO;
 		
@@ -708,21 +668,18 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		
 		logHastings -= Math.log((double)findPotentialAttachmentPoints(beforeBifurcationHeight, null)
 				*findPotentialAttachmentPoints(beforeReassortmentHeight, null));
-			
-		assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
-		
-		
+				
 		if(attachChild.leftParent != attachChild.rightParent &&
 		   arg.getNodeHeight(attachChild.leftParent) > beforeReassortmentHeight &&
 		   arg.getNodeHeight(attachChild.rightParent) > beforeReassortmentHeight){
 				logHastings -= LOG_TWO;
 				
 		}
-		
-		
+				
 		if(attachParent.leftParent != attachParent.rightParent &&
 			arg.getNodeHeight(attachParent.leftParent) > beforeBifurcationHeight &&
 			arg.getNodeHeight(attachParent.rightParent) > beforeBifurcationHeight	){
+			
 				logHastings -= LOG_TWO;
 		}
 		assert nodeCheck();
@@ -965,9 +922,11 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			else
 				throw new XMLParseException(ADD_PROBABILITY + " must be between 0 and 1");
 				
+			ScaleOperator rootGuy = (ScaleOperator) xo.getChild(ScaleOperator.class);
+			
 			return new NewerARGEventOperator(treeModel, weight, size, 
 					mode, parameter1, parameter2, parameter3, 
-					singlePartitionProbability, isRecombination, rootMovesOK);
+					singlePartitionProbability, isRecombination, rootMovesOK, rootGuy);
 		}
 
 		public String getParserDescription() {

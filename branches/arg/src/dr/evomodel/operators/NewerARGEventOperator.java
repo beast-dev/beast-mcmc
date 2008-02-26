@@ -84,9 +84,9 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				
 		try {
 			if(arg.getReassortmentNodeCount() == 0)
-				logq = AddOperation() + LOG_TWO;
+				logq = AddOperation();
 			else 
-				logq = RemoveOperation() - LOG_TWO;
+				logq = RemoveOperation();
 //			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
 //				logq = AddOperation() - size;
 //			else

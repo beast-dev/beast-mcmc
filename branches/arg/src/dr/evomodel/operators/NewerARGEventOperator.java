@@ -38,28 +38,26 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	public static final String INTERNAL_NODES = "internalNodes";
 	public static final String INTERNAL_AND_ROOT = "internalNodesPlusRoot";
 	public static final String NODE_RATES = "nodeRates";
-	public static final String ROOT_MOVES_OK = "rootMovesOk";
 	public static final double LOG_TWO = Math.log(2.0);
 
 	private ARGModel arg = null;
-	private double size = 1.0;
+	private double size = 0.0;  //Translates into add probability of 50%
 	private double singlePartitionProbability = 0.0;
+	private double probBelowRoot = 0.93; //Transformed in constructor for computation efficiency
 	private boolean isRecombination = false;
-	private int mode = CoercableMCMCOperator.DEFAULT;
+	private int mode = CoercableMCMCOperator.COERCION_OFF;
 	private VariableSizeCompoundParameter internalNodeParameters;
 	private VariableSizeCompoundParameter internalAndRootNodeParameters;
 	private VariableSizeCompoundParameter nodeRates;
-	private boolean rootMovesOK = false;
-	private ScaleOperator rootDude;
-
-
+	
+	
+	
 	public NewerARGEventOperator(ARGModel arg, int weight, double size, int mode,
 	                             VariableSizeCompoundParameter param1,
 	                             VariableSizeCompoundParameter param2,
 	                             VariableSizeCompoundParameter param3,
 	                             double singlePartitionProbability,
-	                             boolean isRecombination,
-	                             boolean rootMovesOK, ScaleOperator rootDude) {
+	                             boolean isRecombination) {
 		this.arg = arg;
 		this.size = size;
 		this.internalNodeParameters = param1;
@@ -68,11 +66,11 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		this.singlePartitionProbability = singlePartitionProbability;
 		this.isRecombination = isRecombination;
 		this.mode = mode;
-		this.rootMovesOK = rootMovesOK;
-
+		
 		setWeight(weight);
-
-		this.rootDude = rootDude;
+		
+		//This is for computational efficiency
+		probBelowRoot = -Math.log(1 - Math.sqrt(probBelowRoot));
 	}
 
 
@@ -109,26 +107,38 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 	private double AddOperation() throws OperatorFailedException {
 
-		ArrayList<Double> newHeight = new ArrayList<Double>(2);
-		double newReassortmentHeight, newBifurcationHeight, logHastings = 0;
+		double logHastings = 0;
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
-
-		double meanRoot = 4.0 / treeHeight;
-		double case1 = 0.95;
+		double newBifurcationHeight  = Double.POSITIVE_INFINITY; 
+		double newReassortmentHeight = Double.POSITIVE_INFINITY;
 		
-		if(MathUtils.nextDouble() < case1){
-			newReassortmentHeight = MathUtils.nextDouble() * treeHeight;
-			newBifurcationHeight = MathUtils.nextDouble() * treeHeight;
-			
-			logHastings += 2.0*Math.log(treeHeight) - Math.log(2.0*case1);
-		}else{
-			newReassortmentHeight = MathUtils.nextDouble() * treeHeight;
-			double additional = MathUtils.nextExponential(meanRoot);
-			logHastings += Math.log(treeHeight) + additional*meanRoot - 
-				Math.log((1-case1)*meanRoot);
-			
-			newBifurcationHeight = additional + treeHeight;
+		double theta = probBelowRoot / treeHeight;
+		
+		while(newBifurcationHeight > treeHeight && newReassortmentHeight > treeHeight){
+			newBifurcationHeight = MathUtils.nextExponential(theta);
+			newReassortmentHeight = MathUtils.nextExponential(theta);
 		}
+		
+		logHastings += theta*(newBifurcationHeight + newReassortmentHeight) - LOG_TWO
+		 			- 2.0*Math.log(theta) + Math.log(1 - Math.exp(-2.0*treeHeight*theta));
+		
+//		This is the ugly mixture proposal
+//		double meanRoot = 4.0 / treeHeight;
+//		double case1 = 0.95;
+//		
+//		if(MathUtils.nextDouble() < case1){
+//			newReassortmentHeight = MathUtils.nextDouble() * treeHeight;
+//			newBifurcationHeight = MathUtils.nextDouble() * treeHeight;
+//			
+//			logHastings += 2.0*Math.log(treeHeight) - Math.log(2.0*case1);
+//		}else{
+//			newReassortmentHeight = MathUtils.nextDouble() * treeHeight;
+//			double additional = MathUtils.nextExponential(meanRoot);
+//			logHastings += Math.log(treeHeight) + additional*meanRoot - 
+//				Math.log((1-case1)*meanRoot);
+//			
+//			newBifurcationHeight = additional + treeHeight;
+//		}
 		
 		if(newBifurcationHeight < newReassortmentHeight){
 			double temp = newBifurcationHeight;
@@ -504,8 +514,6 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			Node recParent1 = recNode.leftParent;
 			Node recParent2 = recNode.rightParent;
 
-			//This is the easiest way of integrating root delete moves :)
-
 			if (recParent1.bifurcation && recParent2.bifurcation) {
 				if (MathUtils.nextBoolean()) {
 					recParent1 = recNode.rightParent;
@@ -513,11 +521,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				}
 //				logHastings += LOG_TWO;
 			} else if (recParent2.bifurcation) {
-				assert false;
 				recParent1 = recNode.rightParent;
 				recParent2 = recNode.leftParent;
-			}else{
-				assert false;
 			}
 
 
@@ -661,17 +666,23 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 		double afterTreeHeight = arg.getNodeHeight(arg.getRoot());
 		
-		double meanRoot = 4.0 / afterTreeHeight;
-		double case1 = 0.95;
+//		This is the ugly mixture proposal
+//		double meanRoot = 4.0 / afterTreeHeight;
+//		double case1 = 0.95;
+//		
+//		if(beforeBifurcationHeight < afterTreeHeight){
+//			logHastings -= 2.0*Math.log(afterTreeHeight) - Math.log(2.0*case1);
+//		}else{
+//			double additional = beforeBifurcationHeight - afterTreeHeight;
+//			logHastings -= Math.log(afterTreeHeight) + additional*meanRoot - 
+//				Math.log((1-case1)*meanRoot);
+//		}
 		
-		if(beforeBifurcationHeight < afterTreeHeight){
-			logHastings -= 2.0*Math.log(afterTreeHeight) - Math.log(2.0*case1);
-		}else{
-			double additional = beforeBifurcationHeight - afterTreeHeight;
-			logHastings -= Math.log(afterTreeHeight) + additional*meanRoot - 
-				Math.log((1-case1)*meanRoot);
-		}
+		double theta = probBelowRoot / afterTreeHeight;
 		
+		logHastings -= theta*(beforeBifurcationHeight + beforeReassortmentHeight) - LOG_TWO
+			- 2.0*Math.log(theta) + Math.log(1 - Math.exp(-2.0*afterTreeHeight*theta));
+
 		
 		assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
 
@@ -903,12 +914,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					mode = CoercableMCMCOperator.COERCION_OFF;
 				}
 			}
-
-			boolean rootMovesOK = false;
-			if (xo.hasAttribute(ROOT_MOVES_OK)
-					&& xo.getBooleanAttribute(ROOT_MOVES_OK)) {
-				rootMovesOK = true;
-			}
+			
 
 			ARGModel treeModel = (ARGModel) xo.getChild(ARGModel.class);
 			VariableSizeCompoundParameter parameter1 =
@@ -925,11 +931,11 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			else
 				throw new XMLParseException(ADD_PROBABILITY + " must be between 0 and 1");
 
-			ScaleOperator rootGuy = (ScaleOperator) xo.getChild(ScaleOperator.class);
+			
 
 			return new NewerARGEventOperator(treeModel, weight, size,
 					mode, parameter1, parameter2, parameter3,
-					singlePartitionProbability, isRecombination, rootMovesOK, rootGuy);
+					singlePartitionProbability, isRecombination);
 		}
 
 		public String getParserDescription() {

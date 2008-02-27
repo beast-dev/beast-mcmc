@@ -83,13 +83,14 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	 */
 	public double doOperation() throws OperatorFailedException {
 		double logq = 0;
-
+		
 		try {
-			if (arg.getReassortmentNodeCount() == 0)
-				logq = AddOperation() + LOG_TWO;
-			else
-				logq = RemoveOperation() - LOG_TWO;
-
+			if(arg.getReassortmentNodeCount() == 0){
+				logq = AddOperation();
+			}else{
+				logq = RemoveOperation();
+			}
+			
 //			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
 //				logq = AddOperation() - size;
 //			else
@@ -112,30 +113,30 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		double newReassortmentHeight, newBifurcationHeight, logHastings = 0;
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
 
-		double theta = -treeHeight / Math.log(0.1); //10% of the time, it will propose above the root.
-
-		double draw1 = Double.POSITIVE_INFINITY;
-		double draw2 = Double.POSITIVE_INFINITY;
-
-		while (draw1 > treeHeight && draw2 > treeHeight) {
-			draw1 = MathUtils.nextExponential(theta);
-			draw2 = MathUtils.nextExponential(theta);
+		double meanRoot = 4.0 / treeHeight;
+		double case1 = 0.95;
+		
+		if(MathUtils.nextDouble() < case1){
+			newReassortmentHeight = MathUtils.nextDouble() * treeHeight;
+			newBifurcationHeight = MathUtils.nextDouble() * treeHeight;
+			
+			logHastings += 2.0*Math.log(treeHeight) - Math.log(2.0*case1);
+		}else{
+			newReassortmentHeight = MathUtils.nextDouble() * treeHeight;
+			double additional = MathUtils.nextExponential(meanRoot);
+			logHastings += Math.log(treeHeight) + additional*meanRoot - 
+				Math.log((1-case1)*meanRoot);
+			
+			newBifurcationHeight = additional + treeHeight;
 		}
-		newHeight.add(draw1);
-		newHeight.add(draw2);
-
-//		newHeight.add(MathUtils.nextExponential(theta));
-//		newHeight.add(MathUtils.nextExponential(theta));
-
-		HeapSort.sort(newHeight);
-
-		newReassortmentHeight = newHeight.get(0);
-		newBifurcationHeight = newHeight.get(1);
-
-		logHastings += (newReassortmentHeight + newBifurcationHeight) / theta + 2.0 * Math.log(theta) - LOG_TWO;
-
-//		logHastings += -Math.log(1.0 - Math.exp(-treeHeight*theta));
-
+		
+		if(newBifurcationHeight < newReassortmentHeight){
+			double temp = newBifurcationHeight;
+			newBifurcationHeight = newReassortmentHeight;
+			newReassortmentHeight = temp;
+		}
+		
+	
 		//2. Find the possible re-assortment and bifurcation points.
 		ArrayList<NodeRef> potentialBifurcationChildren = new ArrayList<NodeRef>();
 		ArrayList<NodeRef> potentialReassortmentChildren = new ArrayList<NodeRef>();
@@ -144,13 +145,6 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				newBifurcationHeight, potentialBifurcationChildren);
 		int totalPotentialReassortmentChildren = findPotentialAttachmentPoints(
 				newReassortmentHeight, potentialReassortmentChildren);
-
-//		System.out.println(arg.toARGSummary());
-//		System.out.println(newBifurcationHeight);
-//		System.out.println(potentialBifurcationChildren);
-//		System.out.println(newReassortmentHeight);
-//		System.out.println(potentialReassortmentChildren + "\n\n");
-
 
 		assert totalPotentialBifurcationChildren > 0;
 		assert totalPotentialReassortmentChildren > 0;
@@ -161,8 +155,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		//3.  Choose your re-assortment location.
 		Node recNode = (Node) potentialReassortmentChildren.get(MathUtils
 				.nextInt(totalPotentialReassortmentChildren));
-
-
+		
 		Node recParentL = recNode.leftParent;
 		Node recParentR = recNode.rightParent;
 		Node recParent = recParentL;
@@ -185,10 +178,11 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		}
 
 		//4. Choose your bifurcation location.
+		
 		Node sisNode = (Node) potentialBifurcationChildren.get(MathUtils
-				.nextInt(totalPotentialBifurcationChildren));
+				.nextInt(potentialBifurcationChildren.size()));
 
-
+		
 		Node sisParentL = sisNode.leftParent;
 		Node sisParentR = sisNode.rightParent;
 		Node sisParent = sisParentL;
@@ -361,11 +355,11 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		logHastings -= Math.log((double) findPotentialNodesToRemove(null));
 
 
-		if (newReassortment.leftParent != newReassortment.rightParent
-				&& newReassortment.leftParent.bifurcation
-				&& newReassortment.rightParent.bifurcation) {
-			logHastings -= LOG_TWO;
-		}
+//		if (newReassortment.leftParent != newReassortment.rightParent){
+//			if(newReassortment.leftParent.bifurcation
+//				&& newReassortment.rightParent.bifurcation) 
+//				logHastings -= LOG_TWO;
+//		}
 
 		assert nodeCheck();
 
@@ -517,10 +511,13 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					recParent1 = recNode.rightParent;
 					recParent2 = recNode.leftParent;
 				}
-				logHastings += LOG_TWO;
+//				logHastings += LOG_TWO;
 			} else if (recParent2.bifurcation) {
+				assert false;
 				recParent1 = recNode.rightParent;
 				recParent2 = recNode.leftParent;
+			}else{
+				assert false;
 			}
 
 
@@ -662,16 +659,27 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 		//Do the backwards stuff now :(
 
-		double theta = -arg.getNodeHeight(arg.getRoot()) / Math.log(0.1);
-
-		logHastings += -(beforeBifurcationHeight + beforeReassortmentHeight) / theta
-				- 2.0 * Math.log(theta) + LOG_TWO;
-
+		double afterTreeHeight = arg.getNodeHeight(arg.getRoot());
+		
+		double meanRoot = 4.0 / afterTreeHeight;
+		double case1 = 0.95;
+		
+		if(beforeBifurcationHeight < afterTreeHeight){
+			logHastings -= 2.0*Math.log(afterTreeHeight) - Math.log(2.0*case1);
+		}else{
+			double additional = beforeBifurcationHeight - afterTreeHeight;
+			logHastings -= Math.log(afterTreeHeight) + additional*meanRoot - 
+				Math.log((1-case1)*meanRoot);
+		}
+		
+		
 		assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
 
 		logHastings -= Math.log((double) findPotentialAttachmentPoints(beforeBifurcationHeight, null)
 				* findPotentialAttachmentPoints(beforeReassortmentHeight, null));
 
+		
+		
 		if (attachChild.leftParent != attachChild.rightParent &&
 				arg.getNodeHeight(attachChild.leftParent) > beforeReassortmentHeight &&
 				arg.getNodeHeight(attachChild.rightParent) > beforeReassortmentHeight) {

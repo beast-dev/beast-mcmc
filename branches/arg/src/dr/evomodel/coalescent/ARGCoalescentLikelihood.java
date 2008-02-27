@@ -128,7 +128,10 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 logLikelihood = calculateLogLikelihood(
 				 popSize.getParameterValue(0), 
 				 recomRate.getParameterValue(0)); 
-	 	
+	 			 
+		 if(arg.getReassortmentNodeCount() > 1)
+			 logLikelihood = Double.NEGATIVE_INFINITY;
+		 
 		 return logLikelihood;
 	 }
 	 
@@ -140,7 +143,7 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 
 		 double logLike = 0.0;
 		 int numberOfTaxa = taxaNumber;
-		 
+
 		 for(CoalescentInterval interval: intervals){
 			
 			 if(numberOfTaxa == 1)

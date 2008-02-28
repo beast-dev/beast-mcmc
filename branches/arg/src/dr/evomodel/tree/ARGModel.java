@@ -200,6 +200,189 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		// System.exit(-1);
 
 	}
+	
+	private double nextTime(int nTaxa, double pSize, double rRate){
+		double t = (double)nTaxa;
+		
+		double s = t*(t-1+rRate)/(2.0*pSize);
+		return MathUtils.nextExponential(s);
+	}
+	
+	private boolean nextEventIsBifurcation(int nTaxa, double rRate){
+		double a = (double)(nTaxa - 1)/(nTaxa - 1 + rRate);
+		if(MathUtils.nextDouble() < a){
+			return true;
+		}
+		return false;
+	}
+	
+	private class SimulateSticks{
+		public Node mySon;
+		public boolean leftStick;
+		
+		public SimulateSticks(Node son, boolean left){
+			mySon = son;
+			leftStick = left;
+		}
+	}
+	
+	public ARGModel(int ntaxa, double popSize, double rRate) {
+		super("Simulator");
+		
+		ArrayList<SimulateSticks> currentStickList = new ArrayList<SimulateSticks>(50);
+		ArrayList<Node> currentNodeList = new ArrayList<Node>(50);
+		
+		nodes = new ArrayList<Node>();
+		
+		int nodeNumber = 0;
+		
+		for(int i=0; i<ntaxa; i++) {
+			Node node = new Node();
+			node.heightParameter = new Parameter.Default(0.0);
+			node.taxon = new Taxon(""+i);
+			nodes.add(node);
+			currentNodeList.add(node);
+			node.bifurcation = true;
+			node.number = nodeNumber; nodeNumber++;
+			
+			SimulateSticks stickGuy = new SimulateSticks(node,true);
+			currentStickList.add(stickGuy);
+		}
+		
+		double currentHeight = 0;
+		
+		while( currentStickList.size() > 1) {
+			currentHeight = currentHeight + nextTime(ntaxa,popSize,rRate);
+			
+			if(nextEventIsBifurcation(ntaxa,rRate)){
+				SimulateSticks[] sticks = new SimulateSticks[2];
+				
+				for(int i = 0; i < 2; i++){
+					int randomDraw = MathUtils.nextInt(currentStickList.size());
+					sticks[i] = currentStickList.get(randomDraw);
+					currentStickList.remove(randomDraw);
+				}
+				
+				Node node = new Node();
+				nodes.add(node);
+				node.heightParameter = new Parameter.Default(currentHeight);
+				node.number = nodeNumber; nodeNumber++;
+				node.bifurcation = true;
+				SimulateSticks stickGuy = new SimulateSticks(node,true);
+				
+				if(sticks[0].mySon == sticks[1].mySon){
+					Node child = sticks[0].mySon;
+					node.leftChild = child;
+					node.rightChild = child;
+					child.rightParent = node;
+					child.leftParent = node;
+					
+					currentNodeList.remove(currentNodeList.indexOf(child));
+					currentNodeList.add(node);
+					currentStickList.add(stickGuy);
+				}else{
+					Node child1 = sticks[0].mySon;
+					Node child2 = sticks[1].mySon;
+					
+					node.leftChild = child1;
+					node.rightChild = child2;
+					
+					if(child1.bifurcation){
+						child1.leftParent = node;
+						child1.rightParent = node;
+						currentNodeList.remove(currentNodeList.indexOf(child1));
+					}else{ 
+						if(sticks[0].leftStick){
+							child1.leftParent = node;
+						}else{
+							child1.rightParent = node;
+						}
+						if(child1.leftParent != null && child1.rightParent != null){
+							currentNodeList.remove(currentNodeList.indexOf(child1));
+						}
+					}
+					
+					if(child2.bifurcation){
+						child2.leftParent = node;
+						child2.rightParent = node;
+						currentNodeList.remove(currentNodeList.indexOf(child2));
+					}else{ 
+						if(sticks[1].leftStick){
+							child2.leftParent = node;
+						}else{
+							child2.rightParent = node;
+						}
+						if(child2.leftParent != null && child2.rightParent != null){
+							currentNodeList.remove(currentNodeList.indexOf(child2));
+						}
+					}					
+					currentNodeList.add(node);
+					currentStickList.add(stickGuy);
+				}
+			}else{
+				int randomDraw = MathUtils.nextInt(currentStickList.size());
+				SimulateSticks stick = currentStickList.get(randomDraw);
+				currentStickList.remove(randomDraw);
+				
+				Node node = new Node();
+				nodes.add(node);
+				node.heightParameter = new Parameter.Default(currentHeight);
+				node.number = nodeNumber; nodeNumber++;
+				node.bifurcation = false;
+				SimulateSticks leftStickGuy = new SimulateSticks(node,true);
+				SimulateSticks rightStickGuy = new SimulateSticks(node,false);
+				
+				Node child = stick.mySon;
+				node.leftChild = child;
+				node.rightChild = child;
+				
+				if(child.bifurcation){
+					child.leftParent = node;
+					child.rightParent = node;
+					currentNodeList.remove(currentNodeList.indexOf(child));
+				}else{
+					if(stick.leftStick){
+						child.leftParent = node;
+					}else{
+						child.rightParent = node;
+					}
+					if(child.leftParent != null & child.rightParent != null){
+						currentNodeList.remove(currentNodeList.indexOf(child));
+					}
+				}
+				
+				currentNodeList.add(node);
+				currentStickList.add(leftStickGuy);
+				currentStickList.add(rightStickGuy);
+			}
+						
+		}
+		System.out.println(currentNodeList.size());		
+		root = currentNodeList.get(0);
+				
+		System.out.println(nodeNumber+" "+nodes.size());
+		
+		//nodeNumber--;
+		
+	//	nodes = new Node[nodeNumber]; 
+		
+		
+		System.out.println(this.toARGSummary());
+		
+		String string = this.toExtendedNewick();
+		string = string.replaceAll("[0-9]", "");
+		
+		System.out.println(this.toExtendedNewick());
+		System.out.println(string);
+		System.exit(-1);
+		
+	}
+	
+	public static void main(String[] args) {
+		ARGModel newARG = new ARGModel(4,5.1,0.0);
+		
+		
+	}
 
 	/**
 	 * Packs and sends ARG state, including connectedness, heightparameters and

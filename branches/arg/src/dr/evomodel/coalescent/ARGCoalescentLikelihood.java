@@ -50,6 +50,8 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 			calculateIntervals();
 		}
 		
+		
+		
 		taxaNumber = arg.getExternalNodeCount();
 	}
 	
@@ -129,7 +131,7 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 				 popSize.getParameterValue(0), 
 				 recomRate.getParameterValue(0)); 
 	 			 
-		 if(arg.getReassortmentNodeCount() > 1)
+		 if(arg.getReassortmentNodeCount() > 4)
 			 logLikelihood = Double.NEGATIVE_INFINITY;
 		 
 		 return logLikelihood;

@@ -43,7 +43,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	private ARGModel arg = null;
 	private double size = 0.0;  //Translates into add probability of 50%
 	private double singlePartitionProbability = 0.0;
-	private double probBelowRoot = 0.93; //Transformed in constructor for computation efficiency
+	private double probBelowRoot = 0.9; //Transformed in constructor for computational efficiency
 	private boolean isRecombination = false;
 	private int mode = CoercableMCMCOperator.COERCION_OFF;
 	private VariableSizeCompoundParameter internalNodeParameters;
@@ -83,17 +83,17 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		double logq = 0;
 		
 		try {
-			if(arg.getReassortmentNodeCount() == 0){
-				logq = AddOperation();
-			}else{
-				logq = RemoveOperation();
-			}
+//			if(arg.getReassortmentNodeCount() == 0){
+//				logq = AddOperation();
+//			}else{
+//				logq = RemoveOperation();
+//			}
 			
-//			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
-//				logq = AddOperation() - size;
-//			else
-//				logq = RemoveOperation() + size;
-		} catch (NoReassortmentEventException ofe) {
+			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
+				logq = AddOperation() - size;
+			else
+				logq = RemoveOperation() + size;
+		} catch (NoReassortmentEventException nree) {
 			return Double.NEGATIVE_INFINITY;
 		} catch (OperatorFailedException e) {
 			System.err.println(e.getMessage());
@@ -452,6 +452,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
 		int totalPotentials = findPotentialNodesToRemove(potentialNodes);
 
+//		assert totalPotentials == arg.getReassortmentNodeCount();
+		
 		if (totalPotentials == 0)
 			throw new NoReassortmentEventException();
 

@@ -27,6 +27,7 @@ public class ArgLogger extends MCLogger {
 	public static final String DOT_FORMAT = "dotFormat";
 	public static final String COMPRESSED_STRING = "compressedString";
 	public static final String EXTENDED_NEWICK = "extendedNewick";
+	public static final String STRIPPED_NEWICK = "strippedNewick";
 	public static final String FULL_STRING = "fullString";
 	public static final String FORMAT = "format";
 	
@@ -46,6 +47,8 @@ public class ArgLogger extends MCLogger {
 	public void startLogging() {
 		if(formatType.equals(EXTENDED_NEWICK)){
 			logLine("state ARG.string");
+		}else if(formatType.equals(STRIPPED_NEWICK)){
+			logLine("StrippedARGString");
 		}else{
 			logLine(GRAPHML_HEADER);
 		}
@@ -56,7 +59,7 @@ public class ArgLogger extends MCLogger {
 	}
 
 	public void stopLogging() {
-		if(!formatType.equals(EXTENDED_NEWICK)){
+		if(!formatType.equals(EXTENDED_NEWICK) && !formatType.equals(STRIPPED_NEWICK)){
 			logLine(GRAPHML_FOOTER);
 		}
 //		if (!dotFormat && !newickFormat)
@@ -75,9 +78,12 @@ public class ArgLogger extends MCLogger {
 				logLine("ARG STATE_" + state + " = " + argModel.toGraphStringCompressed(false));	
 			else if(formatType.equals(FULL_STRING))
 				logLine(outputter.outputString(graphElement));
+			else if(formatType.equals(EXTENDED_NEWICK))
+				logLine(argModel.toExtendedNewick());
 			else
-				logLine("ARG STATE_" + state + " = " + argModel.toExtendedNewick());
+				logLine(argModel.toStrippedNewick());
 		}
+//		logLine("ARG STATE_" + state + " = " + argModel.toExtendedNewick());
 	}
 	
 
@@ -182,7 +188,7 @@ public class ArgLogger extends MCLogger {
 		}
 
 		String[] validFormats = {DOT_FORMAT, EXTENDED_NEWICK,
-				 COMPRESSED_STRING, FULL_STRING};
+				 COMPRESSED_STRING, FULL_STRING, STRIPPED_NEWICK};
 		
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 				

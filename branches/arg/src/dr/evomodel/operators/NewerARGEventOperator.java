@@ -451,8 +451,6 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 		ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
 		int totalPotentials = findPotentialNodesToRemove(potentialNodes);
-
-//		assert totalPotentials == arg.getReassortmentNodeCount();
 		
 		if (totalPotentials == 0)
 			throw new NoReassortmentEventException();
@@ -473,7 +471,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		Node recChild = recNode.leftChild;
 
 		Node attachChild = recNode.leftChild;
-		Node attachParent = (Node) arg.getOtherChild(recParent, recNode);
+		Node attachParent = null;
 
 
 		if (recNode.leftParent == recNode.rightParent) {
@@ -490,7 +488,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				beforeBifurcationHeight = recParent.getHeight();
 			} else {
 				assert recChild.bifurcation;
-
+				assert false;
 				Node recChildLeft = recChild.leftChild;
 				Node recChildRight = recChild.rightChild;
 
@@ -528,7 +526,10 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			}
 
 
-			attachParent = (Node) arg.getOtherChild(recParent1, recNode);
+			attachParent = recParent1.leftChild;
+			if(attachParent == recNode){
+				attachParent = recParent1.rightChild;
+			}
 
 			if (arg.isRoot(recParent1)) {
 
@@ -703,7 +704,6 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		if (attachParent.leftParent != attachParent.rightParent &&
 				arg.getNodeHeight(attachParent.leftParent) > beforeBifurcationHeight &&
 				arg.getNodeHeight(attachParent.rightParent) > beforeBifurcationHeight) {
-
 			logHastings -= LOG_TWO;
 		}
 		assert nodeCheck();

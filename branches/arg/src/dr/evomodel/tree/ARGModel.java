@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
+import java.io.*;
 /**
  * A model component for trees.
  * 
@@ -239,12 +240,12 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		for(int i=0; i<ntaxa; i++) {
 			Node node = new Node();
 			node.heightParameter = new Parameter.Default(0.0);
-			node.taxon = new Taxon(""+i);
 			nodes.add(node);
 			currentNodeList.add(node);
 			node.bifurcation = true;
 			node.number = nodeNumber; nodeNumber++;
 			
+			node.taxon = new Taxon(""+nodeNumber);
 			SimulateSticks stickGuy = new SimulateSticks(node,true);
 			currentStickList.add(stickGuy);
 		}
@@ -252,9 +253,9 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		double currentHeight = 0;
 		
 		while( currentStickList.size() > 1) {
-			currentHeight = currentHeight + nextTime(ntaxa,popSize,rRate);
+			currentHeight = currentHeight + nextTime(currentStickList.size(),popSize,rRate);
 			
-			if(nextEventIsBifurcation(ntaxa,rRate)){
+			if(nextEventIsBifurcation(currentStickList.size(),rRate)){
 				SimulateSticks[] sticks = new SimulateSticks[2];
 				
 				for(int i = 0; i < 2; i++){
@@ -357,31 +358,44 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			}
 						
 		}
-		System.out.println(currentNodeList.size());		
+			
 		root = currentNodeList.get(0);
 				
-		System.out.println(nodeNumber+" "+nodes.size());
 		
 		//nodeNumber--;
 		
 	//	nodes = new Node[nodeNumber]; 
 		
-		
-		System.out.println(this.toARGSummary());
-		
-		String string = this.toExtendedNewick();
-		string = string.replaceAll("[0-9]", "");
-		
-		System.out.println(this.toExtendedNewick());
-		System.out.println(string);
-		System.exit(-1);
-		
+				
 	}
 	
 	public static void main(String[] args) {
-		ARGModel newARG = new ARGModel(4,5.1,0.0);
+		BufferedWriter out = null;
+		int i = 0;
+		try{
+			MathUtils.setSeed(133345);
+			
+			out = new BufferedWriter(new FileWriter("coalescent.sim"));
 		
+					
+			
+			ARGModel arg;
+			
+			while(i < 5000000){
+				arg = new ARGModel(4,10.0,1.0);
+						
+				if(arg.getReassortmentNodeCount() < 3){
+					out.write(arg.toStrippedNewick() + "\n");
+					i++;
+				}
+			}
+			
+			out.flush();
 		
+		}catch(Exception IOException){
+    		System.exit(-1);
+    	}
+				
 	}
 
 	/**
@@ -780,6 +794,14 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		return graphElement;
 	}
 
+	public String toStrippedNewick() {
+		String s = root.toExtendedNewick() + ";";
+//		s = s.replaceAll("[0-9a-zA-Z]", "");
+		s = s.replaceAll("[^(),<>;]",  "");
+		return s;
+		
+	}
+	
 	public String toExtendedNewick() {
 		// StringBuffer sb = new StringBuffer();
 		return root.toExtendedNewick() + ";";

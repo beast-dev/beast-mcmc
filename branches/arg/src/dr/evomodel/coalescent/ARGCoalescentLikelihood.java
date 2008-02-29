@@ -130,8 +130,8 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 logLikelihood = calculateLogLikelihood(
 				 popSize.getParameterValue(0), 
 				 recomRate.getParameterValue(0)); 
-	 			 
-		 if(arg.getReassortmentNodeCount() > 4)
+	 	
+		 if(arg.getReassortmentNodeCount() > 1)
 			 logLikelihood = Double.NEGATIVE_INFINITY;
 		 
 		 return logLikelihood;

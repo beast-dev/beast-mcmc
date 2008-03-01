@@ -40,6 +40,7 @@
 			<include name="dr/evolution/**"/>
 			<include name="dr/evomodel/**"/>
 			<include name="dr/evoxml/**"/>
+			<include name="dr/exporters/**"/>
 			<include name="dr/gui/chart/**"/>
 			<include name="dr/gui/tree/**"/>
 			<include name="dr/inference/**"/>
@@ -71,6 +72,7 @@
 				<include name="dr/evolution/**/*.class"/>
 				<include name="dr/evomodel/**/*.class"/>
 				<include name="dr/evoxml/**/*.class"/>
+				<include name="dr/exporters/**/*.class"/>
 				<include name="dr/gui/tree/**/*.class"/>
 				<include name="dr/inference/**/*.class"/>
 				<include name="dr/math/**/*.class"/>

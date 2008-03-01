@@ -71,7 +71,7 @@ public class LogFileTraces implements TraceList {
      */
     public int getStateCount() {
 	    // This is done as two integer divisions to ensure the same rounding for
-	    // the burnin... 
+	    // the burnin...
         return ((lastState - firstState) / stepSize) - (getBurnIn() / stepSize) + 1;
     }
 
@@ -236,7 +236,12 @@ public class LogFileTraces implements TraceList {
             String stateString = tokens.nextToken();
             int state = 0;
             try {
-                state = Integer.parseInt(stateString);
+	            try {
+		            // Changed this to parseDouble because LAMARC uses scientific notation for the state number
+		            state = (int)Double.parseDouble(stateString);
+	            } catch (NumberFormatException nfe) {
+		            throw new TraceException("Unable to parse state number in column 1 (Line " + reader.getLineNumber() + ")");
+	            }
 
                 if (firstState) {
                     // MrBayes puts 1 as the first state, BEAST puts 0
@@ -245,7 +250,9 @@ public class LogFileTraces implements TraceList {
                     if (state == 1) state = 0;
                     firstState = false;
                 }
-                addState(state);
+	            if (!addState(state)) {
+		            throw new TraceException("State " + state + " is not consistent with previous spacing (Line " + reader.getLineNumber() + ")");
+	            }
 
             } catch (NumberFormatException nfe) {
                 throw new TraceException("State " + state + ":Expected real value in column " + reader.getLineNumber());
@@ -257,7 +264,7 @@ public class LogFileTraces implements TraceList {
                     try {
                         addValue(i, Double.parseDouble(tokens.nextToken()));
                     } catch (NumberFormatException nfe) {
-                        throw new TraceException("State " + state + ": Expected real value in column " + i +
+                        throw new TraceException("State " + state + ": Expected real value in column " + (i+1) +
                                 " (Line " + reader.getLineNumber() + ")");
                     }
                 } else {
@@ -293,9 +300,9 @@ public class LogFileTraces implements TraceList {
      * between stateNumbers should remain constant.
      *
      * @param stateNumber the state
-     * @throws TraceException when state number is inconsistent
+     * @returns false if the state number is inconsistent
      */
-    private void addState(int stateNumber) throws TraceException {
+    private boolean addState(int stateNumber) {
         if (firstState < 0) {
             firstState = stateNumber;
         } else if (stepSize < 0) {
@@ -303,10 +310,11 @@ public class LogFileTraces implements TraceList {
         } else {
             int step = stateNumber - lastState;
             if (step != stepSize) {
-                throw new TraceException("State step sizes are not constant");
+	            return false;
             }
         }
         lastState = stateNumber;
+	    return true;
     }
 
     /**

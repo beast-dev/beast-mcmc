@@ -24,11 +24,20 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 			
 	private Parameter popSize;
 	private Parameter recomRate;
-	private ARGModel arg;
+	protected ARGModel arg;
 	private int taxaNumber;
 	
 	private ArrayList<CoalescentInterval> intervals;
 	private ArrayList<CoalescentInterval> storedIntervals;
+	
+	public ARGCoalescentLikelihood(String name, ARGModel arg){
+		super(name);
+		this.arg = arg;
+		
+		intervals = new ArrayList<CoalescentInterval>();
+		
+		taxaNumber = arg.getExternalNodeCount();
+	}
 	
 	public ARGCoalescentLikelihood(Parameter popSize, Parameter recomRate, 
 			ARGModel arg, boolean setupIntervals) {
@@ -120,6 +129,26 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	     }
 	 }
 	 
+	 public boolean currentARGValid(){
+		 if(!intervalsKnown){
+			 calculateIntervals();
+		 }
+		 int taxa = taxaNumber;
+		 
+		 for(CoalescentInterval x : intervals){
+			 if(taxa == 1)
+				 return false;
+			 if(x.type == COALESCENT)
+				 taxa--;
+			 else if(x.type == RECOMBINATION)
+				 taxa++;
+			 else
+				 throw new RuntimeException("Not implemented yet");
+		 }
+		 
+		 return true;
+	 }
+	 
 	 public double getLogLikelihood(){
 		 if(likelihoodKnown)
 			 return logLikelihood;
@@ -131,7 +160,7 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 				 popSize.getParameterValue(0), 
 				 recomRate.getParameterValue(0)); 
 	 	
-		 if(arg.getReassortmentNodeCount() > 1)
+		 if(arg.getReassortmentNodeCount() > 2)
 			 logLikelihood = Double.NEGATIVE_INFINITY;
 		 
 		 return logLikelihood;

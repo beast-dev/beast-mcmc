@@ -100,7 +100,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			System.exit(-1);
 		}
 
-
+		assert !Double.isInfinite(logq) && !Double.isNaN(logq);
+		
 		return logq;
 	}
 

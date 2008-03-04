@@ -1,8 +1,11 @@
 package dr.evomodel.operators;
 
+import java.util.ArrayList;
+
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.ARGModel;
+import dr.evomodel.tree.ARGModel.Node;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -65,31 +68,115 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 
     public double doOperation() throws OperatorFailedException {
 
-        int tipCount = tree.getExternalNodeCount();
+    	double logHastings = 0.0;
+    	int tipCount = tree.getExternalNodeCount();
 
-        if(mode == NARROW){
-        	narrow();
-        }else{
-        	wide();
-        }
+        if(mode == NARROW)
+      		logHastings = narrow();
+        else
+        	logHastings = wide();
+        
         
 
         if (tree.getExternalNodeCount() != tipCount) {
             throw new RuntimeException("Lost some tips in " + ((mode == NARROW) ? "NARROW mode." : "WIDE mode."));
         }
 
-        return 0.0;
+        assert !Double.isInfinite(logHastings) && !Double.isNaN(logHastings);
+        
+        return logHastings;
     }
-
+    
+    public int getAllValidNarrowMoves(){
+    	NodeRef iP = null, j = null, jP = null;
+    	ArrayList<NodeRef> nodes = new ArrayList<NodeRef>(tree.getNodeCount());
+    	ArrayList<NarrowMove> moves = new ArrayList<NarrowMove>(tree.getNodeCount());
+    	
+    	for(int k = 0, n = tree.getNodeCount(); k < n; k++){
+    		NodeRef x = tree.getNode(k);
+    		if(!tree.isRoot(x) && !tree.isRoot(tree.getParent(x, 0)) 
+    				 && !tree.isRoot(tree.getParent(x, 1))){
+    			nodes.add(x);
+    		}
+    	}
+    	NarrowMove a;
+    	for(NodeRef i : nodes){
+    		for(int k = 0; k < 2; k++){
+    			iP = tree.getParent(i,k);
+    			for(int m = 0; m < 2; m++){
+    				jP = tree.getParent(iP,m);
+    				j = tree.getOtherChild(jP, iP);
+    				a = new NarrowMove(i,iP,j,jP);
+    				if(validMove(a) && !moves.contains(a))
+    					moves.add(a);
+    			}
+    		}
+    	}
+    	assert moves.size() > 0;
+    	return moves.size();
+    }
+    
+    private boolean validMove(NarrowMove move){
+    	 if (move.j != move.iP && move.i != move.j &&       
+                 (tree.getNodeHeight(move.j) < tree.getNodeHeight(move.iP)) && 
+                 (tree.getNodeHeight(move.i) < tree.getNodeHeight(move.jP))) {
+         	return true;
+             
+         }
+    	 return false;
+    }
+    
+    private class NarrowMove{
+    	public NodeRef i;
+    	public NodeRef j;
+    	public NodeRef iP;
+    	public NodeRef jP;
+    	
+    	public NarrowMove(NodeRef i, NodeRef iP, NodeRef j, NodeRef jP){
+    		this.i = i;
+    		this.j = j;
+    		this.iP = iP;
+    		this.jP = jP;
+    		
+    	}
+    	
+    	public boolean equals(Object o){
+    		if(!(o instanceof NarrowMove)) {
+				return false;
+    		}
+    		
+    		NarrowMove move = (NarrowMove) o;
+    		    		
+    		if(this.i == move.i && this.j == move.j &&
+    				this.iP == move.iP && this.jP == move.jP){
+    			return true;
+    		}
+    		if(this.i == move.j && this.j == move.i &&
+    				this.iP == move.jP && this.jP == move.iP){
+    			return true;
+    		}
+    		
+    		return false;
+    	}
+    	
+    	public String toString(){
+    		return "(" + i.toString() + ", " + iP.toString() + 
+    			   ", " + jP.toString() + ", " + j.toString() + ")";
+    	}
+    	
+    }
+    
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public void narrow() throws OperatorFailedException {
+    public double narrow() throws OperatorFailedException {
 
         NodeRef i = null, iP = null, j = null, jP = null;
         int tries = 0;
 
         //Echoose
+        
+        int beforeMoves = getAllValidNarrowMoves();
 
         while (tries < MAX_TRIES) {
             i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
@@ -109,7 +196,7 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
             if (j == iP) {
                 j = tree.getChild(jP, 1);
             }
-
+            
             if (j != iP && i != j &&             // can still occur if i is child of doubly-linked reassortment
                     (tree.getNodeHeight(j) < tree.getNodeHeight(iP)) && (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
                 // todo fix height check for cases where i and j get switched
@@ -126,12 +213,14 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
             tree.pushTreeChangedEvent(iP);
             tree.pushTreeChangedEvent(jP);
         } else throw new OperatorFailedException("Couldn't find valid narrow move on this tree!!");
+           
+        return Math.log((double)beforeMoves/getAllValidNarrowMoves());
     }
 
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public void wide() throws OperatorFailedException {
+    public double wide() throws OperatorFailedException {
 
         NodeRef i = null, iP = null, j = null, jP = null;
         int tries = 0;
@@ -165,6 +254,7 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
         if (tries < MAX_TRIES) {
             eupdateARG(i, j, iP, jP);
         } else throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
+        return 0.0;
     }
 
     public int getMode() {

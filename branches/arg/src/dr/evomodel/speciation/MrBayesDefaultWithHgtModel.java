@@ -100,13 +100,13 @@ public class MrBayesDefaultWithHgtModel extends SpeciationModel {
 //        System.err.println(count);
 		double lambda = getHgtRate();
 
-		if (lambda == 0) {
-//            System.err.println("yo");
-			if (count > 1)
-				return Double.NEGATIVE_INFINITY;
-			else
-				return 0.0;
-		}
+//		if (lambda == 0) {
+////            System.err.println("yo");
+//			if (count > 1)
+//				return Double.NEGATIVE_INFINITY;
+//			else
+//				return 0.0;
+//		}
 
 		/*     double logFactorial = 0.0;
 		  if (count > 1) {
@@ -117,7 +117,9 @@ public class MrBayesDefaultWithHgtModel extends SpeciationModel {
 		  System.err.printf("logGamma(%d) = %5.4f\n",count,logGamma(count));
   */
 //	    System.err.println(lambda);
+		double rValue = -lambda + count * Math.log(lambda) - logFactorial(count);
 		
+		assert !Double.isInfinite(rValue) && !Double.isNaN(rValue);
 		return -lambda + count * Math.log(lambda) - logFactorial(count);
 				
 	}

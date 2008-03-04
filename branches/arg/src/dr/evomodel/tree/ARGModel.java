@@ -26,6 +26,7 @@ import dr.xml.*;
 import org.jdom.Document;
 import org.jdom.Element;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -369,29 +370,99 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 				
 	}
 	
+	private static boolean containsLessThan(int[] a, int b){
+		for(int c : a){
+			if(c < b)
+				return true;
+		}
+		return false;
+	}
+	
 	public static void main(String[] args) {
 		BufferedWriter out = null;
-		int i = 0;
-		try{
-			MathUtils.setSeed(133345);
-			
-			out = new BufferedWriter(new FileWriter("coalescent.sim"));
 		
-					
-			
-			ARGModel arg;
-			
-			while(i < 5000000){
-				arg = new ARGModel(4,10.0,1.0);
+		try{
+			out = new BufferedWriter(new FileWriter("rejections.txt"));
+		}catch(Exception e){
+			System.exit(-1);
+		}
+		
+		int rejections = 0;
+		
+		MathUtils.setSeed(99995);
+		
+		ArrayList<String> trees = new ArrayList<String>(10000);
+		
+		while(rejections < 100000){
+			ARGModel arg = new ARGModel(4,10.0,1.0);
+			String s = "";
+			if(arg.getReassortmentNodeCount() < 2){
+				s = arg.toExtendedNewick();
+			}
 						
-				if(arg.getReassortmentNodeCount() < 3){
-					out.write(arg.toStrippedNewick() + "\n");
-					i++;
-				}
+			if(!s.equals("") && !trees.contains(s)){
+				trees.add(s);
+				System.out.println("Total Current Size = " + trees.size() + " Rejections= " + rejections);
+				rejections = 0;
+			}else{
+				rejections++;
+			}
+		}
+		
+		System.out.println("\n************************************");
+		System.out.println("Simulating trees");
+		
+		Collections.sort(trees);
+		int[] freq = new int[trees.size()];
+		int[] mcmcFreq = new int[trees.size()];
+		rejections = 0;
+		
+		while(containsLessThan(freq,50)){
+			ARGModel arg = new ARGModel(4,10.0,1.0);
+			String s = null;
+			if(arg.getReassortmentNodeCount() < 2){
+				s = arg.toExtendedNewick();
 			}
 			
-			out.flush();
+			if(s != null){
+				freq[Collections.binarySearch(trees, s)]++;
+			}
+			rejections++;
+			if(rejections % 1000000 == 0){
+				System.out.println(rejections);
+			}
+		}
+//		
+//		System.out.println("\n************************************");
+//		System.out.println("Analyzing MCMC results");
+//		
+//		BufferedReader read = null;
+//		try{
+//			read = new BufferedReader( new FileReader("prior.args"));
+//			String s = read.readLine();
+//			
+//			while(s != null){
+//				mcmcFreq[Collections.binarySearch(trees, s)]++;
+//				s = read.readLine();
+//			}
+//			
+//		}catch(Exception e){
+//			System.exit(-1);
+//		}
+//		
+		System.out.println("\n************************************");
+		System.out.println("Printing Results");
 		
+		
+		try{
+			out = new BufferedWriter(new FileWriter("coalescent.sim"));
+		
+			rejections = 0;
+			for(String s : trees){
+				out.write(s + " " + freq[rejections] + " " + "\n");
+				rejections++;
+			}
+			out.flush();
 		}catch(Exception IOException){
     		System.exit(-1);
     	}

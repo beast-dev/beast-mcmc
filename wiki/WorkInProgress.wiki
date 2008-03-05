@@ -13,7 +13,7 @@ Some notes on work and plans for future work on BEAST.
 ==Birth-Death models==
   * Nee et al: in progress
   * Some development of Rannala & Yang - Birth, Death & sampling?
-
+ 
 ==Population history models== 
   * New variable dimension Bayesian skyline plot by Joseph Heled (JH) and AJD (handles multiple loci) - submitted to BMC Evolutionary Biology
   * Gaussian Markov random field - Marc's group
@@ -26,9 +26,13 @@ Some notes on work and plans for future work on BEAST.
   * The proposal distribution generator had became very slow, negating the efficiency of the overall technique. Perhaps it would be possible to integrate Marc's discrete model as a proposal distribution? Our interesting example data set (HIV risk groups) was unpublished data which is no longer available to us.
 
 ==Recombination==
-  * Ancestral Recombination Graphs - Marc's group
+  * Ancestral Recombination Graphs - Erik & Marc -- It's working (finally)!!!
 	
 ==Parallelization==
   * Multi-threaded MCMCMC is implemented. Needs some tests to find some recommended settings and conditions where it is more efficient than running independent chains. Given the prevalence of 4 and 8 core machines, I suggest that there would be little to gain for taking this beyond multi-threading (i.e., MPI).
   * Multi-threaded Likelihood evaluation is implemented - this uses threads to calculate the likelihood by partition of the alignment. Assessment required of performance.
   *  MPI threading. Marc has implemented this in his ARG branch. This is used for distributing large numbers of independent likelihood evaluations.
+
+==New Substitution Models==
+  * Selection bias - Alex & Marc are testing corrections to the tree likelihood calculator to account for selection bias in the observed site patterns
+  * Generalized Dollo and Wagner framework - Alex & Marc are almost finished with a substitution model that embeds a continuous-time Markov chain within a trait birth-death process to describe multi-state trait development.

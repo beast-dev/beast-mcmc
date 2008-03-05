@@ -46,7 +46,7 @@ public class ArgLogger extends MCLogger {
 
 	public void startLogging() {
 		if(formatType.equals(EXTENDED_NEWICK)){
-			logLine("state ARG.string");
+			logLine("stateARG.string");
 		}else if(formatType.equals(STRIPPED_NEWICK)){
 			logLine("StrippedARGString");
 		}else{

@@ -1,10 +1,8 @@
 package dr.evomodel.coalescent;
 
-import java.util.ArrayList;
+
 import dr.evomodel.tree.ARGModel;
 import dr.evomodel.tree.ARGModel.Node;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
@@ -15,18 +13,14 @@ import dr.xml.XMLSyntaxRule;
 public class ARGUniformPrior extends ARGCoalescentLikelihood{
 
 	public static final String ARG_UNIFORM_PRIOR = "argUniformPrior";
-	public static final String MEAN_TREE_HEIGHT = "meanTreeHeight";
-	
-	private Parameter meanTreeHeight;
+		
 	private double[] argNumber;
 	
-	ARGUniformPrior(ARGModel arg, Parameter tH) {
+	ARGUniformPrior(ARGModel arg) {
 		super(ARG_UNIFORM_PRIOR,arg);
 				
-		this.meanTreeHeight = tH;
 		addModel(arg);
-		addParameter(tH);
-		
+				
 		argNumber = new double[5];
 		for(int i = 0, n = arg.getExternalNodeCount(); i < argNumber.length; i++){
 			argNumber[i] = Math.log(numberARGS(n,i));
@@ -41,14 +35,12 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood{
 		
 		likelihoodKnown = true;
 		logLikelihood = calculateLogLikelihood();
-		
-		Node x = (Node) arg.getRoot();
-		
+				
 		if(!currentARGValid()){
 			logLikelihood = Double.NEGATIVE_INFINITY;
 		}
 		
-		if(arg.getReassortmentNodeCount() > 1){
+		if(arg.getReassortmentNodeCount() > 2){
 			logLikelihood = Double.NEGATIVE_INFINITY;
 		}
 		
@@ -59,10 +51,9 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood{
 		
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
 		int internalNodes = arg.getInternalNodeCount() - 1;
-		double meanValue = meanTreeHeight.getParameterValue(0);
+		
 		
 		double logLike = logFactorial(internalNodes) - (double)internalNodes*Math.log(treeHeight)
-		 	- Math.log(meanValue) - treeHeight/meanValue 
 		 	- argNumber[arg.getReassortmentNodeCount()];
 		
 		assert !Double.isInfinite(logLike) && !Double.isNaN(logLike);
@@ -127,18 +118,14 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood{
 			}
 					
 			private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-					new ElementRule(ARGCoalescentLikelihood.ARG_MODEL,
-							new XMLSyntaxRule[]{new ElementRule(ARGModel.class)}),
+					new ElementRule(ARGModel.class),
+							
 			};
 			
 			public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-				XMLObject cxo = (XMLObject) xo.getChild(ARGCoalescentLikelihood.ARG_MODEL);
-				ARGModel argModel = (ARGModel)cxo.getChild(ARGModel.class);
+				ARGModel argModel = (ARGModel)xo.getChild(ARGModel.class);
 				
-				cxo = (XMLObject) xo.getChild(MEAN_TREE_HEIGHT);
-				Parameter height = (Parameter) cxo.getChild(Parameter.class);
-				
-				return new ARGUniformPrior(argModel,height);
+				return new ARGUniformPrior(argModel);
 			}
 
 			

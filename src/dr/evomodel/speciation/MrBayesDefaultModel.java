@@ -61,8 +61,7 @@ public class MrBayesDefaultModel extends SpeciationModel {
     // functions that define a speciation model
     //
     public double logTreeProbability(int taxonCount) {
-        return 0.0;
-       // throw new RuntimeException("Why was 'logTreeProbability' called?");
+        throw new RuntimeException("Why was 'logTreeProbability' called?");
     }
 
     //

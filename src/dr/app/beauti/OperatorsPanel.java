@@ -226,7 +226,7 @@ public class OperatorsPanel extends JPanel implements Exportable {
                 default:
                     editable = false;
             }
-
+            
             return editable;
         }
 
@@ -256,7 +256,7 @@ public class OperatorsPanel extends JPanel implements Exportable {
     class OperatorTableCellRenderer extends TableRenderer{
 
         public OperatorTableCellRenderer( int alignment, Insets insets){
-            super(alignment, insets);
+                super(alignment, insets);
         }
 
         public Component getTableCellRendererComponent(JTable aTable,

@@ -38,43 +38,21 @@ import dr.inference.model.Parameter;
  */
 public abstract class SpeciationModel extends AbstractModel implements Units {
 
-	public SpeciationModel(String modelName, Type units) {
-		super(modelName);
+	public SpeciationModel(String name, Type units) { 
+		super(name); 
 		setUnits(units);
 	}
 
     //
-    //  "fixed" part of likelihood
+    // functions that define a speciation model
     //
     public abstract double logTreeProbability(int taxonCount);
 	//
-	// Per node part of likelihood
+	// functions that define a speciation model
 	//
 	public abstract double logNodeProbability(Tree tree, NodeRef node);
 
     public abstract boolean includeExternalNodesInLikelihoodCalculation();
-
-    /**
-     * Generic likelihood calculation
-     * @param tree
-     * @return
-     */
-    public double calculateTreeLogLikelihood(Tree tree) {
-        double logL = 0.0;
-
-        for (int j = 0; j < tree.getInternalNodeCount(); j++) {
-            logL += logNodeProbability(tree, tree.getInternalNode(j));
-        }
-
-        final int taxonCount = tree.getExternalNodeCount();
-        if (includeExternalNodesInLikelihoodCalculation()) {
-            for (int j = 0; j < taxonCount; j++) {
-                logL += logNodeProbability(tree, tree.getExternalNode(j));
-            }
-        }
-
-        return logTreeProbability(taxonCount) + logL;
-    }
 
     // **************************************************************
     // Model IMPLEMENTATION

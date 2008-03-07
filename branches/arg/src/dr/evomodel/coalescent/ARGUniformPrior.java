@@ -39,7 +39,7 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood{
 			logLikelihood = Double.NEGATIVE_INFINITY;
 		}
 		
-		if(arg.getReassortmentNodeCount() > 3){
+		if(arg.getReassortmentNodeCount() > 1){
 			logLikelihood = Double.NEGATIVE_INFINITY;
 		}
 		

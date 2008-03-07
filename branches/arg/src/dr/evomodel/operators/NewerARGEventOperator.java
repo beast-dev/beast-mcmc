@@ -398,7 +398,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 								list.add(nr);
 							count++;
 						}
-					} else { //Doubly linked parents f' it up
+					} else {
 						if (arg.getNodeHeight(left) > time) {
 							if (list != null)
 								list.add(nr);

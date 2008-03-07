@@ -393,10 +393,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		
 		ArrayList<String> trees = new ArrayList<String>(10000);
 		
-		while(rejections < 1000000){
-			ARGModel arg = new ARGModel(4,6.0,0.8);
+		while(rejections < 100){
+			ARGModel arg = new ARGModel(3,6.0,1.0);
 			String s = "";
-			if(arg.getReassortmentNodeCount() < 3){
+			if(arg.getReassortmentNodeCount() < 2){
 				s = arg.toStrippedNewick();
 			}
 						
@@ -417,10 +417,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		int[] mcmcFreq = new int[trees.size()];
 		rejections = 0;
 		
-		while(containsLessThan(freq,10)){
-			ARGModel arg = new ARGModel(4,6.0,0.8);
+		while(containsLessThan(freq,10000)){
+			ARGModel arg = new ARGModel(3,6.0,1.0);
 			String s = null;
-			if(arg.getReassortmentNodeCount() < 3){
+			if(arg.getReassortmentNodeCount() < 2){
 				s = arg.toStrippedNewick();
 			}
 			
@@ -433,23 +433,23 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			}
 		}
 		
-		System.out.println("\n************************************");
-		System.out.println("Analyzing MCMC results");
-		
-		BufferedReader read = null;
-		try{
-			read = new BufferedReader( new FileReader("prior.args"));
-			String s = read.readLine();
-			s = read.readLine();
-			
-			while(s != null){
-				mcmcFreq[Collections.binarySearch(trees, s)]++;
-				s = read.readLine();
-			}
-			
-		}catch(Exception e){
-			System.exit(-1);
-		}
+//		System.out.println("\n************************************");
+//		System.out.println("Analyzing MCMC results");
+//		
+//		BufferedReader read = null;
+//		try{
+//			read = new BufferedReader( new FileReader("prior.args"));
+//			String s = read.readLine();
+//			s = read.readLine();
+//			
+//			while(s != null){
+//				mcmcFreq[Collections.binarySearch(trees, s)]++;
+//				s = read.readLine();
+//			}
+//			
+//		}catch(Exception e){
+//			System.exit(-1);
+//		}
 		
 		System.out.println("\n************************************");
 		System.out.println("Printing Results");
@@ -460,7 +460,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		
 			rejections = 0;
 			for(String s : trees){
-				if(mcmcFreq[rejections] > 20){
+				if(mcmcFreq[rejections] > -1){
 					out.write(s + " " + freq[rejections] + " " + mcmcFreq[rejections] + " \n");
 				}
 				rejections++;

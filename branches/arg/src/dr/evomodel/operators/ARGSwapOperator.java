@@ -59,24 +59,20 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		
 		ArrayList<NodeRef> bifurcationNodes = new ArrayList<NodeRef>(arg.getNodeCount());
 		ArrayList<NodeRef> reassortmentNodes = new ArrayList<NodeRef>(arg.getNodeCount());
-		
-				
-		if(mode.equals(BIFURCATION_SWAP)){
-			setupBifurcationNodes(bifurcationNodes);
-			return bifurcationSwap(bifurcationNodes.get(MathUtils.nextInt(bifurcationNodes.size())));
-		}else if(mode.equals(REASSORTMENT_SWAP)){
-			setupReassortmentNodes(reassortmentNodes);
-			return reassortmentSwap(reassortmentNodes.get(MathUtils.nextInt(reassortmentNodes.size())));
-		}else if(mode.equals(DUAL_SWAP)){
-			setupBifurcationNodes(bifurcationNodes);
-			setupReassortmentNodes(reassortmentNodes);
-			reassortmentSwap(reassortmentNodes.get(MathUtils.nextInt(reassortmentNodes.size())));
-			return bifurcationSwap(bifurcationNodes.get(MathUtils.nextInt(bifurcationNodes.size())));
-		}
-		
+					
+		//Not sure if this part is totally needed.
 		setupBifurcationNodes(bifurcationNodes);
 		setupReassortmentNodes(reassortmentNodes);
 		
+		if(mode.equals(BIFURCATION_SWAP)){
+			return bifurcationSwap(bifurcationNodes.get(MathUtils.nextInt(bifurcationNodes.size())));
+		}else if(mode.equals(REASSORTMENT_SWAP)){
+			return reassortmentSwap(reassortmentNodes.get(MathUtils.nextInt(reassortmentNodes.size())));
+		}else if(mode.equals(DUAL_SWAP)){
+			reassortmentSwap(reassortmentNodes.get(MathUtils.nextInt(reassortmentNodes.size())));
+			return bifurcationSwap(bifurcationNodes.get(MathUtils.nextInt(bifurcationNodes.size())));
+		}
+				
 		bifurcationNodes.addAll(reassortmentNodes);
 		
 		//TODO Change to heapsort method
@@ -137,6 +133,23 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 			arg.singleAddChild(startNode, swapChild);
 			
 		}else{
+			boolean[] sideOk = {swapChild.leftParent.getHeight() > startNode.getHeight(),
+								swapChild.rightParent.getHeight() > startNode.getHeight()};
+			
+			if(sideOk[0] && sideOk[1]){
+				if(MathUtils.nextBoolean()){
+					swapChildParent = swapChild.leftParent;
+				}else{
+					swapChildParent = swapChild.rightParent;
+				}
+			}else if(sideOk[0]){
+				swapChildParent = swapChild.leftParent;
+			}else{
+				swapChildParent = swapChild.rightParent;
+			}
+			
+			System.out.println("here");
+			System.exit(-1);
 			
 		}
 		
@@ -156,6 +169,66 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 	}
 	
 	private double reassortmentSwap(NodeRef x){
+		Node startNode = (Node) x;
+		Node startChild = startNode.leftChild;
+		
+		ArrayList<NodeRef> possibleNodes = new ArrayList<NodeRef>(arg.getNodeCount());
+		
+		findNodesAtHeight(possibleNodes,startNode.getHeight());
+		
+		
+		
+		if(possibleNodes.contains(startNode)){
+			System.out.println(possibleNodes);
+			System.exit(-1);
+		}
+		
+		Node swapChild = (Node) possibleNodes.get(MathUtils.nextInt(possibleNodes.size()));
+		Node swapChildParent = null;
+		
+		arg.beginTreeEdit();
+		
+		if(swapChild.bifurcation){
+			swapChildParent = swapChild.leftParent;
+			
+			arg.doubleRemoveChild(startNode, startChild);
+			arg.singleRemoveChild(swapChildParent,swapChild);
+			
+			arg.doubleAddChild(startNode, swapChild);
+			arg.singleAddChild(swapChildParent, startChild);
+		}else{
+			
+			boolean[] sideOk = {swapChild.leftParent.getHeight() > startNode.getHeight(),
+					swapChild.rightParent.getHeight() > startNode.getHeight()};
+
+			if(sideOk[0] && sideOk[1]){
+				if(MathUtils.nextBoolean()){
+					swapChildParent = swapChild.leftParent;
+				}else{
+					swapChildParent = swapChild.rightParent;
+				}
+			}else if(sideOk[0]){
+				swapChildParent = swapChild.leftParent;
+			}else{
+				swapChildParent = swapChild.rightParent;
+			}
+			
+			
+		}
+		
+		arg.pushTreeChangedEvent(startNode);
+		arg.pushTreeChangedEvent(startChild);
+		arg.pushTreeChangedEvent(swapChild);
+		arg.pushTreeChangedEvent(swapChildParent);
+		
+		try{ 
+			arg.endTreeEdit(); 
+		}catch(MutableTree.InvalidTreeException ite){
+			System.err.println(ite.getMessage());
+			System.exit(-1);
+		}
+		
+		
 		return 0;
 	}
 	
@@ -218,7 +291,6 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 			
 			return 0;
 		}
-		
 	};
 	
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){

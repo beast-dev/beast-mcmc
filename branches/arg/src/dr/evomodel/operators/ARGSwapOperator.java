@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.ARGModel;
 import dr.evomodel.tree.ARGModel.Node;
@@ -19,15 +20,22 @@ import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
+/**
+ * This method moves the arg model around.  Use of both the 
+ * reassortment and bifurcation modes, as well as the event operator,
+ * satisfies irreducibility.
+ * @author ebloomqu
+ *
+ */
 public class ARGSwapOperator extends SimpleMCMCOperator{
 	
 	public static final String ARG_SWAP_OPERATOR = "argSwapOperator";
-	public static final String SWAP_TYPE = "swapType";
+	public static final String SWAP_TYPE = "type";
 	public static final String BIFURCATION_SWAP = "bifurcationSwap";
 	public static final String REASSORTMENT_SWAP = "reassortmentSwap";
 	public static final String DUAL_SWAP = "dualSwap";
 	public static final String FULL_SWAP = "fullSwap";
-	public static final String DEFAULT_MODE = BIFURCATION_SWAP;
+	public static final String DEFAULT = BIFURCATION_SWAP;
 	
 	private ARGModel arg;
 	private String mode;
@@ -37,33 +45,33 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		this.mode = mode;
 		
 		setWeight(weight);
+		
 	}
-	
-	
+		
 	
 	public double doOperation() throws OperatorFailedException {
+		
+		if((mode.equals(REASSORTMENT_SWAP) || mode.equals(DUAL_SWAP)) &&
+				arg.getReassortmentNodeCount() == 0){
+			return 0.0;
+		}
+		
 		
 		ArrayList<NodeRef> bifurcationNodes = new ArrayList<NodeRef>(arg.getNodeCount());
 		ArrayList<NodeRef> reassortmentNodes = new ArrayList<NodeRef>(arg.getNodeCount());
 		
+				
 		if(mode.equals(BIFURCATION_SWAP)){
 			setupBifurcationNodes(bifurcationNodes);
-			
 			return bifurcationSwap(bifurcationNodes.get(MathUtils.nextInt(bifurcationNodes.size())));
 		}else if(mode.equals(REASSORTMENT_SWAP)){
-			if(arg.getReassortmentNodeCount() == 0)
-				return 0.0;
 			setupReassortmentNodes(reassortmentNodes);
-			
 			return reassortmentSwap(reassortmentNodes.get(MathUtils.nextInt(reassortmentNodes.size())));
 		}else if(mode.equals(DUAL_SWAP)){
-			if(arg.getReassortmentNodeCount() == 0)
-				return 0.0;
 			setupBifurcationNodes(bifurcationNodes);
 			setupReassortmentNodes(reassortmentNodes);
-			
-			bifurcationSwap(bifurcationNodes.get(MathUtils.nextInt(bifurcationNodes.size())));
-			return reassortmentSwap(reassortmentNodes.get(MathUtils.nextInt(reassortmentNodes.size())));
+			reassortmentSwap(reassortmentNodes.get(MathUtils.nextInt(reassortmentNodes.size())));
+			return bifurcationSwap(bifurcationNodes.get(MathUtils.nextInt(bifurcationNodes.size())));
 		}
 		
 		setupBifurcationNodes(bifurcationNodes);
@@ -85,14 +93,63 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 	}
 	
 	private double bifurcationSwap(NodeRef x){
-		Node node = (Node) x;
+		Node startNode = (Node) x;
 		
-		Node keepChild = node.leftChild;
-		Node moveChild = node.rightChild;
+		
+		
+		Node keepChild = startNode.leftChild;
+		Node moveChild = startNode.rightChild;
 		
 		if(MathUtils.nextBoolean()){
 			keepChild = moveChild;
-			moveChild = node.leftChild;
+			moveChild = startNode.leftChild;
+		}
+				
+		ArrayList<NodeRef> possibleNodes = new ArrayList<NodeRef>(arg.getNodeCount());
+		
+		findNodesAtHeight(possibleNodes,startNode.getHeight());
+		
+		assert !possibleNodes.contains(keepChild) && !possibleNodes.contains(moveChild);
+		assert possibleNodes.size() > 0;
+		
+		
+		
+		Node swapChild = (Node) possibleNodes.get(MathUtils.nextInt(possibleNodes.size()));
+		Node swapChildParent = null;
+		
+		
+		
+		arg.beginTreeEdit();
+		
+		if(swapChild.bifurcation){
+			swapChildParent = swapChild.leftParent;
+			
+			arg.singleRemoveChild(startNode, moveChild);
+			
+			if(swapChildParent.bifurcation){
+				arg.singleRemoveChild(swapChildParent, swapChild);
+				arg.singleAddChild(swapChildParent, moveChild);
+			}else{
+				arg.doubleRemoveChild(swapChildParent, swapChild);
+				arg.doubleAddChild(swapChildParent, moveChild);
+			}
+			
+			arg.singleAddChild(startNode, swapChild);
+			
+		}else{
+			
+		}
+		
+		arg.pushTreeChangedEvent(startNode);
+		arg.pushTreeChangedEvent(moveChild);
+		arg.pushTreeChangedEvent(swapChild);
+		arg.pushTreeChangedEvent(swapChildParent);
+		
+		try{ 
+			arg.endTreeEdit(); 
+		}catch(MutableTree.InvalidTreeException ite){
+			System.err.println(ite.getMessage());
+			System.exit(-1);
 		}
 		
 		return 0;
@@ -116,6 +173,26 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 			NodeRef x = arg.getNode(i);
 			if(arg.isReassortment(x)){
 				list.add(x);
+			}
+		}
+	}
+	
+	private void findNodesAtHeight(ArrayList<NodeRef> x, double height){
+		for(int i = 0, n = arg.getNodeCount(); i < n; i++){
+			Node y = (Node) arg.getNode(i);
+			if(y.getHeight() < height){
+				if(y.bifurcation){
+					if(y.leftParent.getHeight() > height){
+						x.add(y);
+					}
+				}else{
+					if(y.leftParent.getHeight() > height){
+						x.add(y);
+					}
+					if(y.rightParent.getHeight() > height){
+						x.add(y);
+					}
+				}
 			}
 		}
 	}
@@ -144,7 +221,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		
 	};
 	
-	public XMLObjectParser PARSER = new AbstractXMLObjectParser(){
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
 
 		public String getParserDescription() {
 			return "Swaps nodes on a tree";
@@ -160,7 +237,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 			AttributeRule.newIntegerRule(WEIGHT),	
 			new StringAttributeRule(SWAP_TYPE,"The mode of the operator",
-					validFormats, true),
+					validFormats, false),
 			new ElementRule(ARGModel.class),
 				
 		};
@@ -172,7 +249,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			int weight = xo.getIntegerAttribute(WEIGHT);
 			
-			String mode = DEFAULT_MODE;
+			String mode = DEFAULT;
 			if(xo.hasAttribute(SWAP_TYPE)){
 				mode = xo.getStringAttribute(SWAP_TYPE);
 			}

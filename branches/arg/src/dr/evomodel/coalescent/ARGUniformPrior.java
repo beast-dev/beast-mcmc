@@ -2,7 +2,6 @@ package dr.evomodel.coalescent;
 
 
 import dr.evomodel.tree.ARGModel;
-import dr.evomodel.tree.ARGModel.Node;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
@@ -40,7 +39,7 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood{
 			logLikelihood = Double.NEGATIVE_INFINITY;
 		}
 		
-		if(arg.getReassortmentNodeCount() > 2){
+		if(arg.getReassortmentNodeCount() > 3){
 			logLikelihood = Double.NEGATIVE_INFINITY;
 		}
 		

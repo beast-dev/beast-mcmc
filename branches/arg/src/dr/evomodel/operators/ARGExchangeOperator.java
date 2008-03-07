@@ -72,9 +72,9 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
     	int tipCount = tree.getExternalNodeCount();
 
         if(mode == NARROW){
-        	if(tree.getReassortmentNodeCount() == 0)
+        	if(tree.getReassortmentNodeCount() < 2)
         		logHastings = narrow();
-        	else 
+        	else
         		return 0.0;
         }else{
         	logHastings = wide();

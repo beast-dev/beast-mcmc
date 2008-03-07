@@ -393,10 +393,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		
 		ArrayList<String> trees = new ArrayList<String>(10000);
 		
-		while(rejections < 10000){
-			ARGModel arg = new ARGModel(4,5.0,1.0);
+		while(rejections < 1000000){
+			ARGModel arg = new ARGModel(4,6.0,0.8);
 			String s = "";
-			if(arg.getReassortmentNodeCount() < 2){
+			if(arg.getReassortmentNodeCount() < 3){
 				s = arg.toStrippedNewick();
 			}
 						
@@ -417,10 +417,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		int[] mcmcFreq = new int[trees.size()];
 		rejections = 0;
 		
-		while(containsLessThan(freq,30)){
-			ARGModel arg = new ARGModel(4,5.0,1.0);
+		while(containsLessThan(freq,10)){
+			ARGModel arg = new ARGModel(4,6.0,0.8);
 			String s = null;
-			if(arg.getReassortmentNodeCount() < 2){
+			if(arg.getReassortmentNodeCount() < 3){
 				s = arg.toStrippedNewick();
 			}
 			
@@ -460,7 +460,9 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		
 			rejections = 0;
 			for(String s : trees){
-				out.write(s + " " + freq[rejections] + " " + mcmcFreq[rejections] + " \n");
+				if(mcmcFreq[rejections] > 20){
+					out.write(s + " " + freq[rejections] + " " + mcmcFreq[rejections] + " \n");
+				}
 				rejections++;
 			}
 			out.flush();
@@ -1236,6 +1238,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 	public final boolean isExternal(NodeRef node) {
 		return ((Node) node).isExternal();
+	}
+	
+	public final boolean isInternal(NodeRef node) {
+		return !this.isExternal(node);
 	}
 
 	public final boolean isRoot(NodeRef node) {

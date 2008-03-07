@@ -180,6 +180,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.TossPartitioningOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.NewARGEventOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.NewerARGEventOperator.PARSER);
+        addXMLObjectParser(dr.evomodel.operators.ARGSwapOperator.PARSER);
         
         addXMLObjectParser(dr.evomodel.indel.TKF91Likelihood.PARSER);
         addXMLObjectParser(dr.evomodel.indel.TKF91Model.PARSER);

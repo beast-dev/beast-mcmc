@@ -72,7 +72,7 @@
 				<include name="dr/evolution/**/*.class"/>
 				<include name="dr/evomodel/**/*.class"/>
 				<include name="dr/evoxml/**/*.class"/>
-				<include name="dr/exporters/**/*.class"/>
+                <include name="dr/exporters/**/*.class"/>
 				<include name="dr/gui/tree/**/*.class"/>
 				<include name="dr/inference/**/*.class"/>
 				<include name="dr/math/**/*.class"/>
@@ -140,7 +140,7 @@
 				<include name="dr/**/*.png"/>
 				<include name="org/virion/jam/**/*.png"/>
 			</fileset>
-			<zipgroupfileset dir="${lib}" includes="**/*.jar"/>
+			<zipgroupfileset dir="${lib}" includes="jebl.jar:jdom.jar:commons-math-1.1.jar:mtj.jar"/>
 		</jar>
 	</target>
 

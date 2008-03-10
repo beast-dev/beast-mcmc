@@ -28,7 +28,6 @@ package dr.app.treestat;
 import dr.app.treestat.statistics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.gui.table.TableSorter;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.framework.Exportable;

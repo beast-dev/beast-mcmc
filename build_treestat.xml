@@ -31,7 +31,7 @@
 
     <target name="compile-basic" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.4" srcdir="${src}" destdir="${build}" classpath="${lib}/jdom.jar:${lib}/commons-math-1.1.jar">
+        <javac source="1.5" srcdir="${src}" destdir="${build}" classpath="${lib}/jebl.jar:${lib}/jdom.jar:${lib}/commons-math-1.1.jar">
             <include name="dr/app/treestat/**"/>
             <include name="dr/app/util/**"/>
             <include name="dr/evolution/alignment/**"/>
@@ -108,7 +108,6 @@
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
                 <include name="dr/xml/**/*.class"/>
-                <include name="org/virion/jam/**/*.class"/>
             </fileset>
             <fileset dir="">
                 <include name="images/*.png"/>
@@ -117,7 +116,9 @@
                 <include name="dr/**/*.png"/>
                 <include name="org/virion/jam/**/*.png"/>
             </fileset>
-            <zipgroupfileset dir="${lib}" includes="**/*.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/jdom.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/commons-math-1.1.jar"/>
         </jar>
 
      </target>

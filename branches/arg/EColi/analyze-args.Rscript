@@ -1,0 +1,10 @@
+#
+#
+#
+
+burnInPercentage = 0.1
+
+args = read.table("e-coli.args")[,1]
+totalLength = length(args)
+burnIn = ceiling(totalLength * burnInPercentage)
+args = args[burnIn:totalLength]

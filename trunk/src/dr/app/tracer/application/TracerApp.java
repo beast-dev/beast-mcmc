@@ -19,28 +19,31 @@ public class TracerApp extends MultiDocApplication {
 	static public void main(String[] args) {
 		boolean lafLoaded = false;
 
+		if (Utils.isMacOSX()) {
+
 //		if (Utils.getMacOSXVersion().startsWith("10.5")) {
 //			System.setProperty("apple.awt.brushMetalLook","true");
 //		}
 
-		System.setProperty("apple.laf.useScreenMenuBar","true");
-		System.setProperty("apple.awt.draggableWindowBackground","true");
-		System.setProperty("apple.awt.showGrowBox","true");
-		System.setProperty("apple.awt.graphics.UseQuartz","true");
-		System.setProperty("apple.awt.antialiasing","true");
+			System.setProperty("apple.laf.useScreenMenuBar","true");
+			System.setProperty("apple.awt.draggableWindowBackground","true");
+			System.setProperty("apple.awt.showGrowBox","true");
+			System.setProperty("apple.awt.graphics.UseQuartz","true");
+			System.setProperty("apple.awt.antialiasing","true");
 
 
-		if (!Utils.getMacOSXVersion().startsWith("10.5")) {
-			// set the Quaqua Look and Feel in the UIManager
-			try {
-				UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
-				lafLoaded = true;
-			} catch (Exception e) {
+			if (!Utils.getMacOSXVersion().startsWith("10.5")) {
+				// set the Quaqua Look and Feel in the UIManager
+				try {
+					UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
+					lafLoaded = true;
+				} catch (Exception e) {
+				}
 			}
-		}
 
-		UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
-		UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
+			UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
+			UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
+		}
 
 		if (!lafLoaded) {
 			try {

@@ -26,6 +26,7 @@
 package dr.app.beast;
 
 import dr.evomodel.operators.*;
+import dr.evomodel.treelikelihood.ADNADamageModel;
 import dr.xml.*;
 import dr.inference.trace.VariableDemographicAnalysis;
 
@@ -155,6 +156,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.treelikelihood.AdvancedTreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.treelikelihood.AncestralStateTreeLikelihood.PARSER);
+        addXMLObjectParser(dr.evomodel.treelikelihood.ADNADamageModel.PARSER);
 
 		addXMLObjectParser(dr.evomodel.sitemodel.GammaSiteModel.PARSER);
 

@@ -159,11 +159,11 @@ public class ADNADamageModel extends TipPartialsModel {
                             partials[k + 2] = 0.0;
                             partials[k + 3] = 1.0 - pDamage;
                             break;
+	                    default: // is an ambiguity
                             partials[k] = 1.0;
                             partials[k + 1] = 1.0;
                             partials[k + 2] = 1.0;
                             partials[k + 3] = 1.0;
-                        default: // is an ambiguity
                     }
                     k += stateCount;
                 }

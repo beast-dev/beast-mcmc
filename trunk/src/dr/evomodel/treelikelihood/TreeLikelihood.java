@@ -89,15 +89,15 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (integrateAcrossCategories)	{
                 if (patternList.getDataType() instanceof dr.evolution.datatype.Nucleotides) {
 
-                    if (NativeNucleotideLikelihoodCore.isAvailable()) {
-
-                        Logger.getLogger("dr.evomodel").info("TreeLikelihood using native nucleotide likelihood core");
-                        likelihoodCore = new NativeNucleotideLikelihoodCore();
-                    } else {
+//                    if (NativeNucleotideLikelihoodCore.isAvailable()) {
+//
+//                        Logger.getLogger("dr.evomodel").info("TreeLikelihood using native nucleotide likelihood core");
+//                        likelihoodCore = new NativeNucleotideLikelihoodCore();
+//                    } else {
 
                         Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java nucleotide likelihood core");
                         likelihoodCore = new NucleotideLikelihoodCore();
-                    }
+//                    }
 
                 } else if (patternList.getDataType() instanceof dr.evolution.datatype.AminoAcids) {
                     Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java amino acid likelihood core");
@@ -133,8 +133,23 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             int intNodeCount = treeModel.getInternalNodeCount();
 
             if (tipPartialsModel != null) {
+	            for (int i = 0; i < extNodeCount; i++) {
+	                // Find the id of tip i in the patternList
+	                String id = treeModel.getTaxonId(i);
+	                int index = patternList.getTaxonIndex(id);
+
+	                if (index == -1) {
+	                    throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + treeModel.getId() +
+	                            ", is not found in patternList, " + patternList.getId());
+	                }
+
+
+	                tipPartialsModel.setStates(patternList, index, i);
+	            }
+
                 addModel(tipPartialsModel);
                 updateTipPartials();
+	            useAmbiguities = true;
             } else {
                 for (int i = 0; i < extNodeCount; i++) {
                     // Find the id of tip i in the patternList
@@ -152,11 +167,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                         setStates(likelihoodCore, patternList, index, i);
                     }
                 }
-
-                for (int i = 0; i < intNodeCount; i++) {
-                    likelihoodCore.createNodePartials(extNodeCount + i);
-                }
             }
+	        for (int i = 0; i < intNodeCount; i++) {
+	            likelihoodCore.createNodePartials(extNodeCount + i);
+	        }
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }

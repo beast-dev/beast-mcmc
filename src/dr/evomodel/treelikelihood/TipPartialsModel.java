@@ -3,8 +3,8 @@ package dr.evomodel.treelikelihood;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 import dr.evolution.alignment.PatternList;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 
 /**
@@ -14,15 +14,33 @@ import dr.evomodel.tree.TreeModel;
  */
 public abstract class TipPartialsModel extends AbstractModel {
 
-    /**
-     * @param name Model Name
-     */
-    public TipPartialsModel(String name, TreeModel treeModel, Parameter baseDamageRateParameter, Parameter ageRateFactorParameter) {
+	/**
+	 * @param name Model Name
+	 */
+	public TipPartialsModel(String name, TreeModel treeModel, TaxonList includeTaxa, TaxonList excludeTaxa) {
 		super(name);
 
 		this.treeModel = treeModel;
 
 		int extNodeCount = treeModel.getExternalNodeCount();
+
+		excluded = new boolean[extNodeCount];
+		if (includeTaxa != null) {
+			for (int i = 0; i < extNodeCount; i++) {
+				if (includeTaxa.getTaxonIndex(treeModel.getNodeTaxon(treeModel.getExternalNode(i))) == -1) {
+					excluded[i] = true;
+				}
+			}
+		}
+
+		if (excludeTaxa != null) {
+			for (int i = 0; i < extNodeCount; i++) {
+				if (excludeTaxa.getTaxonIndex(treeModel.getNodeTaxon(treeModel.getExternalNode(i))) != -1) {
+					excluded[i] = true;
+				}
+			}
+
+		}
 
 		states = new int[extNodeCount][];
 		partials = new double[extNodeCount][];
@@ -89,10 +107,11 @@ public abstract class TipPartialsModel extends AbstractModel {
 	}
 
 
-    public abstract double[] getTipPartials(int nodeIndex);
+	public abstract double[] getTipPartials(int nodeIndex);
 
 	protected int[][] states;
 	protected double[][] partials;
+	protected boolean[] excluded;
 
 	protected int patternCount = 0;
 	protected int stateCount;

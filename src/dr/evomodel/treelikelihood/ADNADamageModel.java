@@ -1,7 +1,9 @@
 package dr.evomodel.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.sitemodel.SiteModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -15,9 +17,11 @@ public class ADNADamageModel extends TipPartialsModel {
 	public static final String ADNA_DAMAGE_MODEL = "aDNADamageModel";
 	public static final String BASE_DAMAGE_RATE = "baseDamageRate";
 	public static final String AGE_RATE_FACTOR = "ageRateFactor";
+	public static final String EXCLUDE = "exclude";
+	public static final String INCLUDE = "include";
 
-	public ADNADamageModel(TreeModel treeModel, Parameter baseDamageRateParameter, Parameter ageRateFactorParameter) {
-		super(ADNA_DAMAGE_MODEL, treeModel, baseDamageRateParameter, ageRateFactorParameter);
+	public ADNADamageModel(TreeModel treeModel, TaxonList includeTaxa, TaxonList excludeTaxa, Parameter baseDamageRateParameter, Parameter ageRateFactorParameter) {
+		super(ADNA_DAMAGE_MODEL, treeModel, includeTaxa, excludeTaxa);
 
 		this.baseDamageRateParameter = baseDamageRateParameter;
 		this.ageRateFactorParameter = ageRateFactorParameter;
@@ -28,47 +32,86 @@ public class ADNADamageModel extends TipPartialsModel {
 			double base = baseDamageRateParameter.getParameterValue(0);
 			double factor = ageRateFactorParameter.getParameterValue(0);
 
-			int[] states = this.states[nodeIndex];
-			double[] partials = this.partials[nodeIndex];
 			for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
-				double age = treeModel.getNodeHeight(treeModel.getExternalNode(i));
+				int[] states = this.states[i];
+				double[] partials = this.partials[i];
 
-				double pDamage = base * Math.exp(-factor * age);
+				if (!excluded[i]) {
+					double age = treeModel.getNodeHeight(treeModel.getExternalNode(i));
 
-				int k = 0;
-				for (int j = 0; j < patternCount; j++) {
-					switch (states[j]) {
-						case 0: // is an A
-							partials[k] = 1.0 - pDamage;
-							partials[k + 1] = 0.0;
-							partials[k + 2] = pDamage;
-							partials[k + 3] = 0.0;
-							break;
-						case 1: // is an C
-							partials[k] = 0.0;
-							partials[k + 1] = 1.0 - pDamage;
-							partials[k + 2] = 0.0;
-							partials[k + 3] = pDamage;
-							break;
-						case 2: // is an G
-							partials[k] = pDamage;
-							partials[k + 1] = 0.0;
-							partials[k + 2] = 1.0 - pDamage;
-							partials[k + 3] = 0.0;
-							break;
-						case 3: // is an T
-							partials[k] = 0.0;
-							partials[k + 1] = pDamage;
-							partials[k + 2] = 0.0;
-							partials[k + 3] = 1.0 - pDamage;
-							break;
-						default: // is an ambiguity
-							partials[k] = 1.0;
-							partials[k + 1] = 1.0;
-							partials[k + 2] = 1.0;
-							partials[k + 3] = 1.0;
+					double pDamage = base * Math.exp(-factor * age);
+
+					int k = 0;
+					for (int j = 0; j < patternCount; j++) {
+						switch (states[j]) {
+							case 0: // is an A
+								partials[k] = 1.0 - pDamage;
+								partials[k + 1] = 0.0;
+								partials[k + 2] = pDamage;
+								partials[k + 3] = 0.0;
+								break;
+							case 1: // is an C
+								partials[k] = 0.0;
+								partials[k + 1] = 1.0 - pDamage;
+								partials[k + 2] = 0.0;
+								partials[k + 3] = pDamage;
+								break;
+							case 2: // is an G
+								partials[k] = pDamage;
+								partials[k + 1] = 0.0;
+								partials[k + 2] = 1.0 - pDamage;
+								partials[k + 3] = 0.0;
+								break;
+							case 3: // is an T
+								partials[k] = 0.0;
+								partials[k + 1] = pDamage;
+								partials[k + 2] = 0.0;
+								partials[k + 3] = 1.0 - pDamage;
+								break;
+							default: // is an ambiguity
+								partials[k] = 1.0;
+								partials[k + 1] = 1.0;
+								partials[k + 2] = 1.0;
+								partials[k + 3] = 1.0;
+						}
+						k += stateCount;
 					}
-					k += stateCount;
+				} else {
+					int k = 0;
+					for (int j = 0; j < patternCount; j++) {
+						switch (states[j]) {
+							case 0: // is an A
+								partials[k] = 1.0;
+								partials[k + 1] = 0.0;
+								partials[k + 2] = 0.0;
+								partials[k + 3] = 0.0;
+								break;
+							case 1: // is an C
+								partials[k] = 0.0;
+								partials[k + 1] = 1.0;
+								partials[k + 2] = 0.0;
+								partials[k + 3] = 0.0;
+								break;
+							case 2: // is an G
+								partials[k] = 0.0;
+								partials[k + 1] = 0.0;
+								partials[k + 2] = 1.0;
+								partials[k + 3] = 0.0;
+								break;
+							case 3: // is an T
+								partials[k] = 0.0;
+								partials[k + 1] = 0.0;
+								partials[k + 2] = 0.0;
+								partials[k + 3] = 1.0;
+								break;
+							default: // is an ambiguity
+								partials[k] = 1.0;
+								partials[k + 1] = 1.0;
+								partials[k + 2] = 1.0;
+								partials[k + 3] = 1.0;
+						}
+						k += stateCount;
+					}
 				}
 			}
 			updatePartials = false;
@@ -88,7 +131,18 @@ public class ADNADamageModel extends TipPartialsModel {
 			Parameter baseDamageRateParameter = (Parameter)xo.getSocketChild(BASE_DAMAGE_RATE);
 			Parameter ageRateFactorParameter = (Parameter)xo.getSocketChild(AGE_RATE_FACTOR);
 
-			ADNADamageModel aDNADamageModel =  new ADNADamageModel(treeModel, baseDamageRateParameter, ageRateFactorParameter);
+			TaxonList includeTaxa = null;
+			TaxonList excludeTaxa = null;
+
+			if (xo.hasSocket(INCLUDE)) {
+				includeTaxa = (TaxonList)xo.getSocketChild(INCLUDE);
+			}
+
+			if (xo.hasSocket(EXCLUDE)) {
+				excludeTaxa = (TaxonList)xo.getSocketChild(EXCLUDE);
+			}
+
+			ADNADamageModel aDNADamageModel =  new ADNADamageModel(treeModel, includeTaxa, excludeTaxa, baseDamageRateParameter, ageRateFactorParameter);
 
 			System.out.println("Using aDNA damage model.");
 
@@ -110,9 +164,12 @@ public class ADNADamageModel extends TipPartialsModel {
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 				new ElementRule(TreeModel.class),
-				new ElementRule(PatternList.class),
 				new ElementRule(BASE_DAMAGE_RATE, Parameter.class, "The base rate of accumulation of post-mortem damage", false),
-				new ElementRule(AGE_RATE_FACTOR, Parameter.class, "The factor by which rate of damage scales with age of sample", false)
+				new ElementRule(AGE_RATE_FACTOR, Parameter.class, "The factor by which rate of damage scales with age of sample", false),
+				new XORRule(
+						new ElementRule(INCLUDE, TaxonList.class, "A set of taxa to which to apply the damage model to"),
+						new ElementRule(EXCLUDE, TaxonList.class, "A set of taxa to which to not apply the damage model to")
+						, true)
 		};
 	};
 

@@ -89,15 +89,15 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (integrateAcrossCategories)	{
                 if (patternList.getDataType() instanceof dr.evolution.datatype.Nucleotides) {
 
-//                    if (NativeNucleotideLikelihoodCore.isAvailable()) {
-//
-//                        Logger.getLogger("dr.evomodel").info("TreeLikelihood using native nucleotide likelihood core");
-//                        likelihoodCore = new NativeNucleotideLikelihoodCore();
-//                    } else {
+                    if (NativeNucleotideLikelihoodCore.isAvailable()) {
+
+                        Logger.getLogger("dr.evomodel").info("TreeLikelihood using native nucleotide likelihood core");
+                        likelihoodCore = new NativeNucleotideLikelihoodCore();
+                    } else {
 
                         Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java nucleotide likelihood core");
                         likelihoodCore = new NucleotideLikelihoodCore();
-//                    }
+                    }
 
                 } else if (patternList.getDataType() instanceof dr.evolution.datatype.AminoAcids) {
                     Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java amino acid likelihood core");
@@ -358,9 +358,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         // If the node is internal, update the partial likelihoods.
         if (!tree.isExternal(node)) {
 
-            int nodeCount = tree.getChildCount(node);
-            if (nodeCount != 2)
-                throw new RuntimeException("binary trees only!");
+//            int nodeCount = tree.getChildCount(node);
+//            if (nodeCount != 2)
+//                throw new RuntimeException("binary trees only!");
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);

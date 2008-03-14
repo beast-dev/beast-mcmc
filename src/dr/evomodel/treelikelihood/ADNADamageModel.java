@@ -39,34 +39,34 @@ public class ADNADamageModel extends TipPartialsModel {
 				if (!excluded[i]) {
 					double age = treeModel.getNodeHeight(treeModel.getExternalNode(i));
 
-					double pDamage = base * Math.exp(-factor * age);
+					double pUndamaged = (1.0 - base) * Math.exp(-factor * age);
 
 					int k = 0;
 					for (int j = 0; j < patternCount; j++) {
 						switch (states[j]) {
 							case 0: // is an A
-								partials[k] = 1.0 - pDamage;
+								partials[k] = pUndamaged;
 								partials[k + 1] = 0.0;
-								partials[k + 2] = pDamage;
+								partials[k + 2] = 1.0 - pUndamaged;
 								partials[k + 3] = 0.0;
 								break;
 							case 1: // is an C
 								partials[k] = 0.0;
-								partials[k + 1] = 1.0 - pDamage;
+								partials[k + 1] = pUndamaged;
 								partials[k + 2] = 0.0;
-								partials[k + 3] = pDamage;
+								partials[k + 3] = 1.0 - pUndamaged;
 								break;
 							case 2: // is an G
-								partials[k] = pDamage;
+								partials[k] = 1.0 - pUndamaged;
 								partials[k + 1] = 0.0;
-								partials[k + 2] = 1.0 - pDamage;
+								partials[k + 2] = pUndamaged;
 								partials[k + 3] = 0.0;
 								break;
 							case 3: // is an T
 								partials[k] = 0.0;
-								partials[k + 1] = pDamage;
+								partials[k + 1] = 1.0 - pUndamaged;
 								partials[k + 2] = 0.0;
-								partials[k + 3] = 1.0 - pDamage;
+								partials[k + 3] = pUndamaged;
 								break;
 							default: // is an ambiguity
 								partials[k] = 1.0;

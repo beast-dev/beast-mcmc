@@ -41,6 +41,7 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
     public final static String TREE_TRACE_ANALYSIS = "treeTraceAnalysis";
     public final static String BURN_IN = "burnIn";
     public final static String MIN_CLADE_PROBABILITY = "minCladeProbability";
+    public final static String CRED_SET_PROBABILITY = "credSetProbability";
     public static final String FILE_NAME = "fileName";
 
     public String getParserName() {
@@ -79,10 +80,16 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
                 // leaving the burnin attribute off will result in 10% being used
                 minCladeProbability = xo.getDoubleAttribute(MIN_CLADE_PROBABILITY);
             }
+            
+            double credSetProbability = 0.95;
+            if (xo.hasAttribute(CRED_SET_PROBABILITY)) {
+                // leaving the burnin attribute off will result in 10% being used
+                credSetProbability = xo.getDoubleAttribute(CRED_SET_PROBABILITY);
+            }
 
             TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(new Reader[]{reader}, burnin, true);
 
-            analysis.report(minCladeProbability);
+            analysis.report(minCladeProbability, credSetProbability);
 
             System.out.println();
             System.out.flush();
@@ -112,6 +119,7 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new StringAttributeRule(FILE_NAME, "name of a tree log file", "trees.log"),
             AttributeRule.newIntegerRule(BURN_IN, true),
-            AttributeRule.newDoubleRule(MIN_CLADE_PROBABILITY, true)
+            AttributeRule.newDoubleRule(MIN_CLADE_PROBABILITY, true),
+            AttributeRule.newDoubleRule(CRED_SET_PROBABILITY, true)
     };
 }

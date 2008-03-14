@@ -197,14 +197,18 @@ public class TreeTraceAnalysis {
     }
 
     public void report() throws IOException {
-        report(0.5);
+        report(0.5, 0.95);
+    }
+    
+    public void report(double minCladeProbability) throws IOException {
+        report(minCladeProbability, 0.95);
     }
 
     /**
      * @param minCladeProbability clades with at least this posterior probability will be included in report.
      * @throws IOException if general I/O error occurs
      */
-    public void report(double minCladeProbability) throws IOException {
+    public void report(double minCladeProbability, double credSetProbability) throws IOException {
 
         int fieldWidth = 14;
         NumberFormatter formatter = new NumberFormatter(6);
@@ -220,9 +224,9 @@ public class TreeTraceAnalysis {
         System.out.println();
 
 
-        System.out.println("95% credible set (" + n + " unique trees, " + totalTrees + " total):");
+        System.out.println((Math.round(credSetProbability * 100.0)) + "% credible set (" + n + " unique trees, " + totalTrees + " total):");
         System.out.println("Count\tPercent\tTree");
-        int credSet = (95 * totalTrees) / 100;
+        int credSet = (int)(credSetProbability * totalTrees);
         int sumFreq = 0;
 
         NumberFormatter nf = new NumberFormatter(8);

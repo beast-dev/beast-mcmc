@@ -26,6 +26,7 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.BranchScoreMetric;
+import dr.evolution.tree.CladeMetric;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Statistic;
 import dr.xml.*;
@@ -64,7 +65,7 @@ public class TreeMetricStatistic extends Statistic.Abstract implements
    public static final String METHOD                = "method";
 
    enum Method {
-      TOPOLOGY, BILLERA, ROBINSONSFOULD, CLADEHEIGHTM, BRANCHSCORE
+      TOPOLOGY, BILLERA, ROBINSONSFOULD, CLADEHEIGHTM, BRANCHSCORE, CLADEMETRIC
    }
 
    public TreeMetricStatistic(String name, Tree target, Tree reference,
@@ -99,6 +100,9 @@ public class TreeMetricStatistic extends Statistic.Abstract implements
          case BRANCHSCORE:
             metric = new BranchScoreMetric();
             break;
+         case CLADEMETRIC:
+ 			metric = new CladeMetric();
+ 			break;
       }
    }
 

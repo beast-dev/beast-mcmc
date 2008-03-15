@@ -13,7 +13,6 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.treelikelihood.ARGLikelihood;
-//import dr.gui.tree.SquareTreePainter;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
@@ -25,24 +24,22 @@ import dr.util.NumberFormatter;
 import dr.xml.*;
 import org.jdom.Document;
 import org.jdom.Element;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.StringTokenizer;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.util.*;
 import java.util.logging.Logger;
 
-import java.io.*;
 /**
  * A model component for trees.
- * 
+ *
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: ARGModel.java,v 1.18.2.4 2006/11/06 01:38:30 msuchard Exp $
  */
 public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
-	
+
 	public static final String TREE_MODEL = "argTreeModel";
 	public static final String ROOT_HEIGHT = "rootHeight";
 	public static final String LEAF_HEIGHT = "leafHeight";
@@ -74,14 +71,14 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	public static final String GRAPH_SIZE = "size=\"6,6\"";
 	public static final String DOT_EDGE_DEF = "edge[style=\"setlinewidth(2)\",arrowhead=none]";
 	public static final String DOT_NODE_DEF = "node[shape=plaintext,width=auto,fontname=Helvitica,fontsize=10]";
-	
+
 	public static final int LEFT = 0;
 	public static final int RIGHT = 1;
 
 	// ***********************************************************************
 	// Private members
 	// ***********************************************************************
-	
+
 	protected int storedRootNumber;
 	protected int nodeCount;
 	protected int storedNodeCount;
@@ -110,9 +107,9 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	private int nullCounter = 0;
 	private int storedNullCounter;
 
-	
+
 	public ARGModel(ArrayList<Node> nodes, Node root, int numberPartitions,
-			int externalNodeCount) {
+	                int externalNodeCount) {
 		super(TREE_MODEL);
 		this.nodes = nodes;
 		this.root = root;
@@ -202,237 +199,323 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		// System.exit(-1);
 
 	}
-	
-	private double nextTime(int nTaxa, double pSize, double rRate){
-		double t = (double)nTaxa;
-		
-		double s = t*(t-1+rRate)/(2.0*pSize);
+
+	private double nextTime(int nTaxa, double pSize, double rRate) {
+		double t = (double) nTaxa;
+
+		double s = t * (t - 1 + rRate) / (2.0 * pSize);
 		return MathUtils.nextExponential(s);
 	}
-	
-	private boolean nextEventIsBifurcation(int nTaxa, double rRate){
-		double a = (double)(nTaxa - 1)/(nTaxa - 1 + rRate);
-		if(MathUtils.nextDouble() < a){
+
+	private boolean nextEventIsBifurcation(int nTaxa, double rRate) {
+		double a = (double) (nTaxa - 1) / (nTaxa - 1 + rRate);
+		if (MathUtils.nextDouble() < a) {
 			return true;
 		}
 		return false;
 	}
-	
-	private class SimulateSticks{
+
+	private class SimulateSticks {
 		public Node mySon;
 		public boolean leftStick;
-		
-		public SimulateSticks(Node son, boolean left){
+
+		public SimulateSticks(Node son, boolean left) {
 			mySon = son;
 			leftStick = left;
 		}
 	}
-	
+
 	public ARGModel(int ntaxa, double popSize, double rRate) {
 		super("Simulator");
-		
+
 		ArrayList<SimulateSticks> currentStickList = new ArrayList<SimulateSticks>(50);
 		ArrayList<Node> currentNodeList = new ArrayList<Node>(50);
-		
+
 		nodes = new ArrayList<Node>();
-		
+
 		int nodeNumber = 0;
-		
-		for(int i=0; i<ntaxa; i++) {
+
+		for (int i = 0; i < ntaxa; i++) {
 			Node node = new Node();
 			node.heightParameter = new Parameter.Default(0.0);
 			nodes.add(node);
 			currentNodeList.add(node);
 			node.bifurcation = true;
-			node.number = nodeNumber; nodeNumber++;
-			
-			node.taxon = new Taxon(""+nodeNumber);
-			SimulateSticks stickGuy = new SimulateSticks(node,true);
+			node.number = nodeNumber;
+			nodeNumber++;
+
+			node.taxon = new Taxon("" + nodeNumber);
+			SimulateSticks stickGuy = new SimulateSticks(node, true);
 			currentStickList.add(stickGuy);
 		}
-		
+
 		double currentHeight = 0;
-		
-		while( currentStickList.size() > 1) {
-			currentHeight = currentHeight + nextTime(currentStickList.size(),popSize,rRate);
-			
-			if(nextEventIsBifurcation(currentStickList.size(),rRate)){
+
+		while (currentStickList.size() > 1) {
+			currentHeight = currentHeight + nextTime(currentStickList.size(), popSize, rRate);
+
+			if (nextEventIsBifurcation(currentStickList.size(), rRate)) {
 				SimulateSticks[] sticks = new SimulateSticks[2];
-				
-				for(int i = 0; i < 2; i++){
+
+				for (int i = 0; i < 2; i++) {
 					int randomDraw = MathUtils.nextInt(currentStickList.size());
 					sticks[i] = currentStickList.get(randomDraw);
 					currentStickList.remove(randomDraw);
 				}
-				
+
 				Node node = new Node();
 				nodes.add(node);
 				node.heightParameter = new Parameter.Default(currentHeight);
-				node.number = nodeNumber; nodeNumber++;
+				node.number = nodeNumber;
+				nodeNumber++;
 				node.bifurcation = true;
-				SimulateSticks stickGuy = new SimulateSticks(node,true);
-				
-				if(sticks[0].mySon == sticks[1].mySon){
+				SimulateSticks stickGuy = new SimulateSticks(node, true);
+
+				if (sticks[0].mySon == sticks[1].mySon) {
 					Node child = sticks[0].mySon;
 					node.leftChild = child;
 					node.rightChild = child;
 					child.rightParent = node;
 					child.leftParent = node;
-					
+
 					currentNodeList.remove(currentNodeList.indexOf(child));
 					currentNodeList.add(node);
 					currentStickList.add(stickGuy);
-				}else{
+				} else {
 					Node child1 = sticks[0].mySon;
 					Node child2 = sticks[1].mySon;
-					
+
 					node.leftChild = child1;
 					node.rightChild = child2;
-					
-					if(child1.bifurcation){
+
+					if (child1.bifurcation) {
 						child1.leftParent = node;
 						child1.rightParent = node;
 						currentNodeList.remove(currentNodeList.indexOf(child1));
-					}else{ 
-						if(sticks[0].leftStick){
+					} else {
+						if (sticks[0].leftStick) {
 							child1.leftParent = node;
-						}else{
+						} else {
 							child1.rightParent = node;
 						}
-						if(child1.leftParent != null && child1.rightParent != null){
+						if (child1.leftParent != null && child1.rightParent != null) {
 							currentNodeList.remove(currentNodeList.indexOf(child1));
 						}
 					}
-					
-					if(child2.bifurcation){
+
+					if (child2.bifurcation) {
 						child2.leftParent = node;
 						child2.rightParent = node;
 						currentNodeList.remove(currentNodeList.indexOf(child2));
-					}else{ 
-						if(sticks[1].leftStick){
+					} else {
+						if (sticks[1].leftStick) {
 							child2.leftParent = node;
-						}else{
+						} else {
 							child2.rightParent = node;
 						}
-						if(child2.leftParent != null && child2.rightParent != null){
+						if (child2.leftParent != null && child2.rightParent != null) {
 							currentNodeList.remove(currentNodeList.indexOf(child2));
 						}
-					}					
+					}
 					currentNodeList.add(node);
 					currentStickList.add(stickGuy);
 				}
-			}else{
+			} else {
 				int randomDraw = MathUtils.nextInt(currentStickList.size());
 				SimulateSticks stick = currentStickList.get(randomDraw);
 				currentStickList.remove(randomDraw);
-				
+
 				Node node = new Node();
 				nodes.add(node);
 				node.heightParameter = new Parameter.Default(currentHeight);
-				node.number = nodeNumber; nodeNumber++;
+				node.number = nodeNumber;
+				nodeNumber++;
 				node.bifurcation = false;
-				SimulateSticks leftStickGuy = new SimulateSticks(node,true);
-				SimulateSticks rightStickGuy = new SimulateSticks(node,false);
-				
+				SimulateSticks leftStickGuy = new SimulateSticks(node, true);
+				SimulateSticks rightStickGuy = new SimulateSticks(node, false);
+
 				Node child = stick.mySon;
 				node.leftChild = child;
 				node.rightChild = child;
-				
-				if(child.bifurcation){
+
+				if (child.bifurcation) {
 					child.leftParent = node;
 					child.rightParent = node;
 					currentNodeList.remove(currentNodeList.indexOf(child));
-				}else{
-					if(stick.leftStick){
+				} else {
+					if (stick.leftStick) {
 						child.leftParent = node;
-					}else{
+					} else {
 						child.rightParent = node;
 					}
-					if(child.leftParent != null & child.rightParent != null){
+					if (child.leftParent != null & child.rightParent != null) {
 						currentNodeList.remove(currentNodeList.indexOf(child));
 					}
 				}
-				
+
 				currentNodeList.add(node);
 				currentStickList.add(leftStickGuy);
 				currentStickList.add(rightStickGuy);
 			}
-						
+
 		}
-			
+
 		root = currentNodeList.get(0);
-				
-		
+
 		//nodeNumber--;
-		
-	//	nodes = new Node[nodeNumber]; 
-		
-				
+
+		//	nodes = new Node[nodeNumber];
+
+
 	}
-	
-	private static boolean containsLessThan(int[] a, int b){
-		for(int c : a){
-			if(c < b)
+
+
+	public int possibleInternalNodePermuations() {
+
+		int max = getInternalNodeCount();
+		ArrayList<Double> remainingHeights = new ArrayList<Double>(max - 1);
+
+		for (Node node : nodes) {
+			if (!node.isExternal() && !node.isRoot())
+				remainingHeights.add(node.getHeight());
+		}
+
+		int firstNode = 0;
+		while (nodes.get(firstNode).isExternal() || nodes.get(firstNode).isRoot())
+			firstNode++;
+
+		int result = possibleInternalNodePermutations(firstNode, remainingHeights);
+
+		// Restore heights
+		int i = 0;
+		for (Node node : nodes) {
+			if (!node.isExternal() && !node.isRoot()) {
+				node.setHeight(remainingHeights.get(i++));
+			}
+		}
+
+		return factorial(max - 1) - result;
+	}
+
+	private int factorial(int x) {
+		int result = 1;
+		for (int i = 2; i <= x; i++)
+			result *= i;
+		return result;
+	}
+
+
+	private int possibleInternalNodePermutations(int nodeNumber, ArrayList<Double> remainingHeights) {
+
+		int total = 0;
+
+		if (remainingHeights.size() == 0) {
+			return 0;
+		}
+
+		int newNodeNumber = nodeNumber + 1;
+		if (remainingHeights.size() > 1) {
+			while (nodes.get(newNodeNumber).isExternal() || nodes.get(newNodeNumber).isRoot())
+				newNodeNumber++;
+		}
+
+		Node nr = nodes.get(nodeNumber);
+
+		for (double height : remainingHeights) {
+
+			if (height < getNodeHeight(getParent(nr, 0)) &&
+					height < getNodeHeight(getParent(nr, 1))) {
+				setNodeHeight(nr, height);
+
+				ArrayList<Double> copy0 = deepCopy(remainingHeights);
+				if (!copy0.contains(height))
+					System.err.println("where did i go?");
+				copy0.remove(height);
+
+				total += possibleInternalNodePermutations(newNodeNumber, copy0);
+
+			} else {
+				// The remaining permutations will not work
+				total += factorial(remainingHeights.size() - 1);
+			}
+
+		}
+
+		return total;
+	}
+
+
+	private ArrayList<Double> deepCopy(ArrayList<Double> in) {
+		ArrayList<Double> out = new ArrayList<Double>();
+		for (double d : in) {
+			out.add(d);
+		}
+		return out;
+	}
+
+	private static boolean containsLessThan(int[] a, int b) {
+		for (int c : a) {
+			if (c < b)
 				return true;
 		}
 		return false;
 	}
-	
+
 	public static void main(String[] args) {
 		BufferedWriter out = null;
-		
-		try{
+
+		try {
 			out = new BufferedWriter(new FileWriter("rejections.txt"));
-		}catch(Exception e){
+		} catch (Exception e) {
 			System.exit(-1);
 		}
-		
+
 		int rejections = 0;
-		
+
 		MathUtils.setSeed(97695);
-		
+
 		ArrayList<String> trees = new ArrayList<String>(10000);
-		
-		while(rejections < 100){
-			ARGModel arg = new ARGModel(3,6.0,1.0);
+
+		while (rejections < 100) {
+			ARGModel arg = new ARGModel(3, 6.0, 1.0);
 			String s = "";
-			if(arg.getReassortmentNodeCount() < 2){
+			if (arg.getReassortmentNodeCount() < 2) {
 				s = arg.toStrippedNewick();
 			}
-						
-			if(!s.equals("") && !trees.contains(s)){
+
+			if (!s.equals("") && !trees.contains(s)) {
 				trees.add(s);
 				System.out.println("Total Current Size = " + trees.size() + " Rejections= " + rejections);
 				rejections = 0;
-			}else{
+			} else {
 				rejections++;
 			}
 		}
-		
+
 		System.out.println("\n************************************");
 		System.out.println("Simulating trees");
-		
+
 		Collections.sort(trees);
 		int[] freq = new int[trees.size()];
 		int[] mcmcFreq = new int[trees.size()];
 		rejections = 0;
-		
-		while(containsLessThan(freq,10000)){
-			ARGModel arg = new ARGModel(3,6.0,1.0);
+
+		while (containsLessThan(freq, 10000)) {
+			ARGModel arg = new ARGModel(3, 6.0, 1.0);
 			String s = null;
-			if(arg.getReassortmentNodeCount() < 2){
+			if (arg.getReassortmentNodeCount() < 2) {
 				s = arg.toStrippedNewick();
 			}
-			
-			if(s != null){
+
+			if (s != null) {
 				freq[Collections.binarySearch(trees, s)]++;
 			}
 			rejections++;
-			if(rejections % 1000000 == 0){
+			if (rejections % 1000000 == 0) {
 				System.out.println(rejections);
 			}
 		}
-		
+
 //		System.out.println("\n************************************");
 //		System.out.println("Analyzing MCMC results");
 //		
@@ -450,32 +533,32 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 //		}catch(Exception e){
 //			System.exit(-1);
 //		}
-		
+
 		System.out.println("\n************************************");
 		System.out.println("Printing Results");
-		
-		
-		try{
+
+
+		try {
 			out = new BufferedWriter(new FileWriter("coalescent.sim"));
-		
+
 			rejections = 0;
-			for(String s : trees){
-				if(mcmcFreq[rejections] > -1){
+			for (String s : trees) {
+				if (mcmcFreq[rejections] > -1) {
 					out.write(s + " " + freq[rejections] + " " + mcmcFreq[rejections] + " \n");
 				}
 				rejections++;
 			}
 			out.flush();
-		}catch(Exception IOException){
-    		System.exit(-1);
-    	}
-				
+		} catch (Exception IOException) {
+			System.exit(-1);
+		}
+
 	}
 
 	/**
 	 * Packs and sends ARG state, including connectedness, heightparameters and
 	 * partitioning parameters.
-	 * 
+	 *
 	 * @param toRank
 	 */
 
@@ -656,8 +739,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		}
 	}
 
-	
-
 	// public static final String
 
 	private String getNameOfNode(Node node) {
@@ -816,8 +897,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 			if (sourceNode.leftChild == null)
 				sourceNode.leftChild = targetNode;
-			// sourceNode.
-			// }
+				// sourceNode.
+				// }
 			else {
 				sourceNode.rightChild = targetNode;
 				// sourceNode.partitioning = partitioning;
@@ -871,11 +952,11 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	public String toStrippedNewick() {
 		String s = root.toExtendedNewick() + ";";
 //		s = s.replaceAll("[0-9a-zA-Z]", "");
-		s = s.replaceAll("[^(),<>;]",  "");
+		s = s.replaceAll("[^(),<>;]", "");
 		return s;
-		
+
 	}
-	
+
 	public String toExtendedNewick() {
 		// StringBuffer sb = new StringBuffer();
 		return root.toExtendedNewick() + ";";
@@ -1052,9 +1133,9 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			}
 
 			double compare(double currentValue, double newValue) {
-				if(newValue == 0){
+				if (newValue == 0) {
 					return currentValue;
-				}else if(currentValue == 0){
+				} else if (currentValue == 0) {
 					return newValue;
 				}
 				if (newValue < currentValue)
@@ -1103,7 +1184,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		private ARGModel argModel;
 
 		public ArgTreeHeightColumn(String label, ARGModel argModel,
-				int partition) {
+		                           int partition) {
 			super(label + partition);
 			this.argModel = argModel;
 			this.partition = partition;
@@ -1120,7 +1201,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 		public IsReassortmentColumn(String label) {
 			super(label); // To change body of overridden methods use File |
-							// Settings | File Templates.
+			// Settings | File Templates.
 		}
 
 		public double getDoubleValue() {
@@ -1132,7 +1213,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 		public IsRootTooHighColumn(String label) {
 			super(label); // To change body of overridden methods use File |
-							// Settings | File Templates.
+			// Settings | File Templates.
 		}
 
 		public double getDoubleValue() {
@@ -1144,7 +1225,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 		public CountReassortmentColumn(String label) {
 			super(label); // To change body of overridden methods use File |
-							// Settings | File Templates.
+			// Settings | File Templates.
 		}
 
 		public double getDoubleValue() {
@@ -1239,7 +1320,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	public final boolean isExternal(NodeRef node) {
 		return ((Node) node).isExternal();
 	}
-	
+
 	public final boolean isInternal(NodeRef node) {
 		return !this.isExternal(node);
 	}
@@ -1271,35 +1352,36 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		return ((Node) node).getChildCount();
 	}
 
-	
-	public final NodeRef getOtherChild(NodeRef parent, NodeRef wrongChild){
-		Node p  = (Node) parent;
-		Node c =  (Node) wrongChild;
-		
-		if(p.leftChild == c){
+
+	public final NodeRef getOtherChild(NodeRef parent, NodeRef wrongChild) {
+		Node p = (Node) parent;
+		Node c = (Node) wrongChild;
+
+		if (p.leftChild == c) {
 			return p.rightChild;
 		}
 		return p.leftChild;
 	}
-	
-	public final NodeRef getBrother(NodeRef node){
-		Node n = (Node)node;
-		
-		if(n.isReassortment()){
+
+	public final NodeRef getBrother(NodeRef node) {
+		Node n = (Node) node;
+
+		if (n.isReassortment()) {
 			return node;
 		}
 		Node p = n.leftParent;
-		
-		if(p.leftChild == n){
+
+		if (p.leftChild == n) {
 			return p.rightChild;
 		}
-		
+
 		return p.leftChild;
 	}
+
 	/**
 	 * If i = 0, the left child is returned, else if i = 1, the right child is
 	 * returned.
-	 * 
+	 *
 	 * @return The child of the entered node.
 	 */
 	public final NodeRef getChild(NodeRef node, int i) {
@@ -1323,11 +1405,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	}
 
 	/**
-	 * 
-	 * @param node
-	 *            The child noderef
-	 * @param i
-	 *            i = 0 (left parent) i = 1 (right parent)
+	 * @param node The child noderef
+	 * @param i    i = 0 (left parent) i = 1 (right parent)
 	 * @return The corresponding parent noderef
 	 */
 	public final NodeRef getParent(NodeRef node, int i) {
@@ -1378,7 +1457,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		return internalNodeCount;
 	}
 
-	
 
 	public final int getReassortmentNodeCount() {
 		int cnt = 0;
@@ -1449,60 +1527,57 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	 * <code>parent</code> is a bifurcation node,
 	 * the method calls <code>singleAddChild(parent,child)</code>,
 	 * otherwise, the method calls <code>doubleAddChild(parent,child)</code>.
-	 * @throws RuntimeException if not in edit mode. 
+	 *
+	 * @throws RuntimeException if not in edit mode.
 	 * @see <code>singleAddChild(NodeRef parent, NodeRef child)</code>
 	 * @see <code>doubleAddChild(NodeRef parent, NodeRef child)</code>
 	 */
 	public void addChild(NodeRef parent, NodeRef child) {
 		checkEditMode();
-		
+
 		Node p = (Node) parent;
 		Node c = (Node) child;
-		
-		if(p.bifurcation){
+
+		if (p.bifurcation) {
 			p.singleAddChild(c);
-		}else{
+		} else {
 			p.doubleAddChild(c);
 		}
 	}
-	
-	public void addChildWithSingleParent(NodeRef parent, NodeRef child){
+
+	public void addChildWithSingleParent(NodeRef parent, NodeRef child) {
 		checkEditMode();
-		
+
 		Node p = (Node) parent;
 		Node c = (Node) child;
-		
-		if(p.bifurcation){
+
+		if (p.bifurcation) {
 			p.singleAddChildWithOneParent(c);
-		}else{
+		} else {
 			p.doubleAddChildWithOneParent(c);
 		}
-		
+
 	}
-	
-	
+
 
 	/**
-	 * Makes a link between <code>parent</code> and <code>child</code>.  
-	 * By default, if <code>parent</code> has a null reference for both 
-	 * it's children, <code>child</code> will become the left child of 
-	 * <code>parent</code>, otherwise <code>child</code> will become 
+	 * Makes a link between <code>parent</code> and <code>child</code>.
+	 * By default, if <code>parent</code> has a null reference for both
+	 * it's children, <code>child</code> will become the left child of
+	 * <code>parent</code>, otherwise <code>child</code> will become
 	 * the right child of <code>parent</code>.  <br><br>If the right parent
-	 * of <code>child</code> is <code>null</code>, <code>parent</code> 
+	 * of <code>child</code> is <code>null</code>, <code>parent</code>
 	 * will become the parent, the same thing will happen for the left parent
 	 * of <code>child</code>.
-	 *  
+	 *
 	 * @param parent the <code>NodeRef</code> that will become the parent of <code>child</code>
-	 * @param child the <code>NodeRef</code> that will become the child of <code>parent</code>
-	 * @throws RuntimeException 
-	 * 		if the you are not in edit transaction mode
-	 * @throws IllegalArgumentException
-	 * 		if <code>parent</code> already has two children.
-	 * 					
+	 * @param child  the <code>NodeRef</code> that will become the child of <code>parent</code>
+	 * @throws RuntimeException         if the you are not in edit transaction mode
+	 * @throws IllegalArgumentException if <code>parent</code> already has two children.
 	 */
 	public void singleAddChild(NodeRef parent, NodeRef child) {
 
-		if (!inEdit){
+		if (!inEdit) {
 			throw new RuntimeException(
 					"must be in edit transaction to call this method!");
 		}
@@ -1546,7 +1621,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	}
 
 	public void addChildAsRecombinant(NodeRef p1, NodeRef p2, NodeRef c,
-			Parameter partitioning) {
+	                                  Parameter partitioning) {
 		// public void addChildAsRecombinant(NodeRef p1, NodeRef p2, NodeRef c,
 		// BitSet bs1, BitSet bs2) {
 		if (!inEdit)
@@ -1566,14 +1641,14 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	}
 
 	/**
-	 * Removes the link between <code>parent</code> and 
+	 * Removes the link between <code>parent</code> and
 	 * <code>child</code>.  If <code>parent</code> is a bifurcation node,
 	 * the method calls <code>singleRemoveChild(parent, child)</code>,
 	 * otherwise, the method calls <code>doubleRemoveChild(parent,child)</code>.
-	 * 
+	 *
+	 * @throws RuntimeException if not in edit mode.
 	 * @see <code>singleRemoveChild(NodeRef parent, NodeRef child)</code>
 	 * @see <code>doubleRemoveChild(NodeRef parent, NodeRef child)</code>
-	 * @throws RuntimeException if not in edit mode.
 	 */
 	public void removeChild(NodeRef parent, NodeRef child) {
 		checkEditMode();
@@ -1589,15 +1664,13 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	 * called when the child's parents are both the same. After the method is
 	 * called the parent will have two null references for children, and the
 	 * child will have two null references for parents.
-	 * 
-	 * @param parent
-	 *            The parent NodeRef
-	 * @param chidl
-	 *            The child NodeRef
-	 * @see doubleAddChild()
-	 * @see singleAddChild()
-	 * @see removeChild()
-	 * @see singleRemoveChild()
+	 *
+	 * @param parent The parent NodeRef
+	 * @param child  The child NodeRef
+	 *               //	 * @see doubleAddChild()
+	 *               //	 * @see singleAddChild()
+	 *               //	 * @see removeChild()
+	 *               //	 * @see singleRemoveChild()
 	 */
 	public void doubleRemoveChild(NodeRef parent, NodeRef child) {
 		checkEditMode();
@@ -1610,7 +1683,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 	public void singleRemoveChild(NodeRef p, NodeRef c) {
 		checkEditMode();
-		
+
 		Node parent = (Node) p;
 		Node child = (Node) c;
 
@@ -1618,7 +1691,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	}
 
 	protected Node oldRoot;
-	
+
 
 	public void beginTreeEdit() {
 		if (inEdit)
@@ -1638,7 +1711,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		if (root != oldRoot) {
 			swapParameterObjects(oldRoot, root);
 		}
-		
 
 		// for (int i =0; i < nodes.length; i++) {
 		for (Node node : nodes) {
@@ -1722,7 +1794,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	 * Restore the stored state
 	 */
 	protected void restoreState() {
-				
+
 		ArrayList<Node> tmp = storedNodes;
 		storedNodes = nodes;
 		nodes = tmp;
@@ -1733,65 +1805,65 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 		//This part occurs true when we add a new arg event
 		//onto the root.
-		
-			if (addedParameters != null) {
-				if(addedParameters.length == 5){
-					removeParameter(addedParameters[0]);
-					removeParameter(addedParameters[1]);
-					removeParameter(addedParameters[2]);
-					removeParameter(addedParameters[3]);
-				
-					storedInternalNodeHeights.removeParameter(addedParameters[0]);
-					storedInternalNodeHeights.removeParameter(addedParameters[4]);
-				
-					storedInternalAndRootNodeHeights.removeParameter(addedParameters[0]);
-					storedInternalAndRootNodeHeights.removeParameter(addedParameters[1]);
 
-					storedNodeRates.removeParameter(addedParameters[2]);
-				}else{
-					storedInternalNodeHeights.removeParameter(addedParameters[0]);
-					storedInternalNodeHeights.removeParameter(addedParameters[1]);
-					
-					removeParameter(addedParameters[0]);
-					removeParameter(addedParameters[1]);
+		if (addedParameters != null) {
+			if (addedParameters.length == 5) {
+				removeParameter(addedParameters[0]);
+				removeParameter(addedParameters[1]);
+				removeParameter(addedParameters[2]);
+				removeParameter(addedParameters[3]);
 
-					storedInternalAndRootNodeHeights
-							.removeParameter(addedParameters[0]);
-					storedInternalAndRootNodeHeights
-							.removeParameter(addedParameters[1]);
+				storedInternalNodeHeights.removeParameter(addedParameters[0]);
+				storedInternalNodeHeights.removeParameter(addedParameters[4]);
 
-					removeParameter(addedParameters[2]);
-					removeParameter(addedParameters[3]);
-					storedNodeRates.removeParameter(addedParameters[2]);
-					storedNodeRates.removeParameter(addedParameters[3]);
-				}
+				storedInternalAndRootNodeHeights.removeParameter(addedParameters[0]);
+				storedInternalAndRootNodeHeights.removeParameter(addedParameters[1]);
+
+				storedNodeRates.removeParameter(addedParameters[2]);
+			} else {
+				storedInternalNodeHeights.removeParameter(addedParameters[0]);
+				storedInternalNodeHeights.removeParameter(addedParameters[1]);
+
+				removeParameter(addedParameters[0]);
+				removeParameter(addedParameters[1]);
+
+				storedInternalAndRootNodeHeights
+						.removeParameter(addedParameters[0]);
+				storedInternalAndRootNodeHeights
+						.removeParameter(addedParameters[1]);
+
+				removeParameter(addedParameters[2]);
+				removeParameter(addedParameters[3]);
+				storedNodeRates.removeParameter(addedParameters[2]);
+				storedNodeRates.removeParameter(addedParameters[3]);
 			}
-			if (addedPartitioningParameter != null) {
-				partitioningParameters.removeParameter(addedPartitioningParameter);
-				removeParameter(addedPartitioningParameter);
-			}
-			if (removedParameters != null) {
-				storedInternalNodeHeights.addParameter(removedParameters[0]);
-				storedInternalNodeHeights.addParameter(removedParameters[1]);
-				addParameter(removedParameters[0]);
-				addParameter(removedParameters[1]);
+		}
+		if (addedPartitioningParameter != null) {
+			partitioningParameters.removeParameter(addedPartitioningParameter);
+			removeParameter(addedPartitioningParameter);
+		}
+		if (removedParameters != null) {
+			storedInternalNodeHeights.addParameter(removedParameters[0]);
+			storedInternalNodeHeights.addParameter(removedParameters[1]);
+			addParameter(removedParameters[0]);
+			addParameter(removedParameters[1]);
 
-				storedInternalAndRootNodeHeights.addParameter(removedParameters[0]);
-				storedInternalAndRootNodeHeights.addParameter(removedParameters[1]);
+			storedInternalAndRootNodeHeights.addParameter(removedParameters[0]);
+			storedInternalAndRootNodeHeights.addParameter(removedParameters[1]);
 
-				addParameter(removedParameters[2]);
-				addParameter(removedParameters[3]);
-				storedNodeRates.addParameter(removedParameters[2]);
-				storedNodeRates.addParameter(removedParameters[3]);
+			addParameter(removedParameters[2]);
+			addParameter(removedParameters[3]);
+			storedNodeRates.addParameter(removedParameters[2]);
+			storedNodeRates.addParameter(removedParameters[3]);
 
-			}
+		}
 
-			if (removedPartitioningParameter != null) {
-				partitioningParameters.addParameter(removedPartitioningParameter);
-				addParameter(removedPartitioningParameter);
-			}
-		
-				
+		if (removedPartitioningParameter != null) {
+			partitioningParameters.addParameter(removedPartitioningParameter);
+			addParameter(removedPartitioningParameter);
+		}
+
+
 		nullCounter = storedNullCounter;
 	}
 
@@ -1826,13 +1898,13 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		 *//*
 																 * }
 																 */
-	
+
 	public void expandARGWithRecombinant(Node newbie1, Node newbie2,
-			VariableSizeCompoundParameter internalNodeParameters,
-			VariableSizeCompoundParameter internalAndRootNodeParameters,
-			VariableSizeCompoundParameter nodeRates) {
+	                                     VariableSizeCompoundParameter internalNodeParameters,
+	                                     VariableSizeCompoundParameter internalAndRootNodeParameters,
+	                                     VariableSizeCompoundParameter nodeRates) {
 		// System.err.println("attempting to expand");
-		
+
 		addParameter(newbie1.heightParameter);
 		addParameter(newbie2.heightParameter);
 		addParameter(newbie2.partitioning);
@@ -1896,28 +1968,28 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		}
 	}
 
-	public void contractARGWithRecombinantNewRoot(Node oldie, 
-			Node oldRoot, Node newRoot,
-			VariableSizeCompoundParameter internalNodeParameters,
-			VariableSizeCompoundParameter internalAndRootNodeParameters,
-			VariableSizeCompoundParameter nodeRates) {
+	public void contractARGWithRecombinantNewRoot(Node oldie,
+	                                              Node oldRoot, Node newRoot,
+	                                              VariableSizeCompoundParameter internalNodeParameters,
+	                                              VariableSizeCompoundParameter internalAndRootNodeParameters,
+	                                              VariableSizeCompoundParameter nodeRates) {
 		removeParameter(oldie.heightParameter);
 		removeParameter(oldRoot.heightParameter);
 		removeParameter(oldie.partitioning);
-		
+
 		removeParameter(oldie.rateParameter);
 		removeParameter(oldie.rateParameter);
-		
+
 		removedParameters = new Parameter[4];
 		removedParameters[0] = oldie.heightParameter;
 		removedParameters[1] = oldRoot.heightParameter;
 		removedParameters[2] = oldie.rateParameter;
 		removedParameters[3] = oldRoot.rateParameter;
-		
+
 		partitioningParameters.removeParameter(oldie.partitioning);
 		removedPartitioningParameter = oldie.partitioning;
 		storedInternalNodeHeights = internalNodeParameters;
-		
+
 		storedInternalNodeHeights.removeParameter(oldie.heightParameter);
 
 		storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
@@ -1933,76 +2005,74 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		nodes.remove(oldie);
 		nodes.remove(oldRoot);
 		internalNodeCount -= 2;
-		
+
 		this.setRoot(newRoot);
 		pushTreeSizeChangedEvent();
-		
-		
-	
+
+
 	}
-	
+
 	/**
 	 * Cleans up the arg model after a deletion event.
-	 * @param oldie1 
+	 *
+	 * @param oldie1
 	 * @param oldie2
 	 * @param internalNodeParameters
 	 * @param internalAndRootNodeParameters
 	 * @param nodeRates
 	 */
 	public void contractARGWithRecombinant(Node oldie1, Node oldie2,
-			VariableSizeCompoundParameter internalNodeParameters,
-			VariableSizeCompoundParameter internalAndRootNodeParameters,
-			VariableSizeCompoundParameter nodeRates) {
-		
+	                                       VariableSizeCompoundParameter internalNodeParameters,
+	                                       VariableSizeCompoundParameter internalAndRootNodeParameters,
+	                                       VariableSizeCompoundParameter nodeRates) {
+
 		removeParameter(oldie1.heightParameter);
 		removeParameter(oldie2.heightParameter);
 		removeParameter(oldie2.partitioning);
-		
-		
+
+
 		removeParameter(oldie1.rateParameter);
 		removeParameter(oldie2.rateParameter);
-		
-		
+
+
 		removedParameters = new Parameter[4];
 		removedParameters[0] = oldie1.heightParameter;
 		removedParameters[1] = oldie2.heightParameter;
 		removedParameters[2] = oldie1.rateParameter;
 		removedParameters[3] = oldie2.rateParameter;
-		
-		
+
+
 		partitioningParameters.removeParameter(oldie2.partitioning);
 		removedPartitioningParameter = oldie2.partitioning;
 		storedInternalNodeHeights = internalNodeParameters;
 		storedInternalNodeHeights.removeParameter(oldie1.heightParameter);
 		storedInternalNodeHeights.removeParameter(oldie2.heightParameter);
-		
-		
-		
+
+
 		storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
 		storedInternalAndRootNodeHeights
 				.removeParameter(oldie1.heightParameter);
 		storedInternalAndRootNodeHeights
 				.removeParameter(oldie2.heightParameter);
-		
-		
-		
+
+
 		storedNodeRates = nodeRates;
 		storedNodeRates.removeParameter(oldie1.rateParameter);
 		storedNodeRates.removeParameter(oldie2.rateParameter);
-		
+
 		nodes.remove(oldie1);
 		nodes.remove(oldie2);
-		
+
 		internalNodeCount -= 2;
 		pushTreeSizeChangedEvent();
 	}
 
-	public boolean argStoreCheck(){
-		if(storedInternalNodeHeights.getDimension() == this.internalNodeCount)
+	public boolean argStoreCheck() {
+		if (storedInternalNodeHeights.getDimension() == this.internalNodeCount)
 			return true;
 		return false;
 	}
-	
+
 	/**
 	 * Copies the node connections from this ARGModel's nodes array to the
 	 * destination array. Basically it connects up the nodes in destination in
@@ -2050,28 +2120,28 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 			if (node0.leftParent != null) {
 				node1.leftParent = // storedNodes.get(node0.leftParent.getNumber());
-				storedNodes.get(nodes.indexOf(node0.leftParent));
+						storedNodes.get(nodes.indexOf(node0.leftParent));
 			} else {
 				node1.leftParent = null;
 			}
 
 			if (node0.rightParent != null) {
 				node1.rightParent = // storedNodes.get(node0.rightParent.getNumber());
-				storedNodes.get(nodes.indexOf(node0.rightParent));
+						storedNodes.get(nodes.indexOf(node0.rightParent));
 			} else {
 				node1.rightParent = null;
 			}
 
 			if (node0.leftChild != null) {
 				node1.leftChild = // storedNodes.get(node0.leftChild.getNumber());
-				storedNodes.get(nodes.indexOf(node0.leftChild));
+						storedNodes.get(nodes.indexOf(node0.leftChild));
 			} else {
 				node1.leftChild = null;
 			}
 
 			if (node0.rightChild != null) {
 				node1.rightChild = // storedNodes.get(node0.rightChild.getNumber());
-				storedNodes.get(nodes.indexOf(node0.rightChild));
+						storedNodes.get(nodes.indexOf(node0.rightChild));
 			} else {
 				node1.rightChild = null;
 			}
@@ -2157,10 +2227,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	}
 
 	/**
-	 * @param taxonIndex
-	 *            the index of the taxon whose attribute is being fetched.
-	 * @param name
-	 *            the name of the attribute of interest.
+	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
+	 * @param name       the name of the attribute of interest.
 	 * @return an object representing the named attributed for the taxon of the
 	 *         given external node. If the node doesn't have a taxon then the
 	 *         nodes own attribute is returned.
@@ -2228,11 +2296,9 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 	/**
 	 * Sets an named attribute for this object.
-	 * 
-	 * @param name
-	 *            the name of the attribute.
-	 * @param value
-	 *            the new value of the attribute.
+	 *
+	 * @param name  the name of the attribute.
+	 * @param value the new value of the attribute.
 	 */
 	public void setAttribute(String name, Object value) {
 		if (treeAttributes == null)
@@ -2241,8 +2307,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	}
 
 	/**
-	 * @param name
-	 *            the name of the attribute of interest.
+	 * @param name the name of the attribute of interest.
 	 * @return an object representing the named attributed for this object.
 	 */
 	public Object getAttribute(String name) {
@@ -2272,14 +2337,14 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 	/**
 	 * Checks whether <code>ARGMode</code> is in edit mode.
-	 * @throws RuntimeException
-	 * 		if the <code>ARGModel</code> is not in edit mode.
+	 *
+	 * @throws RuntimeException if the <code>ARGModel</code> is not in edit mode.
 	 */
-	private void checkEditMode() throws RuntimeException{
-		if(!inEdit)
+	private void checkEditMode() throws RuntimeException {
+		if (!inEdit)
 			throw new RuntimeException("Not in edit transaction mode!");
 	}
-	
+
 	public void checkBranchSanity() {
 		boolean plotted = false;
 		for (Node node : nodes) {
@@ -2486,61 +2551,62 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 		// return null;
 	}
-	
-	
+
+
 	/**
-	 * Gives a summary of the ARG model.  Should only 
+	 * Gives a summary of the ARG model.  Should only
 	 * be used for debugging purposes because it's really slow.
+	 *
 	 * @return a summary of the ARG model.
 	 */
-	public String toARGSummary(){
+	public String toARGSummary() {
 		NumberFormatter format = new NumberFormatter(4);
-		
+
 		String space = "   ";
-		
-		String a = "----------------------\n" + 
-			"ARG Summary \n---------------------- \n";
-				
+
+		String a = "----------------------\n" +
+				"ARG Summary \n---------------------- \n";
+
 		a += "Number of nodes: " + nodes.size() + "\n";
 		a += "Number of partitions: " + maxNumberOfPartitions + "\n";
 		a += "Number of Reassorments: " + this.getReassortmentNodeCount() + "\n";
 		a += "Root number: " + getRoot().getNumber() + "\n";
-		a += "Node Summary" 
-	         + "\n----------------------------------------\n" + 
-		     "ID  LP   RP   LC   RC   Height" + space + "TX  \n" + 
-		     "----------------------------------------\n" ;
-			
-		for(Node node : nodes){
+		a += "Node Summary"
+				+ "\n----------------------------------------\n" +
+				"ID  LP   RP   LC   RC   Height" + space + "TX  \n" +
+				"----------------------------------------\n";
+
+		for (Node node : nodes) {
 			a += node.getNumber() + space;
-			
+
 			if (node.leftParent == null) a += "-1" + space;
 			else a += " " + node.leftParent.number + space;
 			if (node.rightParent == null) a += "-1" + space;
 			else a += " " + node.rightParent.number + space;
-			if (node.leftChild == null)	a += "-1" + space;
+			if (node.leftChild == null) a += "-1" + space;
 			else a += " " + node.leftChild.number + space;
 			if (node.rightChild == null) a += "-1" + space;
 			else a += " " + node.rightChild.number + space;
-			
-			a += format.formatDecimal(getNodeHeight(node),4) + space;
 
-			if(node.taxon == null){
+			a += format.formatDecimal(getNodeHeight(node), 4) + space;
+
+			if (node.taxon == null) {
 				a += "internal" + space;
-			}else{
+			} else {
 				a += node.taxon + space;
 			}
 			a += "\n";
 		}
-		a += "\nInduced Trees" + 
-			"\n----------------------------------------\n";
+		a += "\nInduced Trees" +
+				"\n----------------------------------------\n";
 //		for(int i = 0; i < maxNumberOfPartitions; i++){
 //			ARGTree tree = new ARGTree(this,i);
 //			a += "Partition " + i + "\n  " + tree.toString() + "\n";
 //		}
-				
+
 		return a;
 	}
-	
+
 	public String toGraphStringCompressed(boolean recurse) {
 		int cnt = 0;
 		for (Node node : nodes) {
@@ -2644,11 +2710,11 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			Tree tree = (Tree) xo.getChild(Tree.class);
 			ARGModel treeModel = new ARGModel(tree);
 
-			
+
 			Logger.getLogger("dr.evomodel").info(
 					"Creating the tree model, '" + xo.getId() + "'");
-			
-			
+
+
 			for (int i = 0; i < xo.getChildCount(); i++) {
 				if (xo.getChild(i) instanceof XMLObject) {
 
@@ -2706,7 +2772,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 						replaceParameter(cxo, treeModel
 								.createNodeHeightsParameter(rootNode,
-										internalNodes, leafNodes));
+								internalNodes, leafNodes));
 
 					} else if (cxo.getName().equals(NODE_RATES)) {
 
@@ -2739,7 +2805,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 						replaceParameter(cxo, treeModel
 								.createNodeRatesParameter(rootNode,
-										internalNodes, leafNodes));
+								internalNodes, leafNodes));
 
 					} else if (cxo.getName().equals(NODE_TRAITS)) {
 
@@ -2767,7 +2833,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 						replaceParameter(cxo, treeModel
 								.createNodeTraitsParameter(rootNode,
-										internalNodes, leafNodes));
+								internalNodes, leafNodes));
 
 					} else {
 						throw new XMLParseException("illegal child element in "
@@ -2788,7 +2854,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			Logger.getLogger("dr.evomodel").info(
 					"  initial tree topology = "
 							+ Tree.Utils.uniqueNewick(treeModel, treeModel
-									.getRoot()));
+							.getRoot()));
 			return treeModel;
 		}
 
@@ -2830,7 +2896,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 				new ElementRule(Tree.class),
 				new ElementRule(
 						ROOT_HEIGHT,
@@ -2839,18 +2905,18 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 						false),
 				new ElementRule(
 						NODE_HEIGHTS,
-						new XMLSyntaxRule[] {
+						new XMLSyntaxRule[]{
 								AttributeRule
 										.newBooleanRule(ROOT_NODE, true,
-												"If true the root height is included in the parameter"),
+										"If true the root height is included in the parameter"),
 								AttributeRule
 										.newBooleanRule(
-												INTERNAL_NODES,
-												true,
-												"If true the internal node heights (minus the root) are included in the parameter"),
+										INTERNAL_NODES,
+										true,
+										"If true the internal node heights (minus the root) are included in the parameter"),
 								new ElementRule(Parameter.class,
-										"A parameter definition with id only (cannot be a reference!)") },
-						1, Integer.MAX_VALUE) };
+										"A parameter definition with id only (cannot be a reference!)")},
+						1, Integer.MAX_VALUE)};
 
 		public Parameter getParameter(XMLObject xo) throws XMLParseException {
 
@@ -2979,7 +3045,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	 *         only be called by the XMLParser
 	 */
 	protected Parameter createNodeHeightsParameter(boolean rootNode,
-			boolean internalNodes, boolean leafNodes) {
+	                                               boolean internalNodes, boolean leafNodes) {
 
 		if (!rootNode && !internalNodes && !leafNodes) {
 			throw new IllegalArgumentException(
@@ -3020,7 +3086,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	 *         be called by the XMLParser
 	 */
 	protected Parameter createNodeRatesParameter(boolean rootNode,
-			boolean internalNodes, boolean leafNodes) {
+	                                             boolean internalNodes, boolean leafNodes) {
 
 		if (!rootNode && !internalNodes && !leafNodes) {
 			throw new IllegalArgumentException(
@@ -3057,7 +3123,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	 * by the XMLParser
 	 */
 	public Parameter createNodeTraitsParameter(boolean rootNode,
-			boolean internalNodes, boolean leafNodes) {
+	                                           boolean internalNodes, boolean leafNodes) {
 
 		if (!rootNode && !internalNodes && !leafNodes) {
 			throw new IllegalArgumentException(
@@ -3215,7 +3281,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 		/**
 		 * Constructor to build an ARG into a bifurcating tree
-		 * 
+		 *
 		 * @param node
 		 */
 		public Node(Node node) {
@@ -3833,11 +3899,11 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		}
 
 		private Node findNextTreeNode(Node parent, int partition) { // searches
-																	// down the
-																	// ARG for
-																	// the next
-																	// bifurcation
-																	// or tip
+			// down the
+			// ARG for
+			// the next
+			// bifurcation
+			// or tip
 			if (isExternal())
 				return this;
 			Node next = this;
@@ -3857,7 +3923,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		}
 
 		private Node getChild(int n, int partition) { // Assuming an acyclic
-														// bifurcating tree
+			// bifurcating tree
 			Node child = null;
 			if (n == 0) // Handle left side
 				child = leftChild;
@@ -3949,9 +4015,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 		/**
 		 * add new child node
-		 * 
-		 * @param node
-		 *            new child node
+		 *
+		 * @param node new child node
 		 */
 		public void singleAddChild(Node node) {
 			if (leftChild == null) {
@@ -4076,9 +4141,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 		/**
 		 * remove child
-		 * 
-		 * @param node
-		 *            child to be removed
+		 *
+		 * @param node child to be removed
 		 */
 		public Node doubleRemoveChild(Node node) {
 			boolean found = false;
@@ -4123,7 +4187,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			}
 			if (node.leftParent == this)
 				node.leftParent = null;
-			// node.leftPartition = null;
+				// node.leftPartition = null;
 			else if (node.rightParent == this)
 				node.rightParent = null;
 			// node.rightPartition = null;
@@ -4132,9 +4196,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 		/**
 		 * remove child
-		 * 
-		 * @param n
-		 *            number of child to be removed
+		 *
+		 * @param n number of child to be removed
 		 */
 		public Node removeChild(int n) {
 			Node node;
@@ -4199,7 +4262,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		}
 
 		public String toString() {
-			if(taxon == null){
+			if (taxon == null) {
 				return "" + number;
 			}
 			return "" + number + " (" + taxon.getId() + ")";
@@ -4268,7 +4331,5 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		private Parameter nodeHeightParameter = null;
 	}
 
-	
-	
-	
+
 }

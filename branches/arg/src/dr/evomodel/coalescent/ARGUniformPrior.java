@@ -35,7 +35,7 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood{
 		likelihoodKnown = true;
 		logLikelihood = calculateLogLikelihood();
 				
-		if(!currentARGValid()){
+		if(!currentARGValid(true)){
 			logLikelihood = Double.NEGATIVE_INFINITY;
 		}
 		

@@ -274,13 +274,17 @@ public interface Parameter extends Statistic {
 		protected abstract void adoptValues(Parameter source);
 
 		public String toString() {
-			StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
-			buffer.append(getId()).append("=[").append(String.valueOf(getBounds().getLowerLimit(0)));
+			StringBuffer buffer = new StringBuffer();
+			//String.valueOf(getParameterValue(0)));
+			buffer.append(getId());
+			buffer.append(" "+String.valueOf(getParameterValue(0)));
+			
+			buffer.append("=[").append(String.valueOf(getBounds().getLowerLimit(0)));
 			buffer.append(",").append(String.valueOf(getBounds().getUpperLimit(0))).append("]");
 
 			for (int i = 1; i < getDimension(); i++) {
 				buffer.append(", ").append(String.valueOf(getParameterValue(i)));
-				buffer.append("[").append(String.valueOf(getBounds().getLowerLimit(i)));
+				buffer.append("=[").append(String.valueOf(getBounds().getLowerLimit(i)));
 				buffer.append(",").append(String.valueOf(getBounds().getUpperLimit(i))).append("]");
 			}
 			return buffer.toString();

@@ -129,7 +129,7 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	     }
 	 }
 	 
-	 public boolean currentARGValid(){
+	 public boolean currentARGValid(boolean allowDoubleParents){
 		 if(!intervalsKnown){
 			 calculateIntervals();
 		 }
@@ -145,7 +145,14 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 			 else
 				 throw new RuntimeException("Not implemented yet");
 		 }
-		 
+		 if(!allowDoubleParents){
+			 for(int i = 0, n = arg.getNodeCount();i < n; i++){
+				 NodeRef x = arg.getNode(i);
+				 if(arg.isReassortment(x) && arg.getParent(x,0) == arg.getParent(x,1)){
+					 return false;
+				 }
+			 }
+		 }
 		 return true;
 	 }
 	 

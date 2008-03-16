@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+
+
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.ARGModel;
@@ -172,54 +174,92 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		Node startNode = (Node) x;
 		Node startChild = startNode.leftChild;
 		
-		ArrayList<NodeRef> possibleNodes = new ArrayList<NodeRef>(arg.getNodeCount());
+		ArrayList<ARGSwap> possibleSwaps = new ArrayList<ARGSwap>(arg.getNodeCount());
+
+		findSwaps(possibleSwaps,startNode);
 		
-		findNodesAtHeight(possibleNodes,startNode.getHeight());
+		assert !possibleSwaps.contains(new ARGSwap(startNode,true,false));
+		assert possibleSwaps.size() > 0;
 		
+		ARGSwap swap = possibleSwaps.get(MathUtils.nextInt(possibleSwaps.size()));
 		
-		
-		if(possibleNodes.contains(startNode)){
-			System.out.println(possibleNodes);
-			System.exit(-1);
-		}
-		
-		Node swapChild = (Node) possibleNodes.get(MathUtils.nextInt(possibleNodes.size()));
-		Node swapChildParent = null;
+		Node swapChild = swap.son;
+		Node swapParent = swap.getParent();
 		
 		arg.beginTreeEdit();
 		
-		if(swapChild.bifurcation){
-			swapChildParent = swapChild.leftParent;
+		if(swap.bifurcation){
 			
+			System.out.println(arg.toARGSummary());
+			System.out.println(swap);
 			arg.doubleRemoveChild(startNode, startChild);
-			arg.singleRemoveChild(swapChildParent,swapChild);
+			arg.removeChild(swapParent,swapChild);
+
+//			System.out.println(arg.toARGSummary());
 			
 			arg.doubleAddChild(startNode, swapChild);
-			arg.singleAddChild(swapChildParent, startChild);
-		}else{
 			
-			boolean[] sideOk = {swapChild.leftParent.getHeight() > startNode.getHeight(),
-					swapChild.rightParent.getHeight() > startNode.getHeight()};
-
-			if(sideOk[0] && sideOk[1]){
-				if(MathUtils.nextBoolean()){
-					swapChildParent = swapChild.leftParent;
-				}else{
-					swapChildParent = swapChild.rightParent;
-				}
-			}else if(sideOk[0]){
-				swapChildParent = swapChild.leftParent;
+			startChild.leftParent = swapParent;
+			startChild.rightParent = swapParent;
+			
+			if(swapParent.bifurcation){
+				arg.singleAddChild(swapParent, startChild);
 			}else{
-				swapChildParent = swapChild.rightParent;
+				swapParent.leftChild = startChild;
+				swapParent.rightChild = startChild;
 			}
 			
-			
+			assert nodeCheck() : arg.toARGSummary();
+		}else{
+			if(swapChild.leftParent == swapChild.rightParent){
+				arg.doubleRemoveChild(startNode, startChild);
+				if(swap.left){
+					swapParent.leftChild = null;
+					swapChild.leftParent = null;
+					
+					swapChild.leftParent = startNode;
+					startNode.leftChild = swapChild;
+					startNode.rightChild = swapChild;
+					
+					arg.singleAddChild(swapParent, startChild);
+				}else{
+					swapParent.rightChild = null;
+					swapChild.rightParent = null;
+					
+					swapChild.rightParent = startNode;
+					startNode.leftChild = swapChild;
+					startNode.rightChild = swapChild;
+					
+					arg.singleAddChild(swapParent, startChild);
+				}
+				
+				assert nodeCheck() : arg.toARGSummary();
+			}else{
+				arg.doubleRemoveChild(startNode, startChild);
+				arg.singleRemoveChild(swapParent,swapChild);
+							
+				if(swap.left){
+					swapChild.leftParent = startNode;
+					startNode.leftChild = swapChild;
+					startNode.rightChild = swapChild;
+					arg.singleAddChild(swapParent, startChild);
+				}else{
+					swapChild.rightParent = startNode;
+					startNode.leftChild = swapChild;
+					startNode.rightChild = swapChild;
+					arg.singleAddChild(swapParent, startChild);
+					
+				}
+				assert nodeCheck() : arg.toARGSummary();
+				
+			}
 		}
+		
 		
 		arg.pushTreeChangedEvent(startNode);
 		arg.pushTreeChangedEvent(startChild);
 		arg.pushTreeChangedEvent(swapChild);
-		arg.pushTreeChangedEvent(swapChildParent);
+		arg.pushTreeChangedEvent(swapParent);
 		
 		try{ 
 			arg.endTreeEdit(); 
@@ -250,6 +290,29 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		}
 	}
 	
+	private void findSwaps(ArrayList<ARGSwap> x, Node node){
+		double height = node.getHeight();
+		
+		for(int i = 0, n = arg.getNodeCount(); i < n; i++){
+			Node y = (Node) arg.getNode(i);
+			if(y.getHeight() < height && y != node){
+				if(y.bifurcation){
+					if(y.leftParent.getHeight() > height){
+						x.add(new ARGSwap(y,true,true));
+					}
+				}else{
+					if(y.leftParent.getHeight() > height){
+						x.add(new ARGSwap(y,false,true));
+					}
+					if(y.rightParent.getHeight() > height){
+						x.add(new ARGSwap(y,false,false));
+					}
+				}
+			}
+		}
+	}
+	
+	
 	private void findNodesAtHeight(ArrayList<NodeRef> x, double height){
 		for(int i = 0, n = arg.getNodeCount(); i < n; i++){
 			Node y = (Node) arg.getNode(i);
@@ -276,6 +339,49 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 
 	public String getPerformanceSuggestion() {
 		return "";
+	}
+	
+	private class ARGSwap{
+		
+		public Node son;
+		public boolean bifurcation;
+		public boolean left;
+		
+		public ARGSwap(Node son, boolean bif, boolean left){
+			this.son = son;
+			this.bifurcation = bif;
+			this.left = left;
+		}
+		
+		public Node getParent(){
+			if(bifurcation){
+				return son.leftParent;
+			}
+			
+			if(left){
+				return son.leftParent;
+			}
+			
+			return son.rightParent;
+			
+		}
+		
+		public boolean equals(Object o){
+			if(!(o instanceof ARGSwap))
+				return false;
+			
+			ARGSwap s = (ARGSwap)o;
+			
+			if(s.son == this.son){
+				return true;
+			}
+			return false;
+		}
+		
+		public String toString(){
+			return "(" + son.toString() + ", b= " + bifurcation + ", l= " + left + ")"; 
+		}
+		
 	}
 	
 	private Comparator<NodeRef> NodeSorter = new Comparator<NodeRef>(){
@@ -335,5 +441,38 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		}
 		
 	};
+	
+	public boolean nodeCheck() {
+		for (int i = 0, n = arg.getNodeCount(); i < n; i++) {
+			Node x = (Node) arg.getNode(i);
+
+			if (x.leftParent != x.rightParent &&
+					x.leftChild != x.rightChild) {
+				return false;
+			}
+			if (x.leftParent != null) {
+				if (x.leftParent.leftChild.getNumber() != i &&
+						x.leftParent.rightChild.getNumber() != i)
+					return false;
+			}
+			if (x.rightParent != null) {
+				if (x.rightParent.leftChild.getNumber() != i &&
+						x.rightParent.rightChild.getNumber() != i)
+					return false;
+			}
+			if (x.leftChild != null) {
+				if (x.leftChild.leftParent.getNumber() != i &&
+						x.leftChild.rightParent.getNumber() != i)
+					return false;
+			}
+			if (x.rightChild != null) {
+				if (x.rightChild.leftParent.getNumber() != i &&
+						x.rightChild.rightParent.getNumber() != i)
+					return false;
+			}
+		}
+
+		return true;
+	}
 
 }

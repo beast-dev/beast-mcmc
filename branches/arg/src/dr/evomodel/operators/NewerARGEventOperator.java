@@ -83,16 +83,16 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		double logq = 0;
 		
 		try {
-			if(arg.getReassortmentNodeCount() == 0){
-				logq = AddOperation();
-			}else{
-				logq = RemoveOperation();
-			}
+//			if(arg.getReassortmentNodeCount() == 0){
+//				logq = AddOperation();
+//			}else{
+//				logq = RemoveOperation();
+//			}
 			
-//			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
-//				logq = AddOperation() - size;
-//			else
-//				logq = RemoveOperation() + size;
+			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
+				logq = AddOperation() - size;
+			else
+				logq = RemoveOperation() + size;
 		} catch (NoReassortmentEventException nree) {
 			return Double.NEGATIVE_INFINITY;
 		} catch (OperatorFailedException e) {
@@ -363,14 +363,14 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 		assert nodeCheck();
 
-//		logHastings -= Math.log((double) findPotentialNodesToRemove(null));
-		logHastings -= Math.log((double)arg.getReassortmentNodeCount());
+		logHastings -= Math.log((double) findPotentialNodesToRemove(null));
+//		logHastings -= Math.log((double)arg.getReassortmentNodeCount());
 
-		if (newReassortment.leftParent != newReassortment.rightParent){
-			if(newReassortment.leftParent.bifurcation
-				&& newReassortment.rightParent.bifurcation) 
-				logHastings -= LOG_TWO;
-		}
+//		if (newReassortment.leftParent != newReassortment.rightParent){
+//			if(newReassortment.leftParent.bifurcation
+//				&& newReassortment.rightParent.bifurcation) 
+//				logHastings -= LOG_TWO;
+//		}
 
 		assert nodeCheck();
 
@@ -456,8 +456,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		if (totalPotentials == 0)
 			throw new NoReassortmentEventException();
 
-		logHastings += Math.log((double)arg.getReassortmentNodeCount());
-//		logHastings += Math.log((double) totalPotentials);
+//		logHastings += Math.log((double)arg.getReassortmentNodeCount());
+		logHastings += Math.log((double) totalPotentials);
 		
 //		double diff =(double)arg.getReassortmentNodeCount() - totalPotentials;
 //		

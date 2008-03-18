@@ -52,17 +52,15 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		
 	
 	public double doOperation() throws OperatorFailedException {
-		
+				
 		if((mode.equals(REASSORTMENT_SWAP) || mode.equals(DUAL_SWAP)) &&
 				arg.getReassortmentNodeCount() == 0){
 			return 0.0;
 		}
-		
-		
+				
 		ArrayList<NodeRef> bifurcationNodes = new ArrayList<NodeRef>(arg.getNodeCount());
 		ArrayList<NodeRef> reassortmentNodes = new ArrayList<NodeRef>(arg.getNodeCount());
 					
-		//Not sure if this part is totally needed.
 		setupBifurcationNodes(bifurcationNodes);
 		setupReassortmentNodes(reassortmentNodes);
 		
@@ -93,8 +91,6 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 	private double bifurcationSwap(NodeRef x){
 		Node startNode = (Node) x;
 		
-		
-		
 		Node keepChild = startNode.leftChild;
 		Node moveChild = startNode.rightChild;
 		
@@ -107,62 +103,107 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		
 		findNodesAtHeight(possibleNodes,startNode.getHeight());
 		
-		assert !possibleNodes.contains(keepChild) && !possibleNodes.contains(moveChild);
+		assert !possibleNodes.contains(startNode);
 		assert possibleNodes.size() > 0;
 		
 		
-		
-		Node swapChild = (Node) possibleNodes.get(MathUtils.nextInt(possibleNodes.size()));
-		Node swapChildParent = null;
-		
+		Node swapNode = (Node) possibleNodes.get(MathUtils.nextInt(possibleNodes.size()));
+		Node swapNodeParent = swapNode.leftParent;
 		
 		
 		arg.beginTreeEdit();
+	
+		String before = arg.toARGSummary();
 		
-		if(swapChild.bifurcation){
-			swapChildParent = swapChild.leftParent;
+		
+		if(swapNode.bifurcation){
+			swapNodeParent = swapNode.leftParent;
 			
 			arg.singleRemoveChild(startNode, moveChild);
 			
-			if(swapChildParent.bifurcation){
-				arg.singleRemoveChild(swapChildParent, swapChild);
-				arg.singleAddChild(swapChildParent, moveChild);
+			if(swapNodeParent.bifurcation){
+				arg.singleRemoveChild(swapNodeParent, swapNode);
+				arg.singleAddChild(swapNodeParent, moveChild);
 			}else{
-				arg.doubleRemoveChild(swapChildParent, swapChild);
-				arg.doubleAddChild(swapChildParent, moveChild);
+				arg.doubleRemoveChild(swapNodeParent, swapNode);
+				arg.doubleAddChild(swapNodeParent, moveChild);
 			}
 			
-			arg.singleAddChild(startNode, swapChild);
+			arg.singleAddChild(startNode, swapNode);
 			
 		}else{
-			boolean[] sideOk = {swapChild.leftParent.getHeight() > startNode.getHeight(),
-								swapChild.rightParent.getHeight() > startNode.getHeight()};
+			boolean leftSide = true;
+			boolean[] sideOk = {swapNode.leftParent.getHeight() > startNode.getHeight(),
+								swapNode.rightParent.getHeight() > startNode.getHeight()};
 			
 			if(sideOk[0] && sideOk[1]){
 				if(MathUtils.nextBoolean()){
-					swapChildParent = swapChild.leftParent;
-				}else{
-					swapChildParent = swapChild.rightParent;
+					swapNodeParent = swapNode.rightParent;
+					leftSide = false;
 				}
-			}else if(sideOk[0]){
-				swapChildParent = swapChild.leftParent;
-			}else{
-				swapChildParent = swapChild.rightParent;
+			}else if(sideOk[1]){
+				swapNodeParent = swapNode.rightParent;
+				leftSide = false;
 			}
 			
-			System.out.println("here");
-			System.exit(-1);
-			
+						
+			//Double linked parents
+			if(swapNode.leftParent == swapNode.rightParent){
+				arg.singleRemoveChild(startNode, moveChild);
+						
+				if(leftSide){
+					swapNode.leftParent = null;
+					swapNodeParent.leftChild = null;
+				}else{
+					swapNode.rightParent = null;
+					swapNodeParent.rightChild = null;
+				}
+						
+				arg.singleAddChild(startNode, swapNode);
+				arg.singleAddChild(swapNodeParent, moveChild);
+			}else if(swapNode.leftParent == startNode || swapNode.rightParent == startNode){
+				arg.singleRemoveChild(startNode, moveChild);
+						
+				if(swapNodeParent.bifurcation){
+					arg.singleRemoveChild(swapNodeParent,swapNode);
+					arg.singleAddChild(swapNodeParent,moveChild);
+				}else{
+					arg.doubleRemoveChild(swapNodeParent, swapNode);
+					arg.doubleAddChild(swapNodeParent, moveChild);
+				}
+				
+				if(startNode.leftChild == null)
+					startNode.leftChild = swapNode;
+				else
+					startNode.rightChild = swapNode;
+				
+				if(swapNode.leftParent == null)
+					swapNode.leftParent = startNode;
+				else
+					swapNode.rightParent = startNode;
+								
+			}else{
+				arg.singleRemoveChild(startNode, moveChild);
+								
+				if(swapNodeParent.bifurcation){
+					arg.singleRemoveChild(swapNodeParent, swapNode);
+					arg.singleAddChild(swapNodeParent, moveChild);
+				}else{
+					arg.doubleRemoveChild(swapNodeParent, swapNode);
+					arg.doubleAddChild(swapNodeParent, moveChild);
+				}
+				arg.singleAddChild(startNode, swapNode);
+			}
 		}
 		
-		arg.pushTreeChangedEvent(startNode);
-		arg.pushTreeChangedEvent(moveChild);
-		arg.pushTreeChangedEvent(swapChild);
-		arg.pushTreeChangedEvent(swapChildParent);
+		arg.pushTreeChangedEvent();
+		
+		assert nodeCheck();
 		
 		try{ 
 			arg.endTreeEdit(); 
 		}catch(MutableTree.InvalidTreeException ite){
+			System.out.println(before);
 			System.err.println(ite.getMessage());
 			System.exit(-1);
 		}
@@ -174,92 +215,132 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		Node startNode = (Node) x;
 		Node startChild = startNode.leftChild;
 		
-		ArrayList<ARGSwap> possibleSwaps = new ArrayList<ARGSwap>(arg.getNodeCount());
-
-		findSwaps(possibleSwaps,startNode);
+		ArrayList<NodeRef> possibleNodes = new ArrayList<NodeRef>(arg.getNodeCount());		
 		
-		assert !possibleSwaps.contains(new ARGSwap(startNode,true,false));
-		assert possibleSwaps.size() > 0;
+		findNodesAtHeight(possibleNodes,startNode.getHeight());
 		
-		ARGSwap swap = possibleSwaps.get(MathUtils.nextInt(possibleSwaps.size()));
+		assert !possibleNodes.contains(startNode);
+		assert possibleNodes.size() > 0;
 		
-		Node swapChild = swap.son;
-		Node swapParent = swap.getParent();
+		Node swapNode = (Node) possibleNodes.get(MathUtils.nextInt(possibleNodes.size()));
+		
+		Node swapParent = null;
 		
 		arg.beginTreeEdit();
-		
-		if(swap.bifurcation){
-			
-			System.out.println(arg.toARGSummary());
-			System.out.println(swap);
-			arg.doubleRemoveChild(startNode, startChild);
-			arg.removeChild(swapParent,swapChild);
 
-//			System.out.println(arg.toARGSummary());
+		if(swapNode.bifurcation){
+			swapParent = swapNode.leftParent;
 			
-			arg.doubleAddChild(startNode, swapChild);
+			arg.doubleRemoveChild(startNode, startChild);
 			
-			startChild.leftParent = swapParent;
-			startChild.rightParent = swapParent;
+			if(swapParent.bifurcation)
+				arg.singleRemoveChild(swapParent, swapNode);
+			else
+				arg.doubleRemoveChild(swapParent, swapNode);
 			
-			if(swapParent.bifurcation){
-				arg.singleAddChild(swapParent, startChild);
+			arg.doubleAddChild(startNode, swapNode);
+			
+			
+			if(startChild.bifurcation){
+				startChild.leftParent = swapParent;
+				startChild.rightParent = swapParent;
 			}else{
+				if(startChild.leftParent == null){
+					startChild.leftParent = swapParent;
+				}else{
+					startChild.rightParent = swapParent;
+				}
+			}
+			if(!swapParent.bifurcation){
 				swapParent.leftChild = startChild;
 				swapParent.rightChild = startChild;
+			}else{
+				if(swapParent.leftChild == null){
+					swapParent.leftChild = startChild;
+				}else{
+					swapParent.rightChild = startChild;
+				}
+			}
+					
+		}else{
+			boolean leftSide = true;
+			boolean[] sideOk = {swapNode.leftParent.getHeight() > startNode.getHeight(),
+								swapNode.rightParent.getHeight() > startNode.getHeight()};
+			
+			swapParent = swapNode.leftParent;
+			
+			if(sideOk[0] && sideOk[1]){
+				if(MathUtils.nextBoolean()){
+					leftSide = false;
+					swapParent = swapNode.rightParent;
+				}
+			}else if(sideOk[1]){
+				leftSide = false;
+				swapParent = swapNode.rightParent;
 			}
 			
-			assert nodeCheck() : arg.toARGSummary();
-		}else{
-			if(swapChild.leftParent == swapChild.rightParent){
+			if(swapNode.leftParent == swapNode.rightParent){
 				arg.doubleRemoveChild(startNode, startChild);
-				if(swap.left){
-					swapParent.leftChild = null;
-					swapChild.leftParent = null;
-					
-					swapChild.leftParent = startNode;
-					startNode.leftChild = swapChild;
-					startNode.rightChild = swapChild;
-					
-					arg.singleAddChild(swapParent, startChild);
+				
+				if(leftSide){
+					swapParent.leftChild = swapNode.leftParent = null;
+					swapParent.leftChild = startChild;
+					swapNode.leftParent = startNode;
 				}else{
-					swapParent.rightChild = null;
-					swapChild.rightParent = null;
-					
-					swapChild.rightParent = startNode;
-					startNode.leftChild = swapChild;
-					startNode.rightChild = swapChild;
-					
-					arg.singleAddChild(swapParent, startChild);
+					swapParent.rightChild = swapNode.rightParent = null;
+					swapParent.rightChild = startChild;
+					swapNode.rightParent = startNode;
 				}
 				
-				assert nodeCheck() : arg.toARGSummary();
+				startNode.leftChild = startNode.rightChild = swapNode;
+				
+				if(startChild.bifurcation){
+					startChild.leftParent = startChild.rightParent = swapParent;
+				}else{
+					if(startChild.leftParent == null)
+						startChild.leftParent = swapParent;
+					else
+						startChild.rightParent = swapParent;
+				}
 			}else{
 				arg.doubleRemoveChild(startNode, startChild);
-				arg.singleRemoveChild(swapParent,swapChild);
-							
-				if(swap.left){
-					swapChild.leftParent = startNode;
-					startNode.leftChild = swapChild;
-					startNode.rightChild = swapChild;
-					arg.singleAddChild(swapParent, startChild);
-				}else{
-					swapChild.rightParent = startNode;
-					startNode.leftChild = swapChild;
-					startNode.rightChild = swapChild;
-					arg.singleAddChild(swapParent, startChild);
-					
-				}
-				assert nodeCheck() : arg.toARGSummary();
 				
+				if(swapParent.bifurcation)
+					arg.singleRemoveChild(swapParent, swapNode);
+				else
+					arg.doubleRemoveChild(swapParent, swapNode);
+				
+				startNode.leftChild = startNode.rightChild = swapNode;
+				
+				if(leftSide)
+					swapNode.leftParent = startNode;
+				else
+					swapNode.rightParent = startNode;
+				
+				if(swapParent.bifurcation){
+					if(swapParent.leftChild == null)
+						swapParent.leftChild = startChild;
+					else
+						swapParent.rightChild = startChild;
+				}else{
+					swapParent.leftChild = swapParent.rightChild = startChild;
+				}
+				
+				if(startChild.bifurcation){
+					startChild.leftParent = startChild.rightParent = swapParent;
+				}else{
+					if(startChild.leftParent == null)
+						startChild.leftParent = swapParent;
+					else
+						startChild.rightParent = swapParent;
+				}
+							
 			}
+			
 		}
+
 		
-		
-		arg.pushTreeChangedEvent(startNode);
-		arg.pushTreeChangedEvent(startChild);
-		arg.pushTreeChangedEvent(swapChild);
-		arg.pushTreeChangedEvent(swapParent);
+		arg.pushTreeChangedEvent();
 		
 		try{ 
 			arg.endTreeEdit(); 
@@ -290,48 +371,27 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		}
 	}
 	
-	private void findSwaps(ArrayList<ARGSwap> x, Node node){
-		double height = node.getHeight();
-		
-		for(int i = 0, n = arg.getNodeCount(); i < n; i++){
-			Node y = (Node) arg.getNode(i);
-			if(y.getHeight() < height && y != node){
-				if(y.bifurcation){
-					if(y.leftParent.getHeight() > height){
-						x.add(new ARGSwap(y,true,true));
-					}
-				}else{
-					if(y.leftParent.getHeight() > height){
-						x.add(new ARGSwap(y,false,true));
-					}
-					if(y.rightParent.getHeight() > height){
-						x.add(new ARGSwap(y,false,false));
-					}
-				}
-			}
-		}
-	}
-	
 	
 	private void findNodesAtHeight(ArrayList<NodeRef> x, double height){
 		for(int i = 0, n = arg.getNodeCount(); i < n; i++){
-			Node y = (Node) arg.getNode(i);
-			if(y.getHeight() < height){
-				if(y.bifurcation){
-					if(y.leftParent.getHeight() > height){
-						x.add(y);
+			Node test = (Node) arg.getNode(i);
+			if(test.getHeight() < height){
+				if(test.bifurcation){
+					if(test.leftParent.getHeight() > height){
+						x.add(test);
 					}
 				}else{
-					if(y.leftParent.getHeight() > height){
-						x.add(y);
+					if(test.leftParent.getHeight() > height){
+						x.add(test);
 					}
-					if(y.rightParent.getHeight() > height){
-						x.add(y);
+					if(test.rightParent.getHeight() > height){
+						x.add(test);
 					}
 				}
 			}
 		}
 	}
+	
 	
 	public String getOperatorName() {
 		return ARG_SWAP_OPERATOR;
@@ -340,50 +400,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 	public String getPerformanceSuggestion() {
 		return "";
 	}
-	
-	private class ARGSwap{
 		
-		public Node son;
-		public boolean bifurcation;
-		public boolean left;
-		
-		public ARGSwap(Node son, boolean bif, boolean left){
-			this.son = son;
-			this.bifurcation = bif;
-			this.left = left;
-		}
-		
-		public Node getParent(){
-			if(bifurcation){
-				return son.leftParent;
-			}
-			
-			if(left){
-				return son.leftParent;
-			}
-			
-			return son.rightParent;
-			
-		}
-		
-		public boolean equals(Object o){
-			if(!(o instanceof ARGSwap))
-				return false;
-			
-			ARGSwap s = (ARGSwap)o;
-			
-			if(s.son == this.son){
-				return true;
-			}
-			return false;
-		}
-		
-		public String toString(){
-			return "(" + son.toString() + ", b= " + bifurcation + ", l= " + left + ")"; 
-		}
-		
-	}
-	
 	private Comparator<NodeRef> NodeSorter = new Comparator<NodeRef>(){
 
 		public int compare(NodeRef o1, NodeRef o2) {

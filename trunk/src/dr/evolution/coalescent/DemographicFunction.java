@@ -29,6 +29,9 @@ import dr.evolution.util.Units;
 import dr.math.Binomial;
 import dr.math.MathUtils;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
+import org.apache.commons.math.analysis.RombergIntegrator;
+import org.apache.commons.math.MaxIterationsExceededException;
+import org.apache.commons.math.FunctionEvaluationException;
 
 /**
  * This interface provides methods that describe a demographic function.
@@ -109,12 +112,11 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 	public abstract class Abstract implements DemographicFunction
 	{
        // private static final double LARGE_POSITIVE_NUMBER = 1.0e50;
-        private static final double LARGE_NEGATIVE_NUMBER = -1.0e50;
-        private static final double INTEGRATION_PRECISION = 1.0e-5;
-        private static final double INTEGRATION_MAX_ITERATIONS = 50;
+//        private static final double LARGE_NEGATIVE_NUMBER = -1.0e50;
+//        private static final double INTEGRATION_PRECISION = 1.0e-5;
+//        private static final double INTEGRATION_MAX_ITERATIONS = 50;
 
-        // With the release of commons-maths 1.2 we will be able to use this...
-        // RombergIntegrator numericalIntegrator;
+        RombergIntegrator numericalIntegrator = null;
 
         /**
 		 * Construct demographic model with default settings
@@ -147,69 +149,91 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
          * getNumericalIntegral function as appropriate.
          */
 		public double getNumericalIntegral(double start, double finish) {
+            // AER 19th March 2008: I switched this to use the RombergIntegrator from
+            // commons-math v1.2.
 
-            double lastST = LARGE_NEGATIVE_NUMBER;
-            double lastS = LARGE_NEGATIVE_NUMBER;
-
-            assert(finish > start);
-
-            for (int j = 1; j <= INTEGRATION_MAX_ITERATIONS; j++) {
-                // iterate doTrapezoid() until answer obtained
-
-                double st = doTrapezoid(j, start, finish, lastST);
-                double s = (4.0 * st - lastST) / 3.0;
-
-                // If answer is within desired accuracy then return
-                if (Math.abs(s - lastS) < INTEGRATION_PRECISION * Math.abs(lastS)) {
-                    return s;
-                }
-                lastS = s;
-                lastST = st;
+            if (start > finish) {
+                throw new RuntimeException("NumericalIntegration start > finish");
             }
 
-            throw new RuntimeException("Too many iterations in getNumericalIntegral");
+            if (start == finish) {
+                return 0.0;
+            }
+
+            if (numericalIntegrator == null) {
+                numericalIntegrator = new RombergIntegrator(this);
+            }
+
+            try {
+                return numericalIntegrator.integrate(start, finish);
+            } catch (MaxIterationsExceededException e) {
+                throw new RuntimeException(e);
+            } catch (FunctionEvaluationException e) {
+                throw new RuntimeException(e);
+            }
+
+//            double lastST = LARGE_NEGATIVE_NUMBER;
+//            double lastS = LARGE_NEGATIVE_NUMBER;
+//
+//            assert(finish > start);
+//
+//            for (int j = 1; j <= INTEGRATION_MAX_ITERATIONS; j++) {
+//                // iterate doTrapezoid() until answer obtained
+//
+//                double st = doTrapezoid(j, start, finish, lastST);
+//                double s = (4.0 * st - lastST) / 3.0;
+//
+//                // If answer is within desired accuracy then return
+//                if (Math.abs(s - lastS) < INTEGRATION_PRECISION * Math.abs(lastS)) {
+//                    return s;
+//                }
+//                lastS = s;
+//                lastST = st;
+//            }
+//
+//            throw new RuntimeException("Too many iterations in getNumericalIntegral");
         }
 
         /**
          * Performs the trapezoid rule.
          */
-        private double doTrapezoid(int n, double low, double high, double lastS) {
-
-            double s;
-
-            if (n == 1) {
-                // On the first iteration s is reset
-                double demoLow = getDemographic(low); // Value of N(x) obtained here
-                assert(demoLow > 0.0);
-
-                double demoHigh = getDemographic(high);
-                assert(demoHigh > 0.0);
-
-                s = 0.5 * (high - low) * ( (1.0 / demoLow) + (1.0 / demoHigh) );
-            } else {
-                int it=1;
-                for (int j = 1; j < n - 1; j++) {
-                    it *= 2;
-                }
-
-                double tnm = it;	// number of points
-                double del = (high - low) / tnm;	// width of spacing between points
-
-                double x = low + 0.5 * del;
-
-                double sum = 0.0;
-                for (int j = 1; j <= it; j++) {
-                    double demoX = getDemographic(x); // Value of N(x) obtained here
-                    assert(demoX > 0.0);
-
-                    sum += (1.0 / demoX);
-                    x += del;
-                }
-                s =  0.5 * (lastS + (high - low) * sum / tnm);	// New s uses previous s value
-            }
-
-            return s;
-        }
+//        private double doTrapezoid(int n, double low, double high, double lastS) {
+//
+//            double s;
+//
+//            if (n == 1) {
+//                // On the first iteration s is reset
+//                double demoLow = getDemographic(low); // Value of N(x) obtained here
+//                assert(demoLow > 0.0);
+//
+//                double demoHigh = getDemographic(high);
+//                assert(demoHigh > 0.0);
+//
+//                s = 0.5 * (high - low) * ( (1.0 / demoLow) + (1.0 / demoHigh) );
+//            } else {
+//                int it=1;
+//                for (int j = 1; j < n - 1; j++) {
+//                    it *= 2;
+//                }
+//
+//                double tnm = it;	// number of points
+//                double del = (high - low) / tnm;	// width of spacing between points
+//
+//                double x = low + 0.5 * del;
+//
+//                double sum = 0.0;
+//                for (int j = 1; j <= it; j++) {
+//                    double demoX = getDemographic(x); // Value of N(x) obtained here
+//                    assert(demoX > 0.0);
+//
+//                    sum += (1.0 / demoX);
+//                    x += del;
+//                }
+//                s =  0.5 * (lastS + (high - low) * sum / tnm);	// New s uses previous s value
+//            }
+//
+//            return s;
+//        }
 
         // **************************************************************
 	    // UnivariateRealFunction IMPLEMENTATION

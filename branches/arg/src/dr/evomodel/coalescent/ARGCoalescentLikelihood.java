@@ -19,6 +19,7 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	public static final String RECOMBINATION_RATE = "recombinationRate";
 	public static final String POPULATION_SIZE = "populationSize";
 	public static final String ARG_MODEL = "argModel";
+	public static final String MAX_REASSORTMENTS = "maxReassortments";
 	
 	public static final int RECOMBINATION = 3;
 			
@@ -26,21 +27,23 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	private Parameter recomRate;
 	protected ARGModel arg;
 	private int taxaNumber;
+	protected int maxReassortments;
 	
 	private ArrayList<CoalescentInterval> intervals;
 	private ArrayList<CoalescentInterval> storedIntervals;
 	
-	public ARGCoalescentLikelihood(String name, ARGModel arg){
+	public ARGCoalescentLikelihood(String name, ARGModel arg, int max){
 		super(name);
 		this.arg = arg;
 		
 		intervals = new ArrayList<CoalescentInterval>();
 		
 		taxaNumber = arg.getExternalNodeCount();
+		this.maxReassortments = max;
 	}
 	
 	public ARGCoalescentLikelihood(Parameter popSize, Parameter recomRate, 
-			ARGModel arg, boolean setupIntervals) {
+			ARGModel arg, boolean setupIntervals, int maxReassort) {
 		super(ARG_COALESCENT_MODEL);
 		
 		this.popSize = popSize;
@@ -58,10 +61,9 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 			intervalsKnown = true;
 			calculateIntervals();
 		}
-		
-		
-		
+				
 		taxaNumber = arg.getExternalNodeCount();
+		this.maxReassortments = maxReassort;
 	}
 	
 	public void calculateIntervals(){
@@ -112,9 +114,14 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 		 for(CoalescentInterval interval : intervals){
 			 storedIntervals.add(interval.clone());
 		 }
+		 
+	     intervalsKnown = likelihoodKnown = false;
+
+		 
 		 storedIntervalsKnown = intervalsKnown;
 		 storedLikelihoodKnown = likelihoodKnown;
 		 storedLogLikelihood = logLikelihood;
+		 
 	 }
 	 
 	 public void restoreState(){
@@ -124,9 +131,10 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 	     likelihoodKnown = storedLikelihoodKnown;
 	     logLikelihood = storedLogLikelihood;
 
-	     if (!intervalsKnown) {
-	         likelihoodKnown = false;
-	     }
+	     intervalsKnown = likelihoodKnown = false;
+//	     if (!intervalsKnown) {
+//	         likelihoodKnown = false;
+//	     }
 	 }
 	 
 	 public boolean currentARGValid(boolean allowDoubleParents){
@@ -163,12 +171,15 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 			 calculateIntervals();
 		 
 		 likelihoodKnown = true;
-		 logLikelihood = calculateLogLikelihood(
-				 popSize.getParameterValue(0), 
-				 recomRate.getParameterValue(0)); 
-	 	
-		 if(arg.getReassortmentNodeCount() > 3)
+		 
+		 if(arg.getReassortmentNodeCount() > maxReassortments)
 			 logLikelihood = Double.NEGATIVE_INFINITY;
+		 else
+			 logLikelihood = calculateLogLikelihood(
+					 popSize.getParameterValue(0),
+					 recomRate.getParameterValue(0)); 
+		 
+		 
 		 
 		 return logLikelihood;
 	 }
@@ -283,7 +294,12 @@ public class ARGCoalescentLikelihood extends CoalescentLikelihood{
 			cxo = (XMLObject) xo.getChild(ARG_MODEL);
 			ARGModel argModel = (ARGModel)cxo.getChild(ARGModel.class);
 			
-			return new ARGCoalescentLikelihood(pSize,rRate,argModel,false);
+			int maxreassort = Integer.MAX_VALUE;
+			if(xo.hasAttribute(MAX_REASSORTMENTS)){
+				maxreassort = xo.getIntegerAttribute(MAX_REASSORTMENTS);
+			}
+			
+			return new ARGCoalescentLikelihood(pSize,rRate,argModel,false, maxreassort);
 		}
 
 		

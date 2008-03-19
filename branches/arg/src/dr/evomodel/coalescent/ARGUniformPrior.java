@@ -12,15 +12,16 @@ import dr.xml.XMLSyntaxRule;
 public class ARGUniformPrior extends ARGCoalescentLikelihood{
 
 	public static final String ARG_UNIFORM_PRIOR = "argUniformPrior";
-		
+
 	private double[] argNumber;
 	
-	ARGUniformPrior(ARGModel arg) {
-		super(ARG_UNIFORM_PRIOR,arg);
+	
+	ARGUniformPrior(ARGModel arg, int max) {
+		super(ARG_UNIFORM_PRIOR,arg, max);
 				
 		addModel(arg);
 				
-		argNumber = new double[5];
+		argNumber = new double[4];
 		for(int i = 0, n = arg.getExternalNodeCount(); i < argNumber.length; i++){
 			argNumber[i] = Math.log(numberARGS(n,i));
 		}
@@ -39,9 +40,12 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood{
 			logLikelihood = Double.NEGATIVE_INFINITY;
 		}
 		
-		if(arg.getReassortmentNodeCount() > 1){
+		if(arg.getReassortmentNodeCount() > maxReassortments)
 			logLikelihood = Double.NEGATIVE_INFINITY;
-		}
+		else
+			logLikelihood = calculateLogLikelihood();
+		
+		
 		
 		return logLikelihood;
 	}
@@ -124,7 +128,12 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood{
 			public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 				ARGModel argModel = (ARGModel)xo.getChild(ARGModel.class);
 				
-				return new ARGUniformPrior(argModel);
+				int max = Integer.MAX_VALUE;
+				if(xo.hasAttribute(MAX_REASSORTMENTS)){
+					max = xo.getIntegerAttribute(MAX_REASSORTMENTS);
+				}
+				
+				return new ARGUniformPrior(argModel,max);
 			}
 
 			

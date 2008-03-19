@@ -38,6 +38,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	public static final String INTERNAL_NODES = "internalNodes";
 	public static final String INTERNAL_AND_ROOT = "internalNodesPlusRoot";
 	public static final String NODE_RATES = "nodeRates";
+	public static final String BELOW_ROOT_PROBABILITY = "belowRootProbability";
 	public static final double LOG_TWO = Math.log(2.0);
 
 	private ARGModel arg = null;
@@ -57,7 +58,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	                             VariableSizeCompoundParameter param2,
 	                             VariableSizeCompoundParameter param3,
 	                             double singlePartitionProbability,
-	                             boolean isRecombination) {
+	                             boolean isRecombination,
+	                             double belowRootProbability) {
 		this.arg = arg;
 		this.size = size;
 		this.internalNodeParameters = param1;
@@ -68,6 +70,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		this.mode = mode;
 		
 		setWeight(weight);
+		
+		this.probBelowRoot = belowRootProbability;
 		
 		//This is for computational efficiency
 		probBelowRoot = -Math.log(1 - Math.sqrt(probBelowRoot));
@@ -940,11 +944,17 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			else
 				throw new XMLParseException(ADD_PROBABILITY + " must be between 0 and 1");
 
-			
+			double belowRootProb = 0.9;
+			if(xo.hasAttribute(BELOW_ROOT_PROBABILITY)){
+				belowRootProb = xo.getDoubleAttribute(BELOW_ROOT_PROBABILITY);
+				if(belowRootProb >= 1 || belowRootProb <= 0){
+					throw new XMLParseException(BELOW_ROOT_PROBABILITY + " must fall in (0,1)");
+				}
+			}
 
 			return new NewerARGEventOperator(treeModel, weight, size,
 					mode, parameter1, parameter2, parameter3,
-					singlePartitionProbability, isRecombination);
+					singlePartitionProbability, isRecombination, belowRootProb);
 		}
 
 		public String getParserDescription() {

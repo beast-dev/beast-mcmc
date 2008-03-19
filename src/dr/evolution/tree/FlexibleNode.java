@@ -36,29 +36,40 @@ import java.util.Iterator;
  * be correct. Which is currently in use and the conversion between them is handled
  * by FlexibleTree.
  *
- * @version $Id: FlexibleNode.java,v 1.9 2005/06/20 16:06:02 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: FlexibleNode.java,v 1.9 2005/06/20 16:06:02 rambaut Exp $
  */
 public class FlexibleNode implements NodeRef, Attributable {
 
-	/** parent node */
+	/**
+	 * parent node
+	 */
 	private FlexibleNode parent;
 
-	/** number of node */
+	/**
+	 * number of node
+	 */
 	private int nodeNumber;
 
-	/** height of this node */
+	/**
+	 * height of this node
+	 */
 	private double height;
 
-	/** length of the branch to the parent */
+	/**
+	 * length of the branch to the parent
+	 */
 	private double length;
 
-	/** instantaneous rate at this node */
+	/**
+	 * instantaneous rate at this node
+	 */
 	private double rate;
 
-	/** the taxon if node is external */
+	/**
+	 * the taxon if node is external
+	 */
 	private Taxon taxon = null;
 
 	//
@@ -67,28 +78,30 @@ public class FlexibleNode implements NodeRef, Attributable {
 
 	private FlexibleNode[] child;
 
-	/** constructor default node */
-	public FlexibleNode()
-	{
+	/**
+	 * constructor default node
+	 */
+	public FlexibleNode() {
 		parent = null;
-		child =null;
+		child = null;
 		height = 0.0;
 		rate = 1.0;
 
 		nodeNumber = 0;
 	}
 
-    /** constructor default node */
-    public FlexibleNode(Taxon taxon)
-    {
-        parent = null;
-        child =null;
-        height = 0.0;
-        rate = 1.0;
+	/**
+	 * constructor default node
+	 */
+	public FlexibleNode(Taxon taxon) {
+		parent = null;
+		child = null;
+		height = 0.0;
+		rate = 1.0;
 
-        nodeNumber = 0;
-        this.taxon = taxon;
-    }
+		nodeNumber = 0;
+		this.taxon = taxon;
+	}
 
 	public FlexibleNode(FlexibleNode node) {
 		parent = null;
@@ -96,20 +109,21 @@ public class FlexibleNode implements NodeRef, Attributable {
 		setHeight(node.getHeight());
 		setLength(node.getLength());
 		setRate(node.getRate());
-		setId(node.getId());		
+		setId(node.getId());
 		setNumber(node.getNumber());
 		setTaxon(node.getTaxon());
-		
+
 		child = null;
 
 		for (int i = 0; i < node.getChildCount(); i++) {
 			addChild(new FlexibleNode(node.getChild(i)));
 		}
 	}
-	
-	/** constructor used to clone a node and all children */
-	public FlexibleNode(Tree tree, NodeRef node)
-	{
+
+	/**
+	 * constructor used to clone a node and all children
+	 */
+	public FlexibleNode(Tree tree, NodeRef node) {
 		parent = null;
 		setHeight(tree.getNodeHeight(node));
 		setLength(tree.getBranchLength(node));
@@ -117,14 +131,39 @@ public class FlexibleNode implements NodeRef, Attributable {
 		setId(tree.getTaxonId(node.getNumber()));
 		setNumber(node.getNumber());
 		setTaxon(tree.getNodeTaxon(node));
-		
+
 		child = null;
 
 		for (int i = 0; i < tree.getChildCount(node); i++) {
 			addChild(new FlexibleNode(tree, tree.getChild(node, i)));
 		}
 	}
-	
+
+	public FlexibleNode(Tree tree, NodeRef node, boolean copyAttributes) {
+		parent = null;
+		setHeight(tree.getNodeHeight(node));
+		setLength(tree.getBranchLength(node));
+		setRate(tree.getNodeRate(node));
+		setId(tree.getTaxonId(node.getNumber()));
+		setNumber(node.getNumber());
+		setTaxon(tree.getNodeTaxon(node));
+
+		child = null;
+
+		for (int i = 0; i < tree.getChildCount(node); i++) {
+			addChild(new FlexibleNode(tree, tree.getChild(node, i), copyAttributes));
+		}
+		if (copyAttributes) {
+			Iterator iter = tree.getNodeAttributeNames(node);
+			if (iter != null) {
+				while (iter.hasNext()) {
+					String name = (String) iter.next();
+					this.setAttribute(name, tree.getNodeAttribute(node, name));
+				}
+			}
+		}
+	}
+
 	public FlexibleNode getDeepCopy() {
 		FlexibleNode copy = new FlexibleNode(this);
 		return copy;
@@ -132,14 +171,14 @@ public class FlexibleNode implements NodeRef, Attributable {
 
 	public FlexibleNode getShallowCopy() {
 		FlexibleNode copy = new FlexibleNode();
-		
+
 		copy.setHeight(getHeight());
 		copy.setLength(getLength());
 		copy.setRate(getRate());
-		copy.setId(getId());		
+		copy.setId(getId());
 		copy.setNumber(getNumber());
 		copy.setTaxon(getTaxon());
-		
+
 		return copy;
 	}
 
@@ -149,9 +188,13 @@ public class FlexibleNode implements NodeRef, Attributable {
 	public final FlexibleNode getParent() {
 		return parent;
 	}
-	
-	/** Set the parent node of this node. */
-	public void setParent(FlexibleNode node) { parent = node; }
+
+	/**
+	 * Set the parent node of this node.
+	 */
+	public void setParent(FlexibleNode node) {
+		parent = node;
+	}
 
 	/**
 	 * Get the height of this node.
@@ -215,29 +258,26 @@ public class FlexibleNode implements NodeRef, Attributable {
 	 * get child node
 	 *
 	 * @param n number of child
-	 *
 	 * @return child node
 	 */
-	public FlexibleNode getChild(int n)
-	{
+	public FlexibleNode getChild(int n) {
 		return child[n];
 	}
-	
-	public boolean hasChild(FlexibleNode node) { 
-	
+
+	public boolean hasChild(FlexibleNode node) {
+
 		for (int i = 0, n = getChildCount(); i < n; i++) {
 			if (node == child[i]) return true;
 		}
 		return false;
 	}
-	
+
 	/**
 	 * add new child node
 	 *
 	 * @param n new child node
 	 */
-	public void addChild(FlexibleNode n)
-	{
+	public void addChild(FlexibleNode n) {
 		insertChild(n, getChildCount());
 	}
 
@@ -245,38 +285,34 @@ public class FlexibleNode implements NodeRef, Attributable {
 	 * add new child node (insertion at a specific position)
 	 *
 	 * @param n new child node
-	 + @param pos position
+	 *          + @param pos position
 	 */
-	public void insertChild(FlexibleNode n, int pos)
-	{
+	public void insertChild(FlexibleNode n, int pos) {
 		int numChildren = getChildCount();
 
 		FlexibleNode[] newChild = new FlexibleNode[numChildren + 1];
 
-		for (int i = 0; i < pos; i++)
-		{
+		for (int i = 0; i < pos; i++) {
 			newChild[i] = child[i];
 		}
 		newChild[pos] = n;
-		for (int i = pos; i < numChildren; i++)
-		{
-			newChild[i+1] = child[i];
+		for (int i = pos; i < numChildren; i++) {
+			newChild[i + 1] = child[i];
 		}
 
 		child = newChild;
 
 		n.setParent(this);
 	}
-	
+
 	/**
 	 * remove child
 	 *
 	 * @param n child to be removed
 	 */
-	public FlexibleNode removeChild(FlexibleNode n)
-	{
+	public FlexibleNode removeChild(FlexibleNode n) {
 		int numChildren = getChildCount();
-		FlexibleNode[] newChild = new FlexibleNode[numChildren-1];
+		FlexibleNode[] newChild = new FlexibleNode[numChildren - 1];
 
 		int j = 0;
 		boolean found = false;
@@ -284,32 +320,30 @@ public class FlexibleNode implements NodeRef, Attributable {
 			if (child[i] != n) {
 				newChild[j] = child[i];
 				j++;
-			} else 
+			} else
 				found = true;
 		}
-		
+
 		if (!found)
 			throw new IllegalArgumentException("Nonexistent child");
-			
+
 		//remove parent link from removed child!
 		n.setParent(null);
 
 		child = newChild;
-		
+
 		return n;
 	}
-	
+
 	/**
 	 * remove child
 	 *
 	 * @param n number of child to be removed
 	 */
-	public FlexibleNode removeChild(int n)
-	{
+	public FlexibleNode removeChild(int n) {
 		int numChildren = getChildCount();
 
-		if (n >= numChildren)
-		{
+		if (n >= numChildren) {
 			throw new IllegalArgumentException("Nonexistent child");
 		}
 
@@ -317,14 +351,12 @@ public class FlexibleNode implements NodeRef, Attributable {
 	}
 
 
-
 	/**
 	 * check whether this node has any children
 	 *
 	 * @return result (true or false)
 	 */
-	public boolean hasChildren()
-	{
+	public boolean hasChildren() {
 		return (getChildCount() != 0);
 	}
 
@@ -333,7 +365,7 @@ public class FlexibleNode implements NodeRef, Attributable {
 	 *
 	 * @return result (true or false)
 	 */
-	public boolean isExternal()	{
+	public boolean isExternal() {
 		return !hasChildren();
 	}
 
@@ -342,8 +374,7 @@ public class FlexibleNode implements NodeRef, Attributable {
 	 *
 	 * @return result (true or false)
 	 */
-	public boolean isRoot()
-	{
+	public boolean isRoot() {
 		return (getParent() == null);
 	}
 
@@ -356,9 +387,9 @@ public class FlexibleNode implements NodeRef, Attributable {
 		return child.length;
 	}
 
-    // **************************************************************
-    // Identifiable IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// Identifiable IMPLEMENTATION
+	// **************************************************************
 
 	private String id = null;
 
@@ -375,16 +406,17 @@ public class FlexibleNode implements NodeRef, Attributable {
 	public void setId(String id) {
 		this.id = id;
 	}
-	
-    // **************************************************************
-    // Attributable IMPLEMENTATION
-    // **************************************************************
+
+	// **************************************************************
+	// Attributable IMPLEMENTATION
+	// **************************************************************
 
 	private Attributable.AttributeHelper attributes = null;
 
 	/**
 	 * Sets an named attribute for this object.
-	 * @param name the name of the attribute.
+	 *
+	 * @param name  the name of the attribute.
 	 * @param value the new value of the attribute.
 	 */
 	public void setAttribute(String name, Object value) {
@@ -394,11 +426,11 @@ public class FlexibleNode implements NodeRef, Attributable {
 	}
 
 	/**
-	 * @return an object representing the named attributed for this object.
 	 * @param name the name of the attribute of interest.
+	 * @return an object representing the named attributed for this object.
 	 */
 	public Object getAttribute(String name) {
-		
+
 		if (attributes == null) {
 			return null;
 		} else {

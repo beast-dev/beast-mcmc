@@ -154,17 +154,18 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 				for (int j = 0; j < patternCount; j++) {
 
 					int parentIndex = parentState[j] * stateCount;
+					int childIndex = j * stateCount;
 
 					for (int i = 0; i < stateCount; i++)
-						conditionalProbabilities[i] = partialLikelihood[i] * probabilities[parentIndex + i];
+						// fixed bug here, index was i, now childIndex + i
+						// is this correct?
+						conditionalProbabilities[i] = partialLikelihood[childIndex + i] * probabilities[parentIndex + i];
 
 					state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
 					reconstructedStates[nodeNum][j] = state[j];
 
 				}
 			}
-
-//			int nodeCount = tree.getChildCount(node);
 
 			// Traverse down the two child nodes
 			NodeRef child1 = tree.getChild(node, 0);

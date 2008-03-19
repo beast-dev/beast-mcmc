@@ -79,7 +79,6 @@ public class TreeAnnotator {
 
         if (targetOption != USER_TARGET_TREE) {
             cladeSystem = new CladeSystem();
-            boolean firstTree = true;
             FileReader fileReader = new FileReader(inputFileName);
             TreeImporter importer = new NexusImporter(fileReader);
             try {
@@ -87,13 +86,8 @@ public class TreeAnnotator {
                 while (importer.hasTree()) {
                     Tree tree = importer.importNextTree();
 
-                    if (firstTree) {
-                        setupAttributes(tree);
-                        firstTree = false;
-                    }
-
                     if (totalTrees >= burnin) {
-                        cladeSystem.add(tree);
+                        cladeSystem.add(tree, false);
 
                         totalTreesUsed += 1;
                     }
@@ -161,11 +155,17 @@ public class TreeAnnotator {
         NexusImporter importer = new NexusImporter(fileReader);
         cladeSystem = new CladeSystem(targetTree);
         try {
+            boolean firstTree = true;
             int counter = 0;
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
 
                 if (counter >= burnin) {
+                    if (firstTree) {
+                        setupAttributes(tree);
+                        firstTree = false;
+                    }
+
                     cladeSystem.collectAttributes(tree);
                 }
                 if (counter > 0 && counter % stepSize == 0) {
@@ -279,13 +279,13 @@ public class TreeAnnotator {
          */
         public CladeSystem(Tree targetTree) {
             this.targetTree = targetTree;
-            add(targetTree);
+            add(targetTree, true);
         }
 
         /**
          * adds all the clades in the tree
          */
-        public void add(Tree tree) {
+        public void add(Tree tree, boolean includeTips) {
             if (taxonList == null) {
                 taxonList = tree;
             }
@@ -293,14 +293,14 @@ public class TreeAnnotator {
             // Recurse over the tree and add all the clades (or increment their
             // frequency if already present). The root clade is added too (for
             // annotation purposes).
-            addClades(tree, tree.getRoot());
+            addClades(tree, tree.getRoot(), includeTips);
         }
 
         public Clade getClade(NodeRef node) {
             return null;
         }
 
-        private BitSet addClades(Tree tree, NodeRef node) {
+        private BitSet addClades(Tree tree, NodeRef node, boolean includeTips) {
 
             BitSet bits = new BitSet();
 
@@ -309,17 +309,21 @@ public class TreeAnnotator {
                 int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
                 bits.set(index);
 
+                if (includeTips) {
+                    addClade(bits);
+                }
+
             } else {
 
                 for (int i = 0; i < tree.getChildCount(node); i++) {
 
                     NodeRef node1 = tree.getChild(node, i);
 
-                    bits.or(addClades(tree, node1));
+                    bits.or(addClades(tree, node1, includeTips));
                 }
-            }
 
-            addClade(bits);
+                addClade(bits);
+            }
 
             return bits;
         }
@@ -352,7 +356,7 @@ public class TreeAnnotator {
 
                     NodeRef node1 = tree.getChild(node, i);
 
-                    bits.or(addClades(tree, node1));
+                    bits.or(collectAttributes(tree, node1));
                 }
             }
 
@@ -512,6 +516,9 @@ public class TreeAnnotator {
 
             int i = 0;
             for (String attributeName : attributeNames) {
+                if (clade.attributeValues == null) {
+                    throw new RuntimeException("Clade attributes missing");
+                }
                 double[] values = new double[clade.attributeValues.size()];
                 HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
 

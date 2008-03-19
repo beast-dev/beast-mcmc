@@ -35,20 +35,22 @@ import java.util.Iterator;
 /**
  * data structure for binary rooted trees
  *
- * @version $Id: FlexibleTree.java,v 1.34 2006/07/02 21:14:52 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- *
+ * @version $Id: FlexibleTree.java,v 1.34 2006/07/02 21:14:52 rambaut Exp $
  */
 public class FlexibleTree implements MutableTree {
 
-	/** Constructor tree with no nodes. Use adoptNodes to add some nodes. */
+	/**
+	 * Constructor tree with no nodes. Use adoptNodes to add some nodes.
+	 */
 	public FlexibleTree() {
 		root = null;
 	}
 
-	/** clone constructor */
+	/**
+	 * clone constructor
+	 */
 	public FlexibleTree(Tree tree) {
 
 		setUnits(tree.getUnits());
@@ -60,13 +62,13 @@ public class FlexibleTree implements MutableTree {
 		externalNodeCount = tree.getExternalNodeCount();
 
 
-        nodes = new FlexibleNode[nodeCount];
+		nodes = new FlexibleNode[nodeCount];
 
 		FlexibleNode node = root;
 		do {
-			node = (FlexibleNode)Tree.Utils.postorderSuccessor(this, node);
+			node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
 			if ((node.getNumber() >= externalNodeCount && node.isExternal()) ||
-				(node.getNumber() < externalNodeCount && !node.isExternal())) {
+					(node.getNumber() < externalNodeCount && !node.isExternal())) {
 				throw new RuntimeException("Error cloning tree: node numbers are incompatible");
 			}
 			nodes[node.getNumber()] = node;
@@ -76,7 +78,39 @@ public class FlexibleTree implements MutableTree {
 		lengthsKnown = tree.hasBranchLengths();
 	}
 
-	/** clone constructor */
+	/**
+	 * clone constructor
+	 */
+	public FlexibleTree(Tree tree, boolean copyAttributes) {
+
+		setUnits(tree.getUnits());
+
+		root = new FlexibleNode(tree, tree.getRoot(), copyAttributes);
+
+		nodeCount = tree.getNodeCount();
+		internalNodeCount = tree.getInternalNodeCount();
+		externalNodeCount = tree.getExternalNodeCount();
+
+
+		nodes = new FlexibleNode[nodeCount];
+
+		FlexibleNode node = root;
+		do {
+			node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
+			if ((node.getNumber() >= externalNodeCount && node.isExternal()) ||
+					(node.getNumber() < externalNodeCount && !node.isExternal())) {
+				throw new RuntimeException("Error cloning tree: node numbers are incompatible");
+			}
+			nodes[node.getNumber()] = node;
+		} while (node != root);
+
+		heightsKnown = tree.hasNodeHeights();
+		lengthsKnown = tree.hasBranchLengths();
+	}
+
+	/**
+	 * clone constructor
+	 */
 	public FlexibleTree(FlexibleNode root) {
 
 		adoptNodes(root);
@@ -86,7 +120,9 @@ public class FlexibleTree implements MutableTree {
 
 	}
 
-	/** clone constructor */
+	/**
+	 * clone constructor
+	 */
 	public FlexibleTree(FlexibleNode root, boolean heightsKnown, boolean lengthsKnown) {
 
 		adoptNodes(root);
@@ -103,6 +139,28 @@ public class FlexibleTree implements MutableTree {
 		return new FlexibleTree(this);
 	}
 
+	public void adoptTreeModelOrdering() {
+		resolveTree();
+		int i = 0;
+		int j = externalNodeCount;
+
+		FlexibleNode node = (FlexibleNode) getRoot();
+
+		do {
+			node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
+
+			if (node.isExternal()) {
+				node.setNumber(i);
+				nodes[i] = node;
+				i++;
+			} else {
+				node.setNumber(j);
+				nodes[j] = node;
+				j++;
+			}
+		} while (node != root);
+	}
+
 	/**
 	 * Adopt a node hierarchy as its own. Only called by the FlexibleTree(FlexibleNode, TaxonList).
 	 * This creates the node list and stores the nodes in post-traversal order.
@@ -117,13 +175,13 @@ public class FlexibleTree implements MutableTree {
 		root = node;
 
 		do {
-			node = (FlexibleNode)Tree.Utils.postorderSuccessor(this, node);
+			node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
 			if (node.isExternal()) {
 				externalNodeCount++;
 			} else
 				internalNodeCount++;
 
-		} while(node != root);
+		} while (node != root);
 
 		nodeCount = internalNodeCount + externalNodeCount;
 		//System.out.println("internal count = " + internalNodeCount);
@@ -136,7 +194,7 @@ public class FlexibleTree implements MutableTree {
 		int j = externalNodeCount;
 
 		do {
-			node = (FlexibleNode)Tree.Utils.postorderSuccessor(this, node);
+			node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
 			//System.out.print("node = " + node.getId() + " ");
 			if (node.isExternal()) {
 				node.setNumber(i);
@@ -149,7 +207,7 @@ public class FlexibleTree implements MutableTree {
 				nodes[j] = node;
 				j++;
 			}
-		} while(node != root);
+		} while (node != root);
 	}
 
 	/**
@@ -168,7 +226,7 @@ public class FlexibleTree implements MutableTree {
 
 	/**
 	 * @return a count of the number of nodes (internal + external) in this
-	 * tree.
+	 *         tree.
 	 */
 	public int getNodeCount() {
 		return nodeCount;
@@ -182,7 +240,7 @@ public class FlexibleTree implements MutableTree {
 		if (!heightsKnown) {
 			calculateNodeHeights();
 		}
-		return ((FlexibleNode)node).getHeight();
+		return ((FlexibleNode) node).getHeight();
 	}
 
 	public boolean hasBranchLengths() {
@@ -193,16 +251,36 @@ public class FlexibleTree implements MutableTree {
 		if (!lengthsKnown) {
 			calculateBranchLengths();
 		}
-		return ((FlexibleNode)node).getLength();
+		return ((FlexibleNode) node).getLength();
 	}
 
-	public double getNodeRate(NodeRef node) { return ((FlexibleNode)node).getRate(); }
-	public Taxon getNodeTaxon(NodeRef node) { return ((FlexibleNode)node).getTaxon(); }
-	public int getChildCount(NodeRef node) { return ((FlexibleNode)node).getChildCount(); }
-	public boolean isExternal(NodeRef node) { return ((FlexibleNode)node).getChildCount() == 0; }
-	public boolean isRoot(NodeRef node) { return (node == root); }
-	public NodeRef getChild(NodeRef node, int i) { return ((FlexibleNode)node).getChild(i); }
-	public NodeRef getParent(NodeRef node) { return ((FlexibleNode)node).getParent(); }
+	public double getNodeRate(NodeRef node) {
+		return ((FlexibleNode) node).getRate();
+	}
+
+	public Taxon getNodeTaxon(NodeRef node) {
+		return ((FlexibleNode) node).getTaxon();
+	}
+
+	public int getChildCount(NodeRef node) {
+		return ((FlexibleNode) node).getChildCount();
+	}
+
+	public boolean isExternal(NodeRef node) {
+		return ((FlexibleNode) node).getChildCount() == 0;
+	}
+
+	public boolean isRoot(NodeRef node) {
+		return (node == root);
+	}
+
+	public NodeRef getChild(NodeRef node, int i) {
+		return ((FlexibleNode) node).getChild(i);
+	}
+
+	public NodeRef getParent(NodeRef node) {
+		return ((FlexibleNode) node).getParent();
+	}
 
 
 	public final NodeRef getExternalNode(int i) {
@@ -210,7 +288,7 @@ public class FlexibleTree implements MutableTree {
 	}
 
 	public final NodeRef getInternalNode(int i) {
-		return nodes[i+externalNodeCount];
+		return nodes[i + externalNodeCount];
 	}
 
 	public final NodeRef getNode(int i) {
@@ -245,8 +323,10 @@ public class FlexibleTree implements MutableTree {
 
 		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 
-		if (!(r instanceof FlexibleNode)) { throw new IllegalArgumentException(); }
-		root = (FlexibleNode)r;
+		if (!(r instanceof FlexibleNode)) {
+			throw new IllegalArgumentException();
+		}
+		root = (FlexibleNode) r;
 	}
 
 
@@ -269,8 +349,8 @@ public class FlexibleTree implements MutableTree {
 
 	public void addChild(NodeRef p, NodeRef c) {
 		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
-		FlexibleNode parent = (FlexibleNode)p;
-		FlexibleNode child = (FlexibleNode)c;
+		FlexibleNode parent = (FlexibleNode) p;
+		FlexibleNode child = (FlexibleNode) c;
 		if (parent.hasChild(child)) throw new IllegalArgumentException("Child already existists in parent");
 
 		parent.addChild(child);
@@ -280,8 +360,8 @@ public class FlexibleTree implements MutableTree {
 
 		if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 
-		FlexibleNode parent = (FlexibleNode)p;
-		FlexibleNode child = (FlexibleNode)c;
+		FlexibleNode parent = (FlexibleNode) p;
+		FlexibleNode child = (FlexibleNode) c;
 
 		for (int i = 0; i < parent.getChildCount(); i++) {
 			if (parent.getChild(i) == child) {
@@ -305,7 +385,7 @@ public class FlexibleTree implements MutableTree {
 		if (!heightsKnown) {
 			calculateNodeHeights();
 		}
-		FlexibleNode node = (FlexibleNode)n;
+		FlexibleNode node = (FlexibleNode) n;
 		node.setHeight(height);
 
 		lengthsKnown = false;
@@ -318,7 +398,7 @@ public class FlexibleTree implements MutableTree {
 			calculateBranchLengths();
 		}
 
-		FlexibleNode node = (FlexibleNode)n;
+		FlexibleNode node = (FlexibleNode) n;
 		node.setLength(length);
 
 		heightsKnown = false;
@@ -327,7 +407,7 @@ public class FlexibleTree implements MutableTree {
 	}
 
 	public void setNodeRate(NodeRef n, double rate) {
-		FlexibleNode node = (FlexibleNode)n;
+		FlexibleNode node = (FlexibleNode) n;
 		node.setRate(rate);
 
 		fireTreeChanged();
@@ -342,19 +422,19 @@ public class FlexibleTree implements MutableTree {
 			throw new IllegalArgumentException("Branch lengths not known");
 		}
 
-		nodeLengthsToHeights((FlexibleNode)getRoot(), 0.0);
+		nodeLengthsToHeights((FlexibleNode) getRoot(), 0.0);
 
 		double maxHeight = 0.0;
 		FlexibleNode node;
 		for (int i = 0; i < getExternalNodeCount(); i++) {
-			node = (FlexibleNode)getExternalNode(i);
+			node = (FlexibleNode) getExternalNode(i);
 			if (node.getHeight() > maxHeight) {
 				maxHeight = node.getHeight();
 			}
 		}
 
 		for (int i = 0; i < getNodeCount(); i++) {
-			node = (FlexibleNode)getNode(i);
+			node = (FlexibleNode) getNode(i);
 			node.setHeight(maxHeight - node.getHeight());
 		}
 
@@ -385,7 +465,7 @@ public class FlexibleTree implements MutableTree {
 	 */
 	protected void calculateBranchLengths() {
 
-		nodeHeightsToLengths((FlexibleNode)getRoot(), getRootHeight());
+		nodeHeightsToLengths((FlexibleNode) getRoot(), getRootHeight());
 
 		lengthsKnown = true;
 	}
@@ -408,7 +488,7 @@ public class FlexibleTree implements MutableTree {
 	 */
 	public void changeRoot(NodeRef node, double height) {
 
-		FlexibleNode node1 = (FlexibleNode)node;
+		FlexibleNode node1 = (FlexibleNode) node;
 		FlexibleNode parent = node1.getParent();
 		if (parent == null || parent == root) {
 			// the node is already the root so nothing to do...
@@ -486,7 +566,7 @@ public class FlexibleTree implements MutableTree {
 
 		for (int i = 0; i < getInternalNodeCount(); i++) {
 
-			FlexibleNode node = ((FlexibleNode)getInternalNode(i));
+			FlexibleNode node = ((FlexibleNode) getInternalNode(i));
 
 			if (node.getChildCount() > 2) {
 				resolveNode(node);
@@ -521,36 +601,36 @@ public class FlexibleTree implements MutableTree {
 
 	/**
 	 * Sets an named attribute for a given node.
-	 * @param node the node whose attribute is being set.
-	 * @param name the name of the attribute.
+	 *
+	 * @param node  the node whose attribute is being set.
+	 * @param name  the name of the attribute.
 	 * @param value the new value of the attribute.
 	 */
 	public void setNodeAttribute(NodeRef node, String name, Object value) {
-		((FlexibleNode)node).setAttribute(name, value);
+		((FlexibleNode) node).setAttribute(name, value);
 
 		fireTreeChanged();
 	}
 
 	/**
-	 * @return an object representing the named attributed for the given node.
 	 * @param node the node whose attribute is being fetched.
 	 * @param name the name of the attribute of interest.
+	 * @return an object representing the named attributed for the given node.
 	 */
 	public Object getNodeAttribute(NodeRef node, String name) {
-		return ((FlexibleNode)node).getAttribute(name);
+		return ((FlexibleNode) node).getAttribute(name);
 	}
 
-    /**
-     * @return an interator of attribute names available for this node.
-     * @return a key set of attribute names available for this node.
-     */
-    public Iterator getNodeAttributeNames(NodeRef node) {
-        return ((FlexibleNode)node).getAttributeNames();
-    }
+	/**
+	 * @return a key set of attribute names available for this node.
+	 */
+	public Iterator getNodeAttributeNames(NodeRef node) {
+		return ((FlexibleNode) node).getAttributeNames();
+	}
 
-    // **************************************************************
-    // TaxonList IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// TaxonList IMPLEMENTATION
+	// **************************************************************
 
 	/**
 	 * @return a count of the number of taxa in the list.
@@ -563,19 +643,19 @@ public class FlexibleTree implements MutableTree {
 	 * @return the ith taxon in the list.
 	 */
 	public Taxon getTaxon(int taxonIndex) {
-		return ((FlexibleNode)getExternalNode(taxonIndex)).getTaxon();
+		return ((FlexibleNode) getExternalNode(taxonIndex)).getTaxon();
 	}
 
 	/**
 	 * @return the ID of the taxon of the ith external node. If it doesn't have
-	 * a taxon, returns the ID of the node itself.
+	 *         a taxon, returns the ID of the node itself.
 	 */
 	public String getTaxonId(int taxonIndex) {
 		Taxon taxon = getTaxon(taxonIndex);
 		if (taxon != null)
 			return taxon.getId();
 		else
-			return ((FlexibleNode)getExternalNode(taxonIndex)).getId();
+			return ((FlexibleNode) getExternalNode(taxonIndex)).getId();
 	}
 
 	/**
@@ -599,26 +679,31 @@ public class FlexibleTree implements MutableTree {
 	}
 
 	/**
-	 * @return an object representing the named attributed for the taxon of the given
-	 * external node. If the node doesn't have a taxon then the nodes own attribute
-	 * is returned.
 	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
-	 * @param name the name of the attribute of interest.
+	 * @param name       the name of the attribute of interest.
+	 * @return an object representing the named attributed for the taxon of the given
+	 *         external node. If the node doesn't have a taxon then the nodes own attribute
+	 *         is returned.
 	 */
 	public Object getTaxonAttribute(int taxonIndex, String name) {
 		Taxon taxon = getTaxon(taxonIndex);
 		if (taxon != null)
 			return taxon.getAttribute(name);
 		else
-			return ((FlexibleNode)getExternalNode(taxonIndex)).getAttribute(name);
+			return ((FlexibleNode) getExternalNode(taxonIndex)).getAttribute(name);
 	}
 
-    // **************************************************************
-    // MutableTaxonList IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// MutableTaxonList IMPLEMENTATION
+	// **************************************************************
 
-	public int addTaxon(Taxon taxon) { throw new IllegalArgumentException("Cannot add taxon to a MutableTree"); }
-	public boolean removeTaxon(Taxon taxon) { throw new IllegalArgumentException("Cannot add taxon to a MutableTree"); }
+	public int addTaxon(Taxon taxon) {
+		throw new IllegalArgumentException("Cannot add taxon to a MutableTree");
+	}
+
+	public boolean removeTaxon(Taxon taxon) {
+		throw new IllegalArgumentException("Cannot add taxon to a MutableTree");
+	}
 
 	/**
 	 * Sets the ID of the taxon of the ith external node. If it doesn't have
@@ -629,7 +714,7 @@ public class FlexibleTree implements MutableTree {
 		if (taxon != null)
 			taxon.setId(id);
 		else
-			((FlexibleNode)getExternalNode(taxonIndex)).setId(id);
+			((FlexibleNode) getExternalNode(taxonIndex)).setId(id);
 
 		fireTreeChanged();
 		fireTaxaChanged();
@@ -638,24 +723,25 @@ public class FlexibleTree implements MutableTree {
 	/**
 	 * Sets an named attribute for the taxon of a given external node. If the node
 	 * doesn't have a taxon then the attribute is added to the node itself.
+	 *
 	 * @param taxonIndex the index of the taxon whose attribute is being set.
-	 * @param name the name of the attribute.
-	 * @param value the new value of the attribute.
+	 * @param name       the name of the attribute.
+	 * @param value      the new value of the attribute.
 	 */
 	public void setTaxonAttribute(int taxonIndex, String name, Object value) {
 		Taxon taxon = getTaxon(taxonIndex);
 		if (taxon != null)
 			taxon.setAttribute(name, value);
 		else
-			((FlexibleNode)getExternalNode(taxonIndex)).setAttribute(name, value);
+			((FlexibleNode) getExternalNode(taxonIndex)).setAttribute(name, value);
 
 		fireTreeChanged();
 		fireTaxaChanged();
 	}
 
-    // **************************************************************
-    // Identifiable IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// Identifiable IMPLEMENTATION
+	// **************************************************************
 
 	protected String id = null;
 
@@ -675,15 +761,16 @@ public class FlexibleTree implements MutableTree {
 		fireTreeChanged();
 	}
 
-    // **************************************************************
-    // Attributable IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// Attributable IMPLEMENTATION
+	// **************************************************************
 
 	private Attributable.AttributeHelper attributes = null;
 
 	/**
 	 * Sets an named attribute for this object.
-	 * @param name the name of the attribute.
+	 *
+	 * @param name  the name of the attribute.
 	 * @param value the new value of the attribute.
 	 */
 	public void setAttribute(String name, Object value) {
@@ -695,8 +782,8 @@ public class FlexibleTree implements MutableTree {
 	}
 
 	/**
-	 * @return an object representing the named attributed for this object.
 	 * @param name the name of the attribute of interest.
+	 * @return an object representing the named attributed for this object.
 	 */
 	public Object getAttribute(String name) {
 		if (attributes == null)
@@ -721,7 +808,7 @@ public class FlexibleTree implements MutableTree {
 
 	private void fireTreeChanged() {
 		for (int i = 0; i < mutableTreeListeners.size(); i++) {
-			((MutableTreeListener)mutableTreeListeners.get(i)).treeChanged(this);
+			((MutableTreeListener) mutableTreeListeners.get(i)).treeChanged(this);
 		}
 	}
 
@@ -733,7 +820,7 @@ public class FlexibleTree implements MutableTree {
 
 	private void fireTaxaChanged() {
 		for (int i = 0; i < mutableTaxonListListeners.size(); i++) {
-			((MutableTaxonListListener)mutableTaxonListListeners.get(i)).taxaChanged(this);
+			((MutableTaxonListListener) mutableTaxonListListeners.get(i)).taxaChanged(this);
 		}
 	}
 
@@ -753,29 +840,41 @@ public class FlexibleTree implements MutableTree {
 		if (!(obj instanceof Tree)) {
 			throw new IllegalArgumentException("FlexibleTree.equals can only compare instances of Tree");
 		}
-		return Tree.Utils.equal(this, (Tree)obj);
+		return Tree.Utils.equal(this, (Tree) obj);
 	}
 
-    // **************************************************************
-    // Private Stuff
-    // **************************************************************
+	// **************************************************************
+	// Private Stuff
+	// **************************************************************
 
-	/** root node */
+	/**
+	 * root node
+	 */
 	FlexibleNode root;
 
-	/** list of internal nodes (including root) */
+	/**
+	 * list of internal nodes (including root)
+	 */
 	FlexibleNode[] nodes = null;
 
-	/** number of nodes (including root and tips) */
+	/**
+	 * number of nodes (including root and tips)
+	 */
 	int nodeCount;
 
-	/** number of external nodes */
+	/**
+	 * number of external nodes
+	 */
 	int externalNodeCount;
 
-	/** number of internal nodes (including root) */
+	/**
+	 * number of internal nodes (including root)
+	 */
 	int internalNodeCount;
 
-	/** holds the units of the trees branches. */
+	/**
+	 * holds the units of the trees branches.
+	 */
 	private Type units = Type.SUBSTITUTIONS;
 
 	boolean inEdit = false;

@@ -178,7 +178,7 @@ public class BeautiFrame extends DocumentFrame {
 
         operatorsPanel.setOptions(beautiOptions);
 
-        priorsPanel.setOptions(beautiOptions);
+        // priorsPanel.setOptions(beautiOptions);
 
         setDirty();
     }
@@ -452,7 +452,7 @@ public class BeautiFrame extends DocumentFrame {
                 java.util.Date origin = new java.util.Date(0);
 
                 dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
-                beautiOptions. taxonList.getTaxon(i).setAttribute("date", date);
+                beautiOptions.taxonList.getTaxon(i).setAttribute("date", date);
             }
         }
 

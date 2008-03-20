@@ -32,6 +32,7 @@ import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableRenderer;
+import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -99,6 +100,8 @@ public class PriorsPanel extends JPanel implements Exportable {
         priorTable.getColumnModel().getColumn(2).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         priorTable.getColumnModel().getColumn(2).setPreferredWidth(400);
+
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(priorTable);
 
         scrollPane = new JScrollPane(priorTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,

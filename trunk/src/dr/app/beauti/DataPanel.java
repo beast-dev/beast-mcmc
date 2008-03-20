@@ -28,8 +28,8 @@ package dr.app.beauti;
 import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.datatype.*;
 import dr.evolution.util.*;
-import dr.gui.table.TableSorter;
 import dr.gui.table.DateCellEditor;
+import dr.gui.table.TableSorter;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
@@ -39,8 +39,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
@@ -108,6 +106,8 @@ public class DataPanel extends JPanel implements Exportable {
         dataTable.getColumnModel().getColumn(2).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         dataTable.getColumnModel().getColumn(2).setPreferredWidth(80);
+
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
         sequenceRenderer = new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4));
         sequenceRenderer.setFont(new Font("Courier", Font.PLAIN, 12));

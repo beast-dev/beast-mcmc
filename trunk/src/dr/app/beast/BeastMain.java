@@ -178,7 +178,7 @@ public class BeastMain {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAST " + version.getVersionString() + ", 2002-2007", 60);
+        centreLine("BEAST " + version.getVersionString() + ", 2002-2008", 60);
         centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
         centreLine("by", 60);
         centreLine("Alexei J. Drummond and Andrew Rambaut", 60);
@@ -280,7 +280,7 @@ public class BeastMain {
 
             String nameString = "BEAST " + version.getVersionString();
             String aboutString = "<html><center><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
-                    "Version " + version.getVersionString() + ", 2002-2007</p>" +
+                    "Version " + version.getVersionString() + ", 2002-2008</p>" +
                     "<p>by<br>" +
                     "Alexei J. Drummond and Andrew Rambaut</p>" +
                     "<p>Department of Computer Science, University of Auckland<br>" +

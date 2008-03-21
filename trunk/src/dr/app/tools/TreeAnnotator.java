@@ -540,8 +540,8 @@ public class TreeAnnotator {
                                 if (valueString.startsWith("\"")) {
                                     valueString = valueString.replaceAll("\"", "");
                                 }
-                                if (hashMap.containsKey(value)) {
-                                    int count = hashMap.get(value);
+                                if (hashMap.containsKey(valueString)) {
+                                    int count = hashMap.get(valueString);
                                     hashMap.put(valueString, count + 1);
                                 } else {
                                     hashMap.put(valueString, 1);
@@ -567,10 +567,12 @@ public class TreeAnnotator {
                         }
 
                         if (!filter) {
-                            if (!isDiscrete)
+                            if (!isDiscrete) {
                                 annotateMeanAttribute(tree, node, attributeName, values);
-                            else
+                            } else {
                                 annotateModeAttribute(tree, node, attributeName, hashMap);
+                                annotateFrequencyAttribute(tree, node, attributeName, hashMap);
+                            }
                             if (!isBoolean && minValue < maxValue && !isDiscrete) {
                                 // Basically, if it is a boolean (0, 1) then we don't need the distribution information
                                 // Likewise if it doesn't vary.
@@ -603,8 +605,28 @@ public class TreeAnnotator {
 
             for (String key : values.keySet()) {
                 int thisCount = values.get(key);
-                if (thisCount == maxCount)
+                if (thisCount == maxCount) {
                     mode.concat("+" + key);
+                } else if (thisCount > maxCount) {
+                    mode = key;
+                    maxCount = thisCount;
+                }
+                totalCount += thisCount;
+            }
+            double freq = (double) maxCount / (double) totalCount;
+            tree.setNodeAttribute(node, label, mode);
+            tree.setNodeAttribute(node, label + ".prob", freq);
+        }
+
+        private void annotateFrequencyAttribute(MutableTree tree, NodeRef node, String label, HashMap<String, Integer> values) {
+            String mode = null;
+            int maxCount = 0;
+            int totalCount = 0;
+
+            for (String key : values.keySet()) {
+                int thisCount = values.get(key);
+                if (thisCount == maxCount)
+                    mode = mode.concat("+" + key);
                 else if (thisCount > maxCount) {
                     mode = key;
                     maxCount = thisCount;

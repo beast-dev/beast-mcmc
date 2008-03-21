@@ -119,6 +119,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.coalescent.ConstExpConstModel.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.ExpansionModel.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.ConstantLogisticModel.PARSER);
+	    addXMLObjectParser(dr.evomodel.coalescent.ExponentialLogisticModel.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.PiecewisePopulationModel.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.ScaledPiecewiseModel.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.TwoEpochDemographicModel.PARSER);

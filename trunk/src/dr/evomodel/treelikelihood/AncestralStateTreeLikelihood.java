@@ -10,6 +10,7 @@ import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -79,6 +80,38 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 
 
 	}
+
+    private boolean checkConditioning = true;
+
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if( model == siteModel )
+            checkConditioning = true;
+        super.handleModelChangedEvent(model,object,index);
+
+    }
+
+    protected double calculateLogLikelihood() {
+        
+        if (checkConditioning) {
+            final int len = stateCount * stateCount;
+            double[] test = new double[len];
+            try {
+                siteModel.getTransitionProbabilities(1.0, test);
+            } catch (ArithmeticException exception) { // AbstractSubstitutionModel throws numerical errors
+                return Double.NEGATIVE_INFINITY;
+            }
+            for (double d : test) {
+                if (d > 1.05) { // ill-conditioned
+                    return Double.NEGATIVE_INFINITY;
+                }
+
+            }
+            checkConditioning = false;
+        }
+
+        return super.calculateLogLikelihood();
+    }
 
 	private static String formattedState(int[] state, DataType dataType) {
 		StringBuffer sb = new StringBuffer();

@@ -170,9 +170,13 @@ public class FrequencyModel extends AbstractModel {
 				double sum = 0;
 				for (int j = 0; j < freqsParam.getDimension(); j++)
 					sum += freqsParam.getParameterValue(j);
-				for (int j = 0; j < freqsParam.getDimension(); j++)
-					freqsParam.setParameterValue(j, freqsParam.getParameterValue(j) / sum);
-			}
+                for (int j = 0; j < freqsParam.getDimension(); j++) {
+                    if( sum != 0 )
+                        freqsParam.setParameterValue(j, freqsParam.getParameterValue(j) / sum);
+                    else
+                        freqsParam.setParameterValue(j,1.0/freqsParam.getDimension());
+                }
+            }
 
 			NumberFormat format = NumberFormat.getNumberInstance();
 			format.setMaximumFractionDigits(5);

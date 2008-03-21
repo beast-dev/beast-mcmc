@@ -43,7 +43,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
 		int stateCountSquare = stateCount * stateCount;
 		double[] probs = new double[stateCountSquare];
 		getTransitionProbabilities(1.0, probs);
-		for (int i = 0; i < stateCountSquare; i++) {
+		for (int i = 0; valid && i < stateCountSquare; i++) {
 			if (probs[i] == 0)
 				valid = false; // must be fully connected
 		}
@@ -132,7 +132,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
 					throw new XMLParseException("No rates parameter found in " + getParserName());
 				}
 			} else if (ratesParameter.getDimension() != rateCount) {
-				throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.");
+				throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However parameter dimension is "+ratesParameter.getDimension());
 			}
 
 			cxo = (XMLObject) xo.getChild(INDICATOR);

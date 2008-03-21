@@ -383,15 +383,16 @@ public class TreeAnnotator {
                         value = tree.getBranchLength(node);
                     } else {
                         value = tree.getNodeAttribute(node, attributeName);
+                        if (value instanceof String && ((String)value).startsWith("\"")) {
+                            value = ((String)value).replaceAll("\"", "");
+                        }
                     }
 
                     //if (value == null) {
                     //    System.out.println("attribute " + attributeNames[i] + " is null.");
                     //}
 
-                    if (value != null) {
-                        values[i] = value;
-                    }
+                    values[i] = value;
                     i++;
                 }
                 clade.attributeValues.add(values);
@@ -536,15 +537,11 @@ public class TreeAnnotator {
                         for (int j = 0; j < clade.attributeValues.size(); j++) {
                             Object value = clade.attributeValues.get(j)[i];
                             if (isDiscrete) {
-                                String valueString = (String)value;
-                                if (valueString.startsWith("\"")) {
-                                    valueString = valueString.replaceAll("\"", "");
-                                }
-                                if (hashMap.containsKey(valueString)) {
-                                    int count = hashMap.get(valueString);
-                                    hashMap.put(valueString, count + 1);
+                                if (hashMap.containsKey((String)value)) {
+                                    int count = hashMap.get((String)value);
+                                    hashMap.put((String)value, count + 1);
                                 } else {
-                                    hashMap.put(valueString, 1);
+                                    hashMap.put((String)value, 1);
                                 }
                             } else if (isBoolean) {
                                 values[j] = (((Boolean)value) ? 1.0 : 0.0);

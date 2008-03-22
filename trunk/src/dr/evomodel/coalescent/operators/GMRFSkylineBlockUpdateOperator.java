@@ -35,6 +35,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
     GMRFSkylineLikelihood gmrfField;
 
     private DenseMatrix I;
+    private double[] zeros;
 
     public GMRFSkylineBlockUpdateOperator(GMRFSkylineLikelihood gmrfLikelihood,
                                           double weight, int mode, double scaleFactor,
@@ -59,6 +60,8 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
             I.set(i, i, 1.0);
         }
         setWeight(weight);
+        
+        zeros = new double[fieldLength];
     }
 
     private double getNewLambda(double currentValue, double lambdaScale) {
@@ -88,7 +91,44 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
         return returnValue;
     }
 
+    public DenseVector getMultiNormalMean(DenseVector CanonVector, BandCholesky Cholesky){
 
+    	DenseVector tempValue = new DenseVector(zeros);
+    	DenseVector Mean = new DenseVector(zeros);
+
+    	UpperTriangBandMatrix CholeskyUpper  = Cholesky.getU();	
+    	
+    	// Assume Cholesky factorization of the precision matrix Q = LL^T
+    	
+    	// 1. Solve L\omega = b
+
+    	CholeskyUpper.transSolve(CanonVector,tempValue);
+
+    	// 2. Solve L^T \mu = \omega
+
+    	CholeskyUpper.solve(tempValue, Mean);
+
+    	return Mean;
+        }
+    
+    public DenseVector getMultiNormal(DenseVector StandNorm, DenseVector Mean, BandCholesky Cholesky){
+
+    	DenseVector returnValue = new DenseVector(zeros);
+
+    	UpperTriangBandMatrix CholeskyUpper  = Cholesky.getU();	
+    	
+    	// 3. Solve L^T v = z
+
+    	CholeskyUpper.solve(StandNorm, returnValue);
+
+    	// 4. Return x = \mu + v
+
+    	returnValue.add(Mean);
+
+    	return returnValue;
+        }
+    
+    
     public static DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
         int length = Mean.size();
         DenseVector tempValue = new DenseVector(length);
@@ -108,55 +148,29 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
         return returnValue;
     }
 
-    public static double logGeneralizedDeterminant(SymmTridiagMatrix X) {
-        //Set up the eigenvalue solver
-        SymmTridiagEVD eigen = new SymmTridiagEVD(X.numRows(), false);
-        //Solve for the eigenvalues
-        try {
-            eigen.factor(X);
-        } catch (NotConvergedException e) {
-            throw new RuntimeException("Not converged error in generalized determinate calculation.\n" + e.getMessage());
-        }
+   
+    
+    public static double logGeneralizedDeterminant(UpperTriangBandMatrix Matrix){
+    	double returnValue=0;
+    	
+    	for (int i=0; i< Matrix.numColumns();i++){
+    	    if(Matrix.get(i,i) > 0.0000001){
+    		returnValue += Math.log(Matrix.get(i,i));
+    	    }
+    	}
 
-        //Get the eigenvalues
-        double[] x = eigen.getEigenvalues();
-
-        double a = 0;
-        for (double d : x) {
-            if (d > 0.00000001)
-                a += Math.log(d);
-        }
-
-        return a;
+    	return returnValue;
     }
+    
 
-    public static double logGeneralizedDeterminant(UpperSPDPackMatrix X) {
-        //Set up the eigenvalue solver
-        SymmPackEVD eigen = new SymmPackEVD(X.numRows(), false);
-        //Solve for the eigenvalues
-        try {
-            eigen.factor(X);
-        } catch (NotConvergedException e) {
-            throw new RuntimeException("Not converged error in generalized determinate calculation.\n" + e.getMessage());
-        }
-
-        //Get the eigenvalues;
-        double[] x = eigen.getEigenvalues();
-
-        double a = 0;
-
-        for (double d : x) {
-            if (d > 0.00000001)
-                a += Math.log(d);
-        }
-
-        return a;
+    public DenseVector oldNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) {
+        return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
 
     }
 
-
+    
     public DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) {
-        return newtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
+        return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
 
     }
 
@@ -174,6 +188,28 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
             throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue);
 
         return iterateGamma;
+    }
+    
+    public static DenseVector newNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ, 
+    												int maxIterations, double stopValue){
+    	DenseVector iterateGamma = currentGamma.copy();
+    	DenseVector tempValue = currentGamma.copy();
+    	
+    	
+    	
+    	int numberIterations = 0;
+    	
+    	while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > stopValue) {
+            jacobian(data, iterateGamma, proposedQ).solve(gradient(data,iterateGamma,proposedQ),tempValue);
+            iterateGamma.add(tempValue);
+            numberIterations++;
+        }
+    	
+        if (numberIterations > maxIterations)
+            throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue);
+
+        return iterateGamma;
+        	
     }
 
     private static DenseVector gradient(double[] data, DenseVector value, SymmTridiagMatrix Q) {
@@ -200,61 +236,46 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
         return inverseJacobian;
     }
 
+    private static SPDTridiagMatrix jacobian(double[] data, DenseVector value, SymmTridiagMatrix Q){
+    	SPDTridiagMatrix jacobian = new SPDTridiagMatrix(Q,true);
+    	for(int i = 0, n = value.size(); i < n; i++){
+    		jacobian.set(i,i,jacobian.get(i,i) + Math.exp(-value.get(i))*data[i]);
+    	}
+    	return jacobian;
+    }
 
     public double doOperation() throws OperatorFailedException {
 
-        double currentPrecisionParameter = precisionParameter.getParameterValue(0);
-
-        //Generate a new precision.
-        double newPrecisionParameter =
-                this.getNewPrecision(currentPrecisionParameter, scaleFactor);
-
-        precisionParameter.setParameterValue(0, newPrecisionParameter);
-
-        //Generate a new mixing parameter 
-        double currentLambda = lambdaParameter.getParameterValue(0);
-        double newLambda = getNewLambda(currentLambda, lambdaScaleFactor);
-
-        lambdaParameter.setParameterValue(0, newLambda);
-
-        //Conditional on tau, generate a new value for gamma (it takes some work to do this).
+        double currentPrecision = precisionParameter.getParameterValue(0);
+        double proposedPrecision = this.getNewPrecision(currentPrecision, scaleFactor);
+        
+        double currentLambda = this.lambdaParameter.getParameterValue(0);
+        double proposedLambda = this.getNewLambda(currentLambda, lambdaScaleFactor);
+        
+        precisionParameter.setParameterValue(0, proposedPrecision);
+        lambdaParameter.setParameterValue(0, proposedLambda);
+        
         DenseVector currentGamma = new DenseVector(gmrfField.getPopSizeParameter().getParameterValues());
         DenseVector proposedGamma;
 
-        //Get the current Precision and New Precision
-        SymmTridiagMatrix currentQ = gmrfField.getScaledWeightMatrix(currentPrecisionParameter, currentLambda);
-        SymmTridiagMatrix proposedQ = gmrfField.getScaledWeightMatrix(newPrecisionParameter, newLambda);
+        SymmTridiagMatrix currentQ = gmrfField.getScaledWeightMatrix(currentPrecision, currentLambda);
+        SymmTridiagMatrix proposedQ = gmrfField.getScaledWeightMatrix(proposedPrecision, proposedLambda);
 
-        //Get the data
         double[] wNative = gmrfField.getSufficientStatistics();
 
-        //All of these Matricies and vectors are involved in the proposal steps
-        SymmTridiagMatrix forwardQW = new SymmTridiagMatrix(proposedQ, true);
-        SymmTridiagMatrix backwardQW = new SymmTridiagMatrix(currentQ, true);
-
-        DenseVector forwardMean = new DenseVector(fieldLength);
-        DenseVector backwardMean = new DenseVector(fieldLength);
-
-        //Just some temporary storage.
+        UpperSPDBandMatrix forwardQW = new UpperSPDBandMatrix(proposedQ,1);
+        UpperSPDBandMatrix backwardQW = new UpperSPDBandMatrix(currentQ,1);
+        
+        BandCholesky forwardCholesky = new BandCholesky(wNative.length, 1, true);
+		BandCholesky backwardCholesky = new BandCholesky(wNative.length, 1, true);
+        
         DenseVector diagonal1 = new DenseVector(fieldLength);
         DenseVector diagonal2 = new DenseVector(fieldLength);
         DenseVector diagonal3 = new DenseVector(fieldLength);
 
-        //Needed for the inverses
-        DenseMatrix workingDenseMatrix = Matrices.identity(fieldLength);
-
-        //This finds the mode under Q proposed
-        //NOT NEEDED IF EXPANDING UNDER CURRENT LOCATION
         DenseVector modeForward = newtonRaphson(wNative, currentGamma, proposedQ.copy());
-
-        //This part determines whether the taylor expansion
-        //will occur around the current value or the mode
+        
         for (int i = 0; i < fieldLength; i++) {
-            //Option1: Expand around current location
-            //diagonal1.set(i, w[i]*Math.exp(-currentGamma.get(i)));
-            //diagonal2.set(i, currentGamma.get(i) + 1);
-
-            //Option2: Expand about the mode
             diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
             diagonal2.set(i, modeForward.get(i) + 1);
 
@@ -262,65 +283,34 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
             diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
         }
 
-        //Find the mean and variance of proposal distribution
-        forwardQW.solve(I, workingDenseMatrix);
-        UpperSPDDenseMatrix inverseForwardQW = new UpperSPDDenseMatrix(workingDenseMatrix, true);
-
-        inverseForwardQW.mult(diagonal1, forwardMean);
-
-        //Once we obtain the mean and Variance of the proposal
-        //distribution, get a proposal!
-        proposedGamma = getMultiNormal(forwardMean, inverseForwardQW);
+        forwardCholesky.factor(forwardQW.copy());
+        
+        DenseVector forwardMean = getMultiNormalMean(diagonal1, forwardCholesky);
+        
+        DenseVector stand_norm = new DenseVector(zeros);
+		
+		for(int i = 0; i < zeros.length; i++)
+		    stand_norm.set(i,MathUtils.nextGaussian());
+        
+		proposedGamma = getMultiNormal(stand_norm, forwardMean, forwardCholesky);
+		
+        
 
         for (int i = 0; i < fieldLength; i++)
             popSizeParameter.setParameterValueQuietly(i, proposedGamma.get(i));
 
         ((Parameter.Abstract) popSizeParameter).fireParameterChangedEvent();
 
-        //Now do some Metropolis-Hastings stuff in 5 steps.
+       
         double hRatio = 0;
 
-        //     double proposedLike = 0;
-        //     double currentLike = 0;
-
-        //1. First calculate the difference in the log-likelihoods
-        //   for (int i = 0; i < fieldLength; i++) {
-        //       proposedLike += -proposedGamma.get(i) - wNative[i] * Math.exp(-proposedGamma.get(i));
-        //       currentLike += -currentGamma.get(i) - wNative[i] * Math.exp(-currentGamma.get(i));
-        //   }
-
-        //   hRatio = proposedLike - currentLike;
-
-        //   2. Now the prior for gamma
-        //   diagonal1.zero();
-        //   diagonal2.zero();
-
-        //   proposedQ.mult(proposedGamma, diagonal1);
-        //  currentQ.mult(currentGamma, diagonal2);
-
-        //  hRatio += 0.5 * logGeneralizedDeterminant(proposedQ) - 0.5 * proposedGamma.dot(diagonal1);
-        //  hRatio -= 0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal2);
-
-        //    //3. Now the prior for tau, no need for lambda prior, its 1.
-        //  hRatio += precisionPrior(newPrecisionParameter, 0.01, 0.01);
-        //  hRatio -= precisionPrior(currentPrecisionParameter, 0.01, 0.01);
-
-        //4. Next find the difference in the proposal ratio's for gamma
-        //This part sucks cuz you have to do all the backwards stuff
         diagonal1.zero();
         diagonal2.zero();
         diagonal3.zero();
-        workingDenseMatrix = Matrices.identity(fieldLength);
-
-        //This finds the mode under Q proposed
+       
         DenseVector modeBackward = newtonRaphson(wNative, proposedGamma, currentQ.copy());
 
         for (int i = 0; i < fieldLength; i++) {
-            //Expand around current value
-            //diagonal1.set(i,w[i]*Math.exp(-proposedGamma.get(i)));
-            //diagonal2.set(i, proposedGamma.get(i) + 1);
-
-            //Expand about the mode
             diagonal1.set(i, wNative[i] * Math.exp(-modeBackward.get(i)));
             diagonal2.set(i, modeBackward.get(i) + 1);
 
@@ -328,31 +318,21 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
             diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
         }
 
-        backwardQW.solve(I, workingDenseMatrix);
-        UpperSPDDenseMatrix inverseBackwardQW = new UpperSPDDenseMatrix(workingDenseMatrix, true);
-
-
-        inverseBackwardQW.mult(diagonal1, backwardMean);
-
-        //A lot of these steps are necessary
-        //because MTJ has some bad matrix multiplication
-        //and addition routines.
-
+        backwardCholesky.factor(backwardQW.copy());
+        
+        DenseVector backwardMean = getMultiNormalMean(diagonal1, backwardCholesky);
+        
         for (int i = 0; i < fieldLength; i++) {
             diagonal1.set(i, currentGamma.get(i) - backwardMean.get(i));
-            diagonal2.set(i, proposedGamma.get(i) - forwardMean.get(i));
         }
 
         backwardQW.mult(diagonal1, diagonal3);
 
-        hRatio += 0.5 * logGeneralizedDeterminant(backwardQW) - 0.5 * diagonal1.dot(diagonal3);
-
-        diagonal3.zero();
-        forwardQW.mult(diagonal2, diagonal3);
-
-        hRatio -= 0.5 * logGeneralizedDeterminant(forwardQW) - 0.5 * diagonal2.dot(diagonal3);
-
-
+ 		hRatio += 0.5 * 2 * logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
+		hRatio -= 0.5 * 2 * logGeneralizedDeterminant(forwardCholesky.getU())  - 0.5 * stand_norm.dot(stand_norm);
+        
+       
+        
         return hRatio;
     }
 

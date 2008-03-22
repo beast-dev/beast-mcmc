@@ -157,6 +157,7 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
                 index++;
                 length = 0;
                 weight = 0;
+                
             }
         }
 
@@ -261,8 +262,9 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
         SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0));
         currentQ.mult(currentGamma, diagonal1);
 
-        currentLike += 0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1);
+//        currentLike += 0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1);
 
+        currentLike += 0.5 * (fieldLength - 1)*Math.log(precisionParameter.getParameterValue(0)) - 0.5*currentGamma.dot(diagonal1);
         if (lambdaParameter.getParameterValue(0) == 1) {
             currentLike -= (fieldLength - 1) / 2.0 * LOG_TWO_TIMES_PI;
         } else {

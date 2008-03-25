@@ -1,6 +1,6 @@
 package dr.evomodel.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFSkylineLikelihood;
+import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
@@ -26,7 +26,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
 
     public static final String GMRF_GIBBS_OPERATOR = "gmrfFixedEffectsGibbsOperator";
 
-    private GMRFSkylineLikelihood gmrfLikelihood;
+    private GMRFSkyrideLikelihood gmrfLikelihood;
 
     private DenseVector mean;
     private DenseMatrix precision;
@@ -35,7 +35,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
     private int dim;
 
     public GMRFSkylineFixedEffectsGibbsOperator(Parameter param,
-                                                GMRFSkylineLikelihood gmrfLikelihood, MultivariateDistribution prior, double weight) {
+                                                GMRFSkyrideLikelihood gmrfLikelihood, MultivariateDistribution prior, double weight) {
         this.gmrfLikelihood = gmrfLikelihood;
         mean = new DenseVector(prior.getMean());
         precision = new DenseMatrix(prior.getScaleMatrix());
@@ -116,7 +116,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
 
             double weight = xo.getDoubleAttribute(WEIGHT);
 
-            GMRFSkylineLikelihood gmrfLikelihood = (GMRFSkylineLikelihood) xo.getChild(GMRFSkylineLikelihood.class);
+            GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
 
             MultivariateDistributionLikelihood likelihood = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
 
@@ -153,7 +153,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(MultivariateDistributionLikelihood.class),
                 new ElementRule(Parameter.class),
-                new ElementRule(GMRFSkylineLikelihood.class)
+                new ElementRule(GMRFSkyrideLikelihood.class)
         };
 
     };

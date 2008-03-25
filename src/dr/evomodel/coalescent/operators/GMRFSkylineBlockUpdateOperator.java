@@ -1,6 +1,6 @@
 package dr.evomodel.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFSkylineLikelihood;
+import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
@@ -32,12 +32,12 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
     private Parameter precisionParameter;
     private Parameter lambdaParameter;
 
-    GMRFSkylineLikelihood gmrfField;
+    GMRFSkyrideLikelihood gmrfField;
 
     private DenseMatrix I;
     private double[] zeros;
 
-    public GMRFSkylineBlockUpdateOperator(GMRFSkylineLikelihood gmrfLikelihood,
+    public GMRFSkylineBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
                                           double weight, int mode, double scaleFactor,
                                           int maxIterations, double stopValue) {
         super();
@@ -432,7 +432,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
             if (xo.hasAttribute(STOP_VALUE))
                 stopValue = xo.getDoubleAttribute(STOP_VALUE);
 
-            GMRFSkylineLikelihood gmrfLikelihood = (GMRFSkylineLikelihood) xo.getChild(GMRFSkylineLikelihood.class);
+            GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
 
             return new GMRFSkylineBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                     maxIterations, stopValue);
@@ -461,7 +461,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newDoubleRule(STOP_VALUE, true),
                 AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
-                new ElementRule(GMRFSkylineLikelihood.class)
+                new ElementRule(GMRFSkyrideLikelihood.class)
         };
 
     };

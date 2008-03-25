@@ -14,7 +14,7 @@ import no.uib.cipr.matrix.SymmTridiagMatrix;
  * Time: 2:14:04 PM
  * To change this template use File | Settings | File Templates.
  */
-public class GMRFTestLikelihood extends GMRFSkylineLikelihood {
+public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 
 
     public static final String SKYLINE_TEST_LIKELIHOOD = "gmrfTestLikelihood";

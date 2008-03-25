@@ -50,7 +50,7 @@ public class GMRFSkyrideLikelihood extends CoalescentLikelihood {
 
     // PUBLIC STUFF
 
-    public static final String SKYLINE_LIKELIHOOD = "gmrfSkyLineLikelihood";
+    public static final String SKYLINE_LIKELIHOOD = "gmrfSkyrideLikelihood";
     public static final String POPULATION_PARAMETER = "populationSizes";
     public static final String PRECISION_PARAMETER = "precisionParameter";
     public static final String POPULATION_TREE = "populationTree";

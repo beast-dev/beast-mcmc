@@ -13,7 +13,7 @@ import no.uib.cipr.matrix.*;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
-public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
+public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
     public static final String BLOCK_UPDATE_OPERATOR = "gmrfBlockUpdateOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
@@ -37,7 +37,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
     private DenseMatrix I;
     private double[] zeros;
 
-    public GMRFSkylineBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
+    public GMRFSkyrideBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
                                           double weight, int mode, double scaleFactor,
                                           int maxIterations, double stopValue) {
         super();
@@ -434,7 +434,7 @@ public class GMRFSkylineBlockUpdateOperator extends SimpleMCMCOperator implement
 
             GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
 
-            return new GMRFSkylineBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
+            return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                     maxIterations, stopValue);
 
         }

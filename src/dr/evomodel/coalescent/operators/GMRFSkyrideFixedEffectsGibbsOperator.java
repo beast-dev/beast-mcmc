@@ -21,7 +21,7 @@ import no.uib.cipr.matrix.*;
  * @version $Id: GMRFSkylineFixedEffectsGibbsOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
 
-public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class GMRFSkyrideFixedEffectsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
 
     public static final String GMRF_GIBBS_OPERATOR = "gmrfFixedEffectsGibbsOperator";
@@ -34,7 +34,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
     private int fieldLength;
     private int dim;
 
-    public GMRFSkylineFixedEffectsGibbsOperator(Parameter param,
+    public GMRFSkyrideFixedEffectsGibbsOperator(Parameter param,
                                                 GMRFSkyrideLikelihood gmrfLikelihood, MultivariateDistribution prior, double weight) {
         this.gmrfLikelihood = gmrfLikelihood;
         mean = new DenseVector(prior.getMean());
@@ -78,7 +78,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
         gibbsVariance.mult(workingVector, gibbsMean);
 
         //Propose a new value for beta
-        DenseVector betaNew = GMRFSkylineBlockUpdateOperator.getMultiNormal(gibbsMean, gibbsVariance);
+        DenseVector betaNew = GMRFSkyrideBlockUpdateOperator.getMultiNormal(gibbsMean, gibbsVariance);
 
         for (int i = 0; i < dim; i++) {
             beta.setParameterValueQuietly(i, betaNew.get(i));
@@ -127,7 +127,7 @@ public class GMRFSkylineFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
 
             Parameter param = (Parameter) xo.getChild(Parameter.class);
 
-            return new GMRFSkylineFixedEffectsGibbsOperator(param,
+            return new GMRFSkyrideFixedEffectsGibbsOperator(param,
                     gmrfLikelihood, prior, weight);
 
         }

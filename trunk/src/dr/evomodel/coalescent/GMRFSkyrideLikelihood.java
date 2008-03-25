@@ -46,7 +46,7 @@ import no.uib.cipr.matrix.SymmTridiagMatrix;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineLikelihood.java,v 1.3 2007/03/20 22:40:04 msuchard Exp $
  */
-public class GMRFSkylineLikelihood extends CoalescentLikelihood {
+public class GMRFSkyrideLikelihood extends CoalescentLikelihood {
 
     // PUBLIC STUFF
 
@@ -76,11 +76,11 @@ public class GMRFSkylineLikelihood extends CoalescentLikelihood {
     protected SymmTridiagMatrix storedWeightMatrix;
     protected MatrixParameter dMatrix;
 
-    public GMRFSkylineLikelihood() {
+    public GMRFSkyrideLikelihood() {
         super(SKYLINE_LIKELIHOOD);
     }
 
-    public GMRFSkylineLikelihood(Tree tree, Parameter popParameter, Parameter precParameter,
+    public GMRFSkyrideLikelihood(Tree tree, Parameter popParameter, Parameter precParameter,
                                  Parameter lambda, Parameter beta, MatrixParameter dMatrix) {
         super(SKYLINE_LIKELIHOOD);
 
@@ -421,7 +421,7 @@ model {
                     throw new XMLParseException("Design matrix column dimension must equal the regression coefficient length.");
             }
 
-            return new GMRFSkylineLikelihood(treeModel, popParameter, precParameter,
+            return new GMRFSkyrideLikelihood(treeModel, popParameter, precParameter,
                     lambda, beta, dMatrix);
         }
 

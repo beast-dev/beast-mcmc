@@ -156,15 +156,15 @@ public class BeastMain {
 
             } else {
                 Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
-                Logger.getLogger("dr.apps.beast").severe("Fatal exception (email the authors)");
-                System.err.println("Fatal exception (email the authors)");
+                Logger.getLogger("dr.apps.beast").severe("Fatal exception: " + rex.getMessage());
+                System.err.println("Fatal exception: " + rex.getMessage());
                 rex.printStackTrace(System.err);
             }
 
         } catch (Exception ex) {
             Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
-            Logger.getLogger("dr.apps.beast").severe("Fatal exception (email the authors)");
-            System.err.println("Fatal exception (email the authors)");
+            Logger.getLogger("dr.apps.beast").severe("Fatal exception: " + ex.getMessage());
+            System.err.println("Fatal exception: " + ex.getMessage());
             ex.printStackTrace(System.err);
         }
     }

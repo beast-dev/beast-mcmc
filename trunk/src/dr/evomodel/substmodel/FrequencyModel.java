@@ -92,7 +92,9 @@ public class FrequencyModel extends AbstractModel {
 		return frequencyParameter.getDimension();
 	}
 
-	public double[] getFrequencies() {
+    public Parameter getFrequencyParameter() { return frequencyParameter; }
+
+    public double[] getFrequencies() {
 		double[] frequencies = new double[getFrequencyCount()];
 		for (int i = 0; i < frequencies.length; i++) {
 			frequencies[i] = getFrequency(i);

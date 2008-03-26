@@ -278,7 +278,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 	 * compares two patterns
 	 * @return true if they are identical
 	 */
-	private boolean comparePatterns(int[] pattern1, int[] pattern2) {
+	protected boolean comparePatterns(int[] pattern1, int[] pattern2) {
 		
 		int len = pattern1.length;
 		for (int i = 0; i < len; i++) {

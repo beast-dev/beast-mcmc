@@ -93,10 +93,16 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 //				logq = RemoveOperation();
 //			}
 			
-			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
+			if(arg.getReassortmentNodeCount() < 4){
 				logq = AddOperation() - size;
-			else
+			}else{
 				logq = RemoveOperation() + size;
+			}
+			
+//			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
+//				logq = AddOperation() - size;
+//			else
+//				logq = RemoveOperation() + size;
 		} catch (NoReassortmentEventException nree) {
 			return Double.NEGATIVE_INFINITY;
 		} catch (OperatorFailedException e) {

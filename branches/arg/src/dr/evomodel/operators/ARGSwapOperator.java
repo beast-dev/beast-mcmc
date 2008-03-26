@@ -263,6 +263,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 			}
 					
 		}else{
+			
 			boolean leftSide = true;
 			boolean[] sideOk = {swapNode.leftParent.getHeight() > startNode.getHeight(),
 								swapNode.rightParent.getHeight() > startNode.getHeight()};

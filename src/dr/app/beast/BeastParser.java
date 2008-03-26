@@ -27,6 +27,7 @@ package dr.app.beast;
 
 import dr.evomodel.operators.*;
 import dr.xml.*;
+import dr.evolution.datatype.MutationDeathType;
 import dr.inference.trace.VariableDemographicAnalysis;
 
 import java.util.Iterator;
@@ -71,23 +72,24 @@ public class BeastParser extends XMLParser {
 
         //addXMLObjectParser(ColouringTest.PARSER);
 
-        addXMLObjectParser(new dr.evoxml.GeneralDataTypeParser());
-        addXMLObjectParser(new dr.evoxml.AlignmentParser());
-        addXMLObjectParser(new dr.evoxml.SitePatternsParser());
-        addXMLObjectParser(new dr.evoxml.ConvertAlignmentParser());
-        addXMLObjectParser(new dr.evoxml.MergePatternsParser());
+		addXMLObjectParser(new dr.evoxml.GeneralDataTypeParser());
+		addXMLObjectParser(new dr.evoxml.AlignmentParser());
+		addXMLObjectParser(new dr.evoxml.SitePatternsParser());
+        addXMLObjectParser(new dr.evoxml.AscertainedSitePatternsParser());
+		addXMLObjectParser(new dr.evoxml.ConvertAlignmentParser());
+		addXMLObjectParser(new dr.evoxml.MergePatternsParser());
         addXMLObjectParser(new dr.evoxml.AttributePatternsParser());
-        addXMLObjectParser(new dr.evoxml.SequenceParser());
-        addXMLObjectParser(new dr.evoxml.SimpleNodeParser());
-        addXMLObjectParser(new dr.evoxml.SimpleTreeParser());
-        addXMLObjectParser(new dr.evoxml.UPGMATreeParser());
-        addXMLObjectParser(new dr.evoxml.NeighborJoiningParser());
-        addXMLObjectParser(new dr.evoxml.NewickParser());
-        addXMLObjectParser(new dr.evoxml.TaxonParser());
-        addXMLObjectParser(new dr.evoxml.TaxaParser());
-        addXMLObjectParser(new dr.evoxml.DateParser());
-        addXMLObjectParser(new dr.evoxml.DistanceMatrixParser());
-        addXMLObjectParser(new dr.evoxml.HiddenNucleotideParser());
+		addXMLObjectParser(new dr.evoxml.SequenceParser());
+		addXMLObjectParser(new dr.evoxml.SimpleNodeParser());
+		addXMLObjectParser(new dr.evoxml.SimpleTreeParser());
+		addXMLObjectParser(new dr.evoxml.UPGMATreeParser());
+		addXMLObjectParser(new dr.evoxml.NeighborJoiningParser());
+		addXMLObjectParser(new dr.evoxml.NewickParser());
+		addXMLObjectParser(new dr.evoxml.TaxonParser());
+		addXMLObjectParser(new dr.evoxml.TaxaParser());
+		addXMLObjectParser(new dr.evoxml.DateParser());
+		addXMLObjectParser(new dr.evoxml.DistanceMatrixParser());
+		addXMLObjectParser(new dr.evoxml.HiddenNucleotideParser());
 
         addXMLObjectParser(new dr.xml.AttributeParser());
         addXMLObjectParser(new dr.xml.AttributesParser());
@@ -160,44 +162,50 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.substmodel.BinaryCovarionModel.PARSER);
 //        addXMLObjectParser(new dr.evoxml.BinarySubstitutionModelParser());
 
-        addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.treelikelihood.AdvancedTreeLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.treelikelihood.AdvancedTreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.TipsTreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.PurifyingTreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.PurifyingGammaTreeLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.treelikelihood.AncestralStateTreeLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.treelikelihood.AncestralStateTreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.ADNADamageModel.PARSER);
 
-        addXMLObjectParser(dr.evomodel.sitemodel.GammaSiteModel.PARSER);
+        addXMLObjectParser(dr.evomodel.treelikelihood.ALSTreeLikelihood.PARSER);
+        addXMLObjectParser(dr.evomodel.treelikelihood.SingleTipObservationProcess.PARSER);
+        addXMLObjectParser(dr.evomodel.treelikelihood.AnyTipObservationProcess.PARSER);
+
+		addXMLObjectParser(dr.evomodel.sitemodel.GammaSiteModel.PARSER);
         addXMLObjectParser(dr.evomodel.sitemodel.CategorySiteModel.PARSER);
         addXMLObjectParser(dr.evomodel.sitemodel.SampleStateModel.PARSER);
         addXMLObjectParser(dr.evomodel.sitemodel.SampleStateAndCategoryModel.PARSER);
 
-        addXMLObjectParser(dr.evomodel.clock.EDLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.clock.NDLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.clock.GDLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.branchratemodel.DiscretizedBranchRates.PARSER);
-        addXMLObjectParser(dr.evomodel.branchratemodel.StrictClockBranchRates.PARSER);
-        addXMLObjectParser(dr.evomodel.branchratemodel.RateEpochBranchRateModel.PARSER);
+		addXMLObjectParser(dr.evomodel.clock.EDLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.clock.NDLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.clock.GDLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.branchratemodel.DiscretizedBranchRates.PARSER);
+		addXMLObjectParser(dr.evomodel.branchratemodel.StrictClockBranchRates.PARSER);
+		addXMLObjectParser(dr.evomodel.branchratemodel.RateEpochBranchRateModel.PARSER);
         addXMLObjectParser(dr.evomodel.branchratemodel.DecayingRateModel.PARSER);
         addXMLObjectParser(dr.evomodel.branchratemodel.TipBranchRateModel.PARSER);
         addXMLObjectParser(dr.evomodel.branchratemodel.ColouredTreeRateModel.PARSER);
 
         addXMLObjectParser(dr.evomodel.branchratemodel.RandomLocalClockModel.PARSER);
 
+        addXMLObjectParser(dr.evomodel.branchratemodel.ScaledTreeLengthRateModel.PARSER);
+
         addXMLObjectParser(new dr.evomodel.tree.TreeModelParser());
-        addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.TreelengthStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.TreeShapeStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.TMRCAStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.RateCovarianceStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.RateStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.MonophylyStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.ParsimonyStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.ParsimonyStateStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.SpeciesTreeStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.UniformRootPrior.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.TreelengthStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.TreeShapeStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.TMRCAStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.RateCovarianceStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.RateStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.MonophylyStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.ParsimonyStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.ParsimonyStateStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.SpeciesTreeStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.UniformRootPrior.PARSER);
 
         addXMLObjectParser(dr.evomodel.operators.SubtreeSlideOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.ExchangeOperator.NARROW_EXCHANGE_PARSER);
@@ -324,6 +332,14 @@ public class BeastParser extends XMLParser {
 
         // exporters
         addXMLObjectParser(new dr.exporters.CSVExporter());
+
+        // Immigration-Mutation-Death models
+        addXMLObjectParser(MutationDeathType.PARSER);
+        addXMLObjectParser(dr.evomodel.substmodel.MutationDeathModel.PARSER);
+
+
+        addXMLObjectParser(dr.inference.prior.AlternativeSplicingPrior.PARSER);
+        addXMLObjectParser(dr.inference.prior.ImmigrationIntegrationForAlternativeSplicingPrior.PARSER);
     }
 
 }

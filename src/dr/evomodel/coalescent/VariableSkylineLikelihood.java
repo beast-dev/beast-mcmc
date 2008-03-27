@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  *
  * @author Alexei Drummond
  */
-public class VariableSkylineLikelihood extends CoalescentLikelihood {
+public class VariableSkylineLikelihood extends AbstractCoalescentLikelihood {
 
     // PUBLIC STUFF
 
@@ -198,7 +198,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
         if( popPoints != null && popPoints.length == dim ) {
             return popPoints;
         }
-       
+
         if( popPoints == null || popPoints.length != dim) {
             popPoints = new double[dim];
         }
@@ -249,7 +249,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
                 if( groupIndex + 1 >= groupHeights.size() ) {
                     return startGroupPopSize;
                 }
-                
+
                 final double endGroupPopSize = groupHeights.get(groupIndex + 1);
 
                 // calculate the gradient
@@ -344,7 +344,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
         groupHeights.clear(); groupHeights.addAll(storeHeights);
         groupEnds.clear(); groupEnds.addAll(storeEnds);
     }
-    
+
     // ****************************************************************
     // Private and protected stuff
     // ****************************************************************
@@ -440,7 +440,7 @@ public class VariableSkylineLikelihood extends CoalescentLikelihood {
     private ArrayList<Double> storeHeights = new ArrayList<Double>();
     private ArrayList<Double> storeEnds = new ArrayList<Double>();
     private boolean storeValid;
-    
+
     private final Type type;
 
     private boolean logSpace = false;

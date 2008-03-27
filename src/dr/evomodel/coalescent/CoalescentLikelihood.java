@@ -34,6 +34,8 @@ import dr.evolution.util.*;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.xml.*;
+import dr.util.ComparableDouble;
+import dr.util.HeapSort;
 
 import java.util.*;
 
@@ -199,12 +201,39 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	}
 
 	/**
+	 * @returns the node ref of the MRCA of this coalescent prior in the given tree.
+	 */
+	private NodeRef getIncludedMRCA(Tree tree) {
+		if (includedLeafSet != null) {
+			return Tree.Utils.getCommonAncestorNode(tree, includedLeafSet);
+		} else {
+			return tree.getRoot();
+		}
+	}
+
+	/**
+	 * @returns an array of noderefs that represent the MRCAs of subtrees to exclude from coalescent prior.
+	 * May return null if no subtrees should be excluded.
+	 */
+	private Set<NodeRef> getExcludedMRCAs(Tree tree) {
+
+		if (excludedLeafSets.length == 0) return null;
+
+		Set<NodeRef> excludeNodesBelow = new HashSet<NodeRef>();
+		for (int i =0; i < excludedLeafSets.length; i++) {
+			excludeNodesBelow.add(Tree.Utils.getCommonAncestorNode(tree, excludedLeafSets[i]));
+		}
+		return excludeNodesBelow;
+	}
+
+
+	/**
 	 * Recalculates all the intervals from the tree model.
 	 */
-	protected final void setupIntervals() {
+	private final void setupIntervals() {
 
 		intervals.resetEvents();
-		collectTimes(tree, tree.getRoot(), intervals);
+		collectTimes(tree, getIncludedMRCA(tree), getExcludedMRCAs(tree), intervals);
 		// force a calculation of the intervals...
 		intervals.getIntervalCount();
 
@@ -218,24 +247,28 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	 * @param node the node to start from
 	 * @param intervals the intervals object to store the events
 	 */
-	private void collectTimes(Tree tree, NodeRef node, Intervals intervals) {
+	private void collectTimes(Tree tree, NodeRef node, Set<NodeRef> excludeNodesBelow, Intervals intervals) {
 
 		intervals.addCoalescentEvent(tree.getNodeHeight(node));
 
 		for (int i = 0; i < tree.getChildCount(node); i++) {
 			NodeRef child = tree.getChild(node, i);
 
-			if (tree.isExternal(child)) {
+			// check if this subtree is included in the coalescent density
+			boolean include = true;
 
+			if (excludeNodesBelow != null && excludeNodesBelow.contains(child)) {
+				include = false;
+			}
+
+			if (!include || tree.isExternal(child)) {
 				intervals.addSampleEvent(tree.getNodeHeight(child));
-
 			} else {
-
-				collectTimes(tree, child, intervals);
+				collectTimes(tree, child, excludeNodesBelow, intervals);
 			}
 		}
-	}
 
+	}
 
 	// **************************************************************
 	// Loggable IMPLEMENTATION

@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  *
  * @author Alexei Drummond
  */
-public class BayesianSkylineLikelihood extends CoalescentLikelihood {
+public class BayesianSkylineLikelihood extends AbstractCoalescentLikelihood {
 
 	// PUBLIC STUFF
 

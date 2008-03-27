@@ -1433,9 +1433,9 @@ public class BeastGenerator extends BeautiOptions {
             writeParameter("skyline.groupSize", skylineGroupCount, writer);
             writer.writeCloseTag(BayesianSkylineLikelihood.GROUP_SIZES);
 
-            writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
+            writer.writeOpenTag(AbstractCoalescentLikelihood.POPULATION_TREE);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-            writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
+            writer.writeCloseTag(AbstractCoalescentLikelihood.POPULATION_TREE);
 
             writer.writeCloseTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD);
         } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
@@ -1469,12 +1469,12 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeCloseTag(tagName);
 
-            writer.writeOpenTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("id", "coalescent"));
-            writer.writeOpenTag(CoalescentLikelihood.MODEL);
+            writer.writeOpenTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("id", "coalescent"));
+            writer.writeOpenTag(AbstractCoalescentLikelihood.MODEL);
             writer.writeTag(tagName, new Attribute.Default<String>("idref", demoElementName), true);
-            writer.writeCloseTag(CoalescentLikelihood.MODEL);
+            writer.writeCloseTag(AbstractCoalescentLikelihood.MODEL);
             writer.writeComment("Take population Tree from demographic");
-            writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
+            writer.writeCloseTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD);
 
             writer.writeOpenTag(SumStatistic.SUM_STATISTIC,
                     new Attribute[]{
@@ -1501,16 +1501,16 @@ public class BeastGenerator extends BeautiOptions {
             // generate a coalescent process
 
             writer.writeOpenTag(
-                    CoalescentLikelihood.COALESCENT_LIKELIHOOD,
+                    AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD,
                     new Attribute[]{new Attribute.Default<String>("id", "coalescent")}
             );
-            writer.writeOpenTag(CoalescentLikelihood.MODEL);
+            writer.writeOpenTag(AbstractCoalescentLikelihood.MODEL);
             writeNodeHeightPriorModelRef(writer);
-            writer.writeCloseTag(CoalescentLikelihood.MODEL);
-            writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
+            writer.writeCloseTag(AbstractCoalescentLikelihood.MODEL);
+            writer.writeOpenTag(AbstractCoalescentLikelihood.POPULATION_TREE);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-            writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
-            writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
+            writer.writeCloseTag(AbstractCoalescentLikelihood.POPULATION_TREE);
+            writer.writeCloseTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD);
         }
     }
 
@@ -1926,7 +1926,7 @@ public class BeastGenerator extends BeautiOptions {
                 new Attribute.Default<Double>("weight", operator.weight));
 
        writer.writeOpenTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
-       writeParameterRefByName(writer, operator.name); 
+       writeParameterRefByName(writer, operator.name);
        writer.writeCloseTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
 
        writer.writeOpenTag(SampleNonActiveGibbsOperator.DATA_PARAMETER);
@@ -1953,7 +1953,7 @@ public class BeastGenerator extends BeautiOptions {
 	    writer.writeCloseTag(ScaleOperator.INDICATORS);
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
     }
-    
+
     private void writeSubtreeSlideOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(SubtreeSlideOperator.SUBTREE_SLIDE,
                 new Attribute[]{
@@ -2024,7 +2024,7 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == SKYLINE) {
             writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default<String>("idref", "skyline"), true);
         } else {
-            writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("idref", "coalescent"), true);
+            writer.writeTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("idref", "coalescent"), true);
         }
 
         if (nodeHeightPrior == LOGISTIC) {
@@ -2519,7 +2519,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "skyline.groupSize"), true);
         } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.popSize"), true);
-             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.indicators"), true); 
+             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.indicators"), true);
         } else if (nodeHeightPrior == YULE) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "yule.birthRate"), true);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
@@ -2641,7 +2641,7 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == SKYLINE) {
             writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default<String>("idref", "skyline"), true);
         } else {
-            writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("idref", "coalescent"), true);
+            writer.writeTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("idref", "coalescent"), true);
         }
 
 

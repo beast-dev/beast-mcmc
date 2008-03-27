@@ -46,7 +46,7 @@ import no.uib.cipr.matrix.SymmTridiagMatrix;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineLikelihood.java,v 1.3 2007/03/20 22:40:04 msuchard Exp $
  */
-public class GMRFSkyrideLikelihood extends CoalescentLikelihood {
+public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood {
 
     // PUBLIC STUFF
 
@@ -157,7 +157,7 @@ public class GMRFSkyrideLikelihood extends CoalescentLikelihood {
                 index++;
                 length = 0;
                 weight = 0;
-                
+
             }
         }
 

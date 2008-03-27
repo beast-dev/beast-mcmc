@@ -3,7 +3,7 @@ package dr.evomodel.coalescent.operators;
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.BayesianSkylineLikelihood;
-import dr.evomodel.coalescent.CoalescentLikelihood;
+import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
@@ -332,7 +332,7 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
                     bayesianSkylineLikelihood.getIntervalType(j))
                     * curpopsize;
 
-            if (bayesianSkylineLikelihood.getIntervalType(j) == CoalescentLikelihood.CoalescentEventType.COALESCENT) {
+            if (bayesianSkylineLikelihood.getIntervalType(j) == AbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
                 subIndex += 1;
                 if (subIndex >= groupSizes[groupIndex]) {
 

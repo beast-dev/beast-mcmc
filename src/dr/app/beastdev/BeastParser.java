@@ -29,6 +29,7 @@ import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.operators.InternalTraitGibbsOperator;
 import dr.evomodel.operators.PrecisionMatrixGibbsOperator;
 import dr.evomodel.operators.RandomWalkOnMapOperator;
+import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.xml.*;
 
 import java.io.File;

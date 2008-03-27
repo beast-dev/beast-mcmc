@@ -174,6 +174,15 @@ public class ElementRule implements XMLSyntaxRule {
 		this.description = description;
 	}
 
+	public ElementRule(String name, XMLSyntaxRule[] rules, String description, boolean optional) {
+		this.name = name;
+		this.rules = rules;
+		this.description = description;
+		this.min = 1;
+		this.max = 1;
+		if (optional) this.min = 0;
+	}
+
 	/**
 	 * Creates an element rule.
 	 */

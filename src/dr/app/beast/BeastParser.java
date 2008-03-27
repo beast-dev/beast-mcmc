@@ -26,9 +26,9 @@
 package dr.app.beast;
 
 import dr.evomodel.operators.*;
+import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.xml.*;
 import dr.evolution.datatype.MutationDeathType;
-import dr.inference.trace.VariableDemographicAnalysis;
 
 import java.util.Iterator;
 
@@ -103,7 +103,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.speciation.BetaSplittingModel.PARSER);
 
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentSimulator.PARSER);
-        addXMLObjectParser(dr.evomodel.coalescent.NewCoalescentLikelihood.PARSER);
+        addXMLObjectParser(CoalescentLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentMRCALikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.SkylineLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.BayesianSkylineLikelihood.PARSER);

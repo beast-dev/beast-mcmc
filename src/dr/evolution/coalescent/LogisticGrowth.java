@@ -159,7 +159,7 @@ public class LogisticGrowth extends ExponentialGrowth {
 
         double term1 = nZero * (1.0 + c);
         if (term1 == 0.0) {
-            throw new RuntimeException("Infinite integral!");
+            return Double.POSITIVE_INFINITY;
         }
 
         double term2 = c * (1.0 - expOfMinusRG);

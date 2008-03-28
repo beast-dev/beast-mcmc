@@ -32,6 +32,7 @@ import dr.inference.operators.*;
 import dr.inference.prior.Prior;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 /**
  * A concrete markov chain. This is final as the only things that should need overriding
@@ -58,8 +59,6 @@ public final class MarkovChain {
     private boolean useCoercion = true;
 
     private final int fullEvaluationCount;
-
-    private static final int MAX_FAILURE_COUNTS = 10;
 
     public MarkovChain(Prior prior,
                        Likelihood likelihood,
@@ -126,8 +125,6 @@ public final class MarkovChain {
 
         pleaseStop = false;
         isStopped = false;
-
-        int testFailureCount = 0;
 
         double[] logr = new double[] {0.0};
 
@@ -228,14 +225,9 @@ public final class MarkovChain {
                     final double testScore = evaluate(likelihood, prior);
 
                     if (Math.abs(testScore - oldScore) >  1e-6) {
-                        System.err.println("State was not correctly restored after reject step.");
-                        System.err.println("Likelihood before: " + oldScore + " Likelihood after: " + testScore);
-                        System.err.println("Operator: " + mcmcOperator + " " + mcmcOperator.getOperatorName());
-                        testFailureCount ++;
-                    }
-
-                    if (testFailureCount > MAX_FAILURE_COUNTS) {
-                        throw new RuntimeException("Too many test failures: stopping chain.");
+	                    Logger.getLogger("error").severe("State was not correctly restored after reject step.\n" +
+			                    "Likelihood before: " + oldScore + " Likelihood after: " + testScore + "\n" +
+			                    "Operator: " + mcmcOperator + " " + mcmcOperator.getOperatorName());
                     }
                 }
             }

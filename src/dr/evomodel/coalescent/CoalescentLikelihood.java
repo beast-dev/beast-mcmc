@@ -34,6 +34,7 @@ import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 
 /**
@@ -81,7 +82,13 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		DemographicFunction demoFunction = demoModel.getDemographicFunction();
 
-		return Coalescent.calculateLogLikelihood(getIntervals(), demoFunction);
+		double lnL =  Coalescent.calculateLogLikelihood(getIntervals(), demoFunction);
+
+		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+			Logger.getLogger("error").severe("CoalescentLikelihood is " + Double.toString(lnL));
+		}
+
+		return lnL;
 	}
 
 	// **************************************************************

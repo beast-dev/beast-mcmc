@@ -29,7 +29,6 @@ import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.operators.InternalTraitGibbsOperator;
 import dr.evomodel.operators.PrecisionMatrixGibbsOperator;
 import dr.evomodel.operators.RandomWalkOnMapOperator;
-import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.xml.*;
 
 import java.io.File;
@@ -97,7 +96,10 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(dr.evomodel.speciation.SpeciationLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.speciation.YuleModel.PARSER);
+
+	    // Yang and Rannala (1997) See comments for flaws in model...
         addXMLObjectParser(dr.evomodel.speciation.BirthDeathModel.PARSER);
+
         // on trial
         addXMLObjectParser(dr.evomodel.speciation.BirthDeathNee94Model.PARSER);
         addXMLObjectParser(dr.evomodel.speciation.BranchingLikelihood.PARSER);
@@ -105,9 +107,10 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentSimulator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.coalescent.CoalescentMRCALikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.SkylineLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.BayesianSkylineLikelihood.PARSER);
+
+	    // Gerton's classes: Are these useable?
         addXMLObjectParser(dr.evomodel.coalescent.operators.BayesianSkylineGibbsOperator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.operators.SampleNonActiveGibbsOperator.PARSER);
 
@@ -141,9 +144,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.ColouredOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.FixedColouredOperator.PARSER);
 
-        //addXMLObjectParser(dr.evomodel.coalescent.PopulationSizeGraph.PARSER);
-
-        // Transmission models
+        // Transmission models (AR - in testing)
         addXMLObjectParser(dr.evomodel.transmission.TransmissionLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.transmission.TransmissionDemographicModel.PARSER);
         addXMLObjectParser(dr.evomodel.transmission.TransmissionHistoryModel.PARSER);
@@ -161,12 +162,14 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.AdvancedTreeLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.treelikelihood.TipsTreeLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.treelikelihood.PurifyingTreeLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.treelikelihood.PurifyingGammaTreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.AncestralStateTreeLikelihood.PARSER);
 
-        addXMLObjectParser(dr.evomodel.sitemodel.GammaSiteModel.PARSER);
+	    // AR - some stuff I was playing around with a while back. Will probably come to nothing...
+	    addXMLObjectParser(dr.evomodel.treelikelihood.TipsTreeLikelihood.PARSER);
+	    addXMLObjectParser(dr.evomodel.treelikelihood.PurifyingTreeLikelihood.PARSER);
+	    addXMLObjectParser(dr.evomodel.treelikelihood.PurifyingGammaTreeLikelihood.PARSER);
+
+        addXMLObjectParser(dr.evomodel.sitemodel.GammaSiteModel.PARSER);	
         addXMLObjectParser(dr.evomodel.sitemodel.CategorySiteModel.PARSER);
         addXMLObjectParser(dr.evomodel.sitemodel.SampleStateModel.PARSER);
         addXMLObjectParser(dr.evomodel.sitemodel.SampleStateAndCategoryModel.PARSER);

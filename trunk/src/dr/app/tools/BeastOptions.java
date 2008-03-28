@@ -827,16 +827,16 @@ public class BeastOptions {
 	 */
 	public void writeCoalescentLikelihood(XMLWriter writer) {
 		writer.writeOpenTag(
-			AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD,
+			OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD,
 			new Attribute[] { new Attribute.Default("id", "coalescent1") }
 		);
-		writer.writeOpenTag(AbstractCoalescentLikelihood.MODEL);
+		writer.writeOpenTag(OldAbstractCoalescentLikelihood.MODEL);
 		writeDemoModelRef(writer);
-		writer.writeCloseTag(AbstractCoalescentLikelihood.MODEL);
-		writer.writeOpenTag(AbstractCoalescentLikelihood.POPULATION_TREE);
+		writer.writeCloseTag(OldAbstractCoalescentLikelihood.MODEL);
+		writer.writeOpenTag(OldAbstractCoalescentLikelihood.POPULATION_TREE);
 		writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default("idref", "treeModel1"), true);
-		writer.writeCloseTag(AbstractCoalescentLikelihood.POPULATION_TREE);
-		writer.writeCloseTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD);
+		writer.writeCloseTag(OldAbstractCoalescentLikelihood.POPULATION_TREE);
+		writer.writeCloseTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD);
 	}
 
 	/**
@@ -1139,7 +1139,7 @@ public class BeastOptions {
 		writer.writeOpenTag(CompoundLikelihood.COMPOUND_LIKELIHOOD, new Attribute.Default("id", "likelihood1"));
 
 		if (coalescentModel != NONE) {
-			writer.writeTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref", "coalescent1"), true);
+			writer.writeTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref", "coalescent1"), true);
 		}
 		boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
 		if (nucs && codonHetero) {
@@ -1301,7 +1301,7 @@ public class BeastOptions {
 			} else writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood1"), true);
 		}
 		if (coalescentModel != NONE) {
-			writer.writeTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref","coalescent1"), true);
+			writer.writeTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref","coalescent1"), true);
 		}
 	}
 

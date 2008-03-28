@@ -1433,9 +1433,9 @@ public class BeastGenerator extends BeautiOptions {
             writeParameter("skyline.groupSize", skylineGroupCount, writer);
             writer.writeCloseTag(BayesianSkylineLikelihood.GROUP_SIZES);
 
-            writer.writeOpenTag(AbstractCoalescentLikelihood.POPULATION_TREE);
+            writer.writeOpenTag(OldAbstractCoalescentLikelihood.POPULATION_TREE);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-            writer.writeCloseTag(AbstractCoalescentLikelihood.POPULATION_TREE);
+            writer.writeCloseTag(OldAbstractCoalescentLikelihood.POPULATION_TREE);
 
             writer.writeCloseTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD);
         } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
@@ -1469,12 +1469,12 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeCloseTag(tagName);
 
-            writer.writeOpenTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("id", "coalescent"));
-            writer.writeOpenTag(AbstractCoalescentLikelihood.MODEL);
+            writer.writeOpenTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("id", "coalescent"));
+            writer.writeOpenTag(OldAbstractCoalescentLikelihood.MODEL);
             writer.writeTag(tagName, new Attribute.Default<String>("idref", demoElementName), true);
-            writer.writeCloseTag(AbstractCoalescentLikelihood.MODEL);
+            writer.writeCloseTag(OldAbstractCoalescentLikelihood.MODEL);
             writer.writeComment("Take population Tree from demographic");
-            writer.writeCloseTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD);
+            writer.writeCloseTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD);
 
             writer.writeOpenTag(SumStatistic.SUM_STATISTIC,
                     new Attribute[]{
@@ -1501,16 +1501,16 @@ public class BeastGenerator extends BeautiOptions {
             // generate a coalescent process
 
             writer.writeOpenTag(
-                    AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD,
+                    OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD,
                     new Attribute[]{new Attribute.Default<String>("id", "coalescent")}
             );
-            writer.writeOpenTag(AbstractCoalescentLikelihood.MODEL);
+            writer.writeOpenTag(OldAbstractCoalescentLikelihood.MODEL);
             writeNodeHeightPriorModelRef(writer);
-            writer.writeCloseTag(AbstractCoalescentLikelihood.MODEL);
-            writer.writeOpenTag(AbstractCoalescentLikelihood.POPULATION_TREE);
+            writer.writeCloseTag(OldAbstractCoalescentLikelihood.MODEL);
+            writer.writeOpenTag(OldAbstractCoalescentLikelihood.POPULATION_TREE);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-            writer.writeCloseTag(AbstractCoalescentLikelihood.POPULATION_TREE);
-            writer.writeCloseTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD);
+            writer.writeCloseTag(OldAbstractCoalescentLikelihood.POPULATION_TREE);
+            writer.writeCloseTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD);
         }
     }
 
@@ -2024,7 +2024,7 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == SKYLINE) {
             writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default<String>("idref", "skyline"), true);
         } else {
-            writer.writeTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("idref", "coalescent"), true);
+            writer.writeTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("idref", "coalescent"), true);
         }
 
         if (nodeHeightPrior == LOGISTIC) {
@@ -2641,7 +2641,7 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == SKYLINE) {
             writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default<String>("idref", "skyline"), true);
         } else {
-            writer.writeTag(AbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("idref", "coalescent"), true);
+            writer.writeTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("idref", "coalescent"), true);
         }
 
 

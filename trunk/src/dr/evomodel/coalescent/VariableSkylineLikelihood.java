@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  *
  * @author Alexei Drummond
  */
-public class VariableSkylineLikelihood extends AbstractCoalescentLikelihood {
+public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
 
     // PUBLIC STUFF
 

@@ -27,15 +27,11 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.Coalescent;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.Intervals;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.xml.*;
-import dr.util.ComparableDouble;
-import dr.util.HeapSort;
 
 import java.util.*;
 
@@ -50,7 +46,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class CoalescentLikelihood extends AbstractModel implements Likelihood, Units {
+public final class CoalescentLikelihood extends AbstractCoalescentLikelihood implements Likelihood, Units {
 
 	// PUBLIC STUFF
 
@@ -65,125 +61,17 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	                            TaxonList includeSubtree,
 	                            List<TaxonList> excludeSubtrees,
 	                            DemographicModel demoModel) throws Tree.MissingTaxonException {
-		this(COALESCENT_LIKELIHOOD, tree, includeSubtree, excludeSubtrees, demoModel);
-	}
 
-	public CoalescentLikelihood(String name,
-	                            Tree tree,
-	                            TaxonList includeSubtree,
-	                            List<TaxonList> excludeSubtrees,
-	                            DemographicModel demoModel) throws Tree.MissingTaxonException {
+		super(COALESCENT_LIKELIHOOD, tree, includeSubtree, excludeSubtrees);
 
-		super(name);
-
-		this.tree = tree;
 		this.demoModel = demoModel;
 
-		if (includeSubtree != null) {
-			includedLeafSet = Tree.Utils.getLeavesForTaxa(tree, includeSubtree);
-		} else {
-			includedLeafSet = null;
-		}
-
-		if (excludeSubtrees != null) {
-			excludedLeafSets = new Set[excludeSubtrees.size()];
-			for (int i =0; i < excludeSubtrees.size(); i++) {
-				excludedLeafSets[i] = Tree.Utils.getLeavesForTaxa(tree, excludeSubtrees.get(i));
-			}
-		} else {
-			excludedLeafSets = new Set[0];
-		}
-
 		addModel(demoModel);
-
-		if (tree instanceof TreeModel) {
-			addModel((TreeModel)tree);
-		}
-
-		intervals = new Intervals(tree.getNodeCount());
-		storedIntervals = new Intervals(tree.getNodeCount());
-		eventsKnown = false;
-
-		addStatistic(new DeltaStatistic());
-
-		likelihoodKnown = false;
 	}
-
-	// **************************************************************
-	// ModelListener IMPLEMENTATION
-	// **************************************************************
-
-	protected final void handleModelChangedEvent(Model model, Object object, int index) {
-		if (model == tree) {
-			// treeModel has changed so recalculate the intervals
-			eventsKnown = false;
-		} else {
-			// demoModel has changed so we don't need to recalculate the intervals
-		}
-
-		likelihoodKnown = false;
-	}
-
-	// **************************************************************
-	// ParameterListener IMPLEMENTATION
-	// **************************************************************
-
-	protected final void handleParameterChangedEvent(Parameter parameter, int index) { } // No parameters to respond to
-
-	// **************************************************************
-	// Model IMPLEMENTATION
-	// **************************************************************
-
-	/**
-	 * Stores the precalculated state: in this case the intervals
-	 */
-	protected final void storeState() {
-		// copy the intervals into the storedIntervals
-		storedIntervals.copyIntervals(intervals);
-
-		storedEventsKnown = eventsKnown;
-		storedLikelihoodKnown = likelihoodKnown;
-		storedLogLikelihood = logLikelihood;
-	}
-
-	/**
-	 * Restores the precalculated state: that is the intervals of the tree.
-	 */
-	protected final void restoreState() {
-		// swap the intervals back
-		Intervals tmp = storedIntervals;
-		storedIntervals = intervals;
-		intervals = tmp;
-
-		eventsKnown = storedEventsKnown;
-		likelihoodKnown = storedLikelihoodKnown;
-		logLikelihood = storedLogLikelihood;
-
-		if (!eventsKnown) {
-			likelihoodKnown = false;
-		}
-	}
-
-	protected final void acceptState() { } // nothing to do
 
 	// **************************************************************
 	// Likelihood IMPLEMENTATION
 	// **************************************************************
-
-	public final Model getModel() { return this; }
-
-	public final double getLogLikelihood() {
-		if (!likelihoodKnown) {
-			logLikelihood = calculateLogLikelihood();
-			likelihoodKnown = true;
-		}
-		return logLikelihood;
-	}
-
-	public final void makeDirty() {
-		likelihoodKnown = false;
-		eventsKnown = false;
-	}
 
 	/**
 	 * Calculates the log likelihood of this set of coalescent intervals,
@@ -191,108 +79,10 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	 */
 	public double calculateLogLikelihood() {
 
-		if (!eventsKnown) {
-			setupIntervals();
-		}
-
 		DemographicFunction demoFunction = demoModel.getDemographicFunction();
 
-		return Coalescent.calculateLogLikelihood(intervals, demoFunction);
+		return Coalescent.calculateLogLikelihood(getIntervals(), demoFunction);
 	}
-
-	/**
-	 * @returns the node ref of the MRCA of this coalescent prior in the given tree.
-	 */
-	private NodeRef getIncludedMRCA(Tree tree) {
-		if (includedLeafSet != null) {
-			return Tree.Utils.getCommonAncestorNode(tree, includedLeafSet);
-		} else {
-			return tree.getRoot();
-		}
-	}
-
-	/**
-	 * @returns an array of noderefs that represent the MRCAs of subtrees to exclude from coalescent prior.
-	 * May return null if no subtrees should be excluded.
-	 */
-	private Set<NodeRef> getExcludedMRCAs(Tree tree) {
-
-		if (excludedLeafSets.length == 0) return null;
-
-		Set<NodeRef> excludeNodesBelow = new HashSet<NodeRef>();
-		for (int i =0; i < excludedLeafSets.length; i++) {
-			excludeNodesBelow.add(Tree.Utils.getCommonAncestorNode(tree, excludedLeafSets[i]));
-		}
-		return excludeNodesBelow;
-	}
-
-
-	/**
-	 * Recalculates all the intervals from the tree model.
-	 */
-	private final void setupIntervals() {
-
-		intervals.resetEvents();
-		collectTimes(tree, getIncludedMRCA(tree), getExcludedMRCAs(tree), intervals);
-		// force a calculation of the intervals...
-		intervals.getIntervalCount();
-
-		eventsKnown = true;
-	}
-
-
-	/**
-	 * extract coalescent times and tip information into ArrayList times from tree.
-	 * @param tree the tree
-	 * @param node the node to start from
-	 * @param intervals the intervals object to store the events
-	 */
-	private void collectTimes(Tree tree, NodeRef node, Set<NodeRef> excludeNodesBelow, Intervals intervals) {
-
-		intervals.addCoalescentEvent(tree.getNodeHeight(node));
-
-		for (int i = 0; i < tree.getChildCount(node); i++) {
-			NodeRef child = tree.getChild(node, i);
-
-			// check if this subtree is included in the coalescent density
-			boolean include = true;
-
-			if (excludeNodesBelow != null && excludeNodesBelow.contains(child)) {
-				include = false;
-			}
-
-			if (!include || tree.isExternal(child)) {
-				intervals.addSampleEvent(tree.getNodeHeight(child));
-			} else {
-				collectTimes(tree, child, excludeNodesBelow, intervals);
-			}
-		}
-
-	}
-
-	// **************************************************************
-	// Loggable IMPLEMENTATION
-	// **************************************************************
-
-	/**
-	 * @return the log columns.
-	 */
-	public final dr.inference.loggers.LogColumn[] getColumns() {
-		return new dr.inference.loggers.LogColumn[] {
-				new LikelihoodColumn(getId())
-		};
-	}
-
-	private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-		public LikelihoodColumn(String label) { super(label); }
-		public double getDoubleValue() { return getLogLikelihood(); }
-	}
-
-	public String toString() {
-		return Double.toString(logLikelihood);
-
-	}
-
 
 	// **************************************************************
 	// Units IMPLEMENTATION
@@ -314,25 +104,6 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 	public final Type getUnits()
 	{
 		return demoModel.getUnits();
-	}
-
-	// ****************************************************************
-	// Inner classes
-	// ****************************************************************
-
-	public class DeltaStatistic extends Statistic.Abstract {
-
-		public DeltaStatistic() {
-			super("delta");
-		}
-
-		public int getDimension() { return 1; }
-
-		public double getStatisticValue(int i) {
-			throw new RuntimeException("Not implemented");
-//			return IntervalList.Utils.getDelta(intervals);
-		}
-
 	}
 
 	// ****************************************************************
@@ -410,23 +181,4 @@ public class CoalescentLikelihood extends AbstractModel implements Likelihood, U
 
 	/** The demographic model. */
 	private DemographicModel demoModel = null;
-
-	/** The tree. */
-	private Tree tree = null;
-	private final Set<String> includedLeafSet;
-	private final Set[] excludedLeafSets;
-
-	/** The intervals. */
-	private Intervals intervals = null;
-
-	/** The stored values for intervals. */
-	private Intervals storedIntervals = null;
-
-	private boolean eventsKnown = false;
-	private boolean storedEventsKnown = false;
-
-	private double logLikelihood;
-	private double storedLogLikelihood;
-	private boolean likelihoodKnown = false;
-	private boolean storedLikelihoodKnown = false;
 }

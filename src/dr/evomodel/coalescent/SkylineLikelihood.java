@@ -40,7 +40,7 @@ import dr.xml.*;
  *
  * @author Alexei Drummond
  */
-public class SkylineLikelihood extends AbstractCoalescentLikelihood {
+public class SkylineLikelihood extends OldAbstractCoalescentLikelihood {
 
 	// PUBLIC STUFF
 

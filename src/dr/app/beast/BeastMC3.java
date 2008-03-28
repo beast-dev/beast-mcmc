@@ -27,7 +27,7 @@ package dr.app.beast;
 
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
-import dr.app.beastdev.BeastParser;
+import dr.app.beast.BeastParser;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
@@ -47,7 +47,7 @@ public class BeastMC3 {
 
     public final static int HOT_CHAIN_COUNT = 2;
 
-    private final static Version version = new dr.app.beastdev.BeastVersion();
+    private final static Version version = new dr.app.beast.BeastVersion();
 
     static class BeastConsoleApp extends ConsoleApplication {
         XMLParser parser = null;
@@ -106,7 +106,7 @@ public class BeastMC3 {
 
             FileReader fileReader = new FileReader(inputFile);
 
-            XMLParser parser = new BeastParser(new String[]{fileName}, inputFile.getParentFile(), verbose);
+	        XMLParser parser = new BeastParser(new String[] {fileName}, verbose);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -138,7 +138,7 @@ public class BeastMC3 {
                 fileReader = new FileReader(inputFile);
 
                 messageHandler.setLevel(Level.OFF);
-                parser = new BeastParser(new String[]{fileName}, inputFile.getParentFile(), verbose);
+                parser = new BeastParser(new String[] {fileName}, verbose);
 
                 store = parser.parse(fileReader, false);
                 for (Object id : store.getIdSet()) {

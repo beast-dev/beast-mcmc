@@ -28,8 +28,7 @@ package dr.app.beast;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.math.MathUtils;
-import dr.util.MessageLogHandler;
-import dr.util.Version;
+import dr.util.*;
 import dr.xml.XMLParser;
 import org.virion.jam.util.IconUtils;
 
@@ -59,7 +58,7 @@ public class BeastMain {
         }
     }
 
-    public BeastMain(File inputFile, BeastConsoleApp consoleApp, boolean verbose) {
+    public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, boolean verbose) {
 
         if (inputFile == null) {
             System.err.println();
@@ -104,6 +103,13 @@ public class BeastMain {
 
             Logger.getLogger("dr.apps.beast").info("Parsing XML file: " + fileName);
             Logger.getLogger("dr.apps.beast").info("  File encoding: " + fileReader.getEncoding());
+
+			// This is a special logger that is for logging numerical and statistical errors
+	        // during the MCMC run. It will tolerate up to maxErrorCount before throwing a
+	        // RuntimeException to shut down the run.
+	        Logger errorLogger = Logger.getLogger("error");
+	        handler = new ErrorLogHandler(maxErrorCount);
+	        logger.addHandler(handler);
 
             parser.parse(fileReader, true);
 
@@ -158,7 +164,7 @@ public class BeastMain {
                 Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
                 Logger.getLogger("dr.apps.beast").severe("Fatal exception: " + rex.getMessage());
                 System.err.println("Fatal exception: " + rex.getMessage());
-                rex.printStackTrace(System.err);
+                // rex.printStackTrace(System.err);
             }
 
         } catch (Exception ex) {
@@ -230,6 +236,7 @@ public class BeastMain {
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "specify a random number generator seed"),
+		                new Arguments.IntegerOption("errors", "maximum number of numerical errors before stopping"),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -265,6 +272,14 @@ public class BeastMain {
             MathUtils.setSeed(seed);
         }
 
+	    int maxErrorCount = 0;
+	    if (arguments.hasOption("errors")) {
+	        maxErrorCount = arguments.getIntegerOption("errors");
+	        if (maxErrorCount < 0) {
+	            maxErrorCount = 0;
+	        }
+	    }
+
 //		if (System.getProperty("dr.app.beast.main.window", "false").toLowerCase().equals("true")) {
 //			window = true;
 //		}
@@ -290,8 +305,9 @@ public class BeastMain {
                     "<p><a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                     "<p>Source code distributed under the GNU LGPL:<br>" +
                     "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
-                    "<p>Additional programming by:<br>" +
-                    "Roald Forsberg, Gerton Lunter, Sidney Markowitz, Oliver Pybus</p>" +
+		            "<p>Model contributions from:<br>" +
+		            "Erik Bloomquist, Roald Forsberg, Joseph Heled, Gerton Lunter, Sidney Markowitz, " +
+		            "Vladimir Minin, Oliver Pybus, Marc Suchard, Jen Tom</p>" +
                     "<p>Thanks to Korbinian Strimmer for use of his code</p>" +
                     "</center></html>";
 
@@ -333,7 +349,7 @@ public class BeastMain {
         System.out.println("Random number seed: " + seed);
         System.out.println();
 
-        new BeastMain(inputFile, consoleApp, verbose);
+        new BeastMain(inputFile, consoleApp, maxErrorCount, verbose);
     }
 }
 

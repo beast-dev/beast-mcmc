@@ -1045,7 +1045,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
 			number = node.getNumber();
 			taxon = tree.getNodeTaxon(node);
-
+            heightParameter.setId(""+number);
 			for (int i = 0; i < tree.getChildCount(node); i++) {
 				addChild(new Node(tree, tree.getChild(node, i)));
 			}

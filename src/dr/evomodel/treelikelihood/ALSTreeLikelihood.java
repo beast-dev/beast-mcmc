@@ -67,7 +67,7 @@ public class ALSTreeLikelihood extends TreeLikelihood
 
 
     protected void handleModelChangedEvent(Model model, Object object,  int index){
-        if(model==observationProcess){
+        if(model==observationProcess || model==treeModel){
                 makeDirty();
         }else
             super.handleModelChangedEvent(model,object,index);

@@ -100,7 +100,7 @@
             <parameter idref="als.death"/>
         </deathRate>
         <immigrationRate>
-            <parameter id="als.birth" lower="0.0" value="1.0"/>
+            <parameter id="als.birth" lower="0.0" value="0.0001"/>
         </immigrationRate>
         <siteModel idref="siteModel"/>
     </anyTipObservationProcess>
@@ -120,7 +120,7 @@
         <scaledTreeLengthModel idref="treeLengthScaling"/>
     </alsTreeLikelihood>
 
-    <alternativeSplicingPrior id="asPrior">
+    <alsDefaultPrior id="asPrior">
         <treeModel idref="treeModel"/>
         <deathRate>       <parameter idref="als.death"/>    </deathRate>
         <immigrationRate> <parameter idref="als.birth"/>    </immigrationRate>
@@ -130,7 +130,7 @@
             <parameter idref="binary.frequencies"/>
         </freqParameter>
 
-    </alternativeSplicingPrior>
+    </alsDefaultPrior>
 
     <operators id="operators">
         <scaleOperator scaleFactor="0.54" weight="1">
@@ -151,14 +151,14 @@
 		<posterior id="posterior">
             <likelihood id="likelihood">
 				<treeLikelihood idref="alsLikelihood"/>
-                <immigrationIntegrationPrior id="immigrationIntegration">
+                <alsLambdaIntegrator id="immigrationIntegration">
                     <patterns idref="shortPatterns"/>
-                    <deathRate>       <parameter idref="als.death"/>    </deathRate>
-                    <immigrationRate> <parameter idref="als.birth"/>    </immigrationRate>
-                </immigrationIntegrationPrior>
+                    <anyTipObservationProcess idref="exonObservationProcess"/>
+                    <scaledTreeLengthModel idref="treeLengthScaling"/>
+                </alsLambdaIntegrator>
             </likelihood>
             <prior id="prior">
-                <alternativeSplicingPrior idref="asPrior"/>
+                <alsDefaultPrior idref="asPrior"/>
             </prior>
         </posterior>
 
@@ -179,12 +179,12 @@
             <column dp="8" label="Likelihood" width="12">
                 <likelihood idref="likelihood"/>
             </column>
-<!--            <column label="Prior" dp="8" width="12">
+            <column label="Prior" dp="8" width="12">
                 <prior idref="prior"/>
             </column>
             <column label="Posterior" dp="8" width="12">
                 <posterior idref="posterior"/>
-            </column>  -->
+            </column>
         </log>
         <log id="fileLog" logEvery="1" fileName="scalePrior.log">
 	<parameter idref="als.birth" />

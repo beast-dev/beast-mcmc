@@ -2,8 +2,8 @@ package dr.inference.prior;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.branchratemodel.ScaledTreeLengthRateModel;
-import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
@@ -15,7 +15,7 @@ import dr.xml.*;
 import java.util.logging.Logger;
 
 /**
- * Package: AlternativeSplicingPrior
+ * Package: alsDefaultPrior
  * Description:
  * <p/>
  * <p/>
@@ -24,7 +24,7 @@ import java.util.logging.Logger;
  * Date: Mar 14, 2008
  * Time: 12:47:07 PM
  */
-public class AlternativeSplicingPrior extends AbstractModel implements Likelihood {
+public class alsDefaultPrior extends AbstractModel implements Likelihood {
     Parameter deathRate;
     Parameter creationRate;
     Parameter ctmcScale;
@@ -32,7 +32,7 @@ public class AlternativeSplicingPrior extends AbstractModel implements Likelihoo
     TreeModel treeModel;
     BranchRateModel branchRateModel;
 
-    public AlternativeSplicingPrior(Parameter deathRate, Parameter creationRate,
+    public alsDefaultPrior(Parameter deathRate, Parameter creationRate,
                                     TreeModel treeModel, BranchRateModel branchRateModel, Parameter ctmcScale, Parameter freqParam){
         super(null);
         this.deathRate = deathRate;
@@ -41,16 +41,9 @@ public class AlternativeSplicingPrior extends AbstractModel implements Likelihoo
         this.treeModel = treeModel;
         this.branchRateModel = branchRateModel;
         this.freqParam = freqParam;
-
-        addParameter(deathRate);
-        addParameter(creationRate);
-        addParameter(ctmcScale);
-        addModel(treeModel);
-        addModel(branchRateModel);
-
     }
 
-    public static final String MODEL_NAME="alternativeSplicingPrior";
+    public static final String MODEL_NAME="alsDefaultPrior";
     public static final String DEATHPARAMETER="deathRate";
     public static final String CREATIONPARAMETER = "immigrationRate";
     public static final String SCALEPARAMETER = "ctmcScale";
@@ -68,17 +61,26 @@ public class AlternativeSplicingPrior extends AbstractModel implements Likelihoo
 
 			TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
             BranchRateModel branchRateModel= (BranchRateModel) xo.getChild(BranchRateModel.class);
+            if(branchRateModel == null){
+                branchRateModel = new DefaultBranchRateModel();
+            }
             Parameter creationRate = (Parameter)xo.getSocketChild(CREATIONPARAMETER);
             Parameter deathRate = (Parameter)xo.getSocketChild(DEATHPARAMETER);
-            Parameter ctmcScale = (Parameter)xo.getSocketChild(SCALEPARAMETER);
-            Parameter freqParam = (Parameter) xo.getSocketChild(FREQPARAMETER);
+            Parameter ctmcScale = null;
+            if(xo.hasSocket(SCALEPARAMETER)){
+                ctmcScale = (Parameter)xo.getSocketChild(SCALEPARAMETER);
+            }
+            Parameter freqParam = null;
+            if(xo.hasSocket(FREQPARAMETER)){
+                freqParam = (Parameter) xo.getSocketChild(FREQPARAMETER);
+            }
 
-            Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating AlternativeSplicingPrior model.");
+            Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating alsDefaultPrior model.");
             Logger.getLogger("dr.evolution").info("\tIf you publish results using this prior, please reference:");
             Logger.getLogger("dr.evolution").info("\t\t 1. Ferreira and Suchard (in press) for the conditional reference prior on CTMC scale parameter prior;");
             Logger.getLogger("dr.evolution").info("\t\t 2. Alekseyenko, Lee and Suchard (in submision).\n---------------------------------\n");
 
-            return new AlternativeSplicingPrior(deathRate,creationRate,treeModel,branchRateModel,ctmcScale,freqParam);
+            return new alsDefaultPrior(deathRate,creationRate,treeModel,branchRateModel,ctmcScale,freqParam);
         }
 
 
@@ -96,11 +98,11 @@ public class AlternativeSplicingPrior extends AbstractModel implements Likelihoo
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
             new ElementRule(TreeModel.class),
-            new ElementRule(BranchRateModel.class),
+            new ElementRule(BranchRateModel.class,true),
             new ElementRule(DEATHPARAMETER, new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
             new ElementRule(CREATIONPARAMETER, new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-            new ElementRule(SCALEPARAMETER, new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-            new ElementRule(FREQPARAMETER, new XMLSyntaxRule[] { new ElementRule(Parameter.class) })
+            new ElementRule(SCALEPARAMETER, new XMLSyntaxRule[] { new ElementRule(Parameter.class) },true),
+            new ElementRule(FREQPARAMETER, new XMLSyntaxRule[] { new ElementRule(Parameter.class) },true)
         };
 	};
 
@@ -174,7 +176,7 @@ public class AlternativeSplicingPrior extends AbstractModel implements Likelihoo
         for(int i=0; i<L;++i) {
             currentNode=treeModel.getNode(i);
             double branchRate=branchRateModel.getBranchRate(treeModel,currentNode);
-            totalTreeTime+=branchRate + treeModel.getBranchLength(currentNode);
+            totalTreeTime+=branchRate * treeModel.getBranchLength(currentNode);
             //System.err.println("Node "+i+" height: "+treeModel.getNodeHeight(currentNode));
         }
         //System.err.println("totalTreeTime: "+totalTreeTime);
@@ -185,14 +187,15 @@ public class AlternativeSplicingPrior extends AbstractModel implements Likelihoo
         int L = treeModel.getNodeCount();
 
         double lam=creationRate.getParameterValue(0);
-        double ab=ctmcScale.getParameterValue(0);
         double mu=deathRate.getParameterValue(0);
         double totalTreeTime=getTotalLength(L);
 
-/*        System.err.println("AlternativeSplicingPrior\n\tP: {"+p[0]+", "+p[1]+"}.");
-        System.err.println("\talpha+beta: "+ab);*/
-
-        return GammaFunction.lnGamma(L)-Math.log(mu*lam*Math.pow(totalTreeTime,L-1))-0.5*Math.log(ab)-ab*totalTreeTime;
+        if(ctmcScale != null){ // 
+            double ab=ctmcScale.getParameterValue(0);
+            return GammaFunction.lnGamma(L)-Math.log(mu*lam)-(L-1)*Math.log(totalTreeTime)-0.5*Math.log(ab)-ab*totalTreeTime;
+        }else{ // No Markov Chain for this model
+            return GammaFunction.lnGamma(L)-Math.log(mu*lam)-(L-1)*Math.log(totalTreeTime);
+        }
     }
 
     /**

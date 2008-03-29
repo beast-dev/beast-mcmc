@@ -29,6 +29,8 @@ import dr.evomodel.operators.*;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.xml.*;
 import dr.evolution.datatype.MutationDeathType;
+import dr.inference.prior.alsPriorLambdaIntegrator;
+import dr.inference.prior.alsDefaultPrior;
 
 import java.util.Iterator;
 
@@ -341,8 +343,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.substmodel.MutationDeathModel.PARSER);
 
 
-        addXMLObjectParser(dr.inference.prior.AlternativeSplicingPrior.PARSER);
-        addXMLObjectParser(dr.inference.prior.ImmigrationIntegrationForAlternativeSplicingPrior.PARSER);
+        addXMLObjectParser(alsDefaultPrior.PARSER);
+        addXMLObjectParser(alsPriorLambdaIntegrator.PARSER);
     }
 
 }

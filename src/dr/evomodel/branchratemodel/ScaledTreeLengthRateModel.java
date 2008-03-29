@@ -49,9 +49,12 @@ public class ScaledTreeLengthRateModel extends AbstractModel implements BranchRa
 
     protected void updateCurrentLength(){
         double currentLength=0;
+        NodeRef root=treeModel.getRoot();
         for(int i=0; i<treeModel.getNodeCount();++i){
             NodeRef node=treeModel.getNode(i);
-            currentLength+=treeModel.getBranchLength(node);
+            if (node!=root){
+                currentLength+=treeModel.getBranchLength(node);
+            }
         }
         rateFactor = totalLength.getParameterValue(0)/currentLength;
         currentFactorKnown=true;

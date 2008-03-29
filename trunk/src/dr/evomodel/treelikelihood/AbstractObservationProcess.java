@@ -5,6 +5,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.MutationDeathType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.ScaledTreeLengthRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
@@ -54,6 +55,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         this.mu=mu;
         this.lam=lam;
         this.siteModel=siteModel;
+        addModel(treeModel);
         addParameter(mu);
         addParameter(lam);
 
@@ -200,6 +202,9 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if(model==treeModel){
+            weightKnown = false;
+        }
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index) {

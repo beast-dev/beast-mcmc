@@ -1,7 +1,5 @@
 package dr.math;
 
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 
@@ -72,8 +70,8 @@ public class InverseWishartDistribution implements MultivariateDistribution {
 	}
 
 
-	public double logPdf(Parameter x) {
-		Matrix W = new Matrix(((MatrixParameter) x).getParameterAsMatrix());
+	public double logPdf(double[] x) {
+		Matrix W = new Matrix(x, dim, dim);
 		double logDensity = 0;
 
 //	    System.err.println("here");

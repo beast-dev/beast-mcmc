@@ -1,7 +1,5 @@
 package dr.math;
 
-import dr.inference.model.Parameter;
-
 /**
  * @author Marc A. Suchard
  */
@@ -31,11 +29,15 @@ public class DirichletDistribution implements MultivariateDistribution {
 	}
 
 
-	public double logPdf(Parameter x) {
+	public double logPdf(double[] x) {
+
+		if (x.length != dim) {
+			throw new IllegalArgumentException("data array is of the wrong dimension");
+		}
 
 		double logPDF = logNormalizingConstant;
 		for (int i = 0; i < dim; i++)
-			logPDF += (counts[i] - 1) * Math.log(x.getParameterValue(i));
+			logPDF += (counts[i] - 1) * Math.log(x[i]);
 
 		return logPDF;
 	}

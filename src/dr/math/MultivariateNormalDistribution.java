@@ -1,6 +1,5 @@
 package dr.math;
 
-import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
@@ -54,10 +53,6 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
 	public double logPdf(double[] x) {
 		return logPdf(x, mean, precision, logDet, 1.0);
-	}
-
-	public double logPdf(Parameter x) {
-		return logPdf(x.getParameterValues(), mean, precision, logDet, 1.0);
 	}
 
 	public static final double logPdf(double[] x, double[] mean, double[][] precision,

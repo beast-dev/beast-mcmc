@@ -1,0 +1,21 @@
+#summary Some notes on the design of BEAST for developers.
+#labels Featured,Phase-Design
+
+= Dependencies =
+
+  * Try to avoid circular dependencies between packages. Certain packages are intended as global utility classes (feel free to add stuff to them but consider whether they may be useful to other classes).:
+
+  * _dr.maths_ / _dr.stats_ / _dr.utils_ are low level utility packages and should have no dependencies on the packages below...
+
+  * _dr.inference_ is generic MCMC stuff and should have no dependencies on the biological packages (_dr.evolution_ & _dr.evomodel_). Notably, things like priors, operators and the like here are generic ones that work on continuous parameters not biology specific ones.
+
+  * _dr.evolution_ is basic evolutionary stuff and should have no dependencies on dr.evomodel or dr.inference.
+
+  * _dr.evomodel_ is where all BEAST-specific stuff should go  - this ties together the biology in dr.evolution into the inference engine in _dr.inference_.
+
+= 'Plugins' =
+  * If you are creating a 'package' of classes that do some particular models (may include some Models, Likelihoods, Operators and the like) I suggest creating a package in dr.evomodel to put it all in. I envisage that at some point we will move to a 'plugin' type architecture where developers can create independent JAR files for downloading, within which BEAST would search for parsers. This would allow independent distribution of particular models and analyses. I suggest people try and compartmentalize their models a bit rather than dropping classes in all over the place. I suggest this may be a good idea for packages which are of less general interest (i.e., aren't simply natural extensions to the core BEAST functionality).
+
+An example of this is _dr.evomodel.transmission_ which contains a package of classes for analysing transmission histories for infectious diseases. 
+
+The advantages of this is that once we have a plugin architecture, bug fixes and improvements of models will be able to be distributed independently of BEAST.

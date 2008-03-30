@@ -1,7 +1,5 @@
 package dr.math;
 
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
@@ -173,8 +171,8 @@ public class WishartDistribution implements MultivariateDistribution {
         return draw;
     }
 
-    public double logPdf(Parameter x) {
-        Matrix W = new Matrix(((MatrixParameter) x).getParameterAsMatrix());
+    public double logPdf(double[] x) {
+        Matrix W = new Matrix(x, dim, dim);
         return logPdf(W, Sinv, df, dim, logNormalizationConstant);
     }
 

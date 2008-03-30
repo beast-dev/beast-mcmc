@@ -45,6 +45,31 @@ public class Matrix {
 	}
 
 	/**
+	 * Creates a matrix with given components.
+	 * NOTE: the components must not be altered after the definition.
+	 *
+	 * @param a double[]
+	 */
+	public Matrix(double[] a, int n, int m) {
+		if (n <= 0 || m <= 0)
+			throw new NegativeArraySizeException(
+					"Requested matrix size: " + n + " by " + m);
+		if (n * m != a.length) {
+			throw new IllegalArgumentException(
+					"Requested matrix size: " + n + " by " + m + " doesn't match array size: " + a.length);
+		}
+		components = new double[n][m];
+		int k = 0;
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < m; j++) {
+				components[i][j] = a[k];
+				k++;
+			}
+
+		}
+	}
+
+	/**
 	 * Creates a null matrix of given dimensions.
 	 *
 	 * @param n int	number of rows

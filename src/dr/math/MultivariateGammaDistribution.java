@@ -1,6 +1,5 @@
 package dr.math;
 
-import dr.inference.model.Parameter;
 
 /**
  * @author Marc Suchard
@@ -23,12 +22,16 @@ public class MultivariateGammaDistribution implements MultivariateDistribution {
 
 	}
 
-	public double logPdf(Parameter x) {
+	public double logPdf(double[] x) {
 
 		double logPdf = 0;
 
+		if (x.length != dim) {
+			throw new IllegalArgumentException("data array is of the wrong dimension");
+		}
+
 		for (int i = 0; i < dim; i++)
-			logPdf += GammaDistribution.logPdf(x.getParameterValue(i),
+			logPdf += GammaDistribution.logPdf(x[i],
 					shape[i], scale[i]);
 
 		return logPdf;

@@ -1,7 +1,5 @@
 package dr.math;
 
-import dr.inference.model.Parameter;
-
 /**
  * Created by IntelliJ IDEA.
  * User: msuchard
@@ -11,7 +9,7 @@ import dr.inference.model.Parameter;
  */
 public interface MultivariateDistribution {
 
-    public double logPdf(Parameter x);
+    public double logPdf(double[] x);
 
     public double[][] getScaleMatrix();
 

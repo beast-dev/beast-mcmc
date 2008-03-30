@@ -3,7 +3,7 @@
 
 = Dependencies =
 
-  * Try to avoid circular dependencies between packages. Certain packages are intended as global utility classes (feel free to add stuff to them but consider whether they may be useful to other classes).:
+Try to avoid circular dependencies between packages. Certain packages are intended as global utility classes (feel free to add stuff to them but consider whether they may be useful to other classes):
 
   * _dr.maths_ / _dr.stats_ / _dr.utils_ are low level utility packages and should have no dependencies on the packages below...
 

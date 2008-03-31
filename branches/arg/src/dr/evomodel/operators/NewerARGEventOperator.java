@@ -19,7 +19,6 @@ import dr.inference.model.VariableSizeCompoundParameter;
 import dr.inference.model.VariableSizeParameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
-import dr.util.HeapSort;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -87,22 +86,10 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		double logq = 0;
 		
 		try {
-//			if(arg.getReassortmentNodeCount() == 0){
-//				logq = AddOperation();
-//			}else{
-//				logq = RemoveOperation();
-//			}
-			
-			if(arg.getReassortmentNodeCount() < 4){
+			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
 				logq = AddOperation() - size;
-			}else{
+			else
 				logq = RemoveOperation() + size;
-			}
-			
-//			if (MathUtils.nextDouble() < 1.0/(1 + Math.exp(-size)))
-//				logq = AddOperation() - size;
-//			else
-//				logq = RemoveOperation() + size;
 		} catch (NoReassortmentEventException nree) {
 			return Double.NEGATIVE_INFINITY;
 		} catch (OperatorFailedException e) {

@@ -71,7 +71,7 @@ public class ExponentialLogistic extends LogisticGrowth {
 		    return super.getDemographic(t);
 		} else {
 			double N1 = super.getDemographic(transition_time);
-			return N1 * Math.exp(-r1*t);
+			return N1 * Math.exp(-r1*(t - transition_time));
 		}
 	}
 

@@ -126,7 +126,7 @@ public class ExponentialLogisticModel extends DemographicModel
 		exponentialLogistic.setR1(r1);
 
 		double t = transistionTimeParameter.getParameterValue(0);
-		exponentialLogistic.setTime50(t);
+		exponentialLogistic.setTime(t);
 
 		// AER 24/02/03
 		// logisticGrowth.setShape(Math.exp(shapeParameter.getParameterValue(0)));

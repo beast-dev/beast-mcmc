@@ -3,6 +3,7 @@ package dr.evomodel.operators;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.logging.Logger;
 
 
 
@@ -37,7 +38,8 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 	public static final String REASSORTMENT_SWAP = "reassortmentSwap";
 	public static final String DUAL_SWAP = "dualSwap";
 	public static final String FULL_SWAP = "fullSwap";
-	public static final String DEFAULT = BIFURCATION_SWAP;
+	public static final String NARROW_SWAP = "narrowSwap";
+	public static final String DEFAULT = NARROW_SWAP;
 	
 	private ARGModel arg;
 	private String mode;
@@ -52,7 +54,12 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		
 	
 	public double doOperation() throws OperatorFailedException {
-				
+		
+		if(mode.equals(NARROW_SWAP)){
+			return narrowSwap();
+		}
+		
+		
 		if((mode.equals(REASSORTMENT_SWAP) || mode.equals(DUAL_SWAP)) &&
 				arg.getReassortmentNodeCount() == 0){
 			return 0.0;
@@ -87,6 +94,133 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 				
 		return 0;
 	}
+	
+	private double narrowSwap() throws OperatorFailedException{
+		ArrayList<NarrowSwap> possibleSwaps = new ArrayList<NarrowSwap>(arg.getNodeCount());
+		findAllNarrowSwaps(possibleSwaps);
+		int possibleSwapsBefore = possibleSwaps.size();
+		
+		assert possibleSwapsBefore > 0;
+		
+		doNarrowSwap(possibleSwaps.get(MathUtils.nextInt(possibleSwaps.size())));
+		
+		possibleSwaps.clear();
+		findAllNarrowSwaps(possibleSwaps);
+						
+		return Math.log((double)possibleSwaps.size()/possibleSwapsBefore);
+	}
+	
+	public int findAllNarrowSwaps(ArrayList<NarrowSwap> moves){
+    	NodeRef iP = null, j = null, jP = null;
+    	ArrayList<NodeRef> nodes = new ArrayList<NodeRef>(arg.getNodeCount());
+    	
+    	for(int k = 0, n = arg.getNodeCount(); k < n; k++){
+    		NodeRef x = arg.getNode(k);
+    		if(!arg.isRoot(x) && !arg.isRoot(arg.getParent(x, 0)) 
+    				 && !arg.isRoot(arg.getParent(x, 1))){
+    			nodes.add(x);
+    		}
+    	}
+    	NarrowSwap a;
+    	for(NodeRef i : nodes){
+    		for(int k = 0; k < 2; k++){
+    			iP = arg.getParent(i,k);
+    			for(int m = 0; m < 2; m++){
+    				jP = arg.getParent(iP,m);
+    				j = arg.getOtherChild(jP, iP);
+    				a = new NarrowSwap(i,iP,j,jP);
+    				if(validMove(a) && !moves.contains(a)){
+    					moves.add(a);
+    				}
+    			}
+    		}
+    	}
+    	assert moves.size() > 0;
+    	return moves.size();
+    }
+	
+	 private boolean validMove(NarrowSwap move){
+    	 if (move.j != move.iP && move.i != move.j &&       
+                 (arg.getNodeHeight(move.j) < arg.getNodeHeight(move.iP)) && 
+                 (arg.getNodeHeight(move.i) < arg.getNodeHeight(move.jP))) {
+         	return true;
+             
+         }
+    	 return false;
+    }
+	
+	
+	private void doNarrowSwap(NarrowSwap swap) throws OperatorFailedException{
+		 arg.beginTreeEdit();
+
+	        boolean iBifurcation = arg.isBifurcation(swap.i);
+	        boolean jBifurcation = arg.isBifurcation(swap.j);
+
+	        if (iBifurcation && jBifurcation) {
+	            arg.removeChild(swap.iP, swap.i);
+	            arg.removeChild(swap.jP, swap.j);
+	            arg.addChild(swap.jP, swap.i);
+	            arg.addChild(swap.iP, swap.j);
+	        } else if (!iBifurcation && !jBifurcation) {
+	        	//dont' do anything
+	        } else {
+	            if (jBifurcation) {
+	                NodeRef t = swap.i;
+	                NodeRef tP = swap.iP;
+	                swap.i = swap.j;
+	                swap.iP = swap.jP;
+	                swap.j = t;
+	                swap.jP = tP;
+	            }
+	        }
+
+	        try {
+	            arg.endTreeEdit();
+	        } catch (MutableTree.InvalidTreeException ite) {
+	            throw new OperatorFailedException(ite.toString());
+	        }
+	}
+	
+	private class NarrowSwap{
+    	public NodeRef i;
+    	public NodeRef j;
+    	public NodeRef iP;
+    	public NodeRef jP;
+    	
+    	public NarrowSwap(NodeRef i, NodeRef iP, NodeRef j, NodeRef jP){
+    		this.i = i;
+    		this.j = j;
+    		this.iP = iP;
+    		this.jP = jP;
+    		
+    	}
+    	
+    	public boolean equals(Object o){
+    		if(!(o instanceof NarrowSwap)) {
+				return false;
+    		}
+    		
+    		NarrowSwap move = (NarrowSwap) o;
+    		    		
+    		if(this.i == move.i && this.j == move.j &&
+    				this.iP == move.iP && this.jP == move.jP){
+    			return true;
+    		}
+    		if(this.i == move.j && this.j == move.i &&
+    				this.iP == move.jP && this.jP == move.iP){
+    			return true;
+    		}
+    		
+    		return false;
+    	}
+    	
+    	public String toString(){
+    		return "(" + i.toString() + ", " + iP.toString() + 
+    			   ", " + jP.toString() + ", " + j.toString() + ")";
+    	}
+    	
+    }
+	
 	
 	private double bifurcationSwap(NodeRef x){
 		Node startNode = (Node) x;
@@ -428,7 +562,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		}
 
 		private String[] validFormats = {BIFURCATION_SWAP, REASSORTMENT_SWAP,
-				DUAL_SWAP, FULL_SWAP};
+				DUAL_SWAP, FULL_SWAP, NARROW_SWAP};
 		
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 			AttributeRule.newIntegerRule(WEIGHT),	
@@ -449,6 +583,8 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 			if(xo.hasAttribute(SWAP_TYPE)){
 				mode = xo.getStringAttribute(SWAP_TYPE);
 			}
+			
+			Logger.getLogger("dr.evomodel").info("Creating ARGSwapOperator: " + mode);
 			
 			ARGModel arg = (ARGModel) xo.getChild(ARGModel.class);
 			return new ARGSwapOperator(arg,mode,weight);

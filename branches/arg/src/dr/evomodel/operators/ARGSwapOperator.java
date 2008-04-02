@@ -49,8 +49,8 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		this.mode = mode;
 		
 		setWeight(weight);
-		
 	}
+		
 		
 	
 	public double doOperation() throws OperatorFailedException {
@@ -99,137 +99,127 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		ArrayList<NarrowSwap> possibleSwaps = new ArrayList<NarrowSwap>(arg.getNodeCount());
 		findAllNarrowSwaps(possibleSwaps);
 		int possibleSwapsBefore = possibleSwaps.size();
-		
-		assert possibleSwapsBefore > 0;
-		
+				
+		if(possibleSwapsBefore == 0)
+			return 0;
+									
 		doNarrowSwap(possibleSwaps.get(MathUtils.nextInt(possibleSwaps.size())));
 		
 		possibleSwaps.clear();
 		findAllNarrowSwaps(possibleSwaps);
-						
-		return Math.log((double)possibleSwaps.size()/possibleSwapsBefore);
+		
+		return Math.log((double)possibleSwapsBefore/possibleSwaps.size());
 	}
 	
 	public int findAllNarrowSwaps(ArrayList<NarrowSwap> moves){
-    	NodeRef iP = null, j = null, jP = null;
-    	ArrayList<NodeRef> nodes = new ArrayList<NodeRef>(arg.getNodeCount());
-    	
-    	for(int k = 0, n = arg.getNodeCount(); k < n; k++){
-    		NodeRef x = arg.getNode(k);
-    		if(!arg.isRoot(x) && !arg.isRoot(arg.getParent(x, 0)) 
-    				 && !arg.isRoot(arg.getParent(x, 1))){
-    			nodes.add(x);
+			
+    	for(int i = 0, n = arg.getInternalNodeCount(); i < n; i++){
+    		Node x= (Node) arg.getInternalNode(i);
+    		if(x.bifurcation && !x.isRoot() && x.leftParent.bifurcation){
+    			NarrowSwap a = new NarrowSwap(x.leftChild,x,x.leftParent);
+    			NarrowSwap b = new NarrowSwap(x.rightChild,x,x.leftParent);
+    			
+    			if(a.isValid())
+    				moves.add(a);
+    			if(b.isValid())
+    				moves.add(b);
     		}
     	}
-    	NarrowSwap a;
-    	for(NodeRef i : nodes){
-    		for(int k = 0; k < 2; k++){
-    			iP = arg.getParent(i,k);
-    			for(int m = 0; m < 2; m++){
-    				jP = arg.getParent(iP,m);
-    				j = arg.getOtherChild(jP, iP);
-    				a = new NarrowSwap(i,iP,j,jP);
-    				if(validMove(a) && !moves.contains(a)){
-    					moves.add(a);
-    				}
-    			}
-    		}
-    	}
-    	assert moves.size() > 0;
     	return moves.size();
-    }
-	
-	 private boolean validMove(NarrowSwap move){
-    	 if (move.j != move.iP && move.i != move.j &&       
-                 (arg.getNodeHeight(move.j) < arg.getNodeHeight(move.iP)) && 
-                 (arg.getNodeHeight(move.i) < arg.getNodeHeight(move.jP))) {
-         	return true;
-             
-         }
-    	 return false;
-    }
-	
-	
-	private void doNarrowSwap(NarrowSwap swap) throws OperatorFailedException{
-		 arg.beginTreeEdit();
-
-	        boolean iBifurcation = arg.isBifurcation(swap.i);
-	        boolean jBifurcation = arg.isBifurcation(swap.j);
-
-	        if (iBifurcation && jBifurcation) {
-	            arg.removeChild(swap.iP, swap.i);
-	            arg.removeChild(swap.jP, swap.j);
-	            arg.addChild(swap.jP, swap.i);
-	            arg.addChild(swap.iP, swap.j);
-	        } else if (!iBifurcation && !jBifurcation) {
-	        	//dont' do anything
-	        } else {
-	            if (jBifurcation) {
-	                NodeRef t = swap.i;
-	                NodeRef tP = swap.iP;
-	                swap.i = swap.j;
-	                swap.iP = swap.jP;
-	                swap.j = t;
-	                swap.jP = tP;
-	            }
-	        }
-
-	        try {
-	            arg.endTreeEdit();
-	        } catch (MutableTree.InvalidTreeException ite) {
-	            throw new OperatorFailedException(ite.toString());
-	        }
 	}
 	
+	private void doNarrowSwap(NarrowSwap swap){
+		arg.beginTreeEdit();
+
+		String before = arg.toARGSummary();
+		
+		if(swap.c == swap.pb){
+			Node c = (Node) swap.c;
+			Node p = (Node) swap.p;
+			Node gp = (Node) swap.gp;
+			
+			if(c.leftParent == p){
+				c.leftParent = gp;
+				c.rightParent = p;
+			}else{
+				c.leftParent = p;
+				c.rightParent = gp;
+			}
+		}else if(arg.getChild(swap.p,0) == arg.getChild(swap.p,1)){
+			Node p = (Node) swap.p;
+			Node c = (Node) swap.c;
+			
+			if(MathUtils.nextBoolean())
+				p.leftChild = c.leftParent = null;
+			else
+				p.rightChild = c.rightParent = null;
+			arg.removeChild(swap.gp, swap.pb);
+			
+			arg.singleAddChild(swap.gp, swap.c);
+			arg.singleAddChild(swap.p, swap.pb);
+		}else{
+			arg.removeChild(swap.gp, swap.pb);
+			arg.removeChild(swap.p, swap.c);
+			arg.singleAddChild(swap.gp, swap.c);
+			arg.singleAddChild(swap.p,swap.pb);
+		}
+		
+		assert nodeCheck() : swap + " " + before + " " + arg.toARGSummary();
+		
+		arg.pushTreeChangedEvent();
+		
+		try{ 
+			arg.endTreeEdit(); 
+		}catch(MutableTree.InvalidTreeException ite){
+			System.out.println(swap);
+			System.out.println(before);
+			System.err.println(ite.getMessage());
+			System.exit(-1);
+		}catch(NullPointerException e){
+			System.out.println(swap);
+			System.out.println(before);
+			System.err.println(e.getMessage());
+			System.exit(-1);
+		}
+	}
+	 	
 	private class NarrowSwap{
-    	public NodeRef i;
-    	public NodeRef j;
-    	public NodeRef iP;
-    	public NodeRef jP;
-    	
-    	public NarrowSwap(NodeRef i, NodeRef iP, NodeRef j, NodeRef jP){
-    		this.i = i;
-    		this.j = j;
-    		this.iP = iP;
-    		this.jP = jP;
-    		
+		public NodeRef c;
+		public NodeRef p;
+		public NodeRef gp;
+		public NodeRef pb;
+
+    	public NarrowSwap(NodeRef child, NodeRef parent, NodeRef gParent){
+    		c = child;
+    		p = parent;
+    		gp = gParent;
+    		pb = arg.getOtherChild(gParent, parent);
     	}
     	
-    	public boolean equals(Object o){
-    		if(!(o instanceof NarrowSwap)) {
-				return false;
-    		}
-    		
-    		NarrowSwap move = (NarrowSwap) o;
-    		    		
-    		if(this.i == move.i && this.j == move.j &&
-    				this.iP == move.iP && this.jP == move.jP){
+    	public boolean isValid(){
+    		if(arg.getNodeHeight(pb) < arg.getNodeHeight(p))
     			return true;
-    		}
-    		if(this.i == move.j && this.j == move.i &&
-    				this.iP == move.jP && this.jP == move.iP){
-    			return true;
-    		}
-    		
     		return false;
     	}
     	
     	public String toString(){
-    		return "(" + i.toString() + ", " + iP.toString() + 
-    			   ", " + jP.toString() + ", " + j.toString() + ")";
+    		return "Child: "      + ((Node)c).toString() + 
+    			   ", Parent: "   + ((Node)p).toString() + 
+    			   ", G-parent: " + ((Node)gp).toString() +
+    			   ", P-brother: " + ((Node)pb).toString();
     	}
-    	
+    	   	
     }
 	
 	
 	private double bifurcationSwap(NodeRef x){
 		Node startNode = (Node) x;
 		
-		Node keepChild = startNode.leftChild;
+//		Node keepChild = startNode.leftChild;
 		Node moveChild = startNode.rightChild;
 		
 		if(MathUtils.nextBoolean()){
-			keepChild = moveChild;
+//			keepChild = moveChild;
 			moveChild = startNode.leftChild;
 		}
 				
@@ -474,7 +464,6 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 			
 		}
 
-		
 		arg.pushTreeChangedEvent();
 		
 		try{ 
@@ -529,7 +518,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 	
 	
 	public String getOperatorName() {
-		return ARG_SWAP_OPERATOR;
+		return mode;
 	}
 
 	public String getPerformanceSuggestion() {

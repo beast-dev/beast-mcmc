@@ -43,7 +43,7 @@ import dr.xml.*;
  * @author Alexei Drummond
  * @version $Id: WilsonBalding.java,v 1.38 2005/06/14 10:40:34 rambaut Exp $
  */
-public class WilsonBalding extends SimpleMCMCOperator {
+public class WilsonBalding extends AbstractTreeOperator {
 
     public static final String WILSON_BALDING = "wilsonBalding";
     public static final String DEMOGRAPHIC_MODEL = "demographicModel";

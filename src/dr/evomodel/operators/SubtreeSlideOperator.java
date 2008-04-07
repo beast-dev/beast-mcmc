@@ -42,7 +42,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: SubtreeSlideOperator.java,v 1.15 2005/06/14 10:40:34 rambaut Exp $
  */
-public class SubtreeSlideOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
+public class SubtreeSlideOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
 
 	public static final String SUBTREE_SLIDE = "subtreeSlide";
 	public static final String SWAP_RATES = "swapInRandomRate";

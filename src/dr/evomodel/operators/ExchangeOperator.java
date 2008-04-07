@@ -43,21 +43,21 @@ import dr.xml.*;
  * <p/>
  * KNOWN BUGS: WIDE operator cannot be used on trees with 4 or less tips!
  */
-public class ExchangeOperator extends SimpleMCMCOperator {
+public class ExchangeOperator extends AbstractTreeOperator {
 
     public static final String NARROW_EXCHANGE = "narrowExchange";
-    public static final String WIDE_EXCHANGE = "wideExchange"; 
+    public static final String WIDE_EXCHANGE = "wideExchange";
     public static final String INTERMEDIATE_EXCHANGE = "intermediateExchange";
 
     public static final int NARROW = 0;
-    public static final int WIDE = 1;  
+    public static final int WIDE = 1;
     public static final int INTERMEDIATE = 2;
 
     private static final int MAX_TRIES = 10000;
 
     private int mode = NARROW;
     private TreeModel tree;
-    
+
 
     private double[] distances;
 
@@ -166,7 +166,7 @@ public class ExchangeOperator extends SimpleMCMCOperator {
 
         throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
     }
-    
+
     /**
     * WARNING: Assumes strictly bifurcating tree.
     */
@@ -263,16 +263,16 @@ public class ExchangeOperator extends SimpleMCMCOperator {
       return (1.0 / distances[index]) / sum;
 
    }
-   
+
    private void calcDistances(NodeRef [] nodes, NodeRef ref) {
       distances = new double[nodes.length];
       for (int i = 0; i < nodes.length; i++) {
          distances[i] = getNodeDistance(ref, nodes[i]) + 1;
       }
    }
-   
+
    private NodeRef getRandomNode(NodeRef [] nodes, NodeRef ref) {
-      
+
       calcDistances(nodes, ref);
       double sum = 0;
       for (int i = 0; i < distances.length; i++) {
@@ -427,7 +427,7 @@ public class ExchangeOperator extends SimpleMCMCOperator {
         };
 
     };
-    
+
     public static XMLObjectParser INTERMEDIATE_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
 
       public String getParserName() {

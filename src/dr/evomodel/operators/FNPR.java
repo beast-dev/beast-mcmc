@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package dr.evomodel.operators;
 
@@ -21,12 +21,12 @@ import dr.xml.XMLSyntaxRule;
 /**
  * This is an implementation of the Subtree Prune and Regraft (SPR) operator for
  * trees. It assumes explicitely bifurcating rooted trees.
- * 
+ *
  * @author Sebastian Hoehna
  * @version 1.0
- * 
+ *
  */
-public class FNPR extends SimpleMCMCOperator {
+public class FNPR extends AbstractTreeOperator {
 
    private TreeModel tree = null;
 
@@ -35,7 +35,7 @@ public class FNPR extends SimpleMCMCOperator {
    int mode = CoercableMCMCOperator.DEFAULT;
 
    /**
-    * 
+    *
     */
    public FNPR(TreeModel tree, int weight) {
       this.tree = tree;
@@ -45,7 +45,7 @@ public class FNPR extends SimpleMCMCOperator {
 
    /*
     * (non-Javadoc)
-    * 
+    *
     * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
     */
    @Override
@@ -128,7 +128,7 @@ public class FNPR extends SimpleMCMCOperator {
 
    /*
     * (non-Javadoc)
-    * 
+    *
     * @see dr.inference.operators.SimpleMCMCOperator#getOperatorName()
     */
    @Override
@@ -163,7 +163,7 @@ public class FNPR extends SimpleMCMCOperator {
 
    /*
     * (non-Javadoc)
-    * 
+    *
     * @see dr.inference.operators.MCMCOperator#getPerformanceSuggestion()
     */
    public String getPerformanceSuggestion() {

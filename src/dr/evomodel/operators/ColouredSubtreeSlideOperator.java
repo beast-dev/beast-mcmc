@@ -48,7 +48,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: ColouredSubtreeSlideOperator.java,v 1.4 2006/09/11 09:33:01 gerton Exp $
  */
-public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
+public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
 
     public static final String SUBTREE_SLIDE = "colouredSubtreeSlide";
     public static final String SWAP_RATES = "swapRates";
@@ -124,7 +124,7 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
                 if (tree.isRoot(newChild)) {
                     tree.removeChild(iP, CiP);
                     tree.removeChild(PiP, iP);  // remove iP from in between PiP and CiP
-                    tree.addChild(iP, newChild);                           // add new edge from iP to newChild (old root) 
+                    tree.addChild(iP, newChild);                           // add new edge from iP to newChild (old root)
                     tree.addChild(PiP, CiP);                               // formerly two edges
                     tree.setRoot(iP);
                     //System.err.println("Creating new root!");
@@ -134,7 +134,7 @@ public class ColouredSubtreeSlideOperator extends SimpleMCMCOperator implements 
                     tree.removeChild(iP, CiP);
                     tree.removeChild(PiP, iP);  // remove iP from in between PiP and CiP
                     tree.removeChild(newParent, newChild);                 // split edge: first remove old one
-                    tree.addChild(iP, newChild);                           // split edge: put iP in middle 
+                    tree.addChild(iP, newChild);                           // split edge: put iP in middle
                     tree.addChild(PiP, CiP);                               // formerly two edges
                     tree.addChild(newParent, iP);                          // split edge: put iP in middle
                     //System.err.println("No new root!");

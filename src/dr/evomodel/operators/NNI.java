@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package dr.evomodel.operators;
 
@@ -20,19 +20,19 @@ import dr.xml.XMLSyntaxRule;
  * Implements the Nearest Neighbor Interchange (NNI) operation. This particular
  * implementation assumes explicitely bifurcating trees. It works similar to the
  * Narrow Exchange but with manipulating the height of a node if necessary.
- * 
+ *
  * @author Sebastian Hoehna
  * @version 1.0
- * 
+ *
  */
-public class NNI extends SimpleMCMCOperator {
+public class NNI extends AbstractTreeOperator {
 
    private TreeModel          _tree = null;
 
    public static final String NNI   = "NearestNeighborInterchange";
 
    /**
-    * 
+    *
     */
    public NNI(TreeModel tree, int weight) {
       _tree = tree;
@@ -41,7 +41,7 @@ public class NNI extends SimpleMCMCOperator {
 
    /*
     * (non-Javadoc)
-    * 
+    *
     * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
     */
    @Override
@@ -126,7 +126,7 @@ public class NNI extends SimpleMCMCOperator {
 
    /*
     * (non-Javadoc)
-    * 
+    *
     * @see dr.inference.operators.SimpleMCMCOperator#getOperatorName()
     */
    @Override
@@ -144,7 +144,7 @@ public class NNI extends SimpleMCMCOperator {
 
    /*
     * (non-Javadoc)
-    * 
+    *
     * @see dr.inference.operators.MCMCOperator#getPerformanceSuggestion()
     */
    public String getPerformanceSuggestion() {

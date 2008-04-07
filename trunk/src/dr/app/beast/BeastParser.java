@@ -26,10 +26,9 @@
 package dr.app.beast;
 
 import dr.evomodel.operators.*;
-import dr.evomodel.alternativesplicing.alsDefaultPrior;
 import dr.xml.*;
 import dr.evolution.datatype.MutationDeathType;
-import dr.evomodel.alternativesplicing.alsPriorLambdaIntegrator;
+import dr.evomodel.MSSD.*;
 
 import java.util.Iterator;
 
@@ -174,9 +173,9 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.treelikelihood.AncestralStateTreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.ADNADamageModel.PARSER);
 
-        addXMLObjectParser(dr.evomodel.treelikelihood.ALSTreeLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.treelikelihood.SingleTipObservationProcess.PARSER);
-        addXMLObjectParser(dr.evomodel.treelikelihood.AnyTipObservationProcess.PARSER);
+        addXMLObjectParser(ALSTreeLikelihood.PARSER);
+        addXMLObjectParser(SingleTipObservationProcess.PARSER);
+        addXMLObjectParser(AnyTipObservationProcess.PARSER);
 
 		addXMLObjectParser(dr.evomodel.sitemodel.GammaSiteModel.PARSER);
         addXMLObjectParser(dr.evomodel.sitemodel.CategorySiteModel.PARSER);

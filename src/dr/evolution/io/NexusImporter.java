@@ -869,6 +869,11 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 					tree = new FlexibleTree(root, false, true);
 					tree.setId(token2);
 
+					if (getLastDelimiter() == ':') {
+						// in case the root has a branch length, skip it
+						readToken( ";" );
+					}
+
 					if (getLastDelimiter() != ';') {
 						throw new BadFormatException("Expecting ';' after tree, '" + token2 + "', TREE command of TREES block");
 					}

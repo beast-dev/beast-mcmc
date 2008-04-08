@@ -28,7 +28,6 @@ import dr.xml.XMLSyntaxRule;
  * reassortment and bifurcation modes, as well as the event operator,
  * satisfies irreducibility.
  * @author ebloomqu
- *
  */
 public class ARGSwapOperator extends SimpleMCMCOperator{
 	
@@ -39,8 +38,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 	public static final String DUAL_SWAP = "dualSwap";
 	public static final String FULL_SWAP = "fullSwap";
 	public static final String NARROW_SWAP = "narrowSwap";
-	public static final String DEFAULT = NARROW_SWAP;
-	
+		
 	private ARGModel arg;
 	private String mode;
 	
@@ -81,8 +79,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		}
 				
 		bifurcationNodes.addAll(reassortmentNodes);
-		
-		//TODO Change to heapsort method
+				
 		Collections.sort(bifurcationNodes,NodeSorter);
 		
 		for(NodeRef x : bifurcationNodes){
@@ -550,8 +547,8 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 			return ARGSwapOperator.class;
 		}
 
-		private String[] validFormats = {BIFURCATION_SWAP, REASSORTMENT_SWAP,
-				DUAL_SWAP, FULL_SWAP, NARROW_SWAP};
+		private String[] validFormats = {BIFURCATION_SWAP,REASSORTMENT_SWAP,
+										 DUAL_SWAP, FULL_SWAP, NARROW_SWAP};
 		
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 			AttributeRule.newIntegerRule(WEIGHT),	
@@ -568,10 +565,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator{
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			int weight = xo.getIntegerAttribute(WEIGHT);
 			
-			String mode = DEFAULT;
-			if(xo.hasAttribute(SWAP_TYPE)){
-				mode = xo.getStringAttribute(SWAP_TYPE);
-			}
+			String mode = xo.getStringAttribute(SWAP_TYPE);
 			
 			Logger.getLogger("dr.evomodel").info("Creating ARGSwapOperator: " + mode);
 			

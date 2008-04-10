@@ -54,6 +54,16 @@ public class TraceDistribution {
         return mean;
     }
 
+    public boolean hasGeometricMean() {
+        return hasGeometricMean;
+    }
+
+    public double getGeometricMean() {
+
+        return geometricMean;
+    }
+
+
     public double getMedian() {
         return median;
     }
@@ -101,6 +111,11 @@ public class TraceDistribution {
             if (value > maximum) maximum = value;
         }
 
+        if (minimum > 0) {
+            geometricMean = DiscreteStatistics.geometricMean(values);
+            hasGeometricMean = true;
+        }
+
         if (maximum == minimum) {
             isValid = false;
             return;
@@ -133,9 +148,10 @@ public class TraceDistribution {
     //************************************************************************
 
     protected boolean isValid = false;
+    protected boolean hasGeometricMean = false;
 
     protected double minimum, maximum;
-    protected double mean, median;
+    protected double mean, median, geometricMean;
     protected double cpdLower, cpdUpper, hpdLower, hpdUpper;
     protected double ESS;
 }

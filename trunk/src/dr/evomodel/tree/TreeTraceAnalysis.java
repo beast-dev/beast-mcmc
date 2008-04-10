@@ -97,6 +97,9 @@ public class TreeTraceAnalysis {
 
         Tree tree = getTree(0);
 
+        double[][] changed = new double[tree.getNodeCount()][tree.getNodeCount()];
+        double[] rateConditionalOnChange = new double[tree.getNodeCount()];
+
         cladeSet = new CladeSet(tree);
         treeSet = new FrequencySet();
         treeSet.add(Tree.Utils.uniqueNewick(tree, tree.getRoot()));
@@ -114,6 +117,22 @@ public class TreeTraceAnalysis {
             }
             for (int i = 1; i < treeCount; i++) {
                 tree = trace.getTree(i, burnin * trace.getStepSize());
+                for (int j = 0; j < tree.getNodeCount(); j++) {
+                    if (tree.getNode(j) != tree.getRoot()) {
+
+                        if ((Integer) tree.getNodeAttribute(tree.getNode(j), "changed") == 1) {
+                            rateConditionalOnChange[j] += (Double) tree.getNodeAttribute(tree.getNode(j), "rate");
+                        }
+                        for (int k = 0; k < tree.getNodeCount(); k++) {
+                            if (tree.getNode(k) != tree.getRoot()) {
+
+                                changed[j][k] += (Integer) tree.getNodeAttribute(tree.getNode(j), "changed") *
+                                        (Integer) tree.getNodeAttribute(tree.getNode(k), "changed");
+                            }
+                        }
+                    }
+                }
+
                 cladeSet.add(tree);
                 treeSet.add(Tree.Utils.uniqueNewick(tree, tree.getRoot()));
                 if (i >= (int) Math.round(counter * stepSize) && counter <= 60) {
@@ -128,6 +147,18 @@ public class TreeTraceAnalysis {
                 System.out.println("*");
             }
         }
+        for (int j = 0; j < tree.getNodeCount(); j++) {
+            System.out.println(j + "\t" + rateConditionalOnChange[j]);
+        }
+        System.out.println();
+        for (int j = 0; j < tree.getNodeCount(); j++) {
+            for (int k = 0; k < tree.getNodeCount(); k++) {
+                System.out.print(changed[j][k] + "\t");
+            }
+            System.out.println();
+        }
+
+
     }
 
     /**
@@ -199,7 +230,7 @@ public class TreeTraceAnalysis {
     public void report() throws IOException {
         report(0.5, 0.95);
     }
-    
+
     public void report(double minCladeProbability) throws IOException {
         report(minCladeProbability, 0.95);
     }
@@ -226,7 +257,7 @@ public class TreeTraceAnalysis {
 
         System.out.println((Math.round(credSetProbability * 100.0)) + "% credible set (" + n + " unique trees, " + totalTrees + " total):");
         System.out.println("Count\tPercent\tTree");
-        int credSet = (int)(credSetProbability * totalTrees);
+        int credSet = (int) (credSetProbability * totalTrees);
         int sumFreq = 0;
 
         NumberFormatter nf = new NumberFormatter(8);

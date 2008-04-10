@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -181,15 +182,32 @@ public class MCLogger implements Logger {
 
     public void log(int state) {
 
+        if (state == 0) {
+            startTime = System.currentTimeMillis();
+            formatter.setMaximumFractionDigits(2);
+        }
+
         if (logEvery > 0 && (state % logEvery == 0)) {
 
             final int columnCount = getColumnCount();
-            String[] values = new String[columnCount + 1];
+
+            String[] values = new String[columnCount + 2];
 
             values[0] = Integer.toString(state);
 
             for (int i = 0; i < columnCount; i++) {
                 values[i + 1] = getColumnFormatted(i);
+            }
+
+            if (state > 0) {
+
+                long timeTaken = System.currentTimeMillis() - startTime;
+
+                double hoursPerMillionStates = (double) timeTaken / (3.6 * (double) state);
+
+                values[columnCount + 1] = formatter.format(hoursPerMillionStates) + " hours/million states";
+            } else {
+                values[columnCount + 1] = "-";
             }
 
             logValues(values);
@@ -212,7 +230,7 @@ public class MCLogger implements Logger {
 
     /**
      * Resolve file from name.
-     *
+     * <p/>
      * Keep A fully qualified (i.e. absolute path) as is. A name starting with a "./" is
      * relative to the master BEAST directory. Any other name is stripped of any directory
      * component and placed in the "user.dir" directory.
@@ -238,7 +256,7 @@ public class MCLogger implements Logger {
             } else {
                 p = System.getProperty("user.dir");
             }
-            if( parent != null && parent.length() > 0 ) {
+            if (parent != null && parent.length() > 0) {
                 parent = p + '/' + parent;
             } else {
                 parent = p;
@@ -383,4 +401,8 @@ public class MCLogger implements Logger {
     }
 
     protected List<LogFormatter> formatters = new ArrayList<LogFormatter>();
+
+    private long startTime;
+    private NumberFormat formatter = NumberFormat.getNumberInstance();
+
 }

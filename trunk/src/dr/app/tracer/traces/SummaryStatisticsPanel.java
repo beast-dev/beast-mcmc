@@ -17,7 +17,8 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
     static final String NAME_ROW = "name";
     static final String MEAN_ROW = "mean";
-    static final String STDEV_ROW = "stdev of mean";
+    static final String STDEV_ROW = "stderr of mean";
+    static final String GEOMETRIC_MEAN_ROW = "geometric mean";
     static final String MEDIAN_ROW = "median";
     static final String LOWER_ROW = "95% HPD lower";
     static final String UPPER_ROW = "95% HPD upper";
@@ -157,7 +158,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
     class StatisticsModel extends AbstractTableModel {
 
-        String[] rowNames = {MEAN_ROW, STDEV_ROW, MEDIAN_ROW, LOWER_ROW, UPPER_ROW, ACT_ROW, ESS_ROW};
+        String[] rowNames = {MEAN_ROW, STDEV_ROW, MEDIAN_ROW, GEOMETRIC_MEAN_ROW, LOWER_ROW, UPPER_ROW, ACT_ROW, ESS_ROW};
 
         private DecimalFormat formatter = new DecimalFormat("0.###E0");
         private DecimalFormat formatter2 = new DecimalFormat("####0.###");
@@ -217,15 +218,19 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         value = tc.getMedian();
                         break;
                     case 3:
-                        value = tc.getLowerHPD();
+                        if (!tc.hasGeometricMean()) return "n/a";
+                        value = tc.getGeometricMean();
                         break;
                     case 4:
-                        value = tc.getUpperHPD();
+                        value = tc.getLowerHPD();
                         break;
                     case 5:
-                        value = tc.getACT();
+                        value = tc.getUpperHPD();
                         break;
                     case 6:
+                        value = tc.getACT();
+                        break;
+                    case 7:
                         value = tc.getESS();
                         break;
                 }

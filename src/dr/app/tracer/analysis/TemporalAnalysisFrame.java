@@ -239,12 +239,24 @@ public class TemporalAnalysisFrame extends AuxilaryFrame implements TracerFileMe
         StringBuffer buffer = new StringBuffer();
 
         java.util.List<TemporalAnalysisPlotPanel.AnalysisData> analyses = temporalAnalysisPlotPanel.getAnalysisData();
+
+        // Sources line
+        for (TemporalAnalysisPlotPanel.AnalysisData analysis : analyses) {
+            // first \t is for the time
+            buffer.append("\t").append(analysis.title);
+            if (analysis.isDemographic) {
+                // demographic generate 4 values
+                buffer.append("\t\t\t");
+            }
+        }
+        buffer.append("\n");
+        
         buffer.append("Time");
         for (TemporalAnalysisPlotPanel.AnalysisData analysis : analyses) {
             if (analysis.isDemographic) {
-                buffer.append("\t").append(analysis.title).append("\tMedian\tUpper\tLower");
+                buffer.append("\tMean\tMedian\tUpper\tLower");
             } else {
-                buffer.append("\t").append(analysis.title);
+                buffer.append("\t");
             }
         }
         buffer.append("\n");

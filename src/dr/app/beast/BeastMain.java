@@ -161,7 +161,9 @@ public class BeastMain {
                                 "For more information go to <http://beast.bio.ed.ac.uk/>.");
 
             } else {
-                Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
+                // This call never returns as another RuntimeException exception is raised by
+                // the error log handler???
+                Logger.getLogger("dr.apps.beast").warning("Error running file: " + fileName);
                 Logger.getLogger("dr.apps.beast").severe("Fatal exception: " + rex.getMessage());
                 System.err.println("Fatal exception: " + rex.getMessage());
                 // rex.printStackTrace(System.err);

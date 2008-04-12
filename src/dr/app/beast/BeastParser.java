@@ -29,6 +29,7 @@ import dr.evomodel.operators.*;
 import dr.xml.*;
 import dr.evolution.datatype.MutationDeathType;
 import dr.evomodel.MSSD.*;
+import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 
 import java.util.Iterator;
 
@@ -105,7 +106,9 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentSimulator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentLikelihood.PARSER);
 
-	    // Functionality of this is now rolled into CoalescentLikelihood
+        addXMLObjectParser(dr.evomodel.coalescent.OldAbstractCoalescentLikelihood.PARSER);
+
+        // Functionality of this is now rolled into CoalescentLikelihood
         //addXMLObjectParser(dr.evomodel.coalescent.CoalescentMRCALikelihood.PARSER);
 
         addXMLObjectParser(dr.evomodel.coalescent.SkylineLikelihood.PARSER);

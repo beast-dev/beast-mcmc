@@ -60,7 +60,7 @@ public class VariableDemographicAnalysis extends TabularData {
         }
 
         if( populationFirstColumn < 0 || indicatorsFirstColumn < 0 ) {
-            throw new TraceException("incorrect trace column names");
+            throw new TraceException("incorrect trace column names: unable to find populations/indicators");
         }
 
         TreeTrace[] traces = new TreeTrace[treeFiles.length];
@@ -77,7 +77,7 @@ public class VariableDemographicAnalysis extends TabularData {
             final int kthRunLength = treeTrace.getTreeCount(0);
 
             if( runLengthIncludingBurnin != kthRunLength ) {
-                throw new  IOException("non matching runs") ; // FIXME another type
+                throw new  IOException("non matching runs: " + runLengthIncludingBurnin + " != " +  kthRunLength) ; // FIXME another type
             }
             traces[k] = treeTrace;
         }

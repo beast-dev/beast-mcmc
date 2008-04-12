@@ -25,11 +25,6 @@
 
 package dr.inference.operators;
 
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
-
 public abstract class SimpleMCMCOperator implements MCMCOperator {
 
     public double getTargetAcceptanceProbability() {

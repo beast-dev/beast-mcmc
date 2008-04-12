@@ -624,7 +624,7 @@ public class BeautiOptions {
             params.add(getParameter("skyline.popSize"));
         } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
             params.add(getParameter("demographic.populationSizeChanges"));
-             params.add(getParameter("demographic.populationMean"));
+            params.add(getParameter("demographic.populationMean"));
         } else if (nodeHeightPrior == YULE) {
             params.add(getParameter("yule.birthRate"));
         } else if (nodeHeightPrior == BIRTH_DEATH) {

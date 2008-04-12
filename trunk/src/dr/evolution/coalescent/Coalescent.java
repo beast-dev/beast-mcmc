@@ -98,12 +98,12 @@ public class Coalescent implements MultivariateFunction, Units {
 	            
                if( demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
                    logL += - Math.log(demographicAtCoalPoint);
-//                } else {
-//                    // remove this at some stage
-//                    System.err.println("Interval ignored: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
-//                    return Double.NEGATIVE_INFINITY;
-//                    //double d =  duration / intervalArea;
-//                    //logL += Math.log(kover2 / d);
+                } else {
+                    // remove this at some stage
+                    System.err.println("Interval ignored: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
+                    return Double.NEGATIVE_INFINITY;
+                    //double d =  duration / intervalArea;
+                    //logL += Math.log(kover2 / d);
                }
 
 //	            logL += - Math.log(demographicAtCoalPoint);

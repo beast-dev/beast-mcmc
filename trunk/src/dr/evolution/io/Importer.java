@@ -46,72 +46,72 @@ public abstract class Importer {
 		private static final long serialVersionUID = 7858834683324203750L;
 		public ImportException() { super(); }
 		public ImportException(String message) { super(message); }
-	};
+	}
 
-	public static class DuplicateFieldException extends ImportException {
+    public static class DuplicateFieldException extends ImportException {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = 8047146381348414810L;
 		public DuplicateFieldException() { super(); }
 		public DuplicateFieldException(String message) { super(message); }
-	};
-	
-	public static class BadFormatException extends ImportException {
+	}
+
+    public static class BadFormatException extends ImportException {
 		/**
 		 * 
-		 */
+		 */                         
 		private static final long serialVersionUID = -8206831989674620748L;
 		public BadFormatException() { super(); }
 		public BadFormatException(String message) { super(message); }
-	};
-	
-	public static class UnparsableDataException extends ImportException {
+	}
+
+    public static class UnparsableDataException extends ImportException {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = 5905130039882401006L;
 		public UnparsableDataException() { super(); }
 		public UnparsableDataException(String message) { super(message); }
-	};
-	
-	public static class MissingFieldException extends ImportException {
+	}
+
+    public static class MissingFieldException extends ImportException {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = -7576489210458327552L;
 		public MissingFieldException() { super(); }
 		public MissingFieldException(String message) { super(message); }
-	};
+	}
 
-	public static class ShortSequenceException extends ImportException {
+    public static class ShortSequenceException extends ImportException {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = 7460033398106047073L;
 		public ShortSequenceException() { super(); }
 		public ShortSequenceException(String message) { super(message); }
-	};
+	}
 
-	public static class TooFewTaxaException extends ImportException {
+    public static class TooFewTaxaException extends ImportException {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = -6349041350075169247L;
 		public TooFewTaxaException() { super(); }
 		public TooFewTaxaException(String message) { super(message); }
-	};
-	
-	public static class UnknownTaxonException extends ImportException {
+	}
+
+    public static class UnknownTaxonException extends ImportException {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = 6611115782536515250L;
 		public UnknownTaxonException() { super(); }
 		public UnknownTaxonException(String message) { super(message); }
-	};
-	
-	/**
+	}
+
+    /**
 	 * Constructor
 	 */
 	public Importer(Reader reader) {

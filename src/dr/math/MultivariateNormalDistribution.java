@@ -37,16 +37,8 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
 	public static final double calculatePrecisionMatrixDeterminate(double[][] precision) {
 		try {
-//            double det = new Matrix(precision).determinant();
-//            if( det < 0 ) {
-//                System.err.println("Negative determinant.  how?");
-//                System.exit(-1);
-//            }
-//            return //Math.log(new Matrix(precision).determinant());
-//                det;
 			return new Matrix(precision).determinant();
-		} catch (
-				IllegalDimension e) {
+		} catch (IllegalDimension e) {
 			throw new RuntimeException(e.getMessage());
 		}
 	}
@@ -80,10 +72,23 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 		for (int i = 0; i < dim; i++)
 			SSE += tmp[i] * delta[i];
 
-		SSE /= scale;
+		return dim * logNormalize + 0.5 * (logDet - Math.log(scale) - SSE / scale);   // There was an error here.
+		// Variance = (scale * Precision^{-1})
 
-		return dim * logNormalize + 0.5 * logDet - 0.5 * SSE;
+	}
 
+	/* Equal precision, independent dimensions */
+	public static final double logPdf(double[] x, double[] mean, double precision, double scale) {
+
+		final int dim = x.length;
+
+		double SSE = 0;
+		for (int i = 0; i < dim; i++) {
+			double delta = x[i] - mean[i];
+			SSE += delta * delta;
+		}
+
+		return dim * logNormalize + 0.5 * (dim * Math.log(precision) - Math.log(scale) - SSE * precision / scale);
 	}
 
 	public double[] nextMultivariateNormal() {

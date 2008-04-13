@@ -36,6 +36,8 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 	public static final String CACHE_BRANCHES = "cacheBranches";
 	public static final String IN_REAL_TIME = "inRealTime";
 	public static final String DEFAULT_TRAIT_NAME = "trait";
+	public static final String RANDOMIZE = "randomize";
+	public static final String CHECK = "check";
 
 	public MultivariateTraitLikelihood(String traitName,
 	                                   TreeModel treeModel,
@@ -291,6 +293,15 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 		}
 	}
 
+
+	public void randomize(Parameter trait) {
+		diffusionModel.randomize(trait);
+	}
+
+	public void check(Parameter trait) throws XMLParseException {
+		diffusionModel.check(trait);
+	}
+
 	// **************************************************************
 	// XMLElement IMPLEMENTATION
 	// **************************************************************
@@ -394,8 +405,34 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
 
 			}
-			return new MultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
-					traitParameter, missingIndices, cacheBranches, inSubstitutionTime, rateModel);
+
+			Parameter traits = null;
+			Parameter check = null;
+
+			if (xo.hasSocket(RANDOMIZE)) {
+				XMLObject cxo = (XMLObject) xo.getChild(RANDOMIZE);
+				traits = (Parameter) cxo.getChild(Parameter.class);
+			}
+
+			if (xo.hasSocket(CHECK)) {
+				XMLObject cxo = (XMLObject) xo.getChild(CHECK);
+				check = (Parameter) cxo.getChild(Parameter.class);
+			}
+
+			MultivariateTraitLikelihood like =
+					new MultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+							traitParameter, missingIndices, cacheBranches, inSubstitutionTime, rateModel);
+
+
+			if (traits != null) {
+				like.randomize(traits);
+			}
+
+			if (check != null) {
+				like.check(check);
+			}
+
+			return like;
 		}
 
 
@@ -429,7 +466,13 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 				new ElementRule(TreeModel.class),
 				new ElementRule(BranchRateModel.class, true),
 				AttributeRule.newDoubleArrayRule("cut", true),
-				new ElementRule(Parameter.class, true)
+				new ElementRule(Parameter.class, true),
+				new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
+						new ElementRule(Parameter.class)
+				}, true),
+				new ElementRule(CHECK, new XMLSyntaxRule[]{
+						new ElementRule(Parameter.class)
+				}, true)
 		};
 
 

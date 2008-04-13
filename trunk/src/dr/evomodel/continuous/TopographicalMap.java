@@ -1,6 +1,9 @@
 package dr.evomodel.continuous;
 
 import dr.math.SparseMatrixExponential;
+import dr.math.matrixAlgebra.Vector;
+import org.jdom.Element;
+import org.jdom.output.XMLOutputter;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -318,6 +321,138 @@ public class TopographicalMap {
 
 	}
 
+	/* Used for converting GRASS files to PathFinding XML */
+
+	public static final String TERRAIN = "terrain";
+	public static final String TYPE_TYPE = "tileTypes";
+	public static final String TYPE = "type";
+
+	public static String mapToXMLString(double[][] map, int numLevels) {
+		XMLOutputter outputter = new XMLOutputter(org.jdom.output.Format.getPrettyFormat());
+		return outputter.outputString(mapToXML(map, numLevels));
+//				root.toString();
+	}
+
+//	static
+
+
+	public static Element mapToXML(double[][] map, int numLevels) {
+
+		Element root = new Element(TERRAIN);
+		Element tileTypes = new Element(TYPE_TYPE);
+		Element size = new Element("size");
+		Element content = new Element("content");
+		root.addContent(tileTypes);
+		root.addContent(size);
+		root.addContent(content);
+
+		// Make sizes
+		size.addContent(new Element("rows").addContent(Integer.toString(map.length)));
+		size.addContent(new Element("columns").addContent(Integer.toString(map[0].length)));
+		size.addContent(new Element("height").addContent(Integer.toString(map.length)));
+		size.addContent(new Element("width").addContent(Integer.toString(map[0].length)));
+
+		// Make cutpoints
+		double min = Double.MAX_VALUE;
+		double max = Double.MIN_VALUE;
+
+		for (int i = 0; i < map.length; i++) {
+			for (int j = 0; j < map[0].length; j++) {
+				if (!Double.isNaN(map[i][j])) {
+//					System.err.println("die");
+//					System.exit(-1);
+//				}
+					if (map[i][j] < min)
+						min = map[i][j];
+					if (map[i][j] > max)
+						max = map[i][j];
+				}
+			}
+		}
+
+//		System.err.println("min = ");
+
+		double[] cuts = new double[numLevels];
+//		cuts[numLevels-1] = max;
+		double range = max - min;
+		double delta = range / numLevels;
+		for (int i = 0; i < numLevels; i++)
+			cuts[i] = min + delta * (i + 1);
+
+		int deltaColor = 255 / numLevels;
+
+		// Make tile types
+		double average = min + delta / 2;
+		int grey = 255 - deltaColor;
+		for (int i = 0; i < numLevels; i++) {
+			Element type = new Element("type");
+			type.addContent(new Element("name").addContent("L" + Integer.toString(i)));
+			type.addContent(new Element("cost").addContent(Integer.toString((int) average)));
+			Element color = new Element("color");
+			color.setAttribute("r", Integer.toString(grey));
+			color.setAttribute("g", Integer.toString(grey));
+			color.setAttribute("b", Integer.toString(grey));
+			type.addContent(color);
+			tileTypes.addContent(type);
+			average += delta;
+			grey -= deltaColor;
+		}
+		Element blocked = new Element("type");
+		blocked.addContent(new Element("name").addContent("B"));
+		blocked.addContent(new Element("blocked"));
+		Element color = new Element("color");
+		color.setAttribute("r", Integer.toString(255));
+		color.setAttribute("g", Integer.toString(255));
+		color.setAttribute("b", Integer.toString(255));
+		blocked.addContent(color);
+		tileTypes.addContent(blocked);
+
+		int count = 0;
+
+		// Make content
+		content.addContent(new Element("default").addContent("B"));
+
+		for (int r = 0; r < map.length; r++) {
+			for (int c = 0; c < map[0].length; c++) {
+				if (!Double.isNaN(map[r][c]) && map[r][c] > -10) {
+					count++;
+					double value = map[r][c];
+//				if( value != Double.NaN ) {
+					int cut = 0;
+					try {
+						while (value > cuts[cut])
+							cut++;
+					} catch (Exception e) {
+						System.err.println("Error: " + e);
+						System.err.println("value = " + value);
+						System.err.println("cuts = " + new Vector(cuts));
+						System.err.println("min = " + min);
+						System.err.println("max = " + max);
+						System.exit(-1);
+					}
+					Element cell = new Element("column");
+					cell.setAttribute("r", Integer.toString(r));
+					cell.setAttribute("c", Integer.toString(c));
+					cell.setAttribute("length", "1");
+					cell.addContent("L" + Integer.toString(cut));
+//					if( count < 10)
+					content.addContent(cell);
+//				}  else {
+//					System.err.println("about time");
+//					System.exit(-1);
+				}
+
+			}
+		}
+
+		return root;
+	}
+
+
+	public static void writeXML(String file) throws IOException {
+
+	}
+
 //	private double getProbability(int I, int J, double time) {
 //		double probability = 0;
 //		for (int k = 0; k < order; k++) {
@@ -372,18 +507,29 @@ public class TopographicalMap {
 	public static void main(String[] args) {
 		double[][] map = null;
 		try {
-			map = readGRASSAscii("combined.asc");
-		} catch (IOException e) {
-			e.printStackTrace();
+//		try {
+			map = readGRASSAscii(args[1]);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+			System.err.println("Read in GRASS file.");
+			System.err.println("Writing XML file.");
+			String xml = mapToXMLString(map, Integer.parseInt(args[0]));
+			PrintWriter writer = new PrintWriter(new FileWriter(args[2]));
+			writer.println(xml);
+			writer.close();
+		} catch (Exception e) {
+			System.err.println("Command-line error.");
+			System.err.println("USAGE: program_name <# of levels> <GRASS file> <XML file>");
 		}
-		new TopographicalMap(map).doStuff();
+
+//		new TopographicalMap(map).doStuff();
 	}
 
 	private double[][] map;
 	private int[] indexByXY;
 	private int[] xyByIndex;
 	SparseMatrixExponential matrixExp;
-
 
 	private int xDim;
 	private int yDim;

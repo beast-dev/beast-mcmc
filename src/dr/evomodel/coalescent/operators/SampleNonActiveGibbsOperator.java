@@ -22,7 +22,8 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
     private Parameter data;
     private Parameter indicators;
 
-    public SampleNonActiveGibbsOperator(ParametricDistributionModel distribution, Parameter data, Parameter indicators, double weight) {
+    public SampleNonActiveGibbsOperator(ParametricDistributionModel distribution,
+                                        Parameter data, Parameter indicators, double weight) {
         this.distribution = distribution;
         this.data = data;
         this.indicators = indicators;
@@ -35,7 +36,7 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
     }
 
     public String getOperatorName() {
-        return "SampleNonActive";
+        return "SampleNonActive(" + indicators.getId() + ")";
     }
 
     public double doOperation() throws OperatorFailedException {

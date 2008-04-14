@@ -356,7 +356,7 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
 	}
 
 	public String getOperatorName() {
-		return SUBTREE_SLIDE;
+		return SUBTREE_SLIDE + "(" + tree.getId() + ")";
 	}
 
 	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {

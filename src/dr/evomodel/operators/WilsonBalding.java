@@ -227,7 +227,7 @@ public class WilsonBalding extends AbstractTreeOperator {
     }
 
     public String getOperatorName() {
-        return WILSON_BALDING;
+        return WILSON_BALDING + "(" + tree.getId() + ")";
     }
 
     public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {

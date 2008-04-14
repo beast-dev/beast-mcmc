@@ -30,7 +30,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -313,7 +312,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
     }
 
     public String getOperatorName() {
-        return ((mode == NARROW) ? "Narrow" : "Wide") + " Exchange";
+        return ((mode == NARROW) ? "Narrow" : "Wide") + " Exchange" + "(" + tree.getId() + ")";
     }
 
     /* exchange subtrees whose root are i and j */
@@ -361,8 +360,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            double weight = xo.getDoubleAttribute("weight");
-
+            final double weight = xo.getDoubleAttribute("weight");
             return new ExchangeOperator(NARROW, treeModel, weight);
         }
 

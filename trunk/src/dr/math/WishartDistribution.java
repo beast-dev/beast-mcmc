@@ -182,12 +182,12 @@ public class WishartDistribution implements MultivariateDistribution {
 
 //		System.err.println("yoyo "+df+" "+dim);
 
-        double det = 0;
+//        double det = 0;
         try {
             if (!W.isPD())
                 return Double.NEGATIVE_INFINITY;
 
-            det = W.determinant();
+            final double det = W.determinant();
 //		} catch (IllegalDimension illegalDimension) {
 //			illegalDimension.printStackTrace();
 //		}

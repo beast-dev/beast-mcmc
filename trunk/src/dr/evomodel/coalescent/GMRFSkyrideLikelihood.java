@@ -26,11 +26,13 @@
 package dr.evomodel.coalescent;
 
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.xml.*;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.NotConvergedException;
@@ -115,7 +117,9 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		if (betaParameter != null)
 			addParameter(betaParameter);
 
-		setupIntervals();
+        checkTree(); // Fiddle with tree to make sure no intercoalescent intervals are zero.
+
+        setupIntervals();
 		coalescentIntervals = new double[fieldLength];
 		storedCoalescentIntervals = new double[fieldLength];
 		sufficientStatistics = new double[fieldLength];
@@ -135,7 +139,29 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		System.out.println("\tIf you publish results using this model, please reference: Minin, Bloomquist and Suchard (in press).");
 	}
 
-	// **************************************************************
+    private void checkTree() {
+
+       // todo Should only be run if there exists a zero-length interval
+
+        TreeModel treeModel = (TreeModel) tree;
+        for(int i=0; i<treeModel.getInternalNodeCount(); i++) {
+            NodeRef node = treeModel.getInternalNode(i);
+            if( node != treeModel.getRoot() ) {
+                double parentHeight = treeModel.getNodeHeight(treeModel.getParent(node));
+                double childHeight0 = treeModel.getNodeHeight(treeModel.getChild(node,0));
+                double childHeight1 = treeModel.getNodeHeight(treeModel.getChild(node,1));
+                double maxChild = childHeight0;
+                if( childHeight1 > maxChild )
+                    maxChild = childHeight1;
+                double newHeight = maxChild + MathUtils.nextDouble()*(parentHeight - maxChild);
+                treeModel.setNodeHeight(node,newHeight);
+            }
+        }
+        treeModel.pushTreeChangedEvent();
+
+    }
+
+    // **************************************************************
 	// Likelihood IMPLEMENTATION
 	// **************************************************************
 

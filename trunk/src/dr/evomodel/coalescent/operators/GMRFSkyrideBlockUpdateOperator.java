@@ -203,11 +203,12 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
             jacobian(data, iterateGamma, proposedQ).solve(gradient(data,iterateGamma,proposedQ),tempValue);
             iterateGamma.add(tempValue);
             numberIterations++;
-        }
-    	
-        if (numberIterations > maxIterations)
-            throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue);
 
+            if (numberIterations > maxIterations)
+                throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue+"\n"+
+                "Try starting BEAST with a more accurate initial tree.");
+            }
+        
         return iterateGamma;
         	
     }
@@ -330,8 +331,8 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
 
  		hRatio += 0.5 * 2 * logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
 		hRatio -= 0.5 * 2 * logGeneralizedDeterminant(forwardCholesky.getU())  - 0.5 * stand_norm.dot(stand_norm);
-        
-       
+
+
         
         return hRatio;
     }

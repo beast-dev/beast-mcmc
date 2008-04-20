@@ -60,6 +60,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	public static final String LAMBDA_PARAMETER = "lambdaParameter";
 	public static final String BETA_PARAMETER = "betaParameter";
 	public static final String COVARIATE_MATRIX = "covariateMatrix";
+	public static final String RANDOMIZE_TREE = "randomizeTree";
 	public static final double LOG_TWO_TIMES_PI = 1.837877;
 
 	// PRIVATE STUFF
@@ -117,9 +118,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		if (betaParameter != null)
 			addParameter(betaParameter);
 
-        checkTree(); // Fiddle with tree to make sure no intercoalescent intervals are zero.
-
-        setupIntervals();
+		setupIntervals();
 		coalescentIntervals = new double[fieldLength];
 		storedCoalescentIntervals = new double[fieldLength];
 		sufficientStatistics = new double[fieldLength];
@@ -139,29 +138,29 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		System.out.println("\tIf you publish results using this model, please reference: Minin, Bloomquist and Suchard (in press).");
 	}
 
-    private void checkTree() {
+	private static void checkTree(TreeModel treeModel) {
 
-       // todo Should only be run if there exists a zero-length interval
+		// todo Should only be run if there exists a zero-length interval
 
-        TreeModel treeModel = (TreeModel) tree;
-        for(int i=0; i<treeModel.getInternalNodeCount(); i++) {
-            NodeRef node = treeModel.getInternalNode(i);
-            if( node != treeModel.getRoot() ) {
-                double parentHeight = treeModel.getNodeHeight(treeModel.getParent(node));
-                double childHeight0 = treeModel.getNodeHeight(treeModel.getChild(node,0));
-                double childHeight1 = treeModel.getNodeHeight(treeModel.getChild(node,1));
-                double maxChild = childHeight0;
-                if( childHeight1 > maxChild )
-                    maxChild = childHeight1;
-                double newHeight = maxChild + MathUtils.nextDouble()*(parentHeight - maxChild);
-                treeModel.setNodeHeight(node,newHeight);
-            }
-        }
-        treeModel.pushTreeChangedEvent();
+//        TreeModel treeModel = (TreeModel) tree;
+		for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
+			NodeRef node = treeModel.getInternalNode(i);
+			if (node != treeModel.getRoot()) {
+				double parentHeight = treeModel.getNodeHeight(treeModel.getParent(node));
+				double childHeight0 = treeModel.getNodeHeight(treeModel.getChild(node, 0));
+				double childHeight1 = treeModel.getNodeHeight(treeModel.getChild(node, 1));
+				double maxChild = childHeight0;
+				if (childHeight1 > maxChild)
+					maxChild = childHeight1;
+				double newHeight = maxChild + MathUtils.nextDouble() * (parentHeight - maxChild);
+				treeModel.setNodeHeight(node, newHeight);
+			}
+		}
+		treeModel.pushTreeChangedEvent();
 
-    }
+	}
 
-    // **************************************************************
+	// **************************************************************
 	// Likelihood IMPLEMENTATION
 	// **************************************************************
 
@@ -462,6 +461,9 @@ model {
 					throw new XMLParseException("Design matrix column dimension must equal the regression coefficient length.");
 			}
 
+			if (xo.hasAttribute(RANDOMIZE_TREE) && xo.getBooleanAttribute(RANDOMIZE_TREE))
+				checkTree(treeModel);
+
 			return new GMRFSkyrideLikelihood(treeModel, popParameter, groupParameter, precParameter,
 					lambda, beta, dMatrix);
 		}
@@ -494,7 +496,8 @@ model {
 				}),
 				new ElementRule(GROUP_SIZES, new XMLSyntaxRule[]{
 						new ElementRule(Parameter.class)
-				})
+				}),
+				AttributeRule.newBooleanRule(RANDOMIZE_TREE, true)
 		};
 	};
 

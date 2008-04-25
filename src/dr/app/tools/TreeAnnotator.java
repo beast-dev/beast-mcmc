@@ -909,7 +909,6 @@ public class TreeAnnotator {
         }
 
         if (args2.length == 2) {
-            targetTreeFileName = null;
             inputFileName = args2[0];
             outputFileName = args2[1];
         } else {

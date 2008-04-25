@@ -935,7 +935,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 			branch = readExternalNode(translationList);
 		}
 
-		if (getLastDelimiter() != ':') {
+		if (getLastDelimiter() != ':' && getLastDelimiter() != ',' && getLastDelimiter() != ')') {
 			String label = readToken(",():;");
 			if (label.length() > 0) {
 				branch.setAttribute("label", label);

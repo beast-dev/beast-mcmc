@@ -18,21 +18,15 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
     private double[] alltimes;
     private boolean[] dirtyTrees;
     boolean dirty;
-    //private Type units;
+
     private VariableDemographicModel.Type type;
 
     TreeIntervals[] ti;
-    //private double[] populationFactors;
-
-    //private double popFactor = 1;
 
     public VDdemographicFunction(Tree[] trees, VariableDemographicModel.Type type,
-                                 /*double[] popFactors, */double[] indicatorParameter,
-                                 double[] popSizeParameter) {
+                                 double[] indicatorParameter, double[] popSizeParameter, boolean logSpace) {
         super(trees[0].getUnits());
         this.type = type;
-        //this.units = trees[0].getUnits();
-        //this.populationFactors = popFactors;
 
         ti = new TreeIntervals[trees.length];
         dirtyTrees = new boolean[trees.length];
@@ -46,13 +40,23 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         alltimes = new double[tot];
 
         setDirty();
-        setup(trees, indicatorParameter, popSizeParameter);
+        setup(trees, indicatorParameter, popSizeParameter, logSpace);
     }
 
+    /**
+     * Reduce memory footprint of object. After a call to freeze only population/intensity
+     * are allowed.
+     */
+    public void freeze() {
+        ttimes = null;
+        alltimes = null;
+        dirtyTrees = null;
+        ti = null;
+    }
+    
     public VDdemographicFunction(VDdemographicFunction demoFunction) {
         super(demoFunction.getUnits());
         type = demoFunction.type;
-        //populationFactors = demoFunction.populationFactors;
 
         this.ti = demoFunction.ti.clone();
         this.values = demoFunction.values.clone();
@@ -133,7 +137,7 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         return false;
     }
 
-    void setup(Tree[] trees, double[] indicatorParameter, double[] popSizeParameter) {
+    void setup(Tree[] trees, double[] indicatorParameter, double[] popSizes, boolean logSpace) {
         // boolean was = dirty;
         if( dirty ) {
             boolean any = false;
@@ -158,7 +162,7 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
                     }
                     for(int l = j+1; l < inds.length; ++l) {
                         if( inds[l] < ttimes[l].length ) {
-                            if( ttimes[l][inds[l]] <  ttimes[j][inds[j]] ) {
+                            if( ttimes[l][inds[l]] < ttimes[j][inds[j]] ) {
                                 j = l;
                             }
                         }
@@ -186,7 +190,7 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
             times[0] = 0.0;
             times[tot] = Double.POSITIVE_INFINITY;
 
-            values[0] = popSizeParameter[0];
+            values[0] = logSpace ? Math.exp(popSizes[0]) : popSizes[0];
 
 
             int n = 0;
@@ -195,7 +199,7 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
                 if( indicatorParameter[k] > 0 ) {
                     times[n+1] = alltimes[k];
 
-                    values[n+1] = popSizeParameter[k+1];
+                    values[n+1] = logSpace ? Math.exp(popSizes[k+1]) : popSizes[k+1];
                     intervals[n] = times[n+1] - times[n];
                     ++n;
                 }
@@ -387,7 +391,6 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
     }
 
     public TreeIntervals getTreeIntervals(int nt) {
-        //popFactor = populationFactors[nt];
         return ti[nt];
     }
 

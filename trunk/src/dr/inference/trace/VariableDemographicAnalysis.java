@@ -1,17 +1,20 @@
 package dr.inference.trace;
 
-import dr.xml.*;
-import dr.evomodel.tree.TreeTrace;
-import dr.evomodel.coalescent.VariableDemographicModel;
-import dr.evomodel.coalescent.VDdemographicFunction;
 import dr.evolution.io.Importer;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.Tree;
+import dr.evomodel.coalescent.VDdemographicFunction;
+import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.inference.loggers.MCLogger;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 import dr.util.TabularData;
-import dr.inference.loggers.MCLogger;
+import dr.xml.*;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -29,7 +32,7 @@ public class VariableDemographicAnalysis extends TabularData {
 
     VariableDemographicAnalysis(File log, File[] treeFiles, VariableDemographicModel.Type modelType,
                                 String firstColumnName, String firstIndicatorColumnName, double burnIn,
-                                double[] inHPDLevels, boolean quantiles)
+                                double[] inHPDLevels, boolean quantiles, boolean logSpace)
             throws IOException, Importer.ImportException, TraceException {
 
         LogFileTraces ltraces = new LogFileTraces(log.getCanonicalPath(), log);
@@ -39,8 +42,8 @@ public class VariableDemographicAnalysis extends TabularData {
 
         int intBurnIn =  (int)Math.floor(burnIn < 1 ? runLengthIncludingBurnin * burnIn : burnIn);
         final int nStates = runLengthIncludingBurnin - intBurnIn;
-        intBurnIn *= ltraces.getStepSize();
-        ltraces.setBurnIn(intBurnIn);
+        //intBurnIn *= ltraces.getStepSize();
+        ltraces.setBurnIn(intBurnIn * ltraces.getStepSize());
 
         assert ltraces.getStateCount() == nStates;
 
@@ -63,23 +66,35 @@ public class VariableDemographicAnalysis extends TabularData {
             throw new TraceException("incorrect trace column names: unable to find populations/indicators");
         }
 
-        TreeTrace[] traces = new TreeTrace[treeFiles.length];
+        //TreeTrace[] traces = new TreeTrace[treeFiles.length];
+        TreeImporter[] treeImporters = new TreeImporter[treeFiles.length];
         final boolean isStepWise = modelType == VariableDemographicModel.Type.STEPWISE;
 
         int nIndicators = 0;
 
         for(int k = 0; k < treeFiles.length; ++k) {
 
-            final TreeTrace treeTrace = TreeTrace.loadTreeTrace(new FileReader(treeFiles[k]));
+           // System.err.println("burnin " + treeFiles[k] + "(" + k + ")");
 
-            nIndicators += treeTrace.getTree(0,0).getExternalNodeCount() - 1;
-
-            final int kthRunLength = treeTrace.getTreeCount(0);
-
-            if( runLengthIncludingBurnin != kthRunLength ) {
-                throw new  IOException("non matching runs: " + runLengthIncludingBurnin + " != " +  kthRunLength) ; // FIXME another type
+            treeImporters[k] = new NexusImporter(new FileReader(treeFiles[k]));
+            assert intBurnIn > 0;
+            for(int z = 0; z < intBurnIn-1; ++z) {
+                treeImporters[k].importNextTree();
             }
-            traces[k] = treeTrace;
+            nIndicators += treeImporters[k].importNextTree().getExternalNodeCount() - 1;
+
+//            if( false) {
+//                final TreeTrace treeTrace = TreeTrace.loadTreeTrace(new FileReader(treeFiles[k]));
+//
+//                nIndicators += treeTrace.getTree(0,0).getExternalNodeCount() - 1;
+//
+//                final int kthRunLength = treeTrace.getTreeCount(0);
+//
+//                if( runLengthIncludingBurnin != kthRunLength ) {
+//                    throw new  IOException("non matching runs: " + runLengthIncludingBurnin + " != " +  kthRunLength) ; // FIXME another type
+//                }
+//                traces[k] = treeTrace;
+//            }
         }
 
         if( isStepWise ) {
@@ -110,22 +125,25 @@ public class VariableDemographicAnalysis extends TabularData {
             double[] indicators = new double[nIndicators];
             double[] pop = new double[nIndicators+1];
             Tree[] tt = new Tree[treeFiles.length];
-            //double[] popFactors = null;
 
             for(int ns = 0; ns < nStates; ++ns) {
-                ltraces.getStateValues(ns, indicators,  indicatorsFirstColumn);
+                ltraces.getStateValues(ns, indicators, indicatorsFirstColumn);
                 ltraces.getStateValues(ns, pop, populationFirstColumn);
 
                 for(int nt = 0; nt < tt.length; ++nt) {
-                    tt[nt] = traces[nt].getTree(ns, intBurnIn);
+                    tt[nt] = treeImporters[nt].importNextTree();
                 }
-                final VDdemographicFunction demoFunction = new VDdemographicFunction(tt, modelType /*, popFactors*/, indicators, pop);
+                final VDdemographicFunction demoFunction =
+                        new VDdemographicFunction(tt, modelType, indicators, pop, logSpace);
                 double[] x = demoFunction.allTimePoints();
                 for(int k = 0; k < x.length; ++k) {
-                    assert x[k] >= 0 : " " + k + " " + x[k];
+                    //assert x[k] >= 0 : " " + k + " " + x[k];
                     xPoints[k+1] += x[k];
                 }
+
                 allDemog[ns] = demoFunction;
+
+                demoFunction.freeze();
             }
             for(int k = 0; k < xPoints.length; ++k) {
                 xPoints[k] /= nStates;
@@ -164,7 +182,7 @@ public class VariableDemographicAnalysis extends TabularData {
                     hpdHigh[i][nx] = hpd[1];
                 }
             }
-            medians[nx] =  DiscreteStatistics.median(popValues, indices);
+            medians[nx] = DiscreteStatistics.median(popValues, indices);
 //            for(int k = 0; k < indices.length; ++k) {
 //                System.out.print(popValues[indices[k]]);  System.out.print(",");
 //            }
@@ -230,7 +248,8 @@ public class VariableDemographicAnalysis extends TabularData {
         public static final String BURN_IN = "burnIn";
         public static final String HPD_LEVELS = "Confidencelevels";
         public static final String QUANTILES = "useQuantiles";
-
+        public static final String LOG_SPACE = VariableDemographicModel.LOG_SPACE;
+        
         public static final String TREE_LOG = "treeOfLoci";
 
         public static final String LOG_FILE_NAME = "logFileName";
@@ -274,9 +293,10 @@ public class VariableDemographicAnalysis extends TabularData {
                 String indicatorsFirstColumn = getElementText(xo, INDICATORS_FIRST_COLUMN);
                 VariableDemographicModel.Type modelType = VariableDemographicModel.Type.valueOf(modelTypeName);
 
-                boolean quantiles = xo.hasAttribute(QUANTILES) && xo.getBooleanAttribute(QUANTILES);
+                final boolean quantiles = xo.hasAttribute(QUANTILES) && xo.getBooleanAttribute(QUANTILES);
+                final boolean logSpace = xo.hasAttribute(LOG_SPACE) && xo.getBooleanAttribute(LOG_SPACE);
                 return new VariableDemographicAnalysis(log, treeFiles, modelType, populationFirstColumn,
-                        indicatorsFirstColumn, burnin, hpdLevels, quantiles);
+                        indicatorsFirstColumn, burnin, hpdLevels, quantiles, logSpace);
 
             } catch (java.io.IOException ioe) {
                 throw new XMLParseException(ioe.getMessage());
@@ -308,6 +328,7 @@ public class VariableDemographicAnalysis extends TabularData {
                         " actual states) that are discarded from the beginning of the trace before doing the analysis"),
                 AttributeRule.newDoubleArrayRule(HPD_LEVELS, true),
                 AttributeRule.newBooleanRule(QUANTILES, true),
+                AttributeRule.newBooleanRule(LOG_SPACE, true),
                 
                 new ElementRule(LOG_FILE_NAME, String.class, "The name of a BEAST log file"),
                 new ElementRule(TREE_FILE_NAMES,

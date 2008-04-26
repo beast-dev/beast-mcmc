@@ -58,7 +58,6 @@ public class CSVExporter extends AbstractXMLObjectParser {
                                 }
                                 iColumns.add(n);
 
-
                                 final int nAddtional = column.getChildCount();
                                 Parameter[] additionals = nAddtional > 0 ? new Parameter[nAddtional] : null;
                                 for(int nc1 = 0; nc1 < nAddtional; ++nc1) {
@@ -93,32 +92,55 @@ public class CSVExporter extends AbstractXMLObjectParser {
                             }
                         }
                     }
+                    
+                    if( columns.hasAttribute(AS_ROWS) && columns.getBooleanAttribute(AS_ROWS) ) {
+                       for(int nc = 0; nc < iColumns.size(); ++nc) {
+                          writer.print(source.columnName(iColumns.get(nc)));
 
-                    for(int nc = 0; nc < iColumns.size(); ++nc) {
-                        if( nc > 0 ) {  writer.print(sep); }
-                        writer.print(source.columnName(iColumns.get(nc)));
-                    }
-                    writer.println();
+                           for(int nr = 0; nr < source.nRows(); ++nr) {
+                               final Object value = source.data(nr, iColumns.get(nc));
+                               writer.print(sep);
+                               writer.print(value);
 
-                    for(int nr = 0; nr < source.nRows(); ++nr) {
-                        for(int nc = 0; nc < iColumns.size(); ++nc) {
-                          if( nc > 0 ) {  writer.print(sep); }
-                            final Object value = source.data(nr, iColumns.get(nc));
-                            writer.print(value);
-                        }
-                        writer.println();
-                    }
+                           }
+                           for(int nr = 0; nr < maxAdds; ++nr) {
+                               final Parameter[] addsnc = adds.get(nc);
+                               if( addsnc != null && nr < addsnc.length ) {
+                                   final Object value = addsnc[nr].getParameterValues()[0];
+                                   writer.print(sep);
+                                   writer.print(value);
+                               }
+                           }
+                           writer.println();
+                       }
 
-                    for(int nr = 0; nr < maxAdds; ++nr) {
+                    } else {
                         for(int nc = 0; nc < iColumns.size(); ++nc) {
                             if( nc > 0 ) {  writer.print(sep); }
-                            final Parameter[] addsnc = adds.get(nc);
-                            if( addsnc != null && nr < addsnc.length ) {
-                              final Object value = addsnc[nr].getParameterValues()[0];
-                              writer.print(value);
-                            }
+                            writer.print(source.columnName(iColumns.get(nc)));
                         }
                         writer.println();
+
+                        for(int nr = 0; nr < source.nRows(); ++nr) {
+                            for(int nc = 0; nc < iColumns.size(); ++nc) {
+                                if( nc > 0 ) {  writer.print(sep); }
+                                final Object value = source.data(nr, iColumns.get(nc));
+                                writer.print(value);
+                            }
+                            writer.println();
+                        }
+
+                        for(int nr = 0; nr < maxAdds; ++nr) {
+                            for(int nc = 0; nc < iColumns.size(); ++nc) {
+                                if( nc > 0 ) {  writer.print(sep); }
+                                final Parameter[] addsnc = adds.get(nc);
+                                if( addsnc != null && nr < addsnc.length ) {
+                                    final Object value = addsnc[nr].getParameterValues()[0];
+                                    writer.print(value);
+                                }
+                            }
+                            writer.println();
+                        }
                     }
                 }
             }
@@ -133,6 +155,7 @@ public class CSVExporter extends AbstractXMLObjectParser {
     public static final String SEPARATOR = "separator";
     public static final String COLUMNS = "columns";
     public static final String ALL_COLUMNS = "all";
+    public static final String AS_ROWS = "rows";
     public static final String COLUMN = "CSVcolumn";
     public static final String COLUMN_NAME = "name";
 
@@ -143,7 +166,9 @@ public class CSVExporter extends AbstractXMLObjectParser {
                 new StringAttributeRule(SEPARATOR, "Values separator (default is tab)", true),
                 new ElementRule(COLUMNS , new XMLSyntaxRule[] {
                         AttributeRule.newBooleanRule(ALL_COLUMNS, true,
-                                "Dump all columns. default is TRUE when no columns are specified, FALSE"),
+                                "Dump all columns. default is TRUE when no columns are specified, FALSE otherwise"),
+                        AttributeRule.newBooleanRule(AS_ROWS, true,
+                                "Write data in rows (default is columns)"),
                         new ElementRule(TabularData.class),
                         new ElementRule(COLUMN, new XMLSyntaxRule[]{
                                 AttributeRule.newStringArrayRule(COLUMN_NAME),

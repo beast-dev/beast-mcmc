@@ -401,14 +401,15 @@ public class XMLObject {
 	/**
 	 * @return the object as an double if possible
 	 */
-	private double getDouble(Object obj) throws XMLParseException {
-		if (obj instanceof Number) return ((Number) obj).doubleValue();
-		try {
-			return Double.parseDouble((String) obj);
-		} catch (NumberFormatException e) {
-			throw new XMLParseException("Expected double precision number, but got " + obj);
-		}
-	}
+    private double getDouble(Object obj) throws XMLParseException, NumberFormatException {
+        if (obj instanceof Number) {
+            return ((Number) obj).doubleValue();
+        }
+        if( obj instanceof String ) {
+           return Double.parseDouble((String) obj);
+        }
+        throw new XMLParseException("Expected double precision number, but got " + obj);
+    }
 
 	/**
 	 * @return the object as an double[] if possible

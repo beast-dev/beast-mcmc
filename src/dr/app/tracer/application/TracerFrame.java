@@ -609,7 +609,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             Thread readThread = new Thread() {
                 public void run() {
                     try {
-                        traces.loadTraces(reader);
+                        traces.loadTraces(reader, -1);
 
                         EventQueue.invokeLater(
                                 new Runnable() {

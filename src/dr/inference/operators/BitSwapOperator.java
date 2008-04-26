@@ -240,6 +240,7 @@ public class BitSwapOperator extends SimpleMCMCOperator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
+                AttributeRule.newDoubleRule(RADIUS) , 
                 new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
                 new ElementRule(INDICATORS, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
         };

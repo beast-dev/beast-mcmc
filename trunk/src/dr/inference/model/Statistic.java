@@ -37,7 +37,7 @@ import dr.util.Identifiable;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public interface Statistic extends Attribute, Identifiable, Loggable {
+public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
 	
 	public static final String NAME = "name";
 
@@ -100,9 +100,11 @@ public interface Statistic extends Attribute, Identifiable, Loggable {
             return getStatisticName();
         }
         
-        public final Object getAttributeValue() {
+        public final double[] getAttributeValue() {
             double[] stats = new double[getDimension()];
-            for (int i =0; i < stats.length; i++) { stats[i] = getStatisticValue(i); }
+            for (int i = 0; i < stats.length; i++) {
+                stats[i] = getStatisticValue(i);
+            }
 
             return stats;
         }

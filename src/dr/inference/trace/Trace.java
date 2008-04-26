@@ -44,7 +44,14 @@ public class Trace {
 		this.name = name;
 	}
 
-	public Trace(String name, double[] values) {
+    public Trace(String name, int initialSize) {
+        this.name = name;
+        if( initialSize > 0 ) {
+            this.values = new double[initialSize];
+        }
+    }
+
+    public Trace(String name, double[] values) {
 
         this.name = name;
         this.values = new double[values.length];

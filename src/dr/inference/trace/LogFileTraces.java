@@ -24,6 +24,8 @@
  */
 package dr.inference.trace;
 
+import dr.util.FileHelpers;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -177,9 +179,11 @@ public class LogFileTraces implements TraceList {
         traceStatistics[index] = new TraceCorrelation(values, stepSize);
     }
 
+
     public void loadTraces() throws TraceException, IOException {
+
         FileReader reader = new FileReader(file);
-        loadTraces(reader);
+        loadTraces(reader, FileHelpers.numberOfLines(file)-1);
         reader.close();
     }
 
@@ -190,7 +194,7 @@ public class LogFileTraces implements TraceList {
      * @throws TraceException      when trace contents is not valid
      * @throws java.io.IOException low level problems with file
      */
-    public void loadTraces(Reader r) throws TraceException, java.io.IOException {
+    public void loadTraces(Reader r, int numberOfLines) throws TraceException, java.io.IOException {
 
         TrimLineReader reader = new LogFileTraces.TrimLineReader(r);
 
@@ -223,7 +227,7 @@ public class LogFileTraces implements TraceList {
         // read label tokens
         while (tokens.hasMoreTokens()) {
             String label = tokens.nextToken();
-            addTrace(label);
+            addTrace(label, numberOfLines);
         }
 
         int statCount = getTraceCount();
@@ -290,8 +294,8 @@ public class LogFileTraces implements TraceList {
      *
      * @param name trace name
      */
-    private void addTrace(String name) {
-        traces.add(new Trace(name));
+    private void addTrace(String name, int numberOfLines) {
+        traces.add(new Trace(name, numberOfLines));
     }
 
     /**

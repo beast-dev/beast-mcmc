@@ -32,6 +32,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
+import dr.util.FileHelpers;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
 
@@ -148,8 +149,9 @@ public class CoalGenFrame extends DocumentFrame {
             Thread readThread = new Thread() {
                 public void run() {
                     try {
-                        final LogFileTraces traces = new LogFileTraces(fileName, new File(fileName));
-                        traces.loadTraces(reader);
+                        final File file1 = new File(fileName);
+                        final LogFileTraces traces = new LogFileTraces(fileName, file1);
+                        traces.loadTraces(reader, FileHelpers.numberOfLines(file1));
 
                         EventQueue.invokeLater(
                                 new Runnable() {

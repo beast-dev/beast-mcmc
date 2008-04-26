@@ -44,7 +44,7 @@ public interface Parameter extends Statistic {
     double getParameterValue(int dim);
 
     /**
-     * @return the parameter's values
+     * @return the parameter's values  (may be modified, as this is a copy)
      */
     double[] getParameterValues();
 
@@ -251,13 +251,14 @@ public interface Parameter extends Statistic {
 
         public String toString() {
             StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
-            buffer.append(getId()).append("=[").append(String.valueOf(getBounds().getLowerLimit(0)));
-            buffer.append(",").append(String.valueOf(getBounds().getUpperLimit(0))).append("]");
+            final Bounds bounds = getBounds();
+            buffer.append(getId()).append("=[").append(String.valueOf(bounds.getLowerLimit(0)));
+            buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
 
             for (int i = 1; i < getDimension(); i++) {
                 buffer.append(", ").append(String.valueOf(getParameterValue(i)));
-                buffer.append("[").append(String.valueOf(getBounds().getLowerLimit(i)));
-                buffer.append(",").append(String.valueOf(getBounds().getUpperLimit(i))).append("]");
+                buffer.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
+                buffer.append(",").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
             }
             return buffer.toString();
         }

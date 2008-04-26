@@ -120,14 +120,17 @@ public class TreeTraceAnalysis {
                 for (int j = 0; j < tree.getNodeCount(); j++) {
                     if (tree.getNode(j) != tree.getRoot()) {
 
-                        if ((Integer) tree.getNodeAttribute(tree.getNode(j), "changed") == 1) {
-                            rateConditionalOnChange[j] += (Double) tree.getNodeAttribute(tree.getNode(j), "rate");
-                        }
-                        for (int k = 0; k < tree.getNodeCount(); k++) {
-                            if (tree.getNode(k) != tree.getRoot()) {
+                        final Object o = tree.getNodeAttribute(tree.getNode(j), "changed");
+                        if( o != null ) {
+                            if ((Integer) o == 1) {
+                                rateConditionalOnChange[j] += (Double) tree.getNodeAttribute(tree.getNode(j), "rate");
+                            }
+                            for (int k = 0; k < tree.getNodeCount(); k++) {
+                                if (tree.getNode(k) != tree.getRoot()) {
 
-                                changed[j][k] += (Integer) tree.getNodeAttribute(tree.getNode(j), "changed") *
-                                        (Integer) tree.getNodeAttribute(tree.getNode(k), "changed");
+                                    changed[j][k] += (Integer) o *
+                                            (Integer) tree.getNodeAttribute(tree.getNode(k), "changed");
+                                }
                             }
                         }
                     }

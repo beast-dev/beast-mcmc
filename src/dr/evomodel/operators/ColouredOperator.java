@@ -183,6 +183,10 @@ public class ColouredOperator implements CoercableMCMCOperator {
         return innerOperator.getSumDeviation();
     }
 
+    public double getSpan(boolean reset) {
+        return 0;
+    }
+
     public final void setDumDeviation(double sumDeviation) {
         innerOperator.setDumDeviation(sumDeviation);
     }

@@ -26,7 +26,7 @@ public class TwoStateCovarionModelTest extends TestCase {
 
         FrequencyModel freqModel = new FrequencyModel(TwoStateCovarion.INSTANCE, frequencies);
         model = new TwoStateCovarionModel(TwoStateCovarion.INSTANCE, freqModel, alpha, switchingRate);
-        dataType = model.dataType;
+        dataType = model.getDataType();
     }
 
     public void testTransitionProbabilities() {
@@ -99,7 +99,7 @@ public class TwoStateCovarionModelTest extends TestCase {
 
         model.setupMatrix();
 
-        double[] pi = model.freqModel.getFrequencies();
+        double[] pi = model.getFrequencyModel().getFrequencies();
 
         int stateCount = dataType.getStateCount();
 

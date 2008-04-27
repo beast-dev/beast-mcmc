@@ -75,9 +75,9 @@ public class ContinuousLikelihood extends Likelihood.Abstract {
 			for (int i = 0; i < xo.getChildCount(); i++) {
 			
 				Object child = xo.getChild(i);
-				if  (xo.getChild(i) instanceof XMLObject) {
+				if  (child instanceof XMLObject) {
 			
-					XMLObject cxo = (XMLObject)xo.getChild(i);
+					XMLObject cxo = (XMLObject)child;
 					
 					if (cxo.getName().equals(TRAIT)) {
 						traits.add(cxo.getStringAttribute(NAME));

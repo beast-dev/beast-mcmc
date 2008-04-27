@@ -109,6 +109,11 @@ public class MCMC implements Runnable, Identifiable {
         chain();
     }
 
+    // HACK and to be removed soon
+    public static boolean logOps = false;
+    // Experimental
+    public static int  ontheflyFreq = 0;
+
     /**
      * This method actually intiates the MCMC analysis.
      */
@@ -124,7 +129,7 @@ public class MCMC implements Runnable, Identifiable {
             if (preBurnin > 0) {
                 MarkovChainListener burninListener = new BurninListener(preBurnin);
                 mc.addMarkovChainListener(burninListener);
-                mc.chain(preBurnin, true);
+                mc.chain(preBurnin, true, 0, false);
                 mc.removeMarkovChainListener(burninListener);
                 mc.reset();
             }
@@ -138,7 +143,7 @@ public class MCMC implements Runnable, Identifiable {
 
         if (!stopping) {
             mc.addMarkovChainListener(chainListener);
-            mc.chain(getChainLength(), false);
+            mc.chain(getChainLength(), false, ontheflyFreq, logOps);
             mc.removeMarkovChainListener(chainListener);
         }
         timer.stop();

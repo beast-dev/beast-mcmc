@@ -61,6 +61,13 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
         }
     }
 
+    public void operatorsHasBeenUpdated() {
+        totalWeight = 0.0;
+        for (MCMCOperator operator : operators) {
+            totalWeight += operator.getWeight();
+        }
+    }
+
     public void addOperator(MCMCOperator op) {
         operators.add(op);
         totalWeight += op.getWeight();

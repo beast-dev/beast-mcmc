@@ -27,8 +27,11 @@ package dr.app.beast;
 
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
+import dr.inference.mcmc.MCMC;
 import dr.math.MathUtils;
-import dr.util.*;
+import dr.util.ErrorLogHandler;
+import dr.util.MessageLogHandler;
+import dr.util.Version;
 import dr.xml.XMLParser;
 import org.virion.jam.util.IconUtils;
 
@@ -231,15 +234,19 @@ public class BeastMain {
     //Main method
     public static void main(String[] args) throws java.io.IOException {
 
-
+        printTitle();
         Arguments arguments = new Arguments(
                 new Arguments.Option[] {
+
                         new Arguments.Option("verbose", "verbose XML parsing messages"),
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "specify a random number generator seed"),
 		                new Arguments.IntegerOption("errors", "maximum number of numerical errors before stopping"),
-                        new Arguments.Option("help", "option to print this message")
+                       // new Arguments.Option("logops", "hack: log ops to stderr"),
+                        new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
+                                "in number of states."),
+                        new Arguments.Option("help", "option to print this message"),
                 });
 
         try {
@@ -262,6 +269,10 @@ public class BeastMain {
         boolean verbose = arguments.hasOption("verbose");
         boolean window = arguments.hasOption("window");
         boolean working = arguments.hasOption("working");
+
+        // (HACK)
+        //MCMC.logOps =  arguments.hasOption("logops");
+        MCMC.ontheflyFreq =  arguments.hasOption("otfops") ? arguments.getIntegerOption("otfops") : 0;
 
         long seed = MathUtils.getSeed();
         if (arguments.hasOption("seed")) {

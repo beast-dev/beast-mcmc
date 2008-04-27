@@ -76,6 +76,10 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
             operateAllowed = true;
             accepted += 1;
             sumDeviation += deviation;
+
+            spanDeviation[0] = Math.min(spanDeviation[0], deviation);
+            spanDeviation[1] = Math.max(spanDeviation[1], deviation);
+            spanCount += 1;
         } else throw new RuntimeException("Accept/reject methods called twice without operate called in between!");
     }
 
@@ -126,6 +130,20 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         this.sumDeviation = sumDeviation;
     }
 
+    public double getSpan(boolean reset) {
+        double span = 0;
+        if( spanDeviation[1] > spanDeviation[0] && spanCount > 20 ) {
+            span = spanDeviation[1] - spanDeviation[0];
+
+            if( reset ) {
+                spanDeviation[0] = Double.MAX_VALUE;
+                spanDeviation[1] = -Double.MAX_VALUE;
+                spanCount = 0;
+            }
+        }
+        return span;
+    }
+
     public final double operate() throws OperatorFailedException {
         if (operateAllowed) {
             operateAllowed = false;
@@ -152,5 +170,8 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private double lastDeviation = 0.0;
     private boolean operateAllowed = true;
     private double targetAcceptanceProb = 0.234;
+
+    private double[] spanDeviation = {Double.MAX_VALUE,-Double.MAX_VALUE};
+    private int spanCount = 0;
 }
 

@@ -97,6 +97,8 @@ public interface MCMCOperator {
 
     double getSumDeviation();
 
+    double getSpan(boolean reset);
+
     void setDumDeviation(double sumDeviation);
 
     /**

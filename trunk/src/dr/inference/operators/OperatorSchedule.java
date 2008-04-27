@@ -57,4 +57,9 @@ public interface OperatorSchedule {
     public void addOperator(MCMCOperator op);
 
     public void addOperators(List<MCMCOperator> v);
+
+    /**
+     * Should be called after operators weight is externally changed.
+     */
+    public void operatorsHasBeenUpdated(); 
 }

@@ -38,6 +38,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 	public static final String DEFAULT_TRAIT_NAME = "trait";
 	public static final String RANDOMIZE = "randomize";
 	public static final String CHECK = "check";
+	public static final String TREE_LENGTH = "useTreeLength";
 
 	public MultivariateTraitLikelihood(String traitName,
 	                                   TreeModel treeModel,
@@ -46,6 +47,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 	                                   List<Integer> missingIndices,
 	                                   boolean cacheBranches,
 	                                   boolean inSubstitutionTime,
+	                                   boolean useTreeLength,
 	                                   BranchRateModel rateModel) {
 
 		super(TRAIT_LIKELIHOOD);
@@ -69,12 +71,14 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 //			cachedLikelihoods = new HashMap<NodeRef, Double>();
 
 		this.inSubstitutionTime = inSubstitutionTime;
+		this.useTreeLength = useTreeLength;
 
 		StringBuffer sb = new StringBuffer("Creating multivariate diffusion model:\n");
 		sb.append("\tTrait: " + traitName + "\n");
 		sb.append("\tDiffusion process: " + diffusionModel.getId() + "\n");
 		sb.append("\tUsing clock time: " + (!inSubstitutionTime) + "\n");
 		sb.append("\tTime scaling: " + (hasRateModel ? rateModel.getId() : "homogeneous") + "\n");
+		sb.append("\tTree normalization: " + (useTreeLength ? "length" : "height") + "\n");
 		sb.append("\tPlease cite Suchard, Lemey and Rambaut (in preparation) if you publish results using this model.");
 
 		Logger.getLogger("dr.evomodel").info(sb.toString());
@@ -109,7 +113,15 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
 
 	public void recalculateTreeLength() {
-		treeLength = treeModel.getNodeHeight(treeModel.getRoot());
+		if (useTreeLength) {
+			treeLength = 0;
+			for (int i = 0; i < treeModel.getNodeCount(); i++) {
+				NodeRef node = treeModel.getNode(i);
+				if (!treeModel.isRoot(node))
+					treeLength += treeModel.getBranchLength(node);
+			}
+		} else
+			treeLength = treeModel.getNodeHeight(treeModel.getRoot());
 	}
 
 	// **************************************************************
@@ -419,9 +431,14 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 				check = (Parameter) cxo.getChild(Parameter.class);
 			}
 
+			boolean useTreeLength = false;
+			if (xo.hasAttribute(TREE_LENGTH) && xo.getBooleanAttribute(TREE_LENGTH)) {
+				useTreeLength = true;
+			}
+
 			MultivariateTraitLikelihood like =
 					new MultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
-							traitParameter, missingIndices, cacheBranches, inSubstitutionTime, rateModel);
+							traitParameter, missingIndices, cacheBranches, inSubstitutionTime, useTreeLength, rateModel);
 
 
 			if (traits != null) {
@@ -557,5 +574,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 	private double storedTreeLength;
 
 	private boolean inSubstitutionTime;
+
+	private boolean useTreeLength;
 }
 

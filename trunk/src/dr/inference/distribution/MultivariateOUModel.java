@@ -2,21 +2,21 @@ package dr.inference.distribution;
 
 import dr.evomodel.substmodel.PositiveDefiniteSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.inference.model.DesignMatrix;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
  */
-public class MultivariateOUModel extends GeneralizedLinearModel {
+public class MultivariateOUModel extends GeneralizedLinearModel implements Statistic {
 
 	public static final String MVOU_MODEL = "multivariateOUModel";
 	public static final String MVOU_TYPE = "MVOU";
@@ -32,12 +32,26 @@ public class MultivariateOUModel extends GeneralizedLinearModel {
 	private double[] W;
 	private double[] initialPriorMean;
 	private int K;
+	private int Ksquared;
 	private int numTimeSteps;
+	private double[][] GminusWGWt;
 
 	private MultivariateNormalDistribution initialPrior;
 
-	private boolean likelihoodKnown;
+	private boolean likelihoodKnown = false;
+	private boolean storedLikelihoodKnown;
 	private double logLikelihood;
+	private double storedLogLikelihood;
+	private boolean conditionalPrecisionKnown = false;
+	private boolean storedConditionPrecisionKnown;
+
+	private double[] storedWt;
+	private double[] Wt;
+	private double[] conditionPrecisionVector;
+	private double[] storedConditionPrecisionVector;
+
+	private int[] mapTime;
+	private List<Double> deltaTimeList; // todo could just use a Map<Double,Integer>
 
 	public MultivariateOUModel(SubstitutionModel substitutionModel, Parameter dependentParam,
 	                           MatrixParameter gamma, double[] time, double[] design) {
@@ -48,8 +62,9 @@ public class MultivariateOUModel extends GeneralizedLinearModel {
 		this.gamma = gamma;
 
 		K = substitutionModel.getDataType().getStateCount();
+		Ksquared = K * K;
 
-		W = new double[K * K];
+		W = new double[Ksquared];
 
 		initialPriorMean = new double[K]; // todo send this mean in constructor
 
@@ -65,27 +80,85 @@ public class MultivariateOUModel extends GeneralizedLinearModel {
 	}
 
 	private void setupTimes() {
+		deltaTimeList = new ArrayList<Double>();
 		numTimeSteps = time.length / K - 1;
 		deltaTime = new double[numTimeSteps];
+		mapTime = new int[numTimeSteps];
 		double currentTime = time[0];
 		int index = 0;
 		for (int i = 0; i < numTimeSteps; i++) {
 			index += K;
 			deltaTime[i] = time[index] - currentTime;
 			currentTime = time[index];
+			if (!deltaTimeList.contains(deltaTime[i])) {
+				deltaTimeList.add(deltaTime[i]);
+			}
+			mapTime[i] = deltaTimeList.indexOf(deltaTime[i]);
+			((PositiveDefiniteSubstitutionModel) Q).addPrecalculatedTime(-deltaTime[i]); // todo get rid of negative sign
 		}
 		Logger.getLogger("dr.inference.distribution").info(
 				"\tTime increments: " + new Vector(deltaTime)
 		);
+
+		Wt = new double[Ksquared * deltaTimeList.size()];
+		storedWt = new double[Ksquared * deltaTimeList.size()];
+		conditionPrecisionVector = new double[Ksquared * deltaTimeList.size()];
+		storedConditionPrecisionVector = new double[Ksquared * deltaTimeList.size()];
+
+		calculateConditionPrecision();
 	}
 
-//	public final double getLogLikelihood() {
-////		if (!likelihoodKnown) {
-//			logLikelihood = calculateLogLikelihood();
-////			likelihoodKnown = true;
-////		}
-//		return logLikelihood;
-//	}
+	private void calculateConditionPrecision() {
+
+		int index = 0;
+		double[] tempW = new double[Ksquared];
+		double[][] G = gamma.getParameterAsMatrix();
+
+		for (double deltaTime : deltaTimeList) {
+
+			Q.getTransitionProbabilities(-deltaTime, tempW);
+
+			System.arraycopy(tempW, 0, Wt, Ksquared * index, Ksquared);
+
+			double[][] WG = new double[K][K]; // needs to start with zeros
+			for (int i = 0; i < K; i++) {
+				for (int j = 0; j < K; j++) {
+					for (int k = 0; k < K; k++)
+						WG[i][j] += tempW[i * K + k] * G[k][j];
+				}
+			}
+
+			double[][] WGWt = new double[K][K]; // needs to start with zeros
+			for (int i = 0; i < K; i++) {
+				for (int j = 0; j < K; j++) {
+					for (int k = 0; k < K; k++)
+						WGWt[i][j] += WG[i][k] * tempW[j * K + k];
+				}
+			}
+
+			for (int i = 0; i < K; i++) {
+				for (int j = 0; j < K; j++)
+					WGWt[i][j] = G[i][j] - WGWt[i][j];
+			}
+
+			WGWt = new Matrix(WGWt).inverse().toComponents();
+
+			for (int i = 0; i < K; i++)
+				System.arraycopy(WGWt[i], 0, conditionPrecisionVector, Ksquared * index + K * i, K);
+
+			index++;
+		}
+
+		conditionalPrecisionKnown = true;
+	}
+
+	public final double getLogLikelihood() {
+		if (!likelihoodKnown) {
+			logLikelihood = calculateLogLikelihood();
+			likelihoodKnown = true;
+		}
+		return logLikelihood;
+	}
 
 	public double calculateLogLikelihood(double[] x) {
 		return calculateLogLikelihood();
@@ -96,21 +169,27 @@ public class MultivariateOUModel extends GeneralizedLinearModel {
 		double logLikelihood = 0;
 		double[] previous = new double[K];
 		double[] current = new double[K];
+
 		double[] tmpHolder;
 		double[][] G = gamma.getParameterAsMatrix();
 		double[] theta = dependentParam.getParameterValues();
 		double[] Xbeta = null;
 		boolean hasEffects = getNumberOfEffects() > 0;
 
-//		System.err.println("effects: "+hasEffects);
-
-//		System.err.println("Xbeta = "+new Vector(Xbeta));
-
-//		double currentTime = time[0];
-
-//		double deltaTime = 0;
+		if (!conditionalPrecisionKnown)
+			calculateConditionPrecision();
 
 		// Prior on initial time-point
+
+		try {
+			if (new Matrix(G).determinant() < 0.01)
+				return Double.NEGATIVE_INFINITY;
+
+		} catch (IllegalDimension illegalDimension) {
+			illegalDimension.printStackTrace();
+		}
+
+
 		int index = 0;
 
 		if (!hasEffects) {
@@ -127,26 +206,25 @@ public class MultivariateOUModel extends GeneralizedLinearModel {
 		initialPrior = new MultivariateNormalDistribution(initialPriorMean, new Matrix(G).inverse().toComponents());
 		logLikelihood += initialPrior.logPdf(previous);
 
-//		System.err.println("initial point:");
-//		System.err.println("\tX: "+new Vector(previous));
-//		System.err.println("\tVar:\n"+new Matrix(G));
-//		System.err.println("\tlogLike: "+logLikelihood);
+		double save = logLikelihood;
+		double save2 = 0;
+		int oldMapTime = -1;
+
+		double[][] conditionalPrecision = new double[K][K];
 
 		for (int timeStep = 0; timeStep < numTimeSteps; timeStep++) {
 
-//			System.err.print("TimeStep #"+timeStep+" from "+currentTime+" to ");
-//			currentTime += deltaTime[timeStep];
-//			System.err.println(currentTime);
+			int thisMapTime = mapTime[timeStep];
 
+			if (thisMapTime != oldMapTime) {
 
-			Q.getTransitionProbabilities(-deltaTime[timeStep], W);
-//			Q.getTransitionProbabilities(0, W);
+				System.arraycopy(Wt, Ksquared * thisMapTime, W, 0, Ksquared);
 
-//			System.err.println("\ttheta_0: "+new Vector(previous));
+				for (int i = 0; i < K; i++)
+					System.arraycopy(conditionPrecisionVector, Ksquared * thisMapTime + K * i, conditionalPrecision[i], 0, K);
 
-//			System.err.println("\tW:\n" + new Vector(W));
-//			System.err.println("\tG:\n" + new Matrix(G));
-//			System.exit(-1);
+				oldMapTime = thisMapTime;
+			}
 
 			double[] mean = new double[K];
 			int u = 0;
@@ -155,33 +233,40 @@ public class MultivariateOUModel extends GeneralizedLinearModel {
 					mean[i] += W[u++] * previous[j];
 			}
 
-			double[][] WG = new double[K][K];
-			for (int i = 0; i < K; i++) {
-				for (int j = 0; j < K; j++) {
-					for (int k = 0; k < K; k++)
-						WG[i][j] += W[i * K + k] * G[k][j];       // W
-				}
-			}
-
-//			System.err.println("\tWG:\n"+new Matrix(WG));
-
-			double[][] WGWt = new double[K][K];
-			for (int i = 0; i < K; i++) {
-				for (int j = 0; j < K; j++) {
-					for (int k = 0; k < K; k++)
-						WGWt[i][j] += WG[i][k] * W[j * K + k];
-				}
-			}
-
-//			System.err.println("\tWGWt:\n"+new Matrix(WGWt));
-
-			for (int i = 0; i < K; i++) {
-				for (int j = 0; j < K; j++)
-					WGWt[i][j] = G[i][j] - WGWt[i][j];
-
-			}
+//			// start of removable part;
+//			double[][] WG = new double[K][K];
+//			for (int i = 0; i < K; i++) {
+//				for (int j = 0; j < K; j++) {
+//					for (int k = 0; k < K; k++)
+//						WG[i][j] += W[i * K + k] * G[k][j];
+//				}
+//			}
+//
+//
+//			double[][] WGWt = new double[K][K];
+//			for (int i = 0; i < K; i++) {
+//				for (int j = 0; j < K; j++) {
+//					for (int k = 0; k < K; k++)
+//						WGWt[i][j] += WG[i][k] * W[j * K + k];
+//				}
+//			}
+//
+//
+//			for (int i = 0; i < K; i++) {
+//				for (int j = 0; j < K; j++)
+//					WGWt[i][j] = G[i][j] - WGWt[i][j];
+//
+//			}
+//
+//			double[][] oldPrecision = new Matrix(WGWt).inverse().toComponents();
+//
+//
+//			GminusWGWt = WGWt;
 
 			// calculate density of current time step
+
+			// end of removable part;
+
 
 			if (!hasEffects) {
 				for (int i = 0; i < K; i++)
@@ -194,32 +279,14 @@ public class MultivariateOUModel extends GeneralizedLinearModel {
 			}
 
 			MultivariateNormalDistribution density = new MultivariateNormalDistribution(
-					mean, new Matrix(WGWt).inverse().toComponents());
-
-//			System.err.println("\ttheta_1: "+new Vector(current));
-//			System.err.println("\tmean: "+ new Vector(mean));
-//			System.err.println("\tvariance:\n"+new Matrix(WGWt));
+					mean, conditionalPrecision);
 
 			double partialLogLikelihood = density.logPdf(current);
-//			System.err.println("\tpartial-logLikelihood: "+partialLogLikelihood);
 
-			if (partialLogLikelihood > 100) {
-				System.err.println("got here partial");
-				System.err.println("\ttheta_1: " + new Vector(current));
-				System.err.println("\tmean: " + new Vector(mean));
-				System.err.println("\tvariance:\n" + new Matrix(WGWt));
-				System.err.println("\tW:\n" + new Vector(W));
-				double[][] qMat = ((PositiveDefiniteSubstitutionModel) Q).getRates().getParameterAsMatrix();
-//				System.err.println("");
-				System.err.println("\tQ:\n" + new Matrix(qMat));
-				try {
-					System.err.println("\tQ pd? " + new Matrix(qMat).isPD());
-				} catch (Exception e) {
+			if (partialLogLikelihood > 10) {
 
-				}
-				System.err.println("\tG:\n" + new Matrix(G));
+				return Double.NEGATIVE_INFINITY;
 
-//			System.exit(-1);
 			}
 
 			logLikelihood += partialLogLikelihood;
@@ -229,16 +296,16 @@ public class MultivariateOUModel extends GeneralizedLinearModel {
 			previous = current;
 			current = tmpHolder;
 
-//			System.err.println("");
-
 		}
-//		System.err.println("MVOU logLike = "+logLikelihood);
-//		System.exit(-1);
 
 		if (logLikelihood > 100) {
 			System.err.println("got here end");
+			System.err.println("save1 = " + save);
+			System.err.println("save2 = " + save2);
 			System.exit(-1);
 		}
+
+		likelihoodKnown = true;
 
 		return logLikelihood;
 	}
@@ -252,39 +319,43 @@ public class MultivariateOUModel extends GeneralizedLinearModel {
 	}
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
+		conditionalPrecisionKnown = false;
+		likelihoodKnown = false;
 	}
 
 	protected void handleParameterChangedEvent(Parameter parameter, int index) {
-//		if( parameter == gamma )
-//			 recalculate
-//			initialPrior = new MultivariateNormalDistribution(initialPriorMean,
-//					new Matrix(gamma.getParameterAsMatrix()).inverse().toComponents());
+
+		if (parameter == gamma) {
+			conditionalPrecisionKnown = false;
+		}
+		likelihoodKnown = false;
+
 	}
 
 	protected void storeState() {
+		System.arraycopy(Wt, 0, storedWt, 0, Wt.length);
+		System.arraycopy(conditionPrecisionVector, 0, storedConditionPrecisionVector, 0, conditionPrecisionVector.length);
+		storedLogLikelihood = logLikelihood;
+		storedLikelihoodKnown = likelihoodKnown;
+		storedConditionPrecisionKnown = conditionalPrecisionKnown;
 	}
 
 	protected void restoreState() {
+		double[] holder = Wt;
+		Wt = storedWt;
+		storedWt = holder;
+
+		holder = conditionPrecisionVector;
+		conditionPrecisionVector = storedConditionPrecisionVector;
+		storedConditionPrecisionVector = holder;
+
+		logLikelihood = storedLogLikelihood;
+		likelihoodKnown = storedLikelihoodKnown;
+		conditionalPrecisionKnown = storedConditionPrecisionKnown;
 	}
 
 	protected void acceptState() {
 	}
-
-//	public double logPdf(Parameter x) {
-//		return 0;
-//	}
-
-//	public double[][] getScaleMatrix() {
-//		return new double[0][];
-//	}
-//
-//	public double[] getMean() {
-//		return new double[0];
-//	}
-//
-//	public String getType() {
-//		return MVOU_TYPE;
-//	}
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -382,4 +453,35 @@ public class MultivariateOUModel extends GeneralizedLinearModel {
 
 	};
 
+	public String getStatisticName() {
+		return getId();
+	}
+
+	public String getDimensionName(int dim) {
+		return getId() + dim;
+	}
+
+	public int getDimension() {
+		return W.length;
+	}
+
+	public double getStatisticValue(int dim) {
+
+//		int x = dim / K;
+//		int y = dim - x * K;
+
+//		if( GminusWGWt != null )
+//			return GminusWGWt[x][y];
+		if (W != null)
+			return W[dim];
+		return 0;
+	}
+
+	public String getAttributeName() {
+		return null;  //To change body of implemented methods use File | Settings | File Templates.
+	}
+
+	public double[] getAttributeValue() {
+		return null;  //To change body of implemented methods use File | Settings | File Templates.
+	}
 }

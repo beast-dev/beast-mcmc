@@ -57,7 +57,7 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 		super();
 		this.traitModel = traitModel;
 		this.treeModel = traitModel.getTreeModel();
-		precisionMatrixParameter = traitModel.getDiffusionModel().getPrecisionMatrixParameter();
+		precisionMatrixParameter = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
 		this.traitName = traitModel.getTraitName();
 //	    System.err.println("traitName = "+traitName);
 //	    System.exit(-1);

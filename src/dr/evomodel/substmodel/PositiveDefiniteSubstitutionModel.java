@@ -1,6 +1,9 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
@@ -9,8 +12,10 @@ import dr.math.MachineAccuracy;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <b>A general model of sequence substitution with stochastic variable selection</b>. A general reversible class for any
@@ -20,12 +25,9 @@ import java.util.List;
  * @version $Id: PositiveDefiniteSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 msuchard Exp $
  */
 
-public class PositiveDefiniteSubstitutionModel extends AbstractModel implements SubstitutionModel {
+public class PositiveDefiniteSubstitutionModel extends AbstractModel implements SubstitutionModel, Loggable {
 
 	public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "positiveDefiniteSubstitutionModel";
-//	public static final String INDICATOR = "rateIndicator";
-//	public static final String NUM_OUTCOMES = "numOutcomes";
-
 
 	protected DataType dataType = null;
 
@@ -34,16 +36,21 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 	protected double[] storedRelativeRates;
 
 	protected int stateCount;
+	protected final int Ksquared;
 	protected int rateCount;
 
 	private boolean eigenInitialised = false;
 	protected boolean updateMatrix = true;
 	private boolean storedUpdateMatrix = true;
 
+	private boolean precalculatedTimes = false;
+	Map<Double, Integer> mapTimes;
+
 	public PositiveDefiniteSubstitutionModel(MatrixParameter parameter) {
 		super(SVS_GENERAL_SUBSTITUTION_MODEL);
 
 		stateCount = parameter.getRowDimension();
+		Ksquared = stateCount * stateCount;
 
 		rates = parameter;
 		addParameter(rates);
@@ -55,31 +62,42 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 		return rates;
 	}
 
-//   private void setStateCount(int stateCount) {
-//        eigenInitialised = false;
-//
-//        this.stateCount = stateCount;
-//        rateCount = ((stateCount - 1) * stateCount) / 2;
-//
-//        relativeRates = new double[rateCount];
-//        storedRelativeRates = new double[rateCount];
-//        for (int i = 0; i < rateCount; i++) {
-//            relativeRates[i] = 1.0;
-//        }
-//    }
+	public void addPrecalculatedTime(double time) {
+		if (mapTimes == null)
+			mapTimes = new HashMap<Double, Integer>();
+		if (!mapTimes.containsKey(time)) {
+			mapTimes.put(time, mapTimes.size());
+			expQt = new double[Ksquared * mapTimes.size()];
+			storedExpQt = new double[Ksquared * mapTimes.size()];
+			setupMatrix();
+			updatePrecalculatedTimes();
+		}
+		precalculatedTimes = true;
+	}
+
+	private double[] expQt;
+	private double[] storedExpQt;
+
+	private void updatePrecalculatedTimes() {
+
+		double[] tempW = new double[Ksquared];
+
+		for (double deltaTime : mapTimes.keySet()) {
+			getRawTransitionProbabilities(deltaTime, tempW);
+			System.arraycopy(tempW, 0, expQt, Ksquared * mapTimes.get(deltaTime), Ksquared);
+		}
+	}
 
 	// *****************************************************************
 	// Interface Model
 	// *****************************************************************
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		// frequencyModel changed!
 		updateMatrix = true;
-//        frequenciesChanged();
+		assert false; // no submodels
 	}
 
 	protected final void handleParameterChangedEvent(Parameter parameter, int index) {
-		// relativeRates changed
 		updateMatrix = true;
 		ratesChanged();
 	}
@@ -88,13 +106,13 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 
 		storedUpdateMatrix = updateMatrix;
 
-//        System.arraycopy(relativeRates, 0, storedRelativeRates, 0, rateCount);
-
 		System.arraycopy(Eval, 0, storedEval, 0, stateCount);
 		for (int i = 0; i < stateCount; i++) {
 			System.arraycopy(Ievc[i], 0, storedIevc[i], 0, stateCount);
 			System.arraycopy(Evec[i], 0, storedEvec[i], 0, stateCount);
 		}
+
+		System.arraycopy(expQt, 0, storedExpQt, 0, Ksquared * mapTimes.size());
 
 	}
 
@@ -122,12 +140,15 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 		storedEvec = Evec;
 		Evec = tmp2;
 
+		tmp1 = storedExpQt;
+		storedExpQt = expQt;
+		expQt = tmp1;
+
 	}
 
 	protected void acceptState() {
 	} // nothing to do
 
-//    protected void frequenciesChanged() {}
 
 	protected void ratesChanged() {
 	}
@@ -135,16 +156,35 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 	protected void setupRelativeRates() {
 	}
 
-//    public FrequencyModel getFrequencyModel() {
-//        return freqModel;
-//    }
 
-	/**
-	 * @return the data type
-	 */
-//    public DataType getDataType() {
-//        return dataType;
-//    }
+	public void getTransitionProbabilities(double distance, double[] matrix) {
+
+		synchronized (this) {
+			if (updateMatrix) {
+				setupMatrix();
+				if (precalculatedTimes)
+					updatePrecalculatedTimes();
+			}
+		}
+
+		if (precalculatedTimes && mapTimes.containsKey(distance)) {
+			System.arraycopy(expQt, Ksquared * mapTimes.get(distance), matrix, 0, Ksquared);
+
+//			assert checkPrecomputedAndRawValues(distance,matrix);
+
+		} else
+			getRawTransitionProbabilities(distance, matrix);
+	}
+
+	private boolean checkPrecomputedAndRawValues(double distance, double[] precalculated) {
+		double[] compare = new double[Ksquared];
+		getRawTransitionProbabilities(distance, compare);
+		for (int i = 0; i < precalculated.length; i++) {
+			if (precalculated[i] != compare[i])
+				return false;
+		}
+		return true;
+	}
 
 	/**
 	 * get the complete transition probability matrix for the given distance
@@ -152,19 +192,9 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 	 * @param distance the expected number of substitutions
 	 * @param matrix   an array to store the matrix
 	 */
-	public void getTransitionProbabilities(double distance, double[] matrix) {
+	public void getRawTransitionProbabilities(double distance, double[] matrix) {
 		int i, j, k;
 		double temp;
-
-		// this must be synchronized to avoid being called simultaneously by
-		// two different likelihood threads - AJD
-		synchronized (this) {
-			if (updateMatrix) {
-				setupMatrix();
-			}
-		}
-
-//	    distance = -10;
 
 		// implemented a pool of iexp matrices to support multiple threads
 		// without creating a new matrix each call. - AJD
@@ -190,20 +220,6 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 			}
 		}
 		pushiexp(iexp);
-
-//	    u = 0;
-//	    for (i=0; i<stateCount; i++) {
-//			for(j=0; j<stateCount; j++) {
-//				if(i == j )
-////					matrix[u] = 0.5;
-//					matrix[u] = 0.333;
-//				else
-////					matrix[u] = 0.25;
-//					matrix[u] = 0.333;
-//				u++;
-//
-//			}
-//	    }
 	}
 
 	public FrequencyModel getFrequencyModel() {
@@ -212,6 +228,30 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 
 	public DataType getDataType() {
 		return new MyDataType(stateCount);
+	}
+
+	public LogColumn[] getColumns() {
+		LogColumn[] columns = new LogColumn[stateCount * stateCount];
+		for (int i = 0; i < stateCount * stateCount; i++)
+			columns[i] = new ProbabilityColumn(getId() + (i + 1), i);
+		return columns;
+	}
+
+	private class ProbabilityColumn extends NumberColumn {
+
+		private int index;
+		private double[] matrix;
+
+		public ProbabilityColumn(String label, int index) {
+			super(label);
+			this.index = index;
+			matrix = new double[stateCount * stateCount];
+		}
+
+		public double getDoubleValue() {
+			getTransitionProbabilities(0, matrix);
+			return matrix[index];
+		}
 	}
 
 	private class MyDataType extends DataType {
@@ -233,27 +273,13 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 	 * setup substitution matrix
 	 */
 	protected void setupMatrix() {
-//        setupRelativeRates();
 
 		if (!eigenInitialised)
 			initialiseEigen();
 
 		int i, j, k = 0;
 
-		// Set the instantaneous rate matrix
-//        for (i = 0; i < stateCount; i++) {
-//            for (j = i + 1; j < stateCount; j++) {
-//                amat[i][j] = relativeRates[k] * freqModel.getFrequency(j);
-//                amat[j][i] = relativeRates[k] * freqModel.getFrequency(i);
-//                k += 1;
-//            }
-//        }
-
-//		amat = rates.getParameterAsMatrix();
 		amat = new Matrix(rates.getParameterAsMatrix()).inverse().toComponents();
-
-//        makeValid(amat, stateCount);
-//        normalize(amat, freqModel.getFrequencies());
 
 		// copy q matrix for unit testing
 		for (i = 0; i < amat.length; i++) {
@@ -269,75 +295,6 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 		updateMatrix = false;
 	}
 
-	// Make it a valid rate matrix (make sum of rows = 0)
-//    void makeValid(double[][] matrix, int dimension) {
-//        for (int i = 0; i < dimension; i++) {
-//            double sum = 0.0;
-//            for (int j = 0; j < dimension; j++) {
-//                if (i != j)
-//                    sum += matrix[i][j];
-//            }
-//            matrix[i][i] = -sum;
-//        }
-//    }
-
-	/**
-	 * Normalize rate matrix to one expected substitution per unit time
-	 *
-	 * @param matrix the matrix to normalize to one expected substitution
-	 * @param pi     the equilibrium distribution of states
-	 */
-//    void normalize(double[][] matrix, double[] pi) {
-//        double subst = 0.0;
-//        int dimension = pi.length;
-//
-//        for (int i = 0; i < dimension; i++)
-//            subst += -matrix[i][i] * pi[i];
-//
-//        for (int i = 0; i < dimension; i++) {
-//            for (int j = 0; j < dimension; j++) {
-//                matrix[i][j] = matrix[i][j] / subst;
-//            }
-//        }
-//    }
-
-	/**
-	 * Ensures that frequencies are not smaller than MINFREQ and
-	 * that two frequencies differ by at least 2*MINFDIFF.
-	 * This avoids potential problems later when eigenvalues
-	 * are computed.
-	 */
-//    private void checkFrequencies() {
-//        // required frequency difference
-//        double MINFDIFF = 1.0E-10;
-//
-//        // lower limit on frequency
-//        double MINFREQ = 1.0E-10;
-//
-//        int maxi = 0;
-//        double sum = 0.0;
-//        double maxfreq = 0.0;
-//        for (int i = 0; i < stateCount; i++) {
-//            double freq = freqModel.getFrequency(i);
-//            if (freq < MINFREQ) freqModel.setFrequency(i, MINFREQ);
-//            if (freq > maxfreq) {
-//                maxfreq = freq;
-//                maxi = i;
-//            }
-//            sum += freqModel.getFrequency(i);
-//        }
-//        double diff = 1.0 - sum;
-//        freqModel.setFrequency(maxi, freqModel.getFrequency(maxi) + diff);
-//
-//        for (int i = 0; i < stateCount - 1; i++) {
-//            for (int j = i + 1; j < stateCount; j++) {
-//                if (freqModel.getFrequency(i) == freqModel.getFrequency(j)) {
-//                    freqModel.setFrequency(i, freqModel.getFrequency(i) + MINFDIFF);
-//                    freqModel.setFrequency(j, freqModel.getFrequency(j) - MINFDIFF);
-//                }
-//            }
-//        }
-//    }
 
 	/**
 	 * allocate memory for the Eigen routines

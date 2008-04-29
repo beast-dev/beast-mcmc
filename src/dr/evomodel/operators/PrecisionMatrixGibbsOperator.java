@@ -74,7 +74,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 			double weight) {
 		super();
 		this.traitModel = traitModel;
-		this.precisionParam = traitModel.getDiffusionModel().getPrecisionMatrixParameter();
+		this.precisionParam = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
 		this.priorDistribution = priorDistribution;
 		this.priorDf = priorDistribution.df();
 		this.priorScaleMatrix = new SymmetricMatrix(priorDistribution.inverseScaleMatrix());
@@ -178,7 +178,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 			MultivariateTraitLikelihood traitModel = (MultivariateTraitLikelihood) xo.getChild(MultivariateTraitLikelihood.class);
 			TreeModel treeModel = traitModel.getTreeModel();
 
-			MatrixParameter precMatrix = traitModel.getDiffusionModel().getPrecisionMatrixParameter();
+			MatrixParameter precMatrix = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
 
 			MultivariateDistributionLikelihood prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
 			if (!(prior.getDistribution() instanceof WishartDistribution))

@@ -93,9 +93,20 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             double weight = xo.getDoubleAttribute(WEIGHT);
-            int lower = xo.getIntegerAttribute("lower");
-            int upper = xo.getIntegerAttribute("upper");
+
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+
+            int lower = (int) parameter.getBounds().getLowerLimit(0);
+            if (xo.hasAttribute("lower"))
+                lower = xo.getIntegerAttribute("lower");
+
+            int upper = (int) parameter.getBounds().getUpperLimit(0);
+            if (xo.hasAttribute("upper"))
+                lower = xo.getIntegerAttribute("upper");
+
+            if (upper == lower || lower == (int) Double.NEGATIVE_INFINITY || upper == (int) Double.POSITIVE_INFINITY) {
+                throw new XMLParseException(this.getParserName() + " boundaries not found in parameter " + parameter.getParameterName() + " Use operator lower and upper !");
+            }
 
             return new UniformIntegerOperator(parameter, lower, upper, weight);
         }
@@ -119,8 +130,8 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newDoubleRule("upper"),
-                AttributeRule.newDoubleRule("lower"),
+                AttributeRule.newDoubleRule("upper", true),
+                AttributeRule.newDoubleRule("lower", true),
                 new ElementRule(Parameter.class)
         };
     };

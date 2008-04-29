@@ -31,6 +31,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.xml.*;
+import org.apiacoa.games.terrain.CostNodeTileTerrain;
 
 
 /**
@@ -45,12 +46,18 @@ public class RandomWalkOnMapOperator extends SimpleMCMCOperator implements Coerc
 	public static final String GRID_Y_DIMENSION = "yGridDimension";
 
 	public RandomWalkOnMapOperator(Parameter parameter,
-//	                               int xDim, int yDim,
-MapDiffusionModel mapModel,
-double windowSize,
-double weight, int mode) {
+	                               MapDiffusionModel mapModel,
+	                               double windowSize,
+	                               double weight, int mode) {
 		this.parameter = parameter;
+		this.model = mapModel;
 		this.map = mapModel.getMap();
+		this.terrain = mapModel.getTerrain();
+
+		if (this.terrain != null) {
+			maxX = terrain.getColumns();
+			maxY = terrain.getRows();
+		}
 		this.windowSize = windowSize;
 		setWeight(weight);
 		this.mode = mode;
@@ -93,8 +100,16 @@ double weight, int mode) {
 		int newX = (int) parameter.getParameterValue(index) + deltaX;
 		int newY = (int) parameter.getParameterValue(index + 1) + deltaY;
 
-		if (!map.isValidPoint(newX, newY)) {
-			throw new OperatorFailedException("proposed value outside boundaries");
+		if (map != null) {
+			if (!map.isValidPoint(newX, newY)) {
+				throw new OperatorFailedException("proposed value outside boundaries");
+			}
+		}
+
+		if (terrain != null) {
+			if (newX < 0 || newY < 0 || newX >= maxX || newY >= maxY || model.isBlocked(newX, newY)) {
+				throw new OperatorFailedException("proposed value outside boundaries");
+			}
 		}
 
 		parameter.setParameterValue(index, newX);
@@ -224,7 +239,12 @@ double weight, int mode) {
 	private int mode = CoercableMCMCOperator.DEFAULT;
 	//	private int weight = 1;
 	private TopographicalMap map;
+	private CostNodeTileTerrain terrain;
+	private MapDiffusionModel model;
 	private int numberPoints;
+
+	private int maxX;
+	private int maxY;
 
 }
 

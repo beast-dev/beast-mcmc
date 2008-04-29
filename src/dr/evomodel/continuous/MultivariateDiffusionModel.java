@@ -48,7 +48,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
 	public void check(Parameter trait) throws XMLParseException {
 	}
 
-	public MatrixParameter getPrecisionMatrixParameter() {
+	public Parameter getPrecisionParameter() {
 		return diffusionPrecisionMatrixParameter;
 	}
 
@@ -67,7 +67,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
 	}
 
 
-	private void calculatePrecisionInfo() {
+	protected void calculatePrecisionInfo() {
 		diffusionPrecisionMatrix = diffusionPrecisionMatrixParameter.getParameterAsMatrix();
 		determinatePrecisionMatrix =
 				MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(
@@ -158,7 +158,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
 	// Private instance variables
 	// **************************************************************
 
-	private MatrixParameter diffusionPrecisionMatrixParameter;
+	protected MatrixParameter diffusionPrecisionMatrixParameter;
 	private double determinatePrecisionMatrix;
 	private double savedDeterminatePrecisionMatrix;
 	private double[][] diffusionPrecisionMatrix;

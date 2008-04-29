@@ -37,9 +37,9 @@ import java.awt.*;
 import java.awt.event.*;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PriorDialog {
 
@@ -64,7 +64,7 @@ public class PriorDialog {
             PriorType.JEFFREYS_PRIOR,
     };
 
-    private String[] argumentNames = new String[] {
+    private String[] argumentNames = new String[]{
             "Lower Bound", "Upper Bound", "Exponential Mean", "Zero Offset", "Normal Mean", "Normal Stdev",
             "LogNormal Mean", "LogNormal Stdev", "Zero Offset",
             "Gamma Shape (alpha)", "Gamma Scale (beta)", "Zero Offset",
@@ -72,7 +72,7 @@ public class PriorDialog {
 
     private JComboBox priorCombo;
     private JComboBox rootHeightPriorCombo;
-    private int[][] argumentIndices = { {0, 1}, {2, 3}, {4, 5}, {6, 7, 8}, {9, 10, 11}, {}, {}, {4,5,0,1} };
+    private int[][] argumentIndices = {{0, 1}, {2, 3}, {4, 5}, {6, 7, 8}, {9, 10, 11}, {}, {}, {4, 5, 0, 1}};
     private RealNumberField initialField = new RealNumberField();
     private RealNumberField[] argumentFields = new RealNumberField[argumentNames.length];
     private OptionsPanel optionPanel;
@@ -91,7 +91,7 @@ public class PriorDialog {
         priorCombo = new JComboBox(priors);
         rootHeightPriorCombo = new JComboBox(rootHeightPriors);
 
-        truncatedCheck= new JCheckBox("Use a truncated normal distribution");
+        truncatedCheck = new JCheckBox("Use a truncated normal distribution");
         truncatedCheck.setOpaque(false);
 
         initialField.setColumns(8);
@@ -100,7 +100,7 @@ public class PriorDialog {
             argumentFields[i].setColumns(8);
         }
 
-        optionPanel = new OptionsPanel(12,12);
+        optionPanel = new OptionsPanel(12, 12);
 
         chart = new JChart(new LinearAxis(Axis.AT_MINOR_TICK, Axis.AT_MINOR_TICK),
                 new LinearAxis(Axis.AT_ZERO, Axis.AT_DATA));
@@ -123,7 +123,7 @@ public class PriorDialog {
 
         priorType = parameter.priorType;
 
-        if (parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR){
+        if (parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
             isTruncated = true;
             truncatedCheck.setSelected(isTruncated);
             priorType = PriorType.NORMAL_PRIOR;
@@ -145,8 +145,8 @@ public class PriorDialog {
         }
 
 
-       setArguments();
-       setupComponents();
+        setArguments();
+        setupComponents();
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.QUESTION_MESSAGE,
@@ -164,14 +164,16 @@ public class PriorDialog {
                 setupComponents();
                 dialog.pack();
                 dialog.repaint();
-            }});
+            }
+        });
 
         rootHeightPriorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 setupComponents();
                 dialog.pack();
                 dialog.repaint();
-            }});
+            }
+        });
 
         truncatedCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
@@ -179,7 +181,8 @@ public class PriorDialog {
                 setupComponents();
                 dialog.pack();
                 dialog.repaint();
-            }});
+            }
+        });
 
         KeyListener listener = new KeyAdapter() {
             public void keyReleased(KeyEvent e) {
@@ -194,7 +197,7 @@ public class PriorDialog {
         dialog.setVisible(true);
 
         int result = JOptionPane.CANCEL_OPTION;
-        Integer value = (Integer)optionPane.getValue();
+        Integer value = (Integer) optionPane.getValue();
         if (value != null && value != -1) {
             result = value;
         }
@@ -238,10 +241,10 @@ public class PriorDialog {
                 parameter.initial = Double.NaN;
                 return;
             } else {
-                parameter.priorType = (PriorType)rootHeightPriorCombo.getSelectedItem();
+                parameter.priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
             }
         } else {
-            parameter.priorType = (PriorType)priorCombo.getSelectedItem();
+            parameter.priorType = (PriorType) priorCombo.getSelectedItem();
         }
 
         if (parameter.priorType == PriorType.NORMAL_PRIOR && isTruncated)
@@ -280,7 +283,8 @@ public class PriorDialog {
                 if (argumentFields[4].getValue() != null) parameter.normalMean = argumentFields[4].getValue();
                 if (argumentFields[5].getValue() != null) parameter.normalStdev = argumentFields[5].getValue();
                 break;
-            default: throw new IllegalArgumentException("Unknown prior index");
+            default:
+                throw new IllegalArgumentException("Unknown prior index");
         }
     }
 
@@ -295,25 +299,25 @@ public class PriorDialog {
             if (rootHeightPriorCombo.getSelectedIndex() == 0) {
                 return;
             } else {
-                priorType = (PriorType)rootHeightPriorCombo.getSelectedItem();
+                priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
             }
         } else {
             optionPanel.addComponents(new JLabel("Prior Distribution:"), priorCombo);
-            priorType = (PriorType)priorCombo.getSelectedItem();
+            priorType = (PriorType) priorCombo.getSelectedItem();
         }
 
-       if (priorType == PriorType.NORMAL_PRIOR && isTruncated)
+        if (priorType == PriorType.NORMAL_PRIOR && isTruncated)
             priorType = PriorType.TRUNC_NORMAL_PRIOR;
 
         if (priorType != PriorType.JEFFREYS_PRIOR) {
             optionPanel.addSeparator();
 
-            if (priorType == PriorType.NORMAL_PRIOR || priorType == PriorType.TRUNC_NORMAL_PRIOR){
-                      optionPanel.addComponent(truncatedCheck);
-                  }
+            if (priorType == PriorType.NORMAL_PRIOR || priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+                optionPanel.addComponent(truncatedCheck);
+            }
 
-            for (int i = 0; i < argumentIndices[priorType.ordinal()-1].length; i++) {
-                int k = argumentIndices[priorType.ordinal()-1][i];
+            for (int i = 0; i < argumentIndices[priorType.ordinal() - 1].length; i++) {
+                int k = argumentIndices[priorType.ordinal() - 1][i];
                 optionPanel.addComponentWithLabel(argumentNames[k] + ":", argumentFields[k]);
             }
         }
@@ -335,6 +339,7 @@ public class PriorDialog {
     }
 
     NumberFormatter formatter = new NumberFormatter(4);
+
     private void setupChart() {
         chart.removeAllPlots();
 
@@ -343,16 +348,16 @@ public class PriorDialog {
             if (rootHeightPriorCombo.getSelectedIndex() == 0) {
                 return;
             } else {
-                priorType = (PriorType)rootHeightPriorCombo.getSelectedItem();
+                priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
             }
         } else {
-            priorType = (PriorType)priorCombo.getSelectedItem();
+            priorType = (PriorType) priorCombo.getSelectedItem();
         }
 
-          if (priorType == PriorType.NORMAL_PRIOR && isTruncated)
+        if (priorType == PriorType.NORMAL_PRIOR && isTruncated)
             priorType = PriorType.TRUNC_NORMAL_PRIOR;
 
-       if (priorType == PriorType.TRUNC_NORMAL_PRIOR && !isTruncated)
+        if (priorType == PriorType.TRUNC_NORMAL_PRIOR && !isTruncated)
             priorType = PriorType.NORMAL_PRIOR;
 
         Distribution distribution = null;
@@ -389,18 +394,19 @@ public class PriorDialog {
                 double truncNormalStdev = getValue(argumentFields[5].getValue(), 1.0);
                 double truncLower = getValue(argumentFields[0].getValue(), 0.0);
                 double truncUpper = getValue(argumentFields[1].getValue(), 1.0);
-//                distribution = new TruncatedNormalDistribution(truncNormalMean, truncNormalStdev, truncLower, truncUpper);
+                distribution = new TruncatedNormalDistribution(truncNormalMean, truncNormalStdev, truncLower, truncUpper);
                 break;
-            default: throw new IllegalArgumentException("Unknown prior index");
+            default:
+                throw new IllegalArgumentException("Unknown prior index");
 
         }
         chart.addPlot(new PDFPlot(distribution, offset));
         if (distribution != null) {
             quantileText.setText(formatter.format(distribution.quantile(0.025)) +
-                    "\n" +formatter.format(distribution.quantile(0.05)) +
-                    "\n" +formatter.format(distribution.quantile(0.5)) +
-                    "\n" +formatter.format(distribution.quantile(0.95)) +
-                    "\n" +formatter.format(distribution.quantile(0.975)));
+                    "\n" + formatter.format(distribution.quantile(0.05)) +
+                    "\n" + formatter.format(distribution.quantile(0.5)) +
+                    "\n" + formatter.format(distribution.quantile(0.95)) +
+                    "\n" + formatter.format(distribution.quantile(0.975)));
         }
     }
 

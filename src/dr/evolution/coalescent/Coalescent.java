@@ -96,7 +96,7 @@ public class Coalescent implements MultivariateFunction, Units {
 
 	            // AR: This was rejecting some initial coalescent intervals (presumably zero intervals?)...
 	            
-               if( demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
+               if( duration == 0.0 || demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
                    logL += - Math.log(demographicAtCoalPoint);
                 } else {
                     // remove this at some stage

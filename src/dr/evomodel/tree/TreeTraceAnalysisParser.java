@@ -26,6 +26,9 @@
 package dr.evomodel.tree;
 
 import dr.xml.*;
+import dr.evolution.tree.Tree;
+import dr.evolution.io.NewickImporter;
+import dr.evolution.io.Importer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -44,6 +47,9 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
     public final static String CRED_SET_PROBABILITY = "credSetProbability";
     public static final String FILE_NAME = "fileName";
 
+    public final static String REFERENCE_TREE = "referenceTree";
+    public final static String SHORT_REPORT = "shortReport";
+
     public String getParserName() {
         return TREE_TRACE_ANALYSIS;
     }
@@ -54,9 +60,10 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
             Reader reader;
 
             String fileName = xo.getStringAttribute(FILE_NAME);
+            String name;
             try {
                 File file = new File(fileName);
-                String name = file.getName();
+                name = file.getName();
                 String parent = file.getParent();
 
                 if (!file.isAbsolute()) {
@@ -80,16 +87,55 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
                 // leaving the burnin attribute off will result in 10% being used
                 minCladeProbability = xo.getDoubleAttribute(MIN_CLADE_PROBABILITY);
             }
-            
+
             double credSetProbability = 0.95;
             if (xo.hasAttribute(CRED_SET_PROBABILITY)) {
                 // leaving the burnin attribute off will result in 10% being used
                 credSetProbability = xo.getDoubleAttribute(CRED_SET_PROBABILITY);
             }
 
+
+            Tree referenceTree = null;
+            Reader refReader;
+            if (xo.hasAttribute(REFERENCE_TREE)) {
+                String referenceName = xo.getStringAttribute(REFERENCE_TREE);
+
+                try {
+                    File refFile = new File(referenceName);
+                    String refName = refFile.getName();
+                    String parent = refFile.getParent();
+
+                    if (!refFile.isAbsolute()) {
+                        parent = System.getProperty("user.dir");
+                    }
+                    refReader = new FileReader(new File(parent, refName));
+                } catch (FileNotFoundException fnfe) {
+                    throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+                }
+
+                try {
+                    NewickImporter importTree = new NewickImporter(refReader);
+                    if (importTree.hasTree()) {
+                        referenceTree = importTree.importNextTree();
+                    }
+                } catch (Importer.ImportException iee) {
+                    throw new XMLParseException("Reference file '" + referenceName + "' is empty.");
+                }
+            }
+
+            boolean shortReport = false;
+            if (xo.hasAttribute(SHORT_REPORT)) {
+                shortReport = xo.getBooleanAttribute(SHORT_REPORT);
+            }
+
+
             TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(new Reader[]{reader}, burnin, true);
 
-            analysis.report(minCladeProbability, credSetProbability);
+            if (shortReport) {
+                analysis.shortReport(name, referenceTree, true, minCladeProbability, credSetProbability);
+            } else {
+                analysis.report(minCladeProbability, credSetProbability);
+            }
 
             System.out.println();
             System.out.flush();
@@ -120,6 +166,8 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
             new StringAttributeRule(FILE_NAME, "name of a tree log file", "trees.log"),
             AttributeRule.newIntegerRule(BURN_IN, true),
             AttributeRule.newDoubleRule(MIN_CLADE_PROBABILITY, true),
-            AttributeRule.newDoubleRule(CRED_SET_PROBABILITY, true)
+            AttributeRule.newDoubleRule(CRED_SET_PROBABILITY, true),
+            AttributeRule.newBooleanRule(SHORT_REPORT, true),
+            AttributeRule.newStringRule(REFERENCE_TREE, true)
     };
 }

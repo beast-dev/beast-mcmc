@@ -121,7 +121,7 @@ public class TreeTraceAnalysis {
                     if (tree.getNode(j) != tree.getRoot()) {
 
                         final Object o = tree.getNodeAttribute(tree.getNode(j), "changed");
-                        if( o != null ) {
+                        if (o != null) {
                             if ((Integer) o == 1) {
                                 rateConditionalOnChange[j] += (Double) tree.getNodeAttribute(tree.getNode(j), "rate");
                             }
@@ -354,6 +354,10 @@ public class TreeTraceAnalysis {
     }
 
     public void shortReport(String name, Tree tree, boolean drawHeader) throws IOException {
+        shortReport(name, tree, drawHeader, 0.5, 0.95);
+    }
+
+    public void shortReport(String name, Tree tree, boolean drawHeader, double minCladeProbability, double credSetProbability) throws IOException {
 
         String targetTree = "";
         if (tree != null) targetTree = Tree.Utils.uniqueNewick(tree, tree.getRoot());
@@ -364,7 +368,7 @@ public class TreeTraceAnalysis {
         String mapTree = (String) treeSet.get(0);
 
         if (drawHeader) {
-            System.out.println("file\ttrees\tuniqueTrees\tp(MAP)\tMAP tree\t95credSize\ttrue_I\tp(true)\tcum(true)");
+            System.out.println("file\ttrees\tuniqueTrees\tp(MAP)\tMAP tree\t" + (int) credSetProbability * 100 + "credSize\ttrue_I\tp(true)\tcum(true)");
         }
 
         System.out.print(name + "\t");
@@ -373,7 +377,7 @@ public class TreeTraceAnalysis {
         System.out.print(highestProp + "\t");
         System.out.print(mapTree + "\t");
 
-        int credSet = (95 * totalTrees) / 100;
+        int credSet = (int) ((credSetProbability * totalTrees) / 100.);
         int sumFreq = 0;
 
         int credSetSize = -1;

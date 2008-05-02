@@ -31,7 +31,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.xml.*;
-import org.apiacoa.games.terrain.CostNodeTileTerrain;
+//import org.apiacoa.games.terrain.CostNodeTileTerrain;
 
 
 /**
@@ -52,12 +52,12 @@ public class RandomWalkOnMapOperator extends SimpleMCMCOperator implements Coerc
 		this.parameter = parameter;
 		this.model = mapModel;
 		this.map = mapModel.getMap();
-		this.terrain = mapModel.getTerrain();
-
-		if (this.terrain != null) {
-			maxX = terrain.getColumns();
-			maxY = terrain.getRows();
-		}
+//		this.terrain = mapModel.getTerrain();
+//
+//		if (this.terrain != null) {
+//			maxX = terrain.getColumns();
+//			maxY = terrain.getRows();
+//		}
 		this.windowSize = windowSize;
 		setWeight(weight);
 		this.mode = mode;
@@ -106,11 +106,11 @@ public class RandomWalkOnMapOperator extends SimpleMCMCOperator implements Coerc
 			}
 		}
 
-		if (terrain != null) {
-			if (newX < 0 || newY < 0 || newX >= maxX || newY >= maxY || model.isBlocked(newX, newY)) {
-				throw new OperatorFailedException("proposed value outside boundaries");
-			}
-		}
+//		if (terrain != null) {
+//			if (newX < 0 || newY < 0 || newX >= maxX || newY >= maxY || model.isBlocked(newX, newY)) {
+//				throw new OperatorFailedException("proposed value outside boundaries");
+//			}
+//		}
 
 		parameter.setParameterValue(index, newX);
 		parameter.setParameterValue(index + 1, newY);
@@ -239,7 +239,7 @@ public class RandomWalkOnMapOperator extends SimpleMCMCOperator implements Coerc
 	private int mode = CoercableMCMCOperator.DEFAULT;
 	//	private int weight = 1;
 	private TopographicalMap map;
-	private CostNodeTileTerrain terrain;
+//	private CostNodeTileTerrain terrain;
 	private MapDiffusionModel model;
 	private int numberPoints;
 

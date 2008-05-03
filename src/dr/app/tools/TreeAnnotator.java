@@ -154,6 +154,7 @@ public class TreeAnnotator {
         FileReader fileReader = new FileReader(inputFileName);
         NexusImporter importer = new NexusImporter(fileReader);
         cladeSystem = new CladeSystem(targetTree);
+	    totalTreesUsed = 0;
         try {
             boolean firstTree = true;
             int counter = 0;
@@ -167,6 +168,7 @@ public class TreeAnnotator {
                     }
 
                     cladeSystem.collectAttributes(tree);
+	                totalTreesUsed += 1;
                 }
                 if (counter > 0 && counter % stepSize == 0) {
                     System.out.print("*");
@@ -175,6 +177,8 @@ public class TreeAnnotator {
                 counter++;
 
             }
+
+	        cladeSystem.calculateCladeCredibilities(totalTreesUsed);
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             return;
@@ -348,6 +352,9 @@ public class TreeAnnotator {
             if (tree.isExternal(node)) {
 
                 int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+	            if (index < 0) {
+		            throw new IllegalArgumentException("Taxon, " + tree.getNodeTaxon(node).getId() + ", not found in target tree");
+	            }
                 bits.set(index);
 
             } else {
@@ -396,6 +403,8 @@ public class TreeAnnotator {
                     i++;
                 }
                 clade.attributeValues.add(values);
+
+	            clade.setCount(clade.getCount() + 1);
             }
         }
 

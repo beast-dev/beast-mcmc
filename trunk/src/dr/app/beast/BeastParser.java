@@ -35,6 +35,7 @@ import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
+import dr.inference.trace.EBSPAnalysis;
 
 import java.util.Iterator;
 
@@ -105,7 +106,8 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.speciation.BirthDeathModel.PARSER);
 		// on trial
 		addXMLObjectParser(dr.evomodel.speciation.BirthDeathNee94Model.PARSER);
-		addXMLObjectParser(dr.evomodel.speciation.BranchingLikelihood.PARSER);
+        addXMLObjectParser(dr.evomodel.speciation.BirthDeathGernhard08Model.PARSER);
+        addXMLObjectParser(dr.evomodel.speciation.BranchingLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.speciation.BetaSplittingModel.PARSER);
 
 		addXMLObjectParser(dr.evomodel.coalescent.CoalescentSimulator.PARSER);
@@ -304,7 +306,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.trace.LogFileTraceExporter.PARSER);
 
 		addXMLObjectParser(dr.inference.trace.MarginalLikelihoodAnalysis.PARSER);
-		addXMLObjectParser(dr.inference.trace.VariableDemographicAnalysis.PARSER);
+		addXMLObjectParser(EBSPAnalysis.PARSER);
 
 		// Trait models
 		addXMLObjectParser(dr.evomodel.continuous.MultivariateDiffusionModel.PARSER);
@@ -324,7 +326,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.MVGAMMA_PRIOR_PARSER);
 		addXMLObjectParser(dr.evomodel.continuous.InhibitionAssayLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.NodeTraitLogger.PARSER);
-		addXMLObjectParser(dr.evomodel.continuous.CostMapModel.PARSER);
+		//addXMLObjectParser(dr.evomodel.continuous.CostMapModel.PARSER);
 
 		//Multivariate OU Process
 		addXMLObjectParser(dr.inference.operators.MVOUCovarianceOperator.PARSER);

@@ -99,7 +99,8 @@ public class TreelengthStatistic extends Statistic.Abstract implements TreeStati
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(TreeModel.class),
+            AttributeRule.newStringRule(NAME, true),
+            new ElementRule(TreeModel.class),
 		};
 	};
 

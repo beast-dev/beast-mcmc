@@ -31,11 +31,11 @@ import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.operators.InternalTraitGibbsOperator;
 import dr.evomodel.operators.PrecisionMatrixGibbsOperator;
 import dr.evomodel.operators.RandomWalkOnMapOperator;
+
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
-import dr.inference.trace.EBSPAnalysis;
 
 import java.util.Iterator;
 
@@ -275,7 +275,9 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.model.LogarithmStatistic.PARSER);
 		addXMLObjectParser(dr.inference.model.ExpressionStatistic.PARSER);
 
-		addXMLObjectParser(dr.inference.model.TestStatistic.PARSER);
+        addXMLObjectParser(dr.inference.model.RPNcalculatorStatistic .PARSER);
+
+        addXMLObjectParser(dr.inference.model.TestStatistic.PARSER);
 		addXMLObjectParser(dr.inference.model.NotStatistic.PARSER);
 
 		addXMLObjectParser(dr.inference.mcmc.MCMC.PARSER);
@@ -306,7 +308,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.trace.LogFileTraceExporter.PARSER);
 
 		addXMLObjectParser(dr.inference.trace.MarginalLikelihoodAnalysis.PARSER);
-		addXMLObjectParser(EBSPAnalysis.PARSER);
+		addXMLObjectParser(dr.inference.trace.EBSPAnalysis.PARSER);
 
 		// Trait models
 		addXMLObjectParser(dr.evomodel.continuous.MultivariateDiffusionModel.PARSER);

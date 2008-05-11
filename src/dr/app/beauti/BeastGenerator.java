@@ -47,7 +47,6 @@ import dr.evomodel.operators.TreeBitMoveOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
-import dr.evomodel.speciation.BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.YuleModel;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;

@@ -28,9 +28,8 @@ package dr.evomodel.treelikelihood;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
 import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -42,9 +41,8 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -76,7 +74,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
                                       SiteModel siteModel,
                                       BranchRateModel branchRateModel,
                                       boolean useAmbiguities,
-                                      boolean storePartials,
+                                      //boolean storePartials,
                                       boolean useScaling)
     {
 
@@ -203,7 +201,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
                         first = false;
                     }
                     sb.append(taxon.getId());
-                    deltaTips.add(new Integer(node.getNumber()));
+                    deltaTips.add(node.getNumber());
                 }
             }
             sb.append("}");
@@ -376,7 +374,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
      * Traverse the tree calculating partial likelihoods.
      * @return whether the partials for this node were recalculated.
      */
-    private final boolean traverse(Tree tree, NodeRef node, SiteModel currentSiteModel) {
+    private boolean traverse(Tree tree, NodeRef node, SiteModel currentSiteModel) {
 
         boolean update = false;
 
@@ -481,14 +479,14 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             boolean useAmbiguities = false;
-            boolean storePartials = true;
+//            boolean storePartials = true;
             boolean useScaling = false;
             if (xo.hasAttribute(USE_AMBIGUITIES)) {
                 useAmbiguities = xo.getBooleanAttribute(USE_AMBIGUITIES);
             }
-            if (xo.hasAttribute(STORE_PARTIALS)) {
-                storePartials = xo.getBooleanAttribute(STORE_PARTIALS);
-            }
+//            if (xo.hasAttribute(STORE_PARTIALS)) {
+//                storePartials = xo.getBooleanAttribute(STORE_PARTIALS);
+//            }
             if (xo.hasAttribute(USE_SCALING)) {
                 useScaling = xo.getBooleanAttribute(USE_SCALING);
             }
@@ -498,7 +496,10 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
             BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
 
-            AdvancedTreeLikelihood treeLikelihood = new AdvancedTreeLikelihood(patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling);
+            AdvancedTreeLikelihood treeLikelihood = new AdvancedTreeLikelihood(patternList, treeModel, siteModel,
+                    branchRateModel, useAmbiguities,
+                    //storePartials,
+                    useScaling);
 
             if (xo.hasSocket(TIPS)) {
                 SiteModel siteModel2 = (SiteModel)xo.getSocketChild(TIPS);
@@ -562,7 +563,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
                 AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-                AttributeRule.newBooleanRule(STORE_PARTIALS, true),
+               // AttributeRule.newBooleanRule(STORE_PARTIALS, true),
                 AttributeRule.newBooleanRule(USE_SCALING, true),
                 new ElementRule(TIPS, SiteModel.class, "A siteModel that will be applied only to the tips.", 0, 1),
                 new ElementRule(DELTA,
@@ -607,7 +608,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
         Set leafSet;
         int node;
         boolean includeStem;
-    };
+    }
 
     // **************************************************************
     // INSTANCE VARIABLES

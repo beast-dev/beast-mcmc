@@ -60,16 +60,16 @@
         <treeModel idref="treeModel1"/>
     </treeLengthStatistic>
 
-    <mcmc id="mcmc1" chainLength="1000000" verbose="false">
+    <mcmc id="mcmc1" chainLength="10000000" verbose="false">
         <speciationLikelihood idref="speciation"/>
-        <log id="logScreen2" logEvery="10000">
+        <log id="logScreen2" logEvery="100000">
             <column dp="4">
                 <likelihood idref="speciation"/>
                 <parameter idref="treeModel1.rootHeight"/>
                 <treeLengthStatistic idref="TL"/>
             </column>
         </log>
-        <log id="log1" logEvery="5" fileName="yulePrior.log">
+        <log id="log1" logEvery="10" fileName="yulePrior.log">
             <likelihood idref="speciation"/>
             <parameter idref="treeModel1.rootHeight"/>
             <treeLengthStatistic idref="TL"/>

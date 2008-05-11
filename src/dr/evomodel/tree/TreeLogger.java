@@ -64,7 +64,6 @@ public class TreeLogger extends MCLogger {
     private BranchAttributeProvider[] branchAttributeProviders;
 
     private boolean nexusFormat = false;
-    private boolean sortTranslationTable = false;
     public boolean usingRates = false;
     public boolean substitutions = false;
     private Map<String, Integer> idMap = new HashMap<String, Integer>();
@@ -83,7 +82,6 @@ public class TreeLogger extends MCLogger {
         super(formatter, logEvery);
 
         this.nexusFormat = nexusFormat;
-        this.sortTranslationTable = sortTranslationTable;
 
         this.branchRateProvider = branchRateProvider;
 

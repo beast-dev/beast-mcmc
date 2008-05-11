@@ -135,9 +135,8 @@ public class PriorsPanel extends JPanel implements Exportable {
 					"Coalescent: Expansion Growth",
 					"Coalescent: Bayesian Skyline",
                     "Coalescent: Extended Bayesian Skyline",
-                    "Speciation: Yule Process"
-					// Until we have tested the Birth-Death process properly, I have hidden this option
-					//"Speciation: Birth-Death Process"
+                    "Speciation: Yule Process",
+                    "Speciation: Birth-Death Process"
 			});
 		}
 		setupComponent(treePriorCombo);

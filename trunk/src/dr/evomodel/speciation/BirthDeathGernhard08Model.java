@@ -22,9 +22,12 @@ import static org.apache.commons.math.special.Gamma.logGamma;
  */
 public class BirthDeathGernhard08Model extends SpeciationModel {
 
-    public static final String BIRTH_DEATH_MODEL = "birthDeathModelGernhard08";
+    public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
     public static String BIRTHDIFF_RATE = "birthMinusDeathRate";
     public static String RELATIVE_DEATH_RATE = "relativeDeathRate";
+
+    public static String BIRTHDIFF_RATE_PARAM_NAME = "birthDeath.BminusDRate";
+    public static String RELATIVE_DEATH_RATE_PARAM_NAME = "birthDeath.DoverB";
 
     private Parameter relativeDeathRateParameter;
     private Parameter birthDiffRateParameter;

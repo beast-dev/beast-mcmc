@@ -60,20 +60,20 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
      * @return
      */
     public double calculateTreeLogLikelihood(Tree tree) {
-        double logL = 0.0;
+        final int taxonCount = tree.getExternalNodeCount();
+        double logL = logTreeProbability(taxonCount);
 
         for (int j = 0; j < tree.getInternalNodeCount(); j++) {
             logL += logNodeProbability(tree, tree.getInternalNode(j));
         }
 
-        final int taxonCount = tree.getExternalNodeCount();
         if (includeExternalNodesInLikelihoodCalculation()) {
             for (int j = 0; j < taxonCount; j++) {
                 logL += logNodeProbability(tree, tree.getExternalNode(j));
             }
         }
 
-        return logTreeProbability(taxonCount) + logL;
+        return logL;
     }
 
     // **************************************************************

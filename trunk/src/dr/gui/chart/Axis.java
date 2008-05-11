@@ -313,20 +313,14 @@ public interface Axis {
          *	return show label for first tick flag
          */
         public boolean getLabelFirst() {
-            if (getMinorTickCount(-1)==0) // The first tick is a label anyway
-                return false;
-            else
-                return labelFirst;
+            return getMinorTickCount(-1) != 0 && labelFirst;
         }
 
         /**
          *	return show label for last tick flag
          */
         public boolean getLabelLast() {
-            if (getMinorTickCount(majorTickCount-1)==0) // The last tick is a label anyway
-                return false;
-            else
-                return labelLast;
+            return getMinorTickCount(majorTickCount - 1) != 0 && labelLast;
         }
 
         /**
@@ -736,8 +730,8 @@ public interface Axis {
             if (!isCalibrated)
                 calibrate();
 
-            double f=(transform(value)-transform(minAxis))/(transform(maxAxis)-transform(minAxis));
-            return f;
+            final double ta = transform(minAxis);
+            return (transform(value)- ta)/(transform(maxAxis)- ta);
         }
 
         /**

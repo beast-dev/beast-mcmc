@@ -71,10 +71,11 @@ public class ChartSetupDialog {
 		optionPanel.addComponents(maxXLabel, maxXValue);
 		manualXAxis.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent changeEvent) {
-				minXLabel.setEnabled(manualXAxis.isSelected());
-				minXValue.setEnabled(manualXAxis.isSelected());
-				maxXLabel.setEnabled(manualXAxis.isSelected());
-				maxXValue.setEnabled(manualXAxis.isSelected());
+                final boolean xaSelected = manualXAxis.isSelected();
+                minXLabel.setEnabled(xaSelected);
+				minXValue.setEnabled(xaSelected);
+				maxXLabel.setEnabled(xaSelected);
+				maxXValue.setEnabled(xaSelected);
 			}
 		});
 		manualXAxis.setSelected(true);
@@ -93,16 +94,15 @@ public class ChartSetupDialog {
 		optionPanel.addComponents(maxYLabel, maxYValue);
 		manualYAxis.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent changeEvent) {
-				minYLabel.setEnabled(manualYAxis.isSelected());
-				minYValue.setEnabled(manualYAxis.isSelected());
-				maxYLabel.setEnabled(manualYAxis.isSelected());
-				maxYValue.setEnabled(manualYAxis.isSelected());
+                final boolean yaSelected = manualYAxis.isSelected();
+                minYLabel.setEnabled(yaSelected);
+				minYValue.setEnabled(yaSelected);
+				maxYLabel.setEnabled(yaSelected);
+				maxYValue.setEnabled(yaSelected);
 			}
 		});
 		manualYAxis.setSelected(true);
 		manualYAxis.setSelected(false);
-
-
 	}
 
 	public int showDialog(JChart chart) {
@@ -115,21 +115,25 @@ public class ChartSetupDialog {
 				null);
 		optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-		if (canLogXAxis) {
-			logXAxis.setSelected(chart.getXAxis() instanceof LogAxis);
+        Axis xAxis = chart.getXAxis();
+        Axis yAxis = chart.getYAxis();
+
+        if (canLogXAxis) {
+			logXAxis.setSelected(xAxis instanceof LogAxis);
 		}
-		if (canLogYAxis) {
-			logYAxis.setSelected(chart.getYAxis() instanceof LogAxis);
+
+        if (canLogYAxis) {
+			logYAxis.setSelected(yAxis instanceof LogAxis);
 		}
 
 		if (!manualXAxis.isSelected()) {
-			minXValue.setValue(chart.getXAxis().getMinAxis());
-			maxXValue.setValue(chart.getXAxis().getMaxAxis());
+			minXValue.setValue(xAxis.getMinAxis());
+			maxXValue.setValue(xAxis.getMaxAxis());
 		}
 
 		if (!manualYAxis.isSelected()) {
-			minYValue.setValue(chart.getYAxis().getMinAxis());
-			maxYValue.setValue(chart.getYAxis().getMaxAxis());
+			minYValue.setValue(yAxis.getMinAxis());
+			maxYValue.setValue(yAxis.getMaxAxis());
 		}
 
 		final JDialog dialog = optionPane.createDialog(frame, "Setup Chart");
@@ -137,39 +141,41 @@ public class ChartSetupDialog {
 
 		dialog.setVisible(true);
 
-		int result = JOptionPane.CANCEL_OPTION;
-		Integer value = (Integer)optionPane.getValue();
-		if (value != null && value.intValue() != -1) {
-			result = value.intValue();
-		}
 
-		if (result == JOptionPane.OK_OPTION) {
+		final Integer value = (Integer)optionPane.getValue();
+        final int result = (value != null && value != -1) ? value : JOptionPane.CANCEL_OPTION;
+
+        if (result == JOptionPane.OK_OPTION) {
 			if (canLogXAxis) {
 				if (logXAxis.isSelected()) {
-					chart.setXAxis(new LogAxis());
+					xAxis = new LogAxis();
 				} else {
-					chart.setXAxis(new LinearAxis());
+					xAxis = new LinearAxis();
 				}
+                chart.setXAxis(xAxis);
 			}
-			if (manualXAxis.isSelected()) {
-				chart.getXAxis().setManualRange(minXValue.getValue(), maxXValue.getValue());
-                chart.getXAxis().setAxisFlags(Axis.AT_VALUE, Axis.AT_VALUE);
+
+            if (manualXAxis.isSelected()) {
+				xAxis.setManualRange(minXValue.getValue(), maxXValue.getValue());
+                xAxis.setAxisFlags(Axis.AT_VALUE, Axis.AT_VALUE);
 			} else {
-				chart.getXAxis().setAxisFlags(defaultMinXAxisFlag, defaultMaxXAxisFlag);
+				xAxis.setAxisFlags(defaultMinXAxisFlag, defaultMaxXAxisFlag);
 			}
 
 			if (canLogYAxis) {
 				if (logYAxis.isSelected()) {
-					chart.setYAxis(new LogAxis());
+					yAxis = new LogAxis();
 				} else {
-					chart.setYAxis(new LinearAxis());
+					yAxis = new LinearAxis();
 				}
-			}
-			if (manualYAxis.isSelected()) {
-				chart.getYAxis().setManualRange(minYValue.getValue(), maxYValue.getValue());
-                chart.getYAxis().setAxisFlags(Axis.AT_VALUE, Axis.AT_VALUE);
+                chart.setYAxis(yAxis);
+            }
+
+            if (manualYAxis.isSelected()) {
+				yAxis.setManualRange(minYValue.getValue(), maxYValue.getValue());
+                yAxis.setAxisFlags(Axis.AT_VALUE, Axis.AT_VALUE);
 			} else {
-				chart.getYAxis().setAxisFlags(defaultMinYAxisFlag, defaultMaxYAxisFlag);
+				yAxis.setAxisFlags(defaultMinYAxisFlag, defaultMaxYAxisFlag);
 			}
 		}
 

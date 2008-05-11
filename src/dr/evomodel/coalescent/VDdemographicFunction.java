@@ -24,7 +24,8 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
     TreeIntervals[] ti;
 
     public VDdemographicFunction(Tree[] trees, VariableDemographicModel.Type type,
-                                 double[] indicatorParameter, double[] popSizeParameter, boolean logSpace) {
+                                 double[] indicatorParameter, double[] popSizeParameter, boolean logSpace,
+                                 boolean mid) {
         super(trees[0].getUnits());
         this.type = type;
 
@@ -40,7 +41,7 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         alltimes = new double[tot];
 
         setDirty();
-        setup(trees, indicatorParameter, popSizeParameter, logSpace);
+        setup(trees, indicatorParameter, popSizeParameter, logSpace, mid);
     }
 
     /**
@@ -137,7 +138,7 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         return false;
     }
 
-    void setup(Tree[] trees, double[] indicatorParameter, double[] popSizes, boolean logSpace) {
+    void setup(Tree[] trees, double[] indicatorParameter, double[] popSizes, boolean logSpace, boolean mid) {
         // boolean was = dirty;
         if( dirty ) {
             boolean any = false;
@@ -192,12 +193,11 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
 
             values[0] = logSpace ? Math.exp(popSizes[0]) : popSizes[0];
 
-
             int n = 0;
             for(int k = 0; k < nd && n+1 < tot; ++k) {
 
                 if( indicatorParameter[k] > 0 ) {
-                    times[n+1] = alltimes[k];
+                    times[n+1] = mid ? ((alltimes[k] + (k > 0 ? alltimes[k-1] : 0))/2) : alltimes[k];
 
                     values[n+1] = logSpace ? Math.exp(popSizes[k+1]) : popSizes[k+1];
                     intervals[n] = times[n+1] - times[n];
@@ -280,20 +280,27 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
 
         assert (float)start <= (float)(time0 + interval) && start >= time0 && (float)end <= (float)(time0 + interval) && end >= time0;
 
-        // final double pop0 = popStart + ((start - time0) / interval) * popDiff;
-        // final double pop1 = popStart + ((end - time0) / interval) * popDiff;
+//        final double pop0 = popStart + ((start - time0) / interval) * popDiff;
+//       final double pop1 = popStart + ((end - time0) / interval) * popDiff;
 
         // do same as above more effeciently
-        final double r = popDiff / interval;
-        final double x = popStart - time0 * r;
-        final double pop0 = x + start * r;
-        final double pop1 = x + end * r;
+//        final double r = popDiff / interval;
+//        final double x = popStart - time0 * r;
+//        final double pop0 = x + start * r;
+//        final double pop1 = x + end * r;
+        //better numerical stability but not perfect
+        double p1minusp0 = ((end-start)/interval) * popDiff;
 
-        if( pop0 == pop1 ) {
-            // either dx == 0 or very small (numerical inaccuracy)
+        double v = interval * (popStart / popDiff);
+        final double p1overp0 = (v + (end- time0)) / (v + (start- time0));
+        if( p1minusp0 == 0.0 || p1overp0 <= 0 ) {
+            // either dx == 0 or is very small (numerical inaccuracy)
+            final double pop0 = popStart + ((start - time0) / interval) * popDiff;
             return dx/pop0;
         }
-        return dx * Math.log(pop1/pop0) / (pop1 - pop0);
+
+        return dx * Math.log(p1overp0) / p1minusp0;
+       // return dx * Math.log(pop1/pop0) / (pop1 - pop0);*/
     }
 
     private double intensityLinInterval(int index) {

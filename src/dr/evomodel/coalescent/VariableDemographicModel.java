@@ -23,6 +23,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     public static String POP_TREE = "ptree";
 
     public static final String LOG_SPACE = "logUnits";
+    public static final String USE_MIDPOINTS = "useMidpoints";
 
     public static final String TYPE = "type";
     public static final String STEPWISE = "stepwise";
@@ -33,14 +34,11 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     private Parameter indicatorParameter;
     private Type type;
     private boolean logSpace;
+    private boolean mid;
     private TreeModel[] trees;
     private VDdemographicFunction demoFunction = null;
     private VDdemographicFunction savedDemoFunction = null;
     private double[] populationFactors;
-
-//    public Parameter getIndices() {
-//        return indicatorParameter;
-//    }
 
     public Parameter getPopulationValues() {
         return popSizeParameter;
@@ -52,8 +50,9 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         EXPONENTIAL
     }
 
-    public VariableDemographicModel(TreeModel[] trees, double[] popFactors, Parameter popSizeParameter, Parameter indicatorParameter,
-                                    Type type, boolean logSpace) {
+    public VariableDemographicModel(TreeModel[] trees, double[] popFactors,
+                                    Parameter popSizeParameter, Parameter indicatorParameter,
+                                    Type type, boolean logSpace, boolean mid) {
         super(MODEL_NAME);
 
         this.popSizeParameter = popSizeParameter;
@@ -61,7 +60,6 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
 
         this.populationFactors = popFactors;
 
-        //final int redcueDim = type == Type.STEPWISE ? 1 : 0;
         int events = 0;
         for( Tree t : trees ) {
             // number of coalescent envents
@@ -77,9 +75,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         final int nIndicators = indicatorParameter.getDimension();
         this.type = type;
         this.logSpace = logSpace;
-//        if( logSpace ) {
-//            throw new IllegalArgumentException("sorry log space not implemented");
-//        }
+        this.mid = mid;
 
         if (popSizes != events) {
             throw new IllegalArgumentException("Dimension of population parameter (" + popSizes +
@@ -128,10 +124,10 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     public VDdemographicFunction getDemographicFunction() {
         if( demoFunction == null ) {
             demoFunction = new VDdemographicFunction(trees, type,
-                    indicatorParameter.getParameterValues(), popSizeParameter.getParameterValues(), logSpace);
+                    indicatorParameter.getParameterValues(), popSizeParameter.getParameterValues(), logSpace, mid);
         } else {
             demoFunction.setup(trees, indicatorParameter.getParameterValues(), popSizeParameter.getParameterValues(),
-                    logSpace);
+                    logSpace, mid);
         }
         return demoFunction;
     }
@@ -170,13 +166,6 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     }
 
     protected void storeState() {
-        //System.out.println("store");
-
-        /*for (int u = 0; u < 2; ++u) {
-            System.out.println(u + " " + getModel(u));
-          System.out.println(Arrays.toString(demoFunction.ttimes[u]));
-        }
-*/
         savedDemoFunction = demoFunction;
     }
 
@@ -184,12 +173,6 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         //System.out.println("restore");
         demoFunction = savedDemoFunction;
         savedDemoFunction = null;
-        
-        /*for (int u = 0; u < 2; ++u) {
-            System.out.println(u + " " + getModel(u));
-            System.out.println(Arrays.toString(demoFunction.ttimes[u]));
-        }*/
-        //demoFunction.setDirty(); demoFunction.setup();
     }
 
 
@@ -212,7 +195,6 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
             final int nc = cxo.getChildCount();
             TreeModel[] treeModels = new TreeModel[nc];
             double[] populationFactor = new double[nc];
-            //Parameter[] branchFactors = new Parameter[nc];
 
             for(int k = 0; k < treeModels.length; ++k) {
                 final XMLObject child = (XMLObject) cxo.getChild(k);
@@ -237,10 +219,13 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
             }
 
             final boolean logSpace = xo.hasAttribute(LOG_SPACE) && xo.getBooleanAttribute(LOG_SPACE);
+            final boolean useMid = xo.hasAttribute(USE_MIDPOINTS) && xo.getBooleanAttribute(USE_MIDPOINTS);
 
             Logger.getLogger("dr.evomodel").info("Variable demographic: " + type.toString() + " control points");
 
-            return new VariableDemographicModel(treeModels, populationFactor, popParam, indicatorParam, type, logSpace);
+            return new VariableDemographicModel(treeModels, populationFactor, popParam, indicatorParam, type,
+                    logSpace, useMid);
+
         }
 
         //************************************************************************
@@ -263,6 +248,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(VariableSkylineLikelihood.TYPE, true),
                  AttributeRule.newBooleanRule(LOG_SPACE, true),
+                 AttributeRule.newBooleanRule(USE_MIDPOINTS, true),
 
                 new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)

@@ -20,7 +20,7 @@ import java.util.Arrays;
 /**
  @author Joseph Heled
  */
-public class VariableDemographicAnalysis extends TabularData {
+public class EBSPAnalysis extends TabularData {
 
     private double[] xPoints;
     private double[] means;
@@ -30,9 +30,9 @@ public class VariableDemographicAnalysis extends TabularData {
     private double[] HPDLevels;
     private boolean quantiles;
 
-    VariableDemographicAnalysis(File log, File[] treeFiles, VariableDemographicModel.Type modelType,
+    EBSPAnalysis(File log, File[] treeFiles, VariableDemographicModel.Type modelType,
                                 String firstColumnName, String firstIndicatorColumnName, double burnIn,
-                                double[] inHPDLevels, boolean quantiles, boolean logSpace)
+                                double[] inHPDLevels, boolean quantiles, boolean logSpace, boolean  mid)
             throws IOException, Importer.ImportException, TraceException {
 
         LogFileTraces ltraces = new LogFileTraces(log.getCanonicalPath(), log);
@@ -134,7 +134,7 @@ public class VariableDemographicAnalysis extends TabularData {
                     tt[nt] = treeImporters[nt].importNextTree();
                 }
                 final VDdemographicFunction demoFunction =
-                        new VDdemographicFunction(tt, modelType, indicators, pop, logSpace);
+                        new VDdemographicFunction(tt, modelType, indicators, pop, logSpace, mid);
                 double[] x = demoFunction.allTimePoints();
                 for(int k = 0; k < x.length; ++k) {
                     //assert x[k] >= 0 : " " + k + " " + x[k];
@@ -189,8 +189,8 @@ public class VariableDemographicAnalysis extends TabularData {
         }
     }
 
-    private String[] columnNames = {"time", "mean", "median"};
-          //, "hpd lower", "hpd upper"};
+    private final String[] columnNames = {"time", "mean", "median"};
+
     public int nColumns() {
         return columnNames.length + 2*HPDLevels.length;
     }
@@ -202,8 +202,8 @@ public class VariableDemographicAnalysis extends TabularData {
             return columnNames[nColumn];
         }
         nColumn -= fixed;
-        double p = HPDLevels[nColumn/2];
-        String s = ( nColumn % 2 == 0 ) ? "lower" : "upper";
+        final double p = HPDLevels[nColumn/2];
+        final String s = ( nColumn % 2 == 0 ) ? "lower" : "upper";
         return (quantiles ? "cpd " : "hpd ") + s + " " + Math.round(p*100);
     }
 
@@ -249,6 +249,7 @@ public class VariableDemographicAnalysis extends TabularData {
         public static final String HPD_LEVELS = "Confidencelevels";
         public static final String QUANTILES = "useQuantiles";
         public static final String LOG_SPACE = VariableDemographicModel.LOG_SPACE;
+        public static final String USE_MIDDLE = VariableDemographicModel.USE_MIDPOINTS;
         
         public static final String TREE_LOG = "treeOfLoci";
 
@@ -295,8 +296,10 @@ public class VariableDemographicAnalysis extends TabularData {
 
                 final boolean quantiles = xo.hasAttribute(QUANTILES) && xo.getBooleanAttribute(QUANTILES);
                 final boolean logSpace = xo.hasAttribute(LOG_SPACE) && xo.getBooleanAttribute(LOG_SPACE);
-                return new VariableDemographicAnalysis(log, treeFiles, modelType, populationFirstColumn,
-                        indicatorsFirstColumn, burnin, hpdLevels, quantiles, logSpace);
+                final boolean useMid = xo.hasAttribute(USE_MIDDLE) && xo.getBooleanAttribute(USE_MIDDLE);
+                
+                return new EBSPAnalysis(log, treeFiles, modelType, populationFirstColumn,
+                        indicatorsFirstColumn, burnin, hpdLevels, quantiles, logSpace, useMid);
 
             } catch (java.io.IOException ioe) {
                 throw new XMLParseException(ioe.getMessage());
@@ -312,11 +315,11 @@ public class VariableDemographicAnalysis extends TabularData {
         //************************************************************************
 
         public String getParserDescription() {
-            return "reconstruct population graph from variable dimension run.";
+            return "reconstruct population graph from EBSP run.";
         }
 
         public Class getReturnType() {
-            return VariableDemographicAnalysis.class;
+            return EBSPAnalysis.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -325,10 +328,12 @@ public class VariableDemographicAnalysis extends TabularData {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(BURN_IN, true, "The number of states (not sampled states, but" +
-                        " actual states) that are discarded from the beginning of the trace before doing the analysis"),
+                        " actual states) that are discarded from the beginning of the trace and are excluded from " +
+                        "the analysis"),
                 AttributeRule.newDoubleArrayRule(HPD_LEVELS, true),
                 AttributeRule.newBooleanRule(QUANTILES, true),
                 AttributeRule.newBooleanRule(LOG_SPACE, true),
+                AttributeRule.newBooleanRule(USE_MIDDLE, true),
                 
                 new ElementRule(LOG_FILE_NAME, String.class, "The name of a BEAST log file"),
                 new ElementRule(TREE_FILE_NAMES,

@@ -103,10 +103,16 @@ public class BeastParser extends XMLParser {
 
 		addXMLObjectParser(dr.evomodel.speciation.SpeciationLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.speciation.YuleModel.PARSER);
-		addXMLObjectParser(dr.evomodel.speciation.BirthDeathModel.PARSER);
-		// on trial
-		addXMLObjectParser(dr.evomodel.speciation.BirthDeathNee94Model.PARSER);
+
+        // Proven incorrect
+        //addXMLObjectParser(dr.evomodel.speciation.BirthDeathModel.PARSER);
+
+        // on trial - trial failed
+		//addXMLObjectParser(dr.evomodel.speciation.BirthDeathNee94Model.PARSER);
+
+        // Current official birth death model
         addXMLObjectParser(dr.evomodel.speciation.BirthDeathGernhard08Model.PARSER);
+
         addXMLObjectParser(dr.evomodel.speciation.BranchingLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.speciation.BetaSplittingModel.PARSER);
 

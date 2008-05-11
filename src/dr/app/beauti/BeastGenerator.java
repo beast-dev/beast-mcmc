@@ -46,6 +46,7 @@ import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.TreeBitMoveOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
+import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.YuleModel;
@@ -498,6 +499,26 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == BIRTH_DEATH) {
             writer.writeText("");
             writer.writeComment("A prior on the distribution node heights defined given");
+            writer.writeComment("a Birth-Death speciation process (Gernhard 2008).");
+            writer.writeOpenTag(
+                    BirthDeathGernhard08Model.BIRTH_DEATH_MODEL,
+                    new Attribute[]{
+                            new Attribute.Default<String>("id", "birthDeath"),
+                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
+                    }
+            );
+
+            writer.writeOpenTag(BirthDeathGernhard08Model.BIRTHDIFF_RATE);
+            writeParameter(BirthDeathGernhard08Model.BIRTHDIFF_RATE, writer);
+            writer.writeCloseTag(BirthDeathGernhard08Model.BIRTHDIFF_RATE);
+            writer.writeOpenTag(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE);
+            writeParameter(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE, writer);
+            writer.writeCloseTag(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE);
+
+            writer.writeCloseTag(BirthDeathGernhard08Model.BIRTHDIFF_RATE);
+            
+           /* writer.writeText("");
+            writer.writeComment("A prior on the distribution node heights defined given");
             writer.writeComment("a Birth-Death speciation process (Yang & Rannala, 1997).");
             writer.writeOpenTag(
                     BirthDeathModel.BIRTH_DEATH_MODEL,
@@ -517,7 +538,7 @@ public class BeastGenerator extends BeautiOptions {
             // We are not sampling this parameter so use a fixed value
             writeParameter("birthDeath.samplingProportion", 1, birthDeathSamplingProportion, Double.NaN, Double.NaN, writer);
             writer.writeCloseTag(BirthDeathModel.SAMPLING_PROPORTION);
-            writer.writeCloseTag(BirthDeathModel.BIRTH_DEATH_MODEL);
+            writer.writeCloseTag(BirthDeathModel.BIRTH_DEATH_MODEL);*/
         }
 
         if (nodeHeightPrior != CONSTANT && nodeHeightPrior != EXPONENTIAL) {
@@ -2523,8 +2544,8 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == YULE) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "yule.birthRate"), true);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "birthDeath.birthRate"), true);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "birthDeath.deathRate"), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME), true);
         }
 
         if (alignment != null){
@@ -2868,7 +2889,7 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == YULE) {
             writer.writeTag(YuleModel.YULE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "yule")}, true);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-            writer.writeTag(BirthDeathModel.BIRTH_DEATH_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "birthDeath")}, true);
+            writer.writeTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "birthDeath")}, true);
         } else {
             throw new RuntimeException("No coalescent model has been specified so cannot refer to it");
         }

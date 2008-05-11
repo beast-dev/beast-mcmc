@@ -85,10 +85,10 @@ import dr.xml.*;
  */
 public class BirthDeathModel extends SpeciationModel {
 
-    public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
-    public static String BIRTH_RATE = "birthRate";
-    public static String DEATH_RATE = "deathRate";
-    public static String SAMPLING_PROPORTION = "samplingProportion";
+    private static final String BIRTH_DEATH_MODEL = "birthDeathModel";
+    private static String BIRTH_RATE = "birthRate";
+    private static String DEATH_RATE = "deathRate";
+    private static String SAMPLING_PROPORTION = "samplingProportion";
 
 
     public BirthDeathModel(Parameter birthRateParameter, Parameter deathRateParameter, Parameter samplingProportionParameter, Type units) {

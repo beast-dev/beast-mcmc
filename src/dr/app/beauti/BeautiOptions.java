@@ -35,6 +35,7 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.util.NumberFormatter;
 import dr.xml.XMLParseException;
 import org.jdom.Document;
@@ -90,8 +91,11 @@ public class BeautiOptions {
             p.poissonMean = Math.log(2);
         }
         createParameter("yule.birthRate", "Yule speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("birthDeath.birthRate", "Birth-Death speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("birthDeath.deathRate", "Birth-Death speciation process death rate", BIRTH_RATE_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+
+//        createParameter("birthDeath.birthRate", "Birth-Death speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+//        createParameter("birthDeath.deathRate", "Birth-Death speciation process death rate", BIRTH_RATE_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME, "Birth-Death speciation process rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
         //createParameter("birthDeath.samplingProportion", "Birth-Death speciation process sampling proportion", NONE, 1.0, 0.0, 1.0);
 
         createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -191,8 +195,11 @@ public class BeautiOptions {
         createOperator("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize", "demographic.indicators", SCALE_WITH_INDICATORS, 0.5, 2*demoWeights);
 
         createOperator("yule.birthRate", SCALE, 0.75, demoWeights);
-        createOperator("birthDeath.birthRate", SCALE, 0.75, demoWeights);
-        createOperator("birthDeath.deathRate", SCALE, 0.75, demoWeights);
+//        createOperator("birthDeath.birthRate", SCALE, 0.75, demoWeights);
+//        createOperator("birthDeath.deathRate", SCALE, 0.75, demoWeights);
+
+        createOperator(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
+        createOperator(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
         //createOperator("birthDeath.samplingProportion", RANDOM_WALK, 0.75, demoWeights);
 
         createOperator("clock.rate", SCALE, 0.75, rateWeights);
@@ -628,8 +635,10 @@ public class BeautiOptions {
         } else if (nodeHeightPrior == YULE) {
             params.add(getParameter("yule.birthRate"));
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-            params.add(getParameter("birthDeath.birthRate"));
-            params.add(getParameter("birthDeath.deathRate"));
+//            params.add(getParameter("birthDeath.birthRate"));
+//            params.add(getParameter("birthDeath.deathRate"));
+            params.add(getParameter(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME));
+            params.add(getParameter(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME));
             // at present we are not allowing the sampling of samplingProportion
         }
 
@@ -884,8 +893,10 @@ public class BeautiOptions {
         } else if (nodeHeightPrior == YULE) {
             ops.add(getOperator("yule.birthRate"));
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-            ops.add(getOperator("birthDeath.birthRate"));
-            ops.add(getOperator("birthDeath.deathRate"));
+//            ops.add(getOperator("birthDeath.birthRate"));
+//            ops.add(getOperator("birthDeath.deathRate"));
+            ops.add(getOperator(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME));
+            ops.add(getOperator(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME));
             // at present we are not allowing the sampling of samplingProportion
         }
 

@@ -9,9 +9,9 @@ import java.util.ArrayList;
 
 public class JIntervalsChart extends JChart {
 
-	private static final int MAX_POINTS = 1000;
+	//private static final int MAX_POINTS = 1000;
 
-	private boolean isLinePlot = false;
+	// private boolean isLinePlot = false;
 
 	private class Interval {
 		String name;
@@ -92,7 +92,7 @@ public class JIntervalsChart extends JChart {
 			float x = (float)transformX(i + 1);
 			float xLeft = (float)transformX(((double)i + 1) - 0.1);
 			float xRight = (float)transformX(((double)i + 1) + 0.1);
-			float y = (float)transformY(interval.value);
+			//float y = (float)transformY(interval.value);
 			float yUpper = (float)transformY(interval.upper);
 			float yLower = (float)transformY(interval.lower);
 

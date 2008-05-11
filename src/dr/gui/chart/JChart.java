@@ -63,8 +63,7 @@ public class JChart extends JPanel {
 	private double majorTickSize = 4;
 	private double minorTickSize = 2;
 
-	private double tickLabelHeight;
-	private double xTickLabelOffset;
+    private double xTickLabelOffset;
 	private double yTickLabelOffset;
 
 	private boolean showLegend = false;
@@ -287,7 +286,7 @@ public class JChart extends JPanel {
 	
 		g2.setFont(labelFont);
 
-		tickLabelHeight = g2.getFontMetrics().getHeight();
+        double tickLabelHeight = g2.getFontMetrics().getHeight();
 
 		xTickLabelOffset = g2.getFontMetrics().getAscent();
 		yTickLabelOffset = g2.getFontMetrics().getAscent() / 2;

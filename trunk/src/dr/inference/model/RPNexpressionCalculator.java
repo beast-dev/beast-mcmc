@@ -1,7 +1,5 @@
 package dr.inference.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Stack;
 
 /**
@@ -55,8 +53,8 @@ public class RPNexpressionCalculator {
     public RPNexpressionCalculator(String expressionString) {
         String[] tokens = expressionString.trim().split("\\s+");
 
-        List<Eelement> e = new ArrayList<Eelement>();
         expression = new Eelement[tokens.length];
+        
         for(int k = 0; k < tokens.length; ++k) {
             String tok = tokens[k];
             Eelement element;

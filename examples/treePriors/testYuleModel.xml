@@ -29,7 +29,8 @@
     <!-- a Yule speciation process (a pure birth process).                       -->
     <yuleModel id="yule" units="substitutions">
         <birthRate>
-            <parameter id="yule.birthRate" value="2.0" lower="0.0" upper="100.0"/>
+            <parameter id="yule.birthRate" value="2.0" lower="0.0"
+                       upper="100.0"/>
         </birthRate>
     </yuleModel>
 
@@ -73,9 +74,10 @@
             <parameter idref="treeModel1.rootHeight"/>
             <treeLengthStatistic idref="TL"/>
         </log>
-        <log id="logTree1" logEvery="100" fileName="yulePrior_trees.log">
+        <logTree id="logTree1" logEvery="100" nexusFormat="true"
+                 fileName="yulePrior.trees">
             <treeModel idref="treeModel1"/>
-        </log>
+        </logTree>
         <operators>
             <!--<scaleOperator scaleFactor="0.75" weight="1">
                 <parameter idref="treeModel1.rootHeight"/>
@@ -103,7 +105,7 @@
         <expectation name="TL" value="1.5"/>
     </traceAnalysis>
 
-    <treeTraceAnalysis fileName="yulePrior_trees.log"/>
+    <treeTraceAnalysis fileName="yulePrior.trees"/>
 
 </beast>
 

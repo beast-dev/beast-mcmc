@@ -43,13 +43,13 @@ public class IntervalsPanel extends JPanel implements Exportable {
             return;
         }
 
-        for (int i = 0; i < traceLists.length; i++) {
-            for (int j = 0; j < traceIndices.length; j++) {
-                TraceDistribution td = traceLists[i].getDistributionStatistics(traceIndices[j]);
+        for (TraceList traceList : traceLists) {
+            for (int traceIndice : traceIndices) {
+                TraceDistribution td = traceList.getDistributionStatistics(traceIndice);
                 if (td != null) {
-                    String name = traceLists[i].getTraceName(traceIndices[j]);
+                    String name = traceList.getTraceName(traceIndice);
                     if (traceLists.length > 1) {
-                        name = traceLists[i].getName() + " - " + name;
+                        name = traceList.getName() + " - " + name;
                     }
                     intervalsChart.addIntervals(name, td.getMean(), td.getUpperHPD(), td.getLowerHPD(), false);
                 }
@@ -73,5 +73,4 @@ public class IntervalsPanel extends JPanel implements Exportable {
     public JComponent getExportableComponent() {
         return chartPanel;
     }
-
 }

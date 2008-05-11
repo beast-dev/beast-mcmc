@@ -43,21 +43,33 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 		setUnits(units);
 	}
 
-    //
-    //  "fixed" part of likelihood
-    //
+    /**
+     *  "fixed" part of likelihood. Guaranteed to be called before any logNodeProbability
+     * calls for one evaluation of the tree.
+     *
+     * @param taxonCount Number of taxa in tree
+     * @return density factor which is not node dependent
+     */
     public abstract double logTreeProbability(int taxonCount);
-	//
-	// Per node part of likelihood
-	//
-	public abstract double logNodeProbability(Tree tree, NodeRef node);
 
+    /**
+     *  Per node part of likelihood.
+     * @param tree
+     * @param node
+     * @return node contribution to density
+     */
+    public abstract double logNodeProbability(Tree tree, NodeRef node);
+
+    /**
+     *
+     * @return true if calls to logNodeProbability for terminal nodes (tips) are required
+     */
     public abstract boolean includeExternalNodesInLikelihoodCalculation();
 
     /**
      * Generic likelihood calculation
      * @param tree
-     * @return
+     * @return log-likelihood of density
      */
     public double calculateTreeLogLikelihood(Tree tree) {
         final int taxonCount = tree.getExternalNodeCount();

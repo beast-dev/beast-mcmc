@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  * @version $Id: ARGModel.java,v 1.18.2.4 2006/11/06 01:38:30 msuchard Exp $
  */
 public class ARGModel extends AbstractModel implements MutableTree, Loggable {
-
+   
 
 	public static final String TREE_MODEL = "argTreeModel";
 	public static final String ROOT_HEIGHT = "rootHeight";

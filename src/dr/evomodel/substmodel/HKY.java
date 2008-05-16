@@ -170,29 +170,29 @@ public class HKY extends AbstractNucleotideModel
         final double oneminusa = 1 - aa;
 
         final double t1Aaa = (tab1A * aa);
-        matrix[0] =	freqA+ t1Aaa +(tab2A*bbR);
+        matrix[0] =	freqA + t1Aaa + (tab2A*bbR);
 
         matrix[1] =	freqC* oneminusa;
         final double t1Gaa = (tab1G * aa);
-        matrix[2] =	freqG+ t1Gaa -(tab3G*bbR);
+        matrix[2] =	freqG + t1Gaa -(tab3G*bbR);
         matrix[3] =	freqT* oneminusa;
 
         matrix[4] =	freqA* oneminusa;
         final double t1Caa = (tab1C * aa);
-        matrix[5] =	freqC+ t1Caa +(tab2C*bbY);
+        matrix[5] =	freqC+ t1Caa + (tab2C*bbY);
         matrix[6] =	freqG* oneminusa;
         final double t1Taa = (tab1T * aa);
         matrix[7] =	freqT+ t1Taa -(tab3T*bbY);
 
         matrix[8] =	freqA+ t1Aaa -(tab3A*bbR);
         matrix[9] =	matrix[1];
-        matrix[10] =freqG+ t1Gaa +(tab2G*bbR);
-        matrix[11] =matrix[3];
+        matrix[10] = freqG+ t1Gaa +(tab2G*bbR);
+        matrix[11] = matrix[3];
 
-        matrix[12] =matrix[4];
-        matrix[13] =freqC+ t1Caa -(tab3C*bbY);
-        matrix[14] =matrix[6];
-        matrix[15] =freqT+ t1Taa +(tab2T*bbY);
+        matrix[12] = matrix[4];
+        matrix[13] = freqC+ t1Caa -(tab3C*bbY);
+        matrix[14] = matrix[6];
+        matrix[15] = freqT+ t1Taa +(tab2T*bbY);
     }
 
     /**

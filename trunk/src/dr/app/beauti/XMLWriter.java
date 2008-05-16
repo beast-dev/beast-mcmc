@@ -78,13 +78,13 @@ public class XMLWriter extends java.io.PrintWriter {
 	public void writeTag(String tagname, Attribute[] attributes, boolean close) {
 		StringBuffer buffer = new StringBuffer("<");
 		buffer.append(tagname);
-		for (int i =0; i < attributes.length; i++) {
-			buffer.append(' ');
-			buffer.append(attributes[i].getAttributeName());
-			buffer.append("=\"");
-			buffer.append(attributes[i].getAttributeValue());
-			buffer.append("\"");
-		}
+        for (Attribute attribute : attributes) {
+            buffer.append(' ');
+            buffer.append(attribute.getAttributeName());
+            buffer.append("=\"");
+            buffer.append(attribute.getAttributeValue());
+            buffer.append("\"");
+        }
 		if (close) {
 			buffer.append("/");
 		}
@@ -98,11 +98,11 @@ public class XMLWriter extends java.io.PrintWriter {
     public void writeTag(String tagname, Attribute[] attributes, String content, boolean close) {
         StringBuffer buffer = new StringBuffer("<");
         buffer.append(tagname);
-        for (int i = 0; i < attributes.length; i++) {
+        for (Attribute attribute : attributes) {
             buffer.append(' ');
-            buffer.append(attributes[i].getAttributeName());
+            buffer.append(attribute.getAttributeName());
             buffer.append("=\"");
-            buffer.append(attributes[i].getAttributeValue());
+            buffer.append(attribute.getAttributeValue());
             buffer.append("\"");
         }
         if (content != null) {

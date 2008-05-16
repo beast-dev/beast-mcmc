@@ -98,6 +98,7 @@ public class BeautiTester {
         beautiOptions.fixedTree = false;
 
         beautiOptions.performTraceAnalysis = false;
+        beautiOptions.generateCSV = true;  // until beuati button
 
         beautiOptions.units = Units.Type.SUBSTITUTIONS;
         beautiOptions.maximumTipHeight = 0.0;

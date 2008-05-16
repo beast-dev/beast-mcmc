@@ -59,8 +59,10 @@ import dr.inference.loggers.Columns;
 import dr.inference.loggers.MCLogger;
 import dr.inference.model.*;
 import dr.inference.operators.*;
+import dr.inference.trace.EBSPAnalysis;
 import dr.util.Attribute;
 import dr.util.Version;
+import dr.exporters.CSVExporter;
 
 import java.io.Writer;
 import java.util.ArrayList;
@@ -192,6 +194,9 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeText("");
         if (performTraceAnalysis) {
             writeTraceAnalysis(writer);
+        }
+        if( generateCSV ) {
+            writeAnalysisToCSVfile(writer);
         }
 
         writer.writeCloseTag("beast");
@@ -1460,11 +1465,11 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeCloseTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD);
         } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
             final String tagName = VariableDemographicModel.PARSER.getParserName();
-            final String demoElementName = "demographic";
+
             writer.writeOpenTag(
                     tagName,
                     new Attribute[]{
-                            new Attribute.Default<String>("id", demoElementName),
+                            new Attribute.Default<String>("id", VariableDemographicModel.demoElementName),
                             new Attribute.Default<String>(VariableDemographicModel.TYPE, extendedSkylineModel)
                     }
             );
@@ -1472,11 +1477,11 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);
             final int nTax = taxonList.getTaxonCount();
             final int nPops = nTax - (extendedSkylineModel.equals(VariableDemographicModel.STEPWISE) ? 1 : 0);
-            writeParameter(demoElementName + ".popSize", nPops, writer);
+            writeParameter(VariableDemographicModel.demoElementName + ".popSize", nPops, writer);
             writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
 
             writer.writeOpenTag(VariableDemographicModel.INDICATOR_PARAMETER);
-            writeParameter(demoElementName + ".indicators", nPops-1, writer);
+            writeParameter(VariableDemographicModel.demoElementName + ".indicators", nPops-1, writer);
             writer.writeCloseTag(VariableDemographicModel.INDICATOR_PARAMETER);
 
             writer.writeOpenTag(VariableDemographicModel.POPULATION_TREES);
@@ -1491,28 +1496,28 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeOpenTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("id", "coalescent"));
             writer.writeOpenTag(OldAbstractCoalescentLikelihood.MODEL);
-            writer.writeTag(tagName, new Attribute.Default<String>("idref", demoElementName), true);
+            writer.writeTag(tagName, new Attribute.Default<String>("idref", VariableDemographicModel.demoElementName), true);
             writer.writeCloseTag(OldAbstractCoalescentLikelihood.MODEL);
             writer.writeComment("Take population Tree from demographic");
             writer.writeCloseTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD);
 
             writer.writeOpenTag(SumStatistic.SUM_STATISTIC,
                     new Attribute[]{
-                            new Attribute.Default<String>("id", demoElementName + ".populationSizeChanges"),
+                            new Attribute.Default<String>("id", VariableDemographicModel.demoElementName + ".populationSizeChanges"),
                             new Attribute.Default<String>("elementwise", "true")
                     });
             writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute.Default<String>("idref", demoElementName + ".indicators"), true);
+                    new Attribute.Default<String>("idref", VariableDemographicModel.demoElementName + ".indicators"), true);
             writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
             writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
                     new Attribute[]{
-                            new Attribute.Default<String>("id", demoElementName + ".populationMeanDist"),
-                            new Attribute.Default<String>("elementwise", "true")
+                            new Attribute.Default<String>("id", VariableDemographicModel.demoElementName + ".populationMeanDist")
+                            //,new Attribute.Default<String>("elementwise", "true")
                     });
             writer.writeOpenTag(ExponentialDistributionModel.MEAN);
             writer.writeTag(ParameterParser.PARAMETER,
                      new Attribute[]{
-                             new Attribute.Default<String>("id", demoElementName + ".populationMean"),
+                             new Attribute.Default<String>("id", VariableDemographicModel.demoElementName + ".populationMean"),
                              new Attribute.Default<String>("value", "1")}, true);
             writer.writeCloseTag(ExponentialDistributionModel.MEAN) ;
             writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
@@ -2014,6 +2019,51 @@ public class BeastGenerator extends BeautiOptions {
         );
     }
 
+    public void writeAnalysisToCSVfile(XMLWriter writer) {
+        if (nodeHeightPrior == EXTENDED_SKYLINE) {
+            writer.writeOpenTag(EBSPAnalysis.VD_ANALYSIS,  new Attribute[]{
+                    new Attribute.Default<String>("id", "demographic.analysis"),
+                    new Attribute.Default<Double>(EBSPAnalysis.BURN_IN, 0.1)}
+            );
+
+            writer.writeOpenTag(EBSPAnalysis.LOG_FILE_NAME);
+            writer.writeText(logFileName) ;
+            writer.writeCloseTag(EBSPAnalysis.LOG_FILE_NAME);
+
+            writer.writeOpenTag(EBSPAnalysis.TREE_FILE_NAMES);
+            writer.writeOpenTag(EBSPAnalysis.TREE_LOG);
+            writer.writeText(treeFileName) ;
+            writer.writeCloseTag(EBSPAnalysis.TREE_LOG) ;
+            writer.writeCloseTag(EBSPAnalysis.TREE_FILE_NAMES);
+
+            writer.writeOpenTag(EBSPAnalysis.MODEL_TYPE);
+            writer.writeText(extendedSkylineModel) ;
+            writer.writeCloseTag(EBSPAnalysis.MODEL_TYPE);
+
+            writer.writeOpenTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
+            writer.writeText(VariableDemographicModel.demoElementName + ".popSize" + 1) ;
+            writer.writeCloseTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
+
+            writer.writeOpenTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
+            writer.writeText(VariableDemographicModel.demoElementName + ".indicators" + 1) ;
+            writer.writeCloseTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
+
+            writer.writeCloseTag(EBSPAnalysis.VD_ANALYSIS);
+
+            writer.writeOpenTag(CSVExporter.CSV_EXPORT,
+                    new Attribute[]{
+                            new Attribute.Default<String>(CSVExporter.FILE_NAME,
+                                    logFileName.subSequence(0, logFileName.length()-4) + ".csv"),
+                            new Attribute.Default<String>(CSVExporter.SEPARATOR, ",")
+                    });
+            writer.writeOpenTag(CSVExporter.COLUMNS);
+            writer.writeTag(EBSPAnalysis.VD_ANALYSIS,
+                    new Attribute[]{ new Attribute.Default<String>("idref",  "demographic.analysis") }, true);
+             writer.writeCloseTag(CSVExporter.COLUMNS);
+             writer.writeCloseTag(CSVExporter.CSV_EXPORT);  
+        }
+
+    }
     /**
      * Write the MCMC block.
      *
@@ -2329,6 +2379,18 @@ public class BeastGenerator extends BeautiOptions {
         }
     }
 
+    private void writeSumStatisticColumn(XMLWriter writer, String name, String label) {
+              writer.writeOpenTag(Columns.COLUMN,
+                    new Attribute[]{
+                            new Attribute.Default<String>(Columns.LABEL,label),
+                            new Attribute.Default<String>(Columns.DECIMAL_PLACES, "0"),
+                            new Attribute.Default<String>(Columns.WIDTH, "12")
+                    }
+            );
+            writer.writeTag("sumStatistic", new Attribute.Default<String>("idref", name), true);
+            writer.writeCloseTag(Columns.COLUMN);
+    }
+
     /**
      * Write the log
      *
@@ -2394,15 +2456,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeCloseTag(Columns.COLUMN);
 
         if (clockModel == RANDOM_LOCAL_CLOCK) {
-            writer.writeOpenTag(Columns.COLUMN,
-                    new Attribute[]{
-                            new Attribute.Default<String>(Columns.LABEL, "Rate Changes"),
-                            new Attribute.Default<String>(Columns.DECIMAL_PLACES, "0"),
-                            new Attribute.Default<String>(Columns.WIDTH, "12")
-                    }
-            );
-            writer.writeTag("sumStatistic", new Attribute.Default<String>("idref", "rateChanges"), true);
-            writer.writeCloseTag(Columns.COLUMN);
+            writeSumStatisticColumn(writer, "rateChanges", "Rate Changes");
         }
 
         // I think this is too much info for the screen - it is all in the log file.
@@ -2538,8 +2592,10 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "skyline.popSize"), true);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "skyline.groupSize"), true);
         } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
+             writeSumStatisticColumn(writer, "demographic.populationSizeChanges", "popSize_changes");
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.populationMean"), true);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.popSize"), true);
-             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.indicators"), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.indicators"), true);
         } else if (nodeHeightPrior == YULE) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "yule.birthRate"), true);
         } else if (nodeHeightPrior == BIRTH_DEATH) {

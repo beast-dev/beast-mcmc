@@ -16,9 +16,10 @@ import java.util.ArrayList;
  */
 public class CSVExporter extends AbstractXMLObjectParser {
 
+    final static public String CSV_EXPORT = "CSVexport";
 
     public String getParserName() {
-         return "CSVexport";
+        return CSV_EXPORT;
      }
 
      public String getParserDescription() {

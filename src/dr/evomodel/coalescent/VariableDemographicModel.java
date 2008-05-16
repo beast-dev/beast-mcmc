@@ -30,6 +30,8 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     public static final String LINEAR = "linear";
     public static final String EXPONENTIAL = "exponential";
 
+    public static final String demoElementName = "demographic";
+
     private Parameter popSizeParameter;
     private Parameter indicatorParameter;
     private Type type;

@@ -44,7 +44,7 @@ public class RatioStatistic extends Statistic.Abstract {
 
         this.numerator = numerator;
         this.denominator = denominator;
-        
+
         if (denominator.getDimension() != 1 &&
                 numerator.getDimension() != 1 &&
                 denominator.getDimension() != numerator.getDimension()) {
@@ -105,7 +105,7 @@ public class RatioStatistic extends Statistic.Abstract {
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                new ElementRule(Statistic.class, "The statistics", 2, 2),
+				new ElementRule(Statistic.class, "The two operand statistics", 2, 2)
 		};
 	};
 

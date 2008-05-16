@@ -38,8 +38,9 @@ import java.util.Vector;
 public class DifferenceStatistic extends Statistic.Abstract {
 
 	public static String DIFFERENCE_STATISTIC = "differenceStatistic";
+	public static String ABSOLUTE = "absolute";
 
-	public DifferenceStatistic(String name, Statistic term1, Statistic term2) {
+	public DifferenceStatistic(String name, Statistic term1, Statistic term2, boolean absolute) {
 		super(name);
 
         this.term1 = term1;
@@ -79,12 +80,18 @@ public class DifferenceStatistic extends Statistic.Abstract {
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+			boolean absolute = false;
+
             Statistic term1 = (Statistic)xo.getChild(0);
             Statistic term2 = (Statistic)xo.getChild(1);
 
+			if (xo.hasAttribute(ABSOLUTE)) {
+				absolute = xo.getBooleanAttribute(ABSOLUTE);
+			}
+
             DifferenceStatistic differenceStatistic;
             try {
-                differenceStatistic = new DifferenceStatistic(DIFFERENCE_STATISTIC, term1, term2);
+                differenceStatistic = new DifferenceStatistic(DIFFERENCE_STATISTIC, term1, term2, absolute);
             } catch (IllegalArgumentException iae) {
                 throw new XMLParseException("Error parsing " + getParserName() + " the left and right statistics " +
                         "should be of the same dimension or of dimension 1");
@@ -105,8 +112,8 @@ public class DifferenceStatistic extends Statistic.Abstract {
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                new ElementRule(Statistic.class, "The first statistic" ),
-                new ElementRule(Statistic.class, "The second statistic" )
+				AttributeRule.newBooleanRule(ABSOLUTE, true),
+                new ElementRule(Statistic.class, "The two operand statistics", 2, 2)
 		};
 	};
 

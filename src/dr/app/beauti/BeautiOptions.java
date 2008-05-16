@@ -1904,6 +1904,7 @@ public class BeautiOptions {
     public String fileName = null;
     public boolean autoOptimize = true;
     public boolean performTraceAnalysis = false;
+    public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
 
     public HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();

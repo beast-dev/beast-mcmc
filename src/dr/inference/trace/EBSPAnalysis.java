@@ -28,10 +28,15 @@ public class EBSPAnalysis extends TabularData {
     private double[][] hpdLower;
     private double[][] hpdHigh;
     private double[] HPDLevels;
+    // each bin covers xPoints[-1]/coalBins.length
+    private int[] coalBins;
+
     private boolean quantiles;
 
     EBSPAnalysis(File log, File[] treeFiles, VariableDemographicModel.Type modelType,
-                                String firstColumnName, String firstIndicatorColumnName, double burnIn,
+                                String firstColumnName, String firstIndicatorColumnName,
+                                String rootHeightColumnName, int coalPointBins,
+                                double burnIn,
                                 double[] inHPDLevels, boolean quantiles, boolean logSpace, boolean  mid)
             throws IOException, Importer.ImportException, TraceException {
 
@@ -52,6 +57,7 @@ public class EBSPAnalysis extends TabularData {
 
         int populationFirstColumn = -1;
         int indicatorsFirstColumn = -1;
+        int rootHeightColumn = -1;
 
         for(int n = 0; n < ltraces.getTraceCount(); ++n) {
             final String traceName = ltraces.getTraceName(n);
@@ -59,6 +65,8 @@ public class EBSPAnalysis extends TabularData {
                 populationFirstColumn = n;
             } else if( traceName.equals(firstIndicatorColumnName) ) {
                 indicatorsFirstColumn = n;
+            } else if( rootHeightColumnName != null && traceName.equals(rootHeightColumnName) ) {
+                rootHeightColumn = n;
             }
         }
 
@@ -66,7 +74,22 @@ public class EBSPAnalysis extends TabularData {
             throw new TraceException("incorrect trace column names: unable to find populations/indicators");
         }
 
-        //TreeTrace[] traces = new TreeTrace[treeFiles.length];
+        double binSize = 0;
+        if( coalPointBins > 0 ) {
+            if( rootHeightColumn < 0 ) {
+                throw new TraceException("incorrect tree height column");
+            }
+            double hSum = -0;
+            double[] h = new double[1];
+            for(int ns = 0; ns < nStates; ++ns) {
+                ltraces.getStateValues(ns, h, rootHeightColumn);
+                hSum += h[0];
+            }
+            binSize = hSum / (nStates * coalPointBins);
+            coalBins = new int[coalPointBins];
+            Arrays.fill(coalBins, 0);
+        }
+
         TreeImporter[] treeImporters = new TreeImporter[treeFiles.length];
         final boolean isStepWise = modelType == VariableDemographicModel.Type.STEPWISE;
 
@@ -82,39 +105,11 @@ public class EBSPAnalysis extends TabularData {
                 treeImporters[k].importNextTree();
             }
             nIndicators += treeImporters[k].importNextTree().getExternalNodeCount() - 1;
-
-//            if( false) {
-//                final TreeTrace treeTrace = TreeTrace.loadTreeTrace(new FileReader(treeFiles[k]));
-//
-//                nIndicators += treeTrace.getTree(0,0).getExternalNodeCount() - 1;
-//
-//                final int kthRunLength = treeTrace.getTreeCount(0);
-//
-//                if( runLengthIncludingBurnin != kthRunLength ) {
-//                    throw new  IOException("non matching runs: " + runLengthIncludingBurnin + " != " +  kthRunLength) ; // FIXME another type
-//                }
-//                traces[k] = treeTrace;
-//            }
         }
 
         if( isStepWise ) {
             nIndicators -= 1;
         }
-
-//        double heightLimit;
-//        {
-//            double[] allHeights = new double[traces.length * nStates];
-//            int nh = 0;
-//            for (final TreeTrace treeTrace : traces) {
-//                for (int n = 0; n < nStates; ++n) {
-//                    final Tree tree = treeTrace.getTree(n, intBurnIn);
-//                    final double height = tree.getNodeHeight(tree.getRoot());
-//                    allHeights[nh] = height;
-//                    ++nh;
-//                }
-//            }
-//            heightLimit = dr.stats.DiscreteStatistics.quantile(xaxisratio, allHeights);
-//        }
 
         final int nXaxisPoints = nIndicators + (isStepWise ? 1 : 0) + 1;
         xPoints = new double[nXaxisPoints];
@@ -135,12 +130,16 @@ public class EBSPAnalysis extends TabularData {
                 }
                 final VDdemographicFunction demoFunction =
                         new VDdemographicFunction(tt, modelType, indicators, pop, logSpace, mid);
-                double[] x = demoFunction.allTimePoints();
-                for(int k = 0; k < x.length; ++k) {
-                    //assert x[k] >= 0 : " " + k + " " + x[k];
-                    xPoints[k+1] += x[k];
+                double[] xs = demoFunction.allTimePoints();
+                for(int k = 0; k < xs.length; ++k) {
+                    //assert xs[k] >= 0 : " " + k + " " + xs[k];
+                    xPoints[k+1] += xs[k];
                 }
-
+                if( coalPointBins > 0 ) {
+                    for (double x : xs) {
+                        coalBins[Math.min((int) (x / binSize), coalBins.length-1)]++;
+                    }
+                }
                 allDemog[ns] = demoFunction;
 
                 demoFunction.freeze();
@@ -192,9 +191,8 @@ public class EBSPAnalysis extends TabularData {
     private final String[] columnNames = {"time", "mean", "median"};
 
     public int nColumns() {
-        return columnNames.length + 2*HPDLevels.length;
+        return columnNames.length + 2*HPDLevels.length + (coalBins != null ? 1 : 0);
     }
-
 
     public String columnName(int nColumn) {
         final int fixed = columnNames.length;
@@ -202,63 +200,87 @@ public class EBSPAnalysis extends TabularData {
             return columnNames[nColumn];
         }
         nColumn -= fixed;
-        final double p = HPDLevels[nColumn/2];
-        final String s = ( nColumn % 2 == 0 ) ? "lower" : "upper";
-        return (quantiles ? "cpd " : "hpd ") + s + " " + Math.round(p*100);
+        if( nColumn < 2*HPDLevels.length) {
+          final double p = HPDLevels[nColumn/2];
+          final String s = ( nColumn % 2 == 0 ) ? "lower" : "upper";
+          return (quantiles ? "cpd " : "hpd ") + s + " " + Math.round(p*100);
+        }
+        assert (nColumn - 2*HPDLevels.length) == 0;
+        return "bins";
     }
 
     public int nRows() {
-        return xPoints.length;
+        return Math.max(xPoints.length, (coalBins != null ? coalBins.length : 0));
     }
 
     public Object data(int nRow, int nColumn) {
         switch( nColumn ) {
             case 0:
             {
-                return xPoints[nRow];
+                if( nRow < xPoints.length ) {
+                    return xPoints[nRow];
+                }
+                break;
             }
             case 1:
             {
-                return means[nRow];
+                if( nRow < means.length ) {
+                    return means[nRow];
+                }
+                break;
             }
             case 2:
-            {
+            {  if( nRow < medians.length ) {
                 return medians[nRow];
+            }
+                break;
             }
             default:
             {
                 final int j = nColumn - columnNames.length;
-                final int k = j /2;
-                if( 0 <= k && k < HPDLevels.length ) {
-                    if( j % 2 == 0 ) {
-                        return hpdLower[k][nRow];
-                    } else {
-                        return hpdHigh[k][nRow];
+                if( j < 2*HPDLevels.length ) {
+                    if( nRow < xPoints.length ) {
+                        final int k = j /2;
+                        if( 0 <= k && k < HPDLevels.length ) {
+                            if( j % 2 == 0 ) {
+                                return hpdLower[k][nRow];
+                            } else {
+                                return hpdHigh[k][nRow];
+                            }
+                        }
+                    }
+                } else {
+                    if( nRow < coalBins.length ) {
+                        return coalBins[nRow];
                     }
                 }
                 break;
             }
         }
-        return null;
+        return "";
     }
 
+    // should be local to PARSER, but this makes them non-accesible from the outside in Java.
+
+    public static final String VD_ANALYSIS = "VDAnalysis";
+    public static final String FILE_NAME = "fileName";
+    public static final String BURN_IN = "burnIn";
+    public static final String HPD_LEVELS = "Confidencelevels";
+    public static final String QUANTILES = "useQuantiles";
+    public static final String LOG_SPACE = VariableDemographicModel.LOG_SPACE;
+    public static final String USE_MIDDLE = VariableDemographicModel.USE_MIDPOINTS;
+
+    public static final String TREE_LOG = "treeOfLoci";
+
+    public static final String LOG_FILE_NAME = "logFileName";
+    public static final String TREE_FILE_NAMES = "treeFileNames";
+    public static final String MODEL_TYPE = "populationModelType";
+    public static final String POPULATION_FIRST_COLUMN = "populationFirstColumn";
+    public static final String INDICATORS_FIRST_COLUMN = "indicatorsFirstColumn";
+    public static final String ROOTHEIGHT_COLUMN = "rootheightColumn";
+    public static final String NBINS = "nBins";
+
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-        public static final String VD_ANALYSIS = "VDAnalysis";
-        public static final String FILE_NAME = "fileName";
-        public static final String BURN_IN = "burnIn";
-        public static final String HPD_LEVELS = "Confidencelevels";
-        public static final String QUANTILES = "useQuantiles";
-        public static final String LOG_SPACE = VariableDemographicModel.LOG_SPACE;
-        public static final String USE_MIDDLE = VariableDemographicModel.USE_MIDPOINTS;
-        
-        public static final String TREE_LOG = "treeOfLoci";
-
-        public static final String LOG_FILE_NAME = "logFileName";
-        public static final String TREE_FILE_NAMES = "treeFileNames";
-        public static final String MODEL_TYPE = "populationModelType";
-        public static final String POPULATION_FIRST_COLUMN = "populationFirstColumn";
-        public static final String INDICATORS_FIRST_COLUMN = "indicatorsFirstColumn";
-
 
         private String getElementText(XMLObject xo, String childName) throws XMLParseException {
             return ((XMLObject)xo.getChild(childName)).getStringChild(0);
@@ -294,12 +316,23 @@ public class EBSPAnalysis extends TabularData {
                 String indicatorsFirstColumn = getElementText(xo, INDICATORS_FIRST_COLUMN);
                 VariableDemographicModel.Type modelType = VariableDemographicModel.Type.valueOf(modelTypeName);
 
+                String rootHeightColumn = null;
+                int nBins = -1;
+                if( xo.hasAttribute(NBINS) ) {
+                    if( xo.getChild(ROOTHEIGHT_COLUMN) != null )  {
+                        rootHeightColumn = getElementText(xo,ROOTHEIGHT_COLUMN);
+                        nBins = xo.getIntegerAttribute(NBINS);
+                    }
+                }
+
                 final boolean quantiles = xo.hasAttribute(QUANTILES) && xo.getBooleanAttribute(QUANTILES);
                 final boolean logSpace = xo.hasAttribute(LOG_SPACE) && xo.getBooleanAttribute(LOG_SPACE);
                 final boolean useMid = xo.hasAttribute(USE_MIDDLE) && xo.getBooleanAttribute(USE_MIDDLE);
-                
-                return new EBSPAnalysis(log, treeFiles, modelType, populationFirstColumn,
-                        indicatorsFirstColumn, burnin, hpdLevels, quantiles, logSpace, useMid);
+
+                return new EBSPAnalysis(log, treeFiles, modelType,
+                        populationFirstColumn, indicatorsFirstColumn,
+                        rootHeightColumn, nBins,
+                        burnin, hpdLevels, quantiles, logSpace, useMid);
 
             } catch (java.io.IOException ioe) {
                 throw new XMLParseException(ioe.getMessage());
@@ -334,6 +367,7 @@ public class EBSPAnalysis extends TabularData {
                 AttributeRule.newBooleanRule(QUANTILES, true),
                 AttributeRule.newBooleanRule(LOG_SPACE, true),
                 AttributeRule.newBooleanRule(USE_MIDDLE, true),
+                AttributeRule.newIntegerRule(NBINS, true),
                 
                 new ElementRule(LOG_FILE_NAME, String.class, "The name of a BEAST log file"),
                 new ElementRule(TREE_FILE_NAMES,
@@ -343,6 +377,7 @@ public class EBSPAnalysis extends TabularData {
                 new ElementRule(MODEL_TYPE, String.class, "population model type (stepwise, linear ..."),
                 new ElementRule(POPULATION_FIRST_COLUMN, String.class, "Name of first column of population size"),
                 new ElementRule(INDICATORS_FIRST_COLUMN, String.class, "Name of first column of population indicators"),
+                new ElementRule(ROOTHEIGHT_COLUMN, String.class, "Name of trace column of root height", true),
         };
     };
 }

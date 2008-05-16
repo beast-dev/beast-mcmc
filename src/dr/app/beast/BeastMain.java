@@ -71,6 +71,7 @@ public class BeastMain {
 
         String fileName = inputFile.getName();
 
+        final Logger infoLogger = Logger.getLogger("dr.apps.beast");
         try {
 
             FileReader fileReader = new FileReader(inputFile);
@@ -104,8 +105,8 @@ public class BeastMain {
 
             logger.setUseParentHandlers(false);
 
-            Logger.getLogger("dr.apps.beast").info("Parsing XML file: " + fileName);
-            Logger.getLogger("dr.apps.beast").info("  File encoding: " + fileReader.getEncoding());
+            infoLogger.info("Parsing XML file: " + fileName);
+            infoLogger.info("  File encoding: " + fileReader.getEncoding());
 
 			// This is a special logger that is for logging numerical and statistical errors
 	        // during the MCMC run. It will tolerate up to maxErrorCount before throwing a
@@ -117,23 +118,23 @@ public class BeastMain {
             parser.parse(fileReader, true);
 
         } catch (java.io.IOException ioe) {
-            Logger.getLogger("dr.apps.beast").severe("File error: " + ioe.getMessage());
+            infoLogger.severe("File error: " + ioe.getMessage());
         } catch (org.xml.sax.SAXParseException spe) {
             if (spe.getMessage() != null && spe.getMessage().equals("Content is not allowed in prolog")) {
-                Logger.getLogger("dr.apps.beast").severe("Parsing error - the input file, " + fileName + ", is not a valid XML file.");
+                infoLogger.severe("Parsing error - the input file, " + fileName + ", is not a valid XML file.");
             } else {
-                Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
-                Logger.getLogger("dr.apps.beast").severe("Parsing error - poorly formed XML (possibly not an XML file):\n" +
+                infoLogger.severe("Error running file: " + fileName);
+                infoLogger.severe("Parsing error - poorly formed XML (possibly not an XML file):\n" +
                         spe.getMessage());
             }
         } catch (org.w3c.dom.DOMException dome) {
-            Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
-            Logger.getLogger("dr.apps.beast").severe("Parsing error - poorly formed XML:\n" +
+            infoLogger.severe("Error running file: " + fileName);
+            infoLogger.severe("Parsing error - poorly formed XML:\n" +
                     dome.getMessage());
         } catch (dr.xml.XMLParseException pxe) {
             if (pxe.getMessage() != null && pxe.getMessage().equals("Unknown root document element, beauti")) {
-                Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
-                Logger.getLogger("dr.apps.beast").severe(
+                infoLogger.severe("Error running file: " + fileName);
+                infoLogger.severe(
                         "The file you just tried to run in BEAST is actually a BEAUti document.\n" +
                                 "Although this uses XML, it is not a format that BEAST understands.\n" +
                                 "These files are used by BEAUti to save and load your settings so that\n" +
@@ -142,14 +143,14 @@ public class BeastMain {
                                 "the button at the bottom right of the window.");
 
             } else {
-                Logger.getLogger("dr.apps.beast").severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
+                infoLogger.severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
                         pxe.getMessage());
             }
 
         } catch (RuntimeException rex) {
             if (rex.getMessage() != null && rex.getMessage().startsWith("The initial posterior is zero")) {
-                Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
-                Logger.getLogger("dr.apps.beast").severe(
+                infoLogger.warning("Error running file: " + fileName);
+                infoLogger.severe(
                         "The initial model is invalid because state has a zero probability.\n\n" +
                                 "If the log likelihood of the tree is -Inf, his may be because the\n" +
                                 "initial, random tree is so large that it has an extremely bad\n" +
@@ -166,15 +167,15 @@ public class BeastMain {
             } else {
                 // This call never returns as another RuntimeException exception is raised by
                 // the error log handler???
-                Logger.getLogger("dr.apps.beast").warning("Error running file: " + fileName);
-                Logger.getLogger("dr.apps.beast").severe("Fatal exception: " + rex.getMessage());
+                infoLogger.warning("Error running file: " + fileName);
+                infoLogger.severe("Fatal exception: " + rex.getMessage());
                 System.err.println("Fatal exception: " + rex.getMessage());
                 // rex.printStackTrace(System.err);
             }
 
         } catch (Exception ex) {
-            Logger.getLogger("dr.apps.beast").severe("Error running file: " + fileName);
-            Logger.getLogger("dr.apps.beast").severe("Fatal exception: " + ex.getMessage());
+            infoLogger.warning("Error running file: " + fileName);
+            infoLogger.severe("Fatal exception: " + ex.getMessage());
             System.err.println("Fatal exception: " + ex.getMessage());
             ex.printStackTrace(System.err);
         }

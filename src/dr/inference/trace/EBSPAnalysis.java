@@ -35,9 +35,9 @@ public class EBSPAnalysis extends TabularData {
 
     EBSPAnalysis(File log, File[] treeFiles, VariableDemographicModel.Type modelType,
                                 String firstColumnName, String firstIndicatorColumnName,
-                                String rootHeightColumnName, int coalPointBins,
-                                double burnIn,
-                                double[] inHPDLevels, boolean quantiles, boolean logSpace, boolean  mid)
+                                String rootHeightColumnName, int coalPointBins, double burnIn,
+                                double[] inHPDLevels, boolean quantiles, boolean logSpace, boolean mid,
+                                int restrictToNchanges)
             throws IOException, Importer.ImportException, TraceException {
 
         LogFileTraces ltraces = new LogFileTraces(log.getCanonicalPath(), log);
@@ -115,6 +115,7 @@ public class EBSPAnalysis extends TabularData {
         xPoints = new double[nXaxisPoints];
         Arrays.fill(xPoints, 0.0);
 
+        int nDataPoints = 0;
         VDdemographicFunction[] allDemog = new VDdemographicFunction[nStates];
         {
             double[] indicators = new double[nIndicators];
@@ -130,9 +131,13 @@ public class EBSPAnalysis extends TabularData {
                 }
                 final VDdemographicFunction demoFunction =
                         new VDdemographicFunction(tt, modelType, indicators, pop, logSpace, mid);
+
+                if( demoFunction.numberOfChanges() == restrictToNchanges ) {
+                    continue;
+                }
+
                 double[] xs = demoFunction.allTimePoints();
                 for(int k = 0; k < xs.length; ++k) {
-                    //assert xs[k] >= 0 : " " + k + " " + xs[k];
                     xPoints[k+1] += xs[k];
                 }
                 if( coalPointBins > 0 ) {
@@ -140,16 +145,18 @@ public class EBSPAnalysis extends TabularData {
                         coalBins[Math.min((int) (x / binSize), coalBins.length-1)]++;
                     }
                 }
-                allDemog[ns] = demoFunction;
+                allDemog[nDataPoints] = demoFunction;
+                ++nDataPoints;
 
                 demoFunction.freeze();
             }
+
             for(int k = 0; k < xPoints.length; ++k) {
                 xPoints[k] /= nStates;
             }
         }
 
-        double[] popValues = new double[nStates];
+        double[] popValues = new double[nDataPoints];
         means = new double[nXaxisPoints];
         medians = new double[nXaxisPoints];
         hpdLower = new double[HPDLevels.length][];
@@ -163,7 +170,7 @@ public class EBSPAnalysis extends TabularData {
         for(int nx = 0; nx < xPoints.length; ++nx) {
             final double x = xPoints[nx];
 
-            for(int ns = 0; ns < nStates; ++ns) {
+            for(int ns = 0; ns < nDataPoints; ++ns) {
                 popValues[ns] = allDemog[ns].getDemographic(x);
             }
             int[] indices = new int[popValues.length];
@@ -171,7 +178,6 @@ public class EBSPAnalysis extends TabularData {
 
             means[nx] = DiscreteStatistics.mean(popValues);
             for(int i = 0; i < HPDLevels.length; ++i) {
-
                 if( quantiles ) {
                     hpdLower[i][nx] = DiscreteStatistics.quantile((1-HPDLevels[i])/2, popValues, indices);
                     hpdHigh[i][nx] = DiscreteStatistics.quantile((1+HPDLevels[i])/2, popValues, indices);
@@ -182,9 +188,6 @@ public class EBSPAnalysis extends TabularData {
                 }
             }
             medians[nx] = DiscreteStatistics.median(popValues, indices);
-//            for(int k = 0; k < indices.length; ++k) {
-//                System.out.print(popValues[indices[k]]);  System.out.print(",");
-//            }
         }
     }
 
@@ -269,6 +272,7 @@ public class EBSPAnalysis extends TabularData {
     public static final String QUANTILES = "useQuantiles";
     public static final String LOG_SPACE = VariableDemographicModel.LOG_SPACE;
     public static final String USE_MIDDLE = VariableDemographicModel.USE_MIDPOINTS;
+    public static final String N_CHANGES = "nChanges";
 
     public static final String TREE_LOG = "treeOfLoci";
 
@@ -328,11 +332,12 @@ public class EBSPAnalysis extends TabularData {
                 final boolean quantiles = xo.hasAttribute(QUANTILES) && xo.getBooleanAttribute(QUANTILES);
                 final boolean logSpace = xo.hasAttribute(LOG_SPACE) && xo.getBooleanAttribute(LOG_SPACE);
                 final boolean useMid = xo.hasAttribute(USE_MIDDLE) && xo.getBooleanAttribute(USE_MIDDLE);
+                final int onlyNchanges = xo.hasAttribute(N_CHANGES) ? xo.getIntegerAttribute(N_CHANGES) : -1;
 
                 return new EBSPAnalysis(log, treeFiles, modelType,
                         populationFirstColumn, indicatorsFirstColumn,
                         rootHeightColumn, nBins,
-                        burnin, hpdLevels, quantiles, logSpace, useMid);
+                        burnin, hpdLevels, quantiles, logSpace, useMid, onlyNchanges);
 
             } catch (java.io.IOException ioe) {
                 throw new XMLParseException(ioe.getMessage());
@@ -368,6 +373,7 @@ public class EBSPAnalysis extends TabularData {
                 AttributeRule.newBooleanRule(LOG_SPACE, true),
                 AttributeRule.newBooleanRule(USE_MIDDLE, true),
                 AttributeRule.newIntegerRule(NBINS, true),
+                AttributeRule.newIntegerRule(N_CHANGES, true),
                 
                 new ElementRule(LOG_FILE_NAME, String.class, "The name of a BEAST log file"),
                 new ElementRule(TREE_FILE_NAMES,

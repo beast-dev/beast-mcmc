@@ -42,7 +42,7 @@ public interface LikelihoodCore {
     /**
      * cleans up and deallocates arrays.
      */
-    void finalize();
+    void finalize() throws java.lang.Throwable;
 
     /**
      * Allocates partials for a node

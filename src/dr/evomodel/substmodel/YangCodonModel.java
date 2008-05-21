@@ -336,7 +336,7 @@ public class YangCodonModel extends AbstractCodonModel
 
     };
 
-    private Statistic nonsynonymousRateStatistic = new Statistic.Abstract() {
+   /* private Statistic nonsynonymousRateStatistic = new Statistic.Abstract() {
 
         public String getStatisticName() {
             return "nonSynonymousRate";
@@ -348,5 +348,5 @@ public class YangCodonModel extends AbstractCodonModel
             return getNonSynonymousRate();
         }
 
-    };
+    };*/
 }

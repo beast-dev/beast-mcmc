@@ -126,9 +126,10 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
 	/**
 	 * cleans up and deallocates arrays.
 	 */
-	public void finalize() {
+	public void finalize() throws java.lang.Throwable  {
+        super.finalize();
 
-		nodeCount = 0;
+        nodeCount = 0;
 		patternCount = 0;
 		matrixCount = 0;
 
@@ -454,9 +455,7 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
 	public void getPartials(int nodeIndex, double[] outPartials) {
 		double[] partials1 = partials[currentPartialsIndices[nodeIndex]][nodeIndex];
 
-		for (int k = 0; k < partialsSize; k++) {
-			outPartials[k] = partials1[k];
-		}
+        System.arraycopy(partials1, 0, outPartials, 0, partialsSize);
 	}
 
 	/**

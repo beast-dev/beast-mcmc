@@ -73,6 +73,10 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         this.dirty = demoFunction.dirty;
     }
 
+    public int numberOfChanges() {
+        return values.length  - 1;
+    }
+    
     public void treeChanged(int nt) {
         dirtyTrees[nt] = true;
         setDirty();
@@ -104,7 +108,6 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
                 while( nti.getIntervalType(iCount) != IntervalType.COALESCENT ) {
                     ++iCount;
                     timeToCoal += nti.getInterval(iCount);
-//                    assert k == 0: k;
                 }
 
                 int linAtStart = nti.getLineageCount(iCount);
@@ -249,13 +252,13 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
                 }
 
                 final double a = (t - times[j]) / (intervals[j]);
-                p = a * values[j+1] + (1-a) * values[j]; // values[j] + a * (values[j+1] - values[j]);
+                p = a * values[j+1] + (1-a) * values[j];
                 break;
             }
             default: throw new IllegalArgumentException("");
 
         }
-        return p; //  * popFactor;
+        return p;
     }
 
     public double getIntensity(double t) {
@@ -313,7 +316,6 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         return interval * Math.log(pop1/pop0) / (pop1 - pop0);
     }
 
-    // private double populationLin()
     public double getIntegral(double start, double finish) {
 
         double intensity = 0.0;

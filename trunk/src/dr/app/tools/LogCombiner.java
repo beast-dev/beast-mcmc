@@ -55,13 +55,11 @@ public class LogCombiner {
 
     private final static Version version = new BeastVersion();
 
-    public LogCombiner(int[] burnins, int resample, String[] inputFileNames, String outputFileName, boolean treeFiles, boolean convertToDecimal, boolean useScale, double scale) throws IOException {
+    public LogCombiner(int[] burnins, int resample, String[] inputFileNames, String outputFileName, boolean treeFiles,
+                       boolean convertToDecimal, boolean useScale, double scale) throws IOException {
 
-        if (treeFiles) {
-            System.out.println("Creating combined tree file: '" + outputFileName);
-        } else {
-            System.out.println("Creating combined log file: '" + outputFileName);
-        }
+        System.out.println("Creating combined " + (treeFiles ? "tree" : "log") + " file: '" + outputFileName);
+
         System.out.println();
 
         PrintWriter writer = new PrintWriter(new FileOutputStream(outputFileName));
@@ -147,7 +145,7 @@ public class LogCombiner {
 
             } else {
                 BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-                int lineCount = 1;
+                //int lineCount = 1;
                 String line = reader.readLine();
 
                 // lines starting with [ are ignored, assuming comments in MrBayes file
@@ -174,7 +172,7 @@ public class LogCombiner {
                     }
                 }
                 line = reader.readLine();
-                lineCount++;
+                //lineCount++;
 
                 while (line != null) {
                     String[] parts = line.split("\\s");
@@ -210,7 +208,7 @@ public class LogCombiner {
                     }
 
                     line = reader.readLine();
-                    lineCount++;
+                    //lineCount++;
                 }
             }
 
@@ -272,9 +270,9 @@ public class LogCombiner {
                 id = "'" + id + "'";
             }
             if (k < taxonCount) {
-                writer.println("\t\t" + k + " " + taxon.getId() + ",");
+                writer.println("\t\t" + k + " " + id + ",");
             } else {
-                writer.println("\t\t" + k + " " + taxon.getId());
+                writer.println("\t\t" + k + " " + id);
             }
         }
         writer.println("\t\t;");
@@ -419,10 +417,10 @@ public class LogCombiner {
     //Main method
     public static void main(String[] args) throws IOException {
 
-        boolean treeFiles = false;
-        boolean convertToDecimal = false;
+        boolean treeFiles;
+        boolean convertToDecimal;
 
-        int burnin = -1;
+        int burnin;
         int resample = -1;
         double scale = 1.0;
         boolean useScale = false;
@@ -539,9 +537,6 @@ public class LogCombiner {
                 useScale = true;
             }
 
-            String[] inputFileNames = null;
-            String outputFileName = null;
-
             String[] args2 = arguments.getLeftoverArguments();
 
             if (args2.length < 2) {
@@ -551,11 +546,9 @@ public class LogCombiner {
                 System.exit(1);
             }
 
-            inputFileNames = new String[args2.length - 1];
-            for (int i = 0; i < inputFileNames.length; i++) {
-                inputFileNames[i] = args2[i];
-            }
-            outputFileName = args2[args2.length - 1];
+            String[] inputFileNames = new String[args2.length - 1];
+            System.arraycopy(args2, 0, inputFileNames, 0, inputFileNames.length);
+            String outputFileName = args2[args2.length - 1];
 
             new LogCombiner(new int[]{burnin}, resample, inputFileNames, outputFileName, treeFiles, convertToDecimal, useScale, scale);
 

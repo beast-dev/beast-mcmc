@@ -11,8 +11,9 @@ Some notes on work and plans for future work on BEAST.
     * We (MDP and AJD) have gotten the auto-correlated models working. It was not just the root that was the problem - but the best solution at the root in our opinion is to set the root rate to be equal to one of the child rates as Thorne et al does. We have implemented the Thorne et al model with the addition of being able to sample the tree and are writing up a paper that compares this model to (improved) uncorrelated model. Rannala and Yang have already done this but without sampling the trees.
 
 ==Birth-Death models==
-  * Nee et al: in progress
-  * Some development of Rannala & Yang - Birth, Death & sampling?
+  * Nee et al: Removed, Formula tested and is incorrect
+  * Some development of Rannala & Yang - Birth, Death & sampling? Removed, Formula tested and is incorrect
+  * Added Gernhard 2008: tested and working. (JH) 
  
 ==Population history models== 
   * New variable dimension Bayesian skyline plot by Joseph Heled (JH) and AJD (handles multiple loci) - submitted to BMC Evolutionary Biology

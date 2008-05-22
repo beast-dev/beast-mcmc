@@ -35,6 +35,7 @@ import dr.inference.loggers.MLLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Likelihood;
 import dr.xml.*;
+import dr.app.tools.NexusExporter;
 
 import java.io.PrintWriter;
 import java.util.*;
@@ -120,6 +121,9 @@ public class TreeLogger extends MCLogger {
             logLine("\tTaxlabels");
 
             for (String taxaId : taxaIds) {
+                if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
+                    taxaId = "'" + taxaId + "'";
+                }
                 logLine("\t\t" + taxaId);
             }
 
@@ -132,6 +136,9 @@ public class TreeLogger extends MCLogger {
             logLine("\tTranslate");
             int k = 1;
             for (String taxaId : taxaIds) {
+                if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
+                    taxaId = "'" + taxaId + "'";
+                }
                 if (k < taxonCount) {
                     logLine("\t\t" + k + " " + taxaId + ",");
                 } else {

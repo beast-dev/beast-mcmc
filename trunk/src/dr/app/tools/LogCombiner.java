@@ -239,7 +239,7 @@ public class LogCombiner {
         }
     }
 
-    private Map taxonMap = new HashMap();
+    private Map<String, Integer> taxonMap = new HashMap<String, Integer>();
 
     private void startLog(Tree tree, PrintWriter writer) {
 
@@ -250,7 +250,11 @@ public class LogCombiner {
         writer.println("\tDimensions ntax=" + taxonCount + ";");
         writer.println("\tTaxlabels");
         for (int i = 0; i < taxonCount; i++) {
-            writer.println("\t\t" + tree.getTaxon(i).getId());
+            String id = tree.getTaxon(i).getId();
+            if (id.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
+                id = "'" + id + "'";
+            }
+            writer.println("\t\t" + id);
         }
         writer.println("\t\t;");
         writer.println("End;");
@@ -262,7 +266,11 @@ public class LogCombiner {
         for (int i = 0; i < taxonCount; i++) {
             int k = i + 1;
             Taxon taxon = tree.getTaxon(i);
-            taxonMap.put(taxon.getId(), new Integer(k));
+            taxonMap.put(taxon.getId(), k);
+            String id = taxon.getId();
+            if (id.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
+                id = "'" + id + "'";
+            }
             if (k < taxonCount) {
                 writer.println("\t\t" + k + " " + taxon.getId() + ",");
             } else {

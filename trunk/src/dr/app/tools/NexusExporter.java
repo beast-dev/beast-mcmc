@@ -40,9 +40,11 @@ import java.util.*;
  */
 public class NexusExporter implements TreeExporter {
 
-	static final String DEFAULT_TREE_PREFIX = "TREE";
+	public static final String DEFAULT_TREE_PREFIX = "TREE";
 
-	public NexusExporter(PrintStream out) {
+    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.;,\"\'].*";
+
+    public NexusExporter(PrintStream out) {
 		this.out = out;
 	}
 
@@ -101,13 +103,13 @@ public class NexusExporter implements TreeExporter {
 		out.println("End;");
 	}
 
-	private void writeNexusTree(Tree tree, int i, boolean attributes, Map<String, Integer> idMap) {
+	public void writeNexusTree(Tree tree, int i, boolean attributes, Map<String, Integer> idMap) {
 		out.print("tree " + treePrefix + i + "  = [&R] ");
 		writeNode(tree, tree.getRoot(), attributes, idMap);
 		out.println(";");
 	}
 
-	private Map<String, Integer> writeNexusHeader(Tree tree) {
+	public Map<String, Integer> writeNexusHeader(Tree tree) {
 		int taxonCount = tree.getTaxonCount();
 		List<String> names = new ArrayList<String>();
 
@@ -123,6 +125,9 @@ public class NexusExporter implements TreeExporter {
 		out.println("\tDimensions ntax=" + taxonCount + ";");
 		out.println("\tTaxlabels");
 		for (String name : names) {
+            if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
+                name = "'" + name + "'";
+            }
 			out.println("\t\t" + name);
 		}
 		out.println("\t\t;");
@@ -137,6 +142,9 @@ public class NexusExporter implements TreeExporter {
 		int k = 1;
 		for (String name : names) {
 			idMap.put(name, k);
+            if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
+                name = "'" + name + "'";
+            }
 			if (k < names.size()) {
 				out.println("\t\t" + k + " " + name + ",");
 			} else {

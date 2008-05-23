@@ -39,7 +39,11 @@ import dr.inference.model.Model;
  */
 abstract public class AbstractNucleotideModel extends AbstractSubstitutionModel  {
 
-	double freqA, freqC, freqG, freqT, freqR, freqY;
+	double freqA, freqC, freqG, freqT,
+            // A+G
+            freqR,
+            // C+G
+            freqY;
 
 	// Constructor
 	public AbstractNucleotideModel(String name, FrequencyModel freqModel)

@@ -25,6 +25,7 @@
 
 package dr.evomodel.tree;
 
+import dr.app.tools.NexusExporter;
 import dr.evolution.colouring.BranchColouring;
 import dr.evolution.colouring.TreeColouring;
 import dr.evolution.colouring.TreeColouringProvider;
@@ -35,7 +36,6 @@ import dr.inference.loggers.MLLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Likelihood;
 import dr.xml.*;
-import dr.app.tools.NexusExporter;
 
 import java.io.PrintWriter;
 import java.util.*;
@@ -56,6 +56,7 @@ public class TreeLogger extends MCLogger {
     public static final String TIME = "time";
     public static final String SUBSTITUTIONS = "substitutions";
     public static final String SORT_TRANSLATION_TABLE = "sortTranslationTable";
+    public static final String MAP_NAMES = "mapNamesToNumbers";
 
     private Tree tree;
     private BranchRateController branchRateProvider = null;
@@ -69,20 +70,24 @@ public class TreeLogger extends MCLogger {
     public boolean substitutions = false;
     private Map<String, Integer> idMap = new HashMap<String, Integer>();
     private List<String> taxaIds = new ArrayList<String>();
+    private boolean mapNames = true;
 
     /*
            * Constructor
            */
+
+
     public TreeLogger(Tree tree, BranchRateController branchRateProvider,
                       TreeAttributeProvider[] treeAttributeProviders,
                       NodeAttributeProvider[] nodeAttributeProviders,
                       BranchAttributeProvider[] branchAttributeProviders,
                       LogFormatter formatter, int logEvery, boolean nexusFormat,
-                      boolean sortTranslationTable) {
+                      boolean sortTranslationTable, boolean mapNames) {
 
         super(formatter, logEvery);
 
         this.nexusFormat = nexusFormat;
+        this.mapNames = mapNames;
 
         this.branchRateProvider = branchRateProvider;
 
@@ -180,7 +185,7 @@ public class TreeLogger extends MCLogger {
                 Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
                         branchRateProvider, nodeAttributeProviders, branchAttributeProviders, idMap, buffer);
             } else {
-                Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_TIME,
+                Tree.Utils.newick(tree, tree.getRoot(), !mapNames, Tree.Utils.LENGTHS_AS_TIME,
                         null, nodeAttributeProviders, branchAttributeProviders, idMap, buffer);
             }
 
@@ -313,10 +318,14 @@ public class TreeLogger extends MCLogger {
             BranchAttributeProvider[] branchAttributeProviders = new BranchAttributeProvider[baps.size()];
             baps.toArray(branchAttributeProviders);
 
+            boolean mapNames = true;
+            if( xo.hasAttribute(MAP_NAMES) && !xo.getBooleanAttribute(MAP_NAMES) )
+                mapNames = false;
+
             TreeLogger logger =
                     new TreeLogger(tree, branchRateProvider,
                             treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
-                            formatter, logEvery, nexusFormat, sortTranslationTable);
+                            formatter, logEvery, nexusFormat, sortTranslationTable, mapNames);
 
             if (title != null) {
                 logger.setTitle(title);
@@ -349,7 +358,8 @@ public class TreeLogger extends MCLogger {
                 new ElementRule(Likelihood.class, true),
                 new ElementRule(TreeAttributeProvider.class, 0, Integer.MAX_VALUE),
                 new ElementRule(NodeAttributeProvider.class, 0, Integer.MAX_VALUE),
-                new ElementRule(BranchAttributeProvider.class, 0, Integer.MAX_VALUE)
+                new ElementRule(BranchAttributeProvider.class, 0, Integer.MAX_VALUE),
+                AttributeRule.newBooleanRule(MAP_NAMES,true)
         };
 
         public String getParserDescription() {

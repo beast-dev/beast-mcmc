@@ -209,8 +209,17 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                     }
                     NodeRef node = treeModel.getExternalNode(index);
 
+                    if (cxo.hasAttribute(NAME)) {
+                        name = cxo.getStringAttribute(NAME);
+                    }
+
                     Parameter parameter = treeModel.getNodeTraitParameter(node, name);
+
+                    if( parameter == null )
+                        throw new XMLParseException("trait "+name+" not found for leafTrait element in treeModel element");
+
                     replaceParameter(cxo, parameter);
+                    // todo This is now broken.  Please fix.
 
 
                 } else {
@@ -225,6 +234,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         }
 
         treeModel.setupHeightBounds();
+        System.err.println("done constructing treeModel");
 
         Logger.getLogger("dr.evomodel").info("  initial tree topology = " + Tree.Utils.uniqueNewick(treeModel, treeModel.getRoot()));
         return treeModel;

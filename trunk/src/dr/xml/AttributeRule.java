@@ -190,8 +190,16 @@ public class AttributeRule implements XMLSyntaxRule {
 	 */
 	public Set<Class> getRequiredTypes() { return Collections.singleton(c); }
 
+    public boolean isAllowed(String elementName) {
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 
-	public boolean isAttributeRule() { return true; }
+    public boolean isAllowed(Class c) {
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+
+    public boolean isAttributeRule() { return true; }
 
 	/**
 	 * @return true if the given object is compatible with the required class.

@@ -152,11 +152,12 @@ public class Columns {
 				"then the label will be appended by the index of the statistic to create individual column names", true),
 			AttributeRule.newIntegerRule(SIGNIFICANT_FIGURES, true),
 			AttributeRule.newIntegerRule(DECIMAL_PLACES, true),
-			AttributeRule.newIntegerRule(WIDTH, true)
-		};
+			AttributeRule.newIntegerRule(WIDTH, true),
+            // Anything goes???
+            new ElementRule(Object.class, 1, Integer.MAX_VALUE),
+        };
 
 	};
 
 	private LogColumn[] columns = null;
-
 }

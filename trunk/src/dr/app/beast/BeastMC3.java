@@ -27,7 +27,6 @@ package dr.app.beast;
 
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
-import dr.app.beast.BeastParser;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
@@ -68,7 +67,8 @@ public class BeastMC3 {
         }
     }
 
-    public BeastMC3(double[] chainTemperatures, int swapChainsEvery, File inputFile, BeastConsoleApp consoleApp, boolean verbose) {
+    public BeastMC3(double[] chainTemperatures, int swapChainsEvery, File inputFile, BeastConsoleApp consoleApp,
+                    boolean verbose, boolean strictXML) {
 
         if (inputFile == null) {
             System.err.println();
@@ -106,7 +106,7 @@ public class BeastMC3 {
 
             FileReader fileReader = new FileReader(inputFile);
 
-	        XMLParser parser = new BeastParser(new String[] {fileName}, verbose);
+	        XMLParser parser = new BeastParser(new String[] {fileName}, verbose, strictXML);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -138,7 +138,7 @@ public class BeastMC3 {
                 fileReader = new FileReader(inputFile);
 
                 messageHandler.setLevel(Level.OFF);
-                parser = new BeastParser(new String[] {fileName}, verbose);
+                parser = new BeastParser(new String[] {fileName}, verbose, strictXML);
 
                 store = parser.parse(fileReader, false);
                 for (Object id : store.getIdSet()) {
@@ -294,6 +294,7 @@ public class BeastMC3 {
                         new Arguments.RealArrayOption("temperatures", HOT_CHAIN_COUNT, "a comma-separated list of the hot chain temperatures"),
                         new Arguments.IntegerOption("swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
                         new Arguments.Option("verbose", "verbose XML parsing messages"),
+                        new Arguments.Option("strict", "Fail on non conforming BEAST XML file"),
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
                         new Arguments.Option("help", "option to print this message")
@@ -348,9 +349,10 @@ public class BeastMC3 {
             swapChainsEvery = arguments.getIntegerOption("swap");
         }
 
-        boolean verbose = arguments.hasOption("verbose");
-        boolean window = arguments.hasOption("window");
-        boolean working = arguments.hasOption("working");
+        final boolean strictXML = arguments.hasOption("strict");
+        final boolean verbose = arguments.hasOption("verbose");
+        final boolean window = arguments.hasOption("window");
+        final boolean working = arguments.hasOption("working");
 
 //		if (System.getProperty("dr.app.beast.main.window", "false").toLowerCase().equals("true")) {
 //			window = true;
@@ -407,7 +409,7 @@ public class BeastMC3 {
 
         printTitle();
         printHeader();
-        new BeastMC3(chainTemperatures, swapChainsEvery, inputFile, consoleApp, verbose);
+        new BeastMC3(chainTemperatures, swapChainsEvery, inputFile, consoleApp, verbose, strictXML);
     }
 }
 

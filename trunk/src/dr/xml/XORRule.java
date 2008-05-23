@@ -134,6 +134,25 @@ public class XORRule implements XMLSyntaxRule {
         return set;
 	}
 
-	private final XMLSyntaxRule[] rules;
+    public boolean isAllowed(String elementName) {
+        for (XMLSyntaxRule rule : rules) {
+            if( rule.isAllowed(elementName) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isAllowed(Class c) {
+        for (XMLSyntaxRule rule : rules) {
+            if( rule.isAllowed(c) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private final XMLSyntaxRule[] rules;
     private final boolean optional;
 }

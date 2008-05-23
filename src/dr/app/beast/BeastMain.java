@@ -61,7 +61,7 @@ public class BeastMain {
         }
     }
 
-    public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, boolean verbose) {
+    public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, boolean verbose, boolean strictXML) {
 
         if (inputFile == null) {
             System.err.println();
@@ -76,7 +76,7 @@ public class BeastMain {
 
             FileReader fileReader = new FileReader(inputFile);
 
-            XMLParser parser = new BeastParser(new String[] {fileName}, verbose);
+            XMLParser parser = new BeastParser(new String[] {fileName}, verbose, strictXML);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -111,7 +111,7 @@ public class BeastMain {
 			// This is a special logger that is for logging numerical and statistical errors
 	        // during the MCMC run. It will tolerate up to maxErrorCount before throwing a
 	        // RuntimeException to shut down the run.
-	        Logger errorLogger = Logger.getLogger("error");
+	        //Logger errorLogger = Logger.getLogger("error");
 	        handler = new ErrorLogHandler(maxErrorCount);
 	        logger.addHandler(handler);
 
@@ -240,6 +240,7 @@ public class BeastMain {
                 new Arguments.Option[] {
 
                         new Arguments.Option("verbose", "verbose XML parsing messages"),
+                        new Arguments.Option("strict", "Fail on non conforming BEAST XML file"),
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "specify a random number generator seed"),
@@ -267,9 +268,10 @@ public class BeastMain {
             System.exit(0);
         }
 
-        boolean verbose = arguments.hasOption("verbose");
-        boolean window = arguments.hasOption("window");
-        boolean working = arguments.hasOption("working");
+        final boolean verbose = arguments.hasOption("verbose");
+        final boolean strictXML = arguments.hasOption("strict");
+        final boolean window = arguments.hasOption("window");
+        final boolean working = arguments.hasOption("working");
 
         // (HACK)
         //MCMC.logOps =  arguments.hasOption("logops");
@@ -363,7 +365,7 @@ public class BeastMain {
         System.out.println("Random number seed: " + seed);
         System.out.println();
 
-        new BeastMain(inputFile, consoleApp, maxErrorCount, verbose);
+        new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, strictXML);
     }
 }
 

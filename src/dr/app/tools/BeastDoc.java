@@ -170,7 +170,7 @@ public class BeastDoc {
             outputDirectory = Utils.getSaveFileName("BeastDoc v1.0 - Select output directory");
         }
 
-        new BeastDoc(new BeastParser(new String[] {}), outputDirectory, true);
+        new BeastDoc(new BeastParser(new String[] {}, false), outputDirectory, true);
 
         System.exit(0);
     }

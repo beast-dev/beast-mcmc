@@ -46,13 +46,13 @@ import java.util.Iterator;
  */
 public class BeastParser extends XMLParser {
 
-	public BeastParser(String[] args) {
-		super();
+	public BeastParser(String[] args, boolean strictXML) {
+		super(strictXML);
 		setup(args);
 	}
 
-	public BeastParser(String[] args, boolean verbose) {
-		super(verbose);
+	public BeastParser(String[] args, boolean verbose, boolean strictXML) {
+		super(verbose, strictXML);
 		setup(args);
 
 		if (verbose) {

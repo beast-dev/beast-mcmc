@@ -36,7 +36,7 @@ public interface XMLObjectParser {
     /**
      * @param store contains all named objects that have already been parsed.
      */
-    Object parseXMLObject(XMLObject xo, String id, ObjectStore store) throws XMLParseException;
+    Object parseXMLObject(XMLObject xo, String id, ObjectStore store, boolean strictXML) throws XMLParseException;
 
     /**
      *
@@ -82,4 +82,6 @@ public interface XMLObjectParser {
      * Order is not important.
      */
     XMLSyntaxRule[] getSyntaxRules();
+
+    boolean isAllowed(String elementName);
 }

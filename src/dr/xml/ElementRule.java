@@ -469,7 +469,16 @@ public class ElementRule implements XMLSyntaxRule {
 		}
 	}
 
-	public int getMin() { return min; }
+
+    public boolean isAllowed(String elementName) {
+        return c == null &&  name != null && name.equals(elementName);
+    }
+
+    public boolean isAllowed(Class c) {
+        return this.c != null && this.c.isAssignableFrom(c);
+    }
+
+    public int getMin() { return min; }
 	public int getMax() { return max; }
 
 	public String toString() { return ruleString(); }
@@ -483,5 +492,4 @@ public class ElementRule implements XMLSyntaxRule {
 
 	private String description = null;
 	private String example = null;
-
 }

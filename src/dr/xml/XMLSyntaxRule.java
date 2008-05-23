@@ -67,4 +67,14 @@ public interface XMLSyntaxRule {
 	 * @return the classes potentially required by this rule.
 	 */
 	public Set<Class> getRequiredTypes();
+
+    /**
+     *  Check for possible elements: catch typos, old syntax and elements with identical names to global
+     *  xml elemen parsers.
+     * @param elementName
+     * @return true if rule allows an element with that name
+     */
+    boolean isAllowed(String elementName);
+
+    boolean isAllowed(Class c);
 }

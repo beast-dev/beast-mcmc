@@ -42,7 +42,7 @@ abstract public class AbstractNucleotideModel extends AbstractSubstitutionModel 
 	double freqA, freqC, freqG, freqT,
             // A+G
             freqR,
-            // C+G
+            // C+T
             freqY;
 
 	// Constructor

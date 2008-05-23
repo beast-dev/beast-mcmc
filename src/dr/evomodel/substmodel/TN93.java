@@ -31,7 +31,7 @@ import dr.xml.*;
 import java.util.logging.Logger;
 
 /**
- * HTamura and Nei model of nucleotide evolution.
+ * Tamura and Nei model of nucleotide evolution.
  *
  * Most general model which has an analytical solution.
  *
@@ -42,9 +42,6 @@ public class TN93 extends AbstractNucleotideModel {
     public static final String KAPPA1 = "kappa1";
     public static final String KAPPA2 = "kappa2";
     public static final String FREQUENCIES = "frequencies";
-
-    /** tsTv */
-    //private double tsTv;
 
     private Parameter kappa1Parameter = null;
     private Parameter kappa2Parameter = null;

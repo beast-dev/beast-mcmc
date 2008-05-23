@@ -29,6 +29,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
+import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -86,40 +87,43 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             this.categoryCount = siteModel.getCategoryCount();
 
+            final Logger logger = Logger.getLogger("dr.evomodel");
+            String coreName = "Java general";
             if (integrateAcrossCategories)	{
-                if (patternList.getDataType() instanceof dr.evolution.datatype.Nucleotides) {
+
+                final DataType dataType = patternList.getDataType();
+
+                if (dataType instanceof dr.evolution.datatype.Nucleotides) {
 
                     if (NativeNucleotideLikelihoodCore.isAvailable()) {
-
-                        Logger.getLogger("dr.evomodel").info("TreeLikelihood using native nucleotide likelihood core");
+                         coreName = "native nucleotide";
                         likelihoodCore = new NativeNucleotideLikelihoodCore();
                     } else {
-
-                        Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java nucleotide likelihood core");
+                        coreName = "Java nucleotide";
                         likelihoodCore = new NucleotideLikelihoodCore();
                     }
 
-                } else if (patternList.getDataType() instanceof dr.evolution.datatype.AminoAcids) {
-                    Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java amino acid likelihood core");
+                } else if (dataType instanceof dr.evolution.datatype.AminoAcids) {
+                    coreName = "Java amino acid";
                     likelihoodCore = new AminoAcidLikelihoodCore();
-                } else if (patternList.getDataType() instanceof dr.evolution.datatype.Codons) {
-                    Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java codon likelihood core");
+                } else if (dataType instanceof dr.evolution.datatype.Codons) {
+                    coreName = "Java codon";
                     likelihoodCore = new CodonLikelihoodCore(patternList.getStateCount());
                     useAmbiguities = true;
                 } else {
-                    Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java general likelihood core");
                     likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
                 }
             } else {
-                Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java general likelihood core");
                 likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
             }
-            Logger.getLogger("dr.evomodel").info( "  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
-            Logger.getLogger("dr.evomodel").info("  Partial likelihood scaling " + (useScaling ? "on." : "off."));
+            logger.info("TreeLikelihood using" + coreName + " likelihood core");
+
+            logger.info( "  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
+            logger.info("  Partial likelihood scaling " + (useScaling ? "on." : "off."));
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;
-                Logger.getLogger("dr.evomodel").info("Branch rate model used: " + branchRateModel.getModelName());
+                logger.info("Branch rate model used: " + branchRateModel.getModelName());
             } else {
                 this.branchRateModel = new DefaultBranchRateModel();
             }
@@ -142,7 +146,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 	                    throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + treeModel.getId() +
 	                            ", is not found in patternList, " + patternList.getId());
 	                }
-
 
 	                tipPartialsModel.setStates(patternList, index, i);
 	            }
@@ -364,16 +367,16 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            boolean update1 = traverse(tree, child1);
+            final boolean update1 = traverse(tree, child1);
 
             NodeRef child2 = tree.getChild(node, 1);
-            boolean update2 = traverse(tree, child2);
+            final boolean update2 = traverse(tree, child2);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
 
-                int childNum1 = child1.getNumber();
-                int childNum2 = child2.getNumber();
+                final int childNum1 = child1.getNumber();
+                final int childNum2 = child2.getNumber();
 
                 likelihoodCore.setNodePartialsForUpdate(nodeNum);
 

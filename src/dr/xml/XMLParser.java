@@ -40,14 +40,16 @@ public class XMLParser {
     public static final String CONCURRENT = "concurrent";
 
     private Vector<Thread> threads = new Vector<Thread>();
+    private boolean strictXML;
 
-    public XMLParser() {
+    public XMLParser(boolean strictXML) {
+        this.strictXML = strictXML;
         addXMLObjectParser(new ArrayParser());
         addXMLObjectParser(Report.PARSER);
     }
 
-    public XMLParser(boolean verbose) {
-        this();
+    public XMLParser(boolean verbose, boolean strictXML) {
+        this(strictXML);
         this.verbose = verbose;
     }
 
@@ -104,7 +106,7 @@ public class XMLParser {
         if (e.getTagName().equals("beast")) {
 
             concurrent = false;
-            root = (XMLObject) convert(e, run);
+            root = (XMLObject) convert(e, run, true);
 
         } else {
             throw new dr.xml.XMLParseException("Unknown root document element, " + e.getTagName());
@@ -117,7 +119,7 @@ public class XMLParser {
         return root;
     }
 
-    private Object convert(Element e, boolean run) throws XMLParseException {
+    private Object convert(Element e, boolean run, boolean doParse) throws XMLParseException {
 
 
         if (e.hasAttribute(IDREF)) {
@@ -142,6 +144,8 @@ public class XMLParser {
 
             XMLObject xo = new XMLObject(e /*, objectStore*/);
 
+            final XMLObjectParser parser = doParse ? parserStore.get(xo.getName()) : null;
+
             String id = null;
             NodeList nodes = e.getChildNodes();
             for (int k = 0; k < repeats; k++) {
@@ -150,9 +154,13 @@ public class XMLParser {
                     Node child = nodes.item(i);
                     if (child instanceof Element) {
 
-                        if (verbose) System.out.println("Parsing " + ((Element) child).getTagName());
+                        final Element element = (Element) child;
+                        final String tag = element.getTagName();
+                        if (verbose) System.out.println("Parsing " + tag);
 
-                        xo.addChild(convert((Element) child, run));
+                        // don't parse elements that may be legal here with global parsers
+                        final boolean parseIt = parser == null || !parser.isAllowed(tag);
+                        xo.addChild(convert(element, run, parseIt));
                     } else if (child instanceof Text) {
                         // just add text as a child of type String object
                         String text = ((Text) child).getData().trim();
@@ -170,11 +178,9 @@ public class XMLParser {
                 throw new XMLParseException("Object with Id=" + id + " already exists");
             }
 
-            XMLObjectParser parser = parserStore.get(xo.getName());
-
             Object obj = null;
             if (parser != null) {
-                obj = parser.parseXMLObject(xo, id, objectStore);
+                obj = parser.parseXMLObject(xo, id, objectStore, strictXML);
 
                 if (id != null && obj instanceof Identifiable) {
                     ((Identifiable) obj).setId(id);

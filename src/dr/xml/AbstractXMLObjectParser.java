@@ -34,7 +34,8 @@ import java.util.List;
 
 public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
-    public final Object parseXMLObject(XMLObject xo, String id, ObjectStore store) throws XMLParseException {
+    public final Object parseXMLObject(XMLObject xo, String id, ObjectStore store, boolean strictXML)
+            throws XMLParseException {
 
         this.store = store;
 
@@ -63,7 +64,37 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                     }
                 }
                 if( name != null ) {
-                    System.err.println("WARNING: unhandled attribute (typo?) " + name + " in " + xo);
+                    final String msg = "unhandled attribute (typo?) " + name + " in " + xo;
+                    if( strictXML ) {
+                        throw new XMLParseException(msg);
+                    }
+                    System.err.println("WARNING:" + msg);
+
+                }
+            }
+
+            for(int k = 0; k < xo.getChildCount(); ++k) {
+                final Object child = xo.getChild(k);
+                String unexpectedName;
+                if( child instanceof XMLObject ) {
+                    final XMLObject ch = (XMLObject) child;
+                    unexpectedName = !isAllowed(ch.getName()) ? ch.getName() : null;
+                } else {
+                    unexpectedName = child.getClass().getName(); 
+                    for (XMLSyntaxRule rule : rules) {
+                        if( rule.isAllowed(child.getClass()) ) {
+                            unexpectedName = null;
+                            break;
+                        }
+                    }
+                }
+                if( unexpectedName != null ) {
+
+                    String msg = "unexpected element " + unexpectedName + " in " + xo;
+                    if( strictXML ) {
+                        throw new XMLParseException(msg);
+                    }
+                    System.err.println("WARNING: " + msg);
                 }
             }
         }
@@ -89,6 +120,19 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
      * Order is not important.
      */
     public abstract XMLSyntaxRule[] getSyntaxRules();
+
+    public final boolean isAllowed(String elementName) {
+        XMLSyntaxRule[] rules = getSyntaxRules();
+        if (rules != null && rules.length > 0) {
+            for(XMLSyntaxRule rule : rules ) {
+                if( rule.isAllowed(elementName) ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 
     public abstract String getParserDescription();
 

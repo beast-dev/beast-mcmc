@@ -78,8 +78,15 @@ public class ContentRule implements XMLSyntaxRule {
 	 */
 	public Set<Class> getRequiredTypes() { return Collections.EMPTY_SET; }
 
+    public boolean isAllowed(String elementName) {
+        return true;
+    }
 
-	public boolean isAttributeRule() { return false; }
+    public boolean isAllowed(Class c) {
+        return true;
+    }
+
+    public boolean isAttributeRule() { return false; }
 
 	private String htmlDescription;
 }

@@ -269,11 +269,8 @@ public class LogCombiner {
             if (id.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
                 id = "'" + id + "'";
             }
-            if (k < taxonCount) {
-                writer.println("\t\t" + k + " " + id + ",");
-            } else {
-                writer.println("\t\t" + k + " " + id);
-            }
+
+            writer.println("\t\t" + k + " " + id + (k < taxonCount ? "," : ""));
         }
         writer.println("\t\t;");
     }

@@ -29,10 +29,11 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
-import dr.inference.model.Statistic;
-import dr.inference.loggers.*;
+import dr.evomodel.tree.TMRCAStatistic;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.xml.*;
-import dr.evomodel.tree.*;
 
 import java.util.Set;
 

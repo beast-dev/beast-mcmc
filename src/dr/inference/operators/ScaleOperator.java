@@ -42,272 +42,302 @@ import dr.xml.*;
  */
 public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
-    public static final String SCALE_OPERATOR = "scaleOperator";
-    public static final String SCALE_ALL = "scaleAll";
-    public static final String SCALE_FACTOR = "scaleFactor";
-    public static final String DEGREES_OF_FREEDOM = "df";
-    public static final String INDICATORS = "indicators";
-    public static final String PICKONEPROB = "pickoneprob";
+	public static final String SCALE_OPERATOR = "scaleOperator";
+	public static final String SCALE_ALL = "scaleAll";
+	public static final String SCALE_ALL_IND = "scaleAllIndependently";
+	public static final String SCALE_FACTOR = "scaleFactor";
+	public static final String DEGREES_OF_FREEDOM = "df";
+	public static final String INDICATORS = "indicators";
+	public static final String PICKONEPROB = "pickoneprob";
 
-    private Parameter indicator;
-    private double indicatorOnProb;
+	private Parameter indicator;
+	private double indicatorOnProb;
 
-    public ScaleOperator(Parameter parameter, boolean scaleAll, int degreesOfFreedom, double scale,
-                         int mode, Parameter indicator, double indicatorOnProb) {
-        this.parameter = parameter;
-        this.indicator = indicator;
-        this.indicatorOnProb = indicatorOnProb;
-        this.scaleAll = scaleAll;
-        this.scaleFactor = scale;
-        this.mode = mode;
-        this.degreesOfFreedom = degreesOfFreedom;
-    }
-
-
-    /**
-     * @return the parameter this operator acts on.
-     */
-    public Parameter getParameter() {
-        return parameter;
-    }
-
-    /**
-     * change the parameter and return the hastings ratio.
-     */
-    public final double doOperation() throws OperatorFailedException {
-
-        final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
-
-        double logq;
-
-        final Bounds bounds = parameter.getBounds();
-        final int dim = parameter.getDimension();
-        if (scaleAll) {
-            // update all dimensions
-            // hasting ratio is dim-2 times of 1dim case. would be nice to have a reference here
-            // for the proof. It is supposed to be somewhere in an Alexei/Nicholes article.
-            if (degreesOfFreedom > 0)
-                logq = -degreesOfFreedom * Math.log(scale);     // For parameters with non-uniform prior on only one dimension
-            else
-                logq = (parameter.getDimension() - 2) * Math.log(scale);
-
-            for (int i = 0; i < dim; i++) {
-                final double value = parameter.getParameterValue(i) * scale;
-                if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
-                    throw new OperatorFailedException("proposed value outside boundaries");
-                }
-                parameter.setParameterValue(i, value);
-            }
-        } else {
-            logq = -Math.log(scale);
-
-            // which bit to scale
-            int index;
-            if (indicator != null) {
-                final int idim = indicator.getDimension();
-                final boolean impliedOne = idim == (dim - 1);
-                // available bit locations
-                int[] loc = new int[idim + 1];
-                int nLoc = 0;
-                // choose active or non active ones?
-                final boolean takeOne = indicatorOnProb >= 1.0 || MathUtils.nextDouble() < indicatorOnProb;
-
-                if (impliedOne && takeOne) {
-                    loc[nLoc] = 0;
-                    ++nLoc;
-                }
-                for (int i = 0; i < idim; i++) {
-                    final double value = indicator.getStatisticValue(i);
-                    if (takeOne == (value > 0)) {
-                        loc[nLoc] = i + (impliedOne ? 1 : 0);
-                        ++nLoc;
-                    }
-                }
-
-                if (nLoc > 0) {
-                    final int rand = MathUtils.nextInt(nLoc);
-                    index = loc[rand];
-                } else {
-                    throw new OperatorFailedException("no active indicators");
-                }
-            } else {
-                // any is good
-                index = MathUtils.nextInt(dim);
-            }
-
-            final double oldValue = parameter.getParameterValue(index);
-            final double newValue = scale * oldValue;
-
-            if (newValue < bounds.getLowerLimit(index) || newValue > bounds.getUpperLimit(index)) {
-                throw new OperatorFailedException("proposed value outside boundaries");
-            }
-
-            parameter.setParameterValue(index, newValue);
-
-            // provides a hook for subclasses
-            cleanupOperation(newValue, oldValue);
-        }
-
-        return logq;
-    }
-
-    /**
-     * This method should be overridden by operators that need to do something just before the return of doOperation.
-     *
-     * @param newValue the proposed parameter value
-     * @param oldValue the old parameter value
-     */
-    void cleanupOperation(double newValue, double oldValue) {
-        // DO NOTHING
-    }
-
-    //MCMCOperator INTERFACE
-    public final String getOperatorName() {
-        return "scale(" + parameter.getParameterName() + ")";
-    }
-
-    public double getCoercableParameter() {
-        return Math.log(1.0 / scaleFactor - 1.0);
-    }
-
-    public void setCoercableParameter(double value) {
-        scaleFactor = 1.0 / (Math.exp(value) + 1.0);
-    }
-
-    public double getRawParameter() {
-        return scaleFactor;
-    }
-
-    public int getMode() {
-        return mode;
-    }
-
-    public double getScaleFactor() {
-        return scaleFactor;
-    }
-
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
-    }
+	public ScaleOperator(Parameter parameter, boolean scaleAll, int degreesOfFreedom, double scale,
+	                     int mode, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
+		this.parameter = parameter;
+		this.indicator = indicator;
+		this.indicatorOnProb = indicatorOnProb;
+		this.scaleAll = scaleAll;
+		this.scaleAllIndependently = scaleAllInd;
+		this.scaleFactor = scale;
+		this.mode = mode;
+		this.degreesOfFreedom = degreesOfFreedom;
+	}
 
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+	/**
+	 * @return the parameter this operator acts on.
+	 */
+	public Parameter getParameter() {
+		return parameter;
+	}
 
-        public String getParserName() {
-            return SCALE_OPERATOR;
-        }
+	/**
+	 * change the parameter and return the hastings ratio.
+	 */
+	public final double doOperation() throws OperatorFailedException {
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+		final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
 
-            boolean scaleAll = false;
-            int degreesOfFreedom = 0;
-            int mode = CoercableMCMCOperator.DEFAULT;
+		double logq;
 
-            if (xo.hasAttribute(SCALE_ALL)) {
-                scaleAll = xo.getBooleanAttribute(SCALE_ALL);
-            }
+		final Bounds bounds = parameter.getBounds();
+		final int dim = parameter.getDimension();
 
-            if (xo.hasAttribute(DEGREES_OF_FREEDOM)) {
-                degreesOfFreedom = xo.getIntegerAttribute(DEGREES_OF_FREEDOM);
-            }
+		if (scaleAllIndependently) {
+			// update all dimensions independently.
+			logq = 0;
+			for (int i = 0; i < dim; i++) {
 
-            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-                mode = xo.getBooleanAttribute(AUTO_OPTIMIZE) ?
-                        CoercableMCMCOperator.COERCION_ON : CoercableMCMCOperator.COERCION_OFF;
-            }
+				final double scaleOne = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
+				final double value = scaleOne * parameter.getParameterValue(i);
 
-            final double weight = xo.getDoubleAttribute(WEIGHT);
-            final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+				logq -= Math.log(scale);
 
-            if (scaleFactor <= 0.0 || scaleFactor >= 1.0) {
-                throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
-            }
+				if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
+					throw new OperatorFailedException("proposed value outside boundaries");
+				}
 
-            final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+				parameter.setParameterValue(i, value);
 
-            Parameter indicator = null;
-            double indicatorOnProb = 1.0;
-            final XMLObject cxo = (XMLObject) xo.getChild(INDICATORS);
+			}
+		} else if (scaleAll) {
+			// update all dimensions
+			// hasting ratio is dim-2 times of 1dim case. would be nice to have a reference here
+			// for the proof. It is supposed to be somewhere in an Alexei/Nicholes article.
+			if (degreesOfFreedom > 0)
+				logq = -degreesOfFreedom * Math.log(scale);     // For parameters with non-uniform prior on only one dimension
+			else
+				logq = (parameter.getDimension() - 2) * Math.log(scale);
 
-            if (cxo != null) {
-                indicator = (Parameter) cxo.getChild(Parameter.class);
-                if (cxo.hasAttribute(PICKONEPROB)) {
-                    indicatorOnProb = cxo.getDoubleAttribute(PICKONEPROB);
-                    if (!(0 <= indicatorOnProb && indicatorOnProb <= 1)) {
-                        throw new XMLParseException("pickoneprob must be between 0.0 and 1.0");
-                    }
-                }
-            }
-            ScaleOperator operator = new ScaleOperator(parameter, scaleAll, degreesOfFreedom, scaleFactor, mode, indicator, indicatorOnProb);
-            operator.setWeight(weight);
-            return operator;
-        }
+			for (int i = 0; i < dim; i++) {
+				final double value = parameter.getParameterValue(i) * scale;
+				if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
+					throw new OperatorFailedException("proposed value outside boundaries");
+				}
+				parameter.setParameterValue(i, value);
+			}
+		} else {
+			logq = -Math.log(scale);
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+			// which bit to scale
+			int index;
+			if (indicator != null) {
+				final int idim = indicator.getDimension();
+				final boolean impliedOne = idim == (dim - 1);
+				// available bit locations
+				int[] loc = new int[idim + 1];
+				int nLoc = 0;
+				// choose active or non active ones?
+				final boolean takeOne = indicatorOnProb >= 1.0 || MathUtils.nextDouble() < indicatorOnProb;
 
-        public String getParserDescription() {
-            return "This element returns a scale operator on a given parameter.";
-        }
+				if (impliedOne && takeOne) {
+					loc[nLoc] = 0;
+					++nLoc;
+				}
+				for (int i = 0; i < idim; i++) {
+					final double value = indicator.getStatisticValue(i);
+					if (takeOne == (value > 0)) {
+						loc[nLoc] = i + (impliedOne ? 1 : 0);
+						++nLoc;
+					}
+				}
 
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
+				if (nLoc > 0) {
+					final int rand = MathUtils.nextInt(nLoc);
+					index = loc[rand];
+				} else {
+					throw new OperatorFailedException("no active indicators");
+				}
+			} else {
+				// any is good
+				index = MathUtils.nextInt(dim);
+			}
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+			final double oldValue = parameter.getParameterValue(index);
+			final double newValue = scale * oldValue;
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(SCALE_FACTOR),
-                AttributeRule.newBooleanRule(SCALE_ALL, true),
-                AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-                AttributeRule.newDoubleRule(PICKONEPROB, true),
-                new ElementRule(Parameter.class)
-        };
+			if (newValue < bounds.getLowerLimit(index) || newValue > bounds.getUpperLimit(index)) {
+				throw new OperatorFailedException("proposed value outside boundaries");
+			}
 
-    };
+			parameter.setParameterValue(index, newValue);
 
-    public String toString() {
-        return "scaleOperator(" + parameter.getParameterName() + " [" + scaleFactor + ", " + (1.0 / scaleFactor) + "]";
-    }
+			// provides a hook for subclasses
+			cleanupOperation(newValue, oldValue);
+		}
 
-    //PRIVATE STUFF
+		return logq;
+	}
 
-    private Parameter parameter = null;
-    private boolean scaleAll = false;
-    private int degreesOfFreedom = 0;
-    private double scaleFactor = 0.5;
-    private int mode = CoercableMCMCOperator.DEFAULT;
+	/**
+	 * This method should be overridden by operators that need to do something just before the return of doOperation.
+	 *
+	 * @param newValue the proposed parameter value
+	 * @param oldValue the old parameter value
+	 */
+	void cleanupOperation(double newValue, double oldValue) {
+		// DO NOTHING
+	}
+
+	//MCMCOperator INTERFACE
+	public final String getOperatorName() {
+		return "scale(" + parameter.getParameterName() + ")";
+	}
+
+	public double getCoercableParameter() {
+		return Math.log(1.0 / scaleFactor - 1.0);
+	}
+
+	public void setCoercableParameter(double value) {
+		scaleFactor = 1.0 / (Math.exp(value) + 1.0);
+	}
+
+	public double getRawParameter() {
+		return scaleFactor;
+	}
+
+	public int getMode() {
+		return mode;
+	}
+
+	public double getScaleFactor() {
+		return scaleFactor;
+	}
+
+	public double getTargetAcceptanceProbability() {
+		return 0.234;
+	}
+
+	public double getMinimumAcceptanceLevel() {
+		return 0.1;
+	}
+
+	public double getMaximumAcceptanceLevel() {
+		return 0.4;
+	}
+
+	public double getMinimumGoodAcceptanceLevel() {
+		return 0.20;
+	}
+
+	public double getMaximumGoodAcceptanceLevel() {
+		return 0.30;
+	}
+
+	public final String getPerformanceSuggestion() {
+
+		double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+		double targetProb = getTargetAcceptanceProbability();
+		dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
+		double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
+		if (prob < getMinimumGoodAcceptanceLevel()) {
+			return "Try setting scaleFactor to about " + formatter.format(sf);
+		} else if (prob > getMaximumGoodAcceptanceLevel()) {
+			return "Try setting scaleFactor to about " + formatter.format(sf);
+		} else return "";
+	}
+
+
+	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+
+		public String getParserName() {
+			return SCALE_OPERATOR;
+		}
+
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+			boolean scaleAll = false;
+			boolean scaleAllInd = false;
+			int degreesOfFreedom = 0;
+			int mode = CoercableMCMCOperator.DEFAULT;
+
+			if (xo.hasAttribute(SCALE_ALL)) {
+				scaleAll = xo.getBooleanAttribute(SCALE_ALL);
+			}
+
+			if (xo.hasAttribute(SCALE_ALL_IND)) {
+				scaleAllInd = xo.getBooleanAttribute(SCALE_ALL_IND);
+			}
+
+			if (xo.hasAttribute(DEGREES_OF_FREEDOM)) {
+				degreesOfFreedom = xo.getIntegerAttribute(DEGREES_OF_FREEDOM);
+			}
+
+			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
+				mode = xo.getBooleanAttribute(AUTO_OPTIMIZE) ?
+						CoercableMCMCOperator.COERCION_ON : CoercableMCMCOperator.COERCION_OFF;
+			}
+
+			final double weight = xo.getDoubleAttribute(WEIGHT);
+			final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+
+			if (scaleFactor <= 0.0 || scaleFactor >= 1.0) {
+				throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
+			}
+
+			final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+
+			Parameter indicator = null;
+			double indicatorOnProb = 1.0;
+			final XMLObject cxo = (XMLObject) xo.getChild(INDICATORS);
+
+			if (cxo != null) {
+				indicator = (Parameter) cxo.getChild(Parameter.class);
+				if (cxo.hasAttribute(PICKONEPROB)) {
+					indicatorOnProb = cxo.getDoubleAttribute(PICKONEPROB);
+					if (!(0 <= indicatorOnProb && indicatorOnProb <= 1)) {
+						throw new XMLParseException("pickoneprob must be between 0.0 and 1.0");
+					}
+				}
+			}
+			ScaleOperator operator = new ScaleOperator(parameter, scaleAll,
+					degreesOfFreedom, scaleFactor,
+					mode, indicator, indicatorOnProb,
+					scaleAllInd);
+			operator.setWeight(weight);
+			return operator;
+		}
+
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
+
+		public String getParserDescription() {
+			return "This element returns a scale operator on a given parameter.";
+		}
+
+		public Class getReturnType() {
+			return MCMCOperator.class;
+		}
+
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
+
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				AttributeRule.newDoubleRule(SCALE_FACTOR),
+				AttributeRule.newBooleanRule(SCALE_ALL, true),
+				AttributeRule.newBooleanRule(SCALE_ALL_IND, true),
+				AttributeRule.newDoubleRule(WEIGHT),
+				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+				AttributeRule.newDoubleRule(PICKONEPROB, true),
+				new ElementRule(Parameter.class)
+		};
+
+	};
+
+	public String toString() {
+		return "scaleOperator(" + parameter.getParameterName() + " [" + scaleFactor + ", " + (1.0 / scaleFactor) + "]";
+	}
+
+	//PRIVATE STUFF
+
+	private Parameter parameter = null;
+	private boolean scaleAll = false;
+	private boolean scaleAllIndependently = false;
+	private int degreesOfFreedom = 0;
+	private double scaleFactor = 0.5;
+	private int mode = CoercableMCMCOperator.DEFAULT;
 }

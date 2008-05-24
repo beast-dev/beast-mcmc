@@ -61,24 +61,24 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 	}
 
 	public String[] getAttributeForNode(Tree tree, NodeRef node) {
-
-		TreeModel treeModel = (TreeModel) tree;
-
-		if (redrawTime == 0) {
-//			makeDirty();
-//			calculateLogLikelihood();    // should do longer need these, now that rootPartials is properly collected
-			traverseSample(treeModel, tree.getRoot(), null);
+		if (tree != treeModel) {
+			throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
 		}
 
-		// Function gets called once for each node to log tree
-		// After one log, prepare to redraw states
-		redrawTime++;
-		if (redrawTime == tree.getNodeCount())
-			redrawTime = 0;
+		if (!areStatesRedrawn) {
+			redrawAncestralStates();
+		}
 
 		return new String[]{formattedState(reconstructedStates[node.getNumber()], dataType)};
 
 
+	}
+
+	private boolean areStatesRedrawn = false;
+
+	public void redrawAncestralStates() {
+		traverseSample(treeModel, treeModel.getRoot(), null);
+		areStatesRedrawn = true;
 	}
 
     private boolean checkConditioning = true;
@@ -92,7 +92,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
     }
 
     protected double calculateLogLikelihood() {
-        
+
         if (checkConditioning) {
             final int len = stateCount * stateCount;
             double[] test = new double[len];
@@ -109,6 +109,8 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
             }
             checkConditioning = false;
         }
+
+	    areStatesRedrawn = false;
 
         return super.calculateLogLikelihood();
     }

@@ -27,11 +27,11 @@ public class ALSTreeLikelihood extends TreeLikelihood
     protected AbstractObservationProcess observationProcess;
 
     public ALSTreeLikelihood(AbstractObservationProcess observationProcess, PatternList patternList, TreeModel treeModel, SiteModel siteModel, BranchRateModel branchRateModel, boolean useAmbiguities, boolean storePartials, boolean useScaling) {
-        super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, storePartials, useScaling);
+        super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials, useScaling);
 
         this.observationProcess=observationProcess;
         addModel(observationProcess);
-        
+
         // TreeLikelihood does not initialize the partials for tips, we'll do it ourselves
         int extNodeCount = treeModel.getExternalNodeCount();
         for (int i = 0; i < extNodeCount; i++) {

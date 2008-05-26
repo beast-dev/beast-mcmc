@@ -1109,9 +1109,10 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 }
 
                 if (leaves != null) {
+                    // except for the root clade...
                     leaves.addAll(ls);
+                    clades.add(ls);
                 }
-                clades.add(ls);
 
             }
         }
@@ -1144,16 +1145,17 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                     }
                 }
 
-                for (Set<String> clade : clades) {
-                    Set<String> intersection = new HashSet<String>(ls);
-                    intersection.removeAll(clade);
-
-                    if (intersection.size() != 0 && intersection.size() != ls.size()) {
-                        return false;
-                    }
-                }
-
                 if (leaves != null) {
+                    // except for the root clade...
+                    for (Set<String> clade : clades) {
+                        Set<String> intersection = new HashSet<String>(ls);
+                        intersection.removeAll(clade);
+
+                        if (intersection.size() != 0 && intersection.size() != ls.size()) {
+                            return false;
+                        }
+                    }
+
                     leaves.addAll(ls);
                 }
             }

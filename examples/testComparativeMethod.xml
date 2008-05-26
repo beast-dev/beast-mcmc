@@ -198,10 +198,9 @@
         <nodeTraits name="size" rootNode="false" internalNodes="true" leafNodes="false" traitDimension="1">
 			<parameter id="internalTraits"/>
 		</nodeTraits>
-        <!--<leafTrait name="size" taxon="1">-->
-			<!--<parameter id="size.1"/>-->
-		<!--</leafTrait>-->
-        <!-- Directly accessing taxon values is broken.  Please fix. -->
+        <nodeTraits name="size" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="1">
+			<parameter id="leafTraits"/>
+		</nodeTraits>
     </treeModel>
 
     <multivariateNormalPrior id="rootPrior">

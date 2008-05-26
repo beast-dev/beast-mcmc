@@ -89,6 +89,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	                             Parameter lambda, Parameter beta, MatrixParameter dMatrix) {
 		super(SKYLINE_LIKELIHOOD);
 
+		
+		
 		this.popSizeParameter = popParameter;
 		this.groupSizeParameter = groupParameter;
 		this.precisionParameter = precParameter;
@@ -130,6 +132,14 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 
 		initializationReport();
 
+	}
+	
+	public double[] getCopyOfCoalescentIntervals(){
+		return coalescentIntervals.clone();
+	}
+	
+	public double[] getCoalescentIntervals(){
+		return coalescentIntervals;
 	}
 
 	public void initializationReport() {
@@ -177,7 +187,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	}
 
 	protected void setupGMRFWeights() {
-
+	
 		int index = 0;
 
 		double length = 0;
@@ -193,6 +203,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 				weight = 0;
 
 			}
+			
+		
 		}
 
 		//Set up the weight Matrix
@@ -464,6 +476,7 @@ model {
 			if (xo.hasAttribute(RANDOMIZE_TREE) && xo.getBooleanAttribute(RANDOMIZE_TREE))
 				checkTree(treeModel);
 
+			
 			return new GMRFSkyrideLikelihood(treeModel, popParameter, groupParameter, precParameter,
 					lambda, beta, dMatrix);
 		}

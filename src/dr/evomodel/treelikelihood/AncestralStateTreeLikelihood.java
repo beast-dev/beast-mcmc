@@ -49,7 +49,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 	                                    boolean useScaling,
 	                                    DataType dataType,
 	                                    String tag) {
-		super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, storePartials, useScaling);
+		super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials, useScaling);
 		this.dataType = dataType;
 		this.tag = tag;
 

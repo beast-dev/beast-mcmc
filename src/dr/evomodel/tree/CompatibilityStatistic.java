@@ -101,7 +101,7 @@ public class CompatibilityStatistic extends BooleanStatistic implements TreeStat
 			return "A statistic that returns true if a pair of trees are compatible";
 		}
 
-		public Class getReturnType() { return MonophylyStatistic.class; }
+		public Class getReturnType() { return CompatibilityStatistic.class; }
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 

@@ -40,7 +40,6 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
     public static final String ROOT_HEIGHT = "rootHeight";
     public static final String LEAF_HEIGHT = "leafHeight";
-    public static final String LEAF_TRAIT = "leafTrait";
 
     public static final String NODE_HEIGHTS = "nodeHeights";
     public static final String NODE_RATES = "nodeRates";
@@ -192,34 +191,35 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                     replaceParameter(cxo, treeModel.createNodeTraitsParameter(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents));
 
-                } else if (cxo.getName().equals(LEAF_TRAIT)) {
-
-                    String name = "trait";
-
-                    String taxonName;
-                    if (cxo.hasAttribute(TAXON)) {
-                        taxonName = cxo.getStringAttribute(TAXON);
-                    } else {
-                        throw new XMLParseException("taxa element missing from leafTrait element in treeModel element");
-                    }
-
-                    int index = treeModel.getTaxonIndex(taxonName);
-                    if (index == -1) {
-                        throw new XMLParseException("taxon " + taxonName + " not found for leafTrait element in treeModel element");
-                    }
-                    NodeRef node = treeModel.getExternalNode(index);
-
-                    if (cxo.hasAttribute(NAME)) {
-                        name = cxo.getStringAttribute(NAME);
-                    }
-
-                    Parameter parameter = treeModel.getNodeTraitParameter(node, name);
-
-                    if( parameter == null )
-                        throw new XMLParseException("trait "+name+" not found for leafTrait element in treeModel element");
-
-                    replaceParameter(cxo, parameter);
-                    // todo This is now broken.  Please fix.
+// AR 26 May 08: This should not be necessary - use <nodeTraits leafNodes="true"> to extract leaf trait parameters...
+//                } else if (cxo.getName().equals(LEAF_TRAITS)) {
+//
+//                    String name = "trait";
+//
+//                    String taxonName;
+//                    if (cxo.hasAttribute(TAXON)) {
+//                        taxonName = cxo.getStringAttribute(TAXON);
+//                    } else {
+//                        throw new XMLParseException("taxa element missing from leafTrait element in treeModel element");
+//                    }
+//
+//                    int index = treeModel.getTaxonIndex(taxonName);
+//                    if (index == -1) {
+//                        throw new XMLParseException("taxon " + taxonName + " not found for leafTrait element in treeModel element");
+//                    }
+//                    NodeRef node = treeModel.getExternalNode(index);
+//
+//                    if (cxo.hasAttribute(NAME)) {
+//                        name = cxo.getStringAttribute(NAME);
+//                    }
+//
+//                    Parameter parameter = treeModel.getNodeTraitParameter(node, name);
+//
+//                    if( parameter == null )
+//                        throw new XMLParseException("trait "+name+" not found for leafTrait element in treeModel element");
+//
+//                    replaceParameter(cxo, parameter);
+//                    // todo This is now broken.  Please fix.
 
 
                 } else {
@@ -288,7 +288,18 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                             AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root height is included in the parameter"),
                             AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node heights (minus the root) are included in the parameter"),
                             new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                    }, 1, Integer.MAX_VALUE)
+                    }, 1, Integer.MAX_VALUE),
+            new ElementRule(NODE_TRAITS,
+                    new XMLSyntaxRule[]{
+                            AttributeRule.newStringRule(NAME, false, "The name of the trait attribute in the taxa"),
+                            AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root trait is included in the parameter"),
+                            AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node traits (minus the root) are included in the parameter"),
+                            AttributeRule.newBooleanRule(LEAF_NODES, true, "If true the leaf node traits are included in the parameter"),
+                            AttributeRule.newIntegerRule(MULTIVARIATE_TRAIT, true, "The number of dimensions (if multivariate)"),
+                            AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
+                            AttributeRule.newBooleanRule(FIRE_TREE_EVENTS, true, "Whether to fire tree events if the traits change"),
+                            new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
+                    }, 1, Integer.MAX_VALUE),
     };
 
     public Parameter getParameter(XMLObject xo) throws XMLParseException {

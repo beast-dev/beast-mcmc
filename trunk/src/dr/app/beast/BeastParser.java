@@ -353,7 +353,8 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkyrideFixedEffectsGibbsOperator.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.GMRFTestLikelihood.PARSER);
-
+		addXMLObjectParser(dr.evomodel.tree.GMRFSkyrideFixedGridLogger.PARSER);
+		
 		//SVS
 		addXMLObjectParser(dr.evomodel.substmodel.SVSGeneralSubstitutionModel.PARSER);
 		addXMLObjectParser(BitFlipInSubstitutionModelOperator.PARSER);

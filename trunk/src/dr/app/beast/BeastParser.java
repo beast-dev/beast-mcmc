@@ -31,6 +31,7 @@ import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.operators.InternalTraitGibbsOperator;
 import dr.evomodel.operators.PrecisionMatrixGibbsOperator;
 import dr.evomodel.operators.RandomWalkOnMapOperator;
+import dr.evomodel.tree.CompatibilityStatistic;
 
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
@@ -222,6 +223,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.tree.RateCovarianceStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.RateStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.MonophylyStatistic.PARSER);
+        addXMLObjectParser(dr.evomodel.tree.CompatibilityStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.ParsimonyStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.ParsimonyStateStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.SpeciesTreeStatistic.PARSER);

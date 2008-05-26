@@ -299,7 +299,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                             AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
                             AttributeRule.newBooleanRule(FIRE_TREE_EVENTS, true, "Whether to fire tree events if the traits change"),
                             new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                    }, 1, Integer.MAX_VALUE),
+                    }, 0, Integer.MAX_VALUE),
     };
 
     public Parameter getParameter(XMLObject xo) throws XMLParseException {

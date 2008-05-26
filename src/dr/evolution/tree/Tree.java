@@ -1080,5 +1080,85 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 			convertToJebl(tree, tree.getRoot(), jtree);
 			return jtree;
 		}
-	}
+
+        /**
+         * Gets the set of clades in a tree
+         * @param tree the tree
+         * @return the set of clades
+         */
+        public static Set<Set<String>> getClades(Tree tree) {
+            Set<Set<String>> clades = new HashSet<Set<String>>();
+            getClades(tree, tree.getRoot(), null, clades);
+
+            return clades;
+        }
+
+        private static void getClades(Tree tree, NodeRef node, Set<String> leaves, Set<Set<String>> clades) {
+
+            if (tree.isExternal(node)) {
+                leaves.add(tree.getTaxonId(node.getNumber()));
+            } else {
+
+                Set<String> ls = new HashSet<String>();
+
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                   NodeRef node1 = tree.getChild(node, i);
+
+                   getClades(tree, node1, ls, clades);
+                }
+
+                if (leaves != null) {
+                    leaves.addAll(ls);
+                }
+                clades.add(ls);
+
+            }
+        }
+
+        /**
+         * Tests whether the given tree is compatible with a set of clades
+         * @param tree the test tree
+         * @param clades the set of clades
+         * @return
+         */
+        public static boolean isCompatible(Tree tree, Set<Set<String>> clades) {
+            return isCompatible(tree, tree.getRoot(), null, clades);
+        }
+
+        private static boolean isCompatible(Tree tree, NodeRef node, Set<String> leaves, Set<Set<String>> clades) {
+            if (tree.isExternal(node)) {
+                leaves.add(tree.getTaxonId(node.getNumber()));
+                return true;
+            } else {
+
+                Set<String> ls = new HashSet<String>();
+
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                    NodeRef node1 = tree.getChild(node, i);
+
+                    if (!isCompatible(tree, node1, ls, clades)) {
+                        // as soon as we have an incompatibility break out...
+                        return false;
+                    }
+                }
+
+                for (Set<String> clade : clades) {
+                    Set<String> intersection = new HashSet<String>(ls);
+                    intersection.removeAll(clade);
+
+                    if (intersection.size() != 0 && intersection.size() != ls.size()) {
+                        return false;
+                    }
+                }
+
+                if (leaves != null) {
+                    leaves.addAll(ls);
+                }
+            }
+            return true;
+        }
+    }
+
 }

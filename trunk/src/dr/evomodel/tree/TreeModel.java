@@ -51,51 +51,52 @@ public class TreeModel extends AbstractModel implements MutableTree {
 	public static final String TREE_MODEL = "treeModel";
 
 	public TreeModel(Tree tree) {
+        this(tree, false);
+        // Unbelievable code duplication
 
-		super(TREE_MODEL);
-
-		// get a rooted version of the tree to clone
-		FlexibleTree binaryTree = new FlexibleTree(tree);
-		binaryTree.resolveTree();
-
-		// clone the node structure (this will create the individual parameters
-		Node node = new Node(binaryTree, binaryTree.getRoot());
-
-		internalNodeCount = binaryTree.getInternalNodeCount();
-		externalNodeCount = binaryTree.getExternalNodeCount();
-
-		nodeCount = internalNodeCount + externalNodeCount;
-
-		nodes = new Node[nodeCount];
-		storedNodes = new Node[nodeCount];
-
-		int i = 0;
-		int j = externalNodeCount;
-
-		root = node;
-
-		do {
-			node = (Node) Tree.Utils.postorderSuccessor(this, node);
-
-			if (node.isExternal()) {
-				node.number = i;
-
-				nodes[i] = node;
-				storedNodes[i] = new Node();
-				storedNodes[i].taxon = node.taxon;
-				storedNodes[i].number = i;
-
-				i++;
-			} else {
-				node.number = j;
-
-				nodes[j] = node;
-				storedNodes[j] = new Node();
-				storedNodes[j].number = j;
-
-				j++;
-			}
-		} while (node != root);
+//        super(TREE_MODEL);
+//		// get a rooted version of the tree to clone
+//		FlexibleTree binaryTree = new FlexibleTree(tree);
+//		binaryTree.resolveTree();
+//
+//		// clone the node structure (this will create the individual parameters
+//		Node node = new Node(binaryTree, binaryTree.getRoot());
+//
+//		internalNodeCount = binaryTree.getInternalNodeCount();
+//		externalNodeCount = binaryTree.getExternalNodeCount();
+//
+//		nodeCount = internalNodeCount + externalNodeCount;
+//
+//		nodes = new Node[nodeCount];
+//		storedNodes = new Node[nodeCount];
+//
+//		int i = 0;
+//		int j = externalNodeCount;
+//
+//		root = node;
+//
+//		do {
+//			node = (Node) Tree.Utils.postorderSuccessor(this, node);
+//
+//			if (node.isExternal()) {
+//				node.number = i;
+//
+//				nodes[i] = node;
+//				storedNodes[i] = new Node();
+//				storedNodes[i].taxon = node.taxon;
+//				storedNodes[i].number = i;
+//
+//				i++;
+//			} else {
+//				node.number = j;
+//
+//				nodes[j] = node;
+//				storedNodes[j] = new Node();
+//				storedNodes[j].number = j;
+//
+//				j++;
+//			}
+//		} while (node != root);
 
 	}
 
@@ -149,7 +150,6 @@ public class TreeModel extends AbstractModel implements MutableTree {
 				j++;
 			}
 		} while (node != root);
-
 	}
 
 

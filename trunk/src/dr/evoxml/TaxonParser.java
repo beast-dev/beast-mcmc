@@ -53,16 +53,12 @@ public class TaxonParser extends AbstractXMLObjectParser {
             if (child instanceof Date) {
                 taxon.setDate((Date)child);
             } else if (child instanceof Attribute) {
-                Attribute attr = (Attribute)child;
-                String name = attr.getAttributeName();
-                Object value = attr.getAttributeValue();
-                taxon.setAttribute(name, value);
+                final Attribute attr = (Attribute)child;
+                taxon.setAttribute(attr.getAttributeName(), attr.getAttributeValue());
             } else if (child instanceof Attribute[]) {
                 Attribute[] attrs = (Attribute[])child;
-                for (int j =0; j < attrs.length; j++) {
-                    String name = attrs[j].getAttributeName();
-                    Object value = attrs[j].getAttributeValue();
-                    taxon.setAttribute(name, value);
+                for (Attribute attr : attrs) {
+                    taxon.setAttribute(attr.getAttributeName(), attr.getAttributeValue());
                 }
             } else {
                 throw new XMLParseException("Unrecognized element found in taxon element!");

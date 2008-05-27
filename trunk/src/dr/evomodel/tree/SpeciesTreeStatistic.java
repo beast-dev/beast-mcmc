@@ -114,8 +114,8 @@ public class SpeciesTreeStatistic extends BooleanStatistic implements TreeStatis
 			} else {
 				name = xo.getId();
 			}
-			Tree speciesTree = (Tree)xo.getSocketChild("speciesTree");
-			Tree popTree = (Tree)xo.getSocketChild("populationTree");
+			Tree speciesTree = (Tree)xo.getElementFirstChild("speciesTree");
+			Tree popTree = (Tree)xo.getElementFirstChild("populationTree");
 			return new SpeciesTreeStatistic(name, speciesTree, popTree);
 		}
 		

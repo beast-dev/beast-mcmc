@@ -193,11 +193,7 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
                 }
             }
 
-            boolean isIntegerOperator = false;
-            if (xo.hasAttribute(INTEGER_OPERATOR)) {
-                isIntegerOperator = xo.getBooleanAttribute(INTEGER_OPERATOR);
-            }
-
+            final boolean isIntegerOperator = xo.getAttribute(INTEGER_OPERATOR, false);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             double delta = xo.getDoubleAttribute(DELTA);

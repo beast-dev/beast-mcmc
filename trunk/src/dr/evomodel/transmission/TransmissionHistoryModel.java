@@ -193,8 +193,8 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
             for (int i = 0; i < xo.getChildCount(); i++) {
                 XMLObject xoc = (XMLObject)xo.getChild(i);
                 if (xoc.getName().equals(TRANSMISSION)) {
-                    Taxon donor = (Taxon)xoc.getSocketChild(DONOR);
-                    Taxon recipient = (Taxon)xoc.getSocketChild(RECIPIENT);
+                    Taxon donor = (Taxon)xoc.getElementFirstChild(DONOR);
+                    Taxon recipient = (Taxon)xoc.getElementFirstChild(RECIPIENT);
                     if (donor.equals(recipient)) {
                         throw new XMLParseException("Donor and recipient in TransmissionHistoryModel are the same: " + donor);
                     }

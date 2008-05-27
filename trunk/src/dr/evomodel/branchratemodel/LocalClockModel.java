@@ -108,7 +108,7 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
                     XMLObject xoc = (XMLObject)xo.getChild(i);
                     if (xoc.getName().equals(CLADE)) {
 
-                        Parameter rateParameter = (Parameter)xoc.getSocketChild(RELATIVE_RATE);
+                        Parameter rateParameter = (Parameter)xoc.getElementFirstChild(RELATIVE_RATE);
                         TaxonList taxonList = (TaxonList)xoc.getChild(TaxonList.class);
 
                         if (taxonList.getTaxonCount()==1) {
@@ -129,7 +129,7 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
                         }
                     } else if (xoc.getName().equals(EXTERNAL_BRANCHES)) {
 
-                        Parameter rateParameter = (Parameter)xoc.getSocketChild(RELATIVE_RATE);
+                        Parameter rateParameter = (Parameter)xoc.getElementFirstChild(RELATIVE_RATE);
                         TaxonList taxonList = (TaxonList)xoc.getChild(TaxonList.class);
 
 

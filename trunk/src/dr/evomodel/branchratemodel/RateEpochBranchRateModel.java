@@ -143,13 +143,13 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 
 					Parameter tt = null;
 					if (xoc.hasSocket(TRANSITION_TIME)) {
-						tt = (Parameter) xoc.getSocketChild(TRANSITION_TIME);
+						tt = (Parameter) xoc.getElementFirstChild(TRANSITION_TIME);
 					}
 					epochs.add(new Epoch(t, p, tt));
 				}
 			}
 
-			Parameter ancestralRateParameter = (Parameter) xo.getSocketChild(RATE);
+			Parameter ancestralRateParameter = (Parameter) xo.getElementFirstChild(RATE);
 
 			Collections.sort(epochs);
 			Parameter[] rateParameters = new Parameter[epochs.size() + 1];

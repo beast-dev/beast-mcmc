@@ -79,8 +79,8 @@ public class TipBranchRateModel extends AbstractModel implements BranchRateModel
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Parameter externalRateParameter = (Parameter)xo.getSocketChild(EXTERNAL_RATE);
-            Parameter internalRateParameter = (Parameter)xo.getSocketChild(INTERNAL_RATE);
+            Parameter externalRateParameter = (Parameter)xo.getElementFirstChild(EXTERNAL_RATE);
+            Parameter internalRateParameter = (Parameter)xo.getElementFirstChild(INTERNAL_RATE);
 
             TipBranchRateModel tipBranchRateModel =  new TipBranchRateModel(externalRateParameter, internalRateParameter);
 

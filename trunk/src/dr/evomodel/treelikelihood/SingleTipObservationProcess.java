@@ -42,8 +42,8 @@ public class SingleTipObservationProcess extends AnyTipObservationProcess{
     public String getParserName() { return MODEL_NAME; }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            Parameter mu = (Parameter)xo.getSocketChild(DEATH_RATE);
-            Parameter lam= (Parameter)xo.getSocketChild(IMMIGRATION_RATE);
+            Parameter mu = (Parameter)xo.getElementFirstChild(DEATH_RATE);
+            Parameter lam= (Parameter)xo.getElementFirstChild(IMMIGRATION_RATE);
             TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
             PatternList patterns = (PatternList)xo.getChild(PatternList.class);
             Taxon sourceTaxon = (Taxon)xo.getChild(Taxon.class);

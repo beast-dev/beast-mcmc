@@ -143,9 +143,9 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             }
 
             TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-            ParametricDistributionModel distributionModel = (ParametricDistributionModel) xo.getSocketChild(DISTRIBUTION);
+            ParametricDistributionModel distributionModel = (ParametricDistributionModel) xo.getElementFirstChild(DISTRIBUTION);
 
-            Parameter rateCategoryParameter = (Parameter) xo.getSocketChild(RATE_CATEGORIES);
+            Parameter rateCategoryParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORIES);
 
             Logger.getLogger("dr.evomodel").info("Using discretized relaxed clock model.");
             Logger.getLogger("dr.evomodel").info("  over sampling = " + overSampling);

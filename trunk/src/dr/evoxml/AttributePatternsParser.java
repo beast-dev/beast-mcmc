@@ -29,7 +29,6 @@ import dr.evolution.alignment.*;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Taxon;
 import dr.evolution.datatype.DataType;
-import dr.evolution.sequence.Sequence;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -51,7 +50,7 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String attributeName = xo.getStringAttribute(ATTRIBUTE);
-        TaxonList taxa = (TaxonList)xo.getSocketChild(TAXON_LIST);
+        TaxonList taxa = (TaxonList)xo.getElementFirstChild(TAXON_LIST);
         DataType dataType = DataTypeUtils.getDataType(xo);
 
         if (dataType == null) {

@@ -182,18 +182,18 @@ public class TransmissionDemographicModel extends DemographicModel
 			
 				XMLObject cxo = (XMLObject)xo.getChild(CONSTANT);
 				
-				N0Param = (Parameter)cxo.getSocketChild(POPULATION_SIZE);
+				N0Param = (Parameter)cxo.getElementFirstChild(POPULATION_SIZE);
 				model = 0;
 				
 			} else if (xo.hasSocket(EXPONENTIAL)) {
 			
 				XMLObject cxo = (XMLObject)xo.getChild(EXPONENTIAL);
 				
-				N1Param = (Parameter)cxo.getSocketChild(ANCESTRAL_PROPORTION);
+				N1Param = (Parameter)cxo.getElementFirstChild(ANCESTRAL_PROPORTION);
 				if (cxo.hasSocket(GROWTH_RATE)) {
-					rParam = (Parameter)cxo.getSocketChild(GROWTH_RATE);
+					rParam = (Parameter)cxo.getElementFirstChild(GROWTH_RATE);
 				} else {
-					dParam = (Parameter)cxo.getSocketChild(DOUBLING_TIME);
+					dParam = (Parameter)cxo.getElementFirstChild(DOUBLING_TIME);
 				}
 				model = 1;
 			
@@ -201,13 +201,13 @@ public class TransmissionDemographicModel extends DemographicModel
 			
 				XMLObject cxo = (XMLObject)xo.getChild(LOGISTIC);
 				
-				N0Param = (Parameter)cxo.getSocketChild(POPULATION_SIZE);
-				N1Param = (Parameter)cxo.getSocketChild(ANCESTRAL_PROPORTION);
+				N0Param = (Parameter)cxo.getElementFirstChild(POPULATION_SIZE);
+				N1Param = (Parameter)cxo.getElementFirstChild(ANCESTRAL_PROPORTION);
 				
 				if (cxo.hasSocket(GROWTH_RATE)) {
-					rParam = (Parameter)cxo.getSocketChild(GROWTH_RATE);
+					rParam = (Parameter)cxo.getElementFirstChild(GROWTH_RATE);
 				} else {
-					dParam = (Parameter)cxo.getSocketChild(DOUBLING_TIME);
+					dParam = (Parameter)cxo.getElementFirstChild(DOUBLING_TIME);
 				}
 				model = 2;
 			}

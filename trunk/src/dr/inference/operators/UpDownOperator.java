@@ -192,8 +192,8 @@ public class UpDownOperator extends SimpleMCMCOperator implements CoercableMCMCO
             weight = xo.getDoubleAttribute(WEIGHT);
             scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
-            Parameter param1 = (Parameter) xo.getSocketChild(UP);
-            Parameter param2 = (Parameter) xo.getSocketChild(DOWN);
+            Parameter param1 = (Parameter) xo.getElementFirstChild(UP);
+            Parameter param2 = (Parameter) xo.getElementFirstChild(DOWN);
 
             return new UpDownOperator(param1, param2, scaleFactor, weight, mode);
         }

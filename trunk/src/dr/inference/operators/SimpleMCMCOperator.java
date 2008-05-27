@@ -80,14 +80,18 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
             spanDeviation[0] = Math.min(spanDeviation[0], deviation);
             spanDeviation[1] = Math.max(spanDeviation[1], deviation);
             spanCount += 1;
-        } else throw new RuntimeException("Accept/reject methods called twice without operate called in between!");
+        } else {
+            throw new RuntimeException("Accept/reject methods called twice without operate called in between!");
+        }
     }
 
     public void reject() {
         if (!operateAllowed) {
             operateAllowed = true;
             rejected += 1;
-        } else throw new RuntimeException("Accept/reject methods called twice without operate called in between!");
+        } else {
+            throw new RuntimeException("Accept/reject methods called twice without operate called in between!");
+        }
     }
 
     public final void reset() {
@@ -148,7 +152,9 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         if (operateAllowed) {
             operateAllowed = false;
             return doOperation();
-        } else throw new RuntimeException("Operate called twice without accept/reject in between!");
+        } else {
+            throw new RuntimeException("Operate called twice without accept/reject in between!");
+        }
     }
 
     public final double getAcceptanceProbability() {

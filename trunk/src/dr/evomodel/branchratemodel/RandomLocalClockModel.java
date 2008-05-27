@@ -192,12 +192,12 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
 
             TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
-            Parameter rateIndicatorParameter = (Parameter) xo.getSocketChild(RATE_INDICATORS);
-            Parameter ratesParameter = (Parameter) xo.getSocketChild(RATES);
+            Parameter rateIndicatorParameter = (Parameter) xo.getElementFirstChild(RATE_INDICATORS);
+            Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
             Parameter meanRateParameter = null;
 
             if (xo.hasSocket(CLOCK_RATE)) {
-                meanRateParameter = (Parameter) xo.getSocketChild(CLOCK_RATE);
+                meanRateParameter = (Parameter) xo.getElementFirstChild(CLOCK_RATE);
             }
 
             boolean ratesAreMultipliers = false;

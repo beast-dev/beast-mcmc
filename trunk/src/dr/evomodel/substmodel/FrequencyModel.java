@@ -144,7 +144,7 @@ public class FrequencyModel extends AbstractModel {
 
 			DataType dataType = DataTypeUtils.getDataType(xo);
 
-			Parameter freqsParam = (Parameter) xo.getSocketChild(FREQUENCIES);
+			Parameter freqsParam = (Parameter) xo.getElementFirstChild(FREQUENCIES);
 			double[] frequencies = null;
 
 			for (int i = 0; i < xo.getChildCount(); i++) {

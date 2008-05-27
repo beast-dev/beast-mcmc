@@ -101,8 +101,8 @@ public class TipHeightLikelihood extends Likelihood.Abstract {
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			ParametricDistributionModel model = (ParametricDistributionModel)xo.getSocketChild(DISTRIBUTION);
-			Parameter tipHeights = (Parameter)xo.getSocketChild(TIP_HEIGHTS);
+			ParametricDistributionModel model = (ParametricDistributionModel)xo.getElementFirstChild(DISTRIBUTION);
+			Parameter tipHeights = (Parameter)xo.getElementFirstChild(TIP_HEIGHTS);
 
 			return new TipHeightLikelihood(model, tipHeights);
 		}

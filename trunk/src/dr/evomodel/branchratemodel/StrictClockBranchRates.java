@@ -92,7 +92,7 @@ public class StrictClockBranchRates extends AbstractModel implements BranchRateM
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Parameter rateParameter = (Parameter)xo.getSocketChild(RATE);
+            Parameter rateParameter = (Parameter)xo.getElementFirstChild(RATE);
 
 			Logger.getLogger("dr.evomodel").info("Using strict molecular clock model.");
 

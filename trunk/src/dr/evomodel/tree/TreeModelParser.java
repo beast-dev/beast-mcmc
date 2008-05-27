@@ -28,7 +28,6 @@ package dr.evomodel.tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterParser;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -301,73 +300,4 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
                     }, 0, Integer.MAX_VALUE),
     };
-
-    public Parameter getParameter(XMLObject xo) throws XMLParseException {
-
-        int paramCount = 0;
-        Parameter param = null;
-        for (int i = 0; i < xo.getChildCount(); i++) {
-            if (xo.getChild(i) instanceof Parameter) {
-                param = (Parameter) xo.getChild(i);
-                paramCount += 1;
-            }
-        }
-
-        if (paramCount == 0) {
-            throw new XMLParseException("no parameter element in treeModel " + xo.getName() + " element");
-        } else if (paramCount > 1) {
-            throw new XMLParseException("More than one parameter element in treeModel " + xo.getName() + " element");
-        }
-
-        return param;
-    }
-
-    public void replaceParameter(XMLObject xo, Parameter newParam) throws XMLParseException {
-
-        for (int i = 0; i < xo.getChildCount(); i++) {
-
-            if (xo.getChild(i) instanceof Parameter) {
-
-                XMLObject rxo;
-                Object obj = xo.getRawChild(i);
-
-                if (obj instanceof Reference) {
-                    rxo = ((Reference) obj).getReferenceObject();
-                } else if (obj instanceof XMLObject) {
-                    rxo = (XMLObject) obj;
-                } else {
-                    throw new XMLParseException("object reference not available");
-                }
-
-                if (rxo.getChildCount() > 0) {
-                    throw new XMLParseException("No child elements allowed in parameter element.");
-                }
-
-                if (rxo.hasAttribute(XMLParser.IDREF)) {
-                    throw new XMLParseException("References to " + xo.getName() + " parameters are not allowed in treeModel.");
-                }
-
-                if (rxo.hasAttribute(ParameterParser.VALUE)) {
-                    throw new XMLParseException("Parameters in " + xo.getName() + " have values set automatically.");
-                }
-
-                if (rxo.hasAttribute(ParameterParser.UPPER)) {
-                    throw new XMLParseException("Parameters in " + xo.getName() + " have bounds set automatically.");
-                }
-
-                if (rxo.hasAttribute(ParameterParser.LOWER)) {
-                    throw new XMLParseException("Parameters in " + xo.getName() + " have bounds set automatically.");
-                }
-
-                if (rxo.hasAttribute(XMLParser.ID)) {
-
-                    newParam.setId(rxo.getStringAttribute(XMLParser.ID));
-                }
-
-                rxo.setNativeObject(newParam);
-
-                return;
-            }
-        }
-    }
 }

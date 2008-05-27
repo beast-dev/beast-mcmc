@@ -109,12 +109,12 @@ public class XMLObject {
 	/**
 	 * Convenience method for getting the first child element out of a named XMLObject element
 	 */
-	public Object getSocketChild(String socketName) throws XMLParseException {
-		Object socket = getChild(socketName);
+	public Object getElementFirstChild(String elementName) throws XMLParseException {
+		Object socket = getChild(elementName);
 		if (socket == null)
-			throw new XMLParseException("Socket element called " + socketName + " does not exist inside element " + getName());
+			throw new XMLParseException("Socket element called " + elementName + " does not exist inside element " + getName());
 		if (!(socket instanceof XMLObject))
-			throw new XMLParseException("Socket element called " + socketName + " inside element " + getName() + " is not an XMLObject.");
+			throw new XMLParseException("Socket element called " + elementName + " inside element " + getName() + " is not an XMLObject.");
 		return ((XMLObject) socket).getChild(0);
 	}
 
@@ -191,7 +191,21 @@ public class XMLObject {
 		return getStringArray(getChild(i));
 	}
 
-	/**
+    /**
+     * Attribute value, if present - default otherwise.
+     * 
+     * @param name attribute name
+     * @param defaultValue
+     * @return
+     */
+    public <T> T getAttribute(String name, T defaultValue) {
+        if (element.hasAttribute(name)) {
+            return (T) element.getAttribute(name);
+        }
+        return defaultValue;
+    }
+
+    /**
 	 * @return the named attribute
 	 */
 	public Object getAttribute(String name) throws XMLParseException {

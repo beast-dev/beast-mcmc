@@ -58,11 +58,11 @@ public class ACLikelihood extends RateEvolutionLikelihood {
 
             TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
-            Parameter ratesParameter = (Parameter) xo.getSocketChild(RATES);
+            Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
 
-            Parameter rootRate = (Parameter) xo.getSocketChild(ROOTRATE);
+            Parameter rootRate = (Parameter) xo.getElementFirstChild(ROOTRATE);
 
-            Parameter variance = (Parameter) xo.getSocketChild(VARIANCE);
+            Parameter variance = (Parameter) xo.getElementFirstChild(VARIANCE);
 
             boolean isEpisodic = xo.getBooleanAttribute(EPISODIC);
 

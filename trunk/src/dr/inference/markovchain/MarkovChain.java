@@ -27,7 +27,6 @@ package dr.inference.markovchain;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.inference.model.CompoundLikelihood;
 import dr.inference.operators.*;
 import dr.inference.prior.Prior;
 
@@ -146,17 +145,17 @@ public final class MarkovChain {
             final MCMCOperator mcmcOperator = schedule.getOperator(op);
 
             final double oldScore = currentScore;
-             // not used and why must it be a "compund like"?
+            // not used and why must it be a "compund like"?
             //String oldMessage = ((CompoundLikelihood)likelihood).getDiagnosis();
 
-//            assert Profiler.startProfile("Store");
+            //assert Profiler.startProfile("Store");
 
             // The current model is stored here in case the proposal fails
             if (currentModel != null) {
                 currentModel.storeModelState();
             }
 
-//            assert Profiler.stopProfile("Store");
+            //assert Profiler.stopProfile("Store");
 
             boolean operatorSucceeded = true;
             double hastingsRatio = 1.0;
@@ -266,13 +265,13 @@ public final class MarkovChain {
         final double limitSpan = 1000;
         System.err.println("start cycle " + currentState);
 
-        double sHas = 0.0, sNot = 0.0, nHas = 0.0; 
+        double sHas = 0.0/*, sNot = 0.0*/, nHas = 0.0;
         for(int no = 0; no < count; ++no) {
             final MCMCOperator op = schedule.getOperator(no);
             final double v = op.getSpan(true);
 
             if( v == 0 ) {
-                sNot += op.getWeight();
+                //sNot += op.getWeight();
                 s[no] = 0;
             } else {
                 sHas += op.getWeight();

@@ -186,7 +186,7 @@ public class MutationDeathModel extends AbstractSubstitutionModel{
             Parameter mutationRate;
 
             if(xo.hasSocket(MUTATION_RATE)){
-                mutationRate = (Parameter) xo.getSocketChild(MUTATION_RATE);
+                mutationRate = (Parameter) xo.getElementFirstChild(MUTATION_RATE);
             }
             else{
                 mutationRate = new Parameter.Default(new double[]{1.0});

@@ -2,7 +2,6 @@ package dr.evoxml;
 
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.AscertainedSitePatterns;
-import dr.evolution.alignment.SitePatterns;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.util.TaxonList;
 import dr.xml.*;
@@ -64,7 +63,7 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
         }
 
         if (xo.hasSocket(TAXON_LIST)) {
-            taxa = (TaxonList)xo.getSocketChild(TAXON_LIST);
+            taxa = (TaxonList)xo.getElementFirstChild(TAXON_LIST);
         }
 
         if (from > alignment.getSiteCount())

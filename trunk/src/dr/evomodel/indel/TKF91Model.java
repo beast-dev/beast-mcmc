@@ -107,8 +107,8 @@ public class TKF91Model extends IndelModel {
 			
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
-			Parameter lengthDistParameter = (Parameter)xo.getSocketChild("lengthDistribution");
-			Parameter deathParameter = (Parameter)xo.getSocketChild("deathRate");
+			Parameter lengthDistParameter = (Parameter)xo.getElementFirstChild("lengthDistribution");
+			Parameter deathParameter = (Parameter)xo.getElementFirstChild("deathRate");
 			Type units = XMLParser.Utils.getUnitsAttr(xo);
 				
 			return new TKF91Model(lengthDistParameter, deathParameter, units);

@@ -132,7 +132,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 			TaxonList includeSubtree = null;
 
 			if (xo.hasSocket(INCLUDE)) {
-				includeSubtree = (TaxonList)xo.getSocketChild(INCLUDE);
+				includeSubtree = (TaxonList)xo.getElementFirstChild(INCLUDE);
 			}
 
 			List<TaxonList> excludeSubtrees = new ArrayList<TaxonList>();

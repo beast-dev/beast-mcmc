@@ -249,13 +249,13 @@ public class PseudoCodonModel extends AbstractModel {
 		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 		
-			Parameter muParam = (Parameter)xo.getSocketChild(MU);
-			Parameter omegaParam = (Parameter)xo.getSocketChild(OMEGA);
-			Parameter kappaParam = (Parameter)xo.getSocketChild(KAPPA);
+			Parameter muParam = (Parameter)xo.getElementFirstChild(MU);
+			Parameter omegaParam = (Parameter)xo.getElementFirstChild(OMEGA);
+			Parameter kappaParam = (Parameter)xo.getElementFirstChild(KAPPA);
 					
-			GammaSiteModel siteModel1 = (GammaSiteModel)xo.getSocketChild(FIRST_POSITION);
-			GammaSiteModel siteModel2 = (GammaSiteModel)xo.getSocketChild(SECOND_POSITION);
-			GammaSiteModel siteModel3 = (GammaSiteModel)xo.getSocketChild(THIRD_POSITION);
+			GammaSiteModel siteModel1 = (GammaSiteModel)xo.getElementFirstChild(FIRST_POSITION);
+			GammaSiteModel siteModel2 = (GammaSiteModel)xo.getElementFirstChild(SECOND_POSITION);
+			GammaSiteModel siteModel3 = (GammaSiteModel)xo.getElementFirstChild(THIRD_POSITION);
 			
 			if (!(siteModel1.getSubstitutionModel() instanceof GTR) ||
 				!(siteModel2.getSubstitutionModel() instanceof GTR) ||

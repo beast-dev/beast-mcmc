@@ -66,7 +66,7 @@ public class EDLikelihood extends RateChangeLikelihood {
 
             TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
-            Parameter ratesParameter = (Parameter) xo.getSocketChild(RATES);
+            Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
 
             boolean isNormalized = xo.getBooleanAttribute(NORMALIZED);
 

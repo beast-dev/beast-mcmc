@@ -1,10 +1,7 @@
 package dr.evomodel.treelikelihood;
 
-import dr.evolution.alignment.PatternList;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -128,18 +125,18 @@ public class ADNADamageModel extends TipPartialsModel {
 
 			TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
 
-			Parameter baseDamageRateParameter = (Parameter)xo.getSocketChild(BASE_DAMAGE_RATE);
-			Parameter ageRateFactorParameter = (Parameter)xo.getSocketChild(AGE_RATE_FACTOR);
+			Parameter baseDamageRateParameter = (Parameter)xo.getElementFirstChild(BASE_DAMAGE_RATE);
+			Parameter ageRateFactorParameter = (Parameter)xo.getElementFirstChild(AGE_RATE_FACTOR);
 
 			TaxonList includeTaxa = null;
 			TaxonList excludeTaxa = null;
 
 			if (xo.hasSocket(INCLUDE)) {
-				includeTaxa = (TaxonList)xo.getSocketChild(INCLUDE);
+				includeTaxa = (TaxonList)xo.getElementFirstChild(INCLUDE);
 			}
 
 			if (xo.hasSocket(EXCLUDE)) {
-				excludeTaxa = (TaxonList)xo.getSocketChild(EXCLUDE);
+				excludeTaxa = (TaxonList)xo.getElementFirstChild(EXCLUDE);
 			}
 
 			ADNADamageModel aDNADamageModel =  new ADNADamageModel(treeModel, includeTaxa, excludeTaxa, baseDamageRateParameter, ageRateFactorParameter);

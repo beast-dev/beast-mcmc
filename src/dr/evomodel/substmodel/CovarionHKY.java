@@ -135,10 +135,10 @@ public class CovarionHKY extends AbstractCovarionDNAModel {
             Parameter hiddenClassRates;
             FrequencyModel freqModel;
 
-            kappaParam = (Parameter) xo.getSocketChild(KAPPA);
-            switchingRates = (Parameter) xo.getSocketChild(SWITCHING_RATES);
-            hiddenClassRates = (Parameter) xo.getSocketChild(HIDDEN_CLASS_RATES);
-            freqModel = (FrequencyModel) xo.getSocketChild(FREQUENCIES);
+            kappaParam = (Parameter) xo.getElementFirstChild(KAPPA);
+            switchingRates = (Parameter) xo.getElementFirstChild(SWITCHING_RATES);
+            hiddenClassRates = (Parameter) xo.getElementFirstChild(HIDDEN_CLASS_RATES);
+            freqModel = (FrequencyModel) xo.getElementFirstChild(FREQUENCIES);
 
             if (!(freqModel.getDataType() instanceof HiddenNucleotides)) {
                 throw new IllegalArgumentException("Datatype must be hidden nucleotides!!");

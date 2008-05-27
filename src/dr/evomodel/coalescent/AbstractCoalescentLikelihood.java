@@ -25,18 +25,18 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.*;
+import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.Intervals;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.*;
+import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
-import dr.math.Binomial;
-import dr.util.ComparableDouble;
-import dr.util.HeapSort;
-import dr.xml.*;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -198,7 +198,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModel impleme
 		if (excludedLeafSets.length == 0) return null;
 
 		Set<NodeRef> excludeNodesBelow = new HashSet<NodeRef>();
-		for (int i =0; i < excludedLeafSets.length; i++) {
+		for (int i = 0; i < excludedLeafSets.length; i++) {
 			excludeNodesBelow.add(Tree.Utils.getCommonAncestorNode(tree, excludedLeafSets[i]));
 		}
 		return excludeNodesBelow;

@@ -263,8 +263,8 @@ public class YangCodonModel extends AbstractCodonModel
 				}
 			}
 
-			Parameter omegaParam = (Parameter)xo.getSocketChild(OMEGA);
-			Parameter kappaParam = (Parameter)xo.getSocketChild(KAPPA);
+			Parameter omegaParam = (Parameter)xo.getElementFirstChild(OMEGA);
+			Parameter kappaParam = (Parameter)xo.getElementFirstChild(KAPPA);
 			FrequencyModel freqModel = (FrequencyModel)xo.getChild(FrequencyModel.class);
 			return new YangCodonModel(codons, omegaParam, kappaParam, freqModel);			
 		}

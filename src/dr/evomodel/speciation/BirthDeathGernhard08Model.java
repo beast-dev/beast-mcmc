@@ -85,8 +85,8 @@ public class BirthDeathGernhard08Model extends SpeciationModel {
 
             Type units = XMLParser.Utils.getUnitsAttr(xo);
 
-            Parameter birthParameter = (Parameter) xo.getSocketChild(BIRTHDIFF_RATE);
-            Parameter deathParameter = (Parameter) xo.getSocketChild(RELATIVE_DEATH_RATE);
+            Parameter birthParameter = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);
+            Parameter deathParameter = (Parameter) xo.getElementFirstChild(RELATIVE_DEATH_RATE);
 
             return new BirthDeathGernhard08Model(birthParameter, deathParameter, units);
         }

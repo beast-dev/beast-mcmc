@@ -56,8 +56,8 @@ public class ImmigrationIntegrationForAlternativeSplicingPrior extends AbstractM
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             PatternList patterns= (PatternList) xo.getChild(PatternList.class);
-            Parameter creationRate = (Parameter)xo.getSocketChild(CREATIONPARAMETER);
-            Parameter deathRate = (Parameter)xo.getSocketChild(DEATHPARAMETER);
+            Parameter creationRate = (Parameter)xo.getElementFirstChild(CREATIONPARAMETER);
+            Parameter deathRate = (Parameter)xo.getElementFirstChild(DEATHPARAMETER);
 
             Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating ImmigrationIntegrationPrior model.");
             Logger.getLogger("dr.evolution").info("\tIf you publish results using this prior, please reference:");

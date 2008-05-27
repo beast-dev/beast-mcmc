@@ -162,7 +162,7 @@ public class ColouredTreeRateModel extends AbstractModel implements BranchRateMo
 
             ColourSamplerModel colourSamplerModel = (ColourSamplerModel)xo.getChild(ColourSamplerModel.class);
 
-            Parameter substitutionRatesParameter = (Parameter)xo.getSocketChild(SUBSTITUTION_RATES);
+            Parameter substitutionRatesParameter = (Parameter)xo.getElementFirstChild(SUBSTITUTION_RATES);
 
             Logger.getLogger("dr.evomodel").info("Using coloured tree clock model.");
 

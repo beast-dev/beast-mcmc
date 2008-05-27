@@ -430,5 +430,4 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
 				new ElementRule(TreeModel.class)
 		};
 	};
-
 }

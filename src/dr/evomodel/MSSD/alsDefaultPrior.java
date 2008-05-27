@@ -64,15 +64,15 @@ public class alsDefaultPrior extends AbstractModel implements Likelihood {
             if(branchRateModel == null){
                 branchRateModel = new DefaultBranchRateModel();
             }
-            Parameter creationRate = (Parameter)xo.getSocketChild(CREATIONPARAMETER);
-            Parameter deathRate = (Parameter)xo.getSocketChild(DEATHPARAMETER);
+            Parameter creationRate = (Parameter)xo.getElementFirstChild(CREATIONPARAMETER);
+            Parameter deathRate = (Parameter)xo.getElementFirstChild(DEATHPARAMETER);
             Parameter ctmcScale = null;
             if(xo.hasSocket(SCALEPARAMETER)){
-                ctmcScale = (Parameter)xo.getSocketChild(SCALEPARAMETER);
+                ctmcScale = (Parameter)xo.getElementFirstChild(SCALEPARAMETER);
             }
             Parameter freqParam = null;
             if(xo.hasSocket(FREQPARAMETER)){
-                freqParam = (Parameter) xo.getSocketChild(FREQPARAMETER);
+                freqParam = (Parameter) xo.getElementFirstChild(FREQPARAMETER);
             }
 
             Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating alsDefaultPrior model.");

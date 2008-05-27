@@ -52,30 +52,32 @@ public class FlexibleTree implements MutableTree {
 	 * clone constructor
 	 */
 	public FlexibleTree(Tree tree) {
+        this(tree, false);
+        // Unbelievable code duplication
 
-		setUnits(tree.getUnits());
-
-		root = new FlexibleNode(tree, tree.getRoot());
-
-		nodeCount = tree.getNodeCount();
-		internalNodeCount = tree.getInternalNodeCount();
-		externalNodeCount = tree.getExternalNodeCount();
-
-
-		nodes = new FlexibleNode[nodeCount];
-
-		FlexibleNode node = root;
-		do {
-			node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
-			if ((node.getNumber() >= externalNodeCount && node.isExternal()) ||
-					(node.getNumber() < externalNodeCount && !node.isExternal())) {
-				throw new RuntimeException("Error cloning tree: node numbers are incompatible");
-			}
-			nodes[node.getNumber()] = node;
-		} while (node != root);
-
-		heightsKnown = tree.hasNodeHeights();
-		lengthsKnown = tree.hasBranchLengths();
+//        setUnits(tree.getUnits());
+//
+//		root = new FlexibleNode(tree, tree.getRoot());
+//
+//		nodeCount = tree.getNodeCount();
+//		internalNodeCount = tree.getInternalNodeCount();
+//		externalNodeCount = tree.getExternalNodeCount();
+//
+//
+//		nodes = new FlexibleNode[nodeCount];
+//
+//		FlexibleNode node = root;
+//		do {
+//			node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
+//			if ((node.getNumber() >= externalNodeCount && node.isExternal()) ||
+//					(node.getNumber() < externalNodeCount && !node.isExternal())) {
+//				throw new RuntimeException("Error cloning tree: node numbers are incompatible");
+//			}
+//			nodes[node.getNumber()] = node;
+//		} while (node != root);
+//
+//		heightsKnown = tree.hasNodeHeights();
+//		lengthsKnown = tree.hasBranchLengths();
 	}
 
 	/**
@@ -117,7 +119,6 @@ public class FlexibleTree implements MutableTree {
 
 		this.heightsKnown = true;
 		this.lengthsKnown = true;
-
 	}
 
 	/**
@@ -807,9 +808,9 @@ public class FlexibleTree implements MutableTree {
 	}
 
 	private void fireTreeChanged() {
-		for (int i = 0; i < mutableTreeListeners.size(); i++) {
-			((MutableTreeListener) mutableTreeListeners.get(i)).treeChanged(this);
-		}
+        for (Object mutableTreeListener : mutableTreeListeners) {
+            ((MutableTreeListener) mutableTreeListener).treeChanged(this);
+        }
 	}
 
 	private ArrayList mutableTreeListeners = new ArrayList();
@@ -819,9 +820,9 @@ public class FlexibleTree implements MutableTree {
 	}
 
 	private void fireTaxaChanged() {
-		for (int i = 0; i < mutableTaxonListListeners.size(); i++) {
-			((MutableTaxonListListener) mutableTaxonListListeners.get(i)).taxaChanged(this);
-		}
+        for (Object mutableTaxonListListener : mutableTaxonListListeners) {
+            ((MutableTaxonListListener) mutableTaxonListListener).taxaChanged(this);
+        }
 	}
 
 	private ArrayList mutableTaxonListListeners = new ArrayList();

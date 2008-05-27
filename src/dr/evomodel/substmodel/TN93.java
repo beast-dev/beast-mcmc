@@ -285,9 +285,9 @@ public class TN93 extends AbstractNucleotideModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Parameter kappa1Param = (Parameter)xo.getSocketChild(KAPPA1);
-            Parameter kappa2Param = (Parameter)xo.getSocketChild(KAPPA2);
-            FrequencyModel freqModel = (FrequencyModel)xo.getSocketChild(FREQUENCIES);
+            Parameter kappa1Param = (Parameter)xo.getElementFirstChild(KAPPA1);
+            Parameter kappa2Param = (Parameter)xo.getElementFirstChild(KAPPA2);
+            FrequencyModel freqModel = (FrequencyModel)xo.getElementFirstChild(FREQUENCIES);
 
             Logger.getLogger("dr.evomodel").info("Creating TN93 substitution model. Initial kappa = "
                     + kappa1Param.getParameterValue(0) + "," + kappa1Param.getParameterValue(1));

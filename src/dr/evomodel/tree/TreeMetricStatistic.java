@@ -151,9 +151,9 @@ public class TreeMetricStatistic extends Statistic.Abstract implements
                                                  name = xo.getId();
                                               }
                                               Tree target = (Tree) xo
-                                                    .getSocketChild(TARGET);
+                                                    .getElementFirstChild(TARGET);
                                               Tree reference = (Tree) xo
-                                                    .getSocketChild(REFERENCE);
+                                                    .getElementFirstChild(REFERENCE);
 
                                               Method m = Method.TOPOLOGY;
                                               if (xo.hasAttribute(METHOD)) {

@@ -50,7 +50,7 @@ package dr.util;
  *
  * @author Scott Violet
  */
-public abstract class MergeSort extends Object {
+public abstract class MergeSort {
     protected Object           toSort[];
     protected Object           swapSpace[];
 

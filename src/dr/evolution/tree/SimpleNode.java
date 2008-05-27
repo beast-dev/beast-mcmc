@@ -95,8 +95,9 @@ public class SimpleNode implements NodeRef, Attributable {
 		parent = null;
 		setHeight(tree.getNodeHeight(node));
 		setRate(tree.getNodeRate(node));
-		setId(tree.getTaxonId(node.getNumber()));
-		setNumber(node.getNumber());
+        final int nodeNumber = node.getNumber();
+        setId(tree.getTaxonId(nodeNumber));
+		setNumber(nodeNumber);
 		setTaxon(tree.getNodeTaxon(node));
 		
 		child = null;

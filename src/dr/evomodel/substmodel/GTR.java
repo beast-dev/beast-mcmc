@@ -198,27 +198,27 @@ public class GTR extends AbstractNucleotideModel {
 
             Parameter rateACParameter = null;
             if (xo.hasSocket(A_TO_C)) {
-                rateACParameter = (Parameter) xo.getSocketChild(A_TO_C);
+                rateACParameter = (Parameter) xo.getElementFirstChild(A_TO_C);
             }
             Parameter rateAGParameter = null;
             if (xo.hasSocket(A_TO_G)) {
-                rateAGParameter = (Parameter) xo.getSocketChild(A_TO_G);
+                rateAGParameter = (Parameter) xo.getElementFirstChild(A_TO_G);
             }
             Parameter rateATParameter = null;
             if (xo.hasSocket(A_TO_T)) {
-                rateATParameter = (Parameter) xo.getSocketChild(A_TO_T);
+                rateATParameter = (Parameter) xo.getElementFirstChild(A_TO_T);
             }
             Parameter rateCGParameter = null;
             if (xo.hasSocket(C_TO_G)) {
-                rateCGParameter = (Parameter) xo.getSocketChild(C_TO_G);
+                rateCGParameter = (Parameter) xo.getElementFirstChild(C_TO_G);
             }
             Parameter rateCTParameter = null;
             if (xo.hasSocket(C_TO_T)) {
-                rateCTParameter = (Parameter) xo.getSocketChild(C_TO_T);
+                rateCTParameter = (Parameter) xo.getElementFirstChild(C_TO_T);
             }
             Parameter rateGTParameter = null;
             if (xo.hasSocket(G_TO_T)) {
-                rateGTParameter = (Parameter) xo.getSocketChild(G_TO_T);
+                rateGTParameter = (Parameter) xo.getElementFirstChild(G_TO_T);
             }
             int countNull = 0;
             if (rateACParameter == null) countNull++;

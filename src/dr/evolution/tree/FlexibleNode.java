@@ -124,19 +124,22 @@ public class FlexibleNode implements NodeRef, Attributable {
 	 * constructor used to clone a node and all children
 	 */
 	public FlexibleNode(Tree tree, NodeRef node) {
-		parent = null;
-		setHeight(tree.getNodeHeight(node));
-		setLength(tree.getBranchLength(node));
-		setRate(tree.getNodeRate(node));
-		setId(tree.getTaxonId(node.getNumber()));
-		setNumber(node.getNumber());
-		setTaxon(tree.getNodeTaxon(node));
+        this(tree, node, false);
+        // Unbelievable code duplication
 
-		child = null;
-
-		for (int i = 0; i < tree.getChildCount(node); i++) {
-			addChild(new FlexibleNode(tree, tree.getChild(node, i)));
-		}
+//        parent = null;
+//		setHeight(tree.getNodeHeight(node));
+//		setLength(tree.getBranchLength(node));
+//		setRate(tree.getNodeRate(node));
+//		setId(tree.getTaxonId(node.getNumber()));
+//		setNumber(node.getNumber());
+//		setTaxon(tree.getNodeTaxon(node));
+//
+//		child = null;
+//
+//		for (int i = 0; i < tree.getChildCount(node); i++) {
+//			addChild(new FlexibleNode(tree, tree.getChild(node, i)));
+//		}
 	}
 
 	public FlexibleNode(Tree tree, NodeRef node, boolean copyAttributes) {
@@ -165,8 +168,7 @@ public class FlexibleNode implements NodeRef, Attributable {
 	}
 
 	public FlexibleNode getDeepCopy() {
-		FlexibleNode copy = new FlexibleNode(this);
-		return copy;
+        return new FlexibleNode(this);
 	}
 
 	public FlexibleNode getShallowCopy() {
@@ -292,13 +294,9 @@ public class FlexibleNode implements NodeRef, Attributable {
 
 		FlexibleNode[] newChild = new FlexibleNode[numChildren + 1];
 
-		for (int i = 0; i < pos; i++) {
-			newChild[i] = child[i];
-		}
+        System.arraycopy(child, 0, newChild, 0, pos);
 		newChild[pos] = n;
-		for (int i = pos; i < numChildren; i++) {
-			newChild[i + 1] = child[i];
-		}
+        System.arraycopy(child, pos, newChild, pos + 1, numChildren - pos);
 
 		child = newChild;
 

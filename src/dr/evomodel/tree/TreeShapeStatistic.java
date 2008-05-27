@@ -95,7 +95,7 @@ public class TreeShapeStatistic extends Statistic.Abstract implements TreeStatis
 			} else {
 				name = xo.getId();
 			}
-			TreeModel target = (TreeModel)xo.getSocketChild(TARGET);
+			TreeModel target = (TreeModel)xo.getElementFirstChild(TARGET);
 			
 			return new TreeShapeStatistic(name, target);
 		}

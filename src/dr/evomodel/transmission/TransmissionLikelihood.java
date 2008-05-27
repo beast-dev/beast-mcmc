@@ -453,10 +453,10 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            DemographicModel demoModel0 = (DemographicModel)xo.getSocketChild(SOURCE_PATIENT);
+            DemographicModel demoModel0 = (DemographicModel)xo.getElementFirstChild(SOURCE_PATIENT);
             TransmissionDemographicModel demoModel1 = (TransmissionDemographicModel)xo.getChild(TransmissionDemographicModel.class);
 
-            Tree virusTree = (Tree)xo.getSocketChild("parasiteTree");
+            Tree virusTree = (Tree)xo.getElementFirstChild("parasiteTree");
 
             TransmissionLikelihood likelihood = null;
 
@@ -468,7 +468,7 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
                     throw new XMLParseException(e.toString());
                 }
             } else {
-                Tree hostTree = (Tree)xo.getSocketChild("hostTree");
+                Tree hostTree = (Tree)xo.getElementFirstChild("hostTree");
                 try {
                     likelihood = new TransmissionLikelihood(hostTree, virusTree, demoModel0, demoModel1);
                 } catch (TaxonList.MissingTaxonException e) {

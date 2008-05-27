@@ -84,7 +84,7 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
 				name = xo.getId();
 			}
 			Tree tree = (Tree)xo.getChild(Tree.class);
-			TaxonList taxa = (TaxonList)xo.getSocketChild(MRCA);
+			TaxonList taxa = (TaxonList)xo.getElementFirstChild(MRCA);
             boolean isRate = false;
             if (xo.hasAttribute("rate")) {
                 isRate = xo.getBooleanAttribute("rate");

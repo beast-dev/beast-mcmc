@@ -153,8 +153,14 @@ public abstract class RateEvolutionLikelihood extends AbstractModel implements B
      */
     private double calculateLogLikelihood(NodeRef parent, NodeRef node) {
 
-        double logL = branchRateChangeLogLikelihood(getBranchRate(treeModel, parent), getBranchRate(treeModel, node),
-                treeModel.getBranchLength(node));
+        double logL, length;
+        if (treeModel.isRoot(parent))
+            length = treeModel.getBranchLength(node) / 2.;
+        else
+            length = treeModel.getBranchLength(node);
+
+        logL = branchRateChangeLogLikelihood(getBranchRate(treeModel, parent), getBranchRate(treeModel, node),
+                length);
 
         //System.out.print(parent.getNumber() + " " + getBranchRate(treeModel, parent)+ " " + node.getNumber() + " " + getBranchRate(treeModel, node) + " " + treeModel.getBranchLength(node) + " " + logL + ", ");
 

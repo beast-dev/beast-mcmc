@@ -249,8 +249,8 @@ public class HKY extends AbstractNucleotideModel
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Parameter kappaParam = (Parameter)xo.getSocketChild(KAPPA);
-            FrequencyModel freqModel = (FrequencyModel)xo.getSocketChild(FREQUENCIES);
+            Parameter kappaParam = (Parameter)xo.getElementFirstChild(KAPPA);
+            FrequencyModel freqModel = (FrequencyModel)xo.getElementFirstChild(FREQUENCIES);
 
             Logger.getLogger("dr.evomodel").info("Creating HKY substitution model. Initial kappa = " + kappaParam.getParameterValue(0));
 

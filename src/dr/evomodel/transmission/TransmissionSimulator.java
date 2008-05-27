@@ -115,10 +115,10 @@ public class TransmissionSimulator {
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			DemographicModel demoModel0 = (DemographicModel)xo.getSocketChild(SOURCE_PATIENT);
+			DemographicModel demoModel0 = (DemographicModel)xo.getElementFirstChild(SOURCE_PATIENT);
 			TransmissionDemographicModel demoModel1 = (TransmissionDemographicModel)xo.getChild(TransmissionDemographicModel.class);
-			Tree hostTree = (Tree)xo.getSocketChild("hostTree");
-			Tree virusTree = (Tree)xo.getSocketChild("parasiteTree");
+			Tree hostTree = (Tree)xo.getElementFirstChild("hostTree");
+			Tree virusTree = (Tree)xo.getElementFirstChild("parasiteTree");
 
 			TransmissionSimulator simulator = null;
 //			try {

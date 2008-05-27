@@ -202,17 +202,17 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
 
             TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
 
-            Parameter mutationRateParameter = (Parameter)xo.getSocketChild(MUTATION_RATE);
+            Parameter mutationRateParameter = (Parameter)xo.getElementFirstChild(MUTATION_RATE);
 
             Parameter proportionParameter = null;
             Parameter substitutionRateParameter = null;
 
             if (xo.hasSocket(PROPORTION)) {
-                proportionParameter = (Parameter)xo.getSocketChild(PROPORTION);
+                proportionParameter = (Parameter)xo.getElementFirstChild(PROPORTION);
             } else {
-                substitutionRateParameter = (Parameter)xo.getSocketChild(SUBSTITUTION_RATE);
+                substitutionRateParameter = (Parameter)xo.getElementFirstChild(SUBSTITUTION_RATE);
             }
-            Parameter halfLifeParameter = (Parameter)xo.getSocketChild(HALF_LIFE);
+            Parameter halfLifeParameter = (Parameter)xo.getElementFirstChild(HALF_LIFE);
 
             Logger.getLogger("dr.evomodel").info("Using decaying-rate clock model.");
 

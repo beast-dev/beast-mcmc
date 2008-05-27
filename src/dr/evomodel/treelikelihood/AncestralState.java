@@ -103,7 +103,7 @@ public class AncestralState implements Loggable {
 				name = xo.getId();
 			}
 			Tree tree = (Tree)xo.getChild(Tree.class);
-			TaxonList taxa = (TaxonList)xo.getSocketChild(MRCA);
+			TaxonList taxa = (TaxonList)xo.getElementFirstChild(MRCA);
 			AncestralStateTreeLikelihood ancestralTreeLikelihood = (AncestralStateTreeLikelihood)xo.getChild(AncestralStateTreeLikelihood.class);
 			try {
 				return new AncestralState(name, ancestralTreeLikelihood, tree, taxa);

@@ -72,7 +72,7 @@ public class NDLikelihood extends RateChangeLikelihood {
 
             TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
-            Parameter ratesParameter = (Parameter) xo.getSocketChild(RATES);
+            Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
 
             double stdev = xo.getDoubleAttribute(STDEV);
             boolean isEpisodic = xo.getBooleanAttribute(EPISODIC);

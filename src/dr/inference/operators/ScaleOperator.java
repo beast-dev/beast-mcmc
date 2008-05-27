@@ -107,7 +107,8 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 			// hasting ratio is dim-2 times of 1dim case. would be nice to have a reference here
 			// for the proof. It is supposed to be somewhere in an Alexei/Nicholes article.
 			if (degreesOfFreedom > 0)
-				logq = -degreesOfFreedom * Math.log(scale);     // For parameters with non-uniform prior on only one dimension
+                // For parameters with non-uniform prior on only one dimension
+                logq = -degreesOfFreedom * Math.log(scale);
 			else
 				logq = (parameter.getDimension() - 2) * Math.log(scale);
 

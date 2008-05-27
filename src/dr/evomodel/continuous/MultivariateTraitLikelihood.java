@@ -336,7 +336,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
 			MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
 			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-			CompoundParameter traitParameter = (CompoundParameter) xo.getSocketChild(TRAIT_PARAMETER);
+			CompoundParameter traitParameter = (CompoundParameter) xo.getElementFirstChild(TRAIT_PARAMETER);
 
 			boolean cacheBranches = false;
 			if (xo.hasAttribute(CACHE_BRANCHES))
@@ -496,58 +496,9 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 		public Class getReturnType() {
 			return MultivariateTraitLikelihood.class;
 		}
+    };
 
-		public void replaceParameter(XMLObject xo, Parameter newParam) throws XMLParseException {
-
-			for (int i = 0; i < xo.getChildCount(); i++) {
-
-				if (xo.getChild(i) instanceof Parameter) {
-
-					XMLObject rxo;
-					Object obj = xo.getRawChild(i);
-
-					if (obj instanceof Reference) {
-						rxo = ((Reference) obj).getReferenceObject();
-					} else if (obj instanceof XMLObject) {
-						rxo = (XMLObject) obj;
-					} else {
-						throw new XMLParseException("object reference not available");
-					}
-
-					if (rxo.getChildCount() > 0) {
-						throw new XMLParseException("No child elements allowed in parameter element.");
-					}
-
-					if (rxo.hasAttribute(XMLParser.IDREF)) {
-						throw new XMLParseException("References to " + xo.getName() + " parameters are not allowed in treeModel.");
-					}
-
-					if (rxo.hasAttribute(ParameterParser.VALUE)) {
-						throw new XMLParseException("Parameters in " + xo.getName() + " have values set automatically.");
-					}
-
-					if (rxo.hasAttribute(ParameterParser.UPPER)) {
-						throw new XMLParseException("Parameters in " + xo.getName() + " have bounds set automatically.");
-					}
-
-					if (rxo.hasAttribute(ParameterParser.LOWER)) {
-						throw new XMLParseException("Parameters in " + xo.getName() + " have bounds set automatically.");
-					}
-
-					if (rxo.hasAttribute(XMLParser.ID)) {
-
-						newParam.setId(rxo.getStringAttribute(XMLParser.ID));
-					}
-
-					rxo.setNativeObject(newParam);
-
-					return;
-				}
-			}
-		}
-	};
-
-	TreeModel treeModel = null;
+    TreeModel treeModel = null;
 	MultivariateDiffusionModel diffusionModel = null;
 	String traitName = null;
 	//	private boolean jeffreysPrior = false;

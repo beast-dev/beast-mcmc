@@ -229,13 +229,13 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             String name = xo.getStringAttribute("name");
-            Tree virusTree = (Tree) xo.getSocketChild("parasiteTree");
+            Tree virusTree = (Tree) xo.getElementFirstChild("parasiteTree");
 
             if (xo.getChild(TransmissionHistoryModel.class) != null) {
                 TransmissionHistoryModel history = (TransmissionHistoryModel) xo.getChild(TransmissionHistoryModel.class);
                 return new TransmissionStatistic(name, history, virusTree);
             } else {
-                Tree hostTree = (Tree) xo.getSocketChild("hostTree");
+                Tree hostTree = (Tree) xo.getElementFirstChild("hostTree");
                 return new TransmissionStatistic(name, hostTree, virusTree);
             }
 

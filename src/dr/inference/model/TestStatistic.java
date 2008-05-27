@@ -127,13 +127,13 @@ public class TestStatistic extends BooleanStatistic {
 			TestStatistic statistic;
 			
 			if (xo.hasSocket("equals")) {
-				Attribute attr2 = (Attribute)xo.getSocketChild("equals");
+				Attribute attr2 = (Attribute)xo.getElementFirstChild("equals");
 				statistic = new TestStatistic(name, attr, attr2, EQUALS);
 			} else if (xo.hasSocket("greaterThan")) {
-				Attribute attr2 = (Attribute)xo.getSocketChild("greaterThan");
+				Attribute attr2 = (Attribute)xo.getElementFirstChild("greaterThan");
 				statistic = new TestStatistic(name, attr, attr2, GREATER_THAN);
 			} else if (xo.hasSocket("lessThan")) {
-				Attribute attr2 = (Attribute)xo.getSocketChild("lessThan");
+				Attribute attr2 = (Attribute)xo.getElementFirstChild("lessThan");
 				statistic = new TestStatistic(name, attr, attr2, LESS_THAN);
 			} else if (xo.hasAttribute("equals")) {
 				testValue1 = xo.getDoubleAttribute("equals");

@@ -327,17 +327,17 @@ public class GammaSiteModel extends AbstractModel
         public String getParserName() { return SITE_MODEL; }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            SubstitutionModel substitutionModel = (SubstitutionModel)xo.getSocketChild(SUBSTITUTION_MODEL);
+            SubstitutionModel substitutionModel = (SubstitutionModel)xo.getElementFirstChild(SUBSTITUTION_MODEL);
 
             String msg = "";
 
             Parameter muParam = null;
             if (xo.hasSocket(MUTATION_RATE)) {
-                muParam = (Parameter)xo.getSocketChild(MUTATION_RATE);
+                muParam = (Parameter)xo.getElementFirstChild(MUTATION_RATE);
 
                 msg += "\n  with initial substitution rate = " + muParam.getParameterValue(0);
             } else if (xo.hasSocket(RELATIVE_RATE)) {
-                muParam = (Parameter)xo.getSocketChild(RELATIVE_RATE);
+                muParam = (Parameter)xo.getElementFirstChild(RELATIVE_RATE);
 
                 msg += "\n  with initial relative rate = " + muParam.getParameterValue(0);
             }
@@ -354,7 +354,7 @@ public class GammaSiteModel extends AbstractModel
 
             Parameter invarParam = null;
             if (xo.hasSocket(PROPORTION_INVARIANT)) {
-                invarParam = (Parameter)xo.getSocketChild(PROPORTION_INVARIANT);
+                invarParam = (Parameter)xo.getElementFirstChild(PROPORTION_INVARIANT);
                 msg += "\n  initial proportion of invariant sites = " + invarParam.getParameterValue(0);
             }
 

@@ -150,7 +150,7 @@ public class MLLogger extends MCLogger {
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			Likelihood likelihood = (Likelihood)xo.getSocketChild(LIKELIHOOD);
+			Likelihood likelihood = (Likelihood)xo.getElementFirstChild(LIKELIHOOD);
 
 			// logEvery of zero only displays at the end
 			int logEvery = 0;

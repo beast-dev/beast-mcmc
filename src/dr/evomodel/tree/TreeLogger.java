@@ -72,9 +72,6 @@ public class TreeLogger extends MCLogger {
     private List<String> taxaIds = new ArrayList<String>();
     private boolean mapNames = true;
 
-    /*
-           * Constructor
-           */
 
 
     public TreeLogger(Tree tree, BranchRateController branchRateProvider,
@@ -351,7 +348,8 @@ public class TreeLogger extends MCLogger {
                         "Whether to use the NEXUS format for the tree log"),
                 AttributeRule.newBooleanRule(SORT_TRANSLATION_TABLE, true,
                         "Whether the translation table is sorted."),
-                new StringAttributeRule(BRANCH_LENGTHS, "What units should the branch lengths be in", new String[]{TIME, SUBSTITUTIONS}, true),
+                new StringAttributeRule(BRANCH_LENGTHS, "What units should the branch lengths be in",
+                        new String[]{TIME, SUBSTITUTIONS}, true),
                 new ElementRule(Tree.class, "The tree which is to be logged"),
                 new ElementRule(BranchRateController.class, true),
                 new ElementRule(TreeColouringProvider.class, true),
@@ -367,11 +365,13 @@ public class TreeLogger extends MCLogger {
         }
 
         public String getExample() {
+            final String name = getParserName();
             return
-                    "<!-- The " + getParserName() + " element takes a treeModel to be logged -->\n" +
-                            "<" + getParserName() + " " + LOG_EVERY + "=\"100\" " + FILE_NAME + "=\"log.trees\" " + NEXUS_FORMAT + "=\"true\">\n" +
+                    "<!-- The " + name + " element takes a treeModel to be logged -->\n" +
+                            "<" + name + " " + LOG_EVERY + "=\"100\" " + FILE_NAME + "=\"log.trees\" "
+                            + NEXUS_FORMAT + "=\"true\">\n" +
                             "	<treeModel idref=\"treeModel1\"/>\n" +
-                            "</" + getParserName() + ">\n";
+                            "</" + name + ">\n";
         }
 
         public Class getReturnType() {

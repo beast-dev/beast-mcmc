@@ -123,7 +123,7 @@ public class ScaledTreeLengthRateModel extends AbstractModel implements BranchRa
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 			TreeModel tree = (TreeModel)xo.getChild(TreeModel.class);
-            Parameter totalLength = (Parameter)xo.getSocketChild(SCALING_FACTOR);
+            Parameter totalLength = (Parameter)xo.getElementFirstChild(SCALING_FACTOR);
             if(totalLength == null){
                 totalLength= new Parameter.Default(1,1.0);
             }

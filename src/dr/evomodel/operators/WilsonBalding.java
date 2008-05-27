@@ -31,7 +31,6 @@ import dr.evomodel.coalescent.ConstantPopulationModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -240,7 +239,7 @@ public class WilsonBalding extends AbstractTreeOperator {
 
             ConstantPopulationModel demoModel = null;
             if (xo.hasAttribute(DEMOGRAPHIC_MODEL)) {
-                demoModel = (ConstantPopulationModel) xo.getSocketChild(DEMOGRAPHIC_MODEL);
+                demoModel = (ConstantPopulationModel) xo.getElementFirstChild(DEMOGRAPHIC_MODEL);
             }
 
             double weight = xo.getDoubleAttribute(WEIGHT);

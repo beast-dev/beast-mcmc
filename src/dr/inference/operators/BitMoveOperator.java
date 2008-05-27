@@ -96,12 +96,12 @@ public class BitMoveOperator extends SimpleMCMCOperator {
 
             int numBitsToMove = xo.getIntegerAttribute(NUM_BITS_TO_MOVE);
 
-            Parameter bitsParameter = (Parameter) xo.getSocketChild("bits");
+            Parameter bitsParameter = (Parameter) xo.getElementFirstChild("bits");
             Parameter valuesParameter = null;
 
 
             if (xo.hasSocket("values")) {
-                valuesParameter = (Parameter) xo.getSocketChild("values");
+                valuesParameter = (Parameter) xo.getElementFirstChild("values");
             }
 
 

@@ -444,24 +444,17 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double lowerBound = 0.0;
-            double upperBound = Double.MAX_VALUE;
-            boolean jeffreysPrior = true;
             boolean exponentialMarkovPrior = false;
             double shape = 1.0;
             boolean reverse = false;
             int iterations = 1;
 
             double weight = xo.getDoubleAttribute(WEIGHT);
-            if (xo.hasAttribute(LOWER)) {
-                lowerBound = xo.getDoubleAttribute(LOWER);
-            }
-            if (xo.hasAttribute(UPPER)) {
-                upperBound = xo.getDoubleAttribute(UPPER);
-            }
-            if (xo.hasAttribute(JEFFREYS)) {
-                jeffreysPrior = xo.getBooleanAttribute(JEFFREYS);
-            }
+
+            final double lowerBound = xo.getAttribute(LOWER, 0.0);
+            final double upperBound = xo.getAttribute(UPPER, Double.MAX_VALUE);
+            final boolean jeffreysPrior = xo.getAttribute(JEFFREYS, true);
+
             if (xo.hasAttribute(EXPONENTIALMARKOV)) {
                 exponentialMarkovPrior = xo
                         .getBooleanAttribute(EXPONENTIALMARKOV);
@@ -482,10 +475,9 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
             // This is the parameter on which this operator acts
             Parameter paramPops = (Parameter) xo.getChild(Parameter.class);
 
-            Parameter paramGroups = bayesianSkylineLikelihood
-                    .getGroupSizeParameter();
+            Parameter paramGroups = bayesianSkylineLikelihood.getGroupSizeParameter();
 
-            int type = bayesianSkylineLikelihood.getType();
+            final int type = bayesianSkylineLikelihood.getType();
 
             if (type != BayesianSkylineLikelihood.STEPWISE_TYPE) {
                 throw new XMLParseException(

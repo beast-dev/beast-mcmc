@@ -329,10 +329,10 @@ public class EBSPAnalysis extends TabularData {
                     }
                 }
 
-                final boolean quantiles = xo.hasAttribute(QUANTILES) && xo.getBooleanAttribute(QUANTILES);
-                final boolean logSpace = xo.hasAttribute(LOG_SPACE) && xo.getBooleanAttribute(LOG_SPACE);
-                final boolean useMid = xo.hasAttribute(USE_MIDDLE) && xo.getBooleanAttribute(USE_MIDDLE);
-                final int onlyNchanges = xo.hasAttribute(N_CHANGES) ? xo.getIntegerAttribute(N_CHANGES) : -1;
+                final boolean quantiles = xo.getAttribute(QUANTILES, false);
+                final boolean logSpace = xo.getAttribute(LOG_SPACE, false);
+                final boolean useMid = xo.getAttribute(USE_MIDDLE, false);
+                final int onlyNchanges = xo.getAttribute(N_CHANGES, -1);
 
                 return new EBSPAnalysis(log, treeFiles, modelType,
                         populationFirstColumn, indicatorsFirstColumn,

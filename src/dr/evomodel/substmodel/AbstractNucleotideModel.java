@@ -26,7 +26,6 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.Nucleotides;
-import dr.inference.model.Model;
 
 /**
  * base class for nucleotide rate matrices
@@ -85,4 +84,4 @@ abstract public class AbstractNucleotideModel extends AbstractSubstitutionModel 
 	
 	protected void acceptState() { } // nothing to do
 
-};
+}

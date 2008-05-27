@@ -34,7 +34,7 @@ public class ACLikelihood extends RateEvolutionLikelihood {
     double branchRateChangeLogLikelihood(double parentRate, double childRate, double time) {
         double var = variance.getParameterValue(0);
 
-        if (isEpisodic())
+        if (!isEpisodic())
             var *= time;
 
         if (isLogSpace) {

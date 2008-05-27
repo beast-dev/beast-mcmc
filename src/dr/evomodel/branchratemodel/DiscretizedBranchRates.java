@@ -78,7 +78,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
         this.distributionModel = model;
 
-        //Force the boundaries of rate Categories to match oversampling
+        //Force the boundaries of rateCategoryParameter to match the category count
         Parameter.DefaultBounds bound = new Parameter.DefaultBounds(categoryCount - 1, 0, rateCategoryParameter.getDimension());
         rateCategoryParameter.addBounds(bound);
 

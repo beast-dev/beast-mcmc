@@ -359,27 +359,26 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
                 break;
             }
         }
-        return intensity; // /popFactor;
+        return intensity;
     }
 
     public int getNumArguments() {
         assert false;
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return 0;
     }
 
     public String getArgumentName(int n) {
         assert false;
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
     public double getArgument(int n) {
         assert false;
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return 0;
     }
 
     public void setArgument(int n, double value) {
         assert false;
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public double getLowerBound(int n) {

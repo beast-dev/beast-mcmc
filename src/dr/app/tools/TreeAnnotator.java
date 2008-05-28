@@ -154,7 +154,7 @@ public class TreeAnnotator {
         FileReader fileReader = new FileReader(inputFileName);
         NexusImporter importer = new NexusImporter(fileReader);
         cladeSystem = new CladeSystem(targetTree);
-	    totalTreesUsed = 0;
+        totalTreesUsed = 0;
         try {
             boolean firstTree = true;
             int counter = 0;
@@ -168,7 +168,7 @@ public class TreeAnnotator {
                     }
 
                     cladeSystem.collectAttributes(tree);
-	                totalTreesUsed += 1;
+                    totalTreesUsed += 1;
                 }
                 if (counter > 0 && counter % stepSize == 0) {
                     System.out.print("*");
@@ -178,7 +178,7 @@ public class TreeAnnotator {
 
             }
 
-	        cladeSystem.calculateCladeCredibilities(totalTreesUsed);
+            cladeSystem.calculateCladeCredibilities(totalTreesUsed);
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             return;
@@ -352,9 +352,9 @@ public class TreeAnnotator {
             if (tree.isExternal(node)) {
 
                 int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-	            if (index < 0) {
-		            throw new IllegalArgumentException("Taxon, " + tree.getNodeTaxon(node).getId() + ", not found in target tree");
-	            }
+                if (index < 0) {
+                    throw new IllegalArgumentException("Taxon, " + tree.getNodeTaxon(node).getId() + ", not found in target tree");
+                }
                 bits.set(index);
 
             } else {
@@ -404,7 +404,7 @@ public class TreeAnnotator {
                 }
                 clade.attributeValues.add(values);
 
-	            clade.setCount(clade.getCount() + 1);
+                clade.setCount(clade.getCount() + 1);
             }
         }
 
@@ -526,13 +526,12 @@ public class TreeAnnotator {
 
             int i = 0;
             for (String attributeName : attributeNames) {
-                if (clade.attributeValues == null) {
-                    throw new RuntimeException("Clade attributes missing");
-                }
-                double[] values = new double[clade.attributeValues.size()];
-                HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
 
-                if (values.length > 0) {
+                if (clade.attributeValues != null && clade.attributeValues.size() > 0) {
+                    double[] values = new double[clade.attributeValues.size()];
+
+                    HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
+
                     Object[] v = clade.attributeValues.get(0);
                     if (v[i] != null) {
 

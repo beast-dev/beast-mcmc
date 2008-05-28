@@ -145,7 +145,7 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger{
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
 
 		public String getParserDescription() {
-			return "Creates a fixed grid";
+			return "Projects the random grid of the skyride onto a fixed grid";
 		}
 
 		public Class getReturnType() {

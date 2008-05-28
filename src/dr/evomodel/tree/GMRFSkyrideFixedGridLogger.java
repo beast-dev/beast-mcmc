@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.Date;
+import java.util.logging.Logger;
 
 import dr.app.beast.BeastVersion;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
@@ -13,6 +14,8 @@ import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.xml.AbstractXMLObjectParser;
+import dr.xml.AttributeRule;
+import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;
@@ -29,17 +32,29 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger{
 	public static final String SKYRIDE_FIXED_GRID = "logSkyrideFixedGrid";
 	public static final String NUMBER_OF_INTERVALS = "numberOfIntervals";
 	public static final String GRID_HEIGHT = "gridHeight";
+	public static final String LOG_SCALE = "logScale";
 	
 	private GMRFSkyrideLikelihood gmrfLike;
 	private double[] fixedPopSize;
-	private double intervalLength;
+	private double intervalNumber;
+	private double gridHeight;
+	private final boolean gridHeightSameAsTreeHeight;
+	private final boolean logScale;
 	
 	public GMRFSkyrideFixedGridLogger(LogFormatter formatter, int logEvery,
-			GMRFSkyrideLikelihood gmrfLike, int intervalNumber, double intervalStop) {
+			GMRFSkyrideLikelihood gmrfLike, int intervalNumber, double gridHeight,boolean logScale) {
 		super(formatter, logEvery);
 		this.gmrfLike = gmrfLike;
+		this.intervalNumber = intervalNumber;
+		this.gridHeight = gridHeight;
 		
-		intervalLength = intervalStop/intervalNumber;
+		if(gridHeight == -99){
+			gridHeightSameAsTreeHeight = true;
+		}else{
+			gridHeightSameAsTreeHeight = false;
+		}
+		
+		this.logScale = logScale;
 		
 		fixedPopSize = new double[intervalNumber];
 	}
@@ -54,11 +69,21 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger{
 				
 		for(int i = 1; i < randomInterval.length; i++)
 			randomInterval[i] += randomInterval[i-1];
+				
+		if(gridHeightSameAsTreeHeight){
+			gridHeight = randomInterval[randomInterval.length-1];
+		}
 		
+		if(!logScale){
+			for(int i = 0; i < randomPopSize.length; i++)
+				randomPopSize[i] = Math.exp(randomPopSize[i]);
+		}
+		
+		double intervalLength = gridHeight/intervalNumber;
+				
 		double startTime = 0;
 		double endTime = 0;
 		int interval = 0;
-		
 		for(int i = 0; i < fixedPopSize.length; i++){
 			fixedPopSize[i] = 0;
 			if(interval < randomInterval.length){
@@ -87,6 +112,7 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger{
 				fixedPopSize[i] = -99;
 			}
 		}
+		
 	}
 	
 	private void getStringGrid(String[] values){
@@ -126,6 +152,13 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger{
 			return GMRFSkyrideFixedGridLogger.class;
 		}
 
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				AttributeRule.newIntegerRule(NUMBER_OF_INTERVALS),
+				AttributeRule.newDoubleRule(GRID_HEIGHT,true), //If no grid height specified, uses tree height.
+				AttributeRule.newBooleanRule(LOG_SCALE,true),
+				new ElementRule(GMRFSkyrideLikelihood.class),
+		};
+		
 		public XMLSyntaxRule[] getSyntaxRules() {
 			return null;
 		}
@@ -136,12 +169,23 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger{
 		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
+			Logger.getLogger("dr.evolmodel").info("Creating GMRF Skyride Fixed Grid Logger");
+						
 			GMRFSkyrideLikelihood g = (GMRFSkyrideLikelihood)xo.getChild(GMRFSkyrideLikelihood.class);
 			
 			String fileName = null;
 			int logEvery = 1;
-			double gridHeight = xo.getDoubleAttribute(GRID_HEIGHT);
 			int intervalNumber = xo.getIntegerAttribute(NUMBER_OF_INTERVALS);
+			Logger.getLogger("dr.evomodel").info("Number of Intervals = " + intervalNumber);
+			
+			double gridHeight = -99;
+			
+			if(xo.hasAttribute(GRID_HEIGHT)){
+				gridHeight = xo.getDoubleAttribute(GRID_HEIGHT);
+				Logger.getLogger("dr.evomodel").info("Grid Height = " + gridHeight);
+			}else{
+				Logger.getLogger("dr.evomodel").info("Grid Height = same as tree height");
+			}
 			
 			if (xo.hasAttribute(FILE_NAME)) {
 				fileName = xo.getStringAttribute(FILE_NAME);
@@ -151,7 +195,10 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger{
 				logEvery = xo.getIntegerAttribute(LOG_EVERY);
 			}
 			
-			
+			boolean logScale = true;
+			if (xo.hasAttribute(LOG_SCALE)){
+				logScale = xo.getBooleanAttribute(LOG_SCALE);
+			}
 			
 			PrintWriter pw;
 						
@@ -175,7 +222,7 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger{
 			
 			LogFormatter lf = new TabDelimitedFormatter(pw);
 			
-			MCLogger logger = new GMRFSkyrideFixedGridLogger(lf,logEvery,g,intervalNumber,gridHeight);
+			MCLogger logger = new GMRFSkyrideFixedGridLogger(lf,logEvery,g,intervalNumber,gridHeight,logScale);
 			
 			//After constructing the logger, setup the columns.
 			final BeastVersion version = new BeastVersion();
@@ -186,7 +233,8 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger{
 								"Generated " + (new Date()).toString() + 
 								"\nFirst value corresponds to coalescent interval closet to sampling time\n" +
 								"Last value corresponds to coalescent interval closet to the root\n" + 
-								"Grid Height = " + gridHeight + 
+								"Grid Height = " + 
+								(gridHeight == -99 ? "Based on tree height" : Double.toString(gridHeight)) + 
 								"\nNumber of intervals = " + intervalNumber);
 								
 			for(int i = 0 ; i < intervalNumber; i++){

@@ -122,7 +122,8 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                     boolean rootNode = false;
                     boolean internalNodes = false;
                     boolean leafNodes = false;
-
+                    double[] initialValues = null;
+ 
                     if (cxo.hasAttribute(ROOT_NODE)) {
                         rootNode = cxo.getBooleanAttribute(ROOT_NODE);
                     }
@@ -135,6 +136,10 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
                     }
 
+                    if (cxo.hasAttribute(INITIAL_VALUE)) {
+                        initialValues = cxo.getDoubleArrayAttribute(INITIAL_VALUE);
+                    }
+
                     //if (rootNode) {
                     //	throw new XMLParseException("root node does not have a rate parameter");
                     //}
@@ -143,7 +148,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeRates element");
                     }
 
-                    replaceParameter(cxo, treeModel.createNodeRatesParameter(rootNode, internalNodes, leafNodes));
+                    replaceParameter(cxo, treeModel.createNodeRatesParameter(initialValues, rootNode, internalNodes, leafNodes));
 
                 } else if (cxo.getName().equals(NODE_TRAITS)) {
 
@@ -299,5 +304,13 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                             AttributeRule.newBooleanRule(FIRE_TREE_EVENTS, true, "Whether to fire tree events if the traits change"),
                             new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
                     }, 0, Integer.MAX_VALUE),
+            new ElementRule(NODE_RATES,
+                    new XMLSyntaxRule[]{
+                            AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root rate is included in the parameter"),
+                            AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node rate (minus the root) are included in the parameter"),
+                            AttributeRule.newBooleanRule(LEAF_NODES, true, "If true the leaf node rate are included in the parameter"),
+                            AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
+                            new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
+                    }, 0, Integer.MAX_VALUE)
     };
 }

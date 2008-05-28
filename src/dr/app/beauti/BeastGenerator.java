@@ -485,7 +485,6 @@ public class BeastGenerator extends BeautiOptions {
             initialPopSize = "expansion.popSize";
 
         } else if (nodeHeightPrior == YULE) {
-            writer.writeText("");
             writer.writeComment("A prior on the distribution node heights defined given");
             writer.writeComment("a Yule speciation process (a pure birth process).");
             writer.writeOpenTag(
@@ -501,7 +500,6 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeCloseTag(YuleModel.BIRTH_RATE);
             writer.writeCloseTag(YuleModel.YULE_MODEL);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-            writer.writeText("");
             writer.writeComment("A prior on the distribution node heights defined given");
             writer.writeComment("a Birth-Death speciation process (Gernhard 2008).");
             writer.writeOpenTag(
@@ -513,13 +511,13 @@ public class BeastGenerator extends BeautiOptions {
             );
 
             writer.writeOpenTag(BirthDeathGernhard08Model.BIRTHDIFF_RATE);
-            writeParameter(BirthDeathGernhard08Model.BIRTHDIFF_RATE, writer);
+            writeParameter(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME, writer);
             writer.writeCloseTag(BirthDeathGernhard08Model.BIRTHDIFF_RATE);
             writer.writeOpenTag(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE);
-            writeParameter(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE, writer);
+            writeParameter(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME, writer);
             writer.writeCloseTag(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE);
 
-            writer.writeCloseTag(BirthDeathGernhard08Model.BIRTHDIFF_RATE);
+            writer.writeCloseTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL);
             
            /* writer.writeText("");
             writer.writeComment("A prior on the distribution node heights defined given");

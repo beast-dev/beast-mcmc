@@ -294,9 +294,21 @@ public class FlexibleNode implements NodeRef, Attributable {
 
 		FlexibleNode[] newChild = new FlexibleNode[numChildren + 1];
 
-        System.arraycopy(child, 0, newChild, 0, pos);
-		newChild[pos] = n;
-        System.arraycopy(child, pos, newChild, pos + 1, numChildren - pos);
+// AR 28/05/08
+// This doesn't work because pos can be zero and (numChildren - pos) can be zero in which case an NullPointerException is thrown.
+// We could check for these special cases but we are generally only moving one or two nodes so it is unlikely to be an efficiency
+// gain for using arraycopy.
+//        System.arraycopy(child, 0, newChild, 0, pos);
+//		newChild[pos] = n;
+//        System.arraycopy(child, pos, newChild, pos + 1, numChildren - pos);
+
+        for (int i = 0; i < pos; i++) {
+            newChild[i] = child[i];
+        }
+        newChild[pos] = n;
+        for (int i = pos; i < numChildren; i++) {
+            newChild[i + 1] = child[i];
+        }
 
 		child = newChild;
 

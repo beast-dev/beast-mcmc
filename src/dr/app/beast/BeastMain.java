@@ -168,9 +168,8 @@ public class BeastMain {
                 // This call never returns as another RuntimeException exception is raised by
                 // the error log handler???
                 infoLogger.warning("Error running file: " + fileName);
-                infoLogger.severe("Fatal exception: " + rex.getMessage());
                 System.err.println("Fatal exception: " + rex.getMessage());
-                // rex.printStackTrace(System.err);
+                rex.printStackTrace(System.err);
             }
 
         } catch (Exception ex) {

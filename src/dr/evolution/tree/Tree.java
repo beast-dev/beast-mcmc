@@ -1148,10 +1148,12 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 if (leaves != null) {
                     // except for the root clade...
                     for (Set<String> clade : clades) {
-                        Set<String> intersection = new HashSet<String>(ls);
-                        intersection.removeAll(clade);
+                        Set<String> intersection = new HashSet<String>(clade);
+                        intersection.retainAll(ls);
 
-                        if (intersection.size() != 0 && intersection.size() != ls.size()) {
+                        if (intersection.size() != 0 &&
+		                        intersection.size() != ls.size() &&
+		                        intersection.size() != clade.size()) {
                             return false;
                         }
                     }

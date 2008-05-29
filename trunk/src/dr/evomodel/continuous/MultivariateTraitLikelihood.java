@@ -25,205 +25,202 @@ import java.util.logging.Logger;
 
 public class MultivariateTraitLikelihood extends AbstractModel implements Likelihood, NodeAttributeProvider {
 
-	public static final String TRAIT_LIKELIHOOD = "multivariateTraitLikelihood";
-	public static final String TRAIT_NAME = "traitName";
-	public static final String ROOT_PRIOR = "rootPrior";
-	public static final String MODEL = "diffusionModel";
-	public static final String TREE = "tree";
-	public static final String TRAIT_PARAMETER = "traitParameter";
-	public static final String SET_TRAIT = "setOutcomes";
-	public static final String MISSING = "missingIndicator";
-	public static final String CACHE_BRANCHES = "cacheBranches";
-	public static final String IN_REAL_TIME = "inRealTime";
-	public static final String DEFAULT_TRAIT_NAME = "trait";
-	public static final String RANDOMIZE = "randomize";
-	public static final String CHECK = "check";
-	public static final String TREE_LENGTH = "useTreeLength";
+    public static final String TRAIT_LIKELIHOOD = "multivariateTraitLikelihood";
+    public static final String TRAIT_NAME = "traitName";
+    public static final String ROOT_PRIOR = "rootPrior";
+    public static final String MODEL = "diffusionModel";
+    public static final String TREE = "tree";
+    public static final String TRAIT_PARAMETER = "traitParameter";
+    public static final String SET_TRAIT = "setOutcomes";
+    public static final String MISSING = "missingIndicator";
+    public static final String CACHE_BRANCHES = "cacheBranches";
+    public static final String IN_REAL_TIME = "inRealTime";
+    public static final String DEFAULT_TRAIT_NAME = "trait";
+    public static final String RANDOMIZE = "randomize";
+    public static final String CHECK = "check";
+    public static final String TREE_LENGTH = "useTreeLength";
 
-	public MultivariateTraitLikelihood(String traitName,
-	                                   TreeModel treeModel,
-	                                   MultivariateDiffusionModel diffusionModel,
-	                                   CompoundParameter traitParameter,
-	                                   List<Integer> missingIndices,
-	                                   boolean cacheBranches,
-	                                   boolean inSubstitutionTime,
-	                                   boolean useTreeLength,
-	                                   BranchRateModel rateModel) {
+    public MultivariateTraitLikelihood(String traitName,
+                                       TreeModel treeModel,
+                                       MultivariateDiffusionModel diffusionModel,
+                                       CompoundParameter traitParameter,
+                                       List<Integer> missingIndices,
+                                       boolean cacheBranches,
+                                       boolean inSubstitutionTime,
+                                       boolean useTreeLength,
+                                       BranchRateModel rateModel) {
 
-		super(TRAIT_LIKELIHOOD);
+        super(TRAIT_LIKELIHOOD);
 
-		this.traitName = traitName;
-		this.treeModel = treeModel;
-		this.rateModel = rateModel;
-		this.diffusionModel = diffusionModel;
-		this.traitParameter = traitParameter;
-		this.missingIndices = missingIndices;
-		addModel(treeModel);
-		addModel(diffusionModel);
+        this.traitName = traitName;
+        this.treeModel = treeModel;
+        this.rateModel = rateModel;
+        this.diffusionModel = diffusionModel;
+        this.traitParameter = traitParameter;
+        this.missingIndices = missingIndices;
+        addModel(treeModel);
+        addModel(diffusionModel);
 
-		if (rateModel != null) {
-			hasRateModel = true;
-			addModel(rateModel);
-		}
-		addParameter(traitParameter);
+        if (rateModel != null) {
+            hasRateModel = true;
+            addModel(rateModel);
+        }
+        addParameter(traitParameter);
 
 //		if (cacheBranches)
 //			cachedLikelihoods = new HashMap<NodeRef, Double>();
 
-		this.inSubstitutionTime = inSubstitutionTime;
-		this.useTreeLength = useTreeLength;
+        this.inSubstitutionTime = inSubstitutionTime;
+        this.useTreeLength = useTreeLength;
 
-		StringBuffer sb = new StringBuffer("Creating multivariate diffusion model:\n");
-		sb.append("\tTrait: " + traitName + "\n");
-		sb.append("\tDiffusion process: " + diffusionModel.getId() + "\n");
-		sb.append("\tUsing clock time: " + (!inSubstitutionTime) + "\n");
-		sb.append("\tTime scaling: " + (hasRateModel ? rateModel.getId() : "homogeneous") + "\n");
-		sb.append("\tTree normalization: " + (useTreeLength ? "length" : "height") + "\n");
-		sb.append("\tPlease cite Suchard, Lemey and Rambaut (in preparation) if you publish results using this model.");
+        StringBuffer sb = new StringBuffer("Creating multivariate diffusion model:\n");
+        sb.append("\tTrait: " + traitName + "\n");
+        sb.append("\tDiffusion process: " + diffusionModel.getId() + "\n");
+        sb.append("\tUsing clock time: " + (!inSubstitutionTime) + "\n");
+        sb.append("\tTime scaling: " + (hasRateModel ? rateModel.getId() : "homogeneous") + "\n");
+        sb.append("\tTree normalization: " + (useTreeLength ? "length" : "height") + "\n");
+        sb.append("\tPlease cite Suchard, Lemey and Rambaut (in preparation) if you publish results using this model.");
 
-		Logger.getLogger("dr.evomodel").info(sb.toString());
+        Logger.getLogger("dr.evomodel").info(sb.toString());
 
-		recalculateTreeLength();
+        recalculateTreeLength();
 
-	}
+    }
 
-	public String getTraitName() {
-		return traitName;
-	}
+    public String getTraitName() {
+        return traitName;
+    }
 
-	public double getRescaledBranchLength(NodeRef node) {
+    public double getRescaledBranchLength(NodeRef node) {
 
-		if (hasRateModel)
-			return rateModel.getBranchRate(treeModel, node);
-		else
-			return treeModel.getBranchLength(node) / treeLength;
+        if (hasRateModel)
+            return rateModel.getBranchRate(treeModel, node);
+        else
+            return treeModel.getBranchLength(node) / treeLength;
 
-	}
+    }
 
-	// **************************************************************
-	// ModelListener IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // ModelListener IMPLEMENTATION
+    // **************************************************************
 
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
 
-		likelihoodKnown = false;
-		if (model == treeModel)
-			recalculateTreeLength();
-	}
+        likelihoodKnown = false;
+        if (model == treeModel)
+            recalculateTreeLength();
+    }
 
 
-	public void recalculateTreeLength() {
-		if (useTreeLength) {
-			treeLength = 0;
-			for (int i = 0; i < treeModel.getNodeCount(); i++) {
-				NodeRef node = treeModel.getNode(i);
-				if (!treeModel.isRoot(node))
-					treeLength += treeModel.getBranchLength(node);
-			}
-		} else
-			treeLength = treeModel.getNodeHeight(treeModel.getRoot());
-	}
+    public void recalculateTreeLength() {
+        if (useTreeLength) {
+            treeLength = 0;
+            for (int i = 0; i < treeModel.getNodeCount(); i++) {
+                NodeRef node = treeModel.getNode(i);
+                if (!treeModel.isRoot(node))
+                    treeLength += treeModel.getBranchLength(node);
+            }
+        } else
+            treeLength = treeModel.getNodeHeight(treeModel.getRoot());
+    }
 
-	// **************************************************************
-	// ParameterListener IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // ParameterListener IMPLEMENTATION
+    // **************************************************************
 
-	protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected void handleParameterChangedEvent(Parameter parameter, int index) {
 
-		likelihoodKnown = false;
+        likelihoodKnown = false;
 
-	}
+    }
 
-	// **************************************************************
-	// Model IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // Model IMPLEMENTATION
+    // **************************************************************
 
-	/**
-	 * Stores the precalculated state: in this case the intervals
-	 */
-	protected void storeState() {
-		storedLikelihoodKnown = likelihoodKnown;
-		storedLogLikelihood = logLikelihood;
-		storedTreeLength = treeLength;
-	}
+    /**
+     * Stores the precalculated state: in this case the intervals
+     */
+    protected void storeState() {
+        storedLikelihoodKnown = likelihoodKnown;
+        storedLogLikelihood = logLikelihood;
+        storedTreeLength = treeLength;
+    }
 
-	/**
-	 * Restores the precalculated state: that is the intervals of the tree.
-	 */
-	protected void restoreState() {
-		likelihoodKnown = storedLikelihoodKnown;
-		logLikelihood = storedLogLikelihood;
-		treeLength = storedTreeLength;
-	}
+    /**
+     * Restores the precalculated state: that is the intervals of the tree.
+     */
+    protected void restoreState() {
+        likelihoodKnown = storedLikelihoodKnown;
+        logLikelihood = storedLogLikelihood;
+        treeLength = storedTreeLength;
+    }
 
-	protected void acceptState() {
-	} // nothing to do
+    protected void acceptState() {
+    } // nothing to do
 
-	public TreeModel getTreeModel() {
-		return treeModel;
-	}
+    public TreeModel getTreeModel() {
+        return treeModel;
+    }
 
-	public MultivariateDiffusionModel getDiffusionModel() {
-		return diffusionModel;
-	}
+    public MultivariateDiffusionModel getDiffusionModel() {
+        return diffusionModel;
+    }
 
-	public boolean getInSubstitutionTime() {
-		return inSubstitutionTime;
-	}
+    public boolean getInSubstitutionTime() {
+        return inSubstitutionTime;
+    }
 
-	// **************************************************************
-	// Likelihood IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // Likelihood IMPLEMENTATION
+    // **************************************************************
 
-	public Model getModel() {
-		return this;
-	}
+    public Model getModel() {
+        return this;
+    }
 
-	public String toString() {
-		return getClass().getName() + "(" + getLogLikelihood() + ")";
+    public String toString() {
+        return getClass().getName() + "(" + getLogLikelihood() + ")";
 
-	}
+    }
 
-	public final double getLogLikelihood() {
-		if (!likelihoodKnown) {
-			logLikelihood = calculateLogLikelihood();
-			likelihoodKnown = true;
-		}
-		return logLikelihood;
-	}
+    public final double getLogLikelihood() {
+        if (!likelihoodKnown) {
+            logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+        return logLikelihood;
+    }
 
-	public void makeDirty() {
-		likelihoodKnown = false;
-	}
+    public void makeDirty() {
+        likelihoodKnown = false;
+    }
 
-	/**
-	 * Calculate the log likelihood of the current state.
-	 *
-	 * @return the log likelihood.
-	 */
-	public double calculateLogLikelihood() {
+    /**
+     * Calculate the log likelihood of the current state.
+     *
+     * @return the log likelihood.
+     */
+    public double calculateLogLikelihood() {
 
-		double logLikelihood = traitLogLikelihood(treeModel.getRoot());
-		if (logLikelihood > maxLogLikelihood) {
-			maxLogLikelihood = logLikelihood;
-		}
-		return logLikelihood;
-	}
+        double logLikelihood = traitLogLikelihood(null, treeModel.getRoot());
+        if (logLikelihood > maxLogLikelihood) {
+            maxLogLikelihood = logLikelihood;
+        }
+        return logLikelihood;
+    }
 
-	public double getMaxLogLikelihood() {
-		return maxLogLikelihood;
-	}
+    public double getMaxLogLikelihood() {
+        return maxLogLikelihood;
+    }
 
-	private double traitLogLikelihood(NodeRef node) {
+    private double traitLogLikelihood(double[] parentTrait, NodeRef node) {
 
-		double logL = 0.0;
-		double[] childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
+        double logL = 0.0;
+        double[] childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
 
-		if (!treeModel.isRoot(node)) {
-			NodeRef parent = treeModel.getParent(node);
-			double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
-
-			double time = getRescaledBranchLength(node);
+        if (parentTrait != null) {
+            double time = getRescaledBranchLength(node);
 
 //			if (inSubstitutionTime) {
 //				time *= treeModel.getNodeRate(node);
@@ -232,179 +229,180 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 //			if (cachedLikelihoods != null && cachedLikelihoods.containsKey(node)) {
 //				logL = cachedLikelihoods.get(node);
 //			} else {
-			logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
-			if (new Double(logL).isNaN()) {
-				System.err.println("time = " + time);
-				System.err.println("parent = " + new Vector(parentTrait));
-				System.err.println("child = " + new Vector(childTrait));
-				System.err.println(new Matrix(diffusionModel.getPrecisionmatrix()));
-			}
+            logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
+            if (new Double(logL).isNaN()) {
+                System.err.println("MultivariateTraitLikelihood: likelihood is undefined");
+                System.err.println("time = " + time);
+                System.err.println("parent trait value = " + new Vector(parentTrait));
+                System.err.println("child trait value = " + new Vector(childTrait));
+                System.err.println("precision matrix = " + new Matrix(diffusionModel.getPrecisionmatrix()));
+            }
 //				if (cachedLikelihoods != null) {
 //					cachedLikelihoods.put(node, logL);
 //				}
 //			}
-		}
-		int childCount = treeModel.getChildCount(node);
-		for (int i = 0; i < childCount; i++) {
-			logL += traitLogLikelihood(treeModel.getChild(node, i));
-		}
+        }
+        int childCount = treeModel.getChildCount(node);
+        for (int i = 0; i < childCount; i++) {
+            logL += traitLogLikelihood(childTrait, treeModel.getChild(node, i));
+        }
 
-		if (new Double(logL).isNaN()) {
-			System.err.println("logL = " + logL);
-			System.err.println(new Matrix(diffusionModel.getPrecisionmatrix()));
-			System.exit(-1);
-		}
+        if (new Double(logL).isNaN()) {
+            System.err.println("logL = " + logL);
+            System.err.println(new Matrix(diffusionModel.getPrecisionmatrix()));
+            System.exit(-1);
+        }
 
-		return logL;
-	}
+        return logL;
+    }
 
-	// **************************************************************
-	// Loggable IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // Loggable IMPLEMENTATION
+    // **************************************************************
 
-	/**
-	 * @return the log columns.
-	 */
-	public dr.inference.loggers.LogColumn[] getColumns() {
-		return new dr.inference.loggers.LogColumn[]{
-				new LikelihoodColumn(getId())
-		};
-	}
+    /**
+     * @return the log columns.
+     */
+    public dr.inference.loggers.LogColumn[] getColumns() {
+        return new dr.inference.loggers.LogColumn[]{
+                new LikelihoodColumn(getId())
+        };
+    }
 
-	private String[] attributeLabel = null;
+    private String[] attributeLabel = null;
 
-	public String[] getNodeAttributeLabel() {
-		if (attributeLabel == null) {
-			double[] trait = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName);
-			attributeLabel = new String[trait.length];
-			if (trait.length == 1)
-				attributeLabel[0] = traitName;
-			else {
-				for (int i = 1; i <= trait.length; i++)
-					attributeLabel[i - 1] = traitName + i;
-			}
-		}
-		return attributeLabel;
-	}
+    public String[] getNodeAttributeLabel() {
+        if (attributeLabel == null) {
+            double[] trait = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName);
+            attributeLabel = new String[trait.length];
+            if (trait.length == 1)
+                attributeLabel[0] = traitName;
+            else {
+                for (int i = 1; i <= trait.length; i++)
+                    attributeLabel[i - 1] = traitName + i;
+            }
+        }
+        return attributeLabel;
+    }
 
-	public String[] getAttributeForNode(Tree tree, NodeRef node) {
-		double trait[] = treeModel.getMultivariateNodeTrait(node, traitName);
-		String[] value = new String[trait.length];
-		for (int i = 0; i < trait.length; i++)
-			value[i] = Double.toString(trait[i]);
-		return value;
-	}
+    public String[] getAttributeForNode(Tree tree, NodeRef node) {
+        double trait[] = treeModel.getMultivariateNodeTrait(node, traitName);
+        String[] value = new String[trait.length];
+        for (int i = 0; i < trait.length; i++)
+            value[i] = Double.toString(trait[i]);
+        return value;
+    }
 
-	private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-		public LikelihoodColumn(String label) {
-			super(label);
-		}
+    private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
+        public LikelihoodColumn(String label) {
+            super(label);
+        }
 
-		public double getDoubleValue() {
-			return getLogLikelihood();
-		}
-	}
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
+    }
 
 
-	public void randomize(Parameter trait) {
-		diffusionModel.randomize(trait);
-	}
+    public void randomize(Parameter trait) {
+        diffusionModel.randomize(trait);
+    }
 
-	public void check(Parameter trait) throws XMLParseException {
-		diffusionModel.check(trait);
-	}
+    public void check(Parameter trait) throws XMLParseException {
+        diffusionModel.check(trait);
+    }
 
-	// **************************************************************
-	// XMLElement IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // XMLElement IMPLEMENTATION
+    // **************************************************************
 
-	public Element createElement(Document d) {
-		throw new RuntimeException("Not implemented yet!");
-	}
+    public Element createElement(Document d) {
+        throw new RuntimeException("Not implemented yet!");
+    }
 
-	// **************************************************************
-	// XMLObjectParser
-	// **************************************************************
+    // **************************************************************
+    // XMLObjectParser
+    // **************************************************************
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() {
-			return TRAIT_LIKELIHOOD;
-		}
+        public String getParserName() {
+            return TRAIT_LIKELIHOOD;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
-			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-			CompoundParameter traitParameter = (CompoundParameter) xo.getElementFirstChild(TRAIT_PARAMETER);
+            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            CompoundParameter traitParameter = (CompoundParameter) xo.getElementFirstChild(TRAIT_PARAMETER);
 
-			boolean cacheBranches = false;
-			if (xo.hasAttribute(CACHE_BRANCHES))
-				cacheBranches = xo.getBooleanAttribute(CACHE_BRANCHES);
+            boolean cacheBranches = false;
+            if (xo.hasAttribute(CACHE_BRANCHES))
+                cacheBranches = xo.getBooleanAttribute(CACHE_BRANCHES);
 
-			boolean inSubstitutionTime = false;
-			if (xo.hasAttribute(IN_REAL_TIME))
-				inSubstitutionTime = !xo.getBooleanAttribute(IN_REAL_TIME);
+            boolean inSubstitutionTime = false;
+            if (xo.hasAttribute(IN_REAL_TIME))
+                inSubstitutionTime = !xo.getBooleanAttribute(IN_REAL_TIME);
 
-			BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+            BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-			List<Integer> missingIndices = null;
-			String traitName = DEFAULT_TRAIT_NAME;
+            List<Integer> missingIndices = null;
+            String traitName = DEFAULT_TRAIT_NAME;
 
-			if (xo.hasAttribute(TRAIT_NAME)) {
+            if (xo.hasAttribute(TRAIT_NAME)) {
 
-				traitName = xo.getStringAttribute(TRAIT_NAME);
+                traitName = xo.getStringAttribute(TRAIT_NAME);
 
-				// Fill in attributeValues
-				int taxonCount = treeModel.getTaxonCount();
-				for (int i = 0; i < taxonCount; i++) {
-					String taxonName = treeModel.getTaxonId(i);
-					String paramName = taxonName + "." + traitName;
-					Parameter traitParam = getTraitParameterByName(traitParameter, paramName);
-					if (traitParam == null)
-						throw new RuntimeException("Missing trait parameters at tree tips");
-					String object = (String) treeModel.getTaxonAttribute(i, traitName);
-					if (object == null)
-						throw new RuntimeException("Trait \"" + traitName + "\" not found for taxa \"" + taxonName + "\"");
-					else {
-						StringTokenizer st = new StringTokenizer(object);
-						int count = st.countTokens();
-						if (count != traitParam.getDimension())
-							throw new RuntimeException("Trait length must match trait parameter dimension");
-						for (int j = 0; j < count; j++) {
-							String oneValue = st.nextToken();
-							double value = Double.NaN;
-							if (oneValue.compareTo("NA") == 0) {
-								// Missing values not yet handled.
-							} else {
-								try {
-									value = new Double(oneValue);
-								} catch (NumberFormatException e) {
-									throw new RuntimeException(e.getMessage());
-								}
-							}
-							traitParam.setParameterValue(j, value);
-						}
-					}
-				}
+                // Fill in attributeValues
+                int taxonCount = treeModel.getTaxonCount();
+                for (int i = 0; i < taxonCount; i++) {
+                    String taxonName = treeModel.getTaxonId(i);
+                    String paramName = taxonName + "." + traitName;
+                    Parameter traitParam = getTraitParameterByName(traitParameter, paramName);
+                    if (traitParam == null)
+                        throw new RuntimeException("Missing trait parameters at tree tips");
+                    String object = (String) treeModel.getTaxonAttribute(i, traitName);
+                    if (object == null)
+                        throw new RuntimeException("Trait \"" + traitName + "\" not found for taxa \"" + taxonName + "\"");
+                    else {
+                        StringTokenizer st = new StringTokenizer(object);
+                        int count = st.countTokens();
+                        if (count != traitParam.getDimension())
+                            throw new RuntimeException("Trait length must match trait parameter dimension");
+                        for (int j = 0; j < count; j++) {
+                            String oneValue = st.nextToken();
+                            double value = Double.NaN;
+                            if (oneValue.compareTo("NA") == 0) {
+                                // Missing values not yet handled.
+                            } else {
+                                try {
+                                    value = new Double(oneValue);
+                                } catch (NumberFormatException e) {
+                                    throw new RuntimeException(e.getMessage());
+                                }
+                            }
+                            traitParam.setParameterValue(j, value);
+                        }
+                    }
+                }
 
-				// Find missing values
-				double[] allValues = traitParameter.getParameterValues();
-				missingIndices = new ArrayList<Integer>();
-				for (int i = 0; i < allValues.length; i++) {
-					if ((new Double(allValues[i])).isNaN()) {
-						traitParameter.setParameterValue(i, 0);
-						missingIndices.add(i);
-					}
-				}
+                // Find missing values
+                double[] allValues = traitParameter.getParameterValues();
+                missingIndices = new ArrayList<Integer>();
+                for (int i = 0; i < allValues.length; i++) {
+                    if ((new Double(allValues[i])).isNaN()) {
+                        traitParameter.setParameterValue(i, 0);
+                        missingIndices.add(i);
+                    }
+                }
 
-				if (xo.hasSocket(MISSING)) {
-					XMLObject cxo = (XMLObject) xo.getChild(MISSING);
-					Parameter missingParameter = new Parameter.Default(allValues.length, 0.0);
-					for (int i : missingIndices) {
-						missingParameter.setParameterValue(i, 1.0);
-					}
-					missingParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, allValues.length));
+                if (xo.hasSocket(MISSING)) {
+                    XMLObject cxo = (XMLObject) xo.getChild(MISSING);
+                    Parameter missingParameter = new Parameter.Default(allValues.length, 0.0);
+                    for (int i : missingIndices) {
+                        missingParameter.setParameterValue(i, 1.0);
+                    }
+                    missingParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, allValues.length));
 /*					CompoundParameter missingParameter = new CompoundParameter(MISSING);
 					System.err.println("TRAIT: "+traitParameter.toString());
 					System.err.println("CNT:   "+traitParameter.getNumberOfParameters());
@@ -412,120 +410,120 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 						Parameter thisParameter = traitParameter.getIndicatorParameter(i);
 						missingParameter.addParameter(thisParameter);
 					}*/
-					replaceParameter(cxo, missingParameter);
-				}
+                    replaceParameter(cxo, missingParameter);
+                }
 
 
-			}
+            }
 
-			Parameter traits = null;
-			Parameter check = null;
+            Parameter traits = null;
+            Parameter check = null;
 
-			if (xo.hasSocket(RANDOMIZE)) {
-				XMLObject cxo = (XMLObject) xo.getChild(RANDOMIZE);
-				traits = (Parameter) cxo.getChild(Parameter.class);
-			}
+            if (xo.hasSocket(RANDOMIZE)) {
+                XMLObject cxo = (XMLObject) xo.getChild(RANDOMIZE);
+                traits = (Parameter) cxo.getChild(Parameter.class);
+            }
 
-			if (xo.hasSocket(CHECK)) {
-				XMLObject cxo = (XMLObject) xo.getChild(CHECK);
-				check = (Parameter) cxo.getChild(Parameter.class);
-			}
+            if (xo.hasSocket(CHECK)) {
+                XMLObject cxo = (XMLObject) xo.getChild(CHECK);
+                check = (Parameter) cxo.getChild(Parameter.class);
+            }
 
-			boolean useTreeLength = false;
-			if (xo.hasAttribute(TREE_LENGTH) && xo.getBooleanAttribute(TREE_LENGTH)) {
-				useTreeLength = true;
-			}
+            boolean useTreeLength = false;
+            if (xo.hasAttribute(TREE_LENGTH) && xo.getBooleanAttribute(TREE_LENGTH)) {
+                useTreeLength = true;
+            }
 
-			MultivariateTraitLikelihood like =
-					new MultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
-							traitParameter, missingIndices, cacheBranches, inSubstitutionTime, useTreeLength, rateModel);
-
-
-			if (traits != null) {
-				like.randomize(traits);
-			}
-
-			if (check != null) {
-				like.check(check);
-			}
-
-			return like;
-		}
+            MultivariateTraitLikelihood like =
+                    new MultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+                            traitParameter, missingIndices, cacheBranches, inSubstitutionTime, useTreeLength, rateModel);
 
 
-		private Parameter getTraitParameterByName(CompoundParameter traits, String name) {
+            if (traits != null) {
+                like.randomize(traits);
+            }
 
-			for (int i = 0; i < traits.getNumberOfParameters(); i++) {
-				Parameter found = traits.getParameter(i);
-				if (found.getStatisticName().compareTo(name) == 0)
-					return found;
-			}
-			return null;
-		}
+            if (check != null) {
+                like.check(check);
+            }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-
-		public String getParserDescription() {
-			return "Provides the likelihood of a continuous trait evolving on a tree by a " +
-					"given diffusion model.";
-		}
-
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
-
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new StringAttributeRule(TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
-				AttributeRule.newBooleanRule(IN_REAL_TIME, true),
-				new ElementRule(MultivariateDiffusionModel.class),
-				new ElementRule(TreeModel.class),
-				new ElementRule(BranchRateModel.class, true),
-				AttributeRule.newDoubleArrayRule("cut", true),
-				new ElementRule(Parameter.class, true),
-				new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
-						new ElementRule(Parameter.class)
-				}, true),
-				new ElementRule(CHECK, new XMLSyntaxRule[]{
-						new ElementRule(Parameter.class)
-				}, true)
-		};
+            return like;
+        }
 
 
-		public Class getReturnType() {
-			return MultivariateTraitLikelihood.class;
-		}
+        private Parameter getTraitParameterByName(CompoundParameter traits, String name) {
+
+            for (int i = 0; i < traits.getNumberOfParameters(); i++) {
+                Parameter found = traits.getParameter(i);
+                if (found.getStatisticName().compareTo(name) == 0)
+                    return found;
+            }
+            return null;
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "Provides the likelihood of a continuous trait evolving on a tree by a " +
+                    "given diffusion model.";
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new StringAttributeRule(TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
+                AttributeRule.newBooleanRule(IN_REAL_TIME, true),
+                new ElementRule(MultivariateDiffusionModel.class),
+                new ElementRule(TreeModel.class),
+                new ElementRule(BranchRateModel.class, true),
+                AttributeRule.newDoubleArrayRule("cut", true),
+                new ElementRule(Parameter.class, true),
+                new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class)
+                }, true),
+                new ElementRule(CHECK, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class)
+                }, true)
+        };
+
+
+        public Class getReturnType() {
+            return MultivariateTraitLikelihood.class;
+        }
     };
 
     TreeModel treeModel = null;
-	MultivariateDiffusionModel diffusionModel = null;
-	String traitName = null;
-	//	private boolean jeffreysPrior = false;
-	CompoundParameter traitParameter;
-	List<Integer> missingIndices;
+    MultivariateDiffusionModel diffusionModel = null;
+    String traitName = null;
+    //	private boolean jeffreysPrior = false;
+    CompoundParameter traitParameter;
+    List<Integer> missingIndices;
 
-	ArrayList dataList = new ArrayList();
+    ArrayList dataList = new ArrayList();
 
-	private double logLikelihood;
-	private double maxLogLikelihood = Double.NEGATIVE_INFINITY;
-	private double storedLogLikelihood;
-	private boolean likelihoodKnown = false;
-	private boolean storedLikelihoodKnown = false;
-	private BranchRateModel rateModel = null;
-	private boolean hasRateModel = false;
+    private double logLikelihood;
+    private double maxLogLikelihood = Double.NEGATIVE_INFINITY;
+    private double storedLogLikelihood;
+    private boolean likelihoodKnown = false;
+    private boolean storedLikelihoodKnown = false;
+    private BranchRateModel rateModel = null;
+    private boolean hasRateModel = false;
 
-	private Parameter cut;
-	private Parameter scale;
+    private Parameter cut;
+    private Parameter scale;
 
-	//	private double[] cachedLikelihoods = null;
-	private HashMap<NodeRef, Double> cachedLikelihoods = null;
+    //	private double[] cachedLikelihoods = null;
+    private HashMap<NodeRef, Double> cachedLikelihoods = null;
 
-	private double treeLength;
-	private double storedTreeLength;
+    private double treeLength;
+    private double storedTreeLength;
 
-	private boolean inSubstitutionTime;
+    private boolean inSubstitutionTime;
 
-	private boolean useTreeLength;
+    private boolean useTreeLength;
 }
 

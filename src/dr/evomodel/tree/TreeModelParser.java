@@ -199,7 +199,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                 } else if (cxo.getName().equals(LEAF_TRAIT)) {
 
                     String name = "trait";
-
+                  
                     String taxonName;
                     if (cxo.hasAttribute(TAXON)) {
                         taxonName = cxo.getStringAttribute(TAXON);
@@ -296,7 +296,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             AttributeRule.newStringRule(TAXON, false, "The name of the taxon for the leaf"),
                             new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                    }, 1, Integer.MAX_VALUE),
+                    }, 0, Integer.MAX_VALUE),
             new ElementRule(NODE_TRAITS,
                     new XMLSyntaxRule[]{
                             AttributeRule.newStringRule(NAME, false, "The name of the trait attribute in the taxa"),
@@ -321,6 +321,6 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                             AttributeRule.newStringRule(TAXON, false, "The name of the taxon for the leaf"),
                             AttributeRule.newStringRule(NAME, false, "The name of the trait attribute in the taxa"),
                             new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                    }, 1, Integer.MAX_VALUE)
+                    }, 0, Integer.MAX_VALUE)
     };
 }

@@ -161,51 +161,31 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
 
     	return returnValue;
     }
-    
-
-    public DenseVector oldNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) {
+        
+    public DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException{
         return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
-
-    }
-
-    
-    public DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) {
-        return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
-
-    }
-
-    public static DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ,
-                                            int maxIterations, double stopValue) {
-
-        DenseVector iterateGamma = currentGamma.copy();
-        int numberIterations = 0;
-        while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > stopValue) {
-            inverseJacobian(data, iterateGamma, proposedQ).multAdd(gradient(data, iterateGamma, proposedQ), iterateGamma);
-            numberIterations++;
-        }
-
-        if (numberIterations > maxIterations)
-            throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue);
-
-        return iterateGamma;
     }
     
     public static DenseVector newNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ, 
-    												int maxIterations, double stopValue){
+    												int maxIterations, double stopValue) throws OperatorFailedException{
     	DenseVector iterateGamma = currentGamma.copy();
     	DenseVector tempValue = currentGamma.copy();
-    	
-    	
     	
     	int numberIterations = 0;
     	
     	while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > stopValue) {
-            jacobian(data, iterateGamma, proposedQ).solve(gradient(data,iterateGamma,proposedQ),tempValue);
+            try{
+    			jacobian(data, iterateGamma, proposedQ).solve(gradient(data,iterateGamma,proposedQ),tempValue);
+            }catch(no.uib.cipr.matrix.MatrixNotSPDException e){
+            	throw new OperatorFailedException("");
+            }catch(no.uib.cipr.matrix.MatrixSingularException e){
+            	throw new OperatorFailedException("");
+            }
             iterateGamma.add(tempValue);
             numberIterations++;
 
             if (numberIterations > maxIterations)
-                throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue+"\n"+
+                throw new OperatorFailedException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue+"\n"+
                 "Try starting BEAST with a more accurate initial tree.");
             }
         
@@ -224,18 +204,7 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
     }
 
 
-    private static DenseMatrix inverseJacobian(double[] data, DenseVector value, SymmTridiagMatrix Q) {
 
-        SPDTridiagMatrix jacobian = new SPDTridiagMatrix(Q, true);
-        for (int i = 0; i < value.size(); i++) {
-            jacobian.set(i, i, jacobian.get(i, i) + Math.exp(-value.get(i)) * data[i]);
-        }
-
-        DenseMatrix inverseJacobian = Matrices.identity(jacobian.numRows());
-        jacobian.solve(Matrices.identity(value.size()), inverseJacobian);
-
-        return inverseJacobian;
-    }
 
     private static SPDTridiagMatrix jacobian(double[] data, DenseVector value, SymmTridiagMatrix Q){
     	SPDTridiagMatrix jacobian = new SPDTridiagMatrix(Q,true);
@@ -261,7 +230,8 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
 
         SymmTridiagMatrix currentQ = gmrfField.getScaledWeightMatrix(currentPrecision, currentLambda);
         SymmTridiagMatrix proposedQ = gmrfField.getScaledWeightMatrix(proposedPrecision, proposedLambda);
-
+       
+        
         double[] wNative = gmrfField.getSufficientStatistics();
 
         UpperSPDBandMatrix forwardQW = new UpperSPDBandMatrix(proposedQ,1);
@@ -295,7 +265,6 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
         
 		proposedGamma = getMultiNormal(stand_norm, forwardMean, forwardCholesky);
 		
-        
 
         for (int i = 0; i < fieldLength; i++)
             popSizeParameter.setParameterValueQuietly(i, proposedGamma.get(i));
@@ -331,8 +300,7 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
 
  		hRatio += 0.5 * 2 * logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
 		hRatio -= 0.5 * 2 * logGeneralizedDeterminant(forwardCholesky.getU())  - 0.5 * stand_norm.dot(stand_norm);
-
-
+		
         
         return hRatio;
     }
@@ -468,4 +436,37 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
     };
 
 
+//  public DenseVector oldNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException{
+//  return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
+//
+//}
+//
+//public static DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ,
+//int maxIterations, double stopValue) {
+//
+//DenseVector iterateGamma = currentGamma.copy();
+//int numberIterations = 0;
+//while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > stopValue) {
+//inverseJacobian(data, iterateGamma, proposedQ).multAdd(gradient(data, iterateGamma, proposedQ), iterateGamma);
+//numberIterations++;
+//}
+//
+//if (numberIterations > maxIterations)
+//throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue);
+//
+//return iterateGamma;
+//}
+//
+//private static DenseMatrix inverseJacobian(double[] data, DenseVector value, SymmTridiagMatrix Q) {
+//
+//      SPDTridiagMatrix jacobian = new SPDTridiagMatrix(Q, true);
+//      for (int i = 0; i < value.size(); i++) {
+//          jacobian.set(i, i, jacobian.get(i, i) + Math.exp(-value.get(i)) * data[i]);
+//      }
+//
+//      DenseMatrix inverseJacobian = Matrices.identity(jacobian.numRows());
+//      jacobian.solve(Matrices.identity(value.size()), inverseJacobian);
+//
+//      return inverseJacobian;
+//  }
 }

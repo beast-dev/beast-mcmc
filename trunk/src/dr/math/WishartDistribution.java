@@ -221,4 +221,11 @@ public class WishartDistribution implements MultivariateDistribution {
         return logDensity;
     }
 
+	public static void main(String[] argv) {
+		WishartDistribution wd = new WishartDistribution(2, new double[][] { {500.0} });
+		GammaDistribution gd = new GammaDistribution(1.0 / 1000.0, 1000.0);
+		double[] x = new double[] { 1.0 };
+		System.out.println("Wishart, df=2, scale = 500, PDF(1.0): " + wd.logPdf(x));
+		System.out.println("Gamma, scale = 1/1000, shape = 1000, PDF(1.0): " + gd.logPdf(x[0]));
+	}
 }

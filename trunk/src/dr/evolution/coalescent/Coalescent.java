@@ -95,7 +95,7 @@ public class Coalescent implements MultivariateFunction, Units {
                 // population size at the end of a linear interval drive coalescent values to infinity.
 	            
                //if( duration == 0.0 || demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
-                if( demographicAtCoalPoint > 1e-12 * (duration/intervalArea) ) {
+                if( duration == 0.0 || demographicAtCoalPoint > 1e-12 * (duration/intervalArea) ) {
                    logL -= Math.log(demographicAtCoalPoint);
                 } else {
                     // remove this at some stage

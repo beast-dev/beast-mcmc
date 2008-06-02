@@ -377,7 +377,7 @@ public class TreeTraceAnalysis {
         System.out.print(highestProp + "\t");
         System.out.print(mapTree + "\t");
 
-        int credSet = (int) ((credSetProbability * totalTrees) / 100.);
+        int credSet = (int) (credSetProbability * totalTrees);
         int sumFreq = 0;
 
         int credSetSize = -1;

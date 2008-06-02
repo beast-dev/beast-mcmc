@@ -151,7 +151,8 @@ public class FrequencyModel extends AbstractModel {
 				Object obj = xo.getChild(i);
 				if (obj instanceof PatternList) {
 					frequencies = ((PatternList) obj).getStateFrequencies();
-				}
+                    break;
+                }
 			}
 
 			StringBuilder sb = new StringBuilder("Creating state frequencies model: ");
@@ -207,13 +208,19 @@ public class FrequencyModel extends AbstractModel {
 		}
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new XORRule(
-						new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", DataType.getRegisteredDataTypeNames(), false),
+                AttributeRule.newBooleanRule(NORMALIZE, true),
+
+                new ElementRule(PatternList.class, "Initial value", 0, 1),
+
+                new XORRule(
+						new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
+                                DataType.getRegisteredDataTypeNames(), false),
 						new ElementRule(DataType.class)
 				),
-				new ElementRule(FREQUENCIES,
+
+                new ElementRule(FREQUENCIES,
 						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-				AttributeRule.newBooleanRule(NORMALIZE, true),
+
 		};
 	};
 

@@ -448,9 +448,17 @@ public class CoalescentSimulator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(RESCALE_HEIGHT, true, "Attempt to rescale the tree to the given root height"),
-                new XORRule(
-                        new ElementRule(ConstantPopulationModel.class),
-                        new ElementRule(ExponentialGrowthModel.class))
+                AttributeRule.newDoubleRule(ROOT_HEIGHT, true, ""),
+                new ElementRule(Tree.class, 0, Integer.MAX_VALUE),
+                new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE),
+                new ElementRule(CONSTRAINED_TAXA, new XMLSyntaxRule[] {
+                   new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE),
+                        // need more here
+                }, true),
+                new ElementRule(DemographicModel.class),
+//                new XORRule(
+//                        new ElementRule(ConstantPopulationModel.class),
+//                        new ElementRule(ExponentialGrowthModel.class))
         };
     };
 

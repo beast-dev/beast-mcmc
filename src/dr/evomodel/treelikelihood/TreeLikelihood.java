@@ -97,13 +97,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
 				if (dataType instanceof dr.evolution.datatype.Nucleotides) {
 
-//					if (NativeNucleotideLikelihoodCore.isAvailable()) {
-//						coreName = "native nucleotide";
-//						likelihoodCore = new NativeNucleotideLikelihoodCore();
-//					} else {
+					if (NativeNucleotideLikelihoodCore.isAvailable()) {
+						coreName = "native nucleotide";
+						likelihoodCore = new NativeNucleotideLikelihoodCore();
+					} else {
 						coreName = "Java nucleotide";
 						likelihoodCore = new NucleotideLikelihoodCore();
-//					}
+					}
 
 				} else if (dataType instanceof dr.evolution.datatype.AminoAcids) {
 					coreName = "Java amino acid";
@@ -475,7 +475,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 					treeModel,
 					siteModel,
 					branchRateModel,
-					tipPartialsModel, 
+					tipPartialsModel,
 					useAmbiguities, allowMissingTaxa, storePartials, useScaling);
 		}
 

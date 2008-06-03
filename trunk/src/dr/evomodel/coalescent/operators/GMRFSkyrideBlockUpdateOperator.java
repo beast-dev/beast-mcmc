@@ -1,6 +1,17 @@
 package dr.evomodel.coalescent.operators;
 
+import java.io.IOException;
+
+import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.XMLFormatter;
+
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.inference.mcmc.MCMC;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
@@ -19,6 +30,7 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
     public static final String SCALE_FACTOR = "scaleFactor";
     public static final String MAX_ITERATIONS = "maxIterations";
     public static final String STOP_VALUE = "stopValue";
+    public static final String KEEP_LOG_RECORD = "keepLogRecord";
 
     private double scaleFactor;
     private double lambdaScaleFactor;
@@ -173,22 +185,30 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
     	
     	int numberIterations = 0;
     	
+    	
+    	
     	while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > stopValue) {
             try{
     			jacobian(data, iterateGamma, proposedQ).solve(gradient(data,iterateGamma,proposedQ),tempValue);
             }catch(no.uib.cipr.matrix.MatrixNotSPDException e){
+            	Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
             	throw new OperatorFailedException("");
             }catch(no.uib.cipr.matrix.MatrixSingularException e){
+            	Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F"); 
+            			
             	throw new OperatorFailedException("");
             }
             iterateGamma.add(tempValue);
             numberIterations++;
-
-            if (numberIterations > maxIterations)
+           
+            if (numberIterations > maxIterations){
+            	Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
                 throw new OperatorFailedException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue+"\n"+
                 "Try starting BEAST with a more accurate initial tree.");
             }
+        }
         
+    	Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").warning("Newton-Raphson S");
         return iterateGamma;
         	
     }
@@ -375,7 +395,36 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-
+        	boolean logRecord = false;
+        	if(xo.hasAttribute(KEEP_LOG_RECORD)){
+        		logRecord = xo.getBooleanAttribute(KEEP_LOG_RECORD);
+        	}
+        	
+        	Handler gmrfHandler;
+        	Logger gmrfLogger = Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator");
+        	
+        	gmrfLogger.setUseParentHandlers(false);
+        	
+        	if(logRecord){
+        		gmrfLogger.setLevel(Level.FINE);
+        		
+        		try{
+        			gmrfHandler = new FileHandler("GMRFBlockUpdate.log." + MathUtils.getSeed());
+        		}catch(IOException e){
+        			throw new RuntimeException(e.getMessage());
+        		}
+        		gmrfHandler.setLevel(Level.FINE);
+        		
+        		gmrfHandler.setFormatter(new XMLFormatter(){
+        			public String format(LogRecord record){
+        				return "<record>\n \t<message>\n\t" + record.getMessage() 
+        					+ "\n\t</message>\n<record>\n";
+        			};
+        		});
+        		
+        		gmrfLogger.addHandler(gmrfHandler);
+        	} 
+        	
             int mode = CoercableMCMCOperator.DEFAULT;
 
             if (xo.hasAttribute(AUTO_OPTIMIZE)) {
@@ -434,8 +483,8 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
         };
 
     };
-
-
+    
+        
 //  public DenseVector oldNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException{
 //  return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
 //

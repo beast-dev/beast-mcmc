@@ -48,6 +48,7 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
     public static final String MRCA_TRAIT_STATISTIC = "mrcaTraitStatistic";
     public static final String MRCA = "mrca";
     public static final String NAME = "name";
+    public static final String TRAIT = "trait";
 
     public MRCATraitStatistic(String name, String trait, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
         super(name);
@@ -84,7 +85,9 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
                 name = xo.getStringAttribute(NAME);
             } else {
                 name = xo.getId();
-            }
+            }    
+            String trait = xo.getStringAttribute(TRAIT);
+
             Tree tree = (Tree)xo.getChild(Tree.class);
             TaxonList taxa = (TaxonList)xo.getElementFirstChild(MRCA);
 

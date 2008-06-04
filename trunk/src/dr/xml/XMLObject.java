@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * This class wraps a DOM Element for the purposes of parsing.
@@ -198,9 +200,21 @@ public class XMLObject {
      * @param defaultValue
      * @return
      */
-    public <T> T getAttribute(String name, T defaultValue) {
+    public <T> T getAttribute(String name, T defaultValue) throws XMLParseException {
         if (element.hasAttribute(name)) {
-            return (T) element.getAttribute(name);
+
+            final String s = element.getAttribute(name);
+            for( Constructor c : defaultValue.getClass().getConstructors() ) {
+                final Class[] classes = c.getParameterTypes();
+                if( classes.length == 1 && classes[0].equals(String.class) ) {
+                    try {
+                        return (T) c.newInstance(s);
+                    } catch( Exception e ) {
+                        throw new XMLParseException(" conversion of '" + s + "' to " +
+                                defaultValue.getClass().getName() + " failed");
+                    }
+                }
+            }
         }
         return defaultValue;
     }
@@ -339,7 +353,8 @@ public class XMLObject {
 				prefix += ":" + getId();
 			} catch (XMLParseException e) {
 				// this shouldn't happen
-			}
+                assert false;
+            }
 		}
 		//if (nativeObject != null) return prefix + ":" + nativeObject.toString();
 		return prefix;

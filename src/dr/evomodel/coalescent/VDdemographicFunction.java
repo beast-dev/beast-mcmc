@@ -19,7 +19,7 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
     private boolean[] dirtyTrees;
     boolean dirty;
 
-    private VariableDemographicModel.Type type;
+    private final VariableDemographicModel.Type type;
 
     TreeIntervals[] ti;
 
@@ -71,6 +71,28 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         this.alltimes = demoFunction.alltimes.clone();
         this.dirtyTrees = demoFunction.dirtyTrees.clone();
         this.dirty = demoFunction.dirty;
+    }
+
+    // Hack so that VDdemo can be used as just a linear piecewise demography (the BEAST one is broken)
+    public VDdemographicFunction(double[] t, double[] p, Type units) {
+        super(units);
+        this.type = VariableDemographicModel.Type.LINEAR;
+        final int tot = p.length;
+        times = new double[tot+1];
+        values = p;
+        intervals = new double[tot -1];
+
+        times[0] = 0.0;
+        times[tot] = Double.POSITIVE_INFINITY;
+
+//         boolean logSpace = false;
+//        values[0] = logSpace ? Math.exp(p[0]) : p[0];
+        System.arraycopy(t, 0, times, 1, t.length);
+
+        for(int n = 0; n < intervals.length; ++n) {
+           intervals[n] = times[n+1] - times[n];
+        }
+        dirty = false;
     }
 
     public int numberOfChanges() {

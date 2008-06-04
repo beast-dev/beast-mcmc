@@ -29,6 +29,8 @@ import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler, AnalysisMenuHandler {
 
@@ -51,11 +53,14 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private java.util.List<TraceList> currentTraceLists = new ArrayList<TraceList>();
     private CombinedTraces combinedTraces = null;
 
+    private java.util.List<String> commonTraceNames = new ArrayList<String>();
+    private boolean homogenousTraceFiles = true;
+
     private int dividerLocation = -1;
 
     private DemographicDialog demographicDialog = null;
     private BayesianSkylineDialog bayesianSkylineDialog = null;
-	private LineagesThroughTimeDialog lineagesThroughTimeDialog = null;
+    private LineagesThroughTimeDialog lineagesThroughTimeDialog = null;
     private NewTemporalAnalysisDialog createTemporalAnalysisDialog = null;
 
     private BayesFactorsDialog bayesFactorsDialog = null;
@@ -339,11 +344,42 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
         }
 
+        // Get the common set of trace names. This is slightly more complicated
+        // that it may seem because we want to keep them in order of the first
+        // selected trace file (i.e., as a list). So we populate the list with the
+        // first trace file, collect the common set, and then retain only those in
+        // the set.
+        commonTraceNames.clear();
+        homogenousTraceFiles = true;
+        Set<String> commonSet = new HashSet<String>();
+        boolean isFirst = true;
         for (int row : selRows) {
             if (row < traceLists.size()) {
-                currentTraceLists.add(traceLists.get(row));
+                TraceList tl = traceLists.get(row);
+                Set<String> nameSet = new HashSet<String>();
+                for (int i = 0; i < tl.getTraceCount(); i++) {
+                    String traceName = tl.getTraceName(i);
+                    nameSet.add(traceName);
+                    if (isFirst) {
+                        // add them in order of the first trace file
+                        commonTraceNames.add(traceName);
+                    }
+                }
+
+                if (isFirst) {
+                    commonSet.addAll(nameSet);
+                    isFirst = false;
+                } else {
+                    if (nameSet.size() != commonSet.size()) {
+                        homogenousTraceFiles = false;
+                    }
+                    commonSet.retainAll(nameSet);
+                }
+
+                currentTraceLists.add(tl);
             }
         }
+        commonTraceNames.retainAll(commonSet);
 
         int[] rows = statisticTable.getSelectedRows();
         statisticTableModel.fireTableDataChanged();
@@ -368,12 +404,17 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 isIncomplete = true;
         }
 
+        java.util.List<String> selectedTraces = new ArrayList<String>();
+        for (int i = 0; i < selRows.length; i++) {
+            selectedTraces.add(commonTraceNames.get(selRows[i]));
+        }
+
         if (currentTraceLists.size() == 0 || isIncomplete) {
-            tracePanel.setTraces(null, selRows);
+            tracePanel.setTraces(null, selectedTraces);
         } else {
             TraceList[] tl = new TraceList[currentTraceLists.size()];
             currentTraceLists.toArray(tl);
-            tracePanel.setTraces(tl, selRows);
+            tracePanel.setTraces(tl, selectedTraces);
         }
     }
 
@@ -549,9 +590,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 // step 2
                 PdfWriter writer;
                 writer = PdfWriter.getInstance(document, new FileOutputStream(file));
-                // step 3
+// step 3
                 document.open();
-                // step 4
+// step 4
                 PdfContentByte cb = writer.getDirectContent();
                 PdfTemplate tp = cb.createTemplate((float)bounds.getWidth(), (float)bounds.getHeight());
                 Graphics2D g2d = tp.createGraphics((float)bounds.getWidth(), (float)bounds.getHeight(), new DefaultFontMapper());
@@ -605,7 +646,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             final Reader reader = new InputStreamReader(in);
             final JFrame frame = this;
 
-            // the monitored activity must be in a new thread.
+// the monitored activity must be in a new thread.
             Thread readThread = new Thread() {
                 public void run() {
                     try {
@@ -698,7 +739,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         addBayesianSkylineAction.setEnabled(true);
         addDemographicAction.setEnabled(true);
-        // addTimeDensity.setEnabled(true);
+// addTimeDensity.setEnabled(true);
 
         temporalAnalysisFrame.addWindowListener(new WindowAdapter() {
 
@@ -768,34 +809,34 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
 
-	public void doLineagesThroughTime(boolean add) {
-	    if (lineagesThroughTimeDialog == null) {
-	        lineagesThroughTimeDialog = new LineagesThroughTimeDialog(this);
-	    }
+    public void doLineagesThroughTime(boolean add) {
+        if (lineagesThroughTimeDialog == null) {
+            lineagesThroughTimeDialog = new LineagesThroughTimeDialog(this);
+        }
 
-	    if (currentTraceLists.size() != 1) {
-	        JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
-	                "this analysis on, (but not the Combined trace).",
-	                "Unable to perform analysis",
-	                JOptionPane.INFORMATION_MESSAGE);
-	    }
+        if (currentTraceLists.size() != 1) {
+            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
+                    "this analysis on, (but not the Combined trace).",
+                    "Unable to perform analysis",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
 
-	    if (add) {
-	        if (lineagesThroughTimeDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
-	            return;
-	        }
+        if (add) {
+            if (lineagesThroughTimeDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
 
-	        lineagesThroughTimeDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
-	    } else {
-	        if (lineagesThroughTimeDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
-	            return;
-	        }
+            lineagesThroughTimeDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
+        } else {
+            if (lineagesThroughTimeDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
 
-	        lineagesThroughTimeDialog.createBayesianSkylineFrame(currentTraceLists.get(0), this);
-	    }
-	}
+            lineagesThroughTimeDialog.createBayesianSkylineFrame(currentTraceLists.get(0), this);
+        }
+    }
 
-	private void doAddTimeDensity() {
+    private void doAddTimeDensity() {
         throw new UnsupportedOperationException("Not implemented yet...");
     }
 
@@ -898,7 +939,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         public int getRowCount() {
             if (currentTraceLists.size() == 0 || currentTraceLists.get(0) == null) return 0;
-            return currentTraceLists.get(0).getTraceCount();
+            return commonTraceNames.size();
         }
 
         public String getColumnName(int col) {
@@ -906,7 +947,13 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         public Object getValueAt(int row, int col) {
-            if (col == 0) return currentTraceLists.get(0).getTraceName(row);
+            String traceName = commonTraceNames.get(row);
+
+            if (col == 0) return traceName;
+
+            if (!homogenousTraceFiles) {
+                return "n/a";
+            }
 
             TraceDistribution td = currentTraceLists.get(0).getDistributionStatistics(row);
             if (td == null) return "-";
@@ -962,9 +1009,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return bayesianSkylineAction;
     }
 
-	public Action getLineagesThroughTimeAction() {
-	    return lineagesThroughTimeAction;
-	}
+    public Action getLineagesThroughTimeAction() {
+        return lineagesThroughTimeAction;
+    }
 
     public Action getCreateTemporalAnalysisAction() {
         return createTemporalAnalysisAction;
@@ -998,11 +1045,11 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
     };
 
-	private AbstractAction lineagesThroughTimeAction = new AbstractAction(AnalysisMenuFactory.LINEAGES_THROUGH_TIME) {
-	    public void actionPerformed(ActionEvent ae) {
-	        doLineagesThroughTime(false);
-	    }
-	};
+    private AbstractAction lineagesThroughTimeAction = new AbstractAction(AnalysisMenuFactory.LINEAGES_THROUGH_TIME) {
+        public void actionPerformed(ActionEvent ae) {
+            doLineagesThroughTime(false);
+        }
+    };
 
     private AbstractAction createTemporalAnalysisAction = new AbstractAction(AnalysisMenuFactory.CREATE_TEMPORAL_ANALYSIS) {
         public void actionPerformed(ActionEvent ae) {

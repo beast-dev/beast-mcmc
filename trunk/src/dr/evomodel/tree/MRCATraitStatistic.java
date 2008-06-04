@@ -50,7 +50,7 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
     public static final String NAME = "name";
     public static final String TRAIT = "trait";
 
-    public MRCATraitStatistic(String name, String trait, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
+    public MRCATraitStatistic(String name, String trait, TreeModel tree, TaxonList taxa) throws Tree.MissingTaxonException {
         super(name);
         this.tree = tree;
         this.trait = trait;
@@ -58,7 +58,7 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
         this.isRate = trait.equals("rate");
     }
 
-    public void setTree(Tree tree) { this.tree = tree; }
+    public void setTree(Tree tree) { this.tree = (TreeModel)tree; }
     public Tree getTree() { return tree; }
 
     public int getDimension() { return 1; }
@@ -71,7 +71,7 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
         if (isRate) {
             return tree.getNodeRate(node);
         }
-        return (Double)tree.getNodeAttribute(node, trait);
+        return (Double)tree.getNodeTrait(node, trait);
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -88,7 +88,7 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
             }    
             String trait = xo.getStringAttribute(TRAIT);
 
-            Tree tree = (Tree)xo.getChild(Tree.class);
+            TreeModel tree = (TreeModel)xo.getChild(TreeModel.class);
             TaxonList taxa = (TaxonList)xo.getElementFirstChild(MRCA);
 
             try {
@@ -120,7 +120,7 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
         };
     };
 
-    private Tree tree = null;
+    private TreeModel tree = null;
     private Set<String> leafSet = null;
     private String trait;
     private boolean isRate;

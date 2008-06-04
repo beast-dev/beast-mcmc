@@ -33,24 +33,29 @@ public class IntervalsPanel extends JPanel implements Exportable {
         add(chartPanel, BorderLayout.CENTER);
     }
 
-    public void setTraces(TraceList[] traceLists, int[] traceIndices) {
+    public void setTraces(TraceList[] traceLists, java.util.List<String> traceNames) {
 
         intervalsChart.removeAllIntervals();
 
-        if (traceLists == null || traceIndices == null) {
+        if (traceLists == null || traceNames == null) {
             chartPanel.setXAxisTitle("");
             chartPanel.setYAxisTitle("");
             return;
         }
 
         for (TraceList traceList : traceLists) {
-            for (int traceIndice : traceIndices) {
-                TraceDistribution td = traceList.getDistributionStatistics(traceIndice);
+            for (String traceName : traceNames) {
+                int index = traceList.getTraceIndex(traceName);
+                TraceDistribution td = traceList.getDistributionStatistics(index);
                 if (td != null) {
-                    String name = traceList.getTraceName(traceIndice);
+                    String name = "";
                     if (traceLists.length > 1) {
-                        name = traceList.getName() + " - " + name;
+                        name = traceList.getName();
+                        if (traceNames.size() > 1) {
+                            name += ": ";
+                        }
                     }
+                    name += traceName;
                     intervalsChart.addIntervals(name, td.getMean(), td.getUpperHPD(), td.getLowerHPD(), false);
                 }
             }
@@ -59,8 +64,8 @@ public class IntervalsPanel extends JPanel implements Exportable {
         chartPanel.setXAxisTitle("");
         if (traceLists.length == 1) {
             chartPanel.setYAxisTitle(traceLists[0].getName());
-        } else if (traceIndices.length == 1) {
-            chartPanel.setYAxisTitle(traceLists[0].getTraceName(traceIndices[0]));
+        } else if (traceNames.size() == 1) {
+            chartPanel.setYAxisTitle(traceNames.get(0));
         } else {
             chartPanel.setYAxisTitle("Multiple Traces");
         }

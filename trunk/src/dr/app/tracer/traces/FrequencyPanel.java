@@ -23,7 +23,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
     private ChartSetupDialog chartSetupDialog = null;
 
     private TraceList traceList = null;
-    private int traceIndex = -1;
+    private String traceName = null;
 
     private int minimumBins = 50;
 
@@ -86,33 +86,32 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
                         minimumBins = (Integer) binsCombo.getSelectedItem();
-                        setupTrace(traceList, traceIndex);
+                        setupTrace();
                     }
                 }
         );
     }
 
-    public void setTrace(TraceList traceList, int traceIndex) {
+    public void setTrace(TraceList traceList, String traceName) {
         this.traceList = traceList;
-        this.traceIndex = traceIndex;
-        setupTrace(traceList, traceIndex);
+        this.traceName = traceName;
+        setupTrace();
     }
 
 
-    private void setupTrace(TraceList traceList, int traceIndex) {
-
-        this.traceList = traceList;
-        this.traceIndex = traceIndex;
+    private void setupTrace() {
 
         traceChart.removeAllPlots();
 
-        if (traceList == null || traceIndex == -1) {
+        if (traceList == null || traceName == null) {
             chartPanel.setXAxisTitle("");
             chartPanel.setYAxisTitle("");
             return;
         }
 
         double values[] = new double[traceList.getStateCount()];
+
+        int traceIndex = traceList.getTraceIndex(traceName);
         traceList.getValues(traceIndex, values);
         FrequencyPlot plot = new FrequencyPlot(values, minimumBins);
 

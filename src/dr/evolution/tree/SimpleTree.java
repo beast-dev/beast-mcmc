@@ -215,6 +215,7 @@ public class SimpleTree implements MutableTree {
 
         if (!(r instanceof SimpleNode)) { throw new IllegalArgumentException(); }
         root = (SimpleNode)r;
+        root.setParent(null);
     }
 
 
@@ -253,8 +254,16 @@ public class SimpleTree implements MutableTree {
         parent.removeChild(child);
     }
 
-    public void beginTreeEdit() {
+    public void replaceChild(NodeRef node, NodeRef child, NodeRef newChild) {
+        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+        SimpleNode parent = (SimpleNode)node;
+        parent.replaceChild((SimpleNode)child, (SimpleNode)newChild);
+    }
+
+    public boolean beginTreeEdit() {
+        boolean r = inEdit;
         inEdit = true;
+        return r;
     }
 
     public void endTreeEdit() {

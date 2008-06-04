@@ -271,6 +271,15 @@ public class SimpleNode implements NodeRef, Attributable {
 	}
 
 
+    public void replaceChild(SimpleNode childNode, SimpleNode replacment) {
+         for(int nc = 0; nc < child.length; ++nc) {
+             if( child[nc] == childNode ) {
+                 replacment.setParent(this);
+                 child[nc] = replacment;
+                 break;
+             }
+         }
+    }
 
 	/**
 	 * check whether this node has any children

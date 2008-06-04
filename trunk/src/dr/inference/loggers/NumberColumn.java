@@ -97,50 +97,51 @@ public abstract class NumberColumn extends LogColumn.Abstract {
 	 */
 	public int getDecimalPlaces() { return dp; }
 	
-	
-	/**
+
+    public String formatValue(double value) {
+       if (dp < 0 && sf < 0) {
+			// return it at full precision
+			return Double.toString(value);
+		}
+
+		int numFractionDigits = 0;
+
+		if (dp < 0) {
+			
+			double absValue = Math.abs(value);
+
+			if ((absValue > upperCutoff) || (absValue < 0.1)) {
+
+				return scientificFormat.format(value);
+
+			} else {
+
+				numFractionDigits = getNumFractionDigits(value);
+			}
+
+		} else {
+
+			numFractionDigits = dp;
+		}
+
+		decimalFormat.setMaximumFractionDigits(numFractionDigits);
+		decimalFormat.setMinimumFractionDigits(numFractionDigits);
+		return decimalFormat.format(value);
+    }
+
+    /**
 	 * Returns a string containing the current value for this column with
 	 * appropriate formatting.
 	 *
 	 * @return the formatted string.
 	 */
 	protected String getFormattedValue() {
-
-		double value = getDoubleValue();
-		
-		if (dp < 0 && sf < 0) {
-			// return it at full precision
-			return Double.toString(value);
-		}
-	
-		int numFractionDigits = 0;
-
-		if (dp < 0) {
-			
-			double absValue = Math.abs(value);
-		
-			if ((absValue > upperCutoff) || (absValue < 0.1)) {
-			
-				return scientificFormat.format(value);
-				
-			} else {
-			
-				numFractionDigits = getNumFractionDigits(value);
-			}
-
-		} else {
-		
-			numFractionDigits = dp;	
-		}
-		
-		decimalFormat.setMaximumFractionDigits(numFractionDigits);
-		decimalFormat.setMinimumFractionDigits(numFractionDigits);
-		return decimalFormat.format(value);	
+		return formatValue(getDoubleValue());
 	}
 	
 	private int getNumFractionDigits(double value) {
 		value = Math.abs(value);
-		for (int i =0; i < cutoffTable.length; i++) {
+		for (int i = 0; i < cutoffTable.length; i++) {
 			if (value < cutoffTable[i]) return sf-i-1;
 		}
 		return sf - 1;

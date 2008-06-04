@@ -1,6 +1,11 @@
 package dr.inference.loggers;
 
 /**
+ *
+ * Percent column - multiplies by 100 and prepends a '%'.
+ *
+ * Values outside [0,1] are shown as is.
+ *
  * @author joseph
  *         Date: 4/06/2008
  */
@@ -11,14 +16,6 @@ public class PercentColumn extends NumberColumn {
         super(col.getLabel());
         this.column = col;
     }
-
-//    public void setLabel(String label) {
-//      column.setLabel(label);
-//    }
-//
-//    public String getLabel() {
-//        return column.getLabel();
-//    }
 
     public void setSignificantFigures(int sf) {
         column.setSignificantFigures(sf);

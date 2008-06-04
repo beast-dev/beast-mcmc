@@ -373,7 +373,7 @@ public class CoalescentSimulator {
                                     }
                                     h = (h + upper[nc]) / 2;
                                 }
-                                tree = simulator.simulateTree(subs.toArray(new Tree[0]), demoModel, h, true);
+                                tree = simulator.simulateTree(subs.toArray(new Tree[subs.size()]), demoModel, h, true);
                             }
                             st.add(tree);
 
@@ -397,8 +397,8 @@ public class CoalescentSimulator {
                             taxonLists.add(list);
                         }
                         if (st.size() > 1) {
-                            final Tree tree1 = simulator.simulateTree(st.toArray(new Tree[]{}), demoModel, -1, false);
-                            subtrees.add(tree1);
+                            final Tree t = simulator.simulateTree(st.toArray(new Tree[st.size()]), demoModel, -1, false);
+                            subtrees.add(t);
                         } else {
                             subtrees.add(st.get(0));
                         }
@@ -410,7 +410,8 @@ public class CoalescentSimulator {
                 if (subtrees.size() == 1) {
                     return subtrees.get(0);
                 }
-                throw new XMLParseException("Expected at least one taxonList or two subtrees in " + getParserName() + " element.");
+                throw new XMLParseException("Expected at least one taxonList or two subtrees in "
+                        + getParserName() + " element.");
             }
 
             try {

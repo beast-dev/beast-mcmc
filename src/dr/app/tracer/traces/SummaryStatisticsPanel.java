@@ -27,7 +27,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
     static final String SUM_ESS_ROW = "effective sample size (sum of ESS)";
 
     TraceList[] traceLists = null;
-    int[] traceIndices = null;
+    java.util.List<String> traceNames = null;
 
     StatisticsModel statisticsModel;
     JTable statisticsTable = null;
@@ -96,20 +96,20 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
         }
     }
 
-    public void setTraces(TraceList[] traceLists, int[] traces) {
+    public void setTraces(TraceList[] traceLists, java.util.List<String> traceNames) {
 
         this.traceLists = traceLists;
-        this.traceIndices = traces;
+        this.traceNames = traceNames;
 
         int divider = splitPane1.getDividerLocation();
 
         statisticsModel.fireTableStructureChanged();
-        if (traceLists != null && traces != null) {
-            if (traceLists.length == 1 && traces.length == 1) {
+        if (traceLists != null && traceNames != null) {
+            if (traceLists.length == 1 && traceNames.size() == 1) {
                 statisticsTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
                 currentPanel = frequencyPanel;
-                frequencyPanel.setTrace(traceLists[0], traces[0]);
+                frequencyPanel.setTrace(traceLists[0], traceNames.get(0));
                 intervalsPanel.setTraces(null, null);
                 splitPane1.setBottomComponent(frequencyPanel);
             } else {
@@ -120,13 +120,13 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                 }
 
                 currentPanel = intervalsPanel;
-                frequencyPanel.setTrace(null, -1);
-                intervalsPanel.setTraces(traceLists, traces);
+                frequencyPanel.setTrace(null, null);
+                intervalsPanel.setTraces(traceLists, traceNames);
                 splitPane1.setBottomComponent(intervalsPanel);
             }
         } else {
             currentPanel = statisticsTable;
-            frequencyPanel.setTrace(null, -1);
+            frequencyPanel.setTrace(null, null);
             splitPane1.setBottomComponent(frequencyPanel);
         }
 
@@ -167,8 +167,8 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
         }
 
         public int getColumnCount() {
-            if (traceLists != null && traceIndices != null) {
-                return (traceLists.length * traceIndices.length) + 1;
+            if (traceLists != null && traceNames != null) {
+                return (traceLists.length * traceNames.size()) + 1;
             } else {
                 return 2;
             }
@@ -187,15 +187,16 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
             TraceDistribution td;
             TraceCorrelation tc = null;
 
-            if (traceLists != null && traceIndices != null) {
-                int n1 = (col - 1) / traceIndices.length;
-                int n2 = (col - 1) % traceIndices.length;
+            if (traceLists != null && traceNames != null) {
+                int n1 = (col - 1) / traceNames.size();
+                int n2 = (col - 1) % traceNames.size();
 
                 TraceList tl = traceLists[n1];
+                int index = tl.getTraceIndex(traceNames.get(n2));
                 if (tl instanceof CombinedTraces) {
-                    td = tl.getDistributionStatistics(traceIndices[n2]);
+                    td = tl.getDistributionStatistics(index);
                 } else {
-                    tc = tl.getCorrelationStatistics(traceIndices[n2]);
+                    tc = tl.getCorrelationStatistics(index);
                     td = tc;
                 }
             } else {
@@ -269,10 +270,20 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
         public String getColumnName(int column) {
             if (column == 0) return "Summary Statistic";
-            if (traceLists != null && traceIndices != null) {
-                int n1 = (column - 1) / traceIndices.length;
-                int n2 = (column - 1) % traceIndices.length;
-                return traceLists[n1].getTraceName(traceIndices[n2]);
+            if (traceLists != null && traceNames != null) {
+                int n1 = (column - 1) / traceNames.size();
+                int n2 = (column - 1) % traceNames.size();
+                String columnName = "";
+                if (traceLists.length > 1) {
+                    columnName += traceLists[n1].getName();
+                    if (traceNames.size() > 1) {
+                        columnName += ": ";
+                    }
+                }
+                if (traceNames.size() > 1) {
+                    columnName += traceNames.get(n2);
+                }
+               return columnName;
             }
             return "-";
         }

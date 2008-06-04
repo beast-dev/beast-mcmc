@@ -112,25 +112,25 @@ public class CorrelationPanel extends JPanel implements Exportable {
         messageLabel.setText("Can't show correlation of combined traces");
     }
 
-    public void setTraces(TraceList[] traceLists, int[] traceIndices) {
+    public void setTraces(TraceList[] traceLists, java.util.List<String> traceNames) {
 
         correlationChart.removeAllPlots();
 
-        if (traceLists != null && traceIndices != null && traceLists.length == 2 && traceIndices.length == 1) {
+        if (traceLists != null && traceNames != null && traceLists.length == 2 && traceNames.size() == 1) {
             tl1 = traceLists[0];
             name1 = tl1.getName();
             tl2 = traceLists[1];
             name2 = tl2.getName();
-            traceIndex1 = traceIndices[0];
-            traceIndex2 = traceIndices[0];
+            traceIndex1 = tl1.getTraceIndex(traceNames.get(0));
+            traceIndex2 = tl2.getTraceIndex(traceNames.get(0));
             name1 = name1 + " - " + tl1.getTraceName(traceIndex1);
             name2 = name2 + " - " + tl2.getTraceName(traceIndex2);
         } else
-        if (traceLists != null && traceIndices != null && traceLists.length == 1 && traceIndices.length == 2) {
+        if (traceLists != null && traceNames != null && traceLists.length == 1 && traceNames.size() == 2) {
             tl1 = traceLists[0];
             tl2 = traceLists[0];
-            traceIndex1 = traceIndices[0];
-            traceIndex2 = traceIndices[1];
+            traceIndex1 = tl1.getTraceIndex(traceNames.get(0));
+            traceIndex2 = tl2.getTraceIndex(traceNames.get(1));
             name1 = tl1.getTraceName(traceIndex1);
             name2 = tl2.getTraceName(traceIndex2);
         } else {
@@ -163,10 +163,10 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
         messageLabel.setText("");
 
-        int count = Math.min(tl1.getStateCount(), tl2.getStateCount());
+        int maxCount = Math.max(tl1.getStateCount(), tl2.getStateCount());
+        int minCount = Math.min(tl1.getStateCount(), tl2.getStateCount());
 
-
-        int sampleSize = count;
+        int sampleSize = minCount;
 
         if (sampleCheckBox.isSelected()) {
             if (td1.getESS() < td2.getESS()) {
@@ -184,7 +184,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
             }
         }
 
-        double values[] = new double[count];
+        double values[] = new double[maxCount];
 
         tl1.getValues(traceIndex1, values);
 
@@ -192,7 +192,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
         int k = 0;
         for (int i = 0; i < sampleSize; i++) {
             samples1[i] = values[k];
-            k += count / sampleSize;
+            k += minCount / sampleSize;
         }
 
         tl2.getValues(traceIndex2, values);
@@ -201,7 +201,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
         k = 0;
         for (int i = 0; i < sampleSize; i++) {
             samples2[i] = values[k];
-            k += count / sampleSize;
+            k += minCount / sampleSize;
         }
 
         ScatterPlot plot = new ScatterPlot(samples1, samples2);

@@ -118,7 +118,11 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 		return param.getParameterValue(index[0]);
 	}
 
-	public void setParameterValue(int dim, double value) {
+    public double[] inspectParametersValues() {
+        return getParameterValues();
+    }
+
+    public void setParameterValue(int dim, double value) {
 		int[] index = new int[1];
 		Parameter param = findParameter(dim, index);
 

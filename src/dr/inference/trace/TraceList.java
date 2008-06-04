@@ -109,4 +109,5 @@ public interface TraceList {
 	TraceCorrelation getCorrelationStatistics(int traceIndex);
 
 	void analyseTrace(int index);
+
 }

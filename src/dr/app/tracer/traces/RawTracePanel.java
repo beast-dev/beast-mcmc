@@ -190,7 +190,7 @@ public class RawTracePanel extends JPanel implements Exportable {
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
                         colourBy = colourByCombo.getSelectedIndex();
-                        setupTraces(traceLists, traceIndices);
+                        setupTraces();
                         validate();
                         repaint();
                     }
@@ -200,21 +200,21 @@ public class RawTracePanel extends JPanel implements Exportable {
     }
 
     private TraceList[] traceLists = null;
-    private int[] traceIndices = null;
+    private java.util.List<String> traceNames = null;
 
-    public void setTraces(TraceList[] traceLists, int[] traceIndices) {
+    public void setTraces(TraceList[] traceLists, java.util.List<String> traceNames) {
         this.traceLists = traceLists;
-        this.traceIndices = traceIndices;
-        setupTraces(traceLists, traceIndices);
+        this.traceNames = traceNames;
+        setupTraces();
     }
 
 
-    private void setupTraces(TraceList[] traceLists, int[] traceIndices) {
+    private void setupTraces() {
 
         traceChart.removeAllTraces();
 
 
-        if (traceLists == null || traceIndices == null || traceIndices.length == 0) {
+        if (traceLists == null || traceNames == null || traceNames.size() == 0) {
             chartPanel.setXAxisTitle("");
             chartPanel.setYAxisTitle("");
             messageLabel.setText("No traces selected");
@@ -231,10 +231,11 @@ public class RawTracePanel extends JPanel implements Exportable {
             int stateStart = tl.getBurnIn();
             int stateStep = tl.getStepSize();
 
-            for (int traceIndice : traceIndices) {
+            for (String traceName : traceNames) {
                 double values[] = new double[n];
-                tl.getValues(traceIndice, values);
-                String name = tl.getTraceName(traceIndice);
+                int traceIndex = tl.getTraceIndex(traceName);
+                tl.getValues(traceIndex, values);
+                String name = tl.getTraceName(traceIndex);
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;
                 }
@@ -256,8 +257,8 @@ public class RawTracePanel extends JPanel implements Exportable {
         chartPanel.setXAxisTitle("State");
         if (traceLists.length == 1) {
             chartPanel.setYAxisTitle(traceLists[0].getName());
-        } else if (traceIndices.length == 1) {
-            chartPanel.setYAxisTitle(traceLists[0].getTraceName(traceIndices[0]));
+        } else if (traceNames.size() == 1) {
+            chartPanel.setYAxisTitle(traceNames.get(0));
         } else {
             chartPanel.setYAxisTitle("Multiple Traces");
         }

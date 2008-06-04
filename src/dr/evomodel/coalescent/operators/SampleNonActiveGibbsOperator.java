@@ -41,16 +41,18 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
 
     public double doOperation() throws OperatorFailedException {
         final int idim = indicators.getDimension();
-        assert idim == (data.getDimension() - 1);
+        
+        final int offset =  (data.getDimension() - 1) == idim ? 1 : 0;
+        assert offset == 1 ||   data.getDimension() == idim : "" + idim + " (?+1) != " + data.getDimension();
 
         // available locations for direct sampling
         int[] loc = new int[idim];
         int nLoc = 0;
 
-        for (int i = 0; i < idim; i++) {
+        for (int i = 0; i < idim; ++i) {
             final double value = indicators.getStatisticValue(i);
             if (value == 0) {
-                loc[nLoc] = i + 1;
+                loc[nLoc] = i + offset;
                 ++nLoc;
             }
         }

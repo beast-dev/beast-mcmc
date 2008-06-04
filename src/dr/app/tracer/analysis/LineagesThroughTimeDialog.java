@@ -107,37 +107,6 @@ public class LineagesThroughTimeDialog {
 		return -1;
 	}
 
-	private String getNumericalSuffix(String argument) {
-		int i = argument.length() - 1;
-
-		if (i < 0) return "";
-
-		char ch = argument.charAt(i);
-
-		if (!Character.isDigit(ch)) return "";
-
-		while (i > 0 && Character.isDigit(ch)) {
-			i -= 1;
-			ch = argument.charAt(i);
-		}
-
-		return argument.substring(i + 1, argument.length());
-	}
-
-	private int getTraceRange(TraceList traceList, int first) {
-		int i = 1;
-		int k = first;
-
-		String name = traceList.getTraceName(first);
-		String root = name.substring(0, name.length() - 1);
-		while (k < traceList.getTraceCount() && traceList.getTraceName(k).equals(root + i)) {
-			i++;
-			k++;
-		}
-
-		return i - 1;
-	}
-
 	public int showDialog(TraceList traceList, TemporalAnalysisFrame temporalAnalysisFrame) {
 
 		setArguments(temporalAnalysisFrame);
@@ -278,7 +247,7 @@ public class LineagesThroughTimeDialog {
 
 	Timer timer = null;
 
-	public void createBayesianSkylineFrame(TraceList traceList, DocumentFrame parent) {
+	public void createLineagesThroughTimeFrame(TraceList traceList, DocumentFrame parent) {
 
 		TemporalAnalysisFrame frame;
 
@@ -293,7 +262,7 @@ public class LineagesThroughTimeDialog {
 			if (minTime >= maxTime) {
 				JOptionPane.showMessageDialog(parent,
 						"The minimum time value should be less than the maximum.",
-						"Error creating Bayesian skyline",
+						"Error creating Lineages-Through-Time plot",
 						JOptionPane.ERROR_MESSAGE);
 				return;
 			}
@@ -308,12 +277,12 @@ public class LineagesThroughTimeDialog {
 
 	public void addToTemporalAnalysis(TraceList traceList, TemporalAnalysisFrame frame) {
 
-		final AnalyseLLTTask analyseTask = new AnalyseLLTTask(traceList,
+		final AnalyseLTTTask analyseTask = new AnalyseLTTTask(traceList,
 				treeFile,
 				frame);
 
 		final ProgressMonitor progressMonitor = new ProgressMonitor(frame,
-				"Analysing Lineages Through Time",
+				"Analysing Lineages-Through-Time",
 				"", 0, analyseTask.getLengthOfTask());
 		progressMonitor.setMillisToPopup(0);
 		progressMonitor.setMillisToDecideToPopup(0);
@@ -333,7 +302,7 @@ public class LineagesThroughTimeDialog {
 		timer.start();
 	}
 
-	class AnalyseLLTTask extends LongTask {
+	class AnalyseLTTTask extends LongTask {
 
 		TraceList traceList;
 		TemporalAnalysisFrame frame;
@@ -349,7 +318,7 @@ public class LineagesThroughTimeDialog {
 		private int lengthOfTask = 0;
 		private int current = 0;
 
-		public AnalyseLLTTask(TraceList traceList, File treeFile, TemporalAnalysisFrame frame) {
+		public AnalyseLTTTask(TraceList traceList, File treeFile, TemporalAnalysisFrame frame) {
 			this.traceList = traceList;
 			this.frame = frame;
 			this.treeFile = treeFile;

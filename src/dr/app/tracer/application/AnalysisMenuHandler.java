@@ -15,7 +15,9 @@ public interface AnalysisMenuHandler {
 
 	Action getLineagesThroughTimeAction();
 
-	Action getCreateTemporalAnalysisAction();
+    Action getTraitThroughTimeAction();
+
+    Action getCreateTemporalAnalysisAction();
 
 	Action getAddDemographicAction();
 

@@ -61,6 +61,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private DemographicDialog demographicDialog = null;
     private BayesianSkylineDialog bayesianSkylineDialog = null;
     private LineagesThroughTimeDialog lineagesThroughTimeDialog = null;
+    private TraitThroughTimeDialog traitThroughTimeDialog = null;
     private NewTemporalAnalysisDialog createTemporalAnalysisDialog = null;
 
     private BayesFactorsDialog bayesFactorsDialog = null;
@@ -832,7 +833,34 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 return;
             }
 
-            lineagesThroughTimeDialog.createBayesianSkylineFrame(currentTraceLists.get(0), this);
+            lineagesThroughTimeDialog.createLineagesThroughTimeFrame(currentTraceLists.get(0), this);
+        }
+    }
+
+    public void doTraitThroughTime(boolean add) {
+        if (traitThroughTimeDialog == null) {
+            traitThroughTimeDialog = new TraitThroughTimeDialog(this);
+        }
+
+        if (currentTraceLists.size() != 1) {
+            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
+                    "this analysis on, (but not the Combined trace).",
+                    "Unable to perform analysis",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        if (add) {
+            if (traitThroughTimeDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+            traitThroughTimeDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
+        } else {
+            if (traitThroughTimeDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+            traitThroughTimeDialog.createTraitThroughTimeFrame(currentTraceLists.get(0), this);
         }
     }
 
@@ -1013,6 +1041,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return lineagesThroughTimeAction;
     }
 
+    public Action getTraitThroughTimeAction() {
+        return traitThroughTimeAction;
+    }
+
     public Action getCreateTemporalAnalysisAction() {
         return createTemporalAnalysisAction;
     }
@@ -1048,6 +1080,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private AbstractAction lineagesThroughTimeAction = new AbstractAction(AnalysisMenuFactory.LINEAGES_THROUGH_TIME) {
         public void actionPerformed(ActionEvent ae) {
             doLineagesThroughTime(false);
+        }
+    };
+
+    private AbstractAction traitThroughTimeAction = new AbstractAction(AnalysisMenuFactory.TRAIT_THROUGH_TIME) {
+        public void actionPerformed(ActionEvent ae) {
+            doTraitThroughTime(false);
         }
     };
 

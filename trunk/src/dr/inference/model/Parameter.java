@@ -49,6 +49,11 @@ public interface Parameter extends Statistic {
     double[] getParameterValues();
 
     /**
+     * @return the parameter's values (*do not modify*, may not be a copy)
+     */
+    double[] inspectParametersValues();
+
+    /**
      * sets the scalar value in the given dimension of this parameter
      *
      * @param dim
@@ -116,7 +121,7 @@ public interface Parameter extends Statistic {
      *
      * @param dim new dimention
      */
-    public void setDimension(int dim);
+     void setDimension(int dim);
 
     /**
      * Adds new bounds to this parameter
@@ -252,13 +257,18 @@ public interface Parameter extends Statistic {
         public String toString() {
             StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
             final Bounds bounds = getBounds();
-            buffer.append(getId()).append("=[").append(String.valueOf(bounds.getLowerLimit(0)));
-            buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
+            buffer.append(getId());
+            if( bounds != null ) {
+                buffer.append("=[").append(String.valueOf(bounds.getLowerLimit(0)));
+                buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
+            }
 
-            for (int i = 1; i < getDimension(); i++) {
+            for(int i = 1; i < getDimension(); i++) {
                 buffer.append(", ").append(String.valueOf(getParameterValue(i)));
-                buffer.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
-                buffer.append(",").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
+                if( bounds != null ) {
+                    buffer.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
+                    buffer.append(",").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
+                }
             }
             return buffer.toString();
         }
@@ -308,7 +318,7 @@ public interface Parameter extends Statistic {
             bounds.addBounds(boundary);
 
             // can't change dimension after bounds are added!
-            hasBeenStored = true;
+            //hasBeenStored = true;
         }
 
         //********************************************************************
@@ -335,6 +345,10 @@ public interface Parameter extends Statistic {
             return copyOfValues;
         }
 
+        public double[] inspectParametersValues() {
+            return values;
+        }
+
         public Bounds getBounds() {
             if (bounds == null) {
 //				bounds = new IntersectionBounds(getDimension());
@@ -356,15 +370,17 @@ public interface Parameter extends Statistic {
          * dimensions, then the value of the first dimension is copied into the new dimensions.
          */
         public void setDimension(int dim) {
-            if (!hasBeenStored) {
-                double[] newValues = new double[dim];
-                System.arraycopy(values, 0, newValues, 0, values.length);
-                for (int i = values.length; i < newValues.length; i++) {
-                    newValues[i] = values[0];
-                }
-                values = newValues;
-            } else
-                throw new RuntimeException("Can't change dimension after store has been called!");
+
+            assert storedValues == null && bounds == null: "Can't change dimension after store has been called!";
+            //if (!hasBeenStored) {
+            double[] newValues = new double[dim];
+            System.arraycopy(values, 0, newValues, 0, values.length);
+            for (int i = values.length; i < newValues.length; i++) {
+                newValues[i] = values[0];
+            }
+            values = newValues;
+//            } else
+//                throw new RuntimeException("Can't change dimension after store has been called!");
         }
 
         public void setParameterValue(int i, double val) {
@@ -384,7 +400,8 @@ public interface Parameter extends Statistic {
         }
 
         protected final void storeValues() {
-            hasBeenStored = true;
+            // no need to pay a price in a very common call for one-time rare usage
+            //hasBeenStored = true;
             if (storedValues == null) {
                 storedValues = new double[values.length];
             }
@@ -422,9 +439,10 @@ public interface Parameter extends Statistic {
 
         private double[] values;
 
-        private double[] storedValues;
+        private double[] storedValues = null;
 
-        private boolean hasBeenStored = false;
+        // same as !storedValues && !bounds
+        //private boolean hasBeenStored = false;
         private IntersectionBounds bounds = null;
     }
 

@@ -45,8 +45,11 @@ public class Columns {
 	public static final String SIGNIFICANT_FIGURES = "sf";
 	public static final String DECIMAL_PLACES = "dp";
 	public static final String WIDTH = "width";
+    public static final String FORMAT = "format";
+    public static final String PERCENT = "percent";
+    public static final String BOOL = "boolean";
 
-	public Columns(LogColumn[] columns) { this.columns = columns; }
+    public Columns(LogColumn[] columns) { this.columns = columns; }
 	public LogColumn[] getColumns() { return columns; }
 
 	/**
@@ -59,48 +62,62 @@ public class Columns {
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 			String label = null;
-			int sf = -1;
-			int dp = -1;
-			int width = -1;
+//			int sf = -1;
+//			int dp = -1;
+//			int width = -1;
 
 			if (xo.hasAttribute(LABEL)) {
 				label = xo.getStringAttribute(LABEL);
 			}
 
-			if (xo.hasAttribute(SIGNIFICANT_FIGURES)) {
-				sf = xo.getIntegerAttribute(SIGNIFICANT_FIGURES);
-			}
+            final int sf = xo.getAttribute(SIGNIFICANT_FIGURES, -1);
+            final int dp = xo.getAttribute(DECIMAL_PLACES, -1);
+            final int width = xo.getAttribute(WIDTH, -1);
 
-			if (xo.hasAttribute(DECIMAL_PLACES)) {
-				dp = xo.getIntegerAttribute(DECIMAL_PLACES);
-			}
+//            if (xo.hasAttribute(SIGNIFICANT_FIGURES)) {
+//				sf = xo.getIntegerAttribute(SIGNIFICANT_FIGURES);
+//			}
+//
+//			if (xo.hasAttribute(DECIMAL_PLACES)) {
+//				dp = xo.getIntegerAttribute(DECIMAL_PLACES);
+//			}
+//
+//			if (xo.hasAttribute(WIDTH)) {
+//				width = xo.getIntegerAttribute(WIDTH);
+//			}
 
-			if (xo.hasAttribute(WIDTH)) {
-				width = xo.getIntegerAttribute(WIDTH);
-			}
+            String format = xo.getAttribute(FORMAT, "");
 
-			ArrayList colList = new ArrayList();
+            ArrayList colList = new ArrayList();
 
 			for (int i = 0; i < xo.getChildCount(); i++) {
 
 				Object child = xo.getChild(i);
-				LogColumn[] cols = null;
+				LogColumn[] cols;
 
 				if (child instanceof Loggable) {
-
 					cols = ((Loggable)child).getColumns();
-
 				} else if (child instanceof Identifiable) {
-
 					cols = new LogColumn[] { new LogColumn.Default(((Identifiable)child).getId(), child) };
-
 				} else {
-
 					cols = new LogColumn[] { new LogColumn.Default(child.getClass().toString(), child) };
-
 				}
 
-				for (int j = 0; j < cols.length; j++) {
+                if( format.equals(PERCENT) ) {
+                    for(int k = 0; k < cols.length; ++k) {
+                        if( cols[k] instanceof NumberColumn ) {
+                            cols[k] = new PercentColumn((NumberColumn)cols[k]);
+                        }
+                    }
+                } else if( format.equals(BOOL) ) {
+                    for(int k = 0; k < cols.length; ++k) {
+                        if( cols[k] instanceof NumberColumn ) {
+                            cols[k] = new BooleanColumn((NumberColumn)cols[k]);
+                        }
+                    }
+                }
+
+                for (int j = 0; j < cols.length; j++) {
 
 					if (label != null) {
 						if (cols.length > 1) {
@@ -145,19 +162,20 @@ public class Columns {
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new StringAttributeRule(LABEL,
-				"The label of the column. " +
-				"If this is specified and more than one statistic is in this column, " +
-				"then the label will be appended by the index of the statistic to create individual column names", true),
-			AttributeRule.newIntegerRule(SIGNIFICANT_FIGURES, true),
-			AttributeRule.newIntegerRule(DECIMAL_PLACES, true),
-			AttributeRule.newIntegerRule(WIDTH, true),
-            // Anything goes???
-            new ElementRule(Object.class, 1, Integer.MAX_VALUE),
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                new StringAttributeRule(LABEL,
+                        "The label of the column. " +
+                                "If this is specified and more than one statistic is in this column, " +
+                                "then the label will be appended by the index of the statistic to create individual column names", true),
+                AttributeRule.newIntegerRule(SIGNIFICANT_FIGURES, true),
+                AttributeRule.newIntegerRule(DECIMAL_PLACES, true),
+                AttributeRule.newIntegerRule(WIDTH, true),
+                AttributeRule.newStringRule(FORMAT, true),
+                // Anything goes???
+                new ElementRule(Object.class, 1, Integer.MAX_VALUE),
         };
 
-	};
+    };
 
 	private LogColumn[] columns = null;
 }

@@ -27,7 +27,6 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -62,8 +61,8 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
 
         this.tree = tree;
         this.speciationModel = speciationModel;
-        if (tree instanceof TreeModel) {
-            addModel((TreeModel)tree);
+        if (tree instanceof Model) {
+            addModel((Model)tree);
         }
         if (speciationModel != null) {
             addModel(speciationModel);
@@ -187,9 +186,9 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
             SpeciationModel specModel = (SpeciationModel)cxo.getChild(SpeciationModel.class);
 
             cxo = (XMLObject)xo.getChild(TREE);
-            TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
+            Tree tree = (Tree)cxo.getChild(Tree.class);
 
-            return new SpeciationLikelihood(treeModel, specModel);
+            return new SpeciationLikelihood(tree, specModel);
         }
 
         //************************************************************************
@@ -209,7 +208,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
                         new ElementRule(SpeciationModel.class)
                 }),
                 new ElementRule(TREE, new XMLSyntaxRule[] {
-                        new ElementRule(TreeModel.class)
+                        new ElementRule(Tree.class)
                 }),
         };
     };

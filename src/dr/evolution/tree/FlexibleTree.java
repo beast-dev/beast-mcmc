@@ -372,9 +372,15 @@ public class FlexibleTree implements MutableTree {
 		}
 	}
 
-	public void beginTreeEdit() {
-		inEdit = true;
-	}
+    public void replaceChild(NodeRef node, NodeRef child, NodeRef newChild) {
+        throw new RuntimeException("Unimplemented");
+    }
+
+    public boolean beginTreeEdit() {
+        boolean r = inEdit;
+        inEdit = true;
+        return r;
+    }
 
 	public void endTreeEdit() {
 		inEdit = false;

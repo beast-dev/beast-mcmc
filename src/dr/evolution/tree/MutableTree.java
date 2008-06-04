@@ -37,7 +37,7 @@ import dr.evolution.util.MutableTaxonList;
  */
 public interface MutableTree extends Tree, MutableTaxonList {
 
-	public class InvalidTreeException extends Exception {
+    public class InvalidTreeException extends Exception {
 		/**
 		 * 
 		 */
@@ -46,8 +46,10 @@ public interface MutableTree extends Tree, MutableTaxonList {
 		public InvalidTreeException(String message) { super(message); }
 	}
 
-	void beginTreeEdit();
-	void endTreeEdit() throws InvalidTreeException;
+    // return true if tree already in edit mode   
+    boolean beginTreeEdit();
+
+    void endTreeEdit() throws InvalidTreeException;
 
 	/**
 	 * Add child to the children of parent.
@@ -61,7 +63,15 @@ public interface MutableTree extends Tree, MutableTaxonList {
 	 */
 	void removeChild(NodeRef parent, NodeRef child);
 
-	/**
+    /**
+     *  Replace child with another
+     * @param node
+     * @param child  of node to replace
+     * @param newChild replacment child
+     */
+    void replaceChild(NodeRef node, NodeRef child, NodeRef newChild);
+    
+    /**
 	 * Will throw an exception if any nodes have this node as their children.
 	 */
 	void setRoot(NodeRef root);

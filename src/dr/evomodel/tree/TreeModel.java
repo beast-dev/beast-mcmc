@@ -472,14 +472,20 @@ public class TreeModel extends AbstractModel implements MutableTree {
         parent.removeChild(child);
     }
 
+    public void replaceChild(NodeRef node, NodeRef child, NodeRef newChild) {
+        throw new RuntimeException("Unimplemented");
+    }
+
     private Node oldRoot;
 
-    public void beginTreeEdit() {
+    public boolean beginTreeEdit() {
         if (inEdit) throw new RuntimeException("Alreading in edit transaction mode!");
 
         oldRoot = root;
 
         inEdit = true;
+
+        return false;
     }
 
     public void endTreeEdit() throws MutableTree.InvalidTreeException {

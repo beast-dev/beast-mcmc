@@ -323,9 +323,13 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 				AttributeRule.newBooleanRule(SCALE_ALL_IND, true),
 				AttributeRule.newDoubleRule(WEIGHT),
 				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-				AttributeRule.newDoubleRule(PICKONEPROB, true),
-				new ElementRule(Parameter.class)
-		};
+				
+				new ElementRule(Parameter.class),
+                new ElementRule(INDICATORS,
+                        new XMLSyntaxRule[]{
+                                AttributeRule.newDoubleRule(PICKONEPROB, true),
+                                new ElementRule(Parameter.class)}, true),
+        };
 
 	};
 

@@ -111,7 +111,11 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 		listenerHelper.removeModelListener(listener);
 	}
 
-	/**
+    public void addModelRestoreListener(ModelListener listener) {
+        listenerHelper.addModelRestoreListener(listener);
+    }
+
+    /**
 	 * Fires a model changed event.
 	 */
 	public void fireModelChanged() {
@@ -165,8 +169,11 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 
 		handleModelChangedEvent(model, object, index);
 	}
-	
-	abstract protected void handleModelChangedEvent(Model model, Object object, int index);
+
+    // do nothing by default
+    public void modelRestored(Model model) {}
+
+    abstract protected void handleModelChangedEvent(Model model, Object object, int index);
 	
 	// **************************************************************
     // ParameterListener IMPLEMENTATION
@@ -221,7 +228,9 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 
 			restoreState();
 			isValidState = true;
-		}
+
+            listenerHelper.fireModelRestored(this);
+        }
 	}
 	
 	public final void acceptModelState() {

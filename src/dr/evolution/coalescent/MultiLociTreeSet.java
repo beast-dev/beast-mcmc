@@ -87,5 +87,7 @@ public interface MultiLociTreeSet {
             int k = trees.indexOf((TreeModel)model);
             dirty[k] = gotDirty[k] = true;
         }
+
+        public void modelRestored(Model model) {}
     }
 }

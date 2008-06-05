@@ -72,7 +72,12 @@ public interface Likelihood extends Loggable, Identifiable {
 			makeDirty();
 		}
 
-		// **************************************************************
+        // by default resore is the same as changed
+        public void modelRestored(Model model) {
+           makeDirty();
+        }
+
+        // **************************************************************
 	    // Likelihood IMPLEMENTATION
 	    // **************************************************************
 

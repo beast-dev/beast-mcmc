@@ -278,23 +278,28 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 
 	public static class Utils
 	{
-		/**
+        private static double getInterval(double U, DemographicFunction demographicFunction,
+                                          int lineageCount, double timeOfLastCoalescent) {
+            final double intensity = demographicFunction.getIntensity(timeOfLastCoalescent);
+            final double tmp = -Math.log(U)/Binomial.choose2(lineageCount) + intensity;
+
+            return demographicFunction.getInverseIntensity(tmp) - timeOfLastCoalescent;
+        }
+
+        /**
          * @return a random interval size selected from the Kingman prior of the demographic model.
          */
-		public static double getSimulatedInterval(DemographicFunction demographicFunction, int lineageCount, double timeOfLastCoalescent)
+		public static double getSimulatedInterval(DemographicFunction demographicFunction,
+                                                  int lineageCount, double timeOfLastCoalescent)
 		{
 			final double U = MathUtils.nextDouble(); // create unit uniform random variate
-
-			final double tmp = -Math.log(U)/Binomial.choose2(lineageCount) + demographicFunction.getIntensity(timeOfLastCoalescent);
-
-            return demographicFunction.getInverseIntensity(tmp) - timeOfLastCoalescent;
+            return getInterval(U, demographicFunction, lineageCount, timeOfLastCoalescent);
 		}
 
-		public static double getMedianInterval(DemographicFunction demographicFunction, int lineageCount, double timeOfLastCoalescent)
+		public static double getMedianInterval(DemographicFunction demographicFunction,
+                                               int lineageCount, double timeOfLastCoalescent)
 		{
-			final double tmp = -Math.log(0.5)/Binomial.choose2(lineageCount) + demographicFunction.getIntensity(timeOfLastCoalescent);
-
-            return demographicFunction.getInverseIntensity(tmp) - timeOfLastCoalescent;
+             return getInterval(0.5, demographicFunction, lineageCount, timeOfLastCoalescent);
 		}
 
 		/**

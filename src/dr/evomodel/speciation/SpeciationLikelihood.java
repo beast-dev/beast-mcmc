@@ -88,7 +88,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
     // **************************************************************
 
     /**
-     * Stores the precalculated state: in this case the intervals
+     * Stores the precalculated state: likelihood
      */
     protected final void storeState() {
         storedLikelihoodKnown = likelihoodKnown;
@@ -96,7 +96,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
     }
 
     /**
-     * Restores the precalculated state: that is the intervals of the tree.
+     * Restores the precalculated state: computed likelihood
      */
     protected final void restoreState() {
         likelihoodKnown = storedLikelihoodKnown;

@@ -142,7 +142,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
 			if (indicatorParameter.getDimension() != ratesParameter.getDimension())
 				throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
 
-			if (xo.hasSocket(ROOT_FREQ)) {
+			if (xo.hasChildNamed(ROOT_FREQ)) {
 
 				cxo = (XMLObject) xo.getChild(ROOT_FREQ);
 				FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);

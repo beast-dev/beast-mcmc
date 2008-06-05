@@ -132,7 +132,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
             int windowSize = xo.getIntegerAttribute(WINDOW_SIZE);
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-            if (xo.hasSocket(UPDATE_INDEX)) {
+            if (xo.hasChildNamed(UPDATE_INDEX)) {
                 XMLObject cxo = (XMLObject) xo.getChild(UPDATE_INDEX);
                 Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
                 return new RandomWalkIntegerOperator(parameter, updateIndex, windowSize, weight);

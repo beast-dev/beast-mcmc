@@ -142,7 +142,7 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 					Parameter p = (Parameter) xoc.getChild(Parameter.class);
 
 					Parameter tt = null;
-					if (xoc.hasSocket(TRANSITION_TIME)) {
+					if (xoc.hasChildNamed(TRANSITION_TIME)) {
 						tt = (Parameter) xoc.getElementFirstChild(TRANSITION_TIME);
 					}
 					epochs.add(new Epoch(t, p, tt));

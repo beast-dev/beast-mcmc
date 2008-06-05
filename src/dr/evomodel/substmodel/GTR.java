@@ -197,27 +197,27 @@ public class GTR extends AbstractNucleotideModel {
             FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
             Parameter rateACParameter = null;
-            if (xo.hasSocket(A_TO_C)) {
+            if (xo.hasChildNamed(A_TO_C)) {
                 rateACParameter = (Parameter) xo.getElementFirstChild(A_TO_C);
             }
             Parameter rateAGParameter = null;
-            if (xo.hasSocket(A_TO_G)) {
+            if (xo.hasChildNamed(A_TO_G)) {
                 rateAGParameter = (Parameter) xo.getElementFirstChild(A_TO_G);
             }
             Parameter rateATParameter = null;
-            if (xo.hasSocket(A_TO_T)) {
+            if (xo.hasChildNamed(A_TO_T)) {
                 rateATParameter = (Parameter) xo.getElementFirstChild(A_TO_T);
             }
             Parameter rateCGParameter = null;
-            if (xo.hasSocket(C_TO_G)) {
+            if (xo.hasChildNamed(C_TO_G)) {
                 rateCGParameter = (Parameter) xo.getElementFirstChild(C_TO_G);
             }
             Parameter rateCTParameter = null;
-            if (xo.hasSocket(C_TO_T)) {
+            if (xo.hasChildNamed(C_TO_T)) {
                 rateCTParameter = (Parameter) xo.getElementFirstChild(C_TO_T);
             }
             Parameter rateGTParameter = null;
-            if (xo.hasSocket(G_TO_T)) {
+            if (xo.hasChildNamed(G_TO_T)) {
                 rateGTParameter = (Parameter) xo.getElementFirstChild(G_TO_T);
             }
             int countNull = 0;

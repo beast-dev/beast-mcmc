@@ -100,7 +100,7 @@ public class MonophylyStatistic extends BooleanStatistic implements TreeStatisti
 			}
 
 			TaxonList ignore = null;
-			if (xo.hasSocket(IGNORE)) {
+			if (xo.hasChildNamed(IGNORE)) {
 				cxo = (XMLObject)xo.getChild(IGNORE);
 				ignore = (TaxonList)cxo.getChild(TaxonList.class);
 				if (ignore == null) {

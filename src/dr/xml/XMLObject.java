@@ -28,12 +28,11 @@ package dr.xml;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * This class wraps a DOM Element for the purposes of parsing.
@@ -112,12 +111,16 @@ public class XMLObject {
 	 * Convenience method for getting the first child element out of a named XMLObject element
 	 */
 	public Object getElementFirstChild(String elementName) throws XMLParseException {
-		Object socket = getChild(elementName);
-		if (socket == null)
-			throw new XMLParseException("Socket element called " + elementName + " does not exist inside element " + getName());
-		if (!(socket instanceof XMLObject))
-			throw new XMLParseException("Socket element called " + elementName + " inside element " + getName() + " is not an XMLObject.");
-		return ((XMLObject) socket).getChild(0);
+		Object child = getChild(elementName);
+
+        if (child == null)
+			throw new XMLParseException("Child element called " + elementName +
+                    " does not exist inside element " + getName());
+		if (!(child instanceof XMLObject))
+			throw new XMLParseException("Child element called " + elementName +
+                    " inside element " + getName() + " is not an XMLObject.");
+
+        return ((XMLObject) child).getChild(0);
 	}
 
 	public String getChildName(int i) {
@@ -139,9 +142,9 @@ public class XMLObject {
 	/**
 	 * @return true if a child socket element of the given name exists.
 	 */
-	public boolean hasSocket(String socketName) {
-		Object socket = getChild(socketName);
-		return (socket != null) && (socket instanceof XMLObject);
+	public boolean hasChildNamed(String name) {
+		final Object child = getChild(name);
+		return (child != null) && (child instanceof XMLObject);
 	}
 
 	/**

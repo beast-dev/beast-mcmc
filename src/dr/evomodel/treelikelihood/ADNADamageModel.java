@@ -131,11 +131,11 @@ public class ADNADamageModel extends TipPartialsModel {
 			TaxonList includeTaxa = null;
 			TaxonList excludeTaxa = null;
 
-			if (xo.hasSocket(INCLUDE)) {
+			if (xo.hasChildNamed(INCLUDE)) {
 				includeTaxa = (TaxonList)xo.getElementFirstChild(INCLUDE);
 			}
 
-			if (xo.hasSocket(EXCLUDE)) {
+			if (xo.hasChildNamed(EXCLUDE)) {
 				excludeTaxa = (TaxonList)xo.getElementFirstChild(EXCLUDE);
 			}
 

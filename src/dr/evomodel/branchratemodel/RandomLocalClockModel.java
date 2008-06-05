@@ -196,7 +196,7 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
             Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
             Parameter meanRateParameter = null;
 
-            if (xo.hasSocket(CLOCK_RATE)) {
+            if (xo.hasChildNamed(CLOCK_RATE)) {
                 meanRateParameter = (Parameter) xo.getElementFirstChild(CLOCK_RATE);
             }
 

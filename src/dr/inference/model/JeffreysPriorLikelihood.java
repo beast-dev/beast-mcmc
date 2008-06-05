@@ -89,7 +89,7 @@ public class JeffreysPriorLikelihood extends Likelihood.Abstract {
 
             XMLObject cxo = xo;
 
-            if (xo.hasSocket(DATA)) {
+            if (xo.hasChildNamed(DATA)) {
                 cxo = (XMLObject)xo.getChild(DATA);
             }
 

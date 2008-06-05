@@ -67,11 +67,11 @@ public class alsDefaultPrior extends AbstractModel implements Likelihood {
             Parameter creationRate = (Parameter)xo.getElementFirstChild(CREATIONPARAMETER);
             Parameter deathRate = (Parameter)xo.getElementFirstChild(DEATHPARAMETER);
             Parameter ctmcScale = null;
-            if(xo.hasSocket(SCALEPARAMETER)){
+            if(xo.hasChildNamed(SCALEPARAMETER)){
                 ctmcScale = (Parameter)xo.getElementFirstChild(SCALEPARAMETER);
             }
             Parameter freqParam = null;
-            if(xo.hasSocket(FREQPARAMETER)){
+            if(xo.hasChildNamed(FREQPARAMETER)){
                 freqParam = (Parameter) xo.getElementFirstChild(FREQPARAMETER);
             }
 

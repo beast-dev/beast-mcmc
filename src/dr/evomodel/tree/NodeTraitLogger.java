@@ -57,7 +57,7 @@ public class NodeTraitLogger implements NodeAttributeProvider {
 			Parameter traitParameter = traits.get(traitName);
 
 			for (int i = 0; i < traitParameter.getDimension(); i++)
-				values.add(new Double(traitParameter.getParameterValue(i)).toString());
+				values.add(Double.toString(traitParameter.getParameterValue(i)));
 		}
 		return values.toArray(new String[values.size()]);
 	}
@@ -77,7 +77,7 @@ public class NodeTraitLogger implements NodeAttributeProvider {
 
 			try {
 
-				Map<String, Parameter> traits = treeModel.getTraitMap(treeModel.getRoot());
+				//Map<String, Parameter> traits = treeModel.getTraitMap(treeModel.getRoot());
 				return new NodeTraitLogger(treeModel);
 
 			} catch (IllegalArgumentException e) {

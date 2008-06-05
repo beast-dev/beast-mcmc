@@ -76,7 +76,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal 'every' attribute in patterns element");
         }
 
-        if (xo.hasSocket(TAXON_LIST)) {
+        if (xo.hasChildNamed(TAXON_LIST)) {
             taxa = (TaxonList)xo.getElementFirstChild(TAXON_LIST);
         }
 

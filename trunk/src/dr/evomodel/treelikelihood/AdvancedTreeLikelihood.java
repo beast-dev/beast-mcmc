@@ -501,7 +501,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
                     //storePartials,
                     useScaling);
 
-            if (xo.hasSocket(TIPS)) {
+            if (xo.hasChildNamed(TIPS)) {
                 SiteModel siteModel2 = (SiteModel)xo.getElementFirstChild(TIPS);
                 treeLikelihood.addTipsSiteModel(siteModel2);
             }

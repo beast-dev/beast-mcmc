@@ -207,7 +207,7 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
             Parameter proportionParameter = null;
             Parameter substitutionRateParameter = null;
 
-            if (xo.hasSocket(PROPORTION)) {
+            if (xo.hasChildNamed(PROPORTION)) {
                 proportionParameter = (Parameter)xo.getElementFirstChild(PROPORTION);
             } else {
                 substitutionRateParameter = (Parameter)xo.getElementFirstChild(SUBSTITUTION_RATE);

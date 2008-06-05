@@ -62,7 +62,7 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal 'every' attribute in patterns element");
         }
 
-        if (xo.hasSocket(TAXON_LIST)) {
+        if (xo.hasChildNamed(TAXON_LIST)) {
             taxa = (TaxonList)xo.getElementFirstChild(TAXON_LIST);
         }
 
@@ -85,7 +85,7 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
 		    }
         }
 
-        if(xo.hasSocket(INCLUDE)){
+        if(xo.hasChildNamed(INCLUDE)){
             xoc=(XMLObject)xo.getChild(INCLUDE);
             if(xoc.hasAttribute(FROM) && xoc.hasAttribute(TO)){
                 startInclude=xoc.getIntegerAttribute(FROM)-1;
@@ -101,7 +101,7 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evoxml").info("\tAscertainment: Patterns in columns "+(startInclude+1)+" to "+(stopInclude+1)+" are only possible. ");
         }
 
-        if(xo.hasSocket(EXCLUDE)){
+        if(xo.hasChildNamed(EXCLUDE)){
             xoc=(XMLObject)xo.getChild(EXCLUDE);
             if(xoc.hasAttribute(FROM) && xoc.hasAttribute(TO)){
                 startExclude=xoc.getIntegerAttribute(FROM)-1;

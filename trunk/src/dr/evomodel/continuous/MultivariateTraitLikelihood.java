@@ -13,7 +13,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
@@ -396,7 +395,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
                     }
                 }
 
-                if (xo.hasSocket(MISSING)) {
+                if (xo.hasChildNamed(MISSING)) {
                     XMLObject cxo = (XMLObject) xo.getChild(MISSING);
                     Parameter missingParameter = new Parameter.Default(allValues.length, 0.0);
                     for (int i : missingIndices) {
@@ -419,12 +418,12 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
             Parameter traits = null;
             Parameter check = null;
 
-            if (xo.hasSocket(RANDOMIZE)) {
+            if (xo.hasChildNamed(RANDOMIZE)) {
                 XMLObject cxo = (XMLObject) xo.getChild(RANDOMIZE);
                 traits = (Parameter) cxo.getChild(Parameter.class);
             }
 
-            if (xo.hasSocket(CHECK)) {
+            if (xo.hasChildNamed(CHECK)) {
                 XMLObject cxo = (XMLObject) xo.getChild(CHECK);
                 check = (Parameter) cxo.getChild(Parameter.class);
             }
@@ -513,11 +512,11 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
     private BranchRateModel rateModel = null;
     private boolean hasRateModel = false;
 
-    private Parameter cut;
-    private Parameter scale;
+    //private Parameter cut;
+    //private Parameter scale;
 
     //	private double[] cachedLikelihoods = null;
-    private HashMap<NodeRef, Double> cachedLikelihoods = null;
+    //private HashMap<NodeRef, Double> cachedLikelihoods = null;
 
     private double treeLength;
     private double storedTreeLength;

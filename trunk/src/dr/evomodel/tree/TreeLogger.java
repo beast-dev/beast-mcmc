@@ -208,29 +208,29 @@ public class TreeLogger extends MCLogger {
          */
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Tree tree = (Tree) xo.getChild(Tree.class);
-
+            final Tree tree = (Tree) xo.getChild(Tree.class);
 
             String title = null;
-            boolean nexusFormat = false;
-            boolean sortTranslationTable = true;
 
             if (xo.hasAttribute(TITLE)) {
                 title = xo.getStringAttribute(TITLE);
             }
 
-            if (xo.hasAttribute(NEXUS_FORMAT)) {
-                nexusFormat = xo.getBooleanAttribute(NEXUS_FORMAT);
-            }
+            final boolean nexusFormat = xo.getAttribute(NEXUS_FORMAT, false);
+//            if (xo.hasAttribute(NEXUS_FORMAT)) {
+//                nexusFormat = xo.getBooleanAttribute(NEXUS_FORMAT);
+//            }
 
-            if (xo.hasAttribute(SORT_TRANSLATION_TABLE)) {
-                sortTranslationTable = xo.getBooleanAttribute(SORT_TRANSLATION_TABLE);
-            }
+            final boolean sortTranslationTable = xo.getAttribute(SORT_TRANSLATION_TABLE, true);
+//            if (xo.hasAttribute(SORT_TRANSLATION_TABLE)) {
+//                sortTranslationTable = xo.getBooleanAttribute(SORT_TRANSLATION_TABLE);
+//            }
 
-            boolean substitutions = false;
-            if (xo.hasAttribute(BRANCH_LENGTHS)) {
-                substitutions = xo.getStringAttribute(BRANCH_LENGTHS).equals(SUBSTITUTIONS);
-            }
+            boolean substitutions = xo.getAttribute(BRANCH_LENGTHS, "").equals(SUBSTITUTIONS);
+//            boolean substitutions = false;
+//            if (xo.hasAttribute(BRANCH_LENGTHS)) {
+//                substitutions = xo.getStringAttribute(BRANCH_LENGTHS).equals(SUBSTITUTIONS);
+//            }
 
             List<TreeAttributeProvider> taps = new ArrayList<TreeAttributeProvider>();
             List<NodeAttributeProvider> naps = new ArrayList<NodeAttributeProvider>();

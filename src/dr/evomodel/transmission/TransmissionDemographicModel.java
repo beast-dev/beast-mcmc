@@ -178,33 +178,33 @@ public class TransmissionDemographicModel extends DemographicModel
 			Parameter rParam = null;
 			Parameter dParam = null;
 			
-			if (xo.hasSocket(CONSTANT)) {
+			if (xo.hasChildNamed(CONSTANT)) {
 			
 				XMLObject cxo = (XMLObject)xo.getChild(CONSTANT);
 				
 				N0Param = (Parameter)cxo.getElementFirstChild(POPULATION_SIZE);
 				model = 0;
 				
-			} else if (xo.hasSocket(EXPONENTIAL)) {
+			} else if (xo.hasChildNamed(EXPONENTIAL)) {
 			
 				XMLObject cxo = (XMLObject)xo.getChild(EXPONENTIAL);
 				
 				N1Param = (Parameter)cxo.getElementFirstChild(ANCESTRAL_PROPORTION);
-				if (cxo.hasSocket(GROWTH_RATE)) {
+				if (cxo.hasChildNamed(GROWTH_RATE)) {
 					rParam = (Parameter)cxo.getElementFirstChild(GROWTH_RATE);
 				} else {
 					dParam = (Parameter)cxo.getElementFirstChild(DOUBLING_TIME);
 				}
 				model = 1;
 			
-			} else if (xo.hasSocket(LOGISTIC)) {
+			} else if (xo.hasChildNamed(LOGISTIC)) {
 			
 				XMLObject cxo = (XMLObject)xo.getChild(LOGISTIC);
 				
 				N0Param = (Parameter)cxo.getElementFirstChild(POPULATION_SIZE);
 				N1Param = (Parameter)cxo.getElementFirstChild(ANCESTRAL_PROPORTION);
 				
-				if (cxo.hasSocket(GROWTH_RATE)) {
+				if (cxo.hasChildNamed(GROWTH_RATE)) {
 					rParam = (Parameter)cxo.getElementFirstChild(GROWTH_RATE);
 				} else {
 					dParam = (Parameter)cxo.getElementFirstChild(DOUBLING_TIME);

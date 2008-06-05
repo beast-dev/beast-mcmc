@@ -177,7 +177,7 @@ public class RandomWalkOperator extends SimpleMCMCOperator implements CoercableM
 			double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
 			Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-			if (xo.hasSocket(UPDATE_INDEX)) {
+			if (xo.hasChildNamed(UPDATE_INDEX)) {
 				XMLObject cxo = (XMLObject) xo.getChild(UPDATE_INDEX);
 				Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
 				if (updateIndex.getDimension() != parameter.getDimension())

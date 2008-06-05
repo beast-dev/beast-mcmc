@@ -100,7 +100,7 @@ public class BitMoveOperator extends SimpleMCMCOperator {
             Parameter valuesParameter = null;
 
 
-            if (xo.hasSocket("values")) {
+            if (xo.hasChildNamed("values")) {
                 valuesParameter = (Parameter) xo.getElementFirstChild("values");
             }
 

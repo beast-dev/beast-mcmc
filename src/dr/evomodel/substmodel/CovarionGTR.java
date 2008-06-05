@@ -129,27 +129,27 @@ public class CovarionGTR extends AbstractCovarionDNAModel {
             Parameter switchingRates = (Parameter) xo.getElementFirstChild(SWITCHING_RATES);
 
             Parameter rateACParameter = null;
-            if (xo.hasSocket(GTR.A_TO_C)) {
+            if (xo.hasChildNamed(GTR.A_TO_C)) {
                 rateACParameter = (Parameter) xo.getElementFirstChild(GTR.A_TO_C);
             }
             Parameter rateAGParameter = null;
-            if (xo.hasSocket(GTR.A_TO_G)) {
+            if (xo.hasChildNamed(GTR.A_TO_G)) {
                 rateAGParameter = (Parameter) xo.getElementFirstChild(GTR.A_TO_G);
             }
             Parameter rateATParameter = null;
-            if (xo.hasSocket(GTR.A_TO_T)) {
+            if (xo.hasChildNamed(GTR.A_TO_T)) {
                 rateATParameter = (Parameter) xo.getElementFirstChild(GTR.A_TO_T);
             }
             Parameter rateCGParameter = null;
-            if (xo.hasSocket(GTR.C_TO_G)) {
+            if (xo.hasChildNamed(GTR.C_TO_G)) {
                 rateCGParameter = (Parameter) xo.getElementFirstChild(GTR.C_TO_G);
             }
             Parameter rateCTParameter = null;
-            if (xo.hasSocket(GTR.C_TO_T)) {
+            if (xo.hasChildNamed(GTR.C_TO_T)) {
                 rateCTParameter = (Parameter) xo.getElementFirstChild(GTR.C_TO_T);
             }
             Parameter rateGTParameter = null;
-            if (xo.hasSocket(GTR.G_TO_T)) {
+            if (xo.hasChildNamed(GTR.G_TO_T)) {
                 rateGTParameter = (Parameter) xo.getElementFirstChild(GTR.G_TO_T);
             }
 

@@ -278,14 +278,14 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			XMLObject cxo;
-			double[] shape = null;
-			double[] scale = null;
+
+			double[] shape;
+			double[] scale;
 
 
-			if (xo.hasSocket(MVGAMMA_SHAPE)) {
+			if (xo.hasChildNamed(MVGAMMA_SHAPE)) {
 
-				cxo = (XMLObject) xo.getChild(MVGAMMA_SHAPE);
+				XMLObject cxo = (XMLObject) xo.getChild(MVGAMMA_SHAPE);
 				shape = ((Parameter) cxo.getChild(Parameter.class)).getParameterValues();
 
 				cxo = (XMLObject) xo.getChild(MVGAMMA_SCALE);
@@ -296,7 +296,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
 			} else {
 
-				cxo = (XMLObject) xo.getChild(MVN_MEAN);
+				XMLObject cxo = (XMLObject) xo.getChild(MVN_MEAN);
 				double[] mean = ((Parameter) cxo.getChild(Parameter.class)).getParameterValues();
 
 				cxo = (XMLObject) xo.getChild(MVN_CV);
@@ -320,7 +320,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 					new MultivariateDistributionLikelihood(
 							new MultivariateGammaDistribution(shape, scale)
 					);
-			cxo = (XMLObject) xo.getChild(DATA);
+			XMLObject cxo = (XMLObject) xo.getChild(DATA);
 			for (int j = 0; j < cxo.getChildCount(); j++) {
 				if (cxo.getChild(j) instanceof Parameter) {
 					Parameter data = (Parameter) cxo.getChild(j);
@@ -357,6 +357,4 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 			return MultivariateDistributionLikelihood.class;
 		}
 	};
-
-
 }

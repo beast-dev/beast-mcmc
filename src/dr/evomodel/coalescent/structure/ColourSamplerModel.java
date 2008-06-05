@@ -282,7 +282,7 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
             }
 
             ColourSampler colourSampler;
-            if (xo.hasSocket("colours")) {
+            if (xo.hasChildNamed("colours")) {
                 XMLObject cxo = (XMLObject)xo.getChild("colours");
 
                 Taxa[] colourTaxa = new Taxa[cxo.getChildCount()];

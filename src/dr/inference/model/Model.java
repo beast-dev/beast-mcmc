@@ -137,7 +137,24 @@ public interface Model extends Identifiable {
 			}
 		}
 
-		private ArrayList<ModelListener> listeners = null;
-	}
+        public void addModelRestoreListener(ModelListener listener) {
+            if (restoreListeners == null) {
+                restoreListeners = new java.util.ArrayList<ModelListener>();
+            }
+            restoreListeners.add(listener);
+        }
+
+        public void fireModelRestored(Model model) {
+            if (restoreListeners != null) {
+                for (ModelListener listener : restoreListeners ) {
+                    listener.modelRestored(model);
+                }
+            }
+        }
+
+        private ArrayList<ModelListener> listeners = null;
+
+        private ArrayList<ModelListener> restoreListeners = null;
+    }
 }
 		

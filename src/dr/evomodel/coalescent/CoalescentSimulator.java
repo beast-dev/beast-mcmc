@@ -146,6 +146,9 @@ public class CoalescentSimulator {
     }
 
     private static void attemptToScaleTree(MutableTree tree, double rootHeight) {
+        // avoid empty tree
+        if( tree.getRoot() == null ) return;
+
         double scale = rootHeight / tree.getNodeHeight(tree.getRoot());
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             NodeRef n = tree.getInternalNode(i);

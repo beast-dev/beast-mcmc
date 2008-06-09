@@ -37,6 +37,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+/*
+ * @author Marc Suchard and Andrew Rambaut
+ */
+
 public class DensityPlotter {
 
 	private final static Version version = new BeastVersion();
@@ -56,7 +60,8 @@ public class DensityPlotter {
 	                      double value2Upper,
 	                      double value2Lower,
 	                      boolean printHeaders,
-	                      boolean outputTIFF
+	                      boolean outputTIFF,
+	                      boolean logScale
 
 	) throws IOException {
 
@@ -68,12 +73,13 @@ public class DensityPlotter {
 			densityMaps = new DensityMap[timeBinCount];
 			for (int i = 0; i < densityMaps.length; i++) {
 				densityMaps[i] = new DensityMap(i, value1BinCount, value2BinCount,
-						value1Upper, value1Lower, value2Upper, value2Lower);
+						value1Upper, value1Lower, value2Upper, value2Lower, logScale);
 			}
 		} else {
 			densityMaps = new DensityMap[]{
 					new DensityMap(0, timeBinCount, value1BinCount,
-							timeUpper, timeLower, value1Upper, value1Lower)
+							timeUpper, timeLower, value1Upper, value1Lower, logScale)
+
 			};
 		}
 
@@ -228,7 +234,8 @@ public class DensityPlotter {
 						new Arguments.RealOption("value2_lower", "the lower second value bound for the density map [default = min value]"),
 						new Arguments.StringOption("headers", "with_headers", "prints row/column labels in output [default = true"),
 						new Arguments.Option("tiff", "output in TIFF format"),
-						new Arguments.Option("help", "option to print this message")
+						new Arguments.Option("help", "option to print this message"),
+						new Arguments.Option("logScale", "transform trait to log scale")
 				});
 
 		try {
@@ -260,6 +267,10 @@ public class DensityPlotter {
 		double valueLower = Double.NEGATIVE_INFINITY;
 		double value2Upper = Double.POSITIVE_INFINITY;
 		double value2Lower = Double.NEGATIVE_INFINITY;
+		boolean logScale = false;
+
+		if (arguments.hasOption("logScale"))
+			logScale = true;
 
 		if (arguments.hasOption("trait")) {
 			trait1AttributeName = arguments.getStringOption("trait");
@@ -349,7 +360,7 @@ public class DensityPlotter {
 				valueLower,
 				value2Upper,
 				value2Lower,
-				printHeaders, outputTIFF
+				printHeaders, outputTIFF, logScale
 		);
 
 		System.exit(0);

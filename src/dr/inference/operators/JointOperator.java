@@ -13,40 +13,59 @@ import java.util.ArrayList;
 public class JointOperator implements CoercableMCMCOperator {
 
     public static final String JOINT_OPERATOR = "jointOperator";
+    public static final String WEIGHT = "weight";
+    public static final String OPTIMIZE = "toOptimize";
 
 //    private ColourSamplerModel colouringModel;
 
     private double acceptanceFactor = 1.0; // For compatiability with ColourOperator
 
     private ArrayList<MCMCOperator> operator;
-    private MCMCOperator innerOperator;
+    private MCMCOperator optimizedOperator;
+    private int toOptimize;
+    private double weight;
 
     public JointOperator() {
+        operator = new ArrayList<MCMCOperator>();
+    }
+
+    public JointOperator(double weight, int toOptimize) {
 
         operator = new ArrayList<MCMCOperator>();
+        this.toOptimize = toOptimize;
+
+        setWeight(weight);
 
     }
 
     public void addOperator(MCMCOperator operation) {
         operator.add(operation);
-        if( operator.size() == 1 )
-            innerOperator = operation;
+        if( operator.size() == toOptimize )
+            optimizedOperator = operation;
     }
 
    public final double operate() throws OperatorFailedException {
 
         double logP = 0;
 
+       boolean failed = false;
+       OperatorFailedException failure = null;
+
         for(MCMCOperator operation : operator) {
 //            System.err.println("calling "+operation.getOperatorName());
-//            try {
-            logP += operation.operate();
-//            } catch (OperatorFailedException ofe) {
-//                System.err.println("catch failure in "+operation.getOperatorName()+": "+ofe.getMessage());
-//                throw ofe;
-//            }
+
+                try {
+                    logP += operation.operate();
+                } catch (OperatorFailedException ofe) {
+//                    System.err.println("catch failure in "+operation.getOperatorName()+": "+ofe.getMessage());
+                    failed = true;
+                    failure = ofe;
+                }
 //            System.err.println("operator done.");
+            // todo After a failure, should not have to complete remaining operations, need to fake their operate();
         }
+       if( failed )
+        throw failure;
 
        return logP;
     }
@@ -54,15 +73,15 @@ public class JointOperator implements CoercableMCMCOperator {
 
 
     public double getCoercableParameter() {
-        if (innerOperator instanceof CoercableMCMCOperator) {
-            return ((CoercableMCMCOperator) innerOperator).getCoercableParameter();
+        if (optimizedOperator instanceof CoercableMCMCOperator) {
+            return ((CoercableMCMCOperator) optimizedOperator).getCoercableParameter();
         }
         throw new IllegalArgumentException();
     }
 
     public void setCoercableParameter(double value) {
-        if (innerOperator instanceof CoercableMCMCOperator) {
-            ((CoercableMCMCOperator) innerOperator).setCoercableParameter(value);
+        if (optimizedOperator instanceof CoercableMCMCOperator) {
+            ((CoercableMCMCOperator) optimizedOperator).setCoercableParameter(value);
             return;
         }
         throw new IllegalArgumentException();
@@ -70,24 +89,24 @@ public class JointOperator implements CoercableMCMCOperator {
 
     public double getRawParameter() {
 
-        if (innerOperator instanceof CoercableMCMCOperator) {
-            return ((CoercableMCMCOperator) innerOperator).getRawParameter();
+        if (optimizedOperator instanceof CoercableMCMCOperator) {
+            return ((CoercableMCMCOperator) optimizedOperator).getRawParameter();
         }
         throw new IllegalArgumentException();
     }
 
     public int getMode() {
-        if (innerOperator instanceof CoercableMCMCOperator) {
-            return ((CoercableMCMCOperator) innerOperator).getMode();
+        if (optimizedOperator instanceof CoercableMCMCOperator) {
+            return ((CoercableMCMCOperator) optimizedOperator).getMode();
         }
         return CoercableMCMCOperator.COERCION_OFF;
     }
 
     public String getOperatorName() {
-        StringBuffer sb = new StringBuffer("Joint( ");
+        StringBuffer sb = new StringBuffer("Joint(\n");
         for(MCMCOperator operation : operator)
-            sb.append(operation.getOperatorName()+" ");
-        sb.append(")");
+            sb.append("\t"+operation.getOperatorName()+"\n");
+        sb.append(") opt = "+optimizedOperator.getOperatorName());
         return sb.toString();
     }
 
@@ -96,39 +115,26 @@ public class JointOperator implements CoercableMCMCOperator {
     }
 
     public double getTargetAcceptanceProbability() {
-        return innerOperator.getTargetAcceptanceProbability() * acceptanceFactor;
+        return optimizedOperator.getTargetAcceptanceProbability() * acceptanceFactor;
     }
 
     public double getMinimumAcceptanceLevel() {
-        return innerOperator.getMinimumAcceptanceLevel() * acceptanceFactor;
+        return optimizedOperator.getMinimumAcceptanceLevel() * acceptanceFactor;
     }
 
     public double getMaximumAcceptanceLevel() {
-        return innerOperator.getMaximumAcceptanceLevel() * acceptanceFactor;
+        return optimizedOperator.getMaximumAcceptanceLevel() * acceptanceFactor;
     }
 
     public double getMinimumGoodAcceptanceLevel() {
-        return innerOperator.getMinimumGoodAcceptanceLevel() * acceptanceFactor;
+        return optimizedOperator.getMinimumGoodAcceptanceLevel() * acceptanceFactor;
     }
 
     public double getMaximumGoodAcceptanceLevel() {
-        return innerOperator.getMaximumGoodAcceptanceLevel() * acceptanceFactor;
+        return optimizedOperator.getMaximumGoodAcceptanceLevel() * acceptanceFactor;
     }
 
     // All of this is copied and modified from SimpleMCMCOperator
-    /**
-     * @return the weight of this operator.
-     */
-    public final double getWeight() {
-        return innerOperator.getWeight();
-    }
-
-    /**
-     * Sets the weight of this operator.
-     */
-    public final void setWeight(double w) {
-        innerOperator.setWeight(w);
-    }
 
     public final void accept(double deviation) {
         for(MCMCOperator operation : operator)
@@ -146,27 +152,27 @@ public class JointOperator implements CoercableMCMCOperator {
     }
 
     public final int getAccepted() {
-        return innerOperator.getAccepted();
+        return optimizedOperator.getAccepted();
     }
 
     public final void setAccepted(int accepted) {
-        innerOperator.setAccepted(accepted);
+        optimizedOperator.setAccepted(accepted);
     }
 
     public final int getRejected() {
-        return innerOperator.getRejected();
+        return optimizedOperator.getRejected();
     }
 
     public final void setRejected(int rejected) {
-        innerOperator.setRejected(rejected);
+        optimizedOperator.setRejected(rejected);
     }
 
     public final double getMeanDeviation() {
-        return innerOperator.getMeanDeviation();
+        return optimizedOperator.getMeanDeviation();
     }
 
     public final double getSumDeviation() {
-        return innerOperator.getSumDeviation();
+        return optimizedOperator.getSumDeviation();
     }
 
     public double getSpan(boolean reset) {
@@ -174,11 +180,24 @@ public class JointOperator implements CoercableMCMCOperator {
     }
 
     public final void setDumDeviation(double sumDeviation) {
-        innerOperator.setDumDeviation(sumDeviation);
+        optimizedOperator.setDumDeviation(sumDeviation);
     }
 
     public String getPerformanceSuggestion() {
-        return innerOperator.getPerformanceSuggestion();
+        return optimizedOperator.getPerformanceSuggestion();
+    }
+
+     public final double getWeight() {
+        return weight;
+    }
+
+    /**
+     * Sets the weight of this operator.
+     */
+    public final void setWeight(double w) {
+        if (w > 0) {
+            weight = w;
+        } else throw new IllegalArgumentException("Weight must be a positive real. (called with " + w + ")");
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -189,7 +208,23 @@ public class JointOperator implements CoercableMCMCOperator {
 
         public Object parseXMLObject(XMLObject xo) {
 
-            JointOperator operator = new JointOperator();
+            double weight;
+            int toOptimize = 1;
+
+            try {
+                weight = xo.getDoubleAttribute(WEIGHT);
+
+                if( xo.hasAttribute(OPTIMIZE) )
+                    toOptimize = xo.getIntegerAttribute(OPTIMIZE);
+
+                if( toOptimize < 0 || toOptimize > xo.getChildCount() )
+                    throw new RuntimeException("Can only optimize existing operator");
+
+            } catch (XMLParseException e) {
+                throw new RuntimeException("Must provide valid 'weight' attribute");
+            }
+
+            JointOperator operator = new JointOperator(weight,toOptimize);
 
             for(int i=0; i<xo.getChildCount(); i++) {
                 operator.addOperator((MCMCOperator)xo.getChild(i));
@@ -217,7 +252,8 @@ public class JointOperator implements CoercableMCMCOperator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(MCMCOperator.class,1, Integer.MAX_VALUE),
-
+                AttributeRule.newDoubleArrayRule(WEIGHT),
+                AttributeRule.newIntegerArrayRule(OPTIMIZE,true)
         };
 
     };

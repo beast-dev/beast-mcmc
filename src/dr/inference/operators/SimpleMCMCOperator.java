@@ -136,7 +136,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
 
     public double getSpan(boolean reset) {
         double span = 0;
-        if( spanDeviation[1] > spanDeviation[0] && spanCount > 20 ) {
+        if( spanDeviation[1] > spanDeviation[0] && spanCount > 2000 ) {
             span = spanDeviation[1] - spanDeviation[0];
 
             if( reset ) {

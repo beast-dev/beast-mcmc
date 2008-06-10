@@ -26,6 +26,7 @@
 package dr.inference.loggers;
 
 import dr.app.beast.BeastVersion;
+import dr.math.MathUtils;
 import dr.util.Identifiable;
 import dr.xml.*;
 
@@ -323,7 +324,7 @@ public class MCLogger implements Logger {
                 final String title = "BEAST " + version.getVersionString() +
                         ", " + version.getBuildString() + "\n" +
 
-                        "Generated " + (new Date()).toString();
+                        "Generated " + (new Date()).toString() + " [seed="+ MathUtils.getSeed()+"]";
                 logger.setTitle(title);
             }
 

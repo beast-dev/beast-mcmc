@@ -235,7 +235,7 @@ public class AncestralSequenceAnnotator {
 	}
 
 	public SubstitutionModelLoader[] modelLoaders = {
-			new SubstitutionModelLoader("Empirical(Data/wag.dat)*pi") {
+			new SubstitutionModelLoader("Empirical(wag.dat)*pi") {
 				protected void modelSpecifics(Tree tree) {
 					// Instantiate a WAG model
 					double[] freq = new double[20];
@@ -1092,7 +1092,7 @@ public class AncestralSequenceAnnotator {
 		System.out.println();
 		centreLine("Ancestral Sequence Annotator " + "v0.1" + ", " + "2008", 60);
 //				version.getVersionString() + ", " + version.getDateString(), 60);
-//		centreLine("MCMC Output analysis", 60);
+
 		System.out.println();
 		centreLine("by", 60);
 		System.out.println();
@@ -1104,10 +1104,8 @@ public class AncestralSequenceAnnotator {
 		centreLine("msuchard@ucla.edu", 60);
 		System.out.println();
 		System.out.println();
-//		centreLine("NB: A substantial portion of ")
-		System.out.println("NB: I stole a substanital portion of this code from Andrew Rambaut.");
+		System.out.println("NB: I stole a substantial portion of this code from Andrew Rambaut.");
 		System.out.println("    Please also give him due credit.");
-//		centreLine("Andrew Rambau")
 		System.out.println();
 	}
 
@@ -1123,7 +1121,7 @@ public class AncestralSequenceAnnotator {
 
 	public static void printUsage(Arguments arguments) {
 
-		arguments.printUsage("ancestralsequenceannotator", "<input-file-name> [<output-file-name>]");
+		arguments.printUsage("ancestralsequenceannotator", "<input-file-name> <output-file-name>");
 		System.out.println();
 		System.out.println("  Example: ancestralsequenceannotator test.trees out.txt");
 		System.out.println();
@@ -1189,7 +1187,7 @@ public class AncestralSequenceAnnotator {
 			targetTreeFileName = arguments.getStringOption("target");
 		}
 
-		String clustalExecutable = "/sw/bin/clustalw";
+		String clustalExecutable = "/usr/local/bin/clustalw";
 		if (arguments.hasOption("clustal")) {
 			clustalExecutable = arguments.getStringOption("clustal");
 		}

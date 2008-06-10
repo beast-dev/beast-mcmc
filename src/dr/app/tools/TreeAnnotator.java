@@ -578,18 +578,19 @@ public class TreeAnnotator {
 						for (int j = 0; j < clade.attributeValues.size(); j++) {
 							Object value = clade.attributeValues.get(j)[i];
 							if (isDiscrete) {
-                                final String s = (String) value;
-                                if (hashMap.containsKey(s)) {
-                                    hashMap.put(s, hashMap.get(s) + 1);
+								final String s = (String) value;
+								if (hashMap.containsKey(s)) {
+									hashMap.put(s, hashMap.get(s) + 1);
 								} else {
 									hashMap.put(s, 1);
 								}
 							} else if (isBoolean) {
 								values[j] = (((Boolean) value) ? 1.0 : 0.0);
 							} else if (isDoubleArray) {
-								Double[] array = (Double[]) value;
+								// Forcing to Double[] causes a cast exception. MAS
+								Object[] array = (Object[]) value;
 								for (int k = 0; k < lenArray; k++) {
-									valuesArray[k][j] = array[k];
+									valuesArray[k][j] = ((Double) array[k]);
 									if (valuesArray[k][j] < minValueArray[k]) minValueArray[k] = valuesArray[k][j];
 									if (valuesArray[k][j] > maxValueArray[k]) maxValueArray[k] = valuesArray[k][j];
 								}
@@ -653,7 +654,7 @@ public class TreeAnnotator {
 										annotateHPDAttribute(tree, node, attributeName + "2" + "_95%_HPD", 0.95, valuesArray[1]);
 
 									if (variationInFirst && variationInSecond)
-										annotate2DHPDAttribute(tree, node, attributeName + "_95%HPD", 0.95, valuesArray);
+										annotate2DHPDAttribute(tree, node, attributeName, "_95%HPD", 0.95, valuesArray);
 								}
 							}
 						}
@@ -682,8 +683,8 @@ public class TreeAnnotator {
 			for (String key : values.keySet()) {
 				int thisCount = values.get(key);
 				if (thisCount == maxCount) {
-                    // I hope this is the intention
-                    mode = mode.concat("+" + key);
+					// I hope this is the intention
+					mode = mode.concat("+" + key);
 				} else if (thisCount > maxCount) {
 					mode = key;
 					maxCount = thisCount;
@@ -774,11 +775,16 @@ public class TreeAnnotator {
 
 		public static final String CORDINATE = "cordinates";
 
-		private String formattedLocation(double x, double y) {
-			return String.format("%5.2f,%5.2f,0.00", x, y);
+//		private String formattedLocation(double loc1, double loc2) {
+//			return formattedLocation(loc1) + "," + formattedLocation(loc2);
+//		}
+
+		private String formattedLocation(double x) {
+			return String.format("%5.2f", x);
 		}
 
-		private void annotate2DHPDAttribute(MutableTree tree, NodeRef node, String label, double hpd, double[][] values) {
+		private void annotate2DHPDAttribute(MutableTree tree, NodeRef node, String preLabel, String postLabel,
+		                                    double hpd, double[][] values) {
 
 			// Uses R-Java interface, and the HPD routines from 'emdbook' and 'coda'
 
@@ -797,43 +803,44 @@ public class TreeAnnotator {
 				for (String command : rBootCommands) {
 					rEngine.eval(command);
 				}
-
-//			    called++;
-//			    System.err.println("Init call #"+called);
 			}
 
-//			int N = values[0].length / 10;
-//		    if (N > 50)
-//		        N = 50;
+			// todo Need a good method to pick grid size
 			int N = 25;
-
-			double prob = 0.95;
-
-//		    System.err.println("V0 = "+makeRString(values[0]));
-//		    System.err.println("V1 = "+makeRString(values[1]));
-//		    System.err.println("N = "+N);
 
 			REXP x = rEngine.eval("makeContour(" +
 					makeRString(values[0]) + "," +
 					makeRString(values[1]) + "," +
-					prob + "," +
+					hpd + "," +
 					N + ")");
 
 			RVector contourList = x.asVector();
 			int numberContours = contourList.size();
+
+			tree.setNodeAttribute(node, preLabel + postLabel + "_modality", numberContours);
+
 			StringBuffer output = new StringBuffer();
 			for (int i = 0; i < numberContours; i++) {
 				output.append("\n<" + CORDINATE + ">\n");
 				RVector oneContour = contourList.at(i).asVector();
 				double[] xList = oneContour.at(1).asDoubleArray();
 				double[] yList = oneContour.at(2).asDoubleArray();
+				StringBuffer xString = new StringBuffer("{");
+				StringBuffer yString = new StringBuffer("{");
 				for (int k = 0; k < xList.length; k++) {
-					output.append(formattedLocation(xList[k], yList[k]) + "\n");
+//					output.append(formattedLocation(xList[k], yList[k]) + "\n");
+					xString.append(formattedLocation(xList[k])).append(",");
+					yString.append(formattedLocation(yList[k])).append(",");
 				}
-				output.append(formattedLocation(xList[0], yList[0]) + "\n</" + CORDINATE + ">\n");
+//				output.append(formattedLocation(xList[0], yList[0]) + "\n</" + CORDINATE + ">\n");
+				xString.append(formattedLocation(xList[0])).append("}");
+				yString.append(formattedLocation(yList[0])).append("}");
+
+				tree.setNodeAttribute(node, preLabel + "1" + postLabel + "_" + (i + 1), xString);
+				tree.setNodeAttribute(node, preLabel + "2" + postLabel + "_" + (i + 1), yString);
 			}
 
-			tree.setNodeAttribute(node, label, output.toString());
+//			tree.setNodeAttribute(node, label, output.toString());
 
 //          // Uses some crap that Marc was trying to write
 //		    int gridPoints = 10;

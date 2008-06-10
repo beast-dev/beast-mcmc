@@ -578,18 +578,18 @@ public class TreeAnnotator {
 						for (int j = 0; j < clade.attributeValues.size(); j++) {
 							Object value = clade.attributeValues.get(j)[i];
 							if (isDiscrete) {
-								if (hashMap.containsKey((String) value)) {
-									int count = hashMap.get((String) value);
-									hashMap.put((String) value, count + 1);
+                                final String s = (String) value;
+                                if (hashMap.containsKey(s)) {
+                                    hashMap.put(s, hashMap.get(s) + 1);
 								} else {
-									hashMap.put((String) value, 1);
+									hashMap.put(s, 1);
 								}
 							} else if (isBoolean) {
 								values[j] = (((Boolean) value) ? 1.0 : 0.0);
 							} else if (isDoubleArray) {
-								Object[] array = (Object[]) value;
+								Double[] array = (Double[]) value;
 								for (int k = 0; k < lenArray; k++) {
-									valuesArray[k][j] = ((Double) array[k]).doubleValue();
+									valuesArray[k][j] = array[k];
 									if (valuesArray[k][j] < minValueArray[k]) minValueArray[k] = valuesArray[k][j];
 									if (valuesArray[k][j] > maxValueArray[k]) maxValueArray[k] = valuesArray[k][j];
 								}
@@ -682,7 +682,8 @@ public class TreeAnnotator {
 			for (String key : values.keySet()) {
 				int thisCount = values.get(key);
 				if (thisCount == maxCount) {
-					mode.concat("+" + key);
+                    // I hope this is the intention
+                    mode = mode.concat("+" + key);
 				} else if (thisCount > maxCount) {
 					mode = key;
 					maxCount = thisCount;

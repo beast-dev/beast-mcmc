@@ -121,7 +121,6 @@ public class XMLParser {
 
     private Object convert(Element e, boolean run, boolean doParse) throws XMLParseException {
 
-
         if (e.hasAttribute(IDREF)) {
             String idref = e.getAttribute(IDREF);
             XMLObject restoredXMLObject = (XMLObject) store.get(idref);

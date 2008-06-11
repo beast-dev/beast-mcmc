@@ -31,9 +31,9 @@
 	<target name="compile-basic" depends="init">
 		<!-- Compile the java code from ${src} into ${build} -->
 		<javac source="1.5" srcdir="${src}" destdir="${build}"
-		       classpath="${lib}/jebl.jar:${lib}/jdom.jar:${lib}/commons-math-1.2.jar:${lib}/mtj.jar:lib/colt.jar:lib/itext-1.4.5.jar:lib/junit-4.4.jar">
+		       classpath="${lib}/jebl.jar:${lib}/jdom.jar:${lib}/commons-math-1.2.jar:${lib}/mtj.jar:lib/colt.jar:lib/itext-1.4.5.jar:lib/junit-4.4.jar:lib/JRI.jar">
 			<include name="dr/app/beast/**"/>
-			<include name="dr/app/beastdev/**"/>
+			<!--<include name="dr/app/beastdev/**"/>-->
 			<include name="dr/app/beauti/**"/>
 			<include name="dr/app/tools/**"/>
 			<include name="dr/app/util/**"/>
@@ -66,7 +66,7 @@
 			</manifest>
 			<fileset dir="${build}">
 				<include name="dr/app/beast/**/*.class"/>
-				<include name="dr/app/beastdev/**/*.class"/>
+				<!--<include name="dr/app/beastdev/**/*.class"/>-->
 				<include name="dr/app/util/**/*.class"/>
 				<include name="dr/app/tools/**/*.class"/>
 				<include name="dr/evolution/**/*.class"/>
@@ -93,7 +93,8 @@
             <zipgroupfileset dir="${lib}" includes="jdom.jar"/>
             <zipgroupfileset dir="${lib}" includes="commons-math-1.2.jar"/>
             <zipgroupfileset dir="${lib}" includes="mtj.jar"/>
-		</jar>
+            <zipgroupfileset dir="${lib}" includes="JRI.jar"/>
+        </jar>
 
 		<!-- Put everything in ${build} into the beauti.jar file -->
 		<jar jarfile="${dist}/beauti.jar">

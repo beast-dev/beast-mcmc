@@ -361,6 +361,17 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
 	/**
 	 * A special parser that reads a convenient short form of priors on parameters.
+	 * 
+	 * If X ~ logNormal, then log(X) ~ Normal.
+	 * <br>
+	 * <br>
+	 * If meanInRealSpace=false, <code>mean</code> specifies the mean of log(X) and
+	 * <code>stdev</code> specifies the standard deviation of log(X).  
+	 * <br>
+	 * <br>
+	 * If meanInRealSpace=true, <code>mean</code> specifies the mean of X, but <code>
+	 * stdev</code> specifies the standard deviation of log(X).  
+	 * <br>
 	 */
 	public static XMLObjectParser LOG_NORMAL_PRIOR_PARSER = new AbstractXMLObjectParser() {
 

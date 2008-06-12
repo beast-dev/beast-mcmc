@@ -106,8 +106,14 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 					}
 
 				} else if (dataType instanceof dr.evolution.datatype.AminoAcids) {
-					coreName = "Java amino acid";
-					likelihoodCore = new AminoAcidLikelihoodCore();
+					if (NativeAminoAcidLikelihoodCore.isAvailable()) {
+						coreName = "native amino acid";
+						likelihoodCore = new NativeAminoAcidLikelihoodCore();
+					} else {
+						coreName = "Java amino acid";
+						likelihoodCore = new AminoAcidLikelihoodCore();
+					}
+									
 				} else if (dataType instanceof dr.evolution.datatype.Codons) {
 					coreName = "Java codon";
 					likelihoodCore = new CodonLikelihoodCore(patternList.getStateCount());

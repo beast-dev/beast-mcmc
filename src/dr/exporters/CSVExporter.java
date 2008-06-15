@@ -55,7 +55,7 @@ public class CSVExporter extends AbstractXMLObjectParser {
                                 final String name = column.getStringAttribute(COLUMN_NAME);
                                 final int n = source.getColumn(name);
                                 if( n < 0 ) {
-                                    throw new XMLParseException("unsupported column name" + name);
+                                    throw new XMLParseException("column '" + name + "' not found in log.");
                                 }
                                 iColumns.add(n);
 

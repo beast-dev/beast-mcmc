@@ -239,6 +239,16 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		a.set(fieldLength - 1, fieldLength - 1, a.get(fieldLength - 1, fieldLength - 1) * precision);
 		return a;
 	}
+	
+	public SymmTridiagMatrix getStoredScaledWeightMatrix(double precision) {
+		SymmTridiagMatrix a = storedWeightMatrix.copy();
+		for (int i = 0; i < a.numRows() - 1; i++) {
+			a.set(i, i, a.get(i, i) * precision);
+			a.set(i + 1, i, a.get(i + 1, i) * precision);
+		}
+		a.set(fieldLength - 1, fieldLength - 1, a.get(fieldLength - 1, fieldLength - 1) * precision);
+		return a;
+	}
 
 	public SymmTridiagMatrix getScaledWeightMatrix(double precision, double lambda) {
 		if (lambda == 1)
@@ -256,6 +266,20 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 
 	public SymmTridiagMatrix getCopyWeightMatrix() {
 		return weightMatrix.copy();
+	}
+	
+	public SymmTridiagMatrix getStoredScaledWeightMatrix(double precision, double lambda){
+		if (lambda == 1)
+			return getStoredScaledWeightMatrix(precision);
+
+		SymmTridiagMatrix a = storedWeightMatrix.copy();
+		for (int i = 0; i < a.numRows() - 1; i++) {
+			a.set(i, i, precision * (1 - lambda + lambda * a.get(i, i)));
+			a.set(i + 1, i, a.get(i + 1, i) * precision * lambda);
+		}
+
+		a.set(fieldLength - 1, fieldLength - 1, precision * (1 - lambda + lambda * a.get(fieldLength - 1, fieldLength - 1)));
+		return a;
 	}
 
 

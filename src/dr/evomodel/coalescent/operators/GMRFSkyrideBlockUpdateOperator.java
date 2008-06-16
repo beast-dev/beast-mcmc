@@ -236,7 +236,7 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
 		DenseVector currentGamma = new DenseVector(gmrfField.getPopSizeParameter().getParameterValues());
 		DenseVector proposedGamma;
 
-		SymmTridiagMatrix currentQ = gmrfField.getScaledWeightMatrix(currentPrecision, currentLambda);
+		SymmTridiagMatrix currentQ = gmrfField.getStoredScaledWeightMatrix(currentPrecision, currentLambda);
 		SymmTridiagMatrix proposedQ = gmrfField.getScaledWeightMatrix(proposedPrecision, proposedLambda);
 
 

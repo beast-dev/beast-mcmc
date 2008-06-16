@@ -198,7 +198,7 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
 			}
 		}
 
-		Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").warning("Newton-Raphson S");
+		Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson S");
 		return iterateGamma;
 
 	}

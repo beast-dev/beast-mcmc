@@ -35,31 +35,41 @@ import java.util.List;
  * @version $Id: OperatorSchedule.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface OperatorSchedule {
-    /**
-     *
-     * @return Choose the next operator.
-     */
-    public int getNextOperatorIndex();
+	/**
+	 * @return Choose the next operator.
+	 */
+	public int getNextOperatorIndex();
 
-    /**
-     *
-     * @return  Total number of operators
-     */
-    public int getOperatorCount();
+	/**
+	 * @return Total number of operators
+	 */
+	public int getOperatorCount();
 
-    /**
-     *
-     * @param index
-     * @return  the index'th operator
-     */
-    public MCMCOperator getOperator(int index);
+	/**
+	 * @param index
+	 * @return the index'th operator
+	 */
+	public MCMCOperator getOperator(int index);
 
-    public void addOperator(MCMCOperator op);
+	public void addOperator(MCMCOperator op);
 
-    public void addOperators(List<MCMCOperator> v);
+	public void addOperators(List<MCMCOperator> v);
 
-    /**
-     * Should be called after operators weight is externally changed.
-     */
-    public void operatorsHasBeenUpdated(); 
+	/**
+	 * Should be called after operators weight is externally changed.
+	 */
+	public void operatorsHasBeenUpdated();
+
+	/**
+	 * @return the optimization schedule
+	 */
+	public double getOptimizationTransform(double d);
+
+	final int DEFAULT_SCHEDULE = 0;
+	final int LOG_SCHEDULE = 1;
+	final int SQRT_SCHEDULE = 2;
+
+	final String DEFAULT_STRING = "default";
+	final String LOG_STRING = "log";
+	final String SQRT_STRING = "sqrt";
 }

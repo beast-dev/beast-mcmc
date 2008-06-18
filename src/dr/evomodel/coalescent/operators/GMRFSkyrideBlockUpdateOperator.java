@@ -433,7 +433,7 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
 //            if (scaleFactor <= 0.0) {
 //                throw new XMLParseException("scaleFactor must be greater than 0.0");
 			if (scaleFactor < 1.0) {
-				throw new XMLParseException("scaleFactor must be greater than or equal to 0.0");
+				throw new XMLParseException("scaleFactor must be greater than or equal to 1.0");
 			}
 
 			int maxIterations = 200;

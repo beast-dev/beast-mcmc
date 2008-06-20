@@ -336,8 +336,8 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 
         int v = 0;
 		for (int k = 0; k < patternCount; k++) {
-//            double logScalingFactor = getLogScalingFactor(k);
-			double logScalingFactor = 0;
+            double logScalingFactor = getLogScalingFactor(k);
+//			double logScalingFactor = 0;
 			double sum = frequencies[0] * partials[v];	v++;
 			sum += frequencies[1] * partials[v];	v++;
 			sum += frequencies[2] * partials[v];	v++;

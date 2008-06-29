@@ -118,8 +118,6 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.coalescent.CoalescentSimulator.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.CoalescentLikelihood.PARSER);
 
-		addXMLObjectParser(dr.evomodel.coalescent.OldAbstractCoalescentLikelihood.PARSER);
-
 		// Functionality of this is now rolled into CoalescentLikelihood
 		//addXMLObjectParser(dr.evomodel.coalescent.CoalescentMRCALikelihood.PARSER);
 

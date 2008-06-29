@@ -717,88 +717,88 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
     // Private and protected stuff
     // ****************************************************************
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return COALESCENT_LIKELIHOOD;
-        }
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject cxo = (XMLObject) xo.getChild(MODEL);
-            DemographicModel demoModel = (DemographicModel) cxo.getChild(DemographicModel.class);
-
-            List<TreeModel> trees = new ArrayList<TreeModel>();
-            List<Double> popFactors = new ArrayList<Double>();
-            MultiLociTreeSet treesSet = demoModel instanceof MultiLociTreeSet ? (MultiLociTreeSet)demoModel : null;
-
-            for(int k = 0; k < xo.getChildCount(); ++k) {
-                final Object child = xo.getChild(k);
-                if( child instanceof XMLObject ) {
-                    cxo = (XMLObject)child;
-                    if( cxo.getName().equals(POPULATION_TREE) ) {
-                        final TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
-                        if( treeModel == null ) {
-                            // xml check not done yet?
-                            throw new XMLParseException("Expecting a tree model.");
-                        }
-                        trees.add(treeModel);
-
-                        try {
-                            double v = cxo.hasAttribute(POPULATION_FACTOR) ?
-                                    cxo.getDoubleAttribute(POPULATION_FACTOR) : 1.0;
-                            popFactors.add(v);
-                        } catch (XMLParseException e) {
-                            throw new XMLParseException(e.getMessage());
-                        }
-                    }
-                } else if( child instanceof MultiLociTreeSet )  {
-                    treesSet = (MultiLociTreeSet)child;
-                }
-            }
-
-            TreeModel treeModel = null;
-            if( trees.size() == 1 && popFactors.get(0) == 1.0 ) {
-                treeModel = trees.get(0);
-            } else if( trees.size() > 1 ) {
-               treesSet = new MultiLociTreeSet.Default(trees, popFactors);
-            } else if( !(trees.size() == 0 && treesSet != null) ) {
-               throw new XMLParseException("error");
-            }
-
-            if( treeModel != null ) {
-                return new OldAbstractCoalescentLikelihood(treeModel, demoModel);
-            }
-            return new OldAbstractCoalescentLikelihood(treesSet, demoModel);
-        }
-
-
-        //************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents the likelihood of the tree given the demographic function.";
-        }
-
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(MODEL, new XMLSyntaxRule[] {
-				new ElementRule(DemographicModel.class)
-			}),
-			new ElementRule(POPULATION_TREE, new XMLSyntaxRule[] {
-                    AttributeRule.newDoubleRule(POPULATION_FACTOR, true),
-                new ElementRule(TreeModel.class)
-			}, 0, Integer.MAX_VALUE),
-		};
-	};
+//    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+//
+//        public String getParserName() {
+//            return COALESCENT_LIKELIHOOD;
+//        }
+//
+//		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+//
+//            XMLObject cxo = (XMLObject) xo.getChild(MODEL);
+//            DemographicModel demoModel = (DemographicModel) cxo.getChild(DemographicModel.class);
+//
+//            List<TreeModel> trees = new ArrayList<TreeModel>();
+//            List<Double> popFactors = new ArrayList<Double>();
+//            MultiLociTreeSet treesSet = demoModel instanceof MultiLociTreeSet ? (MultiLociTreeSet)demoModel : null;
+//
+//            for(int k = 0; k < xo.getChildCount(); ++k) {
+//                final Object child = xo.getChild(k);
+//                if( child instanceof XMLObject ) {
+//                    cxo = (XMLObject)child;
+//                    if( cxo.getName().equals(POPULATION_TREE) ) {
+//                        final TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
+//                        if( treeModel == null ) {
+//                            // xml check not done yet?
+//                            throw new XMLParseException("Expecting a tree model.");
+//                        }
+//                        trees.add(treeModel);
+//
+//                        try {
+//                            double v = cxo.hasAttribute(POPULATION_FACTOR) ?
+//                                    cxo.getDoubleAttribute(POPULATION_FACTOR) : 1.0;
+//                            popFactors.add(v);
+//                        } catch (XMLParseException e) {
+//                            throw new XMLParseException(e.getMessage());
+//                        }
+//                    }
+//                } else if( child instanceof MultiLociTreeSet )  {
+//                    treesSet = (MultiLociTreeSet)child;
+//                }
+//            }
+//
+//            TreeModel treeModel = null;
+//            if( trees.size() == 1 && popFactors.get(0) == 1.0 ) {
+//                treeModel = trees.get(0);
+//            } else if( trees.size() > 1 ) {
+//               treesSet = new MultiLociTreeSet.Default(trees, popFactors);
+//            } else if( !(trees.size() == 0 && treesSet != null) ) {
+//               throw new XMLParseException("error");
+//            }
+//
+//            if( treeModel != null ) {
+//                return new OldAbstractCoalescentLikelihood(treeModel, demoModel);
+//            }
+//            return new OldAbstractCoalescentLikelihood(treesSet, demoModel);
+//        }
+//
+//
+//        //************************************************************************
+//		// AbstractXMLObjectParser implementation
+//		//************************************************************************
+//
+//        public String getParserDescription() {
+//            return "This element represents the likelihood of the tree given the demographic function.";
+//        }
+//
+//        public Class getReturnType() {
+//            return Likelihood.class;
+//        }
+//
+//        public XMLSyntaxRule[] getSyntaxRules() {
+//            return rules;
+//        }
+//
+//		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+//			new ElementRule(MODEL, new XMLSyntaxRule[] {
+//				new ElementRule(DemographicModel.class)
+//			}),
+//			new ElementRule(POPULATION_TREE, new XMLSyntaxRule[] {
+//                    AttributeRule.newDoubleRule(POPULATION_FACTOR, true),
+//                new ElementRule(TreeModel.class)
+//			}, 0, Integer.MAX_VALUE),
+//		};
+//	};
 
     // ****************************************************************
     // Private and protected stuff

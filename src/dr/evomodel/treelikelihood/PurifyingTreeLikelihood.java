@@ -112,7 +112,7 @@ public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
 						
 			probabilities = new double[stateCount * stateCount];
 
-			likelihoodCore.initialize(nodeCount, patternCount, categoryCount, integrateAcrossCategories, false);
+			likelihoodCore.initialize(nodeCount, patternCount, categoryCount, integrateAcrossCategories);
 			
 			int extNodeCount = treeModel.getExternalNodeCount();
 			int intNodeCount = treeModel.getInternalNodeCount();
@@ -394,10 +394,9 @@ public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
 				int childNum2 = child2.getNumber();
 			
 				if (integrateAcrossCategories) {
-					likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
+					likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, false);
 				} else {
-					likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum,
-														siteCategories);
+					likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, siteCategories, false);
 				}
 				
 				if (parent == null) {

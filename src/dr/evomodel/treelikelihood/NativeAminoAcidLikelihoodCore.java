@@ -55,9 +55,10 @@ public class NativeAminoAcidLikelihoodCore extends AbstractLikelihoodCore{
 	public void calculateLogLikelihoods(double[] partials,
 			double[] frequencies, double[] outLogLikelihoods) {
 		
+        double logScalingFactor = getTotalLogScalingFactor();
+
 		int v = 0;
 		for (int k = 0; k < patternCount; k++) {
-            double logScalingFactor = getLogScalingFactor(k);
 
 			double sum = frequencies[0] * partials[v];	v++;
 			sum += frequencies[1] * partials[v];	v++;
@@ -85,7 +86,6 @@ public class NativeAminoAcidLikelihoodCore extends AbstractLikelihoodCore{
 			sum += frequencies[19] * partials[v];	v++;
             outLogLikelihoods[k] = Math.log(sum) + logScalingFactor;
 		}
-        checkScaling();
 	}
 	
 	public native void nativeIntegratePartials(double[] partials, double[] proportions,

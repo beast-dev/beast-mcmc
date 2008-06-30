@@ -49,7 +49,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 	                                    boolean useScaling,
 	                                    DataType dataType,
 	                                    String tag) {
-		super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials, useScaling, false);
+		super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials, 0, 1.0, false);
 		this.dataType = dataType;
 		this.tag = tag;
 
@@ -254,9 +254,6 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 			if (xo.hasAttribute(STORE_PARTIALS)) {
 				storePartials = xo.getBooleanAttribute(STORE_PARTIALS);
 			}
-			if (xo.hasAttribute(USE_SCALING)) {
-				useScaling = xo.getBooleanAttribute(USE_SCALING);
-			}
 
 			PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -293,7 +290,6 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 				AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
 				AttributeRule.newBooleanRule(STORE_PARTIALS, true),
-				AttributeRule.newBooleanRule(USE_SCALING, true),
 				AttributeRule.newStringRule(TAG_NAME, true),
 				new ElementRule(PatternList.class),
 				new ElementRule(TreeModel.class),

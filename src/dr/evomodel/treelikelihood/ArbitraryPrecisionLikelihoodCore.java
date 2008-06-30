@@ -25,7 +25,11 @@
 
 package dr.evomodel.treelikelihood;
 
+import dr.math.BigDecimalUtils;
+
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
 
 /**
  * GeneralLikelihoodCore - An implementation of LikelihoodCore for any data
@@ -36,6 +40,8 @@ import java.math.BigDecimal;
  */
 
 public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
+
+    private MathContext precision;
 
     private int stateCount;
     private int nodeCount;
@@ -63,9 +69,10 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
 	 *
 	 * @param stateCount number of states
 	 */
-	public ArbitraryPrecisionLikelihoodCore(int stateCount) {
+	public ArbitraryPrecisionLikelihoodCore(int stateCount, int precision) {
         this.stateCount = stateCount;
-	}
+        this.precision = new MathContext(precision);
+    }
 
     /**
      * initializes partial likelihood arrays.
@@ -75,7 +82,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
      * @param matrixCount         the number of matrices (i.e., number of categories)
      * @param integrateCategories whether sites are being integrated over all matrices
      */
-    public void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories, boolean useScaling) {
+    public void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories) {
 
         this.nodeCount = nodeCount;
         this.patternCount = patternCount;
@@ -151,13 +158,13 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
             int k = 0;
             for (int i = 0; i < matrixCount; i++) {
                 for (int j = 0; j < partials.length; j++) {
-                    this.partials[0][nodeIndex][k] = BigDecimal.valueOf(partials[j]);
+                    this.partials[0][nodeIndex][k] = new BigDecimal(partials[j], precision);
                     k++;
                 }
             }
         } else {
             for (int j = 0; j < partials.length; j++) {
-                this.partials[0][nodeIndex][j] = BigDecimal.valueOf(partials[j]);
+                this.partials[0][nodeIndex][j] = new BigDecimal(partials[j], precision);
             }
         }
     }
@@ -199,7 +206,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
     public void setNodeMatrix(int nodeIndex, int matrixIndex, double[] matrix) {
 
         for (int j = 0; j < matrixSize; j++) {
-            matrices[currentMatricesIndices[nodeIndex]][nodeIndex][(matrixIndex * matrixSize) + j] = BigDecimal.valueOf(matrix[j]);
+            matrices[currentMatricesIndices[nodeIndex]][nodeIndex][(matrixIndex * matrixSize) + j] = new BigDecimal(matrix[j], precision);
         }
     }
 
@@ -223,7 +230,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
      * @param nodeIndex2 the 'child 2' node
      * @param nodeIndex3 the 'parent' node
      */
-    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3) {
+    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, boolean doScaling) {
         if (states[nodeIndex1] != null) {
             if (states[nodeIndex2] != null) {
                 calculateStatesStatesPruning(
@@ -270,7 +277,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
 
 					for (int i = 0; i < stateCount; i++) {
 
-						partials3[v] = matrices1[w + state1].multiply(matrices2[w + state2]);
+						partials3[v] = matrices1[w + state1].multiply(matrices2[w + state2], precision);
 
 						v++;
 						w += stateCount;
@@ -337,11 +344,11 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
 
 						sum = BigDecimal.ZERO;
 						for (int j = 0; j < stateCount; j++) {
-							sum = sum.add(matrices2[w].multiply(partials2[v + j]));
+							sum = sum.add(matrices2[w].multiply(partials2[v + j], precision), precision);
 							w++;
 						}
 
-						partials3[u] = tmp.multiply(sum);
+						partials3[u] = tmp.multiply(sum, precision);
 						u++;
 					}
 
@@ -353,7 +360,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
 
                         sum = BigDecimal.ZERO;
 						for (int j = 0; j < stateCount; j++) {
-							sum = sum.add(matrices2[w].multiply(partials2[v + j]));
+							sum = sum.add(matrices2[w].multiply(partials2[v + j], precision), precision);
 							w++;
 						}
 
@@ -390,13 +397,13 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
 					sum1 = sum2 = BigDecimal.ZERO;
 
 					for (int j = 0; j < stateCount; j++) {
-						sum1 = sum1.add(matrices1[w].multiply(partials1[v + j]));
-						sum2 = sum2.add(matrices2[w].multiply(partials2[v + j]));
+						sum1 = sum1.add(matrices1[w].multiply(partials1[v + j], precision), precision);
+						sum2 = sum2.add(matrices2[w].multiply(partials2[v + j], precision), precision);
 
 						w++;
 					}
 
-					partials3[u] = sum1.multiply(sum2);
+					partials3[u] = sum1.multiply(sum2, precision);
 					u++;
 				}
 				v += stateCount;
@@ -412,7 +419,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
      * @param nodeIndex3 the 'parent' node
      * @param matrixMap  a map of which matrix to use for each pattern (can be null if integrating over categories)
      */
-    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap) {
+    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap, boolean doScaling) {
          throw new UnsupportedOperationException("calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap) is not implemented in this likelihood core");                                                                                                   
     }
 
@@ -424,7 +431,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
     public void integratePartials(int nodeIndex, double[] proportions, BigDecimal[] outPartials) {
         BigDecimal[] prop = new BigDecimal[proportions.length];
         for (int i = 0; i < proportions.length; i++) {
-            prop[i] = BigDecimal.valueOf(proportions[i]);
+            prop[i] = new BigDecimal(proportions[i], precision);
         }
         calculateIntegratePartials(partials[currentPartialsIndices[nodeIndex]][nodeIndex], prop, outPartials);
     }
@@ -444,7 +451,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
 
 			for (int i = 0; i < stateCount; i++) {
 
-				outPartials[u] = inPartials[v].multiply(proportions[0]);
+				outPartials[u] = inPartials[v].multiply(proportions[0], precision);
 				u++;
 				v++;
 			}
@@ -458,7 +465,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
 
 				for (int i = 0; i < stateCount; i++) {
 
-					outPartials[u] = outPartials[u].add(inPartials[v].multiply(proportions[l]));
+					outPartials[u] = outPartials[u].add(inPartials[v].multiply(proportions[l], precision), precision);
 					u++;
 					v++;
 				}
@@ -476,7 +483,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
     {
         BigDecimal[] freqs = new BigDecimal[frequencies.length];
         for (int i = 0; i < freqs.length; i++) {
-            freqs[i] = BigDecimal.valueOf(frequencies[i]);
+            freqs[i] = new BigDecimal(frequencies[i], precision);
         }
 
         int v = 0;
@@ -485,15 +492,28 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
             BigDecimal sum = BigDecimal.ZERO;
             for (int i = 0; i < stateCount; i++) {
 
-                sum = sum.add(freqs[i].multiply(partials[v]));
+                sum = sum.add(freqs[i].multiply(partials[v], precision), precision);
                 v++;
             }
-            outLogLikelihoods[k] = Math.log(sum.unscaledValue().doubleValue()) - sum.scale()*Math.log(10);
+
+            double scale = sum.scale();
+            double value = sum.unscaledValue().doubleValue();
+//            outLogLikelihoods[k] = Math.log(value) + (Math.log(10.0) / scale);
+            outLogLikelihoods[k] = Math.log(value) - (scale * Math.log(10));
+
+//            outLogLikelihoods[k] = BigDecimalUtils.ln(sum, 10).doubleValue();
         }
     }
 
     public void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods) {
         throw new UnsupportedOperationException("calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods) is not implemented in this likelihood core");
+    }
+
+    public void setScalingFactor(double scalingFactor) {
+    }
+
+    public double getTotalLogScalingFactor() {
+        return 0;
     }
 
     /**

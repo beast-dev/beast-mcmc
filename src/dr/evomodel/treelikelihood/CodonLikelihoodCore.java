@@ -78,7 +78,7 @@ public class CodonLikelihoodCore implements LikelihoodCore {
      * @param matrixCount the number of matrices (i.e., number of categories)
      * @param integrateCategories whether sites are being integrated over all matrices
      */
-    public void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories, boolean useScaling) {
+    public void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories) {
 
         this.nodeCount = nodeCount;
         this.patternCount = patternCount;
@@ -283,7 +283,7 @@ public class CodonLikelihoodCore implements LikelihoodCore {
      * @param nodeIndex2 the 'child 2' node
      * @param nodeIndex3 the 'parent' node
      */
-    public void calculatePartials( int nodeIndex1, int nodeIndex2, int nodeIndex3 )
+    public void calculatePartials( int nodeIndex1, int nodeIndex2, int nodeIndex3, boolean doScaling)
     {
         double[] partials1 = partials[nodeIndex1];
         double[] matrices1 = matrices[nodeIndex1];
@@ -333,7 +333,7 @@ public class CodonLikelihoodCore implements LikelihoodCore {
      * @param nodeIndex3 the 'parent' node
      * @param matrixMap a map of which matrix to use for each pattern (can be null if integrating over categories)
      */
-    public void calculatePartials( int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap )
+    public void calculatePartials( int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap, boolean doScaling)
     {
         throw new RuntimeException("calculatePartials not implemented for CodonLikelihoodCore");
     }
@@ -414,6 +414,14 @@ public class CodonLikelihoodCore implements LikelihoodCore {
         }
         checkScaling();
     }
+
+    public void setScalingFactor(double scalingFactor) {
+    }
+
+    public double getTotalLogScalingFactor() {
+        return 0;
+    }
+
 
     /**
      * Store current state

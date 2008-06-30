@@ -108,11 +108,11 @@ public class TipsTreeLikelihood extends AbstractTreeLikelihood {
 			externalNodeCount = treeModel.getExternalNodeCount();
 			int intNodeCount = treeModel.getInternalNodeCount();
 
-			likelihoodCore.initialize(nodeCount, patternCount, categoryCount, true, useScaling);
+			likelihoodCore.initialize(nodeCount, patternCount, categoryCount, true);
 			
 			// we only need nodes for the tips + 2 extra: 1 for a set of dummy unknown states
 			// and one for the temporary destination partials
-			tipsLikelihoodCore.initialize(externalNodeCount + 2, patternCount, categoryCount, true, false);
+			tipsLikelihoodCore.initialize(externalNodeCount + 2, patternCount, categoryCount, true);
 			
 			for (int i = 0; i < externalNodeCount; i++) {
 				// Find the id of tip i in the patternList
@@ -256,7 +256,7 @@ public class TipsTreeLikelihood extends AbstractTreeLikelihood {
 					tipsLikelihoodCore.setNodeMatrix(i, j, probabilities);
 				}
 
-				tipsLikelihoodCore.calculatePartials(i, externalNodeCount, externalNodeCount + 1);
+				tipsLikelihoodCore.calculatePartials(i, externalNodeCount, externalNodeCount + 1, false);
 				
 				tipsLikelihoodCore.integratePartials(externalNodeCount + 1, proportions, rootPartials);
 				likelihoodCore.setNodePartials(i, rootPartials);
@@ -354,7 +354,7 @@ public class TipsTreeLikelihood extends AbstractTreeLikelihood {
 				int childNum1 = child1.getNumber();				
 				int childNum2 = child2.getNumber();
 			
-				likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
+				likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, false);
 				
 				if (parent == null) {
 					// No parent this is the root of the tree - 

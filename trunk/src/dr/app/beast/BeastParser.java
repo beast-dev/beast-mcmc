@@ -179,6 +179,7 @@ public class BeastParser extends XMLParser {
 //        addXMLObjectParser(new dr.evoxml.BinarySubstitutionModelParser());
 
 		addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
+//        addXMLObjectParser(dr.evomodel.treelikelihood.ExperimentalTreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.treelikelihood.AdvancedTreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.treelikelihood.TipsTreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.treelikelihood.PurifyingTreeLikelihood.PARSER);

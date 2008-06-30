@@ -70,12 +70,14 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
                                           boolean useAmbiguities,
                                           boolean allowMissingTaxa,
                                           boolean storePartials,
-                                          boolean useScaling)
+                                          int scalingThreshold,
+                                          double scalingFactor)
     {
 
         super(TREE_LIKELIHOOD, patternList, treeModel);
 
         this.storePartials = storePartials;
+        this.scalingThreshold = scalingThreshold;
 
         try {
             this.siteModel = siteModel;
@@ -89,12 +91,13 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
             final Logger logger = Logger.getLogger("dr.evomodel");
             String coreName = "Java general";
             likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
-            precisionLikelihoodCore = new ArbitraryPrecisionLikelihoodCore(patternList.getStateCount());
+            precisionLikelihoodCore = new ArbitraryPrecisionLikelihoodCore(patternList.getStateCount(), 20);
 
             logger.info("ExperimentalTreeLikelihood using " + coreName + " likelihood core");
 
             logger.info( "  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
-            logger.info("  Partial likelihood scaling " + (useScaling ? "on." : "off."));
+            logger.info("  Partial likelihood scaling " + (scalingThreshold > 0 ?
+                    "on: node count threshold = " + scalingThreshold + ", factor = " + scalingFactor : "off."));
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;
@@ -106,8 +109,9 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 
             probabilities = new double[stateCount * stateCount];
 
-            likelihoodCore.initialize(nodeCount, patternCount, categoryCount, true, useScaling);
-            precisionLikelihoodCore.initialize(nodeCount, patternCount, categoryCount, true, useScaling);
+            likelihoodCore.initialize(nodeCount, patternCount, categoryCount, true);
+            likelihoodCore.setScalingFactor(scalingFactor);
+            precisionLikelihoodCore.initialize(nodeCount, patternCount, categoryCount, true);
 
             int extNodeCount = treeModel.getExternalNodeCount();
             int intNodeCount = treeModel.getInternalNodeCount();
@@ -251,8 +255,13 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
             patternLogLikelihoods = new double[patternCount];
         }
 
+        if (precisionPatternLogLikelihoods == null) {
+            precisionPatternLogLikelihoods = new double[patternCount];
+        }
+
         final NodeRef root = treeModel.getRoot();
-        traverse(treeModel, root);
+        int[] nodeCounter = new int[] { 0 };
+        traverse(treeModel, root, nodeCounter);
 
         //********************************************************************
         // after traverse all nodes and patterns have been updated --
@@ -274,7 +283,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
             precisionLogL += precisionPatternLogLikelihoods[i] * patternWeights[i];
         }
 
-        if (logL != precisionLogL) {
+        if (Math.abs(logL - precisionLogL) > 1.0E-5 ) {
             System.out.println("logL = " + logL + " precision logL = " + precisionLogL);
         }
         return logL;
@@ -284,7 +293,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
      * Traverse the tree calculating partial likelihoods.
      * @return whether the partials for this node were recalculated.
      */
-    private boolean traverse(Tree tree, NodeRef node) {
+    private boolean traverse(Tree tree, NodeRef node, int[] nodeCounter) {
 
         boolean update = false;
 
@@ -324,12 +333,16 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 //            if (nodeCount != 2)
 //                throw new RuntimeException("binary trees only!");
 
+            int[] childCounter = new int[] { 0 };
+
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverse(tree, child1);
+            final boolean update1 = traverse(tree, child1, childCounter);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverse(tree, child2);
+            final boolean update2 = traverse(tree, child2, childCounter);
+
+            nodeCounter[0] += childCounter[0];
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
@@ -340,8 +353,14 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
                 likelihoodCore.setNodePartialsForUpdate(nodeNum);
                 precisionLikelihoodCore.setNodePartialsForUpdate(nodeNum);
 
-                likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
-                precisionLikelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
+                boolean doScaling = false;
+
+                if (nodeCounter[0] > scalingThreshold) {
+                    doScaling = true;
+                    nodeCounter[0] = 0;
+                }
+                likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, doScaling);
+                precisionLikelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, doScaling);
 
                 if (parent == null) {
                     // No parent this is the root of the tree -
@@ -359,6 +378,8 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
             }
         }
 
+        nodeCounter[0]++;
+
         return update;
 
     }
@@ -375,10 +396,6 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 
         return rootPartials;
     }
-    /** the root partial likelihoods (a temporary array that is used
-     * to fetch the partials - it should not be examined directly -
-     * use getRootPartials() instead).
-     */
     private double[] rootPartials = null;
 
     public final BigDecimal[] getPrecisionRootPartials() {
@@ -394,10 +411,6 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
         return precisionRootPartials;
     }
 
-    /** the root partial likelihoods (a temporary array that is used
-     * to fetch the partials - it should not be examined directly -
-     * use getRootPartials() instead).
-     */
     private BigDecimal[] precisionRootPartials = null;
 
     /**
@@ -438,7 +451,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
                     treeModel,
                     siteModel,
                     branchRateModel,
-                    useAmbiguities, allowMissingTaxa, storePartials, useScaling);
+                    useAmbiguities, allowMissingTaxa, storePartials, 50, 1.0E-4);
         }
 
         //************************************************************************
@@ -498,4 +511,6 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
     /** the LikelihoodCore */
     protected LikelihoodCore likelihoodCore;
     protected ArbitraryPrecisionLikelihoodCore precisionLikelihoodCore;
+
+    private int scalingThreshold;
 }

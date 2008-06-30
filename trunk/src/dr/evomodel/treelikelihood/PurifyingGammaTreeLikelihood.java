@@ -104,7 +104,7 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
 						
 			probabilities = new double[stateCount * stateCount];
 
-			likelihoodCore.initialize(nodeCount, patternCount, categoryCount, true, false);
+			likelihoodCore.initialize(nodeCount, patternCount, categoryCount, true);
 			
 			int extNodeCount = treeModel.getExternalNodeCount();
 			int intNodeCount = treeModel.getInternalNodeCount();
@@ -353,7 +353,7 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
 				int childNum1 = child1.getNumber();				
 				int childNum2 = child2.getNumber();
 			
-				likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
+				likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, false);
 				
 				if (parent == null) {
 					// No parent this is the root of the tree - 

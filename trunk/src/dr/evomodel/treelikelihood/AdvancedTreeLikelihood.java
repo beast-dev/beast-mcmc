@@ -130,7 +130,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
             probabilities = new double[stateCount * stateCount];
 
-            likelihoodCore.initialize(nodeCount, patternCount, categoryCount, true, useScaling);
+            likelihoodCore.initialize(nodeCount, patternCount, categoryCount, true);
 
             int extNodeCount = treeModel.getExternalNodeCount();
             int intNodeCount = treeModel.getInternalNodeCount();
@@ -449,7 +449,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
                 likelihoodCore.setNodePartialsForUpdate(nodeNum);
 
-                likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
+                likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, false);
 
                 if (parent == null) {
                     // No parent this is the root of the tree -

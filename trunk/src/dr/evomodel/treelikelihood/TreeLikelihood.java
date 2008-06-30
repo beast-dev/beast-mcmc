@@ -56,7 +56,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String ALLOW_MISSING_TAXA = "allowMissingTaxa";
     public static final String STORE_PARTIALS = "storePartials";
-    public static final String USE_SCALING = "useScaling";
+    public static final String SCALING_FACTOR = "scalingFactor";
+    public static final String SCALING_THRESHOLD = "scalingThreshold";
     public static final String FORCE_JAVA_CORE = "forceJavaCore";
 
     /**
@@ -70,13 +71,15 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                               boolean useAmbiguities,
                               boolean allowMissingTaxa,
                               boolean storePartials,
-                              boolean useScaling,
+                              int scalingThreshold,
+                              double scalingFactor,
                               boolean forceJavaCore)
     {
 
         super(TREE_LIKELIHOOD, patternList, treeModel);
 
         this.storePartials = storePartials;
+        this.scalingThreshold = scalingThreshold;
 
         try {
             this.siteModel = siteModel;
@@ -129,7 +132,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             logger.info("TreeLikelihood using " + coreName + " likelihood core");
 
             logger.info( "  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
-            logger.info("  Partial likelihood scaling " + (useScaling ? "on." : "off."));
+            logger.info("  Partial likelihood scaling " + (scalingThreshold > 0 ?
+                    "on: node count threshold = " + scalingThreshold + ", factor = " + scalingFactor : "off."));
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;
@@ -141,7 +145,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             probabilities = new double[stateCount * stateCount];
 
-            likelihoodCore.initialize(nodeCount, patternCount, categoryCount, integrateAcrossCategories, useScaling);
+            likelihoodCore.initialize(nodeCount, patternCount, categoryCount, integrateAcrossCategories);
+            likelihoodCore.setScalingFactor(scalingFactor);
 
             int extNodeCount = treeModel.getExternalNodeCount();
             int intNodeCount = treeModel.getInternalNodeCount();
@@ -321,7 +326,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         }
 
         final NodeRef root = treeModel.getRoot();
-        traverse(treeModel, root);
+        int[] nodeCounter = new int[] { 0 };
+        traverse(treeModel, root, nodeCounter);
 
         //********************************************************************
         // after traverse all nodes and patterns have been updated --
@@ -344,7 +350,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * Traverse the tree calculating partial likelihoods.
      * @return whether the partials for this node were recalculated.
      */
-    private boolean traverse(Tree tree, NodeRef node) {
+    private boolean traverse(Tree tree, NodeRef node, int[] nodeCounter) {
 
         boolean update = false;
 
@@ -382,12 +388,16 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 //            if (nodeCount != 2)
 //                throw new RuntimeException("binary trees only!");
 
+            int[] childCounter = new int[] { 0 };
+
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverse(tree, child1);
+            final boolean update1 = traverse(tree, child1, childCounter);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverse(tree, child2);
+            final boolean update2 = traverse(tree, child2, childCounter);
+
+            nodeCounter[0] += childCounter[0];
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
@@ -397,10 +407,17 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
                 likelihoodCore.setNodePartialsForUpdate(nodeNum);
 
+                boolean doScaling = false;
+
+                if (nodeCounter[0] > scalingThreshold) {
+                    doScaling = true;
+                    nodeCounter[0] = 0;
+                }
+
                 if (integrateAcrossCategories) {
-                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
+                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, doScaling);
                 } else {
-                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, siteCategories);
+                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, siteCategories, doScaling);
                 }
 
                 if (parent == null) {
@@ -416,6 +433,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 update = true;
             }
         }
+
+        nodeCounter[0]++;
 
         return update;
 
@@ -456,7 +475,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             boolean useAmbiguities = false;
             boolean allowMissingTaxa = false;
             boolean storePartials = true;
-            boolean useScaling = false;
+            int scalingThreshold = 0;
+            double scalingFactor = 1.0;
             boolean forceJavaCore = false;
             if (xo.hasAttribute(USE_AMBIGUITIES)) {
                 useAmbiguities = xo.getBooleanAttribute(USE_AMBIGUITIES);
@@ -467,8 +487,11 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (xo.hasAttribute(STORE_PARTIALS)) {
                 storePartials = xo.getBooleanAttribute(STORE_PARTIALS);
             }
-            if (xo.hasAttribute(USE_SCALING)) {
-                useScaling = xo.getBooleanAttribute(USE_SCALING);
+            if (xo.hasAttribute(SCALING_THRESHOLD)) {
+                scalingThreshold = xo.getIntegerAttribute(SCALING_THRESHOLD);
+            }
+            if (xo.hasAttribute(SCALING_FACTOR)) {
+                scalingFactor = xo.getDoubleAttribute(SCALING_FACTOR);
             }
             if (xo.hasAttribute(FORCE_JAVA_CORE)) {
                 forceJavaCore = xo.getBooleanAttribute(FORCE_JAVA_CORE);
@@ -489,7 +512,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     siteModel,
                     branchRateModel,
                     tipPartialsModel,
-                    useAmbiguities, allowMissingTaxa, storePartials, useScaling, forceJavaCore);
+                    useAmbiguities, allowMissingTaxa, storePartials, scalingThreshold, scalingFactor, forceJavaCore);
         }
 
         //************************************************************************
@@ -508,7 +531,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
                 AttributeRule.newBooleanRule(ALLOW_MISSING_TAXA, true),
                 AttributeRule.newBooleanRule(STORE_PARTIALS, true),
-                AttributeRule.newBooleanRule(USE_SCALING, true),
+                AttributeRule.newDoubleRule(SCALING_FACTOR, true),
+                AttributeRule.newIntegerRule(SCALING_THRESHOLD, true),
                 AttributeRule.newBooleanRule(FORCE_JAVA_CORE, true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
@@ -553,4 +577,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
     /** the LikelihoodCore */
     protected LikelihoodCore likelihoodCore;
+
+    private int scalingThreshold;
 }

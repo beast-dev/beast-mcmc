@@ -25,8 +25,6 @@
 
 package dr.evomodel.treelikelihood;
 
-import java.util.logging.Logger;
-
 /**
  * AbstractLikelihoodCore - An abstract base class for LikelihoodCores
  *
@@ -56,12 +54,10 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
     protected int[] currentPartialsIndices;
     protected int[] storedPartialsIndices;
 
-    protected boolean useScaling;
+    protected double logScalingFactors[][];
 
-    protected double[][][] scalingFactors;
-
-    private final double scalingThreshold = 1.0E-100;
-    private int scalingCheckCount;
+    private double scalingFactor = 1.0;
+    private double logScalingFactor = Math.log(scalingFactor);
 
     /**
      * Constructor
@@ -80,7 +76,7 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
      * @param matrixCount         the number of matrices (i.e., number of categories)
      * @param integrateCategories whether sites are being integrated over all matrices
      */
-    public void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories, boolean useScaling) {
+    public void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories) {
 
         this.nodeCount = nodeCount;
         this.patternCount = patternCount;
@@ -115,12 +111,7 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
 
         matrices = new double[2][nodeCount][matrixCount * matrixSize];
 
-        this.useScaling = useScaling;
-
-        if (useScaling) {
-            scalingFactors = new double[2][nodeCount][patternCount];
-            scalingCheckCount = 0;
-        }
+        logScalingFactors = new double[2][nodeCount];
     }
 
     /**
@@ -140,8 +131,6 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
         matrices = null;
         currentMatricesIndices = null;
         storedMatricesIndices = null;
-
-        scalingFactors = null;
     }
 
     /**
@@ -230,7 +219,7 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
      * @param nodeIndex2 the 'child 2' node
      * @param nodeIndex3 the 'parent' node
      */
-    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3) {
+    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, boolean doScaling) {
         if (states[nodeIndex1] != null) {
             if (states[nodeIndex2] != null) {
                 calculateStatesStatesPruning(
@@ -254,8 +243,10 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
             }
         }
 
-        if (useScaling) {
+        logScalingFactors[currentPartialsIndices[nodeIndex3]][nodeIndex3] = 0.0;
+        if (doScaling) {
             scalePartials(nodeIndex3);
+
         }
 
 //
@@ -302,7 +293,7 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
      * @param nodeIndex3 the 'parent' node
      * @param matrixMap  a map of which matrix to use for each pattern (can be null if integrating over categories)
      */
-    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap) {
+    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap, boolean doScaling) {
         if (states[nodeIndex1] != null) {
             if (states[nodeIndex2] != null) {
                 calculateStatesStatesPruning(
@@ -329,7 +320,7 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
             }
         }
 
-        if (useScaling) {
+        if (doScaling) {
             scalePartials(nodeIndex3);
         }
     }
@@ -385,79 +376,24 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
      * @param nodeIndex
      */
     protected void scalePartials(int nodeIndex) {
-        int u = 0;
-
-        for (int i = 0; i < patternCount; i++) {
-
-            double scaleFactor = 0.0;
-            int v = u;
-            for (int k = 0; k < matrixCount; k++) {
-                for (int j = 0; j < stateCount; j++) {
-                    if (partials[currentPartialsIndices[nodeIndex]][nodeIndex][v] > scaleFactor) {
-                        scaleFactor = partials[currentPartialsIndices[nodeIndex]][nodeIndex][v];
-                    }
-                    v++;
-                }
-                v += patternCount;
-            }
-
-            if (scaleFactor < scalingThreshold) {
-
-                v = u;
-                for (int k = 0; k < matrixCount; k++) {
-                    for (int j = 0; j < stateCount; j++) {
-                        partials[currentPartialsIndices[nodeIndex]][nodeIndex][v] /= scaleFactor;
-                        v++;
-                    }
-                    v += patternCount;
-                }
-                scalingFactors[currentPartialsIndices[nodeIndex]][nodeIndex][i] = Math.log(scaleFactor);
-            } else {
-                scalingFactors[currentPartialsIndices[nodeIndex]][nodeIndex][i] = 0.0;
-            }
-            u += stateCount;
+        for (int i = 0; i < partialsSize; i++) {
+            partials[currentPartialsIndices[nodeIndex]][nodeIndex][i] /= scalingFactor;
         }
+        logScalingFactors[currentPartialsIndices[nodeIndex]][nodeIndex] = logScalingFactor;
     }
 
-    /**
-     * This function returns the scaling factor for that pattern by summing over
-     * the log scalings used at each node. If scaling is off then this just returns
-     * a 0.
-     *
-     * @return the log scaling factor
-     */
-    protected double getLogScalingFactor(int pattern) {
-        double logScalingFactor = 0.0;
-        if (useScaling) {
-            for (int i = 0; i < nodeCount; i++) {
-                logScalingFactor += scalingFactors[currentPartialsIndices[i]][i][pattern];
-            }
-        }
-        return logScalingFactor;
+    public void setScalingFactor(double scalingFactor) {
+        this.scalingFactor = scalingFactor;
+        this.logScalingFactor = Math.log(scalingFactor);
+
     }
 
-    /**
-     * Check whether the scaling is still required. If the sum of all the logScalingFactors
-     * is zero then we simply turn off the useScaling flag. This will speed up the likelihood
-     * calculations when scaling is not required.
-     */
-    public void checkScaling() {
-        if (useScaling) {
-            if (scalingCheckCount % 1000 == 0) {
-                double totalScalingFactor = 0.0;
-                for (int i = 0; i < nodeCount; i++) {
-                    for (int j = 0; j < patternCount; j++) {
-                        totalScalingFactor += scalingFactors[currentPartialsIndices[i]][i][j];
-                    }
-                }
-                useScaling = totalScalingFactor < 0.0;
-                Logger.getLogger("dr.evomodel").info("LikelihoodCore total log scaling factor: " + totalScalingFactor);
-                if (!useScaling) {
-                    Logger.getLogger("dr.evomodel").info("LikelihoodCore scaling turned off.");
-                }
-            }
-            scalingCheckCount++;
+    public double getTotalLogScalingFactor() {
+        double totalLogScalingFactor = 0.0;
+        for (int i = 0; i < nodeCount; i++) {
+            totalLogScalingFactor += logScalingFactors[currentPartialsIndices[i]][i];
         }
+        return totalLogScalingFactor;
     }
 
     /**

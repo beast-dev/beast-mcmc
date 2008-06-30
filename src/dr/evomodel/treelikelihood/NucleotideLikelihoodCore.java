@@ -333,18 +333,16 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 	 */
 	public void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods)
 	{
+        double logScalingFactor = getTotalLogScalingFactor();
 
         int v = 0;
 		for (int k = 0; k < patternCount; k++) {
-            double logScalingFactor = getLogScalingFactor(k);
-//			double logScalingFactor = 0;
 			double sum = frequencies[0] * partials[v];	v++;
 			sum += frequencies[1] * partials[v];	v++;
 			sum += frequencies[2] * partials[v];	v++;
 			sum += frequencies[3] * partials[v];	v++;
             outLogLikelihoods[k] = Math.log(sum) + logScalingFactor;
 		}
-        checkScaling();
 	}
 
 }

@@ -26,8 +26,8 @@ public class ALSTreeLikelihood extends TreeLikelihood
     public static final String LIKE_NAME="alsTreeLikelihood";
     protected AbstractObservationProcess observationProcess;
 
-    public ALSTreeLikelihood(AbstractObservationProcess observationProcess, PatternList patternList, TreeModel treeModel, SiteModel siteModel, BranchRateModel branchRateModel, boolean useAmbiguities, boolean storePartials, boolean useScaling) {
-        super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials, useScaling, false);
+    public ALSTreeLikelihood(AbstractObservationProcess observationProcess, PatternList patternList, TreeModel treeModel, SiteModel siteModel, BranchRateModel branchRateModel, boolean useAmbiguities, boolean storePartials) {
+        super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials, 0, 1.0, false);
 
         this.observationProcess=observationProcess;
         addModel(observationProcess);
@@ -84,15 +84,11 @@ public class ALSTreeLikelihood extends TreeLikelihood
 
 			boolean useAmbiguities = false;
 			boolean storePartials = true;
-			boolean useScaling = false;
 			if (xo.hasAttribute(USE_AMBIGUITIES)) {
 				useAmbiguities = xo.getBooleanAttribute(USE_AMBIGUITIES);
 			}
 			if (xo.hasAttribute(STORE_PARTIALS)) {
 				storePartials = xo.getBooleanAttribute(STORE_PARTIALS);
-			}
-			if (xo.hasAttribute(USE_SCALING)) {
-				useScaling = xo.getBooleanAttribute(USE_SCALING);
 			}
 
             AbstractObservationProcess observationProcess= (AbstractObservationProcess)xo.getChild(AbstractObservationProcess.class);
@@ -104,7 +100,7 @@ public class ALSTreeLikelihood extends TreeLikelihood
             Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating ALSTreeLikelihood model.");
             Logger.getLogger("dr.evolution").info("\tIf you publish results using Acquisition-Loss-Mutaion (ALS) Model likelihood, please reference Alekseyenko, Lee and Suchard (in submision).\n---------------------------------\n");
 
-			return new ALSTreeLikelihood(observationProcess, patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials, useScaling);
+			return new ALSTreeLikelihood(observationProcess, patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials);
 		}
 
 
@@ -124,7 +120,6 @@ public class ALSTreeLikelihood extends TreeLikelihood
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 				AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
 				AttributeRule.newBooleanRule(STORE_PARTIALS, true),
-				AttributeRule.newBooleanRule(USE_SCALING, true),
 				new ElementRule(PatternList.class),
 				new ElementRule(TreeModel.class),
 				new ElementRule(SiteModel.class),

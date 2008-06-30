@@ -37,7 +37,7 @@ public interface LikelihoodCore {
     /**
      * initializes partial likelihood arrays.
      */
-    void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories, boolean useScaling);
+    void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories);
 
     /**
      * cleans up and deallocates arrays.
@@ -91,7 +91,7 @@ public interface LikelihoodCore {
      * @param nodeIndex2 the 'child 2' node
      * @param nodeIndex3 the 'parent' node
      */
-    void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3);
+    void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, boolean doScaling);
 
     /**
      * Calculates partial likelihoods at a node using a matrixMap.
@@ -101,7 +101,7 @@ public interface LikelihoodCore {
      * @param nodeIndex3 the 'parent' node
      * @param matrixMap  a map of which matrix to use for each pattern
      */
-    void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap);
+    void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap, boolean doScaling);
 
     /**
      * Gets the partials for a particular node.
@@ -129,15 +129,17 @@ public interface LikelihoodCore {
      */
     void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods);
 
+    void  setScalingFactor(double scalingFactor);
+
+    double getTotalLogScalingFactor();
+
     /**
      * Store current state
      */
     void storeState();
 
     /**
-	 * Restore the stored state
-	 */
-	void restoreState();
-
-    void checkScaling();
+     * Restore the stored state
+     */
+    void restoreState();
 }

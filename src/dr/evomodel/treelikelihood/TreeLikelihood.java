@@ -330,6 +330,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         }
 
         if (logL == Double.NEGATIVE_INFINITY) {
+            Logger.getLogger("dr.evomodel").info("TreeLikelihood, " + this.getId() + ", turning on partial likelihood scaling to avoid precision loss");
+
             // We probably had an underflow... turn on scaling
             likelihoodCore.setUseScaling(true);
 

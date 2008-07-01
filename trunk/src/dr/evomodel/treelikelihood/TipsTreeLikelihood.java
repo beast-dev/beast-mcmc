@@ -256,7 +256,7 @@ public class TipsTreeLikelihood extends AbstractTreeLikelihood {
 					tipsLikelihoodCore.setNodeMatrix(i, j, probabilities);
 				}
 
-				tipsLikelihoodCore.calculatePartials(i, externalNodeCount, externalNodeCount + 1, false);
+				tipsLikelihoodCore.calculatePartials(i, externalNodeCount, externalNodeCount + 1);
 				
 				tipsLikelihoodCore.integratePartials(externalNodeCount + 1, proportions, rootPartials);
 				likelihoodCore.setNodePartials(i, rootPartials);
@@ -354,7 +354,7 @@ public class TipsTreeLikelihood extends AbstractTreeLikelihood {
 				int childNum1 = child1.getNumber();				
 				int childNum2 = child2.getNumber();
 			
-				likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, false);
+				likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
 				
 				if (parent == null) {
 					// No parent this is the root of the tree - 

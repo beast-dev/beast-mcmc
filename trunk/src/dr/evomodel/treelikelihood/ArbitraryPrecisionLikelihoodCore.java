@@ -227,7 +227,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
      * @param nodeIndex2 the 'child 2' node
      * @param nodeIndex3 the 'parent' node
      */
-    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, boolean doScaling) {
+    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3) {
         if (states[nodeIndex1] != null) {
             if (states[nodeIndex2] != null) {
                 calculateStatesStatesPruning(
@@ -416,7 +416,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
      * @param nodeIndex3 the 'parent' node
      * @param matrixMap  a map of which matrix to use for each pattern (can be null if integrating over categories)
      */
-    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap, boolean doScaling) {
+    public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap) {
          throw new UnsupportedOperationException("calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap) is not implemented in this likelihood core");
     }
 

@@ -394,9 +394,9 @@ public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
 				int childNum2 = child2.getNumber();
 			
 				if (integrateAcrossCategories) {
-					likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, false);
+					likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
 				} else {
-					likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, siteCategories, false);
+					likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, siteCategories);
 				}
 				
 				if (parent == null) {

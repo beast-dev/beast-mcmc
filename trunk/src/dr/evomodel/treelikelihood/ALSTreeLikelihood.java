@@ -27,7 +27,7 @@ public class ALSTreeLikelihood extends TreeLikelihood
     protected AbstractObservationProcess observationProcess;
 
     public ALSTreeLikelihood(AbstractObservationProcess observationProcess, PatternList patternList, TreeModel treeModel, SiteModel siteModel, BranchRateModel branchRateModel, boolean useAmbiguities, boolean storePartials) {
-        super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials, 0, 1.0, false);
+        super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials, false);
 
         this.observationProcess=observationProcess;
         addModel(observationProcess);

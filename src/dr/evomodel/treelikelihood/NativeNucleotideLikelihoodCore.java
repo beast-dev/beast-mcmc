@@ -136,8 +136,6 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 
 	public void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods)
 	{
-        double logScalingFactor = getTotalLogScalingFactor();
-
         int v = 0;
 		for (int k = 0; k < patternCount; k++) {
 
@@ -145,7 +143,7 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 			sum += frequencies[1] * partials[v];	v++;
 			sum += frequencies[2] * partials[v];	v++;
 			sum += frequencies[3] * partials[v];	v++;
-            outLogLikelihoods[k] = Math.log(sum) + logScalingFactor;
+            outLogLikelihoods[k] = Math.log(sum) + getLogScalingFactor(k);
 		}
     }
 

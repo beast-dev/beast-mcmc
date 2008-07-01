@@ -29,7 +29,6 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -110,7 +109,6 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
             probabilities = new double[stateCount * stateCount];
 
             likelihoodCore.initialize(nodeCount, patternCount, categoryCount, true);
-            likelihoodCore.setScalingFactor(scalingFactor);
             precisionLikelihoodCore.initialize(nodeCount, patternCount, categoryCount, true);
 
             int extNodeCount = treeModel.getExternalNodeCount();

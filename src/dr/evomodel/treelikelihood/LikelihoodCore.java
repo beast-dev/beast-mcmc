@@ -129,9 +129,9 @@ public interface LikelihoodCore {
      */
     void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods);
 
-    void  setScalingFactor(double scalingFactor);
+    void setUseScaling(boolean useScaling);
 
-    double getTotalLogScalingFactor();
+    double getLogScalingFactor(int pattern);
 
     /**
      * Store current state

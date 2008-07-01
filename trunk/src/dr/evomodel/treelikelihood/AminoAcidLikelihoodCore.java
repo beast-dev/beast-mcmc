@@ -42,12 +42,12 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 	public AminoAcidLikelihoodCore() {
 		super(20);
 	}
-	
+
 	/**
 	 * Calculates partial likelihoods at a node when both children have states.
 	 */
-	protected void calculateStatesStatesPruning(int[] states1, double[] matrices1, 
-												int[] states2, double[] matrices2, 
+	protected void calculateStatesStatesPruning(int[] states1, double[] matrices1,
+												int[] states2, double[] matrices2,
 												double[] partials3)
 	{
 		int v = 0;
@@ -55,14 +55,14 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 		for (int j = 0; j < matrixCount; j++) {
 
 			for (int k = 0; k < patternCount; k++) {
-			
+
 				int w = u;
-				
+
 				int state1 = states1[k];
 				int state2 = states2[k];
-								
+
 				if (state1 < 20 && state2 < 20) {
-				
+
 					partials3[v] = matrices1[w + state1] * matrices2[w + state2];
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1] * matrices2[w + state2];
@@ -71,7 +71,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1] * matrices2[w + state2];
 					v++;	w += 20;
-					
+
 					partials3[v] = matrices1[w + state1] * matrices2[w + state2];
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1] * matrices2[w + state2];
@@ -118,7 +118,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1];
 					v++;	w += 20;
-					
+
 					partials3[v] = matrices1[w + state1];
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1];
@@ -127,7 +127,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1];
 					v++;	w += 20;
-					
+
 					partials3[v] = matrices1[w + state1];
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1];
@@ -136,7 +136,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1];
 					v++;	w += 20;
-					
+
 					partials3[v] = matrices1[w + state1];
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1];
@@ -145,7 +145,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1];
 					v++;	w += 20;
-					
+
 					partials3[v] = matrices1[w + state1];
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1];
@@ -154,7 +154,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;	w += 20;
 					partials3[v] = matrices1[w + state1];
 					v++;	w += 20;
-					
+
 				} else if (state2 < 20) {
 					// child 2 has a gap or unknown state so don't use it
 					partials3[v] = matrices2[w + state2];
@@ -165,7 +165,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;	w += 20;
 					partials3[v] = matrices2[w + state2];
 					v++;	w += 20;
-					
+
 					partials3[v] = matrices2[w + state2];
 					v++;	w += 20;
 					partials3[v] = matrices2[w + state2];
@@ -174,7 +174,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;	w += 20;
 					partials3[v] = matrices2[w + state2];
 					v++;	w += 20;
-					
+
 					partials3[v] = matrices2[w + state2];
 					v++;	w += 20;
 					partials3[v] = matrices2[w + state2];
@@ -183,7 +183,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;	w += 20;
 					partials3[v] = matrices2[w + state2];
 					v++;	w += 20;
-					
+
 					partials3[v] = matrices2[w + state2];
 					v++;	w += 20;
 					partials3[v] = matrices2[w + state2];
@@ -192,7 +192,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;	w += 20;
 					partials3[v] = matrices2[w + state2];
 					v++;	w += 20;
-					
+
 					partials3[v] = matrices2[w + state2];
 					v++;	w += 20;
 					partials3[v] = matrices2[w + state2];
@@ -201,7 +201,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;	w += 20;
 					partials3[v] = matrices2[w + state2];
 					v++;	w += 20;
-					
+
 				} else {
 					// both children have a gap or unknown state so set partials to 1
 					partials3[v] = 1.0;
@@ -250,16 +250,16 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					v++;
 				}
 			}
-			
+
 			u += matrixSize;
 		}
 	}
-	
+
 	/**
 	 * Calculates partial likelihoods at a node when one child has states and one has partials.
 	 */
-	protected void calculateStatesPartialsPruning(	int[] states1, double[] matrices1, 
-													double[] partials2, double[] matrices2, 
+	protected void calculateStatesPartialsPruning(	int[] states1, double[] matrices1,
+													double[] partials2, double[] matrices2,
 													double[] partials3)
 	{
 		int u = 0;
@@ -269,16 +269,16 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 
 		for (int l = 0; l < matrixCount; l++) {
 			for (int k = 0; k < patternCount; k++) {
-			
+
 				int state1 = states1[k];
-			
+
 				if (state1 < 20) {
-			
+
 					double sum;
-					
+
 					x = w;
 					for (int i = 0; i < 20; i++) {
-					
+
 						y = v;
 						double value = matrices1[x + state1];
 						sum =	matrices2[x] * partials2[y]; x++; y++;
@@ -301,20 +301,20 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 						sum +=	matrices2[x] * partials2[y]; x++; y++;
 						sum +=	matrices2[x] * partials2[y]; x++; y++;
 						sum +=	matrices2[x] * partials2[y]; x++; y++;
-						partials3[u] = value * sum;	
+						partials3[u] = value * sum;
 						u++;
 					}
-											
+
 					v += 20;
 
 				} else {
 					// Child 1 has a gap or unknown state so don't use it
 
 					double sum;
-					
+
 					x = w;
 					for (int i = 0; i < 20; i++) {
-					
+
 						y = v;
 						sum =	matrices2[x] * partials2[y]; x++; y++;
 						sum +=	matrices2[x] * partials2[y]; x++; y++;
@@ -336,28 +336,28 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 						sum +=	matrices2[x] * partials2[y]; x++; y++;
 						sum +=	matrices2[x] * partials2[y]; x++; y++;
 						sum +=	matrices2[x] * partials2[y]; x++; y++;
-						partials3[u] = sum;	
+						partials3[u] = sum;
 						u++;
 					}
-											
+
 					v += 20;
 				}
 			}
-			
+
 			w += matrixSize;
 		}
 	}
-	
+
 	/**
 	 * Calculates partial likelihoods at a node when both children have partials.
 	 */
-	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1, 
-													double[] partials2, double[] matrices2, 
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
+													double[] partials2, double[] matrices2,
 													double[] partials3)
 	{
-		
+
 		double sum1, sum2;
-		
+
 		int u = 0;
 		int v = 0;
 		int w = 0;
@@ -365,10 +365,10 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 
 		for (int l = 0; l < matrixCount; l++) {
 			for (int k = 0; k < patternCount; k++) {
-											
+
 				x = w;
 				for (int i = 0; i < 20; i++) {
-				
+
 					y = v;
 					sum1 =	matrices1[x] * partials1[y];
 					sum2 =	matrices2[x] * partials2[y]; x++; y++;
@@ -411,34 +411,34 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					sum1 +=	matrices1[x] * partials1[y];
 					sum2 +=	matrices2[x] * partials2[y]; x++; y++;
 
-					partials3[u] = sum1 * sum2;	
+					partials3[u] = sum1 * sum2;
 					u++;
 				}
-										
+
 				v += 20;
 			}
-			
+
 			w += matrixSize;
 		}
-      
+
 	}
 
-							
+
 	/**
 	 * Calculates partial likelihoods at a node when both children have states.
 	 */
-	protected void calculateStatesStatesPruning(int[] states1, double[] matrices1, 
-												int[] states2, double[] matrices2, 
+	protected void calculateStatesStatesPruning(int[] states1, double[] matrices1,
+												int[] states2, double[] matrices2,
 												double[] partials3, int[] matrixMap)
 	{
 		throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");
 	}
-	
+
 	/**
 	 * Calculates partial likelihoods at a node when one child has states and one has partials.
 	 */
-	protected void calculateStatesPartialsPruning(	int[] states1, double[] matrices1, 
-													double[] partials2, double[] matrices2, 
+	protected void calculateStatesPartialsPruning(	int[] states1, double[] matrices1,
+													double[] partials2, double[] matrices2,
 													double[] partials3, int[] matrixMap)
 	{
 		throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");
@@ -447,8 +447,8 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 	/**
 	 * Calculates partial likelihoods at a node when both children have partials.
 	 */
-	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1, 
-													double[] partials2, double[] matrices2, 
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
+													double[] partials2, double[] matrices2,
 													double[] partials3, int[] matrixMap)
 	{
 		throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");
@@ -465,7 +465,7 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 		int u = 0;
 		int v = 0;
 		for (int k = 0; k < patternCount; k++) {
-		
+
 			outPartials[u] = inPartials[v] * proportions[0]; u++; v++;
 			outPartials[u] = inPartials[v] * proportions[0]; u++; v++;
 			outPartials[u] = inPartials[v] * proportions[0]; u++; v++;
@@ -491,10 +491,10 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 			outPartials[u] = inPartials[v] * proportions[0]; u++; v++;
 			outPartials[u] = inPartials[v] * proportions[0]; u++; v++;
 		}
-		
-		
+
+
 		for (int j = 1; j < matrixCount; j++) {
-			u = 0;	
+			u = 0;
 			for (int k = 0; k < patternCount; k++) {
 				outPartials[u] += inPartials[v] * proportions[j]; u++; v++;
 				outPartials[u] += inPartials[v] * proportions[j]; u++; v++;
@@ -533,8 +533,6 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 	 */
 	public void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods)
 	{
-        double logScalingFactor = getTotalLogScalingFactor();
-
         int v = 0;
 		for (int k = 0; k < patternCount; k++) {
 
@@ -562,9 +560,9 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 			sum += frequencies[17] * partials[v];	v++;
 			sum += frequencies[18] * partials[v];	v++;
 			sum += frequencies[19] * partials[v];	v++;
-            outLogLikelihoods[k] = Math.log(sum) + logScalingFactor;
+            outLogLikelihoods[k] = Math.log(sum)  + getLogScalingFactor(k);
 		}
 	}
-		
+
 }
 

@@ -25,10 +25,7 @@
 
 package dr.evomodel.treelikelihood;
 
-import dr.math.BigDecimalUtils;
-
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.MathContext;
 
 /**
@@ -420,12 +417,12 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
      * @param matrixMap  a map of which matrix to use for each pattern (can be null if integrating over categories)
      */
     public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap, boolean doScaling) {
-         throw new UnsupportedOperationException("calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap) is not implemented in this likelihood core");                                                                                                   
+         throw new UnsupportedOperationException("calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap) is not implemented in this likelihood core");
     }
 
 
     public void integratePartials(int nodeIndex, double[] proportions, double[] outPartials) {
-        throw new UnsupportedOperationException("integratePartials(int nodeIndex, double[] proportions, double[] outPartials) is not implemented in this likelihood core");                                                                                                   
+        throw new UnsupportedOperationException("integratePartials(int nodeIndex, double[] proportions, double[] outPartials) is not implemented in this likelihood core");
     }
 
     public void integratePartials(int nodeIndex, double[] proportions, BigDecimal[] outPartials) {
@@ -498,10 +495,8 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
 
             double scale = sum.scale();
             double value = sum.unscaledValue().doubleValue();
-//            outLogLikelihoods[k] = Math.log(value) + (Math.log(10.0) / scale);
-            outLogLikelihoods[k] = Math.log(value) - (scale * Math.log(10));
 
-//            outLogLikelihoods[k] = BigDecimalUtils.ln(sum, 10).doubleValue();
+            outLogLikelihoods[k] = Math.log(value) - (scale * Math.log(10));
         }
     }
 
@@ -509,10 +504,10 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
         throw new UnsupportedOperationException("calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods) is not implemented in this likelihood core");
     }
 
-    public void setScalingFactor(double scalingFactor) {
+    public void setUseScaling(boolean useScaling) {
     }
 
-    public double getTotalLogScalingFactor() {
+    public double getLogScalingFactor(int pattern) {
         return 0;
     }
 

@@ -1,17 +1,15 @@
 package dr.evomodel.treelikelihood;
 
-import java.io.PrintStream;
-
 public class NativeAminoAcidLikelihoodCore extends AbstractLikelihoodCore{
-	
+
 	public NativeAminoAcidLikelihoodCore() {
 		super(20);
 	}
-	
-	
+
+
 	protected void calculateIntegratePartials(double[] inPartials,
 			double[] proportions, double[] outPartials) {
-		nativeIntegratePartials(inPartials, proportions, patternCount, matrixCount, outPartials);	
+		nativeIntegratePartials(inPartials, proportions, patternCount, matrixCount, outPartials);
 	}
 
 	protected void calculatePartialsPartialsPruning(double[] partials1,
@@ -29,11 +27,11 @@ public class NativeAminoAcidLikelihoodCore extends AbstractLikelihoodCore{
 	protected void calculateStatesStatesPruning(int[] states1,
 			double[] matrices1, int[] states2, double[] matrices2,
 			double[] partials3) {
-		
-		
+
+
 		nativeStatesStatesPruning(states1, matrices1, states2, matrices2, patternCount, matrixCount, partials3);
 	}
-	
+
 	protected void calculatePartialsPartialsPruning(double[] partials1,
 			double[] matrices1, double[] partials2, double[] matrices2,
 			double[] partials3, int[] matrixMap) {
@@ -45,7 +43,7 @@ public class NativeAminoAcidLikelihoodCore extends AbstractLikelihoodCore{
 			double[] partials3, int[] matrixMap) {
 		throw new RuntimeException("not implemented using matrixMap");
 	}
-	
+
 	protected void calculateStatesPartialsPruning(int[] states1,
 			double[] matrices1, double[] partials2, double[] matrices2,
 			double[] partials3, int[] matrixMap) {
@@ -54,8 +52,6 @@ public class NativeAminoAcidLikelihoodCore extends AbstractLikelihoodCore{
 
 	public void calculateLogLikelihoods(double[] partials,
 			double[] frequencies, double[] outLogLikelihoods) {
-		
-        double logScalingFactor = getTotalLogScalingFactor();
 
 		int v = 0;
 		for (int k = 0; k < patternCount; k++) {
@@ -84,35 +80,35 @@ public class NativeAminoAcidLikelihoodCore extends AbstractLikelihoodCore{
 			sum += frequencies[17] * partials[v];	v++;
 			sum += frequencies[18] * partials[v];	v++;
 			sum += frequencies[19] * partials[v];	v++;
-            outLogLikelihoods[k] = Math.log(sum) + logScalingFactor;
+            outLogLikelihoods[k] = Math.log(sum) + getLogScalingFactor(k);
 		}
 	}
-	
+
 	public native void nativeIntegratePartials(double[] partials, double[] proportions,
 											   int patternCount, int matrixCount,
 											   double[] outPartials);
-	
+
 	protected native void nativePartialsPartialsPruning(double[] partials1, double[] matrices1,
 														double[] partials2, double[] matrices2,
 														int patternCount, int matrixCount,
-														double[] partials3);	
-	
+														double[] partials3);
+
 	protected native void nativeStatesPartialsPruning(int[] states1, double[] matrices1,
 													  double[] partials2, double[] matrices2,
 													  int patternCount, int matrixCount,
 													  double[] partials3);
-	
+
 	protected native void nativeStatesStatesPruning(int[] states1, double[] matrices1,
 													int[] states2, double[] matrices2,
 													int patternCount, int matrixCount,
 													double[] partials3);
-	
+
 	public static boolean isAvailable(){
 		return isNativeAvailable;
 	}
-	
+
 	private static boolean isNativeAvailable = false;
-	
+
 	static {
         try {
             System.loadLibrary("AminoAcidLikelihoodCore");

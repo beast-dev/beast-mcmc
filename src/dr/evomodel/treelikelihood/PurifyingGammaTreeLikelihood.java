@@ -353,7 +353,7 @@ public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
 				int childNum1 = child1.getNumber();				
 				int childNum2 = child2.getNumber();
 			
-				likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, false);
+				likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
 				
 				if (parent == null) {
 					// No parent this is the root of the tree - 

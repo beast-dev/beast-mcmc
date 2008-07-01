@@ -449,7 +449,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
                 likelihoodCore.setNodePartialsForUpdate(nodeNum);
 
-                likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, false);
+                likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
 
                 if (parent == null) {
                     // No parent this is the root of the tree -

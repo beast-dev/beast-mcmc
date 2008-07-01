@@ -91,7 +91,7 @@ public interface LikelihoodCore {
      * @param nodeIndex2 the 'child 2' node
      * @param nodeIndex3 the 'parent' node
      */
-    void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, boolean doScaling);
+    void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3);
 
     /**
      * Calculates partial likelihoods at a node using a matrixMap.
@@ -101,7 +101,7 @@ public interface LikelihoodCore {
      * @param nodeIndex3 the 'parent' node
      * @param matrixMap  a map of which matrix to use for each pattern
      */
-    void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap, boolean doScaling);
+    void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap);
 
     /**
      * Gets the partials for a particular node.

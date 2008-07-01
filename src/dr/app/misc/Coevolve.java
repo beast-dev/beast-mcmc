@@ -211,7 +211,7 @@ public class Coevolve {
 
         SiteModel siteModel = new GammaSiteModel(substModel, muParameter, null, 1, null);
         TreeModel treeModel = new TreeModel(tree);
-        final TreeLikelihood treeLikelihood = new TreeLikelihood(patternList, treeModel, siteModel, null, null, false, false, true, 0, 1.0, false);
+        final TreeLikelihood treeLikelihood = new TreeLikelihood(patternList, treeModel, siteModel, null, null, false, false, true, false);
         treeLikelihood.setId("likelihood");
 
         MultivariateFunction function = new MultivariateFunction() {

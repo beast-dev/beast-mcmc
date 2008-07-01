@@ -109,8 +109,8 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
                 Logger.getLogger("dr.evomodel").info("AdvancedTreeLikelihood Java amino acid likelihood core.");
                 likelihoodCore = new AminoAcidLikelihoodCore();
             } else if (patternList.getDataType() instanceof dr.evolution.datatype.Codons) {
-                Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java codon likelihood core");
-                likelihoodCore = new CodonLikelihoodCore(patternList.getStateCount());
+                Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java general likelihood core");
+                likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
                 useAmbiguities = true;
             } else {
                 Logger.getLogger("dr.evomodel").info("AdvancedTreeLikelihood using Java general likelihood core");

@@ -31,22 +31,21 @@ import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableRenderer;
 import org.virion.jam.table.TableEditorStopper;
+import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PriorsPanel extends JPanel implements Exportable {
 
@@ -60,10 +59,10 @@ public class PriorsPanel extends JPanel implements Exportable {
 
     OptionsPanel treePriorPanel = new OptionsPanel();
     JComboBox treePriorCombo;
-    JComboBox parameterizationCombo = new JComboBox(new String[] {
+    JComboBox parameterizationCombo = new JComboBox(new String[]{
             "Growth Rate", "Doubling Time"});
-    JComboBox bayesianSkylineCombo = new JComboBox(new String[] {
-            "Constant", "Linear"});
+    JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
+            "Piecewise-constant", "Piecewise-linear"});
     WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
     RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
@@ -117,45 +116,56 @@ public class PriorsPanel extends JPanel implements Exportable {
 
         // order here must match corrosponding BeautiOptions constant, i.e. BeautiOptions.CONSTANT == 0 etc
         if (BeautiApp.developer) {
-			treePriorCombo = new JComboBox(new String[] {
-					"Coalescent: Constant Size",
-					"Coalescent: Exponential Growth",
-					"Coalescent: Logistic Growth",
-					"Coalescent: Expansion Growth",
-					"Coalescent: Bayesian Skyline",
-                    "Coalescent: Extended Bayesian Skyline",
-                    "Speciation: Yule Process",
-					"Speciation: Birth-Death Process"
-			});
-		} else {
-			treePriorCombo = new JComboBox(new String[] {
-					"Coalescent: Constant Size",
-					"Coalescent: Exponential Growth",
-					"Coalescent: Logistic Growth",
-					"Coalescent: Expansion Growth",
-					"Coalescent: Bayesian Skyline",
+            treePriorCombo = new JComboBox(new String[]{
+                    "Coalescent: Constant Size",
+                    "Coalescent: Exponential Growth",
+                    "Coalescent: Logistic Growth",
+                    "Coalescent: Expansion Growth",
+                    "Coalescent: Bayesian Skyline",
                     "Coalescent: Extended Bayesian Skyline",
                     "Speciation: Yule Process",
                     "Speciation: Birth-Death Process"
-			});
-		}
-		setupComponent(treePriorCombo);
-		treePriorCombo.addItemListener(
-				new java.awt.event.ItemListener() {
-					public void itemStateChanged(java.awt.event.ItemEvent ev) {
-						if (!settingOptions) frame.priorsChanged();
-						setupPanel();
-					}
-				}
-		);
-		groupCountField.addKeyListener(new java.awt.event.KeyAdapter() {
-			public void keyTyped(java.awt.event.KeyEvent ev) {
-				if (!settingOptions) frame.priorsChanged();
-			}});
-		samplingProportionField.addKeyListener(new java.awt.event.KeyAdapter() {
-			public void keyTyped(java.awt.event.KeyEvent ev) {
-				if (!settingOptions) frame.priorsChanged();
-			}});
+            });
+        } else {
+            treePriorCombo = new JComboBox(new String[]{
+                    "Coalescent: Constant Size",
+                    "Coalescent: Exponential Growth",
+                    "Coalescent: Logistic Growth",
+                    "Coalescent: Expansion Growth",
+                    "Coalescent: Bayesian Skyline",
+                    "Coalescent: Extended Bayesian Skyline",
+                    "Speciation: Yule Process",
+                    "Speciation: Birth-Death Process"
+            });
+        }
+        setupComponent(treePriorCombo);
+        treePriorCombo.addItemListener(
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                        if (!settingOptions) frame.priorsChanged();
+                        setupPanel();
+                    }
+                }
+        );
+
+        KeyListener keyListener = new KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent ev) {
+                if (!settingOptions && ev.getKeyCode() == KeyEvent.VK_ENTER) {
+                    frame.priorsChanged();
+                }
+            }
+        };
+
+        groupCountField.addKeyListener(keyListener);
+        samplingProportionField.addKeyListener(keyListener);
+
+        FocusListener focusListener = new FocusAdapter() {
+            public void focusLost(FocusEvent focusEvent) {
+                frame.priorsChanged();
+            }
+        };
+        samplingProportionField.addFocusListener(focusListener);
+        groupCountField.addFocusListener(focusListener);
 
         setupComponent(parameterizationCombo);
         parameterizationCombo.addItemListener(listener);
@@ -166,15 +176,15 @@ public class PriorsPanel extends JPanel implements Exportable {
         setupComponent(upgmaStartingTreeCheck);
 
         setOpaque(false);
-        setLayout(new BorderLayout(0,0));
+        setLayout(new BorderLayout(0, 0));
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
 
-        JPanel panel = new JPanel(new BorderLayout(0,0));
+        JPanel panel = new JPanel(new BorderLayout(0, 0));
         panel.setOpaque(false);
         panel.add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
         panel.add(new JLabel("* Marked parameters currently have a default prior distribution. " +
-                "You could check that these are appropriate."), BorderLayout.SOUTH);
+                "You should check that these are appropriate."), BorderLayout.SOUTH);
 
         treePriorPanel.setBorder(null);
         add(treePriorPanel, BorderLayout.NORTH);
@@ -184,8 +194,6 @@ public class PriorsPanel extends JPanel implements Exportable {
     private void setupComponent(JComponent comp) {
         comp.setOpaque(false);
 
-        //comp.setFont(UIManager.getFont("SmallSystemFont"));
-        //comp.putClientProperty("JComponent.sizeVariant", "small");
         if (comp instanceof JButton) {
             comp.putClientProperty("JButton.buttonType", "roundRect");
         }
@@ -201,13 +209,13 @@ public class PriorsPanel extends JPanel implements Exportable {
         treePriorPanel.addComponentWithLabel("Tree Prior:", treePriorCombo);
         if (treePriorCombo.getSelectedIndex() == 1 || // exponential
                 treePriorCombo.getSelectedIndex() == 2 || // logistic
-                treePriorCombo.getSelectedIndex() == 3 ) { // expansion
+                treePriorCombo.getSelectedIndex() == 3) { // expansion
             treePriorPanel.addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
-        } else if (treePriorCombo.getSelectedIndex() == 4 ) { // bayesian skyline
+        } else if (treePriorCombo.getSelectedIndex() == 4) { // bayesian skyline
             groupCountField.setColumns(6);
             treePriorPanel.addComponentWithLabel("Number of groups:", groupCountField);
             treePriorPanel.addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
-        } else if (treePriorCombo.getSelectedIndex() == 6 ) { // birth-death
+        } else if (treePriorCombo.getSelectedIndex() == 6) { // birth-death
             samplingProportionField.setColumns(8);
             treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
         }
@@ -225,27 +233,10 @@ public class PriorsPanel extends JPanel implements Exportable {
         parameters = options.selectParameters();
         priorTableModel.fireTableDataChanged();
 
-//		if (options.nodeHeightPrior == BeautiOptions.CONSTANT) {
-//			treePriorCombo.setSelectedIndex(0);
-//		} else if (options.nodeHeightPrior == BeautiOptions.EXPONENTIAL) {
-//			treePriorCombo.setSelectedIndex(1);
-//		} else if (options.nodeHeightPrior == BeautiOptions.LOGISTIC) {
-//			treePriorCombo.setSelectedIndex(2);
-//		} else if (options.nodeHeightPrior == BeautiOptions.EXPANSION) {
-//			treePriorCombo.setSelectedIndex(3);
-//		} else if (options.nodeHeightPrior == BeautiOptions.SKYLINE) {
-//			treePriorCombo.setSelectedIndex(4);
-//        } else if (options.nodeHeightPrior == BeautiOptions.SKYLINE) {
-//			treePriorCombo.setSelectedIndex(5);
-//        } else if (options.nodeHeightPrior == BeautiOptions.YULE) {
-//			treePriorCombo.setSelectedIndex(6);
-//		} else if (options.nodeHeightPrior == BeautiOptions.BIRTH_DEATH) {
-//			treePriorCombo.setSelectedIndex(7);
-//		}
         treePriorCombo.setSelectedIndex(options.nodeHeightPrior);
 
         groupCountField.setValue(options.skylineGroupCount);
-		samplingProportionField.setValue(options.birthDeathSamplingProportion);
+        samplingProportionField.setValue(options.birthDeathSamplingProportion);
 
         parameterizationCombo.setSelectedIndex(options.parameterization);
         bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
@@ -264,7 +255,7 @@ public class PriorsPanel extends JPanel implements Exportable {
     private DiscretePriorDialog discretePriorDialog = null;
 
     private void priorButtonPressed(int row) {
-        BeautiOptions.Parameter param = (BeautiOptions.Parameter)parameters.get(row);
+        BeautiOptions.Parameter param = (BeautiOptions.Parameter) parameters.get(row);
 
         if (param.isDiscrete) {
             if (discretePriorDialog == null) {
@@ -291,37 +282,37 @@ public class PriorsPanel extends JPanel implements Exportable {
     public void getOptions(BeautiOptions options) {
         if (settingOptions) return;
 
-		if (treePriorCombo.getSelectedIndex() == BeautiOptions.CONSTANT) {
-			options.nodeHeightPrior = BeautiOptions.CONSTANT;
-		} else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXPONENTIAL) {
-			options.nodeHeightPrior = BeautiOptions.EXPONENTIAL;
-		} else if (treePriorCombo.getSelectedIndex() == BeautiOptions.LOGISTIC) {
-			options.nodeHeightPrior = BeautiOptions.LOGISTIC;
-		} else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXPANSION) {
-			options.nodeHeightPrior = BeautiOptions.EXPANSION;
-		} else if (treePriorCombo.getSelectedIndex() == BeautiOptions.SKYLINE) {
-			options.nodeHeightPrior = BeautiOptions.SKYLINE;
-			Integer groupCount = groupCountField.getValue();
-			if (groupCount != null) {
-				options.skylineGroupCount = groupCount;
-			} else {
-				options.skylineGroupCount = 5;
-			}
-		} else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXTENDED_SKYLINE ) {
-			options.nodeHeightPrior = BeautiOptions.EXTENDED_SKYLINE;
+        if (treePriorCombo.getSelectedIndex() == BeautiOptions.CONSTANT) {
+            options.nodeHeightPrior = BeautiOptions.CONSTANT;
+        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXPONENTIAL) {
+            options.nodeHeightPrior = BeautiOptions.EXPONENTIAL;
+        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.LOGISTIC) {
+            options.nodeHeightPrior = BeautiOptions.LOGISTIC;
+        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXPANSION) {
+            options.nodeHeightPrior = BeautiOptions.EXPANSION;
+        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.SKYLINE) {
+            options.nodeHeightPrior = BeautiOptions.SKYLINE;
+            Integer groupCount = groupCountField.getValue();
+            if (groupCount != null) {
+                options.skylineGroupCount = groupCount;
+            } else {
+                options.skylineGroupCount = 5;
+            }
+        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXTENDED_SKYLINE) {
+            options.nodeHeightPrior = BeautiOptions.EXTENDED_SKYLINE;
         } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.YULE) {
-			options.nodeHeightPrior = BeautiOptions.YULE;
+            options.nodeHeightPrior = BeautiOptions.YULE;
         } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.BIRTH_DEATH) {
-			options.nodeHeightPrior = BeautiOptions.BIRTH_DEATH;
-			Double samplingProportion = samplingProportionField.getValue();
-			if (samplingProportion != null) {
-				options.birthDeathSamplingProportion = samplingProportion;
-			} else {
-				options.birthDeathSamplingProportion = 1.0;
-			}
-		} else {
-			throw new RuntimeException("Unexpected value from treePriorCombo");
-		}
+            options.nodeHeightPrior = BeautiOptions.BIRTH_DEATH;
+            Double samplingProportion = samplingProportionField.getValue();
+            if (samplingProportion != null) {
+                options.birthDeathSamplingProportion = samplingProportion;
+            } else {
+                options.birthDeathSamplingProportion = 1.0;
+            }
+        } else {
+            throw new RuntimeException("Unexpected value from treePriorCombo");
+        }
 
         options.parameterization = parameterizationCombo.getSelectedIndex();
         options.skylineModel = bayesianSkylineCombo.getSelectedIndex();
@@ -341,7 +332,7 @@ public class PriorsPanel extends JPanel implements Exportable {
          *
          */
         private static final long serialVersionUID = -8864178122484971872L;
-        String[] columnNames = { "Parameter", "Prior", "Description" };
+        String[] columnNames = {"Parameter", "Prior", "Description"};
 
         public PriorTableModel() {
         }
@@ -355,11 +346,14 @@ public class PriorsPanel extends JPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
-            BeastGenerator.Parameter param = (BeastGenerator.Parameter)parameters.get(row);
+            BeastGenerator.Parameter param = (BeastGenerator.Parameter) parameters.get(row);
             switch (col) {
-                case 0: return param.getName();
-                case 1: return param.priorType.getPriorString(param);
-                case 2: return param.getDescription();
+                case 0:
+                    return param.getName();
+                case 1:
+                    return param.priorType.getPriorString(param);
+                case 2:
+                    return param.getDescription();
             }
             return null;
         }
@@ -368,7 +362,9 @@ public class PriorsPanel extends JPanel implements Exportable {
             return columnNames[column];
         }
 
-        public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
+        public Class getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
+        }
 
         public boolean isCellEditable(int row, int col) {
             return col == 1;
@@ -413,10 +409,10 @@ public class PriorsPanel extends JPanel implements Exportable {
                                                        boolean hasFocus, int row, int column) {
 
             String s;
-            if (((Double)value).isNaN()) {
+            if (((Double) value).isNaN()) {
                 s = "random";
             } else {
-                s = formatter.format((Double)value);
+                s = formatter.format((Double) value);
             }
             return super.getTableCellRendererComponent(table, s, isSelected, hasFocus, row, column);
 
@@ -443,11 +439,11 @@ public class PriorsPanel extends JPanel implements Exportable {
             if (isSelected) {
                 setForeground(table.getSelectionForeground());
                 setBackground(table.getSelectionBackground());
-            } else{
+            } else {
                 setForeground(table.getForeground());
                 setBackground(UIManager.getColor("Button.background"));
             }
-            setText( (value ==null) ? "" : value.toString() );
+            setText((value == null) ? "" : value.toString());
             return this;
         }
     }
@@ -482,19 +478,19 @@ public class PriorsPanel extends JPanel implements Exportable {
             if (isSelected) {
                 button.setForeground(table.getSelectionForeground());
                 button.setBackground(table.getSelectionBackground());
-            } else{
+            } else {
                 button.setForeground(table.getForeground());
                 button.setBackground(table.getBackground());
             }
-            label = (value ==null) ? "" : value.toString();
-            button.setText( label );
+            label = (value == null) ? "" : value.toString();
+            button.setText(label);
             isPushed = true;
             this.row = row;
             return button;
         }
 
         public Object getCellEditorValue() {
-            if (isPushed)  {
+            if (isPushed) {
                 priorButtonPressed(row);
             }
             isPushed = false;
@@ -510,6 +506,4 @@ public class PriorsPanel extends JPanel implements Exportable {
             super.fireEditingStopped();
         }
     }
-
-
 }

@@ -36,7 +36,6 @@ import java.util.logging.Logger;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: SitePatternsParser.java,v 1.3 2005/07/11 14:06:25 rambaut Exp $
  */
 public class SitePatternsParser extends AbstractXMLObjectParser {
@@ -47,11 +46,13 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
     public static final String EVERY = "every";
     public static final String TAXON_LIST = "taxonList";
 
-    public String getParserName() { return PATTERNS; }
+    public String getParserName() {
+        return PATTERNS;
+    }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Alignment alignment = (Alignment)xo.getChild(Alignment.class);
+        Alignment alignment = (Alignment) xo.getChild(Alignment.class);
         TaxonList taxa = null;
 
         int from = 0;
@@ -77,7 +78,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         }
 
         if (xo.hasChildNamed(TAXON_LIST)) {
-            taxa = (TaxonList)xo.getElementFirstChild(TAXON_LIST);
+            taxa = (TaxonList) xo.getElementFirstChild(TAXON_LIST);
         }
 
         if (from > alignment.getSiteCount())
@@ -89,19 +90,19 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         SitePatterns patterns = new SitePatterns(alignment, taxa, from, to, every);
 
         int f = from + 1;
-        int t = to;
-        if (t == 0) t = alignment.getSiteCount();
+        int t = to + 1;
+        if (t == -1) t = alignment.getSiteCount();
 
-	    if (xo.hasAttribute("id")) {
-		    Logger.getLogger("dr.evoxml").info("Site patterns '" + xo.getId() + "' created from positions "+
-                            Integer.toString(f) + "-" + Integer.toString(t) +
-                            " of alignment '" + alignment.getId() + "'");
+        if (xo.hasAttribute("id")) {
+            Logger.getLogger("dr.evoxml").info("Site patterns '" + xo.getId() + "' created from positions " +
+                    Integer.toString(f) + "-" + Integer.toString(t) +
+                    " of alignment '" + alignment.getId() + "'");
 
-        if (every > 1) {
-			    Logger.getLogger("dr.evoxml").info("  only using every " + every + " site");
-		    }
-		    Logger.getLogger("dr.evoxml").info("  pattern count = " + patterns.getPatternCount());
-	    }
+            if (every > 1) {
+                Logger.getLogger("dr.evoxml").info("  only using every " + every + " site");
+            }
+            Logger.getLogger("dr.evoxml").info("  pattern count = " + patterns.getPatternCount());
+        }
 
         return patterns;
     }
@@ -110,21 +111,25 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
     // AbstractXMLObjectParser implementation
     //************************************************************************
 
-    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-        AttributeRule.newIntegerRule(FROM, true, "The site position to start at, default is 1 (the first position)"),
-        AttributeRule.newIntegerRule(TO, true, "The site position to finish at, must be greater than <b>" + FROM + "</b>, default is length of given alignment"),
-        AttributeRule.newIntegerRule(EVERY, true, "Determines how many sites are selected. A value of 3 will select every third site starting from <b>" + FROM + "</b>, default is 1 (every site)"),
-        new ElementRule(TAXON_LIST,
-            new XMLSyntaxRule[] { new ElementRule(TaxonList.class) }, true),
-        new ElementRule(Alignment.class)
+    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            AttributeRule.newIntegerRule(FROM, true, "The site position to start at, default is 1 (the first position)"),
+            AttributeRule.newIntegerRule(TO, true, "The site position to finish at, must be greater than <b>" + FROM + "</b>, default is length of given alignment"),
+            AttributeRule.newIntegerRule(EVERY, true, "Determines how many sites are selected. A value of 3 will select every third site starting from <b>" + FROM + "</b>, default is 1 (every site)"),
+            new ElementRule(TAXON_LIST,
+                    new XMLSyntaxRule[]{new ElementRule(TaxonList.class)}, true),
+            new ElementRule(Alignment.class)
     };
 
     public String getParserDescription() {
         return "A weighted list of the unique site patterns (unique columns) in an alignment.";
     }
 
-    public Class getReturnType() { return PatternList.class; }
+    public Class getReturnType() {
+        return PatternList.class;
+    }
 
 }

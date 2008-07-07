@@ -90,7 +90,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         SitePatterns patterns = new SitePatterns(alignment, taxa, from, to, every);
 
         int f = from + 1;
-        int t = to + 1;
+        int t = to + 1; // fixed a *display* error by adding + 1 for consistency with f = from + 1
         if (to == -1) t = alignment.getSiteCount();
 
         if (xo.hasAttribute("id")) {

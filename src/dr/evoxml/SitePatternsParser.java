@@ -56,7 +56,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         TaxonList taxa = null;
 
         int from = 0;
-        int to = 0;
+        int to = -1;
         int every = 1;
 
         if (xo.hasAttribute(FROM)) {
@@ -91,7 +91,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
 
         int f = from + 1;
         int t = to + 1;
-        if (t == -1) t = alignment.getSiteCount();
+        if (to == -1) t = alignment.getSiteCount();
 
         if (xo.hasAttribute("id")) {
             Logger.getLogger("dr.evoxml").info("Site patterns '" + xo.getId() + "' created from positions " +

@@ -827,16 +827,16 @@ public class BeastOptions {
 	 */
 	public void writeCoalescentLikelihood(XMLWriter writer) {
 		writer.writeOpenTag(
-			OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD,
+			CoalescentLikelihood.COALESCENT_LIKELIHOOD,
 			new Attribute[] { new Attribute.Default("id", "coalescent1") }
 		);
-		writer.writeOpenTag(OldAbstractCoalescentLikelihood.MODEL);
+		writer.writeOpenTag(CoalescentLikelihood.MODEL);
 		writeDemoModelRef(writer);
-		writer.writeCloseTag(OldAbstractCoalescentLikelihood.MODEL);
-		writer.writeOpenTag(OldAbstractCoalescentLikelihood.POPULATION_TREE);
+		writer.writeCloseTag(CoalescentLikelihood.MODEL);
+		writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
 		writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default("idref", "treeModel1"), true);
-		writer.writeCloseTag(OldAbstractCoalescentLikelihood.POPULATION_TREE);
-		writer.writeCloseTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD);
+		writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
+		writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
 	}
 
 	/**
@@ -1139,7 +1139,7 @@ public class BeastOptions {
 		writer.writeOpenTag(CompoundLikelihood.COMPOUND_LIKELIHOOD, new Attribute.Default("id", "likelihood1"));
 
 		if (coalescentModel != NONE) {
-			writer.writeTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref", "coalescent1"), true);
+			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref", "coalescent1"), true);
 		}
 		boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
 		if (nucs && codonHetero) {
@@ -1301,7 +1301,7 @@ public class BeastOptions {
 			} else writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default("idref","treeLikelihood1"), true);
 		}
 		if (coalescentModel != NONE) {
-			writer.writeTag(OldAbstractCoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref","coalescent1"), true);
+			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default("idref","coalescent1"), true);
 		}
 	}
 

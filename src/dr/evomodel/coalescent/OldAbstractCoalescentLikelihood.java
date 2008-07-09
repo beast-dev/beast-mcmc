@@ -60,12 +60,12 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
 
     // PUBLIC STUFF
 
-    public static final String COALESCENT_LIKELIHOOD = "oldcoalescentLikelihood";
-    public static final String ANALYTICAL = "analytical";
-    public static final String MODEL = "model";
-
-    public static final String POPULATION_TREE = "populationTree";
-    public static final String POPULATION_FACTOR = "factor";
+    //public static final String COALESCENT_LIKELIHOOD = "oldcoalescentLikelihood";
+//    public static final String ANALYTICAL = "analytical";
+//    public static final String MODEL = "model";
+//
+//    public static final String POPULATION_TREE = "populationTree";
+//    public static final String POPULATION_FACTOR = "factor";
     private MultiLociTreeSet treesSet = null;
 
     public enum CoalescentEventType {
@@ -87,11 +87,11 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
     }
 
     public OldAbstractCoalescentLikelihood(Tree tree, DemographicModel demoModel) {
-        this(COALESCENT_LIKELIHOOD, tree, demoModel, true);
+        this(CoalescentLikelihood.COALESCENT_LIKELIHOOD, tree, demoModel, true);
     }
 
     public OldAbstractCoalescentLikelihood(MultiLociTreeSet treesSet, DemographicModel demoModel) {
-        super(COALESCENT_LIKELIHOOD);
+        super(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
         this.demoModel = demoModel;
         this.tree = null;
         this.treesSet = treesSet;

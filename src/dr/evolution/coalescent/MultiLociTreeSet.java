@@ -13,12 +13,31 @@ import java.util.List;
  *         Date: 19/11/2007
  */
 public interface MultiLociTreeSet {
+    /**
+     *
+     * @return  Number of independent loci in set.
+     */
     int nLoci();
 
+    /**
+     *
+     * @param nt  index of tree to return
+     * @return the nt's loci (i.e. tree)
+     */
     Tree getTree(int nt);
 
+    /**
+     *
+     * @param nt index of tree to return
+     * @return  Coalecsent intervals for nt's tree
+     */
     TreeIntervals getTreeIntervals(int nt);
 
+    /**
+     *
+     * @param nt
+     * @return Population factor of nt's tree
+     */
     double getPopulationFactor(int nt);
 
     void storeTheState();
@@ -84,7 +103,7 @@ public interface MultiLociTreeSet {
 
         public void modelChangedEvent(Model model, Object object, int index) {
             assert model instanceof TreeModel;
-            int k = trees.indexOf((TreeModel)model);
+            final int k = trees.indexOf((TreeModel)model);
             dirty[k] = gotDirty[k] = true;
         }
 

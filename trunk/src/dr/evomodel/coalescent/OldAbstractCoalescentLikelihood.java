@@ -37,10 +37,8 @@ import dr.inference.model.*;
 import dr.math.Binomial;
 import dr.util.ComparableDouble;
 import dr.util.HeapSort;
-import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -277,7 +275,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
                     getIntervalType(j));
 
             // insert zero-length coalescent intervals
-            int diff = getCoalescentEvents(j) - 1;
+            final int diff = getCoalescentEvents(j) - 1;
             for (int k = 0; k < diff; k++) {
                 logL += calculateIntervalLikelihood(demoFunction, 0.0, currentTime, lineageCounts[j] - k - 1,
                         CoalescentEventType.COALESCENT);

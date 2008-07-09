@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.Coalescent;
 import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.MultiLociTreeSet;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
 import dr.evomodel.tree.TreeModel;
@@ -54,8 +55,9 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	public static final String COALESCENT_LIKELIHOOD = "coalescentLikelihood";
 	public static final String MODEL = "model";
 	public static final String POPULATION_TREE = "populationTree";
+    public static final String POPULATION_FACTOR = "factor";
 
-	public static final String INCLUDE = "include";
+    public static final String INCLUDE = "include";
 	public static final String EXCLUDE = "exclude";
 
 	public CoalescentLikelihood(Tree tree,
@@ -70,7 +72,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		addModel(demoModel);
 	}
 
-	// **************************************************************
+    // **************************************************************
 	// Likelihood IMPLEMENTATION
 	// **************************************************************
 
@@ -123,11 +125,39 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			XMLObject cxo = (XMLObject)xo.getChild(MODEL);
-			DemographicModel demoModel = (DemographicModel)cxo.getChild(DemographicModel.class);
+            XMLObject cxo = (XMLObject)xo.getChild(MODEL);
+            DemographicModel demoModel = (DemographicModel)cxo.getChild(DemographicModel.class);
 
-			cxo = (XMLObject)xo.getChild(POPULATION_TREE);
-			TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
+            List<TreeModel> trees = new ArrayList<TreeModel>();
+            List<Double> popFactors = new ArrayList<Double>();
+            MultiLociTreeSet treesSet = demoModel instanceof MultiLociTreeSet ? (MultiLociTreeSet)demoModel : null;
+
+            for(int k = 0; k < xo.getChildCount(); ++k) {
+                final Object child = xo.getChild(k);
+                if( child instanceof XMLObject ) {
+                    cxo = (XMLObject)child;
+                    if( cxo.getName().equals(POPULATION_TREE) ) {
+                        final TreeModel t = (TreeModel) cxo.getChild(TreeModel.class);
+                        assert t != null;
+                        trees.add(t);
+
+                        popFactors.add(cxo.getAttribute(POPULATION_FACTOR, 1.0));
+                    }
+                }
+//                in the future we may have arbitrary multi-loci element
+//                else if( child instanceof MultiLociTreeSet )  {
+//                    treesSet = (MultiLociTreeSet)child;
+//                }
+            }
+
+            TreeModel treeModel = null;
+            if( trees.size() == 1 && popFactors.get(0) == 1.0 ) {
+                treeModel = trees.get(0);
+            } else if( trees.size() > 1 ) {
+                treesSet = new MultiLociTreeSet.Default(trees, popFactors);
+            } else if( !(trees.size() == 0 && treesSet != null) ) {
+                throw new XMLParseException("Incorrectly constructed likelihood element");
+            }
 
 			TaxonList includeSubtree = null;
 
@@ -144,12 +174,22 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 				}
 			}
 
-			try {
-				return new CoalescentLikelihood(treeModel, includeSubtree, excludeSubtrees, demoModel);
-			} catch (Tree.MissingTaxonException mte) {
-				throw new XMLParseException("treeModel missing a taxon from taxon list in " + getParserName() + " element");
-			}
-		}
+            if( treeModel != null ) {
+                try {
+                    return new CoalescentLikelihood(treeModel, includeSubtree, excludeSubtrees, demoModel);
+                } catch (Tree.MissingTaxonException mte) {
+                    throw new XMLParseException("treeModel missing a taxon from taxon list in " + getParserName() + " element");
+			    }
+            } else {
+                if( includeSubtree != null || excludeSubtrees.size() > 0 ) {
+                   throw new XMLParseException("Include/Exclude taxa not supported for multi locus sets");
+                }
+                // Use old code for multi locus sets.
+                // This is a little unfortunate but the current code is using AbstractCoalescentLikelihood as
+                // a base - and modifing it will probsbly result in a bigger mess.
+                return new OldAbstractCoalescentLikelihood(treesSet, demoModel);
+            }
+        }
 
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
@@ -164,18 +204,22 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-				new ElementRule(MODEL, new XMLSyntaxRule[] {
-						new ElementRule(DemographicModel.class)
-				}, "The demographic model which describes the coalescent rate over time"),
-				new ElementRule(POPULATION_TREE, new XMLSyntaxRule[] {
-						new ElementRule(TreeModel.class)
-				}, "The treeModel"),
-				new ElementRule(INCLUDE, new XMLSyntaxRule[] {
-						new ElementRule(Taxa.class)
-				}, "An optional subset of taxa on which to calculate the likelihood (should be monophyletic)", true),
-				new ElementRule(EXCLUDE, new XMLSyntaxRule[] {
-						new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
-				}, "One or more subsets of taxa which should be excluded from calculate the likelihood (should be monophyletic)", true)
+                new ElementRule(MODEL, new XMLSyntaxRule[] {
+                        new ElementRule(DemographicModel.class)
+                }, "The demographic model which describes the effective population size over time"),
+
+                new ElementRule(POPULATION_TREE, new XMLSyntaxRule[] {
+                        AttributeRule.newDoubleRule(POPULATION_FACTOR, true),
+                        new ElementRule(TreeModel.class)
+                }, "Tree(s) to compute likelihood for", 0, Integer.MAX_VALUE),
+
+                new ElementRule(INCLUDE, new XMLSyntaxRule[] {
+                        new ElementRule(Taxa.class)
+                }, "An optional subset of taxa on which to calculate the likelihood (should be monophyletic)", true),
+
+                new ElementRule(EXCLUDE, new XMLSyntaxRule[] {
+                        new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
+                }, "One or more subsets of taxa which should be excluded from calculate the likelihood (should be monophyletic)", true)
 		};
 	};
 

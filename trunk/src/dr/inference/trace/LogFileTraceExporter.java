@@ -1,11 +1,11 @@
 package dr.inference.trace;
 
+import dr.evomodelxml.LoggerParser;
 import dr.util.TabularData;
+import dr.xml.AttributeRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
-import dr.xml.AttributeRule;
-import dr.inference.loggers.MCLogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import java.io.IOException;
  * @author joseph
  *         Date: 25/10/2007
  */
-public class LogFileTraceExporter  extends TabularData {
+public class LogFileTraceExporter extends TabularData {
     private LogFileTraces analysis;
     private String[] rows = {"mean", "median", "hpdLower", "hpdUpper", "ESS"};
     TraceDistribution[] distributions;
@@ -25,8 +25,8 @@ public class LogFileTraceExporter  extends TabularData {
 
         analysis = new LogFileTraces(file.getCanonicalPath(), file);
         analysis.loadTraces();
-        if( burnin >= 0 ) {
-          analysis.setBurnIn(burnin);
+        if (burnin >= 0) {
+            analysis.setBurnIn(burnin);
         }
 
         distributions = new TraceDistribution[nColumns()];
@@ -45,38 +45,33 @@ public class LogFileTraceExporter  extends TabularData {
     }
 
     public Object data(int nRow, int nColumn) {
-        if( distributions[nColumn] == null ) {
-          analysis.analyseTrace(nColumn);
-          distributions[nColumn] = analysis.getDistributionStatistics(nColumn);
+        if (distributions[nColumn] == null) {
+            analysis.analyseTrace(nColumn);
+            distributions[nColumn] = analysis.getDistributionStatistics(nColumn);
         }
 
         TraceDistribution distribution = distributions[nColumn];
 
-        switch(nRow) {
-            case 0:
-            {
+        switch (nRow) {
+            case 0: {
                 return distribution.getMean();
             }
-            case 1:
-            {
-                    return distribution.getMedian();
+            case 1: {
+                return distribution.getMedian();
             }
-            case 2:
-            {
+            case 2: {
                 return distribution.getLowerHPD();
             }
-            case 3:
-            {
+            case 3: {
                 return distribution.getUpperHPD();
             }
-            case 4:
-            {
+            case 4: {
                 return distribution.getESS();
             }
         }
 
         return null;
-       // return analysis.getStateValue(nColumn,  nRow);
+        // return analysis.getStateValue(nColumn,  nRow);
     }
 
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
@@ -89,9 +84,9 @@ public class LogFileTraceExporter  extends TabularData {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            final File file = MCLogger.getFile(xo.getStringAttribute(FILENAME));
+            final File file = LoggerParser.getFile(xo.getStringAttribute(FILENAME));
             int burnIn = -1;
-            if( xo.hasAttribute(BURN_IN) ) {
+            if (xo.hasAttribute(BURN_IN)) {
                 burnIn = xo.getIntegerAttribute(BURN_IN);
             }
 

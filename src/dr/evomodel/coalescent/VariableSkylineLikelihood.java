@@ -363,7 +363,7 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
             cxo = (XMLObject) xo.getChild(VariableSkylineLikelihood.INDICATOR_PARAMETER);
             Parameter param2 = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(POPULATION_TREE);
+            cxo = (XMLObject) xo.getChild(CoalescentLikelihood.POPULATION_TREE);
             TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
 
             Type type = VariableSkylineLikelihood.Type.STEPWISE;
@@ -416,7 +416,7 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
                 new ElementRule(VariableSkylineLikelihood.INDICATOR_PARAMETER, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }),
-                new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
+                new ElementRule(CoalescentLikelihood.POPULATION_TREE, new XMLSyntaxRule[]{
                         new ElementRule(TreeModel.class)
                 }),
                 AttributeRule.newBooleanRule(LOG_SPACE)

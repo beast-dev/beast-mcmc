@@ -333,7 +333,7 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood {
 		    cxo = (XMLObject)xo.getChild(GROUP_SIZES);
 		    Parameter param2 = (Parameter)cxo.getChild(Parameter.class);
 
-		    cxo = (XMLObject)xo.getChild(POPULATION_TREE);
+		    cxo = (XMLObject)xo.getChild(CoalescentLikelihood.POPULATION_TREE);
 		    TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
 
 		    int type = LINEAR_TYPE;
@@ -382,7 +382,7 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood {
 		    new ElementRule(GROUP_SIZES, new XMLSyntaxRule[] {
 					new ElementRule(Parameter.class)
 				    }),
-		    new ElementRule(POPULATION_TREE, new XMLSyntaxRule[] {
+		    new ElementRule(CoalescentLikelihood.POPULATION_TREE, new XMLSyntaxRule[] {
 					new ElementRule(TreeModel.class)
 				    }),
 		};

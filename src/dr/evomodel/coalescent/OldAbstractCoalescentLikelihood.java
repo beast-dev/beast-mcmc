@@ -40,15 +40,14 @@ import dr.util.HeapSort;
 
 import java.util.ArrayList;
 
-
 /**
  * Forms a base class for a number of coalescent likelihood calculators.
- *
+ * <p/>
  * This was the former 'CoalescentLikelihood' which, as of BEAST v1.4.x was replaced as the
  * standard coalescent likelihood by 'NewCoalescentLikelihood'. As this class is used as a base
  * by a number of other classes (i.e., BayesianSkylineLikelihood), I have made this class abstract
  * and removed the parser.
- *
+ * <p/>
  * NewCoalescentLikelihood is now CoalesecentLikelihood (it's parser was installed as the default
  * 'coalescentLikelihood' anyway).
  *
@@ -65,7 +64,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
 //    public static final String MODEL = "model";
 //
 //    public static final String POPULATION_TREE = "populationTree";
-//    public static final String POPULATION_FACTOR = "factor";
+    //    public static final String POPULATION_FACTOR = "factor";
     private MultiLociTreeSet treesSet = null;
 
     public enum CoalescentEventType {
@@ -100,10 +99,10 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
             addModel(demoModel);
         }
 
-        for(int nt = 0; nt < treesSet.nLoci(); ++nt) {
+        for (int nt = 0; nt < treesSet.nLoci(); ++nt) {
             final Tree t = treesSet.getTree(nt);
-            if( t instanceof Model ) {
-                addModel((Model)t);
+            if (t instanceof Model) {
+                addModel((Model) t);
             }
         }
     }
@@ -120,12 +119,12 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
 
         if (demoModel != null) {
             addModel(demoModel);
-		}
+        }
 
         if (setupIntervals) setupIntervals();
 
-		addStatistic(new DeltaStatistic());
-	}
+        addStatistic(new DeltaStatistic());
+    }
 
     OldAbstractCoalescentLikelihood(String name) {
         super(name);
@@ -172,7 +171,9 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
     // **************************************************************
 
     // No parameters to respond to
-    protected  void handleParameterChangedEvent(Parameter parameter, int index) { }
+
+    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    }
 
     // **************************************************************
     // Model IMPLEMENTATION
@@ -188,7 +189,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
             storedIntervalsKnown = intervalsKnown;
             storedIntervalCount = intervalCount;
             storedLikelihoodKnown = likelihoodKnown;
-        } else if( treesSet != null ) {
+        } else if (treesSet != null) {
             treesSet.storeTheState();
         }
         storedLogLikelihood = logLikelihood;
@@ -203,7 +204,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
             System.arraycopy(storedLineageCounts, 0, lineageCounts, 0, storedLineageCounts.length);
             intervalsKnown = storedIntervalsKnown;
             intervalCount = storedIntervalCount;
-        } else if( treesSet != null ) {
+        } else if (treesSet != null) {
             treesSet.restoreTheState();
         }
 
@@ -234,7 +235,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
         return logLikelihood;
     }
 
-	public final void makeDirty() {
+    public final void makeDirty() {
         likelihoodKnown = false;
         intervalsKnown = false;
     }
@@ -245,11 +246,11 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
      */
     public double calculateLogLikelihood() {
 
-        if( treesSet != null ) {
+        if (treesSet != null) {
             final int nTrees = treesSet.nLoci();
             final DemographicFunction demogFunction = demoModel.getDemographicFunction();
             double logLike = 0.0;
-            for(int nt = 0; nt < nTrees; ++nt) {
+            for (int nt = 0; nt < nTrees; ++nt) {
                 final double popFactor = treesSet.getPopulationFactor(nt);
                 DemographicFunction df = popFactor != 1.0 ?
                         new ScaledDemographic(demogFunction, popFactor) : demogFunction;
@@ -301,10 +302,10 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
         return -(n - 1) * Math.log(lambda);
     }
 
-	/**
-	 * Returns the likelihood of a given *coalescent* interval
-	 */
-	public final double calculateIntervalLikelihood(DemographicFunction demoFunction, double width,
+    /**
+     * Returns the likelihood of a given *coalescent* interval
+     */
+    public final double calculateIntervalLikelihood(DemographicFunction demoFunction, double width,
                                                     double timeOfPrevCoal, int lineageCount) {
 
         return calculateIntervalLikelihood(demoFunction, width, timeOfPrevCoal, lineageCount,
@@ -326,32 +327,27 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
      * <p/>
      * For a sample event, the likelihood is for no event until time t, and is just the first term of the above.
      *
-     * @param demogFunction
-     * @param width
-     * @param timeOfPrevCoal
-     * @param lineageCount
-     * @param type
+     * @param demogFunction  the demographic function
+     * @param width          the size of the coalescent interval
+     * @param timeOfPrevCoal the time of previous coalescent event (going backwards in time)
+     * @param lineageCount   the number of lineages spanning this coalescent interval
+     * @param type           the type of coalescent event that this interval is terminated by
      * @return likelihood of a given interval,coalescent or otherwise
      */
     public static double calculateIntervalLikelihood(DemographicFunction demogFunction,
                                                      double width, double timeOfPrevCoal, int lineageCount,
                                                      CoalescentEventType type) {
-        //binom.setMax(lineageCount);
-
         final double timeOfThisCoal = width + timeOfPrevCoal;
 
         final double intervalArea = demogFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
         final double kchoose2 = Binomial.choose2(lineageCount);
         double like = -kchoose2 * intervalArea;
-        if (false) {
-            System.err.print("l = " + lineageCount + " width " + width + " int " + intervalArea);
-        }
-        switch (type) {
-			case COALESCENT:
-                final double demographic = demogFunction.getLogDemographic(timeOfThisCoal);
-                like += -demographic; //Math.log(demographic);
 
-                if( false ) { System.err.print(" vatend " + demographic); }
+        switch (type) {
+            case COALESCENT:
+                final double demographic = demogFunction.getLogDemographic(timeOfThisCoal);
+                like += -demographic;
+
                 break;
             case NEW_SAMPLE:
                 break;
@@ -380,8 +376,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
      *         associated to the likelihood for this interval, coalescent or otherwise
      */
     public final double calculateIntervalRateParameter(DemographicFunction demogFunction, double width,
-                                                       double timeOfPrevCoal, int lineageCount, CoalescentEventType type)
-    {
+                                                       double timeOfPrevCoal, int lineageCount, CoalescentEventType type) {
         final double timeOfThisCoal = width + timeOfPrevCoal;
         final double intervalArea = demogFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
         return Binomial.choose2(lineageCount) * intervalArea;
@@ -837,7 +832,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
 		};
 	};*/
 
-   /**
+    /**
      * The demographic model.
      */
     DemographicModel demoModel = null;
@@ -862,11 +857,11 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
     boolean intervalsKnown = false;
     private boolean storedIntervalsKnown = false;
 
-	double logLikelihood;
-	private double storedLogLikelihood;
-	boolean likelihoodKnown = false;
-	private boolean storedLikelihoodKnown = false;
+    double logLikelihood;
+    private double storedLogLikelihood;
+    boolean likelihoodKnown = false;
+    private boolean storedLikelihoodKnown = false;
 
-	int intervalCount = 0;
-	private int storedIntervalCount = 0;
+    int intervalCount = 0;
+    private int storedIntervalCount = 0;
 }

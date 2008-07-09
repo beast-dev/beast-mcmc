@@ -13,7 +13,7 @@ import dr.xml.*;
 
  */
 public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
-    public static String SAMPLE_NONACTIVE_GIBBS_OPERATOR = "sampleNoneActiveOperator";
+    public static String SAMPLE_NONACTIVE_GIBBS_OPERATOR = "sampleNonActiveOperator";
     public static String DISTRIBUTION = "distribution";
 
     public static String INDICATOR_PARAMETER = "indicators";
@@ -41,9 +41,9 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
 
     public double doOperation() throws OperatorFailedException {
         final int idim = indicators.getDimension();
-        
-        final int offset =  (data.getDimension() - 1) == idim ? 1 : 0;
-        assert offset == 1 ||   data.getDimension() == idim : "" + idim + " (?+1) != " + data.getDimension();
+
+        final int offset = (data.getDimension() - 1) == idim ? 1 : 0;
+        assert offset == 1 || data.getDimension() == idim : "" + idim + " (?+1) != " + data.getDimension();
 
         // available locations for direct sampling
         int[] loc = new int[idim];

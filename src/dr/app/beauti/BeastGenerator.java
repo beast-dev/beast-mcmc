@@ -53,16 +53,18 @@ import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.evomodelxml.BinarySubstitutionModelParser;
+import dr.evomodelxml.LoggerParser;
+import dr.evomodelxml.TreeLoggerParser;
 import dr.evoxml.*;
+import dr.exporters.CSVExporter;
 import dr.inference.distribution.*;
 import dr.inference.loggers.Columns;
-import dr.inference.loggers.MCLogger;
 import dr.inference.model.*;
 import dr.inference.operators.*;
 import dr.inference.trace.EBSPAnalysis;
 import dr.util.Attribute;
 import dr.util.Version;
-import dr.exporters.CSVExporter;
 
 import java.io.Writer;
 import java.util.ArrayList;
@@ -195,7 +197,7 @@ public class BeastGenerator extends BeautiOptions {
         if (performTraceAnalysis) {
             writeTraceAnalysis(writer);
         }
-        if( generateCSV ) {
+        if (generateCSV) {
             writeAnalysisToCSVfile(writer);
         }
 
@@ -282,28 +284,29 @@ public class BeastGenerator extends BeautiOptions {
     /**
      * Determine and return the datatype description for these beast options
      * note that the datatype in XML may differ from the actual datatype
+     *
      * @return description
      */
 
     private String getAlignmentDataTypeDescription() {
         String description;
 
-        switch (dataType){
+        switch (dataType) {
             case DataType.TWO_STATES:
             case DataType.COVARION:
 
-                switch(binarySubstitutionModel){
+                switch (binarySubstitutionModel) {
                     case BIN_COVARION:
                         description = TwoStateCovarion.DESCRIPTION;
-                         break;
+                        break;
 
                     default:
-                        description= alignment.getDataType().getDescription();
+                        description = alignment.getDataType().getDescription();
                 }
                 break;
 
             default:
-                description= alignment.getDataType().getDescription();
+                description = alignment.getDataType().getDescription();
         }
 
         return description;
@@ -518,8 +521,8 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeCloseTag(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE);
 
             writer.writeCloseTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL);
-            
-           /* writer.writeText("");
+
+            /* writer.writeText("");
             writer.writeComment("A prior on the distribution node heights defined given");
             writer.writeComment("a Birth-Death speciation process (Yang & Rannala, 1997).");
             writer.writeOpenTag(
@@ -729,7 +732,7 @@ public class BeastGenerator extends BeautiOptions {
     public void writeSubstitutionModel(XMLWriter writer) {
 
 
-        switch(dataType){
+        switch (dataType) {
             case DataType.NUCLEOTIDES:
                 // Jukes-Cantor model
                 if (nucSubstitutionModel == JC) {
@@ -827,12 +830,12 @@ public class BeastGenerator extends BeautiOptions {
             case DataType.COVARION:
 
                 switch (binarySubstitutionModel) {
-                 case BIN_SIMPLE:
-                      writeBinarySimpleModel(writer);
-                     break;
-                 case BIN_COVARION:
-                      writeBinaryCovarionModel(writer);
-                     break;
+                    case BIN_SIMPLE:
+                        writeBinarySimpleModel(writer);
+                        break;
+                    case BIN_COVARION:
+                        writeBinaryCovarionModel(writer);
+                        break;
                 }
 
                 break;
@@ -908,7 +911,7 @@ public class BeastGenerator extends BeautiOptions {
         if (frequencyPolicy == ALLEQUAL)
             writeParameter(id + ".frequencies", 4, writer);
         else
-            writeParameter(id + ".frequencies", 4,  Double.NaN, Double.NaN, Double.NaN, writer);
+            writeParameter(id + ".frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
         writer.writeCloseTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
@@ -936,7 +939,7 @@ public class BeastGenerator extends BeautiOptions {
     }
 
 
-        /**
+    /**
      * Write the Binary  simple model XML block.
      *
      * @param writer the writer
@@ -946,7 +949,7 @@ public class BeastGenerator extends BeautiOptions {
 
         writer.writeComment("The Binary simple model (based on the general substitution model)");
         writer.writeOpenTag(
-                dr.evoxml.BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL,
+                BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL,
                 new Attribute[]{new Attribute.Default<String>("id", id)}
         );
         writer.writeOpenTag(dr.evomodel.substmodel.GeneralSubstitutionModel.FREQUENCIES);
@@ -963,7 +966,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
         writer.writeCloseTag(dr.evomodel.substmodel.GeneralSubstitutionModel.FREQUENCIES);
 
-        writer.writeCloseTag(dr.evoxml.BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL);
+        writer.writeCloseTag(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL);
     }
 
 
@@ -983,11 +986,11 @@ public class BeastGenerator extends BeautiOptions {
         );
 
         writer.writeOpenTag(dr.evomodel.substmodel.BinaryCovarionModel.FREQUENCIES);
-        writeParameter(id + ".frequencies", 2 , 0.5, 0.0, 1.0, writer);
+        writeParameter(id + ".frequencies", 2, 0.5, 0.0, 1.0, writer);
         writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.FREQUENCIES);
 
         writer.writeOpenTag(dr.evomodel.substmodel.BinaryCovarionModel.HIDDEN_FREQUENCIES);
-        writeParameter(id + ".hfrequencies", 2 , 0.5, 0.0, 1.0, writer);
+        writeParameter(id + ".hfrequencies", 2, 0.5, 0.0, 1.0, writer);
         writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.HIDDEN_FREQUENCIES);
 
         writer.writeOpenTag(dr.evomodel.substmodel.BinaryCovarionModel.ALPHA);
@@ -1008,22 +1011,22 @@ public class BeastGenerator extends BeautiOptions {
      */
     public void writeSiteModel(XMLWriter writer) {
 
-        switch(dataType){
+        switch (dataType) {
             case DataType.NUCLEOTIDES:
                 if (codonHeteroPattern != null) {
-                for (int i = 1; i <= partitionCount; i++) {
-                    writeNucSiteModel(i, writer);
+                    for (int i = 1; i <= partitionCount; i++) {
+                        writeNucSiteModel(i, writer);
+                    }
+                    writer.println();
+                    writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>("id", "allMus")});
+                    for (int i = 1; i <= partitionCount; i++) {
+                        writer.writeTag(ParameterParser.PARAMETER,
+                                new Attribute[]{new Attribute.Default<String>("idref", "siteModel" + i + ".mu")}, true);
+                    }
+                    writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+                } else {
+                    writeNucSiteModel(-1, writer);
                 }
-                writer.println();
-                writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>("id", "allMus")});
-                for (int i = 1; i <= partitionCount; i++) {
-                    writer.writeTag(ParameterParser.PARAMETER,
-                            new Attribute[]{new Attribute.Default<String>("idref", "siteModel" + i + ".mu")}, true);
-                }
-                writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
-            } else {
-                writeNucSiteModel(-1, writer);
-            }
                 break;
 
             case DataType.AMINO_ACIDS:
@@ -1035,8 +1038,8 @@ public class BeastGenerator extends BeautiOptions {
                 writeTwoStateSiteModel(writer);
                 break;
 
-             default:
-                  throw new IllegalArgumentException("Unknown data type");
+            default:
+                throw new IllegalArgumentException("Unknown data type");
         }
     }
 
@@ -1147,17 +1150,17 @@ public class BeastGenerator extends BeautiOptions {
 
         writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
-             switch (binarySubstitutionModel) {
-                case BIN_SIMPLE:
-                    //writer.writeTag(dr.evomodel.substmodel.GeneralSubstitutionModel.GENERAL_SUBSTITUTION_MODEL, new Attribute.Default<String>("idref", "bsimple"), true);
-                    writer.writeTag(dr.evoxml.BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, new Attribute.Default<String>("idref", "bsimple"), true);
-                    break;
-                case BIN_COVARION:
-                    writer.writeTag(dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL, new Attribute.Default<String>("idref", "bcov"), true);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown substitution model.");
-            }
+        switch (binarySubstitutionModel) {
+            case BIN_SIMPLE:
+                //writer.writeTag(dr.evomodel.substmodel.GeneralSubstitutionModel.GENERAL_SUBSTITUTION_MODEL, new Attribute.Default<String>("idref", "bsimple"), true);
+                writer.writeTag(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, new Attribute.Default<String>("idref", "bsimple"), true);
+                break;
+            case BIN_COVARION:
+                writer.writeTag(dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL, new Attribute.Default<String>("idref", "bcov"), true);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown substitution model.");
+        }
 
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
@@ -1210,8 +1213,6 @@ public class BeastGenerator extends BeautiOptions {
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
     }
-
-
 
 
     /**
@@ -1479,7 +1480,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
 
             writer.writeOpenTag(VariableDemographicModel.INDICATOR_PARAMETER);
-            writeParameter(VariableDemographicModel.demoElementName + ".indicators", nPops-1, writer);
+            writeParameter(VariableDemographicModel.demoElementName + ".indicators", nPops - 1, writer);
             writer.writeCloseTag(VariableDemographicModel.INDICATOR_PARAMETER);
 
             writer.writeOpenTag(VariableDemographicModel.POPULATION_TREES);
@@ -1514,10 +1515,10 @@ public class BeastGenerator extends BeautiOptions {
                     });
             writer.writeOpenTag(ExponentialDistributionModel.MEAN);
             writer.writeTag(ParameterParser.PARAMETER,
-                     new Attribute[]{
-                             new Attribute.Default<String>("id", VariableDemographicModel.demoElementName + ".populationMean"),
-                             new Attribute.Default<String>("value", "1")}, true);
-            writer.writeCloseTag(ExponentialDistributionModel.MEAN) ;
+                    new Attribute[]{
+                            new Attribute.Default<String>("id", VariableDemographicModel.demoElementName + ".populationMean"),
+                            new Attribute.Default<String>("value", "1")}, true);
+            writer.writeCloseTag(ExponentialDistributionModel.MEAN);
             writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 
         } else {
@@ -1593,25 +1594,24 @@ public class BeastGenerator extends BeautiOptions {
     }
 
 
-
-
     /**
      * Determine and return the datatype description for these beast options
      * note that the datatype in XML may differ from the actual datatype
+     *
      * @return description
      */
 
     private Boolean useAmbiguities() {
         Boolean useAmbiguities = false;
 
-        switch (dataType){
+        switch (dataType) {
             case DataType.TWO_STATES:
             case DataType.COVARION:
 
-                switch(binarySubstitutionModel){
+                switch (binarySubstitutionModel) {
                     case BIN_COVARION:
-                         useAmbiguities = true;
-                         break;
+                        useAmbiguities = true;
+                        break;
 
                     default:
                 }
@@ -1945,26 +1945,26 @@ public class BeastGenerator extends BeautiOptions {
     }
 
     private void writeSampleNoneActiveOperator(Operator operator, XMLWriter writer) {
-       writer.writeOpenTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR,
+        writer.writeOpenTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR,
                 new Attribute.Default<Double>("weight", operator.weight));
 
-       writer.writeOpenTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
-       writeParameterRefByName(writer, operator.name);
-       writer.writeCloseTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
+        writer.writeOpenTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
+        writeParameterRefByName(writer, operator.name);
+        writer.writeCloseTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
 
-       writer.writeOpenTag(SampleNonActiveGibbsOperator.DATA_PARAMETER);
-       writeParameter1Ref(writer, operator);
-       writer.writeCloseTag(SampleNonActiveGibbsOperator.DATA_PARAMETER);
+        writer.writeOpenTag(SampleNonActiveGibbsOperator.DATA_PARAMETER);
+        writeParameter1Ref(writer, operator);
+        writer.writeCloseTag(SampleNonActiveGibbsOperator.DATA_PARAMETER);
 
-       writer.writeOpenTag(SampleNonActiveGibbsOperator.INDICATOR_PARAMETER);
-       writeParameterRefByName(writer, operator.parameter2.getName());
-       writer.writeCloseTag(SampleNonActiveGibbsOperator.INDICATOR_PARAMETER);
+        writer.writeOpenTag(SampleNonActiveGibbsOperator.INDICATOR_PARAMETER);
+        writeParameterRefByName(writer, operator.parameter2.getName());
+        writer.writeCloseTag(SampleNonActiveGibbsOperator.INDICATOR_PARAMETER);
 
-       writer.writeCloseTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR);
+        writer.writeCloseTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR);
     }
 
     private void writeScaleWithIndicatorsOperator(Operator operator, XMLWriter writer) {
-         writer.writeOpenTag(
+        writer.writeOpenTag(
                 ScaleOperator.SCALE_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<Double>("scaleFactor", operator.tuning),
@@ -1973,7 +1973,7 @@ public class BeastGenerator extends BeautiOptions {
         writeParameter1Ref(writer, operator);
         writer.writeOpenTag(ScaleOperator.INDICATORS, new Attribute.Default<String>(ScaleOperator.PICKONEPROB, "1.0"));
         writeParameterRefByName(writer, operator.parameter2.getName());
-	    writer.writeCloseTag(ScaleOperator.INDICATORS);
+        writer.writeCloseTag(ScaleOperator.INDICATORS);
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
     }
 
@@ -2019,31 +2019,31 @@ public class BeastGenerator extends BeautiOptions {
 
     public void writeAnalysisToCSVfile(XMLWriter writer) {
         if (nodeHeightPrior == EXTENDED_SKYLINE) {
-            writer.writeOpenTag(EBSPAnalysis.VD_ANALYSIS,  new Attribute[]{
+            writer.writeOpenTag(EBSPAnalysis.VD_ANALYSIS, new Attribute[]{
                     new Attribute.Default<String>("id", "demographic.analysis"),
                     new Attribute.Default<Double>(EBSPAnalysis.BURN_IN, 0.1)}
             );
 
             writer.writeOpenTag(EBSPAnalysis.LOG_FILE_NAME);
-            writer.writeText(logFileName) ;
+            writer.writeText(logFileName);
             writer.writeCloseTag(EBSPAnalysis.LOG_FILE_NAME);
 
             writer.writeOpenTag(EBSPAnalysis.TREE_FILE_NAMES);
             writer.writeOpenTag(EBSPAnalysis.TREE_LOG);
-            writer.writeText(treeFileName) ;
-            writer.writeCloseTag(EBSPAnalysis.TREE_LOG) ;
+            writer.writeText(treeFileName);
+            writer.writeCloseTag(EBSPAnalysis.TREE_LOG);
             writer.writeCloseTag(EBSPAnalysis.TREE_FILE_NAMES);
 
             writer.writeOpenTag(EBSPAnalysis.MODEL_TYPE);
-            writer.writeText(extendedSkylineModel) ;
+            writer.writeText(extendedSkylineModel);
             writer.writeCloseTag(EBSPAnalysis.MODEL_TYPE);
 
             writer.writeOpenTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
-            writer.writeText(VariableDemographicModel.demoElementName + ".popSize" + 1) ;
+            writer.writeText(VariableDemographicModel.demoElementName + ".popSize" + 1);
             writer.writeCloseTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
 
             writer.writeOpenTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
-            writer.writeText(VariableDemographicModel.demoElementName + ".indicators" + 1) ;
+            writer.writeText(VariableDemographicModel.demoElementName + ".indicators" + 1);
             writer.writeCloseTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
 
             writer.writeCloseTag(EBSPAnalysis.VD_ANALYSIS);
@@ -2051,17 +2051,18 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeOpenTag(CSVExporter.CSV_EXPORT,
                     new Attribute[]{
                             new Attribute.Default<String>(CSVExporter.FILE_NAME,
-                                    logFileName.subSequence(0, logFileName.length()-4) + ".csv"),
+                                    logFileName.subSequence(0, logFileName.length() - 4) + ".csv"),
                             new Attribute.Default<String>(CSVExporter.SEPARATOR, ",")
                     });
             writer.writeOpenTag(CSVExporter.COLUMNS);
             writer.writeTag(EBSPAnalysis.VD_ANALYSIS,
-                    new Attribute[]{ new Attribute.Default<String>("idref",  "demographic.analysis") }, true);
-             writer.writeCloseTag(CSVExporter.COLUMNS);
-             writer.writeCloseTag(CSVExporter.CSV_EXPORT);  
+                    new Attribute[]{new Attribute.Default<String>("idref", "demographic.analysis")}, true);
+            writer.writeCloseTag(CSVExporter.COLUMNS);
+            writer.writeCloseTag(CSVExporter.CSV_EXPORT);
         }
 
     }
+
     /**
      * Write the MCMC block.
      *
@@ -2151,26 +2152,26 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeTag(SimpleOperatorSchedule.OPERATOR_SCHEDULE, new Attribute.Default<String>("idref", "operators"), true);
 
         // write log to screen
-        writer.writeOpenTag(MCLogger.LOG,
+        writer.writeOpenTag(LoggerParser.LOG,
                 new Attribute[]{
                         new Attribute.Default<String>("id", "screenLog"),
-                        new Attribute.Default<String>(MCLogger.LOG_EVERY, echoEvery + "")
+                        new Attribute.Default<String>(LoggerParser.LOG_EVERY, echoEvery + "")
                 });
         writeScreenLog(writer);
-        writer.writeCloseTag(MCLogger.LOG);
+        writer.writeCloseTag(LoggerParser.LOG);
 
         // write log to file
         if (logFileName == null) {
             logFileName = fileNameStem + ".log";
         }
-        writer.writeOpenTag(MCLogger.LOG,
+        writer.writeOpenTag(LoggerParser.LOG,
                 new Attribute[]{
                         new Attribute.Default<String>("id", "fileLog"),
-                        new Attribute.Default<String>(MCLogger.LOG_EVERY, logEvery + ""),
-                        new Attribute.Default<String>(MCLogger.FILE_NAME, logFileName)
+                        new Attribute.Default<String>(LoggerParser.LOG_EVERY, logEvery + ""),
+                        new Attribute.Default<String>(LoggerParser.FILE_NAME, logFileName)
                 });
         writeLog(writer);
-        writer.writeCloseTag(MCLogger.LOG);
+        writer.writeCloseTag(LoggerParser.LOG);
 
         // write tree log to file
         if (treeFileName == null) {
@@ -2180,13 +2181,13 @@ public class BeastGenerator extends BeautiOptions {
                 treeFileName = fileNameStem + ".trees";
             }
         }
-        writer.writeOpenTag(TreeLogger.LOG_TREE,
+        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
                 new Attribute[]{
                         new Attribute.Default<String>("id", "treeFileLog"),
-                        new Attribute.Default<String>(TreeLogger.LOG_EVERY, logEvery + ""),
-                        new Attribute.Default<String>(TreeLogger.NEXUS_FORMAT, "true"),
-                        new Attribute.Default<String>(TreeLogger.FILE_NAME, treeFileName),
-                        new Attribute.Default<String>(TreeLogger.SORT_TRANSLATION_TABLE, "true")
+                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, logEvery + ""),
+                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
+                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeFileName),
+                        new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
                 });
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
         if (clockModel != STRICT_CLOCK) {
@@ -2196,7 +2197,7 @@ public class BeastGenerator extends BeautiOptions {
             // we have data...
             writer.writeTag("posterior", new Attribute.Default<String>("idref", "posterior"), true);
         }
-        writer.writeCloseTag(TreeLogger.LOG_TREE);
+        writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
 
 //        if (mapTreeLog) {
 //            // write tree log to file
@@ -2223,13 +2224,13 @@ public class BeastGenerator extends BeautiOptions {
             if (substTreeFileName == null) {
                 substTreeFileName = fileNameStem + "(subst).trees";
             }
-            writer.writeOpenTag(TreeLogger.LOG_TREE,
+            writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
                     new Attribute[]{
                             new Attribute.Default<String>("id", "substTreeFileLog"),
-                            new Attribute.Default<String>(TreeLogger.LOG_EVERY, logEvery + ""),
-                            new Attribute.Default<String>(TreeLogger.NEXUS_FORMAT, "true"),
-                            new Attribute.Default<String>(TreeLogger.FILE_NAME, substTreeFileName),
-                            new Attribute.Default<String>(TreeLogger.BRANCH_LENGTHS, TreeLogger.SUBSTITUTIONS)
+                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, logEvery + ""),
+                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
+                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, substTreeFileName),
+                            new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
                     });
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
             if (clockModel == STRICT_CLOCK) {
@@ -2237,7 +2238,7 @@ public class BeastGenerator extends BeautiOptions {
             } else {
                 writer.writeTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
             }
-            writer.writeCloseTag(TreeLogger.LOG_TREE);
+            writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
         }
 
         writer.writeCloseTag("mcmc");
@@ -2378,15 +2379,15 @@ public class BeastGenerator extends BeautiOptions {
     }
 
     private void writeSumStatisticColumn(XMLWriter writer, String name, String label) {
-              writer.writeOpenTag(Columns.COLUMN,
-                    new Attribute[]{
-                            new Attribute.Default<String>(Columns.LABEL,label),
-                            new Attribute.Default<String>(Columns.DECIMAL_PLACES, "0"),
-                            new Attribute.Default<String>(Columns.WIDTH, "12")
-                    }
-            );
-            writer.writeTag("sumStatistic", new Attribute.Default<String>("idref", name), true);
-            writer.writeCloseTag(Columns.COLUMN);
+        writer.writeOpenTag(Columns.COLUMN,
+                new Attribute[]{
+                        new Attribute.Default<String>(Columns.LABEL, label),
+                        new Attribute.Default<String>(Columns.DECIMAL_PLACES, "0"),
+                        new Attribute.Default<String>(Columns.WIDTH, "12")
+                }
+        );
+        writer.writeTag("sumStatistic", new Attribute.Default<String>("idref", name), true);
+        writer.writeCloseTag(Columns.COLUMN);
     }
 
     /**
@@ -2590,7 +2591,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "skyline.popSize"), true);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "skyline.groupSize"), true);
         } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
-             writeSumStatisticColumn(writer, "demographic.populationSizeChanges", "popSize_changes");
+            writeSumStatisticColumn(writer, "demographic.populationSizeChanges", "popSize_changes");
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.populationMean"), true);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.popSize"), true);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "demographic.indicators"), true);
@@ -2601,8 +2602,8 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME), true);
         }
 
-        if (alignment != null){
-            switch(dataType){
+        if (alignment != null) {
+            switch (dataType) {
                 case DataType.NUCLEOTIDES:
                     if (partitionCount > 1) {
                         for (int i = 1; i <= partitionCount; i++) {
@@ -2610,7 +2611,7 @@ public class BeastGenerator extends BeautiOptions {
                                     new Attribute.Default<String>("idref", "siteModel" + i + ".mu"), true);
                         }
                     }
-                    switch(nucSubstitutionModel){
+                    switch (nucSubstitutionModel) {
                         case HKY:
                             if (partitionCount > 1 && unlinkedSubstitutionModel) {
                                 for (int i = 1; i <= partitionCount; i++) {
@@ -2647,7 +2648,7 @@ public class BeastGenerator extends BeautiOptions {
                 case DataType.TWO_STATES:
                 case DataType.COVARION:
 
-                    switch(binarySubstitutionModel){
+                    switch (binarySubstitutionModel) {
                         case BIN_SIMPLE:
                             break;
                         case BIN_COVARION:
@@ -2737,12 +2738,12 @@ public class BeastGenerator extends BeautiOptions {
     }
 
 
-    private String multiDimensionValue(int dimension, double value){
-        String multi= "";
+    private String multiDimensionValue(int dimension, double value) {
+        String multi = "";
 
         multi += value + "";
-        for (int i=2; i <= dimension; i++)
-            multi +=  " " + value;
+        for (int i = 2; i <= dimension; i++)
+            multi += " " + value;
 
         return multi;
     }
@@ -2783,9 +2784,10 @@ public class BeastGenerator extends BeautiOptions {
         }
         if (parameter.isFixed) {
             writeParameter(id, dimension, parameter.initial, Double.NaN, Double.NaN, writer);
-        } else if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+        } else
+        if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
             writeParameter(id, dimension, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
-        }  else {
+        } else {
             writeParameter(id, dimension, parameter.initial, parameter.lower, parameter.upper, writer);
         }
     }

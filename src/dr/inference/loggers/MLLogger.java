@@ -25,216 +25,199 @@
 
 package dr.inference.loggers;
 
+import dr.evomodelxml.LoggerParser;
 import dr.inference.model.Likelihood;
 import dr.util.Identifiable;
 import dr.xml.*;
 
-import java.io.*;
+import java.io.PrintWriter;
 
 /**
  * A logger that stores maximum likelihood states.
  *
- * @version $Id: MLLogger.java,v 1.21 2005/07/27 22:09:21 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: MLLogger.java,v 1.21 2005/07/27 22:09:21 rambaut Exp $
  */
 public class MLLogger extends MCLogger {
 
-	public static final String LOG_ML = "logML";
-	public static final String LIKELIHOOD = "ml";
+    public static final String LOG_ML = "logML";
+    public static final String LIKELIHOOD = "ml";
 
-	private Likelihood likelihood;
-	private double bestLikelihood;
-	private int bestState;
-	private String[] bestValues = null;
-	private int logEvery = 0;
+    private Likelihood likelihood;
+    private double bestLikelihood;
+    private int bestState;
+    private String[] bestValues = null;
+    private int logEvery = 0;
 
-	public MLLogger(Likelihood likelihood, LogFormatter formatter, int logEvery) {
+    public MLLogger(Likelihood likelihood, LogFormatter formatter, int logEvery) {
 
-		super(formatter, logEvery);
+        super(formatter, logEvery);
 
-		this.likelihood = likelihood;
-	}
+        this.likelihood = likelihood;
+    }
 
-	public void startLogging() {
-		bestLikelihood = Double.NEGATIVE_INFINITY;
-		bestState = 0;
-		bestValues = new String[getColumnCount()];
+    public void startLogging() {
+        bestLikelihood = Double.NEGATIVE_INFINITY;
+        bestState = 0;
+        bestValues = new String[getColumnCount()];
 
-		if (logEvery > 0) {
-			String[] labels = new String[getColumnCount() + 1];
+        if (logEvery > 0) {
+            String[] labels = new String[getColumnCount() + 1];
 
-			labels[0] = "state";
+            labels[0] = "state";
 
-			for (int i = 0; i < getColumnCount(); i++) {
-				labels[i+1] = getColumnLabel(i);
-			}
+            for (int i = 0; i < getColumnCount(); i++) {
+                labels[i + 1] = getColumnLabel(i);
+            }
 
-			logLabels(labels);
-		}
+            logLabels(labels);
+        }
 
-		super.startLogging();
-	}
+        super.startLogging();
+    }
 
-	public void log(int state) {
+    public void log(int state) {
 
-		double lik;
+        double lik;
 
-		lik = likelihood.getLogLikelihood();
+        lik = likelihood.getLogLikelihood();
 
-		if (lik > bestLikelihood) {
+        if (lik > bestLikelihood) {
 
-			for (int i = 0; i < getColumnCount(); i++) {
-				bestValues[i] = getColumnFormatted(i);
-			}
+            for (int i = 0; i < getColumnCount(); i++) {
+                bestValues[i] = getColumnFormatted(i);
+            }
 
-			bestState = state;
-			bestLikelihood = lik;
+            bestState = state;
+            bestLikelihood = lik;
 
-			if (logEvery == 1) {
+            if (logEvery == 1) {
 
-				String[] values = new String[getColumnCount() + 1];
+                String[] values = new String[getColumnCount() + 1];
 
-				values[0] = Integer.toString(bestState);
+                values[0] = Integer.toString(bestState);
 
                 System.arraycopy(bestValues, 0, values, 1, getColumnCount());
 
-				logValues(values);
-			}
-		}
+                logValues(values);
+            }
+        }
 
-		if (logEvery > 1 && (state % logEvery == 0)) {
+        if (logEvery > 1 && (state % logEvery == 0)) {
 
-			String[] values = new String[getColumnCount() + 1];
+            String[] values = new String[getColumnCount() + 1];
 
-			values[0] = Integer.toString(bestState);
+            values[0] = Integer.toString(bestState);
 
             System.arraycopy(bestValues, 0, values, 1, getColumnCount());
 
-			logValues(values);
-		}
-	}
+            logValues(values);
+        }
+    }
 
-	public void stopLogging() {
+    public void stopLogging() {
         final int columnCount = getColumnCount();
         String[] values = new String[columnCount + 2];
 
-		values[0] = Integer.toString(bestState);
-		values[1] = Double.toString(bestLikelihood);
+        values[0] = Integer.toString(bestState);
+        values[1] = Double.toString(bestLikelihood);
 
         System.arraycopy(bestValues, 0, values, 2, columnCount);
 
-		if (logEvery > 0) {
-			logValues(values);
-		} else {
-			String[] labels = new String[columnCount + 2];
+        if (logEvery > 0) {
+            logValues(values);
+        } else {
+            String[] labels = new String[columnCount + 2];
 
-			labels[0] = "state";
-			labels[1] = "ML";
+            labels[0] = "state";
+            labels[1] = "ML";
 
-			for (int i = 0; i < columnCount; i++) {
-				labels[i+2] = getColumnLabel(i);
-			}
+            for (int i = 0; i < columnCount; i++) {
+                labels[i + 2] = getColumnLabel(i);
+            }
 
-			logLabels(labels);
-			logValues(values);
-		}
+            logLabels(labels);
+            logValues(values);
+        }
 
-		super.stopLogging();
-	}
+        super.stopLogging();
+    }
 
-	public static LoggerParser ML_LOGGER_PARSER = new MCLogger.LoggerParser() {
+    public static LoggerParser ML_LOGGER_PARSER = new LoggerParser() {
 
-		public String getParserName() { return LOG_ML; }
+        public String getParserName() {
+            return LOG_ML;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			Likelihood likelihood = (Likelihood)xo.getElementFirstChild(LIKELIHOOD);
+            Likelihood likelihood = (Likelihood) xo.getElementFirstChild(LIKELIHOOD);
 
-			// logEvery of zero only displays at the end
-			int logEvery = 0;
+            // logEvery of zero only displays at the end
+            int logEvery = 0;
 
-			if (xo.hasAttribute(LOG_EVERY)) {
-				logEvery = xo.getIntegerAttribute(LOG_EVERY);
-			}
+            if (xo.hasAttribute(LOG_EVERY)) {
+                logEvery = xo.getIntegerAttribute(LOG_EVERY);
+            }
 
             PrintWriter pw = getLogFile(xo, getParserName());
-            
-//			PrintWriter pw = null;
-//
-//			if (xo.hasAttribute(FILE_NAME)) {
-//
-//				String fileName = xo.getStringAttribute(FILE_NAME);
-//				try {
-//					File file = new File(fileName);
-//					String name = file.getName();
-//					String parent = file.getParent();
-//
-//					if (!file.isAbsolute()) {
-//						parent = System.getProperty("user.dir");
-//					}
-//
-//					pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
-//				} catch (FileNotFoundException fnfe) {
-//					throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
-//				}
-//
-//			} else {
-//				pw = new PrintWriter(System.out);
-//			}
 
-			LogFormatter formatter = new TabDelimitedFormatter(pw);
+            LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-			MLLogger logger = new MLLogger(likelihood, formatter, logEvery);
+            MLLogger logger = new MLLogger(likelihood, formatter, logEvery);
 
-			if (xo.hasAttribute(TITLE)) {
-				logger.setTitle(xo.getStringAttribute(TITLE));
-			}
+            if (xo.hasAttribute(TITLE)) {
+                logger.setTitle(xo.getStringAttribute(TITLE));
+            }
 
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				Object child = xo.getChild(i);
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                Object child = xo.getChild(i);
 
-				if (child instanceof Columns) {
+                if (child instanceof Columns) {
 
-					logger.addColumns(((Columns)child).getColumns());
+                    logger.addColumns(((Columns) child).getColumns());
 
-				} else if (child instanceof Loggable) {
+                } else if (child instanceof Loggable) {
 
-					logger.add((Loggable)child);
+                    logger.add((Loggable) child);
 
-				} else if (child instanceof Identifiable) {
+                } else if (child instanceof Identifiable) {
 
-					logger.addColumn(new LogColumn.Default(((Identifiable)child).getId(), child));
+                    logger.addColumn(new LogColumn.Default(((Identifiable) child).getId(), child));
 
-				} else {
+                } else {
 
-					logger.addColumn(new LogColumn.Default(child.getClass().toString(), child));
-				}
-			}
+                    logger.addColumn(new LogColumn.Default(child.getClass().toString(), child));
+                }
+            }
 
-			return logger;
-		}
+            return logger;
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newIntegerRule(LOG_EVERY, true),
-			new ElementRule(LIKELIHOOD,
-				new XMLSyntaxRule[] { new ElementRule(Likelihood.class) }),
-			new OrRule(
-				new ElementRule(Columns.class, 1, Integer.MAX_VALUE),
-				new ElementRule(Loggable.class, 1, Integer.MAX_VALUE)
-			)
-		};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newIntegerRule(LOG_EVERY, true),
+                new ElementRule(LIKELIHOOD,
+                        new XMLSyntaxRule[]{new ElementRule(Likelihood.class)}),
+                new OrRule(
+                        new ElementRule(Columns.class, 1, Integer.MAX_VALUE),
+                        new ElementRule(Loggable.class, 1, Integer.MAX_VALUE)
+                )
+        };
 
-		public String getParserDescription() {
-			return "Logs one or more items every time the given likelihood improves";
-		}
+        public String getParserDescription() {
+            return "Logs one or more items every time the given likelihood improves";
+        }
 
-		public Class getReturnType() { return MLLogger.class; }
-	};
+        public Class getReturnType() {
+            return MLLogger.class;
+        }
+    };
 }

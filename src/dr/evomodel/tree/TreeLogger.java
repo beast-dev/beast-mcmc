@@ -62,7 +62,7 @@ public class TreeLogger extends MCLogger {
                       LogFormatter formatter, int logEvery, boolean nexusFormat,
                       boolean sortTranslationTable, boolean mapNames) {
 
-        super(formatter, logEvery);
+        super(formatter, logEvery, false);
 
         this.nexusFormat = nexusFormat;
         this.mapNames = mapNames;

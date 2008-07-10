@@ -37,6 +37,10 @@ import java.util.List;
  * @version $Id: MCLogger.java,v 1.18 2005/05/24 20:25:59 rambaut Exp $
  */
 public class MCLogger implements Logger {
+    /**
+     * Output perfomance stats in this log
+     */
+     private boolean performanceReport;
 
     /**
      * Constructor. Will log every logEvery.
@@ -44,19 +48,18 @@ public class MCLogger implements Logger {
      * @param formatter the formatter of this logger
      * @param logEvery  logging frequency
      */
-    public MCLogger(LogFormatter formatter, int logEvery) {
+    public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport) {
 
         addFormatter(formatter);
         this.logEvery = logEvery;
+        this.performanceReport = performanceReport;
     }
 
     public final void setTitle(String title) {
-
         this.title = title;
     }
 
     public final String getTitle() {
-
         return title;
     }
 
@@ -164,7 +167,7 @@ public class MCLogger implements Logger {
 
             final int columnCount = getColumnCount();
 
-            String[] values = new String[columnCount + 2];
+            String[] values = new String[columnCount + (performanceReport ? 2 : 1)];
 
             values[0] = Integer.toString(state);
 
@@ -172,15 +175,17 @@ public class MCLogger implements Logger {
                 values[i + 1] = getColumnFormatted(i);
             }
 
-            if (state > 0) {
+            if( performanceReport ) {
+                if (state > 0) {
 
-                long timeTaken = System.currentTimeMillis() - startTime;
+                    long timeTaken = System.currentTimeMillis() - startTime;
 
-                double hoursPerMillionStates = (double) timeTaken / (3.6 * (double) state);
+                    double hoursPerMillionStates = (double) timeTaken / (3.6 * (double) state);
 
-                values[columnCount + 1] = formatter.format(hoursPerMillionStates) + " hours/million states";
-            } else {
-                values[columnCount + 1] = "-";
+                    values[columnCount + 1] = formatter.format(hoursPerMillionStates) + " hours/million states";
+                } else {
+                    values[columnCount + 1] = "-";
+                }
             }
 
             logValues(values);

@@ -52,7 +52,7 @@ public class MLLogger extends MCLogger {
 
     public MLLogger(Likelihood likelihood, LogFormatter formatter, int logEvery) {
 
-        super(formatter, logEvery);
+		super(formatter, logEvery, false);
 
         this.likelihood = likelihood;
     }

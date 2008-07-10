@@ -36,7 +36,6 @@ import dr.xml.*;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: SimpleTreeParser.java,v 1.3 2005/05/24 20:25:59 rambaut Exp $
  */
 public class SimpleTreeParser extends AbstractXMLObjectParser {
@@ -49,18 +48,16 @@ public class SimpleTreeParser extends AbstractXMLObjectParser {
     public static final String USING_DATES = "usingDates";
     public static final String DATE = "date";
 
-    public String getParserName() { return SIMPLE_TREE; }
+    public String getParserName() {
+        return SIMPLE_TREE;
+    }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Units.Type units = XMLParser.Utils.getUnitsAttr(xo);
-        boolean usingDates = false;
+        boolean usingDates = xo.getAttribute(USING_DATES, false);
 
-        if (xo.hasAttribute(USING_DATES)) {
-            usingDates = xo.getBooleanAttribute(USING_DATES);
-        }
-
-        SimpleNode root = (SimpleNode)xo.getChild(SimpleNode.class);
+        SimpleNode root = (SimpleNode) xo.getChild(SimpleNode.class);
 
         if (root == null) {
             throw new XMLParseException("node element missing from tree");
@@ -73,10 +70,10 @@ public class SimpleTreeParser extends AbstractXMLObjectParser {
             dr.evolution.util.Date mostRecent = null;
             for (int i = 0; i < tree.getTaxonCount(); i++) {
 
-                dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getTaxonAttribute(i, DATE);
+                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getTaxonAttribute(i, DATE);
 
                 if (date == null) {
-                    date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getExternalNode(i), DATE);
+                    date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getExternalNode(i), DATE);
                 }
 
                 if (date != null && ((mostRecent == null) || date.after(mostRecent))) {
@@ -85,7 +82,7 @@ public class SimpleTreeParser extends AbstractXMLObjectParser {
             }
 
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getInternalNode(i), DATE);
+                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getInternalNode(i), DATE);
 
                 if (date != null && ((mostRecent == null) || date.after(mostRecent))) {
                     mostRecent = date;
@@ -99,10 +96,10 @@ public class SimpleTreeParser extends AbstractXMLObjectParser {
             TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
 
             for (int i = 0; i < tree.getTaxonCount(); i++) {
-                dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getTaxonAttribute(i, DATE);
+                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getTaxonAttribute(i, DATE);
 
                 if (date == null) {
-                    date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getExternalNode(i), DATE);
+                    date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getExternalNode(i), DATE);
                 }
 
                 if (date != null) {
@@ -112,7 +109,7 @@ public class SimpleTreeParser extends AbstractXMLObjectParser {
             }
 
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getInternalNode(i), DATE);
+                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getInternalNode(i), DATE);
 
                 if (date != null) {
                     double height = timeScale.convertTime(date.getTimeValue(), date);
@@ -136,12 +133,16 @@ public class SimpleTreeParser extends AbstractXMLObjectParser {
         return "This element represents a rooted binary tree and associated attributes.";
     }
 
-    public Class getReturnType() { return Tree.class; }
+    public Class getReturnType() {
+        return Tree.class;
+    }
 
-    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-        XMLUnits.SYNTAX_RULES[0],
-        new ElementRule(SimpleNode.class)
+    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            XMLUnits.SYNTAX_RULES[0],
+            new ElementRule(SimpleNode.class)
     };
 }

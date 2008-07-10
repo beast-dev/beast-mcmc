@@ -66,9 +66,7 @@ public class ACLikelihood extends RateEvolutionLikelihood {
 
             boolean isEpisodic = xo.getBooleanAttribute(EPISODIC);
 
-            boolean isLogSpace = false;
-            if (xo.hasAttribute(LOGSPACE))
-                isLogSpace = xo.getBooleanAttribute(LOGSPACE);
+            boolean isLogSpace = xo.getAttribute(LOGSPACE, false);
 
             ACLikelihood ed = new ACLikelihood(tree, ratesParameter, variance, rootRate, isEpisodic, isLogSpace);
 

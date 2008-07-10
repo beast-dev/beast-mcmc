@@ -147,7 +147,7 @@ public class CoalescentSimulator {
 
     private static void attemptToScaleTree(MutableTree tree, double rootHeight) {
         // avoid empty tree
-        if( tree.getRoot() == null ) return;
+        if (tree.getRoot() == null) return;
 
         double scale = rootHeight / tree.getNodeHeight(tree.getRoot());
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
@@ -260,10 +260,8 @@ public class CoalescentSimulator {
                                 TaxonList taxaSubSet = (TaxonList) constraint.getChild(TaxonList.class);
                                 ParametricDistributionModel dist =
                                         (ParametricDistributionModel) constraint.getChild(ParametricDistributionModel.class);
-                                boolean isMono = true;
-                                if (constraint.hasAttribute(IS_MONOPHYLETIC)) {
-                                    isMono = constraint.getBooleanAttribute(IS_MONOPHYLETIC);
-                                }
+                                boolean isMono = constraint.getAttribute(IS_MONOPHYLETIC, true);
+
                                 final TaxaConstraint taxaConstraint = new TaxaConstraint(taxaSubSet, dist, isMono);
                                 int insertPoint;
                                 for (insertPoint = 0; insertPoint < constraints.size(); ++insertPoint) {
@@ -455,8 +453,8 @@ public class CoalescentSimulator {
                 AttributeRule.newDoubleRule(ROOT_HEIGHT, true, ""),
                 new ElementRule(Tree.class, 0, Integer.MAX_VALUE),
                 new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE),
-                new ElementRule(CONSTRAINED_TAXA, new XMLSyntaxRule[] {
-                   new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE),
+                new ElementRule(CONSTRAINED_TAXA, new XMLSyntaxRule[]{
+                        new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE),
                         // need more here
                 }, true),
                 new ElementRule(DemographicModel.class),

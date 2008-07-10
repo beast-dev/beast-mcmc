@@ -27,21 +27,20 @@ package dr.inference.model;
 
 import dr.xml.*;
 
-import java.util.Vector;
-
 /**
- * @version $Id: ProductStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: ProductStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  */
 public class DifferenceStatistic extends Statistic.Abstract {
 
-	public static String DIFFERENCE_STATISTIC = "differenceStatistic";
-	public static String ABSOLUTE = "absolute";
+    public static String DIFFERENCE_STATISTIC = "differenceStatistic";
+    public static String ABSOLUTE = "absolute";
 
-	public DifferenceStatistic(String name, Statistic term1, Statistic term2, boolean absolute) {
-		super(name);
+    private boolean absolute;
+
+    public DifferenceStatistic(String name, Statistic term1, Statistic term2, boolean absolute) {
+        super(name);
 
         this.term1 = term1;
         this.term2 = term2;
@@ -57,37 +56,49 @@ public class DifferenceStatistic extends Statistic.Abstract {
         } else {
             dimension = term2.getDimension();
         }
+
+        this.absolute = absolute;
     }
 
-    public int getDimension() { return dimension; }
+    public int getDimension() {
+        return dimension;
+    }
 
-	/** @return mean of contained statistics */
-	public double getStatisticValue(int dim) {
+    /**
+     * @return mean of contained statistics
+     */
+    public double getStatisticValue(int dim) {
+
+        double statistic;
 
         if (term1.getDimension() == 1) {
-            return term1.getStatisticValue(0) - term2.getStatisticValue(dim);
+            statistic = term1.getStatisticValue(0) - term2.getStatisticValue(dim);
         } else if (term2.getDimension() == 1) {
-            return term1.getStatisticValue(dim) - term1.getStatisticValue(0);
+            statistic = term1.getStatisticValue(dim) - term1.getStatisticValue(0);
         } else {
-            return term1.getStatisticValue(dim) - term2.getStatisticValue(dim);
+            statistic = term1.getStatisticValue(dim) - term2.getStatisticValue(dim);
         }
+        if (absolute) statistic = Math.abs(statistic);
+
+        return statistic;
     }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String[] getParserNames() { return new String[] { getParserName(), "difference" }; }
-		public String getParserName() { return DIFFERENCE_STATISTIC; }
+        public String[] getParserNames() {
+            return new String[]{getParserName(), "difference"};
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public String getParserName() {
+            return DIFFERENCE_STATISTIC;
+        }
 
-			boolean absolute = false;
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Statistic term1 = (Statistic)xo.getChild(0);
-            Statistic term2 = (Statistic)xo.getChild(1);
+            boolean absolute = xo.getAttribute(ABSOLUTE, false);
 
-			if (xo.hasAttribute(ABSOLUTE)) {
-				absolute = xo.getBooleanAttribute(ABSOLUTE);
-			}
+            Statistic term1 = (Statistic) xo.getChild(0);
+            Statistic term2 = (Statistic) xo.getChild(1);
 
             DifferenceStatistic differenceStatistic;
             try {
@@ -96,33 +107,36 @@ public class DifferenceStatistic extends Statistic.Abstract {
                 throw new XMLParseException("Error parsing " + getParserName() + " the left and right statistics " +
                         "should be of the same dimension or of dimension 1");
             }
-			return differenceStatistic;
-		}
+            return differenceStatistic;
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element returns a statistic that is the difference of the 2 child statistics.";
-		}
+        public String getParserDescription() {
+            return "This element returns a statistic that is the difference of the 2 child statistics.";
+        }
 
-		public Class getReturnType() { return ProductStatistic.class; }
+        public Class getReturnType() {
+            return ProductStatistic.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-				AttributeRule.newBooleanRule(ABSOLUTE, true),
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newBooleanRule(ABSOLUTE, true),
                 new ElementRule(Statistic.class, "The two operand statistics", 2, 2)
-		};
-	};
+        };
+    };
 
-
-	// ****************************************************************
-	// Private and protected stuff
-	// ****************************************************************
+    // ****************************************************************
+    // Private and protected stuff
+    // ****************************************************************
 
     private int dimension = 0;
     private Statistic term1 = null;
-	private Statistic term2 = null;
+    private Statistic term2 = null;
 }

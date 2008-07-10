@@ -40,11 +40,7 @@ public class TreeLoggerParser extends LoggerParser {
 
         final Tree tree = (Tree) xo.getChild(Tree.class);
 
-        String title = null;
-
-        if (xo.hasAttribute(TITLE)) {
-            title = xo.getStringAttribute(TITLE);
-        }
+        String title = xo.getAttribute(TITLE, null);
 
         final boolean nexusFormat = xo.getAttribute(NEXUS_FORMAT, false);
 
@@ -135,9 +131,8 @@ public class TreeLoggerParser extends LoggerParser {
         BranchAttributeProvider[] branchAttributeProviders = new BranchAttributeProvider[baps.size()];
         baps.toArray(branchAttributeProviders);
 
-        boolean mapNames = true;
-        if (xo.hasAttribute(MAP_NAMES) && !xo.getBooleanAttribute(MAP_NAMES))
-            mapNames = false;
+        // I think the default should be to have names rather than numbers, thus the false default - AJD
+        boolean mapNames = xo.getAttribute(MAP_NAMES, false);
 
         TreeLogger logger =
                 new TreeLogger(tree, branchRateProvider,

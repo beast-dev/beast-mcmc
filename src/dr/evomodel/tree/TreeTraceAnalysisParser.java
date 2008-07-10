@@ -25,10 +25,10 @@
 
 package dr.evomodel.tree;
 
-import dr.xml.*;
-import dr.evolution.tree.Tree;
-import dr.evolution.io.NewickImporter;
 import dr.evolution.io.Importer;
+import dr.evolution.io.NewickImporter;
+import dr.evolution.tree.Tree;
+import dr.xml.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -123,11 +123,7 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
                 }
             }
 
-            boolean shortReport = false;
-            if (xo.hasAttribute(SHORT_REPORT)) {
-                shortReport = xo.getBooleanAttribute(SHORT_REPORT);
-            }
-
+            boolean shortReport = xo.getAttribute(SHORT_REPORT, false);
 
             TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(new Reader[]{reader}, burnin, true);
 

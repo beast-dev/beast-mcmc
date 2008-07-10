@@ -18,465 +18,454 @@ import java.util.logging.*;
  */
 public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
-	public static final String BLOCK_UPDATE_OPERATOR = "gmrfBlockUpdateOperator";
-	public static final String SCALE_FACTOR = "scaleFactor";
-	public static final String MAX_ITERATIONS = "maxIterations";
-	public static final String STOP_VALUE = "stopValue";
-	public static final String KEEP_LOG_RECORD = "keepLogRecord";
+    public static final String BLOCK_UPDATE_OPERATOR = "gmrfBlockUpdateOperator";
+    public static final String SCALE_FACTOR = "scaleFactor";
+    public static final String MAX_ITERATIONS = "maxIterations";
+    public static final String STOP_VALUE = "stopValue";
+    public static final String KEEP_LOG_RECORD = "keepLogRecord";
 
-	private double scaleFactor;
-	private double lambdaScaleFactor;
-	private int mode = CoercableMCMCOperator.DEFAULT;
-	private int fieldLength;
+    private double scaleFactor;
+    private double lambdaScaleFactor;
+    private int mode = CoercableMCMCOperator.DEFAULT;
+    private int fieldLength;
 
-	private int maxIterations;
-	private double stopValue;
+    private int maxIterations;
+    private double stopValue;
 
-	private Parameter popSizeParameter;
-	private Parameter precisionParameter;
-	private Parameter lambdaParameter;
+    private Parameter popSizeParameter;
+    private Parameter precisionParameter;
+    private Parameter lambdaParameter;
 
-	GMRFSkyrideLikelihood gmrfField;
+    GMRFSkyrideLikelihood gmrfField;
 
-	private DenseMatrix I;
-	private double[] zeros;
+    private DenseMatrix I;
+    private double[] zeros;
 
-	public GMRFSkyrideBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
-	                                      double weight, int mode, double scaleFactor,
-	                                      int maxIterations, double stopValue) {
-		super();
-		this.mode = mode;
-		gmrfField = gmrfLikelihood;
-		popSizeParameter = gmrfLikelihood.getPopSizeParameter();
-		precisionParameter = gmrfLikelihood.getPrecisionParameter();
-		lambdaParameter = gmrfLikelihood.getLambdaParameter();
+    public GMRFSkyrideBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
+                                          double weight, int mode, double scaleFactor,
+                                          int maxIterations, double stopValue) {
+        super();
+        this.mode = mode;
+        gmrfField = gmrfLikelihood;
+        popSizeParameter = gmrfLikelihood.getPopSizeParameter();
+        precisionParameter = gmrfLikelihood.getPrecisionParameter();
+        lambdaParameter = gmrfLikelihood.getLambdaParameter();
 
-		this.scaleFactor = scaleFactor;
-		lambdaScaleFactor = 0.0;
-		fieldLength = popSizeParameter.getDimension();
+        this.scaleFactor = scaleFactor;
+        lambdaScaleFactor = 0.0;
+        fieldLength = popSizeParameter.getDimension();
 
-		this.maxIterations = maxIterations;
-		this.stopValue = stopValue;
+        this.maxIterations = maxIterations;
+        this.stopValue = stopValue;
 
-		I = new DenseMatrix(fieldLength, fieldLength);
+        I = new DenseMatrix(fieldLength, fieldLength);
 
-		for (int i = 0; i < fieldLength; i++) {
-			I.set(i, i, 1.0);
-		}
-		setWeight(weight);
+        for (int i = 0; i < fieldLength; i++) {
+            I.set(i, i, 1.0);
+        }
+        setWeight(weight);
 
-		zeros = new double[fieldLength];
-	}
+        zeros = new double[fieldLength];
+    }
 
-	private double getNewLambda(double currentValue, double lambdaScale) {
-		double a = MathUtils.nextDouble() * lambdaScale - lambdaScale / 2;
-		double b = currentValue + a;
-		if (b > 1)
-			b = 2 - b;
-		if (b < 0)
-			b = -b;
+    private double getNewLambda(double currentValue, double lambdaScale) {
+        double a = MathUtils.nextDouble() * lambdaScale - lambdaScale / 2;
+        double b = currentValue + a;
+        if (b > 1)
+            b = 2 - b;
+        if (b < 0)
+            b = -b;
 
-		return b;
-	}
+        return b;
+    }
 
-	private double getNewPrecision(double currentValue, double scaleFactor) {
-		double length = scaleFactor - 1 / scaleFactor;
-		double returnValue;
+    private double getNewPrecision(double currentValue, double scaleFactor) {
+        double length = scaleFactor - 1 / scaleFactor;
+        double returnValue;
 
 
-		if (scaleFactor == 1)
-			return currentValue;
-		if (MathUtils.nextDouble() < length / (length + 2 * Math.log(scaleFactor))) {
-			returnValue = (1 / scaleFactor + length * MathUtils.nextDouble()) * currentValue;
-		} else {
-			returnValue = Math.pow(scaleFactor, 2.0 * MathUtils.nextDouble() - 1) * currentValue;
-		}
+        if (scaleFactor == 1)
+            return currentValue;
+        if (MathUtils.nextDouble() < length / (length + 2 * Math.log(scaleFactor))) {
+            returnValue = (1 / scaleFactor + length * MathUtils.nextDouble()) * currentValue;
+        } else {
+            returnValue = Math.pow(scaleFactor, 2.0 * MathUtils.nextDouble() - 1) * currentValue;
+        }
 
-		return returnValue;
-	}
+        return returnValue;
+    }
 
-	public DenseVector getMultiNormalMean(DenseVector CanonVector, BandCholesky Cholesky) {
+    public DenseVector getMultiNormalMean(DenseVector CanonVector, BandCholesky Cholesky) {
 
-		DenseVector tempValue = new DenseVector(zeros);
-		DenseVector Mean = new DenseVector(zeros);
+        DenseVector tempValue = new DenseVector(zeros);
+        DenseVector Mean = new DenseVector(zeros);
 
-		UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
+        UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
 
-		// Assume Cholesky factorization of the precision matrix Q = LL^T
+        // Assume Cholesky factorization of the precision matrix Q = LL^T
 
-		// 1. Solve L\omega = b
+        // 1. Solve L\omega = b
 
-		CholeskyUpper.transSolve(CanonVector, tempValue);
+        CholeskyUpper.transSolve(CanonVector, tempValue);
 
-		// 2. Solve L^T \mu = \omega
+        // 2. Solve L^T \mu = \omega
 
-		CholeskyUpper.solve(tempValue, Mean);
+        CholeskyUpper.solve(tempValue, Mean);
 
-		return Mean;
-	}
+        return Mean;
+    }
 
-	public DenseVector getMultiNormal(DenseVector StandNorm, DenseVector Mean, BandCholesky Cholesky) {
+    public DenseVector getMultiNormal(DenseVector StandNorm, DenseVector Mean, BandCholesky Cholesky) {
 
-		DenseVector returnValue = new DenseVector(zeros);
+        DenseVector returnValue = new DenseVector(zeros);
 
-		UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
+        UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
 
-		// 3. Solve L^T v = z
+        // 3. Solve L^T v = z
 
-		CholeskyUpper.solve(StandNorm, returnValue);
+        CholeskyUpper.solve(StandNorm, returnValue);
 
-		// 4. Return x = \mu + v
+        // 4. Return x = \mu + v
 
-		returnValue.add(Mean);
+        returnValue.add(Mean);
 
-		return returnValue;
-	}
+        return returnValue;
+    }
 
 
-	public static DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
-		int length = Mean.size();
-		DenseVector tempValue = new DenseVector(length);
-		DenseVector returnValue = new DenseVector(length);
-		UpperSPDDenseMatrix ab = Variance.copy();
+    public static DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
+        int length = Mean.size();
+        DenseVector tempValue = new DenseVector(length);
+        DenseVector returnValue = new DenseVector(length);
+        UpperSPDDenseMatrix ab = Variance.copy();
 
-		for (int i = 0; i < returnValue.size(); i++)
-			tempValue.set(i, MathUtils.nextGaussian());
+        for (int i = 0; i < returnValue.size(); i++)
+            tempValue.set(i, MathUtils.nextGaussian());
 
-		DenseCholesky chol = new DenseCholesky(length, true);
-		chol.factor(ab);
+        DenseCholesky chol = new DenseCholesky(length, true);
+        chol.factor(ab);
 
-		UpperTriangDenseMatrix x = chol.getU();
+        UpperTriangDenseMatrix x = chol.getU();
 
-		x.transMult(tempValue, returnValue);
-		returnValue.add(Mean);
-		return returnValue;
-	}
+        x.transMult(tempValue, returnValue);
+        returnValue.add(Mean);
+        return returnValue;
+    }
 
 
-	public static double logGeneralizedDeterminant(UpperTriangBandMatrix Matrix) {
-		double returnValue = 0;
+    public static double logGeneralizedDeterminant(UpperTriangBandMatrix Matrix) {
+        double returnValue = 0;
 
-		for (int i = 0; i < Matrix.numColumns(); i++) {
-			if (Matrix.get(i, i) > 0.0000001) {
-				returnValue += Math.log(Matrix.get(i, i));
-			}
-		}
+        for (int i = 0; i < Matrix.numColumns(); i++) {
+            if (Matrix.get(i, i) > 0.0000001) {
+                returnValue += Math.log(Matrix.get(i, i));
+            }
+        }
 
-		return returnValue;
-	}
+        return returnValue;
+    }
 
-	public DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException {
-		return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
-	}
+    public DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException {
+        return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
+    }
 
-	public static DenseVector newNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ,
-	                                           int maxIterations, double stopValue) throws OperatorFailedException {
-		DenseVector iterateGamma = currentGamma.copy();
-		DenseVector tempValue = currentGamma.copy();
+    public static DenseVector newNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ,
+                                               int maxIterations, double stopValue) throws OperatorFailedException {
+        DenseVector iterateGamma = currentGamma.copy();
+        DenseVector tempValue = currentGamma.copy();
 
-		int numberIterations = 0;
+        int numberIterations = 0;
 
 
-		while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > stopValue) {
-			try {
-				jacobian(data, iterateGamma, proposedQ).solve(gradient(data, iterateGamma, proposedQ), tempValue);
-			} catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
-				Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-				throw new OperatorFailedException("");
-			} catch (no.uib.cipr.matrix.MatrixSingularException e) {
-				Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
+        while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > stopValue) {
+            try {
+                jacobian(data, iterateGamma, proposedQ).solve(gradient(data, iterateGamma, proposedQ), tempValue);
+            } catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
+                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
+                throw new OperatorFailedException("");
+            } catch (no.uib.cipr.matrix.MatrixSingularException e) {
+                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
 
-				throw new OperatorFailedException("");
-			}
-			iterateGamma.add(tempValue);
-			numberIterations++;
+                throw new OperatorFailedException("");
+            }
+            iterateGamma.add(tempValue);
+            numberIterations++;
 
-			if (numberIterations > maxIterations) {
-				Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-				throw new OperatorFailedException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
-						"Try starting BEAST with a more accurate initial tree.");
-			}
-		}
+            if (numberIterations > maxIterations) {
+                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
+                throw new OperatorFailedException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
+                        "Try starting BEAST with a more accurate initial tree.");
+            }
+        }
 
-		Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson S");
-		return iterateGamma;
+        Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson S");
+        return iterateGamma;
 
-	}
+    }
 
-	private static DenseVector gradient(double[] data, DenseVector value, SymmTridiagMatrix Q) {
+    private static DenseVector gradient(double[] data, DenseVector value, SymmTridiagMatrix Q) {
 
-		DenseVector returnValue = new DenseVector(value.size());
-		Q.mult(value, returnValue);
-		for (int i = 0; i < value.size(); i++) {
-			returnValue.set(i, -returnValue.get(i) - 1 + data[i] * Math.exp(-value.get(i)));
-		}
-		return returnValue;
-	}
+        DenseVector returnValue = new DenseVector(value.size());
+        Q.mult(value, returnValue);
+        for (int i = 0; i < value.size(); i++) {
+            returnValue.set(i, -returnValue.get(i) - 1 + data[i] * Math.exp(-value.get(i)));
+        }
+        return returnValue;
+    }
 
 
-	private static SPDTridiagMatrix jacobian(double[] data, DenseVector value, SymmTridiagMatrix Q) {
-		SPDTridiagMatrix jacobian = new SPDTridiagMatrix(Q, true);
-		for (int i = 0, n = value.size(); i < n; i++) {
-			jacobian.set(i, i, jacobian.get(i, i) + Math.exp(-value.get(i)) * data[i]);
-		}
-		return jacobian;
-	}
+    private static SPDTridiagMatrix jacobian(double[] data, DenseVector value, SymmTridiagMatrix Q) {
+        SPDTridiagMatrix jacobian = new SPDTridiagMatrix(Q, true);
+        for (int i = 0, n = value.size(); i < n; i++) {
+            jacobian.set(i, i, jacobian.get(i, i) + Math.exp(-value.get(i)) * data[i]);
+        }
+        return jacobian;
+    }
 
-	public double doOperation() throws OperatorFailedException {
+    public double doOperation() throws OperatorFailedException {
 
-		double currentPrecision = precisionParameter.getParameterValue(0);
-		double proposedPrecision = this.getNewPrecision(currentPrecision, scaleFactor);
+        double currentPrecision = precisionParameter.getParameterValue(0);
+        double proposedPrecision = this.getNewPrecision(currentPrecision, scaleFactor);
 
-		double currentLambda = this.lambdaParameter.getParameterValue(0);
-		double proposedLambda = this.getNewLambda(currentLambda, lambdaScaleFactor);
+        double currentLambda = this.lambdaParameter.getParameterValue(0);
+        double proposedLambda = this.getNewLambda(currentLambda, lambdaScaleFactor);
 
-		precisionParameter.setParameterValue(0, proposedPrecision);
-		lambdaParameter.setParameterValue(0, proposedLambda);
+        precisionParameter.setParameterValue(0, proposedPrecision);
+        lambdaParameter.setParameterValue(0, proposedLambda);
 
-		DenseVector currentGamma = new DenseVector(gmrfField.getPopSizeParameter().getParameterValues());
-		DenseVector proposedGamma;
+        DenseVector currentGamma = new DenseVector(gmrfField.getPopSizeParameter().getParameterValues());
+        DenseVector proposedGamma;
 
-		SymmTridiagMatrix currentQ = gmrfField.getStoredScaledWeightMatrix(currentPrecision, currentLambda);
-		SymmTridiagMatrix proposedQ = gmrfField.getScaledWeightMatrix(proposedPrecision, proposedLambda);
+        SymmTridiagMatrix currentQ = gmrfField.getStoredScaledWeightMatrix(currentPrecision, currentLambda);
+        SymmTridiagMatrix proposedQ = gmrfField.getScaledWeightMatrix(proposedPrecision, proposedLambda);
 
 
-		double[] wNative = gmrfField.getSufficientStatistics();
+        double[] wNative = gmrfField.getSufficientStatistics();
 
-		UpperSPDBandMatrix forwardQW = new UpperSPDBandMatrix(proposedQ, 1);
-		UpperSPDBandMatrix backwardQW = new UpperSPDBandMatrix(currentQ, 1);
+        UpperSPDBandMatrix forwardQW = new UpperSPDBandMatrix(proposedQ, 1);
+        UpperSPDBandMatrix backwardQW = new UpperSPDBandMatrix(currentQ, 1);
 
-		BandCholesky forwardCholesky = new BandCholesky(wNative.length, 1, true);
-		BandCholesky backwardCholesky = new BandCholesky(wNative.length, 1, true);
+        BandCholesky forwardCholesky = new BandCholesky(wNative.length, 1, true);
+        BandCholesky backwardCholesky = new BandCholesky(wNative.length, 1, true);
 
-		DenseVector diagonal1 = new DenseVector(fieldLength);
-		DenseVector diagonal2 = new DenseVector(fieldLength);
-		DenseVector diagonal3 = new DenseVector(fieldLength);
+        DenseVector diagonal1 = new DenseVector(fieldLength);
+        DenseVector diagonal2 = new DenseVector(fieldLength);
+        DenseVector diagonal3 = new DenseVector(fieldLength);
 
-		DenseVector modeForward = newtonRaphson(wNative, currentGamma, proposedQ.copy());
+        DenseVector modeForward = newtonRaphson(wNative, currentGamma, proposedQ.copy());
 
-		for (int i = 0; i < fieldLength; i++) {
-			diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
-			diagonal2.set(i, modeForward.get(i) + 1);
+        for (int i = 0; i < fieldLength; i++) {
+            diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
+            diagonal2.set(i, modeForward.get(i) + 1);
 
-			forwardQW.set(i, i, diagonal1.get(i) + forwardQW.get(i, i));
-			diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
-		}
+            forwardQW.set(i, i, diagonal1.get(i) + forwardQW.get(i, i));
+            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
+        }
 
-		forwardCholesky.factor(forwardQW.copy());
+        forwardCholesky.factor(forwardQW.copy());
 
-		DenseVector forwardMean = getMultiNormalMean(diagonal1, forwardCholesky);
+        DenseVector forwardMean = getMultiNormalMean(diagonal1, forwardCholesky);
 
-		DenseVector stand_norm = new DenseVector(zeros);
+        DenseVector stand_norm = new DenseVector(zeros);
 
-		for (int i = 0; i < zeros.length; i++)
-			stand_norm.set(i, MathUtils.nextGaussian());
+        for (int i = 0; i < zeros.length; i++)
+            stand_norm.set(i, MathUtils.nextGaussian());
 
-		proposedGamma = getMultiNormal(stand_norm, forwardMean, forwardCholesky);
+        proposedGamma = getMultiNormal(stand_norm, forwardMean, forwardCholesky);
 
 
-		for (int i = 0; i < fieldLength; i++)
-			popSizeParameter.setParameterValueQuietly(i, proposedGamma.get(i));
+        for (int i = 0; i < fieldLength; i++)
+            popSizeParameter.setParameterValueQuietly(i, proposedGamma.get(i));
 
-		((Parameter.Abstract) popSizeParameter).fireParameterChangedEvent();
+        ((Parameter.Abstract) popSizeParameter).fireParameterChangedEvent();
 
 
-		double hRatio = 0;
+        double hRatio = 0;
 
-		diagonal1.zero();
-		diagonal2.zero();
-		diagonal3.zero();
+        diagonal1.zero();
+        diagonal2.zero();
+        diagonal3.zero();
 
-		DenseVector modeBackward = newtonRaphson(wNative, proposedGamma, currentQ.copy());
+        DenseVector modeBackward = newtonRaphson(wNative, proposedGamma, currentQ.copy());
 
-		for (int i = 0; i < fieldLength; i++) {
-			diagonal1.set(i, wNative[i] * Math.exp(-modeBackward.get(i)));
-			diagonal2.set(i, modeBackward.get(i) + 1);
+        for (int i = 0; i < fieldLength; i++) {
+            diagonal1.set(i, wNative[i] * Math.exp(-modeBackward.get(i)));
+            diagonal2.set(i, modeBackward.get(i) + 1);
 
-			backwardQW.set(i, i, diagonal1.get(i) + backwardQW.get(i, i));
-			diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
-		}
+            backwardQW.set(i, i, diagonal1.get(i) + backwardQW.get(i, i));
+            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
+        }
 
-		backwardCholesky.factor(backwardQW.copy());
+        backwardCholesky.factor(backwardQW.copy());
 
-		DenseVector backwardMean = getMultiNormalMean(diagonal1, backwardCholesky);
+        DenseVector backwardMean = getMultiNormalMean(diagonal1, backwardCholesky);
 
-		for (int i = 0; i < fieldLength; i++) {
-			diagonal1.set(i, currentGamma.get(i) - backwardMean.get(i));
-		}
+        for (int i = 0; i < fieldLength; i++) {
+            diagonal1.set(i, currentGamma.get(i) - backwardMean.get(i));
+        }
 
-		backwardQW.mult(diagonal1, diagonal3);
+        backwardQW.mult(diagonal1, diagonal3);
 
-		hRatio += 0.5 * 2 * logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
-		hRatio -= 0.5 * 2 * logGeneralizedDeterminant(forwardCholesky.getU()) - 0.5 * stand_norm.dot(stand_norm);
+        hRatio += 0.5 * 2 * logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
+        hRatio -= 0.5 * 2 * logGeneralizedDeterminant(forwardCholesky.getU()) - 0.5 * stand_norm.dot(stand_norm);
 
 
-		return hRatio;
-	}
+        return hRatio;
+    }
 
-	//MCMCOperator INTERFACE
+    //MCMCOperator INTERFACE
 
-	public final String getOperatorName() {
-		return BLOCK_UPDATE_OPERATOR;
-	}
+    public final String getOperatorName() {
+        return BLOCK_UPDATE_OPERATOR;
+    }
 
-	public double getCoercableParameter() {
+    public double getCoercableParameter() {
 //        return Math.log(scaleFactor);
-		return Math.sqrt(scaleFactor - 1);
-	}
+        return Math.sqrt(scaleFactor - 1);
+    }
 
-	public void setCoercableParameter(double value) {
+    public void setCoercableParameter(double value) {
 //        scaleFactor = Math.exp(value);
-		scaleFactor = 1 + value * value;
-	}
+        scaleFactor = 1 + value * value;
+    }
 
-	public double getRawParameter() {
-		return scaleFactor;
-	}
+    public double getRawParameter() {
+        return scaleFactor;
+    }
 
-	public int getMode() {
-		return mode;
-	}
+    public int getMode() {
+        return mode;
+    }
 
-	public double getScaleFactor() {
-		return scaleFactor;
-	}
+    public double getScaleFactor() {
+        return scaleFactor;
+    }
 
-	public double getTargetAcceptanceProbability() {
-		return 0.234;
-	}
+    public double getTargetAcceptanceProbability() {
+        return 0.234;
+    }
 
-	public double getMinimumAcceptanceLevel() {
-		return 0.1;
-	}
+    public double getMinimumAcceptanceLevel() {
+        return 0.1;
+    }
 
-	public double getMaximumAcceptanceLevel() {
-		return 0.4;
-	}
+    public double getMaximumAcceptanceLevel() {
+        return 0.4;
+    }
 
-	public double getMinimumGoodAcceptanceLevel() {
-		return 0.20;
-	}
+    public double getMinimumGoodAcceptanceLevel() {
+        return 0.20;
+    }
 
-	public double getMaximumGoodAcceptanceLevel() {
-		return 0.30;
-	}
+    public double getMaximumGoodAcceptanceLevel() {
+        return 0.30;
+    }
 
-	public final String getPerformanceSuggestion() {
+    public final String getPerformanceSuggestion() {
 
-		double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-		double targetProb = getTargetAcceptanceProbability();
-		dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
+        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+        double targetProb = getTargetAcceptanceProbability();
+        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
 
-		double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
+        double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
 
-		if (prob < getMinimumGoodAcceptanceLevel()) {
-			return "Try setting scaleFactor to about " + formatter.format(sf);
-		} else if (prob > getMaximumGoodAcceptanceLevel()) {
-			return "Try setting scaleFactor to about " + formatter.format(sf);
-		} else return "";
-	}
+        if (prob < getMinimumGoodAcceptanceLevel()) {
+            return "Try setting scaleFactor to about " + formatter.format(sf);
+        } else if (prob > getMaximumGoodAcceptanceLevel()) {
+            return "Try setting scaleFactor to about " + formatter.format(sf);
+        } else return "";
+    }
 
 
-	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
-		public String getParserName() {
-			return BLOCK_UPDATE_OPERATOR;
-		}
+        public String getParserName() {
+            return BLOCK_UPDATE_OPERATOR;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			boolean logRecord = false;
-			if (xo.hasAttribute(KEEP_LOG_RECORD)) {
-				logRecord = xo.getBooleanAttribute(KEEP_LOG_RECORD);
-			}
+            boolean logRecord = xo.getAttribute(KEEP_LOG_RECORD, false);
 
-			Handler gmrfHandler;
-			Logger gmrfLogger = Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator");
+            Handler gmrfHandler;
+            Logger gmrfLogger = Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator");
 
-			gmrfLogger.setUseParentHandlers(false);
+            gmrfLogger.setUseParentHandlers(false);
 
-			if (logRecord) {
-				gmrfLogger.setLevel(Level.FINE);
+            if (logRecord) {
+                gmrfLogger.setLevel(Level.FINE);
 
-				try {
-					gmrfHandler = new FileHandler("GMRFBlockUpdate.log." + MathUtils.getSeed());
-				} catch (IOException e) {
-					throw new RuntimeException(e.getMessage());
-				}
-				gmrfHandler.setLevel(Level.FINE);
+                try {
+                    gmrfHandler = new FileHandler("GMRFBlockUpdate.log." + MathUtils.getSeed());
+                } catch (IOException e) {
+                    throw new RuntimeException(e.getMessage());
+                }
+                gmrfHandler.setLevel(Level.FINE);
 
-				gmrfHandler.setFormatter(new XMLFormatter() {
-					public String format(LogRecord record) {
-						return "<record>\n \t<message>\n\t" + record.getMessage()
-								+ "\n\t</message>\n<record>\n";
-					}
+                gmrfHandler.setFormatter(new XMLFormatter() {
+                    public String format(LogRecord record) {
+                        return "<record>\n \t<message>\n\t" + record.getMessage()
+                                + "\n\t</message>\n<record>\n";
+                    }
+                });
 
-					;
-				});
+                gmrfLogger.addHandler(gmrfHandler);
+            }
 
-				gmrfLogger.addHandler(gmrfHandler);
-			}
+            int mode = xo.getAttribute(AUTO_OPTIMIZE, true) ?
+                    CoercableMCMCOperator.COERCION_ON :
+                    CoercableMCMCOperator.COERCION_OFF;
 
-			int mode = CoercableMCMCOperator.COERCION_ON;
-
-			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-					mode = CoercableMCMCOperator.COERCION_ON;
-				} else {
-					mode = CoercableMCMCOperator.COERCION_OFF;
-				}
-			}
-
-			double weight = xo.getDoubleAttribute(WEIGHT);
-			double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+            double weight = xo.getDoubleAttribute(WEIGHT);
+            double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
 //            if (scaleFactor <= 0.0) {
 //                throw new XMLParseException("scaleFactor must be greater than 0.0");
-			if (scaleFactor < 1.0) {
-				throw new XMLParseException("scaleFactor must be greater than or equal to 1.0");
-			}
+            if (scaleFactor < 1.0) {
+                throw new XMLParseException("scaleFactor must be greater than or equal to 1.0");
+            }
 
-			int maxIterations = 200;
-			if (xo.hasAttribute(MAX_ITERATIONS))
-				maxIterations = xo.getIntegerAttribute(MAX_ITERATIONS);
+            int maxIterations = 200;
+            if (xo.hasAttribute(MAX_ITERATIONS))
+                maxIterations = xo.getIntegerAttribute(MAX_ITERATIONS);
 
-			double stopValue = 0.01;
-			if (xo.hasAttribute(STOP_VALUE))
-				stopValue = xo.getDoubleAttribute(STOP_VALUE);
+            double stopValue = 0.01;
+            if (xo.hasAttribute(STOP_VALUE))
+                stopValue = xo.getDoubleAttribute(STOP_VALUE);
 
-			GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
+            GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
 
-			return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
-					maxIterations, stopValue);
+            return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
+                    maxIterations, stopValue);
 
-		}
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element returns a GMRF block-update operator for the joint distribution of the population sizes and precision parameter.";
-		}
+        public String getParserDescription() {
+            return "This element returns a GMRF block-update operator for the joint distribution of the population sizes and precision parameter.";
+        }
 
-		public Class getReturnType() {
-			return MCMCOperator.class;
-		}
+        public Class getReturnType() {
+            return MCMCOperator.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				AttributeRule.newDoubleRule(SCALE_FACTOR),
-				AttributeRule.newDoubleRule(WEIGHT),
-				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-				AttributeRule.newDoubleRule(STOP_VALUE, true),
-				AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
-				new ElementRule(GMRFSkyrideLikelihood.class)
-		};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule(SCALE_FACTOR),
+                AttributeRule.newDoubleRule(WEIGHT),
+                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+                AttributeRule.newDoubleRule(STOP_VALUE, true),
+                AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
+                new ElementRule(GMRFSkyrideLikelihood.class)
+        };
 
-	};
+    };
 
 //  public DenseVector oldNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException{
 //  return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);

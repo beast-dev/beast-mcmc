@@ -6,11 +6,11 @@ import dr.xml.*;
 
 /**
  * Ornstein-Uhlenbeck prior.
- *
+ * <p/>
  * A diffusion process - Basically a correlated sequence of normally distributed values, where correlation is time
  * dependent.
- *
- *
+ * <p/>
+ * <p/>
  * Very experimental and only slightly tested at this time
  *
  * @author joseph
@@ -36,7 +36,7 @@ public class OrnsteinUhlenbeckPriorLikelihood extends Likelihood.Abstract implem
 
         this.mean = mean;
         this.sigma = sigma;
-        if( lambda != null ) {
+        if (lambda != null) {
             this.lambda = lambda;
             lambda.addParameterListener(this);
         } else {
@@ -61,43 +61,43 @@ public class OrnsteinUhlenbeckPriorLikelihood extends Likelihood.Abstract implem
 
     protected double calculateLogLikelihood() {
 
-        VariableDemographicModel m = (VariableDemographicModel)getModel();
+        VariableDemographicModel m = (VariableDemographicModel) getModel();
         final double[] tps = m != null ? m.getDemographicFunction().allTimePoints() : times.getParameterValues();
 
         final double[] vals = m != null ? m.getPopulationValues().getParameterValues() : data.getParameterValues();
 
-        if( logSpace ) {
-            for(int k = 0; k < vals.length; ++k) {
+        if (logSpace) {
+            for (int k = 0; k < vals.length; ++k) {
                 vals[k] = Math.log(vals[k]);
             }
         }
 
         final double lambda = this.lambda.getStatisticValue(0);
-        final double mean =  this.mean.getStatisticValue(0);
-        
+        final double mean = this.mean.getStatisticValue(0);
+
         double sigma = this.sigma.getStatisticValue(0);
-        if( normalize ) {
+        if (normalize) {
             // make the process have a SD of sigma
-            sigma *= Math.sqrt(2*lambda);
+            sigma *= Math.sqrt(2 * lambda);
         }
 
 
-        double logL = NormalDistribution.logPdf(vals[0],  mean, sigma);
+        double logL = NormalDistribution.logPdf(vals[0], mean, sigma);
 
-        final double xScale = -lambda * (normalize ? 1.0/tps[tps.length-1] : 1.0);
+        final double xScale = -lambda * (normalize ? 1.0 / tps[tps.length - 1] : 1.0);
 
-        for(int k = 0; k < tps.length; ++k) {
-            double dt = tps[k] - (k > 0 ? tps[k-1] : 0);
-            double a = Math.exp(xScale* dt);
-            double den = sigma * Math.sqrt((1-a*a)/(2*lambda));
-            double z = (vals[k+1] - (vals[k] * a + mean * (1-a))) / den;
+        for (int k = 0; k < tps.length; ++k) {
+            double dt = tps[k] - (k > 0 ? tps[k - 1] : 0);
+            double a = Math.exp(xScale * dt);
+            double den = sigma * Math.sqrt((1 - a * a) / (2 * lambda));
+            double z = (vals[k + 1] - (vals[k] * a + mean * (1 - a))) / den;
             logL += NormalDistribution.logPdf(z, 0, 1);
         }
         return logL;
     }
 
     public void parameterChangedEvent(Parameter parameter, int index) {
-      makeDirty();
+        makeDirty();
     }
 
     static final String OU = "Ornstein-Uhlenbeck";
@@ -114,7 +114,7 @@ public class OrnsteinUhlenbeckPriorLikelihood extends Likelihood.Abstract implem
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-          public String getParserDescription() {
+        public String getParserDescription() {
             return "";
         }
 
@@ -127,14 +127,14 @@ public class OrnsteinUhlenbeckPriorLikelihood extends Likelihood.Abstract implem
         }
 
         private Parameter getParam(XMLObject xo, String name) throws XMLParseException {
-            final XMLObject object = (XMLObject)xo.getChild(name);
+            final XMLObject object = (XMLObject) xo.getChild(name);
             final Object child = object.getChild(0);
-            if( child instanceof Parameter ) {
-                return (Parameter)child;
+            if (child instanceof Parameter) {
+                return (Parameter) child;
             }
 
             double x = object.getDoubleChild(0);
-            return  new Parameter.Default(x);
+            return new Parameter.Default(x);
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -143,12 +143,12 @@ public class OrnsteinUhlenbeckPriorLikelihood extends Likelihood.Abstract implem
             Parameter sigma = getParam(xo, SIGMA);
             Parameter lambda = getParam(xo, LAMBDA);
 
-            final boolean logSpace = xo.hasAttribute(LOG_SPACE) && xo.getBooleanAttribute(LOG_SPACE);
-            final boolean normalize = xo.hasAttribute(NORMALIZE) && xo.getBooleanAttribute(NORMALIZE);
+            final boolean logSpace = xo.getAttribute(LOG_SPACE, false);
+            final boolean normalize = xo.getAttribute(NORMALIZE, false);
 
-            VariableDemographicModel m = (VariableDemographicModel)xo.getChild(VariableDemographicModel.class);
-            if( m != null ) {
-              return new OrnsteinUhlenbeckPriorLikelihood(mean, sigma, lambda, m, logSpace, normalize);
+            VariableDemographicModel m = (VariableDemographicModel) xo.getChild(VariableDemographicModel.class);
+            if (m != null) {
+                return new OrnsteinUhlenbeckPriorLikelihood(mean, sigma, lambda, m, logSpace, normalize);
             }
 
             XMLObject cxo1 = (XMLObject) xo.getChild(DATA);
@@ -161,21 +161,21 @@ public class OrnsteinUhlenbeckPriorLikelihood extends Likelihood.Abstract implem
         public XMLSyntaxRule[] getSyntaxRules() {
 
 
-            return new XMLSyntaxRule[] {
+            return new XMLSyntaxRule[]{
                     AttributeRule.newBooleanRule(LOG_SPACE, true),
                     AttributeRule.newBooleanRule(NORMALIZE, true),
                     //new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
                     //new ElementRule(TIMES, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
-                    new XORRule (
+                    new XORRule(
                             new ElementRule(MEAN, Double.class),
                             new ElementRule(MEAN, Parameter.class)
                     ),
-                    new XORRule (
+                    new XORRule(
                             new ElementRule(SIGMA, Double.class),
                             new ElementRule(SIGMA, Parameter.class)
                     ),
 
-                    new XORRule (
+                    new XORRule(
                             new ElementRule(LAMBDA, Double.class),
                             new ElementRule(LAMBDA, Parameter.class)
                     ),

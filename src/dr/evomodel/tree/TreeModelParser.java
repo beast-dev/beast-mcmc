@@ -50,7 +50,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public static final String ROOT_NODE = "rootNode";
     public static final String INTERNAL_NODES = "internalNodes";
     public static final String LEAF_NODES = "leafNodes";
-	public static final String FIRE_TREE_EVENTS = "fireTreeEvents";
+    public static final String FIRE_TREE_EVENTS = "fireTreeEvents";
 
     public static final String TAXON = "taxon";
     public static final String NAME = "name";
@@ -96,21 +96,9 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                 } else if (cxo.getName().equals(NODE_HEIGHTS)) {
 
-                    boolean rootNode = false;
-                    boolean internalNodes = false;
-                    boolean leafNodes = false;
-
-                    if (cxo.hasAttribute(ROOT_NODE)) {
-                        rootNode = cxo.getBooleanAttribute(ROOT_NODE);
-                    }
-
-                    if (cxo.hasAttribute(INTERNAL_NODES)) {
-                        internalNodes = cxo.getBooleanAttribute(INTERNAL_NODES);
-                    }
-
-                    if (cxo.hasAttribute(LEAF_NODES)) {
-                        leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
-                    }
+                    boolean rootNode = cxo.getAttribute(ROOT_NODE, false);
+                    boolean internalNodes = cxo.getAttribute(INTERNAL_NODES, false);
+                    boolean leafNodes = cxo.getAttribute(LEAF_NODES, false);
 
                     if (!rootNode && !internalNodes && !leafNodes) {
                         throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeHeights element");
@@ -120,22 +108,10 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                 } else if (cxo.getName().equals(NODE_RATES)) {
 
-                    boolean rootNode = false;
-                    boolean internalNodes = false;
-                    boolean leafNodes = false;
+                    boolean rootNode = cxo.getAttribute(ROOT_NODE, false);
+                    boolean internalNodes = cxo.getAttribute(INTERNAL_NODES, false);
+                    boolean leafNodes = cxo.getAttribute(LEAF_NODES, false);
                     double[] initialValues = null;
- 
-                    if (cxo.hasAttribute(ROOT_NODE)) {
-                        rootNode = cxo.getBooleanAttribute(ROOT_NODE);
-                    }
-
-                    if (cxo.hasAttribute(INTERNAL_NODES)) {
-                        internalNodes = cxo.getBooleanAttribute(INTERNAL_NODES);
-                    }
-
-                    if (cxo.hasAttribute(LEAF_NODES)) {
-                        leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
-                    }
 
                     if (cxo.hasAttribute(INITIAL_VALUE)) {
                         initialValues = cxo.getDoubleArrayAttribute(INITIAL_VALUE);
@@ -153,41 +129,16 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                 } else if (cxo.getName().equals(NODE_TRAITS)) {
 
-                    boolean rootNode = false;
-                    boolean internalNodes = false;
-                    boolean leafNodes = false;
-	                boolean fireTreeEvents = false;
-                    String name = "trait";
+                    boolean rootNode = cxo.getAttribute(ROOT_NODE, false);
+                    boolean internalNodes = cxo.getAttribute(INTERNAL_NODES, false);
+                    boolean leafNodes = cxo.getAttribute(LEAF_NODES, false);
+                    boolean fireTreeEvents = cxo.getAttribute(FIRE_TREE_EVENTS, false);
+                    String name = cxo.getAttribute(NAME, "trait");
+                    int dim = cxo.getAttribute(MULTIVARIATE_TRAIT, 1);
+
                     double[] initialValues = null;
-
-                    int dim = 1;
-
-                    if (cxo.hasAttribute(MULTIVARIATE_TRAIT)) {
-                        dim = cxo.getIntegerAttribute(MULTIVARIATE_TRAIT);
-                    }
-
                     if (cxo.hasAttribute(INITIAL_VALUE)) {
                         initialValues = cxo.getDoubleArrayAttribute(INITIAL_VALUE);
-                    }
-
-                    if (cxo.hasAttribute(ROOT_NODE)) {
-                        rootNode = cxo.getBooleanAttribute(ROOT_NODE);
-                    }
-
-                    if (cxo.hasAttribute(INTERNAL_NODES)) {
-                        internalNodes = cxo.getBooleanAttribute(INTERNAL_NODES);
-                    }
-
-                    if (cxo.hasAttribute(LEAF_NODES)) {
-                        leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
-                    }
-
-	                if (cxo.hasAttribute(FIRE_TREE_EVENTS)) {
-	                    fireTreeEvents = cxo.getBooleanAttribute(FIRE_TREE_EVENTS);
-	                }
-
-                    if (cxo.hasAttribute(NAME)) {
-                        name = cxo.getStringAttribute(NAME);
                     }
 
                     if (!rootNode && !internalNodes && !leafNodes) {
@@ -199,7 +150,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                 } else if (cxo.getName().equals(LEAF_TRAIT)) {
 
                     String name = "trait";
-                  
+
                     String taxonName;
                     if (cxo.hasAttribute(TAXON)) {
                         taxonName = cxo.getStringAttribute(TAXON);
@@ -219,8 +170,8 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                     Parameter parameter = treeModel.getNodeTraitParameter(node, name);
 
-                    if( parameter == null )
-                        throw new XMLParseException("trait "+name+" not found for leafTrait element in treeModel element");
+                    if (parameter == null)
+                        throw new XMLParseException("trait " + name + " not found for leafTrait element in treeModel element");
 
                     replaceParameter(cxo, parameter);
 

@@ -43,7 +43,7 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger {
                                       GMRFSkyrideLikelihood gmrfLike,
                                       int intervalNumber, double gridHeight,
                                       int auxiliaryIntervals) {
-        super(formatter, logEvery);
+        super(formatter, logEvery, false);
         this.gmrfLike = gmrfLike;
         this.intervalNumber = intervalNumber;
         this.gridHeight = gridHeight;

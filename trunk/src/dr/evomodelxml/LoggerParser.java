@@ -52,7 +52,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
         final LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-        final MCLogger logger = new MCLogger(formatter, logEvery);
+        final MCLogger logger = new MCLogger(formatter, logEvery, !xo.hasAttribute(FILE_NAME));
 
         if (xo.hasAttribute(TITLE)) {
             logger.setTitle(xo.getStringAttribute(TITLE));

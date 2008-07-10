@@ -30,7 +30,6 @@ package dr.inference.mcmc;
  * with an MCMC analysis.
  *
  * @author Alexei Drummond
- *
  * @version $Id: MCMCOptions.java,v 1.7 2005/05/24 20:25:59 rambaut Exp $
  */
 public class MCMCOptions {
@@ -39,27 +38,41 @@ public class MCMCOptions {
     private int fullEvaluationCount = 2000;
     private boolean coercion = true;
     private int preBurnin = 0;
-    private boolean preBurninSet = false;
     private double temperature = 1.0;
 
-    public MCMCOptions() {  }
-    
-    /** @return the chain length of the MCMC analysis */
-    public final int getChainLength() { return chainLength; }
+    public MCMCOptions() {
+    }
 
-    public final int fullEvaluationCount() {return fullEvaluationCount; }
+    /**
+     * @return the chain length of the MCMC analysis
+     */
+    public final int getChainLength() {
+        return chainLength;
+    }
 
-    public final boolean useCoercion() {return coercion; }
+    public final int fullEvaluationCount() {
+        return fullEvaluationCount;
+    }
+
+    public final boolean useCoercion() {
+        return coercion;
+    }
 
 
-    public final int getPreBurnin() { return preBurnin; }
+    public final int getPreBurnin() {
+        return preBurnin;
+    }
 
-    public final double getTemperature() { return temperature; }
-    public final void setTemperature(double temperature) { this.temperature = temperature; }
+    public final double getTemperature() {
+        return temperature;
+    }
+
+    public final void setTemperature(double temperature) {
+        this.temperature = temperature;
+    }
 
     public final void setChainLength(int length) {
         chainLength = length;
-        if (!preBurninSet) preBurnin=chainLength/100;
     }
 
     public final void setFullEvaluationCount(int fullEvaluationCount) {
@@ -73,7 +86,6 @@ public class MCMCOptions {
 
     public final void setPreBurnin(int preBurnin) {
         this.preBurnin = preBurnin;
-        preBurninSet = true;
     }
 
 }

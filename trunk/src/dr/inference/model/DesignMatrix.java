@@ -8,81 +8,76 @@ import org.w3c.dom.Element;
  * @author Marc Suchard
  */
 public class DesignMatrix extends MatrixParameter {
-	public static final String DESIGN_MATRIX = "designMatrix";
-	public static final String ADD_INTERCEPT = "addIntercept";
+    public static final String DESIGN_MATRIX = "designMatrix";
+    public static final String ADD_INTERCEPT = "addIntercept";
 
-	public DesignMatrix(String name) {
-		super(name);
-	}
+    public DesignMatrix(String name) {
+        super(name);
+    }
 
-	public DesignMatrix(String name, Parameter[] parameters) {
-		super(name, parameters);
-	}
+    public DesignMatrix(String name, Parameter[] parameters) {
+        super(name, parameters);
+    }
 
-	// **************************************************************
-	// XMLElement IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // XMLElement IMPLEMENTATION
+    // **************************************************************
 
-	public Element createElement(Document d) {
-		throw new RuntimeException("Not implemented yet!");
-	}
+    public Element createElement(Document d) {
+        throw new RuntimeException("Not implemented yet!");
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-
-		public String getParserName() {
-			return DESIGN_MATRIX;
-		}
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			DesignMatrix designMatrix = new DesignMatrix(DESIGN_MATRIX);
-			boolean addIntercept = false;
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
 
-			if (xo.hasAttribute(ADD_INTERCEPT)) {
-				addIntercept = xo.getBooleanAttribute(ADD_INTERCEPT);
-			}
+        public String getParserName() {
+            return DESIGN_MATRIX;
+        }
 
-			int dim = 0;
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				Parameter parameter = (Parameter) xo.getChild(i);
-				designMatrix.addParameter(parameter);
-				if (i == 0)
-					dim = parameter.getDimension();
-				else if (dim != parameter.getDimension())
-					throw new XMLParseException("All parameters must have the same dimension to construct a rectangular design matrix");
-			}
+            DesignMatrix designMatrix = new DesignMatrix(DESIGN_MATRIX);
+            boolean addIntercept = xo.getAttribute(ADD_INTERCEPT, false);
 
-			if (addIntercept) {
-				Parameter intercept = new Parameter.Default(dim);
-				intercept.setId("Intercept");
-				designMatrix.addParameter(intercept);
-			}
+            int dim = 0;
 
-			return designMatrix;
-		}
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                Parameter parameter = (Parameter) xo.getChild(i);
+                designMatrix.addParameter(parameter);
+                if (i == 0)
+                    dim = parameter.getDimension();
+                else if (dim != parameter.getDimension())
+                    throw new XMLParseException("All parameters must have the same dimension to construct a rectangular design matrix");
+            }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            if (addIntercept) {
+                Parameter intercept = new Parameter.Default(dim);
+                intercept.setId("Intercept");
+                designMatrix.addParameter(intercept);
+            }
 
-		public String getParserDescription() {
-			return "A matrix parameter constructed from its component parameters.";
-		}
+            return designMatrix;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
-				AttributeRule.newBooleanRule(ADD_INTERCEPT, true)
-		};
+        public String getParserDescription() {
+            return "A matrix parameter constructed from its component parameters.";
+        }
 
-		public Class getReturnType() {
-			return DesignMatrix.class;
-		}
-	};
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
+                AttributeRule.newBooleanRule(ADD_INTERCEPT, true)
+        };
+
+        public Class getReturnType() {
+            return DesignMatrix.class;
+        }
+    };
 }

@@ -33,7 +33,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorUtils;
-import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 import org.w3c.dom.Document;
@@ -333,8 +332,8 @@ public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implement
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            boolean swapRates = false;
-            boolean swapTraits = false;
+            boolean swapRates = xo.getAttribute(SWAP_RATES, false);
+            boolean swapTraits = xo.getAttribute(SWAP_TRAITS, false);
 
             int mode = CoercableMCMCOperator.DEFAULT;
             if (xo.hasAttribute(AUTO_OPTIMIZE)) {
@@ -343,13 +342,6 @@ public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implement
                 } else {
                     mode = CoercableMCMCOperator.COERCION_OFF;
                 }
-            }
-
-            if (xo.hasAttribute(SWAP_RATES)) {
-                swapRates = xo.getBooleanAttribute(SWAP_RATES);
-            }
-            if (xo.hasAttribute(SWAP_TRAITS)) {
-                swapTraits = xo.getBooleanAttribute(SWAP_TRAITS);
             }
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);

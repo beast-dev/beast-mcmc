@@ -27,14 +27,13 @@ package dr.inference.model;
 
 import dr.xml.*;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @version $Id: SumStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
- *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @version $Id: SumStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  */
 public class SumStatistic extends Statistic.Abstract {
 
@@ -55,13 +54,19 @@ public class SumStatistic extends Statistic.Abstract {
             } else if (dimension != statistic.getDimension()) {
                 throw new IllegalArgumentException();
             }
-        } else { dimension = 1; }
+        } else {
+            dimension = 1;
+        }
         statistics.add(statistic);
     }
 
-    public int getDimension() { return dimension; }
+    public int getDimension() {
+        return dimension;
+    }
 
-    /** @return mean of contained statistics */
+    /**
+     * @return mean of contained statistics
+     */
     public double getStatisticValue(int dim) {
 
         double sum = 0.0;
@@ -81,23 +86,25 @@ public class SumStatistic extends Statistic.Abstract {
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String[] getParserNames() { return new String[] { getParserName(), "sum" }; }
-        public String getParserName() { return SUM_STATISTIC; }
+        public String[] getParserNames() {
+            return new String[]{getParserName(), "sum"};
+        }
+
+        public String getParserName() {
+            return SUM_STATISTIC;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            boolean elementwise = false;
-            if (xo.hasAttribute("elementwise")) {
-                elementwise = xo.getBooleanAttribute("elementwise");
-            }
+            boolean elementwise = xo.getAttribute("elementwise", false);
 
             SumStatistic sumStatistic = new SumStatistic(SUM_STATISTIC, elementwise);
 
-            for (int i =0; i < xo.getChildCount(); i++) {
+            for (int i = 0; i < xo.getChildCount(); i++) {
                 Object child = xo.getChild(i);
                 if (child instanceof Statistic) {
                     try {
-                        sumStatistic.addStatistic((Statistic)child);
+                        sumStatistic.addStatistic((Statistic) child);
                     } catch (IllegalArgumentException iae) {
                         throw new XMLParseException("Statistic added to " + getParserName() + " element is not of the same dimension");
                     }
@@ -117,16 +124,19 @@ public class SumStatistic extends Statistic.Abstract {
             return "This element returns a statistic that is the element-wise sum of the child statistics.";
         }
 
-        public Class getReturnType() { return SumStatistic.class; }
+        public Class getReturnType() {
+            return SumStatistic.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newBooleanRule("elementwise", true),
-                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
     };
-
 
     // ****************************************************************
     // Private and protected stuff

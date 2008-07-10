@@ -45,11 +45,10 @@ public class XMLObject {
     public static final String missingValue = "NA";
 
     /**
-     * Creates an XMLObject from the given element and the given object store.
+     * @param e the element the construct this XML object from
      */
-    public XMLObject(Element e /*, ObjectStore store*/) {
+    public XMLObject(Element e) {
         this.element = e;
-//		this.store = store;
     }
 
     /**
@@ -60,6 +59,7 @@ public class XMLObject {
     }
 
     /**
+     * @param i the index of the child to return
      * @return the ith child in native format if available, otherwise as
      *         an XMLObject.
      */
@@ -78,6 +78,7 @@ public class XMLObject {
     }
 
     /**
+     * @param c the class of the child to return
      * @return the first child with a native format of the given class, or null if no such child exists.
      */
     public Object getChild(Class c) {
@@ -92,6 +93,7 @@ public class XMLObject {
     }
 
     /**
+     * @param name the name of the child to return
      * @return the first child of type XMLObject with a given name, or null if no such child exists.
      */
     public Object getChild(String name) {
@@ -108,7 +110,10 @@ public class XMLObject {
     }
 
     /**
-     * Convenience method for getting the first child element out of a named XMLObject element
+     * @param elementName the name of the XML wrapper element the child resides in
+     * @return the first child element out of a named XMLObject element
+     * @throws XMLParseException if no wrapper element exists, or it the child in
+     *                           wrapper element is not an XMLObject
      */
     public Object getElementFirstChild(String elementName) throws XMLParseException {
         Object child = getChild(elementName);
@@ -140,7 +145,8 @@ public class XMLObject {
     }
 
     /**
-     * @return true if a child socket element of the given name exists.
+     * @param name the name of the child element being tested for.
+     * @return true if a child element of the given name exists.
      */
     public boolean hasChildNamed(String name) {
         final Object child = getChild(name);
@@ -155,42 +161,54 @@ public class XMLObject {
     }
 
     /**
-     * @return the ith child as a double.
+     * @param i the index of the child to return
+     * @return the ith child as a boolean.
+     * @throws XMLParseException if getChild(i) would
      */
     public boolean getBooleanChild(int i) throws XMLParseException {
         return getBoolean(getChild(i));
     }
 
     /**
+     * @param i the index of the child to return
      * @return the ith child as a double.
+     * @throws XMLParseException if getChild(i) would
      */
     public double getDoubleChild(int i) throws XMLParseException {
         return getDouble(getChild(i));
     }
 
     /**
+     * @param i the index of the child to return
      * @return the ith child as a double[].
+     * @throws XMLParseException if getChild(i) would
      */
     public double[] getDoubleArrayChild(int i) throws XMLParseException {
         return getDoubleArray(getChild(i));
     }
 
     /**
-     * @return the ith child as a double.
+     * @param i the index of the child to return
+     * @return the ith child as an integer.
+     * @throws XMLParseException if getChild(i) would
      */
     public int getIntegerChild(int i) throws XMLParseException {
         return getInteger(getChild(i));
     }
 
     /**
-     * @return the ith child as a double.
+     * @param i the index of the child to return
+     * @return the ith child as a string.
+     * @throws XMLParseException if getChild(i) would
      */
     public String getStringChild(int i) throws XMLParseException {
         return getString(getChild(i));
     }
 
     /**
-     * @return the ith child as a double.
+     * @param i the index of the child to return
+     * @return the ith child as a String[].
+     * @throws XMLParseException if getChild(i) would
      */
     public String[] getStringArrayChild(int i) throws XMLParseException {
         return getStringArray(getChild(i));
@@ -199,20 +217,21 @@ public class XMLObject {
     /**
      * Attribute value, if present - default otherwise.
      *
-     * @param name attribute name
-     * @param defaultValue
-     * @return
+     * @param name         attribute name
+     * @param defaultValue the default value
+     * @return the given attribute if it exists, otherwise the default value
+     * @throws XMLParseException if attribute can't be converted to desired type
      */
     public <T> T getAttribute(String name, T defaultValue) throws XMLParseException {
         if (element.hasAttribute(name)) {
 
             final String s = element.getAttribute(name);
-            for( Constructor c : defaultValue.getClass().getConstructors() ) {
+            for (Constructor c : defaultValue.getClass().getConstructors()) {
                 final Class[] classes = c.getParameterTypes();
-                if( classes.length == 1 && classes[0].equals(String.class) ) {
+                if (classes.length == 1 && classes[0].equals(String.class)) {
                     try {
                         return (T) c.newInstance(s);
-                    } catch( Exception e ) {
+                    } catch (Exception e) {
                         throw new XMLParseException(" conversion of '" + s + "' to " +
                                 defaultValue.getClass().getName() + " failed");
                     }
@@ -438,7 +457,7 @@ public class XMLObject {
             if (obj instanceof Number) {
                 return ((Number) obj).doubleValue();
             }
-            if( obj instanceof String ) {
+            if (obj instanceof String) {
                 return Double.parseDouble((String) obj);
             }
         } catch (NumberFormatException nfe) {

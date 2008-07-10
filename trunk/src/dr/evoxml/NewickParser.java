@@ -38,7 +38,6 @@ import java.io.IOException;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: NewickParser.java,v 1.7 2006/04/25 14:41:08 rambaut Exp $
  */
 public class NewickParser extends AbstractXMLObjectParser {
@@ -47,23 +46,21 @@ public class NewickParser extends AbstractXMLObjectParser {
     public static final String UNITS = "units";
     public static final String RESCALE_HEIGHT = "rescaleHeight";
 
-    public String getParserName() { return NEWICK; }
+    public String getParserName() {
+        return NEWICK;
+    }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         final Units.Type units = XMLParser.Utils.getUnitsAttr(xo);
 
-        boolean usingDates = true;
-
-        if (xo.hasAttribute(SimpleTreeParser.USING_DATES)) {
-            usingDates = xo.getBooleanAttribute(SimpleTreeParser.USING_DATES);
-        }
+        boolean usingDates = xo.getAttribute(SimpleTreeParser.USING_DATES, true);
 
         StringBuffer buffer = new StringBuffer();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             if (xo.getChild(i) instanceof String) {
-                buffer.append((String)xo.getChild(i));
+                buffer.append((String) xo.getChild(i));
             } else {
                 throw new XMLParseException("illegal element in newick element");
             }
@@ -75,7 +72,7 @@ public class NewickParser extends AbstractXMLObjectParser {
         FlexibleTree tree;
 
         try {
-            tree = (FlexibleTree)importer.importTree(null);
+            tree = (FlexibleTree) importer.importTree(null);
         } catch (IOException ioe) {
             throw new XMLParseException("error parsing tree in newick element");
         } catch (NewickImporter.BranchMissingException bme) {
@@ -84,15 +81,15 @@ public class NewickParser extends AbstractXMLObjectParser {
             throw new XMLParseException("error parsing tree in newick element");
         }
 
-        if( tree == null ) {
-             throw new XMLParseException("Failed to read tree");
+        if (tree == null) {
+            throw new XMLParseException("Failed to read tree");
         }
-        
+
         tree.setUnits(units);
 
         for (int i = 0; i < tree.getTaxonCount(); i++) {
 
-            FlexibleNode node = (FlexibleNode)tree.getExternalNode(i);
+            FlexibleNode node = (FlexibleNode) tree.getExternalNode(i);
 
             String id = node.getTaxon().getId();
             Taxon taxon = null;
@@ -102,9 +99,9 @@ public class NewickParser extends AbstractXMLObjectParser {
 
                 if (obj instanceof Taxon) {
 
-                    taxon = (Taxon)obj;
+                    taxon = (Taxon) obj;
                 }
-            } catch (ObjectNotFoundException e) { /**/ }
+            } catch (ObjectNotFoundException e) { /**/}
 
             if (taxon != null) {
 
@@ -120,10 +117,10 @@ public class NewickParser extends AbstractXMLObjectParser {
             dr.evolution.util.Date mostRecent = null;
             for (int i = 0; i < tree.getTaxonCount(); i++) {
 
-                dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
+                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
 
                 if (date == null) {
-                    date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getExternalNode(i), dr.evolution.util.Date.DATE);
+                    date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getExternalNode(i), dr.evolution.util.Date.DATE);
                 }
 
                 if (date != null && ((mostRecent == null) || date.after(mostRecent))) {
@@ -132,7 +129,7 @@ public class NewickParser extends AbstractXMLObjectParser {
             }
 
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getInternalNode(i), dr.evolution.util.Date.DATE);
+                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getInternalNode(i), dr.evolution.util.Date.DATE);
 
                 if (date != null && ((mostRecent == null) || date.after(mostRecent))) {
                     mostRecent = date;
@@ -146,10 +143,10 @@ public class NewickParser extends AbstractXMLObjectParser {
             TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
 
             for (int i = 0; i < tree.getTaxonCount(); i++) {
-                dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
+                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
 
                 if (date == null) {
-                    date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getExternalNode(i), dr.evolution.util.Date.DATE);
+                    date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getExternalNode(i), dr.evolution.util.Date.DATE);
                 }
 
                 if (date != null) {
@@ -161,14 +158,13 @@ public class NewickParser extends AbstractXMLObjectParser {
             }
 
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getInternalNode(i), dr.evolution.util.Date.DATE);
+                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getInternalNode(i), dr.evolution.util.Date.DATE);
 
                 if (date != null) {
                     double height = timeScale.convertTime(date.getTimeValue(), date);
                     tree.setNodeHeight(tree.getInternalNode(i), height);
                 }
             }
-
 
 
             MutableTree.Utils.correctHeightsForTips(tree);
@@ -199,14 +195,18 @@ public class NewickParser extends AbstractXMLObjectParser {
         return "<" + getParserName() + " " + UNITS + "=\"" + Units.Utils.getDefaultUnitName(Units.Type.YEARS) + "\">" + " ((A:1.0, B:1.0):1.0,(C:2.0, D:2.0):1.0); </" + getParserName() + ">";
     }
 
-    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newBooleanRule(SimpleTreeParser.USING_DATES, true),
             AttributeRule.newDoubleRule(RESCALE_HEIGHT, true, "Attempt to rescale the tree to the given root height"),
             new StringAttributeRule(UNITS, "The branch length units of this tree", Units.UNIT_NAMES, true),
             new ElementRule(String.class, "The NEWICK format tree. Tip labels are taken to be Taxon IDs")
     };
 
-    public Class getReturnType() { return Tree.class; }
+    public Class getReturnType() {
+        return Tree.class;
+    }
 }

@@ -27,15 +27,13 @@ package dr.inference.model;
 
 import dr.xml.*;
 
-import java.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @version $Id: ProductStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
- *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @version $Id: ProductStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  */
 public class ProductStatistic extends Statistic.Abstract {
 
@@ -62,9 +60,13 @@ public class ProductStatistic extends Statistic.Abstract {
         statistics.add(statistic);
     }
 
-    public int getDimension() { return dimension; }
+    public int getDimension() {
+        return dimension;
+    }
 
-    /** @return mean of contained statistics */
+    /**
+     * @return mean of contained statistics
+     */
     public double getStatisticValue(int dim) {
 
         double product = 1.0;
@@ -84,24 +86,26 @@ public class ProductStatistic extends Statistic.Abstract {
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String[] getParserNames() { return new String[] { getParserName(), "product" }; }
-        public String getParserName() { return PRODUCT_STATISTIC; }
+        public String[] getParserNames() {
+            return new String[]{getParserName(), "product"};
+        }
+
+        public String getParserName() {
+            return PRODUCT_STATISTIC;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 
-            boolean elementwise = false;
-            if (xo.hasAttribute("elementwise")) {
-                elementwise = xo.getBooleanAttribute("elementwise");
-            }
+            boolean elementwise = xo.getAttribute("elementwise", false);
 
             ProductStatistic productStatistic = new ProductStatistic(PRODUCT_STATISTIC, elementwise);
 
-            for (int i =0; i < xo.getChildCount(); i++) {
+            for (int i = 0; i < xo.getChildCount(); i++) {
                 Object child = xo.getChild(i);
                 if (child instanceof Statistic) {
                     try {
-                        productStatistic.addStatistic((Statistic)child);
+                        productStatistic.addStatistic((Statistic) child);
                     } catch (IllegalArgumentException iae) {
                         throw new XMLParseException("Statistic added to " + getParserName() + " element is not of the same dimension");
                     }
@@ -121,16 +125,19 @@ public class ProductStatistic extends Statistic.Abstract {
             return "This element returns a statistic that is the product of the child statistics.";
         }
 
-        public Class getReturnType() { return ProductStatistic.class; }
+        public Class getReturnType() {
+            return ProductStatistic.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newBooleanRule("elementwise", true),
-                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
     };
-
 
     // ****************************************************************
     // Private and protected stuff

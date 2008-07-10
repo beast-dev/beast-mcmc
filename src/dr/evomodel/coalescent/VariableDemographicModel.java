@@ -63,7 +63,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         this.populationFactors = popFactors;
 
         int events = 0;
-        for( Tree t : trees ) {
+        for (Tree t : trees) {
             // number of coalescent envents
             events += t.getExternalNodeCount() - 1;
             // we will have to handle this I guess
@@ -71,7 +71,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         }
         // all trees share time 0, need fixing for serial data
 
-        events +=  type == Type.STEPWISE ? 0 : 1;
+        events += type == Type.STEPWISE ? 0 : 1;
 
         final int popSizes = popSizeParameter.getDimension();
         final int nIndicators = indicatorParameter.getDimension();
@@ -83,16 +83,16 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
             throw new IllegalArgumentException("Dimension of population parameter (" + popSizes +
                     ") must be the same as the number of internal nodes in the tree. (" + events + ")");
         }
-        
+
         if (nIndicators != popSizes - 1) {
             throw new IllegalArgumentException("Dimension of indicator parameter must one less than the number of internal nodes in the tree. ("
-            + nIndicators + " != " + (events-1) + ")");
+                    + nIndicators + " != " + (events - 1) + ")");
         }
 
         this.trees = trees;
 
-        for( TreeModel t : trees ) {
-          addModel(t);
+        for (TreeModel t : trees) {
+            addModel(t);
         }
 
         addParameter(indicatorParameter);
@@ -124,7 +124,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     }
 
     public VDdemographicFunction getDemographicFunction() {
-        if( demoFunction == null ) {
+        if (demoFunction == null) {
             demoFunction = new VDdemographicFunction(trees, type,
                     indicatorParameter.getParameterValues(), popSizeParameter.getParameterValues(), logSpace, mid);
         } else {
@@ -137,18 +137,18 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // tree has changed
         //System.out.println("model changed: " + model);
-        if( demoFunction != null ) {
-            if( demoFunction == savedDemoFunction ) {
+        if (demoFunction != null) {
+            if (demoFunction == savedDemoFunction) {
                 demoFunction = new VDdemographicFunction(demoFunction);
             }
-            for(int k = 0; k < trees.length; ++k) {
-                if( model == trees[k] ) {
+            for (int k = 0; k < trees.length; ++k) {
+                if (model == trees[k]) {
                     demoFunction.treeChanged(k);
                     //System.out.println("tree changed: " + k + " " + Arrays.toString(demoFunction.dirtyTrees)
-                     //       + " " + demoFunction.dirtyTrees);
+                    //       + " " + demoFunction.dirtyTrees);
                     break;
                 }
-                assert k+1 < trees.length;
+                assert k + 1 < trees.length;
             }
         }
         super.handleModelChangedEvent(model, object, index);
@@ -158,8 +158,8 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     protected void handleParameterChangedEvent(Parameter parameter, int index) {
         //System.out.println("parm changed: " + parameter);
         super.handleParameterChangedEvent(parameter, index);
-        if( demoFunction != null ) {
-            if( demoFunction == savedDemoFunction ) {
+        if (demoFunction != null) {
+            if (demoFunction == savedDemoFunction) {
                 demoFunction = new VDdemographicFunction(demoFunction);
             }
             demoFunction.setDirty();
@@ -198,13 +198,13 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
             TreeModel[] treeModels = new TreeModel[nc];
             double[] populationFactor = new double[nc];
 
-            for(int k = 0; k < treeModels.length; ++k) {
+            for (int k = 0; k < treeModels.length; ++k) {
                 final XMLObject child = (XMLObject) cxo.getChild(k);
-                populationFactor[k] = child.hasAttribute(PLOIDY) ? child.getDoubleAttribute(PLOIDY) : 1.0 ;
+                populationFactor[k] = child.hasAttribute(PLOIDY) ? child.getDoubleAttribute(PLOIDY) : 1.0;
 
                 treeModels[k] = (TreeModel) child.getChild(TreeModel.class);
             }
-            
+
             Type type = Type.STEPWISE;
 
             if (xo.hasAttribute(TYPE)) {
@@ -220,8 +220,8 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
                 }
             }
 
-            final boolean logSpace = xo.hasAttribute(LOG_SPACE) && xo.getBooleanAttribute(LOG_SPACE);
-            final boolean useMid = xo.hasAttribute(USE_MIDPOINTS) && xo.getBooleanAttribute(USE_MIDPOINTS);
+            final boolean logSpace = xo.getAttribute(LOG_SPACE, false);
+            final boolean useMid = xo.getAttribute(USE_MIDPOINTS, false);
 
             Logger.getLogger("dr.evomodel").info("Variable demographic: " + type.toString() + " control points");
 
@@ -247,23 +247,23 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         }
 
         private XMLSyntaxRule[] rules =
-        new XMLSyntaxRule[]{
-                AttributeRule.newStringRule(VariableSkylineLikelihood.TYPE, true),
-                 AttributeRule.newBooleanRule(LOG_SPACE, true),
-                 AttributeRule.newBooleanRule(USE_MIDPOINTS, true),
+                new XMLSyntaxRule[]{
+                        AttributeRule.newStringRule(VariableSkylineLikelihood.TYPE, true),
+                        AttributeRule.newBooleanRule(LOG_SPACE, true),
+                        AttributeRule.newBooleanRule(USE_MIDPOINTS, true),
 
-                new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(VariableSkylineLikelihood.INDICATOR_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(POPULATION_TREES, new XMLSyntaxRule[]{
-                        new ElementRule(POP_TREE, new XMLSyntaxRule[] {
-                              AttributeRule.newDoubleRule(PLOIDY, true),
-                              new ElementRule(TreeModel.class),
-                        }, 1, Integer.MAX_VALUE)
-                })
-        };
+                        new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class)
+                        }),
+                        new ElementRule(VariableSkylineLikelihood.INDICATOR_PARAMETER, new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class)
+                        }),
+                        new ElementRule(POPULATION_TREES, new XMLSyntaxRule[]{
+                                new ElementRule(POP_TREE, new XMLSyntaxRule[]{
+                                        AttributeRule.newDoubleRule(PLOIDY, true),
+                                        new ElementRule(TreeModel.class),
+                                }, 1, Integer.MAX_VALUE)
+                        })
+                };
     };
 }

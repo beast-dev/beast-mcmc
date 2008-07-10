@@ -32,65 +32,78 @@ import dr.util.Attribute;
 import dr.util.Identifiable;
 
 /**
- * @version $Id: Statistic.java,v 1.8 2005/05/24 20:26:00 rambaut Exp $
- *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @version $Id: Statistic.java,v 1.8 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
-	
-	public static final String NAME = "name";
 
-	/** @return the name of this statistic */
-	String getStatisticName();
-	
-	/** @return the statistic's name for a given dimension */
-	String getDimensionName(int dim);
+    public static final String NAME = "name";
 
-	/** @return the number of dimensions that this statistic has. */
-	int getDimension();
-	
-	/** @return the statistic's scalar value in the given dimension */
-	double getStatisticValue(int dim);
-	
-	
-	/**
-	 * Abstract base class for Statistics
-	 *
-	 */
-	public abstract class Abstract implements Statistic {
-		
-		private String name = null;
-	
-		public Abstract() { this.name = null; }
-		public Abstract(String name) { this.name = name; }
-		
-		public String getStatisticName() {
-			if (name != null) {
-				return name;
-			} else if (id != null) {
-				return id;
-			} else {
-				return getClass().toString();
-			}
-		}	
-			
-		public String getDimensionName(int dim) {
-			if (getDimension() == 1) {
-				return getStatisticName();
-			} else {
-				return getStatisticName() + Integer.toString(dim+1);
-			}
-		}	
-			
-		public String toString() {
-			StringBuffer buffer = new StringBuffer(String.valueOf(getStatisticValue(0)));
-			
-			for (int i = 1; i < getDimension(); i++) {
+    /**
+     * @return the name of this statistic
+     */
+    String getStatisticName();
+
+    /**
+     * @param dim the dimension to return name of
+     * @return the statistic's name for a given dimension
+     */
+    String getDimensionName(int dim);
+
+    /**
+     * @return the number of dimensions that this statistic has.
+     */
+    int getDimension();
+
+    /**
+     * @param dim the dimension to return value of
+     * @return the statistic's scalar value in the given dimension
+     */
+    double getStatisticValue(int dim);
+
+
+    /**
+     * Abstract base class for Statistics
+     */
+    public abstract class Abstract implements Statistic {
+
+        private String name = null;
+
+        public Abstract() {
+            this.name = null;
+        }
+
+        public Abstract(String name) {
+            this.name = name;
+        }
+
+        public String getStatisticName() {
+            if (name != null) {
+                return name;
+            } else if (id != null) {
+                return id;
+            } else {
+                return getClass().toString();
+            }
+        }
+
+        public String getDimensionName(int dim) {
+            if (getDimension() == 1) {
+                return getStatisticName();
+            } else {
+                return getStatisticName() + Integer.toString(dim + 1);
+            }
+        }
+
+        public String toString() {
+            StringBuffer buffer = new StringBuffer(String.valueOf(getStatisticValue(0)));
+
+            for (int i = 1; i < getDimension(); i++) {
                 buffer.append(", ").append(String.valueOf(getStatisticValue(i)));
-			}
-			return buffer.toString();
-		}
+            }
+            return buffer.toString();
+        }
 
         // **************************************************************
         // Attribute IMPLEMENTATION
@@ -99,7 +112,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
         public final String getAttributeName() {
             return getStatisticName();
         }
-        
+
         public final double[] getAttributeValue() {
             double[] stats = new double[getDimension()];
             for (int i = 0; i < stats.length; i++) {
@@ -109,45 +122,51 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
             return stats;
         }
 
-	    // **************************************************************
-	    // Identifiable IMPLEMENTATION
-	    // **************************************************************
+        // **************************************************************
+        // Identifiable IMPLEMENTATION
+        // **************************************************************
 
-		protected String id = null;
+        protected String id = null;
 
-		/**
-		 * @return the id.
-		 */
-		public String getId() {
-			return id;
-		}
+        /**
+         * @return the id.
+         */
+        public String getId() {
+            return id;
+        }
 
-		/**
-		 * Sets the id.
-		 */
-		public void setId(String id) {
-			this.id = id;
-		}
+        /**
+         * Sets the id.
+         */
+        public void setId(String id) {
+            this.id = id;
+        }
 
-	    // **************************************************************
-	    // Loggable IMPLEMENTATION
-	    // **************************************************************
+        // **************************************************************
+        // Loggable IMPLEMENTATION
+        // **************************************************************
 
-		/**
-		 * @return the log columns.
-		 */
-		public LogColumn[] getColumns() {
-			LogColumn[] columns = new LogColumn[getDimension()];
-			for (int i = 0; i < getDimension(); i++) {
-				columns[i] = new StatisticColumn(getDimensionName(i), i);
-			}
-			return columns;
-		}
+        /**
+         * @return the log columns.
+         */
+        public LogColumn[] getColumns() {
+            LogColumn[] columns = new LogColumn[getDimension()];
+            for (int i = 0; i < getDimension(); i++) {
+                columns[i] = new StatisticColumn(getDimensionName(i), i);
+            }
+            return columns;
+        }
 
-		private class StatisticColumn extends NumberColumn {
-			private int dim;
-			public StatisticColumn(String label, int dim) { super(label); this.dim = dim; }
-			public double getDoubleValue() { return getStatisticValue(dim); }
+        private class StatisticColumn extends NumberColumn {
+            private int dim;
+
+            public StatisticColumn(String label, int dim) {
+                super(label);
+                this.dim = dim;
+            }
+
+            public double getDoubleValue() {
+                return getStatisticValue(dim); }
 		}
 	}
 }

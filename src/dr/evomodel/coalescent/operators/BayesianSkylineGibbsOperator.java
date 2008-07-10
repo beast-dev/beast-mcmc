@@ -444,30 +444,16 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            boolean exponentialMarkovPrior = false;
-            double shape = 1.0;
-            boolean reverse = false;
-            int iterations = 1;
-
             double weight = xo.getDoubleAttribute(WEIGHT);
 
             final double lowerBound = xo.getAttribute(LOWER, 0.0);
             final double upperBound = xo.getAttribute(UPPER, Double.MAX_VALUE);
             final boolean jeffreysPrior = xo.getAttribute(JEFFREYS, true);
 
-            if (xo.hasAttribute(EXPONENTIALMARKOV)) {
-                exponentialMarkovPrior = xo
-                        .getBooleanAttribute(EXPONENTIALMARKOV);
-            }
-            if (xo.hasAttribute(SHAPE)) {
-                shape = xo.getDoubleAttribute(SHAPE);
-            }
-            if (xo.hasAttribute(REVERSE)) {
-                reverse = xo.getBooleanAttribute(REVERSE);
-            }
-            if (xo.hasAttribute(ITERATIONS)) {
-                iterations = xo.getIntegerAttribute(ITERATIONS);
-            }
+            boolean exponentialMarkovPrior = xo.getAttribute(EXPONENTIALMARKOV, false);
+            double shape = xo.getAttribute(SHAPE, 1.0);
+            boolean reverse = xo.getAttribute(REVERSE, false);
+            int iterations = xo.getAttribute(ITERATIONS, 1);
 
             BayesianSkylineLikelihood bayesianSkylineLikelihood = (BayesianSkylineLikelihood) xo
                     .getChild(BayesianSkylineLikelihood.class);

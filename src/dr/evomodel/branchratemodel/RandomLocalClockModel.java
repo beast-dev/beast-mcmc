@@ -154,7 +154,7 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
     }
 
     public final boolean isRateChangeOnBranchAbove(Tree tree, NodeRef node) {
-	    return ((TreeModel) tree).getNodeTrait(node, "trait") > 0.5;
+        return ((TreeModel) tree).getNodeTrait(node, "trait") > 0.5;
 //        return (int) Math.round(((TreeModel) tree).getNodeTrait(node, "trait")) == 1;
     }
 
@@ -200,10 +200,7 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
                 meanRateParameter = (Parameter) xo.getElementFirstChild(CLOCK_RATE);
             }
 
-            boolean ratesAreMultipliers = false;
-            if (xo.hasAttribute(RATES_ARE_MULTIPLIERS)) {
-                ratesAreMultipliers = xo.getBooleanAttribute(RATES_ARE_MULTIPLIERS);
-            }
+            boolean ratesAreMultipliers = xo.getAttribute(RATES_ARE_MULTIPLIERS, false);
 
             Logger.getLogger("dr.evomodel").info("Using random local clock (RLC) model.");
             Logger.getLogger("dr.evomodel").info("  rates at change points are parameterized to be " + (ratesAreMultipliers ? " multipliers of parent rates." : "independent of parent rates."));

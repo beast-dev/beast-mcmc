@@ -50,9 +50,8 @@ import java.util.logging.Logger;
  * This one has some advanced models such as multiple site models for different clades.
  * This only makes sense if those clades are being constrained to remain monophyletic.
  *
- * @version $Id: AdvancedTreeLikelihood.java,v 1.11 2006/01/10 16:48:27 rambaut Exp $
- *
  * @author Andrew Rambaut
+ * @version $Id: AdvancedTreeLikelihood.java,v 1.11 2006/01/10 16:48:27 rambaut Exp $
  */
 
 public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
@@ -69,14 +68,12 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
     /**
      * Constructor.
      */
-    public AdvancedTreeLikelihood(	PatternList patternList,
-                                      TreeModel treeModel,
-                                      SiteModel siteModel,
-                                      BranchRateModel branchRateModel,
-                                      boolean useAmbiguities,
-                                      //boolean storePartials,
-                                      boolean useScaling)
-    {
+    public AdvancedTreeLikelihood(PatternList patternList,
+                                  TreeModel treeModel,
+                                  SiteModel siteModel,
+                                  BranchRateModel branchRateModel,
+                                  boolean useAmbiguities,
+                                  boolean useScaling) {
 
         super(ADVANCED_TREE_LIKELIHOOD, patternList, treeModel);
 
@@ -117,7 +114,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
                 likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
             }
 //            likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
-            Logger.getLogger("dr.evomodel").info( "  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
+            Logger.getLogger("dr.evomodel").info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             Logger.getLogger("dr.evomodel").info("  Partial likelihood scaling " + (useScaling ? "on." : "off."));
 
             if (branchRateModel != null) {
@@ -164,10 +161,9 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
     /**
      * Add an additional siteModel for a clade in the tree.
      */
-    public void addCladeSiteModel(	SiteModel siteModel,
-                                      TaxonList taxonList,
-                                      boolean includeStem ) throws Tree.MissingTaxonException
-    {
+    public void addCladeSiteModel(SiteModel siteModel,
+                                  TaxonList taxonList,
+                                  boolean includeStem) throws Tree.MissingTaxonException {
         Logger.getLogger("dr.evomodel").info("SiteModel added for clade.");
         cladeSiteModels.add(new Clade(siteModel, taxonList, includeStem));
         addModel(siteModel);
@@ -177,8 +173,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
     /**
      * Add an additional siteModel for the tips of the tree.
      */
-    public void addTipsSiteModel(SiteModel siteModel)
-    {
+    public void addTipsSiteModel(SiteModel siteModel) {
         Logger.getLogger("dr.evomodel").info("SiteModel added for tips.");
         tipsSiteModel = siteModel;
         addModel(siteModel);
@@ -236,9 +231,9 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
         if (model == treeModel) {
             if (object instanceof TreeModel.TreeChangedEvent) {
 
-                if (((TreeModel.TreeChangedEvent)object).isNodeChanged()) {
+                if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
 
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent)object).getNode());
+                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
 
                 } else {
                     updateAllNodes();
@@ -270,7 +265,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
                 // find the siteModel in the additional siteModel list
                 NodeRef node = null;
                 for (int i = 0, n = cladeSiteModels.size(); i < n; i++) {
-                    Clade clade = (Clade)cladeSiteModels.get(i);
+                    Clade clade = (Clade) cladeSiteModels.get(i);
 
                     if (!commonAncestorsKnown) {
                         clade.findMRCA();
@@ -330,6 +325,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
     /**
      * Calculate the log likelihood of the current state.
+     *
      * @return the log likelihood.
      */
     protected double calculateLogLikelihood() {
@@ -346,7 +342,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
         if (!commonAncestorsKnown) {
             for (int i = 0, n = cladeSiteModels.size(); i < n; i++) {
-                ((Clade)cladeSiteModels.get(i)).findMRCA();
+                ((Clade) cladeSiteModels.get(i)).findMRCA();
             }
             commonAncestorsKnown = true;
         }
@@ -372,6 +368,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
     /**
      * Traverse the tree calculating partial likelihoods.
+     *
      * @return whether the partials for this node were recalculated.
      */
     private boolean traverse(Tree tree, NodeRef node, SiteModel currentSiteModel) {
@@ -386,7 +383,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
             currentSiteModel = tipsSiteModel;
         } else {
             for (int i = 0, n = cladeSiteModels.size(); i < n; i++) {
-                Clade clade = (Clade)cladeSiteModels.get(i);
+                Clade clade = (Clade) cladeSiteModels.get(i);
                 if (clade.getNode() == nodeNum) {
                     nextSiteModel = clade.getSiteModel();
 
@@ -406,7 +403,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
             double branchRate = branchRateModel.getBranchRate(tree, node);
 
             // Get the operational time of the branch
-            double branchTime = branchRate * ( tree.getNodeHeight(parent) - tree.getNodeHeight(node) );
+            double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
             if (branchTime < 0.0) {
                 throw new RuntimeException("Negative branch length: " + branchTime);
             }
@@ -474,63 +471,55 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return ADVANCED_TREE_LIKELIHOOD; }
+        public String getParserName() {
+            return ADVANCED_TREE_LIKELIHOOD;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            boolean useAmbiguities = false;
-//            boolean storePartials = true;
-            boolean useScaling = false;
-            if (xo.hasAttribute(USE_AMBIGUITIES)) {
-                useAmbiguities = xo.getBooleanAttribute(USE_AMBIGUITIES);
-            }
-//            if (xo.hasAttribute(STORE_PARTIALS)) {
-//                storePartials = xo.getBooleanAttribute(STORE_PARTIALS);
-//            }
-            if (xo.hasAttribute(USE_SCALING)) {
-                useScaling = xo.getBooleanAttribute(USE_SCALING);
-            }
-            PatternList patternList = (PatternList)xo.getChild(PatternList.class);
-            TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
-            SiteModel siteModel = (SiteModel)xo.getChild(SiteModel.class);
+            boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
+            boolean useScaling = xo.getAttribute(USE_SCALING, false);
 
-            BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
+            PatternList patternList = (PatternList) xo.getChild(PatternList.class);
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
+
+            BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
             AdvancedTreeLikelihood treeLikelihood = new AdvancedTreeLikelihood(patternList, treeModel, siteModel,
                     branchRateModel, useAmbiguities,
-                    //storePartials,
                     useScaling);
 
             if (xo.hasChildNamed(TIPS)) {
-                SiteModel siteModel2 = (SiteModel)xo.getElementFirstChild(TIPS);
+                SiteModel siteModel2 = (SiteModel) xo.getElementFirstChild(TIPS);
                 treeLikelihood.addTipsSiteModel(siteModel2);
             }
 
-            XMLObject xoc = (XMLObject)xo.getChild(DELTA);
+            XMLObject xoc = (XMLObject) xo.getChild(DELTA);
             if (xoc != null) {
-                Parameter deltaParameter = (Parameter)xoc.getChild(Parameter.class);
-                TaxonList taxa = (TaxonList)xoc.getChild(TaxonList.class);
+                Parameter deltaParameter = (Parameter) xoc.getChild(Parameter.class);
+                TaxonList taxa = (TaxonList) xoc.getChild(TaxonList.class);
                 treeLikelihood.addDeltaParameter(deltaParameter, taxa);
             }
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 if (xo.getChild(i) instanceof XMLObject) {
 
-                    xoc = (XMLObject)xo.getChild(i);
+                    xoc = (XMLObject) xo.getChild(i);
                     if (xoc.getName().equals(CLADE)) {
 
-                        SiteModel siteModel2 = (SiteModel)xoc.getChild(SiteModel.class);
-                        TaxonList taxonList = (TaxonList)xoc.getChild(TaxonList.class);
+                        SiteModel siteModel2 = (SiteModel) xoc.getChild(SiteModel.class);
+                        TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
 
                         boolean includeStem = false;
 
                         if (xoc.hasAttribute(INCLUDE_STEM)) {
                             includeStem = xoc.getBooleanAttribute(INCLUDE_STEM);
 
-                            if (taxonList.getTaxonCount()==1 && !includeStem) {
+                            if (taxonList.getTaxonCount() == 1 && !includeStem) {
                                 throw new XMLParseException("The site model is only applied to 1 taxon and therefore must include the stem branch");
                             }
-                        } else if (taxonList.getTaxonCount()==1) {
+                        } else if (taxonList.getTaxonCount() == 1) {
                             includeStem = true;
                         }
 
@@ -557,22 +546,26 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
             return "This element represents the likelihood of a patternlist on a tree given the site model.";
         }
 
-        public Class getReturnType() { return Likelihood.class; }
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-               // AttributeRule.newBooleanRule(STORE_PARTIALS, true),
+                // AttributeRule.newBooleanRule(STORE_PARTIALS, true),
                 AttributeRule.newBooleanRule(USE_SCALING, true),
                 new ElementRule(TIPS, SiteModel.class, "A siteModel that will be applied only to the tips.", 0, 1),
                 new ElementRule(DELTA,
-                        new XMLSyntaxRule[] {
+                        new XMLSyntaxRule[]{
                                 new ElementRule(TaxonList.class, "A set of taxa to which to apply the delta model to", 0, 1),
                                 new ElementRule(Parameter.class, "A parameter that specifies the amount of extra substitutions per site at each tip.", 0, 1),
                         }, true),
                 new ElementRule(CLADE,
-                        new XMLSyntaxRule[] {
+                        new XMLSyntaxRule[]{
                                 AttributeRule.newBooleanRule(INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel."),
                                 new ElementRule(TaxonList.class, "A set of taxa which defines a clade to apply a different site model to"),
                                 new ElementRule(SiteModel.class, "A siteModel that will be applied only to this clade")
@@ -600,9 +593,17 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
             node = Tree.Utils.getCommonAncestorNode(treeModel, leafSet).getNumber();
         }
 
-        int getNode() { return node; }
-        boolean includeStem() { return includeStem; }
-        SiteModel getSiteModel() { return this.siteModel; }
+        int getNode() {
+            return node;
+        }
+
+        boolean includeStem() {
+            return includeStem;
+        }
+
+        SiteModel getSiteModel() {
+            return this.siteModel;
+        }
 
         SiteModel siteModel;
         Set leafSet;
@@ -614,41 +615,61 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
     // INSTANCE VARIABLES
     // **************************************************************
 
-    /** the frequency model for these sites */
+    /**
+     * the frequency model for these sites
+     */
     protected FrequencyModel frequencyModel = null;
 
-    /** the site model for these sites */
+    /**
+     * the site model for these sites
+     */
     protected SiteModel siteModel = null;
 
-    /** the branch rate model  */
+    /**
+     * the branch rate model
+     */
     protected BranchRateModel branchRateModel = null;
 
     private boolean storePartials = false;
 
 
-    /** the site model for the tips */
+    /**
+     * the site model for the tips
+     */
     protected SiteModel tipsSiteModel = null;
 
     protected Parameter deltaParameter = null;
     protected Set deltaTips = null;
 
-    /** the site models for specific clades */
+    /**
+     * the site models for specific clades
+     */
     protected ArrayList cladeSiteModels = new ArrayList();
 
     private boolean commonAncestorsKnown = true;
 
-    /** the root partial likelihoods */
+    /**
+     * the root partial likelihoods
+     */
     protected double[] rootPartials = null;
 
-    /** the pattern likelihoods */
+    /**
+     * the pattern likelihoods
+     */
     protected double[] patternLogLikelihoods = null;
 
-    /** the number of rate categories */
+    /**
+     * the number of rate categories
+     */
     protected int categoryCount;
 
-    /** an array used to store transition probabilities */
+    /**
+     * an array used to store transition probabilities
+     */
     protected double[] probabilities;
 
-    /** the LikelihoodCore */
+    /**
+     * the LikelihoodCore
+     */
     protected LikelihoodCore likelihoodCore;
 }

@@ -38,15 +38,14 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.xml.*;
 
-import java.util.logging.Logger;
 import java.math.BigDecimal;
+import java.util.logging.Logger;
 
 /**
  * TreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- *
  * @version $Id: TreeLikelihood.java,v 1.31 2006/08/30 16:02:42 rambaut Exp $
  */
 
@@ -62,14 +61,13 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
     /**
      * Constructor.
      */
-    public ExperimentalTreeLikelihood(	PatternList patternList,
-                                          TreeModel treeModel,
-                                          SiteModel siteModel,
-                                          BranchRateModel branchRateModel,
-                                          boolean useAmbiguities,
-                                          boolean allowMissingTaxa,
-                                          boolean storePartials)
-    {
+    public ExperimentalTreeLikelihood(PatternList patternList,
+                                      TreeModel treeModel,
+                                      SiteModel siteModel,
+                                      BranchRateModel branchRateModel,
+                                      boolean useAmbiguities,
+                                      boolean allowMissingTaxa,
+                                      boolean storePartials) {
 
         super(TREE_LIKELIHOOD, patternList, treeModel);
 
@@ -91,7 +89,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 
             logger.info("ExperimentalTreeLikelihood using " + coreName + " likelihood core");
 
-            logger.info( "  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
+            logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;
@@ -158,15 +156,15 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
         if (model == treeModel) {
             if (object instanceof TreeModel.TreeChangedEvent) {
 
-                if (((TreeModel.TreeChangedEvent)object).isNodeChanged()) {
+                if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes
                     // are flagged for updating (this will result in everything
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent)object).getNode());
+                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
 
-                } else if (((TreeModel.TreeChangedEvent)object).isTreeChanged()) {
+                } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // Currently this event type is not used.
                     System.err.println("Full tree update event - these events currently aren't used\n" +
@@ -240,6 +238,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 
     /**
      * Calculate the log likelihood of the current state.
+     *
      * @return the log likelihood.
      */
     protected double calculateLogLikelihood() {
@@ -267,7 +266,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
             precisionLogL += precisionPatternLogLikelihoods[i] * patternWeights[i];
         }
 
-        if (Math.abs(logL - precisionLogL) > 1.0E-5 ) {
+        if (Math.abs(logL - precisionLogL) > 1.0E-5) {
             System.out.println("logL = " + logL + " precision logL = " + precisionLogL);
         }
 
@@ -284,8 +283,8 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
             for (int i = 0; i < patternCount; i++) {
                 logL += patternLogLikelihoods[i] * patternWeights[i];
             }
-            
-            if (Math.abs(logL - precisionLogL) > 1.0E-5 ) {
+
+            if (Math.abs(logL - precisionLogL) > 1.0E-5) {
                 System.out.println("scaled logL = " + logL + " precision logL = " + precisionLogL);
             }
 
@@ -304,6 +303,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 
     /**
      * Traverse the tree calculating partial likelihoods.
+     *
      * @return whether the partials for this node were recalculated.
      */
     private boolean traverse(Tree tree, NodeRef node) {
@@ -320,7 +320,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
             final double branchRate = branchRateModel.getBranchRate(tree, node);
 
             // Get the operational time of the branch
-            final double branchTime = branchRate * ( tree.getNodeHeight(parent) - tree.getNodeHeight(node) );
+            final double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
 
             if (branchTime < 0.0) {
                 throw new RuntimeException("Negative branch length: " + branchTime);
@@ -393,6 +393,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 
         return rootPartials;
     }
+
     private double[] rootPartials = null;
 
     public final BigDecimal[] getPrecisionRootPartials() {
@@ -415,28 +416,21 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return TREE_LIKELIHOOD; }
+        public String getParserName() {
+            return TREE_LIKELIHOOD;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            boolean useAmbiguities = false;
-            boolean allowMissingTaxa = false;
-            boolean storePartials = true;
-            if (xo.hasAttribute(USE_AMBIGUITIES)) {
-                useAmbiguities = xo.getBooleanAttribute(USE_AMBIGUITIES);
-            }
-            if (xo.hasAttribute(ALLOW_MISSING_TAXA)) {
-                allowMissingTaxa = xo.getBooleanAttribute(ALLOW_MISSING_TAXA);
-            }
-            if (xo.hasAttribute(STORE_PARTIALS)) {
-                storePartials = xo.getBooleanAttribute(STORE_PARTIALS);
-            }
+            boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
+            boolean allowMissingTaxa = xo.getAttribute(ALLOW_MISSING_TAXA, false);
+            boolean storePartials = xo.getAttribute(STORE_PARTIALS, true);
 
-            PatternList patternList = (PatternList)xo.getChild(PatternList.class);
-            TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
-            SiteModel siteModel = (SiteModel)xo.getChild(SiteModel.class);
+            PatternList patternList = (PatternList) xo.getChild(PatternList.class);
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
 
-            BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
+            BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
             return new ExperimentalTreeLikelihood(
                     patternList,
@@ -454,11 +448,15 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
             return "This element represents the likelihood of a patternlist on a tree given the site model.";
         }
 
-        public Class getReturnType() { return Likelihood.class; }
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
                 AttributeRule.newBooleanRule(ALLOW_MISSING_TAXA, true),
                 AttributeRule.newBooleanRule(STORE_PARTIALS, true),
@@ -473,33 +471,51 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
     // INSTANCE VARIABLES
     // **************************************************************
 
-    /** the frequency model for these sites */
+    /**
+     * the frequency model for these sites
+     */
     protected final FrequencyModel frequencyModel;
 
-    /** the site model for these sites */
+    /**
+     * the site model for these sites
+     */
     protected final SiteModel siteModel;
 
-    /** the branch rate model  */
+    /**
+     * the branch rate model
+     */
     protected final BranchRateModel branchRateModel;
 
     private final boolean storePartials;
 
-    /** the categories for each site */
+    /**
+     * the categories for each site
+     */
     protected int[] siteCategories = null;
 
 
-    /** the pattern likelihoods */
+    /**
+     * the pattern likelihoods
+     */
     protected double[] patternLogLikelihoods = null;
-    /** the pattern likelihoods */
+    /**
+     * the pattern likelihoods
+     */
     protected double[] precisionPatternLogLikelihoods = null;
 
-    /** the number of rate categories */
+    /**
+     * the number of rate categories
+     */
     protected int categoryCount;
 
-    /** an array used to store transition probabilities */
+    /**
+     * an array used to store transition probabilities
+     */
     protected double[] probabilities;
 
-    /** the LikelihoodCore */
+    /**
+     * the LikelihoodCore
+     */
     protected LikelihoodCore likelihoodCore;
     protected ArbitraryPrecisionLikelihoodCore precisionLikelihoodCore;
 }

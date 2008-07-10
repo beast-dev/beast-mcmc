@@ -74,9 +74,7 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
             cxo = (XMLObject) xo.getChild(OFF_DIAGONAL);
             Parameter offDiagonalParameter = (Parameter) cxo.getChild(Parameter.class);
 
-            boolean asCorrelation = false;
-            if (xo.hasAttribute(AS_CORRELATION))
-                asCorrelation = xo.getBooleanAttribute(AS_CORRELATION);
+            boolean asCorrelation = xo.getAttribute(AS_CORRELATION, false);
 
             return new CompoundSymmetricMatrix(diagonalParameter, offDiagonalParameter, asCorrelation);
         }

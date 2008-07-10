@@ -37,7 +37,6 @@ import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond
- *
  * @version $Id: ColourSamplerModel.java,v 1.14 2006/09/11 09:33:01 gerton Exp $
  */
 
@@ -68,9 +67,9 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
         addStatistic(migrationEventStatistic);
         //addStatistic(debugMigrationEventStatistic);
 
-        addStatistic(rootColourStatistic);           
+        addStatistic(rootColourStatistic);
 
-    	this.colourSampler = colourSampler;
+        this.colourSampler = colourSampler;
 
     }
 
@@ -91,25 +90,26 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
 
     /**
      * Returns treeColouring and ensures that a proposal probability density has been assigned to it.
+     *
      * @return treeColouring
      */
     public final DefaultTreeColouring getTreeColouringWithProbability() {
 
-    	DefaultTreeColouring tc = getTreeColouring();
+        DefaultTreeColouring tc = getTreeColouring();
 
-    	if (tc.hasProbability()) {
-    		return tc;
-    	}
+        if (tc.hasProbability()) {
+            return tc;
+        }
 
-    	// We have a colouring, but it hasn't got a valid proposal probability.  This happens when parameters influencing the
-    	// proposal distribution have changed, or when local re-colouring moves have occurred. Re-compute the proposal probability
+        // We have a colouring, but it hasn't got a valid proposal probability.  This happens when parameters influencing the
+        // proposal distribution have changed, or when local re-colouring moves have occurred. Re-compute the proposal probability
 
         // TODO HACK HACK HACK -- only using modern day population size
         // NOTE: If this is changed, StructuredCoalescentSampler should change too!  (GAL)
         //double[] N = metaPopulationModel.getPopulationSizes(0);
 
         double logP = colourSampler.getProposalProbability(tc, treeModel, migrationModel.getMigrationMatrix(), metaPopulationModel);
-        tc.setLogProbabilityDensity( logP );
+        tc.setLogProbabilityDensity(logP);
         return tc;
     }
 
@@ -121,13 +121,13 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
      * Keeps the colouring, but reset its proposal probability (in response to a change in parameters)
      */
     public final void invalidateProposalProbability() {
-    	treeColouring = new DefaultTreeColouring( treeColouring );
+        treeColouring = new DefaultTreeColouring(treeColouring);
     }
 
     /**
      * Colours the tree probabilistically with the given migration rates
      */
-    private final void sample() {
+    private void sample() {
 
         // TODO HACK HACK HACK -- only using modern day population size
         // NOTE: If this is changed, StructuredCoalescentSampler should change too!  (GAL)
@@ -195,7 +195,9 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
             return "migrationEvents";
         }
 
-        public int getDimension() { return 1; }
+        public int getDimension() {
+            return 1;
+        }
 
         public double getStatisticValue(int dim) {
             TreeColouring colouring = getTreeColouringWithProbability();
@@ -210,7 +212,9 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
             return "rootColour";
         }
 
-        public int getDimension() { return 1; }
+        public int getDimension() {
+            return 1;
+        }
 
         public double getStatisticValue(int dim) {
             TreeColouring colouring = getTreeColouringWithProbability();
@@ -250,58 +254,45 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
 
     };
  */
-    
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return COLOUR_SAMPLER_MODEL; }
+        public String getParserName() {
+            return COLOUR_SAMPLER_MODEL;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-            MigrationModel migrationModel = (MigrationModel)xo.getChild(MigrationModel.class);
+            MigrationModel migrationModel = (MigrationModel) xo.getChild(MigrationModel.class);
 
-            MetaPopulationModel metaPopulationModel = (MetaPopulationModel)xo.getChild(MetaPopulationModel.class);
+            MetaPopulationModel metaPopulationModel = (MetaPopulationModel) xo.getChild(MetaPopulationModel.class);
 
-            boolean structuredSampler = true;
-            boolean branchBias = true;
-            boolean nodeBias = true;
-            boolean secondIteration = false;
-
-            if (xo.hasAttribute(STRUCTURED_SAMPLER)) {
-                structuredSampler = xo.getBooleanAttribute(STRUCTURED_SAMPLER);
-            }
-            if (xo.hasAttribute(NODE_BIAS)) {
-                nodeBias = xo.getBooleanAttribute(NODE_BIAS);
-            }
-            if (xo.hasAttribute(BRANCH_BIAS)) {
-                branchBias = xo.getBooleanAttribute(BRANCH_BIAS);
-            }
-            if (xo.hasAttribute(SECOND_ITERATION)) {
-            	secondIteration = xo.getBooleanAttribute(SECOND_ITERATION);
-            }
+            boolean structuredSampler = xo.getAttribute(STRUCTURED_SAMPLER, true);
+            boolean branchBias = xo.getAttribute(BRANCH_BIAS, true);
+            boolean nodeBias = xo.getAttribute(NODE_BIAS, true);
+            boolean secondIteration = xo.getAttribute(SECOND_ITERATION, false);
 
             ColourSampler colourSampler;
             if (xo.hasChildNamed("colours")) {
-                XMLObject cxo = (XMLObject)xo.getChild("colours");
+                XMLObject cxo = (XMLObject) xo.getChild("colours");
 
                 Taxa[] colourTaxa = new Taxa[cxo.getChildCount()];
                 for (int i = 0; i < cxo.getChildCount(); i++) {
-                    colourTaxa[i] = (Taxa)cxo.getChild(i);
+                    colourTaxa[i] = (Taxa) cxo.getChild(i);
                 }
 
                 if (structuredSampler) {
                     colourSampler = new StructuredColourSampler(colourTaxa, treeModel, nodeBias, branchBias, secondIteration);
-                }
-                else {
+                } else {
                     colourSampler = new BasicColourSampler(colourTaxa, treeModel);
                 }
             } else {
-                Alignment alignment = (Alignment)xo.getChild(Alignment.class);
+                Alignment alignment = (Alignment) xo.getChild(Alignment.class);
                 if (structuredSampler) {
                     colourSampler = new StructuredColourSampler(alignment, treeModel, nodeBias, branchBias, secondIteration);
-                }
-                else {
+                } else {
                     colourSampler = new BasicColourSampler(alignment, treeModel);
                 }
             }
@@ -309,15 +300,15 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
             ColourSamplerModel colourSamplerModel = new ColourSamplerModel(treeModel, colourSampler, migrationModel, metaPopulationModel);
 
             if (structuredSampler) {
-            	Logger.getLogger("dr.evomodel").info("Creating colour sampler model with 2 colours");
-            	if (!nodeBias) {
-            		Logger.getLogger("dr.evomodel").info(" Colour sampler has node biases switched off");
-            	}
-            	if (!branchBias) {
-            		Logger.getLogger("dr.evomodel").info(" Colour sampler has branch biases switched off");
-            	}
+                Logger.getLogger("dr.evomodel").info("Creating colour sampler model with 2 colours");
+                if (!nodeBias) {
+                    Logger.getLogger("dr.evomodel").info(" Colour sampler has node biases switched off");
+                }
+                if (!branchBias) {
+                    Logger.getLogger("dr.evomodel").info(" Colour sampler has branch biases switched off");
+                }
             } else {
-            	Logger.getLogger("dr.evomodel").info("Creating basic 2-colour sampler");
+                Logger.getLogger("dr.evomodel").info("Creating basic 2-colour sampler");
             }
 
             return colourSamplerModel;
@@ -331,13 +322,17 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
             return "This element represents a likelihood function for transmission.";
         }
 
-        public Class getReturnType() { return StructuredCoalescentLikelihood.class; }
+        public Class getReturnType() {
+            return StructuredCoalescentLikelihood.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new XORRule(
-                        new ElementRule("colours", new XMLSyntaxRule[] {
+                        new ElementRule("colours", new XMLSyntaxRule[]{
                                 new ElementRule(Taxa.class, "Taxa for each subsequent colour (after 0).", 1, Integer.MAX_VALUE),
                         }),
                         new ElementRule(Alignment.class, "The alignment.")),
@@ -348,7 +343,7 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
     };
 
 
-    private final MetaPopulationModel metaPopulationModel ;
+    private final MetaPopulationModel metaPopulationModel;
     private final MigrationModel migrationModel;
     private final ColourSampler colourSampler;
     private final TreeModel treeModel;

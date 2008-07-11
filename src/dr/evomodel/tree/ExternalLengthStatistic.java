@@ -28,32 +28,28 @@ package dr.evomodel.tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
 import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 
-import java.util.Set;
-import java.util.HashSet;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A statistic that tracks the time of MRCA of a set of taxa
  *
- * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
- *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
+ * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
 public class ExternalLengthStatistic extends Statistic.Abstract implements TreeStatistic {
 
-	public static final String EXTERNAL_LENGTH_STATISTIC = "externalLengthStatistic";
+    public static final String EXTERNAL_LENGTH_STATISTIC = "externalLengthStatistic";
 
-	public ExternalLengthStatistic(String name, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
-		super(name);
-		this.tree = tree;
+    public ExternalLengthStatistic(String name, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
+        super(name);
+        this.tree = tree;
         int m = taxa.getTaxonCount();
         int n = tree.getExternalNodeCount();
 
@@ -80,59 +76,70 @@ public class ExternalLengthStatistic extends Statistic.Abstract implements TreeS
         }
     }
 
-	public void setTree(Tree tree) { this.tree = tree; }
-	public Tree getTree() { return tree; }
+    public void setTree(Tree tree) {
+        this.tree = tree;
+    }
 
-	public int getDimension() { return leafSet.size(); }
+    public Tree getTree() {
+        return tree;
+    }
 
-	/** @return the height of the MRCA node. */
-	public double getStatisticValue(int dim) {
+    public int getDimension() {
+        return leafSet.size();
+    }
+
+    /**
+     * @return the height of the MRCA node.
+     */
+    public double getStatisticValue(int dim) {
         NodeRef node = leafSet.get(dim);
         return tree.getBranchLength(node);
-	}
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return EXTERNAL_LENGTH_STATISTIC; }
+        public String getParserName() {
+            return EXTERNAL_LENGTH_STATISTIC;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			String name;
-			if (xo.hasAttribute(NAME)) {
-				name = xo.getStringAttribute(NAME);
-			} else {
-				name = xo.getId();
-			}
-			Tree tree = (Tree)xo.getChild(Tree.class);
-			TaxonList taxa = (TaxonList)xo.getChild(Taxa.class);
+            String name = xo.getAttribute(NAME, xo.getId());
 
-			try {
-				return new ExternalLengthStatistic(name, tree, taxa);
-			} catch (Tree.MissingTaxonException mte) {
-				throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
-			}
-		}
+            Tree tree = (Tree) xo.getChild(Tree.class);
+            TaxonList taxa = (TaxonList) xo.getChild(Taxa.class);
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            try {
+                return new ExternalLengthStatistic(name, tree, taxa);
+            } catch (Tree.MissingTaxonException mte) {
+                throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
+            }
+        }
 
-		public String getParserDescription() {
-			return "A statistic that has as its value(s) the length of the external branch length(s) of a set of one or more taxa in a given tree";
-		}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public Class getReturnType() { return ExternalLengthStatistic.class; }
+        public String getParserDescription() {
+            return "A statistic that has as its value(s) the length of the external branch length(s) of a set of one or more taxa in a given tree";
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public Class getReturnType() {
+            return ExternalLengthStatistic.class;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(TreeModel.class),
-			new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
-            new ElementRule(Taxa.class)
-		};
-	};
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-	private Tree tree = null;
-	private List<NodeRef> leafSet = new ArrayList<NodeRef>();
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(TreeModel.class),
+                new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
+                new ElementRule(Taxa.class)
+        };
+    };
+
+    private Tree tree = null;
+    private List<NodeRef> leafSet = new ArrayList<NodeRef>();
 
 }

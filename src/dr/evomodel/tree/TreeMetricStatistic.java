@@ -141,12 +141,7 @@ public class TreeMetricStatistic extends Statistic.Abstract implements TreeStati
                 XMLObject xo)
                 throws XMLParseException {
 
-            String name;
-            if (xo.hasAttribute(NAME)) {
-                name = xo.getStringAttribute(NAME);
-            } else {
-                name = xo.getId();
-            }
+            String name = xo.getAttribute(NAME, xo.getId());
             Tree target = (Tree) xo.getElementFirstChild(TARGET);
             Tree reference = (Tree) xo.getElementFirstChild(REFERENCE);
 

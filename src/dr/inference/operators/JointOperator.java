@@ -12,166 +12,166 @@ import java.util.ArrayList;
  */
 public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
 
-	public static final String JOINT_OPERATOR = "jointOperator";
-	public static final String WEIGHT = "weight";
-	public static final String TARGET_ACCEPTANCE = "targetAcceptance";
+    public static final String JOINT_OPERATOR = "jointOperator";
+    public static final String WEIGHT = "weight";
+    public static final String TARGET_ACCEPTANCE = "targetAcceptance";
 
-	private ArrayList<SimpleMCMCOperator> operatorList;
-	private ArrayList<Integer> operatorToOptimizeList;
+    private ArrayList<SimpleMCMCOperator> operatorList;
+    private ArrayList<Integer> operatorToOptimizeList;
 
-	private int currentOptimizedOperator;
-	private double targetProbability;
+    private int currentOptimizedOperator;
+    private double targetProbability;
 
-	public JointOperator(double weight, double targetProb) {
+    public JointOperator(double weight, double targetProb) {
 
-		operatorList = new ArrayList<SimpleMCMCOperator>();
-		operatorToOptimizeList = new ArrayList<Integer>();
-		targetProbability = targetProb;
+        operatorList = new ArrayList<SimpleMCMCOperator>();
+        operatorToOptimizeList = new ArrayList<Integer>();
+        targetProbability = targetProb;
 
-		setWeight(weight);
+        setWeight(weight);
 
-	}
+    }
 
-	public void addOperator(SimpleMCMCOperator operation) {
+    public void addOperator(SimpleMCMCOperator operation) {
 
-		operatorList.add(operation);
-		if (operation instanceof CoercableMCMCOperator) {
+        operatorList.add(operation);
+        if (operation instanceof CoercableMCMCOperator) {
 
-			if (((CoercableMCMCOperator) operation).getMode() == COERCION_ON)
+            if (((CoercableMCMCOperator) operation).getMode() == COERCION_ON)
 
-				operatorToOptimizeList.add(operatorList.size() - 1);
+                operatorToOptimizeList.add(operatorList.size() - 1);
 
-		}
-	}
+        }
+    }
 
-	public final double doOperation() throws OperatorFailedException {
+    public final double doOperation() throws OperatorFailedException {
 
-		double logP = 0;
+        double logP = 0;
 
-		boolean failed = false;
-		OperatorFailedException failure = null;
+        boolean failed = false;
+        OperatorFailedException failure = null;
 
-		for (SimpleMCMCOperator operation : operatorList) {
+        for (SimpleMCMCOperator operation : operatorList) {
 
-			try {
-				logP += operation.doOperation();
-			} catch (OperatorFailedException ofe) {
-				failed = true;
-				failure = ofe;
-			}
-			// todo After a failure, should not have to complete remaining operations, need to fake their operate();
-		}
-		if (failed)
-			throw failure;
+            try {
+                logP += operation.doOperation();
+            } catch (OperatorFailedException ofe) {
+                failed = true;
+                failure = ofe;
+            }
+            // todo After a failure, should not have to complete remaining operations, need to fake their operate();
+        }
+        if (failed)
+            throw failure;
 
-		return logP;
-	}
+        return logP;
+    }
 
 //    private double old;
 
-	public double getCoercableParameter() {
-		if (operatorToOptimizeList.size() > 0) {
-			currentOptimizedOperator = operatorToOptimizeList.get(MathUtils.nextInt(operatorToOptimizeList.size()));
-			return ((CoercableMCMCOperator) operatorList.get(currentOptimizedOperator)).getCoercableParameter();
-		}
-		throw new IllegalArgumentException();
-	}
+    public double getCoercableParameter() {
+        if (operatorToOptimizeList.size() > 0) {
+            currentOptimizedOperator = operatorToOptimizeList.get(MathUtils.nextInt(operatorToOptimizeList.size()));
+            return ((CoercableMCMCOperator) operatorList.get(currentOptimizedOperator)).getCoercableParameter();
+        }
+        throw new IllegalArgumentException();
+    }
 
-	public void setCoercableParameter(double value) {
-		if (operatorToOptimizeList.size() > 0) {
-			((CoercableMCMCOperator) operatorList.get(currentOptimizedOperator)).setCoercableParameter(value);
-			return;
-		}
-		throw new IllegalArgumentException();
-	}
-
-
-	public int getNumberOfSubOperators() {
-		return operatorList.size();
-	}
-
-	public double getRawParamter(int i) {
-		if (i < 0 || i >= operatorList.size())
-			throw new IllegalArgumentException();
-		return ((CoercableMCMCOperator) operatorList.get(i)).getRawParameter();
-	}
+    public void setCoercableParameter(double value) {
+        if (operatorToOptimizeList.size() > 0) {
+            ((CoercableMCMCOperator) operatorList.get(currentOptimizedOperator)).setCoercableParameter(value);
+            return;
+        }
+        throw new IllegalArgumentException();
+    }
 
 
-	public double getRawParameter() {
+    public int getNumberOfSubOperators() {
+        return operatorList.size();
+    }
 
-		throw new RuntimeException("More than one raw parameter for a joint operator");
-	}
+    public double getRawParamter(int i) {
+        if (i < 0 || i >= operatorList.size())
+            throw new IllegalArgumentException();
+        return ((CoercableMCMCOperator) operatorList.get(i)).getRawParameter();
+    }
 
-	public int getMode() {
-		if (operatorToOptimizeList.size() > 0)
-			return CoercableMCMCOperator.COERCION_ON;
-		return CoercableMCMCOperator.COERCION_OFF;
-	}
 
-	public MCMCOperator getSubOperator(int i) {
-		return operatorList.get(i);
-	}
+    public double getRawParameter() {
 
-	public int getSubOperatorMode(int i) {
-		if (i < 0 || i >= operatorList.size())
-			throw new IllegalArgumentException();
-		if (operatorList.get(i) instanceof CoercableMCMCOperator)
-			return ((CoercableMCMCOperator) operatorList.get(i)).getMode();
-		return CoercableMCMCOperator.COERCION_OFF;
-	}
+        throw new RuntimeException("More than one raw parameter for a joint operator");
+    }
 
-	public String getSubOperatorName(int i) {
-		if (i < 0 || i >= operatorList.size())
-			throw new IllegalArgumentException();
-		return "Joint." + operatorList.get(i).getOperatorName();
-	}
+    public int getMode() {
+        if (operatorToOptimizeList.size() > 0)
+            return CoercableMCMCOperator.COERCION_ON;
+        return CoercableMCMCOperator.COERCION_OFF;
+    }
 
-	public String getOperatorName() {
+    public MCMCOperator getSubOperator(int i) {
+        return operatorList.get(i);
+    }
+
+    public int getSubOperatorMode(int i) {
+        if (i < 0 || i >= operatorList.size())
+            throw new IllegalArgumentException();
+        if (operatorList.get(i) instanceof CoercableMCMCOperator)
+            return ((CoercableMCMCOperator) operatorList.get(i)).getMode();
+        return CoercableMCMCOperator.COERCION_OFF;
+    }
+
+    public String getSubOperatorName(int i) {
+        if (i < 0 || i >= operatorList.size())
+            throw new IllegalArgumentException();
+        return "Joint." + operatorList.get(i).getOperatorName();
+    }
+
+    public String getOperatorName() {
 //        StringBuffer sb = new StringBuffer("Joint(\n");
 //        for(SimpleMCMCOperator operation : operatorList)
 //            sb.append("\t"+operation.getOperatorName()+"\n");
 //        sb.append(") opt = "+optimizedOperator.getOperatorName());
 //        return sb.toString();
-		return "JointOperator";
-	}
+        return "JointOperator";
+    }
 
-	public Element createOperatorElement(Document d) {
-		throw new RuntimeException("not implemented");
-	}
+    public Element createOperatorElement(Document d) {
+        throw new RuntimeException("not implemented");
+    }
 
-	public double getTargetAcceptanceProbability() {
-		return targetProbability;
-	}
+    public double getTargetAcceptanceProbability() {
+        return targetProbability;
+    }
 
-	public double getMinimumAcceptanceLevel() {
-		double min = targetProbability - 0.2;
-		if (min < 0)
-			min = 0.01;
-		return min;
-	}
+    public double getMinimumAcceptanceLevel() {
+        double min = targetProbability - 0.2;
+        if (min < 0)
+            min = 0.01;
+        return min;
+    }
 
-	public double getMaximumAcceptanceLevel() {
-		double max = targetProbability + 0.2;
-		if (max > 1)
-			max = 0.9;
-		return max;
-	}
+    public double getMaximumAcceptanceLevel() {
+        double max = targetProbability + 0.2;
+        if (max > 1)
+            max = 0.9;
+        return max;
+    }
 
-	public double getMinimumGoodAcceptanceLevel() {
-		double min = targetProbability - 0.1;
-		if (min < 0)
-			min = 0.01;
-		return min;
-	}
+    public double getMinimumGoodAcceptanceLevel() {
+        double min = targetProbability - 0.1;
+        if (min < 0)
+            min = 0.01;
+        return min;
+    }
 
-	public double getMaximumGoodAcceptanceLevel() {
-		double max = targetProbability + 0.2;
-		if (max > 1)
-			max = 0.9;
-		return max;
-	}
+    public double getMaximumGoodAcceptanceLevel() {
+        double max = targetProbability + 0.2;
+        if (max > 1)
+            max = 0.9;
+        return max;
+    }
 
-	public final String getPerformanceSuggestion() {
+    public final String getPerformanceSuggestion() {
 
 //		double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
 //		double targetProb = getTargetAcceptanceProbability();
@@ -182,69 +182,56 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 //		} else if (prob > getMaximumGoodAcceptanceLevel()) {
 //			return "Try setting scaleFactor to about " + formatter.format(sf);
 //		} else return "";
-		return "";
-	}
+        return "";
+    }
 
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() {
-			return JOINT_OPERATOR;
-		}
+        public String getParserName() {
+            return JOINT_OPERATOR;
+        }
 
-		public Object parseXMLObject(XMLObject xo) {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			double weight;
+            double weight = xo.getDoubleAttribute(WEIGHT);
 
-			try {
-				weight = xo.getDoubleAttribute(WEIGHT);
+            double targetProb = xo.getAttribute(TARGET_ACCEPTANCE, 0.2);
+            if (targetProb <= 0.0 || targetProb >= 1.0)
+                throw new RuntimeException("Target acceptance probability must be between 0.0 and 1.0");
 
-			} catch (XMLParseException e) {
-				throw new RuntimeException("Must provide valid '" + WEIGHT + "'attribute");
-			}
+            JointOperator operator = new JointOperator(weight, targetProb);
 
-			double targetProb = 0.2;
-			try {
-				if (xo.hasAttribute(TARGET_ACCEPTANCE))
-					targetProb = xo.getDoubleAttribute(TARGET_ACCEPTANCE);
-				if (targetProb <= 0.0 || targetProb >= 1.0)
-					throw new RuntimeException("Target acceptance probability must be between 0.0 and 1.0");
-			} catch (XMLParseException e) {
-				throw new RuntimeException("Must provide valid '" + TARGET_ACCEPTANCE + "' attribute");
-			}
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                operator.addOperator((SimpleMCMCOperator) xo.getChild(i));
 
-			JointOperator operator = new JointOperator(weight, targetProb);
+            }
 
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				operator.addOperator((SimpleMCMCOperator) xo.getChild(i));
+            return operator;
+        }
 
-			}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-			return operator;
-		}
+        public String getParserDescription() {
+            return "This element represents an arbitrary list of operators; only the first is optimizable";
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        public Class getReturnType() {
+            return JointOperator.class;
+        }
 
-		public String getParserDescription() {
-			return "This element represents an arbitrary list of operators; only the first is optimizable";
-		}
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		public Class getReturnType() {
-			return JointOperator.class;
-		}
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(SimpleMCMCOperator.class, 1, Integer.MAX_VALUE),
+                AttributeRule.newDoubleRule(WEIGHT),
+                AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true)
+        };
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
-
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new ElementRule(SimpleMCMCOperator.class, 1, Integer.MAX_VALUE),
-				AttributeRule.newDoubleArrayRule(WEIGHT),
-				AttributeRule.newDoubleArrayRule(TARGET_ACCEPTANCE, true)
-		};
-
-	};
+    };
 }
 

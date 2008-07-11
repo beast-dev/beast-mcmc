@@ -26,9 +26,9 @@
 package dr.evomodel.clock;
 
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
 import dr.math.NormalDistribution;
 import dr.xml.*;
-import dr.inference.model.Parameter;
 
 
 /**
@@ -88,9 +88,7 @@ public class NDLikelihood extends RateChangeLikelihood {
                 if (rootModelString.equals(NONE)) rootModel = ROOT_RATE_NONE;
             }
 
-            NDLikelihood ed = new NDLikelihood(tree, ratesParameter, stdev, rootModel, isEpisodic);
-
-            return ed;
+            return new NDLikelihood(tree, ratesParameter, stdev, rootModel, isEpisodic);
         }
 
         //************************************************************************

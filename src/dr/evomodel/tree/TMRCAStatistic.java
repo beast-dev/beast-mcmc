@@ -86,12 +86,7 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            String name;
-            if (xo.hasAttribute(NAME)) {
-                name = xo.getStringAttribute(NAME);
-            } else {
-                name = xo.getId();
-            }
+            String name = xo.getAttribute(NAME, xo.getId());
             Tree tree = (Tree) xo.getChild(Tree.class);
             TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
             boolean isRate = xo.getAttribute("rate", false);

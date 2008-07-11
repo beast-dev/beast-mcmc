@@ -27,45 +27,51 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.Statistic;
 import dr.stats.DiscreteStatistics;
 import dr.xml.*;
-import dr.evomodel.branchratemodel.BranchRateModel;
 
 /**
  * A statistic that tracks the mean, variance and coefficent of variation of the rates.
  *
- * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
- *
  * @author Alexei Drummond
- *
+ * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
  */
 public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
-	
-	public static final String RATE_STATISTIC = "rateStatistic";
+
+    public static final String RATE_STATISTIC = "rateStatistic";
     public static final String MODE = "mode";
     public static final String MEAN = "mean";
     public static final String VARIANCE = "variance";
     public static final String COEFFICIENT_OF_VARIATION = "coefficientOfVariation";
 
 
-
-	public RateStatistic(String name, Tree tree, BranchRateModel branchRateModel, boolean external, boolean internal, String mode) {
-		super(name);
-		this.tree = tree;
+    public RateStatistic(String name, Tree tree, BranchRateModel branchRateModel, boolean external, boolean internal, String mode) {
+        super(name);
+        this.tree = tree;
         this.branchRateModel = branchRateModel;
         this.internal = internal;
         this.external = external;
         this.mode = mode;
     }
 
-	public void setTree(Tree tree) { this.tree = tree; }
-	public Tree getTree() { return tree; }
-	
-	public int getDimension() { return 1; }
-	
-	/** @return the height of the MRCA node. */
-	public double getStatisticValue(int dim) {
+    public void setTree(Tree tree) {
+        this.tree = tree;
+    }
+
+    public Tree getTree() {
+        return tree;
+    }
+
+    public int getDimension() {
+        return 1;
+    }
+
+    /**
+     * @return the height of the MRCA node.
+     */
+    public double getStatisticValue(int dim) {
 
         int length = 0;
         int offset = 0;
@@ -115,22 +121,19 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
         }
 
         throw new IllegalArgumentException();
-	}
-	
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-	
-		public String getParserName() { return RATE_STATISTIC; }
-	
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			String name;
-			if (xo.hasAttribute(NAME)) {
-				name = xo.getStringAttribute(NAME);
-			} else {
-				name = xo.getId();
-			}
-			Tree tree = (Tree)xo.getChild(Tree.class);
-            BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
+    }
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return RATE_STATISTIC;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            String name = xo.getAttribute(NAME, xo.getId());
+            Tree tree = (Tree) xo.getChild(Tree.class);
+            BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
             boolean internal = xo.getBooleanAttribute("internal");
             boolean external = xo.getBooleanAttribute("external");
@@ -141,34 +144,38 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
 
             String mode = xo.getStringAttribute(MODE);
 
-			return new RateStatistic(name, tree, branchRateModel, external, internal, mode);
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            return new RateStatistic(name, tree, branchRateModel, external, internal, mode);
+        }
 
-		public String getParserDescription() {
-			return "A statistic that returns the average of the branch rates";
-		}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public Class getReturnType() { return RateStatistic.class; }
+        public String getParserDescription() {
+            return "A statistic that returns the average of the branch rates";
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(TreeModel.class),
-            new ElementRule(BranchRateModel.class),
-			AttributeRule.newBooleanRule("internal"),
-            AttributeRule.newBooleanRule("external"),
-            new StringAttributeRule("mode", "This attribute determines how the rates are summarized, can be one of (mean, variance, coefficientOfVariance)", new String[] {MEAN, VARIANCE, COEFFICIENT_OF_VARIATION}, false),
-            new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
-		};
-	};
+        public Class getReturnType() {
+            return RateStatistic.class;
+        }
 
-	private Tree tree = null;
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(TreeModel.class),
+                new ElementRule(BranchRateModel.class),
+                AttributeRule.newBooleanRule("internal"),
+                AttributeRule.newBooleanRule("external"),
+                new StringAttributeRule("mode", "This attribute determines how the rates are summarized, can be one of (mean, variance, coefficientOfVariance)", new String[]{MEAN, VARIANCE, COEFFICIENT_OF_VARIATION}, false),
+                new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
+        };
+    };
+
+    private Tree tree = null;
     private BranchRateModel branchRateModel = null;
-	private boolean internal = true;
+    private boolean internal = true;
     private boolean external = true;
     private String mode = MEAN;
 

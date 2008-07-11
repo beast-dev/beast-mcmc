@@ -73,10 +73,7 @@ public class CategoryParameterStatistic extends BooleanStatistic {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             SampleStateAndCategoryModel siteModel = null;
-            String name = null;
-            if (xo.hasAttribute("name")) {
-                name = xo.getStringAttribute("name");
-            }
+            String name = xo.getAttribute("name", null);
 
             int minimum = xo.getAttribute(MINIMUM_NUMBER, 0);
 

@@ -31,68 +31,71 @@ import dr.xml.*;
 /**
  * A statistic that the population size at a particular time...
  *
- * @version $Id: PopSizeStatistic.java,v 1.1 2005/10/28 02:49:39 alexei Exp $
- *
  * @author Alexei Drummond
- *
+ * @version $Id: PopSizeStatistic.java,v 1.1 2005/10/28 02:49:39 alexei Exp $
  */
 public class PopSizeStatistic extends Statistic.Abstract {
-	
-	public static final String POPSIZE_STATISTIC = "popSizeStatistic";
+
+    public static final String POPSIZE_STATISTIC = "popSizeStatistic";
 
     public DemographicModel model;
     public double time;
 
-    public PopSizeStatistic(String name, DemographicModel model, double time)  {
-		super(name);
-		this.model = model;
+    public PopSizeStatistic(String name, DemographicModel model, double time) {
+        super(name);
+        this.model = model;
         this.time = time;
     }
 
-	public int getDimension() { return 2+model.getParameterCount(); }
-	
-	/** @return the height of the MRCA node. */
-	public double getStatisticValue(int dim) {
-	    if (dim == 0) return model.getDemographicFunction().getDemographic(time);
-        if (dim == 1) return model.getDemographicFunction().getIntensity(time);
-        return model.getParameter(dim-2).getParameterValue(0);
+    public int getDimension() {
+        return 2 + model.getParameterCount();
     }
-	
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-	
-		public String getParserName() { return POPSIZE_STATISTIC; }
-	
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			String name;
-			if (xo.hasAttribute(NAME)) {
-				name = xo.getStringAttribute(NAME);
-			} else {
-				name = xo.getId();
-			}
-			DemographicModel demo = (DemographicModel)xo.getChild(DemographicModel.class);
+
+    /**
+     * @return the height of the MRCA node.
+     */
+    public double getStatisticValue(int dim) {
+        if (dim == 0) return model.getDemographicFunction().getDemographic(time);
+        if (dim == 1) return model.getDemographicFunction().getIntensity(time);
+        return model.getParameter(dim - 2).getParameterValue(0);
+    }
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return POPSIZE_STATISTIC;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            String name = xo.getAttribute(NAME, xo.getId());
+            DemographicModel demo = (DemographicModel) xo.getChild(DemographicModel.class);
             double time = xo.getDoubleAttribute("time");
 
 
-		    return new PopSizeStatistic(name, demo, time);
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            return new PopSizeStatistic(name, demo, time);
+        }
 
-		public String getParserDescription() {
-			return "A statistic that has as its value the height of the most recent common ancestor of a set of taxa in a given tree";
-		}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public Class getReturnType() { return PopSizeStatistic.class; }
+        public String getParserDescription() {
+            return "A statistic that has as its value the height of the most recent common ancestor of a set of taxa in a given tree";
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(DemographicModel.class),
-			new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
-            AttributeRule.newDoubleRule("time", false),
-		};
-	};
+        public Class getReturnType() {
+            return PopSizeStatistic.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(DemographicModel.class),
+                new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
+                AttributeRule.newDoubleRule("time", false),
+        };
+    };
 }

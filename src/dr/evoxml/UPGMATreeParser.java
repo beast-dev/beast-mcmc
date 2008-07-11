@@ -26,144 +26,147 @@
 package dr.evoxml;
 
 import dr.evolution.distance.DistanceMatrix;
-import dr.evolution.tree.*;
+import dr.evolution.tree.MutableTree;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.UPGMATree;
 import dr.evolution.util.TimeScale;
 import dr.xml.*;
 
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: UPGMATreeParser.java,v 1.6 2006/07/28 11:27:32 rambaut Exp $
  */
 public class UPGMATreeParser extends AbstractXMLObjectParser {
 
-	//
-	// Public stuff
-	//
+    //
+    // Public stuff
+    //
 
-	public static final String UPGMA_TREE = "upgmaTree";
-	public static final String DISTANCES = "distances";
-	public static final String ROOT_HEIGHT = "rootHeight";
+    public static final String UPGMA_TREE = "upgmaTree";
+    public static final String DISTANCES = "distances";
+    public static final String ROOT_HEIGHT = "rootHeight";
 
-	public String getParserName() { return UPGMA_TREE; }
+    public String getParserName() {
+        return UPGMA_TREE;
+    }
 
-	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		boolean usingDatesSpecified = false;
-		boolean usingDates = true;
-		double rootHeight = -1.0;
+        boolean usingDatesSpecified = false;
+        boolean usingDates = true;
+        double rootHeight = xo.getAttribute(ROOT_HEIGHT, -1.0);
 
-		if (xo.hasAttribute(SimpleTreeParser.USING_DATES)) {
-			usingDatesSpecified = true;
-			usingDates = xo.getBooleanAttribute(SimpleTreeParser.USING_DATES);
-		}
+        if (xo.hasAttribute(SimpleTreeParser.USING_DATES)) {
+            usingDatesSpecified = true;
+            usingDates = xo.getBooleanAttribute(SimpleTreeParser.USING_DATES);
+        }
 
-		if (xo.hasAttribute(ROOT_HEIGHT)) {
-			rootHeight = xo.getDoubleAttribute(ROOT_HEIGHT);
-		}
+        DistanceMatrix distances = (DistanceMatrix) xo.getChild(DistanceMatrix.class);
 
-		DistanceMatrix distances = (DistanceMatrix)xo.getChild(DistanceMatrix.class);
-
-		UPGMATree tree = new UPGMATree(distances);
+        UPGMATree tree = new UPGMATree(distances);
 
         if (rootHeight > 0) {
-            double scaleFactor = rootHeight/tree.getNodeHeight(tree.getRoot());
+            double scaleFactor = rootHeight / tree.getNodeHeight(tree.getRoot());
 
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
                 NodeRef node = tree.getInternalNode(i);
                 double height = tree.getNodeHeight(node);
-                tree.setNodeHeight(node, height*scaleFactor);
+                tree.setNodeHeight(node, height * scaleFactor);
             }
         }
 
-		if (usingDates) {
+        if (usingDates) {
 
-			dr.evolution.util.Date mostRecent = null;
-			for (int i = 0; i < tree.getTaxonCount(); i++) {
+            dr.evolution.util.Date mostRecent = null;
+            for (int i = 0; i < tree.getTaxonCount(); i++) {
 
-				dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
+                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
 
-				if (date == null) {
-					date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getExternalNode(i), dr.evolution.util.Date.DATE);
-				}
+                if (date == null) {
+                    date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getExternalNode(i), dr.evolution.util.Date.DATE);
+                }
 
-				if (date != null && ((mostRecent == null) || date.after(mostRecent))) {
-					mostRecent = date;
-				}
-			}
+                if (date != null && ((mostRecent == null) || date.after(mostRecent))) {
+                    mostRecent = date;
+                }
+            }
 
-			for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-				dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getInternalNode(i), dr.evolution.util.Date.DATE);
+            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getInternalNode(i), dr.evolution.util.Date.DATE);
 
-				if (date != null && ((mostRecent == null) || date.after(mostRecent))) {
-					mostRecent = date;
-				}
-			}
+                if (date != null && ((mostRecent == null) || date.after(mostRecent))) {
+                    mostRecent = date;
+                }
+            }
 
-			if (mostRecent == null) {
-				if (usingDatesSpecified) {
-					throw new XMLParseException("no date elements in tree (and usingDates attribute set)");
-				}
-			} else {
-				TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
+            if (mostRecent == null) {
+                if (usingDatesSpecified) {
+                    throw new XMLParseException("no date elements in tree (and usingDates attribute set)");
+                }
+            } else {
+                TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
 
-				for (int i = 0; i < tree.getTaxonCount(); i++) {
-					dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
+                for (int i = 0; i < tree.getTaxonCount(); i++) {
+                    dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
 
-					if (date == null) {
-						date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getExternalNode(i), dr.evolution.util.Date.DATE);
-					}
+                    if (date == null) {
+                        date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getExternalNode(i), dr.evolution.util.Date.DATE);
+                    }
 
-					if (date != null) {
-						double height = timeScale.convertTime(date.getTimeValue(), date);
-						tree.setNodeHeight(tree.getExternalNode(i), height);
-					}
-				}
+                    if (date != null) {
+                        double height = timeScale.convertTime(date.getTimeValue(), date);
+                        tree.setNodeHeight(tree.getExternalNode(i), height);
+                    }
+                }
 
-				for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-					dr.evolution.util.Date date = (dr.evolution.util.Date)tree.getNodeAttribute(tree.getInternalNode(i), dr.evolution.util.Date.DATE);
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getInternalNode(i), dr.evolution.util.Date.DATE);
 
-					if (date != null) {
-						double height = timeScale.convertTime(date.getTimeValue(), date);
-						tree.setNodeHeight(tree.getInternalNode(i), height);
-					}
-				}
+                    if (date != null) {
+                        double height = timeScale.convertTime(date.getTimeValue(), date);
+                        tree.setNodeHeight(tree.getInternalNode(i), height);
+                    }
+                }
 
-				MutableTree.Utils.correctHeightsForTips(tree);
-			}
+                MutableTree.Utils.correctHeightsForTips(tree);
+            }
 
-		}
+        }
 
         if (rootHeight > 0) {
-            double scaleFactor = rootHeight/tree.getNodeHeight(tree.getRoot());
+            double scaleFactor = rootHeight / tree.getNodeHeight(tree.getRoot());
 
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
                 NodeRef node = tree.getInternalNode(i);
                 double height = tree.getNodeHeight(node);
-                tree.setNodeHeight(node, height*scaleFactor);
+                tree.setNodeHeight(node, height * scaleFactor);
             }
         }
 
 
-		return tree;
-	}
+        return tree;
+    }
 
-	//************************************************************************
-	// AbstractXMLObjectParser implementation
-	//************************************************************************
+    //************************************************************************
+    // AbstractXMLObjectParser implementation
+    //************************************************************************
 
-	public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
 
-	private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newBooleanRule(SimpleTreeParser.USING_DATES, true),
-			AttributeRule.newDoubleRule(ROOT_HEIGHT, true),
-			new ElementRule(DistanceMatrix.class)
-	};
+    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            AttributeRule.newBooleanRule(SimpleTreeParser.USING_DATES, true),
+            AttributeRule.newDoubleRule(ROOT_HEIGHT, true),
+            new ElementRule(DistanceMatrix.class)
+    };
 
-	public String getParserDescription() {
-		return "This element returns a UPGMA tree generated from the given distances.";
-	}
+    public String getParserDescription() {
+        return "This element returns a UPGMA tree generated from the given distances.";
+    }
 
-	public Class getReturnType() { return UPGMATree.class; }
+    public Class getReturnType() {
+        return UPGMATree.class;
+    }
 }

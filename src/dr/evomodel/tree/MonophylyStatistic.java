@@ -26,135 +26,146 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.Tree;
-import dr.evolution.util.*;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.inference.model.BooleanStatistic;
 import dr.xml.*;
 
-import java.util.Set;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * Performs monophyly test given a taxonList
  *
- * @version $Id: MonophylyStatistic.java,v 1.16 2005/07/11 14:06:25 rambaut Exp $
- *
  * @author Roald Forsberg
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
+ * @version $Id: MonophylyStatistic.java,v 1.16 2005/07/11 14:06:25 rambaut Exp $
  */
 public class MonophylyStatistic extends BooleanStatistic implements TreeStatistic {
 
-	public static final String MONOPHYLY_STATISTIC = "monophylyStatistic";
-	public static final String MRCA = "mrca";
-	public static final String IGNORE = "ignore";
+    public static final String MONOPHYLY_STATISTIC = "monophylyStatistic";
+    public static final String MRCA = "mrca";
+    public static final String IGNORE = "ignore";
 
-	public MonophylyStatistic(String name, Tree tree, TaxonList taxa, TaxonList ignore) throws Tree.MissingTaxonException {
+    public MonophylyStatistic(String name, Tree tree, TaxonList taxa, TaxonList ignore) throws Tree.MissingTaxonException {
 
-		super(name);
-		this.tree = tree;
-		this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
-		if (ignore != null) {
-			this.ignoreLeafSet = Tree.Utils.getLeavesForTaxa(tree, ignore);
-		} else {
-			this.ignoreLeafSet = Collections.emptySet();
-		}
+        super(name);
+        this.tree = tree;
+        this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
+        if (ignore != null) {
+            this.ignoreLeafSet = Tree.Utils.getLeavesForTaxa(tree, ignore);
+        } else {
+            this.ignoreLeafSet = Collections.emptySet();
+        }
 
-	}
+    }
 
-	public void setTree(Tree tree) { this.tree = tree; }
-	public Tree getTree() { return tree; }
+    public void setTree(Tree tree) {
+        this.tree = tree;
+    }
 
-	public int getDimension() { return 1; }
+    public Tree getTree() {
+        return tree;
+    }
 
-	/** @return boolean result of test. */
-	public boolean getBoolean(int dim) {
-		return Tree.Utils.isMonophyletic(this.tree, this.leafSet, this.ignoreLeafSet);
-	}
+    public int getDimension() {
+        return 1;
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    /**
+     * @return boolean result of test.
+     */
+    public boolean getBoolean(int dim) {
+        return Tree.Utils.isMonophyletic(this.tree, this.leafSet, this.ignoreLeafSet);
+    }
 
-		public String getParserName() { return MONOPHYLY_STATISTIC; }
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public String getParserName() {
+            return MONOPHYLY_STATISTIC;
+        }
 
-			String name;
-			if (xo.hasAttribute(NAME)) {
-				name = xo.getStringAttribute(NAME);
-			} else {
-				name = xo.getId();
-			}
-			Tree tree = (Tree)xo.getChild(Tree.class);
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			XMLObject cxo = (XMLObject)xo.getChild(MRCA);
-			TaxonList taxa = (TaxonList)cxo.getChild(TaxonList.class);
-			if (taxa == null) {
-				Taxa taxa1 = new Taxa();
-				for (int i = 0; i < cxo.getChildCount(); i++) {
-					Object ccxo = cxo.getChild(i);
-					if (ccxo instanceof Taxon) {
-						taxa1.addTaxon((Taxon)ccxo);
-					}
-				}
-				taxa = taxa1;
-			}
+            String name = xo.getAttribute(NAME, xo.getId());
 
-			TaxonList ignore = null;
-			if (xo.hasChildNamed(IGNORE)) {
-				cxo = (XMLObject)xo.getChild(IGNORE);
-				ignore = (TaxonList)cxo.getChild(TaxonList.class);
-				if (ignore == null) {
-					Taxa taxa1 = new Taxa();
-					for (int i = 0; i < cxo.getChildCount(); i++) {
-						Object ccxo = cxo.getChild(i);
-						if (ccxo instanceof Taxon) {
-							taxa1.addTaxon((Taxon)ccxo);
-						}
-					}
-					ignore = taxa1;
-				}
-			}
+            Tree tree = (Tree) xo.getChild(Tree.class);
 
-			try {
-				return new MonophylyStatistic(name, tree, taxa, ignore);
-			} catch (Tree.MissingTaxonException mte) {
-				throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
-			}
-		}
+            XMLObject cxo = (XMLObject) xo.getChild(MRCA);
+            TaxonList taxa = (TaxonList) cxo.getChild(TaxonList.class);
+            if (taxa == null) {
+                Taxa taxa1 = new Taxa();
+                for (int i = 0; i < cxo.getChildCount(); i++) {
+                    Object ccxo = cxo.getChild(i);
+                    if (ccxo instanceof Taxon) {
+                        taxa1.addTaxon((Taxon) ccxo);
+                    }
+                }
+                taxa = taxa1;
+            }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            TaxonList ignore = null;
+            if (xo.hasChildNamed(IGNORE)) {
+                cxo = (XMLObject) xo.getChild(IGNORE);
+                ignore = (TaxonList) cxo.getChild(TaxonList.class);
+                if (ignore == null) {
+                    Taxa taxa1 = new Taxa();
+                    for (int i = 0; i < cxo.getChildCount(); i++) {
+                        Object ccxo = cxo.getChild(i);
+                        if (ccxo instanceof Taxon) {
+                            taxa1.addTaxon((Taxon) ccxo);
+                        }
+                    }
+                    ignore = taxa1;
+                }
+            }
 
-		public String getParserDescription() {
-			return "A statistic that returns true if a given set of taxa are monophyletic for a given tree";
-		}
+            try {
+                return new MonophylyStatistic(name, tree, taxa, ignore);
+            } catch (Tree.MissingTaxonException mte) {
+                throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
+            }
+        }
 
-		public Class getReturnType() { return MonophylyStatistic.class; }
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public String getParserDescription() {
+            return "A statistic that returns true if a given set of taxa are monophyletic for a given tree";
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-				new StringAttributeRule(NAME, "A name for this statistic for the purpose of logging", true),
-				new ElementRule(TreeModel.class),
-				new ElementRule(MRCA, new XMLSyntaxRule[] {
-						new XORRule(
-								new ElementRule(Taxon.class, 1, Integer.MAX_VALUE),
-								new ElementRule(Taxa.class)
-						)
-				}),
-				new ElementRule(IGNORE, new XMLSyntaxRule[] {
-						new XORRule(
-								new ElementRule(Taxon.class, 1, Integer.MAX_VALUE),
-								new ElementRule(Taxa.class)
-						)
-				}, "An optional list of taxa to ignore from the test of monophyly", true)
-		};
+        public Class getReturnType() {
+            return MonophylyStatistic.class;
+        }
 
-	};
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-	private Tree tree = null;
-	private Set<String> leafSet = null;
-	private Set<String> ignoreLeafSet = null;
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new StringAttributeRule(NAME, "A name for this statistic for the purpose of logging", true),
+                new ElementRule(TreeModel.class),
+                new ElementRule(MRCA, new XMLSyntaxRule[]{
+                        new XORRule(
+                                new ElementRule(Taxon.class, 1, Integer.MAX_VALUE),
+                                new ElementRule(Taxa.class)
+                        )
+                }),
+                new ElementRule(IGNORE, new XMLSyntaxRule[]{
+                        new XORRule(
+                                new ElementRule(Taxon.class, 1, Integer.MAX_VALUE),
+                                new ElementRule(Taxa.class)
+                        )
+                }, "An optional list of taxa to ignore from the test of monophyly", true)
+        };
+
+    };
+
+    private Tree tree = null;
+    private Set<String> leafSet = null;
+    private Set<String> ignoreLeafSet = null;
 
 }

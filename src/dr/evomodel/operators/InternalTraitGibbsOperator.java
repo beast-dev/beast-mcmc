@@ -42,117 +42,117 @@ import dr.xml.*;
  */
 public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-	public static final String GIBBS_OPERATOR = "internalTraitGibbsOperator";
+    public static final String GIBBS_OPERATOR = "internalTraitGibbsOperator";
 
-	private TreeModel treeModel;
-	private MatrixParameter precisionMatrixParameter;
-	private MultivariateTraitLikelihood traitModel;
-	private int dim;
-	private String traitName;
+    private TreeModel treeModel;
+    private MatrixParameter precisionMatrixParameter;
+    private MultivariateTraitLikelihood traitModel;
+    private int dim;
+    private String traitName;
 //	private String traitName;
 
-	public InternalTraitGibbsOperator(MultivariateTraitLikelihood traitModel
+    public InternalTraitGibbsOperator(MultivariateTraitLikelihood traitModel
 //		    TreeModel treeModel, MultivariateDiffusionModel diffusionModel, boolean inSubstitutionTime
-	) {
-		super();
-		this.traitModel = traitModel;
-		this.treeModel = traitModel.getTreeModel();
-		precisionMatrixParameter = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
-		this.traitName = traitModel.getTraitName();
+    ) {
+        super();
+        this.traitModel = traitModel;
+        this.treeModel = traitModel.getTreeModel();
+        precisionMatrixParameter = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
+        this.traitName = traitModel.getTraitName();
 //	    System.err.println("traitName = "+traitName);
 //	    System.exit(-1);
-		dim = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName).length;
+        dim = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName).length;
 //        this.inSubstitutionTime = inSubstitutionTime;
 
-	}
+    }
 
 
-	public int getStepCount() {
-		return 1;
-	}
+    public int getStepCount() {
+        return 1;
+    }
 
 
-	public double doOperation() throws OperatorFailedException {
+    public double doOperation() throws OperatorFailedException {
 
-		double[][] precision = precisionMatrixParameter.getParameterAsMatrix();
+        double[][] precision = precisionMatrixParameter.getParameterAsMatrix();
 
 ////        double treeLength = Tree.Utils.getTreeLength(treeModel,treeModel.getRoot());
 //        double treeLength = treeModel.getNodeHeight(treeModel.getRoot());
 
 
-		NodeRef node = treeModel.getRoot();
+        NodeRef node = treeModel.getRoot();
 //		System.err.println("CNT: "+treeModel.getInternalNodeCount());
-		while (node == treeModel.getRoot()) {
-			node = treeModel.getInternalNode(MathUtils.nextInt(
-					treeModel.getInternalNodeCount()));
-		} // select any internal node but the root.
+        while (node == treeModel.getRoot()) {
+            node = treeModel.getInternalNode(MathUtils.nextInt(
+                    treeModel.getInternalNodeCount()));
+        } // select any internal node but the root.
 
-		NodeRef parent = treeModel.getParent(node);
+        NodeRef parent = treeModel.getParent(node);
 
-		double[] weightedAverage = new double[dim];
+        double[] weightedAverage = new double[dim];
 
 //        double weight = 1.0 / treeModel.getBranchLength(node);
 //        weight *= treeLength;
-		double weight = 1.0 / traitModel.getRescaledBranchLength(node);
+        double weight = 1.0 / traitModel.getRescaledBranchLength(node);
 
 //        if (inSubstitutionTime)
 //            weight /= treeModel.getNodeRate(node);
-		double[] trait = treeModel.getMultivariateNodeTrait(parent, traitName);
+        double[] trait = treeModel.getMultivariateNodeTrait(parent, traitName);
 
-		for (int i = 0; i < dim; i++)
-			weightedAverage[i] = trait[i] * weight;
+        for (int i = 0; i < dim; i++)
+            weightedAverage[i] = trait[i] * weight;
 //		weightedAverage[i] = i;
 
-		double weightTotal = weight;
-		for (int j = 0; j < treeModel.getChildCount(node); j++) {
-			NodeRef child = treeModel.getChild(node, j);
-			trait = treeModel.getMultivariateNodeTrait(child, traitName);
+        double weightTotal = weight;
+        for (int j = 0; j < treeModel.getChildCount(node); j++) {
+            NodeRef child = treeModel.getChild(node, j);
+            trait = treeModel.getMultivariateNodeTrait(child, traitName);
 //            weight = 1.0 / treeModel.getBranchLength(child);
 //            weight *= treeLength;
-			weight = 1.0 / traitModel.getRescaledBranchLength(child);
+            weight = 1.0 / traitModel.getRescaledBranchLength(child);
 
 //            if (inSubstitutionTime)
 //                weight /= treeModel.getNodeRate(child);
-			for (int i = 0; i < dim; i++)
-				weightedAverage[i] += trait[i] * weight;
-			weightTotal += weight;
-		}
+            for (int i = 0; i < dim; i++)
+                weightedAverage[i] += trait[i] * weight;
+            weightTotal += weight;
+        }
 
-		for (int i = 0; i < dim; i++) {
-			weightedAverage[i] /= weightTotal;
-			for (int j = i; j < dim; j++)
-				precision[j][i] = precision[i][j] *= weightTotal;
-		}
+        for (int i = 0; i < dim; i++) {
+            weightedAverage[i] /= weightTotal;
+            for (int j = i; j < dim; j++)
+                precision[j][i] = precision[i][j] *= weightTotal;
+        }
 
-		double[] draw = MultivariateNormalDistribution.nextMultivariateNormalPrecision(
-				weightedAverage, precision);
+        double[] draw = MultivariateNormalDistribution.nextMultivariateNormalPrecision(
+                weightedAverage, precision);
 
-		treeModel.setMultivariateTrait(node, traitName, draw);
+        treeModel.setMultivariateTrait(node, traitName, draw);
 //		for(int i=0; i<dim; i++)
 
-		return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
 
-	}
+    }
 
-	public String getPerformanceSuggestion() {
-		return null;
-	}
+    public String getPerformanceSuggestion() {
+        return null;
+    }
 
-	public String getOperatorName() {
-		return GIBBS_OPERATOR;
-	}
+    public String getOperatorName() {
+        return GIBBS_OPERATOR;
+    }
 
-	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
-		public String getParserName() {
-			return GIBBS_OPERATOR;
-		}
+        public String getParserName() {
+            return GIBBS_OPERATOR;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			double weight = xo.getIntegerAttribute(WEIGHT);
+            double weight = xo.getDoubleAttribute(WEIGHT);
 
-			MultivariateTraitLikelihood traitModel = (MultivariateTraitLikelihood) xo.getChild(MultivariateTraitLikelihood.class);
+            MultivariateTraitLikelihood traitModel = (MultivariateTraitLikelihood) xo.getChild(MultivariateTraitLikelihood.class);
 
 //            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 //            TreeModel treeModel = traitModel.getTreeModel();
@@ -161,34 +161,32 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 
 //            MultivariateDiffusionModel diffusionModel = traitModel.getDiffusionModel();
 
-			InternalTraitGibbsOperator operator = new InternalTraitGibbsOperator(traitModel);
-			operator.setWeight(weight);
-			return operator;
-		}
+            InternalTraitGibbsOperator operator = new InternalTraitGibbsOperator(traitModel);
+            operator.setWeight(weight);
+            return operator;
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element returns a multivariate Gibbs operator on an internal node trait.";
-		}
+        public String getParserDescription() {
+            return "This element returns a multivariate Gibbs operator on an internal node trait.";
+        }
 
-		public Class getReturnType() {
-			return MCMCOperator.class;
-		}
+        public Class getReturnType() {
+            return MCMCOperator.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				AttributeRule.newDoubleRule(WEIGHT),
-//				new ElementRule(TreeModel.class),
-//				new ElementRule(MultivariateDiffusionModel.class)
-				new ElementRule(MultivariateTraitLikelihood.class)
-		};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule(WEIGHT),
+                new ElementRule(MultivariateTraitLikelihood.class)
+        };
 
-	};
+    };
 
 }

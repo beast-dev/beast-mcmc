@@ -192,22 +192,12 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger {
             Logger.getLogger("dr.evomodel").info("Grid Height = " + gridHeight);
 
             //Filename
-            String fileName = null;
-            if (xo.hasAttribute(LoggerParser.FILE_NAME)) {
-                fileName = xo.getStringAttribute(LoggerParser.FILE_NAME);
-            }
+            String fileName = xo.getAttribute(LoggerParser.FILE_NAME, null);
 
             //Log every
-            int logEvery = 1;
-            if (xo.hasAttribute(LoggerParser.LOG_EVERY)) {
-                logEvery = xo.getIntegerAttribute(LoggerParser.LOG_EVERY);
-            }
+            int logEvery = xo.getAttribute(LoggerParser.LOG_EVERY, 1);
 
-            int auxiliaryIntervals = 1;
-            if (xo.hasAttribute(AUXILLIARY_INTERVALS)) {
-                auxiliaryIntervals = xo.getIntegerAttribute(AUXILLIARY_INTERVALS);
-            }
-
+            int auxiliaryIntervals = xo.getAttribute(AUXILLIARY_INTERVALS, 1);
 
             PrintWriter pw;
 
@@ -249,7 +239,7 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger {
             }
             logger.addColumn(new LogColumn.Default("AuxiliaryLikelihood", null));
 
-            return (GMRFSkyrideFixedGridLogger) logger;
+            return logger;
         }
 
 

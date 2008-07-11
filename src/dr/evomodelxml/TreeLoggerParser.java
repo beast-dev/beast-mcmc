@@ -115,11 +115,8 @@ public class TreeLoggerParser extends LoggerParser {
         }
 
         // logEvery of zero only displays at the end
-        int logEvery = 1;
+        int logEvery = xo.getAttribute(LOG_EVERY, 1);
 
-        if (xo.hasAttribute(LOG_EVERY)) {
-            logEvery = xo.getIntegerAttribute(LOG_EVERY);
-        }
         PrintWriter pw = getLogFile(xo, getParserName());
 
         LogFormatter formatter = new TabDelimitedFormatter(pw);

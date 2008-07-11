@@ -52,7 +52,7 @@ public class MLLogger extends MCLogger {
 
     public MLLogger(Likelihood likelihood, LogFormatter formatter, int logEvery) {
 
-		super(formatter, logEvery, false);
+        super(formatter, logEvery, false);
 
         this.likelihood = likelihood;
     }
@@ -155,11 +155,7 @@ public class MLLogger extends MCLogger {
             Likelihood likelihood = (Likelihood) xo.getElementFirstChild(LIKELIHOOD);
 
             // logEvery of zero only displays at the end
-            int logEvery = 0;
-
-            if (xo.hasAttribute(LOG_EVERY)) {
-                logEvery = xo.getIntegerAttribute(LOG_EVERY);
-            }
+            int logEvery = xo.getAttribute(LOG_EVERY, 0);
 
             PrintWriter pw = getLogFile(xo, getParserName());
 

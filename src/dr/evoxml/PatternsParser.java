@@ -34,7 +34,6 @@ import dr.xml.*;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: PatternsParser.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  */
 public class PatternsParser extends AbstractXMLObjectParser {
@@ -44,18 +43,20 @@ public class PatternsParser extends AbstractXMLObjectParser {
     public static final String TO = "to";
     public static final String EVERY = "every";
 
-    public String getParserName() { return PATTERNS; }
+    public String getParserName() {
+        return PATTERNS;
+    }
 
     /**
      * Parses a patterns element and returns a patterns object.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Alignment alignment = (Alignment)xo.getChild(Alignment.class);
+        Alignment alignment = (Alignment) xo.getChild(Alignment.class);
 
         int from = 0;
         int to = 0;
-        int every = 1;
+        int every = xo.getAttribute(EVERY, 1);
 
         if (xo.hasAttribute(FROM)) {
             from = xo.getIntegerAttribute(FROM) - 1;
@@ -69,11 +70,7 @@ public class PatternsParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal 'to' attribute in patterns element");
         }
 
-        if (xo.hasAttribute(EVERY)) {
-            every = xo.getIntegerAttribute(EVERY);
-            if (every <= 0)
-                throw new XMLParseException("illegal 'every' attribute in patterns element");
-        }
+        if (every <= 0) throw new XMLParseException("illegal 'every' attribute in patterns element");
 
 
         if (from > alignment.getSiteCount())
@@ -82,25 +79,27 @@ public class PatternsParser extends AbstractXMLObjectParser {
         if (to > alignment.getSiteCount())
             throw new XMLParseException("illegal 'to' attribute in patterns element");
 
-        Patterns patterns = new Patterns(alignment, from, to, every);
-
-        return patterns;
+        return new Patterns(alignment, from, to, every);
     }
 
-    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-        AttributeRule.newIntegerRule(FROM, true, "The site position to start at, default is 1 (the first position)"),
-        AttributeRule.newIntegerRule(TO, true, "The site position to finish at, must be greater than <b>" + FROM + "</b>, default is length of given alignment"),
-        AttributeRule.newIntegerRule(EVERY, true, "Determines how many sites are selected. A value of 3 will select every third site starting from <b>" + FROM + "</b>, default is 1 (every site)"),
+    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            AttributeRule.newIntegerRule(FROM, true, "The site position to start at, default is 1 (the first position)"),
+            AttributeRule.newIntegerRule(TO, true, "The site position to finish at, must be greater than <b>" + FROM + "</b>, default is length of given alignment"),
+            AttributeRule.newIntegerRule(EVERY, true, "Determines how many sites are selected. A value of 3 will select every third site starting from <b>" + FROM + "</b>, default is 1 (every site)"),
 
-        new ElementRule(SiteList.class)
+            new ElementRule(SiteList.class)
     };
 
     public String getParserDescription() {
         return "A weighted list of the unique site patterns (unique columns) in an alignment.";
     }
 
-    public Class getReturnType() { return PatternList.class; }
+    public Class getReturnType() {
+        return PatternList.class;
+    }
 
 }

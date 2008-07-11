@@ -62,11 +62,8 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
             file = new File(parent, name);
             fileName = file.getName();
 
-            int burnin = -1;
-            if (xo.hasAttribute(BURN_IN)) {
-                // leaving the burnin attribute off will result in 10% being used
-                burnin = xo.getIntegerAttribute(BURN_IN);
-            }
+            // leaving the burnin attribute off will result in 10% being used
+            int burnin = xo.getAttribute(BURN_IN, -1);
 
             TraceList traces = TraceAnalysis.report(fileName, burnin);
             for (int x = 0; x < xo.getChildCount(); x++) {

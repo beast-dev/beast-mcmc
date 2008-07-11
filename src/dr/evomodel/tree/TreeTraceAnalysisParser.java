@@ -76,24 +76,12 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
             }
 
-            int burnin = -1;
-            if (xo.hasAttribute(BURN_IN)) {
-                // leaving the burnin attribute off will result in 10% being used
-                burnin = xo.getIntegerAttribute(BURN_IN);
-            }
+            // leaving the burnin attribute off will result in 10% being used
+            int burnin = xo.getAttribute(BURN_IN, -1);
 
-            double minCladeProbability = 0.5;
-            if (xo.hasAttribute(MIN_CLADE_PROBABILITY)) {
-                // leaving the burnin attribute off will result in 10% being used
-                minCladeProbability = xo.getDoubleAttribute(MIN_CLADE_PROBABILITY);
-            }
+            double minCladeProbability = xo.getAttribute(MIN_CLADE_PROBABILITY, 0.5);
 
-            double credSetProbability = 0.95;
-            if (xo.hasAttribute(CRED_SET_PROBABILITY)) {
-                // leaving the burnin attribute off will result in 10% being used
-                credSetProbability = xo.getDoubleAttribute(CRED_SET_PROBABILITY);
-            }
-
+            double credSetProbability = xo.getAttribute(CRED_SET_PROBABILITY, 0.95);
 
             Tree referenceTree = null;
             Reader refReader;

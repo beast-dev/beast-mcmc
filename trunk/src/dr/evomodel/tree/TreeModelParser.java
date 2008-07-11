@@ -149,7 +149,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                 } else if (cxo.getName().equals(LEAF_TRAIT)) {
 
-                    String name = "trait";
+                    String name = xo.getAttribute(NAME, "trait");
 
                     String taxonName;
                     if (cxo.hasAttribute(TAXON)) {
@@ -163,10 +163,6 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("taxon " + taxonName + " not found for leafTrait element in treeModel element");
                     }
                     NodeRef node = treeModel.getExternalNode(index);
-
-                    if (cxo.hasAttribute(NAME)) {
-                        name = cxo.getStringAttribute(NAME);
-                    }
 
                     Parameter parameter = treeModel.getNodeTraitParameter(node, name);
 

@@ -34,10 +34,7 @@ public class CSVExporter extends AbstractXMLObjectParser {
 
         File csv = LoggerParser.getFile(fileName);
 
-        String sep = "\t";
-        if (xo.hasAttribute(SEPARATOR)) {
-            sep = xo.getStringAttribute(SEPARATOR);
-        }
+        String sep = xo.getAttribute(SEPARATOR, "\t");
 
         try {
             final PrintWriter writer = new PrintWriter(new FileWriter(csv));

@@ -99,9 +99,7 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
 
             double weight = xo.getDoubleAttribute(WEIGHT);
 
-
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-
 
             return new TreeBitMoveOperator(treeModel, weight);
         }

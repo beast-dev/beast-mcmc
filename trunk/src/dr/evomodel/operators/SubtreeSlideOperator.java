@@ -386,11 +386,8 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             double weight = xo.getDoubleAttribute("weight");
 
-            double targetAcceptance = 0.234;
-            if (xo.hasAttribute(TARGET_ACCEPTANCE)) {
-                targetAcceptance = xo.getDoubleAttribute(TARGET_ACCEPTANCE);
+            double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
-            }
             double size = xo.getDoubleAttribute("size");
             boolean gaussian = xo.getBooleanAttribute("gaussian");
             SubtreeSlideOperator operator = new SubtreeSlideOperator(treeModel, weight, size, gaussian,

@@ -178,9 +178,9 @@ public class UpDownOperator extends SimpleMCMCOperator implements CoercableMCMCO
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double scaleFactor;
+            double scaleFactor = xo.getDoubleAttribute(WEIGHT);
             int mode = CoercableMCMCOperator.DEFAULT;
-            double weight;
+            double weight = xo.getDoubleAttribute(SCALE_FACTOR);
 
             if (xo.hasAttribute(AUTO_OPTIMIZE)) {
                 if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
@@ -189,8 +189,6 @@ public class UpDownOperator extends SimpleMCMCOperator implements CoercableMCMCO
                     mode = CoercableMCMCOperator.COERCION_OFF;
                 }
             }
-            weight = xo.getDoubleAttribute(WEIGHT);
-            scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
             Parameter param1 = (Parameter) xo.getElementFirstChild(UP);
             Parameter param2 = (Parameter) xo.getElementFirstChild(DOWN);

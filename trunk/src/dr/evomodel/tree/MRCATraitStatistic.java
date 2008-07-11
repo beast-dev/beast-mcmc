@@ -37,11 +37,9 @@ import java.util.Set;
 /**
  * A statistic that tracks the time of MRCA of a set of taxa
  *
- * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
- *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
+ * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
 public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatistic {
 
@@ -58,12 +56,21 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
         this.isRate = trait.equals("rate");
     }
 
-    public void setTree(Tree tree) { this.tree = (TreeModel)tree; }
-    public Tree getTree() { return tree; }
+    public void setTree(Tree tree) {
+        this.tree = (TreeModel) tree;
+    }
 
-    public int getDimension() { return 1; }
+    public Tree getTree() {
+        return tree;
+    }
 
-    /** @return the height of the MRCA node. */
+    public int getDimension() {
+        return 1;
+    }
+
+    /**
+     * @return the height of the MRCA node.
+     */
     public double getStatisticValue(int dim) {
 
         NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
@@ -71,25 +78,22 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
         if (isRate) {
             return tree.getNodeRate(node);
         }
-        return (Double)tree.getNodeTrait(node, trait);
+        return (Double) tree.getNodeTrait(node, trait);
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return MRCA_TRAIT_STATISTIC; }
+        public String getParserName() {
+            return MRCA_TRAIT_STATISTIC;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            String name;
-            if (xo.hasAttribute(NAME)) {
-                name = xo.getStringAttribute(NAME);
-            } else {
-                name = xo.getId();
-            }    
+            String name = xo.getAttribute(NAME, xo.getId());
             String trait = xo.getStringAttribute(TRAIT);
 
-            TreeModel tree = (TreeModel)xo.getChild(TreeModel.class);
-            TaxonList taxa = (TaxonList)xo.getElementFirstChild(MRCA);
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+            TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
 
             try {
                 return new MRCATraitStatistic(name, trait, tree, taxa);
@@ -106,17 +110,21 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
             return "A statistic that has as its value the height of the most recent common ancestor of a set of taxa in a given tree";
         }
 
-        public Class getReturnType() { return TMRCAStatistic.class; }
+        public Class getReturnType() {
+            return TMRCAStatistic.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class),
                 new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
                 new StringAttributeRule("trait", "The name of the trait (can be rate)"),
                 AttributeRule.newBooleanRule("rate", true),
                 new ElementRule(MRCA,
-                        new XMLSyntaxRule[] { new ElementRule(Taxa.class) })
+                        new XMLSyntaxRule[]{new ElementRule(Taxa.class)})
         };
     };
 

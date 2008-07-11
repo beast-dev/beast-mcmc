@@ -218,10 +218,8 @@ public class CoalescentSimulator {
             List<TaxonList> taxonLists = new ArrayList<TaxonList>();
             List<Tree> subtrees = new ArrayList<Tree>();
 
-            double rootHeight = -1;
-            if (xo.hasAttribute(ROOT_HEIGHT)) {
-                rootHeight = xo.getDoubleAttribute(ROOT_HEIGHT);
-            }
+            double rootHeight = xo.getAttribute(ROOT_HEIGHT, -1.0);
+
             if (xo.hasAttribute(RESCALE_HEIGHT)) {
                 rootHeight = xo.getDoubleAttribute(RESCALE_HEIGHT);
             }

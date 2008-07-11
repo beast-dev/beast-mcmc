@@ -34,85 +34,83 @@ import dr.xml.*;
  */
 public class LogarithmStatistic extends Statistic.Abstract {
 
-	public static String LOGARITHM_STATISTIC = "logarithmStatistic";
-	public static String BASE = "base";
+    public static String LOGARITHM_STATISTIC = "logarithmStatistic";
+    public static String BASE = "base";
 
-	private final Statistic statistic;
-	private final double base;
+    private final Statistic statistic;
+    private final double base;
 
-	public LogarithmStatistic(String name, Statistic statistic, double base) {
-		super(name);
-		this.statistic = statistic;
-		this.base = base;
-	}
+    public LogarithmStatistic(String name, Statistic statistic, double base) {
+        super(name);
+        this.statistic = statistic;
+        this.base = base;
+    }
 
-	public int getDimension() {
-		return statistic.getDimension();
-	}
+    public int getDimension() {
+        return statistic.getDimension();
+    }
 
-	/**
-	 * @return mean of contained statistics
-	 */
-	public double getStatisticValue(int dim) {
-		if (base <= 1.0) {
-			return Math.log(statistic.getStatisticValue(dim));
-		} else {
-			return Math.log(statistic.getStatisticValue(dim)) / Math.log(base);
-		}
-	}
+    /**
+     * @return mean of contained statistics
+     */
+    public double getStatisticValue(int dim) {
+        if (base <= 1.0) {
+            return Math.log(statistic.getStatisticValue(dim));
+        } else {
+            return Math.log(statistic.getStatisticValue(dim)) / Math.log(base);
+        }
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String[] getParserNames() {
-			return new String[]{getParserName(), "logarithm"};
-		}
+        public String[] getParserNames() {
+            return new String[]{getParserName(), "logarithm"};
+        }
 
-		public String getParserName() {
-			return LOGARITHM_STATISTIC;
-		}
+        public String getParserName() {
+            return LOGARITHM_STATISTIC;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			LogarithmStatistic logStatistic;
+            LogarithmStatistic logStatistic;
 
-			double base = 0.0; // base 0.0 means natural logarithm
-			if (xo.hasAttribute(BASE)) {
-				base = xo.getDoubleAttribute(BASE);
-			}
+            // base 0.0 means natural logarithm, the default base
+            double base = xo.getAttribute(BASE, 0.0);
 
-			if (base <= 1.0 && base != 0.0) {
-				throw new XMLParseException("Error parsing " + getParserName() + " element: base attribute should be > 1");
-			}
+            if (base <= 1.0 && base != 0.0) {
+                throw new XMLParseException("Error parsing " + getParserName() + " element: base attribute should be > 1");
+            }
 
-			Object child = xo.getChild(0);
-			if (child instanceof Statistic) {
-				logStatistic = new LogarithmStatistic(LOGARITHM_STATISTIC, (Statistic) child, base);
-			} else {
-				throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
-			}
+            Object child = xo.getChild(0);
+            if (child instanceof Statistic) {
+                logStatistic = new LogarithmStatistic(LOGARITHM_STATISTIC, (Statistic) child, base);
+            } else {
+                throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
+            }
 
-			return logStatistic;
-		}
+            return logStatistic;
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element returns a statistic that is the element-wise natural logarithm of the child statistic.";
-		}
+        public String getParserDescription() {
+            return "This element returns a statistic that is the element-wise natural logarithm of the child statistic.";
+        }
 
-		public Class getReturnType() {
-			return ExponentialStatistic.class;
-		}
+        public Class getReturnType() {
+            return ExponentialStatistic.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				AttributeRule.newDoubleRule(BASE, true, "An optional base for the logarithm (default is the natural logarithm, base e)"),
-				new ElementRule(Statistic.class, 1, 1)
-		};
-	};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule(BASE, true, "An optional base for the logarithm (default is the natural logarithm, base e)"),
+                new ElementRule(Statistic.class, 1, 1)
+        };
+    };
 }

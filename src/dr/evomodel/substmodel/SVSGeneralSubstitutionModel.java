@@ -14,187 +14,184 @@ import dr.xml.*;
 
 public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
 
-	public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
-	public static final String INDICATOR = "rateIndicator";
-	public static final String ROOT_FREQ = "rootFrequencies";
+    public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
+    public static final String INDICATOR = "rateIndicator";
+    public static final String ROOT_FREQ = "rootFrequencies";
 
 
-	public SVSGeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter,
-	                                   Parameter indicator) { //, int relativeTo) {
-		super(dataType, freqModel, parameter, 1);
+    public SVSGeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter,
+                                       Parameter indicator) { //, int relativeTo) {
+        super(dataType, freqModel, parameter, 1);
 
-		rateIndicator = indicator;
-		addParameter(rateIndicator);
-	}
+        rateIndicator = indicator;
+        addParameter(rateIndicator);
+    }
 
-	protected SVSGeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {
-		super(name, dataType, freqModel, relativeTo);
-	}
+    protected SVSGeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {
+        super(name, dataType, freqModel, relativeTo);
+    }
 
-	public Parameter getRateIndicators() {
-		return rateIndicator;
-	}
+    public Parameter getRateIndicators() {
+        return rateIndicator;
+    }
 
-	public boolean myIsValid() {
-		boolean valid = true;
-		//	setupMatrix();
-		updateMatrix = true;
-		int stateCount = dataType.getStateCount();
-		int stateCountSquare = stateCount * stateCount;
-		double[] probs = new double[stateCountSquare];
-		getTransitionProbabilities(1.0, probs);
-		for (int i = 0; valid && i < stateCountSquare; i++) {
-			if (probs[i] == 0)
-				valid = false; // must be fully connected
-		}
+    public boolean myIsValid() {
+        boolean valid = true;
+        //	setupMatrix();
+        updateMatrix = true;
+        int stateCount = dataType.getStateCount();
+        int stateCountSquare = stateCount * stateCount;
+        double[] probs = new double[stateCountSquare];
+        getTransitionProbabilities(1.0, probs);
+        for (int i = 0; valid && i < stateCountSquare; i++) {
+            if (probs[i] == 0)
+                valid = false; // must be fully connected
+        }
 
-		return valid;
-	}
+        return valid;
+    }
 
-	protected void setupRelativeRates() {
+    protected void setupRelativeRates() {
 
-		for (int i = 0; i < relativeRates.length; i++) {
-			relativeRates[i] = ratesParameter.getParameterValue(i) * rateIndicator.getParameterValue(i);
-		}
+        for (int i = 0; i < relativeRates.length; i++) {
+            relativeRates[i] = ratesParameter.getParameterValue(i) * rateIndicator.getParameterValue(i);
+        }
 
-	}
-
-
-	void normalize(double[][] matrix, double[] pi) {
-		double subst = 0.0;
-		int dimension = pi.length;
-
-		final int dim = rateIndicator.getDimension();
-		int sum = 0;
-		for (int i = 0; i < dim; i++)
-			sum += rateIndicator.getParameterValue(i);
+    }
 
 
-		for (int i = 0; i < dimension; i++)
-			subst += -matrix[i][i] * pi[i];
+    void normalize(double[][] matrix, double[] pi) {
+        double subst = 0.0;
+        int dimension = pi.length;
 
-		for (int i = 0; i < dimension; i++) {
-			for (int j = 0; j < dimension; j++) {
-				matrix[i][j] = matrix[i][j] / subst; // / sum;
-			}
-		}
-	}
+        //final int dim = rateIndicator.getDimension();
+        //int sum = 0;
+        //for (int i = 0; i < dim; i++)
+        //	sum += rateIndicator.getParameterValue(i);
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() {
-			return SVS_GENERAL_SUBSTITUTION_MODEL;
-		}
+        for (int i = 0; i < dimension; i++)
+            subst += -matrix[i][i] * pi[i];
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                matrix[i][j] = matrix[i][j] / subst; // / sum;
+            }
+        }
+    }
 
-			Parameter ratesParameter;
-			Parameter indicatorParameter;
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-			XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
-			FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+        public String getParserName() {
+            return SVS_GENERAL_SUBSTITUTION_MODEL;
+        }
 
-			DataType dataType = null;
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			if (xo.hasAttribute(DataType.DATA_TYPE)) {
-				String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
-				if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
-					dataType = Nucleotides.INSTANCE;
-				} else if (dataTypeStr.equals(AminoAcids.DESCRIPTION)) {
-					dataType = AminoAcids.INSTANCE;
-				} else if (dataTypeStr.equals(Codons.DESCRIPTION)) {
-					dataType = Codons.UNIVERSAL;
-				} else if (dataTypeStr.equals(TwoStates.DESCRIPTION)) {
-					dataType = TwoStates.INSTANCE;
-				}
-			}
+            Parameter ratesParameter;
+            Parameter indicatorParameter;
 
-			if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
+            XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
+            FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
-			cxo = (XMLObject) xo.getChild(RATES);
+            DataType dataType = null;
 
-//			int relativeTo = cxo.getIntegerAttribute(RELATIVE_TO) - 1;
-//			if (relativeTo < 0) throw new XMLParseException(RELATIVE_TO + " must be 1 or greater");
+            if (xo.hasAttribute(DataType.DATA_TYPE)) {
+                String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
+                if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
+                    dataType = Nucleotides.INSTANCE;
+                } else if (dataTypeStr.equals(AminoAcids.DESCRIPTION)) {
+                    dataType = AminoAcids.INSTANCE;
+                } else if (dataTypeStr.equals(Codons.DESCRIPTION)) {
+                    dataType = Codons.UNIVERSAL;
+                } else if (dataTypeStr.equals(TwoStates.DESCRIPTION)) {
+                    dataType = TwoStates.INSTANCE;
+                }
+            }
 
-			ratesParameter = (Parameter) cxo.getChild(Parameter.class);
+            if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
 
-			if (dataType != freqModel.getDataType()) {
-				throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
-			}
+            cxo = (XMLObject) xo.getChild(RATES);
 
-			int rateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount()) / 2;
+            ratesParameter = (Parameter) cxo.getChild(Parameter.class);
 
-			if (ratesParameter == null) {
+            if (dataType != freqModel.getDataType()) {
+                throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
+            }
 
-				if (rateCount == 1) {
-					// simplest model for binary traits...
-				} else {
-					throw new XMLParseException("No rates parameter found in " + getParserName());
-				}
-			} else if (ratesParameter.getDimension() != rateCount) {
-				throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However parameter dimension is "+ratesParameter.getDimension());
-			}
+            int rateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount()) / 2;
 
-			cxo = (XMLObject) xo.getChild(INDICATOR);
+            if (ratesParameter == null) {
 
-			indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
+                if (rateCount == 1) {
+                    // simplest model for binary traits...
+                } else {
+                    throw new XMLParseException("No rates parameter found in " + getParserName());
+                }
+            } else if (ratesParameter.getDimension() != rateCount) {
+                throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However parameter dimension is " + ratesParameter.getDimension());
+            }
 
-			if (indicatorParameter.getDimension() != ratesParameter.getDimension())
-				throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
+            cxo = (XMLObject) xo.getChild(INDICATOR);
 
-			if (xo.hasChildNamed(ROOT_FREQ)) {
+            indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
 
-				cxo = (XMLObject) xo.getChild(ROOT_FREQ);
-				FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+            if (indicatorParameter.getDimension() != ratesParameter.getDimension())
+                throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
 
-				if (dataType != rootFreq.getDataType()) {
-					throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
-				}
+            if (xo.hasChildNamed(ROOT_FREQ)) {
 
-				return new SVSIrreversibleSubstitutionModel(dataType, freqModel, rootFreq, ratesParameter, indicatorParameter);
+                cxo = (XMLObject) xo.getChild(ROOT_FREQ);
+                FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
-			}
+                if (dataType != rootFreq.getDataType()) {
+                    throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
+                }
 
-			return new SVSGeneralSubstitutionModel(dataType, freqModel, ratesParameter, indicatorParameter);
-		}
+                return new SVSIrreversibleSubstitutionModel(dataType, freqModel, rootFreq, ratesParameter, indicatorParameter);
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            }
 
-		public String getParserDescription() {
-			return "A general reversible model of sequence substitution for any data type with stochastic variable selection.";
-		}
+            return new SVSGeneralSubstitutionModel(dataType, freqModel, ratesParameter, indicatorParameter);
+        }
 
-		public Class getReturnType() {
-			return SubstitutionModel.class;
-		}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        public String getParserDescription() {
+            return "A general reversible model of sequence substitution for any data type with stochastic variable selection.";
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new XORRule(
-						new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
-						new ElementRule(DataType.class)
-				),
-				new ElementRule(FREQUENCIES, FrequencyModel.class),
-				new ElementRule(RATES,
-						new XMLSyntaxRule[]{
-								new ElementRule(Parameter.class)}
-				),
-				new ElementRule(INDICATOR,
-						new XMLSyntaxRule[]{
-								new ElementRule(Parameter.class)
-						}),
-				new ElementRule(ROOT_FREQ,
-						new XMLSyntaxRule[]{
-								new ElementRule(FrequencyModel.class)
-						}, 0, 1)
-		};
+        public Class getReturnType() {
+            return SubstitutionModel.class;
+        }
 
-	};
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-	private Parameter rateIndicator;
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new XORRule(
+                        new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
+                        new ElementRule(DataType.class)
+                ),
+                new ElementRule(FREQUENCIES, FrequencyModel.class),
+                new ElementRule(RATES,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class)}
+                ),
+                new ElementRule(INDICATOR,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class)
+                        }),
+                new ElementRule(ROOT_FREQ,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(FrequencyModel.class)
+                        }, 0, 1)
+        };
+
+    };
+
+    private Parameter rateIndicator;
 }

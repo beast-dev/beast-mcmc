@@ -79,8 +79,8 @@ public class ExchangeOperator extends AbstractTreeOperator {
                 wide();
                 break;
             case INTERMEDIATE:
-               hastingsRatio = intermediate();
-               break;
+                hastingsRatio = intermediate();
+                break;
         }
 
         if (tree.getExternalNodeCount() != tipCount) {
@@ -167,14 +167,14 @@ public class ExchangeOperator extends AbstractTreeOperator {
     }
 
     /**
-    * WARNING: Assumes strictly bifurcating tree.
-    */
+     * WARNING: Assumes strictly bifurcating tree.
+     */
     public double intermediate() throws OperatorFailedException {
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 
-        for(int tries = 0; tries < MAX_TRIES; ++tries) {
+        for (int tries = 0; tries < MAX_TRIES; ++tries) {
             NodeRef i, j;
             NodeRef[] possibleNodes;
             do {
@@ -242,69 +242,68 @@ public class ExchangeOperator extends AbstractTreeOperator {
     }
 
     /* why not use Arrays.asList(a).indexOf(n) ? */
-   private int indexOf(NodeRef [] a, NodeRef n) {
+    private int indexOf(NodeRef[] a, NodeRef n) {
 
-      for (int i=0; i<a.length; i++){
-         if (a[i] == n){
-            return i;
-         }
-      }
-      return  -1;
-   }
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] == n) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
-   private double getWinningChance(int index) {
+    private double getWinningChance(int index) {
 
-      double sum = 0;
-      for (int i = 0; i < distances.length; i++) {
-         sum += (1.0 / distances[i]);
-      }
+        double sum = 0;
+        for (int i = 0; i < distances.length; i++) {
+            sum += (1.0 / distances[i]);
+        }
 
-      return (1.0 / distances[index]) / sum;
+        return (1.0 / distances[index]) / sum;
 
-   }
+    }
 
-   private void calcDistances(NodeRef [] nodes, NodeRef ref) {
-      distances = new double[nodes.length];
-      for (int i = 0; i < nodes.length; i++) {
-         distances[i] = getNodeDistance(ref, nodes[i]) + 1;
-      }
-   }
+    private void calcDistances(NodeRef[] nodes, NodeRef ref) {
+        distances = new double[nodes.length];
+        for (int i = 0; i < nodes.length; i++) {
+            distances[i] = getNodeDistance(ref, nodes[i]) + 1;
+        }
+    }
 
-   private NodeRef getRandomNode(NodeRef [] nodes, NodeRef ref) {
+    private NodeRef getRandomNode(NodeRef[] nodes, NodeRef ref) {
 
-      calcDistances(nodes, ref);
-      double sum = 0;
-      for (int i = 0; i < distances.length; i++) {
-         sum += 1.0 / distances[i];
-      }
+        calcDistances(nodes, ref);
+        double sum = 0;
+        for (int i = 0; i < distances.length; i++) {
+            sum += 1.0 / distances[i];
+        }
 
-      double randomValue = MathUtils.nextDouble() * sum;
-      NodeRef n = null;
-      for (int i = 0; i < distances.length; i++) {
-         randomValue -= 1.0 / distances[i];
+        double randomValue = MathUtils.nextDouble() * sum;
+        NodeRef n = null;
+        for (int i = 0; i < distances.length; i++) {
+            randomValue -= 1.0 / distances[i];
 
-         if (randomValue <= 0) {
-            n = nodes[i];
-            break;
-         }
-      }
-      return n;
-   }
+            if (randomValue <= 0) {
+                n = nodes[i];
+                break;
+            }
+        }
+        return n;
+    }
 
-   private int getNodeDistance(NodeRef i, NodeRef j) {
-      int count = 0;
+    private int getNodeDistance(NodeRef i, NodeRef j) {
+        int count = 0;
 
-      while (i != j) {
-         count++;
-         if (tree.getNodeHeight(i) < tree.getNodeHeight(j)) {
-            i = tree.getParent(i);
-         } else {
-            j = tree.getParent(j);
-         }
-      }
-      return count;
-   }
-
+        while (i != j) {
+            count++;
+            if (tree.getNodeHeight(i) < tree.getNodeHeight(j)) {
+                i = tree.getParent(i);
+            } else {
+                j = tree.getParent(j);
+            }
+        }
+        return count;
+    }
 
 
     public int getMode() {
@@ -428,38 +427,38 @@ public class ExchangeOperator extends AbstractTreeOperator {
 
     public static XMLObjectParser INTERMEDIATE_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
 
-      public String getParserName() {
-         return INTERMEDIATE_EXCHANGE;
-      }
+        public String getParserName() {
+            return INTERMEDIATE_EXCHANGE;
+        }
 
-      public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-         int weight = xo.getIntegerAttribute("weight");
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            double weight = xo.getDoubleAttribute("weight");
 
-         return new ExchangeOperator(INTERMEDIATE, treeModel, weight);
-      }
+            return new ExchangeOperator(INTERMEDIATE, treeModel, weight);
+        }
 
-      // ************************************************************************
-      // AbstractXMLObjectParser implementation
-      // ************************************************************************
+        // ************************************************************************
+        // AbstractXMLObjectParser implementation
+        // ************************************************************************
 
-      public String getParserDescription() {
-         return "This element represents a intermediate exchange operator. "
-               + "This operator swaps two random subtrees.";
-      }
+        public String getParserDescription() {
+            return "This element represents a intermediate exchange operator. "
+                    + "This operator swaps two random subtrees.";
+        }
 
-      public Class getReturnType() {
-         return ExchangeOperator.class;
-      }
+        public Class getReturnType() {
+            return ExchangeOperator.class;
+        }
 
-      public XMLSyntaxRule[] getSyntaxRules() {
-         return rules;
-      }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-      private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            AttributeRule.newIntegerRule("weight"),
-            new ElementRule(TreeModel.class) };
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule("weight"),
+                new ElementRule(TreeModel.class)};
 
-   };
+    };
 }

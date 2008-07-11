@@ -57,7 +57,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
 
         int from = 0;
         int to = -1;
-        int every = 1;
+        int every = xo.getAttribute(EVERY, 1);
 
         if (xo.hasAttribute(FROM)) {
             from = xo.getIntegerAttribute(FROM) - 1;
@@ -71,11 +71,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal 'to' attribute in patterns element");
         }
 
-        if (xo.hasAttribute(EVERY)) {
-            every = xo.getIntegerAttribute(EVERY);
-            if (every <= 0)
-                throw new XMLParseException("illegal 'every' attribute in patterns element");
-        }
+        if (every <= 0) throw new XMLParseException("illegal 'every' attribute in patterns element");
 
         if (xo.hasChildNamed(TAXON_LIST)) {
             taxa = (TaxonList) xo.getElementFirstChild(TAXON_LIST);

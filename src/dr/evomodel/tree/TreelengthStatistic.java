@@ -33,27 +33,34 @@ import dr.xml.*;
 /**
  * A statistic that tracks the mean, variance and coefficent of variation of the rates.
  *
- * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
- *
  * @author Alexei Drummond
- *
+ * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
  */
 public class TreelengthStatistic extends Statistic.Abstract implements TreeStatistic {
 
-	public static final String TREE_LENGTH_STATISTIC = "treeLengthStatistic";
+    public static final String TREE_LENGTH_STATISTIC = "treeLengthStatistic";
 
-	public TreelengthStatistic(String name, Tree tree) {
-		super(name);
-		this.tree = tree;
+    public TreelengthStatistic(String name, Tree tree) {
+        super(name);
+        this.tree = tree;
     }
 
-	public void setTree(Tree tree) { this.tree = tree; }
-	public Tree getTree() { return tree; }
+    public void setTree(Tree tree) {
+        this.tree = tree;
+    }
 
-	public int getDimension() { return 1; }
+    public Tree getTree() {
+        return tree;
+    }
 
-	/** @return the estimated birthRate */
-	public double getStatisticValue(int dim) {
+    public int getDimension() {
+        return 1;
+    }
+
+    /**
+     * @return the estimated birthRate
+     */
+    public double getStatisticValue(int dim) {
 
         double treeLength = 0.0;
         for (int i = 0; i < tree.getNodeCount(); i++) {
@@ -65,44 +72,43 @@ public class TreelengthStatistic extends Statistic.Abstract implements TreeStati
             }
         }
         return treeLength;
-	}
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return TREE_LENGTH_STATISTIC; }
+        public String getParserName() {
+            return TREE_LENGTH_STATISTIC;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			String name;
-			if (xo.hasAttribute(NAME)) {
-				name = xo.getStringAttribute(NAME);
-			} else {
-				name = xo.getId();
-			}
-			Tree tree = (Tree)xo.getChild(Tree.class);
+            String name = xo.getAttribute(NAME, xo.getId());
+            Tree tree = (Tree) xo.getChild(Tree.class);
 
+            return new TreelengthStatistic(name, tree);
+        }
 
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-			return new TreelengthStatistic(name, tree);
-		}
+        public String getParserDescription() {
+            return "A statistic that returns the average of the branch rates";
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        public Class getReturnType() {
+            return RateStatistic.class;
+        }
 
-		public String getParserDescription() {
-			return "A statistic that returns the average of the branch rates";
-		}
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		public Class getReturnType() { return RateStatistic.class; }
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newStringRule(NAME, true),
+                new ElementRule(TreeModel.class),
+        };
+    };
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            AttributeRule.newStringRule(NAME, true),
-            new ElementRule(TreeModel.class),
-		};
-	};
-
-	private Tree tree = null;
+    private Tree tree = null;
 }

@@ -296,12 +296,9 @@ public class EBSPAnalysis extends TabularData {
             try {
 
                 // 10% is brun-in default
-                double burnin = 0.1;
-                if (xo.hasAttribute(BURN_IN)) {
-                    burnin = xo.getDoubleAttribute(BURN_IN);
-                    if (burnin < 0)
-                        throw new XMLParseException("burnIn should be either between 0 and 1 or a positive number");
-                }
+                double burnin = xo.getAttribute(BURN_IN, 0.1);
+                if (burnin < 0)
+                    throw new XMLParseException("burnIn should be either between 0 and 1 or a positive number");
 
                 final double[] hpdLevels = xo.hasAttribute(HPD_LEVELS) ? xo.getDoubleArrayAttribute(HPD_LEVELS) : null;
 

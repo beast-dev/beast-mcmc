@@ -40,102 +40,105 @@ import java.util.Set;
 /**
  * A statistic that tracks the time of MRCA of a set of taxa
  *
- * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
- *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
+ * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
 public class AncestralState implements Loggable {
 
-	public static final String ANCESTRAL_STATE = "ancestralState";
-	public static final String NAME = "name";
-	public static final String MRCA = "mrca";
+    public static final String ANCESTRAL_STATE = "ancestralState";
+    public static final String NAME = "name";
+    public static final String MRCA = "mrca";
 
-	public AncestralState(String name, AncestralStateTreeLikelihood ancestralTreeLikelihood, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
-		this.name = name;
-		this.tree = tree;
-		this.ancestralTreeLikelihood = ancestralTreeLikelihood;
-		this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
-	}
+    public AncestralState(String name, AncestralStateTreeLikelihood ancestralTreeLikelihood, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
+        this.name = name;
+        this.tree = tree;
+        this.ancestralTreeLikelihood = ancestralTreeLikelihood;
+        this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
+    }
 
-	public Tree getTree() { return tree; }
+    public Tree getTree() {
+        return tree;
+    }
 
-	/** @return the ancestral state of the MRCA node. */
-	public String getAncestralState() {
+    /**
+     * @return the ancestral state of the MRCA node.
+     */
+    public String getAncestralState() {
 
-		NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
-		if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
+        NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+        if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
         String rtn = null;
-        for(int i=0; i<tree.getNodeCount(); i++)
+        for (int i = 0; i < tree.getNodeCount(); i++)
             rtn = ancestralTreeLikelihood.getAttributeForNode(tree, node)[0];
         return rtn;
     }
 
-	// **************************************************************
-	// Loggable IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // Loggable IMPLEMENTATION
+    // **************************************************************
 
-	/**
-	 * @return the log columns.
-	 */
-	public LogColumn[] getColumns() {
-		LogColumn[] columns = new LogColumn[1];
-		columns[0] = new LogColumn.Abstract(name) {
+    /**
+     * @return the log columns.
+     */
+    public LogColumn[] getColumns() {
+        LogColumn[] columns = new LogColumn[1];
+        columns[0] = new LogColumn.Abstract(name) {
 
-			protected String getFormattedValue() {
-				return getAncestralState();
-			}
-		};
-		return columns;
-	}
+            protected String getFormattedValue() {
+                return getAncestralState();
+            }
+        };
+        return columns;
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return ANCESTRAL_STATE; }
+        public String getParserName() {
+            return ANCESTRAL_STATE;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			String name;
-			if (xo.hasAttribute(NAME)) {
-				name = xo.getStringAttribute(NAME);
-			} else {
-				name = xo.getId();
-			}
-			Tree tree = (Tree)xo.getChild(Tree.class);
-			TaxonList taxa = (TaxonList)xo.getElementFirstChild(MRCA);
-			AncestralStateTreeLikelihood ancestralTreeLikelihood = (AncestralStateTreeLikelihood)xo.getChild(AncestralStateTreeLikelihood.class);
-			try {
-				return new AncestralState(name, ancestralTreeLikelihood, tree, taxa);
-			} catch (Tree.MissingTaxonException mte) {
-				throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
-			}
-		}
+            String name = xo.getAttribute(NAME, xo.getId());
+            Tree tree = (Tree) xo.getChild(Tree.class);
+            TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
+            AncestralStateTreeLikelihood ancestralTreeLikelihood = (AncestralStateTreeLikelihood) xo.getChild(AncestralStateTreeLikelihood.class);
+            try {
+                return new AncestralState(name, ancestralTreeLikelihood, tree, taxa);
+            } catch (Tree.MissingTaxonException mte) {
+                throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
+            }
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "A statistic that has as its value the height of the most recent common ancestor of a set of taxa in a given tree";
-		}
+        public String getParserDescription() {
+            return "A statistic that has as its value the height of the most recent common ancestor of a set of taxa in a given tree";
+        }
 
-		public Class getReturnType() { return TMRCAStatistic.class; }
+        public Class getReturnType() {
+            return TMRCAStatistic.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-				new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
-				new ElementRule(TreeModel.class),
-				new ElementRule(AncestralStateTreeLikelihood.class),
-				new ElementRule(MRCA,
-						new XMLSyntaxRule[] { new ElementRule(Taxa.class) })
-		};
-	};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
+                new ElementRule(TreeModel.class),
+                new ElementRule(AncestralStateTreeLikelihood.class),
+                new ElementRule(MRCA,
+                        new XMLSyntaxRule[]{new ElementRule(Taxa.class)})
+        };
+    };
 
-	private final Tree tree;
-	private final AncestralStateTreeLikelihood ancestralTreeLikelihood;
-	private final String name;
-	private Set<String> leafSet = null;
+    private final Tree tree;
+    private final AncestralStateTreeLikelihood ancestralTreeLikelihood;
+    private final String name;
+    private Set<String> leafSet = null;
 
 }

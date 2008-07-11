@@ -25,174 +25,185 @@
 
 package dr.evomodel.tree;
 
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.util.*;
+import dr.evolution.tree.Tree;
 import dr.inference.model.BooleanStatistic;
 import dr.xml.*;
 
-import java.util.*;
+import java.util.BitSet;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Tests whether 2 (possibly unresolved) trees are compatible
  * *
- * @author Andrew Rambaut
  *
+ * @author Andrew Rambaut
  */
 public class CompatibilityStatistic extends BooleanStatistic implements TreeStatistic {
 
-	public static final String COMPATIBILITY_STATISTIC = "compatibilityStatistic";
-	public static final String COMPATIBLE_WITH = "compatibleWith";
+    public static final String COMPATIBILITY_STATISTIC = "compatibilityStatistic";
+    public static final String COMPATIBLE_WITH = "compatibleWith";
 
-	public CompatibilityStatistic(String name, Tree tree1, Tree tree2) throws Tree.MissingTaxonException {
+    public CompatibilityStatistic(String name, Tree tree1, Tree tree2) throws Tree.MissingTaxonException {
 
-		super(name);
-		this.tree = tree1;
+        super(name);
+        this.tree = tree1;
 
-		intersection = new BitSet(tree1.getExternalNodeCount());
-		clades = new HashSet<BitSet>();
-		getClades(tree1, tree2, tree2.getRoot(), null, clades);
+        intersection = new BitSet(tree1.getExternalNodeCount());
+        clades = new HashSet<BitSet>();
+        getClades(tree1, tree2, tree2.getRoot(), null, clades);
 
-		for (int i = 0; i < tree1.getTaxonCount(); i++) {
-			String id = tree1.getTaxonId(i);
-			if (tree2.getTaxonIndex(id) == -1) {
-				throw new Tree.MissingTaxonException(tree1.getTaxon(i));
-			}
-		}
-	}
+        for (int i = 0; i < tree1.getTaxonCount(); i++) {
+            String id = tree1.getTaxonId(i);
+            if (tree2.getTaxonIndex(id) == -1) {
+                throw new Tree.MissingTaxonException(tree1.getTaxon(i));
+            }
+        }
+    }
 
-	public void setTree(Tree tree) { this.tree = tree; }
-	public Tree getTree() { return tree; }
+    public void setTree(Tree tree) {
+        this.tree = tree;
+    }
 
-	public int getDimension() { return 1; }
+    public Tree getTree() {
+        return tree;
+    }
 
-	/** @return boolean result of test. */
-	public boolean getBoolean(int dim) {
-		return isCompatible(tree, tree.getRoot(), null);
-	}
+    public int getDimension() {
+        return 1;
+    }
 
-	private boolean isCompatible(Tree tree, NodeRef node, BitSet leaves) {
-		if (tree.isExternal(node)) {
-			leaves.set(node.getNumber());
-			return true;
-		} else {
+    /**
+     * @return boolean result of test.
+     */
+    public boolean getBoolean(int dim) {
+        return isCompatible(tree, tree.getRoot(), null);
+    }
 
-			BitSet ls = new BitSet(tree.getExternalNodeCount());
+    private boolean isCompatible(Tree tree, NodeRef node, BitSet leaves) {
+        if (tree.isExternal(node)) {
+            leaves.set(node.getNumber());
+            return true;
+        } else {
 
-			for (int i = 0; i < tree.getChildCount(node); i++) {
+            BitSet ls = new BitSet(tree.getExternalNodeCount());
 
-				NodeRef node1 = tree.getChild(node, i);
+            for (int i = 0; i < tree.getChildCount(node); i++) {
 
-				if (!isCompatible(tree, node1, ls)) {
-					// as soon as we have an incompatibility break out...
-					return false;
-				}
-			}
+                NodeRef node1 = tree.getChild(node, i);
 
-			if (leaves != null) {
-				if (!clades.contains(ls)) {
-					// except for the root clade...
-					for (BitSet clade : clades) {
-						intersection.clear();
-						intersection.or(clade);
-						intersection.and(ls);
+                if (!isCompatible(tree, node1, ls)) {
+                    // as soon as we have an incompatibility break out...
+                    return false;
+                }
+            }
 
-						int card = intersection.cardinality();
-						if (card != 0 &&
-								card != ls.cardinality() &&
-								card != clade.cardinality()) {
-							return false;
-						}
-					}
-				}
+            if (leaves != null) {
+                if (!clades.contains(ls)) {
+                    // except for the root clade...
+                    for (BitSet clade : clades) {
+                        intersection.clear();
+                        intersection.or(clade);
+                        intersection.and(ls);
 
-				leaves.or(ls);
-			}
-		}
-		return true;
-	}
+                        int card = intersection.cardinality();
+                        if (card != 0 &&
+                                card != ls.cardinality() &&
+                                card != clade.cardinality()) {
+                            return false;
+                        }
+                    }
+                }
 
-	private void getClades(Tree referenceTree, Tree tree, NodeRef node, BitSet leaves, Set<BitSet> clades) {
+                leaves.or(ls);
+            }
+        }
+        return true;
+    }
 
-		if (tree.isExternal(node)) {
-			String taxonId = tree.getNodeTaxon(node).getId();
-			for (int i = 0; i < referenceTree.getExternalNodeCount(); i++) {
-				NodeRef n = referenceTree.getExternalNode(i);
+    private void getClades(Tree referenceTree, Tree tree, NodeRef node, BitSet leaves, Set<BitSet> clades) {
 
-				if (taxonId.equals(referenceTree.getNodeTaxon(n).getId())) {
-					leaves.set(n.getNumber());
-				}
-			}
-		} else {
+        if (tree.isExternal(node)) {
+            String taxonId = tree.getNodeTaxon(node).getId();
+            for (int i = 0; i < referenceTree.getExternalNodeCount(); i++) {
+                NodeRef n = referenceTree.getExternalNode(i);
 
-			BitSet ls = new BitSet(tree.getExternalNodeCount());
+                if (taxonId.equals(referenceTree.getNodeTaxon(n).getId())) {
+                    leaves.set(n.getNumber());
+                }
+            }
+        } else {
 
-			for (int i = 0; i < tree.getChildCount(node); i++) {
+            BitSet ls = new BitSet(tree.getExternalNodeCount());
 
-				NodeRef node1 = tree.getChild(node, i);
+            for (int i = 0; i < tree.getChildCount(node); i++) {
 
-				getClades(referenceTree, tree, node1, ls, clades);
-			}
+                NodeRef node1 = tree.getChild(node, i);
 
-			if (leaves != null) {
-				// except for the root clade...
-				leaves.or(ls);
-				clades.add(ls);
-			}
+                getClades(referenceTree, tree, node1, ls, clades);
+            }
 
-		}
-	}
+            if (leaves != null) {
+                // except for the root clade...
+                leaves.or(ls);
+                clades.add(ls);
+            }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        }
+    }
 
-		public String getParserName() { return COMPATIBILITY_STATISTIC; }
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public String getParserName() {
+            return COMPATIBILITY_STATISTIC;
+        }
 
-			String name;
-			if (xo.hasAttribute(NAME)) {
-				name = xo.getStringAttribute(NAME);
-			} else {
-				name = xo.getId();
-			}
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			Tree tree1 = (Tree)xo.getChild(Tree.class);
+            String name = xo.getAttribute(NAME, xo.getId());
 
-			XMLObject cxo = (XMLObject)xo.getChild(COMPATIBLE_WITH);
-			Tree tree2 = (Tree)cxo.getChild(Tree.class);
+            Tree tree1 = (Tree) xo.getChild(Tree.class);
 
-			try {
-				return new CompatibilityStatistic(name, tree1, tree2);
-			} catch (Tree.MissingTaxonException mte) {
-				throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was in the source tree but not the constraints tree.");
-			}
-		}
+            XMLObject cxo = (XMLObject) xo.getChild(COMPATIBLE_WITH);
+            Tree tree2 = (Tree) cxo.getChild(Tree.class);
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            try {
+                return new CompatibilityStatistic(name, tree1, tree2);
+            } catch (Tree.MissingTaxonException mte) {
+                throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was in the source tree but not the constraints tree.");
+            }
+        }
 
-		public String getParserDescription() {
-			return "A statistic that returns true if a pair of trees are compatible";
-		}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public Class getReturnType() { return CompatibilityStatistic.class; }
+        public String getParserDescription() {
+            return "A statistic that returns true if a pair of trees are compatible";
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public Class getReturnType() {
+            return CompatibilityStatistic.class;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-				new StringAttributeRule(NAME, "A name for this statistic for the purpose of logging", true),
-				new ElementRule(Tree.class),
-				new ElementRule(COMPATIBLE_WITH, new XMLSyntaxRule[] {
-						new ElementRule(Tree.class)
-				}),
-				new ElementRule(Tree.class)
-		};
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-	};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new StringAttributeRule(NAME, "A name for this statistic for the purpose of logging", true),
+                new ElementRule(Tree.class),
+                new ElementRule(COMPATIBLE_WITH, new XMLSyntaxRule[]{
+                        new ElementRule(Tree.class)
+                }),
+                new ElementRule(Tree.class)
+        };
 
-	private Tree tree;
-	private final Set<BitSet> clades;
-	private final BitSet intersection;
+    };
+
+    private Tree tree;
+    private final Set<BitSet> clades;
+    private final BitSet intersection;
 
 }

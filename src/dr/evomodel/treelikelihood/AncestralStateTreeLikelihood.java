@@ -253,9 +253,8 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 
             DataType dataType = ((SubstitutionModel) xo.getChild(SubstitutionModel.class)).getDataType();
 
-            String tag = RECONSTRUCTION_TAG;
-            if (xo.hasAttribute(TAG_NAME))
-                tag = xo.getStringAttribute(TAG_NAME);
+            // default tag is RECONSTRUCTION_TAG
+            String tag = xo.getAttribute(TAG_NAME, RECONSTRUCTION_TAG);
 
             return new AncestralStateTreeLikelihood(patternList, treeModel, siteModel,
                     branchRateModel, useAmbiguities, storePartials, dataType, tag);

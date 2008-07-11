@@ -110,7 +110,7 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
                 // For parameters with non-uniform prior on only one dimension
                 logq = -degreesOfFreedom * Math.log(scale);
             else
-                logq = (parameter.getDimension() - 2) * Math.log(scale);
+                logq = (dim - 2) * Math.log(scale);
 
             for (int i = 0; i < dim; i++) {
                 final double value = parameter.getParameterValue(i) * scale;
@@ -249,22 +249,10 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            boolean scaleAll = false;
-            boolean scaleAllInd = false;
-            int degreesOfFreedom = 0;
+            boolean scaleAll = xo.getAttribute(SCALE_ALL, false);
+            boolean scaleAllInd = xo.getAttribute(SCALE_ALL_IND, false);
+            int degreesOfFreedom = xo.getAttribute(DEGREES_OF_FREEDOM, 0);
             int mode = CoercableMCMCOperator.DEFAULT;
-
-            if (xo.hasAttribute(SCALE_ALL)) {
-                scaleAll = xo.getBooleanAttribute(SCALE_ALL);
-            }
-
-            if (xo.hasAttribute(SCALE_ALL_IND)) {
-                scaleAllInd = xo.getBooleanAttribute(SCALE_ALL_IND);
-            }
-
-            if (xo.hasAttribute(DEGREES_OF_FREEDOM)) {
-                degreesOfFreedom = xo.getIntegerAttribute(DEGREES_OF_FREEDOM);
-            }
 
             if (xo.hasAttribute(AUTO_OPTIMIZE)) {
                 mode = xo.getBooleanAttribute(AUTO_OPTIMIZE) ?

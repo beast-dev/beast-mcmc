@@ -425,13 +425,9 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
                 throw new XMLParseException("scaleFactor must be greater than or equal to 1.0");
             }
 
-            int maxIterations = 200;
-            if (xo.hasAttribute(MAX_ITERATIONS))
-                maxIterations = xo.getIntegerAttribute(MAX_ITERATIONS);
+            int maxIterations = xo.getAttribute(MAX_ITERATIONS, 200);
 
-            double stopValue = 0.01;
-            if (xo.hasAttribute(STOP_VALUE))
-                stopValue = xo.getDoubleAttribute(STOP_VALUE);
+            double stopValue = xo.getAttribute(STOP_VALUE, 0.01);
 
             GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
 

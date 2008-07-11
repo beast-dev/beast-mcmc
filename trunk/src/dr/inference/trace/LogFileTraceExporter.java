@@ -85,10 +85,7 @@ public class LogFileTraceExporter extends TabularData {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final File file = LoggerParser.getFile(xo.getStringAttribute(FILENAME));
-            int burnIn = -1;
-            if (xo.hasAttribute(BURN_IN)) {
-                burnIn = xo.getIntegerAttribute(BURN_IN);
-            }
+            int burnIn = xo.getAttribute(BURN_IN, -1);
 
             try {
                 return new LogFileTraceExporter(file, burnIn);

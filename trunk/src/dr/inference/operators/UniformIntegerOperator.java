@@ -97,12 +97,10 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
             int lower = (int) parameter.getBounds().getLowerLimit(0);
-            if (xo.hasAttribute("lower"))
-                lower = xo.getIntegerAttribute("lower");
+            if (xo.hasAttribute("lower")) lower = xo.getIntegerAttribute("lower");
 
             int upper = (int) parameter.getBounds().getUpperLimit(0);
-            if (xo.hasAttribute("upper"))
-                upper = xo.getIntegerAttribute("upper");
+            if (xo.hasAttribute("upper")) upper = xo.getIntegerAttribute("upper");
 
             if (upper == lower || lower == (int) Double.NEGATIVE_INFINITY || upper == (int) Double.POSITIVE_INFINITY) {
                 throw new XMLParseException(this.getParserName() + " boundaries not found in parameter " + parameter.getParameterName() + " Use operator lower and upper !");

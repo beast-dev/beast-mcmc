@@ -67,7 +67,7 @@ public class Columns {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            String label = xo.getAttribute(LABEL, null);
+            String label = xo.getAttribute(LABEL, "");
             final int sf = xo.getAttribute(SIGNIFICANT_FIGURES, -1);
             final int dp = xo.getAttribute(DECIMAL_PLACES, -1);
             final int width = xo.getAttribute(WIDTH, -1);

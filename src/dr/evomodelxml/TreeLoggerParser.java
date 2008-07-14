@@ -40,7 +40,7 @@ public class TreeLoggerParser extends LoggerParser {
 
         final Tree tree = (Tree) xo.getChild(Tree.class);
 
-        String title = xo.getAttribute(TITLE, null);
+        String title = xo.getAttribute(TITLE, "");
 
         final boolean nexusFormat = xo.getAttribute(NEXUS_FORMAT, false);
 

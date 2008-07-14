@@ -27,6 +27,9 @@ package dr.inference.model;
 
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A multidimensional parameter constructed from its component parameters.
  *
@@ -36,237 +39,238 @@ import dr.xml.*;
  */
 public class CompoundParameter extends Parameter.Abstract implements ParameterListener {
 
-	public static final String COMPOUND_PARAMETER = "compoundParameter";
+    public static final String COMPOUND_PARAMETER = "compoundParameter";
 
-	public CompoundParameter(String name, Parameter[] parameters) {
+    public CompoundParameter(Parameter[] params) {
 
-		this.parameters = parameters;
-		dimension = 0;
-		for (Parameter parameter : parameters) {
-			dimension += parameter.getDimension();
-			parameter.addParameterListener(this);
-		}
+        dimension = 0;
+        for (Parameter parameter : parameters) {
+            dimension += parameter.getDimension();
+            parameter.addParameterListener(this);
+        }
 
-	}
+        this.parameters = new Parameter[dimension];
+        this.pindex = new int[dimension];
+        int k = 0;
+        for (Parameter parameter : params) {
+            for (int j = 0; j < parameter.getDimension(); j++) {
+                parameters[j + k] = parameter;
+                pindex[j + k] = j;
+            }
+            k += parameter.getDimension();
+            uniqueParameters.add(parameter);
+        }
 
-	public CompoundParameter(String name) {
-		dimension = 0;
-	}
+    }
 
-	public void addParameter(Parameter param) {
+    public CompoundParameter(String name) {
+        if (name != null) setId(name);
+        dimension = 0;
+    }
 
-		if (parameters == null) {
-			parameters = new Parameter[]{param};
-		} else {
-			Parameter[] newParams = new Parameter[parameters.length + 1];
-			System.arraycopy(parameters, 0, newParams, 0, parameters.length);
-			newParams[parameters.length] = param;
-			parameters = newParams;
-		}
-		dimension += param.getDimension();
-		param.addParameterListener(this);
-	}
+    public void addParameter(Parameter param) {
 
-	public final String getParameterName() {
-		return getId();
-	}
+        uniqueParameters.add(param);
+        if (parameters == null) {
+            parameters = new Parameter[param.getDimension()];
+            this.pindex = new int[param.getDimension()];
+            for (int j = 0; j < param.getDimension(); j++) {
+                parameters[j] = param;
+                pindex[j] = j;
+            }
+        } else {
+            Parameter[] newParams = new Parameter[parameters.length + param.getDimension()];
+            int[] newIndices = new int[pindex.length + param.getDimension()];
+            System.arraycopy(parameters, 0, newParams, 0, parameters.length);
+            System.arraycopy(pindex, 0, newIndices, 0, pindex.length);
 
-	public Parameter getParameter(int index) {
-		return parameters[index];
-	}
+            for (int j = 0; j < param.getDimension(); j++) {
+                newParams[j + parameters.length] = param;
+                newIndices[j + pindex.length] = j;
+            }
 
-	public int getNumberOfParameters() {
-		return parameters.length;
-	}
+            parameters = newParams;
+            pindex = newIndices;
+        }
+        dimension += param.getDimension();
+        if (dimension != parameters.length) throw new RuntimeException();
+        param.addParameterListener(this);
+    }
 
-	public final String getDimensionName(int dim) {
-		int[] index = new int[1];
-		Parameter param = findParameter(dim, index);
-		return param.getDimensionName(index[0]);
+    public final String getParameterName() {
+        return getId();
+    }
 
-	}
+    public Parameter getParameter(int index) {
+        return uniqueParameters.get(index);
+    }
 
-	public int getDimension() {
-		return dimension;
-	}
+    public int getNumberOfParameters() {
+        return uniqueParameters.size();
+    }
 
-	public void setDimension(int dim) {
-		throw new RuntimeException();
-	}
+    public final String getDimensionName(int dim) {
 
-	public void addBounds(Bounds boundary) {
+        return parameters[dim].getDimensionName(pindex[dim]);
+    }
 
-		if (bounds == null) createBounds();
-		bounds.addBounds(boundary);
-	}
+    public int getDimension() {
+        return dimension;
+    }
 
-	public Bounds getBounds() {
+    public void setDimension(int dim) {
+        throw new RuntimeException();
+    }
 
-		if (bounds == null) createBounds();
-		return bounds;
-	}
+    public void addBounds(Bounds boundary) {
 
-	private void createBounds() {
-		bounds = new IntersectionBounds(getDimension());
-		bounds.addBounds(new CompoundBounds());
-	}
+        if (bounds == null) createBounds();
+        bounds.addBounds(boundary);
+    }
 
-	public double getParameterValue(int dim) {
-		int[] index = new int[1];
-		Parameter param = findParameter(dim, index);
+    public Bounds getBounds() {
 
-		return param.getParameterValue(index[0]);
-	}
+        if (bounds == null) createBounds();
+        return bounds;
+    }
+
+    private void createBounds() {
+        bounds = new IntersectionBounds(getDimension());
+        bounds.addBounds(new CompoundBounds());
+    }
+
+    public double getParameterValue(int dim) {
+        return parameters[dim].getParameterValue(pindex[dim]);
+    }
 
     public double[] inspectParametersValues() {
         return getParameterValues();
     }
 
     public void setParameterValue(int dim, double value) {
-		int[] index = new int[1];
-		Parameter param = findParameter(dim, index);
+        parameters[dim].setParameterValue(pindex[dim], value);
+    }
 
-		param.setParameterValue(index[0], value);
-	}
+    public void setParameterValueQuietly(int dim, double value) {
+        parameters[dim].setParameterValueQuietly(pindex[dim], value);
+    }
 
-	public void setParameterValueQuietly(int dim, double value) {
-		int[] index = new int[1];
-		Parameter param = findParameter(dim, index);
+    protected void storeValues() {
+        for (Parameter parameter : uniqueParameters) {
+            parameter.storeParameterValues();
+        }
+    }
 
-		param.setParameterValueQuietly(index[0], value);
-	}
+    protected void restoreValues() {
+        for (Parameter parameter : uniqueParameters) {
+            parameter.restoreParameterValues();
+        }
+    }
 
-	protected void storeValues() {
-		for (Parameter parameter : parameters) {
-			parameter.storeParameterValues();
-		}
-	}
+    protected final void acceptValues() {
+        for (Parameter parameter : uniqueParameters) {
+            parameter.acceptParameterValues();
+        }
+    }
 
-	protected void restoreValues() {
-		for (Parameter parameter : parameters) {
-			parameter.restoreParameterValues();
-		}
-	}
+    protected final void adoptValues(Parameter source) {
+        // the parameters that make up a compound parameter will have
+        // this function called on them individually so we don't need
+        // to do anything here.
+    }
 
-	protected final void acceptValues() {
-		for (Parameter parameter : parameters) {
-			parameter.acceptParameterValues();
-		}
-	}
+    public String toString() {
+        StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
+        final Bounds bounds = getBounds();
+        buffer.append("[").append(String.valueOf(bounds.getLowerLimit(0)));
+        buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
 
-	protected final void adoptValues(Parameter source) {
-		// the parameters that make up a compound parameter will have
-		// this function called on them individually so we don't need
-		// to do anything here.
-	}
+        for (int i = 1; i < getDimension(); i++) {
+            buffer.append(", ").append(String.valueOf(getParameterValue(i)));
+            buffer.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
+            buffer.append(",").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
+        }
+        return buffer.toString();
+    }
 
-	private Parameter findParameter(int dim, int[] outIndex) {
-		int k = 0;
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		for (Parameter parameter : parameters) {
-			if (dim < k + parameter.getDimension()) {
-				outIndex[0] = dim - k;
-				return parameter;
-			}
-			k += parameter.getDimension();
-		}
+        public String getParserName() {
+            return COMPOUND_PARAMETER;
+        }
 
-		throw new IllegalArgumentException("index out of bound in compound parameter");
-	}
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-	public String toString() {
-		StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
-		final Bounds bounds = getBounds();
-		buffer.append("[").append(String.valueOf(bounds.getLowerLimit(0)));
-		buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
+            CompoundParameter compoundParameter = new CompoundParameter((String) null);
 
-		for (int i = 1; i < getDimension(); i++) {
-			buffer.append(", ").append(String.valueOf(getParameterValue(i)));
-			buffer.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
-			buffer.append(",").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
-		}
-		return buffer.toString();
-	}
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                compoundParameter.addParameter((Parameter) xo.getChild(i));
+            }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+            return compoundParameter;
+        }
 
-		public String getParserName() {
-			return COMPOUND_PARAMETER;
-		}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public String getParserDescription() {
+            return "A multidimensional parameter constructed from its component parameters.";
+        }
 
-			CompoundParameter compoundParameter = new CompoundParameter(COMPOUND_PARAMETER);
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				compoundParameter.addParameter((Parameter) xo.getChild(i));
-			}
-			return compoundParameter;
-		}
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
+        };
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        public Class getReturnType() {
+            return CompoundParameter.class;
+        }
+    };
 
-		public String getParserDescription() {
-			return "A multidimensional parameter constructed from its component parameters.";
-		}
+    // ****************************************************************
+    // Parameter listener interface
+    // ****************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+    public void parameterChangedEvent(Parameter parameter, int index) {
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
-		};
+        int dim = 0;
+        for (Parameter parameter1 : uniqueParameters) {
+            if (parameter == parameter1) {
+                fireParameterChangedEvent(dim + index);
+                break;
+            }
+            dim += parameter1.getDimension();
+        }
+    }
 
-		public Class getReturnType() {
-			return CompoundParameter.class;
-		}
-	};
+    // ****************************************************************
+    // Private and protected stuff
+    // ****************************************************************
 
-	// ****************************************************************
-	// Parameter listener interface
-	// ****************************************************************
+    private class CompoundBounds implements Bounds {
 
-	public void parameterChangedEvent(Parameter parameter, int index) {
+        public double getUpperLimit(int dim) {
+            return parameters[dim].getBounds().getUpperLimit(pindex[dim]);
+        }
 
-		int dim = 0;
-		for (Parameter parameter1 : parameters) {
-			if (parameter == parameter1) {
-				fireParameterChangedEvent(dim + index);
-				break;
-			}
-			dim += parameter1.getDimension();
-		}
-	}
+        public double getLowerLimit(int dim) {
+            return parameters[dim].getBounds().getLowerLimit(pindex[dim]);
+        }
 
-	// ****************************************************************
-	// Private and protected stuff
-	// ****************************************************************
-
-	private class CompoundBounds implements Bounds {
-
-		public double getUpperLimit(int dim) {
-			int[] index = new int[1];
-			Parameter param = findParameter(dim, index);
-			return param.getBounds().getUpperLimit(index[0]);
-		}
-
-		public double getLowerLimit(int dim) {
-			int[] index = new int[1];
-			Parameter param = findParameter(dim, index);
-			return param.getBounds().getLowerLimit(index[0]);
-		}
-
-		public int getBoundsDimension() {
-			return getDimension();
-		}
-	}
+        public int getBoundsDimension() {
+            return getDimension();
+        }
+    }
 
 
-	private Parameter[] parameters = null;
-	private IntersectionBounds bounds = null;
-	private int dimension;
-//	private String name;
+    private List<Parameter> uniqueParameters = new ArrayList<Parameter>();
+
+    private Parameter[] parameters = null;
+    private int[] pindex = null;
+    private IntersectionBounds bounds = null;
+    private int dimension;
 }

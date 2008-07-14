@@ -143,17 +143,23 @@ public class NewickParser extends AbstractXMLObjectParser {
             TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
 
             for (int i = 0; i < tree.getTaxonCount(); i++) {
+
+                NodeRef node = tree.getExternalNode(i);
+
                 dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
 
                 if (date == null) {
                     date = (dr.evolution.util.Date) tree.getNodeAttribute(tree.getExternalNode(i), dr.evolution.util.Date.DATE);
                 }
 
+                double height = 0.0;
+                double nodeHeight = tree.getNodeHeight(node);
                 if (date != null) {
-                    double height = timeScale.convertTime(date.getTimeValue(), date);
-                    tree.setNodeHeight(tree.getExternalNode(i), height);
-                } else {
-                    tree.setNodeHeight(tree.getExternalNode(i), 0.0);
+                    height = timeScale.convertTime(date.getTimeValue(), date);
+                }
+                if (Math.abs(nodeHeight - height) > 1e-5) {
+                    System.out.println("  Changing height of node " + tree.getTaxon(node.getNumber()) + " from " + nodeHeight + " to " + height);
+                    tree.setNodeHeight(node, height);
                 }
             }
 

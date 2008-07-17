@@ -178,9 +178,9 @@ public class UpDownOperator extends SimpleMCMCOperator implements CoercableMCMCO
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double scaleFactor = xo.getDoubleAttribute(WEIGHT);
+            final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
             int mode = CoercableMCMCOperator.DEFAULT;
-            double weight = xo.getDoubleAttribute(SCALE_FACTOR);
+            final double weight = xo.getDoubleAttribute(WEIGHT);
 
             if (xo.hasAttribute(AUTO_OPTIMIZE)) {
                 if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {

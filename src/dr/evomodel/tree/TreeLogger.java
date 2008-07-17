@@ -65,7 +65,8 @@ public class TreeLogger extends MCLogger {
         super(formatter, logEvery, false);
 
         this.nexusFormat = nexusFormat;
-        this.mapNames = mapNames;
+        // if not NEXUS, can't map names
+        this.mapNames = mapNames && nexusFormat;
 
         this.branchRateProvider = branchRateProvider;
 

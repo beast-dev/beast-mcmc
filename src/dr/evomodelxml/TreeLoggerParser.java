@@ -129,7 +129,9 @@ public class TreeLoggerParser extends LoggerParser {
         baps.toArray(branchAttributeProviders);
 
         // I think the default should be to have names rather than numbers, thus the false default - AJD
-        boolean mapNames = xo.getAttribute(MAP_NAMES, false);
+        // I think the default should be numbers - using names results in larger files and end user never
+        // sees the numbers anyway as any software loading the nuxus files does the translation - JH
+        final boolean mapNames = xo.getAttribute(MAP_NAMES, true);
 
         TreeLogger logger =
                 new TreeLogger(tree, branchRateProvider,

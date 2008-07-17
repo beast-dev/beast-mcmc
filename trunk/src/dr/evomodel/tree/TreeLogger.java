@@ -115,21 +115,23 @@ public class TreeLogger extends MCLogger {
             logLine("");
             logLine("Begin trees;");
 
-            // This is needed if the trees use numerical taxon labels
-            logLine("\tTranslate");
-            int k = 1;
-            for (String taxaId : taxaIds) {
-                if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
-                    taxaId = "'" + taxaId + "'";
+            if( mapNames ) {
+                // This is needed if the trees use numerical taxon labels
+                logLine("\tTranslate");
+                int k = 1;
+                for (String taxaId : taxaIds) {
+                    if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
+                        taxaId = "'" + taxaId + "'";
+                    }
+                    if (k < taxonCount) {
+                        logLine("\t\t" + k + " " + taxaId + ",");
+                    } else {
+                        logLine("\t\t" + k + " " + taxaId);
+                    }
+                    k += 1;
                 }
-                if (k < taxonCount) {
-                    logLine("\t\t" + k + " " + taxaId + ",");
-                } else {
-                    logLine("\t\t" + k + " " + taxaId);
-                }
-                k += 1;
+                logLine("\t\t;");
             }
-            logLine("\t\t;");
         }
     }
 

@@ -1,9 +1,9 @@
 package dr.app.beauti;
 
-import org.virion.jam.framework.MenuFactory;
 import org.virion.jam.framework.AbstractFrame;
 import org.virion.jam.framework.Application;
 import org.virion.jam.framework.MenuBarFactory;
+import org.virion.jam.framework.MenuFactory;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -40,7 +40,7 @@ public class BeautiDefaultFileMenuFactory implements MenuFactory {
 
         menu.addSeparator();
 
-        item = new JMenuItem(((BeautiFrame)frame).getOpenAction());
+        item = new JMenuItem(frame.getOpenAction());
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
         menu.add(item);
 

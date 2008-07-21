@@ -53,9 +53,7 @@ import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
-import dr.evomodelxml.BinarySubstitutionModelParser;
-import dr.evomodelxml.LoggerParser;
-import dr.evomodelxml.TreeLoggerParser;
+import dr.evomodelxml.*;
 import dr.evoxml.*;
 import dr.exporters.CSVExporter;
 import dr.inference.distribution.*;
@@ -498,9 +496,9 @@ public class BeastGenerator extends BeautiOptions {
                     }
             );
 
-            writer.writeOpenTag(YuleModel.BIRTH_RATE);
+            writer.writeOpenTag(YuleModelParser.BIRTH_RATE);
             writeParameter("yule.birthRate", writer);
-            writer.writeCloseTag(YuleModel.BIRTH_RATE);
+            writer.writeCloseTag(YuleModelParser.BIRTH_RATE);
             writer.writeCloseTag(YuleModel.YULE_MODEL);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
             writer.writeComment("A prior on the distribution node heights defined given");
@@ -513,12 +511,12 @@ public class BeastGenerator extends BeautiOptions {
                     }
             );
 
-            writer.writeOpenTag(BirthDeathGernhard08Model.BIRTHDIFF_RATE);
-            writeParameter(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME, writer);
-            writer.writeCloseTag(BirthDeathGernhard08Model.BIRTHDIFF_RATE);
-            writer.writeOpenTag(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE);
-            writeParameter(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME, writer);
-            writer.writeCloseTag(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE);
+            writer.writeOpenTag(BirthDeathModelParser.BIRTHDIFF_RATE);
+            writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, writer);
+            writer.writeCloseTag(BirthDeathModelParser.BIRTHDIFF_RATE);
+            writer.writeOpenTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
+            writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, writer);
+            writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 
             writer.writeCloseTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL);
 
@@ -2598,8 +2596,8 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == YULE) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "yule.birthRate"), true);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME), true);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME), true);
         }
 
         if (alignment != null) {

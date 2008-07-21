@@ -35,7 +35,7 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodelxml.BirthDeathModelParser;
 import dr.util.NumberFormatter;
 import dr.xml.XMLParseException;
 import org.jdom.Document;
@@ -82,9 +82,9 @@ public class BeautiOptions {
         createParameter("skyline.popSize", "Bayesian Skyline population sizes", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
 
-        createParameter("demographic.popSize", "Extended Bayesian Skyline population sizes",TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("demographic.popSize", "Extended Bayesian Skyline population sizes", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("demographic.indicators", "Extended Bayesian Skyline population switch");
-        createScaleParameter("demographic.populationMean", "Extended Bayesian Skyline population prior mean", TIME_SCALE, 1, 0,  Double.POSITIVE_INFINITY);
+        createScaleParameter("demographic.populationMean", "Extended Bayesian Skyline population prior mean", TIME_SCALE, 1, 0, Double.POSITIVE_INFINITY);
         {
             final Parameter p = createStatistic("demographic.populationSizeChanges", "Average number of population change points", true);
             p.priorType = PriorType.POISSON_PRIOR;
@@ -94,8 +94,8 @@ public class BeautiOptions {
 
 //        createParameter("birthDeath.birthRate", "Birth-Death speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 //        createParameter("birthDeath.deathRate", "Birth-Death speciation process death rate", BIRTH_RATE_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME, "Birth-Death speciation process rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
+        createParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Birth-Death speciation process rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
         //createParameter("birthDeath.samplingProportion", "Birth-Death speciation process sampling proportion", NONE, 1.0, 0.0, 1.0);
 
         createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -107,20 +107,20 @@ public class BeautiOptions {
         createParameter("localClock.changes", "random local clock rate change indicator");
 
         //Substitution model parameters
-        createParameter("hky.frequencies",  "HKY base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("hky1.frequencies",  "HKY base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("hky2.frequencies",  "HKY base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("hky3.frequencies",  "HKY base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("hky.frequencies", "HKY base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("hky1.frequencies", "HKY base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("hky2.frequencies", "HKY base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("hky3.frequencies", "HKY base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
         createScaleParameter("hky.kappa", "HKY transition-transversion parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         createScaleParameter("hky1.kappa", "HKY transition-transversion parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         createScaleParameter("hky2.kappa", "HKY transition-transversion parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         createScaleParameter("hky3.kappa", "HKY transition-transversion parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createParameter("gtr.frequencies",  "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("gtr1.frequencies",  "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("gtr2.frequencies",  "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("gtr3.frequencies",  "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("gtr.frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("gtr1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("gtr2.frequencies", "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("gtr3.frequencies", "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
         createScaleParameter("gtr.ac", "GTR A-C substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         createScaleParameter("gtr.ag", "GTR A-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
@@ -146,12 +146,12 @@ public class BeautiOptions {
         createScaleParameter("gtr3.cg", "GTR C-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         createScaleParameter("gtr3.gt", "GTR G-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createParameter("bsimple.frequencies",  "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);        
+        createParameter("bsimple.frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
 
-        createParameter("bcov.frequencies",  "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
+        createParameter("bcov.frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
         createParameter("bcov.hfrequencies", "Binary Covarion frequencies of the hidden rates", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameter("bcov.alpha",  "Binary Covarion rate of evolution in slow mode", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameter("bcov.s",      "Binary Covarion rate of flipping between slow and fast modes", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 100.0);
+        createParameter("bcov.alpha", "Binary Covarion rate of evolution in slow mode", UNITY_SCALE, 0.5, 0.0, 1.0);
+        createParameter("bcov.s", "Binary Covarion rate of flipping between slow and fast modes", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 100.0);
 
         createParameter("siteModel.alpha", "gamma shape parameter", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
         createParameter("siteModel1.alpha", "gamma shape parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
@@ -189,17 +189,17 @@ public class BeautiOptions {
         createOperator("skyline.groupSize", INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
 
         createOperator("demographic.populationMean", SCALE, 0.9, demoWeights);
-        createOperator("demographic.indicators", BITFLIP, 1, 2*treeWeights);
+        createOperator("demographic.indicators", BITFLIP, 1, 2 * treeWeights);
         // hack pass distribution in name
-        createOperator("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize", "demographic.indicators", SAMPLE_NONACTIVE, 1, 5*demoWeights);
-        createOperator("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize", "demographic.indicators", SCALE_WITH_INDICATORS, 0.5, 2*demoWeights);
+        createOperator("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize", "demographic.indicators", SAMPLE_NONACTIVE, 1, 5 * demoWeights);
+        createOperator("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize", "demographic.indicators", SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
 
         createOperator("yule.birthRate", SCALE, 0.75, demoWeights);
 //        createOperator("birthDeath.birthRate", SCALE, 0.75, demoWeights);
 //        createOperator("birthDeath.deathRate", SCALE, 0.75, demoWeights);
 
-        createOperator(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
-        createOperator(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
+        createOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
+        createOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
         //createOperator("birthDeath.samplingProportion", RANDOM_WALK, 0.75, demoWeights);
 
         createOperator("clock.rate", SCALE, 0.75, rateWeights);
@@ -209,7 +209,7 @@ public class BeautiOptions {
         createOperator("branchRates.categories", SWAP, 1, branchWeights);
         createOperator("localClock.rates", SCALE, 0.75, treeWeights);
         createOperator("localClock.changes", BITFLIP, 1, treeWeights);
-	    createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree", TREE_BIT_MOVE, -1.0, treeWeights);
+        createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree", TREE_BIT_MOVE, -1.0, treeWeights);
 
         createOperator("hky.kappa", SCALE, 0.75, substWeights);
         createOperator("hky1.kappa", SCALE, 0.75, substWeights);
@@ -418,7 +418,7 @@ public class BeautiOptions {
                     case UNITY_SCALE:
                         param.uniformLower = 0.0;
                         param.uniformUpper = 1.0;
-                    break;
+                        break;
 
                 }
                 if (param.isNodeHeight) {
@@ -484,10 +484,10 @@ public class BeautiOptions {
                     params.add(getParameter("siteModel" + i + ".mu"));
                 }
             }
-            switch(dataType){
+            switch (dataType) {
                 case DataType.NUCLEOTIDES:
-                    switch(nucSubstitutionModel){
-                        case  HKY:
+                    switch (nucSubstitutionModel) {
+                        case HKY:
                             if (partitionCount > 1 && unlinkedSubstitutionModel) {
                                 for (int i = 1; i <= partitionCount; i++) {
                                     params.add(getParameter("hky" + i + ".kappa"));
@@ -637,8 +637,8 @@ public class BeautiOptions {
         } else if (nodeHeightPrior == BIRTH_DEATH) {
 //            params.add(getParameter("birthDeath.birthRate"));
 //            params.add(getParameter("birthDeath.deathRate"));
-            params.add(getParameter(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME));
-            params.add(getParameter(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME));
+            params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+            params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
             // at present we are not allowing the sampling of samplingProportion
         }
 
@@ -697,21 +697,21 @@ public class BeautiOptions {
     private void selectOperators(ArrayList<Operator> ops) {
 
         if (alignment != null) {
-            switch(dataType){
+            switch (dataType) {
                 case DataType.NUCLEOTIDES:
 
-                    switch(nucSubstitutionModel){
+                    switch (nucSubstitutionModel) {
                         case HKY:
-                           // if (frequencyPolicy == BeautiOptions.ESTIMATED || frequencyPolicy == BeautiOptions.EMPIRICAL){
-                                if (partitionCount > 1 && unlinkedSubstitutionModel) {
-                                    for (int i = 1; i <= partitionCount; i++) {
-                                        ops.add(getOperator("hky" + i + ".kappa"));
-                                    }
-                                } else {
-                                    ops.add(getOperator("hky.kappa"));
+                            // if (frequencyPolicy == BeautiOptions.ESTIMATED || frequencyPolicy == BeautiOptions.EMPIRICAL){
+                            if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                                for (int i = 1; i <= partitionCount; i++) {
+                                    ops.add(getOperator("hky" + i + ".kappa"));
                                 }
+                            } else {
+                                ops.add(getOperator("hky.kappa"));
+                            }
                             //}
-                            if(frequencyPolicy == BeautiOptions.ESTIMATED){
+                            if (frequencyPolicy == BeautiOptions.ESTIMATED) {
                                 if (partitionCount > 1 && unlinkedSubstitutionModel) {
                                     for (int i = 1; i <= partitionCount; i++) {
                                         ops.add(getOperator("hky" + i + ".frequencies"));
@@ -720,29 +720,28 @@ public class BeautiOptions {
                                     ops.add(getOperator("hky.frequencies"));
                                 }
                             }
-                        break;
+                            break;
 
                         case GTR:
                             //if (frequencyPolicy == BeautiOptions.ESTIMATED || frequencyPolicy == BeautiOptions.EMPIRICAL){
-                                if (partitionCount > 1 && unlinkedSubstitutionModel) {
-                                    for (int i = 1; i <= partitionCount; i++) {
-                                        ops.add(getOperator("gtr" + i + ".ac"));
-                                        ops.add(getOperator("gtr" + i + ".ag"));
-                                        ops.add(getOperator("gtr" + i + ".at"));
-                                        ops.add(getOperator("gtr" + i + ".cg"));
-                                        ops.add(getOperator("gtr" + i + ".gt"));
-                                    }
+                            if (partitionCount > 1 && unlinkedSubstitutionModel) {
+                                for (int i = 1; i <= partitionCount; i++) {
+                                    ops.add(getOperator("gtr" + i + ".ac"));
+                                    ops.add(getOperator("gtr" + i + ".ag"));
+                                    ops.add(getOperator("gtr" + i + ".at"));
+                                    ops.add(getOperator("gtr" + i + ".cg"));
+                                    ops.add(getOperator("gtr" + i + ".gt"));
                                 }
-                                else {
-                                    ops.add(getOperator("gtr.ac"));
-                                    ops.add(getOperator("gtr.ag"));
-                                    ops.add(getOperator("gtr.at"));
-                                    ops.add(getOperator("gtr.cg"));
-                                    ops.add(getOperator("gtr.gt"));
-                                }
+                            } else {
+                                ops.add(getOperator("gtr.ac"));
+                                ops.add(getOperator("gtr.ag"));
+                                ops.add(getOperator("gtr.at"));
+                                ops.add(getOperator("gtr.cg"));
+                                ops.add(getOperator("gtr.gt"));
+                            }
                             //}
 
-                            if (frequencyPolicy == BeautiOptions.ESTIMATED){
+                            if (frequencyPolicy == BeautiOptions.ESTIMATED) {
                                 if (partitionCount > 1 && unlinkedSubstitutionModel) {
                                     for (int i = 1; i <= partitionCount; i++) {
                                         ops.add(getOperator("gtr" + i + ".frequencies"));
@@ -779,11 +778,10 @@ public class BeautiOptions {
                             throw new IllegalArgumentException("Unknown binary substitution model");
                     }
                     break;
-            
+
                 default:
                     throw new IllegalArgumentException("Unknown data type");
             }
-
 
             // if gamma do shape move
             if (gammaHetero) {
@@ -885,7 +883,7 @@ public class BeautiOptions {
         } else if (nodeHeightPrior == SKYLINE) {
             ops.add(getOperator("skyline.popSize"));
             ops.add(getOperator("skyline.groupSize"));
-        } else if( nodeHeightPrior == EXTENDED_SKYLINE ) {
+        } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
             ops.add(getOperator("demographic.populationMean"));
             ops.add(getOperator("demographic.popSize"));
             ops.add(getOperator("demographic.indicators"));
@@ -895,8 +893,8 @@ public class BeautiOptions {
         } else if (nodeHeightPrior == BIRTH_DEATH) {
 //            ops.add(getOperator("birthDeath.birthRate"));
 //            ops.add(getOperator("birthDeath.deathRate"));
-            ops.add(getOperator(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME));
-            ops.add(getOperator(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME));
+            ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+            ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
             // at present we are not allowing the sampling of samplingProportion
         }
 
@@ -1166,7 +1164,7 @@ public class BeautiOptions {
                     case DataType.AMINO_ACIDS:
                         originalAlignment.setDataType(AminoAcids.INSTANCE);
                         break;
-                    case DataType.TWO_STATES:                        
+                    case DataType.TWO_STATES:
                         originalAlignment.setDataType(TwoStates.INSTANCE);
                         break;
                     default:
@@ -1231,8 +1229,8 @@ public class BeautiOptions {
         if (modelElement != null) {
             nucSubstitutionModel = getIntegerChild(modelElement, "nucSubstitutionModel", HKY);
             aaSubstitutionModel = getIntegerChild(modelElement, "aaSubstitutionModel", BLOSUM_62);
-            binarySubstitutionModel = getIntegerChild(modelElement, "binarySubstitutionModel", BIN_SIMPLE);            
-            frequencyPolicy =  getIntegerChild(modelElement, "frequencyPolicy", ESTIMATED);
+            binarySubstitutionModel = getIntegerChild(modelElement, "binarySubstitutionModel", BIN_SIMPLE);
+            frequencyPolicy = getIntegerChild(modelElement, "frequencyPolicy", ESTIMATED);
             gammaHetero = getBooleanChild(modelElement, "gammaHetero", false);
             gammaCategories = getIntegerChild(modelElement, "gammaCategories", 5);
             invarHetero = getBooleanChild(modelElement, "invarHetero", false);
@@ -1307,7 +1305,7 @@ public class BeautiOptions {
                     statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
                     statistics.put(taxonSet, statistic);
                 }
-                Element e = priorsElement.getChild(statistic.getXMLName());                
+                Element e = priorsElement.getChild(statistic.getXMLName());
                 statistic.initial = getDoubleChild(e, "initial", 1.0);
                 statistic.priorType = PriorType.valueOf(getStringChild(e, "priorType", PriorType.UNIFORM_PRIOR.name()));
                 statistic.priorEdited = getBooleanChild(e, "priorEdited", false);
@@ -1525,7 +1523,7 @@ public class BeautiOptions {
         }
     }
 
-    public class   Parameter {
+    public class Parameter {
 
         /**
          * A constructor for "special" parameters which are not user-configurable
@@ -1648,7 +1646,7 @@ public class BeautiOptions {
             }
         }
 
-         public String getXMLName() {
+        public String getXMLName() {
             if (taxa != null) {
                 return "tmrca_" + taxa.getId();
             } else {
@@ -1780,12 +1778,12 @@ public class BeautiOptions {
     public static final int CP_REV_45 = 4;
     public static final int WAG = 5;
 
-    public static final int BIN_SIMPLE=0;
-    public static final int BIN_COVARION=1;
+    public static final int BIN_SIMPLE = 0;
+    public static final int BIN_COVARION = 1;
 
-    public static final int ESTIMATED=0;
-    public static final int EMPIRICAL=1;
-    public static final int ALLEQUAL=2;
+    public static final int ESTIMATED = 0;
+    public static final int EMPIRICAL = 1;
+    public static final int ALLEQUAL = 2;
 
     public static final int CONSTANT = 0;
     public static final int EXPONENTIAL = 1;
@@ -1824,7 +1822,7 @@ public class BeautiOptions {
     public static final String INTEGER_DELTA_EXCHANGE = "integerDeltaExchange";
     public static final String SWAP = "swap";
     public static final String BITFLIP = "bitFlip";
-	public static final String TREE_BIT_MOVE = "treeBitMove";
+    public static final String TREE_BIT_MOVE = "treeBitMove";
     public static final String SAMPLE_NONACTIVE = "sampleNoneActiveOperator";
     public static final String SCALE_WITH_INDICATORS = "scaleWithIndicators";
 
@@ -1843,7 +1841,7 @@ public class BeautiOptions {
 
     // Data options
     public int dataType = DataType.NUCLEOTIDES;
-    
+
     public TaxonList taxonList = null;
     public SimpleAlignment originalAlignment = null;
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
@@ -1887,7 +1885,7 @@ public class BeautiOptions {
     public int parameterization = GROWTH_RATE;
     public int skylineGroupCount = 10;
     public int skylineModel = CONSTANT_SKYLINE;
-    public String extendedSkylineModel =  VariableDemographicModel.LINEAR;
+    public String extendedSkylineModel = VariableDemographicModel.LINEAR;
     public double birthDeathSamplingProportion = 1.0;
     public boolean fixedTree = false;
     public Units.Type units = Units.Type.SUBSTITUTIONS;

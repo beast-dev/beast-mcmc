@@ -28,6 +28,7 @@ package dr.app.beauti;
 import dr.app.beast.BeastVersion;
 import dr.util.Version;
 import org.virion.jam.framework.*;
+import org.virion.jam.mac.Utils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -77,16 +78,18 @@ public class BeautiApp extends MultiDocApplication {
 
         } else {
 
-	        if (args.length == 1 && args[0].equalsIgnoreCase("-developer")) {
-		        developer = true;
+            if (args.length == 1 && args[0].equalsIgnoreCase("-developer")) {
+                developer = true;
+            }
+
+	        if (Utils.isMacOSX()) {
+		        System.setProperty("apple.laf.useScreenMenuBar","true");
+		        System.setProperty("apple.awt.showGrowBox","true");
+		        System.setProperty("apple.awt.graphics.UseQuartz","true");
+		        UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
+		        UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
 	        }
 
-            System.setProperty("com.apple.macos.useScreenMenuBar","true");
-            System.setProperty("apple.laf.useScreenMenuBar","true");
-            System.setProperty("apple.awt.graphics.UseQuartz","true");
-            UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
-            UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
-             
             try {
 
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

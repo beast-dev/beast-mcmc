@@ -38,9 +38,7 @@ import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
-import dr.evomodel.speciation.BirthDeathModel;
-import dr.evomodel.speciation.SpeciationLikelihood;
-import dr.evomodel.speciation.YuleModel;
+import dr.evomodel.speciation.*;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.*;
@@ -275,6 +273,7 @@ public class BeastGenerator extends BeautiOptions {
 
     /**
      * Generate an alignment block from these beast options
+     *
      * @param writer the writer
      */
     public void writeAlignment(XMLWriter writer) {
@@ -447,30 +446,48 @@ public class BeastGenerator extends BeautiOptions {
             initialPopSize = "expansion.popSize";
 
         } else if (nodeHeightPrior == YULE) {
-            writer.writeText("");
             writer.writeComment("A prior on the distribution node heights defined given");
             writer.writeComment("a Yule speciation process (a pure birth process).");
             writer.writeOpenTag(
-                    YuleModel.YULE_MODEL,
+                    YuleModelParser.YULE_MODEL,
                     new Attribute[] {
                             new Attribute.Default("id", "yule"),
                             new Attribute.Default("units", Units.Utils.getDefaultUnitName(units))
                     }
             );
 
-            writer.writeOpenTag(YuleModel.BIRTH_RATE);
+            writer.writeOpenTag(YuleModelParser.BIRTH_RATE);
             writeParameter("yule.birthRate", writer);
-            writer.writeCloseTag(YuleModel.BIRTH_RATE);
-            writer.writeCloseTag(YuleModel.YULE_MODEL);
+            writer.writeCloseTag(YuleModelParser.BIRTH_RATE);
+            writer.writeCloseTag(YuleModelParser.YULE_MODEL);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-            writer.writeText("");
+            writer.writeComment("A prior on the distribution node heights defined given");
+            writer.writeComment("a Birth-Death speciation process (Gernhard 2008).");
+            writer.writeOpenTag(
+                    BirthDeathGernhard08Model.BIRTH_DEATH_MODEL,
+                    new Attribute[]{
+                            new Attribute.Default("id", "birthDeath"),
+                            new Attribute.Default("units", Units.Utils.getDefaultUnitName(units))
+                    }
+            );
+
+            writer.writeOpenTag(BirthDeathGernhard08Model.BIRTHDIFF_RATE);
+            writeParameter(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME, writer);
+            writer.writeCloseTag(BirthDeathGernhard08Model.BIRTHDIFF_RATE);
+            writer.writeOpenTag(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE);
+            writeParameter(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME, writer);
+            writer.writeCloseTag(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE);
+
+            writer.writeCloseTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL);
+
+            /* writer.writeText("");
             writer.writeComment("A prior on the distribution node heights defined given");
             writer.writeComment("a Birth-Death speciation process (Yang & Rannala, 1997).");
             writer.writeOpenTag(
                     BirthDeathModel.BIRTH_DEATH_MODEL,
-                    new Attribute[] {
-                            new Attribute.Default("id", "birthDeath"),
-                            new Attribute.Default("units", Units.Utils.getDefaultUnitName(units))
+                    new Attribute[]{
+                            new Attribute.Default<String>("id", "birthDeath"),
+                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
                     }
             );
 
@@ -484,7 +501,7 @@ public class BeastGenerator extends BeautiOptions {
             // We are not sampling this parameter so use a fixed value
             writeParameter("birthDeath.samplingProportion", 1, birthDeathSamplingProportion, Double.NaN, Double.NaN, writer);
             writer.writeCloseTag(BirthDeathModel.SAMPLING_PROPORTION);
-            writer.writeCloseTag(BirthDeathModel.BIRTH_DEATH_MODEL);
+            writer.writeCloseTag(BirthDeathModel.BIRTH_DEATH_MODEL);*/
         }
 
         if (nodeHeightPrior != CONSTANT && nodeHeightPrior != EXPONENTIAL) {
@@ -1743,7 +1760,7 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeTag(MonophylyStatistic.MONOPHYLY_STATISTIC, new Attribute[]{attr}, true);
             }
         }
-        if( ! first ) {
+        if (!first) {
             writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
         }
 
@@ -2350,9 +2367,9 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == SKYLINE) {
             writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute[] { new Attribute.Default("idref", "skyline") }, true);
         } else if (nodeHeightPrior == YULE) {
-            writer.writeTag(YuleModel.YULE_MODEL, new Attribute[] { new Attribute.Default("idref", "yule") }, true);
+            writer.writeTag(YuleModelParser.YULE_MODEL, new Attribute[] { new Attribute.Default("idref", "yule") }, true);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-            writer.writeTag(BirthDeathModel.BIRTH_DEATH_MODEL, new Attribute[] { new Attribute.Default("idref", "birthDeath") }, true);
+            writer.writeTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL, new Attribute[] { new Attribute.Default("idref", "birthDeath") }, true);
         } else {
             throw new RuntimeException("No coalescent model has been specified so cannot refer to it");
         }

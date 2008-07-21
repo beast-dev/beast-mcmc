@@ -39,14 +39,13 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PriorsPanel extends JPanel implements Exportable {
 
@@ -60,10 +59,10 @@ public class PriorsPanel extends JPanel implements Exportable {
 
     OptionsPanel treePriorPanel = new OptionsPanel();
     JComboBox treePriorCombo;
-    JComboBox parameterizationCombo = new JComboBox(new String[] {
+    JComboBox parameterizationCombo = new JComboBox(new String[]{
             "Growth Rate", "Doubling Time"});
-    JComboBox bayesianSkylineCombo = new JComboBox(new String[] {
-            "Constant", "Linear"});
+    JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
+            "Piecewise-constant", "Piecewise-linear"});
     WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
     RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
@@ -115,6 +114,7 @@ public class PriorsPanel extends JPanel implements Exportable {
             }
         };
 
+        // order here must match corrosponding BeautiOptions constant, i.e. BeautiOptions.CONSTANT == 0 etc
         if (BeautiApp.developer) {
             treePriorCombo = new JComboBox(new String[] {
                     "Coalescent: Constant Size",
@@ -132,9 +132,8 @@ public class PriorsPanel extends JPanel implements Exportable {
                     "Coalescent: Logistic Growth",
                     "Coalescent: Expansion Growth",
                     "Coalescent: Bayesian Skyline",
-                    "Speciation: Yule Process"
-                    // Until we have tested the Birth-Death process properly, I have hidden this option
-                    //"Speciation: Birth-Death Process"
+                    "Speciation: Yule Process",
+                    "Speciation: Birth-Death Process"
             });
         }
         setupComponent(treePriorCombo);
@@ -146,14 +145,25 @@ public class PriorsPanel extends JPanel implements Exportable {
                     }
                 }
         );
-        groupCountField.addKeyListener(new java.awt.event.KeyAdapter() {
+
+        KeyListener keyListener = new KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
-                if (!settingOptions) frame.priorsChanged();
-            }});
-        samplingProportionField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent ev) {
-                if (!settingOptions) frame.priorsChanged();
-            }});
+                if (!settingOptions && ev.getKeyCode() == KeyEvent.VK_ENTER) {
+                    frame.priorsChanged();
+                }
+            }
+        };
+
+        groupCountField.addKeyListener(keyListener);
+        samplingProportionField.addKeyListener(keyListener);
+
+        FocusListener focusListener = new FocusAdapter() {
+            public void focusLost(FocusEvent focusEvent) {
+                frame.priorsChanged();
+            }
+        };
+        samplingProportionField.addFocusListener(focusListener);
+        groupCountField.addFocusListener(focusListener);
 
         setupComponent(parameterizationCombo);
         parameterizationCombo.addItemListener(listener);
@@ -164,15 +174,15 @@ public class PriorsPanel extends JPanel implements Exportable {
         setupComponent(upgmaStartingTreeCheck);
 
         setOpaque(false);
-        setLayout(new BorderLayout(0,0));
+        setLayout(new BorderLayout(0, 0));
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
 
-        JPanel panel = new JPanel(new BorderLayout(0,0));
+        JPanel panel = new JPanel(new BorderLayout(0, 0));
         panel.setOpaque(false);
         panel.add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
         panel.add(new JLabel("* Marked parameters currently have a default prior distribution. " +
-                "You could check that these are appropriate."), BorderLayout.SOUTH);
+                "You should check that these are appropriate."), BorderLayout.SOUTH);
 
         treePriorPanel.setBorder(null);
         add(treePriorPanel, BorderLayout.NORTH);
@@ -182,8 +192,6 @@ public class PriorsPanel extends JPanel implements Exportable {
     private void setupComponent(JComponent comp) {
         comp.setOpaque(false);
 
-        //comp.setFont(UIManager.getFont("SmallSystemFont"));
-        //comp.putClientProperty("JComponent.sizeVariant", "small");
         if (comp instanceof JButton) {
             comp.putClientProperty("JButton.buttonType", "roundRect");
         }
@@ -552,6 +560,6 @@ public class PriorsPanel extends JPanel implements Exportable {
             super.fireEditingStopped();
         }
     }
-
-
 }
+
+

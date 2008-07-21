@@ -46,7 +46,7 @@ public class BeastVersion implements Version {
 	/**
 	 * Version string: assumed to be in format x.x.x
 	 */
-	private static String VERSION = "1.4.7";
+	private static String VERSION = "1.4.8";
 	private static String DATE_STRING = "2002-2008";
 
 	public String getVersionString() {
@@ -62,6 +62,6 @@ public class BeastVersion implements Version {
         // for SVN. I am currently updating it manually to match the SVN
         // version number (i.e., the current version number plus one for
         // when this change gets committed).
-        return "Build r590";
+        return "Build r1000";
 	}
 }

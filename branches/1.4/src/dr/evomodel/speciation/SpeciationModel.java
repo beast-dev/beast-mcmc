@@ -43,16 +43,52 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 		setUnits(units);
 	}
 
-    //
-    // functions that define a speciation model
-    //
+    /**
+     *  "fixed" part of likelihood. Guaranteed to be called before any logNodeProbability
+     * calls for one evaluation of the tree.
+     *
+     * @param taxonCount Number of taxa in tree
+     * @return density factor which is not node dependent
+     */
     public abstract double logTreeProbability(int taxonCount);
-	//
-	// functions that define a speciation model
-	//
-	public abstract double logNodeProbability(Tree tree, NodeRef node);
 
-	// **************************************************************
+    /**
+     *  Per node part of likelihood.
+     * @param tree
+     * @param node
+     * @return node contribution to density
+     */
+    public abstract double logNodeProbability(Tree tree, NodeRef node);
+
+    /**
+     *
+     * @return true if calls to logNodeProbability for terminal nodes (tips) are required
+     */
+    public abstract boolean includeExternalNodesInLikelihoodCalculation();
+
+    /**
+     * Generic likelihood calculation
+     * @param tree
+     * @return log-likelihood of density
+     */
+    public double calculateTreeLogLikelihood(Tree tree) {
+        final int taxonCount = tree.getExternalNodeCount();
+        double logL = logTreeProbability(taxonCount);
+
+        for (int j = 0; j < tree.getInternalNodeCount(); j++) {
+            logL += logNodeProbability(tree, tree.getInternalNode(j));
+        }
+
+        if (includeExternalNodesInLikelihoodCalculation()) {
+            for (int j = 0; j < taxonCount; j++) {
+                logL += logNodeProbability(tree, tree.getExternalNode(j));
+            }
+        }
+
+        return logL;
+    }
+
+    // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
 	
@@ -67,8 +103,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 	protected void storeState() {} // no additional state needs storing
 	protected void restoreState() {} // no additional state needs restoring	
 	protected void acceptState() {} // no additional state needs accepting	
-	protected void adoptState(Model source) {} // no additional state needs adopting	
-		
+
     // **************************************************************
     // Units IMPLEMENTATION
     // **************************************************************

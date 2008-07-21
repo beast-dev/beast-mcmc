@@ -2,9 +2,7 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evoxml.XMLUnits;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 import static org.apache.commons.math.special.Gamma.logGamma;
 
 /**
@@ -23,11 +21,6 @@ import static org.apache.commons.math.special.Gamma.logGamma;
 public class BirthDeathGernhard08Model extends SpeciationModel {
 
     public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
-    public static String BIRTHDIFF_RATE = "birthMinusDeathRate";
-    public static String RELATIVE_DEATH_RATE = "relativeDeathRate";
-
-    public static String BIRTHDIFF_RATE_PARAM_NAME = "birthDeath.BminusDRate";
-    public static String RELATIVE_DEATH_RATE_PARAM_NAME = "birthDeath.DoverB";
 
     private Parameter relativeDeathRateParameter;
     private Parameter birthDiffRateParameter;
@@ -74,43 +67,4 @@ public class BirthDeathGernhard08Model extends SpeciationModel {
     public boolean includeExternalNodesInLikelihoodCalculation() {
         return false;
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return BIRTH_DEATH_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Type units = XMLParser.Utils.getUnitsAttr(xo);
-
-            Parameter birthParameter = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);
-            Parameter deathParameter = (Parameter) xo.getElementFirstChild(RELATIVE_DEATH_RATE);
-
-            return new BirthDeathGernhard08Model(birthParameter, deathParameter, units);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "Gernhard (2008) model of speciation (equation at bottom of page 19 of draft).";
-        }
-
-        public Class getReturnType() {
-            return BirthDeathGernhard08Model.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(BIRTHDIFF_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(RELATIVE_DEATH_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                XMLUnits.SYNTAX_RULES[0]
-        };
-    };
 }

@@ -16,8 +16,11 @@ public class HKYTest extends TestCase {
 
     interface Instance {
         double[] getPi();
-        double   getKappa();
-        double   getDistance();
+
+        double getKappa();
+
+        double getDistance();
+
         double[] getExpectedResult();
     }
 
@@ -36,7 +39,7 @@ public class HKYTest extends TestCase {
      */
     Instance test0 = new Instance() {
         public double[] getPi() {
-            return new double[]{0.25, 0.25, 0.25,0.25};
+            return new double[]{0.25, 0.25, 0.25, 0.25};
         }
 
         public double getKappa() {
@@ -49,17 +52,17 @@ public class HKYTest extends TestCase {
 
         public double[] getExpectedResult() {
             return new double[]{
-                    0.906563342722 ,   0.023790645491  ,  0.045855366296  ,  0.023790645491  ,
-                    0.023790645491  ,  0.906563342722  ,  0.023790645491  ,  0.045855366296   ,
-                    0.045855366296 ,   0.023790645491  ,  0.906563342722  ,  0.023790645491  ,
-                    0.023790645491  ,  0.045855366296  ,  0.023790645491 ,   0.906563342722  ,
+                    0.906563342722, 0.023790645491, 0.045855366296, 0.023790645491,
+                    0.023790645491, 0.906563342722, 0.023790645491, 0.045855366296,
+                    0.045855366296, 0.023790645491, 0.906563342722, 0.023790645491,
+                    0.023790645491, 0.045855366296, 0.023790645491, 0.906563342722
             };
         }
     };
 
     Instance test1 = new Instance() {
         public double[] getPi() {
-            return new double[]{0.50, 0.20, 0.2,0.1};
+            return new double[]{0.50, 0.20, 0.2, 0.1};
         }
 
         public double getKappa() {
@@ -72,17 +75,17 @@ public class HKYTest extends TestCase {
 
         public double[] getExpectedResult() {
             return new double[]{
-                    0.928287993055 ,  0.021032136637 ,   0.040163801989 ,  0.010516068319 ,
-                    0.052580341593 ,  0.906092679369 ,  0.021032136637  ,  0.020294842401 ,
-                    0.100409504972 ,  0.021032136637 ,  0.868042290072  ,  0.010516068319 ,
-                    0.052580341593 ,  0.040589684802 ,  0.021032136637  ,  0.885797836968 ,
+                    0.928287993055, 0.021032136637, 0.040163801989, 0.010516068319,
+                    0.052580341593, 0.906092679369, 0.021032136637, 0.020294842401,
+                    0.100409504972, 0.021032136637, 0.868042290072, 0.010516068319,
+                    0.052580341593, 0.040589684802, 0.021032136637, 0.885797836968
             };
         }
     };
 
     Instance test2 = new Instance() {
         public double[] getPi() {
-            return new double[]{0.20, 0.30, 0.25,0.25};
+            return new double[]{0.20, 0.30, 0.25, 0.25};
         }
 
         public double getKappa() {
@@ -95,10 +98,10 @@ public class HKYTest extends TestCase {
 
         public double[] getExpectedResult() {
             return new double[]{
-                    0.904026219693 ,   0.016708646875 ,   0.065341261036  ,  0.013923872396 ,
-                    0.011139097917 ,   0.910170587813 ,   0.013923872396  ,  0.064766441875 ,
-                    0.052273008829 ,  0.016708646875  ,  0.917094471901   , 0.013923872396  ,
-                    0.011139097917 ,   0.077719730250 ,   0.013923872396  ,  0.897217299437 ,
+                    0.904026219693, 0.016708646875, 0.065341261036, 0.013923872396,
+                    0.011139097917, 0.910170587813, 0.013923872396, 0.064766441875,
+                    0.052273008829, 0.016708646875, 0.917094471901, 0.013923872396,
+                    0.011139097917, 0.077719730250, 0.013923872396, 0.897217299437
             };
         }
     };
@@ -106,7 +109,7 @@ public class HKYTest extends TestCase {
     Instance[] all = {test2, test1, test0};
 
     public void testHKY() {
-        for( Instance test : all ) {
+        for (Instance test : all) {
             Parameter kappa = new Parameter.Default(1, test.getKappa());
             double[] pi = test.getPi();
 
@@ -116,11 +119,11 @@ public class HKYTest extends TestCase {
 
             double distance = test.getDistance();
 
-            double[] mat = new double[4*4];
+            double[] mat = new double[4 * 4];
             hky.getTransitionProbabilities(distance, mat);
             final double[] result = test.getExpectedResult();
-            
-            for(int k = 0; k < mat.length; ++k) {
+
+            for (int k = 0; k < mat.length; ++k) {
                 assertEquals(mat[k], result[k], 1e-10);
                 // System.out.print(" " + (mat[k] - result[k]));
             }

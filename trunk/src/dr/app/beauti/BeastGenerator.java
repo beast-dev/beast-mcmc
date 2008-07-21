@@ -519,29 +519,6 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 
             writer.writeCloseTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL);
-
-            /* writer.writeText("");
-            writer.writeComment("A prior on the distribution node heights defined given");
-            writer.writeComment("a Birth-Death speciation process (Yang & Rannala, 1997).");
-            writer.writeOpenTag(
-                    BirthDeathModel.BIRTH_DEATH_MODEL,
-                    new Attribute[]{
-                            new Attribute.Default<String>("id", "birthDeath"),
-                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
-                    }
-            );
-
-            writer.writeOpenTag(BirthDeathModel.BIRTH_RATE);
-            writeParameter("birthDeath.birthRate", writer);
-            writer.writeCloseTag(BirthDeathModel.BIRTH_RATE);
-            writer.writeOpenTag(BirthDeathModel.DEATH_RATE);
-            writeParameter("birthDeath.deathRate", writer);
-            writer.writeCloseTag(BirthDeathModel.DEATH_RATE);
-            writer.writeOpenTag(BirthDeathModel.SAMPLING_PROPORTION);
-            // We are not sampling this parameter so use a fixed value
-            writeParameter("birthDeath.samplingProportion", 1, birthDeathSamplingProportion, Double.NaN, Double.NaN, writer);
-            writer.writeCloseTag(BirthDeathModel.SAMPLING_PROPORTION);
-            writer.writeCloseTag(BirthDeathModel.BIRTH_DEATH_MODEL);*/
         }
 
         if (nodeHeightPrior != CONSTANT && nodeHeightPrior != EXPONENTIAL) {
@@ -1757,7 +1734,7 @@ public class BeastGenerator extends BeautiOptions {
         } else if (operator.type.equals(WILSON_BALDING)) {
             writeWilsonBaldingOperator(operator, writer);
         } else if (operator.type.equals(SAMPLE_NONACTIVE)) {
-            writeSampleNoneActiveOperator(operator, writer);
+            writeSampleNonActiveOperator(operator, writer);
         } else if (operator.type.equals(SCALE_WITH_INDICATORS)) {
             writeScaleWithIndicatorsOperator(operator, writer);
         }
@@ -1942,7 +1919,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeCloseTag(WilsonBalding.WILSON_BALDING);
     }
 
-    private void writeSampleNoneActiveOperator(Operator operator, XMLWriter writer) {
+    private void writeSampleNonActiveOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR,
                 new Attribute.Default<Double>("weight", operator.weight));
 

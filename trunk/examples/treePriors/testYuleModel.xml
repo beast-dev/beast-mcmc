@@ -60,7 +60,7 @@
         <treeModel idref="treeModel1"/>
     </treeLengthStatistic>
 
-    <mcmc id="mcmc1" chainLength="10000000" verbose="false">
+    <mcmc id="mcmc1" chainLength="10000000">
         <speciationLikelihood idref="speciation"/>
         <log id="logScreen2" logEvery="100000">
             <column dp="4">
@@ -79,12 +79,6 @@
             <treeModel idref="treeModel1"/>
         </logTree>
         <operators>
-            <!--<scaleOperator scaleFactor="0.75" weight="1">
-                <parameter idref="treeModel1.rootHeight"/>
-            </scaleOperator>
-            <uniformOperator weight="3">
-                <parameter idref="treeModel1.internalNodeHeights"/>
-            </uniformOperator>  -->
             <subtreeSlide weight="1" gaussian="true" size="1">
                 <treeModel idref="treeModel1"/>
             </subtreeSlide>

@@ -73,6 +73,8 @@ public class PriorsPanel extends JPanel implements Exportable {
 
     BeautiFrame frame = null;
 
+    boolean warningShown = false;
+    
     public PriorsPanel(BeautiFrame parent) {
 
         this.frame = parent;
@@ -311,6 +313,20 @@ public class PriorsPanel extends JPanel implements Exportable {
             }
         } else {
             throw new RuntimeException("Unexpected value from treePriorCombo");
+        }
+
+        if (!warningShown &&
+                (options.nodeHeightPrior == BeautiOptions.YULE ||
+                options.nodeHeightPrior == BeautiOptions.BIRTH_DEATH)
+                && options.maximumTipHeight != 0.0) {
+            JOptionPane.showMessageDialog(frame,
+                    "You have chosen a speciation prior but the \n"+
+                    "sequences have non-contemporaneous dates. \n" +
+                    "These models will not give correct results\n" +
+                    "for time-sampled data.",
+                    "Warning",
+                    JOptionPane.WARNING_MESSAGE);
+            warningShown = true;
         }
 
         options.parameterization = parameterizationCombo.getSelectedIndex();

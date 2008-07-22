@@ -1372,6 +1372,8 @@ public class BeastGenerator extends BeautiOptions {
             writeScaleOperator(operator, writer);
         } else if (operator.type.equals(RANDOM_WALK)) {
             writeRandomWalkOperator(operator, writer);
+        } else if (operator.type.equals(INTEGER_RANDOM_WALK)) {
+            writeIntegerRandomWalkOperator(operator, writer);
         } else if (operator.type.equals(UP_DOWN)) {
             writeUpDownOperator(operator, writer);
         } else if (operator.type.equals(SCALE_ALL)) {
@@ -1386,6 +1388,8 @@ public class BeastGenerator extends BeautiOptions {
             writeSwapOperator(operator, writer);
         } else if (operator.type.equals(UNIFORM)) {
             writeUniformOperator(operator, writer);
+        } else if (operator.type.equals(INTEGER_UNIFORM)) {
+            writeIntegerUniformOperator(operator, writer);
         } else if (operator.type.equals(SUBTREE_SLIDE)) {
             writeSubtreeSlideOperator(operator, writer);
         } else if (operator.type.equals(NARROW_EXCHANGE)) {
@@ -1417,6 +1421,17 @@ public class BeastGenerator extends BeautiOptions {
                 });
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref", operator.parameter1.getName()), true);
         writer.writeCloseTag("randomWalkOperator");
+    }
+
+    private void writeIntegerRandomWalkOperator(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(
+                "randomWalkIntegerOperator",
+                new Attribute[] {
+                        new Attribute.Default("windowSize", Double.toString(operator.tuning)),
+                        new Attribute.Default("weight", Integer.toString((int)operator.weight)),
+                });
+        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref", operator.parameter1.getName()), true);
+        writer.writeCloseTag("randomWalkIntegerOperator");
     }
 
     private void writeScaleAllOperator(Operator operator, XMLWriter writer) {
@@ -1518,6 +1533,13 @@ public class BeastGenerator extends BeautiOptions {
                 new Attribute.Default("weight", Integer.toString((int)operator.weight)));
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref", operator.parameter1.getName()), true);
         writer.writeCloseTag("uniformOperator");
+    }
+
+    private void writeIntegerUniformOperator(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag("uniformIntegerOperator",
+                new Attribute.Default("weight", Integer.toString((int)operator.weight)));
+        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref", operator.parameter1.getName()), true);
+        writer.writeCloseTag("uniformIntegerOperator");
     }
 
     private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {

@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
+ * @author Michael Defoin Platel
  * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
 public class DiscretizedBranchRates extends AbstractModel implements BranchRateModel  {
@@ -48,6 +48,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
     public static final String DISTRIBUTION = "distribution";
     public static final String RATE_CATEGORIES = "rateCategories";
     public static final String SINGLE_ROOT_RATE = "singleRootRate";
+    public static final String OVERSAMPLING = "overSampling";
 
     private ParametricDistributionModel distributionModel;
     private TreeModel tree;
@@ -63,25 +64,33 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
     private final double step;
     private final double[] rates;
 
-	public DiscretizedBranchRates(TreeModel tree, Parameter rateCategoryParameter, ParametricDistributionModel model) {
+    //overSampling control the number of effective categories
+
+    public DiscretizedBranchRates(TreeModel tree, Parameter rateCategoryParameter, ParametricDistributionModel model, int overSampling) {
 
         super(DISCRETIZED_BRANCH_RATES);
         this.tree = tree;
 
-        categoryCount = tree.getNodeCount();
-        step = 1.0 / (double)categoryCount;
+        categoryCount = (tree.getNodeCount() - 1) * overSampling;
+        step = 1.0 / (double) categoryCount;
 
         rates = new double[categoryCount];
 
         this.distributionModel = model;
 
+        //Force the boundaries of rateCategoryParameter to match the category count
+        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(categoryCount - 1, 0, rateCategoryParameter.getDimension());
+        rateCategoryParameter.addBounds(bound);
+
         this.rateCategoryParameter = rateCategoryParameter;
-        if (rateCategoryParameter.getDimension() != tree.getNodeCount() -1 ) {
-            throw new IllegalArgumentException("The rate category parameter must be of length nodeCount-1");
+        int categoryCount = tree.getNodeCount() - 1;
+        if (rateCategoryParameter.getDimension() != categoryCount ) {
+            throw new IllegalArgumentException("The rate category parameter must be of length " + categoryCount + " (nodes in the tree - 1)");
         }
 
         for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
-            rateCategoryParameter.setParameterValue(i, i);
+            int index = (int) Math.floor((i + 0.5) * overSampling);
+            rateCategoryParameter.setParameterValue(i, index);
         }
 
         addModel(model);
@@ -91,13 +100,12 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
         rootNodeNumber = tree.getRoot().getNumber();
         storedRootNodeNumber = rootNodeNumber;
-        
+
         setupRates();
         shuffleIndices();
+    }
 
-	}
-
-	public void handleModelChangedEvent(Model model, Object object, int index) {
+    public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == distributionModel) {
             setupRates();
             fireModelChanged();
@@ -119,20 +127,34 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         rootNodeNumber = storedRootNodeNumber;
     }
 
-    protected void acceptState() {}
+    protected void acceptState() {
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return DISCRETIZED_BRANCH_RATES; }
+        public String getParserName() {
+            return DISCRETIZED_BRANCH_RATES;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			TreeModel tree = (TreeModel)xo.getChild(TreeModel.class);
-            ParametricDistributionModel distributionModel = (ParametricDistributionModel)xo.getSocketChild(DISTRIBUTION);
+            int overSampling = 1;
+            if (xo.hasAttribute(OVERSAMPLING)) {
+                overSampling = xo.getIntegerAttribute(OVERSAMPLING);
+                if (overSampling < 1) {
+                    overSampling = 1;
+                }
+            }
 
-            Parameter rateCategoryParameter = (Parameter)xo.getSocketChild(RATE_CATEGORIES);
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+            ParametricDistributionModel distributionModel = (ParametricDistributionModel) xo.getSocketChild(DISTRIBUTION);
 
-			Logger.getLogger("dr.evomodel").info("Using discretized relaxed clock model.");
+            Parameter rateCategoryParameter = (Parameter) xo.getSocketChild(RATE_CATEGORIES);
+
+            Logger.getLogger("dr.evomodel").info("Using discretized relaxed clock model.");
+            if (overSampling > 1) {
+                Logger.getLogger("dr.evomodel").info("  over sampling = " + overSampling);
+            }
             Logger.getLogger("dr.evomodel").info("  parametric model = " + distributionModel.getModelName());
             Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryParameter.getDimension());
 
@@ -141,32 +163,33 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
                 Logger.getLogger("dr.evomodel").warning("   WARNING: single root rate is not implemented!");
             }
 
-            if (rateCategoryParameter.getDimension() != tree.getNodeCount() -1 ) {
-                throw new XMLParseException(DISCRETIZED_BRANCH_RATES + ": The rate category parameter must be of length nodeCount-1");
-            }
-                                                   
-			return new DiscretizedBranchRates(tree, rateCategoryParameter, distributionModel);
+            return new DiscretizedBranchRates(tree, rateCategoryParameter, distributionModel, overSampling);
         }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return
-				"This element returns an discretized relaxed clock model." +
-                "The branch rates are drawn from a discretized parametric distribution.";
-		}
+        public String getParserDescription() {
+            return
+                    "This element returns an discretized relaxed clock model." +
+                            "The branch rates are drawn from a discretized parametric distribution.";
+        }
 
-		public Class getReturnType() { return DiscretizedBranchRates.class; }
+        public Class getReturnType() {
+            return DiscretizedBranchRates.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            AttributeRule.newBooleanRule(SINGLE_ROOT_RATE, true, "Whether only a single rate should be used for the two children branches of the root"),
-            new ElementRule(TreeModel.class),
-            new ElementRule(DISTRIBUTION, ParametricDistributionModel.class, "The distribution model for rates among branches", false),
-            new ElementRule(RATE_CATEGORIES, Parameter.class, "The rate categories parameter", false),
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newBooleanRule(SINGLE_ROOT_RATE, true, "Whether only a single rate should be used for the two children branches of the root"),
+                AttributeRule.newIntegerRule(OVERSAMPLING, true, "The integer factor for oversampling the distribution model (1 means no oversampling)"),
+                new ElementRule(TreeModel.class),
+                new ElementRule(DISTRIBUTION, ParametricDistributionModel.class, "The distribution model for rates among branches", false),
+                new ElementRule(RATE_CATEGORIES, Parameter.class, "The rate categories parameter", false),
         };
     };
 
@@ -182,9 +205,42 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             throw new IllegalArgumentException("INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.");
         }
 
-        int rateCategory = (int)Math.round(rateCategoryParameter.getParameterValue(getCategoryIndexFromNodeNumber(nodeNumber)));
+        int rateCategory = (int) Math.round(rateCategoryParameter.getParameterValue(getCategoryIndexFromNodeNumber(nodeNumber)));
+
+        if (rateCategory < rateCategoryParameter.getBounds().getLowerLimit(0) || rateCategory > rateCategoryParameter.getBounds().getUpperLimit(0)) {
+            throw new IllegalArgumentException("INTERNAL ERROR! invalid catergory number " + rateCategory);
+        }
 
         return rates[rateCategory];
+    }
+
+/*    public NodeRef getNodeForParameter(Parameter parameter, int index) {
+
+        if (parameter != rateCategoryParameter) {
+            throw new RuntimeException("Expecting " + rateCategoryParameter + ", but got " + parameter);
+        }
+
+        if (index == -1) {
+            throw new RuntimeException("Expecting non-negative index!");
+        }
+
+        NodeRef node;
+        if (index < rootNodeNumber) {
+            node = tree.getNode(index);
+            if (node.getNumber() != index) throw new RuntimeException();
+        } else {
+            node = tree.getNode(index - 1);
+            if (node.getNumber() != index - 1) throw new RuntimeException();
+        }
+        return node;
+    }*/
+
+    public String getBranchAttributeLabel() {
+        return "rate";
+    }
+
+    public String getAttributeForBranch(Tree tree, NodeRef node) {
+        return Double.toString(getBranchRate(tree, node));
     }
 
     public int getNodeNumberFromCategoryIndex(int categoryIndex) {
@@ -200,7 +256,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
     /**
      * Calculates the actual rates corresponding to the category indices.
      */
-    private void setupRates() {
+    protected void setupRates() {
 
         double z = step / 2.0;
         for (int i = 0; i < categoryCount; i++) {
@@ -224,15 +280,16 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             //}
             //System.out.println();
 
-            int oldRateIndex = (int)Math.round(
-                    rateCategoryParameter.getParameterValue(newRootNodeNumber));
+//            int oldRateIndex = (int) Math.round(
+            double oldRateIndex =
+                    rateCategoryParameter.getParameterValue(newRootNodeNumber);
 
-            int end = Math.min(rateCategoryParameter.getDimension()-1, rootNodeNumber);
+            int end = Math.min(rateCategoryParameter.getDimension() - 1, rootNodeNumber);
             for (int i = newRootNodeNumber; i < end; i++) {
-                rateCategoryParameter.setParameterValue(i,rateCategoryParameter.getParameterValue(i+1));
+                rateCategoryParameter.setParameterValue(i, rateCategoryParameter.getParameterValue(i + 1));
             }
 
-            rateCategoryParameter.setParameterValue(end,oldRateIndex);
+            rateCategoryParameter.setParameterValue(end, oldRateIndex);
 
             //for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
             //    System.out.print((int)Math.round(rateCategoryParameter.getParameterValue(i)) + "\t");
@@ -249,16 +306,16 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             //}
             //System.out.println();
 
-            int end = Math.min(rateCategoryParameter.getDimension()-1, newRootNodeNumber);
+            int end = Math.min(rateCategoryParameter.getDimension() - 1, newRootNodeNumber);
 
-            int oldRateIndex = (int)Math.round(
+            int oldRateIndex = (int) Math.round(
                     rateCategoryParameter.getParameterValue(end));
 
             for (int i = end; i > rootNodeNumber; i--) {
-                rateCategoryParameter.setParameterValue(i,rateCategoryParameter.getParameterValue(i-1));
+                rateCategoryParameter.setParameterValue(i, rateCategoryParameter.getParameterValue(i - 1));
             }
 
-            rateCategoryParameter.setParameterValue(rootNodeNumber,oldRateIndex);
+            rateCategoryParameter.setParameterValue(rootNodeNumber, oldRateIndex);
 
             //for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
             //    System.out.print((int)Math.round(rateCategoryParameter.getParameterValue(i)) + "\t");

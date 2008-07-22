@@ -185,7 +185,9 @@ public class BeautiOptions {
         createOperator("uced.mean", SCALE, 0.75, rateWeights);
         createOperator("ucld.mean", SCALE, 0.75, rateWeights);
         createOperator("ucld.stdev", SCALE, 0.75, rateWeights);
-        createOperator("branchRates.categories", SWAP, 1, branchWeights);
+//        createOperator("swapBranchRateCategories", "branchRates.categories", "Performs a swap of branch rate categories", "branchRates.categories", SWAP, 1, branchWeights);
+        createOperator("randomWalkBranchRateCategories", "branchRates.categories", "Performs an integer random walk of branch rate categories", "branchRates.categories", INTEGER_RANDOM_WALK, 1, branchWeights);
+        createOperator("unformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories", "branchRates.categories", INTEGER_UNIFORM, 1, branchWeights);
 
         createOperator("hky.kappa", SCALE, 0.75, substWeights);
         createOperator("hky1.kappa", SCALE, 0.75, substWeights);
@@ -741,7 +743,9 @@ public class BeautiOptions {
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }
-                    ops.add(getOperator("branchRates.categories"));
+//                    ops.add(getOperator("swapBranchRateCategories"));
+                    ops.add(getOperator("randomWalkBranchRateCategories"));
+                    ops.add(getOperator("unformBranchRateCategories"));
                 }
             } else {
                 if (clockModel == STRICT_CLOCK) {
@@ -754,7 +758,9 @@ public class BeautiOptions {
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }
-                    ops.add(getOperator("branchRates.categories"));
+ //                   ops.add(getOperator("swapBranchRateCategories"));
+                    ops.add(getOperator("randomWalkBranchRateCategories"));
+                    ops.add(getOperator("unformBranchRateCategories"));
                 }
             }
         }
@@ -1718,6 +1724,7 @@ public class BeautiOptions {
 
     public static final String SCALE = "scale";
     public static final String RANDOM_WALK = "randomWalk";
+    public static final String INTEGER_RANDOM_WALK = "integerRandomWalk";
     public static final String UP_DOWN = "upDown";
     public static final String SCALE_ALL = "scaleAll";
     public static final String CENTERED_SCALE = "centeredScale";
@@ -1725,6 +1732,7 @@ public class BeautiOptions {
     public static final String INTEGER_DELTA_EXCHANGE = "integerDeltaExchange";
     public static final String SWAP = "swap";
     public static final String UNIFORM = "uniform";
+    public static final String INTEGER_UNIFORM = "integerUniform";
     public static final String SUBTREE_SLIDE = "subtreeSlide";
     public static final String NARROW_EXCHANGE = "narrowExchange";
     public static final String WIDE_EXCHANGE = "wideExchange";

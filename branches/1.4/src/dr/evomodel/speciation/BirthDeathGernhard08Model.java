@@ -7,6 +7,8 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 import org.apache.commons.math.special.Gamma;
 
+import java.util.logging.Logger;
+
 /**
  * Birth Death model based on Gernhard 2008  "The conditioned reconstructed process"
  * doi:10.1016/j.jtbi.2008.04.005 (http://dx.doi.org/10.1016/j.jtbi.2008.04.005)
@@ -88,6 +90,7 @@ public class BirthDeathGernhard08Model extends SpeciationModel {
             Parameter birthParameter = (Parameter) xo.getSocketChild(BIRTHDIFF_RATE);
             Parameter deathParameter = (Parameter) xo.getSocketChild(RELATIVE_DEATH_RATE);
 
+            Logger.getLogger("dr.evomodel").info("Using Gernhard 2008 birth-death model: Gernhard T (2008) J Theor Biol, In press");
             return new BirthDeathGernhard08Model(birthParameter, deathParameter, units);
         }
 

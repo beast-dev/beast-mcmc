@@ -129,15 +129,8 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
      * given a demographic model.
      * @return the log likelihood
      */
-    public double calculateLogLikelihood() {
-
-        double logL = 0.0;
-
-        for (int j = 0; j < tree.getInternalNodeCount(); j++) {
-            logL += speciationModel.logNodeProbability( tree, tree.getInternalNode(j));
-        }
-
-        return logL;
+    private double calculateLogLikelihood() {
+        return speciationModel.calculateTreeLogLikelihood(tree);
     }
 
     // **************************************************************
@@ -194,9 +187,9 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
             SpeciationModel specModel = (SpeciationModel)cxo.getChild(SpeciationModel.class);
 
             cxo = (XMLObject)xo.getChild(TREE);
-            TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
+            Tree tree = (Tree)cxo.getChild(Tree.class);
 
-            return new SpeciationLikelihood(treeModel, specModel);
+            return new SpeciationLikelihood(tree, specModel);
         }
 
         //************************************************************************
@@ -216,7 +209,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
                         new ElementRule(SpeciationModel.class)
                 }),
                 new ElementRule(TREE, new XMLSyntaxRule[] {
-                        new ElementRule(TreeModel.class)
+                        new ElementRule(Tree.class)
                 }),
         };
     };

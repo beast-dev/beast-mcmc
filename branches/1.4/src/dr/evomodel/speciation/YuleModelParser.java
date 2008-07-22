@@ -5,6 +5,8 @@ import dr.evoxml.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.logging.Logger;
+
 /**
  * @author Alexei Drummond
  */
@@ -25,6 +27,8 @@ public class YuleModelParser extends AbstractXMLObjectParser {
         Parameter brParameter = (Parameter) cxo.getChild(Parameter.class);
         Parameter deathParameter = new Parameter.Default(0.0);
 
+        Logger.getLogger("dr.evomodel").info("Using Yule prior");
+        
         return new BirthDeathGernhard08Model(brParameter, deathParameter, units);
     }
 

@@ -30,7 +30,8 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 
 import java.io.PrintStream;
-import java.util.Iterator;
+import java.text.NumberFormat;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -39,20 +40,96 @@ import java.util.Iterator;
  */
 public class NexusExporter implements TreeExporter {
 
+    public static final String DEFAULT_TREE_PREFIX = "TREE";
+
+    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.;,\"\'].*";
+
     public NexusExporter(PrintStream out) {
         this.out = out;
     }
 
-    public void exportTree(Tree tree) {
+    /**
+     * Sets the name to use for each tree (will be suffixed by tree number)
+     *
+     * @param treePrefix
+     */
+    public void setTreePrefix(String treePrefix) {
+        this.treePrefix = treePrefix;
+    }
 
+    /**
+     * Sets the number format to use for outputting branch lengths
+     *
+     * @param format
+     */
+    public void setNumberFormat(NumberFormat format) {
+        formatter = format;
+    }
+
+    /**
+     * @param sorted true if you wish the translation table to be alphabetically sorted.
+     */
+    public void setSortedTranslationTable(boolean sorted) {
+        this.sorted = sorted;
+    }
+
+    /**
+     * @param trees      the array of trees to export
+     * @param attributes true if the nodes should be annotated with their attributes
+     */
+    public void exportTrees(Tree[] trees, boolean attributes) {
+        Map idMap = writeNexusHeader(trees[0]);
+        out.println("\t\t;");
+        for (int i = 0; i < trees.length; i++) {
+            writeNexusTree(trees[i], i, attributes, idMap);
+        }
+        out.println("End;");
+    }
+
+
+    public void exportTrees(Tree[] trees) {
+        exportTrees(trees, true);
+    }
+
+    /**
+     * Export a tree with all its attributes.
+     *
+     * @param tree the tree to export.
+     */
+    public void exportTree(Tree tree) {
+        Map idMap = writeNexusHeader(tree);
+        out.println("\t\t;");
+        writeNexusTree(tree, 1, true, idMap);
+        out.println("End;");
+    }
+
+    public void writeNexusTree(Tree tree, int i, boolean attributes, Map idMap) {
+        out.print("tree " + treePrefix + i + "  = [&R] ");
+        writeNode(tree, tree.getRoot(), attributes, idMap);
+        out.println(";");
+    }
+
+    public Map writeNexusHeader(Tree tree) {
         int taxonCount = tree.getTaxonCount();
+        List names = new ArrayList();
+
+        for (int i = 0; i < tree.getTaxonCount(); i++) {
+            names.add(tree.getTaxonId(i));
+        }
+
+        if (sorted) Collections.sort(names);
+
         out.println("#NEXUS");
         out.println();
         out.println("Begin taxa;");
         out.println("\tDimensions ntax=" + taxonCount + ";");
         out.println("\tTaxlabels");
-        for (int i = 0; i < taxonCount; i++) {
-            out.println("\t\t" + tree.getTaxon(i).getId());
+        for (int i = 0; i < names.size(); i++) {
+            String name = (String)names.get(i);
+            if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
+                name = "'" + name + "'";
+            }
+            out.println("\t\t" + name);
         }
         out.println("\t\t;");
         out.println("End;");
@@ -61,65 +138,77 @@ public class NexusExporter implements TreeExporter {
 
         // This is needed if the trees use numerical taxon labels
         out.println("\tTranslate");
-        for (int i = 0; i < taxonCount; i++) {
-            int k = i + 1;
-            if (k < taxonCount) {
-                out.println("\t\t" + k + " " + tree.getTaxonId(i) + ",");
+        Map idMap = new HashMap();
+
+        for (int k = 1; k <= names.size(); k++) {
+            String name = (String)names.get(k - 1);
+            idMap.put(name, new Integer(k));
+            if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
+                name = "'" + name + "'";
+            }
+            if (k < names.size()) {
+                out.println("\t\t" + k + " " + name + ",");
             } else {
-                out.println("\t\t" + k + " " + tree.getTaxonId(i));
+                out.println("\t\t" + k + " " + name);
             }
         }
-        out.println("\t\t;");
-        out.print("tree TREE1  = [&R] ");
-        writeNode( tree, tree.getRoot(), true);
-        out.println(";");
-        out.println("End;");
+        return idMap;
     }
 
-    private void writeNode(Tree tree, NodeRef node, boolean attributes) {
+    private void writeNode(Tree tree, NodeRef node, boolean attributes, Map idMap) {
         if (tree.isExternal(node)) {
             int k = node.getNumber() + 1;
+            if (idMap != null) {
+                k = ((Integer)idMap.get(tree.getTaxonId(k - 1))).intValue();
+            }
+
             out.print(k);
         } else {
             out.print("(");
-            writeNode(tree, tree.getChild(node, 0), attributes);
+            writeNode(tree, tree.getChild(node, 0), attributes, idMap);
             for (int i = 1; i < tree.getChildCount(node); i++) {
                 out.print(",");
-                writeNode(tree, tree.getChild(node, i), attributes);
+                writeNode(tree, tree.getChild(node, i), attributes, idMap);
             }
             out.print(")");
         }
 
-        Iterator iter = tree.getNodeAttributeNames(node);
-        if (iter != null) {
-            boolean first = true;
-            while (iter.hasNext()) {
-                if (first) {
-                    out.print("[&");
-                    first = false;
-                } else {
-                    out.print(",");
+        if (attributes) {
+            Iterator iter = tree.getNodeAttributeNames(node);
+            if (iter != null) {
+                boolean first = true;
+                while (iter.hasNext()) {
+                    if (first) {
+                        out.print("[&");
+                        first = false;
+                    } else {
+                        out.print(",");
+                    }
+                    String name = (String) iter.next();
+                    out.print(name + "=");
+                    Object value = tree.getNodeAttribute(node, name);
+                    printValue(value);
                 }
-                String name = (String)iter.next();
-                out.print(name + "=");
-                Object value = tree.getNodeAttribute(node, name);
-                printValue(value);
+                out.print("]");
             }
-            out.print("]");
         }
 
         if (!tree.isRoot(node)) {
             out.print(":");
 
             double length = tree.getBranchLength(node);
-            out.print(Double.toString(length));
+            if (formatter != null) {
+                out.print(formatter.format(length));
+            } else {
+                out.print(length);
+            }
         }
     }
 
     private void printValue(Object value) {
         if (value instanceof Object[]) {
             out.print("{");
-            Object[] values = (Object[])value;
+            Object[] values = (Object[]) value;
             for (int i = 0; i < values.length; i++) {
                 if (i > 0) {
                     out.print(",");
@@ -135,5 +224,8 @@ public class NexusExporter implements TreeExporter {
     }
 
     private PrintStream out;
+    private NumberFormat formatter = null;
+    private String treePrefix = DEFAULT_TREE_PREFIX;
+    private boolean sorted = false;
 
 }

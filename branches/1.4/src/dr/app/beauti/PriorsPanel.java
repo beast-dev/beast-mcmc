@@ -65,7 +65,7 @@ public class PriorsPanel extends JPanel implements Exportable {
             "Piecewise-constant", "Piecewise-linear"});
     WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
-    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
+//    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
 
     JCheckBox upgmaStartingTreeCheck = new JCheckBox("Use UPGMA to construct a starting tree");
 
@@ -74,7 +74,7 @@ public class PriorsPanel extends JPanel implements Exportable {
     BeautiFrame frame = null;
 
     boolean warningShown = false;
-    
+
     public PriorsPanel(BeautiFrame parent) {
 
         this.frame = parent;
@@ -157,14 +157,14 @@ public class PriorsPanel extends JPanel implements Exportable {
         };
 
         groupCountField.addKeyListener(keyListener);
-        samplingProportionField.addKeyListener(keyListener);
+//        samplingProportionField.addKeyListener(keyListener);
 
         FocusListener focusListener = new FocusAdapter() {
             public void focusLost(FocusEvent focusEvent) {
                 frame.priorsChanged();
             }
         };
-        samplingProportionField.addFocusListener(focusListener);
+//        samplingProportionField.addFocusListener(focusListener);
         groupCountField.addFocusListener(focusListener);
 
         setupComponent(parameterizationCombo);
@@ -216,8 +216,8 @@ public class PriorsPanel extends JPanel implements Exportable {
             treePriorPanel.addComponentWithLabel("Number of groups:", groupCountField);
             treePriorPanel.addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
         } else if (treePriorCombo.getSelectedIndex() == 6 ) { // birth-death
-            samplingProportionField.setColumns(8);
-            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
+//            samplingProportionField.setColumns(8);
+//            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
         }
 
         treePriorPanel.addComponent(upgmaStartingTreeCheck);
@@ -249,7 +249,7 @@ public class PriorsPanel extends JPanel implements Exportable {
             treePriorCombo.setSelectedIndex(6);
         }
         groupCountField.setValue(options.skylineGroupCount);
-        samplingProportionField.setValue(options.birthDeathSamplingProportion);
+//        samplingProportionField.setValue(options.birthDeathSamplingProportion);
 
         parameterizationCombo.setSelectedIndex(options.parameterization);
         bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
@@ -305,12 +305,12 @@ public class PriorsPanel extends JPanel implements Exportable {
             options.nodeHeightPrior = BeautiOptions.YULE;
         } else if (treePriorCombo.getSelectedIndex() == 6) {
             options.nodeHeightPrior = BeautiOptions.BIRTH_DEATH;
-            Double samplingProportion = samplingProportionField.getValue();
-            if (samplingProportion != null) {
-                options.birthDeathSamplingProportion = samplingProportion.doubleValue();
-            } else {
-                options.birthDeathSamplingProportion = 1.0;
-            }
+//            Double samplingProportion = samplingProportionField.getValue();
+//            if (samplingProportion != null) {
+//                options.birthDeathSamplingProportion = samplingProportion.doubleValue();
+//            } else {
+//                options.birthDeathSamplingProportion = 1.0;
+//            }
         } else {
             throw new RuntimeException("Unexpected value from treePriorCombo");
         }

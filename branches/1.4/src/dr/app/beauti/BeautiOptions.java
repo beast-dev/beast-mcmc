@@ -87,8 +87,6 @@ public class BeautiOptions {
         createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
         createParameter("yule.birthRate", "Yule speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
-//        createParameter("birthDeath.birthRate", "Birth-Death speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-//        createParameter("birthDeath.deathRate", "Birth-Death speciation process death rate", BIRTH_RATE_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
         createParameter(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME, "Birth-Death speciation process rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
         //createParameter("birthDeath.samplingProportion", "Birth-Death speciation process sampling proportion", NONE, 1.0, 0.0, 1.0);
@@ -174,8 +172,6 @@ public class BeautiOptions {
         createOperator("skyline.popSize", SCALE, 0.75, demoWeights * 5);
         createOperator("skyline.groupSize", INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
         createOperator("yule.birthRate", SCALE, 0.75, demoWeights);
-//        createOperator("birthDeath.birthRate", SCALE, 0.75, demoWeights);
-//        createOperator("birthDeath.deathRate", SCALE, 0.75, demoWeights);
 
         createOperator(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
         createOperator(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
@@ -585,8 +581,6 @@ public class BeautiOptions {
         } else if (nodeHeightPrior == YULE) {
             params.add(getParameter("yule.birthRate"));
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-//            params.add(getParameter("birthDeath.birthRate"));
-//            params.add(getParameter("birthDeath.deathRate"));
             params.add(getParameter(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME));
             params.add(getParameter(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME));
             // at present we are not allowing the sampling of samplingProportion
@@ -796,8 +790,6 @@ public class BeautiOptions {
         } else if (nodeHeightPrior == YULE) {
             ops.add(getOperator("yule.birthRate"));
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-//            ops.add(getOperator("birthDeath.birthRate"));
-//            ops.add(getOperator("birthDeath.deathRate"));
             ops.add(getOperator(BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME));
             ops.add(getOperator(BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME));
             // at present we are not allowing the sampling of samplingProportion

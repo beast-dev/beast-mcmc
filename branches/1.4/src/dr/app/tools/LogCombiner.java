@@ -58,11 +58,8 @@ public class LogCombiner {
 
     public LogCombiner(int[] burnins, int resample, String[] inputFileNames, String outputFileName, boolean treeFiles, boolean convertToDecimal, boolean useScale, double scale) throws IOException {
 
-        if (treeFiles) {
-            System.out.println("Creating combined tree file: '" + outputFileName);
-        } else {
-            System.out.println("Creating combined log file: '" + outputFileName);
-        }
+        System.out.println("Creating combined " + (treeFiles ? "tree" : "log") + " file: '" + outputFileName);
+
         System.out.println();
 
         PrintWriter writer = new PrintWriter(new FileOutputStream(outputFileName));
@@ -150,6 +147,15 @@ public class LogCombiner {
                 BufferedReader reader = new BufferedReader(new FileReader(inputFile));
                 int lineCount = 1;
                 String line = reader.readLine();
+
+                // lines starting with [ are ignored, assuming comments in MrBayes file
+                // lines starting with # are ignored, assuming comments in Migrate or BEAST file
+                while (line.startsWith("[") || line.startsWith("#")) {
+
+                    line = reader.readLine();
+                }
+
+
                 if (firstFile) {
                     titles = line.split("\t");
                     writer.println(line);
@@ -242,7 +248,11 @@ public class LogCombiner {
         writer.println("\tDimensions ntax=" + taxonCount + ";");
         writer.println("\tTaxlabels");
         for (int i = 0; i < taxonCount; i++) {
-            writer.println("\t\t" + tree.getTaxon(i).getId());
+            String id = tree.getTaxon(i).getId();
+            if (id.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
+                id = "'" + id + "'";
+            }
+            writer.println("\t\t" + id);
         }
         writer.println("\t\t;");
         writer.println("End;");
@@ -255,11 +265,12 @@ public class LogCombiner {
             int k = i + 1;
             Taxon taxon = tree.getTaxon(i);
             taxonMap.put(taxon.getId(), new Integer(k));
-            if (k < taxonCount) {
-                writer.println("\t\t" + k + " " + taxon.getId() + ",");
-            } else {
-                writer.println("\t\t" + k + " " + taxon.getId());
+            String id = taxon.getId();
+            if (id.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
+                id = "'" + id + "'";
             }
+
+            writer.println("\t\t" + k + " " + id + (k < taxonCount ? "," : ""));
         }
         writer.println("\t\t;");
     }
@@ -383,7 +394,9 @@ public class LogCombiner {
     public static void centreLine(String line, int pageWidth) {
         int n = pageWidth - line.length();
         int n1 = n / 2;
-        for (int i = 0; i < n1; i++) { System.out.print(" "); }
+        for (int i = 0; i < n1; i++) {
+            System.out.print(" ");
+        }
         System.out.println(line);
     }
 

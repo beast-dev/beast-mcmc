@@ -2075,8 +2075,8 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == YULE) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","yule.birthRate"), true);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","birthDeath.birthRate"), true);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref","birthDeath.deathRate"), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref", BirthDeathGernhard08Model.BIRTHDIFF_RATE_PARAM_NAME), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default("idref", BirthDeathGernhard08Model.RELATIVE_DEATH_RATE_PARAM_NAME), true);
         }
 
         if (alignment != null) {

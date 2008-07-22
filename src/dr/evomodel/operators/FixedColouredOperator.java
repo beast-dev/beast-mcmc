@@ -27,6 +27,7 @@ package dr.evomodel.operators;
 
 import dr.evomodel.coalescent.structure.ColourSamplerModel;
 import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.xml.*;
@@ -88,11 +89,11 @@ public class FixedColouredOperator implements CoercableMCMCOperator {
         throw new IllegalArgumentException();
     }
 
-    public int getMode() {
+    public CoercionMode getMode() {
         if (innerOperator instanceof CoercableMCMCOperator) {
             return ((CoercableMCMCOperator) innerOperator).getMode();
         }
-        return CoercableMCMCOperator.COERCION_OFF;
+        return CoercionMode.COERCION_OFF;
     }
 
     public String getOperatorName() {
@@ -178,8 +179,8 @@ public class FixedColouredOperator implements CoercableMCMCOperator {
         return 0;
     }
 
-    public final void setDumDeviation(double sumDeviation) {
-        innerOperator.setDumDeviation(sumDeviation);
+    public final void setSumDeviation(double sumDeviation) {
+        innerOperator.setSumDeviation(sumDeviation);
     }
 
     public String getPerformanceSuggestion() {

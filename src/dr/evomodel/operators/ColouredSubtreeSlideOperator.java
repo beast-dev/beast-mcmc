@@ -31,6 +31,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.structure.ColourSamplerModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
@@ -57,11 +58,11 @@ public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implement
     private boolean gaussian = false;
     private boolean swapRates;
     private boolean swapTraits;
-    private int mode = CoercableMCMCOperator.DEFAULT;
+    private CoercionMode mode = CoercionMode.DEFAULT;
 
     private ColourSamplerModel colouringModel;
 
-    public ColouredSubtreeSlideOperator(TreeModel tree, ColourSamplerModel colouringModel, double weight, double size, boolean gaussian, boolean swapRates, boolean swapTraits, int mode) {
+    public ColouredSubtreeSlideOperator(TreeModel tree, ColourSamplerModel colouringModel, double weight, double size, boolean gaussian, boolean swapRates, boolean swapTraits, CoercionMode mode) {
         this.tree = tree;
         setWeight(weight);
 
@@ -294,7 +295,7 @@ public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implement
         return getSize();
     }
 
-    public int getMode() {
+    public CoercionMode getMode() {
         return mode;
     }
 
@@ -335,15 +336,7 @@ public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implement
             boolean swapRates = xo.getAttribute(SWAP_RATES, false);
             boolean swapTraits = xo.getAttribute(SWAP_TRAITS, false);
 
-            int mode = CoercableMCMCOperator.DEFAULT;
-            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-                if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-                    mode = CoercableMCMCOperator.COERCION_ON;
-                } else {
-                    mode = CoercableMCMCOperator.COERCION_OFF;
-                }
-            }
-
+            CoercionMode mode = CoercionMode.parseMode(xo);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             ColourSamplerModel colourSamplerModel = (ColourSamplerModel) xo.getChild(ColourSamplerModel.class);
             double weight = xo.getDoubleAttribute("weight");

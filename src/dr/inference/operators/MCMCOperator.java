@@ -99,7 +99,7 @@ public interface MCMCOperator {
 
     double getSpan(boolean reset);
 
-    void setDumDeviation(double sumDeviation);
+    void setSumDeviation(double sumDeviation);
 
     /**
      * @return the optimal acceptance probability
@@ -161,7 +161,7 @@ public interface MCMCOperator {
 
         public static int getOperationCount(MCMCOperator op) {
             return op.getAccepted() + op.getRejected();
-		}
-	}
+        }
+    }
 
 }

@@ -36,13 +36,12 @@ import dr.xml.*;
 /**
  * @author Marc Suchard
  */
-public class MultivariateNormalOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
+public class MultivariateNormalOperator extends AbstractCoercableOperator {
 
     public static final String MVN_OPERATOR = "mvnOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
     public static final String VARIANCE_MATRIX = "varMatrix";
 
-    private int mode;
     private double scaleFactor;
     private Parameter parameter;
     private int dim;
@@ -50,9 +49,8 @@ public class MultivariateNormalOperator extends SimpleMCMCOperator implements Co
     private double[][] cholesky;
 
     public MultivariateNormalOperator(Parameter parameter, double scaleFactor,
-                                      MatrixParameter varMatrix, double weight, int mode) {
-        super();
-        this.mode = mode;
+                                      MatrixParameter varMatrix, double weight, CoercionMode mode) {
+        super(mode);
         this.scaleFactor = scaleFactor;
         this.parameter = parameter;
         setWeight(weight);
@@ -107,10 +105,6 @@ public class MultivariateNormalOperator extends SimpleMCMCOperator implements Co
         return scaleFactor;
     }
 
-    public int getMode() {
-        return mode;
-    }
-
     public double getScaleFactor() {
         return scaleFactor;
     }
@@ -156,15 +150,7 @@ public class MultivariateNormalOperator extends SimpleMCMCOperator implements Co
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            int mode = CoercableMCMCOperator.DEFAULT;
-
-            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-                if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-                    mode = CoercableMCMCOperator.COERCION_ON;
-                } else {
-                    mode = CoercableMCMCOperator.COERCION_OFF;
-                }
-            }
+            CoercionMode mode = CoercionMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);

@@ -37,18 +37,20 @@ import dr.xml.*;
  * @author Andrew Rambaut
  * @version $Id: DeltaExchangeOperator.java,v 1.18 2005/06/14 10:40:34 rambaut Exp $
  */
-public class DeltaExchangeOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
+public class DeltaExchangeOperator extends AbstractCoercableOperator {
 
     public static final String DELTA_EXCHANGE = "deltaExchange";
     public static final String DELTA = "delta";
     public static final String INTEGER_OPERATOR = "integer";
     public static final String PARAMETER_WEIGHTS = "parameterWeights";
 
-    public DeltaExchangeOperator(Parameter parameter, int[] parameterWeights, double delta, double weight, boolean isIntegerOperator, int mode) {
+    public DeltaExchangeOperator(Parameter parameter, int[] parameterWeights, double delta, double weight, boolean isIntegerOperator, CoercionMode mode) {
+
+        super(mode);
+
         this.parameter = parameter;
         this.delta = delta;
         setWeight(weight);
-        this.mode = mode;
         this.isIntegerOperator = isIntegerOperator;
         this.parameterWeights = parameterWeights;
 
@@ -132,11 +134,6 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
         return delta;
     }
 
-    public int getMode() {
-        return mode;
-    }
-
-
     public double getTargetAcceptanceProbability() {
         return 0.234;
     }
@@ -184,14 +181,7 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            int mode = CoercableMCMCOperator.DEFAULT;
-            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-                if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-                    mode = CoercableMCMCOperator.COERCION_ON;
-                } else {
-                    mode = CoercableMCMCOperator.COERCION_OFF;
-                }
-            }
+            CoercionMode mode = CoercionMode.parseMode(xo);
 
             final boolean isIntegerOperator = xo.getAttribute(INTEGER_OPERATOR, false);
 
@@ -260,6 +250,5 @@ public class DeltaExchangeOperator extends SimpleMCMCOperator implements Coercab
     private Parameter parameter = null;
     private int[] parameterWeights;
     private double delta = 0.02;
-    private int mode = CoercableMCMCOperator.DEFAULT;
     private boolean isIntegerOperator = false;
 }

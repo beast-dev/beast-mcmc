@@ -30,31 +30,32 @@ import java.io.PrintWriter;
 /**
  * A class that writes a log in tab delimited format.
  *
- * @version $Id: TabDelimitedFormatter.java,v 1.5 2005/05/24 20:25:59 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: TabDelimitedFormatter.java,v 1.5 2005/05/24 20:25:59 rambaut Exp $
  */
-public class TabDelimitedFormatter extends LogFormatter {
+public class TabDelimitedFormatter implements LogFormatter {
 
-	boolean outputLabels = true;
+    protected PrintWriter printWriter;
 
     public TabDelimitedFormatter(PrintWriter printWriter) {
-	
-		super(printWriter);
-	}
+
+        this.printWriter = printWriter;
+    }
+
+    boolean outputLabels = true;
 
     public TabDelimitedFormatter(PrintWriter printWriter, boolean labels) {
 
-		super(printWriter);
+        this(printWriter);
         outputLabels = labels;
-	}
+    }
 
-	public void startLogging(String title) {
+    public void startLogging(String title) {
         // DO NOTHING    
     }
-	
-	public void logHeading(String heading) {
+
+    public void logHeading(String heading) {
         if (heading != null) {
             String[] lines = heading.split("[\r\n]");
             for (String line : lines) {
@@ -63,14 +64,14 @@ public class TabDelimitedFormatter extends LogFormatter {
         }
         printWriter.flush();
     }
-	
-	public void logLine(String line) {
-		printWriter.println(line);
-		printWriter.flush();
-	}
-	
-	public void logLabels(String[] labels) {
-		if (outputLabels) {
+
+    public void logLine(String line) {
+        printWriter.println(line);
+        printWriter.flush();
+    }
+
+    public void logLabels(String[] labels) {
+        if (outputLabels) {
             if (labels.length > 0) {
                 printWriter.print(labels[0]);
             }
@@ -82,26 +83,26 @@ public class TabDelimitedFormatter extends LogFormatter {
 
             printWriter.println();
             printWriter.flush();
-}
-	}
-	
-	public void logValues(String[] values) {
-		
-		if (values.length > 0) {
-			printWriter.print(values[0]);
-		}
-	
-		for (int i = 1; i < values.length; i++) {
-			printWriter.print('\t');
-			printWriter.print(values[i]);
-		}
-		
-		printWriter.println();
-		printWriter.flush();
-	}
-	
-	public void stopLogging() {
-		// Nothing to do...
-	}
-		
+        }
+    }
+
+    public void logValues(String[] values) {
+
+        if (values.length > 0) {
+            printWriter.print(values[0]);
+        }
+
+        for (int i = 1; i < values.length; i++) {
+            printWriter.print('\t');
+            printWriter.print(values[i]);
+        }
+
+        printWriter.println();
+        printWriter.flush();
+    }
+
+    public void stopLogging() {
+        // Nothing to do...
+    }
+
 }

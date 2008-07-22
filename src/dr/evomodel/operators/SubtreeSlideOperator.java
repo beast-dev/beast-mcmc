@@ -29,10 +29,7 @@ import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.OperatorUtils;
+import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -61,10 +58,10 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
     private boolean swapInRandomRate;
     private boolean swapInRandomTrait;
     private boolean scaledDirichletBranches;
-    private int mode = CoercableMCMCOperator.DEFAULT;
+    private CoercionMode mode = CoercionMode.DEFAULT;
 
     public SubtreeSlideOperator(TreeModel tree, double weight, double size, boolean gaussian,
-                                boolean swapRates, boolean swapTraits, boolean scaleDirichletBranches, int mode) {
+                                boolean swapRates, boolean swapTraits, boolean scaleDirichletBranches, CoercionMode mode) {
         this.tree = tree;
         setWeight(weight);
 
@@ -336,7 +333,7 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
         return getSize();
     }
 
-    public int getMode() {
+    public CoercionMode getMode() {
         return mode;
     }
 
@@ -374,12 +371,12 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
             boolean swapTraits = xo.getAttribute(SWAP_TRAITS, false);
             boolean scaledDirichletBranches = xo.getAttribute(DIRICHLET_BRANCHES, false);
 
-            int mode = CoercableMCMCOperator.DEFAULT;
+            CoercionMode mode = CoercionMode.DEFAULT;
             if (xo.hasAttribute(AUTO_OPTIMIZE)) {
                 if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-                    mode = CoercableMCMCOperator.COERCION_ON;
+                    mode = CoercionMode.COERCION_ON;
                 } else {
-                    mode = CoercableMCMCOperator.COERCION_OFF;
+                    mode = CoercionMode.COERCION_OFF;
                 }
             }
 

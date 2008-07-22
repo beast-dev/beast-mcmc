@@ -25,32 +25,25 @@
 
 package dr.inference.loggers;
 
-import java.io.PrintWriter;
-
 /**
  * An abstract class for a log formatter which writes the log to a PrintStream in a particular format.
  *
- * @version $Id: LogFormatter.java,v 1.3 2005/05/24 20:25:59 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: LogFormatter.java,v 1.3 2005/05/24 20:25:59 rambaut Exp $
  */
-public abstract class LogFormatter {
+public interface LogFormatter {
 
-	protected PrintWriter printWriter;
+    void startLogging(String title);
 
-	public LogFormatter(PrintWriter printWriter) {
-	
-		this.printWriter = printWriter;
-	}
+    void logHeading(String heading);
 
-	public abstract void startLogging(String title);
-	
-	public abstract void logHeading(String heading);
-	public abstract void logLine(String line);
-	public abstract void logLabels(String[] labels);
-	public abstract void logValues(String[] values);
-	
-	public abstract void stopLogging();
-	
+    void logLine(String line);
+
+    void logLabels(String[] labels);
+
+    void logValues(String[] values);
+
+    void stopLogging();
+
 }

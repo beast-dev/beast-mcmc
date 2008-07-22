@@ -130,16 +130,16 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         return sumDeviation;
     }
 
-    public final void setDumDeviation(double sumDeviation) {
+    public final void setSumDeviation(double sumDeviation) {
         this.sumDeviation = sumDeviation;
     }
 
     public double getSpan(boolean reset) {
         double span = 0;
-        if( spanDeviation[1] > spanDeviation[0] && spanCount > 2000 ) {
+        if (spanDeviation[1] > spanDeviation[0] && spanCount > 2000) {
             span = spanDeviation[1] - spanDeviation[0];
 
-            if( reset ) {
+            if (reset) {
                 spanDeviation[0] = Double.MAX_VALUE;
                 spanDeviation[1] = -Double.MAX_VALUE;
                 spanCount = 0;
@@ -177,7 +177,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private boolean operateAllowed = true;
     private double targetAcceptanceProb = 0.234;
 
-    private double[] spanDeviation = {Double.MAX_VALUE,-Double.MAX_VALUE};
+    private double[] spanDeviation = {Double.MAX_VALUE, -Double.MAX_VALUE};
     private int spanCount = 0;
 }
 

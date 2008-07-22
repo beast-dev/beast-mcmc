@@ -36,20 +36,21 @@ import dr.xml.*;
  * @author Andrew Rambaut
  * @version $Id: CenteredScaleOperator.java,v 1.20 2005/06/14 10:40:34 rambaut Exp $
  */
-public class CenteredScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
+public class CenteredScaleOperator extends AbstractCoercableOperator {
 
     public static final String CENTERED_SCALE = "centeredScale";
     public static final String SCALE_FACTOR = "scaleFactor";
 
     public CenteredScaleOperator(Parameter parameter) {
+        super(CoercionMode.DEFAULT);
         this.parameter = parameter;
     }
 
-    public CenteredScaleOperator(Parameter parameter, double scale, int weight, int mode) {
+    public CenteredScaleOperator(Parameter parameter, double scale, int weight, CoercionMode mode) {
+        super(mode);
         this.parameter = parameter;
         this.scaleFactor = scale;
         setWeight(weight);
-        this.mode = mode;
     }
 
     /**
@@ -111,10 +112,6 @@ public class CenteredScaleOperator extends SimpleMCMCOperator implements Coercab
         return scaleFactor;
     }
 
-    public int getMode() {
-        return mode;
-    }
-
     public double getTargetAcceptanceProbability() {
         return 0.234;
     }
@@ -158,21 +155,12 @@ public class CenteredScaleOperator extends SimpleMCMCOperator implements Coercab
 
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-            int mode = CoercableMCMCOperator.DEFAULT;
-            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-                if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-                    mode = CoercableMCMCOperator.COERCION_ON;
-                } else {
-                    mode = CoercableMCMCOperator.COERCION_OFF;
-                }
-            }
-
             double scale = xo.getDoubleAttribute(SCALE_FACTOR);
             double weight = xo.getDoubleAttribute(WEIGHT);
             CenteredScaleOperator op = new CenteredScaleOperator(parameter);
             op.setWeight(weight);
             op.scaleFactor = scale;
-            op.mode = mode;
+            op.mode = CoercionMode.parseMode(xo);
             return op;
         }
 
@@ -204,5 +192,4 @@ public class CenteredScaleOperator extends SimpleMCMCOperator implements Coercab
 
     private Parameter parameter = null;
     private double scaleFactor = 0.5;
-    private int mode = CoercableMCMCOperator.DEFAULT;
 }

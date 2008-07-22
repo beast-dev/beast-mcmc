@@ -37,7 +37,7 @@ import dr.xml.*;
  * @author Andrew Rambaut
  * @version $Id: UpDownOperator.java,v 1.25 2005/06/14 10:40:34 rambaut Exp $
  */
-public class UpDownOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
+public class UpDownOperator extends AbstractCoercableOperator {
 
     public static final String UP_DOWN_OPERATOR = "upDownOperator";
     public static final String UP = "up";
@@ -46,12 +46,14 @@ public class UpDownOperator extends SimpleMCMCOperator implements CoercableMCMCO
     public static final String SCALE_FACTOR = "scaleFactor";
 
     public UpDownOperator(Parameter upParameter, Parameter downParameter,
-                          double scale, double weight, int mode) {
+                          double scale, double weight, CoercionMode mode) {
+
+        super(mode);
+
         this.upParameter = upParameter;
         this.downParameter = downParameter;
         this.scaleFactor = scale;
         setWeight(weight);
-        this.mode = mode;
     }
 
     public final int getPriorType() {
@@ -137,10 +139,6 @@ public class UpDownOperator extends SimpleMCMCOperator implements CoercableMCMCO
         scaleFactor = 1.0 / (Math.pow(10.0, value) + 1.0);
     }
 
-    public int getMode() {
-        return mode;
-    }
-
     public double getRawParameter() {
         return scaleFactor;
     }
@@ -179,16 +177,9 @@ public class UpDownOperator extends SimpleMCMCOperator implements CoercableMCMCO
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
-            int mode = CoercableMCMCOperator.DEFAULT;
-            final double weight = xo.getDoubleAttribute(WEIGHT);
 
-            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-                if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-                    mode = CoercableMCMCOperator.COERCION_ON;
-                } else {
-                    mode = CoercableMCMCOperator.COERCION_OFF;
-                }
-            }
+            final double weight = xo.getDoubleAttribute(WEIGHT);
+            CoercionMode mode = CoercionMode.parseMode(xo);
 
             Parameter param1 = (Parameter) xo.getElementFirstChild(UP);
             Parameter param2 = (Parameter) xo.getElementFirstChild(DOWN);
@@ -227,5 +218,4 @@ public class UpDownOperator extends SimpleMCMCOperator implements CoercableMCMCO
     private Parameter downParameter = null;
     private ContinuousVariablePrior prior = new ContinuousVariablePrior();
     private double scaleFactor = 0.5;
-    private int mode = CoercableMCMCOperator.DEFAULT;
 }

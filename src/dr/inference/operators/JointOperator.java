@@ -37,7 +37,7 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
         operatorList.add(operation);
         if (operation instanceof CoercableMCMCOperator) {
 
-            if (((CoercableMCMCOperator) operation).getMode() == COERCION_ON)
+            if (((CoercableMCMCOperator) operation).getMode() == CoercionMode.COERCION_ON)
 
                 operatorToOptimizeList.add(operatorList.size() - 1);
 
@@ -102,22 +102,22 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
         throw new RuntimeException("More than one raw parameter for a joint operator");
     }
 
-    public int getMode() {
+    public CoercionMode getMode() {
         if (operatorToOptimizeList.size() > 0)
-            return CoercableMCMCOperator.COERCION_ON;
-        return CoercableMCMCOperator.COERCION_OFF;
+            return CoercionMode.COERCION_ON;
+        return CoercionMode.COERCION_OFF;
     }
 
     public MCMCOperator getSubOperator(int i) {
         return operatorList.get(i);
     }
 
-    public int getSubOperatorMode(int i) {
+    public CoercionMode getSubOperatorMode(int i) {
         if (i < 0 || i >= operatorList.size())
             throw new IllegalArgumentException();
         if (operatorList.get(i) instanceof CoercableMCMCOperator)
             return ((CoercableMCMCOperator) operatorList.get(i)).getMode();
-        return CoercableMCMCOperator.COERCION_OFF;
+        return CoercionMode.COERCION_OFF;
     }
 
     public String getSubOperatorName(int i) {

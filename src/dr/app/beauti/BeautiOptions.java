@@ -365,7 +365,7 @@ public class BeautiOptions {
             growthRateMaximum = 1E6 * rate;
             birthRateMaximum = 1E6 * rate;
 
-            if (alignment != null) {
+            if (hasData()) {
                 initialRootHeight = meanDistance / rate;
 
                 initialRootHeight = round(initialRootHeight, 2);
@@ -382,7 +382,7 @@ public class BeautiOptions {
         double timeScaleMaximum = round(initialRootHeight * 1000.0, 2);
 
         for (Parameter param : ops) {
-            if (alignmentReset) param.priorEdited = false;
+            if (dataReset) param.priorEdited = false;
 
             if (!param.priorEdited) {
                 switch (param.scale) {
@@ -433,7 +433,7 @@ public class BeautiOptions {
             }
         }
 
-        alignmentReset = false;
+        dataReset = false;
 
         return ops;
     }
@@ -454,7 +454,7 @@ public class BeautiOptions {
         if (fixedSubstitutionRate) {
             double rate = meanSubstitutionRate;
 
-            if (alignment != null) {
+            if (hasData()) {
                 initialRootHeight = meanDistance / rate;
                 initialRootHeight = round(initialRootHeight, 2);
             }
@@ -480,14 +480,14 @@ public class BeautiOptions {
      */
     private void selectParameters(ArrayList<Parameter> params) {
 
-        if (alignment != null) {
+        if (hasData()) {
 
             if (partitionCount > 1) {
                 for (int i = 1; i <= partitionCount; i++) {
                     params.add(getParameter("siteModel" + i + ".mu"));
                 }
             }
-            switch (dataType) {
+            switch (dataType.getType()) {
                 case DataType.NUCLEOTIDES:
                     switch (nucSubstitutionModel) {
                         case HKY:
@@ -699,8 +699,8 @@ public class BeautiOptions {
      */
     private void selectOperators(ArrayList<Operator> ops) {
 
-        if (alignment != null) {
-            switch (dataType) {
+        if (hasData()) {
+            switch (dataType.getType()) {
                 case DataType.NUCLEOTIDES:
 
                     switch (nucSubstitutionModel) {
@@ -926,11 +926,10 @@ public class BeautiOptions {
     /**
      * Read options from a file
      *
-     * @param includeData include a data block?
      * @param guessDates  guess dates?
      * @return the Document
      */
-    public Document create(boolean includeData, boolean guessDates) {
+    public Document create(boolean guessDates) {
 
         Element root = new Element("beauti");
         root.setAttribute("version", version);
@@ -943,23 +942,6 @@ public class BeautiOptions {
         dataElement.addContent(createChild("datesDirection", datesDirection));
         dataElement.addContent(createChild("translation", translation));
         dataElement.addContent(createChild("userTree", userTree));
-
-        if (includeData && originalAlignment != null) {
-            Element alignmentElement = new Element("alignment");
-            alignmentElement.addContent(createChild("dataType", originalAlignment.getDataType().getType()));
-            for (int i = 0; i < originalAlignment.getTaxonCount(); i++) {
-                Element taxonElement = new Element("taxon");
-                taxonElement.addContent(createChild("id", originalAlignment.getTaxonId(i)));
-                dr.evolution.util.Date date = originalAlignment.getTaxon(i).getDate();
-                if (date != null) {
-                    taxonElement.addContent(createChild("date", date.getTimeValue()));
-                }
-                Sequence sequence = originalAlignment.getSequence(i);
-                taxonElement.addContent(createChild("sequence", sequence.getSequenceString()));
-                alignmentElement.addContent(taxonElement);
-            }
-            dataElement.addContent(alignmentElement);
-        }
 
         dataElement.addContent(createChild("guessDates", guessDates));
         dataElement.addContent(createChild("guessDateFromOrder", guessDateFromOrder));
@@ -1139,78 +1121,11 @@ public class BeautiOptions {
             throw new dr.xml.XMLParseException("This document does not appear to be a BEAUti file");
         }
 
-        Element dataElement = root.getChild("data");
         Element taxaElement = root.getChild("taxa");
         Element modelElement = root.getChild("model");
         Element priorsElement = root.getChild("priors");
         Element operatorsElement = root.getChild("operators");
         Element mcmcElement = root.getChild("mcmc");
-
-        if (dataElement != null) {
-            //fileNameStem = getStringChild(dataElement, "fileNameStem", "untitled");
-
-            datesUnits = getIntegerChild(dataElement, "datesUnits", YEARS);
-            datesDirection = getIntegerChild(dataElement, "datesDirection", FORWARDS);
-            translation = getIntegerChild(dataElement, "translation", NONE);
-            userTree = getBooleanChild(dataElement, "userTree", false);
-
-            Units.Type theUnits = Units.Type.SUBSTITUTIONS;
-            if (datesUnits == YEARS) theUnits = Units.Type.YEARS;
-            if (datesUnits == MONTHS) theUnits = Units.Type.MONTHS;
-            if (datesUnits == DAYS) theUnits = Units.Type.DAYS;
-
-            Element alignmentElement = dataElement.getChild("alignment");
-            if (alignmentElement != null) {
-                originalAlignment = new SimpleAlignment();
-
-                int dataType = getIntegerChild(alignmentElement, "dataType", DataType.NUCLEOTIDES);
-                switch (dataType) {
-                    case DataType.NUCLEOTIDES:
-                        originalAlignment.setDataType(Nucleotides.INSTANCE);
-                        break;
-                    case DataType.AMINO_ACIDS:
-                        originalAlignment.setDataType(AminoAcids.INSTANCE);
-                        break;
-                    case DataType.TWO_STATES:
-                        originalAlignment.setDataType(TwoStates.INSTANCE);
-                        break;
-                    default:
-                        originalAlignment.setDataType(Nucleotides.INSTANCE);
-                }
-
-                for (Object o : alignmentElement.getChildren("taxon")) {
-                    Element taxonElement = (Element) o;
-
-                    String id = getStringChild(taxonElement, "id", "");
-                    Taxon taxon = new Taxon(id);
-
-                    if (taxonElement.getChild("date") != null) {
-                        double dateValue = getDoubleChild(taxonElement, "date", 0.0);
-
-                        if (datesDirection == FORWARDS) {
-                            taxon.setDate(Date.createTimeSinceOrigin(dateValue, theUnits, 0.0));
-                        } else {
-                            taxon.setDate(Date.createTimeAgoFromOrigin(dateValue, theUnits, 0.0));
-                        }
-                    }
-                    String seqString = getStringChild(taxonElement, "sequence", "");
-                    Sequence sequence = new Sequence(taxon, seqString);
-
-                    originalAlignment.addSequence(sequence);
-                }
-                taxonList = originalAlignment;
-                alignment = originalAlignment;
-            }
-
-            guessDates = getBooleanChild(dataElement, "guessDates", false);
-            guessDateFromOrder = getBooleanChild(dataElement, "guessDateFromOrder", false);
-            fromLast = getBooleanChild(dataElement, "fromLast", false);
-            order = getIntegerChild(dataElement, "order", 0);
-            prefix = getStringChild(dataElement, "prefix", "");
-            offset = getDoubleChild(dataElement, "offset", 0);
-            unlessLessThan = getDoubleChild(dataElement, "unlessLessThan", 0);
-            offset2 = getDoubleChild(dataElement, "offset2", 0);
-        }
 
         if (taxaElement != null) {
             for (Object ts : taxaElement.getChildren("taxonSet")) {
@@ -1373,16 +1288,16 @@ public class BeautiOptions {
 
     public void guessDates() {
 
-        for (int i = 0; i < originalAlignment.getTaxonCount(); i++) {
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             java.util.Date origin = new java.util.Date(0);
 
             double d = 0.0;
 
             try {
                 if (guessDateFromOrder) {
-                    d = guessDateFromOrder(originalAlignment.getTaxonId(i), order, fromLast);
+                    d = guessDateFromOrder(taxonList.getTaxonId(i), order, fromLast);
                 } else {
-                    d = guessDateFromPrefix(originalAlignment.getTaxonId(i), prefix);
+                    d = guessDateFromPrefix(taxonList.getTaxonId(i), prefix);
                 }
 
             } catch (GuessDatesException gfe) {
@@ -1402,7 +1317,7 @@ public class BeautiOptions {
             }
 
             Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
-            originalAlignment.getTaxon(i).setAttribute("date", date);
+            taxonList.getTaxon(i).setAttribute("date", date);
         }
 
         // adjust the dates to the current timescale...
@@ -1511,14 +1426,14 @@ public class BeautiOptions {
 
     private void timeScaleChanged() {
 
-        for (int i = 0; i < alignment.getTaxonCount(); i++) {
-            Date date = alignment.getTaxon(i).getDate();
-            double d = date.getTimeValue();
-
-            Date newDate = createDate(d, units, datesDirection == BACKWARDS, 0.0);
-
-            alignment.getTaxon(i).setDate(newDate);
-        }
+//        for (int i = 0; i < alignment.getTaxonCount(); i++) {
+//            Date date = alignment.getTaxon(i).getDate();
+//            double d = date.getTimeValue();
+//
+//            Date newDate = createDate(d, units, datesDirection == BACKWARDS, 0.0);
+//
+//            alignment.getTaxon(i).setDate(newDate);
+//        }
 
     }
 
@@ -1528,6 +1443,10 @@ public class BeautiOptions {
         } else {
             return Date.createTimeSinceOrigin(timeValue, units, origin);
         }
+    }
+
+    public boolean hasData() {
+        return dataPartitions.size() > 0;
     }
 
     public class Parameter {
@@ -1766,6 +1685,45 @@ public class BeautiOptions {
 
     }
 
+    public static class DataPartition {
+        public DataPartition(String name, String fileName, Alignment alignment) {
+            this.name = name;
+            this.fileName = fileName;
+            this.alignment = alignment;
+            this.coding = false;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public Alignment getAlignment() {
+            return alignment;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public boolean isCoding() {
+            return coding;
+        }
+
+        public void setCoding(boolean coding) {
+            this.coding = coding;
+        }
+
+        private final String fileName;
+        private final Alignment alignment;
+
+        private String name;
+        private boolean coding;
+    }
+
     public static final String version = "1.4";
     public static final int YEARS = 0;
     public static final int MONTHS = 1;
@@ -1849,15 +1807,14 @@ public class BeautiOptions {
     public String substTreeFileName = null;
 
     // Data options
-    public int dataType = DataType.NUCLEOTIDES;
+    public DataType dataType = null;
+    public boolean dataReset = true;
 
     public TaxonList taxonList = null;
-    public SimpleAlignment originalAlignment = null;
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
-    public Alignment alignment = null;
+    public List<DataPartition> dataPartitions = new ArrayList<DataPartition>();
     public Tree tree = null;
-    public boolean alignmentReset = true;
     public double meanDistance = 1.0;
     public int datesUnits = YEARS;
     public int datesDirection = FORWARDS;
@@ -1897,6 +1854,7 @@ public class BeautiOptions {
     public String extendedSkylineModel = VariableDemographicModel.LINEAR;
     public double birthDeathSamplingProportion = 1.0;
     public boolean fixedTree = false;
+
     public Units.Type units = Units.Type.SUBSTITUTIONS;
     public boolean fixedSubstitutionRate = false;
     public boolean hasSetFixedSubstitutionRate = false;

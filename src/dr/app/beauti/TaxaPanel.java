@@ -376,7 +376,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 
         this.options = options;
 
-        taxa = options.alignment;
+        taxa = options.taxonList;
         if (taxa == null) {
             addTaxonSetAction.setEnabled(false);
             removeTaxonSetAction.setEnabled(false);

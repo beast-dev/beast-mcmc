@@ -87,8 +87,6 @@ public class BeautiTester {
 
         // Data options
         beautiOptions.taxonList = null;
-        beautiOptions.originalAlignment = null;
-        beautiOptions.alignment = null;
         beautiOptions.tree = null;
 
         beautiOptions.datesUnits = BeautiOptions.YEARS;
@@ -109,8 +107,6 @@ public class BeautiTester {
     }
 
     public void buildNucModels(String key, BeastGenerator beautiOptions) {
-        beautiOptions.alignment = beautiOptions.originalAlignment;
-
         beautiOptions.nucSubstitutionModel = BeautiOptions.HKY;
         buildCodonModels(key+"HKY", beautiOptions);
         beautiOptions.nucSubstitutionModel = BeautiOptions.GTR;
@@ -177,7 +173,7 @@ public class BeautiTester {
 
     public void buildAAModels(String key, BeastGenerator beautiOptions) {
 
-        beautiOptions.alignment = new ConvertAlignment(AminoAcids.INSTANCE, GeneticCode.UNIVERSAL, beautiOptions.originalAlignment);
+//        beautiOptions.alignment = new ConvertAlignment(AminoAcids.INSTANCE, GeneticCode.UNIVERSAL, beautiOptions.originalAlignment);
         /*
         beautiOptions.aaSubstitutionModel = BeautiOptions.BLOSUM_62;
         buildHeteroModels(key+"BLOSUM62", beautiOptions);
@@ -252,143 +248,143 @@ public class BeautiTester {
     }
 
     protected void importFromFile(String fileName, BeastGenerator beautiOptions) {
-
-        try {
-            FileReader reader = new FileReader(fileName);
-
-            NexusApplicationImporter importer = new NexusApplicationImporter(reader);
-
-            boolean done = false;
-
-            beautiOptions.originalAlignment = null;
-            beautiOptions.alignment = null;
-            beautiOptions.tree = null;
-            beautiOptions.taxonList = null;
-
-            while (!done) {
-                try {
-
-                    NexusImporter.NexusBlock block = importer.findNextBlock();
-
-                    if (block == NexusImporter.TAXA_BLOCK) {
-
-                        if (beautiOptions.taxonList != null) {
-                            throw new NexusImporter.MissingBlockException("TAXA block already defined");
-                        }
-
-                        beautiOptions.taxonList = importer.parseTaxaBlock();
-
-                    } else if (block == NexusImporter.CALIBRATION_BLOCK) {
-                        if (beautiOptions.taxonList == null) {
-                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a CALIBRATION block");
-                        }
-
-                        importer.parseCalibrationBlock(beautiOptions.taxonList);
-
-                    } else if (block == NexusImporter.CHARACTERS_BLOCK) {
-
-                        if (beautiOptions.taxonList == null) {
-                            throw new NexusImporter.MissingBlockException("TAXA block must be defined before a CHARACTERS block");
-                        }
-
-                        if (beautiOptions.originalAlignment != null) {
-                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
-                        }
-
-                        beautiOptions.originalAlignment = (SimpleAlignment)importer.parseCharactersBlock(beautiOptions.taxonList);
-
-                    } else if (block == NexusImporter.DATA_BLOCK) {
-
-                        if (beautiOptions.originalAlignment != null) {
-                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
-                        }
-
-                        // A data block doesn't need a taxon block before it
-                        // but if one exists then it will use it.
-                        beautiOptions.originalAlignment = (SimpleAlignment)importer.parseDataBlock(beautiOptions.taxonList);
-                        if (beautiOptions.taxonList == null) {
-                            beautiOptions.taxonList = beautiOptions.originalAlignment;
-                        }
-
-                    } else if (block == NexusImporter.TREES_BLOCK) {
-
-                        if (beautiOptions.taxonList == null) {
-                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a TREES block");
-                        }
-
-                        if (beautiOptions.tree != null) {
-                            throw new NexusImporter.MissingBlockException("TREES block already defined");
-                        }
-
-                        Tree[] trees = importer.parseTreesBlock(beautiOptions.taxonList);
-                        if (trees.length > 0) {
-                            beautiOptions.tree = trees[0];
-                        }
-
-/*					} else if (block == NexusApplicationImporter.PAUP_BLOCK) {
-
-						importer.parsePAUPBlock(beautiOptions);
-
-					} else if (block == NexusApplicationImporter.MRBAYES_BLOCK) {
-
-						importer.parseMrBayesBlock(beautiOptions);
-
-					} else if (block == NexusApplicationImporter.RHINO_BLOCK) {
-
-						importer.parseRhinoBlock(beautiOptions);
-*/
-                    } else {
-                        // Ignore the block..
-                    }
-
-                } catch (EOFException ex) {
-                    done = true;
-                }
-            }
-
-            if (beautiOptions.originalAlignment == null) {
-                throw new NexusImporter.MissingBlockException("DATA or CHARACTERS block is missing");
-            }
-
-        } catch (FileNotFoundException fnfe) {
-            System.err.println("File not found: " + fnfe);
-            System.exit(1);
-
-        } catch (Importer.ImportException ime) {
-            System.err.println("Error parsing imported file: " + ime);
-            System.exit(1);
-        } catch (IOException ioex) {
-            System.err.println("File I/O Error: " + ioex);
-            System.exit(1);
-        } catch (Exception ex) {
-            System.err.println("Fatal exception: " + ex);
-            System.exit(1);
-        }
-
-        // make sure they all have dates...
-        for (int i = 0; i < beautiOptions.originalAlignment.getTaxonCount(); i++) {
-            if (beautiOptions.originalAlignment.getTaxonAttribute(i, "date") == null) {
-                java.util.Date origin = new java.util.Date(0);
-
-                dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
-                beautiOptions.originalAlignment.getTaxon(i).setAttribute("date", date);
-            }
-        }
-
-        beautiOptions.alignment = beautiOptions.originalAlignment;
-        beautiOptions.taxonList = beautiOptions.originalAlignment;
-
-        calculateHeights(beautiOptions);
+//
+//        try {
+//            FileReader reader = new FileReader(fileName);
+//
+//            NexusApplicationImporter importer = new NexusApplicationImporter(reader);
+//
+//            boolean done = false;
+//
+//            beautiOptions.originalAlignment = null;
+//            beautiOptions.alignment = null;
+//            beautiOptions.tree = null;
+//            beautiOptions.taxonList = null;
+//
+//            while (!done) {
+//                try {
+//
+//                    NexusImporter.NexusBlock block = importer.findNextBlock();
+//
+//                    if (block == NexusImporter.TAXA_BLOCK) {
+//
+//                        if (beautiOptions.taxonList != null) {
+//                            throw new NexusImporter.MissingBlockException("TAXA block already defined");
+//                        }
+//
+//                        beautiOptions.taxonList = importer.parseTaxaBlock();
+//
+//                    } else if (block == NexusImporter.CALIBRATION_BLOCK) {
+//                        if (beautiOptions.taxonList == null) {
+//                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a CALIBRATION block");
+//                        }
+//
+//                        importer.parseCalibrationBlock(beautiOptions.taxonList);
+//
+//                    } else if (block == NexusImporter.CHARACTERS_BLOCK) {
+//
+//                        if (beautiOptions.taxonList == null) {
+//                            throw new NexusImporter.MissingBlockException("TAXA block must be defined before a CHARACTERS block");
+//                        }
+//
+//                        if (beautiOptions.originalAlignment != null) {
+//                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
+//                        }
+//
+//                        beautiOptions.originalAlignment = (SimpleAlignment)importer.parseCharactersBlock(beautiOptions.taxonList);
+//
+//                    } else if (block == NexusImporter.DATA_BLOCK) {
+//
+//                        if (beautiOptions.originalAlignment != null) {
+//                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
+//                        }
+//
+//                        // A data block doesn't need a taxon block before it
+//                        // but if one exists then it will use it.
+//                        beautiOptions.originalAlignment = (SimpleAlignment)importer.parseDataBlock(beautiOptions.taxonList);
+//                        if (beautiOptions.taxonList == null) {
+//                            beautiOptions.taxonList = beautiOptions.originalAlignment;
+//                        }
+//
+//                    } else if (block == NexusImporter.TREES_BLOCK) {
+//
+//                        if (beautiOptions.taxonList == null) {
+//                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a TREES block");
+//                        }
+//
+//                        if (beautiOptions.tree != null) {
+//                            throw new NexusImporter.MissingBlockException("TREES block already defined");
+//                        }
+//
+//                        Tree[] trees = importer.parseTreesBlock(beautiOptions.taxonList);
+//                        if (trees.length > 0) {
+//                            beautiOptions.tree = trees[0];
+//                        }
+//
+///*					} else if (block == NexusApplicationImporter.PAUP_BLOCK) {
+//
+//						importer.parsePAUPBlock(beautiOptions);
+//
+//					} else if (block == NexusApplicationImporter.MRBAYES_BLOCK) {
+//
+//						importer.parseMrBayesBlock(beautiOptions);
+//
+//					} else if (block == NexusApplicationImporter.RHINO_BLOCK) {
+//
+//						importer.parseRhinoBlock(beautiOptions);
+//*/
+//                    } else {
+//                        // Ignore the block..
+//                    }
+//
+//                } catch (EOFException ex) {
+//                    done = true;
+//                }
+//            }
+//
+//            if (beautiOptions.originalAlignment == null) {
+//                throw new NexusImporter.MissingBlockException("DATA or CHARACTERS block is missing");
+//            }
+//
+//        } catch (FileNotFoundException fnfe) {
+//            System.err.println("File not found: " + fnfe);
+//            System.exit(1);
+//
+//        } catch (Importer.ImportException ime) {
+//            System.err.println("Error parsing imported file: " + ime);
+//            System.exit(1);
+//        } catch (IOException ioex) {
+//            System.err.println("File I/O Error: " + ioex);
+//            System.exit(1);
+//        } catch (Exception ex) {
+//            System.err.println("Fatal exception: " + ex);
+//            System.exit(1);
+//        }
+//
+//        // make sure they all have dates...
+//        for (int i = 0; i < beautiOptions.originalAlignment.getTaxonCount(); i++) {
+//            if (beautiOptions.originalAlignment.getTaxonAttribute(i, "date") == null) {
+//                java.util.Date origin = new java.util.Date(0);
+//
+//                dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
+//                beautiOptions.originalAlignment.getTaxon(i).setAttribute("date", date);
+//            }
+//        }
+//
+//        beautiOptions.alignment = beautiOptions.originalAlignment;
+//        beautiOptions.taxonList = beautiOptions.originalAlignment;
+//
+//        calculateHeights(beautiOptions);
     }
 
     private void calculateHeights(BeautiOptions options) {
 
         options.maximumTipHeight = 0.0;
-        if (options.alignment == null) return;
+        if (!options.hasData()) return;
 
         dr.evolution.util.Date mostRecent = null;
-        for (int i = 0; i < options.alignment.getSequenceCount(); i++) {
-            Date date = options.alignment.getTaxon(i).getDate();
+        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+            Date date = options.taxonList.getTaxon(i).getDate();
             if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
                 mostRecent = date;
             }
@@ -398,8 +394,8 @@ public class BeautiTester {
             TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
             double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
 
-            for (int i = 0; i < options.alignment.getSequenceCount(); i++) {
-                Date date = options.alignment.getTaxon(i).getDate();
+            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+                Date date = options.taxonList.getTaxon(i).getDate();
                 if (date != null) {
                     double height = timeScale.convertTime(date.getTimeValue(), date) - time0;
                     if (height > options.maximumTipHeight) options.maximumTipHeight = height;

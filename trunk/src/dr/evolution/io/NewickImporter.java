@@ -34,242 +34,245 @@ import dr.evolution.util.TaxonList;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 
 /**
  * Class for importing Newick tree file format
  *
- * @version $Id: NewickImporter.java,v 1.20 2005/12/07 11:25:35 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: NewickImporter.java,v 1.20 2005/12/07 11:25:35 rambaut Exp $
  */
 public class NewickImporter extends Importer implements TreeImporter {
 
-	public class BranchMissingException extends ImportException {
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = 777435104809244693L;
+    public class BranchMissingException extends ImportException {
+        /**
+         *
+         */
+        private static final long serialVersionUID = 777435104809244693L;
 
-		public BranchMissingException() { super(); }
+        public BranchMissingException() {
+            super();
+        }
 
-		public BranchMissingException(String msg) {
-			super("Branch missing: "+msg);
-			System.err.println(msg);
-		}
-	};
+        public BranchMissingException(String msg) {
+            super("Branch missing: " + msg);
+            System.err.println(msg);
+        }
+    }
 
-	/**
-	 * Constructor
-	 */
-	public NewickImporter(Reader reader) {
-		super(reader);
-	}
+    /**
+     * @param reader A reader to a source containing a tree in Newick format
+     */
+    public NewickImporter(Reader reader) {
+        super(reader);
+    }
 
-	/**
-	 * importTree.
-	 */
-	public Tree importTree(TaxonList taxonList) throws IOException, ImportException
-	{
-		FlexibleTree tree = null;
+    /**
+     * @param treeString a string containing a tree in newick format
+     */
+    public NewickImporter(String treeString) {
+        this(new StringReader(treeString));
+    }
 
-		try {
-			skipUntil("(");
-			unreadCharacter('(');
+    /**
+     * importTree.
+     */
+    public Tree importTree(TaxonList taxonList) throws IOException, ImportException {
+        FlexibleTree tree = null;
 
-			FlexibleNode root = readInternalNode(taxonList);
+        try {
+            skipUntil("(");
+            unreadCharacter('(');
+
+            FlexibleNode root = readInternalNode(taxonList);
 
 //			if (getLastDelimiter() != ';') {
 //				throw new BadFormatException("Expecting ';' after tree");
 //			}
 
-			tree = new FlexibleTree(root, false, true);
+            tree = new FlexibleTree(root, false, true);
 
-		} catch (EOFException e) {
-			throw new ImportException("incomplete tree");
-		}
+        } catch (EOFException e) {
+            throw new ImportException("incomplete tree");
+        }
 
-		return tree;
-	}
+        return tree;
+    }
 
-	/**
-	 * importTrees.
-	 */
-	public Tree[] importTrees(TaxonList taxonList) throws IOException, ImportException
-	{
-		boolean done = false;
-		ArrayList array = new ArrayList();
+    /**
+     * importTrees.
+     */
+    public Tree[] importTrees(TaxonList taxonList) throws IOException, ImportException {
+        boolean done = false;
+        ArrayList array = new ArrayList();
 
-		do {
+        do {
 
-			try {
+            try {
 
-				skipUntil("(");
-				unreadCharacter('(');
+                skipUntil("(");
+                unreadCharacter('(');
 
-				FlexibleNode root = readInternalNode(taxonList);
-				FlexibleTree tree = new FlexibleTree(root, false, true);
-				array.add(tree);
+                FlexibleNode root = readInternalNode(taxonList);
+                FlexibleTree tree = new FlexibleTree(root, false, true);
+                array.add(tree);
 
-				if (taxonList == null) {
-					taxonList = tree;
-				}
+                if (taxonList == null) {
+                    taxonList = tree;
+                }
 
-				if (readCharacter() != ';') {
-					throw new BadFormatException("Expecting ';' after tree");
-				}
+                if (readCharacter() != ';') {
+                    throw new BadFormatException("Expecting ';' after tree");
+                }
 
-			} catch (EOFException e) {
-				done = true;
-			}
-		} while (!done);
+            } catch (EOFException e) {
+                done = true;
+            }
+        } while (!done);
 
-		Tree[] trees = new Tree[array.size()];
-		array.toArray(trees);
+        Tree[] trees = new Tree[array.size()];
+        array.toArray(trees);
 
-		return trees;
-	}
+        return trees;
+    }
 
-	/**
-	 * return whether another tree is available.
-	 */
-	public boolean hasTree() throws IOException, ImportException
-	{
-		try {
-			skipUntil("(");
-			unreadCharacter('(');
-		} catch (EOFException e) {
-			lastTree = null;
-			return false;
-		}
+    /**
+     * return whether another tree is available.
+     */
+    public boolean hasTree() throws IOException, ImportException {
+        try {
+            skipUntil("(");
+            unreadCharacter('(');
+        } catch (EOFException e) {
+            lastTree = null;
+            return false;
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	private Tree lastTree = null;
+    private Tree lastTree = null;
 
-	/**
-	 * import the next tree.
-	 * return the tree or null if no more trees are available
-	 */
-	public Tree importNextTree() throws IOException, ImportException
-	{
-		FlexibleTree tree = null;
+    /**
+     * import the next tree.
+     * return the tree or null if no more trees are available
+     */
+    public Tree importNextTree() throws IOException, ImportException {
+        FlexibleTree tree = null;
 
-		try {
-			skipUntil("(");
-			unreadCharacter('(');
+        try {
+            skipUntil("(");
+            unreadCharacter('(');
 
-			FlexibleNode root = readInternalNode(lastTree);
+            FlexibleNode root = readInternalNode(lastTree);
 
-			tree = new FlexibleTree(root, false, true);
+            tree = new FlexibleTree(root, false, true);
 
-		} catch (EOFException e) { }
+        } catch (EOFException e) {
+        }
 
-		lastTree = tree;
+        lastTree = tree;
 
-		return tree;
-	}
+        return tree;
+    }
 
-	/**
-	 * Reads a branch in. This could be a node or a tip (calls readNode or readTip
-	 * accordingly). It then reads the branch length and SimpleNode that will
-	 * point at the new node or tip.
-	 */
-	private FlexibleNode readBranch(TaxonList taxonList) throws IOException, ImportException
-	{
-		double length = 0.0;
-		FlexibleNode branch;
+    /**
+     * Reads a branch in. This could be a node or a tip (calls readNode or readTip
+     * accordingly). It then reads the branch length and SimpleNode that will
+     * point at the new node or tip.
+     */
+    private FlexibleNode readBranch(TaxonList taxonList) throws IOException, ImportException {
+        double length = 0.0;
+        FlexibleNode branch;
 
-		if (nextCharacter() == '(') {
-			// is an internal node
-			branch = readInternalNode(taxonList);
+        if (nextCharacter() == '(') {
+            // is an internal node
+            branch = readInternalNode(taxonList);
 
-		} else {
-			// is an external node
-			branch = readExternalNode(taxonList);
-		}
+        } else {
+            // is an external node
+            branch = readExternalNode(taxonList);
+        }
 
-		if (getLastDelimiter() == ':') {
-			length = readDouble(",():;");
-		}
+        if (getLastDelimiter() == ':') {
+            length = readDouble(",():;");
+        }
 
-		branch.setLength(length);
+        branch.setLength(length);
 
-		return branch;
-	}
+        return branch;
+    }
 
-	/**
-	 * Reads a node in. This could be a polytomy. Calls readBranch on each branch
-	 * in the node.
-	 */
-	private FlexibleNode readInternalNode(TaxonList taxonList) throws IOException, ImportException
-	{
-		FlexibleNode node = new FlexibleNode();
+    /**
+     * Reads a node in. This could be a polytomy. Calls readBranch on each branch
+     * in the node.
+     */
+    private FlexibleNode readInternalNode(TaxonList taxonList) throws IOException, ImportException {
+        FlexibleNode node = new FlexibleNode();
 
-		// read the opening '('
-		readCharacter();
+        // read the opening '('
+        readCharacter();
 
-		// read the first child
-		node.addChild( readBranch(taxonList) );
+        // read the first child
+        node.addChild(readBranch(taxonList));
 
-		// an internal node must have at least 2 children
-		if (getLastDelimiter() != ',') {
-			throw new BadFormatException("Missing ',' in tree");
-		}
+        // an internal node must have at least 2 children
+        if (getLastDelimiter() != ',') {
+            throw new BadFormatException("Missing ',' in tree");
+        }
 
-		// read subsequent children
-		do {
-			node.addChild( readBranch(taxonList) );
+        // read subsequent children
+        do {
+            node.addChild(readBranch(taxonList));
 
-		} while (getLastDelimiter() == ',');
+        } while (getLastDelimiter() == ',');
 
-		// should have had a closing ')'
-		if (getLastDelimiter() != ')') {
-			throw new BadFormatException("Missing closing ')' in tree");
-		}
+        // should have had a closing ')'
+        if (getLastDelimiter() != ')') {
+            throw new BadFormatException("Missing closing ')' in tree");
+        }
 
-		// If there is a label before the colon, store it:
-		try {
-			String label = readToken(",():;");
-			if (label.length() > 0) {
-				node.setAttribute("label", label);
-			}
-		} catch (IOException ioe) {
-			// probably an end of file without a terminal ';'
-			// we are going to allow this and return the nodes...
-		}
+        // If there is a label before the colon, store it:
+        try {
+            String label = readToken(",():;");
+            if (label.length() > 0) {
+                node.setAttribute("label", label);
+            }
+        } catch (IOException ioe) {
+            // probably an end of file without a terminal ';'
+            // we are going to allow this and return the nodes...
+        }
 
-		return node;
-	}
+        return node;
+    }
 
-	/**
-	 * Reads an external node in.
-	 */
-	private FlexibleNode readExternalNode(TaxonList taxonList) throws IOException, ImportException
-	{
-		FlexibleNode node = new FlexibleNode();
+    /**
+     * Reads an external node in.
+     */
+    private FlexibleNode readExternalNode(TaxonList taxonList) throws IOException, ImportException {
+        FlexibleNode node = new FlexibleNode();
 
-		String label = readToken(":(),;");
+        String label = readToken(":(),;");
 
-		Taxon taxon = null;
+        Taxon taxon = null;
 
-		if (taxonList != null) {
-			// if a taxon list is given then the taxon must be in it...
-			int index = taxonList.getTaxonIndex(label);
-			if (index != -1) {
-				taxon = taxonList.getTaxon(index);
-			} else {
-				throw new UnknownTaxonException("Taxon in tree, '" + label + "' is unknown");
-			}
-		} else {
-			// No taxon list given so create new taxa
-			taxon = new Taxon(label);
-		}
+        if (taxonList != null) {
+            // if a taxon list is given then the taxon must be in it...
+            int index = taxonList.getTaxonIndex(label);
+            if (index != -1) {
+                taxon = taxonList.getTaxon(index);
+            } else {
+                throw new UnknownTaxonException("Taxon in tree, '" + label + "' is unknown");
+            }
+        } else {
+            // No taxon list given so create new taxa
+            taxon = new Taxon(label);
+        }
 
-		node.setTaxon(taxon);
-		return node;
-	}
+        node.setTaxon(taxon);
+        return node;
+    }
 
 }

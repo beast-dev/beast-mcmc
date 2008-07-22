@@ -272,7 +272,7 @@ public class MCMC implements Runnable, Identifiable {
 
     private String formattedParameterString(MCMCOperator op) {
         String pString = "        ";
-        if (op instanceof CoercableMCMCOperator && ((CoercableMCMCOperator) op).getMode() != CoercableMCMCOperator.COERCION_OFF) {
+        if (op instanceof CoercableMCMCOperator && ((CoercableMCMCOperator) op).getMode() != CoercionMode.COERCION_OFF) {
             pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator) op).getRawParameter(), 3), 8);
         }
         return pString;
@@ -388,7 +388,7 @@ public class MCMC implements Runnable, Identifiable {
             MCMCOperator op = schedule.getOperator(i);
 
             if (op instanceof CoercableMCMCOperator) {
-                if (((CoercableMCMCOperator) op).getMode() == CoercableMCMCOperator.COERCION_ON) return true;
+                if (((CoercableMCMCOperator) op).getMode() == CoercionMode.COERCION_ON) return true;
             }
         }
         return false;

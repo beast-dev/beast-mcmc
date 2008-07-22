@@ -34,44 +34,41 @@ package dr.inference.operators;
  */
 public interface CoercableMCMCOperator extends MCMCOperator {
 
-	final int DEFAULT = 0;
-	final int COERCION_ON = 1;
-	final int COERCION_OFF = 2;
+    public static final String AUTO_OPTIMIZE = "autoOptimize";
 
-	public static final String AUTO_OPTIMIZE = "autoOptimize";
+    /**
+     * A coercable parameter must have a range from -infinity to +infinity with a preference for
+     * small numbers.
+     * <p/>
+     * If operator acceptance is too high, BEAST increases the parameter; if operator acceptance is
+     * too low, BEAST decreases the parameter.
+     * <p/>
+     * From MarkovChain.coerceAcceptanceProbability:
+     * <p/>
+     * new parameter = old parameter + 1/(1+N) * (current-step acceptance probability - target probabilitity),
+     * <p/>
+     * where N is some function of the number of operator trials.
+     *
+     * @return a "coercable" parameter
+     */
+    double getCoercableParameter();
 
-	/**
-	 * A coercable parameter must have a range from -infinity to +infinity with a preference for
-	 * small numbers.
-	 * <p/>
-	 * If operator acceptance is too high, BEAST increases the parameter; if operator acceptance is
-	 * too low, BEAST decreases the parameter.
-	 * <p/>
-	 * From MarkovChain.coerceAcceptanceProbability:
-	 * <p/>
-	 * new parameter = old parameter + 1/(1+N) * (current-step acceptance probability - target probabilitity),
-	 * <p/>
-	 * where N is some function of the number of operator trials.
-	 *
-	 * @return a "coercable" parameter
-	 */
-	double getCoercableParameter();
+    /**
+     * Sets the coercable parameter value. A coercable parameter must have a range from -infinity to +infinity with a preference for
+     * small numbers.
+     *
+     * @param value the value to set the coercible parameter to
+     */
+    void setCoercableParameter(double value);
 
-	/**
-	 * Sets the coercable parameter value. A coercable parameter must have a range from -infinity to +infinity with a preference for
-	 * small numbers.
-	 *
-	 * @param value the value to set the coercible parameter to
-	 */
-	void setCoercableParameter(double value);
+    /**
+     * @return the underlying tuning parameter value
+     */
+    double getRawParameter();
 
-	/**
-	 * @return the underlying tuning parameter value
-	 */
-	double getRawParameter();
+    /**
+     * @return the mode of this operator.
+     */
+    CoercionMode getMode();
 
-	/**
-	 * @return the mode of this operator.
-	 */
-	int getMode();
 }

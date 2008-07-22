@@ -33,16 +33,18 @@ import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmc.MCMCCriterion;
 import dr.inference.mcmc.MCMCOptions;
-import dr.inference.model.*;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
 import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 import dr.util.NumberFormatter;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -262,8 +264,8 @@ public class MCMCMC implements Runnable {
                 operator2.setRejected(tmp);
 
                 double tmp2 = operator1.getSumDeviation();
-                operator1.setDumDeviation(operator2.getSumDeviation());
-                operator2.setDumDeviation(tmp2);
+                operator1.setSumDeviation(operator2.getSumDeviation());
+                operator2.setSumDeviation(tmp2);
 
                 if (operator1 instanceof CoercableMCMCOperator) {
                     tmp2 = ((CoercableMCMCOperator) operator1).getCoercableParameter();
@@ -519,7 +521,7 @@ public class MCMCMC implements Runnable {
             MCMCOperator op = schedules[coldChain].getOperator(i);
 
             if (op instanceof CoercableMCMCOperator) {
-                if (((CoercableMCMCOperator) op).getMode() == CoercableMCMCOperator.COERCION_ON) return true;
+                if (((CoercableMCMCOperator) op).getMode() == CoercionMode.COERCION_ON) return true;
             }
         }
         return false;

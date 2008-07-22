@@ -16,7 +16,7 @@ import java.util.logging.*;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
-public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
+public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
 
     public static final String BLOCK_UPDATE_OPERATOR = "gmrfBlockUpdateOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
@@ -26,7 +26,6 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
 
     private double scaleFactor;
     private double lambdaScaleFactor;
-    private int mode = CoercableMCMCOperator.DEFAULT;
     private int fieldLength;
 
     private int maxIterations;
@@ -42,10 +41,9 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
     private double[] zeros;
 
     public GMRFSkyrideBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
-                                          double weight, int mode, double scaleFactor,
+                                          double weight, CoercionMode mode, double scaleFactor,
                                           int maxIterations, double stopValue) {
-        super();
-        this.mode = mode;
+        super(mode);
         gmrfField = gmrfLikelihood;
         popSizeParameter = gmrfLikelihood.getPopSizeParameter();
         precisionParameter = gmrfLikelihood.getPrecisionParameter();
@@ -333,10 +331,6 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
         return scaleFactor;
     }
 
-    public int getMode() {
-        return mode;
-    }
-
     public double getScaleFactor() {
         return scaleFactor;
     }
@@ -412,9 +406,8 @@ public class GMRFSkyrideBlockUpdateOperator extends SimpleMCMCOperator implement
                 gmrfLogger.addHandler(gmrfHandler);
             }
 
-            int mode = xo.getAttribute(AUTO_OPTIMIZE, true) ?
-                    CoercableMCMCOperator.COERCION_ON :
-                    CoercableMCMCOperator.COERCION_OFF;
+            CoercionMode mode = CoercionMode.parseMode(xo);
+            if (mode == CoercionMode.DEFAULT) mode = CoercionMode.COERCION_ON;
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);

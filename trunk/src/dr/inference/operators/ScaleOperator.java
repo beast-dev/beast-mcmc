@@ -40,7 +40,7 @@ import dr.xml.*;
  * @author Andrew Rambaut
  * @version $Id: ScaleOperator.java,v 1.20 2005/06/14 10:40:34 rambaut Exp $
  */
-public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
+public class ScaleOperator extends AbstractCoercableOperator {
 
     public static final String SCALE_OPERATOR = "scaleOperator";
     public static final String SCALE_ALL = "scaleAll";
@@ -54,14 +54,16 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
     private double indicatorOnProb;
 
     public ScaleOperator(Parameter parameter, boolean scaleAll, int degreesOfFreedom, double scale,
-                         int mode, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
+                         CoercionMode mode, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
+
+        super(mode);
+
         this.parameter = parameter;
         this.indicator = indicator;
         this.indicatorOnProb = indicatorOnProb;
         this.scaleAll = scaleAll;
         this.scaleAllIndependently = scaleAllInd;
         this.scaleFactor = scale;
-        this.mode = mode;
         this.degreesOfFreedom = degreesOfFreedom;
     }
 
@@ -199,10 +201,6 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
         return scaleFactor;
     }
 
-    public int getMode() {
-        return mode;
-    }
-
     public double getScaleFactor() {
         return scaleFactor;
     }
@@ -252,12 +250,8 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
             boolean scaleAll = xo.getAttribute(SCALE_ALL, false);
             boolean scaleAllInd = xo.getAttribute(SCALE_ALL_IND, false);
             int degreesOfFreedom = xo.getAttribute(DEGREES_OF_FREEDOM, 0);
-            int mode = CoercableMCMCOperator.DEFAULT;
 
-            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-                mode = xo.getBooleanAttribute(AUTO_OPTIMIZE) ?
-                        CoercableMCMCOperator.COERCION_ON : CoercableMCMCOperator.COERCION_OFF;
-            }
+            CoercionMode mode = CoercionMode.parseMode(xo);
 
             final double weight = xo.getDoubleAttribute(WEIGHT);
             final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
@@ -332,5 +326,4 @@ public class ScaleOperator extends SimpleMCMCOperator implements CoercableMCMCOp
     private boolean scaleAllIndependently = false;
     private int degreesOfFreedom = 0;
     private double scaleFactor = 0.5;
-    private int mode = CoercableMCMCOperator.DEFAULT;
 }

@@ -6,6 +6,8 @@ import dr.evoxml.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.logging.Logger;
+
 /**
  * @author Alexei Drummond
  * @author Joseph Heled
@@ -30,6 +32,8 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
         Parameter birthParameter = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);
         Parameter deathParameter = (Parameter) xo.getElementFirstChild(RELATIVE_DEATH_RATE);
+
+        Logger.getLogger("dr.evomodel").info("Using Gernhard 2008 birth-death model on tree: Gernhard T (2008) J Theor Biol, In press");
 
         return new BirthDeathGernhard08Model(birthParameter, deathParameter, units);
     }

@@ -83,8 +83,9 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         rateCategoryParameter.addBounds(bound);
 
         this.rateCategoryParameter = rateCategoryParameter;
-        if (rateCategoryParameter.getDimension() != tree.getNodeCount() - 1) {
-            throw new IllegalArgumentException("The rate category parameter must be of length nodeCount-1");
+        int categoryCount = tree.getNodeCount() - 1;
+        if (rateCategoryParameter.getDimension() != categoryCount ) {
+            throw new IllegalArgumentException("The rate category parameter must be of length " + categoryCount + " (nodes in the tree - 1)");
         }
 
         for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {

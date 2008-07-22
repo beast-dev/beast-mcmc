@@ -8,14 +8,14 @@
  */
 package dr.app.beauti;
 
-import dr.evolution.alignment.Patterns;
-import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.alignment.*;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evolution.util.TaxonList;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
@@ -50,6 +50,7 @@ public class BeautiFrame extends DocumentFrame {
     private JLabel statusLabel = new JLabel("No data loaded");
 
     private DataPanel dataPanel;
+    private SamplesPanel samplesPanel;
     private TaxaPanel taxaPanel;
     private ModelPanel modelPanel;
     private PriorsPanel priorsPanel;
@@ -82,14 +83,16 @@ public class BeautiFrame extends DocumentFrame {
     public void initializeComponents() {
 
         dataPanel = new DataPanel(this);
+        samplesPanel = new SamplesPanel(this);
         taxaPanel = new TaxaPanel(this);
         modelPanel = new ModelPanel(this);
         priorsPanel = new PriorsPanel(this);
         operatorsPanel = new OperatorsPanel(this);
         mcmcPanel = new MCMCPanel(this);
 
-        tabbedPane.addTab("Data", dataPanel);
-        tabbedPane.addTab("Taxa", taxaPanel);
+        tabbedPane.addTab("Data Partitions", dataPanel);
+        tabbedPane.addTab("Sample Dates", samplesPanel);
+        tabbedPane.addTab("Taxon Sets", taxaPanel);
         tabbedPane.addTab("Model", modelPanel);
         tabbedPane.addTab("Priors", priorsPanel);
         tabbedPane.addTab("Operators", operatorsPanel);
@@ -110,7 +113,7 @@ public class BeautiFrame extends DocumentFrame {
 
         getExportAction().setEnabled(false);
         JButton generateButton = new JButton(getExportAction());
-	    generateButton.putClientProperty("JButton.buttonType", "roundRect");
+        generateButton.putClientProperty("JButton.buttonType", "roundRect");
 
         JPanel panel2 = new JPanel(new BorderLayout(6, 6));
         panel2.add(statusLabel, BorderLayout.CENTER);
@@ -122,6 +125,7 @@ public class BeautiFrame extends DocumentFrame {
         getContentPane().add(panel, BorderLayout.CENTER);
 
         dataPanel.setOptions(beautiOptions);
+        samplesPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
         modelPanel.setOptions(beautiOptions);
         priorsPanel.setOptions(beautiOptions);
@@ -132,6 +136,15 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void dataChanged() {
+        samplesPanel.setOptions(beautiOptions);
+        taxaPanel.setOptions(beautiOptions);
+        modelPanel.setOptions(beautiOptions);
+        priorsPanel.setOptions(beautiOptions);
+        operatorsPanel.setOptions(beautiOptions);
+        setDirty();
+    }
+
+    public final void samplesChanged() {
         taxaPanel.setOptions(beautiOptions);
         modelPanel.setOptions(beautiOptions);
         priorsPanel.setOptions(beautiOptions);
@@ -239,15 +252,16 @@ public class BeautiFrame extends DocumentFrame {
             }
 
             dataPanel.setOptions(beautiOptions);
+            samplesPanel.setOptions(beautiOptions);
             taxaPanel.setOptions(beautiOptions);
             modelPanel.setOptions(beautiOptions);
             priorsPanel.setOptions(beautiOptions);
             operatorsPanel.setOptions(beautiOptions);
             mcmcPanel.setOptions(beautiOptions);
 
-            getExportAction().setEnabled(beautiOptions.alignment != null);
-            getSaveAction().setEnabled(beautiOptions.alignment != null);
-            getSaveAsAction().setEnabled(beautiOptions.alignment != null);
+            getExportAction().setEnabled(beautiOptions.hasData());
+            getSaveAction().setEnabled(beautiOptions.hasData());
+            getSaveAsAction().setEnabled(beautiOptions.hasData());
 
         } catch (dr.xml.XMLParseException xpe) {
             JOptionPane.showMessageDialog(this, "Error reading file: This may not be a BEAUti file",
@@ -267,13 +281,14 @@ public class BeautiFrame extends DocumentFrame {
 
     protected boolean writeToFile(File file) throws IOException {
         dataPanel.getOptions(beautiOptions);
+        samplesPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
         modelPanel.getOptions(beautiOptions);
         priorsPanel.getOptions(beautiOptions);
         operatorsPanel.getOptions(beautiOptions);
         mcmcPanel.getOptions(beautiOptions);
 
-        Document doc = beautiOptions.create(false, true);
+        Document doc = beautiOptions.create(true);
 
         FileWriter fw = new FileWriter(file);
 
@@ -314,17 +329,16 @@ public class BeautiFrame extends DocumentFrame {
 
     protected void importFromFile(File file) throws IOException {
 
+        TaxonList taxa = null;
+        SimpleAlignment alignment = null;
+        Tree tree = null;
+
         try {
             FileReader reader = new FileReader(file);
 
             NexusApplicationImporter importer = new NexusApplicationImporter(reader);
 
             boolean done = false;
-
-            beautiOptions.originalAlignment = null;
-            beautiOptions.alignment = null;
-            beautiOptions.tree = null;
-            beautiOptions.taxonList = null;
 
             while (!done) {
                 try {
@@ -333,57 +347,57 @@ public class BeautiFrame extends DocumentFrame {
 
                     if (block == NexusImporter.TAXA_BLOCK) {
 
-                        if (beautiOptions.taxonList != null) {
+                        if (taxa != null) {
                             throw new NexusImporter.MissingBlockException("TAXA block already defined");
                         }
 
-                        beautiOptions.taxonList = importer.parseTaxaBlock();
+                        taxa = importer.parseTaxaBlock();
 
                     } else if (block == NexusImporter.CALIBRATION_BLOCK) {
-                        if (beautiOptions.taxonList == null) {
+                        if (taxa == null) {
                             throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a CALIBRATION block");
                         }
 
-                        importer.parseCalibrationBlock(beautiOptions.taxonList);
+                        importer.parseCalibrationBlock(taxa);
 
                     } else if (block == NexusImporter.CHARACTERS_BLOCK) {
 
-                        if (beautiOptions.taxonList == null) {
+                        if (taxa == null) {
                             throw new NexusImporter.MissingBlockException("TAXA block must be defined before a CHARACTERS block");
                         }
 
-                        if (beautiOptions.originalAlignment != null) {
+                        if (alignment != null) {
                             throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
                         }
 
-                        beautiOptions.originalAlignment = (SimpleAlignment)importer.parseCharactersBlock(beautiOptions.taxonList);
+                        alignment = (SimpleAlignment)importer.parseCharactersBlock(beautiOptions.taxonList);
 
                     } else if (block == NexusImporter.DATA_BLOCK) {
 
-                        if (beautiOptions.originalAlignment != null) {
+                        if (alignment != null) {
                             throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
                         }
 
                         // A data block doesn't need a taxon block before it
                         // but if one exists then it will use it.
-                        beautiOptions.originalAlignment = (SimpleAlignment)importer.parseDataBlock(beautiOptions.taxonList);
-                        if (beautiOptions.taxonList == null) {
-                            beautiOptions.taxonList = beautiOptions.originalAlignment;
+                        alignment = (SimpleAlignment)importer.parseDataBlock(beautiOptions.taxonList);
+                        if (taxa == null) {
+                            taxa = alignment;
                         }
 
                     } else if (block == NexusImporter.TREES_BLOCK) {
 
-                        if (beautiOptions.taxonList == null) {
+                        if (taxa == null) {
                             throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a TREES block");
                         }
 
-                        if (beautiOptions.tree != null) {
+                        if (tree != null) {
                             throw new NexusImporter.MissingBlockException("TREES block already defined");
                         }
 
-                        Tree[] trees = importer.parseTreesBlock(beautiOptions.taxonList);
+                        Tree[] trees = importer.parseTreesBlock(taxa);
                         if (trees.length > 0) {
-                            beautiOptions.tree = trees[0];
+                            tree = trees[0];
                         }
 
 /*					} else if (block == NexusApplicationImporter.PAUP_BLOCK) {
@@ -408,7 +422,7 @@ public class BeautiFrame extends DocumentFrame {
             }
 
             // Allow the user to load taxa only (perhaps from a tree file) so that they can sample from a prior...
-            if (beautiOptions.originalAlignment == null && beautiOptions.taxonList == null) {
+            if (alignment == null && taxa == null) {
                 throw new NexusImporter.MissingBlockException("TAXON, DATA or CHARACTERS block is missing");
             }
 
@@ -429,58 +443,88 @@ public class BeautiFrame extends DocumentFrame {
             return;
         }
 
-        // check the taxon names for invalid characters
-        boolean foundAmp = false;
-        for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
-            String name = beautiOptions.taxonList.getTaxon(i).getId();
-            if (name.indexOf('&') >= 0) {
-                foundAmp = true;
+        String fileNameStem = dr.app.util.Utils.trimExtensions(file.getName(),
+                new String[] {"NEX", "NEXUS", "TRE", "TREE"});
+
+        if (beautiOptions.taxonList == null) {
+            // This is the first partition to be loaded...
+
+            beautiOptions.taxonList = taxa;
+
+            // check the taxon names for invalid characters
+            boolean foundAmp = false;
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                String name = taxa.getTaxon(i).getId();
+                if (name.indexOf('&') >= 0) {
+                    foundAmp = true;
+                }
+            }
+            if (foundAmp) {
+                JOptionPane.showMessageDialog(this, "One or more taxon names include an illegal character ('&').\n" +
+                        "These characters will prevent BEAST from reading the resulting XML file.\n\n" +
+                        "Please edit the taxon name(s) before reloading the data file.",
+                        "Illegal Taxon Name(s)",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // make sure they all have dates...
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                if (taxa.getTaxonAttribute(i, "date") == null) {
+                    java.util.Date origin = new java.util.Date(0);
+
+                    dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
+                    taxa.getTaxon(i).setAttribute("date", date);
+                }
+            }
+
+
+            beautiOptions.fileNameStem = fileNameStem;
+
+            if (alignment != null) {
+                BeautiOptions.DataPartition partition = new BeautiOptions.DataPartition(fileNameStem, file.getName(), alignment);
+                beautiOptions.dataPartitions.add(partition);
+                beautiOptions.dataType = alignment.getDataType();
+
+                Patterns patterns = new Patterns(alignment);
+                DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
+                beautiOptions.meanDistance = distances.getMeanDistance();
+
+                statusLabel.setText("Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
+                        beautiOptions.dataPartitions.size() + " partitions");
+            }
+        } else {
+            // This is an additional partition so check it uses the same taxa
+
+            if (alignment != null) {
+                if (alignment.getDataType() != beautiOptions.dataType) {
+                    JOptionPane.showMessageDialog(this, "This alignment is a different data type from \n" +
+                            "previously loaded alignments.",
+                            "Incompatible data type",
+                            JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                BeautiOptions.DataPartition partition = new BeautiOptions.DataPartition(fileNameStem, file.getName(), alignment);
+                beautiOptions.dataPartitions.add(partition);
             }
         }
-        if (foundAmp) {
-            JOptionPane.showMessageDialog(this, "One or more taxon names include an illegal character ('&').\n" +
-                    "These characters will prevent BEAST from reading the resulting XML file.\n\n" +
-                    "Please edit the taxon name(s) before generating the BEAST file.",
-                    "Illegal Taxon Name(s)",
-                    JOptionPane.WARNING_MESSAGE);
-        }
 
-
-        // make sure they all have dates...
-        for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
-            if (beautiOptions.taxonList.getTaxonAttribute(i, "date") == null) {
-                java.util.Date origin = new java.util.Date(0);
-
-                dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
-                beautiOptions.taxonList.getTaxon(i).setAttribute("date", date);
-            }
-        }
-
-        beautiOptions.fileNameStem = dr.app.util.Utils.trimExtensions(file.getName(),
-                new String[] {"nex", "NEX", "tre", "TRE", "nexus", "NEXUS"});
-
-        beautiOptions.alignment = beautiOptions.originalAlignment;
-        beautiOptions.alignmentReset = true;
-        if (beautiOptions.alignment != null) {
-            Patterns patterns = new Patterns(beautiOptions.alignment);
-            DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
-            beautiOptions.meanDistance = distances.getMeanDistance();
-
-            statusLabel.setText("Alignment: " + beautiOptions.alignment.getTaxonCount() + " taxa, " +
-                    beautiOptions.alignment.getSiteCount() + " sites");
-            beautiOptions.dataType = beautiOptions.alignment.getDataType().getType();
+        if (beautiOptions.dataPartitions.size() > 0) {
+            statusLabel.setText("Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
+                    beautiOptions.dataPartitions.size() + " partitions");
         } else {
             statusLabel.setText("Taxa only: " + beautiOptions.taxonList.getTaxonCount() + " taxa");
             beautiOptions.meanDistance = 0.0;
         }
 
         dataPanel.setOptions(beautiOptions);
+        samplesPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
         modelPanel.setOptions(beautiOptions);
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         mcmcPanel.setOptions(beautiOptions);
-
 
         getOpenAction().setEnabled(true);
         getSaveAction().setEnabled(true);
@@ -523,6 +567,7 @@ public class BeautiFrame extends DocumentFrame {
 
     protected void generate(File file) throws IOException {
         dataPanel.getOptions(beautiOptions);
+        samplesPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
         modelPanel.getOptions(beautiOptions);
         priorsPanel.getOptions(beautiOptions);

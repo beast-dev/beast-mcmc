@@ -52,7 +52,7 @@ import java.util.GregorianCalendar;
  * @author			Alexei Drummond
  * @version			$Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
-public class DataPanel extends JPanel implements Exportable {
+public class PartitionsPanel extends JPanel implements Exportable {
 
     JScrollPane scrollPane = new JScrollPane();
     JTable dataTable = null;
@@ -62,23 +62,35 @@ public class DataPanel extends JPanel implements Exportable {
 
     BeautiOptions options = null;
 
-    public DataPanel(BeautiFrame parent) {
+    public PartitionsPanel(BeautiFrame parent) {
 
         this.frame = parent;
 
         dataTableModel = new DataTableModel();
-        dataTable = new JTable(dataTableModel);
+        dataTable = new JTable();
 
         dataTable.getTableHeader().setReorderingAllowed(false);
         dataTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
+        dataTable.getColumnModel().getColumn(0).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+
+        dataTable.getColumnModel().getColumn(1).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(1).setPreferredWidth(80);
+        dataTable.getColumnModel().getColumn(1).setCellEditor(
+                new DateCellEditor());
+
+        dataTable.getColumnModel().getColumn(2).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(2).setPreferredWidth(80);
+
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
         dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) {
-                selectionChanged();
-            }
+            public void valueChanged(ListSelectionEvent evt) { selectionChanged(); }
         });
 
         scrollPane = new JScrollPane(dataTable,
@@ -100,7 +112,17 @@ public class DataPanel extends JPanel implements Exportable {
 
         this.options = options;
 
+        if (options.taxonList != null) {
+
+        }
+
+        setupTable();
+
         dataTableModel.fireTableDataChanged();
+    }
+
+    private void setupTable() {
+        dataTableModel.fireTableStructureChanged();
     }
 
     public void getOptions(BeautiOptions options) {
@@ -136,7 +158,7 @@ public class DataPanel extends JPanel implements Exportable {
         }
 
         public int getColumnCount() {
-            return columnNames.length;
+                return columnNames.length;
         }
 
         public int getRowCount() {
@@ -149,23 +171,17 @@ public class DataPanel extends JPanel implements Exportable {
             switch (col) {
                 case 0: return partition.getName();
                 case 1: return partition.getFileName();
-                case 2: return "" + partition.getAlignment().getPatternCount();
+                case 2: return partition.getAlignment().getPatternCount();
                 case 3: return partition.getAlignment().getDataType().getDescription();
-                default:
-                    throw new IllegalArgumentException("unknown column, " + col);
             }
+            return null;
         }
 
         public String getColumnName(int column) {
             return columnNames[column];
         }
 
-        public Class getColumnClass(int c) {
-            if (getRowCount() == 0) {
-                return Object.class;
-            }
-            return getValueAt(0, c).getClass();
-        }
+        public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
 
         public String toString() {
             StringBuffer buffer = new StringBuffer();

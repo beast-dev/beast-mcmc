@@ -312,10 +312,10 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
         settingOptions = true;
 
-        if (options.alignment != null) {
+        if (options.hasData()) {
             hasAlignment = true;
 
-            dataType=options.dataType;
+            dataType = options.dataType.getType();
             switch(dataType){
                 case DataType.NUCLEOTIDES:
                     if (options.nucSubstitutionModel == BeautiOptions.GTR) {

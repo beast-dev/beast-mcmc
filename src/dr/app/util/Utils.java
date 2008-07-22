@@ -31,10 +31,10 @@ import java.io.File;
 /**
  *
  * @author  adru001
- * @version 
+ * @version
  */
 public class Utils {
-        
+
 	public static String getLoadFileName(String message) {
 		java.io.File file = getLoadFile(message);
 		if (file == null) return null;
@@ -50,27 +50,27 @@ public class Utils {
 	public static File getLoadFile(String message) {
 		// No file name in the arguments so throw up a dialog box...
 		java.awt.Frame frame = new java.awt.Frame();
-		java.awt.FileDialog chooser = new java.awt.FileDialog(frame, message, 
+		java.awt.FileDialog chooser = new java.awt.FileDialog(frame, message,
 															java.awt.FileDialog.LOAD);
 		chooser.show();
 		if (chooser.getFile() == null) return null;
 		java.io.File file = new java.io.File(chooser.getDirectory(), chooser.getFile());
 		chooser.dispose();
 		frame.dispose();
-		
+
 		return file;
 	}
 
 	public static File getSaveFile(String message) {
 		// No file name in the arguments so throw up a dialog box...
 		java.awt.Frame frame = new java.awt.Frame();
-		java.awt.FileDialog chooser = new java.awt.FileDialog(frame, message, 
+		java.awt.FileDialog chooser = new java.awt.FileDialog(frame, message,
 															java.awt.FileDialog.SAVE);
 		chooser.show();
 		java.io.File file = new java.io.File(chooser.getDirectory(), chooser.getFile());
 		chooser.dispose();
 		frame.dispose();
-		
+
 		return file;
 	}
 
@@ -84,16 +84,16 @@ public class Utils {
 	public static String trimExtensions(String fileName, String[] extensions) {
 
 		String newName = null;
-		
+
 		for (int i = 0; i < extensions.length; i++) {
 			String ext = "." + extensions[i];
-			if (fileName.endsWith(ext)) {
+			if (fileName.toUpperCase().endsWith(ext.toUpperCase())) {
 				newName = fileName.substring(0, fileName.length() - ext.length());
 			}
 		}
-		
+
 		if (newName == null) newName = fileName;
-	
+
 		return newName;
 	}
 
@@ -101,9 +101,9 @@ public class Utils {
 	 * @return a named image from file or resource bundle.
 	 */
 	public static Image getImage(Object caller, String name) {
-		
+
 		java.net.URL url = caller.getClass().getResource(name);
-		if (url != null) { 
+		if (url != null) {
 			return Toolkit.getDefaultToolkit().createImage(url);
 		} else {
 			if (caller instanceof Component) {

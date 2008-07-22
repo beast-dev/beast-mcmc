@@ -32,6 +32,7 @@ import dr.evolution.tree.Tree;
 import dr.inference.loggers.*;
 import dr.inference.model.Likelihood;
 import dr.xml.*;
+import dr.app.tools.NexusExporter;
 
 import java.io.*;
 import java.util.*;
@@ -65,10 +66,10 @@ public class TreeLogger extends MCLogger {
     private String likelihoodLabel;
 
     private boolean nexusFormat = false;
-    private boolean sortTranslationTable = false;
     public boolean usingRates = false;
     public boolean substitutions = false;
     private Map idMap = new HashMap();
+    private List taxaIds = new ArrayList();
 
     /**
      * Constructor
@@ -83,7 +84,6 @@ public class TreeLogger extends MCLogger {
         super(formatter, logEvery);
 
         this.nexusFormat = nexusFormat;
-        this.sortTranslationTable = sortTranslationTable;
 
         this.branchRateProvider = branchRateProvider;
         this.rateLabel = rateLabel;
@@ -98,6 +98,22 @@ public class TreeLogger extends MCLogger {
             this.substitutions = substitutions;
         }
         this.tree = tree;
+
+        for (int i = 0; i < tree.getTaxonCount(); i++) {
+            taxaIds.add(tree.getTaxon(i).getId());
+        }
+        
+        if (sortTranslationTable) {
+            Collections.sort(taxaIds);
+        }
+
+        int k = 1;
+        Iterator iter = taxaIds.iterator();
+        while (iter.hasNext()) {
+            String taxonId = (String)iter.next();
+            idMap.put(taxonId, new Integer(k));
+            k += 1;
+        }
     }
 
     public void startLogging() {
@@ -110,17 +126,12 @@ public class TreeLogger extends MCLogger {
             logLine("\tDimensions ntax=" + taxonCount + ";");
             logLine("\tTaxlabels");
 
-            List taxaIds = new ArrayList();
-            for (int i = 0; i < taxonCount; i++) {
-                taxaIds.add(tree.getTaxon(i).getId());
-            }
-            if (sortTranslationTable) {
-                Collections.sort(taxaIds);
-            }
-
             Iterator iter = taxaIds.iterator();
             while (iter.hasNext()) {
                 String taxaId = (String)iter.next();
+                if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
+                    taxaId = "'" + taxaId + "'";
+                }
                 logLine("\t\t" + taxaId);
             }
             logLine("\t\t;");
@@ -134,12 +145,14 @@ public class TreeLogger extends MCLogger {
             iter = taxaIds.iterator();
             while (iter.hasNext()) {
                 String taxaId = (String)iter.next();
+                if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
+                    taxaId = "'" + taxaId + "'";
+                }
                 if (k < taxonCount) {
                     logLine("\t\t" + k + " " + taxaId + ",");
                 } else {
                     logLine("\t\t" + k + " " + taxaId);
                 }
-                idMap.put(taxaId, new Integer(k));
                 k += 1;
             }
             logLine("\t\t;");

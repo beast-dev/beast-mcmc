@@ -65,7 +65,7 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
         nativePartialsPartialsPruning(partials1, matrices1, partials2, matrices2, patternCount, matrixCount, partials3);
     }
 
-	/**
+    /**
 	 * Calculates partial likelihoods at a node when both children have states.
 	 */
 	protected void calculateStatesStatesPruning(int[] states1, double[] matrices1,
@@ -124,16 +124,13 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 	{
         int v = 0;
 		for (int k = 0; k < patternCount; k++) {
-            double logScalingFactor = getLogScalingFactor(k);
 
 			double sum = frequencies[0] * partials[v];	v++;
 			sum += frequencies[1] * partials[v];	v++;
 			sum += frequencies[2] * partials[v];	v++;
 			sum += frequencies[3] * partials[v];	v++;
-            outLogLikelihoods[k] = Math.log(sum) + logScalingFactor;
+            outLogLikelihoods[k] = Math.log(sum) + getLogScalingFactor(k);
 		}
-
-        checkScaling();
     }
 
 	public static boolean isAvailable() { return isNativeAvailable; }

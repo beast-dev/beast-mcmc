@@ -392,20 +392,16 @@ public class GeneralLikelihoodCore extends AbstractLikelihoodCore {
 	 */
 	public void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods)
 	{
-
         int v = 0;
 		for (int k = 0; k < patternCount; k++) {
 
-            double logScalingFactor = getLogScalingFactor(k);
-            
             double sum = 0.0;
 			for (int i = 0; i < stateCount; i++) {
 
 				sum += frequencies[i] * partials[v];
 				v++;
 			}
-            outLogLikelihoods[k] = Math.log(sum) + logScalingFactor;
+            outLogLikelihoods[k] = Math.log(sum) + getLogScalingFactor(k);
 		}
-        checkScaling();
 	}
 }

@@ -45,7 +45,6 @@ import java.util.logging.Logger;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- *
  * @version $Id: TreeLikelihood.java,v 1.31 2006/08/30 16:02:42 rambaut Exp $
  */
 
@@ -59,7 +58,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     /**
      * Constructor.
      */
-    public TreeLikelihood(	PatternList patternList,
+    public TreeLikelihood(PatternList patternList,
                               TreeModel treeModel,
                               SiteModel siteModel,
                               BranchRateModel branchRateModel,
@@ -99,10 +98,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 } else if (patternList.getDataType() instanceof dr.evolution.datatype.AminoAcids) {
                     Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java amino acid likelihood core");
                     likelihoodCore = new AminoAcidLikelihoodCore();
-                } else if (patternList.getDataType() instanceof dr.evolution.datatype.Codons) {
-                    Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java codon likelihood core");
-                    likelihoodCore = new CodonLikelihoodCore(patternList.getStateCount());
-                    useAmbiguities = true;
+//                } else if (patternList.getDataType() instanceof dr.evolution.datatype.Codons) {
+//                    Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java codon likelihood core");
+//                    likelihoodCore = new CodonLikelihoodCore(patternList.getStateCount());
+//                    useAmbiguities = true;
                 } else {
                     Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java general likelihood core");
                     likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
@@ -124,7 +123,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             probabilities = new double[stateCount * stateCount];
 
-            likelihoodCore.initialize(nodeCount, patternCount, categoryCount, integrateAcrossCategories, useScaling);
+            likelihoodCore.initialize(nodeCount, patternCount, categoryCount, integrateAcrossCategories);
+            likelihoodCore.setUseScaling(useScaling);
 
             int extNodeCount = treeModel.getExternalNodeCount();
             int intNodeCount = treeModel.getInternalNodeCount();
@@ -236,6 +236,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
     /**
      * Calculate the log likelihood of the current state.
+     *
      * @return the log likelihood.
      */
     protected double calculateLogLikelihood() {
@@ -280,9 +281,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
     /**
      * Traverse the tree calculating partial likelihoods.
+     *
      * @return whether the partials for this node were recalculated.
      */
-    private final boolean traverse(Tree tree, NodeRef node) {
+    private boolean traverse(Tree tree, NodeRef node) {
 
         boolean update = false;
 
@@ -293,11 +295,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         // First update the transition probability matrix(ices) for this branch
         if (parent != null && updateNode[nodeNum]) {
 
-
-            double branchRate = branchRateModel.getBranchRate(tree, node);
+            final double branchRate = branchRateModel.getBranchRate(tree, node);
 
             // Get the operational time of the branch
-            double branchTime = branchRate * ( tree.getNodeHeight(parent) - tree.getNodeHeight(node) );
+            final double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
 
             if (branchTime < 0.0) {
                 throw new RuntimeException("Negative branch length: " + branchTime);
@@ -317,22 +318,18 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         // If the node is internal, update the partial likelihoods.
         if (!tree.isExternal(node)) {
 
-            int nodeCount = tree.getChildCount(node);
-            if (nodeCount != 2)
-                throw new RuntimeException("binary trees only!");
-
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            boolean update1 = traverse(tree, child1);
+            final boolean update1 = traverse(tree, child1);
 
             NodeRef child2 = tree.getChild(node, 1);
-            boolean update2 = traverse(tree, child2);
+            final boolean update2 = traverse(tree, child2);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
 
-                int childNum1 = child1.getNumber();
-                int childNum2 = child2.getNumber();
+                final int childNum1 = child1.getNumber();
+                final int childNum2 = child2.getNumber();
 
                 likelihoodCore.setNodePartialsForUpdate(nodeNum);
 
@@ -372,7 +369,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return TREE_LIKELIHOOD; }
+        public String getParserName() {
+            return TREE_LIKELIHOOD;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 

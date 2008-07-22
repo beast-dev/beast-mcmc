@@ -28,110 +28,116 @@ package dr.evomodel.treelikelihood;
 /**
  * LikelihoodCore - An interface describing the core likelihood functions.
  *
- * @version $Id: LikelihoodCore.java,v 1.15 2006/08/29 18:07:23 rambaut Exp $
- *
  * @author Andrew Rambaut
+ * @version $Id: LikelihoodCore.java,v 1.15 2006/08/29 18:07:23 rambaut Exp $
  */
 
 public interface LikelihoodCore {
 
-	/**
-	 * initializes partial likelihood arrays.
-	 */
-	void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories, boolean useScaling);
+    /**
+     * initializes partial likelihood arrays.
+     */
+    void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories);
 
-	/**
-	 * cleans up and deallocates arrays.
-	 */
-	void finalize();
+    /**
+     * cleans up and deallocates arrays.
+     */
+    void finalize() throws java.lang.Throwable;
 
-	/**
-	 * Allocates partials for a node
-	 */
-	void createNodePartials(int nodeIndex);
+    /**
+     * Allocates partials for a node
+     */
+    void createNodePartials(int nodeIndex);
 
-	/**
-	 * Sets partials for a node
-	 */
-	void setNodePartials(int nodeIndex, double[] partials);
+    /**
+     * Sets partials for a node
+     */
+    void setNodePartials(int nodeIndex, double[] partials);
 
-	/**
-	 * Sets states for a node
-	 */
-	void setNodeStates(int nodeIndex, int[] states);
+    /**
+     * Sets states for a node
+     */
+    void setNodeStates(int nodeIndex, int[] states);
 
-	/**
-	 * Sets states for a node and a pattern
-	 * Allocates states for a node
-	 */
-	void createNodeStates(int nodeIndex);
+    /**
+     * Sets states for a node and a pattern
+     * Allocates states for a node
+     */
+    void createNodeStates(int nodeIndex);
 
     /**
      * Specify that the matrices for the given node are about to be updated
+     *
      * @param nodeIndex
      */
     void setNodeMatrixForUpdate(int nodeIndex);
 
     /**
-	 * Sets probability matrix for a node
-	 */
-	void setNodeMatrix(int nodeIndex, int matrixIndex, double[] matrix);
+     * Sets probability matrix for a node
+     */
+    void setNodeMatrix(int nodeIndex, int matrixIndex, double[] matrix);
 
     /**
      * Specify that the partials for the given node are about to be updated
+     *
      * @param nodeIndex
      */
     void setNodePartialsForUpdate(int nodeIndex);
-    
+
     /**
-	 * Calculates partial likelihoods at a node using a matrixMap.
-	 * @param nodeIndex1 the 'child 1' node
-	 * @param nodeIndex2 the 'child 2' node
-	 * @param nodeIndex3 the 'parent' node
-	 */
-	void calculatePartials( int nodeIndex1, int nodeIndex2, int nodeIndex3);
+     * Calculates partial likelihoods at a node using a matrixMap.
+     *
+     * @param nodeIndex1 the 'child 1' node
+     * @param nodeIndex2 the 'child 2' node
+     * @param nodeIndex3 the 'parent' node
+     */
+    void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3);
 
-	/**
-	 * Calculates partial likelihoods at a node using a matrixMap.
-	 * @param nodeIndex1 the 'child 1' node
-	 * @param nodeIndex2 the 'child 2' node
-	 * @param nodeIndex3 the 'parent' node
-	 * @param matrixMap a map of which matrix to use for each pattern
-	 */
-	void calculatePartials( int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap);
+    /**
+     * Calculates partial likelihoods at a node using a matrixMap.
+     *
+     * @param nodeIndex1 the 'child 1' node
+     * @param nodeIndex2 the 'child 2' node
+     * @param nodeIndex3 the 'parent' node
+     * @param matrixMap  a map of which matrix to use for each pattern
+     */
+    void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap);
 
-	/**
-	 * Gets the partials for a particular node.
-	 * @param nodeIndex the node
-	 * @param outPartials an array into which the partials will go
-	 */
-	public void getPartials(int nodeIndex, double[] outPartials);
+    /**
+     * Gets the partials for a particular node.
+     *
+     * @param nodeIndex   the node
+     * @param outPartials an array into which the partials will go
+     */
+    public void getPartials(int nodeIndex, double[] outPartials);
 
-	/**
-	 * Integrates partials across categories.
-	 * @param nodeIndex the node at which to calculate the likelihoods
-	 * @param proportions the proportions of sites in each category
-	 * @param outPartials an array into which the partials will go
-	 */
-	void integratePartials(int nodeIndex, double[] proportions, double[] outPartials);
+    /**
+     * Integrates partials across categories.
+     *
+     * @param nodeIndex   the node at which to calculate the likelihoods
+     * @param proportions the proportions of sites in each category
+     * @param outPartials an array into which the partials will go
+     */
+    void integratePartials(int nodeIndex, double[] proportions, double[] outPartials);
 
-	/**
-	 * Calculates pattern log likelihoods at a node.
-	 * @param partials the partials used to calculate the likelihoods
-	 * @param frequencies an array of state frequencies
-	 * @param outLogLikelihoods an array into which the log likelihoods will go
-	 */
-	void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods);
+    /**
+     * Calculates pattern log likelihoods at a node.
+     *
+     * @param partials          the partials used to calculate the likelihoods
+     * @param frequencies       an array of state frequencies
+     * @param outLogLikelihoods an array into which the log likelihoods will go
+     */
+    void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods);
 
-	/**
-	 * Store current state
-	 */
-	void storeState();
+    void setUseScaling(boolean useScaling);
 
-	/**
-	 * Restore the stored state
-	 */
-	void restoreState();
+    /**
+     * Store current state
+     */
+    void storeState();
 
-    void checkScaling();
+    /**
+     * Restore the stored state
+     */
+    void restoreState();
 }

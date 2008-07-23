@@ -75,7 +75,7 @@ public class CommandLineBeauti {
             return;
         }
 
-        beautiOptions.guessDates();
+        //beautiOptions.guessDates();
 
         try {
             generate(new File(outputFileName));

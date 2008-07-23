@@ -6,6 +6,7 @@ import dr.evolution.alignment.Alignment;
  * @author Andrew Rambaut
  */
 public class DataPartition {
+
     public DataPartition(String name, String fileName, Alignment alignment) {
         this.name = name;
         this.fileName = fileName;
@@ -29,6 +30,14 @@ public class DataPartition {
         this.name = name;
     }
 
+    public void setPartitionModel(PartitionModel model) {
+        this.model = model;
+    }
+
+    public PartitionModel getPartitionModel() {
+        return model;
+    }
+
     public boolean isCoding() {
         return coding;
     }
@@ -42,4 +51,6 @@ public class DataPartition {
 
     private String name;
     private boolean coding;
+
+    private PartitionModel model;
 }

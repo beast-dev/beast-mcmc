@@ -518,6 +518,13 @@ public class BeautiOptions extends AbstractModelOptions {
     }
 
     /**
+     * @return a list of partition models
+     */
+    public List<PartitionModel> getPartitionModels() {
+        return models;
+    }
+
+    /**
      * Read options from a file
      *
      * @param guessDates guess dates?
@@ -565,32 +572,34 @@ public class BeautiOptions extends AbstractModelOptions {
 
         root.addContent(taxaElement);
 
-        /*
-        Element modelElement = new Element("model");
+        for (PartitionModel model : models) {
 
-        modelElement.addContent(createChild("nucSubstitutionModel", nucSubstitutionModel));
-        modelElement.addContent(createChild("aaSubstitutionModel", aaSubstitutionModel));
-        modelElement.addContent(createChild("binarySubstitutionModel", binarySubstitutionModel));
-        modelElement.addContent(createChild("frequencyPolicy", frequencyPolicy));
-        modelElement.addContent(createChild("gammaHetero", gammaHetero));
-        modelElement.addContent(createChild("gammaCategories", gammaCategories));
-        modelElement.addContent(createChild("invarHetero", invarHetero));
-        modelElement.addContent(createChild("codonHeteroPattern", codonHeteroPattern));
-        modelElement.addContent(createChild("maximumTipHeight", maximumTipHeight));
-        modelElement.addContent(createChild("hasSetFixedSubstitutionRate", hasSetFixedSubstitutionRate));
-        modelElement.addContent(createChild("meanSubstitutionRate", meanSubstitutionRate));
-        modelElement.addContent(createChild("fixedSubstitutionRate", fixedSubstitutionRate));
-        modelElement.addContent(createChild("unlinkedSubstitutionModel", unlinkedSubstitutionModel));
-        modelElement.addContent(createChild("unlinkedHeterogeneityModel", unlinkedHeterogeneityModel));
-        modelElement.addContent(createChild("unlinkedFrequencyModel", unlinkedFrequencyModel));
-        modelElement.addContent(createChild("clockModel", clockModel));
-        modelElement.addContent(createChild("nodeHeightPrior", nodeHeightPrior));
-        modelElement.addContent(createChild("parameterization", parameterization));
-        modelElement.addContent(createChild("skylineGroupCount", skylineGroupCount));
-        modelElement.addContent(createChild("skylineModel", skylineModel));
-        modelElement.addContent(createChild("fixedTree", fixedTree));
+            Element modelElement = new Element("model");
 
-        root.addContent(modelElement);    */
+            /*modelElement.addContent(createChild("nucSubstitutionModel", nucSubstitutionModel));
+            modelElement.addContent(createChild("aaSubstitutionModel", aaSubstitutionModel));
+            modelElement.addContent(createChild("binarySubstitutionModel", binarySubstitutionModel));
+            modelElement.addContent(createChild("frequencyPolicy", frequencyPolicy));
+            modelElement.addContent(createChild("gammaHetero", gammaHetero));
+            modelElement.addContent(createChild("gammaCategories", gammaCategories));
+            modelElement.addContent(createChild("invarHetero", invarHetero));
+            modelElement.addContent(createChild("codonHeteroPattern", codonHeteroPattern));
+            modelElement.addContent(createChild("maximumTipHeight", maximumTipHeight));
+            modelElement.addContent(createChild("hasSetFixedSubstitutionRate", hasSetFixedSubstitutionRate));
+            modelElement.addContent(createChild("meanSubstitutionRate", meanSubstitutionRate));
+            modelElement.addContent(createChild("fixedSubstitutionRate", fixedSubstitutionRate));
+            modelElement.addContent(createChild("unlinkedSubstitutionModel", unlinkedSubstitutionModel));
+            modelElement.addContent(createChild("unlinkedHeterogeneityModel", unlinkedHeterogeneityModel));
+            modelElement.addContent(createChild("unlinkedFrequencyModel", unlinkedFrequencyModel));
+            modelElement.addContent(createChild("clockModel", clockModel));
+            modelElement.addContent(createChild("nodeHeightPrior", nodeHeightPrior));
+            modelElement.addContent(createChild("parameterization", parameterization));
+            modelElement.addContent(createChild("skylineGroupCount", skylineGroupCount));
+            modelElement.addContent(createChild("skylineModel", skylineModel));
+            modelElement.addContent(createChild("fixedTree", fixedTree)); */
+
+            root.addContent(modelElement);
+        }
 
         Element priorsElement = new Element("priors");
 

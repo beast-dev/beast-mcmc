@@ -928,7 +928,7 @@ public class BeautiOptions extends AbstractModelOptions {
     // Model options
     public int partitionCount = 1;
 
-    List<PartitionModel> models;
+    List<PartitionModel> models = new ArrayList<PartitionModel>();
 
     public int nodeHeightPrior = CONSTANT;
     public int parameterization = GROWTH_RATE;

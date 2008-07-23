@@ -52,7 +52,7 @@ public class BeautiFrame extends DocumentFrame {
     private DataPanel dataPanel;
     private SamplesPanel samplesPanel;
     private TaxaPanel taxaPanel;
-    private ModelPanel modelPanel;
+    private ModelsPanel modelsPanel;
     private PriorsPanel priorsPanel;
     private OperatorsPanel operatorsPanel;
     private MCMCPanel mcmcPanel;
@@ -85,7 +85,7 @@ public class BeautiFrame extends DocumentFrame {
         dataPanel = new DataPanel(this);
         samplesPanel = new SamplesPanel(this);
         taxaPanel = new TaxaPanel(this);
-        modelPanel = new ModelPanel(this);
+        modelsPanel = new ModelsPanel(this);
         priorsPanel = new PriorsPanel(this);
         operatorsPanel = new OperatorsPanel(this);
         mcmcPanel = new MCMCPanel(this);
@@ -93,7 +93,7 @@ public class BeautiFrame extends DocumentFrame {
         tabbedPane.addTab("Data Partitions", dataPanel);
         tabbedPane.addTab("Sample Dates", samplesPanel);
         tabbedPane.addTab("Taxon Sets", taxaPanel);
-        tabbedPane.addTab("Model", modelPanel);
+        tabbedPane.addTab("Models", modelsPanel);
         tabbedPane.addTab("Priors", priorsPanel);
         tabbedPane.addTab("Operators", operatorsPanel);
         tabbedPane.addTab("MCMC", mcmcPanel);
@@ -127,7 +127,7 @@ public class BeautiFrame extends DocumentFrame {
         dataPanel.setOptions(beautiOptions);
         samplesPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
-        modelPanel.setOptions(beautiOptions);
+        modelsPanel.setOptions(beautiOptions);
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         mcmcPanel.setOptions(beautiOptions);
@@ -138,7 +138,7 @@ public class BeautiFrame extends DocumentFrame {
     public final void dataChanged() {
         samplesPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
-        modelPanel.setOptions(beautiOptions);
+        modelsPanel.setOptions(beautiOptions);
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         setDirty();
@@ -146,7 +146,7 @@ public class BeautiFrame extends DocumentFrame {
 
     public final void samplesChanged() {
         taxaPanel.setOptions(beautiOptions);
-        modelPanel.setOptions(beautiOptions);
+        modelsPanel.setOptions(beautiOptions);
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         setDirty();
@@ -175,7 +175,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void modelChanged() {
-        modelPanel.getOptions(beautiOptions);
+        modelsPanel.getOptions(beautiOptions);
 
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
@@ -254,7 +254,7 @@ public class BeautiFrame extends DocumentFrame {
             dataPanel.setOptions(beautiOptions);
             samplesPanel.setOptions(beautiOptions);
             taxaPanel.setOptions(beautiOptions);
-            modelPanel.setOptions(beautiOptions);
+            modelsPanel.setOptions(beautiOptions);
             priorsPanel.setOptions(beautiOptions);
             operatorsPanel.setOptions(beautiOptions);
             mcmcPanel.setOptions(beautiOptions);
@@ -283,7 +283,7 @@ public class BeautiFrame extends DocumentFrame {
         dataPanel.getOptions(beautiOptions);
         samplesPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
-        modelPanel.getOptions(beautiOptions);
+        modelsPanel.getOptions(beautiOptions);
         priorsPanel.getOptions(beautiOptions);
         operatorsPanel.getOptions(beautiOptions);
         mcmcPanel.getOptions(beautiOptions);
@@ -521,7 +521,7 @@ public class BeautiFrame extends DocumentFrame {
         dataPanel.setOptions(beautiOptions);
         samplesPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
-        modelPanel.setOptions(beautiOptions);
+        modelsPanel.setOptions(beautiOptions);
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         mcmcPanel.setOptions(beautiOptions);
@@ -569,7 +569,7 @@ public class BeautiFrame extends DocumentFrame {
         dataPanel.getOptions(beautiOptions);
         samplesPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
-        modelPanel.getOptions(beautiOptions);
+        modelsPanel.getOptions(beautiOptions);
         priorsPanel.getOptions(beautiOptions);
         operatorsPanel.getOptions(beautiOptions);
         mcmcPanel.getOptions(beautiOptions);

@@ -119,8 +119,6 @@ public class ModelsPanel extends JPanel implements Exportable {
         tableColumn0.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         //tableColumn0.setWidth(40);
 
-        modelTable.setPreferredSize(new Dimension(80, modelTable.getPreferredSize().height));
-        
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(modelTable);
 
         modelTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -131,7 +129,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         scrollPane = new JScrollPane(modelTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
 
         Icon addIcon = null, removeIcon = null;
@@ -146,7 +144,7 @@ public class ModelsPanel extends JPanel implements Exportable {
                 javax.swing.BoxLayout.Y_AXIS);
 
         modelPanel = new OptionsPanel(12, 18);
-        modelPanel.setOpaque(true);
+        modelPanel.setOpaque(false);
 
         setupComponent(substUnlinkCheck);
         substUnlinkCheck.setEnabled(false);
@@ -277,11 +275,15 @@ public class ModelsPanel extends JPanel implements Exportable {
         OptionsPanel panel = new OptionsPanel(0, 0);
         panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane, modelPanel);
+        splitPane.setDividerLocation(180);
+        splitPane.setContinuousLayout(true);
+        splitPane.setBorder(BorderFactory.createEmptyBorder());
+
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0,0));
-        add(scrollPane, BorderLayout.WEST);
-        add(modelPanel, BorderLayout.CENTER);
+        add(splitPane, BorderLayout.CENTER);
         add(panel, BorderLayout.SOUTH);
     }
 
@@ -350,7 +352,6 @@ public class ModelsPanel extends JPanel implements Exportable {
         if (model == null) {
             return;
         }
-
 
         switch (model.dataType.getType()){
             case DataType.NUCLEOTIDES:
@@ -442,6 +443,10 @@ public class ModelsPanel extends JPanel implements Exportable {
         settingOptions = false;
 
         modelTableModel.fireTableDataChanged();
+
+        if (currentModel == null && options.getPartitionModels().size() > 0) {
+            modelTable.getSelectionModel().setSelectionInterval(0, 0);
+        }
 
         validate();
         repaint();

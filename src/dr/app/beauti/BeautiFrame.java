@@ -133,7 +133,7 @@ public class BeautiFrame extends DocumentFrame {
         operatorsPanel.setOptions(beautiOptions);
         mcmcPanel.setOptions(beautiOptions);
 
-        setSize(new java.awt.Dimension(800, 600));
+        setSize(new java.awt.Dimension(1024, 768));
     }
 
     public final void dataChanged() {

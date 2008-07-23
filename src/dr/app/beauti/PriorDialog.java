@@ -25,7 +25,11 @@
 
 package dr.app.beauti;
 
-import dr.gui.chart.*;
+import dr.app.beauti.options.Parameter;
+import dr.gui.chart.Axis;
+import dr.gui.chart.JChart;
+import dr.gui.chart.LinearAxis;
+import dr.gui.chart.PDFPlot;
 import dr.math.*;
 import dr.util.NumberFormatter;
 import org.virion.jam.components.RealNumberField;
@@ -83,7 +87,7 @@ public class PriorDialog {
     private JCheckBox truncatedCheck;
     private boolean isTruncated;
 
-    private BeautiOptions.Parameter parameter;
+    private Parameter parameter;
 
     public PriorDialog(JFrame frame) {
         this.frame = frame;
@@ -115,7 +119,7 @@ public class PriorDialog {
         quantileText.setEditable(false);
     }
 
-    public int showDialog(final BeautiOptions.Parameter parameter) {
+    public int showDialog(final Parameter parameter) {
 
         PriorType priorType;
 

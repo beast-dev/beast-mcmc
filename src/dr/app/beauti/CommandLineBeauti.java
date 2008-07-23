@@ -24,14 +24,17 @@
  */
 package dr.app.beauti;
 
-import dr.evolution.alignment.*;
+import dr.app.beauti.options.DataPartition;
+import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Units;
 import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
@@ -39,9 +42,9 @@ import org.jdom.input.SAXBuilder;
 import java.io.*;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class CommandLineBeauti {
     private BeastGenerator beautiOptions = new BeastGenerator();
@@ -144,7 +147,7 @@ public class CommandLineBeauti {
                             throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
                         }
 
-                        alignment = (SimpleAlignment)importer.parseCharactersBlock(beautiOptions.taxonList);
+                        alignment = (SimpleAlignment) importer.parseCharactersBlock(beautiOptions.taxonList);
 
                     } else if (block == NexusImporter.DATA_BLOCK) {
 
@@ -154,7 +157,7 @@ public class CommandLineBeauti {
 
                         // A data block doesn't need a taxon block before it
                         // but if one exists then it will use it.
-                        alignment = (SimpleAlignment)importer.parseDataBlock(beautiOptions.taxonList);
+                        alignment = (SimpleAlignment) importer.parseDataBlock(beautiOptions.taxonList);
                         if (taxa == null) {
                             taxa = alignment;
                         }
@@ -241,10 +244,10 @@ public class CommandLineBeauti {
             }
 
             beautiOptions.fileNameStem = dr.app.util.Utils.trimExtensions(file.getName(),
-                    new String[] {"nex", "NEX", "tre", "TRE", "nexus", "NEXUS"});
+                    new String[]{"nex", "NEX", "tre", "TRE", "nexus", "NEXUS"});
 
             if (alignment != null) {
-                BeautiOptions.DataPartition partition = new BeautiOptions.DataPartition(beautiOptions.fileNameStem, file.getName(), alignment);
+                DataPartition partition = new DataPartition(beautiOptions.fileNameStem, file.getName(), alignment);
                 beautiOptions.dataPartitions.add(partition);
                 beautiOptions.dataType = alignment.getDataType();
 
@@ -267,7 +270,6 @@ public class CommandLineBeauti {
         beautiOptions.generateXML(fw);
         fw.close();
     }
-
 
 
 }

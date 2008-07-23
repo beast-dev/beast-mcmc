@@ -121,7 +121,7 @@ public interface Parameter extends Statistic {
      *
      * @param dim new dimention
      */
-     void setDimension(int dim);
+    void setDimension(int dim);
 
     /**
      * Adds new bounds to this parameter
@@ -258,14 +258,14 @@ public interface Parameter extends Statistic {
             StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
             final Bounds bounds = getBounds();
             buffer.append(getId());
-            if( bounds != null ) {
+            if (bounds != null) {
                 buffer.append("=[").append(String.valueOf(bounds.getLowerLimit(0)));
                 buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
             }
 
-            for(int i = 1; i < getDimension(); i++) {
+            for (int i = 1; i < getDimension(); i++) {
                 buffer.append(", ").append(String.valueOf(getParameterValue(i)));
-                if( bounds != null ) {
+                if (bounds != null) {
                     buffer.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
                     buffer.append(",").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
                 }
@@ -296,6 +296,18 @@ public interface Parameter extends Statistic {
             values = new double[1];
             values[0] = initialValue;
             this.bounds = null;
+        }
+
+        /**
+         * @param id           a unique id for this parameter
+         * @param initialValue the initial value for this parameter
+         * @param lower        the lower bound on this parameter
+         * @param upper        the upper bound on this parameter
+         */
+        public Default(String id, double initialValue, double lower, double upper) {
+            this(initialValue);
+            setId(id);
+            addBounds(new DefaultBounds(upper, lower, 1));
         }
 
         public Default(int dimension, double initialValue) {
@@ -371,7 +383,7 @@ public interface Parameter extends Statistic {
          */
         public void setDimension(int dim) {
 
-            assert storedValues == null && bounds == null: "Can't change dimension after store has been called!";
+            assert storedValues == null && bounds == null : "Can't change dimension after store has been called!";
             //if (!hasBeenStored) {
             double[] newValues = new double[dim];
             System.arraycopy(values, 0, newValues, 0, values.length);
@@ -444,6 +456,7 @@ public interface Parameter extends Statistic {
         // same as !storedValues && !bounds
         //private boolean hasBeenStored = false;
         private IntersectionBounds bounds = null;
+
     }
 
     class DefaultBounds implements Bounds {
@@ -485,9 +498,14 @@ public interface Parameter extends Statistic {
             return uppers[i];
         }
 
-        public double getLowerLimit(int i) { return lowers[i]; }
-		public int getBoundsDimension() { return uppers.length; }
+        public double getLowerLimit(int i) {
+            return lowers[i];
+        }
 
-		private double[] uppers, lowers;
-	}
+        public int getBoundsDimension() {
+            return uppers.length;
+        }
+
+        private double[] uppers, lowers;
+    }
 }

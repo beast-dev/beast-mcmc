@@ -26,8 +26,11 @@
 package dr.app.beauti;
 
 import dr.app.beast.BeastVersion;
-import dr.evolution.alignment.SitePatterns;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.DataPartition;
+import dr.app.beauti.options.Operator;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.datatype.TwoStateCovarion;
@@ -146,10 +149,10 @@ public class BeastGenerator extends BeautiOptions {
             writeTaxonSets(writer);
         }
 
-        for (DataPartition partition: dataPartitions) {
+        for (DataPartition partition : dataPartitions) {
             writeAlignment(partition, writer);
         }
-        for (DataPartition partition: dataPartitions) {
+        for (DataPartition partition : dataPartitions) {
             writePatternLists(partition, writer);
         }
 
@@ -173,15 +176,15 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeText("");
         writeBranchRatesModel(writer);
 
-        for (DataPartition partition: dataPartitions) {
+        for (DataPartition partition : dataPartitions) {
             writer.writeText("");
             writeSubstitutionModel(partition, writer);
         }
-        for (DataPartition partition: dataPartitions) {
+        for (DataPartition partition : dataPartitions) {
             writer.writeText("");
             writeSiteModel(partition, writer);
         }
-        for (DataPartition partition: dataPartitions) {
+        for (DataPartition partition : dataPartitions) {
             writer.writeText("");
             writeTreeLikelihood(partition, writer);
         }
@@ -2250,11 +2253,12 @@ public class BeastGenerator extends BeautiOptions {
 
     private String getPartitionSuffix(DataPartition partition, int num) {
         if (num < 0) {
-            return (partition.getName() != null ? "." + partition.getName() : "" );
+            return (partition.getName() != null ? "." + partition.getName() : "");
         } else {
-            return (partition.getName() != null ? "." + partition.getName() : "" ) + num;            
+            return (partition.getName() != null ? "." + partition.getName() : "") + num;
         }
     }
+
     /**
      * Write the priors for each parameter
      *
@@ -2277,8 +2281,8 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
         }
 
-        ArrayList<Parameter> parameters = selectParameters();
-        for (Parameter parameter : parameters) {
+        ArrayList<dr.app.beauti.options.Parameter> parameters = selectParameters();
+        for (dr.app.beauti.options.Parameter parameter : parameters) {
             if (parameter.priorType != PriorType.NONE) {
                 if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
                     writeParameterPrior(parameter, writer);
@@ -2294,7 +2298,7 @@ public class BeastGenerator extends BeautiOptions {
      * @param parameter the parameter
      * @param writer    the writer
      */
-    private void writeParameterPrior(Parameter parameter, XMLWriter writer) {
+    private void writeParameterPrior(dr.app.beauti.options.Parameter parameter, XMLWriter writer) {
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:
                 writer.writeOpenTag(DistributionLikelihood.UNIFORM_PRIOR,
@@ -2381,7 +2385,7 @@ public class BeastGenerator extends BeautiOptions {
         }
     }
 
-    private void writeParameterIdref(XMLWriter writer, Parameter parameter) {
+    private void writeParameterIdref(XMLWriter writer, dr.app.beauti.options.Parameter parameter) {
         if (parameter.isStatistic) {
             writer.writeTag("statistic", new Attribute[]{new Attribute.Default<String>("idref", parameter.getName())}, true);
         } else {
@@ -2716,7 +2720,7 @@ public class BeastGenerator extends BeautiOptions {
         if (hasData()) {
             writeTreeLikelihoodReferences(writer);
         }
-        
+
         if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
             writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default<String>("idref", "speciation"), true);
         } else if (nodeHeightPrior == SKYLINE) {
@@ -2751,7 +2755,7 @@ public class BeastGenerator extends BeautiOptions {
      * @param value the value
      */
     public void fixParameter(String id, double value) {
-        Parameter parameter = parameters.get(id);
+        dr.app.beauti.options.Parameter parameter = parameters.get(id);
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + id + ", is unknown");
         }
@@ -2777,7 +2781,7 @@ public class BeastGenerator extends BeautiOptions {
      * @param writer the writer
      */
     public void writeParameter(String id, XMLWriter writer) {
-        Parameter parameter = parameters.get(id);
+        dr.app.beauti.options.Parameter parameter = parameters.get(id);
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + id + ", is unknown");
         }
@@ -2800,7 +2804,7 @@ public class BeastGenerator extends BeautiOptions {
      * @param writer    the writer
      */
     public void writeParameter(String id, int dimension, XMLWriter writer) {
-        Parameter parameter = parameters.get(id);
+        dr.app.beauti.options.Parameter parameter = parameters.get(id);
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + id + ", is unknown");
         }
@@ -2859,7 +2863,7 @@ public class BeastGenerator extends BeautiOptions {
         } else if (upgmaStartingTree) {
             // generate a upgma starting tree
             writer.writeComment("Construct a rough-and-ready UPGMA tree as an starting tree");
-            Parameter rootHeight = getParameter("treeModel.rootHeight");
+            dr.app.beauti.options.Parameter rootHeight = getParameter("treeModel.rootHeight");
             if (rootHeight.priorType != PriorType.NONE) {
                 writer.writeOpenTag(
                         UPGMATreeParser.UPGMA_TREE,
@@ -2890,7 +2894,7 @@ public class BeastGenerator extends BeautiOptions {
         } else {
             // generate a coalescent tree
             writer.writeComment("Generate a random starting tree under the coalescent process");
-            Parameter rootHeight = getParameter("treeModel.rootHeight");
+            dr.app.beauti.options.Parameter rootHeight = getParameter("treeModel.rootHeight");
             if (rootHeight.priorType != PriorType.NONE) {
                 writer.writeOpenTag(
                         CoalescentSimulator.COALESCENT_TREE,
@@ -2913,7 +2917,7 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
                 writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
                 for (Taxa taxonSet : taxonSets) {
-                    Parameter statistic = statistics.get(taxonSet);
+                    dr.app.beauti.options.Parameter statistic = statistics.get(taxonSet);
 
                     Attribute mono = new Attribute.Default<Boolean>(CoalescentSimulator.IS_MONOPHYLETIC, taxonSetsMono.get(taxonSet));
 

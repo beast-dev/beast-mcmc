@@ -58,12 +58,12 @@ public interface TraceList {
     String getTraceName(int index);
 
     /**
-     * @return the burn-in for this trace list
+     * @return the burn-in for this trace list (the number of sampled states to discard)
      */
     int getBurnIn();
 
     /**
-     * @return the number of states in the traces
+     * @return the number of states in the traces (without the burnin)
      */
     int getStateCount();
 
@@ -106,8 +106,8 @@ public interface TraceList {
      * @param traceIndex the index of the trace
      * @return the trace correlation statistic object for the given index
      */
-	TraceCorrelation getCorrelationStatistics(int traceIndex);
+    TraceCorrelation getCorrelationStatistics(int traceIndex);
 
-	void analyseTrace(int index);
+    void analyseTrace(int index);
 
 }

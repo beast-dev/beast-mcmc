@@ -25,6 +25,8 @@
 
 package dr.app.beauti;
 
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Parameter;
 import dr.util.NumberFormatter;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.components.WholeNumberField;
@@ -255,7 +257,7 @@ public class PriorsPanel extends JPanel implements Exportable {
     private DiscretePriorDialog discretePriorDialog = null;
 
     private void priorButtonPressed(int row) {
-        BeautiOptions.Parameter param = (BeautiOptions.Parameter) parameters.get(row);
+        Parameter param = (Parameter) parameters.get(row);
 
         if (param.isDiscrete) {
             if (discretePriorDialog == null) {
@@ -346,7 +348,7 @@ public class PriorsPanel extends JPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
-            BeastGenerator.Parameter param = (BeastGenerator.Parameter) parameters.get(row);
+            Parameter param = (Parameter) parameters.get(row);
             switch (col) {
                 case 0:
                     return param.getName();

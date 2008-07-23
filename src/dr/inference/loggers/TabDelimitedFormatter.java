@@ -25,6 +25,8 @@
 
 package dr.inference.loggers;
 
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
 /**
@@ -39,8 +41,11 @@ public class TabDelimitedFormatter implements LogFormatter {
     protected PrintWriter printWriter;
 
     public TabDelimitedFormatter(PrintWriter printWriter) {
-
         this.printWriter = printWriter;
+    }
+
+    public TabDelimitedFormatter(OutputStream stream) {
+        this(new PrintWriter(new OutputStreamWriter(stream)));
     }
 
     boolean outputLabels = true;

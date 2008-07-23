@@ -25,6 +25,8 @@
 
 package dr.app.beauti;
 
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Operator;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.RealNumberCellEditor;
@@ -37,9 +39,9 @@ import java.awt.*;
 import java.util.ArrayList;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: OperatorsPanel.java,v 1.12 2005/07/11 14:07:25 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: OperatorsPanel.java,v 1.12 2005/07/11 14:07:25 rambaut Exp $
  */
 public class OperatorsPanel extends JPanel implements Exportable {
 
@@ -161,7 +163,7 @@ public class OperatorsPanel extends JPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
-            BeastGenerator.Operator op = (BeastGenerator.Operator) operators.get(row);
+            Operator op = (Operator) operators.get(row);
             switch (col) {
                 case 0:
                     return op.inUse;
@@ -184,7 +186,7 @@ public class OperatorsPanel extends JPanel implements Exportable {
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-            BeastGenerator.Operator op = (BeastGenerator.Operator) operators.get(row);
+            Operator op = (Operator) operators.get(row);
             switch (col) {
                 case 0:
                     op.inUse = (Boolean) aValue;
@@ -211,9 +213,9 @@ public class OperatorsPanel extends JPanel implements Exportable {
         public boolean isCellEditable(int row, int col) {
             boolean editable;
 
-            BeastGenerator.Operator op = (BeastGenerator.Operator) operators.get(row);
+            Operator op = (Operator) operators.get(row);
 
-            switch (col){
+            switch (col) {
                 case 0:// Check box
                     editable = true;
                     break;
@@ -253,9 +255,9 @@ public class OperatorsPanel extends JPanel implements Exportable {
         }
     }
 
-    class OperatorTableCellRenderer extends TableRenderer{
+    class OperatorTableCellRenderer extends TableRenderer {
 
-        public OperatorTableCellRenderer( int alignment, Insets insets){
+        public OperatorTableCellRenderer(int alignment, Insets insets) {
             super(alignment, insets);
         }
 
@@ -273,8 +275,8 @@ public class OperatorsPanel extends JPanel implements Exportable {
                     aHasFocus,
                     aRow, aColumn);
 
-            BeastGenerator.Operator op = (BeastGenerator.Operator) operators.get(aRow);
-            if (! op.inUse && aColumn > 0)
+            Operator op = (Operator) operators.get(aRow);
+            if (!op.inUse && aColumn > 0)
                 renderer.setForeground(Color.gray);
             else
                 renderer.setForeground(Color.black);

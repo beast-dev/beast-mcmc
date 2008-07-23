@@ -1,5 +1,7 @@
 package dr.app.beauti;
 
+import dr.app.beauti.options.Parameter;
+
 import java.text.NumberFormat;
 
 /**
@@ -20,20 +22,30 @@ public enum PriorType {
     public String toString() {
 
         switch (this) {
-            case NONE: return "none";
-            case UNIFORM_PRIOR: return "Uniform";
-            case EXPONENTIAL_PRIOR: return "Exponential";
-            case NORMAL_PRIOR: return "Normal";
-            case LOGNORMAL_PRIOR: return "Lognormal";
-            case GAMMA_PRIOR: return "Gamma";
-            case JEFFREYS_PRIOR: return "Jeffreys'";
-            case POISSON_PRIOR: return "Poisson";
-            case TRUNC_NORMAL_PRIOR: return "Truncated Normal";
-            default: return "";
+            case NONE:
+                return "none";
+            case UNIFORM_PRIOR:
+                return "Uniform";
+            case EXPONENTIAL_PRIOR:
+                return "Exponential";
+            case NORMAL_PRIOR:
+                return "Normal";
+            case LOGNORMAL_PRIOR:
+                return "Lognormal";
+            case GAMMA_PRIOR:
+                return "Gamma";
+            case JEFFREYS_PRIOR:
+                return "Jeffreys'";
+            case POISSON_PRIOR:
+                return "Poisson";
+            case TRUNC_NORMAL_PRIOR:
+                return "Truncated Normal";
+            default:
+                return "";
         }
     }
 
-    public String getPriorString(BeastGenerator.Parameter param) {
+    public String getPriorString(Parameter param) {
 
         NumberFormat formatter = NumberFormat.getNumberInstance();
         StringBuffer buffer = new StringBuffer();

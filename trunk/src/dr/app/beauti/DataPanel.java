@@ -25,32 +25,23 @@
 
 package dr.app.beauti;
 
-import dr.evolution.alignment.ConvertAlignment;
-import dr.evolution.datatype.*;
-import dr.evolution.util.*;
-import dr.gui.table.DateCellEditor;
-import dr.gui.table.TableSorter;
-import org.virion.jam.components.RealNumberField;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.DataPartition;
 import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.*;
+import org.virion.jam.table.HeaderRenderer;
+import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class DataPanel extends JPanel implements Exportable {
 
@@ -88,7 +79,7 @@ public class DataPanel extends JPanel implements Exportable {
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
-        setLayout(new BorderLayout(0,0));
+        setLayout(new BorderLayout(0, 0));
         add(scrollPane, "Center");
     }
 
@@ -130,7 +121,7 @@ public class DataPanel extends JPanel implements Exportable {
          *
          */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = { "Name", "FileName", "Sites", "Sequence Type" };
+        String[] columnNames = {"Name", "FileName", "Sites", "Sequence Type"};
 
         public DataTableModel() {
         }
@@ -145,12 +136,16 @@ public class DataPanel extends JPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
-            BeautiOptions.DataPartition partition = options.dataPartitions.get(row);
+            DataPartition partition = options.dataPartitions.get(row);
             switch (col) {
-                case 0: return partition.getName();
-                case 1: return partition.getFileName();
-                case 2: return "" + partition.getAlignment().getPatternCount();
-                case 3: return partition.getAlignment().getDataType().getDescription();
+                case 0:
+                    return partition.getName();
+                case 1:
+                    return partition.getFileName();
+                case 2:
+                    return "" + partition.getAlignment().getPatternCount();
+                case 3:
+                    return partition.getAlignment().getDataType().getDescription();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
@@ -188,6 +183,8 @@ public class DataPanel extends JPanel implements Exportable {
 
             return buffer.toString();
         }
-    };
+    }
+
+    ;
 
 }

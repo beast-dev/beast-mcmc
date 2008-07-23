@@ -39,7 +39,7 @@ import java.util.StringTokenizer;
  * @version $Id: LogFileTraces.java,v 1.4 2006/11/30 17:39:29 rambaut Exp $
  */
 
-public class LogFileTraces implements TraceList {
+public class LogFileTraces extends AbstractTraceList {
 
     public LogFileTraces(String name, File file) {
         this.name = name;
@@ -72,8 +72,8 @@ public class LogFileTraces implements TraceList {
      * @return the number of states excluding the burnin
      */
     public int getStateCount() {
-	    // This is done as two integer divisions to ensure the same rounding for
-	    // the burnin...
+        // This is done as two integer divisions to ensure the same rounding for
+        // the burnin...
         return ((lastState - firstState) / stepSize) - (getBurnIn() / stepSize) + 1;
     }
 
@@ -125,7 +125,7 @@ public class LogFileTraces implements TraceList {
 
     public void setBurnIn(int burnIn) {
         this.burnIn = burnIn;
-        traceStatistics = null;
+        super.setBurnIn(burnIn);
     }
 
     public double getStateValue(int trace, int index) {
@@ -133,16 +133,16 @@ public class LogFileTraces implements TraceList {
     }
 
     /**
-     *  Read several consecutive values of one state into a destination array
+     * Read several consecutive values of one state into a destination array
      *
-     * @param nState  State index number
+     * @param nState      State index number
      * @param destination array to store result
-     * @param offset  first trace index
+     * @param offset      first trace index
      */
     public void getStateValues(int nState, double[] destination, int offset) {
         final int index1 = nState + (burnIn / stepSize);
-        for(int k = 0; k < destination.length; ++k) {
-            destination[k] = getTrace(k+offset).getValue(index1);
+        for (int k = 0; k < destination.length; ++k) {
+            destination[k] = getTrace(k + offset).getValue(index1);
         }
     }
 
@@ -154,36 +154,10 @@ public class LogFileTraces implements TraceList {
         getTrace(index).getValues((burnIn / stepSize), destination, offset);
     }
 
-    public TraceDistribution getDistributionStatistics(int index) {
-        return getCorrelationStatistics(index);
-    }
-
-    public TraceCorrelation getCorrelationStatistics(int index) {
-        if (traceStatistics == null) {
-            return null;
-        }
-
-        return traceStatistics[index];
-    }
-
-    public void analyseTrace(int index) {
-        double[] values = new double[getStateCount()];
-        int offset = (getBurnIn() / stepSize);
-
-        if (traceStatistics == null) {
-            traceStatistics = new TraceCorrelation[getTraceCount()];
-        }
-
-        Trace trace = getTrace(index);
-        trace.getValues(offset, values);
-        traceStatistics[index] = new TraceCorrelation(values, stepSize);
-    }
-
-
     public void loadTraces() throws TraceException, IOException {
 
         FileReader reader = new FileReader(file);
-        loadTraces(reader, FileHelpers.numberOfLines(file)-1);
+        loadTraces(reader, FileHelpers.numberOfLines(file) - 1);
         reader.close();
     }
 
@@ -240,12 +214,12 @@ public class LogFileTraces implements TraceList {
             String stateString = tokens.nextToken();
             int state = 0;
             try {
-	            try {
-		            // Changed this to parseDouble because LAMARC uses scientific notation for the state number
-		            state = (int)Double.parseDouble(stateString);
-	            } catch (NumberFormatException nfe) {
-		            throw new TraceException("Unable to parse state number in column 1 (Line " + reader.getLineNumber() + ")");
-	            }
+                try {
+                    // Changed this to parseDouble because LAMARC uses scientific notation for the state number
+                    state = (int) Double.parseDouble(stateString);
+                } catch (NumberFormatException nfe) {
+                    throw new TraceException("Unable to parse state number in column 1 (Line " + reader.getLineNumber() + ")");
+                }
 
                 if (firstState) {
                     // MrBayes puts 1 as the first state, BEAST puts 0
@@ -254,9 +228,9 @@ public class LogFileTraces implements TraceList {
                     if (state == 1) state = 0;
                     firstState = false;
                 }
-	            if (!addState(state)) {
-		            throw new TraceException("State " + state + " is not consistent with previous spacing (Line " + reader.getLineNumber() + ")");
-	            }
+                if (!addState(state)) {
+                    throw new TraceException("State " + state + " is not consistent with previous spacing (Line " + reader.getLineNumber() + ")");
+                }
 
             } catch (NumberFormatException nfe) {
                 throw new TraceException("State " + state + ":Expected real value in column " + reader.getLineNumber());
@@ -268,7 +242,7 @@ public class LogFileTraces implements TraceList {
                     try {
                         addValue(i, Double.parseDouble(tokens.nextToken()));
                     } catch (NumberFormatException nfe) {
-                        throw new TraceException("State " + state + ": Expected real value in column " + (i+1) +
+                        throw new TraceException("State " + state + ": Expected real value in column " + (i + 1) +
                                 " (Line " + reader.getLineNumber() + ")");
                     }
                 } else {
@@ -314,11 +288,11 @@ public class LogFileTraces implements TraceList {
         } else {
             int step = stateNumber - lastState;
             if (step != stepSize) {
-	            return false;
+                return false;
             }
         }
         lastState = stateNumber;
-	    return true;
+        return true;
     }
 
     /**
@@ -335,7 +309,6 @@ public class LogFileTraces implements TraceList {
     private String name;
 
     private List<Trace> traces = new ArrayList<Trace>();
-    private TraceCorrelation[] traceStatistics = null;
 
     private int burnIn = -1;
     private int firstState = -1;
@@ -361,7 +334,9 @@ public class LogFileTraces implements TraceList {
             return new StringTokenizer(line, "\t");
         }
 
-        public int getLineNumber() { return lineNumber; }
+        public int getLineNumber() {
+            return lineNumber;
+        }
 
         private int lineNumber = 0;
     }

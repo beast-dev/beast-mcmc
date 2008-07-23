@@ -13,6 +13,10 @@ public class PartitionModel extends AbstractModelOptions {
         this(partition.getName(), partition.getAlignment().getDataType());
     }
 
+    public String getName() {
+        return name;
+    }
+
     public PartitionModel(String name, DataType dataType) {
 
         this.name = name;

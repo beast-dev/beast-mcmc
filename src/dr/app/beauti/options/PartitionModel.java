@@ -9,6 +9,10 @@ import java.util.ArrayList;
  */
 public class PartitionModel extends AbstractModelOptions {
 
+    public PartitionModel(DataPartition partition) {
+        this(partition.getName(), partition.getAlignment().getDataType());
+    }
+
     public PartitionModel(String name, DataType dataType) {
 
         this.name = name;

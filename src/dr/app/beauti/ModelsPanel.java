@@ -26,7 +26,8 @@
 package dr.app.beauti;
 
 import dr.evolution.datatype.DataType;
-import dr.evolution.util.Taxa;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionModel;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
@@ -41,7 +42,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Collections;
 
 /**
  * @author			Andrew Rambaut

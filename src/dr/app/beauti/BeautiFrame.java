@@ -16,6 +16,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evolution.util.TaxonList;
+import dr.app.beauti.options.*;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
@@ -242,61 +243,61 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     protected boolean readFromFile(File file) throws IOException {
-        try {
-            SAXBuilder parser = new SAXBuilder();
-            Document doc = parser.build(file);
-            beautiOptions.parse(doc);
-
-            if (beautiOptions.guessDates) {
-                beautiOptions.guessDates();
-            }
-
-            dataPanel.setOptions(beautiOptions);
-            samplesPanel.setOptions(beautiOptions);
-            taxaPanel.setOptions(beautiOptions);
-            modelsPanel.setOptions(beautiOptions);
-            priorsPanel.setOptions(beautiOptions);
-            operatorsPanel.setOptions(beautiOptions);
-            mcmcPanel.setOptions(beautiOptions);
-
-            getExportAction().setEnabled(beautiOptions.hasData());
-            getSaveAction().setEnabled(beautiOptions.hasData());
-            getSaveAsAction().setEnabled(beautiOptions.hasData());
-
-        } catch (dr.xml.XMLParseException xpe) {
-            JOptionPane.showMessageDialog(this, "Error reading file: This may not be a BEAUti file",
-                    "Error reading file",
-                    JOptionPane.ERROR_MESSAGE);
-            return false;
-        } catch (JDOMException e) {
-            JOptionPane.showMessageDialog(this, "Unable to open file: This may not be a BEAUti file",
-                    "Unable to open file",
-                    JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
+//        try {
+//            SAXBuilder parser = new SAXBuilder();
+//            Document doc = parser.build(file);
+//            beautiOptions.parse(doc);
+//
+//            if (beautiOptions.guessDates) {
+//                beautiOptions.guessDates();
+//            }
+//
+//            dataPanel.setOptions(beautiOptions);
+//            samplesPanel.setOptions(beautiOptions);
+//            taxaPanel.setOptions(beautiOptions);
+//            modelsPanel.setOptions(beautiOptions);
+//            priorsPanel.setOptions(beautiOptions);
+//            operatorsPanel.setOptions(beautiOptions);
+//            mcmcPanel.setOptions(beautiOptions);
+//
+//            getExportAction().setEnabled(beautiOptions.hasData());
+//            getSaveAction().setEnabled(beautiOptions.hasData());
+//            getSaveAsAction().setEnabled(beautiOptions.hasData());
+//
+//        } catch (dr.xml.XMLParseException xpe) {
+//            JOptionPane.showMessageDialog(this, "Error reading file: This may not be a BEAUti file",
+//                    "Error reading file",
+//                    JOptionPane.ERROR_MESSAGE);
+//            return false;
+//        } catch (JDOMException e) {
+//            JOptionPane.showMessageDialog(this, "Unable to open file: This may not be a BEAUti file",
+//                    "Unable to open file",
+//                    JOptionPane.ERROR_MESSAGE);
+//            return false;
+//        }
         return true;
     }
 
     public String getDefaultFileName() { return beautiOptions.fileNameStem+".beauti"; }
 
     protected boolean writeToFile(File file) throws IOException {
-        dataPanel.getOptions(beautiOptions);
-        samplesPanel.getOptions(beautiOptions);
-        taxaPanel.getOptions(beautiOptions);
-        modelsPanel.getOptions(beautiOptions);
-        priorsPanel.getOptions(beautiOptions);
-        operatorsPanel.getOptions(beautiOptions);
-        mcmcPanel.getOptions(beautiOptions);
-
-        Document doc = beautiOptions.create(true);
-
-        FileWriter fw = new FileWriter(file);
-
-        XMLOutputter outputter = new XMLOutputter(org.jdom.output.Format.getPrettyFormat());
-
-        outputter.output(doc, fw);
-
-        fw.close();
+//        dataPanel.getOptions(beautiOptions);
+//        samplesPanel.getOptions(beautiOptions);
+//        taxaPanel.getOptions(beautiOptions);
+//        modelsPanel.getOptions(beautiOptions);
+//        priorsPanel.getOptions(beautiOptions);
+//        operatorsPanel.getOptions(beautiOptions);
+//        mcmcPanel.getOptions(beautiOptions);
+//
+//        Document doc = beautiOptions.create(true);
+//
+//        FileWriter fw = new FileWriter(file);
+//
+//        XMLOutputter outputter = new XMLOutputter(org.jdom.output.Format.getPrettyFormat());
+//
+//        outputter.output(doc, fw);
+//
+//        fw.close();
         return true;
     }
 
@@ -482,13 +483,13 @@ public class BeautiFrame extends DocumentFrame {
             beautiOptions.fileNameStem = fileNameStem;
 
             if (alignment != null) {
-                BeautiOptions.DataPartition partition = new BeautiOptions.DataPartition(fileNameStem, file.getName(), alignment);
+                DataPartition partition = new DataPartition(fileNameStem, file.getName(), alignment);
                 beautiOptions.dataPartitions.add(partition);
                 beautiOptions.dataType = alignment.getDataType();
 
-                Patterns patterns = new Patterns(alignment);
-                DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
-                beautiOptions.meanDistance = distances.getMeanDistance();
+                PartitionModel model = new PartitionModel(partition);
+                partition.setPartitionModel(model);
+                beautiOptions.addPartitionModel(model);
 
                 statusLabel.setText("Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
                         beautiOptions.dataPartitions.size() + " partitions");
@@ -497,15 +498,26 @@ public class BeautiFrame extends DocumentFrame {
             // This is an additional partition so check it uses the same taxa
 
             if (alignment != null) {
-                if (alignment.getDataType() != beautiOptions.dataType) {
-                    JOptionPane.showMessageDialog(this, "This alignment is a different data type from \n" +
-                            "previously loaded alignments.",
-                            "Incompatible data type",
-                            JOptionPane.WARNING_MESSAGE);
-                    return;
+//                if (alignment.getDataType() != beautiOptions.dataType) {
+//                    JOptionPane.showMessageDialog(this, "This alignment is a different data type from \n" +
+//                            "previously loaded alignments.",
+//                            "Incompatible data type",
+//                            JOptionPane.WARNING_MESSAGE);
+//                    return;
+//                }
+
+                DataPartition partition = new DataPartition(fileNameStem, file.getName(), alignment);
+                for (PartitionModel model : beautiOptions.getPartitionModels()) {
+                    if (model.dataType == alignment.getDataType()) {
+                        partition.setPartitionModel(model);
+                    }
+                }
+                if (partition.getPartitionModel() == null) {
+                    PartitionModel model = new PartitionModel(partition);
+                    partition.setPartitionModel(model);
+                    beautiOptions.addPartitionModel(model);
                 }
 
-                BeautiOptions.DataPartition partition = new BeautiOptions.DataPartition(fileNameStem, file.getName(), alignment);
                 beautiOptions.dataPartitions.add(partition);
             }
         }

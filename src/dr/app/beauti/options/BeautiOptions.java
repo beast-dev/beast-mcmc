@@ -283,6 +283,47 @@ public class BeautiOptions extends AbstractModelOptions {
      */
     private void selectParameters(ArrayList<Parameter> params) {
 
+        if (hasData()) {
+
+            // if not fixed then do mutation rate move and up/down move
+            if (!fixedSubstitutionRate) {
+                Parameter rateParam;
+
+                if (clockModel == STRICT_CLOCK || clockModel == RANDOM_LOCAL_CLOCK) {
+                    rateParam = getParameter("clock.rate");
+                    params.add(rateParam);
+                } else {
+                    if (clockModel == UNCORRELATED_EXPONENTIAL) {
+                        rateParam = getParameter("uced.mean");
+                        params.add(rateParam);
+                    } else if (clockModel == UNCORRELATED_LOGNORMAL) {
+                        rateParam = getParameter("ucld.mean");
+                        params.add(rateParam);
+                        params.add(getParameter("ucld.stdev"));
+                    } else {
+                        throw new IllegalArgumentException("Unknown clock model");
+                    }
+                }
+
+                rateParam.isFixed = false;
+            } else {
+                Parameter rateParam;
+                if (clockModel == STRICT_CLOCK || clockModel == RANDOM_LOCAL_CLOCK) {
+                    rateParam = getParameter("clock.rate");
+                } else {
+                    if (clockModel == UNCORRELATED_EXPONENTIAL) {
+                        rateParam = getParameter("uced.mean");
+                    } else if (clockModel == UNCORRELATED_LOGNORMAL) {
+                        rateParam = getParameter("ucld.mean");
+                        params.add(getParameter("ucld.stdev"));
+                    } else {
+                        throw new IllegalArgumentException("Unknown clock model");
+                    }
+                }
+                rateParam.isFixed = true;
+            }
+        }
+
         if (nodeHeightPrior == CONSTANT) {
             params.add(getParameter("constant.popSize"));
         } else if (nodeHeightPrior == EXPONENTIAL) {
@@ -370,6 +411,56 @@ public class BeautiOptions extends AbstractModelOptions {
      * @param ops the operator list
      */
     private void selectOperators(ArrayList<Operator> ops) {
+
+        if (hasData()) {
+
+            // if not fixed then do mutation rate move and up/down move
+            if (!fixedSubstitutionRate) {
+                if (clockModel == STRICT_CLOCK) {
+                    ops.add(getOperator("clock.rate"));
+                    ops.add(getOperator("upDownRateHeights"));
+                } else if (clockModel == RANDOM_LOCAL_CLOCK) {
+                    ops.add(getOperator("clock.rate"));
+                    ops.add(getOperator("upDownRateHeights"));
+                    ops.add(getOperator("localClock.rates"));
+                    ops.add(getOperator("localClock.changes"));
+                    ops.add(getOperator("treeBitMove"));
+                } else {
+                    if (clockModel == UNCORRELATED_EXPONENTIAL) {
+                        ops.add(getOperator("uced.mean"));
+                        ops.add(getOperator("upDownUCEDMeanHeights"));
+                    } else if (clockModel == UNCORRELATED_LOGNORMAL) {
+                        ops.add(getOperator("ucld.mean"));
+                        ops.add(getOperator("ucld.stdev"));
+                        ops.add(getOperator("upDownUCLDMeanHeights"));
+                    } else {
+                        throw new IllegalArgumentException("Unknown clock model");
+                    }
+//                    ops.add(getOperator("swapBranchRateCategories"));
+                    ops.add(getOperator("randomWalkBranchRateCategories"));
+                    ops.add(getOperator("unformBranchRateCategories"));
+                }
+            } else {
+                if (clockModel == STRICT_CLOCK) {
+                    // no parameter to operator on
+                } else if (clockModel == RANDOM_LOCAL_CLOCK) {
+                    ops.add(getOperator("localClock.rates"));
+                    ops.add(getOperator("localClock.changes"));
+                    ops.add(getOperator("treeBitMove"));
+                } else {
+                    if (clockModel == UNCORRELATED_EXPONENTIAL) {
+                        // no parameter to operator on
+                    } else if (clockModel == UNCORRELATED_LOGNORMAL) {
+                        ops.add(getOperator("ucld.stdev"));
+                    } else {
+                        throw new IllegalArgumentException("Unknown clock model");
+                    }
+                    //                   ops.add(getOperator("swapBranchRateCategories"));
+                    ops.add(getOperator("randomWalkBranchRateCategories"));
+                    ops.add(getOperator("unformBranchRateCategories"));
+                }
+            }
+        }
 
         if (nodeHeightPrior == CONSTANT) {
             ops.add(getOperator("constant.popSize"));

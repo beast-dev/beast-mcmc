@@ -6,7 +6,7 @@ package dr.app.beauti.options;
  */
 public class Operator {
     public Operator(String name, String description, Parameter parameter, String operatorType, double tuning, double weight) {
-        this.name = name;
+        this.baseName = name;
         this.description = description;
         this.parameter1 = parameter;
         this.parameter2 = null;
@@ -22,7 +22,7 @@ public class Operator {
     public Operator(String name, String description,
                     Parameter parameter1, Parameter parameter2,
                     String operatorType, double tuning, double weight) {
-        this.name = name;
+        this.baseName = name;
         this.description = description;
         this.parameter1 = parameter1;
         this.parameter2 = parameter2;
@@ -53,7 +53,19 @@ public class Operator {
         return tuning > 0;
     }
 
-    public final String name;
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+    public String getName() {
+        String name = baseName;
+        if (prefix != null) name = prefix + "." + baseName;
+        return name;
+    }
+
+    private final String baseName;
+    public String prefix = null;
+
     public final String description;
 
     public final String type;
@@ -64,5 +76,6 @@ public class Operator {
 
     public final Parameter parameter1;
     public final Parameter parameter2;
+
 
 }

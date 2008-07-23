@@ -31,7 +31,7 @@ import dr.inference.model.Statistic;
 import dr.xml.*;
 
 /**
- * A statistic that tracks the mean, variance and coefficent of variation of the rates.
+ * A statistic that reports the total length of all the branches in the tree
  *
  * @author Alexei Drummond
  * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
@@ -58,7 +58,7 @@ public class TreelengthStatistic extends Statistic.Abstract implements TreeStati
     }
 
     /**
-     * @return the estimated birthRate
+     * @return the total length of all the branches in the tree
      */
     public double getStatisticValue(int dim) {
 

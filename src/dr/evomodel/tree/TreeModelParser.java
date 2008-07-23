@@ -117,10 +117,6 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         initialValues = cxo.getDoubleArrayAttribute(INITIAL_VALUE);
                     }
 
-                    //if (rootNode) {
-                    //	throw new XMLParseException("root node does not have a rate parameter");
-                    //}
-
                     if (!rootNode && !internalNodes && !leafNodes) {
                         throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeRates element");
                     }

@@ -25,23 +25,19 @@
 
 package dr.app.beauti;
 
-import dr.evolution.alignment.ConvertAlignment;
-import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.datatype.AminoAcids;
-import dr.evolution.datatype.GeneticCode;
-import dr.evolution.io.Importer;
-import dr.evolution.io.NexusImporter;
-import dr.evolution.tree.Tree;
+import dr.app.beauti.options.BeautiOptions;
 import dr.evolution.util.Date;
 import dr.evolution.util.TimeScale;
 import dr.evolution.util.Units;
 
-import java.io.*;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: BeautiTester.java,v 1.2 2005/07/11 14:07:25 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: BeautiTester.java,v 1.2 2005/07/11 14:07:25 rambaut Exp $
  */
 public class BeautiTester {
 
@@ -108,46 +104,46 @@ public class BeautiTester {
 
     public void buildNucModels(String key, BeastGenerator beautiOptions) {
         beautiOptions.nucSubstitutionModel = BeautiOptions.HKY;
-        buildCodonModels(key+"HKY", beautiOptions);
+        buildCodonModels(key + "HKY", beautiOptions);
         beautiOptions.nucSubstitutionModel = BeautiOptions.GTR;
-        buildCodonModels(key+"GTR", beautiOptions);
+        buildCodonModels(key + "GTR", beautiOptions);
     }
 
     public void buildCodonModels(String key, BeastGenerator beautiOptions) {
         beautiOptions.codonHeteroPattern = null;
         beautiOptions.unlinkedSubstitutionModel = false;
         beautiOptions.unlinkedHeterogeneityModel = false;
-        buildHeteroModels(key+"", beautiOptions);
+        buildHeteroModels(key + "", beautiOptions);
 
         beautiOptions.codonHeteroPattern = "123";
-        buildHeteroModels(key+"+C123", beautiOptions);
+        buildHeteroModels(key + "+C123", beautiOptions);
 
         beautiOptions.unlinkedSubstitutionModel = true;
         beautiOptions.unlinkedHeterogeneityModel = false;
-        buildHeteroModels(key+"+C123^S", beautiOptions);
+        buildHeteroModels(key + "+C123^S", beautiOptions);
 
         beautiOptions.unlinkedSubstitutionModel = false;
         beautiOptions.unlinkedHeterogeneityModel = true;
-        buildHeteroModels(key+"+C123^H", beautiOptions);
+        buildHeteroModels(key + "+C123^H", beautiOptions);
 
         beautiOptions.unlinkedSubstitutionModel = true;
         beautiOptions.unlinkedHeterogeneityModel = true;
-        buildHeteroModels(key+"+C123^SH", beautiOptions);
+        buildHeteroModels(key + "+C123^SH", beautiOptions);
 
         beautiOptions.codonHeteroPattern = "112";
-	    buildHeteroModels(key+"+C112", beautiOptions);
+        buildHeteroModels(key + "+C112", beautiOptions);
 
-	    beautiOptions.unlinkedSubstitutionModel = true;
-	    beautiOptions.unlinkedHeterogeneityModel = false;
-	    buildHeteroModels(key+"+C112^S", beautiOptions);
+        beautiOptions.unlinkedSubstitutionModel = true;
+        beautiOptions.unlinkedHeterogeneityModel = false;
+        buildHeteroModels(key + "+C112^S", beautiOptions);
 
-	    beautiOptions.unlinkedSubstitutionModel = false;
-	    beautiOptions.unlinkedHeterogeneityModel = true;
-	    buildHeteroModels(key+"+C112^H", beautiOptions);
+        beautiOptions.unlinkedSubstitutionModel = false;
+        beautiOptions.unlinkedHeterogeneityModel = true;
+        buildHeteroModels(key + "+C112^H", beautiOptions);
 
-	    beautiOptions.unlinkedSubstitutionModel = true;
-	    beautiOptions.unlinkedHeterogeneityModel = true;
-	    buildHeteroModels(key+"+C112^SH", beautiOptions);
+        beautiOptions.unlinkedSubstitutionModel = true;
+        beautiOptions.unlinkedHeterogeneityModel = true;
+        buildHeteroModels(key + "+C112^SH", beautiOptions);
 
     }
 
@@ -156,19 +152,19 @@ public class BeautiTester {
         beautiOptions.gammaHetero = false;
         beautiOptions.gammaCategories = 4;
         beautiOptions.invarHetero = false;
-        buildTreePriorModels(key+"", beautiOptions);
+        buildTreePriorModels(key + "", beautiOptions);
 
         beautiOptions.gammaHetero = true;
         beautiOptions.invarHetero = false;
-        buildTreePriorModels(key+"+G", beautiOptions);
+        buildTreePriorModels(key + "+G", beautiOptions);
 
         beautiOptions.gammaHetero = false;
         beautiOptions.invarHetero = true;
-        buildTreePriorModels(key+"+I", beautiOptions);
+        buildTreePriorModels(key + "+I", beautiOptions);
 
         beautiOptions.gammaHetero = true;
         beautiOptions.invarHetero = true;
-        buildTreePriorModels(key+"+GI", beautiOptions);
+        buildTreePriorModels(key + "+GI", beautiOptions);
     }
 
     public void buildAAModels(String key, BeastGenerator beautiOptions) {
@@ -191,43 +187,43 @@ public class BeautiTester {
         buildHeteroModels(key+"MTREV24", beautiOptions);
         */
         beautiOptions.aaSubstitutionModel = BeautiOptions.WAG;
-        buildHeteroModels(key+"WAG", beautiOptions);
+        buildHeteroModels(key + "WAG", beautiOptions);
     }
 
     public void buildTreePriorModels(String key, BeastGenerator beautiOptions) {
 
         beautiOptions.nodeHeightPrior = BeautiOptions.CONSTANT;
-        buildClockModels(key+"+CP", beautiOptions);
+        buildClockModels(key + "+CP", beautiOptions);
 
         beautiOptions.nodeHeightPrior = BeautiOptions.EXPONENTIAL;
         beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-        buildClockModels(key+"+EG", beautiOptions);
+        buildClockModels(key + "+EG", beautiOptions);
 
         beautiOptions.nodeHeightPrior = BeautiOptions.LOGISTIC;
         beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-        buildClockModels(key+"+LG", beautiOptions);
+        buildClockModels(key + "+LG", beautiOptions);
 
         beautiOptions.nodeHeightPrior = BeautiOptions.EXPANSION;
         beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-        buildClockModels(key+"+XG", beautiOptions);
+        buildClockModels(key + "+XG", beautiOptions);
 
         beautiOptions.nodeHeightPrior = BeautiOptions.SKYLINE;
         beautiOptions.skylineGroupCount = 3;
         beautiOptions.skylineModel = BeautiOptions.CONSTANT_SKYLINE;
-        buildClockModels(key+"+SKC", beautiOptions);
+        buildClockModels(key + "+SKC", beautiOptions);
 
         beautiOptions.skylineModel = BeautiOptions.LINEAR_SKYLINE;
-        buildClockModels(key+"+SKL", beautiOptions);
+        buildClockModels(key + "+SKL", beautiOptions);
 
     }
 
     public void buildClockModels(String key, BeastGenerator beautiOptions) {
         beautiOptions.clockModel = BeautiOptions.STRICT_CLOCK;
-        generate(key+"+CLOC", beautiOptions);
+        generate(key + "+CLOC", beautiOptions);
         beautiOptions.clockModel = BeautiOptions.UNCORRELATED_EXPONENTIAL;
-        generate(key+"+UCED", beautiOptions);
+        generate(key + "+UCED", beautiOptions);
         beautiOptions.clockModel = BeautiOptions.UNCORRELATED_LOGNORMAL;
-        generate(key+"+UCLD", beautiOptions);
+        generate(key + "+UCLD", beautiOptions);
     }
 
     public void generate(String name, BeastGenerator beautiOptions) {
@@ -404,10 +400,10 @@ public class BeautiTester {
         }
     }
 
-	//Main method
-	public static void main(String[] args) {
+    //Main method
+    public static void main(String[] args) {
 
-		new BeautiTester();
-	}
+        new BeautiTester();
+    }
 }
 

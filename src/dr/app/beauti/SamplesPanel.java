@@ -25,15 +25,18 @@
 
 package dr.app.beauti;
 
-import dr.evolution.alignment.ConvertAlignment;
-import dr.evolution.datatype.*;
-import dr.evolution.util.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.evolution.util.Date;
+import dr.evolution.util.TimeScale;
+import dr.evolution.util.Units;
 import dr.gui.table.DateCellEditor;
 import dr.gui.table.TableSorter;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.*;
+import org.virion.jam.table.HeaderRenderer;
+import org.virion.jam.table.TableEditorStopper;
+import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -41,16 +44,17 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class SamplesPanel extends JPanel implements Exportable {
 
@@ -65,8 +69,8 @@ public class SamplesPanel extends JPanel implements Exportable {
     ClearDatesAction clearDatesAction = new ClearDatesAction();
     GuessDatesAction guessDatesAction = new GuessDatesAction();
 
-    JComboBox unitsCombo = new JComboBox(new String[] {"Years", "Months", "Days"});
-    JComboBox directionCombo = new JComboBox(new String[] {"Since some time in the past", "Before the present"});
+    JComboBox unitsCombo = new JComboBox(new String[]{"Years", "Months", "Days"});
+    JComboBox directionCombo = new JComboBox(new String[]{"Since some time in the past", "Before the present"});
     //RealNumberField originField = new RealNumberField(0.0, Double.POSITIVE_INFINITY);
 
     BeautiFrame frame = null;
@@ -119,9 +123,9 @@ public class SamplesPanel extends JPanel implements Exportable {
         clearDatesAction.setEnabled(false);
 
         guessDatesAction.setEnabled(false);
-	    setupComponent(unitsCombo);
+        setupComponent(unitsCombo);
         unitsCombo.setEnabled(false);
-	    setupComponent(directionCombo);
+        setupComponent(directionCombo);
         directionCombo.setEnabled(false);
         //originField.setEnabled(false);
         //originField.setValue(0.0);
@@ -132,11 +136,11 @@ public class SamplesPanel extends JPanel implements Exportable {
         toolBar1.setOpaque(false);
 //		toolBar1.setLayout(new BoxLayout(toolBar1, javax.swing.BoxLayout.X_AXIS));
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-	    JButton button = new JButton(clearDatesAction);
-	    setupComponent(button);
+        JButton button = new JButton(clearDatesAction);
+        setupComponent(button);
         toolBar1.add(button);
-	    button = new JButton(guessDatesAction);
-	    setupComponent(button);
+        button = new JButton(guessDatesAction);
+        setupComponent(button);
         toolBar1.add(button);
         toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
         toolBar1.add(new JLabel("Dates specified as "));
@@ -146,11 +150,11 @@ public class SamplesPanel extends JPanel implements Exportable {
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
-        setLayout(new BorderLayout(0,0));
+        setLayout(new BorderLayout(0, 0));
         add(toolBar1, "North");
         add(scrollPane, "Center");
 
-        ItemListener listener =	new ItemListener() {
+        ItemListener listener = new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 timeScaleChanged();
             }
@@ -164,19 +168,19 @@ public class SamplesPanel extends JPanel implements Exportable {
 
     }
 
-	private void setupComponent(JComponent comp) {
-		comp.setOpaque(false);
+    private void setupComponent(JComponent comp) {
+        comp.setOpaque(false);
 
-		//comp.setFont(UIManager.getFont("SmallSystemFont"));
-		//comp.putClientProperty("JComponent.sizeVariant", "small");
-		if (comp instanceof JButton) {
-			comp.putClientProperty("JButton.buttonType", "roundRect");
-		}
-		if (comp instanceof JComboBox) {
-			comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
-		}
+        //comp.setFont(UIManager.getFont("SmallSystemFont"));
+        //comp.putClientProperty("JComponent.sizeVariant", "small");
+        if (comp instanceof JButton) {
+            comp.putClientProperty("JButton.buttonType", "roundRect");
+        }
+        if (comp instanceof JComboBox) {
+            comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+        }
 
-	}
+    }
 
     public final void dataChanged() {
         calculateHeights();
@@ -186,9 +190,15 @@ public class SamplesPanel extends JPanel implements Exportable {
     public final void timeScaleChanged() {
         Units.Type units = Units.Type.YEARS;
         switch (unitsCombo.getSelectedIndex()) {
-            case 0: units = Units.Type.YEARS; break;
-            case 1: units = Units.Type.MONTHS; break;
-            case 2: units = Units.Type.DAYS; break;
+            case 0:
+                units = Units.Type.YEARS;
+                break;
+            case 1:
+                units = Units.Type.MONTHS;
+                break;
+            case 2:
+                units = Units.Type.DAYS;
+                break;
         }
 
         boolean backwards = directionCombo.getSelectedIndex() == 1;
@@ -326,7 +336,7 @@ public class SamplesPanel extends JPanel implements Exportable {
         optionPanel.addLabel("The date is given by a numerical field in the taxon label that is:");
 
         final JRadioButton orderRadio = new JRadioButton("Defined by its order", true);
-        final JComboBox orderCombo = new JComboBox(new String[] {"first", "second", "third",
+        final JComboBox orderCombo = new JComboBox(new String[]{"first", "second", "third",
                 "fourth", "fourth from last",
                 "third from last", "second from last", "last"});
 
@@ -402,7 +412,7 @@ public class SamplesPanel extends JPanel implements Exportable {
             return;
         }
 
-        int value = ((Integer)optionPane.getValue()).intValue();
+        int value = ((Integer) optionPane.getValue()).intValue();
         if (value == -1 || value == JOptionPane.CANCEL_OPTION) {
             return;
         }
@@ -482,8 +492,12 @@ public class SamplesPanel extends JPanel implements Exportable {
             setToolTipText("Use this tool to remove sampling dates from each taxon");
         }
 
-        public void actionPerformed(ActionEvent ae) { clearDates(); }
-    };
+        public void actionPerformed(ActionEvent ae) {
+            clearDates();
+        }
+    }
+
+    ;
 
     public class GuessDatesAction extends AbstractAction {
         /**
@@ -496,8 +510,12 @@ public class SamplesPanel extends JPanel implements Exportable {
             setToolTipText("Use this tool to guess the sampling dates from the taxon labels");
         }
 
-        public void actionPerformed(ActionEvent ae) { guessDates(); }
-    };
+        public void actionPerformed(ActionEvent ae) {
+            guessDates();
+        }
+    }
+
+    ;
 
     private void calculateHeights() {
 
@@ -536,7 +554,7 @@ public class SamplesPanel extends JPanel implements Exportable {
          *
          */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = { "Name", "Date", "Height" };
+        String[] columnNames = {"Name", "Date", "Height"};
 
         public DataTableModel() {
         }
@@ -554,7 +572,8 @@ public class SamplesPanel extends JPanel implements Exportable {
 
         public Object getValueAt(int row, int col) {
             switch (col) {
-                case 0: return options.taxonList.getTaxonId(row);
+                case 0:
+                    return options.taxonList.getTaxonId(row);
                 case 1:
                     Date date = options.taxonList.getTaxon(row).getDate();
                     if (date != null) {
@@ -578,7 +597,7 @@ public class SamplesPanel extends JPanel implements Exportable {
             } else if (col == 1) {
                 Date date = options.taxonList.getTaxon(row).getDate();
                 if (date != null) {
-                    double d = ((Double)aValue).doubleValue();
+                    double d = ((Double) aValue).doubleValue();
                     Date newDate = createDate(d, date.getUnits(), date.isBackwards(), date.getOrigin());
                     options.taxonList.getTaxon(row).setDate(newDate);
                 }
@@ -600,7 +619,9 @@ public class SamplesPanel extends JPanel implements Exportable {
             return columnNames[column];
         }
 
-        public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
+        public Class getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
+        }
 
         public String toString() {
             StringBuffer buffer = new StringBuffer();
@@ -623,6 +644,8 @@ public class SamplesPanel extends JPanel implements Exportable {
 
             return buffer.toString();
         }
-    };
+    }
+
+    ;
 
 }

@@ -35,13 +35,12 @@ import dr.xml.*;
 
 /**
  * A likelihood function for speciation processes. Takes a tree and a speciation model.
- *
+ * <p/>
  * Parts of this class were derived from C++ code provided by Oliver Pybus.
- *
- * @version $Id: SpeciationLikelihood.java,v 1.10 2005/05/18 09:51:11 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: SpeciationLikelihood.java,v 1.10 2005/05/18 09:51:11 rambaut Exp $
  */
 public class SpeciationLikelihood extends AbstractModel implements Likelihood, Units {
 
@@ -51,8 +50,14 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
     public static final String MODEL = "model";
     public static final String TREE = "speciesTree";
 
-    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel) {
+    /**
+     * @param tree            the tree
+     * @param speciationModel the model of speciation
+     * @param id              a unique identifier for this likelihood
+     */
+    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id) {
         this(SPECIATION_LIKELIHOOD, tree, speciationModel);
+        setId(id);
     }
 
     public SpeciationLikelihood(String name, Tree tree, SpeciationModel speciationModel) {
@@ -62,7 +67,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
         this.tree = tree;
         this.speciationModel = speciationModel;
         if (tree instanceof Model) {
-            addModel((Model)tree);
+            addModel((Model) tree);
         }
         if (speciationModel != null) {
             addModel(speciationModel);
@@ -81,7 +86,8 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index) { } // No parameters to respond to
+    protected final void handleParameterChangedEvent(Parameter parameter, int index) {
+    } // No parameters to respond to
 
     // **************************************************************
     // Model IMPLEMENTATION
@@ -103,13 +109,16 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
         logLikelihood = storedLogLikelihood;
     }
 
-    protected final void acceptState() { } // nothing to do
+    protected final void acceptState() {
+    } // nothing to do
 
     // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-    public final Model getModel() { return this; }
+    public final Model getModel() {
+        return this;
+    }
 
     public final double getLogLikelihood() {
         if (!likelihoodKnown) {
@@ -126,6 +135,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
     /**
      * Calculates the log likelihood of this set of coalescent intervals,
      * given a demographic model.
+     *
      * @return the log likelihood
      */
     private double calculateLogLikelihood() {
@@ -140,14 +150,23 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
      * @return the log columns.
      */
     public final dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[] {
-                new LikelihoodColumn(getId())
+
+        String columnName = getId();
+        if (columnName == null) columnName = getModelName() + ".likelihood";
+
+        return new dr.inference.loggers.LogColumn[]{
+                new LikelihoodColumn(columnName)
         };
     }
 
     private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) { super(label); }
-        public double getDoubleValue() { return getLogLikelihood(); }
+        public LikelihoodColumn(String label) {
+            super(label);
+        }
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
     }
 
     // **************************************************************
@@ -158,8 +177,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
      * Sets the units these coalescent intervals are
      * measured in.
      */
-    public final void setUnits(Type u)
-    {
+    public final void setUnits(Type u) {
         speciationModel.setUnits(u);
     }
 
@@ -167,8 +185,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
      * Returns the units these coalescent intervals are
      * measured in.
      */
-    public final Type getUnits()
-    {
+    public final Type getUnits() {
         return speciationModel.getUnits();
     }
 
@@ -178,17 +195,19 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return SPECIATION_LIKELIHOOD; }
+        public String getParserName() {
+            return SPECIATION_LIKELIHOOD;
+        }
 
         public Object parseXMLObject(XMLObject xo) {
 
-            XMLObject cxo = (XMLObject)xo.getChild(MODEL);
-            SpeciationModel specModel = (SpeciationModel)cxo.getChild(SpeciationModel.class);
+            XMLObject cxo = (XMLObject) xo.getChild(MODEL);
+            SpeciationModel specModel = (SpeciationModel) cxo.getChild(SpeciationModel.class);
 
-            cxo = (XMLObject)xo.getChild(TREE);
-            Tree tree = (Tree)cxo.getChild(Tree.class);
+            cxo = (XMLObject) xo.getChild(TREE);
+            Tree tree = (Tree) cxo.getChild(Tree.class);
 
-            return new SpeciationLikelihood(tree, specModel);
+            return new SpeciationLikelihood(tree, specModel, null);
         }
 
         //************************************************************************
@@ -199,30 +218,36 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
             return "This element represents the likelihood of the tree given the speciation.";
         }
 
-        public Class getReturnType() { return Likelihood.class; }
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                new ElementRule(MODEL, new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(MODEL, new XMLSyntaxRule[]{
                         new ElementRule(SpeciationModel.class)
                 }),
-                new ElementRule(TREE, new XMLSyntaxRule[] {
+                new ElementRule(TREE, new XMLSyntaxRule[]{
                         new ElementRule(Tree.class)
                 }),
         };
     };
 
-
-
     // ****************************************************************
     // Private and protected stuff
     // ****************************************************************
 
-    /** The speciation model. */
+    /**
+     * The speciation model.
+     */
     SpeciationModel speciationModel = null;
 
-    /** The tree. */
+    /**
+     * The tree.
+     */
     Tree tree = null;
 
     private double logLikelihood;

@@ -25,7 +25,10 @@
 
 package dr.app.beauti;
 
-import dr.evolution.util.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.TableRenderer;
@@ -36,17 +39,18 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: TaxaPanel.java,v 1.1 2006/09/05 13:29:34 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: TaxaPanel.java,v 1.1 2006/09/05 13:29:34 rambaut Exp $
  */
 public class TaxaPanel extends JPanel implements Exportable {
 
@@ -108,7 +112,9 @@ public class TaxaPanel extends JPanel implements Exportable {
         //final TableColumn tableColumn1 = model.getColumn(1);
 
         taxonSetsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) { taxonSetsTableSelectionChanged(); }
+            public void valueChanged(ListSelectionEvent evt) {
+                taxonSetsTableSelectionChanged();
+            }
         });
 
         JScrollPane scrollPane1 = new JScrollPane(taxonSetsTable,
@@ -134,7 +140,9 @@ public class TaxaPanel extends JPanel implements Exportable {
         excludedTaxaTable.getColumnModel().getColumn(0).setMinWidth(20);
 
         excludedTaxaTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) { excludedTaxaTableSelectionChanged(); }
+            public void valueChanged(ListSelectionEvent evt) {
+                excludedTaxaTableSelectionChanged();
+            }
         });
 
         JScrollPane scrollPane2 = new JScrollPane(excludedTaxaTable,
@@ -144,7 +152,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         Box panel1 = new Box(BoxLayout.X_AXIS);
         panel1.add(new JLabel("Select: "));
         panel1.setOpaque(false);
-        excludedTaxonSetsComboBox = new JComboBox(new String[] { TAXON_SET_DEFAULT });
+        excludedTaxonSetsComboBox = new JComboBox(new String[]{TAXON_SET_DEFAULT});
         excludedTaxonSetsComboBox.setOpaque(false);
         panel1.add(excludedTaxonSetsComboBox);
 
@@ -161,7 +169,9 @@ public class TaxaPanel extends JPanel implements Exportable {
         includedTaxaTable.getColumnModel().getColumn(0).setMinWidth(20);
 
         includedTaxaTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) { includedTaxaTableSelectionChanged(); }
+            public void valueChanged(ListSelectionEvent evt) {
+                includedTaxaTableSelectionChanged();
+            }
         });
         includedTaxaTable.doLayout();
 
@@ -172,7 +182,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         Box panel2 = new Box(BoxLayout.X_AXIS);
         panel2.add(new JLabel("Select: "));
         panel2.setOpaque(false);
-        includedTaxonSetsComboBox = new JComboBox(new String[] { TAXON_SET_DEFAULT });
+        includedTaxonSetsComboBox = new JComboBox(new String[]{TAXON_SET_DEFAULT});
         includedTaxonSetsComboBox.setOpaque(false);
         panel2.add(includedTaxonSetsComboBox);
 
@@ -188,7 +198,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         c.weighty = 1;
         c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(12,12,4,0);
+        c.insets = new Insets(12, 12, 4, 0);
         taxonSetEditingPanel.add(scrollPane2, c);
 
         c.gridx = 0;
@@ -197,7 +207,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         c.weighty = 0;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(0,12,12,0);
+        c.insets = new Insets(0, 12, 12, 0);
         taxonSetEditingPanel.add(panel1, c);
 
         c.gridx = 1;
@@ -207,7 +217,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         c.gridheight = 2;
         c.fill = GridBagConstraints.NONE;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(12,2,12,4);
+        c.insets = new Insets(12, 2, 12, 4);
         taxonSetEditingPanel.add(buttonPanel, c);
 
         c.gridx = 2;
@@ -217,7 +227,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         c.gridheight = 1;
         c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(12,0,4,12);
+        c.insets = new Insets(12, 0, 4, 12);
         taxonSetEditingPanel.add(scrollPane3, c);
 
         c.gridx = 2;
@@ -226,7 +236,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         c.weighty = 0;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(0,0,12,12);
+        c.insets = new Insets(0, 0, 12, 12);
         taxonSetEditingPanel.add(panel2, c);
 
         JPanel panel3 = new JPanel();
@@ -240,7 +250,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         c.weighty = 1;
         c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(0,0,2,12);
+        c.insets = new Insets(0, 0, 2, 12);
         panel3.add(scrollPane1, c);
 
         c.gridx = 0;
@@ -249,7 +259,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         c.weighty = 0;
         c.fill = GridBagConstraints.NONE;
         c.anchor = GridBagConstraints.WEST;
-        c.insets = new Insets(2,0,0,12);
+        c.insets = new Insets(2, 0, 0, 12);
         panel3.add(actionPanel1, c);
 
         c.gridx = 1;
@@ -258,12 +268,12 @@ public class TaxaPanel extends JPanel implements Exportable {
         c.weighty = 1;
         c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(0,0,0,0);
+        c.insets = new Insets(0, 0, 0, 0);
         panel3.add(taxonSetEditingPanel, c);
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
-        setLayout(new BorderLayout(0,0));
+        setLayout(new BorderLayout(0, 0));
         add(panel3, BorderLayout.CENTER);
 
 //		taxonSetsTable.addMouseListener(new MouseAdapter() {
@@ -314,8 +324,8 @@ public class TaxaPanel extends JPanel implements Exportable {
                 includedSelectionChanging = true;
                 includedTaxaTable.clearSelection();
                 if (includedTaxonSetsComboBox.getSelectedIndex() > 0) {
-                    Taxa taxa = (Taxa)includedTaxonSetsComboBox.getSelectedItem();
-                    for (int i =0; i < taxa.getTaxonCount(); i++) {
+                    Taxa taxa = (Taxa) includedTaxonSetsComboBox.getSelectedItem();
+                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
                         Taxon taxon = taxa.getTaxon(i);
                         int index = includedTaxa.indexOf(taxon);
                         includedTaxaTable.getSelectionModel().addSelectionInterval(index, index);
@@ -338,8 +348,8 @@ public class TaxaPanel extends JPanel implements Exportable {
                 excludedSelectionChanging = true;
                 excludedTaxaTable.clearSelection();
                 if (excludedTaxonSetsComboBox.getSelectedIndex() > 0) {
-                    Taxa taxa = (Taxa)excludedTaxonSetsComboBox.getSelectedItem();
-                    for (int i =0; i < taxa.getTaxonCount(); i++) {
+                    Taxa taxa = (Taxa) excludedTaxonSetsComboBox.getSelectedItem();
+                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
                         Taxon taxon = taxa.getTaxon(i);
                         int index = excludedTaxa.indexOf(taxon);
                         excludedTaxaTable.getSelectionModel().addSelectionInterval(index, index);
@@ -432,7 +442,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         private static final long serialVersionUID = 20273987098143413L;
 
         public void actionPerformed(ActionEvent ae) {
-            taxonSetCount ++;
+            taxonSetCount++;
             currentTaxonSet = new Taxa("untitled" + taxonSetCount);
 
             options.taxonSets.add(currentTaxonSet);
@@ -539,6 +549,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 
     /**
      * Returns true if taxa are all found in availableTaxa
+     *
      * @param taxa
      * @param availableTaxa
      * @return true if the taxa are all found in availableTaxa
@@ -593,29 +604,31 @@ public class TaxaPanel extends JPanel implements Exportable {
 
         public Object getValueAt(int rowIndex, int columnIndex) {
             Taxa taxonSet = options.taxonSets.get(rowIndex);
-            switch(columnIndex) {
-                case 0: return taxonSet.getId();
-                case 1: return options.taxonSetsMono.get(taxonSet);
+            switch (columnIndex) {
+                case 0:
+                    return taxonSet.getId();
+                case 1:
+                    return options.taxonSetsMono.get(taxonSet);
             }
             return null;
         }
 
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             Taxa taxonSet = options.taxonSets.get(rowIndex);
-            switch(columnIndex) {
+            switch (columnIndex) {
                 case 0: {
                     taxonSet.setId(aValue.toString());
                     setTaxonSetTitle();
                     break;
                 }
                 case 1: {
-                    if ((Boolean)aValue) {
+                    if ((Boolean) aValue) {
                         Taxa taxa = options.taxonSets.get(rowIndex);
                         if (checkCompatibility(taxa)) {
-                            options.taxonSetsMono.put(taxonSet, (Boolean)aValue);
+                            options.taxonSetsMono.put(taxonSet, (Boolean) aValue);
                         }
                     } else {
-                        options.taxonSetsMono.put(taxonSet, (Boolean)aValue);
+                        options.taxonSetsMono.put(taxonSet, (Boolean) aValue);
                     }
                     break;
                 }
@@ -627,9 +640,11 @@ public class TaxaPanel extends JPanel implements Exportable {
         }
 
         public String getColumnName(int column) {
-            switch(column) {
-                case 0: return "Taxon Sets";
-                case 1: return "Monophyletic?";
+            switch (column) {
+                case 0:
+                    return "Taxon Sets";
+                case 1:
+                    return "Monophyletic?";
             }
             return null;
         }
@@ -666,7 +681,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         removeAction.setEnabled(false);
 
         buttonPanel.add(addButton);
-        buttonPanel.add(new JToolBar.Separator(new Dimension(6,6)));
+        buttonPanel.add(new JToolBar.Separator(new Dimension(6, 6)));
         buttonPanel.add(removeButton);
 
         return buttonPanel;
@@ -807,7 +822,9 @@ public class TaxaPanel extends JPanel implements Exportable {
             else return "Excluded Taxa";
         }
 
-        public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
+        public Class getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
+        }
     }
 
 }

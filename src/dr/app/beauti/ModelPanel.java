@@ -25,6 +25,7 @@
 
 package dr.app.beauti;
 
+import dr.app.beauti.options.BeautiOptions;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
@@ -35,9 +36,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class ModelPanel extends OptionsPanel implements Exportable {
 
@@ -46,18 +47,18 @@ public class ModelPanel extends OptionsPanel implements Exportable {
      */
     private static final long serialVersionUID = 2778103564318492601L;
 
-    JComboBox nucSubstCombo = new JComboBox(new String[] {"HKY", "GTR"});
-    JComboBox aaSubstCombo = new JComboBox(new String[] {"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
-    JComboBox binarySubstCombo = new JComboBox(new String[] {"Simple", "Covarion"});
+    JComboBox nucSubstCombo = new JComboBox(new String[]{"HKY", "GTR"});
+    JComboBox aaSubstCombo = new JComboBox(new String[]{"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
+    JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
 
-    JComboBox frequencyCombo =new JComboBox(new String[] {"Estimated", "Empirical", "All equal"});
+    JComboBox frequencyCombo = new JComboBox(new String[]{"Estimated", "Empirical", "All equal"});
 
-    JComboBox heteroCombo = new JComboBox(new String[] {"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
+    JComboBox heteroCombo = new JComboBox(new String[]{"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
 
-    JComboBox gammaCatCombo = new JComboBox(new String[] {"4", "5", "6", "7", "8", "9", "10"});
+    JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5", "6", "7", "8", "9", "10"});
     JLabel gammaCatLabel;
 
-    JComboBox codingCombo = new JComboBox(new String[] {
+    JComboBox codingCombo = new JComboBox(new String[]{
             "Off",
             "2 partitions: codon positions (1 + 2), 3",
             "3 partitions: codon positions 1, 2, 3"});
@@ -71,11 +72,11 @@ public class ModelPanel extends OptionsPanel implements Exportable {
     JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY);
 
-    JComboBox clockModelCombo = new JComboBox(new String[] {
+    JComboBox clockModelCombo = new JComboBox(new String[]{
             "Strict Clock",
             "Random Local Clock",
             "Relaxed Clock: Uncorrelated Lognormal",
-            "Relaxed Clock: Uncorrelated Exponential" } );
+            "Relaxed Clock: Uncorrelated Exponential"});
 
     BeautiFrame frame = null;
 
@@ -211,7 +212,8 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         substitutionRateField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
                 frame.mcmcChanged();
-            }});
+            }
+        });
         substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
 
         setupComponent(clockModelCombo);
@@ -240,7 +242,7 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
         if (hasAlignment) {
 
-            switch (dataType){
+            switch (dataType) {
                 case DataType.NUCLEOTIDES:
                     addComponentWithLabel("Substitution Model:", nucSubstCombo, true);
                     addComponentWithLabel("Base frequencies:", frequencyCombo);
@@ -249,7 +251,7 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
                     addSeparator();
 
-                    JPanel panel = new JPanel(new BorderLayout(6,6));
+                    JPanel panel = new JPanel(new BorderLayout(6, 6));
                     panel.setOpaque(false);
                     panel.add(codingCombo, BorderLayout.CENTER);
                     panel.add(setSRD06Button, BorderLayout.EAST);
@@ -316,7 +318,7 @@ public class ModelPanel extends OptionsPanel implements Exportable {
             hasAlignment = true;
 
             dataType = options.dataType.getType();
-            switch(dataType){
+            switch (dataType) {
                 case DataType.NUCLEOTIDES:
                     if (options.nucSubstitutionModel == BeautiOptions.GTR) {
                         nucSubstCombo.setSelectedIndex(1);
@@ -386,13 +388,17 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
         switch (options.clockModel) {
             case BeautiOptions.STRICT_CLOCK:
-                clockModelCombo.setSelectedIndex(0); break;
+                clockModelCombo.setSelectedIndex(0);
+                break;
             case BeautiOptions.RANDOM_LOCAL_CLOCK:
-                clockModelCombo.setSelectedIndex(1); break;
+                clockModelCombo.setSelectedIndex(1);
+                break;
             case BeautiOptions.UNCORRELATED_LOGNORMAL:
-                clockModelCombo.setSelectedIndex(2); break;
+                clockModelCombo.setSelectedIndex(2);
+                break;
             case BeautiOptions.UNCORRELATED_EXPONENTIAL:
-                clockModelCombo.setSelectedIndex(3); break;
+                clockModelCombo.setSelectedIndex(3);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown option for clock model");
         }
@@ -447,9 +453,9 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         boolean fixed = fixedSubstitutionRateCheck.isSelected();
         if (!warningShown && !fixed && options.maximumTipHeight == 0.0) {
             JOptionPane.showMessageDialog(frame,
-                    "You have chosen to sample substitution rates but all \n"+
-                            "the sequences have the same date. In order for this to \n"+
-                            "work, a strong prior is required on the substitution\n"+
+                    "You have chosen to sample substitution rates but all \n" +
+                            "the sequences have the same date. In order for this to \n" +
+                            "work, a strong prior is required on the substitution\n" +
                             "rate or the root of the tree.",
                     "Warning",
                     JOptionPane.WARNING_MESSAGE);
@@ -458,13 +464,17 @@ public class ModelPanel extends OptionsPanel implements Exportable {
 
         switch (clockModelCombo.getSelectedIndex()) {
             case 0:
-                options.clockModel = BeautiOptions.STRICT_CLOCK; break;
+                options.clockModel = BeautiOptions.STRICT_CLOCK;
+                break;
             case 1:
-                options.clockModel = BeautiOptions.RANDOM_LOCAL_CLOCK; break;
+                options.clockModel = BeautiOptions.RANDOM_LOCAL_CLOCK;
+                break;
             case 2:
-                options.clockModel = BeautiOptions.UNCORRELATED_LOGNORMAL; break;
+                options.clockModel = BeautiOptions.UNCORRELATED_LOGNORMAL;
+                break;
             case 3:
-                options.clockModel = BeautiOptions.UNCORRELATED_EXPONENTIAL; break;
+                options.clockModel = BeautiOptions.UNCORRELATED_EXPONENTIAL;
+                break;
             default:
                 throw new IllegalArgumentException("Unknown option for clock model");
         }

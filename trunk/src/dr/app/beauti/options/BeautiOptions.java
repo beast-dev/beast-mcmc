@@ -40,10 +40,7 @@ import org.jdom.Element;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -181,10 +178,15 @@ public class BeautiOptions extends AbstractModelOptions {
      */
     public ArrayList<Parameter> selectParameters() {
 
-        ArrayList<Parameter> ops = new ArrayList<Parameter>();
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
-        selectParameters(ops);
-        selectStatistics(ops);
+        selectParameters(parameters);
+        selectStatistics(parameters);
+
+        for (PartitionModel model : getActiveModels()) {
+            parameters.addAll(model.getParameters());
+        }
+
 
         double growthRateMaximum = 1E6;
         double birthRateMaximum = 1E6;
@@ -217,7 +219,7 @@ public class BeautiOptions extends AbstractModelOptions {
 
         double timeScaleMaximum = round(initialRootHeight * 1000.0, 2);
 
-        for (Parameter param : ops) {
+        for (Parameter param : parameters) {
             if (dataReset) param.priorEdited = false;
 
             if (!param.priorEdited) {
@@ -271,7 +273,17 @@ public class BeautiOptions extends AbstractModelOptions {
 
         dataReset = false;
 
-        return ops;
+        return parameters;
+    }
+
+    private Set<PartitionModel> getActiveModels() {
+
+        Set<PartitionModel> models = new HashSet<PartitionModel>();
+
+        for (DataPartition partition : dataPartitions) {
+            models.add(partition.getPartitionModel());
+        }
+        return models;
     }
 
     /**

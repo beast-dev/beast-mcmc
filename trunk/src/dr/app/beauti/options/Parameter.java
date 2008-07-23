@@ -16,7 +16,7 @@ public class Parameter {
      * @param description the description
      */
     public Parameter(String name, String description) {
-        this.name = name;
+        this.baseName = name;
         this.description = description;
         this.scale = BeautiOptions.NONE;
         this.isNodeHeight = false;
@@ -30,7 +30,7 @@ public class Parameter {
 
     public Parameter(String name, String description, int scale,
                      double initial, double lower, double upper) {
-        this.name = name;
+        this.baseName = name;
         this.description = description;
         this.initial = initial;
         this.isNodeHeight = false;
@@ -50,7 +50,7 @@ public class Parameter {
 
     public Parameter(TaxonList taxa, String description) {
         this.taxa = taxa;
-        this.name = null;
+        this.baseName = null;
         this.description = description;
 
         this.isNodeHeight = true;
@@ -68,7 +68,7 @@ public class Parameter {
     public Parameter(String name, String description, boolean isDiscrete) {
         this.taxa = null;
 
-        this.name = name;
+        this.baseName = name;
         this.description = description;
 
         this.isNodeHeight = false;
@@ -85,7 +85,7 @@ public class Parameter {
     public Parameter(String name, String description, double lower, double upper) {
         this.taxa = null;
 
-        this.name = name;
+        this.baseName = name;
         this.description = description;
 
         this.isNodeHeight = false;
@@ -104,7 +104,7 @@ public class Parameter {
 
     public Parameter(String name, String description, boolean isNodeHeight,
                      double initial, double lower, double upper) {
-        this.name = name;
+        this.baseName = name;
         this.description = description;
         this.initial = initial;
 
@@ -122,11 +122,20 @@ public class Parameter {
         uniformUpper = upper;
     }
 
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+    private String getFullName() {
+        if (prefix != null) return prefix + "." + baseName;
+        return baseName;
+    }
+
     public String getName() {
         if (taxa != null) {
             return "tmrca(" + taxa.getId() + ")";
         } else {
-            return name;
+            return getFullName();
         }
     }
 
@@ -134,7 +143,7 @@ public class Parameter {
         if (taxa != null) {
             return "tmrca_" + taxa.getId();
         } else {
-            return name;
+            return getFullName();
         }
     }
 
@@ -146,7 +155,10 @@ public class Parameter {
         }
     }
 
-    private final String name;
+    private final String baseName;
+
+    private String prefix = null;
+
     private final String description;
     public double initial;
 

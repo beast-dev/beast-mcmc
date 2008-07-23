@@ -168,7 +168,7 @@ public class OperatorsPanel extends JPanel implements Exportable {
                 case 0:
                     return op.inUse;
                 case 1:
-                    return op.name;
+                    return op.getName();
                 case 2:
                     return op.type;
                 case 3:

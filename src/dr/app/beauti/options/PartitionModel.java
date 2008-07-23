@@ -24,8 +24,6 @@ public class PartitionModel extends AbstractModelOptions {
         this.dataType = dataType;
 
         double substWeights = 1.0;
-        double branchWeights = 30.0;
-        double treeWeights = 15.0;
 
         //Substitution model parameters
         createParameter("hky.frequencies", "HKY base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
@@ -146,7 +144,9 @@ public class PartitionModel extends AbstractModelOptions {
         createOperator("deltaMu", "Relative rates", "Changes codon position rates relative to each other maintaining mean", "allMus", DELTA_EXCHANGE, 0.75, substWeights);
     }
 
-    private void selectOperators(ArrayList<Operator> ops) {
+    List<Operator> getOperators() {
+
+        List<Operator> operators = new ArrayList<Operator>();
 
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
@@ -155,18 +155,18 @@ public class PartitionModel extends AbstractModelOptions {
                     case HKY:
                         if (codonPartitionCount > 1 && unlinkedSubstitutionModel) {
                             for (int i = 1; i <= codonPartitionCount; i++) {
-                                ops.add(getOperator("hky" + i + ".kappa"));
+                                operators.add(getOperator("hky" + i + ".kappa"));
                             }
                         } else {
-                            ops.add(getOperator("hky.kappa"));
+                            operators.add(getOperator("hky.kappa"));
                         }
                         if (frequencyPolicy == BeautiOptions.ESTIMATED) {
                             if (codonPartitionCount > 1 && unlinkedSubstitutionModel) {
                                 for (int i = 1; i <= codonPartitionCount; i++) {
-                                    ops.add(getOperator("hky" + i + ".frequencies"));
+                                    operators.add(getOperator("hky" + i + ".frequencies"));
                                 }
                             } else {
-                                ops.add(getOperator("hky.frequencies"));
+                                operators.add(getOperator("hky.frequencies"));
                             }
                         }
                         break;
@@ -175,28 +175,28 @@ public class PartitionModel extends AbstractModelOptions {
                         //if (frequencyPolicy == BeautiOptions.ESTIMATED || frequencyPolicy == BeautiOptions.EMPIRICAL){
                         if (codonPartitionCount > 1 && unlinkedSubstitutionModel) {
                             for (int i = 1; i <= codonPartitionCount; i++) {
-                                ops.add(getOperator("gtr" + i + ".ac"));
-                                ops.add(getOperator("gtr" + i + ".ag"));
-                                ops.add(getOperator("gtr" + i + ".at"));
-                                ops.add(getOperator("gtr" + i + ".cg"));
-                                ops.add(getOperator("gtr" + i + ".gt"));
+                                operators.add(getOperator("gtr" + i + ".ac"));
+                                operators.add(getOperator("gtr" + i + ".ag"));
+                                operators.add(getOperator("gtr" + i + ".at"));
+                                operators.add(getOperator("gtr" + i + ".cg"));
+                                operators.add(getOperator("gtr" + i + ".gt"));
                             }
                         } else {
-                            ops.add(getOperator("gtr.ac"));
-                            ops.add(getOperator("gtr.ag"));
-                            ops.add(getOperator("gtr.at"));
-                            ops.add(getOperator("gtr.cg"));
-                            ops.add(getOperator("gtr.gt"));
+                            operators.add(getOperator("gtr.ac"));
+                            operators.add(getOperator("gtr.ag"));
+                            operators.add(getOperator("gtr.at"));
+                            operators.add(getOperator("gtr.cg"));
+                            operators.add(getOperator("gtr.gt"));
                         }
                         //}
 
                         if (frequencyPolicy == BeautiOptions.ESTIMATED) {
                             if (codonPartitionCount > 1 && unlinkedSubstitutionModel) {
                                 for (int i = 1; i <= codonPartitionCount; i++) {
-                                    ops.add(getOperator("gtr" + i + ".frequencies"));
+                                    operators.add(getOperator("gtr" + i + ".frequencies"));
                                 }
                             } else {
-                                ops.add(getOperator("gtr.frequencies"));
+                                operators.add(getOperator("gtr.frequencies"));
                             }
                         }
                         break;
@@ -217,10 +217,10 @@ public class PartitionModel extends AbstractModelOptions {
                         break;
 
                     case BIN_COVARION:
-                        ops.add(getOperator("bcov.alpha"));
-                        ops.add(getOperator("bcov.s"));
-                        ops.add(getOperator("bcov.frequencies"));
-                        ops.add(getOperator("bcov.hfrequencies"));
+                        operators.add(getOperator("bcov.alpha"));
+                        operators.add(getOperator("bcov.s"));
+                        operators.add(getOperator("bcov.frequencies"));
+                        operators.add(getOperator("bcov.hfrequencies"));
                         break;
 
                     default:
@@ -236,29 +236,31 @@ public class PartitionModel extends AbstractModelOptions {
         if (gammaHetero) {
             if (codonPartitionCount > 1 && unlinkedHeterogeneityModel) {
                 for (int i = 1; i <= codonPartitionCount; i++) {
-                    ops.add(getOperator("siteModel" + i + ".alpha"));
+                    operators.add(getOperator("siteModel" + i + ".alpha"));
                 }
             } else {
-                ops.add(getOperator("siteModel.alpha"));
+                operators.add(getOperator("siteModel.alpha"));
             }
         }
         // if pinv do pinv move
         if (invarHetero) {
             if (codonPartitionCount > 1 && unlinkedHeterogeneityModel) {
                 for (int i = 1; i <= codonPartitionCount; i++) {
-                    ops.add(getOperator("siteModel" + i + ".pInv"));
+                    operators.add(getOperator("siteModel" + i + ".pInv"));
                 }
             } else {
-                ops.add(getOperator("siteModel.pInv"));
+                operators.add(getOperator("siteModel.pInv"));
             }
         }
 
         if (codonPartitionCount > 1) {
             if (!codonHeteroPattern.equals("112")) {
-                ops.add(getOperator("centeredMu"));
+                operators.add(getOperator("centeredMu"));
             }
-            ops.add(getOperator("deltaMu"));
+            operators.add(getOperator("deltaMu"));
         }
+
+        return operators;
     }
 
 
@@ -358,11 +360,20 @@ public class PartitionModel extends AbstractModelOptions {
 
     protected Parameter getParameter(String name) {
         Parameter parameter = parameters.get(name);
+
+        if (parameter == null) {
+            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
+        }
         parameter.setPrefix(getName());
 
-        if (parameter == null)
-            throw new IllegalArgumentException("Parameter with name, " + parameter.getName() + ", is unknown");
         return parameter;
+    }
+
+    Operator getOperator(String name) {
+        Operator operator = operators.get(name);
+        if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
+        operator.setPrefix(getName());
+        return operator;
     }
 
 

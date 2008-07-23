@@ -297,6 +297,11 @@ public class BeautiOptions extends AbstractModelOptions {
 
         selectOperators(ops);
 
+        for (PartitionModel model : getActiveModels()) {
+            ops.addAll(model.getOperators());
+        }
+
+
         double initialRootHeight = 1;
 
         if (fixedSubstitutionRate) {

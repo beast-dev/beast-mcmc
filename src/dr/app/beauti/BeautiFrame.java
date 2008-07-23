@@ -8,19 +8,14 @@
  */
 package dr.app.beauti;
 
-import dr.evolution.alignment.*;
-import dr.evolution.distance.DistanceMatrix;
-import dr.evolution.distance.JukesCantorDistanceMatrix;
+import dr.app.beauti.options.DataPartition;
+import dr.app.beauti.options.PartitionModel;
+import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Units;
 import dr.evolution.util.TaxonList;
-import dr.app.beauti.options.*;
-import org.jdom.Document;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import dr.evolution.util.Units;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
@@ -34,9 +29,9 @@ import java.awt.event.ActionEvent;
 import java.io.*;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class BeautiFrame extends DocumentFrame {
 
@@ -278,7 +273,9 @@ public class BeautiFrame extends DocumentFrame {
         return true;
     }
 
-    public String getDefaultFileName() { return beautiOptions.fileNameStem+".beauti"; }
+    public String getDefaultFileName() {
+        return beautiOptions.fileNameStem + ".beauti";
+    }
 
     protected boolean writeToFile(File file) throws IOException {
 //        dataPanel.getOptions(beautiOptions);
@@ -371,7 +368,7 @@ public class BeautiFrame extends DocumentFrame {
                             throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
                         }
 
-                        alignment = (SimpleAlignment)importer.parseCharactersBlock(beautiOptions.taxonList);
+                        alignment = (SimpleAlignment) importer.parseCharactersBlock(beautiOptions.taxonList);
 
                     } else if (block == NexusImporter.DATA_BLOCK) {
 
@@ -381,7 +378,7 @@ public class BeautiFrame extends DocumentFrame {
 
                         // A data block doesn't need a taxon block before it
                         // but if one exists then it will use it.
-                        alignment = (SimpleAlignment)importer.parseDataBlock(beautiOptions.taxonList);
+                        alignment = (SimpleAlignment) importer.parseDataBlock(beautiOptions.taxonList);
                         if (taxa == null) {
                             taxa = alignment;
                         }
@@ -445,7 +442,7 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         String fileNameStem = dr.app.util.Utils.trimExtensions(file.getName(),
-                new String[] {"NEX", "NEXUS", "TRE", "TREE"});
+                new String[]{"NEX", "NEXUS", "TRE", "TREE"});
 
         if (beautiOptions.taxonList == null) {
             // This is the first partition to be loaded...
@@ -547,7 +544,7 @@ public class BeautiFrame extends DocumentFrame {
 
         try {
             beautiOptions.checkOptions();
-        } catch(IllegalArgumentException iae) {
+        } catch (IllegalArgumentException iae) {
             JOptionPane.showMessageDialog(this, iae.getMessage(),
                     "Unable to generate file",
                     JOptionPane.ERROR_MESSAGE);
@@ -597,9 +594,9 @@ public class BeautiFrame extends DocumentFrame {
         Component comp = tabbedPane.getSelectedComponent();
 
         if (comp instanceof Exportable) {
-            exportable = ((Exportable)comp).getExportableComponent();
+            exportable = ((Exportable) comp).getExportableComponent();
         } else if (comp instanceof JComponent) {
-            exportable = (JComponent)comp;
+            exportable = (JComponent) comp;
         }
 
         return exportable;
@@ -664,7 +661,9 @@ public class BeautiFrame extends DocumentFrame {
         }
     };
 
-    public Action getImportAction() { return importNexusAction; }
+    public Action getImportAction() {
+        return importNexusAction;
+    }
 
     protected AbstractAction importNexusAction = new AbstractAction("Import NEXUS...") {
         private static final long serialVersionUID = 3217702096314745005L;
@@ -674,7 +673,9 @@ public class BeautiFrame extends DocumentFrame {
         }
     };
 
-    public Action getExportAction() { return generateAction; }
+    public Action getExportAction() {
+        return generateAction;
+    }
 
     protected AbstractAction generateAction = new AbstractAction("Generate BEAST File...", gearIcon) {
         private static final long serialVersionUID = -5329102618630268783L;

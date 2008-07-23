@@ -87,7 +87,7 @@ public class AbstractModelOptions {
 
     protected void createOperator(String parameterName, String type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
-        operators.put(parameter.getName(), new Operator(parameterName, "", parameter, type, tuning, weight));
+        operators.put(parameterName, new Operator(parameterName, "", parameter, type, tuning, weight));
     }
 
     protected void createOperator(String key, String name, String description, String parameterName, String type, double tuning, double weight) {

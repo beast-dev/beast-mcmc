@@ -139,53 +139,53 @@ public class NexusApplicationImporter extends NexusImporter {
     private void readLSETCommand(BeautiOptions options) throws ImportException, IOException {
         boolean done = false;
 
-        while (!done) {
-            String subcommand = readToken("=;");
-            if (match("NST", subcommand, 2)) {
-                int nst = readInteger(";");
-                if (nst == 1) {
-                    options.nucSubstitutionModel = BeautiOptions.JC;
-                } else if (nst == 2) {
-                    options.nucSubstitutionModel = BeautiOptions.HKY;
-                } else if (nst == 6) {
-                    options.nucSubstitutionModel = BeautiOptions.GTR;
-                } else {
-                    throw new BadFormatException("Bad value for NST subcommand of LSET command");
-                }
-            } else if (match("RATES", subcommand, 2)) {
-                String token = readToken(";");
-
-                if (match("EQUAL", token, 1)) {
-                    options.gammaHetero = false;
-                    options.invarHetero = false;
-                } else if (match("GAMMA", token, 1)) {
-                    options.gammaHetero = true;
-                    options.invarHetero = false;
-                } else if (match("PROPINV", token, 1)) {
-                    options.gammaHetero = false;
-                    options.invarHetero = true;
-                } else if (match("INVGAMMA", token, 1)) {
-                    options.gammaHetero = true;
-                    options.invarHetero = true;
-                } else if (match("ADGAMMA", token, 1)) {
-                    System.err.println("The option, 'RATES=ADGAMMA', in the LSET command is not used by BEAST and has been ignored");
-                } else if (match("SITESPEC", token, 1)) {
-                    System.err.println("The option, 'RATES=SITESPEC', in the LSET command is not used by BEAST and has been ignored");
-                } else {
-                    throw new BadFormatException("Unknown value, '" + token + "'");
-                }
-            } else if (match("NGAMMACAT", subcommand, 2)) {
-
-                options.gammaCategories = readInteger(";");
-            } else {
-
-                System.err.println("The option, '" + subcommand + "', in the LSET command is not used by BEAST and has been ignored");
-            }
-
-            if (getLastDelimiter() == ';') {
-                done = true;
-            }
-        }
+//        while (!done) {
+//            String subcommand = readToken("=;");
+//            if (match("NST", subcommand, 2)) {
+//                int nst = readInteger(";");
+//                if (nst == 1) {
+//                    options.nucSubstitutionModel = BeautiOptions.JC;
+//                } else if (nst == 2) {
+//                    options.nucSubstitutionModel = BeautiOptions.HKY;
+//                } else if (nst == 6) {
+//                    options.nucSubstitutionModel = BeautiOptions.GTR;
+//                } else {
+//                    throw new BadFormatException("Bad value for NST subcommand of LSET command");
+//                }
+//            } else if (match("RATES", subcommand, 2)) {
+//                String token = readToken(";");
+//
+//                if (match("EQUAL", token, 1)) {
+//                    options.gammaHetero = false;
+//                    options.invarHetero = false;
+//                } else if (match("GAMMA", token, 1)) {
+//                    options.gammaHetero = true;
+//                    options.invarHetero = false;
+//                } else if (match("PROPINV", token, 1)) {
+//                    options.gammaHetero = false;
+//                    options.invarHetero = true;
+//                } else if (match("INVGAMMA", token, 1)) {
+//                    options.gammaHetero = true;
+//                    options.invarHetero = true;
+//                } else if (match("ADGAMMA", token, 1)) {
+//                    System.err.println("The option, 'RATES=ADGAMMA', in the LSET command is not used by BEAST and has been ignored");
+//                } else if (match("SITESPEC", token, 1)) {
+//                    System.err.println("The option, 'RATES=SITESPEC', in the LSET command is not used by BEAST and has been ignored");
+//                } else {
+//                    throw new BadFormatException("Unknown value, '" + token + "'");
+//                }
+//            } else if (match("NGAMMACAT", subcommand, 2)) {
+//
+//                options.gammaCategories = readInteger(";");
+//            } else {
+//
+//                System.err.println("The option, '" + subcommand + "', in the LSET command is not used by BEAST and has been ignored");
+//            }
+//
+//            if (getLastDelimiter() == ';') {
+//                done = true;
+//            }
+//        }
     }
 
     private void readMCMCCommand(BeautiOptions options) throws ImportException, IOException {
@@ -258,63 +258,63 @@ public class NexusApplicationImporter extends NexusImporter {
     private void readNUCMODELCommand(BeautiOptions options) throws ImportException, IOException {
         boolean done = false;
 
-        while (!done) {
-            String subcommand = readToken("=;");
-            if (match("TYPE", subcommand, 1)) {
-                String token = readToken(";");
-                if (match("HKY", token, 1)) {
-                    options.nucSubstitutionModel = BeautiOptions.HKY;
-                } else if (match("GTR", token, 1)) {
-                    options.nucSubstitutionModel = BeautiOptions.GTR;
-                } else if (match("F84", token, 1)) {
-                    System.err.println("The option, 'TYPE=F84', in the NUCMODEL command is not used by BEAST and has been ignored");
-                } else {
-                    throw new BadFormatException("Unknown value, '" + token + "'");
-                }
-            } else {
-
-                System.err.println("The option, '" + subcommand + "', in the NUCMODEL command is not used by BEAST and has been ignored");
-            }
-
-            if (getLastDelimiter() == ';') {
-                done = true;
-            }
-        }
+//        while (!done) {
+//            String subcommand = readToken("=;");
+//            if (match("TYPE", subcommand, 1)) {
+//                String token = readToken(";");
+//                if (match("HKY", token, 1)) {
+//                    options.nucSubstitutionModel = BeautiOptions.HKY;
+//                } else if (match("GTR", token, 1)) {
+//                    options.nucSubstitutionModel = BeautiOptions.GTR;
+//                } else if (match("F84", token, 1)) {
+//                    System.err.println("The option, 'TYPE=F84', in the NUCMODEL command is not used by BEAST and has been ignored");
+//                } else {
+//                    throw new BadFormatException("Unknown value, '" + token + "'");
+//                }
+//            } else {
+//
+//                System.err.println("The option, '" + subcommand + "', in the NUCMODEL command is not used by BEAST and has been ignored");
+//            }
+//
+//            if (getLastDelimiter() == ';') {
+//                done = true;
+//            }
+//        }
     }
 
     private void readSITEMODELCommand(BeautiOptions options) throws ImportException, IOException {
         boolean done = false;
 
-        while (!done) {
-            String subcommand = readToken("=;");
-            if (match("TYPE", subcommand, 1)) {
-                String token = readToken(";");
-                if (match("HOMOGENEOUS", token, 1)) {
-                    options.gammaHetero = false;
-                    options.invarHetero = false;
-                } else if (match("GAMMA", token, 2)) {
-                    options.gammaHetero = true;
-                    options.invarHetero = false;
-                } else if (match("INVAR", token, 1)) {
-                    options.gammaHetero = false;
-                    options.invarHetero = true;
-                } else if (match("GI", token, 2)) {
-                    options.gammaHetero = true;
-                    options.invarHetero = true;
-                } else {
-                    throw new BadFormatException("Unknown value, '" + token + "'");
-                }
-            } else if (match("NUMCAT", subcommand, 1)) {
-                options.gammaCategories = readInteger(";");
-            } else {
-
-                System.err.println("The option, '" + subcommand + "', in the SITEMODEL command is not used by BEAST and has been ignored");
-            }
-
-            if (getLastDelimiter() == ';') {
-                done = true;
-            }
-        }
+//        while (!done) {
+//            String subcommand = readToken("=;");
+//            if (match("TYPE", subcommand, 1)) {
+//                String token = readToken(";");
+//                if (match("HOMOGENEOUS", token, 1)) {
+//                    options.gammaHetero = false;
+//                    options.invarHetero = false;
+//                } else if (match("GAMMA", token, 2)) {
+//                    options.gammaHetero = true;
+//                    options.invarHetero = false;
+//                } else if (match("INVAR", token, 1)) {
+//                    options.gammaHetero = false;
+//                    options.invarHetero = true;
+//                } else if (match("GI", token, 2)) {
+//                    options.gammaHetero = true;
+//                    options.invarHetero = true;
+//                } else {
+//                    throw new BadFormatException("Unknown value, '" + token + "'");
+//                }
+//            } else if (match("NUMCAT", subcommand, 1)) {
+//                options.gammaCategories = readInteger(";");
+//            } else {
+//
+//                System.err.println("The option, '" + subcommand + "', in the SITEMODEL command is not used by BEAST and has been ignored");
+//            }
+//
+//            if (getLastDelimiter() == ';') {
+//                done = true;
+//            }
+//        }
     }
 
     private void readTREEMODELCommand(BeautiOptions options) throws ImportException, IOException {
@@ -349,48 +349,48 @@ public class NexusApplicationImporter extends NexusImporter {
     private void readCPPARTITIONMODELCommand(BeautiOptions options) throws ImportException, IOException {
         boolean done = false;
 
-        options.codonHeteroPattern = null;
-
-        while (!done) {
-            String subcommand = readToken("=;");
-            if (match("ON", subcommand, 1)) {
-                String token = readToken(";");
-                if (match("TRUE", token, 1)) {
-                    options.codonHeteroPattern = "123";
-                } else if (match("FALSE", token, 1)) {
-                    options.codonHeteroPattern = null;
-                } else {
-                    throw new BadFormatException("Unknown value, '" + token + "'");
-                }
-            } else if (match("SUBSTMODEL", subcommand, 1)) {
-                String token = readToken(";");
-                if (match("TRUE", token, 1)) {
-                    options.unlinkedSubstitutionModel = true;
-                    options.unlinkedHeterogeneityModel = true;
-                } else if (match("FALSE", token, 1)) {
-                    options.unlinkedSubstitutionModel = false;
-                    options.unlinkedHeterogeneityModel = false;
-                } else {
-                    throw new BadFormatException("Unknown value, '" + token + "'");
-                }
-            } else if (match("FREQMODEL", subcommand, 1)) {
-                String token = readToken(";");
-                if (match("TRUE", token, 1)) {
-                    options.unlinkedFrequencyModel = true;
-                } else if (match("FALSE", token, 1)) {
-                    options.unlinkedFrequencyModel = false;
-                } else {
-                    throw new BadFormatException("Unknown value, '" + token + "'");
-                }
-            } else {
-
-                System.err.println("The option, '" + subcommand + "', in the CPPARTITIONMODEL command is not used by BEAST and has been ignored");
-            }
-
-            if (getLastDelimiter() == ';') {
-                done = true;
-            }
-        }
+//        options.codonHeteroPattern = null;
+//
+//        while (!done) {
+//            String subcommand = readToken("=;");
+//            if (match("ON", subcommand, 1)) {
+//                String token = readToken(";");
+//                if (match("TRUE", token, 1)) {
+//                    options.codonHeteroPattern = "123";
+//                } else if (match("FALSE", token, 1)) {
+//                    options.codonHeteroPattern = null;
+//                } else {
+//                    throw new BadFormatException("Unknown value, '" + token + "'");
+//                }
+//            } else if (match("SUBSTMODEL", subcommand, 1)) {
+//                String token = readToken(";");
+//                if (match("TRUE", token, 1)) {
+//                    options.unlinkedSubstitutionModel = true;
+//                    options.unlinkedHeterogeneityModel = true;
+//                } else if (match("FALSE", token, 1)) {
+//                    options.unlinkedSubstitutionModel = false;
+//                    options.unlinkedHeterogeneityModel = false;
+//                } else {
+//                    throw new BadFormatException("Unknown value, '" + token + "'");
+//                }
+//            } else if (match("FREQMODEL", subcommand, 1)) {
+//                String token = readToken(";");
+//                if (match("TRUE", token, 1)) {
+//                    options.unlinkedFrequencyModel = true;
+//                } else if (match("FALSE", token, 1)) {
+//                    options.unlinkedFrequencyModel = false;
+//                } else {
+//                    throw new BadFormatException("Unknown value, '" + token + "'");
+//                }
+//            } else {
+//
+//                System.err.println("The option, '" + subcommand + "', in the CPPARTITIONMODEL command is not used by BEAST and has been ignored");
+//            }
+//
+//            if (getLastDelimiter() == ';') {
+//                done = true;
+//            }
+//        }
     }
 
     private boolean match(String reference, String target, int min) throws ImportException {

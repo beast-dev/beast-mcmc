@@ -3,6 +3,7 @@ package dr.app.beauti.options;
 import dr.evolution.datatype.DataType;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -263,10 +264,10 @@ public class PartitionModel extends AbstractModelOptions {
 
     /**
      * return a list of parameters that are required
-     *
-     * @param params the parameter list
      */
-    private void selectParameters(ArrayList<Parameter> params) {
+    List<Parameter> getParameters() {
+
+        List<Parameter> params = new ArrayList<Parameter>();
 
         if (codonPartitionCount > 1) {
             for (int i = 1; i <= codonPartitionCount; i++) {
@@ -351,7 +352,19 @@ public class PartitionModel extends AbstractModelOptions {
                 params.add(getParameter("siteModel.pInv"));
             }
         }
+
+        return params;
     }
+
+    protected Parameter getParameter(String name) {
+        Parameter parameter = parameters.get(name);
+        parameter.setPrefix(getName());
+
+        if (parameter == null)
+            throw new IllegalArgumentException("Parameter with name, " + parameter.getName() + ", is unknown");
+        return parameter;
+    }
+
 
     public int nucSubstitutionModel = BeautiOptions.HKY;
     public int aaSubstitutionModel = BeautiOptions.BLOSUM_62;

@@ -55,11 +55,20 @@ public class BeautiOptions extends AbstractModelOptions {
         double demoWeights = 3.0;
         double branchWeights = 30.0;
         double treeWeights = 15.0;
+        double rateWeights = 3.0;
 
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
         createParameter("treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
+
+        createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("uced.mean", "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("ucld.mean", "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("ucld.stdev", "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("branchRates.categories", "relaxed clock branch rate categories");
+        createParameter("localClock.rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("localClock.changes", "random local clock rate change indicator");
 
         createScaleParameter("constant.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
@@ -116,8 +125,28 @@ public class BeautiOptions extends AbstractModelOptions {
         createOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
         createOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
 
+        // These are statistics which could have priors on...
+        createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
+        createStatistic("coefficientOfVariation", "The variation in rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
+        createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages", Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+
+        createOperator("clock.rate", SCALE, 0.75, rateWeights);
+        createOperator("uced.mean", SCALE, 0.75, rateWeights);
+        createOperator("ucld.mean", SCALE, 0.75, rateWeights);
+        createOperator("ucld.stdev", SCALE, 0.75, rateWeights);
+        createOperator("randomWalkBranchRateCategories", "branchRates.categories", "Performs an integer random walk of branch rate categories", "branchRates.categories", INTEGER_RANDOM_WALK, 1, branchWeights);
+        createOperator("unformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories", "branchRates.categories", INTEGER_UNIFORM, 1, branchWeights);
+
+        createOperator("localClock.rates", SCALE, 0.75, treeWeights);
+        createOperator("localClock.changes", BITFLIP, 1, treeWeights);
+        createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree", TREE_BIT_MOVE, -1.0, treeWeights);
+
         createOperator("treeModel.rootHeight", SCALE, 0.75, demoWeights);
         createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally", "treeModel.internalNodeHeights", UNIFORM, -1, branchWeights);
+
+        createOperator("upDownRateHeights", "Substitution rate and heights", "Scales substitution rates inversely to node heights of the tree", "clock.rate", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
+        createOperator("upDownUCEDMeanHeights", "UCED mean and heights", "Scales UCED mean inversely to node heights of the tree", "uced.mean", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
+        createOperator("upDownUCLDMeanHeights", "UCLD mean and heights", "Scales UCLD mean inversely to node heights of the tree", "ucld.mean", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
 
         createOperator("subtreeSlide", "Tree", "Performs the subtree-slide rearrangement of the tree", "tree", SUBTREE_SLIDE, 1.0, treeWeights);
         createOperator("narrowExchange", "Tree", "Performs local rearrangements of the tree", "tree", NARROW_EXCHANGE, -1, treeWeights);

@@ -23,15 +23,8 @@ public class PartitionModel extends AbstractModelOptions {
         this.dataType = dataType;
 
         double substWeights = 1.0;
-        double rateWeights = 3.0;
         double branchWeights = 30.0;
         double treeWeights = 15.0;
-
-        createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("uced.mean", "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("ucld.mean", "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("ucld.stdev", "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("branchRates.categories", "relaxed clock branch rate categories");
 
         //Substitution model parameters
         createParameter("hky.frequencies", "HKY base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
@@ -95,22 +88,6 @@ public class PartitionModel extends AbstractModelOptions {
         createParameter("siteModel3.mu", "relative rate parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("allMus", "All the relative rates");
 
-        // These are statistics which could have priors on...
-        createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
-        createStatistic("coefficientOfVariation", "The variation in rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
-        createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages", Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-
-        createOperator("clock.rate", SCALE, 0.75, rateWeights);
-        createOperator("uced.mean", SCALE, 0.75, rateWeights);
-        createOperator("ucld.mean", SCALE, 0.75, rateWeights);
-        createOperator("ucld.stdev", SCALE, 0.75, rateWeights);
-        createOperator("randomWalkBranchRateCategories", "branchRates.categories", "Performs an integer random walk of branch rate categories", "branchRates.categories", INTEGER_RANDOM_WALK, 1, branchWeights);
-        createOperator("unformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories", "branchRates.categories", INTEGER_UNIFORM, 1, branchWeights);
-
-        createOperator("localClock.rates", SCALE, 0.75, treeWeights);
-        createOperator("localClock.changes", BITFLIP, 1, treeWeights);
-        createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree", TREE_BIT_MOVE, -1.0, treeWeights);
-
         createOperator("hky.kappa", SCALE, 0.75, substWeights);
         createOperator("hky1.kappa", SCALE, 0.75, substWeights);
         createOperator("hky2.kappa", SCALE, 0.75, substWeights);
@@ -164,9 +141,6 @@ public class PartitionModel extends AbstractModelOptions {
         createOperator("siteModel2.pInv", SCALE, 0.75, substWeights);
         createOperator("siteModel3.pInv", SCALE, 0.75, substWeights);
 
-        createOperator("upDownRateHeights", "Substitution rate and heights", "Scales substitution rates inversely to node heights of the tree", "clock.rate", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
-        createOperator("upDownUCEDMeanHeights", "UCED mean and heights", "Scales UCED mean inversely to node heights of the tree", "uced.mean", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
-        createOperator("upDownUCLDMeanHeights", "UCLD mean and heights", "Scales UCLD mean inversely to node heights of the tree", "ucld.mean", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
         createOperator("centeredMu", "Relative rates", "Scales codon position rates relative to each other maintaining mean", "allMus", CENTERED_SCALE, 0.75, substWeights);
         createOperator("deltaMu", "Relative rates", "Changes codon position rates relative to each other maintaining mean", "allMus", DELTA_EXCHANGE, 0.75, substWeights);
     }

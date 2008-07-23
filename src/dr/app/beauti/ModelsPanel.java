@@ -491,20 +491,9 @@ public class ModelsPanel extends JPanel implements Exportable {
         heteroUnlinkCheck.setSelected(model.unlinkedHeterogeneityModel);
         freqsUnlinkCheck.setSelected(model.unlinkedFrequencyModel);
 
-        hasSetFixedSubstitutionRate = model.hasSetFixedSubstitutionRate;
-        if (!hasSetFixedSubstitutionRate) {
-            if (model.maximumTipHeight > 0.0) {
-                model.meanSubstitutionRate = 0.001;
-                model.fixedSubstitutionRate = false;
-            } else {
-                model.meanSubstitutionRate = 1.0;
-                model.fixedSubstitutionRate = true;
-            }
-        }
-
-        fixedSubstitutionRateCheck.setSelected(model.fixedSubstitutionRate);
+//        fixedSubstitutionRateCheck.setSelected(model.fixedSubstitutionRate);
         substitutionRateField.setValue(model.meanSubstitutionRate);
-        substitutionRateField.setEnabled(model.fixedSubstitutionRate);
+//        substitutionRateField.setEnabled(model.fixedSubstitutionRate);
 
         setupPanel(currentModel, modelPanel);
     }
@@ -576,21 +565,22 @@ public class ModelsPanel extends JPanel implements Exportable {
         model.unlinkedHeterogeneityModel = heteroUnlinkCheck.isSelected();
         model.unlinkedFrequencyModel = freqsUnlinkCheck.isSelected();
 
-        model.hasSetFixedSubstitutionRate = hasSetFixedSubstitutionRate;
-        model.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
+//        model.hasSetFixedSubstitutionRate = hasSetFixedSubstitutionRate;
+//        model.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
         model.meanSubstitutionRate = substitutionRateField.getValue();
 
-        boolean fixed = fixedSubstitutionRateCheck.isSelected();
-        if (!warningShown && !fixed && model.maximumTipHeight == 0.0) {
-            JOptionPane.showMessageDialog(frame,
-                    "You have chosen to sample substitution rates but all \n"+
-                            "the sequences have the same date. In order for this to \n"+
-                            "work, a strong prior is required on the substitution\n"+
-                            "rate or the root of the tree.",
-                    "Warning",
-                    JOptionPane.WARNING_MESSAGE);
-            warningShown = true;
-        }
+        // This warning should be given at generate...
+//        boolean fixed = fixedSubstitutionRateCheck.isSelected();
+//        if (!warningShown && !fixed && model.maximumTipHeight == 0.0) {
+//            JOptionPane.showMessageDialog(frame,
+//                    "You have chosen to sample substitution rates but all \n"+
+//                            "the sequences have the same date. In order for this to \n"+
+//                            "work, a strong prior is required on the substitution\n"+
+//                            "rate or the root of the tree.",
+//                    "Warning",
+//                    JOptionPane.WARNING_MESSAGE);
+//            warningShown = true;
+//        }
 
     }
 
@@ -599,7 +589,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         int[] selRows = modelTable.getSelectedRows();
         if (selRows == null || selRows.length == 0) {
         } else {
-            currentModel = options.partitionModels.get(selRows[0]);
+            currentModel = options.getPartitionModels().get(selRows[0]);
         }
     }
 
@@ -631,11 +621,11 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.partitionModel.size();
+            return options.getPartitionModels().size();
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionModel model = options.partitionModel.get(row);
+            PartitionModel model = options.getPartitionModels().get(row);
             switch (col) {
                 case 0: return model.getName();
                 default:

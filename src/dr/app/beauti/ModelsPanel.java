@@ -263,7 +263,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
         clockModelCombo.addItemListener(listener);
 
-        currentModel = options.partitionModels.get(0);
+        currentModel = options.getPartitionModels().get(0);
 
         setupPanel(currentModel, modelPanel);
 

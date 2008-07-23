@@ -1,9 +1,13 @@
 package dr.app.beauti.options;
 
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.Patterns;
+import dr.evolution.distance.DistanceMatrix;
+import dr.evolution.distance.JukesCantorDistanceMatrix;
 
 /**
  * @author Andrew Rambaut
+ * @author Alexei Drummond
  */
 public class DataPartition {
 
@@ -12,6 +16,15 @@ public class DataPartition {
         this.fileName = fileName;
         this.alignment = alignment;
         this.coding = false;
+
+        Patterns patterns = new Patterns(alignment);
+        DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
+        meanDistance = distances.getMeanDistance();
+
+    }
+
+    public double getMeanDistance() {
+        return meanDistance;
     }
 
     public String getFileName() {
@@ -48,9 +61,11 @@ public class DataPartition {
 
     private final String fileName;
     private final Alignment alignment;
+    private final double meanDistance;
 
     private String name;
     private boolean coding;
+
 
     private PartitionModel model;
 }

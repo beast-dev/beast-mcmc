@@ -26,6 +26,7 @@
 package dr.app.beauti;
 
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.DateGuesser;
 import dr.evolution.util.Date;
 import dr.evolution.util.TimeScale;
 import dr.evolution.util.Units;
@@ -412,12 +413,14 @@ public class SamplesPanel extends JPanel implements Exportable {
             return;
         }
 
-        int value = ((Integer) optionPane.getValue()).intValue();
+        int value = (Integer) optionPane.getValue();
         if (value == -1 || value == JOptionPane.CANCEL_OPTION) {
             return;
         }
 
-        options.guessDates = true;
+        DateGuesser guesser = options.dateGuesser;
+
+        guesser.guessDates = true;
 
         String warningMessage = null;
 
@@ -428,39 +431,39 @@ public class SamplesPanel extends JPanel implements Exportable {
 
             try {
                 if (orderRadio.isSelected()) {
-                    options.guessDateFromOrder = true;
-                    options.order = orderCombo.getSelectedIndex();
-                    options.fromLast = false;
-                    if (options.order > 3) {
-                        options.fromLast = true;
-                        options.order = 8 - options.order - 1;
+                    guesser.guessDateFromOrder = true;
+                    guesser.order = orderCombo.getSelectedIndex();
+                    guesser.fromLast = false;
+                    if (guesser.order > 3) {
+                        guesser.fromLast = true;
+                        guesser.order = 8 - guesser.order - 1;
                     }
 
-                    d = options.guessDateFromOrder(options.taxonList.getTaxonId(i), options.order, options.fromLast);
+                    d = guesser.guessDateFromOrder(options.taxonList.getTaxonId(i), guesser.order, guesser.fromLast);
                 } else {
-                    options.guessDateFromOrder = false;
-                    options.prefix = prefixText.getText();
-                    d = options.guessDateFromPrefix(options.taxonList.getTaxonId(i), options.prefix);
+                    guesser.guessDateFromOrder = false;
+                    guesser.prefix = prefixText.getText();
+                    d = guesser.guessDateFromPrefix(options.taxonList.getTaxonId(i), guesser.prefix);
                 }
 
             } catch (GuessDatesException gfe) {
                 warningMessage = gfe.getMessage();
             }
 
-            options.offset = 0.0;
-            options.unlessLessThan = 0.0;
+            guesser.offset = 0.0;
+            guesser.unlessLessThan = 0.0;
             if (offsetCheck.isSelected()) {
-                options.offset = offsetText.getValue().doubleValue();
+                guesser.offset = offsetText.getValue();
                 if (unlessCheck.isSelected()) {
-                    options.unlessLessThan = unlessText.getValue().doubleValue();
-                    options.offset2 = offset2Text.getValue().doubleValue();
-                    if (d < options.unlessLessThan) {
-                        d += options.offset2;
+                    guesser.unlessLessThan = unlessText.getValue();
+                    guesser.offset2 = offset2Text.getValue();
+                    if (d < guesser.unlessLessThan) {
+                        d += guesser.offset2;
                     } else {
-                        d += options.offset;
+                        d += guesser.offset;
                     }
                 } else {
-                    d += options.offset;
+                    d += guesser.offset;
                 }
             }
 
@@ -497,8 +500,6 @@ public class SamplesPanel extends JPanel implements Exportable {
         }
     }
 
-    ;
-
     public class GuessDatesAction extends AbstractAction {
         /**
          *
@@ -514,8 +515,6 @@ public class SamplesPanel extends JPanel implements Exportable {
             guessDates();
         }
     }
-
-    ;
 
     private void calculateHeights() {
 
@@ -577,13 +576,13 @@ public class SamplesPanel extends JPanel implements Exportable {
                 case 1:
                     Date date = options.taxonList.getTaxon(row).getDate();
                     if (date != null) {
-                        return new Double(date.getTimeValue());
+                        return date.getTimeValue();
                     } else {
                         return "-";
                     }
                 case 2:
                     if (heights != null) {
-                        return new Double(heights[row]);
+                        return heights[row];
                     } else {
                         return "0.0";
                     }
@@ -597,7 +596,7 @@ public class SamplesPanel extends JPanel implements Exportable {
             } else if (col == 1) {
                 Date date = options.taxonList.getTaxon(row).getDate();
                 if (date != null) {
-                    double d = ((Double) aValue).doubleValue();
+                    double d = (Double) aValue;
                     Date newDate = createDate(d, date.getUnits(), date.isBackwards(), date.getOrigin());
                     options.taxonList.getTaxon(row).setDate(newDate);
                 }
@@ -645,7 +644,4 @@ public class SamplesPanel extends JPanel implements Exportable {
             return buffer.toString();
         }
     }
-
-    ;
-
 }

@@ -112,12 +112,9 @@ public class BeautiOptions extends AbstractModelOptions {
         createOperator("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize", "demographic.indicators", SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
 
         createOperator("yule.birthRate", SCALE, 0.75, demoWeights);
-//        createOperator("birthDeath.birthRate", SCALE, 0.75, demoWeights);
-//        createOperator("birthDeath.deathRate", SCALE, 0.75, demoWeights);
 
         createOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
         createOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
-        //createOperator("birthDeath.samplingProportion", RANDOM_WALK, 0.75, demoWeights);
 
         createOperator("treeModel.rootHeight", SCALE, 0.75, demoWeights);
         createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally", "treeModel.internalNodeHeights", UNIFORM, -1, branchWeights);
@@ -130,6 +127,13 @@ public class BeautiOptions extends AbstractModelOptions {
 
     public void addPartitionModel(PartitionModel model) {
         models.add(model);
+    }
+
+    /**
+     * @return a list of partition models
+     */
+    public List<PartitionModel> getPartitionModels() {
+        return models;
     }
 
     private double round(double value, int sf) {
@@ -515,13 +519,6 @@ public class BeautiOptions extends AbstractModelOptions {
             ops.add(getOperator("wideExchange"));
             ops.add(getOperator("wilsonBalding"));
         }
-    }
-
-    /**
-     * @return a list of partition models
-     */
-    public List<PartitionModel> getPartitionModels() {
-        return models;
     }
 
     /**

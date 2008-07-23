@@ -28,14 +28,13 @@ package dr.app.beauti;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import org.virion.jam.framework.Exportable;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
+import org.virion.jam.table.*;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
-import javax.swing.table.AbstractTableModel;
+import javax.swing.table.*;
 import java.awt.*;
 
 /**

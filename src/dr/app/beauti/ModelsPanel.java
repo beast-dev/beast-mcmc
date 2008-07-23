@@ -31,15 +31,14 @@ import dr.app.beauti.options.PartitionModel;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
+import org.virion.jam.table.*;
 import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.table.AbstractTableModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
@@ -111,9 +110,17 @@ public class ModelsPanel extends JPanel implements Exportable {
         modelTable = new JTable(modelTableModel);
 
         modelTable.getTableHeader().setReorderingAllowed(false);
+        modelTable.getTableHeader().setResizingAllowed(false);
         modelTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        
+        final TableColumnModel model = modelTable.getColumnModel();
+        final TableColumn tableColumn0 = model.getColumn(0);
+        tableColumn0.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        //tableColumn0.setWidth(40);
 
+        modelTable.setPreferredSize(new Dimension(80, modelTable.getPreferredSize().height));
+        
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(modelTable);
 
         modelTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -263,7 +270,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
         clockModelCombo.addItemListener(listener);
 
-        currentModel = options.getPartitionModels().get(0);
+        currentModel = null;
 
         setupPanel(currentModel, modelPanel);
 
@@ -323,7 +330,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         }
     };
 
-   private void setupComponent(JComponent comp) {
+    private void setupComponent(JComponent comp) {
         comp.setOpaque(false);
 
         //comp.setFont(UIManager.getFont("SmallSystemFont"));
@@ -340,62 +347,64 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         panel.removeAll();
 
-        if (hasAlignment) {
-
-            switch (dataType){
-                case DataType.NUCLEOTIDES:
-                    panel.addComponentWithLabel("Substitution Model:", nucSubstCombo, true);
-                    panel.addComponentWithLabel("Base frequencies:", frequencyCombo);
-                    panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
-                    gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
-
-                    panel.addSeparator();
-
-                    JPanel panel1 = new JPanel(new BorderLayout(6,6));
-                    panel1.setOpaque(false);
-                    panel1.add(codingCombo, BorderLayout.CENTER);
-                    panel1.add(setSRD06Button, BorderLayout.EAST);
-                    panel.addComponentWithLabel("Partition into codon positions:", panel1);
-
-                    panel1 = new JPanel();
-                    panel1.setOpaque(false);
-                    panel1.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-                    panel1.setBorder(BorderFactory.createTitledBorder("Link/Unlink parameters:"));
-                    panel1.add(substUnlinkCheck);
-                    panel1.add(heteroUnlinkCheck);
-                    panel1.add(freqsUnlinkCheck);
-
-                    panel.addComponent(panel1);
-                    break;
-
-                case DataType.AMINO_ACIDS:
-                    panel.addComponentWithLabel("Substitution Model:", aaSubstCombo);
-                    panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
-                    gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
-
-                    break;
-
-                case DataType.TWO_STATES:
-                case DataType.COVARION:
-                    panel.addComponentWithLabel("Substitution Model:", binarySubstCombo);
-                    panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
-                    gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
-
-                    break;
-
-                default:
-                    throw new IllegalArgumentException("Unknown data type");
-
-            }
-
-            panel.addSeparator();
-
-            //addComponent(fixedSubstitutionRateCheck);
-            substitutionRateField.setColumns(10);
-            panel.addComponents(fixedSubstitutionRateCheck, substitutionRateField);
-
-            panel.addSeparator();
+        if (model == null) {
+            return;
         }
+
+
+        switch (model.dataType.getType()){
+            case DataType.NUCLEOTIDES:
+                panel.addComponentWithLabel("Substitution Model:", nucSubstCombo, true);
+                panel.addComponentWithLabel("Base frequencies:", frequencyCombo);
+                panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+
+                panel.addSeparator();
+
+                JPanel panel1 = new JPanel(new BorderLayout(6,6));
+                panel1.setOpaque(false);
+                panel1.add(codingCombo, BorderLayout.CENTER);
+                panel1.add(setSRD06Button, BorderLayout.EAST);
+                panel.addComponentWithLabel("Partition into codon positions:", panel1);
+
+                JPanel panel2 = new JPanel();
+                panel2.setOpaque(false);
+                panel2.setLayout(new BoxLayout(panel2, BoxLayout.PAGE_AXIS));
+                panel2.setBorder(BorderFactory.createTitledBorder("Link/Unlink parameters:"));
+                panel2.add(substUnlinkCheck);
+                panel2.add(heteroUnlinkCheck);
+                panel2.add(freqsUnlinkCheck);
+
+                panel.addComponent(panel2);
+                break;
+
+            case DataType.AMINO_ACIDS:
+                panel.addComponentWithLabel("Substitution Model:", aaSubstCombo);
+                panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+
+                break;
+
+            case DataType.TWO_STATES:
+            case DataType.COVARION:
+                panel.addComponentWithLabel("Substitution Model:", binarySubstCombo);
+                panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown data type");
+
+        }
+
+        panel.addSeparator();
+
+        //addComponent(fixedSubstitutionRateCheck);
+        substitutionRateField.setColumns(10);
+        panel.addComponents(fixedSubstitutionRateCheck, substitutionRateField);
+
+        panel.addSeparator();
 
         validate();
         repaint();
@@ -440,32 +449,35 @@ public class ModelsPanel extends JPanel implements Exportable {
 
     public void setModelOptions(PartitionModel model) {
 
+        if (currentModel == null) {
+            return;
+        }
+        
+        dataType = model.dataType.getType();
+        switch(dataType){
+            case DataType.NUCLEOTIDES:
+                if (model.nucSubstitutionModel == BeautiOptions.GTR) {
+                    nucSubstCombo.setSelectedIndex(1);
+                } else {
+                    nucSubstCombo.setSelectedIndex(0);
+                }
 
-            dataType = model.dataType.getType();
-            switch(dataType){
-                case DataType.NUCLEOTIDES:
-                    if (model.nucSubstitutionModel == BeautiOptions.GTR) {
-                        nucSubstCombo.setSelectedIndex(1);
-                    } else {
-                        nucSubstCombo.setSelectedIndex(0);
-                    }
+                frequencyCombo.setSelectedIndex(model.frequencyPolicy);
 
-                    frequencyCombo.setSelectedIndex(model.frequencyPolicy);
+                break;
 
-                    break;
+            case DataType.AMINO_ACIDS:
+                aaSubstCombo.setSelectedIndex(model.aaSubstitutionModel);
+                break;
 
-                case DataType.AMINO_ACIDS:
-                    aaSubstCombo.setSelectedIndex(model.aaSubstitutionModel);
-                    break;
+            case DataType.TWO_STATES:
+            case DataType.COVARION:
+                binarySubstCombo.setSelectedIndex(model.binarySubstitutionModel);
+                break;
 
-                case DataType.TWO_STATES:
-                case DataType.COVARION:
-                    binarySubstCombo.setSelectedIndex(model.binarySubstitutionModel);
-                    break;
-
-                default:
-                    throw new IllegalArgumentException("Unknown data type");
-            }
+            default:
+                throw new IllegalArgumentException("Unknown data type");
+        }
 
         if (model.gammaHetero && !model.invarHetero) {
             heteroCombo.setSelectedIndex(1);
@@ -567,7 +579,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
 //        model.hasSetFixedSubstitutionRate = hasSetFixedSubstitutionRate;
 //        model.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
-        model.meanSubstitutionRate = substitutionRateField.getValue();
+//        model.meanSubstitutionRate = substitutionRateField.getValue();
 
         // This warning should be given at generate...
 //        boolean fixed = fixedSubstitutionRateCheck.isSelected();
@@ -590,6 +602,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         if (selRows == null || selRows.length == 0) {
         } else {
             currentModel = options.getPartitionModels().get(selRows[0]);
+            setupPanel(currentModel, modelPanel);
         }
     }
 

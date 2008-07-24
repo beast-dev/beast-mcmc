@@ -50,7 +50,8 @@ public class PanelUtils {
             comp.putClientProperty("JButton.buttonType", "roundRect");
         }
         if (comp instanceof JComboBox) {
-            comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+            comp.putClientProperty("JComboBox.isPopDown", Boolean.TRUE);
+//            comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
         }
 
     }

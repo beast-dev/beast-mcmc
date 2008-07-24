@@ -12,14 +12,22 @@ import dr.evolution.distance.JukesCantorDistanceMatrix;
 public class DataPartition {
 
     public DataPartition(String name, String fileName, Alignment alignment) {
+        this(name, fileName, alignment, -1, -1);
+    }
+
+    public DataPartition(String name, String fileName, Alignment alignment, int fromSite, int toSite) {
         this.name = name;
         this.fileName = fileName;
         this.alignment = alignment;
         this.coding = false;
 
-        Patterns patterns = new Patterns(alignment);
-        DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
-        meanDistance = distances.getMeanDistance();
+        this.fromSite = fromSite;
+        this.toSite = toSite;
+
+//        Patterns patterns = new Patterns(alignment);
+//        DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
+//        meanDistance = distances.getMeanDistance();
+        meanDistance = 0.0;
 
     }
 
@@ -59,6 +67,14 @@ public class DataPartition {
         this.coding = coding;
     }
 
+    public int getFromSite() {
+        return fromSite;
+    }
+
+    public int getToSite() {
+        return toSite;
+    }
+
     public String toString() {
         return getName();
     }
@@ -70,6 +86,8 @@ public class DataPartition {
     private String name;
     private boolean coding;
 
+    private int fromSite;
+    private int toSite;
 
     private PartitionModel model;
 }

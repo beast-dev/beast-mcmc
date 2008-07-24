@@ -341,6 +341,8 @@ public class BeautiFrame extends DocumentFrame {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
         Tree tree = null;
+        PartitionModel model = null;
+        java.util.List<NexusApplicationImporter.CharSet> charSets = null;
 
         try {
             FileReader reader = new FileReader(file);
@@ -409,18 +411,18 @@ public class BeautiFrame extends DocumentFrame {
                             tree = trees[0];
                         }
 
-/*					} else if (block == NexusApplicationImporter.PAUP_BLOCK) {
+                    } else if (block == NexusApplicationImporter.PAUP_BLOCK) {
 
-						importer.parsePAUPBlock(beautiOptions);
+                        model = importer.parsePAUPBlock(beautiOptions);
 
-					} else if (block == NexusApplicationImporter.MRBAYES_BLOCK) {
+                    } else if (block == NexusApplicationImporter.MRBAYES_BLOCK) {
 
-						importer.parseMrBayesBlock(beautiOptions);
+                        model = importer.parseMrBayesBlock(beautiOptions);
 
-					} else if (block == NexusApplicationImporter.RHINO_BLOCK) {
+                    } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK) {
 
-						importer.parseRhinoBlock(beautiOptions);
-*/
+                        charSets = importer.parseAssumptionsBlock();
+
                     } else {
                         // Ignore the block..
                     }
@@ -514,19 +516,33 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         if (alignment != null) {
-            DataPartition partition = new DataPartition(fileNameStem, file.getName(), alignment);
-            for (PartitionModel model : beautiOptions.getPartitionModels()) {
-                if (model.dataType == alignment.getDataType()) {
-                    partition.setPartitionModel(model);
+            java.util.List<DataPartition> partitions = new ArrayList<DataPartition>();
+            if (charSets != null && charSets.size() > 0) {
+                for (NexusApplicationImporter.CharSet charSet : charSets) {
+                    partitions.add(new DataPartition(charSet.getName(), file.getName(),
+                            alignment, charSet.getFromSite(), charSet.getToSite()));
                 }
+            } else {
+                partitions.add(new DataPartition(fileNameStem, file.getName(), alignment));
             }
-            if (partition.getPartitionModel() == null) {
-                PartitionModel model = new PartitionModel(partition);
-                partition.setPartitionModel(model);
-                beautiOptions.addPartitionModel(model);
+            for (DataPartition partition : partitions) {
+                if (model != null) {
+                    partition.setPartitionModel(model);
+                    beautiOptions.addPartitionModel(model);
+                } else {
+                    for (PartitionModel pm : beautiOptions.getPartitionModels()) {
+                        if (pm.dataType == alignment.getDataType()) {
+                            partition.setPartitionModel(pm);
+                        }
+                    }
+                    if (partition.getPartitionModel() == null) {
+                        PartitionModel pm = new PartitionModel(partition);
+                        partition.setPartitionModel(pm);
+                        beautiOptions.addPartitionModel(pm);
+                    }
+                }
+                beautiOptions.dataPartitions.add(partition);
             }
-
-            beautiOptions.dataPartitions.add(partition);
         }
 
         if (beautiOptions.dataPartitions.size() > 0) {

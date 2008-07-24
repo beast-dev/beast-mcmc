@@ -94,13 +94,17 @@ public class BeastGenerator extends BeautiOptions {
      *
      * @throws IllegalArgumentException if there is a problem with the current settings
      */
-    public void checkOptions() throws IllegalArgumentException {
+    public void  checkOptions() throws IllegalArgumentException {
         Set<String> ids = new HashSet<String>();
 
         ids.add("taxa");
         ids.add("alignment");
 
         if (taxonList != null) {
+            if (taxonList.getTaxonCount() < 2) {
+                throw new IllegalArgumentException("BEAST requires at least two taxa to run.");
+            }
+
             for (int i = 0; i < taxonList.getTaxonCount(); i++) {
                 Taxon taxon = taxonList.getTaxon(i);
                 if (ids.contains(taxon.getId())) {
@@ -123,7 +127,10 @@ public class BeastGenerator extends BeautiOptions {
             ids.add(taxa.getId());
         }
 
- //       getPartionCount(codonHeteroPattern);
+        // add other tests and warnings here
+        // Speciation model with dated tips
+        // Sampling rates without dated tips or priors on rate or nodes
+
     }
 
     /**

@@ -162,6 +162,19 @@ public class BeautiOptions extends AbstractModelOptions {
         return models;
     }
 
+    /**
+     * @return a list of partition models that are of the given data type
+     */
+    public List<PartitionModel> getPartitionModels(DataType dataType) {
+        List<PartitionModel> models = new ArrayList<PartitionModel>();
+        for (PartitionModel model : getPartitionModels()) {
+            if (model.dataType == dataType) {
+                models.add(model);
+            }
+        }
+        return models;
+    }
+
     private double round(double value, int sf) {
         NumberFormatter formatter = new NumberFormatter(sf);
         try {

@@ -39,10 +39,8 @@ import org.virion.jam.console.ConsoleApplication;
 
 import javax.swing.*;
 import java.io.*;
-import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.text.*;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,6 +59,12 @@ public class LogCombiner {
         System.out.println("Creating combined " + (treeFiles ? "tree" : "log") + " file: '" + outputFileName);
 
         System.out.println();
+
+        decimalFormatter = NumberFormat.getInstance(Locale.US);
+        decimalFormatter.setGroupingUsed(false);
+        decimalFormatter.setMaximumFractionDigits(100);
+        scientificFormatter = new DecimalFormat("#.############E0");
+        ((DecimalFormat)scientificFormatter).setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
 
         PrintWriter writer = new PrintWriter(new FileOutputStream(outputFileName));
 
@@ -345,8 +349,10 @@ public class LogCombiner {
         writer.println("End;");
     }
 
-    private static final DecimalFormat decimalFormatter = new DecimalFormat("#.############");
-    private static final DecimalFormat scientificFormatter = new DecimalFormat("#.############E0");
+    //private static final DecimalFormat decimalFormatter = new DecimalFormat("#.############");
+    private final NumberFormat decimalFormatter;
+    private final NumberFormat scientificFormatter;
+
 
     private String reformatNumbers(String line, boolean convertDecimal, boolean useScale, double scale) {
         StringBuffer outLine = new StringBuffer();

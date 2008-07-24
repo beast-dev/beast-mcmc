@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
 public class PartitionModel extends AbstractModelOptions {
 
@@ -14,8 +15,30 @@ public class PartitionModel extends AbstractModelOptions {
         this(partition.getName(), partition.getAlignment().getDataType());
     }
 
-    public String getName() {
-        return name;
+    /**
+     * A copy constructor
+     * @param name the name of the new model
+     * @param source the source model
+     */
+    public PartitionModel(String name, PartitionModel source) {
+        this(name, source.dataType);
+
+        nucSubstitutionModel = source.nucSubstitutionModel;
+        aaSubstitutionModel = source.aaSubstitutionModel;
+        binarySubstitutionModel = source.binarySubstitutionModel;
+
+        frequencyPolicy = source.frequencyPolicy;
+        gammaHetero = source.gammaHetero;
+        gammaCategories = source.gammaCategories;
+        invarHetero = source.invarHetero;
+        codonHeteroPattern = source.codonHeteroPattern;
+        meanSubstitutionRate = source.meanSubstitutionRate;
+        unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
+        unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
+        unlinkedFrequencyModel = source.unlinkedFrequencyModel;
+
+        codonPartitionCount = source.codonPartitionCount;
+        fixedSubstitutionRate = source.fixedSubstitutionRate;
     }
 
     public PartitionModel(String name, DataType dataType) {
@@ -144,7 +167,15 @@ public class PartitionModel extends AbstractModelOptions {
         createOperator("deltaMu", "Relative rates", "Changes codon position rates relative to each other maintaining mean", "allMus", DELTA_EXCHANGE, 0.75, substWeights);
     }
 
-    List<Operator> getOperators() {
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<Operator> getOperators() {
 
         List<Operator> operators = new ArrayList<Operator>();
 

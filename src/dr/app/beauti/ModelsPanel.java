@@ -26,21 +26,25 @@
 package dr.app.beauti;
 
 import dr.evolution.datatype.DataType;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionModel;
+import dr.evolution.datatype.Nucleotides;
+import dr.app.beauti.options.*;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
+import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.*;
 import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * @author			Andrew Rambaut
@@ -58,6 +62,8 @@ public class ModelsPanel extends JPanel implements Exportable {
     PartitionModel currentModel = null;
 
     OptionsPanel modelPanel;
+    TitledBorder modelBorder;
+
     JComboBox nucSubstCombo = new JComboBox(new String[] {"HKY", "GTR"});
     JComboBox aaSubstCombo = new JComboBox(new String[] {"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
     JComboBox binarySubstCombo = new JComboBox(new String[] {"Simple", "Covarion"});
@@ -91,16 +97,13 @@ public class ModelsPanel extends JPanel implements Exportable {
 
     BeautiFrame frame = null;
 
-    boolean warningShown = false;
-    boolean hasSetFixedSubstitutionRate = false;
+    CreateModelDialog createModelDialog = null;
 
     boolean settingOptions = false;
 
     boolean hasAlignment = false;
 
-    int dataType = DataType.NUCLEOTIDES;
-
-    public ModelsPanel(BeautiFrame parent) {
+    public ModelsPanel(BeautiFrame parent, Action removeModelAction) {
 
         super();
 
@@ -113,14 +116,14 @@ public class ModelsPanel extends JPanel implements Exportable {
         modelTable.getTableHeader().setResizingAllowed(false);
         modelTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        
+
         final TableColumnModel model = modelTable.getColumnModel();
         final TableColumn tableColumn0 = model.getColumn(0);
-        tableColumn0.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        //tableColumn0.setWidth(40);
+        tableColumn0.setCellRenderer(new ModelsTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(modelTable);
 
+        modelTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         modelTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
                 selectionChanged();
@@ -132,19 +135,16 @@ public class ModelsPanel extends JPanel implements Exportable {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
 
-        Icon addIcon = null, removeIcon = null;
-        try {
-            addIcon = new ImageIcon(IconUtils.getImage(this.getClass(), "images/add.png"));
-            removeIcon = new ImageIcon(IconUtils.getImage(this.getClass(), "images/remove.png"));
-        } catch (Exception e) {
-            // do nothing
-        }
-        JPanel buttonPanel = createAddRemoveButtonPanel(addModelAction, addIcon, "Create a new model",
-                removeModelAction, removeIcon, "Delete the selected model",
-                javax.swing.BoxLayout.Y_AXIS);
-
         modelPanel = new OptionsPanel(12, 18);
         modelPanel.setOpaque(false);
+
+        ActionPanel actionPanel1 = new ActionPanel(false);
+        actionPanel1.setAddAction(addModelAction);
+        actionPanel1.setRemoveAction(removeModelAction);
+
+        JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        controlPanel1.setOpaque(false);
+        controlPanel1.add(actionPanel1);
 
         setupComponent(substUnlinkCheck);
         substUnlinkCheck.setEnabled(false);
@@ -162,7 +162,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         java.awt.event.ItemListener listener = new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                frame.modelChanged();
+                fireModelsChanged();
             }
         };
 
@@ -188,7 +188,7 @@ public class ModelsPanel extends JPanel implements Exportable {
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
 
-                        frame.modelChanged();
+                        fireModelsChanged();
 
                         if (heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3) {
                             gammaCatLabel.setEnabled(true);
@@ -211,7 +211,7 @@ public class ModelsPanel extends JPanel implements Exportable {
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
 
-                        frame.modelChanged();
+                        fireModelsChanged();
 
                         if (codingCombo.getSelectedIndex() != 0) { // codon position partitioning
                             substUnlinkCheck.setEnabled(true);
@@ -251,8 +251,7 @@ public class ModelsPanel extends JPanel implements Exportable {
                         boolean fixed = fixedSubstitutionRateCheck.isSelected();
                         substitutionRateLabel.setEnabled(fixed);
                         substitutionRateField.setEnabled(fixed);
-                        hasSetFixedSubstitutionRate = true;
-                        frame.modelChanged();
+                        fireModelsChanged();
                     }
                 }
         );
@@ -275,10 +274,23 @@ public class ModelsPanel extends JPanel implements Exportable {
         OptionsPanel panel = new OptionsPanel(0, 0);
         panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane, modelPanel);
+        JPanel panel1 = new JPanel(new BorderLayout(0,0));
+        panel1.setOpaque(false);
+        panel1.add(scrollPane, BorderLayout.CENTER);
+        panel1.add(controlPanel1, BorderLayout.SOUTH);
+
+        JPanel panel2 = new JPanel(new BorderLayout(0,0));
+        panel2.setOpaque(false);
+        modelBorder = new TitledBorder("Substitution Model");
+        panel2.setBorder(modelBorder);
+        panel2.add(modelPanel, BorderLayout.CENTER);
+
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, panel2);
         splitPane.setDividerLocation(180);
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
+        splitPane.setOpaque(false);
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
@@ -286,51 +298,6 @@ public class ModelsPanel extends JPanel implements Exportable {
         add(splitPane, BorderLayout.CENTER);
         add(panel, BorderLayout.SOUTH);
     }
-
-    private JPanel createAddRemoveButtonPanel(Action addAction, Icon addIcon, String addToolTip,
-                                              Action removeAction, Icon removeIcon, String removeToolTip, int axis) {
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new BoxLayout(buttonPanel, axis));
-        buttonPanel.setOpaque(false);
-        JButton addButton = new JButton(addAction);
-        if (addIcon != null) {
-            addButton.setIcon(addIcon);
-            addButton.setText(null);
-        }
-        addButton.setToolTipText(addToolTip);
-        addButton.putClientProperty("JButton.buttonType", "toolbar");
-        addButton.setOpaque(false);
-        addAction.setEnabled(false);
-
-        JButton removeButton = new JButton(removeAction);
-        if (removeIcon != null) {
-            removeButton.setIcon(removeIcon);
-            removeButton.setText(null);
-        }
-        removeButton.setToolTipText(removeToolTip);
-        removeButton.putClientProperty("JButton.buttonType", "toolbar");
-        removeButton.setOpaque(false);
-        removeAction.setEnabled(false);
-
-        buttonPanel.add(addButton);
-        buttonPanel.add(new JToolBar.Separator(new Dimension(6,6)));
-        buttonPanel.add(removeButton);
-
-        return buttonPanel;
-    }
-
-    Action addModelAction = new AbstractAction("+") {
-        private static final long serialVersionUID = 20273987098143413L;
-
-        public void actionPerformed(ActionEvent ae) {
-        }
-    };
-
-    Action removeModelAction = new AbstractAction("-") {
-        public void actionPerformed(ActionEvent ae) {
-        }
-    };
 
     private void setupComponent(JComponent comp) {
         comp.setOpaque(false);
@@ -349,63 +316,63 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         panel.removeAll();
 
-        if (model == null) {
-            return;
+        if (model != null) {
+
+            switch (model.dataType.getType()){
+                case DataType.NUCLEOTIDES:
+                    panel.addComponentWithLabel("Substitution Model:", nucSubstCombo, true);
+                    panel.addComponentWithLabel("Base frequencies:", frequencyCombo);
+                    panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                    gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+
+                    panel.addSeparator();
+
+                    JPanel panel1 = new JPanel(new BorderLayout(6,6));
+                    panel1.setOpaque(false);
+                    panel1.add(codingCombo, BorderLayout.CENTER);
+                    panel1.add(setSRD06Button, BorderLayout.EAST);
+                    panel.addComponentWithLabel("Partition into codon positions:", panel1);
+
+                    JPanel panel2 = new JPanel();
+                    panel2.setOpaque(false);
+                    panel2.setLayout(new BoxLayout(panel2, BoxLayout.PAGE_AXIS));
+                    panel2.setBorder(BorderFactory.createTitledBorder("Link/Unlink parameters:"));
+                    panel2.add(substUnlinkCheck);
+                    panel2.add(heteroUnlinkCheck);
+                    panel2.add(freqsUnlinkCheck);
+
+                    panel.addComponent(panel2);
+                    break;
+
+                case DataType.AMINO_ACIDS:
+                    panel.addComponentWithLabel("Substitution Model:", aaSubstCombo);
+                    panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                    gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+
+                    break;
+
+                case DataType.TWO_STATES:
+                case DataType.COVARION:
+                    panel.addComponentWithLabel("Substitution Model:", binarySubstCombo);
+                    panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                    gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
+
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unknown data type");
+
+            }
+
+            panel.addSeparator();
+
+            //addComponent(fixedSubstitutionRateCheck);
+            substitutionRateField.setColumns(10);
+            panel.addComponents(fixedSubstitutionRateCheck, substitutionRateField);
+
+            panel.addSeparator();
+
         }
-
-        switch (model.dataType.getType()){
-            case DataType.NUCLEOTIDES:
-                panel.addComponentWithLabel("Substitution Model:", nucSubstCombo, true);
-                panel.addComponentWithLabel("Base frequencies:", frequencyCombo);
-                panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
-                gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
-
-                panel.addSeparator();
-
-                JPanel panel1 = new JPanel(new BorderLayout(6,6));
-                panel1.setOpaque(false);
-                panel1.add(codingCombo, BorderLayout.CENTER);
-                panel1.add(setSRD06Button, BorderLayout.EAST);
-                panel.addComponentWithLabel("Partition into codon positions:", panel1);
-
-                JPanel panel2 = new JPanel();
-                panel2.setOpaque(false);
-                panel2.setLayout(new BoxLayout(panel2, BoxLayout.PAGE_AXIS));
-                panel2.setBorder(BorderFactory.createTitledBorder("Link/Unlink parameters:"));
-                panel2.add(substUnlinkCheck);
-                panel2.add(heteroUnlinkCheck);
-                panel2.add(freqsUnlinkCheck);
-
-                panel.addComponent(panel2);
-                break;
-
-            case DataType.AMINO_ACIDS:
-                panel.addComponentWithLabel("Substitution Model:", aaSubstCombo);
-                panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
-                gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
-
-                break;
-
-            case DataType.TWO_STATES:
-            case DataType.COVARION:
-                panel.addComponentWithLabel("Substitution Model:", binarySubstCombo);
-                panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
-                gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
-
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unknown data type");
-
-        }
-
-        panel.addSeparator();
-
-        //addComponent(fixedSubstitutionRateCheck);
-        substitutionRateField.setColumns(10);
-        panel.addComponents(fixedSubstitutionRateCheck, substitutionRateField);
-
-        panel.addSeparator();
 
         validate();
         repaint();
@@ -457,8 +424,8 @@ public class ModelsPanel extends JPanel implements Exportable {
         if (currentModel == null) {
             return;
         }
-        
-        dataType = model.dataType.getType();
+
+        int dataType = model.dataType.getType();
         switch(dataType){
             case DataType.NUCLEOTIDES:
                 if (model.nucSubstitutionModel == BeautiOptions.GTR) {
@@ -525,16 +492,6 @@ public class ModelsPanel extends JPanel implements Exportable {
         getOptions(currentModel);
 
         boolean fixed = fixedSubstitutionRateCheck.isSelected();
-        if (!warningShown && !fixed && options.maximumTipHeight == 0.0) {
-            JOptionPane.showMessageDialog(frame,
-                    "You have chosen to sample substitution rates but all \n"+
-                            "the sequences have the same date. In order for this to \n"+
-                            "work, a strong prior is required on the substitution\n"+
-                            "rate or the root of the tree.",
-                    "Warning",
-                    JOptionPane.WARNING_MESSAGE);
-            warningShown = true;
-        }
 
         switch (clockModelCombo.getSelectedIndex()) {
             case 0:
@@ -601,14 +558,81 @@ public class ModelsPanel extends JPanel implements Exportable {
 
     }
 
-    public void selectionChanged() {
+    private void fireModelsChanged() {
+        frame.modelChanged();
+    }
 
-        int[] selRows = modelTable.getSelectedRows();
-        if (selRows == null || selRows.length == 0) {
-        } else {
-            currentModel = options.getPartitionModels().get(selRows[0]);
+    private void createModel() {
+        if (createModelDialog == null) {
+            createModelDialog = new CreateModelDialog(frame);
+        }
+
+        int result = createModelDialog.showDialog();
+        if (result != JOptionPane.CANCEL_OPTION) {
+            PartitionModel model = new PartitionModel(createModelDialog.getName(), createModelDialog.getDataType());
+            options.addPartitionModel(model);
+            modelTableModel.fireTableDataChanged();
+            int row = options.getPartitionModels().size() - 1;
+            modelTable.getSelectionModel().setSelectionInterval(row, row);
+        }
+    }
+
+    public void removeSelection() {
+        int selRow = modelTable.getSelectedRow();
+        if (!isUsed(selRow)) {
+            PartitionModel model = options.getPartitionModels().get(selRow);
+            options.getPartitionModels().remove(model);
+        }
+
+        modelTableModel.fireTableDataChanged();
+        int n = options.getPartitionModels().size();
+        if (selRow >= n) {
+            selRow --;
+        }
+        modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        if (n == 0) {
+            currentModel = null;
             setupPanel(currentModel, modelPanel);
         }
+    }
+
+    public void selectionChanged() {
+
+        int selRow = modelTable.getSelectedRow();
+        if (selRow >= 0) {
+            currentModel = options.getPartitionModels().get(selRow);
+            setupPanel(currentModel, modelPanel);
+            frame.modelSelectionChanged(!isUsed(selRow));
+
+            String title;
+
+            switch (currentModel.dataType.getType()) {
+                case DataType.NUCLEOTIDES:
+                    title = "Nucleotide";
+                    break;
+                case DataType.AMINO_ACIDS:
+                    title = "Amino Acid";
+                    break;
+                case DataType.TWO_STATES:
+                    title = "Binary";
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported data type");
+
+            }
+            modelBorder.setTitle(title + " Substitution Model");
+        }
+    }
+
+
+    private boolean isUsed(int row) {
+        PartitionModel model = options.getPartitionModels().get(row);
+        for (DataPartition partition : options.dataPartitions) {
+            if (partition.getPartitionModel() == model) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public JComponent getExportableComponent() {
@@ -651,6 +675,19 @@ public class ModelsPanel extends JPanel implements Exportable {
             }
         }
 
+        public boolean isCellEditable(int row, int col) {
+            return true;
+        }
+
+        public void setValueAt(Object value, int row, int col) {
+            String name = ((String)value).trim();
+            if (name.length() > 0) {
+                PartitionModel model = options.getPartitionModels().get(row);
+                model.setName(name);
+                fireModelsChanged();
+            }
+        }
+
         public String getColumnName(int column) {
             return columnNames[column];
         }
@@ -684,5 +721,41 @@ public class ModelsPanel extends JPanel implements Exportable {
             return buffer.toString();
         }
     };
+
+    class ModelsTableCellRenderer extends TableRenderer {
+
+        public ModelsTableCellRenderer(int alignment, Insets insets) {
+            super(alignment, insets);
+        }
+
+        public Component getTableCellRendererComponent(JTable aTable,
+                                                       Object value,
+                                                       boolean aIsSelected,
+                                                       boolean aHasFocus,
+                                                       int aRow, int aColumn) {
+
+            if (value == null) return this;
+
+            Component renderer = super.getTableCellRendererComponent(aTable,
+                    value,
+                    aIsSelected,
+                    aHasFocus,
+                    aRow, aColumn);
+
+            if (!isUsed(aRow))
+                renderer.setForeground(Color.gray);
+            else
+                renderer.setForeground(Color.black);
+            return this;
+        }
+
+    }
+
+    Action addModelAction = new AbstractAction("+") {
+        public void actionPerformed(ActionEvent ae) {
+            createModel();
+        }
+    };
+
 
 }

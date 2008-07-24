@@ -284,4 +284,5 @@ public class OperatorsPanel extends JPanel implements Exportable {
         }
 
     }
+
 }

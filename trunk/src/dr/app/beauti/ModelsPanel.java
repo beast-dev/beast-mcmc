@@ -146,17 +146,17 @@ public class ModelsPanel extends JPanel implements Exportable {
         controlPanel1.setOpaque(false);
         controlPanel1.add(actionPanel1);
 
-        setupComponent(substUnlinkCheck);
+        PanelUtils.setupComponent(substUnlinkCheck);
         substUnlinkCheck.setEnabled(false);
         substUnlinkCheck.setToolTipText("" +
                 "<html>Gives each codon position partition different<br>" +
                 "substitution model parameters.</html>");
 
-        setupComponent(heteroUnlinkCheck);
+        PanelUtils.setupComponent(heteroUnlinkCheck);
         heteroUnlinkCheck.setEnabled(false);
         heteroUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>rate heterogeneity model parameters.</html>");
 
-        setupComponent(freqsUnlinkCheck);
+        PanelUtils.setupComponent(freqsUnlinkCheck);
         freqsUnlinkCheck.setEnabled(false);
         freqsUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>nucleotide frequency parameters.</html>");
 
@@ -166,23 +166,23 @@ public class ModelsPanel extends JPanel implements Exportable {
             }
         };
 
-        setupComponent(nucSubstCombo);
+        PanelUtils.setupComponent(nucSubstCombo);
         nucSubstCombo.addItemListener(listener);
         nucSubstCombo.setToolTipText("<html>Select the type of nucleotide substitution model.</html>");
 
-        setupComponent(aaSubstCombo);
+        PanelUtils.setupComponent(aaSubstCombo);
         aaSubstCombo.addItemListener(listener);
         aaSubstCombo.setToolTipText("<html>Select the type of amino acid substitution model.</html>");
 
-        setupComponent(binarySubstCombo);
+        PanelUtils.setupComponent(binarySubstCombo);
         binarySubstCombo.addItemListener(listener);
         binarySubstCombo.setToolTipText("<html>Select the type of binay substitution model.</html>");
 
-        setupComponent(frequencyCombo);
+        PanelUtils.setupComponent(frequencyCombo);
         frequencyCombo.addItemListener(listener);
         frequencyCombo.setToolTipText("<html>Select the policy for determining the base frequencies.</html>");
 
-        setupComponent(heteroCombo);
+        PanelUtils.setupComponent(heteroCombo);
         heteroCombo.setToolTipText("<html>Select the type of site-specific rate<br>heterogeneity model.</html>");
         heteroCombo.addItemListener(
                 new java.awt.event.ItemListener() {
@@ -201,11 +201,11 @@ public class ModelsPanel extends JPanel implements Exportable {
                 }
         );
 
-        setupComponent(gammaCatCombo);
+        PanelUtils.setupComponent(gammaCatCombo);
         gammaCatCombo.setToolTipText("<html>Select the number of categories to use for<br>the discrete gamma rate heterogeneity model.</html>");
         gammaCatCombo.addItemListener(listener);
 
-        setupComponent(codingCombo);
+        PanelUtils.setupComponent(codingCombo);
         codingCombo.setToolTipText("<html>Select how to partition the codon positions.</html>");
         codingCombo.addItemListener(
                 new java.awt.event.ItemListener() {
@@ -234,11 +234,11 @@ public class ModelsPanel extends JPanel implements Exportable {
         freqsUnlinkCheck.addItemListener(listener);
 
         setSRD06Button = new JButton(setSRD06Action);
-        setupComponent(setSRD06Button);
+        PanelUtils.setupComponent(setSRD06Button);
         setSRD06Button.setToolTipText("<html>Sets the SRD06 model as described in<br>" +
                 "Shapiro, Rambaut & Drummond (2006) <i>MBE</i> <b>23</b>: 7-9.</html>");
 
-        setupComponent(fixedSubstitutionRateCheck);
+        PanelUtils.setupComponent(fixedSubstitutionRateCheck);
         fixedSubstitutionRateCheck.setToolTipText(
                 "<html>Select this option to fix the substitution rate<br>" +
                         "rather than try to infer it. If this option is<br>" +
@@ -256,14 +256,14 @@ public class ModelsPanel extends JPanel implements Exportable {
                 }
         );
 
-        setupComponent(substitutionRateField);
+        PanelUtils.setupComponent(substitutionRateField);
         substitutionRateField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
                 frame.mcmcChanged();
             }});
         substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
 
-        setupComponent(clockModelCombo);
+        PanelUtils.setupComponent(clockModelCombo);
         clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
         clockModelCombo.addItemListener(listener);
 
@@ -299,19 +299,6 @@ public class ModelsPanel extends JPanel implements Exportable {
         add(panel, BorderLayout.SOUTH);
     }
 
-    private void setupComponent(JComponent comp) {
-        comp.setOpaque(false);
-
-        //comp.setFont(UIManager.getFont("SmallSystemFont"));
-        //comp.putClientProperty("JComponent.sizeVariant", "small");
-        if (comp instanceof JButton) {
-            comp.putClientProperty("JButton.buttonType", "roundRect");
-        }
-        if (comp instanceof JComboBox) {
-            comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
-        }
-    }
-
     private void setupPanel(PartitionModel model, OptionsPanel panel) {
 
         panel.removeAll();
@@ -320,7 +307,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
             switch (model.dataType.getType()){
                 case DataType.NUCLEOTIDES:
-                    panel.addComponentWithLabel("Substitution Model:", nucSubstCombo, true);
+                    panel.addComponentWithLabel("Substitution Model:", nucSubstCombo);
                     panel.addComponentWithLabel("Base frequencies:", frequencyCombo);
                     panel.addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
                     gammaCatLabel = panel.addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
@@ -596,7 +583,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         }
     }
 
-    public void selectionChanged() {
+    private void selectionChanged() {
 
         int selRow = modelTable.getSelectedRow();
         if (selRow >= 0) {
@@ -604,24 +591,30 @@ public class ModelsPanel extends JPanel implements Exportable {
             setupPanel(currentModel, modelPanel);
             frame.modelSelectionChanged(!isUsed(selRow));
 
-            String title;
-
-            switch (currentModel.dataType.getType()) {
-                case DataType.NUCLEOTIDES:
-                    title = "Nucleotide";
-                    break;
-                case DataType.AMINO_ACIDS:
-                    title = "Amino Acid";
-                    break;
-                case DataType.TWO_STATES:
-                    title = "Binary";
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unsupported data type");
-
-            }
-            modelBorder.setTitle(title + " Substitution Model");
+            updateBorder();
         }
+    }
+
+    private void updateBorder() {
+
+        String title;
+
+        switch (currentModel.dataType.getType()) {
+            case DataType.NUCLEOTIDES:
+                title = "Nucleotide";
+                break;
+            case DataType.AMINO_ACIDS:
+                title = "Amino Acid";
+                break;
+            case DataType.TWO_STATES:
+                title = "Binary";
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported data type");
+
+        }
+        modelBorder.setTitle(title + " Substitution Model - " + currentModel.getName());
+        repaint();
     }
 
 
@@ -684,6 +677,7 @@ public class ModelsPanel extends JPanel implements Exportable {
             if (name.length() > 0) {
                 PartitionModel model = options.getPartitionModels().get(row);
                 model.setName(name);
+                updateBorder();
                 fireModelsChanged();
             }
         }

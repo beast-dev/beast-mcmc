@@ -27,6 +27,7 @@ import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
+import java.util.ArrayList;
 
 /**
  * @author Andrew Rambaut
@@ -78,10 +79,10 @@ public class BeautiFrame extends DocumentFrame {
 
     public void initializeComponents() {
 
-        dataPanel = new DataPanel(this);
+        dataPanel = new DataPanel(this, getImportAction(), getDeleteAction());
         samplesPanel = new SamplesPanel(this);
         taxaPanel = new TaxaPanel(this);
-        modelsPanel = new ModelsPanel(this);
+        modelsPanel = new ModelsPanel(this, getDeleteAction());
         priorsPanel = new PriorsPanel(this);
         operatorsPanel = new OperatorsPanel(this);
         mcmcPanel = new MCMCPanel(this);
@@ -156,6 +157,14 @@ public class BeautiFrame extends DocumentFrame {
         }
     }
 
+    public final void modelSelectionChanged(boolean isSelected) {
+        if (isSelected) {
+            getDeleteAction().setEnabled(true);
+        } else {
+            getDeleteAction().setEnabled(false);
+        }
+    }
+
     public void taxonSetsChanged() {
         priorsPanel.setOptions(beautiOptions);
         setDirty();
@@ -164,9 +173,11 @@ public class BeautiFrame extends DocumentFrame {
 
     public void doDelete() {
         if (tabbedPane.getSelectedComponent() == dataPanel) {
-            dataPanel.deleteSelection();
+            dataPanel.removeSelection();
+        } else if (tabbedPane.getSelectedComponent() == modelsPanel) {
+            modelsPanel.removeSelection();
         } else {
-            throw new RuntimeException("Delete should only be accessable from the Data panel");
+            throw new RuntimeException("Delete should only be accessable from the Data and Models panels");
         }
     }
 
@@ -479,49 +490,49 @@ public class BeautiFrame extends DocumentFrame {
 
             beautiOptions.fileNameStem = fileNameStem;
 
-            if (alignment != null) {
-                DataPartition partition = new DataPartition(fileNameStem, file.getName(), alignment);
-                beautiOptions.dataPartitions.add(partition);
-                beautiOptions.dataType = alignment.getDataType();
-
-                PartitionModel model = new PartitionModel(partition);
-                partition.setPartitionModel(model);
-                beautiOptions.addPartitionModel(model);
-
-                statusLabel.setText("Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
-                        beautiOptions.dataPartitions.size() + " partitions");
-            }
         } else {
             // This is an additional partition so check it uses the same taxa
 
-            if (alignment != null) {
-//                if (alignment.getDataType() != beautiOptions.dataType) {
-//                    JOptionPane.showMessageDialog(this, "This alignment is a different data type from \n" +
-//                            "previously loaded alignments.",
-//                            "Incompatible data type",
-//                            JOptionPane.WARNING_MESSAGE);
-//                    return;
-//                }
-
-                DataPartition partition = new DataPartition(fileNameStem, file.getName(), alignment);
-                for (PartitionModel model : beautiOptions.getPartitionModels()) {
-                    if (model.dataType == alignment.getDataType()) {
-                        partition.setPartitionModel(model);
-                    }
-                }
-                if (partition.getPartitionModel() == null) {
-                    PartitionModel model = new PartitionModel(partition);
-                    partition.setPartitionModel(model);
-                    beautiOptions.addPartitionModel(model);
-                }
-
-                beautiOptions.dataPartitions.add(partition);
+            java.util.List<String> oldTaxa = new ArrayList<String>();
+            for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
+                oldTaxa.add(beautiOptions.taxonList.getTaxon(i).getId());
             }
+            java.util.List<String> newTaxa = new ArrayList<String>();
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                newTaxa.add(taxa.getTaxon(i).getId());
+            }
+
+            if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
+                JOptionPane.showMessageDialog(this,
+                        "This file contains different taxa from the previously loaded\n" +
+                                "data partitions.\n\n" +
+                                "Please check the taxon name(s) before reloading the data file.",
+                        "Non-matching Taxon Name(s)",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
+        if (alignment != null) {
+            DataPartition partition = new DataPartition(fileNameStem, file.getName(), alignment);
+            for (PartitionModel model : beautiOptions.getPartitionModels()) {
+                if (model.dataType == alignment.getDataType()) {
+                    partition.setPartitionModel(model);
+                }
+            }
+            if (partition.getPartitionModel() == null) {
+                PartitionModel model = new PartitionModel(partition);
+                partition.setPartitionModel(model);
+                beautiOptions.addPartitionModel(model);
+            }
+
+            beautiOptions.dataPartitions.add(partition);
         }
 
         if (beautiOptions.dataPartitions.size() > 0) {
             statusLabel.setText("Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
-                    beautiOptions.dataPartitions.size() + " partitions");
+                    beautiOptions.dataPartitions.size() +
+                    (beautiOptions.dataPartitions.size() > 1 ? " partitions" : " partition"));
         } else {
             statusLabel.setText("Taxa only: " + beautiOptions.taxonList.getTaxonCount() + " taxa");
             beautiOptions.meanDistance = 0.0;

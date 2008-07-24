@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 /**
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
 public class AbstractModelOptions {
 

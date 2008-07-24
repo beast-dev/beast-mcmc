@@ -59,6 +59,10 @@ public class DataPartition {
         this.coding = coding;
     }
 
+    public String toString() {
+        return getName();
+    }
+
     private final String fileName;
     private final Alignment alignment;
     private final double meanDistance;

@@ -70,6 +70,8 @@ public class SamplesPanel extends JPanel implements Exportable {
     ClearDatesAction clearDatesAction = new ClearDatesAction();
     GuessDatesAction guessDatesAction = new GuessDatesAction();
 
+    JCheckBox usingSamplingDates  = new JCheckBox("Use sampling dates");
+
     JComboBox unitsCombo = new JComboBox(new String[]{"Years", "Months", "Days"});
     JComboBox directionCombo = new JComboBox(new String[]{"Since some time in the past", "Before the present"});
     //RealNumberField originField = new RealNumberField(0.0, Double.POSITIVE_INFINITY);
@@ -124,9 +126,9 @@ public class SamplesPanel extends JPanel implements Exportable {
         clearDatesAction.setEnabled(false);
 
         guessDatesAction.setEnabled(false);
-        setupComponent(unitsCombo);
+        PanelUtils.setupComponent(unitsCombo);
         unitsCombo.setEnabled(false);
-        setupComponent(directionCombo);
+        PanelUtils.setupComponent(directionCombo);
         directionCombo.setEnabled(false);
         //originField.setEnabled(false);
         //originField.setValue(0.0);
@@ -138,10 +140,10 @@ public class SamplesPanel extends JPanel implements Exportable {
 //		toolBar1.setLayout(new BoxLayout(toolBar1, javax.swing.BoxLayout.X_AXIS));
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
         JButton button = new JButton(clearDatesAction);
-        setupComponent(button);
+        PanelUtils.setupComponent(button);
         toolBar1.add(button);
         button = new JButton(guessDatesAction);
-        setupComponent(button);
+        PanelUtils.setupComponent(button);
         toolBar1.add(button);
         toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
         toolBar1.add(new JLabel("Dates specified as "));
@@ -149,11 +151,33 @@ public class SamplesPanel extends JPanel implements Exportable {
         toolBar1.add(directionCombo);
         //toolBar.add(originField);
 
+        JPanel panel1 = new JPanel(new BorderLayout(0, 0));
+        panel1.setOpaque(false);
+        panel1.add(toolBar1, "North");
+        panel1.add(scrollPane, "Center");
+
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
-        add(toolBar1, "North");
-        add(scrollPane, "Center");
+        add(usingSamplingDates, "North");
+        add(panel1, "Center");
+
+        clearDatesAction.setEnabled(false);
+        guessDatesAction.setEnabled(false);
+        directionCombo.setEnabled(false);
+        scrollPane.setEnabled(false);
+        dataTable.setEnabled(false);
+
+        usingSamplingDates.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                boolean enabled = usingSamplingDates.isEnabled();
+                clearDatesAction.setEnabled(enabled);
+                guessDatesAction.setEnabled(enabled);
+                directionCombo.setEnabled(enabled);
+                scrollPane.setEnabled(enabled);
+                dataTable.setEnabled(enabled);
+            }
+        });
 
         ItemListener listener = new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
@@ -166,20 +190,6 @@ public class SamplesPanel extends JPanel implements Exportable {
         //	public void keyTyped(java.awt.event.KeyEvent ev) {
         //		timeScaleChanged();
         //	}});
-
-    }
-
-    private void setupComponent(JComponent comp) {
-        comp.setOpaque(false);
-
-        //comp.setFont(UIManager.getFont("SmallSystemFont"));
-        //comp.putClientProperty("JComponent.sizeVariant", "small");
-        if (comp instanceof JButton) {
-            comp.putClientProperty("JButton.buttonType", "roundRect");
-        }
-        if (comp instanceof JComboBox) {
-            comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
-        }
 
     }
 

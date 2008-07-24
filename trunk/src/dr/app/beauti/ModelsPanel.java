@@ -262,7 +262,8 @@ public class ModelsPanel extends JPanel implements Exportable {
                 frame.mcmcChanged();
             }});
         substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
-
+        substitutionRateField.setEnabled(false);
+        
         PanelUtils.setupComponent(clockModelCombo);
         clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
         clockModelCombo.addItemListener(listener);
@@ -279,11 +280,11 @@ public class ModelsPanel extends JPanel implements Exportable {
         panel1.add(scrollPane, BorderLayout.CENTER);
         panel1.add(controlPanel1, BorderLayout.SOUTH);
 
-        JPanel panel2 = new JPanel(new BorderLayout(0,0));
+        JPanel panel2 = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panel2.setOpaque(false);
         modelBorder = new TitledBorder("Substitution Model");
         panel2.setBorder(modelBorder);
-        panel2.add(modelPanel, BorderLayout.CENTER);
+        panel2.add(modelPanel);
 
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, panel2);

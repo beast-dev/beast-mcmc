@@ -159,6 +159,7 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood{
 		
 	public double calculateLogLikelihood(){
 		
+		
 		double treeHeight = arg.getNodeHeight(arg.getRoot());
 		int internalNodes = arg.getInternalNodeCount() - 1;
 		
@@ -168,6 +169,7 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood{
 		
 		assert !Double.isInfinite(logLike) && !Double.isNaN(logLike);
 
+		
 		return logLike;
 	}
 		

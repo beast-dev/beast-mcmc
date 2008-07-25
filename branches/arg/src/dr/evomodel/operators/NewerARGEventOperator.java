@@ -42,9 +42,9 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 	private ARGModel arg = null;
 	private double size = 0.0;  //Translates into add probability of 50%
-	private double singlePartitionProbability = 0.0;
+	
 	private double probBelowRoot = 0.9; //Transformed in constructor for computational efficiency
-	private boolean isRecombination = false;
+	private boolean isRecombination;
 	private int mode = CoercableMCMCOperator.COERCION_OFF;
 	private VariableSizeCompoundParameter internalNodeParameters;
 	private VariableSizeCompoundParameter internalAndRootNodeParameters;
@@ -56,16 +56,14 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	                             VariableSizeCompoundParameter param1,
 	                             VariableSizeCompoundParameter param2,
 	                             VariableSizeCompoundParameter param3,
-	                             double singlePartitionProbability,
-	                             boolean isRecombination,
 	                             double belowRootProbability) {
 		this.arg = arg;
 		this.size = size;
 		this.internalNodeParameters = param1;
 		this.internalAndRootNodeParameters = param2;
 		this.nodeRates = param3;
-		this.singlePartitionProbability = singlePartitionProbability;
-		this.isRecombination = isRecombination;
+		
+		this.isRecombination = arg.isRecombinationPartitionType();
 		this.mode = mode;
 		
 		setWeight(weight);
@@ -92,12 +90,11 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				logq = RemoveOperation() + size;
 		} catch (NoReassortmentEventException nree) {
 			return Double.NEGATIVE_INFINITY;
-		} catch (OperatorFailedException e) {
-			System.err.println(e.getMessage());
-			System.exit(-1);
 		}
 
 		assert !Double.isInfinite(logq) && !Double.isNaN(logq);
+		
+		
 		
 		return logq;
 	}
@@ -720,32 +717,60 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 	private double drawRandomPartitioning(Parameter partitioning) {
 		double logq = 0;
-		int len = arg.getNumberOfPartitions();
-		if (len == 2) {
-//            boolean first = MathUtils.nextBoolean();
-			if (partitioning != null) {
-				if (MathUtils.nextBoolean())
-					partitioning.setParameterValueQuietly(0, 1.0);
-				else
-					partitioning.setParameterValueQuietly(1, 1.0);
-			}
-			return Math.log(2);
-		}
+		
 		if (isRecombination) {
-			logq += drawRandomRecombination(partitioning);
+			logq = drawRecombinationPartition(partitioning);
 		} else {
-			logq += drawRandomReassortment(partitioning);
+			logq = drawReassortmentPartition(partitioning);
 		}
+		
 		return logq;
 	}
 
+	private double drawReassortmentPartition(Parameter partition){
+		int sum = 0;
+		
+		partition.setParameterValueQuietly(0, 0);
+		
+		while(sum == partition.getDimension() - 1 || sum == 0){
+			sum = 0;
+			for(int i = 1; i < partition.getDimension(); i++){
+				if(MathUtils.nextBoolean()){
+					partition.setParameterValueQuietly(i, 1);
+					sum++;
+				}else{
+					partition.setParameterValueQuietly(i, 0);
+				}
+			}
+		}
+			
+		return 0.0;
+	}
+	
+	private double drawRecombinationPartition(Parameter partition){
+		
+		int cut = MathUtils.nextInt(partition.getDimension() - 1);
+		
+		int leftValue = 0;
+		int rightValue = 1;
+						
+		for(int i = 0; i < cut + 1; i++){
+			partition.setParameterValueQuietly(i, leftValue);
+		}
+		for(int i = cut + 1; i < partition.getDimension(); i++){
+			partition.setParameterValueQuietly(i, rightValue);
+		}
+		
+		
+		return 0.0;
+	}
 
 	/* Draws a new partitioning.
 	 * With probability singlePartitionProbability, one bit is set;
 	 * otherwise, all bits are selected via a random permutation
 	 *
 	 */
-	private double drawRandomReassortment(Parameter partitioning) {
+	/* private double drawRandomReassortment(Parameter partitioning) {
 		int len = arg.getNumberOfPartitions();
 		double logq = 0;
 		if (MathUtils.nextDouble() < singlePartitionProbability) {
@@ -762,13 +787,13 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		}
 		logq += Math.log(len - 1);
 		return logq;
-	}
+	} */
 
 	/* Draws a new partitioning.
 	 * A break-pt is drawn uniformly
 	 *
 	 */
-	private double drawRandomRecombination(Parameter partitioning) {
+	/* private double drawRandomRecombination(Parameter partitioning) {
 		int len = arg.getNumberOfPartitions();
 		double logq = 0;
 		double leftValue = MathUtils.nextInt(2);
@@ -783,7 +808,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		}
 		logq += Math.log(len - 1);
 		return logq;
-	}
+	} */
 
 
 	public boolean nodeCheck() {
@@ -908,10 +933,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			double singlePartitionProbability = 0.0;
-			boolean isRecombination = false;
-
+		
 			int mode = CoercableMCMCOperator.DEFAULT;
 			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
 				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
@@ -923,6 +945,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			
 
 			ARGModel treeModel = (ARGModel) xo.getChild(ARGModel.class);
+
 			VariableSizeCompoundParameter parameter1 =
 					(VariableSizeCompoundParameter) xo.getSocketChild(INTERNAL_NODES);
 			VariableSizeCompoundParameter parameter2 =
@@ -947,7 +970,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 			return new NewerARGEventOperator(treeModel, weight, size,
 					mode, parameter1, parameter2, parameter3,
-					singlePartitionProbability, isRecombination, belowRootProb);
+					belowRootProb);
 		}
 
 		public String getParserDescription() {

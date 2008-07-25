@@ -1,5 +1,7 @@
 package dr.evomodel.operators;
 
+import java.util.ArrayList;
+
 import dr.evomodel.tree.ARGModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.VariableSizeCompoundParameter;
@@ -14,20 +16,19 @@ import dr.xml.XMLSyntaxRule;
 public class TossPartitioningOperator extends SimpleMCMCOperator {
 
     private VariableSizeCompoundParameter partitioningParameters;
-    private ARGModel argModel;
-    //private int numberPartitions;
-
-    public final static String OPERATOR_NAME = "tossPartitioningOperator";
-    public static final String TOSS_SIZE = "singleFlip";
-    public static final String IS_RECOMBINATION = "isRecombination";
+    private ARGModel arg;
+  
+    public final static String OPERATOR_NAME = "argPartitionOperator";
+    public static final String TOSS_SIZE = "tossSize";
+  
     private boolean isRecombination;
+    private int tossSize;
 
-
-    public TossPartitioningOperator(ARGModel arg, boolean singleFlip, boolean isRecombination) {
-        argModel = arg;
+    public TossPartitioningOperator(ARGModel arg, int tossSize) {
+        this.arg = arg;
         partitioningParameters = arg.getPartitioningParameters();
-        this.singleFlip = singleFlip;
-        this.isRecombination = isRecombination;
+        this.tossSize = tossSize;
+        this.isRecombination = arg.isRecombinationPartitionType();
     }
 
     /**
@@ -37,74 +38,105 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
         return partitioningParameters;
     }
 
-    @Override
+    
     public final double doOperation() throws OperatorFailedException {
         double logq = 0;
-        int numberParameters = partitioningParameters.getNumParameters();
-        if (numberParameters == 0)
-            throw new OperatorFailedException("Must be atleast one reassortment.");
-        // TODO update more than one at a time
-        int whichParameter = MathUtils.nextInt(numberParameters);
-        Parameter partitioning = partitioningParameters.getParameter(whichParameter);
-        int numberPartitions = partitioning.getDimension();
-        if (numberPartitions == 2) { // Just swap partitioning
-            if (partitioning.getParameterValue(0) == 0) {
-                partitioning.setParameterValueQuietly(0, 1);
-                partitioning.setParameterValueQuietly(1, 0);
-            } else {
-                partitioning.setParameterValueQuietly(0, 0);
-                partitioning.setParameterValueQuietly(1, 1);
-            }
-        } else {
-            if (isRecombination)
-                logq += doRecombination(partitioning);
-            else
-                logq += doReassortment(partitioning);
+        
+        int len = partitioningParameters.getNumberOfParameters();
+        
+        if(len == 0){
+        	throw new OperatorFailedException("");
         }
-        argModel.fireModelChanged(new PartitionChangedEvent(partitioningParameters));
+        
+    	if (isRecombination){
+    		logq = doRecombination(partitioningParameters.getParameter(MathUtils.nextInt(len)));
+        }else{
+            logq = doReassortment(partitioningParameters.getParameter(MathUtils.nextInt(len)));
+        }
+        
+        arg.fireModelChanged(new PartitionChangedEvent(partitioningParameters));
         return logq;
     }
 
 
-    private double doRecombination(Parameter partitioning) throws OperatorFailedException {
-        int numberPartitions = partitioning.getDimension();
-        double leftValue = MathUtils.nextInt(2);
-        double rightValue = 1.0 - leftValue;
-        int cut = MathUtils.nextInt(numberPartitions-1);
-        /*for (int i=0; i<numberPartitions; i++) {
-            if (i <= cut)
-                partitioning.setParameterValueQuietly(i,leftValue);
-            else
-                partitioning.setParameterValueQuietly(i,rightValue);
-
-        }*/
-        for (int i=0; i<=cut; i++)
-            partitioning.setParameterValueQuietly(i,leftValue);
-        for (int i=cut+1; i<numberPartitions; i++)
-            partitioning.setParameterValueQuietly(i,rightValue);
-        return 0;
+    private double doRecombination(Parameter partition) throws OperatorFailedException {
+     
+    	assert checkValidRecombinationPartition(partition);
+    	
+    	int currentBreakLocation = 0;
+    	for(int i = 0, n = arg.getNumberOfPartitions(); i < n; i++){
+    		if(partition.getParameterValue(i) == 1){
+    			currentBreakLocation = i;
+    			break;
+    		}
+    	}
+    	
+    	assert currentBreakLocation > 0;
+    	
+    	//Move break right 1
+    	if(MathUtils.nextBoolean()){
+    		partition.setParameterValueQuietly(currentBreakLocation, 0.0);
+    	}else{
+    		partition.setParameterValueQuietly(currentBreakLocation - 1, 1.0);
+    	}
+    	
+    	if(!checkValidRecombinationPartition(partition))
+    		throw new OperatorFailedException("");
+    	
+    	
+    	return 0;
+    }
+    
+    private boolean checkValidRecombinationPartition(Parameter partition){
+    	int l = partition.getDimension();
+    	if(partition.getParameterValue(0) != 1 && partition.getParameterValue(l - 1) != 0)
+    	  	return true;
+    	
+    	return false;
     }
 
 
-    private double doReassortment(Parameter partitioning) throws OperatorFailedException {
-        int numberPartitions = partitioning.getDimension();
-        if (singleFlip) {
-            /*int which = MathUtils.nextInt(numberPartitions);
-           if (partitioning)*/
-            throw new RuntimeException("Must implement single flips");
-
-        } else {
-            // generate a uniform random draw from all possible partitionings
-            int[] permutation = MathUtils.permuted(numberPartitions);
-            int cut = MathUtils.nextInt(numberPartitions - 1);
-            for (int i = 0; i < numberPartitions; i++) {
-                if (i <= cut)
-                    partitioning.setParameterValueQuietly(permutation[i], 0);
-                else
-                    partitioning.setParameterValueQuietly(permutation[i], 1);
-            }
-        }
+    private double doReassortment(Parameter partition) throws OperatorFailedException {
+        
+    	assert checkValidReassortmentPartition(partition);
+    	
+    	ArrayList<Integer> list = new ArrayList<Integer>(tossSize);
+    	
+    	while(list.size() < tossSize){
+    		int a = MathUtils.nextInt(arg.getNumberOfPartitions() - 1) + 1;
+    		if(!list.contains(a)){
+    			list.add(a);
+    		}
+    	}
+    	    	
+    	
+    	for(int a : list){
+    		if(partition.getParameterValue(a) == 0){
+    			partition.setParameterValueQuietly(a,1);
+    		}else{
+    			partition.setParameterValueQuietly(a,0);
+    		}
+    	}
+    	
         return 0;
+    }
+    
+    private boolean checkValidReassortmentPartition(Parameter partition){
+    	if(partition.getParameterValue(0) != 0)
+    		return false;
+    	
+    	double[] a = partition.getParameterValues();
+    	
+    	double sum = 0;
+    	
+    	for(double b : a)
+    		sum += b;
+    	
+    	if(sum == 0 || sum == a.length)
+    		return false;
+    	
+    	return true;
+    	
     }
 
     @Override
@@ -137,21 +169,21 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-//			int weight = xo.getIntegerAttribute(WEIGHT);
-//			Parameter parameter = (Parameter)xo.getChild(Parameter.class);
-            boolean singleFlip = false;
-            boolean isRecombination = false;
-
+        	int weight = xo.getIntegerAttribute(WEIGHT);
+        	
+        	ARGModel arg = (ARGModel) xo.getChild(ARGModel.class);        	
+        	
+        	int tossSize = 1;
             if (xo.hasAttribute(TOSS_SIZE)) {
-                singleFlip = xo.getBooleanAttribute(TOSS_SIZE);
+                tossSize = xo.getIntegerAttribute(TOSS_SIZE);
+                
+                if(tossSize <= 0 || tossSize >= arg.getNumberOfPartitions()){
+                	throw new XMLParseException("Toss size is incorrect");
+                }
             }
-
-            if (xo.hasAttribute(IS_RECOMBINATION)) {
-                isRecombination = xo.getBooleanAttribute(IS_RECOMBINATION);
-            }
-
-            ARGModel arg = (ARGModel) xo.getChild(ARGModel.class);
-            return new TossPartitioningOperator(arg,singleFlip,isRecombination);
+            
+            
+            return new TossPartitioningOperator(arg,tossSize);
         }
 
         //************************************************************************

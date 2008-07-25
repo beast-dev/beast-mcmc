@@ -1252,6 +1252,14 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		return partitionType;
 	}
 	
+	public boolean isRecombinationPartitionType(){
+		System.out.println(partitionType);
+		if(partitionType.equals(RECOMBINATION_PARTITION)){
+			return true;
+		}
+		return false;
+	}
+	
 	// *****************************************************************
 	// Interface Tree
 	// *****************************************************************
@@ -2734,6 +2742,11 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 			if(xo.hasAttribute(PARTITION_TYPE)){
 				treeModel.partitionType = xo.getStringAttribute(PARTITION_TYPE);
+				
+				if(!treeModel.partitionType.equals(REASSORTMENT_PARTITION) && 
+						!treeModel.partitionType.equals(RECOMBINATION_PARTITION)){
+					throw new XMLParseException("Must use either correct partition type");
+				}
 			}
 			
 			Logger.getLogger("dr.evomodel").info(

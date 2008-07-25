@@ -226,8 +226,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 	}
 
 	// **************************************************************
-	// Model IMPLEMENTATION
-	// **************************************************************
+    // Model IMPLEMENTATION
+    // **************************************************************
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
 		likelihoodKnown = false;

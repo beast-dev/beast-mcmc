@@ -35,6 +35,8 @@ import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;

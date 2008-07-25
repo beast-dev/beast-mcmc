@@ -181,9 +181,9 @@ public class BeautiOptions {
         createOperator("uced.mean", SCALE, 0.75, rateWeights);
         createOperator("ucld.mean", SCALE, 0.75, rateWeights);
         createOperator("ucld.stdev", SCALE, 0.75, rateWeights);
-//        createOperator("swapBranchRateCategories", "branchRates.categories", "Performs a swap of branch rate categories", "branchRates.categories", SWAP, 1, branchWeights);
-        createOperator("randomWalkBranchRateCategories", "branchRates.categories", "Performs an integer random walk of branch rate categories", "branchRates.categories", INTEGER_RANDOM_WALK, 1, branchWeights);
-        createOperator("unformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories", "branchRates.categories", INTEGER_UNIFORM, 1, branchWeights);
+        createOperator("swapBranchRateCategories", "branchRates.categories", "Performs a swap of branch rate categories", "branchRates.categories", SWAP, 1, branchWeights / 3);
+        createOperator("randomWalkBranchRateCategories", "branchRates.categories", "Performs an integer random walk of branch rate categories", "branchRates.categories", INTEGER_RANDOM_WALK, 1, branchWeights / 3);
+        createOperator("unformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories", "branchRates.categories", INTEGER_UNIFORM, 1, branchWeights / 3);
 
         createOperator("hky.kappa", SCALE, 0.75, substWeights);
         createOperator("hky1.kappa", SCALE, 0.75, substWeights);

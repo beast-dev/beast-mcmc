@@ -9,7 +9,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class PartitionModel extends AbstractModelOptions {
+public class PartitionModel extends ModelOptions {
 
     public PartitionModel(DataPartition partition) {
         this(partition.getName(), partition.getAlignment().getDataType());
@@ -17,7 +17,8 @@ public class PartitionModel extends AbstractModelOptions {
 
     /**
      * A copy constructor
-     * @param name the name of the new model
+     *
+     * @param name   the name of the new model
      * @param source the source model
      */
     public PartitionModel(String name, PartitionModel source) {
@@ -110,61 +111,56 @@ public class PartitionModel extends AbstractModelOptions {
         createParameter("siteModel3.mu", "relative rate parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("allMus", "All the relative rates");
 
-        createOperator("hky.kappa", SCALE, 0.75, substWeights);
-        createOperator("hky1.kappa", SCALE, 0.75, substWeights);
-        createOperator("hky2.kappa", SCALE, 0.75, substWeights);
-        createOperator("hky3.kappa", SCALE, 0.75, substWeights);
-        createOperator("hky.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("hky1.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("hky2.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("hky3.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
+        createScaleOperator("hky.kappa", substWeights);
+        createScaleOperator("hky1.kappa", substWeights);
+        createScaleOperator("hky2.kappa", substWeights);
+        createScaleOperator("hky3.kappa", substWeights);
 
-        createOperator("gtr.ac", SCALE, 0.75, substWeights);
-        createOperator("gtr.ag", SCALE, 0.75, substWeights);
-        createOperator("gtr.at", SCALE, 0.75, substWeights);
-        createOperator("gtr.cg", SCALE, 0.75, substWeights);
-        createOperator("gtr.gt", SCALE, 0.75, substWeights);
+        createOperator("hky.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("hky1.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("hky2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("hky3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
-        createOperator("gtr1.ac", SCALE, 0.75, substWeights);
-        createOperator("gtr1.ag", SCALE, 0.75, substWeights);
-        createOperator("gtr1.at", SCALE, 0.75, substWeights);
-        createOperator("gtr1.cg", SCALE, 0.75, substWeights);
-        createOperator("gtr1.gt", SCALE, 0.75, substWeights);
+        createScaleOperator("gtr.ac", substWeights);
+        createScaleOperator("gtr.ag", substWeights);
+        createScaleOperator("gtr.at", substWeights);
+        createScaleOperator("gtr.cg", substWeights);
+        createScaleOperator("gtr.gt", substWeights);
 
-        createOperator("gtr2.ac", SCALE, 0.75, substWeights);
-        createOperator("gtr2.ag", SCALE, 0.75, substWeights);
-        createOperator("gtr2.at", SCALE, 0.75, substWeights);
-        createOperator("gtr2.cg", SCALE, 0.75, substWeights);
-        createOperator("gtr2.gt", SCALE, 0.75, substWeights);
+        for (int i = 1; i <= 3; i++) {
+            createScaleOperator("gtr" + i + ".ac", substWeights);
+            createScaleOperator("gtr" + i + ".ag", substWeights);
+            createScaleOperator("gtr" + i + ".at", substWeights);
+            createScaleOperator("gtr" + i + ".cg", substWeights);
+            createScaleOperator("gtr" + i + ".gt", substWeights);
+        }
 
-        createOperator("gtr3.ac", SCALE, 0.75, substWeights);
-        createOperator("gtr3.ag", SCALE, 0.75, substWeights);
-        createOperator("gtr3.at", SCALE, 0.75, substWeights);
-        createOperator("gtr3.cg", SCALE, 0.75, substWeights);
-        createOperator("gtr3.gt", SCALE, 0.75, substWeights);
+        createOperator("gtr.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("gtr1.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("gtr2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("gtr3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
-        createOperator("gtr.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("gtr1.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("gtr2.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("gtr3.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
+        createScaleOperator("bcov.alpha", substWeights);
+        createScaleOperator("bcov.s", substWeights);
+        createOperator("bcov.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("bcov.hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
-        createOperator("bcov.alpha", SCALE, 0.75, substWeights);
-        createOperator("bcov.s", SCALE, 0.75, substWeights);
-        createOperator("bcov.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("bcov.hfrequencies", DELTA_EXCHANGE, 0.01, substWeights);
+        createScaleOperator("siteModel.alpha", substWeights);
+        for (int i = 1; i <= 3; i++) {
+            createScaleOperator("siteModel" + i + ".alpha", substWeights);
+        }
 
-        createOperator("siteModel.alpha", SCALE, 0.75, substWeights);
-        createOperator("siteModel1.alpha", SCALE, 0.75, substWeights);
-        createOperator("siteModel2.alpha", SCALE, 0.75, substWeights);
-        createOperator("siteModel3.alpha", SCALE, 0.75, substWeights);
+        createScaleOperator("siteModel.pInv", substWeights);
+        for (int i = 1; i <= 3; i++) {
+            createScaleOperator("siteModel" + i + ".pInv", substWeights);
+        }
 
-        createOperator("siteModel.pInv", SCALE, 0.75, substWeights);
-        createOperator("siteModel1.pInv", SCALE, 0.75, substWeights);
-        createOperator("siteModel2.pInv", SCALE, 0.75, substWeights);
-        createOperator("siteModel3.pInv", SCALE, 0.75, substWeights);
-
-        createOperator("centeredMu", "Relative rates", "Scales codon position rates relative to each other maintaining mean", "allMus", CENTERED_SCALE, 0.75, substWeights);
-        createOperator("deltaMu", "Relative rates", "Changes codon position rates relative to each other maintaining mean", "allMus", DELTA_EXCHANGE, 0.75, substWeights);
+        createOperator("centeredMu", "Relative rates",
+                "Scales codon position rates relative to each other maintaining mean", "allMus",
+                OperatorType.CENTERED_SCALE, 0.75, substWeights);
+        createOperator("deltaMu", "Relative rates",
+                "Changes codon position rates relative to each other maintaining mean", "allMus",
+                OperatorType.DELTA_EXCHANGE, 0.75, substWeights);
     }
 
     public String getName() {
@@ -296,7 +292,7 @@ public class PartitionModel extends AbstractModelOptions {
 
 
     /**
-     * return a list of parameters that are required
+     * @return a list of parameters that are required
      */
     List<Parameter> getParameters() {
 

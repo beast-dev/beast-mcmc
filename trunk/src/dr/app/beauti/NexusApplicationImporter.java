@@ -25,15 +25,16 @@
 
 package dr.app.beauti;
 
-import dr.app.beauti.options.*;
-import dr.evolution.io.NexusImporter;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionModel;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.io.NexusImporter;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class for importing PAUP, MrBayes and Rhino NEXUS file format
@@ -88,7 +89,7 @@ public class NexusApplicationImporter extends NexusImporter {
     /**
      * Parses a 'PAUP' block.
      */
-    public PartitionModel parsePAUPBlock(BeastGenerator options) throws ImportException, IOException {
+    public PartitionModel parsePAUPBlock(BeautiOptions options) throws ImportException, IOException {
         PartitionModel model = new PartitionModel("nucs", Nucleotides.INSTANCE);
 
         readPAUPBlock(options, model);
@@ -99,7 +100,7 @@ public class NexusApplicationImporter extends NexusImporter {
     /**
      * Parses a 'MRBAYES' block.
      */
-    public PartitionModel parseMrBayesBlock(BeastGenerator options) throws ImportException, IOException {        
+    public PartitionModel parseMrBayesBlock(BeautiOptions options) throws ImportException, IOException {
         return parseMrBayesBlock(options);
     }
 
@@ -132,17 +133,17 @@ public class NexusApplicationImporter extends NexusImporter {
         int to;
 
         try {
-        if (parts.length == 2) {
-            from = Integer.parseInt(parts[0]);
-            to = Integer.parseInt(parts[1]);
-        } else if (parts.length == 1) {
-            from = Integer.parseInt(parts[0]);
-            to = from;
-        } else {
-            throw new ImportException("CharSet, "+ name +", unable to be parsed");
-        }
+            if (parts.length == 2) {
+                from = Integer.parseInt(parts[0]);
+                to = Integer.parseInt(parts[1]);
+            } else if (parts.length == 1) {
+                from = Integer.parseInt(parts[0]);
+                to = from;
+            } else {
+                throw new ImportException("CharSet, " + name + ", unable to be parsed");
+            }
         } catch (NumberFormatException nfe) {
-            throw new ImportException("CharSet, "+ name +", unable to be parsed");
+            throw new ImportException("CharSet, " + name + ", unable to be parsed");
         }
         return new CharSet(name, from, to);
     }

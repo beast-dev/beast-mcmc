@@ -8,6 +8,8 @@
  */
 package dr.app.beauti;
 
+import dr.app.beauti.generator.BeastGenerator;
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import dr.app.beauti.options.PartitionModel;
 import dr.evolution.alignment.SimpleAlignment;
@@ -41,7 +43,8 @@ public class BeautiFrame extends DocumentFrame {
      */
     private static final long serialVersionUID = 2114148696789612509L;
 
-    private BeastGenerator beautiOptions = new BeastGenerator();
+    private BeautiOptions beautiOptions = new BeautiOptions();
+    private BeastGenerator generator = new BeastGenerator(beautiOptions);
 
     private JTabbedPane tabbedPane = new JTabbedPane();
     private JLabel statusLabel = new JLabel("No data loaded");
@@ -570,7 +573,7 @@ public class BeautiFrame extends DocumentFrame {
     public final boolean doGenerate() {
 
         try {
-            beautiOptions.checkOptions();
+            generator.checkOptions();
         } catch (IllegalArgumentException iae) {
             JOptionPane.showMessageDialog(this, iae.getMessage(),
                     "Unable to generate file",
@@ -611,7 +614,7 @@ public class BeautiFrame extends DocumentFrame {
         mcmcPanel.getOptions(beautiOptions);
 
         FileWriter fw = new FileWriter(file);
-        beautiOptions.generateXML(fw);
+        generator.generateXML(fw);
         fw.close();
     }
 

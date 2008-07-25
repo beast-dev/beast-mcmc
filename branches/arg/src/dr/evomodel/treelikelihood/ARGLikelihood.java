@@ -84,8 +84,14 @@ public class ARGLikelihood extends AbstractARGLikelihood {
                     }
 
                 } else if (patternList.getDataType() instanceof dr.evolution.datatype.AminoAcids) {
-                    Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java amino acid likelihood core");
-                    likelihoodCore = new AminoAcidLikelihoodCore();
+                                 	
+                	 if (NativeAminoAcidLikelihoodCore.isAvailable()) {
+                		 Logger.getLogger("dr.evomodel").info("TreeLikelihood using native amino acid likelihood core");
+                         likelihoodCore = new NativeAminoAcidLikelihoodCore();
+                     } else {
+                    	 Logger.getLogger("dr.evomodel").info("TreeLikelihood using java likelihood core");
+                         likelihoodCore = new AminoAcidLikelihoodCore();
+                     }
                 } else if (patternList.getDataType() instanceof dr.evolution.datatype.Codons) {
                     Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java codon likelihood core");
                     likelihoodCore = new CodonLikelihoodCore(patternList.getStateCount());

@@ -74,6 +74,11 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 	public static final int LEFT = 0;
 	public static final int RIGHT = 1;
+	
+	public static final String PARTITION_TYPE = "partitionType";
+	public static final String REASSORTMENT_PARTITION = "reassortment";
+	public static final String RECOMBINATION_PARTITION = "recombination";
+	public static final String PARTITION_DEFAULT_TYPE = REASSORTMENT_PARTITION;
 
 	// ***********************************************************************
 	// Private members
@@ -106,6 +111,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	private boolean hasTraits = false;
 	private int nullCounter = 0;
 	private int storedNullCounter;
+	
+	protected String partitionType = PARTITION_DEFAULT_TYPE;
 
 
 	public ARGModel(ArrayList<Node> nodes, Node root, int numberPartitions,
@@ -462,96 +469,100 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	}
 
 	public static void main(String[] args) {
-		BufferedWriter out = null;
-
-		try {
-			out = new BufferedWriter(new FileWriter("rejections.txt"));
-		} catch (Exception e) {
-			System.exit(-1);
-		}
-
-		int rejections = 0;
-
-		MathUtils.setSeed(97695);
-
-		ArrayList<String> trees = new ArrayList<String>(10000);
-
-		while (rejections < 100) {
-			ARGModel arg = new ARGModel(3, 6.0, 1.0);
-			String s = "";
-			if (arg.getReassortmentNodeCount() < 2) {
-				s = arg.toStrippedNewick();
-			}
-
-			if (!s.equals("") && !trees.contains(s)) {
-				trees.add(s);
-				System.out.println("Total Current Size = " + trees.size() + " Rejections= " + rejections);
-				rejections = 0;
-			} else {
-				rejections++;
-			}
-		}
-
-		System.out.println("\n************************************");
-		System.out.println("Simulating trees");
-
-		Collections.sort(trees);
-		int[] freq = new int[trees.size()];
-		int[] mcmcFreq = new int[trees.size()];
-		rejections = 0;
-
-		while (containsLessThan(freq, 10000)) {
-			ARGModel arg = new ARGModel(3, 6.0, 1.0);
-			String s = null;
-			if (arg.getReassortmentNodeCount() < 2) {
-				s = arg.toStrippedNewick();
-			}
-
-			if (s != null) {
-				freq[Collections.binarySearch(trees, s)]++;
-			}
-			rejections++;
-			if (rejections % 1000000 == 0) {
-				System.out.println(rejections);
-			}
-		}
-
-//		System.out.println("\n************************************");
-//		System.out.println("Analyzing MCMC results");
-//		
-//		BufferedReader read = null;
-//		try{
-//			read = new BufferedReader( new FileReader("prior.args"));
-//			String s = read.readLine();
-//			s = read.readLine();
-//			
-//			while(s != null){
-//				mcmcFreq[Collections.binarySearch(trees, s)]++;
-//				s = read.readLine();
-//			}
-//			
-//		}catch(Exception e){
+		ARGModel arg = new ARGModel(8,20.0,0.5);
+		System.out.println(arg.toARGSummary());
+		System.out.println(arg.getReassortmentNodeCount());
+		System.out.println(arg.toExtendedNewick());
+//		BufferedWriter out = null;
+//
+//		try {
+//			out = new BufferedWriter(new FileWriter("rejections.txt"));
+//		} catch (Exception e) {
 //			System.exit(-1);
 //		}
-
-		System.out.println("\n************************************");
-		System.out.println("Printing Results");
-
-
-		try {
-			out = new BufferedWriter(new FileWriter("coalescent.sim"));
-
-			rejections = 0;
-			for (String s : trees) {
-				if (mcmcFreq[rejections] > -1) {
-					out.write(s + " " + freq[rejections] + " " + mcmcFreq[rejections] + " \n");
-				}
-				rejections++;
-			}
-			out.flush();
-		} catch (Exception IOException) {
-			System.exit(-1);
-		}
+//
+//		int rejections = 0;
+//
+//		MathUtils.setSeed(97695);
+//
+//		ArrayList<String> trees = new ArrayList<String>(10000);
+//
+//		while (rejections < 100) {
+//			ARGModel arg = new ARGModel(3, 6.0, 1.0);
+//			String s = "";
+//			if (arg.getReassortmentNodeCount() < 2) {
+//				s = arg.toStrippedNewick();
+//			}
+//
+//			if (!s.equals("") && !trees.contains(s)) {
+//				trees.add(s);
+//				System.out.println("Total Current Size = " + trees.size() + " Rejections= " + rejections);
+//				rejections = 0;
+//			} else {
+//				rejections++;
+//			}
+//		}
+//
+//		System.out.println("\n************************************");
+//		System.out.println("Simulating trees");
+//
+//		Collections.sort(trees);
+//		int[] freq = new int[trees.size()];
+//		int[] mcmcFreq = new int[trees.size()];
+//		rejections = 0;
+//
+//		while (containsLessThan(freq, 10000)) {
+//			ARGModel arg = new ARGModel(3, 6.0, 1.0);
+//			String s = null;
+//			if (arg.getReassortmentNodeCount() < 2) {
+//				s = arg.toStrippedNewick();
+//			}
+//
+//			if (s != null) {
+//				freq[Collections.binarySearch(trees, s)]++;
+//			}
+//			rejections++;
+//			if (rejections % 1000000 == 0) {
+//				System.out.println(rejections);
+//			}
+//		}
+//
+////		System.out.println("\n************************************");
+////		System.out.println("Analyzing MCMC results");
+////		
+////		BufferedReader read = null;
+////		try{
+////			read = new BufferedReader( new FileReader("prior.args"));
+////			String s = read.readLine();
+////			s = read.readLine();
+////			
+////			while(s != null){
+////				mcmcFreq[Collections.binarySearch(trees, s)]++;
+////				s = read.readLine();
+////			}
+////			
+////		}catch(Exception e){
+////			System.exit(-1);
+////		}
+//
+//		System.out.println("\n************************************");
+//		System.out.println("Printing Results");
+//
+//
+//		try {
+//			out = new BufferedWriter(new FileWriter("coalescent.sim"));
+//
+//			rejections = 0;
+//			for (String s : trees) {
+//				if (mcmcFreq[rejections] > -1) {
+//					out.write(s + " " + freq[rejections] + " " + mcmcFreq[rejections] + " \n");
+//				}
+//				rejections++;
+//			}
+//			out.flush();
+//		} catch (Exception IOException) {
+//			System.exit(-1);
+//		}
 
 	}
 
@@ -1233,10 +1244,18 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		}
 	}
 
+	public void setPartitionType(String partitionType){
+		this.partitionType = partitionType;
+	}
+	
+	public String getPartitionType(){
+		return partitionType;
+	}
+	
 	// *****************************************************************
 	// Interface Tree
 	// *****************************************************************
-
+	
 	/**
 	 * Return the units that this tree is expressed in.
 	 */
@@ -2709,11 +2728,16 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 			Tree tree = (Tree) xo.getChild(Tree.class);
 			ARGModel treeModel = new ARGModel(tree);
-
-
+		
 			Logger.getLogger("dr.evomodel").info(
 					"Creating the tree model, '" + xo.getId() + "'");
 
+			if(xo.hasAttribute(PARTITION_TYPE)){
+				treeModel.partitionType = xo.getStringAttribute(PARTITION_TYPE);
+			}
+			
+			Logger.getLogger("dr.evomodel").info(
+					xo.getId() + " has partition type: " + treeModel.partitionType);
 
 			for (int i = 0; i < xo.getChildCount(); i++) {
 				if (xo.getChild(i) instanceof XMLObject) {
@@ -2849,6 +2873,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 				}
 			}
 
+			
+			
 			treeModel.setupHeightBounds();
 
 			Logger.getLogger("dr.evomodel").info(
@@ -2896,7 +2922,11 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 			return rules;
 		}
 
+		private String[] partitionFormats = {REASSORTMENT_PARTITION, RECOMBINATION_PARTITION}; 
+		
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				new StringAttributeRule(PARTITION_TYPE,"Describes the partition structure of the model",
+						partitionFormats,true),
 				new ElementRule(Tree.class),
 				new ElementRule(
 						ROOT_HEIGHT,

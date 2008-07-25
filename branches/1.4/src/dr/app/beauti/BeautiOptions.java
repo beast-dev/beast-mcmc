@@ -737,7 +737,7 @@ public class BeautiOptions {
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }
-//                    ops.add(getOperator("swapBranchRateCategories"));
+                    ops.add(getOperator("swapBranchRateCategories"));
                     ops.add(getOperator("randomWalkBranchRateCategories"));
                     ops.add(getOperator("unformBranchRateCategories"));
                 }
@@ -752,7 +752,7 @@ public class BeautiOptions {
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }
- //                   ops.add(getOperator("swapBranchRateCategories"));
+                    ops.add(getOperator("swapBranchRateCategories"));
                     ops.add(getOperator("randomWalkBranchRateCategories"));
                     ops.add(getOperator("unformBranchRateCategories"));
                 }

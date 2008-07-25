@@ -27,6 +27,7 @@ package dr.app.beauti;
 
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.TreePrior;
 import dr.util.NumberFormatter;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.components.WholeNumberField;
@@ -235,7 +236,7 @@ public class PriorsPanel extends JPanel implements Exportable {
         parameters = options.selectParameters();
         priorTableModel.fireTableDataChanged();
 
-        treePriorCombo.setSelectedIndex(options.nodeHeightPrior);
+        treePriorCombo.setSelectedIndex(options.nodeHeightPrior.ordinal());
 
         groupCountField.setValue(options.skylineGroupCount);
         samplingProportionField.setValue(options.birthDeathSamplingProportion);
@@ -284,36 +285,22 @@ public class PriorsPanel extends JPanel implements Exportable {
     public void getOptions(BeautiOptions options) {
         if (settingOptions) return;
 
-        if (treePriorCombo.getSelectedIndex() == BeautiOptions.CONSTANT) {
-            options.nodeHeightPrior = BeautiOptions.CONSTANT;
-        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXPONENTIAL) {
-            options.nodeHeightPrior = BeautiOptions.EXPONENTIAL;
-        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.LOGISTIC) {
-            options.nodeHeightPrior = BeautiOptions.LOGISTIC;
-        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXPANSION) {
-            options.nodeHeightPrior = BeautiOptions.EXPANSION;
-        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.SKYLINE) {
-            options.nodeHeightPrior = BeautiOptions.SKYLINE;
+        options.nodeHeightPrior = (TreePrior.values()[treePriorCombo.getSelectedIndex()]);
+
+        if (options.nodeHeightPrior == TreePrior.SKYLINE) {
             Integer groupCount = groupCountField.getValue();
             if (groupCount != null) {
                 options.skylineGroupCount = groupCount;
             } else {
                 options.skylineGroupCount = 5;
             }
-        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.EXTENDED_SKYLINE) {
-            options.nodeHeightPrior = BeautiOptions.EXTENDED_SKYLINE;
-        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.YULE) {
-            options.nodeHeightPrior = BeautiOptions.YULE;
-        } else if (treePriorCombo.getSelectedIndex() == BeautiOptions.BIRTH_DEATH) {
-            options.nodeHeightPrior = BeautiOptions.BIRTH_DEATH;
+        } else if (options.nodeHeightPrior == TreePrior.BIRTH_DEATH) {
             Double samplingProportion = samplingProportionField.getValue();
             if (samplingProportion != null) {
                 options.birthDeathSamplingProportion = samplingProportion;
             } else {
                 options.birthDeathSamplingProportion = 1.0;
             }
-        } else {
-            throw new RuntimeException("Unexpected value from treePriorCombo");
         }
 
         options.parameterization = parameterizationCombo.getSelectedIndex();

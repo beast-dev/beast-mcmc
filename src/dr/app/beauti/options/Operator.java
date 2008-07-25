@@ -1,11 +1,21 @@
 package dr.app.beauti.options;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
 public class Operator {
-    public Operator(String name, String description, Parameter parameter, String operatorType, double tuning, double weight) {
+
+    public Operator(String name,
+                    String description,
+                    Parameter parameter,
+                    OperatorType operatorType,
+                    double tuning,
+                    double weight) {
+
         this.baseName = name;
         this.description = description;
         this.parameter1 = parameter;
@@ -21,7 +31,7 @@ public class Operator {
 
     public Operator(String name, String description,
                     Parameter parameter1, Parameter parameter2,
-                    String operatorType, double tuning, double weight) {
+                    OperatorType operatorType, double tuning, double weight) {
         this.baseName = name;
         this.description = description;
         this.parameter1 = parameter1;
@@ -38,9 +48,9 @@ public class Operator {
     public String getDescription() {
         if (description == null || description.length() == 0) {
             String prefix = "";
-            if (type.equals(BeautiOptions.SCALE)) {
+            if (type == OperatorType.SCALE) {
                 prefix = "Scales the ";
-            } else if (type.equals(BeautiOptions.RANDOM_WALK)) {
+            } else if (type == OperatorType.RANDOM_WALK) {
                 prefix = "A random-walk on the ";
             }
             return prefix + parameter1.getDescription();
@@ -63,12 +73,16 @@ public class Operator {
         return name;
     }
 
+    public void addAttribute(String name, String value) {
+        attributes.put(name, value);
+    }
+
     private final String baseName;
     public String prefix = null;
 
     public final String description;
 
-    public final String type;
+    public final OperatorType type;
     public boolean tuningEdited;
     public double tuning;
     public double weight;
@@ -77,5 +91,6 @@ public class Operator {
     public final Parameter parameter1;
     public final Parameter parameter2;
 
+    private Map<String, String> attributes = new HashMap<String, String>();
 
 }

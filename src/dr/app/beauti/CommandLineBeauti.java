@@ -24,6 +24,8 @@
  */
 package dr.app.beauti;
 
+import dr.app.beauti.generator.BeastGenerator;
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
@@ -47,7 +49,8 @@ import java.io.*;
  * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class CommandLineBeauti {
-    private BeastGenerator beautiOptions = new BeastGenerator();
+    private BeautiOptions beautiOptions = new BeautiOptions();
+    private BeastGenerator generator = new BeastGenerator(beautiOptions);
 
     public CommandLineBeauti(String inputFileName, String templateFileName, String outputFileName) {
 
@@ -267,7 +270,7 @@ public class CommandLineBeauti {
 
     private void generate(File file) throws IOException {
         FileWriter fw = new FileWriter(file);
-        beautiOptions.generateXML(fw);
+        generator.generateXML(fw);
         fw.close();
     }
 

@@ -46,7 +46,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class BeautiOptions extends AbstractModelOptions {
+public class BeautiOptions extends ModelOptions {
 
     public BeautiOptions() {
         double demoWeights = 3.0;
@@ -96,59 +96,80 @@ public class BeautiOptions extends AbstractModelOptions {
         createParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Birth-Death speciation process rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
 
-        createOperator("constant.popSize", SCALE, 0.75, demoWeights);
-        createOperator("exponential.popSize", SCALE, 0.75, demoWeights);
-        createOperator("exponential.growthRate", RANDOM_WALK, 1.0, demoWeights);
-        createOperator("exponential.doublingTime", SCALE, 0.75, demoWeights);
-        createOperator("logistic.popSize", SCALE, 0.75, demoWeights);
-        createOperator("logistic.growthRate", SCALE, 0.75, demoWeights);
-        createOperator("logistic.doublingTime", SCALE, 0.75, demoWeights);
-        createOperator("logistic.t50", SCALE, 0.75, demoWeights);
-        createOperator("expansion.popSize", SCALE, 0.75, demoWeights);
-        createOperator("expansion.growthRate", SCALE, 0.75, demoWeights);
-        createOperator("expansion.doublingTime", SCALE, 0.75, demoWeights);
-        createOperator("expansion.ancestralProportion", SCALE, 0.75, demoWeights);
-        createOperator("skyline.popSize", SCALE, 0.75, demoWeights * 5);
-        createOperator("skyline.groupSize", INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
+        createScaleOperator("constant.popSize", demoWeights);
+        createScaleOperator("exponential.popSize", demoWeights);
+        createOperator("exponential.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
+        createScaleOperator("exponential.doublingTime", demoWeights);
+        createScaleOperator("logistic.popSize", demoWeights);
+        createScaleOperator("logistic.growthRate", demoWeights);
+        createScaleOperator("logistic.doublingTime", demoWeights);
+        createScaleOperator("logistic.t50", demoWeights);
+        createScaleOperator("expansion.popSize", demoWeights);
+        createScaleOperator("expansion.growthRate", demoWeights);
+        createScaleOperator("expansion.doublingTime", demoWeights);
+        createScaleOperator("expansion.ancestralProportion", demoWeights);
+        createScaleOperator("skyline.popSize", demoWeights * 5);
+        createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
 
-        createOperator("demographic.populationMean", SCALE, 0.9, demoWeights);
-        createOperator("demographic.indicators", BITFLIP, 1, 2 * treeWeights);
+        createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
+        createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
         // hack pass distribution in name
-        createOperator("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize", "demographic.indicators", SAMPLE_NONACTIVE, 1, 5 * demoWeights);
-        createOperator("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize", "demographic.indicators", SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
+        createOperator("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize",
+                "demographic.indicators", OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
+        createOperator("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
+                "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
 
-        createOperator("yule.birthRate", SCALE, 0.75, demoWeights);
+        createScaleOperator("yule.birthRate", demoWeights);
 
-        createOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
-        createOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, SCALE, 0.75, demoWeights);
+        createScaleOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoWeights);
+        createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoWeights);
 
         // These are statistics which could have priors on...
         createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
-        createStatistic("coefficientOfVariation", "The variation in rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
-        createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages", Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        createStatistic("coefficientOfVariation", "The variation in rate of evolution over the whole tree",
+                0.0, Double.POSITIVE_INFINITY);
+        createStatistic("covariance",
+                "The covariance in rates of evolution on each lineage with their ancestral lineages",
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
-        createOperator("clock.rate", SCALE, 0.75, rateWeights);
-        createOperator("uced.mean", SCALE, 0.75, rateWeights);
-        createOperator("ucld.mean", SCALE, 0.75, rateWeights);
-        createOperator("ucld.stdev", SCALE, 0.75, rateWeights);
-        createOperator("randomWalkBranchRateCategories", "branchRates.categories", "Performs an integer random walk of branch rate categories", "branchRates.categories", INTEGER_RANDOM_WALK, 1, branchWeights);
-        createOperator("unformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories", "branchRates.categories", INTEGER_UNIFORM, 1, branchWeights);
+        createScaleOperator("clock.rate", rateWeights);
+        createScaleOperator("uced.mean", rateWeights);
+        createScaleOperator("ucld.mean", rateWeights);
+        createScaleOperator("ucld.stdev", rateWeights);
+        createOperator("randomWalkBranchRateCategories", "branchRates.categories",
+                "Performs an integer random walk of branch rate categories", "branchRates.categories",
+                OperatorType.INTEGER_RANDOM_WALK, 1, branchWeights);
+        createOperator("unformBranchRateCategories", "branchRates.categories",
+                "Performs an integer uniform draw of branch rate categories", "branchRates.categories",
+                OperatorType.INTEGER_UNIFORM, 1, branchWeights);
 
-        createOperator("localClock.rates", SCALE, 0.75, treeWeights);
-        createOperator("localClock.changes", BITFLIP, 1, treeWeights);
-        createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree", TREE_BIT_MOVE, -1.0, treeWeights);
+        createScaleOperator("localClock.rates", treeWeights);
+        createOperator("localClock.changes", OperatorType.BITFLIP, 1, treeWeights);
+        createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
+                OperatorType.TREE_BIT_MOVE, -1.0, treeWeights);
 
-        createOperator("treeModel.rootHeight", SCALE, 0.75, demoWeights);
-        createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally", "treeModel.internalNodeHeights", UNIFORM, -1, branchWeights);
+        createScaleOperator("treeModel.rootHeight", demoWeights);
+        createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally",
+                "treeModel.internalNodeHeights", OperatorType.UNIFORM, -1, branchWeights);
 
-        createOperator("upDownRateHeights", "Substitution rate and heights", "Scales substitution rates inversely to node heights of the tree", "clock.rate", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
-        createOperator("upDownUCEDMeanHeights", "UCED mean and heights", "Scales UCED mean inversely to node heights of the tree", "uced.mean", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
-        createOperator("upDownUCLDMeanHeights", "UCLD mean and heights", "Scales UCLD mean inversely to node heights of the tree", "ucld.mean", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
+        createOperator("upDownRateHeights", "Substitution rate and heights",
+                "Scales substitution rates inversely to node heights of the tree", "clock.rate",
+                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
+        createOperator("upDownUCEDMeanHeights", "UCED mean and heights",
+                "Scales UCED mean inversely to node heights of the tree", "uced.mean",
+                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
+        createOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
+                "Scales UCLD mean inversely to node heights of the tree", "ucld.mean",
+                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
 
-        createOperator("subtreeSlide", "Tree", "Performs the subtree-slide rearrangement of the tree", "tree", SUBTREE_SLIDE, 1.0, treeWeights);
-        createOperator("narrowExchange", "Tree", "Performs local rearrangements of the tree", "tree", NARROW_EXCHANGE, -1, treeWeights);
-        createOperator("wideExchange", "Tree", "Performs global rearrangements of the tree", "tree", WIDE_EXCHANGE, -1, demoWeights);
-        createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree", WILSON_BALDING, -1, demoWeights);
+        createOperator("subtreeSlide", "Tree", "Performs the subtree-slide rearrangement of the tree", "tree",
+                OperatorType.SUBTREE_SLIDE, 1.0, treeWeights);
+        createOperator("narrowExchange", "Tree", "Performs local rearrangements of the tree", "tree",
+                OperatorType.NARROW_EXCHANGE, -1, treeWeights);
+        createOperator("wideExchange", "Tree", "Performs global rearrangements of the tree", "tree",
+                OperatorType.WIDE_EXCHANGE, -1, demoWeights);
+        createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
+                OperatorType.WILSON_BALDING, -1, demoWeights);
     }
 
     public void addPartitionModel(PartitionModel model) {
@@ -387,16 +408,16 @@ public class BeautiOptions extends AbstractModelOptions {
             }
         }
 
-        if (nodeHeightPrior == CONSTANT) {
+        if (nodeHeightPrior == TreePrior.CONSTANT) {
             params.add(getParameter("constant.popSize"));
-        } else if (nodeHeightPrior == EXPONENTIAL) {
+        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
             params.add(getParameter("exponential.popSize"));
             if (parameterization == GROWTH_RATE) {
                 params.add(getParameter("exponential.growthRate"));
             } else {
                 params.add(getParameter("exponential.doublingTime"));
             }
-        } else if (nodeHeightPrior == LOGISTIC) {
+        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
             params.add(getParameter("logistic.popSize"));
             if (parameterization == GROWTH_RATE) {
                 params.add(getParameter("logistic.growthRate"));
@@ -404,7 +425,7 @@ public class BeautiOptions extends AbstractModelOptions {
                 params.add(getParameter("logistic.doublingTime"));
             }
             params.add(getParameter("logistic.t50"));
-        } else if (nodeHeightPrior == EXPANSION) {
+        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
             params.add(getParameter("expansion.popSize"));
             if (parameterization == GROWTH_RATE) {
                 params.add(getParameter("expansion.growthRate"));
@@ -412,19 +433,16 @@ public class BeautiOptions extends AbstractModelOptions {
                 params.add(getParameter("expansion.doublingTime"));
             }
             params.add(getParameter("expansion.ancestralProportion"));
-        } else if (nodeHeightPrior == SKYLINE) {
+        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
             params.add(getParameter("skyline.popSize"));
-        } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
+        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
             params.add(getParameter("demographic.populationSizeChanges"));
             params.add(getParameter("demographic.populationMean"));
-        } else if (nodeHeightPrior == YULE) {
+        } else if (nodeHeightPrior == TreePrior.YULE) {
             params.add(getParameter("yule.birthRate"));
-        } else if (nodeHeightPrior == BIRTH_DEATH) {
-//            params.add(getParameter("birthDeath.birthRate"));
-//            params.add(getParameter("birthDeath.deathRate"));
+        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
             params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
             params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-            // at present we are not allowing the sampling of samplingProportion
         }
 
         params.add(getParameter("treeModel.rootHeight"));
@@ -525,16 +543,16 @@ public class BeautiOptions extends AbstractModelOptions {
             }
         }
 
-        if (nodeHeightPrior == CONSTANT) {
+        if (nodeHeightPrior == TreePrior.CONSTANT) {
             ops.add(getOperator("constant.popSize"));
-        } else if (nodeHeightPrior == EXPONENTIAL) {
+        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
             ops.add(getOperator("exponential.popSize"));
             if (parameterization == GROWTH_RATE) {
                 ops.add(getOperator("exponential.growthRate"));
             } else {
                 ops.add(getOperator("exponential.doublingTime"));
             }
-        } else if (nodeHeightPrior == LOGISTIC) {
+        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
             ops.add(getOperator("logistic.popSize"));
             if (parameterization == GROWTH_RATE) {
                 ops.add(getOperator("logistic.growthRate"));
@@ -542,7 +560,7 @@ public class BeautiOptions extends AbstractModelOptions {
                 ops.add(getOperator("logistic.doublingTime"));
             }
             ops.add(getOperator("logistic.t50"));
-        } else if (nodeHeightPrior == EXPANSION) {
+        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
             ops.add(getOperator("expansion.popSize"));
             if (parameterization == GROWTH_RATE) {
                 ops.add(getOperator("expansion.growthRate"));
@@ -550,22 +568,19 @@ public class BeautiOptions extends AbstractModelOptions {
                 ops.add(getOperator("expansion.doublingTime"));
             }
             ops.add(getOperator("expansion.ancestralProportion"));
-        } else if (nodeHeightPrior == SKYLINE) {
+        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
             ops.add(getOperator("skyline.popSize"));
             ops.add(getOperator("skyline.groupSize"));
-        } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
+        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
             ops.add(getOperator("demographic.populationMean"));
             ops.add(getOperator("demographic.popSize"));
             ops.add(getOperator("demographic.indicators"));
             ops.add(getOperator("demographic.scaleActive"));
-        } else if (nodeHeightPrior == YULE) {
+        } else if (nodeHeightPrior == TreePrior.YULE) {
             ops.add(getOperator("yule.birthRate"));
-        } else if (nodeHeightPrior == BIRTH_DEATH) {
-//            ops.add(getOperator("birthDeath.birthRate"));
-//            ops.add(getOperator("birthDeath.deathRate"));
+        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
             ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
             ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-            // at present we are not allowing the sampling of samplingProportion
         }
 
         ops.add(getOperator("treeModel.rootHeight"));
@@ -989,7 +1004,7 @@ public class BeautiOptions extends AbstractModelOptions {
 
     List<PartitionModel> models = new ArrayList<PartitionModel>();
 
-    public int nodeHeightPrior = CONSTANT;
+    public TreePrior nodeHeightPrior = TreePrior.CONSTANT;
     public int parameterization = GROWTH_RATE;
     public int skylineGroupCount = 10;
     public int skylineModel = CONSTANT_SKYLINE;

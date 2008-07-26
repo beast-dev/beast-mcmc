@@ -68,7 +68,7 @@ public class PriorsPanel extends JPanel implements Exportable {
             "Piecewise-constant", "Piecewise-linear"});
     WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
-    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
+//    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
 
     JCheckBox upgmaStartingTreeCheck = new JCheckBox("Use UPGMA to construct a starting tree");
 
@@ -117,30 +117,8 @@ public class PriorsPanel extends JPanel implements Exportable {
             }
         };
 
-        // order here must match corrosponding BeautiOptions constant, i.e. BeautiOptions.CONSTANT == 0 etc
-        if (BeautiApp.developer) {
-            treePriorCombo = new JComboBox(new String[]{
-                    "Coalescent: Constant Size",
-                    "Coalescent: Exponential Growth",
-                    "Coalescent: Logistic Growth",
-                    "Coalescent: Expansion Growth",
-                    "Coalescent: Bayesian Skyline",
-                    "Coalescent: Extended Bayesian Skyline",
-                    "Speciation: Yule Process",
-                    "Speciation: Birth-Death Process"
-            });
-        } else {
-            treePriorCombo = new JComboBox(new String[]{
-                    "Coalescent: Constant Size",
-                    "Coalescent: Exponential Growth",
-                    "Coalescent: Logistic Growth",
-                    "Coalescent: Expansion Growth",
-                    "Coalescent: Bayesian Skyline",
-                    "Coalescent: Extended Bayesian Skyline",
-                    "Speciation: Yule Process",
-                    "Speciation: Birth-Death Process"
-            });
-        }
+        treePriorCombo = new JComboBox(TreePrior.values());
+
         setupComponent(treePriorCombo);
         treePriorCombo.addItemListener(
                 new java.awt.event.ItemListener() {
@@ -160,14 +138,14 @@ public class PriorsPanel extends JPanel implements Exportable {
         };
 
         groupCountField.addKeyListener(keyListener);
-        samplingProportionField.addKeyListener(keyListener);
+//        samplingProportionField.addKeyListener(keyListener);
 
         FocusListener focusListener = new FocusAdapter() {
             public void focusLost(FocusEvent focusEvent) {
                 frame.priorsChanged();
             }
         };
-        samplingProportionField.addFocusListener(focusListener);
+//        samplingProportionField.addFocusListener(focusListener);
         groupCountField.addFocusListener(focusListener);
 
         setupComponent(parameterizationCombo);
@@ -210,17 +188,17 @@ public class PriorsPanel extends JPanel implements Exportable {
         treePriorPanel.removeAll();
 
         treePriorPanel.addComponentWithLabel("Tree Prior:", treePriorCombo);
-        if (treePriorCombo.getSelectedIndex() == 1 || // exponential
-                treePriorCombo.getSelectedIndex() == 2 || // logistic
-                treePriorCombo.getSelectedIndex() == 3) { // expansion
+        if (treePriorCombo.getSelectedItem() == TreePrior.EXPONENTIAL ||
+                treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC ||
+                treePriorCombo.getSelectedItem() == TreePrior.EXPANSION) {
             treePriorPanel.addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
-        } else if (treePriorCombo.getSelectedIndex() == 4) { // bayesian skyline
+        } else if (treePriorCombo.getSelectedItem() == TreePrior.SKYLINE) {
             groupCountField.setColumns(6);
             treePriorPanel.addComponentWithLabel("Number of groups:", groupCountField);
             treePriorPanel.addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
-        } else if (treePriorCombo.getSelectedIndex() == 6) { // birth-death
-            samplingProportionField.setColumns(8);
-            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
+        } else if (treePriorCombo.getSelectedItem() == TreePrior.BIRTH_DEATH) {
+//            samplingProportionField.setColumns(8);
+//            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
         }
 
         treePriorPanel.addComponent(upgmaStartingTreeCheck);
@@ -236,10 +214,10 @@ public class PriorsPanel extends JPanel implements Exportable {
         parameters = options.selectParameters();
         priorTableModel.fireTableDataChanged();
 
-        treePriorCombo.setSelectedIndex(options.nodeHeightPrior.ordinal());
+        treePriorCombo.setSelectedItem(options.nodeHeightPrior);
 
         groupCountField.setValue(options.skylineGroupCount);
-        samplingProportionField.setValue(options.birthDeathSamplingProportion);
+        //samplingProportionField.setValue(options.birthDeathSamplingProportion);
 
         parameterizationCombo.setSelectedIndex(options.parameterization);
         bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
@@ -285,7 +263,7 @@ public class PriorsPanel extends JPanel implements Exportable {
     public void getOptions(BeautiOptions options) {
         if (settingOptions) return;
 
-        options.nodeHeightPrior = (TreePrior.values()[treePriorCombo.getSelectedIndex()]);
+        options.nodeHeightPrior = (TreePrior)treePriorCombo.getSelectedItem();
 
         if (options.nodeHeightPrior == TreePrior.SKYLINE) {
             Integer groupCount = groupCountField.getValue();
@@ -295,12 +273,12 @@ public class PriorsPanel extends JPanel implements Exportable {
                 options.skylineGroupCount = 5;
             }
         } else if (options.nodeHeightPrior == TreePrior.BIRTH_DEATH) {
-            Double samplingProportion = samplingProportionField.getValue();
-            if (samplingProportion != null) {
-                options.birthDeathSamplingProportion = samplingProportion;
-            } else {
-                options.birthDeathSamplingProportion = 1.0;
-            }
+//            Double samplingProportion = samplingProportionField.getValue();
+//            if (samplingProportion != null) {
+//                options.birthDeathSamplingProportion = samplingProportion;
+//            } else {
+//                options.birthDeathSamplingProportion = 1.0;
+//            }
         }
 
         options.parameterization = parameterizationCombo.getSelectedIndex();

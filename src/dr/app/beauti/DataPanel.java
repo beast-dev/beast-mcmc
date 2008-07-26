@@ -130,10 +130,8 @@ public class DataPanel extends JPanel implements Exportable {
         Object[] modelArray = options.getPartitionModels().toArray();
         TableColumn col = dataTable.getColumnModel().getColumn(4);
 
-        JComboBox comboBox = new JComboBox(modelArray);
-
-        col.setCellEditor(new DefaultCellEditor(comboBox));
-        col.setCellRenderer(new ComboBoxRenderer(comboBox));
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
+        //col.setCellRenderer(new ComboBoxRenderer(modelArray));
     }
 
     public void setOptions(BeautiOptions options) {
@@ -235,9 +233,6 @@ public class DataPanel extends JPanel implements Exportable {
 
     class DataTableModel extends AbstractTableModel {
 
-        /**
-         *
-         */
         private static final long serialVersionUID = -6707994233020715574L;
         String[] columnNames = {"Name", "FileName", "Sites", "Sequence Type", "Partition Model"};
 
@@ -339,27 +334,26 @@ public class DataPanel extends JPanel implements Exportable {
         }
     }
 
-    public class ComboBoxRenderer extends DefaultTableCellRenderer {
-        public ComboBoxRenderer(JComboBox comboBox) {
-            this.comboBox = comboBox;
+    public class ComboBoxRenderer extends JComboBox implements TableCellRenderer {
+        public ComboBoxRenderer(Object[] items) {
+            super(items);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus,
                                                        int row, int column) {
+
             if (isSelected) {
-                comboBox.setForeground(table.getSelectionForeground());
-                comboBox.setBackground(table.getSelectionBackground());
+                this.setForeground(table.getSelectionForeground());
+                this.setBackground(table.getSelectionBackground());
             } else {
-                comboBox.setForeground(table.getForeground());
-                comboBox.setBackground(table.getBackground());
+                this.setForeground(table.getForeground());
+                this.setBackground(table.getBackground());
             }
 
-            comboBox.setSelectedItem(value);
-            return comboBox;
+            setSelectedItem(value);
+            return this;
         }
-
-        private final JComboBox comboBox;
     }
 
     public class UnlinkModelsAction extends AbstractAction {

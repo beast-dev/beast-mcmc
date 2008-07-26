@@ -575,6 +575,8 @@ public class ModelsPanel extends JPanel implements Exportable {
             int row = options.getPartitionModels().size() - 1;
             modelTable.getSelectionModel().setSelectionInterval(row, row);
         }
+
+        fireModelsChanged();
     }
 
     public void removeSelection() {
@@ -594,6 +596,8 @@ public class ModelsPanel extends JPanel implements Exportable {
             currentModel = null;
             setupPanel(currentModel, modelPanel);
         }
+
+        fireModelsChanged();
     }
 
     private void selectionChanged() {

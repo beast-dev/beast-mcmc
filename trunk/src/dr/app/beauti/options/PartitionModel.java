@@ -407,6 +407,9 @@ public class PartitionModel extends ModelOptions {
         return operator;
     }
 
+    public String toString() {
+        return getName();
+    }
 
     public NucModelType nucSubstitutionModel = NucModelType.HKY;
     public int aaSubstitutionModel = BeautiOptions.BLOSUM_62;

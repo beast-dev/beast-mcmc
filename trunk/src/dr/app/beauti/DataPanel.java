@@ -38,7 +38,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
-import javax.swing.table.AbstractTableModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.HashSet;
@@ -57,7 +57,6 @@ public class DataPanel extends JPanel implements Exportable {
 
     UnlinkModelsAction unlinkModelsAction = new UnlinkModelsAction();
     LinkModelsAction linkModelAction = new LinkModelsAction();
-
 
     SelectModelDialog selectModelDialog = null;
 
@@ -83,6 +82,7 @@ public class DataPanel extends JPanel implements Exportable {
                 selectionChanged();
             }
         });
+
 
         scrollPane = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -126,9 +126,21 @@ public class DataPanel extends JPanel implements Exportable {
         frame.dataChanged();
     }
 
+    private void modelsChanged() {
+        Object[] modelArray = options.getPartitionModels().toArray();
+        TableColumn col = dataTable.getColumnModel().getColumn(4);
+
+        JComboBox comboBox = new JComboBox(modelArray);
+
+        col.setCellEditor(new DefaultCellEditor(comboBox));
+        col.setCellRenderer(new ComboBoxRenderer(comboBox));
+    }
+
     public void setOptions(BeautiOptions options) {
 
         this.options = options;
+
+        modelsChanged();
 
         dataTableModel.fireTableDataChanged();
     }
@@ -171,6 +183,9 @@ public class DataPanel extends JPanel implements Exportable {
                 partition.setPartitionModel(model);
             }
         }
+
+        modelsChanged();
+
         fireDataChanged();
         repaint();
     }
@@ -266,7 +281,7 @@ public class DataPanel extends JPanel implements Exportable {
                     }
                     break;
                 case 4:
-                    // partition.setPartitionModel((PartitionModel)aValue);
+                    partition.setPartitionModel((PartitionModel)aValue);
                     break;
             }
             fireDataChanged();
@@ -280,7 +295,7 @@ public class DataPanel extends JPanel implements Exportable {
                     editable = true;
                     break;
                 case 4:// model selection menu
-                    editable = false;
+                    editable = true;
                     break;
                 default:
                     editable = false;
@@ -322,6 +337,29 @@ public class DataPanel extends JPanel implements Exportable {
 
             return buffer.toString();
         }
+    }
+
+    public class ComboBoxRenderer extends DefaultTableCellRenderer {
+        public ComboBoxRenderer(JComboBox comboBox) {
+            this.comboBox = comboBox;
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus,
+                                                       int row, int column) {
+            if (isSelected) {
+                comboBox.setForeground(table.getSelectionForeground());
+                comboBox.setBackground(table.getSelectionBackground());
+            } else {
+                comboBox.setForeground(table.getForeground());
+                comboBox.setBackground(table.getBackground());
+            }
+
+            comboBox.setSelectedItem(value);
+            return comboBox;
+        }
+
+        private final JComboBox comboBox;
     }
 
     public class UnlinkModelsAction extends AbstractAction {

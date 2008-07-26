@@ -33,7 +33,6 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.datatype.TwoStateCovarion;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -161,9 +160,25 @@ public class BeastGenerator extends Generator {
         }
 
         List<DataPartition> dataPartitions = options.dataPartitions;
+
+        List<Alignment> alignments = new ArrayList<Alignment>();
+
         for (DataPartition partition : dataPartitions) {
-            writeAlignment(partition, writer);
+            Alignment alignment = partition.getAlignment();
+            if (!alignments.contains(alignment)) {
+                alignments.add(alignment);
+            }
         }
+
+        int index = 1;
+        for (Alignment alignment : alignments) {
+            if (alignments.size() > 1) {
+                alignment.setId("alignment" + index);
+            } else alignment.setId("alignment");
+            writeAlignment(alignment, writer);
+            index += 1;
+        }
+
         for (DataPartition partition : dataPartitions) {
             writePatternLists(partition, writer);
         }
@@ -305,28 +320,28 @@ public class BeastGenerator extends Generator {
      * Determine and return the datatype description for these beast options
      * note that the datatype in XML may differ from the actual datatype
      *
-     * @param partition the partition to get alignment type description for
      * @return description
      */
 
-    private String getAlignmentDataTypeDescription(DataPartition partition) {
+    private String getAlignmentDataTypeDescription(Alignment alignment) {
         String description;
-
-        Alignment alignment = partition.getAlignment();
 
         switch (alignment.getDataType().getType()) {
             case DataType.TWO_STATES:
             case DataType.COVARION:
 
-                switch (partition.getPartitionModel().binarySubstitutionModel) {
-                    case ModelOptions.BIN_COVARION:
-                        description = TwoStateCovarion.DESCRIPTION;
-                        break;
+                // TODO make this work
+                throw new RuntimeException("TO DO!");
 
-                    default:
-                        description = alignment.getDataType().getDescription();
-                }
-                break;
+                //switch (partition.getPartitionModel().binarySubstitutionModel) {
+                //    case ModelOptions.BIN_COVARION:
+                //        description = TwoStateCovarion.DESCRIPTION;
+                //        break;
+                //
+                //    default:
+                //        description = alignment.getDataType().getDescription();
+                //}
+                //break;
 
             default:
                 description = alignment.getDataType().getDescription();
@@ -339,12 +354,10 @@ public class BeastGenerator extends Generator {
     /**
      * Generate an alignment block from these beast options
      *
-     * @param partition the partition to write the alignment of
+     * @param alignment the alignment to write
      * @param writer    the writer
      */
-    public void writeAlignment(DataPartition partition, XMLWriter writer) {
-
-        Alignment alignment = partition.getAlignment();
+    public void writeAlignment(Alignment alignment, XMLWriter writer) {
 
         writer.writeText("");
         writer.writeComment("The sequence alignment (each sequence refers to a taxon above).");
@@ -353,12 +366,11 @@ public class BeastGenerator extends Generator {
             writer.writeComment("Null sequences generated in order to sample from the prior only.");
         }
 
-
         writer.writeOpenTag(
                 "alignment",
                 new Attribute[]{
-                        new Attribute.Default<String>("id", "alignment"),
-                        new Attribute.Default<String>("dataType", getAlignmentDataTypeDescription(partition))
+                        new Attribute.Default<String>("id", alignment.getId()),
+                        new Attribute.Default<String>("dataType", getAlignmentDataTypeDescription(alignment))
                 }
         );
 
@@ -470,7 +482,7 @@ public class BeastGenerator extends Generator {
         }
         writer.writeOpenTag(SitePatternsParser.PATTERNS, attributes);
 
-        writer.writeTag("alignment", new Attribute.Default<String>("idref", "alignment"), true);
+        writer.writeTag("alignment", new Attribute.Default<String>("idref", alignment.getId()), true);
         writer.writeCloseTag(SitePatternsParser.PATTERNS);
     }
 

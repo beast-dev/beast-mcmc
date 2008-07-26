@@ -57,10 +57,6 @@ public class BeautiFrame extends DocumentFrame {
     private OperatorsPanel operatorsPanel;
     private MCMCPanel mcmcPanel;
 
-//	final Icon dataIcon = new ImageIcon(Utils.getImage(this, "/images/data-icon.gif"));
-//	final Icon modelIcon = new ImageIcon(Utils.getImage(this, "/images/model-icon.gif"));
-//	final Icon mcmcIcon = new ImageIcon(Utils.getImage(this, "/images/mcmc-icon.gif"));
-
     final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
 
     public BeautiFrame(String title) {
@@ -187,6 +183,7 @@ public class BeautiFrame extends DocumentFrame {
     public final void modelChanged() {
         modelsPanel.getOptions(beautiOptions);
 
+        dataPanel.getOptions(beautiOptions);
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         setDirty();

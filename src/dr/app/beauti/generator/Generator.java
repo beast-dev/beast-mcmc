@@ -65,10 +65,10 @@ public abstract class Generator {
      * @param id     the id
      * @param writer the writer
      */
-    public void writeParameter(String wrapperElementName, String id, XMLWriter writer, ModelOptions options) {
-        writer.writeOpenTag(wrapperElementName);
+    public void writeParameter(String wrapperName, String id, XMLWriter writer, ModelOptions options) {
+        writer.writeOpenTag(wrapperName);
         writeParameter(id, writer, options);
-        writer.writeOpenTag(wrapperElementName);
+        writer.writeCloseTag(wrapperName);
     }
 
 

@@ -385,7 +385,7 @@ public class PartitionModel extends ModelOptions {
         return params;
     }
 
-    protected Parameter getParameter(String name) {
+    public Parameter getParameter(String name) {
         Parameter parameter = parameters.get(name);
 
         if (parameter == null) {
@@ -404,7 +404,7 @@ public class PartitionModel extends ModelOptions {
     }
 
 
-    public int nucSubstitutionModel = BeautiOptions.HKY;
+    public NucModelType nucSubstitutionModel = NucModelType.HKY;
     public int aaSubstitutionModel = BeautiOptions.BLOSUM_62;
     public int binarySubstitutionModel = BeautiOptions.BIN_SIMPLE;
 

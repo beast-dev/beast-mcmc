@@ -13,9 +13,9 @@ import java.util.ArrayList;
 /**
  * @author Alexei Drummond
  */
-public abstract class Generator extends ModelOptions {
+public abstract class Generator {
 
-    BeautiOptions options;
+    final BeautiOptions options;
 
     public Generator(BeautiOptions options) {
         this.options = options;
@@ -28,7 +28,7 @@ public abstract class Generator extends ModelOptions {
      * @param value the value
      */
     public void fixParameter(String id, double value) {
-        dr.app.beauti.options.Parameter parameter = parameters.get(id);
+        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + id + ", is unknown");
         }
@@ -42,9 +42,10 @@ public abstract class Generator extends ModelOptions {
      * @param id     the id
      * @param writer the writer
      */
-    public void writeParameter(String id, XMLWriter writer) {
-        dr.app.beauti.options.Parameter parameter = parameters.get(id);
+    public void writeParameter(String id, XMLWriter writer, ModelOptions options) {
+        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
         if (parameter == null) {
+
             throw new IllegalArgumentException("parameter with name, " + id + ", is unknown");
         }
         if (parameter.isFixed) {
@@ -61,12 +62,25 @@ public abstract class Generator extends ModelOptions {
     /**
      * write a parameter
      *
+     * @param id     the id
+     * @param writer the writer
+     */
+    public void writeParameter(String wrapperElementName, String id, XMLWriter writer, ModelOptions options) {
+        writer.writeOpenTag(wrapperElementName);
+        writeParameter(id, writer, options);
+        writer.writeOpenTag(wrapperElementName);
+    }
+
+
+    /**
+     * write a parameter
+     *
      * @param id        the id
      * @param dimension the dimension
      * @param writer    the writer
      */
     public void writeParameter(String id, int dimension, XMLWriter writer) {
-        dr.app.beauti.options.Parameter parameter = parameters.get(id);
+        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + id + ", is unknown");
         }
@@ -114,6 +128,23 @@ public abstract class Generator extends ModelOptions {
 
         writer.writeTag(ParameterParser.PARAMETER, attrArray, true);
     }
+
+    /**
+     * write a parameter
+     *
+     * @param id        the id
+     * @param dimension the dimension
+     * @param value     the value
+     * @param lower     the lower bound
+     * @param upper     the upper bound
+     * @param writer    the writer
+     */
+    public void writeParameter(String wrapperName, String id, int dimension, double value, double lower, double upper, XMLWriter writer) {
+        writer.writeOpenTag(wrapperName);
+        writeParameter(id, dimension, value, lower, upper, writer);
+        writer.writeCloseTag(wrapperName);
+    }
+
 
     void writeSumStatisticColumn(XMLWriter writer, String name, String label) {
         writer.writeOpenTag(Columns.COLUMN,

@@ -2,6 +2,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.ModelOptions;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -29,7 +30,7 @@ public class BranchRatesModelGenerator extends Generator {
      * @param writer the writer
      */
     public void writeBranchRatesModel(XMLWriter writer) {
-        if (options.clockModel == STRICT_CLOCK) {
+        if (options.clockModel == ModelOptions.STRICT_CLOCK) {
             if (options.fixedSubstitutionRate) {
 
                 // TODO
@@ -41,12 +42,9 @@ public class BranchRatesModelGenerator extends Generator {
                     StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
                     new Attribute[]{new Attribute.Default<String>("id", "branchRates")}
             );
-            writer.writeOpenTag("rate");
-
-            writeParameter("clock.rate", writer);
-            writer.writeCloseTag("rate");
+            writeParameter("rate", "clock.rate", writer, options);
             writer.writeCloseTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES);
-        } else if (options.clockModel == RANDOM_LOCAL_CLOCK) {
+        } else if (options.clockModel == ModelOptions.RANDOM_LOCAL_CLOCK) {
             if (options.fixedSubstitutionRate) {
 
                 // TODO
@@ -71,9 +69,7 @@ public class BranchRatesModelGenerator extends Generator {
             writer.writeTag("parameter", new Attribute.Default<String>("idref", "localClock.changes"), true);
             writer.writeCloseTag("rateIndicator");
 
-            writer.writeOpenTag("clockRate");
-            writeParameter("clock.rate", writer);
-            writer.writeCloseTag("clockRate");
+            writeParameter("clockRate", "clock.rate", writer, options);
 
             writer.writeCloseTag(RandomLocalClockModel.LOCAL_BRANCH_RATES);
 
@@ -140,7 +136,7 @@ public class BranchRatesModelGenerator extends Generator {
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
             writer.writeOpenTag("distribution");
-            if (options.clockModel == UNCORRELATED_EXPONENTIAL) {
+            if (options.clockModel == ModelOptions.UNCORRELATED_EXPONENTIAL) {
                 if (options.fixedSubstitutionRate) {
 
                     // TODO
@@ -149,11 +145,9 @@ public class BranchRatesModelGenerator extends Generator {
 
                 final String eModelName = ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL;
                 writer.writeOpenTag(eModelName);
-                writer.writeOpenTag("mean");
-                writeParameter("uced.mean", writer);
-                writer.writeCloseTag("mean");
+                writeParameter("mean", "uced.mean", writer, options);
                 writer.writeCloseTag(eModelName);
-            } else if (options.clockModel == UNCORRELATED_LOGNORMAL) {
+            } else if (options.clockModel == ModelOptions.UNCORRELATED_LOGNORMAL) {
                 if (options.fixedSubstitutionRate) {
 
                     // TODO
@@ -161,12 +155,8 @@ public class BranchRatesModelGenerator extends Generator {
                 }
 
                 writer.writeOpenTag("logNormalDistributionModel", new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
-                writer.writeOpenTag("mean");
-                writeParameter("ucld.mean", writer);
-                writer.writeCloseTag("mean");
-                writer.writeOpenTag("stdev");
-                writeParameter("ucld.stdev", writer);
-                writer.writeCloseTag("stdev");
+                writeParameter("mean", "ucld.mean", writer, options);
+                writeParameter("stdev", "ucld.stdev", writer, options);
                 writer.writeCloseTag("logNormalDistributionModel");
             } else {
                 throw new RuntimeException("Unrecognised relaxed clock model");

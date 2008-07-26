@@ -25,31 +25,34 @@
 
 package dr.app.beauti;
 
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.DataPartition;
+import dr.app.beauti.options.NucModelType;
+import dr.app.beauti.options.PartitionModel;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
-import dr.app.beauti.options.*;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.table.*;
-import org.virion.jam.util.IconUtils;
+import org.virion.jam.panels.OptionsPanel;
+import org.virion.jam.table.HeaderRenderer;
+import org.virion.jam.table.TableEditorStopper;
+import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import javax.swing.plaf.BorderUIResource;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.table.*;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.plaf.BorderUIResource;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Set;
-import java.util.HashSet;
 
 /**
- * @author			Andrew Rambaut
- * @author			Alexei Drummond
- * @version			$Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class ModelsPanel extends JPanel implements Exportable {
 
@@ -64,18 +67,18 @@ public class ModelsPanel extends JPanel implements Exportable {
     OptionsPanel modelPanel;
     TitledBorder modelBorder;
 
-    JComboBox nucSubstCombo = new JComboBox(new String[] {"HKY", "GTR"});
-    JComboBox aaSubstCombo = new JComboBox(new String[] {"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
-    JComboBox binarySubstCombo = new JComboBox(new String[] {"Simple", "Covarion"});
+    JComboBox nucSubstCombo = new JComboBox(new String[]{"HKY", "GTR"});
+    JComboBox aaSubstCombo = new JComboBox(new String[]{"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
+    JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
 
-    JComboBox frequencyCombo =new JComboBox(new String[] {"Estimated", "Empirical", "All equal"});
+    JComboBox frequencyCombo = new JComboBox(new String[]{"Estimated", "Empirical", "All equal"});
 
-    JComboBox heteroCombo = new JComboBox(new String[] {"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
+    JComboBox heteroCombo = new JComboBox(new String[]{"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
 
-    JComboBox gammaCatCombo = new JComboBox(new String[] {"4", "5", "6", "7", "8", "9", "10"});
+    JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5", "6", "7", "8", "9", "10"});
     JLabel gammaCatLabel;
 
-    JComboBox codingCombo = new JComboBox(new String[] {
+    JComboBox codingCombo = new JComboBox(new String[]{
             "Off",
             "2 partitions: codon positions (1 + 2), 3",
             "3 partitions: codon positions 1, 2, 3"});
@@ -89,11 +92,11 @@ public class ModelsPanel extends JPanel implements Exportable {
     JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY);
 
-    JComboBox clockModelCombo = new JComboBox(new String[] {
+    JComboBox clockModelCombo = new JComboBox(new String[]{
             "Strict Clock",
             "Random Local Clock",
             "Relaxed Clock: Uncorrelated Lognormal",
-            "Relaxed Clock: Uncorrelated Exponential" } );
+            "Relaxed Clock: Uncorrelated Exponential"});
 
     BeautiFrame frame = null;
 
@@ -260,10 +263,11 @@ public class ModelsPanel extends JPanel implements Exportable {
         substitutionRateField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
                 frame.mcmcChanged();
-            }});
+            }
+        });
         substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
         substitutionRateField.setEnabled(false);
-        
+
         PanelUtils.setupComponent(clockModelCombo);
         clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
         clockModelCombo.addItemListener(listener);
@@ -275,7 +279,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         OptionsPanel panel = new OptionsPanel(0, 0);
         panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
-        JPanel panel1 = new JPanel(new BorderLayout(0,0));
+        JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
         panel1.add(scrollPane, BorderLayout.CENTER);
         panel1.add(controlPanel1, BorderLayout.SOUTH);
@@ -295,7 +299,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
-        setLayout(new BorderLayout(0,0));
+        setLayout(new BorderLayout(0, 0));
         add(splitPane, BorderLayout.CENTER);
         add(panel, BorderLayout.SOUTH);
     }
@@ -306,7 +310,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         if (model != null) {
 
-            switch (model.dataType.getType()){
+            switch (model.dataType.getType()) {
                 case DataType.NUCLEOTIDES:
                     panel.addComponentWithLabel("Substitution Model:", nucSubstCombo);
                     panel.addComponentWithLabel("Base frequencies:", frequencyCombo);
@@ -315,7 +319,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
                     panel.addSeparator();
 
-                    JPanel panel1 = new JPanel(new BorderLayout(6,6));
+                    JPanel panel1 = new JPanel(new BorderLayout(6, 6));
                     panel1.setOpaque(false);
                     panel1.add(codingCombo, BorderLayout.CENTER);
                     panel1.add(setSRD06Button, BorderLayout.EAST);
@@ -384,13 +388,17 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         switch (options.clockModel) {
             case BeautiOptions.STRICT_CLOCK:
-                clockModelCombo.setSelectedIndex(0); break;
+                clockModelCombo.setSelectedIndex(0);
+                break;
             case BeautiOptions.RANDOM_LOCAL_CLOCK:
-                clockModelCombo.setSelectedIndex(1); break;
+                clockModelCombo.setSelectedIndex(1);
+                break;
             case BeautiOptions.UNCORRELATED_LOGNORMAL:
-                clockModelCombo.setSelectedIndex(2); break;
+                clockModelCombo.setSelectedIndex(2);
+                break;
             case BeautiOptions.UNCORRELATED_EXPONENTIAL:
-                clockModelCombo.setSelectedIndex(3); break;
+                clockModelCombo.setSelectedIndex(3);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown option for clock model");
         }
@@ -414,9 +422,9 @@ public class ModelsPanel extends JPanel implements Exportable {
         }
 
         int dataType = model.dataType.getType();
-        switch(dataType){
+        switch (dataType) {
             case DataType.NUCLEOTIDES:
-                if (model.nucSubstitutionModel == BeautiOptions.GTR) {
+                if (model.nucSubstitutionModel == NucModelType.GTR) {
                     nucSubstCombo.setSelectedIndex(1);
                 } else {
                     nucSubstCombo.setSelectedIndex(0);
@@ -483,13 +491,17 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         switch (clockModelCombo.getSelectedIndex()) {
             case 0:
-                options.clockModel = BeautiOptions.STRICT_CLOCK; break;
+                options.clockModel = BeautiOptions.STRICT_CLOCK;
+                break;
             case 1:
-                options.clockModel = BeautiOptions.RANDOM_LOCAL_CLOCK; break;
+                options.clockModel = BeautiOptions.RANDOM_LOCAL_CLOCK;
+                break;
             case 2:
-                options.clockModel = BeautiOptions.UNCORRELATED_LOGNORMAL; break;
+                options.clockModel = BeautiOptions.UNCORRELATED_LOGNORMAL;
+                break;
             case 3:
-                options.clockModel = BeautiOptions.UNCORRELATED_EXPONENTIAL; break;
+                options.clockModel = BeautiOptions.UNCORRELATED_EXPONENTIAL;
+                break;
             default:
                 throw new IllegalArgumentException("Unknown option for clock model");
         }
@@ -499,9 +511,9 @@ public class ModelsPanel extends JPanel implements Exportable {
     public void getOptions(PartitionModel model) {
 
         if (nucSubstCombo.getSelectedIndex() == 1) {
-            model.nucSubstitutionModel = BeautiOptions.GTR;
+            model.nucSubstitutionModel = NucModelType.GTR;
         } else {
-            model.nucSubstitutionModel = BeautiOptions.HKY;
+            model.nucSubstitutionModel = NucModelType.HKY;
         }
         model.aaSubstitutionModel = aaSubstCombo.getSelectedIndex();
 
@@ -575,7 +587,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         modelTableModel.fireTableDataChanged();
         int n = options.getPartitionModels().size();
         if (selRow >= n) {
-            selRow --;
+            selRow--;
         }
         modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         if (n == 0) {
@@ -646,7 +658,7 @@ public class ModelsPanel extends JPanel implements Exportable {
          *
          */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = { "Model" };
+        String[] columnNames = {"Model"};
 
         public ModelTableModel() {
         }
@@ -663,7 +675,8 @@ public class ModelsPanel extends JPanel implements Exportable {
         public Object getValueAt(int row, int col) {
             PartitionModel model = options.getPartitionModels().get(row);
             switch (col) {
-                case 0: return model.getName();
+                case 0:
+                    return model.getName();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
@@ -674,7 +687,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         }
 
         public void setValueAt(Object value, int row, int col) {
-            String name = ((String)value).trim();
+            String name = ((String) value).trim();
             if (name.length() > 0) {
                 PartitionModel model = options.getPartitionModels().get(row);
                 model.setName(name);
@@ -715,7 +728,9 @@ public class ModelsPanel extends JPanel implements Exportable {
 
             return buffer.toString();
         }
-    };
+    }
+
+    ;
 
     class ModelsTableCellRenderer extends TableRenderer {
 

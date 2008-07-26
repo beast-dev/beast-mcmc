@@ -66,7 +66,7 @@ public class CreateModelDialog {
         this.frame = frame;
 
         nameField = new JTextField();
-        nameField.setColumns(32);
+        nameField.setColumns(20);
 
         dataTypeCombo = new JComboBox(dataTypes);
 

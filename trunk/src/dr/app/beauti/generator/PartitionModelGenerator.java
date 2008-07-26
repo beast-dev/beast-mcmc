@@ -154,7 +154,7 @@ public class PartitionModelGenerator extends Generator {
     public void writeHKYModel(int num, XMLWriter writer, PartitionModel model) {
         String dataTypeDescription = model.dataType.getDescription();
 
-        String id = "hky";
+        String id = model.getName() + ".hky";
         if (num > 0) {
             id += Integer.toString(num);
         }
@@ -170,6 +170,7 @@ public class PartitionModelGenerator extends Generator {
                         new Attribute.Default<String>("dataType", dataTypeDescription)
                 }
         );
+        // TODO what alignment should I use here in general?
         writer.writeTag("alignment", new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
         if (model.frequencyPolicy == ModelOptions.ALLEQUAL)
@@ -252,6 +253,7 @@ public class PartitionModelGenerator extends Generator {
                         new Attribute.Default<String>("dataType", dataTypeDescription)
                 }
         );
+        // TODO what alignment should I actually use here?
         writer.writeTag("alignment", new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
         writeParameter(id + ".frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
@@ -331,6 +333,7 @@ public class PartitionModelGenerator extends Generator {
     public void writeLog(XMLWriter writer, PartitionModel model) {
 
         int codonPartitionCount = model.codonPartitionCount;
+        String id = model.getName() + ".";
 
         switch (model.dataType.getType()) {
             case DataType.NUCLEOTIDES:
@@ -344,28 +347,42 @@ public class PartitionModelGenerator extends Generator {
                     case HKY:
                         if (codonPartitionCount > 1 && model.unlinkedSubstitutionModel) {
                             for (int i = 1; i <= codonPartitionCount; i++) {
-                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "hky" + i + ".kappa"), true);
+                                writer.writeTag(ParameterParser.PARAMETER,
+                                        new Attribute.Default<String>("idref", id + "hky" + i + ".kappa"), true);
                             }
                         } else {
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "hky.kappa"), true);
+                            writer.writeTag(ParameterParser.PARAMETER,
+                                    new Attribute.Default<String>("idref", id + "hky.kappa"), true);
                         }
                         break;
 
                     case GTR:
+                        id = model.getName() + ".gtr";
                         if (codonPartitionCount > 1 && model.unlinkedSubstitutionModel) {
+
                             for (int i = 1; i <= codonPartitionCount; i++) {
-                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".ac"), true);
-                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".ag"), true);
-                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".at"), true);
-                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".cg"), true);
-                                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr" + i + ".gt"), true);
+                                writer.writeTag(ParameterParser.PARAMETER,
+                                        new Attribute.Default<String>("idref", id + i + ".ac"), true);
+                                writer.writeTag(ParameterParser.PARAMETER,
+                                        new Attribute.Default<String>("idref", id + i + ".ag"), true);
+                                writer.writeTag(ParameterParser.PARAMETER,
+                                        new Attribute.Default<String>("idref", id + i + ".at"), true);
+                                writer.writeTag(ParameterParser.PARAMETER,
+                                        new Attribute.Default<String>("idref", id + i + ".cg"), true);
+                                writer.writeTag(ParameterParser.PARAMETER,
+                                        new Attribute.Default<String>("idref", id + i + ".gt"), true);
                             }
                         } else {
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.ac"), true);
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.ag"), true);
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.at"), true);
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.cg"), true);
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "gtr.gt"), true);
+                            writer.writeTag(ParameterParser.PARAMETER,
+                                    new Attribute.Default<String>("idref", id + ".ac"), true);
+                            writer.writeTag(ParameterParser.PARAMETER,
+                                    new Attribute.Default<String>("idref", id + ".ag"), true);
+                            writer.writeTag(ParameterParser.PARAMETER,
+                                    new Attribute.Default<String>("idref", id + ".at"), true);
+                            writer.writeTag(ParameterParser.PARAMETER,
+                                    new Attribute.Default<String>("idref", id + ".cg"), true);
+                            writer.writeTag(ParameterParser.PARAMETER,
+                                    new Attribute.Default<String>("idref", id + ".gt"), true);
                         }
                         break;
                 }
@@ -381,10 +398,14 @@ public class PartitionModelGenerator extends Generator {
                     case ModelOptions.BIN_SIMPLE:
                         break;
                     case ModelOptions.BIN_COVARION:
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "bcov.alpha"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "bcov.s"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "bcov.frequencies"), true);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "bcov.hfrequencies"), true);
+                        writer.writeTag(ParameterParser.PARAMETER,
+                                new Attribute.Default<String>("idref", id + "bcov.alpha"), true);
+                        writer.writeTag(ParameterParser.PARAMETER,
+                                new Attribute.Default<String>("idref", id + "bcov.s"), true);
+                        writer.writeTag(ParameterParser.PARAMETER,
+                                new Attribute.Default<String>("idref", id + "bcov.frequencies"), true);
+                        writer.writeTag(ParameterParser.PARAMETER,
+                                new Attribute.Default<String>("idref", id + "bcov.hfrequencies"), true);
                         break;
 
                 }
@@ -442,11 +463,11 @@ public class PartitionModelGenerator extends Generator {
                     break;
                 case HKY:
                     writer.writeTag(NucModelType.HKY.getXMLName(),
-                            new Attribute.Default<String>("idref", "hky" + num), true);
+                            new Attribute.Default<String>("idref", model.getName() + ".hky" + num), true);
                     break;
                 case GTR:
                     writer.writeTag(dr.evomodel.substmodel.GTR.GTR_MODEL,
-                            new Attribute.Default<String>("idref", "gtr" + num), true);
+                            new Attribute.Default<String>("idref", model.getName() + ".gtr" + num), true);
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown substitution model.");
@@ -454,13 +475,16 @@ public class PartitionModelGenerator extends Generator {
         } else {
             switch (model.nucSubstitutionModel) {
                 case JC:
-                    writer.writeTag(NucModelType.HKY.getXMLName(), new Attribute.Default<String>("idref", "jc"), true);
+                    writer.writeTag(NucModelType.HKY.getXMLName(),
+                            new Attribute.Default<String>("idref", model.getName() + ".jc"), true);
                     break;
                 case HKY:
-                    writer.writeTag(NucModelType.HKY.getXMLName(), new Attribute.Default<String>("idref", "hky"), true);
+                    writer.writeTag(NucModelType.HKY.getXMLName(),
+                            new Attribute.Default<String>("idref", model.getName() + ".hky"), true);
                     break;
                 case GTR:
-                    writer.writeTag(dr.evomodel.substmodel.GTR.GTR_MODEL, new Attribute.Default<String>("idref", "gtr"), true);
+                    writer.writeTag(dr.evomodel.substmodel.GTR.GTR_MODEL,
+                            new Attribute.Default<String>("idref", model.getName() + ".gtr"), true);
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown substitution model.");

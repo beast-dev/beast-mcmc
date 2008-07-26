@@ -386,6 +386,10 @@ public class PartitionModel extends ModelOptions {
     }
 
     public Parameter getParameter(String name) {
+
+        if (name.startsWith(getName())) {
+            name = name.substring(getName().length() + 1);
+        }
         Parameter parameter = parameters.get(name);
 
         if (parameter == null) {

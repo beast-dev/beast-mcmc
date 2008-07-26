@@ -75,6 +75,11 @@ public class DataPanel extends JPanel implements Exportable {
         dataTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
+        TableColumn col = dataTable.getColumnModel().getColumn(4);
+        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
+        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        col.setCellRenderer(comboBoxRenderer);
+
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
         dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -129,9 +134,7 @@ public class DataPanel extends JPanel implements Exportable {
     private void modelsChanged() {
         Object[] modelArray = options.getPartitionModels().toArray();
         TableColumn col = dataTable.getColumnModel().getColumn(4);
-
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
-        //col.setCellRenderer(new ComboBoxRenderer(modelArray));
     }
 
     public void setOptions(BeautiOptions options) {
@@ -226,6 +229,8 @@ public class DataPanel extends JPanel implements Exportable {
                 partition.setPartitionModel(model);
             }
         }
+
+        modelsChanged();
 
         fireDataChanged();
         repaint();
@@ -335,8 +340,9 @@ public class DataPanel extends JPanel implements Exportable {
     }
 
     public class ComboBoxRenderer extends JComboBox implements TableCellRenderer {
-        public ComboBoxRenderer(Object[] items) {
-            super(items);
+        public ComboBoxRenderer() {
+            super();
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value,
@@ -351,9 +357,15 @@ public class DataPanel extends JPanel implements Exportable {
                 this.setBackground(table.getBackground());
             }
 
-            setSelectedItem(value);
+            if (value != null) {
+                removeAllItems();
+                addItem(value);
+            }
             return this;
         }
+
+        public void revalidate() {}
+
     }
 
     public class UnlinkModelsAction extends AbstractAction {

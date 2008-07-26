@@ -64,7 +64,7 @@ public class SelectModelDialog {
 
         copyCheck = new JCheckBox("Make copy with name:");
         nameField = new JTextField();
-        nameField.setColumns(32);
+        nameField.setColumns(20);
         nameField.setEnabled(false);
 
         optionPanel = new OptionsPanel(12, 12);
@@ -87,7 +87,7 @@ public class SelectModelDialog {
         for (Object model : models) {
             modelCombo.addItem(model);
         }
-        
+
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.QUESTION_MESSAGE,
                 JOptionPane.OK_CANCEL_OPTION,

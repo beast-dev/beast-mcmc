@@ -26,6 +26,7 @@
 package dr.app.beauti;
 
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.NucModelType;
 import dr.app.beauti.options.PartitionModel;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NexusImporter;
@@ -186,11 +187,11 @@ public class NexusApplicationImporter extends NexusImporter {
             if (match("NST", subcommand, 2)) {
                 int nst = readInteger(";");
                 if (nst == 1) {
-                    model.nucSubstitutionModel = BeautiOptions.JC;
+                    model.nucSubstitutionModel = NucModelType.JC;
                 } else if (nst == 2) {
-                    model.nucSubstitutionModel = BeautiOptions.HKY;
+                    model.nucSubstitutionModel = NucModelType.HKY;
                 } else if (nst == 6) {
-                    model.nucSubstitutionModel = BeautiOptions.GTR;
+                    model.nucSubstitutionModel = NucModelType.GTR;
                 } else {
                     throw new BadFormatException("Bad value for NST subcommand of LSET command");
                 }

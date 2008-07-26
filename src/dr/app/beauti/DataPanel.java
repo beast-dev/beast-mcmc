@@ -25,21 +25,24 @@
 
 package dr.app.beauti;
 
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.DataPartition;
+import dr.app.beauti.options.PartitionModel;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.framework.Exportable;
-import org.virion.jam.table.*;
 import org.virion.jam.panels.ActionPanel;
+import org.virion.jam.table.HeaderRenderer;
+import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
-import javax.swing.table.*;
+import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -119,7 +122,7 @@ public class DataPanel extends JPanel implements Exportable {
     }
 
 
-    private final void fireDataChanged() {
+    private void fireDataChanged() {
         frame.dataChanged();
     }
 
@@ -142,7 +145,7 @@ public class DataPanel extends JPanel implements Exportable {
         boolean hasSelection = (selRows != null && selRows.length != 0);
         frame.dataSelectionChanged(hasSelection);
         unlinkModelsAction.setEnabled(hasSelection);
-        linkModelAction.setEnabled(selRows.length > 1);
+        linkModelAction.setEnabled(selRows != null && selRows.length > 1);
     }
 
     public void removeSelection() {
@@ -162,7 +165,7 @@ public class DataPanel extends JPanel implements Exportable {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
             DataPartition partition = options.dataPartitions.get(row);
-            if (partition.getPartitionModel().getName() != partition.getName()) {
+            if (!partition.getPartitionModel().getName().equals(partition.getName())) {
                 PartitionModel model = new PartitionModel(partition);
                 options.addPartitionModel(model);
                 partition.setPartitionModel(model);
@@ -192,7 +195,7 @@ public class DataPanel extends JPanel implements Exportable {
 
         java.util.List<PartitionModel> models = options.getPartitionModels(dateType);
         Object[] modelArray = models.toArray();
-        
+
         if (selectModelDialog == null) {
             selectModelDialog = new SelectModelDialog(frame);
         }
@@ -243,7 +246,7 @@ public class DataPanel extends JPanel implements Exportable {
                 case 1:
                     return partition.getFileName();
                 case 2:
-                    return "" + partition.getAlignment().getPatternCount();
+                    return "" + (partition.getToSite() - partition.getFromSite() + 1);
                 case 3:
                     return partition.getAlignment().getDataType().getDescription();
                 case 4:
@@ -257,7 +260,7 @@ public class DataPanel extends JPanel implements Exportable {
             DataPartition partition = options.dataPartitions.get(row);
             switch (col) {
                 case 0:
-                    String name = ((String)aValue).trim();
+                    String name = ((String) aValue).trim();
                     if (name.length() > 0) {
                         partition.setName(name);
                     }

@@ -25,6 +25,7 @@
 
 package dr.app.tools;
 
+import dr.app.beauti.options.NucModelType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.SitePatterns;
@@ -45,6 +46,7 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeModelParser;
 import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.evomodelxml.HKYParser;
 import dr.evomodelxml.LoggerParser;
 import dr.evomodelxml.TreeLoggerParser;
 import dr.evoxml.SitePatternsParser;
@@ -560,11 +562,10 @@ public class BeastOptions {
             // Jukes-Cantor model
             if (nucSubstitutionModel == JC) {
                 writer.writeComment("The JC substitution model (Jukes & Cantor, 1969)");
-                writer.writeOpenTag(
-                        dr.evomodel.substmodel.HKY.HKY_MODEL,
+                writer.writeOpenTag(NucModelType.HKY.getXMLName(),
                         new Attribute[]{new Attribute.Default("id", "jc1")}
                 );
-                writer.writeOpenTag(dr.evomodel.substmodel.HKY.FREQUENCIES);
+                writer.writeOpenTag(HKYParser.FREQUENCIES);
                 writer.writeOpenTag(
                         FrequencyModel.FREQUENCY_MODEL,
                         new Attribute[]{
@@ -583,12 +584,12 @@ public class BeastOptions {
                 writer.writeCloseTag(FrequencyModel.FREQUENCIES);
 
                 writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
-                writer.writeCloseTag(dr.evomodel.substmodel.HKY.FREQUENCIES);
+                writer.writeCloseTag(HKYParser.FREQUENCIES);
 
-                writer.writeOpenTag(dr.evomodel.substmodel.HKY.KAPPA);
+                writer.writeOpenTag(HKYParser.KAPPA);
                 writeParameter("hky1.kappa", 1.0, 1.0, 1.0, writer);
-                writer.writeCloseTag(dr.evomodel.substmodel.HKY.KAPPA);
-                writer.writeCloseTag(dr.evomodel.substmodel.HKY.HKY_MODEL);
+                writer.writeCloseTag(HKYParser.KAPPA);
+                writer.writeCloseTag(NucModelType.HKY.getXMLName());
 
             } else
                 // Hasegawa Kishino and Yano 85 model
@@ -646,10 +647,10 @@ public class BeastOptions {
         // Hasegawa Kishino and Yano 85 model
         writer.writeComment("The HKY substitution model (Hasegawa, Kishino & Yano, 1985)");
         writer.writeOpenTag(
-                dr.evomodel.substmodel.HKY.HKY_MODEL,
+                NucModelType.HKY.getXMLName(),
                 new Attribute[]{new Attribute.Default("id", "hky" + num)}
         );
-        writer.writeOpenTag(dr.evomodel.substmodel.HKY.FREQUENCIES);
+        writer.writeOpenTag(HKYParser.FREQUENCIES);
         writer.writeOpenTag(
                 FrequencyModel.FREQUENCY_MODEL,
                 new Attribute[]{
@@ -668,12 +669,12 @@ public class BeastOptions {
         );
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
-        writer.writeCloseTag(dr.evomodel.substmodel.HKY.FREQUENCIES);
+        writer.writeCloseTag(HKYParser.FREQUENCIES);
 
-        writer.writeOpenTag(dr.evomodel.substmodel.HKY.KAPPA);
+        writer.writeOpenTag(HKYParser.KAPPA);
         writeParameter("hky" + num + ".kappa", 1.0, 0.0, 100.0, writer);
-        writer.writeCloseTag(dr.evomodel.substmodel.HKY.KAPPA);
-        writer.writeCloseTag(dr.evomodel.substmodel.HKY.HKY_MODEL);
+        writer.writeCloseTag(HKYParser.KAPPA);
+        writer.writeCloseTag(NucModelType.HKY.getXMLName());
     }
 
     /**
@@ -770,10 +771,10 @@ public class BeastOptions {
         switch (nucSubstitutionModel) {
             // JC cannot be unlinked because it has no parameters
             case JC:
-                writer.writeTag(dr.evomodel.substmodel.HKY.HKY_MODEL, new Attribute.Default("idref", "jc1"), true);
+                writer.writeTag(NucModelType.HKY.getXMLName(), new Attribute.Default("idref", "jc1"), true);
                 break;
             case HKY:
-                writer.writeTag(dr.evomodel.substmodel.HKY.HKY_MODEL, new Attribute.Default("idref", "hky" + n), true);
+                writer.writeTag(NucModelType.HKY.getXMLName(), new Attribute.Default("idref", "hky" + n), true);
                 break;
             case GTR:
                 writer.writeTag(dr.evomodel.substmodel.GTR.GTR_MODEL, new Attribute.Default("idref", "gtr" + n), true);

@@ -205,6 +205,10 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
+    public Parameter getParameter(String name, PartitionModel model) {
+        return model.getParameter(name);
+    }
+
     /**
      * return an list of parameters that are required
      *
@@ -1029,9 +1033,6 @@ public class BeautiOptions extends ModelOptions {
     public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
 
-    public HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();
-    public HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
-    public HashMap<String, Operator> operators = new HashMap<String, Operator>();
     public Parameter localClockRateChangesStatistic = null;
     public Parameter localClockRatesStatistic = null;
 }

@@ -2,6 +2,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.TreePrior;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.*;
@@ -68,7 +69,7 @@ public class TreePriorGenerator extends Generator {
             );
 
             writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
-            writeParameter("constant.popSize", writer);
+            writeParameter("constant.popSize", writer, options);
             writer.writeCloseTag(ConstantPopulationModel.POPULATION_SIZE);
             writer.writeCloseTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL);
 
@@ -87,18 +88,18 @@ public class TreePriorGenerator extends Generator {
 
             // write pop size socket
             writer.writeOpenTag(ExponentialGrowthModel.POPULATION_SIZE);
-            writeParameter("exponential.popSize", writer);
+            writeParameter("exponential.popSize", writer, options);
             writer.writeCloseTag(ExponentialGrowthModel.POPULATION_SIZE);
 
-            if (parameterization == GROWTH_RATE) {
+            if (parameterization == ModelOptions.GROWTH_RATE) {
                 // write growth rate socket
                 writer.writeOpenTag(ExponentialGrowthModel.GROWTH_RATE);
-                writeParameter("exponential.growthRate", writer);
+                writeParameter("exponential.growthRate", writer, options);
                 writer.writeCloseTag(ExponentialGrowthModel.GROWTH_RATE);
             } else {
                 // write doubling time socket
                 writer.writeOpenTag(ExponentialGrowthModel.DOUBLING_TIME);
-                writeParameter("exponential.doublingTime", writer);
+                writeParameter("exponential.doublingTime", writer, options);
                 writer.writeCloseTag(ExponentialGrowthModel.DOUBLING_TIME);
             }
 
@@ -118,24 +119,24 @@ public class TreePriorGenerator extends Generator {
 
             // write pop size socket
             writer.writeOpenTag(LogisticGrowthModel.POPULATION_SIZE);
-            writeParameter("logistic.popSize", writer);
+            writeParameter("logistic.popSize", writer, options);
             writer.writeCloseTag(LogisticGrowthModel.POPULATION_SIZE);
 
-            if (parameterization == GROWTH_RATE) {
+            if (parameterization == ModelOptions.GROWTH_RATE) {
                 // write growth rate socket
                 writer.writeOpenTag(LogisticGrowthModel.GROWTH_RATE);
-                writeParameter("logistic.growthRate", writer);
+                writeParameter("logistic.growthRate", writer, options);
                 writer.writeCloseTag(LogisticGrowthModel.GROWTH_RATE);
             } else {
                 // write doubling time socket
                 writer.writeOpenTag(LogisticGrowthModel.DOUBLING_TIME);
-                writeParameter("logistic.doublingTime", writer);
+                writeParameter("logistic.doublingTime", writer, options);
                 writer.writeCloseTag(LogisticGrowthModel.DOUBLING_TIME);
             }
 
             // write logistic t50 socket
             writer.writeOpenTag(LogisticGrowthModel.TIME_50);
-            writeParameter("logistic.t50", writer);
+            writeParameter("logistic.t50", writer, options);
             writer.writeCloseTag(LogisticGrowthModel.TIME_50);
 
             writer.writeCloseTag(LogisticGrowthModel.LOGISTIC_GROWTH_MODEL);
@@ -156,26 +157,19 @@ public class TreePriorGenerator extends Generator {
             );
 
             // write pop size socket
-            writer.writeOpenTag(ExpansionModel.POPULATION_SIZE);
-            writeParameter("expansion.popSize", writer);
-            writer.writeCloseTag(ExpansionModel.POPULATION_SIZE);
+            writeParameter(ExpansionModel.POPULATION_SIZE, "expansion.popSize", writer, options);
 
-            if (options.parameterization == GROWTH_RATE) {
+            if (options.parameterization == ModelOptions.GROWTH_RATE) {
                 // write growth rate socket
-                writer.writeOpenTag(ExpansionModel.GROWTH_RATE);
-                writeParameter("expansion.growthRate", writer);
-                writer.writeCloseTag(ExpansionModel.GROWTH_RATE);
+                writeParameter(ExpansionModel.GROWTH_RATE, "expansion.growthRate", writer, options);
             } else {
                 // write doubling time socket
-                writer.writeOpenTag(ExpansionModel.DOUBLING_TIME);
-                writeParameter("expansion.doublingTime", writer);
-                writer.writeCloseTag(ExpansionModel.DOUBLING_TIME);
+                writeParameter(ExpansionModel.DOUBLING_TIME, "expansion.doublingTime", writer, options);
             }
 
             // write ancestral proportion socket
-            writer.writeOpenTag(ExpansionModel.ANCESTRAL_POPULATION_PROPORTION);
-            writeParameter("expansion.ancestralProportion", writer);
-            writer.writeCloseTag(ExpansionModel.ANCESTRAL_POPULATION_PROPORTION);
+            writeParameter(ExpansionModel.ANCESTRAL_POPULATION_PROPORTION,
+                    "expansion.ancestralProportion", writer, options);
 
             writer.writeCloseTag(ExpansionModel.EXPANSION_MODEL);
 
@@ -192,9 +186,7 @@ public class TreePriorGenerator extends Generator {
                     }
             );
 
-            writer.writeOpenTag(YuleModelParser.BIRTH_RATE);
-            writeParameter("yule.birthRate", writer);
-            writer.writeCloseTag(YuleModelParser.BIRTH_RATE);
+            writeParameter(YuleModelParser.BIRTH_RATE, "yule.birthRate", writer, options);
             writer.writeCloseTag(YuleModel.YULE_MODEL);
         } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
             writer.writeComment("A prior on the distribution node heights defined given");
@@ -207,12 +199,10 @@ public class TreePriorGenerator extends Generator {
                     }
             );
 
-            writer.writeOpenTag(BirthDeathModelParser.BIRTHDIFF_RATE);
-            writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, writer);
-            writer.writeCloseTag(BirthDeathModelParser.BIRTHDIFF_RATE);
-            writer.writeOpenTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
-            writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, writer);
-            writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
+            writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE,
+                    BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, writer, options);
+            writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE,
+                    BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, writer, options);
             writer.writeCloseTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL);
         }
 
@@ -280,13 +270,14 @@ public class TreePriorGenerator extends Generator {
                     BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD,
                     new Attribute[]{
                             new Attribute.Default<String>("id", "skyline"),
-                            new Attribute.Default<String>("linear", options.skylineModel == LINEAR_SKYLINE ? "true" : "false")
+                            new Attribute.Default<String>("linear",
+                                    options.skylineModel == ModelOptions.LINEAR_SKYLINE ? "true" : "false")
                     }
             );
 
             // write pop size socket
             writer.writeOpenTag(BayesianSkylineLikelihood.POPULATION_SIZES);
-            if (options.skylineModel == LINEAR_SKYLINE) {
+            if (options.skylineModel == ModelOptions.LINEAR_SKYLINE) {
                 writeParameter("skyline.popSize", options.skylineGroupCount + 1, writer);
             } else {
                 writeParameter("skyline.popSize", options.skylineGroupCount, writer);
@@ -426,7 +417,7 @@ public class TreePriorGenerator extends Generator {
                 break;
             case EXPONENTIAL:
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "exponential.popSize"), true);
-                if (options.parameterization == GROWTH_RATE) {
+                if (options.parameterization == ModelOptions.GROWTH_RATE) {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "exponential.growthRate"), true);
                 } else {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "exponential.doublingTime"), true);
@@ -434,7 +425,7 @@ public class TreePriorGenerator extends Generator {
                 break;
             case LOGISTIC:
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "logistic.popSize"), true);
-                if (options.parameterization == GROWTH_RATE) {
+                if (options.parameterization == ModelOptions.GROWTH_RATE) {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "logistic.growthRate"), true);
                 } else {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "logistic.doublingTime"), true);
@@ -443,7 +434,7 @@ public class TreePriorGenerator extends Generator {
                 break;
             case EXPANSION:
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "expansion.popSize"), true);
-                if (options.parameterization == GROWTH_RATE) {
+                if (options.parameterization == ModelOptions.GROWTH_RATE) {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "expansion.growthRate"), true);
                 } else {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "expansion.doublingTime"), true);

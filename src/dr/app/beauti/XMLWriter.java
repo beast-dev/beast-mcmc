@@ -28,56 +28,66 @@ package dr.app.beauti;
 import dr.util.Attribute;
 
 import java.io.Writer;
+import java.util.List;
 
 /**
- * @author			Alexei Drummond
- * @version			$Id: XMLWriter.java,v 1.3 2005/06/27 21:18:40 rambaut Exp $
+ * @author Alexei Drummond
+ * @version $Id: XMLWriter.java,v 1.3 2005/06/27 21:18:40 rambaut Exp $
  */
 public class XMLWriter extends java.io.PrintWriter {
 
-	int level = 0;
+    int level = 0;
 
-	public XMLWriter(Writer writer) {
-		super(writer);
-	}
+    public XMLWriter(Writer writer) {
+        super(writer);
+    }
 
-	public void increaseLevel() { level += 1; }
-	public void decreaseLevel() { level -= 1; }
+    public void increaseLevel() {
+        level += 1;
+    }
 
-	public void writeComment(String comment) {
-		writeComment(comment, 80);
-	}
+    public void decreaseLevel() {
+        level -= 1;
+    }
 
-	public void writeComment(String comment, int length) {
-		StringBuffer buffer = new StringBuffer("<!-- ");
-		buffer.append(comment);
-		for (int i = buffer.length(); i < (length - 3); i++) {
-			buffer.append(' ');
-		}
-		buffer.append("-->");
-		writeText(buffer.toString());
-	}
+    public void writeComment(String comment) {
+        writeComment(comment, 80);
+    }
 
-	public void writeOpenTag(String tagname) {
-		writeText("<" + tagname + ">");
-		increaseLevel();
-	}
+    public void writeComment(String comment, int length) {
+        StringBuffer buffer = new StringBuffer("<!-- ");
+        buffer.append(comment);
+        for (int i = buffer.length(); i < (length - 3); i++) {
+            buffer.append(' ');
+        }
+        buffer.append("-->");
+        writeText(buffer.toString());
+    }
 
-	public void writeOpenTag(String tagname, Attribute attribute) {
-		writeTag(tagname, new Attribute[] {attribute}, false);
-	}
+    public void writeOpenTag(String tagname) {
+        writeText("<" + tagname + ">");
+        increaseLevel();
+    }
 
-	public void writeOpenTag(String tagname, Attribute[] attributes) {
-		writeTag(tagname, attributes, false);
-	}
+    public void writeOpenTag(String tagname, Attribute attribute) {
+        writeTag(tagname, new Attribute[]{attribute}, false);
+    }
 
-	public void writeTag(String tagname, Attribute attribute, boolean close) {
-		writeTag(tagname, new Attribute[] { attribute }, close);
-	}
+    public void writeOpenTag(String tagname, Attribute[] attributes) {
+        writeTag(tagname, attributes, false);
+    }
 
-	public void writeTag(String tagname, Attribute[] attributes, boolean close) {
-		StringBuffer buffer = new StringBuffer("<");
-		buffer.append(tagname);
+    public void writeOpenTag(String tagname, List<Attribute> attributes) {
+        writeTag(tagname, attributes.toArray(new Attribute[attributes.size()]), false);
+    }
+
+    public void writeTag(String tagname, Attribute attribute, boolean close) {
+        writeTag(tagname, new Attribute[]{attribute}, close);
+    }
+
+    public void writeTag(String tagname, Attribute[] attributes, boolean close) {
+        StringBuffer buffer = new StringBuffer("<");
+        buffer.append(tagname);
         for (Attribute attribute : attributes) {
             buffer.append(' ');
             buffer.append(attribute.getAttributeName());
@@ -85,15 +95,15 @@ public class XMLWriter extends java.io.PrintWriter {
             buffer.append(attribute.getAttributeValue());
             buffer.append("\"");
         }
-		if (close) {
-			buffer.append("/");
-		}
-		buffer.append(">");
-		writeText(buffer.toString());
-		if (!close) {
-			increaseLevel();
-		}
-	}
+        if (close) {
+            buffer.append("/");
+        }
+        buffer.append(">");
+        writeText(buffer.toString());
+        if (!close) {
+            increaseLevel();
+        }
+    }
 
     public void writeTag(String tagname, Attribute[] attributes, String content, boolean close) {
         StringBuffer buffer = new StringBuffer("<");
@@ -123,16 +133,16 @@ public class XMLWriter extends java.io.PrintWriter {
         }
     }
 
-	public void writeCloseTag(String tagname) {
-		decreaseLevel();
-		writeText("</" + tagname + ">");
-	}
+    public void writeCloseTag(String tagname) {
+        decreaseLevel();
+        writeText("</" + tagname + ">");
+    }
 
-	public void writeText(String string) {
-		for (int i =0; i < level; i++) {
-			write('\t');
-		}
-		println(string);
-	}
+    public void writeText(String string) {
+        for (int i = 0; i < level; i++) {
+            write('\t');
+        }
+        println(string);
+    }
 }
 

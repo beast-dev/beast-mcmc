@@ -1,8 +1,5 @@
 package dr.app.beauti.options;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -14,7 +11,8 @@ public class Operator {
                     Parameter parameter,
                     OperatorType operatorType,
                     double tuning,
-                    double weight) {
+                    double weight,
+                    ModelOptions options) {
 
         this.baseName = name;
         this.description = description;
@@ -26,12 +24,14 @@ public class Operator {
         this.tuning = tuning;
         this.weight = weight;
 
+        this.options = options;
+
         this.inUse = true;
     }
 
     public Operator(String name, String description,
                     Parameter parameter1, Parameter parameter2,
-                    OperatorType operatorType, double tuning, double weight) {
+                    OperatorType operatorType, double tuning, double weight, ModelOptions options) {
         this.baseName = name;
         this.description = description;
         this.parameter1 = parameter1;
@@ -73,9 +73,13 @@ public class Operator {
         return name;
     }
 
-    public void addAttribute(String name, String value) {
-        attributes.put(name, value);
+    public ModelOptions getModelOptions() {
+        return options;
     }
+
+    //public void addAttribute(String name, String value) {
+    //    attributes.put(name, value);
+    //}
 
     private final String baseName;
     public String prefix = null;
@@ -91,6 +95,8 @@ public class Operator {
     public final Parameter parameter1;
     public final Parameter parameter2;
 
-    private Map<String, String> attributes = new HashMap<String, String>();
+    private ModelOptions options;
+
+    //private Map<String, String> attributes = new HashMap<String, String>();
 
 }

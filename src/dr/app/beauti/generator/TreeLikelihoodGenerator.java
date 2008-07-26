@@ -43,7 +43,6 @@ public class TreeLikelihoodGenerator extends Generator {
         }
     }
 
-
     /**
      * Write the tree likelihood XML block.
      *
@@ -116,11 +115,11 @@ public class TreeLikelihoodGenerator extends Generator {
             if (partition.isCoding() && model.codonHeteroPattern != null) {
                 for (int i = 1; i <= model.codonPartitionCount; i++) {
                     writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD,
-                            new Attribute.Default<String>("idref", model.getName() + ".treeLikelihood" + i), true);
+                            new Attribute.Default<String>("idref", partition.getName() + ".treeLikelihood" + i), true);
                 }
             } else {
                 writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD,
-                        new Attribute.Default<String>("idref", model.getName() + ".treeLikelihood"), true);
+                        new Attribute.Default<String>("idref", partition.getName() + ".treeLikelihood"), true);
             }
         }
     }

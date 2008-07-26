@@ -319,7 +319,7 @@ public class BeastGenerator extends Generator {
             case DataType.COVARION:
 
                 switch (partition.getPartitionModel().binarySubstitutionModel) {
-                    case BIN_COVARION:
+                    case ModelOptions.BIN_COVARION:
                         description = TwoStateCovarion.DESCRIPTION;
                         break;
 
@@ -386,6 +386,8 @@ public class BeastGenerator extends Generator {
      */
     public void writePatternLists(DataPartition partition, XMLWriter writer) {
 
+        int from = partition.getFromSite();
+        int to = partition.getToSite();
         Alignment alignment = partition.getAlignment();
         String codonHeteroPattern = partition.getPartitionModel().codonHeteroPattern;
 
@@ -401,23 +403,23 @@ public class BeastGenerator extends Generator {
                                 new Attribute.Default<String>("id", "patterns1+2"),
                         }
                 );
-                writePatternList(alignment, 1, 3, writer);
-                writePatternList(alignment, 2, 3, writer);
+                writePatternList(alignment, from, to, 3, writer);
+                writePatternList(alignment, from + 1, to, 3, writer);
                 writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
-                writePatternList(alignment, 3, 3, writer);
+                writePatternList(alignment, from + 2, to, 3, writer);
 
             } else {
                 // pattern is 123
                 // write pattern lists for all three codon positions
                 for (int i = 1; i <= 3; i++) {
-                    writePatternList(alignment, i, 3, writer);
+                    writePatternList(alignment, from + i - 1, to, 3, writer);
                 }
 
             }
         } else {
             //partitionCount = 1;
-            writePatternList(alignment, -1, 0, writer);
+            writePatternList(alignment, from, to, 0, writer);
         }
     }
 
@@ -440,10 +442,11 @@ public class BeastGenerator extends Generator {
      *
      * @param alignment the alignment to write a pattern list from
      * @param from      from site
+     * @param to        to site
      * @param every     skip every
      * @param writer    the writer
      */
-    private void writePatternList(Alignment alignment, int from, int every, XMLWriter writer) {
+    private void writePatternList(Alignment alignment, int from, int to, int every, XMLWriter writer) {
 
         String id = "patterns";
         if (from < 1) {
@@ -454,24 +457,18 @@ public class BeastGenerator extends Generator {
             id += Integer.toString(from);
         }
 
-        SitePatterns patterns = new SitePatterns(alignment, from - 1, 0, every);
+        SitePatterns patterns = new SitePatterns(alignment, from - 1, to - 1, every);
         writer.writeComment("npatterns=" + patterns.getPatternCount());
+
+        List<Attribute> attributes = new ArrayList<Attribute>();
+        attributes.add(new Attribute.Default<String>("id", id));
+        attributes.add(new Attribute.Default<String>("from", "" + from));
+        if (to >= 0) attributes.add(new Attribute.Default<String>("to", "" + to));
+
         if (every != 0) {
-            writer.writeOpenTag(SitePatternsParser.PATTERNS,
-                    new Attribute[]{
-                            new Attribute.Default<String>("id", id),
-                            new Attribute.Default<String>("from", "" + from),
-                            new Attribute.Default<String>("every", "" + every)
-                    }
-            );
-        } else {
-            writer.writeOpenTag(SitePatternsParser.PATTERNS,
-                    new Attribute[]{
-                            new Attribute.Default<String>("id", id),
-                            new Attribute.Default<String>("from", "" + from)
-                    }
-            );
+            attributes.add(new Attribute.Default<String>("every", "" + every));
         }
+        writer.writeOpenTag(SitePatternsParser.PATTERNS, attributes);
 
         writer.writeTag("alignment", new Attribute.Default<String>("idref", "alignment"), true);
         writer.writeCloseTag(SitePatternsParser.PATTERNS);
@@ -689,30 +686,31 @@ public class BeastGenerator extends Generator {
 
     private void writeDeltaOperator(Operator operator, XMLWriter writer) {
 
-//        model.codonPartitionCount = getCodonPartionCount(model.codonHeteroPattern);
-//
-//        if (operator.getName().equals("Relative rates") && model.codonHeteroPattern.equals("112")) {
-//            writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
-//                    new Attribute[]{
-//                            new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
-//                            new Attribute.Default<String>(DeltaExchangeOperator.PARAMETER_WEIGHTS, "2 1"),
-//                            new Attribute.Default<Double>("weight", operator.weight),
-//                    }
-//            );
-//        } else {
-        writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
-                new Attribute[]{
-                        new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
-                        new Attribute.Default<Double>("weight", operator.weight),
-                }
-        );
-//        }
+
+        if (operator.getName().equals("Relative rates")) {
+
+            PartitionModel model = ((PartitionModel) operator.getModelOptions());
+
+            if (model.codonHeteroPattern.equals("112")) {
+                writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
+                        new Attribute[]{
+                                new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
+                                new Attribute.Default<String>(DeltaExchangeOperator.PARAMETER_WEIGHTS, "2 1"),
+                                new Attribute.Default<Double>("weight", operator.weight),
+                        }
+                );
+            } else {
+                writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
+                        new Attribute[]{
+                                new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
+                                new Attribute.Default<Double>("weight", operator.weight),
+                        }
+                );
+            }
+        }
 
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag(DeltaExchangeOperator.DELTA_EXCHANGE);
-
-        // TODO
-        throw new RuntimeException("TO DO");
     }
 
     private void writeIntegerDeltaOperator(Operator operator, XMLWriter writer) {
@@ -993,7 +991,7 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
                 });
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-        if (options.clockModel != STRICT_CLOCK) {
+        if (options.clockModel != ModelOptions.STRICT_CLOCK) {
             writer.writeTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
         }
         if (options.hasData()) {
@@ -1036,7 +1034,7 @@ public class BeastGenerator extends Generator {
                             new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
                     });
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-            if (options.clockModel == STRICT_CLOCK) {
+            if (options.clockModel == ModelOptions.STRICT_CLOCK) {
                 writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
             } else {
                 writer.writeTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
@@ -1238,14 +1236,14 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        if (options.clockModel == STRICT_CLOCK) {
+        if (options.clockModel == ModelOptions.STRICT_CLOCK) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "clock.rate"), true);
         } else {
             writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "meanRate"), true);
         }
         writer.writeCloseTag(Columns.COLUMN);
 
-        if (options.clockModel == RANDOM_LOCAL_CLOCK) {
+        if (options.clockModel == ModelOptions.RANDOM_LOCAL_CLOCK) {
             writeSumStatisticColumn(writer, "rateChanges", "Rate Changes");
         }
     }
@@ -1266,7 +1264,7 @@ public class BeastGenerator extends Generator {
 
         // As of v1.4.2, always write the rate parameter even if fixed...
         //if (!fixedSubstitutionRate) {
-        if (options.clockModel == STRICT_CLOCK) {
+        if (options.clockModel == ModelOptions.STRICT_CLOCK) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "clock.rate"), true);
         } else {
             writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "meanRate"), true);
@@ -1285,17 +1283,17 @@ public class BeastGenerator extends Generator {
             partitionModelGenerator.writeLog(writer, model);
         }
 
-        if (options.clockModel != STRICT_CLOCK) {
-            if (options.clockModel == UNCORRELATED_EXPONENTIAL) {
+        if (options.clockModel != ModelOptions.STRICT_CLOCK) {
+            if (options.clockModel == ModelOptions.UNCORRELATED_EXPONENTIAL) {
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "uced.mean"), true);
-            } else if (options.clockModel == UNCORRELATED_LOGNORMAL) {
+            } else if (options.clockModel == ModelOptions.UNCORRELATED_LOGNORMAL) {
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.mean"), true);
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.stdev"), true);
             }
             writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "coefficientOfVariation"), true);
             writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>("idref", "covariance"), true);
 
-            if (options.clockModel == RANDOM_LOCAL_CLOCK) {
+            if (options.clockModel == ModelOptions.RANDOM_LOCAL_CLOCK) {
                 writer.writeTag("sumStatistic", new Attribute.Default<String>("idref", "rateChanges"), true);
             }
         }

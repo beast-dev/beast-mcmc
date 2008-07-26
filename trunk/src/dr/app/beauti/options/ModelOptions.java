@@ -19,10 +19,6 @@ public class ModelOptions {
     public static final int BACKWARDS = 1;
     public static final int NONE = -1;
 
-    public static final int JC = 0;
-    public static final int HKY = 1;
-    public static final int GTR = 2;
-
     public static final int BLOSUM_62 = 0;
     public static final int DAYHOFF = 1;
     public static final int JTT = 2;
@@ -58,23 +54,23 @@ public class ModelOptions {
 
     protected void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
-        operators.put(parameterName, new Operator(parameterName, "", parameter, type, tuning, weight));
+        operators.put(parameterName, new Operator(parameterName, "", parameter, type, tuning, weight, this));
     }
 
     protected void createOperator(String key, String name, String description, String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
-        operators.put(key, new Operator(name, description, parameter, type, tuning, weight));
+        operators.put(key, new Operator(name, description, parameter, type, tuning, weight, this));
     }
 
     protected void createOperator(String key, String name, String description, String parameterName1, String parameterName2, OperatorType type, double tuning, double weight) {
         Parameter parameter1 = getParameter(parameterName1);
         Parameter parameter2 = getParameter(parameterName2);
-        operators.put(key, new Operator(name, description, parameter1, parameter2, type, tuning, weight));
+        operators.put(key, new Operator(name, description, parameter1, parameter2, type, tuning, weight, this));
     }
 
     protected void createScaleOperator(String parameterName, double weight) {
         Parameter parameter = getParameter(parameterName);
-        operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE, 0.75, weight));
+        operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE, 0.75, weight, this));
     }
 
     protected Parameter createParameter(String name, String description) {
@@ -109,9 +105,25 @@ public class ModelOptions {
         parameters.put(name, new Parameter(name, description, lower, upper));
     }
 
-    protected Parameter getParameter(String name) {
+    public Parameter getParameter(String name) {
         Parameter parameter = parameters.get(name);
-        if (parameter == null) throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
+        if (parameter == null) {
+            for (String key : parameters.keySet()) {
+                System.err.println(key);
+            }
+            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
+        }
+        return parameter;
+    }
+
+    public Parameter getStatistic(TaxonList taxonList) {
+        Parameter parameter = statistics.get(taxonList);
+        if (parameter == null) {
+            for (TaxonList key : statistics.keySet()) {
+                System.err.println("Taxon list: " + key.getId());
+            }
+            throw new IllegalArgumentException("Statistic for taxon list, " + taxonList.getId() + ", is unknown");
+        }
         return parameter;
     }
 
@@ -122,7 +134,7 @@ public class ModelOptions {
     }
 
 
-    public HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();
-    public HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
-    public HashMap<String, Operator> operators = new HashMap<String, Operator>();
+    HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();
+    HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
+    HashMap<String, Operator> operators = new HashMap<String, Operator>();
 }

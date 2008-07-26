@@ -159,7 +159,7 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(dr.evomodel.substmodel.FrequencyModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.GeneralSubstitutionModel.PARSER);
-        addXMLObjectParser(dr.evomodel.substmodel.HKY.PARSER);
+        addXMLObjectParser(new dr.evomodelxml.HKYParser());
         addXMLObjectParser(dr.evomodel.substmodel.GTR.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.CovarionHKY.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.CovarionGTR.PARSER);

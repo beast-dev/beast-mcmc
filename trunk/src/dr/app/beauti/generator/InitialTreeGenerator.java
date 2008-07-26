@@ -34,7 +34,7 @@ public class InitialTreeGenerator extends Generator {
         } else if (options.upgmaStartingTree) {
             // generate a upgma starting tree
             writer.writeComment("Construct a rough-and-ready UPGMA tree as an starting tree");
-            dr.app.beauti.options.Parameter rootHeight = getParameter("treeModel.rootHeight");
+            dr.app.beauti.options.Parameter rootHeight = options.getParameter("treeModel.rootHeight");
             if (rootHeight.priorType != PriorType.NONE) {
                 writer.writeOpenTag(
                         UPGMATreeParser.UPGMA_TREE,
@@ -65,7 +65,7 @@ public class InitialTreeGenerator extends Generator {
         } else {
             // generate a coalescent tree
             writer.writeComment("Generate a random starting tree under the coalescent process");
-            dr.app.beauti.options.Parameter rootHeight = getParameter("treeModel.rootHeight");
+            dr.app.beauti.options.Parameter rootHeight = options.getParameter("treeModel.rootHeight");
             if (rootHeight.priorType != PriorType.NONE) {
                 writer.writeOpenTag(
                         CoalescentSimulator.COALESCENT_TREE,
@@ -88,7 +88,7 @@ public class InitialTreeGenerator extends Generator {
                 writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
                 writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
                 for (Taxa taxonSet : options.taxonSets) {
-                    dr.app.beauti.options.Parameter statistic = statistics.get(taxonSet);
+                    dr.app.beauti.options.Parameter statistic = options.getStatistic(taxonSet);
 
                     Attribute mono = new Attribute.Default<Boolean>(
                             CoalescentSimulator.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxonSet));

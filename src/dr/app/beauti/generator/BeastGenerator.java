@@ -415,8 +415,8 @@ public class BeastGenerator extends Generator {
                                 new Attribute.Default<String>("id", "patterns1+2"),
                         }
                 );
-                writePatternList(alignment, from, to, 3, writer);
-                writePatternList(alignment, from + 1, to, 3, writer);
+                partition.addPatternListId(writePatternList(alignment, from, to, 3, writer));
+                partition.addPatternListId(writePatternList(alignment, from + 1, to, 3, writer));
                 writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
                 writePatternList(alignment, from + 2, to, 3, writer);
@@ -425,13 +425,13 @@ public class BeastGenerator extends Generator {
                 // pattern is 123
                 // write pattern lists for all three codon positions
                 for (int i = 1; i <= 3; i++) {
-                    writePatternList(alignment, from + i - 1, to, 3, writer);
+                    partition.addPatternListId(writePatternList(alignment, from + i - 1, to, 3, writer));
                 }
 
             }
         } else {
             //partitionCount = 1;
-            writePatternList(alignment, from, to, 0, writer);
+            partition.addPatternListId(writePatternList(alignment, from, to, 0, writer));
         }
     }
 
@@ -458,17 +458,19 @@ public class BeastGenerator extends Generator {
      * @param every     skip every
      * @param writer    the writer
      */
-    private void writePatternList(Alignment alignment, int from, int to, int every, XMLWriter writer) {
+    private String writePatternList(Alignment alignment, int from, int to, int every, XMLWriter writer) {
 
-        String id = "patterns";
+        if (every < 1) every = 1;
+        String id = alignment.getId() + "_patterns";
         if (from < 1) {
             writer.writeComment("The unique patterns for all positions");
             from = 1;
         } else {
-            writer.writeComment("The unique patterns for codon position " + from);
-            id += Integer.toString(from);
+            writer.writeComment("The unique patterns from " + from + " to " + to + ((every > 1) ? " every " + every : ""));
+            id += from + "_" + to + ((every > 1) ? "_" + every : "");
         }
 
+        // this object is created solely to calculate the number of patterns in the alignment
         SitePatterns patterns = new SitePatterns(alignment, from - 1, to - 1, every);
         writer.writeComment("npatterns=" + patterns.getPatternCount());
 
@@ -477,13 +479,15 @@ public class BeastGenerator extends Generator {
         attributes.add(new Attribute.Default<String>("from", "" + from));
         if (to >= 0) attributes.add(new Attribute.Default<String>("to", "" + to));
 
-        if (every != 0) {
+        if (every > 1) {
             attributes.add(new Attribute.Default<String>("every", "" + every));
         }
         writer.writeOpenTag(SitePatternsParser.PATTERNS, attributes);
 
         writer.writeTag("alignment", new Attribute.Default<String>("idref", alignment.getId()), true);
         writer.writeCloseTag(SitePatternsParser.PATTERNS);
+
+        return id;
     }
 
     /**
@@ -711,14 +715,14 @@ public class BeastGenerator extends Generator {
                                 new Attribute.Default<Double>("weight", operator.weight),
                         }
                 );
-            } else {
-                writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
-                        new Attribute[]{
-                                new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
-                                new Attribute.Default<Double>("weight", operator.weight),
-                        }
-                );
             }
+        } else {
+            writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
+                    new Attribute[]{
+                            new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
+                            new Attribute.Default<Double>("weight", operator.weight),
+                    }
+            );
         }
 
         writeParameter1Ref(writer, operator);

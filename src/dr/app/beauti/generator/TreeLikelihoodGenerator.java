@@ -36,10 +36,10 @@ public class TreeLikelihoodGenerator extends Generator {
 
         if (partition.isCoding() && model.codonHeteroPattern != null) {
             for (int i = 1; i <= model.codonPartitionCount; i++) {
-                writeTreeLikelihood(partition.getName(), i, writer, partition);
+                writeTreeLikelihood(partition.getName() + ".treeLikelihood", i, writer, partition);
             }
         } else {
-            writeTreeLikelihood(partition.getName(), -1, writer, partition);
+            writeTreeLikelihood(partition.getName() + ".treeLikelihood", -1, writer, partition);
         }
     }
 
@@ -47,12 +47,12 @@ public class TreeLikelihoodGenerator extends Generator {
     /**
      * Write the tree likelihood XML block.
      *
-     * @param name      the name of the tree likelihood block
+     * @param id        the id of the tree likelihood
      * @param num       the likelihood number
      * @param writer    the writer
      * @param partition the partition for which likelihood block is being generated
      */
-    public void writeTreeLikelihood(String name, int num, XMLWriter writer, DataPartition partition) {
+    public void writeTreeLikelihood(String id, int num, XMLWriter writer, DataPartition partition) {
 
         PartitionModel model = partition.getPartitionModel();
 
@@ -60,36 +60,49 @@ public class TreeLikelihoodGenerator extends Generator {
             writer.writeOpenTag(
                     TreeLikelihood.TREE_LIKELIHOOD,
                     new Attribute[]{
-                            new Attribute.Default<String>("id", "treeLikelihood" + (name != null ? name : "") + num),
+                            new Attribute.Default<String>("id", id + num),
                             new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(partition))}
             );
             if (model.codonHeteroPattern.equals("112")) {
                 if (num == 1) {
-                    writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[]{new Attribute.Default<String>("idref", "patterns1+2")}, true);
+                    writer.writeTag(SitePatternsParser.PATTERNS,
+                            new Attribute[]{new Attribute.Default<String>("idref",
+                                    partition.getPatternListId(0))}, true);
                 } else {
-                    writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[]{new Attribute.Default<String>("idref", "patterns3")}, true);
+                    writer.writeTag(SitePatternsParser.PATTERNS,
+                            new Attribute[]{new Attribute.Default<String>("idref",
+                                    partition.getPatternListId(1))}, true);
                 }
             } else {
-                writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[]{new Attribute.Default<String>("idref", "patterns" + num)}, true);
+                writer.writeTag(SitePatternsParser.PATTERNS,
+                        new Attribute[]{new Attribute.Default<String>("idref",
+                                partition.getPatternListId(num - 1))}, true);
             }
-            writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
-            writer.writeTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "siteModel" + num)}, true);
+            writer.writeTag(TreeModel.TREE_MODEL,
+                    new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
+            writer.writeTag(GammaSiteModel.SITE_MODEL,
+                    new Attribute[]{new Attribute.Default<String>("idref", "siteModel" + num)}, true);
         } else {
             writer.writeOpenTag(
                     TreeLikelihood.TREE_LIKELIHOOD,
                     new Attribute[]{
-                            new Attribute.Default<String>("id", "treeLikelihood" + (name != null ? name : "")),
+                            new Attribute.Default<String>("id", id),
                             new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(partition))
                     }
             );
-            writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[]{new Attribute.Default<String>("idref", "patterns")}, true);
-            writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
-            writer.writeTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "siteModel")}, true);
+            writer.writeTag(SitePatternsParser.PATTERNS,
+                    new Attribute[]{new Attribute.Default<String>("idref", partition.getPatternListId(0))}, true);
+            writer.writeTag(TreeModel.TREE_MODEL,
+                    new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
+            writer.writeTag(GammaSiteModel.SITE_MODEL,
+                    new Attribute[]{new Attribute.Default<String>("idref", "siteModel")}, true);
         }
         if (options.clockModel == ModelOptions.STRICT_CLOCK) {
-            writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+            writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
+                    new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
         } else {
-            writer.writeTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+            writer.writeTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES,
+                    new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
         }
 
         writer.writeCloseTag(TreeLikelihood.TREE_LIKELIHOOD);
@@ -102,23 +115,13 @@ public class TreeLikelihoodGenerator extends Generator {
 
             if (partition.isCoding() && model.codonHeteroPattern != null) {
                 for (int i = 1; i <= model.codonPartitionCount; i++) {
-                    String suffix = getPartitionSuffix(partition, i);
                     writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD,
-                            new Attribute.Default<String>("idref", "treeLikelihood" + suffix), true);
+                            new Attribute.Default<String>("idref", model.getName() + ".treeLikelihood" + i), true);
                 }
             } else {
-                String suffix = getPartitionSuffix(partition, -1);
                 writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD,
-                        new Attribute.Default<String>("idref", "treeLikelihood" + suffix), true);
+                        new Attribute.Default<String>("idref", model.getName() + ".treeLikelihood"), true);
             }
-        }
-    }
-
-    private String getPartitionSuffix(DataPartition partition, int num) {
-        if (num < 0) {
-            return (partition.getName() != null ? "." + partition.getName() : "");
-        } else {
-            return (partition.getName() != null ? "." + partition.getName() : "") + num;
         }
     }
 

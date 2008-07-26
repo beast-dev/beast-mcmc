@@ -1,9 +1,9 @@
 package dr.app.beauti.options;
 
 import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.distance.DistanceMatrix;
-import dr.evolution.distance.JukesCantorDistanceMatrix;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -90,4 +90,15 @@ public class DataPartition {
     private int toSite;
 
     private PartitionModel model;
+
+    public void addPatternListId(String s) {
+        patternListIds.add(s);
+
+    }
+
+    public String getPatternListId(int i) {
+        return patternListIds.get(i);
+    }
+
+    List<String> patternListIds = new ArrayList<String>();
 }

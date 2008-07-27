@@ -25,10 +25,7 @@
 
 package dr.app.beauti;
 
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.DataPartition;
-import dr.app.beauti.options.NucModelType;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
@@ -92,11 +89,7 @@ public class ModelsPanel extends JPanel implements Exportable {
     JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY);
 
-    JComboBox clockModelCombo = new JComboBox(new String[]{
-            "Strict Clock",
-            "Random Local Clock",
-            "Relaxed Clock: Uncorrelated Lognormal",
-            "Relaxed Clock: Uncorrelated Exponential"});
+    JComboBox clockModelCombo = new JComboBox(ClockType.values());
 
     BeautiFrame frame = null;
 
@@ -386,22 +379,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         setModelOptions(currentModel);
 
-        switch (options.clockModel) {
-            case BeautiOptions.STRICT_CLOCK:
-                clockModelCombo.setSelectedIndex(0);
-                break;
-            case BeautiOptions.RANDOM_LOCAL_CLOCK:
-                clockModelCombo.setSelectedIndex(1);
-                break;
-            case BeautiOptions.UNCORRELATED_LOGNORMAL:
-                clockModelCombo.setSelectedIndex(2);
-                break;
-            case BeautiOptions.UNCORRELATED_EXPONENTIAL:
-                clockModelCombo.setSelectedIndex(3);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown option for clock model");
-        }
+        clockModelCombo.setSelectedItem(options.clockType);
 
         settingOptions = false;
 
@@ -489,22 +467,8 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         boolean fixed = fixedSubstitutionRateCheck.isSelected();
 
-        switch (clockModelCombo.getSelectedIndex()) {
-            case 0:
-                options.clockModel = BeautiOptions.STRICT_CLOCK;
-                break;
-            case 1:
-                options.clockModel = BeautiOptions.RANDOM_LOCAL_CLOCK;
-                break;
-            case 2:
-                options.clockModel = BeautiOptions.UNCORRELATED_LOGNORMAL;
-                break;
-            case 3:
-                options.clockModel = BeautiOptions.UNCORRELATED_EXPONENTIAL;
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown option for clock model");
-        }
+
+        options.clockType = (ClockType) clockModelCombo.getSelectedItem();
     }
 
 
@@ -733,8 +697,6 @@ public class ModelsPanel extends JPanel implements Exportable {
             return buffer.toString();
         }
     }
-
-    ;
 
     class ModelsTableCellRenderer extends TableRenderer {
 

@@ -18,12 +18,8 @@ public enum TreePrior {
         this.name = name;
     }
 
-    public String getName() {
-        return name;
-    }
-
     public String toString() {
-        return super.toString();
+        return name;
     }
 
     private final String name;

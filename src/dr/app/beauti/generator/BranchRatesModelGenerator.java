@@ -2,7 +2,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ModelOptions;
+import dr.app.beauti.options.ClockType;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -30,7 +30,7 @@ public class BranchRatesModelGenerator extends Generator {
      * @param writer the writer
      */
     public void writeBranchRatesModel(XMLWriter writer) {
-        if (options.clockModel == ModelOptions.STRICT_CLOCK) {
+        if (options.clockType == ClockType.STRICT_CLOCK) {
             if (options.fixedSubstitutionRate) {
 
                 // TODO
@@ -44,7 +44,7 @@ public class BranchRatesModelGenerator extends Generator {
             );
             writeParameter("rate", "clock.rate", writer, options);
             writer.writeCloseTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES);
-        } else if (options.clockModel == ModelOptions.RANDOM_LOCAL_CLOCK) {
+        } else if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
             if (options.fixedSubstitutionRate) {
 
                 // TODO
@@ -136,7 +136,7 @@ public class BranchRatesModelGenerator extends Generator {
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
             writer.writeOpenTag("distribution");
-            if (options.clockModel == ModelOptions.UNCORRELATED_EXPONENTIAL) {
+            if (options.clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
                 if (options.fixedSubstitutionRate) {
 
                     // TODO
@@ -147,7 +147,7 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeOpenTag(eModelName);
                 writeParameter("mean", "uced.mean", writer, options);
                 writer.writeCloseTag(eModelName);
-            } else if (options.clockModel == ModelOptions.UNCORRELATED_LOGNORMAL) {
+            } else if (options.clockType == ClockType.UNCORRELATED_LOGNORMAL) {
                 if (options.fixedSubstitutionRate) {
 
                     // TODO

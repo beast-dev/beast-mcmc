@@ -1,10 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.DataPartition;
-import dr.app.beauti.options.ModelOptions;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -96,7 +93,7 @@ public class TreeLikelihoodGenerator extends Generator {
             writer.writeTag(GammaSiteModel.SITE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", "siteModel")}, true);
         }
-        if (options.clockModel == ModelOptions.STRICT_CLOCK) {
+        if (options.clockType == ClockType.STRICT_CLOCK) {
             writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
                     new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
         } else {

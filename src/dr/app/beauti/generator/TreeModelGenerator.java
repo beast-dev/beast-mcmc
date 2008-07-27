@@ -2,7 +2,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ModelOptions;
+import dr.app.beauti.options.ClockType;
 import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeModelParser;
@@ -50,7 +50,7 @@ public class TreeModelGenerator extends Generator {
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "treeModel.allInternalNodeHeights"), true);
         writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
-        if (options.clockModel == ModelOptions.RANDOM_LOCAL_CLOCK) {
+        if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
             writer.writeOpenTag(TreeModelParser.NODE_RATES,
                     new Attribute[]{
                             new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),

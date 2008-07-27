@@ -9,7 +9,7 @@ import java.awt.*;
  */
 public class PanelUtils {
     public static JPanel createAddRemoveButtonPanel(Action addAction, Icon addIcon, String addToolTip,
-                                              Action removeAction, Icon removeIcon, String removeToolTip, int axis) {
+                                                    Action removeAction, Icon removeIcon, String removeToolTip, int axis) {
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, axis));
@@ -35,7 +35,7 @@ public class PanelUtils {
         removeAction.setEnabled(false);
 
         buttonPanel.add(addButton);
-        buttonPanel.add(new JToolBar.Separator(new Dimension(6,6)));
+        buttonPanel.add(new JToolBar.Separator(new Dimension(6, 6)));
         buttonPanel.add(removeButton);
 
         return buttonPanel;
@@ -53,7 +53,6 @@ public class PanelUtils {
             comp.putClientProperty("JComboBox.isPopDown", Boolean.TRUE);
 //            comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
         }
-
     }
 
 

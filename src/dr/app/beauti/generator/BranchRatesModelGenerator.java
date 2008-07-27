@@ -31,7 +31,7 @@ public class BranchRatesModelGenerator extends Generator {
      */
     public void writeBranchRatesModel(XMLWriter writer) {
         if (options.clockType == ClockType.STRICT_CLOCK) {
-            if (options.fixedSubstitutionRate) {
+            if (options.isFixedSubstitutionRate()) {
 
                 // TODO
                 //fixParameter("clock.rate", options.meanSubstitutionRate);
@@ -45,7 +45,7 @@ public class BranchRatesModelGenerator extends Generator {
             writeParameter("rate", "clock.rate", writer, options);
             writer.writeCloseTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES);
         } else if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
-            if (options.fixedSubstitutionRate) {
+            if (options.isFixedSubstitutionRate()) {
 
                 // TODO
                 //fixParameter("clock.rate", meanSubstitutionRate);
@@ -137,7 +137,7 @@ public class BranchRatesModelGenerator extends Generator {
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
             writer.writeOpenTag("distribution");
             if (options.clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
-                if (options.fixedSubstitutionRate) {
+                if (options.isFixedSubstitutionRate()) {
 
                     // TODO
                     //fixParameter("uced.mean", meanSubstitutionRate);
@@ -148,7 +148,7 @@ public class BranchRatesModelGenerator extends Generator {
                 writeParameter("mean", "uced.mean", writer, options);
                 writer.writeCloseTag(eModelName);
             } else if (options.clockType == ClockType.UNCORRELATED_LOGNORMAL) {
-                if (options.fixedSubstitutionRate) {
+                if (options.isFixedSubstitutionRate()) {
 
                     // TODO
                     //fixParameter("ucld.mean", meanSubstitutionRate);

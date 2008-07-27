@@ -29,7 +29,6 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.TreePrior;
 import dr.util.NumberFormatter;
-import org.virion.jam.components.RealNumberField;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
@@ -263,7 +262,7 @@ public class PriorsPanel extends JPanel implements Exportable {
     public void getOptions(BeautiOptions options) {
         if (settingOptions) return;
 
-        options.nodeHeightPrior = (TreePrior)treePriorCombo.getSelectedItem();
+        options.nodeHeightPrior = (TreePrior) treePriorCombo.getSelectedItem();
 
         if (options.nodeHeightPrior == TreePrior.SKYLINE) {
             Integer groupCount = groupCountField.getValue();

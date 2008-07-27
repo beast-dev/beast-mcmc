@@ -1006,7 +1006,7 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
                 });
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-        if (options.clockModel != ModelOptions.STRICT_CLOCK) {
+        if (options.clockType != ClockType.STRICT_CLOCK) {
             writer.writeTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
         }
         if (options.hasData()) {
@@ -1049,7 +1049,7 @@ public class BeastGenerator extends Generator {
                             new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
                     });
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-            if (options.clockModel == ModelOptions.STRICT_CLOCK) {
+            if (options.clockType == ClockType.STRICT_CLOCK) {
                 writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
             } else {
                 writer.writeTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
@@ -1251,14 +1251,14 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        if (options.clockModel == ModelOptions.STRICT_CLOCK) {
+        if (options.clockType == ClockType.STRICT_CLOCK) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "clock.rate"), true);
         } else {
             writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "meanRate"), true);
         }
         writer.writeCloseTag(Columns.COLUMN);
 
-        if (options.clockModel == ModelOptions.RANDOM_LOCAL_CLOCK) {
+        if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
             writeSumStatisticColumn(writer, "rateChanges", "Rate Changes");
         }
     }
@@ -1279,7 +1279,7 @@ public class BeastGenerator extends Generator {
 
         // As of v1.4.2, always write the rate parameter even if fixed...
         //if (!fixedSubstitutionRate) {
-        if (options.clockModel == ModelOptions.STRICT_CLOCK) {
+        if (options.clockType == ClockType.STRICT_CLOCK) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "clock.rate"), true);
         } else {
             writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "meanRate"), true);
@@ -1298,17 +1298,17 @@ public class BeastGenerator extends Generator {
             partitionModelGenerator.writeLog(writer, model);
         }
 
-        if (options.clockModel != ModelOptions.STRICT_CLOCK) {
-            if (options.clockModel == ModelOptions.UNCORRELATED_EXPONENTIAL) {
+        if (options.clockType != ClockType.STRICT_CLOCK) {
+            if (options.clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "uced.mean"), true);
-            } else if (options.clockModel == ModelOptions.UNCORRELATED_LOGNORMAL) {
+            } else if (options.clockType == ClockType.UNCORRELATED_LOGNORMAL) {
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.mean"), true);
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.stdev"), true);
             }
             writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "coefficientOfVariation"), true);
             writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>("idref", "covariance"), true);
 
-            if (options.clockModel == ModelOptions.RANDOM_LOCAL_CLOCK) {
+            if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
                 writer.writeTag("sumStatistic", new Attribute.Default<String>("idref", "rateChanges"), true);
             }
         }

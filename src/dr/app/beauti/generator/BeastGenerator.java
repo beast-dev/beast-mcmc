@@ -415,23 +415,23 @@ public class BeastGenerator extends Generator {
                                 new Attribute.Default<String>("id", "patterns1+2"),
                         }
                 );
-                partition.addPatternListId(writePatternList(alignment, from, to, 3, writer));
-                partition.addPatternListId(writePatternList(alignment, from + 1, to, 3, writer));
+                partition.addPatternListId(writePatternList(partition, 1, from, to, 3, writer));
+                partition.addPatternListId(writePatternList(partition, 2, from + 1, to, 3, writer));
                 writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
-                writePatternList(alignment, from + 2, to, 3, writer);
+                writePatternList(partition, 3, from + 2, to, 3, writer);
 
             } else {
                 // pattern is 123
                 // write pattern lists for all three codon positions
                 for (int i = 1; i <= 3; i++) {
-                    partition.addPatternListId(writePatternList(alignment, from + i - 1, to, 3, writer));
+                    partition.addPatternListId(writePatternList(partition, i, from + i - 1, to, 3, writer));
                 }
 
             }
         } else {
             //partitionCount = 1;
-            partition.addPatternListId(writePatternList(alignment, from, to, 0, writer));
+            partition.addPatternListId(writePatternList(partition, 1, from, to, 0, writer));
         }
     }
 
@@ -452,23 +452,22 @@ public class BeastGenerator extends Generator {
     /**
      * Write a single pattern list
      *
-     * @param alignment the alignment to write a pattern list from
+     * @param partition the partition to write a pattern list for
      * @param from      from site
      * @param to        to site
      * @param every     skip every
      * @param writer    the writer
      */
-    private String writePatternList(Alignment alignment, int from, int to, int every, XMLWriter writer) {
+    private String writePatternList(DataPartition partition, int num, int from, int to, int every, XMLWriter writer) {
 
+        Alignment alignment = partition.getAlignment();
+        String id = partition.getName() + ".patterns";
+
+        if (from < 1) from = 1;
         if (every < 1) every = 1;
-        String id = alignment.getId() + "_patterns";
-        if (from < 1) {
-            writer.writeComment("The unique patterns for all positions");
-            from = 1;
-        } else {
-            writer.writeComment("The unique patterns from " + from + " to " + to + ((every > 1) ? " every " + every : ""));
-            id += from + "_" + to + ((every > 1) ? "_" + every : "");
-        }
+        writer.writeComment("The unique patterns from " + from + " to " + to + ((every > 1) ? " every " + every : ""));
+
+        if (every > 1) id += num;
 
         // this object is created solely to calculate the number of patterns in the alignment
         SitePatterns patterns = new SitePatterns(alignment, from - 1, to - 1, every);

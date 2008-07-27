@@ -235,7 +235,7 @@ public class BeautiOptions extends ModelOptions {
         double initialRate = 1;
 
 
-        if (fixedSubstitutionRate) {
+        if (isFixedSubstitutionRate()) {
             double rate = models.get(0).meanSubstitutionRate;
 
             growthRateMaximum = 1E6 * rate;
@@ -314,6 +314,11 @@ public class BeautiOptions extends ModelOptions {
         return parameters;
     }
 
+    public boolean isFixedSubstitutionRate() {
+
+        return (models.size() == 1 && models.get(0).fixedSubstitutionRate);
+    }
+
     private Set<PartitionModel> getActiveModels() {
 
         Set<PartitionModel> models = new HashSet<PartitionModel>();
@@ -342,7 +347,7 @@ public class BeautiOptions extends ModelOptions {
 
         double initialRootHeight = 1;
 
-        if (fixedSubstitutionRate) {
+        if (isFixedSubstitutionRate()) {
             double rate = models.get(0).meanSubstitutionRate;
 
             if (hasData()) {
@@ -374,25 +379,26 @@ public class BeautiOptions extends ModelOptions {
         if (hasData()) {
 
             // if not fixed then do mutation rate move and up/down move
+            boolean fixed = isFixedSubstitutionRate();
             Parameter rateParam;
 
             if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.RANDOM_LOCAL_CLOCK) {
                 rateParam = getParameter("clock.rate");
-                if (!fixedSubstitutionRate) params.add(rateParam);
+                if (!fixed) params.add(rateParam);
             } else {
                 if (clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
                     rateParam = getParameter("uced.mean");
-                    if (!fixedSubstitutionRate) params.add(rateParam);
+                    if (!fixed) params.add(rateParam);
                 } else if (clockType == ClockType.UNCORRELATED_LOGNORMAL) {
                     rateParam = getParameter("ucld.mean");
-                    if (!fixedSubstitutionRate) params.add(rateParam);
+                    if (!fixed) params.add(rateParam);
                     params.add(getParameter("ucld.stdev"));
                 } else {
                     throw new IllegalArgumentException("Unknown clock model");
                 }
             }
 
-            rateParam.isFixed = fixedSubstitutionRate;
+            rateParam.isFixed = fixed;
         }
 
         if (nodeHeightPrior == TreePrior.CONSTANT) {
@@ -483,7 +489,7 @@ public class BeautiOptions extends ModelOptions {
         if (hasData()) {
 
             // if not fixed then do mutation rate move and up/down move
-            if (!fixedSubstitutionRate) {
+            if (!isFixedSubstitutionRate()) {
                 if (clockType == ClockType.STRICT_CLOCK) {
                     ops.add(getOperator("clock.rate"));
                     ops.add(getOperator("upDownRateHeights"));
@@ -1000,8 +1006,6 @@ public class BeautiOptions extends ModelOptions {
     public boolean fixedTree = false;
 
     public Units.Type units = Units.Type.SUBSTITUTIONS;
-    public boolean fixedSubstitutionRate = false;
-    public boolean hasSetFixedSubstitutionRate = false;
     public ClockType clockType = ClockType.STRICT_CLOCK;
 
     // MCMC options

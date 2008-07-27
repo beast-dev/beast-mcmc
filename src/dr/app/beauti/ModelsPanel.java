@@ -87,7 +87,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
     JCheckBox fixedSubstitutionRateCheck = new JCheckBox("Fix mean substitution rate:");
     JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
-    RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+    RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
     JComboBox clockModelCombo = new JComboBox(ClockType.values());
 
@@ -235,6 +235,7 @@ public class ModelsPanel extends JPanel implements Exportable {
                 "Shapiro, Rambaut & Drummond (2006) <i>MBE</i> <b>23</b>: 7-9.</html>");
 
         PanelUtils.setupComponent(fixedSubstitutionRateCheck);
+        fixedSubstitutionRateCheck.setSelected(true);
         fixedSubstitutionRateCheck.setToolTipText(
                 "<html>Select this option to fix the substitution rate<br>" +
                         "rather than try to infer it. If this option is<br>" +
@@ -251,15 +252,14 @@ public class ModelsPanel extends JPanel implements Exportable {
                     }
                 }
         );
-
-        PanelUtils.setupComponent(substitutionRateField);
+        substitutionRateField.setValue(1.0);
         substitutionRateField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
                 frame.mcmcChanged();
             }
         });
         substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
-        substitutionRateField.setEnabled(false);
+        substitutionRateField.setEnabled(true);
 
         PanelUtils.setupComponent(clockModelCombo);
         clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
@@ -351,7 +351,6 @@ public class ModelsPanel extends JPanel implements Exportable {
 
             panel.addSeparator();
 
-            //addComponent(fixedSubstitutionRateCheck);
             substitutionRateField.setColumns(10);
             panel.addComponents(fixedSubstitutionRateCheck, substitutionRateField);
 
@@ -449,9 +448,10 @@ public class ModelsPanel extends JPanel implements Exportable {
         heteroUnlinkCheck.setSelected(model.unlinkedHeterogeneityModel);
         freqsUnlinkCheck.setSelected(model.unlinkedFrequencyModel);
 
-//        fixedSubstitutionRateCheck.setSelected(model.fixedSubstitutionRate);
+        fixedSubstitutionRateCheck.setSelected(model.fixedSubstitutionRate);
+        System.out.println("Substitution rate field set");
         substitutionRateField.setValue(model.meanSubstitutionRate);
-//        substitutionRateField.setEnabled(model.fixedSubstitutionRate);
+        substitutionRateField.setEnabled(model.fixedSubstitutionRate);
 
         setupPanel(currentModel, modelPanel);
     }
@@ -464,9 +464,6 @@ public class ModelsPanel extends JPanel implements Exportable {
         if (settingOptions) return;
 
         getOptions(currentModel);
-
-        boolean fixed = fixedSubstitutionRateCheck.isSelected();
-
 
         options.clockType = (ClockType) clockModelCombo.getSelectedItem();
     }
@@ -503,23 +500,9 @@ public class ModelsPanel extends JPanel implements Exportable {
         model.unlinkedHeterogeneityModel = heteroUnlinkCheck.isSelected();
         model.unlinkedFrequencyModel = freqsUnlinkCheck.isSelected();
 
-//        model.hasSetFixedSubstitutionRate = hasSetFixedSubstitutionRate;
-//        model.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
-//        model.meanSubstitutionRate = substitutionRateField.getValue();
+        model.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
 
-        // This warning should be given at generate...
-//        boolean fixed = fixedSubstitutionRateCheck.isSelected();
-//        if (!warningShown && !fixed && model.maximumTipHeight == 0.0) {
-//            JOptionPane.showMessageDialog(frame,
-//                    "You have chosen to sample substitution rates but all \n"+
-//                            "the sequences have the same date. In order for this to \n"+
-//                            "work, a strong prior is required on the substitution\n"+
-//                            "rate or the root of the tree.",
-//                    "Warning",
-//                    JOptionPane.WARNING_MESSAGE);
-//            warningShown = true;
-//        }
-
+        model.meanSubstitutionRate = substitutionRateField.getValue();
     }
 
     private void fireModelsChanged() {

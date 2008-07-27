@@ -420,13 +420,13 @@ public class PartitionModel extends ModelOptions {
     public int gammaCategories = 4;
     public boolean invarHetero = false;
     public String codonHeteroPattern = null;
-    public double meanSubstitutionRate = 1.0;
     public boolean unlinkedSubstitutionModel = false;
     public boolean unlinkedHeterogeneityModel = false;
     public boolean unlinkedFrequencyModel = false;
 
     public int codonPartitionCount;
-    boolean fixedSubstitutionRate = false;
+    public boolean fixedSubstitutionRate = true;
+    public double meanSubstitutionRate = 1.0;
 
     public DataType dataType;
     public String name;

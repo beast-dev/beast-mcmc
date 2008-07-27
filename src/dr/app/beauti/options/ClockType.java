@@ -10,14 +10,13 @@ public enum ClockType {
     UNCORRELATED_LOGNORMAL("Relaxed Clock: Uncorrelated Lognormal"),
     RANDOM_LOCAL_CLOCK("Random local clock model");
 
-    ClockType(String name) {
-        this.name = name;
+    ClockType(String displayName) {
+        this.displayName = displayName;
     }
 
     public String toString() {
-        return name;
+        return displayName;
     }
 
-    private final String name;
-
+    private final String displayName;
 }

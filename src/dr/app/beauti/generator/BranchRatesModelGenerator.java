@@ -33,8 +33,7 @@ public class BranchRatesModelGenerator extends Generator {
         if (options.clockType == ClockType.STRICT_CLOCK) {
             if (options.isFixedSubstitutionRate()) {
 
-                // TODO
-                //fixParameter("clock.rate", options.meanSubstitutionRate);
+                fixParameter("clock.rate", options.getMeanSubstitutionRate());
             }
 
             writer.writeComment("The strict clock (Uniform rates across branches)");
@@ -47,8 +46,7 @@ public class BranchRatesModelGenerator extends Generator {
         } else if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
             if (options.isFixedSubstitutionRate()) {
 
-                // TODO
-                //fixParameter("clock.rate", meanSubstitutionRate);
+                fixParameter("clock.rate", options.getMeanSubstitutionRate());
             }
 
             writer.writeComment("The random local clock model (Drummond & Suchard, 2007)");
@@ -139,8 +137,7 @@ public class BranchRatesModelGenerator extends Generator {
             if (options.clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
                 if (options.isFixedSubstitutionRate()) {
 
-                    // TODO
-                    //fixParameter("uced.mean", meanSubstitutionRate);
+                    fixParameter("uced.mean", options.getMeanSubstitutionRate());
                 }
 
                 final String eModelName = ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL;
@@ -150,8 +147,7 @@ public class BranchRatesModelGenerator extends Generator {
             } else if (options.clockType == ClockType.UNCORRELATED_LOGNORMAL) {
                 if (options.isFixedSubstitutionRate()) {
 
-                    // TODO
-                    //fixParameter("ucld.mean", meanSubstitutionRate);
+                    fixParameter("ucld.mean", options.getMeanSubstitutionRate());
                 }
 
                 writer.writeOpenTag("logNormalDistributionModel", new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));

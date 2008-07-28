@@ -361,7 +361,7 @@ public class BeautiOptions extends ModelOptions {
         int[] weights = new int[getTotalActivePartitionCount()];
 
         for (DataPartition partition : dataPartitions) {
-            partition.getPartitionModel().addWeightsForPartition(partition  , weights);
+//            partition.getPartitionModel().addWeightsForPartition(partition  , weights);
         }
         return weights;
     }

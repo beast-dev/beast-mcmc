@@ -287,7 +287,6 @@ public class PartitionModel extends ModelOptions {
      * @return a list of parameters that are required
      */
     List<Parameter> getParameters(boolean multiplePartitionModels) {
-        String prefix = (multiplePartitionModels? getName() : "");
 
         List<Parameter> params = new ArrayList<Parameter>();
 

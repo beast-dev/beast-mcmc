@@ -296,38 +296,52 @@ public class PartitionModelGenerator extends Generator {
      * @param writer the writer
      * @param model  the partition model to write in BEAST XML
      */
-    public void writeSiteModel(PartitionModel model, XMLWriter writer) {
+    public void writeSiteModel(PartitionModel model, boolean writeMuParameter, XMLWriter writer) {
 
         switch (model.dataType.getType()) {
             case DataType.NUCLEOTIDES:
                 if (model.codonHeteroPattern != null) {
                     for (int i = 1; i <= model.codonPartitionCount; i++) {
-                        writeNucSiteModel(i, writer, model);
+                        writeNucSiteModel(i, writeMuParameter, writer, model);
                     }
                     writer.println();
-                    writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>("id", "allMus")});
-                    for (int i = 1; i <= model.codonPartitionCount; i++) {
-                        writer.writeTag(ParameterParser.PARAMETER,
-                                new Attribute[]{new Attribute.Default<String>("idref", "siteModel" + i + ".mu")}, true);
-                    }
-                    writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
                 } else {
-                    writeNucSiteModel(-1, writer, model);
+                    writeNucSiteModel(-1, writeMuParameter, writer, model);
                 }
                 break;
 
             case DataType.AMINO_ACIDS:
-                writeAASiteModel(writer, model);
+                writeAASiteModel(writer, writeMuParameter, model);
                 break;
 
             case DataType.TWO_STATES:
             case DataType.COVARION:
-                writeTwoStateSiteModel(writer, model);
+                writeTwoStateSiteModel(writer, writeMuParameter, model);
                 break;
 
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
+    }
+
+    /**
+     * Write the all the mu parameters for this partition model.
+     *
+     * @param writer the writer
+     * @param model  the partition model to write in BEAST XML
+     */
+    public void writeMuParameterRefs(PartitionModel model, XMLWriter writer) {
+
+        if (model.dataType.getType() == DataType.NUCLEOTIDES && model.codonHeteroPattern != null) {
+            for (int i = 1; i <= model.codonPartitionCount; i++) {
+                writer.writeTag(ParameterParser.PARAMETER,
+                        new Attribute[]{new Attribute.Default<String>("idref", "siteModel" + i + ".mu")}, true);
+            }
+        } else {
+            writer.writeTag(ParameterParser.PARAMETER,
+                    new Attribute[]{new Attribute.Default<String>("idref", "siteModel.mu")}, true);
+        }
+
     }
 
     public void writeLog(XMLWriter writer, PartitionModel model) {
@@ -439,10 +453,11 @@ public class PartitionModelGenerator extends Generator {
      * Write the nucleotide site model XML block.
      *
      * @param num    the model number
+     * @param writeMuParameter
      * @param writer the writer
      * @param model  the partition model to write in BEAST XML
      */
-    private void writeNucSiteModel(int num, XMLWriter writer, PartitionModel model) {
+    private void writeNucSiteModel(int num, boolean writeMuParameter, XMLWriter writer, PartitionModel model) {
 
         String id = "siteModel";
         if (num > 0) {
@@ -492,10 +507,8 @@ public class PartitionModelGenerator extends Generator {
         }
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
-        if (num != -1) {
+        if (writeMuParameter) {
             writeParameter(GammaSiteModel.RELATIVE_RATE, id + ".mu", writer, model);
-        } else {
-//            The actual mutation rate is now in the BranchRateModel so relativeRate can be missing
         }
 
         if (model.gammaHetero) {
@@ -535,9 +548,10 @@ public class PartitionModelGenerator extends Generator {
      * Write the two states site model XML block.
      *
      * @param writer the writer
+     * @param writeMuParameter
      * @param model  the partition model to write in BEAST XML
      */
-    private void writeTwoStateSiteModel(XMLWriter writer, PartitionModel model) {
+    private void writeTwoStateSiteModel(XMLWriter writer, boolean writeMuParameter, PartitionModel model) {
 
         String id = "siteModel";
 
@@ -561,6 +575,10 @@ public class PartitionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
+        if (writeMuParameter) {
+            writeParameter(GammaSiteModel.RELATIVE_RATE, id + ".mu", writer, model);
+        }
+
         if (model.gammaHetero) {
             writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE,
                     new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + model.gammaCategories));
@@ -579,13 +597,16 @@ public class PartitionModelGenerator extends Generator {
      * Write the AA site model XML block.
      *
      * @param writer the writer
+     * @param writeMuParameter
      * @param model  the partition model to write in BEAST XML
      */
-    private void writeAASiteModel(XMLWriter writer, PartitionModel model) {
+    private void writeAASiteModel(XMLWriter writer, boolean writeMuParameter, PartitionModel model) {
+
+        String id = "siteModel";
 
         writer.writeComment("site model");
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL, new Attribute[]{
-                new Attribute.Default<String>("id", "siteModel")});
+                new Attribute.Default<String>("id", id)});
 
 
         writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
@@ -593,20 +614,24 @@ public class PartitionModelGenerator extends Generator {
                 new Attribute.Default<String>("idref", "aa"), true);
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
-        //The actual mutation rate is now in the BranchRateModel so relativeRate can be missing
+        if (writeMuParameter) {
+            writeParameter(GammaSiteModel.RELATIVE_RATE, id + ".mu", writer, model);
+        }
+
 
         if (model.gammaHetero) {
             writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE,
                     new Attribute.Default<String>(
                             GammaSiteModel.GAMMA_CATEGORIES, "" + model.gammaCategories));
-            writeParameter("siteModel.alpha", writer, model);
+            writeParameter(id + ".alpha", writer, model);
             writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
         }
 
         if (model.invarHetero) {
-            writeParameter(GammaSiteModel.PROPORTION_INVARIANT, "siteModel.pInv", writer, model);
+            writeParameter(GammaSiteModel.PROPORTION_INVARIANT, id + ".pInv", writer, model);
         }
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
     }
+
 }

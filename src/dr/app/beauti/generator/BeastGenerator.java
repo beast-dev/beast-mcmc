@@ -203,9 +203,20 @@ public class BeastGenerator extends Generator {
             writer.writeText("");
             partitionModelGenerator.writeSubstitutionModel(partitionModel, writer);
         }
+
+        boolean writeMuParameters = options.getTotalActivePartitionCount() > 1;
+
         for (PartitionModel partitionModel : options.getPartitionModels()) {
             writer.writeText("");
-            partitionModelGenerator.writeSiteModel(partitionModel, writer);
+            partitionModelGenerator.writeSiteModel(partitionModel, writeMuParameters, writer);
+        }
+
+        if (writeMuParameters) {
+            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>("id", "allMus")});
+            for (PartitionModel partitionModel : options.getPartitionModels()) {
+                partitionModelGenerator.writeMuParameterRefs(partitionModel, writer);
+            }
+            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
         }
 
         treeLikelihoodGenerator = new TreeLikelihoodGenerator(options);
@@ -704,13 +715,17 @@ public class BeastGenerator extends Generator {
 
         if (operator.getName().equals("Relative rates")) {
 
-            PartitionModel model = ((PartitionModel) operator.getModelOptions());
+            int[] parameterWeights = options.getActivePartitionWeights();
 
-            if (model.codonHeteroPattern.equals("112")) {
+            if (parameterWeights != null && parameterWeights.length > 1) {
+                String pw = "" + parameterWeights[0];
+                for (int i = 1; i < parameterWeights.length; i++) {
+                    pw += " " + parameterWeights[i];
+                }
                 writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
                         new Attribute[]{
                                 new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
-                                new Attribute.Default<String>(DeltaExchangeOperator.PARAMETER_WEIGHTS, "2 1"),
+                                new Attribute.Default<String>(DeltaExchangeOperator.PARAMETER_WEIGHTS, pw),
                                 new Attribute.Default<Double>("weight", operator.weight),
                         }
                 );
@@ -1319,4 +1334,5 @@ public class BeastGenerator extends Generator {
 
         treePriorGenerator.writeLikelihoodLog(writer);
     }
+
 }

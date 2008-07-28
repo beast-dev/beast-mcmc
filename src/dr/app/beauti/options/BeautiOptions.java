@@ -335,14 +335,23 @@ public class BeautiOptions extends ModelOptions {
         return meanSubstitutionRate;
     }
 
-    private Set<PartitionModel> getActiveModels() {
+    private List<PartitionModel> getActiveModels() {
 
-        Set<PartitionModel> models = new TreeSet<PartitionModel>();
+        Set<PartitionModel> models = new HashSet<PartitionModel>();
 
         for (DataPartition partition : dataPartitions) {
             models.add(partition.getPartitionModel());
         }
-        return models;
+
+        // I have changed this to a list to ensure that the order is kept the same as in the table.
+        List<PartitionModel> activeModels = new ArrayList<PartitionModel>();
+        for (PartitionModel model : getPartitionModels()) {
+            if (models.contains(model)) {
+                activeModels.add(model);
+            }
+        }
+
+        return activeModels;
     }
 
     public int getTotalActivePartitionCount() {
@@ -357,12 +366,21 @@ public class BeautiOptions extends ModelOptions {
      * This returns an integer vector of the number of sites in each partition (including any codon partitions). These
      * are strictly in the same order as the 'mu' relative rates are listed.
      */
-    public int[] getActivePartitionWeights() {
+    public int[] getPartitionWeights() {
         int[] weights = new int[getTotalActivePartitionCount()];
 
-        for (DataPartition partition : dataPartitions) {
-//            partition.getPartitionModel().addWeightsForPartition(partition  , weights);
+        int k = 0;
+        for (PartitionModel model : getActiveModels()) {
+            for (DataPartition partition : dataPartitions) {
+                if (partition.getPartitionModel() == model) {
+                    model.addWeightsForPartition(partition, weights, k);
+                }
+            }
+            k += model.getCodonPartitionCount();
         }
+
+        assert(k == weights.length);
+
         return weights;
     }
 
@@ -380,7 +398,7 @@ public class BeautiOptions extends ModelOptions {
         boolean multiplePartitions = getTotalActivePartitionCount() > 1;
 
         for (PartitionModel model : getActiveModels()) {
-            ops.addAll(model.getOperators(multiplePartitions));
+            ops.addAll(model.getOperators());
         }
 
         if (multiplePartitions) {

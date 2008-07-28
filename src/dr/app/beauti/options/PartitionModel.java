@@ -163,7 +163,7 @@ public class PartitionModel extends ModelOptions {
         this.name = name;
     }
 
-    public List<Operator> getOperators(boolean multiplePartitionModels) {
+    public List<Operator> getOperators() {
         List<Operator> operators = new ArrayList<Operator>();
 
         switch (dataType.getType()) {
@@ -408,6 +408,27 @@ public class PartitionModel extends ModelOptions {
         return codonPartitionCount;
     }
 
+    public void addWeightsForPartition(DataPartition partition, int[] weights, int offset) {
+        int n = partition.getSiteCount();
+        int codonCount = n / 3;
+        int remainder = n % 3;
+        switch (codonPartitionCount) {
+            case 1:
+                weights[offset] += n;
+                break;
+            case 2:
+                weights[offset] += codonCount * 2 + remainder; // positions 1 + 2
+                weights[offset + 1] += codonCount; // position 3
+                break;
+            case 3:
+                weights[offset] += codonCount + (remainder > 0 ? 1 : 0);
+                weights[offset + 1] += codonCount + (remainder > 1 ? 1 : 0);
+                weights[offset + 2] += codonCount;
+                break;
+            default:
+                throw new IllegalArgumentException("illegal codonPartitionCount");
+        }
+    }
 
     public String toString() {
         return getName();

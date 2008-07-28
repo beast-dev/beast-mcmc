@@ -95,7 +95,6 @@ public class ModelsPanel extends JPanel implements Exportable {
     JCheckBox fixedSubstitutionRateCheck = new JCheckBox("Fix mean substitution rate:");
     JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
-    JCheckBox unlinkRelativeRatesCheck = new JCheckBox("Unlink relative rates across partitions");
 
     JComboBox clockModelCombo = new JComboBox(ClockType.values());
 
@@ -241,6 +240,10 @@ public class ModelsPanel extends JPanel implements Exportable {
         setSRD06Button.setToolTipText("<html>Sets the SRD06 model as described in<br>" +
                 "Shapiro, Rambaut & Drummond (2006) <i>MBE</i> <b>23</b>: 7-9.</html>");
 
+        PanelUtils.setupComponent(clockModelCombo);
+        clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
+        clockModelCombo.addItemListener(listener);
+
         PanelUtils.setupComponent(fixedSubstitutionRateCheck);
         fixedSubstitutionRateCheck.setSelected(true);
         fixedSubstitutionRateCheck.setToolTipText(
@@ -268,10 +271,6 @@ public class ModelsPanel extends JPanel implements Exportable {
         substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
         substitutionRateField.setEnabled(true);
 
-        PanelUtils.setupComponent(clockModelCombo);
-        clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
-        clockModelCombo.addItemListener(listener);
-
         currentModel = null;
 
         setupPanel(currentModel, modelPanel);
@@ -283,7 +282,6 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         substitutionRateField.setColumns(10);
         panel.addComponents(fixedSubstitutionRateCheck, substitutionRateField);
-        panel.addComponent(unlinkRelativeRatesCheck);
         panel.addSeparator();
 
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
@@ -296,7 +294,6 @@ public class ModelsPanel extends JPanel implements Exportable {
         modelBorder = new TitledBorder("Substitution Model");
         panel2.setBorder(modelBorder);
         panel2.add(modelPanel);
-
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, panel2);
         splitPane.setDividerLocation(180);
@@ -394,6 +391,11 @@ public class ModelsPanel extends JPanel implements Exportable {
             modelTable.getSelectionModel().setSelectionInterval(0, 0);
         }
 
+        fixedSubstitutionRateCheck.setSelected(options.fixedSubstitutionRate);
+        System.out.println("Substitution rate field set");
+        substitutionRateField.setValue(options.meanSubstitutionRate);
+        substitutionRateField.setEnabled(options.fixedSubstitutionRate);
+
         validate();
         repaint();
     }
@@ -454,11 +456,6 @@ public class ModelsPanel extends JPanel implements Exportable {
         heteroUnlinkCheck.setSelected(model.unlinkedHeterogeneityModel);
         freqsUnlinkCheck.setSelected(model.unlinkedFrequencyModel);
 
-        fixedSubstitutionRateCheck.setSelected(model.fixedSubstitutionRate);
-        System.out.println("Substitution rate field set");
-        substitutionRateField.setValue(model.meanSubstitutionRate);
-        substitutionRateField.setEnabled(model.fixedSubstitutionRate);
-
         setupPanel(currentModel, modelPanel);
     }
 
@@ -472,6 +469,9 @@ public class ModelsPanel extends JPanel implements Exportable {
         getOptions(currentModel);
 
         options.clockType = (ClockType) clockModelCombo.getSelectedItem();
+        options.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
+
+        options.meanSubstitutionRate = substitutionRateField.getValue();
     }
 
 
@@ -505,10 +505,6 @@ public class ModelsPanel extends JPanel implements Exportable {
         model.unlinkedSubstitutionModel = substUnlinkCheck.isSelected();
         model.unlinkedHeterogeneityModel = heteroUnlinkCheck.isSelected();
         model.unlinkedFrequencyModel = freqsUnlinkCheck.isSelected();
-
-        model.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
-
-        model.meanSubstitutionRate = substitutionRateField.getValue();
     }
 
     private void fireModelsChanged() {

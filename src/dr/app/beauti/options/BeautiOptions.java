@@ -59,6 +59,9 @@ public class BeautiOptions extends ModelOptions {
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
         createParameter("treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
+        // A vector of relative rates across all partitions...
+        createParameter("allMus", "All the relative rates");
+
         createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("uced.mean", "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("ucld.mean", "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -131,6 +134,14 @@ public class BeautiOptions extends ModelOptions {
         createStatistic("covariance",
                 "The covariance in rates of evolution on each lineage with their ancestral lineages",
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+
+        // This only works if the partitions are of the same size...
+//        createOperator("centeredMu", "Relative rates",
+//                "Scales codon position rates relative to each other maintaining mean", "allMus",
+//                OperatorType.CENTERED_SCALE, 0.75, rateWeights);
+        createOperator("deltaMu", "Relative rates",
+                "Changes partition relative rates relative to each other maintaining their mean", "allMus",
+                OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
 
         createScaleOperator("clock.rate", rateWeights);
         createScaleOperator("uced.mean", rateWeights);
@@ -221,8 +232,10 @@ public class BeautiOptions extends ModelOptions {
         selectParameters(parameters);
         selectStatistics(parameters);
 
+        boolean multiplePartitions = getTotalActivePartitionCount() > 1;
+
         for (PartitionModel model : getActiveModels()) {
-            parameters.addAll(model.getParameters());
+            parameters.addAll(model.getParameters(multiplePartitions));
         }
 
 
@@ -332,6 +345,28 @@ public class BeautiOptions extends ModelOptions {
         return models;
     }
 
+    public int getTotalActivePartitionCount() {
+        int totalPartitionCount = 0;
+        for (PartitionModel model : getActiveModels()) {
+            totalPartitionCount += model.getCodonPartitionCount();
+        }
+        return totalPartitionCount;
+    }
+
+    /**
+     * This returns an integer vector of the number of sites in each partition (including any codon partitions). These
+     * are strictly in the same order as the 'mu' relative rates are listed.
+     */
+    public int[] getActivePartitionWeights() {
+//        int[] weights = new int[getTotalActivePartitionCount()];
+//
+//        for (DataPartition partition : dataPartitions) {
+//            partition.getPartitionModel().addWeightsForPartition(, weights);
+//        }
+//        return models;
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
     /**
      * return an list of operators that are required
      *
@@ -343,10 +378,15 @@ public class BeautiOptions extends ModelOptions {
 
         selectOperators(ops);
 
+        boolean multiplePartitions = getTotalActivePartitionCount() > 1;
+
         for (PartitionModel model : getActiveModels()) {
-            ops.addAll(model.getOperators());
+            ops.addAll(model.getOperators(multiplePartitions));
         }
 
+        if (multiplePartitions) {
+            ops.add(getOperator("deltaMu"));
+        }
 
         double initialRootHeight = 1;
 
@@ -996,9 +1036,11 @@ public class BeautiOptions extends ModelOptions {
     public boolean userTree = false;
 
     // Model options
-    public int partitionCount = 1;
-
     List<PartitionModel> models = new ArrayList<PartitionModel>();
+
+    public boolean fixedSubstitutionRate = true;
+    public double meanSubstitutionRate = 1.0;
+    public boolean unlinkPartitionRates = true;
 
     public TreePrior nodeHeightPrior = TreePrior.CONSTANT;
     public int parameterization = GROWTH_RATE;
@@ -1023,9 +1065,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
 
-    private boolean fixedSubstitutionRate;
-    private double meanSubstitutionRate;
-
     public Parameter localClockRateChangesStatistic = null;
     public Parameter localClockRatesStatistic = null;
+
 }

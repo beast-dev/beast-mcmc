@@ -33,13 +33,11 @@ public class PartitionModel extends ModelOptions {
         gammaCategories = source.gammaCategories;
         invarHetero = source.invarHetero;
         codonHeteroPattern = source.codonHeteroPattern;
-        meanSubstitutionRate = source.meanSubstitutionRate;
         unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
         unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
 
         codonPartitionCount = source.codonPartitionCount;
-        fixedSubstitutionRate = source.fixedSubstitutionRate;
     }
 
     public PartitionModel(String name, DataType dataType) {
@@ -106,10 +104,10 @@ public class PartitionModel extends ModelOptions {
         createParameter("siteModel2.pInv", "proportion of invariant sites parameter for codon position 2", NONE, 0.5, 0.0, 1.0);
         createParameter("siteModel3.pInv", "proportion of invariant sites parameter for codon position 3", NONE, 0.5, 0.0, 1.0);
 
+        createParameter("siteModel.mu", "relative rate parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("siteModel1.mu", "relative rate parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("siteModel2.mu", "relative rate parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("siteModel3.mu", "relative rate parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("allMus", "All the relative rates");
 
         createScaleOperator("hky.kappa", substWeights);
         createScaleOperator("hky1.kappa", substWeights);
@@ -155,12 +153,6 @@ public class PartitionModel extends ModelOptions {
             createScaleOperator("siteModel" + i + ".pInv", substWeights);
         }
 
-        createOperator("centeredMu", "Relative rates",
-                "Scales codon position rates relative to each other maintaining mean", "allMus",
-                OperatorType.CENTERED_SCALE, 0.75, substWeights);
-        createOperator("deltaMu", "Relative rates",
-                "Changes codon position rates relative to each other maintaining mean", "allMus",
-                OperatorType.DELTA_EXCHANGE, 0.75, substWeights);
     }
 
     public String getName() {
@@ -171,8 +163,7 @@ public class PartitionModel extends ModelOptions {
         this.name = name;
     }
 
-    public List<Operator> getOperators() {
-
+    public List<Operator> getOperators(boolean multiplePartitionModels) {
         List<Operator> operators = new ArrayList<Operator>();
 
         switch (dataType.getType()) {
@@ -280,12 +271,13 @@ public class PartitionModel extends ModelOptions {
             }
         }
 
-        if (codonPartitionCount > 1) {
-            if (!codonHeteroPattern.equals("112")) {
-                operators.add(getOperator("centeredMu"));
-            }
-            operators.add(getOperator("deltaMu"));
-        }
+        // Operators on mu are now done globally.
+//        if (codonPartitionCount > 1) {
+//            if (!codonHeteroPattern.equals("112")) {
+//                operators.add(getOperator("centeredMu"));
+//            }
+//            operators.add(getOperator("deltaMu"));
+//        }
 
         return operators;
     }
@@ -294,15 +286,21 @@ public class PartitionModel extends ModelOptions {
     /**
      * @return a list of parameters that are required
      */
-    List<Parameter> getParameters() {
+    List<Parameter> getParameters(boolean multiplePartitionModels) {
+        String prefix = (multiplePartitionModels? getName() : "");
 
         List<Parameter> params = new ArrayList<Parameter>();
 
-        if (codonPartitionCount > 1) {
-            for (int i = 1; i <= codonPartitionCount; i++) {
-                params.add(getParameter("siteModel" + i + ".mu"));
+        if (multiplePartitionModels) {
+            if (codonPartitionCount > 1) {
+                for (int i = 1; i <= codonPartitionCount; i++) {
+                    params.add(getParameter("siteModel" + i + ".mu"));
+                }
+            } else {
+                params.add(getParameter("siteModel.mu"));
             }
         }
+
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
                 switch (nucSubstitutionModel) {
@@ -407,6 +405,11 @@ public class PartitionModel extends ModelOptions {
         return operator;
     }
 
+    public int getCodonPartitionCount() {
+        return codonPartitionCount;
+    }
+
+
     public String toString() {
         return getName();
     }
@@ -424,10 +427,9 @@ public class PartitionModel extends ModelOptions {
     public boolean unlinkedHeterogeneityModel = false;
     public boolean unlinkedFrequencyModel = false;
 
-    public int codonPartitionCount;
-    public boolean fixedSubstitutionRate = true;
-    public double meanSubstitutionRate = 1.0;
+    public int codonPartitionCount = 1;
 
     public DataType dataType;
     public String name;
+
 }

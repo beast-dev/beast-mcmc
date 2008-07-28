@@ -41,7 +41,7 @@ public class PartitionModelGenerator extends Generator {
                 if (model.nucSubstitutionModel == NucModelType.JC) {
                     writer.writeComment("The JC substitution model (Jukes & Cantor, 1969)");
                     writer.writeOpenTag(NucModelType.HKY.getXMLName(),
-                            new Attribute[]{new Attribute.Default<String>("id", "jc")}
+                            new Attribute[]{new Attribute.Default<String>("id", model.getName() + ".jc")}
                     );
                     writer.writeOpenTag(HKYParser.FREQUENCIES);
                     writer.writeOpenTag(
@@ -54,7 +54,7 @@ public class PartitionModelGenerator extends Generator {
                     writer.writeTag(
                             ParameterParser.PARAMETER,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", "jc.frequencies"),
+                                    new Attribute.Default<String>("id", model.getName() + ".jc.frequencies"),
                                     new Attribute.Default<String>("value", "0.25 0.25 0.25 0.25")
                             },
                             true
@@ -122,7 +122,7 @@ public class PartitionModelGenerator extends Generator {
                 writer.writeComment("The " + aaModel + " substitution model");
                 writer.writeTag(
                         EmpiricalAminoAcidModel.EMPIRICAL_AMINO_ACID_MODEL,
-                        new Attribute[]{new Attribute.Default<String>("id", "aa"),
+                        new Attribute[]{new Attribute.Default<String>("id", model.getName() + ".aa"),
                                 new Attribute.Default<String>("type", aaModel)}, true
                 );
 
@@ -136,7 +136,7 @@ public class PartitionModelGenerator extends Generator {
                         writeBinarySimpleModel(writer, model);
                         break;
                     case ModelOptions.BIN_COVARION:
-                        writeBinaryCovarionModel(writer);
+                        writeBinaryCovarionModel(writer, model);
                         break;
                 }
 
@@ -195,7 +195,7 @@ public class PartitionModelGenerator extends Generator {
     public void writeGTRModel(int num, XMLWriter writer, PartitionModel model) {
         String dataTypeDescription = model.dataType.getDescription();
 
-        String id = "gtr";
+        String id = model.getName() + ".gtr";
         if (num > 0) {
             id += Integer.toString(num);
         }
@@ -239,7 +239,7 @@ public class PartitionModelGenerator extends Generator {
     public void writeBinarySimpleModel(XMLWriter writer, PartitionModel model) {
         String dataTypeDescription = model.dataType.getDescription();
 
-        final String id = "bsimple";
+        final String id = model.getName() + ".bsimple";
 
         writer.writeComment("The Binary simple model (based on the general substitution model)");
         writer.writeOpenTag(
@@ -269,8 +269,8 @@ public class PartitionModelGenerator extends Generator {
      *
      * @param writer the writer
      */
-    public void writeBinaryCovarionModel(XMLWriter writer) {
-        String id = "bcov";
+    public void writeBinaryCovarionModel(XMLWriter writer, PartitionModel model) {
+        String id = model.getName() + "bcov";
 
         writer.writeComment("The Binary covarion model");
         writer.writeOpenTag(
@@ -459,7 +459,7 @@ public class PartitionModelGenerator extends Generator {
      */
     private void writeNucSiteModel(int num, boolean writeMuParameter, XMLWriter writer, PartitionModel model) {
 
-        String id = "siteModel";
+        String id = model.getName() + ".siteModel";
         if (num > 0) {
             id += Integer.toString(num);
         }
@@ -553,7 +553,7 @@ public class PartitionModelGenerator extends Generator {
      */
     private void writeTwoStateSiteModel(XMLWriter writer, boolean writeMuParameter, PartitionModel model) {
 
-        String id = "siteModel";
+        String id = model.getName() + ".siteModel";
 
         writer.writeComment("site model");
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>("id", id)});
@@ -602,7 +602,7 @@ public class PartitionModelGenerator extends Generator {
      */
     private void writeAASiteModel(XMLWriter writer, boolean writeMuParameter, PartitionModel model) {
 
-        String id = "siteModel";
+        String id = model.getName() + ".siteModel";
 
         writer.writeComment("site model");
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL, new Attribute[]{

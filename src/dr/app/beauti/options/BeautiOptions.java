@@ -337,7 +337,7 @@ public class BeautiOptions extends ModelOptions {
 
     private Set<PartitionModel> getActiveModels() {
 
-        Set<PartitionModel> models = new HashSet<PartitionModel>();
+        Set<PartitionModel> models = new TreeSet<PartitionModel>();
 
         for (DataPartition partition : dataPartitions) {
             models.add(partition.getPartitionModel());
@@ -358,13 +358,12 @@ public class BeautiOptions extends ModelOptions {
      * are strictly in the same order as the 'mu' relative rates are listed.
      */
     public int[] getActivePartitionWeights() {
-//        int[] weights = new int[getTotalActivePartitionCount()];
-//
-//        for (DataPartition partition : dataPartitions) {
-//            partition.getPartitionModel().addWeightsForPartition(, weights);
-//        }
-//        return models;
-        throw new UnsupportedOperationException("Not implemented yet!");
+        int[] weights = new int[getTotalActivePartitionCount()];
+
+        for (DataPartition partition : dataPartitions) {
+            partition.getPartitionModel().addWeightsForPartition(partition  , weights);
+        }
+        return weights;
     }
 
     /**

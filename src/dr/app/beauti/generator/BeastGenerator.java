@@ -212,6 +212,7 @@ public class BeastGenerator extends Generator {
         }
 
         if (writeMuParameters) {
+            writer.writeText("");
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>("id", "allMus")});
             for (PartitionModel partitionModel : options.getPartitionModels()) {
                 partitionModelGenerator.writeMuParameterRefs(partitionModel, writer);
@@ -715,7 +716,7 @@ public class BeastGenerator extends Generator {
 
         if (operator.getName().equals("Relative rates")) {
 
-            int[] parameterWeights = options.getActivePartitionWeights();
+            int[] parameterWeights = options.getPartitionWeights();
 
             if (parameterWeights != null && parameterWeights.length > 1) {
                 String pw = "" + parameterWeights[0];

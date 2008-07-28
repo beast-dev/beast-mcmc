@@ -11,7 +11,7 @@ import java.util.HashMap;
  */
 public class ModelOptions {
 
-    public static final String version = "1.4";
+    public static final String version = "1.5";
     public static final int YEARS = 0;
     public static final int MONTHS = 1;
     public static final int DAYS = 2;

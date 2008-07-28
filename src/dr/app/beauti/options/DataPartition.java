@@ -75,6 +75,10 @@ public class DataPartition {
         return toSite;
     }
 
+    public int getSiteCount() {
+        return getFromSite() - getToSite() + 1;
+    }
+
     public String toString() {
         return getName();
     }
@@ -101,4 +105,5 @@ public class DataPartition {
     }
 
     List<String> patternListIds = new ArrayList<String>();
+
 }

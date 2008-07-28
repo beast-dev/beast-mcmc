@@ -64,13 +64,17 @@ public class ModelsPanel extends JPanel implements Exportable {
     OptionsPanel modelPanel;
     TitledBorder modelBorder;
 
+    // Partition model parameters //////////////////////////////////////////////////////////////////////
+
     JComboBox nucSubstCombo = new JComboBox(new String[]{"HKY", "GTR"});
-    JComboBox aaSubstCombo = new JComboBox(new String[]{"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
+    JComboBox aaSubstCombo = new JComboBox(
+            new String[]{"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
     JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
 
     JComboBox frequencyCombo = new JComboBox(new String[]{"Estimated", "Empirical", "All equal"});
 
-    JComboBox heteroCombo = new JComboBox(new String[]{"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
+    JComboBox heteroCombo = new JComboBox(
+            new String[]{"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
 
     JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5", "6", "7", "8", "9", "10"});
     JLabel gammaCatLabel;
@@ -80,23 +84,26 @@ public class ModelsPanel extends JPanel implements Exportable {
             "2 partitions: codon positions (1 + 2), 3",
             "3 partitions: codon positions 1, 2, 3"});
     JCheckBox substUnlinkCheck = new JCheckBox("Unlink substitution model across codon positions");
-    JCheckBox heteroUnlinkCheck = new JCheckBox("Unlink rate heterogeneity model across codon positions");
+    JCheckBox heteroUnlinkCheck =
+            new JCheckBox("Unlink rate heterogeneity model across codon positions");
     JCheckBox freqsUnlinkCheck = new JCheckBox("Unlink base frequencies across codon positions");
 
     JButton setSRD06Button;
 
+    // Overall model parameters ////////////////////////////////////////////////////////////////////////
+
     JCheckBox fixedSubstitutionRateCheck = new JCheckBox("Fix mean substitution rate:");
     JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
+    JCheckBox unlinkRelativeRatesCheck = new JCheckBox("Unlink relative rates across partitions");
 
     JComboBox clockModelCombo = new JComboBox(ClockType.values());
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
     BeautiFrame frame = null;
-
     CreateModelDialog createModelDialog = null;
-
     boolean settingOptions = false;
-
     boolean hasAlignment = false;
 
     public ModelsPanel(BeautiFrame parent, Action removeModelAction) {
@@ -269,8 +276,15 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         setupPanel(currentModel, modelPanel);
 
-        OptionsPanel panel = new OptionsPanel(0, 0);
+        OptionsPanel panel = new OptionsPanel(10, 10);
+        panel.addSeparator();
+
         panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
+
+        substitutionRateField.setColumns(10);
+        panel.addComponents(fixedSubstitutionRateCheck, substitutionRateField);
+        panel.addComponent(unlinkRelativeRatesCheck);
+        panel.addSeparator();
 
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
@@ -348,14 +362,6 @@ public class ModelsPanel extends JPanel implements Exportable {
                     throw new IllegalArgumentException("Unknown data type");
 
             }
-
-            panel.addSeparator();
-
-            substitutionRateField.setColumns(10);
-            panel.addComponents(fixedSubstitutionRateCheck, substitutionRateField);
-
-            panel.addSeparator();
-
         }
 
         validate();

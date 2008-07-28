@@ -236,7 +236,7 @@ public class BeautiOptions extends ModelOptions {
 
 
         if (isFixedSubstitutionRate()) {
-            double rate = models.get(0).meanSubstitutionRate;
+            double rate = getMeanSubstitutionRate();
 
             growthRateMaximum = 1E6 * rate;
             birthRateMaximum = 1E6 * rate;
@@ -315,8 +315,11 @@ public class BeautiOptions extends ModelOptions {
     }
 
     public boolean isFixedSubstitutionRate() {
+        return fixedSubstitutionRate;
+    }
 
-        return (models.size() == 1 && models.get(0).fixedSubstitutionRate);
+    public double getMeanSubstitutionRate() {
+        return meanSubstitutionRate;
     }
 
     private Set<PartitionModel> getActiveModels() {
@@ -348,7 +351,7 @@ public class BeautiOptions extends ModelOptions {
         double initialRootHeight = 1;
 
         if (isFixedSubstitutionRate()) {
-            double rate = models.get(0).meanSubstitutionRate;
+            double rate = getMeanSubstitutionRate();
 
             if (hasData()) {
                 initialRootHeight = meanDistance / rate;
@@ -510,7 +513,7 @@ public class BeautiOptions extends ModelOptions {
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }
-//                    ops.add(getOperator("swapBranchRateCategories"));
+                    ops.add(getOperator("swapBranchRateCategories"));
                     ops.add(getOperator("randomWalkBranchRateCategories"));
                     ops.add(getOperator("unformBranchRateCategories"));
                 }
@@ -529,7 +532,7 @@ public class BeautiOptions extends ModelOptions {
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }
-                    //                   ops.add(getOperator("swapBranchRateCategories"));
+                    ops.add(getOperator("swapBranchRateCategories"));
                     ops.add(getOperator("randomWalkBranchRateCategories"));
                     ops.add(getOperator("unformBranchRateCategories"));
                 }
@@ -1019,6 +1022,9 @@ public class BeautiOptions extends ModelOptions {
     public boolean performTraceAnalysis = false;
     public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
+
+    private boolean fixedSubstitutionRate;
+    private double meanSubstitutionRate;
 
     public Parameter localClockRateChangesStatistic = null;
     public Parameter localClockRatesStatistic = null;

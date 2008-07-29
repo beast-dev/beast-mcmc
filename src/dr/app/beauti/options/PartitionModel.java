@@ -380,7 +380,7 @@ public class PartitionModel extends ModelOptions {
         return params;
     }
 
-    public Parameter getParameter(String name) {
+    public Parameter getParameter(String name, String prefix) {
 
         if (name.startsWith(getName())) {
             name = name.substring(getName().length() + 1);
@@ -390,7 +390,8 @@ public class PartitionModel extends ModelOptions {
         if (parameter == null) {
             throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
         }
-        parameter.setPrefix(getName());
+
+        parameter.setPrefix(prefix);
 
         return parameter;
     }

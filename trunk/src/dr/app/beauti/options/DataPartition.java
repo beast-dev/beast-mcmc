@@ -94,16 +94,4 @@ public class DataPartition {
     private int toSite;
 
     private PartitionModel model;
-
-    public void addPatternListId(String s) {
-        patternListIds.add(s);
-
-    }
-
-    public String getPatternListId(int i) {
-        return patternListIds.get(i);
-    }
-
-    List<String> patternListIds = new ArrayList<String>();
-
 }

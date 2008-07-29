@@ -187,11 +187,11 @@ public class NexusApplicationImporter extends NexusImporter {
             if (match("NST", subcommand, 2)) {
                 int nst = readInteger(";");
                 if (nst == 1) {
-                    model.nucSubstitutionModel = NucModelType.JC;
+                    model.setNucSubstitutionModel(NucModelType.JC);
                 } else if (nst == 2) {
-                    model.nucSubstitutionModel = NucModelType.HKY;
+                    model.setNucSubstitutionModel(NucModelType.HKY);
                 } else if (nst == 6) {
-                    model.nucSubstitutionModel = NucModelType.GTR;
+                    model.setNucSubstitutionModel(NucModelType.GTR);
                 } else {
                     throw new BadFormatException("Bad value for NST subcommand of LSET command");
                 }
@@ -199,17 +199,17 @@ public class NexusApplicationImporter extends NexusImporter {
                 String token = readToken(";");
 
                 if (match("EQUAL", token, 1)) {
-                    model.gammaHetero = false;
-                    model.invarHetero = false;
+                    model.setGammaHetero(false);
+                    model.setInvarHetero(false);
                 } else if (match("GAMMA", token, 1)) {
-                    model.gammaHetero = true;
-                    model.invarHetero = false;
+                    model.setGammaHetero(true);
+                    model.setInvarHetero(false);
                 } else if (match("PROPINV", token, 1)) {
-                    model.gammaHetero = false;
-                    model.invarHetero = true;
+                    model.setGammaHetero(false);
+                    model.setInvarHetero(true);
                 } else if (match("INVGAMMA", token, 1)) {
-                    model.gammaHetero = true;
-                    model.invarHetero = true;
+                    model.setGammaHetero(true);
+                    model.setInvarHetero(true);
                 } else if (match("ADGAMMA", token, 1)) {
                     System.err.println("The option, 'RATES=ADGAMMA', in the LSET command is not used by BEAST and has been ignored");
                 } else if (match("SITESPEC", token, 1)) {
@@ -219,7 +219,7 @@ public class NexusApplicationImporter extends NexusImporter {
                 }
             } else if (match("NGAMMACAT", subcommand, 2)) {
 
-                model.gammaCategories = readInteger(";");
+                model.setGammaCategories(readInteger(";"));
             } else {
 
                 System.err.println("The option, '" + subcommand + "', in the LSET command is not used by BEAST and has been ignored");

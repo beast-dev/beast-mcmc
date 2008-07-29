@@ -335,7 +335,7 @@ public class BeautiOptions extends ModelOptions {
         return meanSubstitutionRate;
     }
 
-    private List<PartitionModel> getActiveModels() {
+    public List<PartitionModel> getActiveModels() {
 
         Set<PartitionModel> models = new HashSet<PartitionModel>();
 

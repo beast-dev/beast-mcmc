@@ -95,28 +95,7 @@ public class PartitionModelGenerator extends Generator {
 
             case DataType.AMINO_ACIDS:
                 // Amino Acid model
-                String aaModel = "";
-
-                switch (model.getAaSubstitutionModel()) {
-                    case 0:
-                        aaModel = EmpiricalAminoAcidModel.BLOSUM_62;
-                        break;
-                    case 1:
-                        aaModel = EmpiricalAminoAcidModel.DAYHOFF;
-                        break;
-                    case 2:
-                        aaModel = EmpiricalAminoAcidModel.JTT;
-                        break;
-                    case 3:
-                        aaModel = EmpiricalAminoAcidModel.MT_REV_24;
-                        break;
-                    case 4:
-                        aaModel = EmpiricalAminoAcidModel.CP_REV_45;
-                        break;
-                    case 5:
-                        aaModel = EmpiricalAminoAcidModel.WAG;
-                        break;
-                }
+                String aaModel = model.getAaSubstitutionModel().getXMLName();
 
                 writer.writeComment("The " + aaModel + " substitution model");
                 writer.writeTag(
@@ -172,10 +151,23 @@ public class PartitionModelGenerator extends Generator {
             writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
         }
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
-        if (model.getFrequencyPolicy() == FrequencyPolicy.ALLEQUAL)
-            writeParameter(prefix + "frequencies", 4, writer);
-        else
-            writeParameter(prefix + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
+
+        switch (model.getFrequencyPolicy()) {
+            case ESTIMATED:
+                writer.writeTag(
+                        ParameterParser.PARAMETER,
+                        new Attribute[]{
+                                new Attribute.Default<String>("id", prefix + "frequencies"),
+                                new Attribute.Default<String>("value", "0.25 0.25 0.25 0.25")
+                        }, true);
+                break;
+            case EMPIRICAL:
+                writeParameter(prefix + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
+                break;
+            case ALLEQUAL:
+                writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+                break;
+        }
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
         writer.writeCloseTag(HKYParser.FREQUENCIES);

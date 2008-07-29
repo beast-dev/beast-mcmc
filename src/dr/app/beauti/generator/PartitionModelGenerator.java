@@ -1,10 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ModelOptions;
-import dr.app.beauti.options.NucModelType;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
@@ -171,9 +168,11 @@ public class PartitionModelGenerator extends Generator {
                 }
         );
 
-        writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
+        if (model.getFrequencyPolicy() == FrequencyPolicy.EMPIRICAL) {
+            writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
+        }
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
-        if (model.getFrequencyPolicy() == ModelOptions.ALLEQUAL)
+        if (model.getFrequencyPolicy() == FrequencyPolicy.ALLEQUAL)
             writeParameter(prefix + "frequencies", 4, writer);
         else
             writeParameter(prefix + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
@@ -209,9 +208,11 @@ public class PartitionModelGenerator extends Generator {
                         new Attribute.Default<String>("dataType", dataTypeDescription)
                 }
         );
-        writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
+        if (model.getFrequencyPolicy() == FrequencyPolicy.EMPIRICAL) {
+            writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
+        }
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
-        if (model.getFrequencyPolicy() == ModelOptions.ALLEQUAL)
+        if (model.getFrequencyPolicy() == FrequencyPolicy.ALLEQUAL)
             writeParameter(prefix + "frequencies", 4, writer);
         else
             writeParameter(prefix + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
@@ -264,6 +265,7 @@ public class PartitionModelGenerator extends Generator {
      * Write the Binary covarion model XML block
      *
      * @param writer the writer
+     * @param model  the partition model to write
      */
     public void writeBinaryCovarionModel(XMLWriter writer, PartitionModel model) {
         String prefix = model.getPrefix();

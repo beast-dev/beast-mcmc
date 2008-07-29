@@ -11,7 +11,6 @@ import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodelxml.BinarySubstitutionModelParser;
 import dr.evomodelxml.HKYParser;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 
@@ -293,8 +292,9 @@ public class PartitionModelGenerator extends Generator {
     /**
      * Write the site model XML block.
      *
-     * @param writer the writer
-     * @param model  the partition model to write in BEAST XML
+     * @param model            the partition model to write in BEAST XML
+     * @param writeMuParameter the relative rate parameter for this site model
+     * @param writer           the writer
      */
     public void writeSiteModel(PartitionModel model, boolean writeMuParameter, XMLWriter writer) {
 
@@ -452,10 +452,10 @@ public class PartitionModelGenerator extends Generator {
     /**
      * Write the nucleotide site model XML block.
      *
-     * @param num    the model number
-     * @param writeMuParameter
-     * @param writer the writer
-     * @param model  the partition model to write in BEAST XML
+     * @param num              the model number
+     * @param writeMuParameter the relative rate parameter for this site model
+     * @param writer           the writer
+     * @param model            the partition model to write in BEAST XML
      */
     private void writeNucSiteModel(int num, boolean writeMuParameter, XMLWriter writer, PartitionModel model) {
 
@@ -547,9 +547,9 @@ public class PartitionModelGenerator extends Generator {
     /**
      * Write the two states site model XML block.
      *
-     * @param writer the writer
-     * @param writeMuParameter
-     * @param model  the partition model to write in BEAST XML
+     * @param writer           the writer
+     * @param writeMuParameter the relative rate parameter for this site model
+     * @param model            the partition model to write in BEAST XML
      */
     private void writeTwoStateSiteModel(XMLWriter writer, boolean writeMuParameter, PartitionModel model) {
 
@@ -596,9 +596,9 @@ public class PartitionModelGenerator extends Generator {
     /**
      * Write the AA site model XML block.
      *
-     * @param writer the writer
-     * @param writeMuParameter
-     * @param model  the partition model to write in BEAST XML
+     * @param writer           the writer
+     * @param writeMuParameter the relative rate parameter for this site model
+     * @param model            the partition model to write in BEAST XML
      */
     private void writeAASiteModel(XMLWriter writer, boolean writeMuParameter, PartitionModel model) {
 

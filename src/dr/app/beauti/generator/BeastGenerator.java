@@ -406,8 +406,8 @@ public class BeastGenerator extends Generator {
     /**
      * Writes the pattern lists
      *
-     * @param model the partition model to write the pattern lists for
-     * @param writer    the writer
+     * @param model  the partition model to write the pattern lists for
+     * @param writer the writer
      */
     public void writePatternList(PartitionModel model, XMLWriter writer) {
         writer.writeText("");
@@ -505,7 +505,7 @@ public class BeastGenerator extends Generator {
         if (every < 1) every = 1;
 
         from += offset;
-        
+
         writer.writeComment("The unique patterns from " + from + " to " + (to > 0 ? to : "end") + ((every > 1) ? " every " + every : ""));
 
         // this object is created solely to calculate the number of patterns in the alignment
@@ -997,7 +997,7 @@ public class BeastGenerator extends Generator {
             // write likelihood block
             writer.writeOpenTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>("id", "likelihood"));
 
-                treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
+            treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
 
             writer.writeCloseTag(CompoundLikelihood.LIKELIHOOD);
 
@@ -1334,8 +1334,11 @@ public class BeastGenerator extends Generator {
 
         treePriorGenerator.writeParameterLog(writer);
 
-        for (PartitionModel model : options.getPartitionModels()) {
+        for (PartitionModel model : options.getActiveModels()) {
             partitionModelGenerator.writeLog(writer, model);
+        }
+        if (options.getActiveModels().size() > 1) {
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "allMus"), true);
         }
 
         if (options.clockType != ClockType.STRICT_CLOCK) {

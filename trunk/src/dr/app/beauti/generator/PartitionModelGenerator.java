@@ -38,7 +38,7 @@ public class PartitionModelGenerator extends Generator {
             case DataType.NUCLEOTIDES:
                 // Jukes-Cantor model
                 if (model.getNucSubstitutionModel() == NucModelType.JC) {
-                    String prefix = getPrefix(model);
+                    String prefix = model.getPrefix();
                     writer.writeComment("The JC substitution model (Jukes & Cantor, 1969)");
                     writer.writeOpenTag(NucModelType.HKY.getXMLName(),
                             new Attribute[]{new Attribute.Default<String>("id", prefix + "jc")}
@@ -54,7 +54,7 @@ public class PartitionModelGenerator extends Generator {
                     writer.writeTag(
                             ParameterParser.PARAMETER,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", prefix + ".frequencies"),
+                                    new Attribute.Default<String>("id", prefix + "frequencies"),
                                     new Attribute.Default<String>("value", "0.25 0.25 0.25 0.25")
                             },
                             true
@@ -124,7 +124,7 @@ public class PartitionModelGenerator extends Generator {
                 writer.writeComment("The " + aaModel + " substitution model");
                 writer.writeTag(
                         EmpiricalAminoAcidModel.EMPIRICAL_AMINO_ACID_MODEL,
-                        new Attribute[]{new Attribute.Default<String>("id", getPrefix(model) + ".aa"),
+                        new Attribute[]{new Attribute.Default<String>("id", model.getPrefix() + "aa"),
                                 new Attribute.Default<String>("type", aaModel)}, true
                 );
 
@@ -156,7 +156,7 @@ public class PartitionModelGenerator extends Generator {
     public void writeHKYModel(int num, XMLWriter writer, PartitionModel model) {
         String dataTypeDescription = model.dataType.getDescription();
 
-        String prefix = getPrefix(model, num);
+        String prefix = model.getPrefix(num);
 
         // Hasegawa Kishino and Yano 85 model
         writer.writeComment("The HKY substitution model (Hasegawa, Kishino & Yano, 1985)");
@@ -171,7 +171,7 @@ public class PartitionModelGenerator extends Generator {
                 }
         );
 
-        writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", model.getName() + ".patterns" + (num > 0 ? num : ""))}, true);
+        writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
         if (model.getFrequencyPolicy() == ModelOptions.ALLEQUAL)
             writeParameter(prefix + "frequencies", 4, writer);
@@ -195,7 +195,7 @@ public class PartitionModelGenerator extends Generator {
     public void writeGTRModel(int num, XMLWriter writer, PartitionModel model) {
         String dataTypeDescription = model.dataType.getDescription();
 
-        String prefix = getPrefix(model, num);
+        String prefix = model.getPrefix(num);
 
         writer.writeComment("The general time reversible (GTR) substitution model");
         writer.writeOpenTag(
@@ -209,7 +209,7 @@ public class PartitionModelGenerator extends Generator {
                         new Attribute.Default<String>("dataType", dataTypeDescription)
                 }
         );
-        writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", model.getName() + ".patterns" + (num > 0 ? num : ""))}, true);
+        writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
         if (model.getFrequencyPolicy() == ModelOptions.ALLEQUAL)
             writeParameter(prefix + "frequencies", 4, writer);
@@ -236,7 +236,7 @@ public class PartitionModelGenerator extends Generator {
     public void writeBinarySimpleModel(XMLWriter writer, PartitionModel model) {
         String dataTypeDescription = model.dataType.getDescription();
 
-        String prefix = getPrefix(model);
+        String prefix = model.getPrefix();
 
         writer.writeComment("The Binary simple model (based on the general substitution model)");
         writer.writeOpenTag(
@@ -250,7 +250,7 @@ public class PartitionModelGenerator extends Generator {
                         new Attribute.Default<String>("dataType", dataTypeDescription)
                 }
         );
-        writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", model.getName() + ".patterns")}, true);
+        writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
         writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);
@@ -266,7 +266,7 @@ public class PartitionModelGenerator extends Generator {
      * @param writer the writer
      */
     public void writeBinaryCovarionModel(XMLWriter writer, PartitionModel model) {
-        String prefix = getPrefix(model);
+        String prefix = model.getPrefix();
 
         writer.writeComment("The Binary covarion model");
         writer.writeOpenTag(
@@ -332,11 +332,11 @@ public class PartitionModelGenerator extends Generator {
         if (model.dataType.getType() == DataType.NUCLEOTIDES && model.getCodonHeteroPattern() != null) {
             for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                 writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute[]{new Attribute.Default<String>("idref", getPrefix(model, i) + "mu")}, true);
+                        new Attribute[]{new Attribute.Default<String>("idref", model.getPrefix(i) + "mu")}, true);
             }
         } else {
             writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute[]{new Attribute.Default<String>("idref", getPrefix(model) + "mu")}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", model.getPrefix() + "mu")}, true);
         }
 
     }
@@ -351,7 +351,7 @@ public class PartitionModelGenerator extends Generator {
 
                     for (int i = 1; i <= codonPartitionCount; i++) {
                         writer.writeTag(ParameterParser.PARAMETER,
-                                new Attribute.Default<String>("idref", getPrefix(model, i) + "mu"), true);
+                                new Attribute.Default<String>("idref", model.getPrefix(i) + "mu"), true);
                     }
                 }
                 switch (model.getNucSubstitutionModel()) {
@@ -359,11 +359,11 @@ public class PartitionModelGenerator extends Generator {
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
                             for (int i = 1; i <= codonPartitionCount; i++) {
                                 writer.writeTag(ParameterParser.PARAMETER,
-                                        new Attribute.Default<String>("idref", getPrefix(model, i) + "kappa"), true);
+                                        new Attribute.Default<String>("idref", model.getPrefix(i) + "kappa"), true);
                             }
                         } else {
                             writer.writeTag(ParameterParser.PARAMETER,
-                                    new Attribute.Default<String>("idref", getPrefix(model) + "kappa"), true);
+                                    new Attribute.Default<String>("idref", model.getPrefix() + "kappa"), true);
                         }
                         break;
 
@@ -371,7 +371,7 @@ public class PartitionModelGenerator extends Generator {
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
 
                             for (int i = 1; i <= codonPartitionCount; i++) {
-                                String prefix = getPrefix(model, i);
+                                String prefix = model.getPrefix(i);
                                 writer.writeTag(ParameterParser.PARAMETER,
                                         new Attribute.Default<String>("idref", prefix + "ac"), true);
                                 writer.writeTag(ParameterParser.PARAMETER,
@@ -384,7 +384,7 @@ public class PartitionModelGenerator extends Generator {
                                         new Attribute.Default<String>("idref", prefix + "gt"), true);
                             }
                         } else {
-                            String prefix = getPrefix(model);
+                            String prefix = model.getPrefix();
                             writer.writeTag(ParameterParser.PARAMETER,
                                     new Attribute.Default<String>("idref", prefix + "ac"), true);
                             writer.writeTag(ParameterParser.PARAMETER,
@@ -406,7 +406,7 @@ public class PartitionModelGenerator extends Generator {
             case DataType.TWO_STATES:
             case DataType.COVARION:
 
-                String prefix = getPrefix(model);
+                String prefix = model.getPrefix();
                 switch (model.getBinarySubstitutionModel()) {
                     case ModelOptions.BIN_SIMPLE:
                         break;
@@ -429,11 +429,11 @@ public class PartitionModelGenerator extends Generator {
             if (codonPartitionCount > 1 && model.isUnlinkedHeterogeneityModel()) {
                 for (int i = 1; i <= codonPartitionCount; i++) {
                     writer.writeTag(ParameterParser.PARAMETER,
-                            new Attribute.Default<String>("idref", getPrefix(model, i) + "alpha"), true);
+                            new Attribute.Default<String>("idref", model.getPrefix(i) + "alpha"), true);
                 }
             } else {
                 writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute.Default<String>("idref", getPrefix(model) + "alpha"), true);
+                        new Attribute.Default<String>("idref", model.getPrefix() + "alpha"), true);
             }
         }
 
@@ -441,11 +441,11 @@ public class PartitionModelGenerator extends Generator {
             if (codonPartitionCount > 1 && model.isUnlinkedHeterogeneityModel()) {
                 for (int i = 1; i <= codonPartitionCount; i++) {
                     writer.writeTag(ParameterParser.PARAMETER,
-                            new Attribute.Default<String>("idref", getPrefix(model, i) + "pInv"), true);
+                            new Attribute.Default<String>("idref", model.getPrefix(i) + "pInv"), true);
                 }
             } else {
                 writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute.Default<String>("idref", getPrefix(model) + "pInv"), true);
+                        new Attribute.Default<String>("idref", model.getPrefix() + "pInv"), true);
             }
         }
     }
@@ -460,8 +460,8 @@ public class PartitionModelGenerator extends Generator {
      */
     private void writeNucSiteModel(int num, boolean writeMuParameter, XMLWriter writer, PartitionModel model) {
 
-        String prefix = getPrefix(model, num);
-        String prefix2 = getPrefix(model);
+        String prefix = model.getPrefix(num);
+        String prefix2 = model.getPrefix();
 
         writer.writeComment("site model");
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL,
@@ -558,7 +558,7 @@ public class PartitionModelGenerator extends Generator {
      */
     private void writeTwoStateSiteModel(XMLWriter writer, boolean writeMuParameter, PartitionModel model) {
 
-        String prefix = getPrefix(model);
+        String prefix = model.getPrefix();
 
         writer.writeComment("site model");
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL,
@@ -608,7 +608,7 @@ public class PartitionModelGenerator extends Generator {
      */
     private void writeAASiteModel(XMLWriter writer, boolean writeMuParameter, PartitionModel model) {
 
-        String prefix = getPrefix(model);
+        String prefix = model.getPrefix();
 
         writer.writeComment("site model");
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL, new Attribute[]{
@@ -640,35 +640,4 @@ public class PartitionModelGenerator extends Generator {
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
     }
 
-    private String getPrefix(PartitionModel model) {
-        String prefix = "";
-        if (options.getActiveModels().size() > 1) {
-            // There is more than one active partition model
-            prefix += model.getName() + ".";
-        }
-        return prefix;
-    }
-
-    private String getPrefix(PartitionModel model, int codonPartitionNumber) {
-        String prefix = "";
-        if (options.getActiveModels().size() > 1) {
-            // There is more than one active partition model
-            prefix += model.getName() + ".";
-        }
-        if (model.getCodonPartitionCount() > 1) {
-            if (model.getCodonHeteroPattern().equals("123")) {
-                prefix += "CP" + (codonPartitionNumber + 1) + ".";
-            } else if (model.getCodonHeteroPattern().equals("112")) {
-                if (codonPartitionNumber == 0) {
-                prefix += "CP1+2.";
-                } else {
-                    prefix += "CP3.";
-                }
-            } else {
-                throw new IllegalArgumentException("unsupported codon hetero pattern");
-            }
-
-        }
-        return prefix;
-    }
 }

@@ -315,7 +315,7 @@ public class PriorsPanel extends JPanel implements Exportable {
             Parameter param = (Parameter) parameters.get(row);
             switch (col) {
                 case 0:
-                    return param.getName();
+                    return param.getFullName();
                 case 1:
                     return param.priorType.getPriorString(param);
                 case 2:

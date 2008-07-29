@@ -179,7 +179,7 @@ public class DataPanel extends JPanel implements Exportable {
         for (int row : selRows) {
             DataPartition partition = options.dataPartitions.get(row);
             if (!partition.getPartitionModel().getName().equals(partition.getName())) {
-                PartitionModel model = new PartitionModel(partition);
+                PartitionModel model = new PartitionModel(options, partition);
                 options.addPartitionModel(model);
                 partition.setPartitionModel(model);
             }
@@ -220,7 +220,7 @@ public class DataPanel extends JPanel implements Exportable {
         if (result != JOptionPane.CANCEL_OPTION) {
             PartitionModel model = selectModelDialog.getModel();
             if (selectModelDialog.getMakeCopy()) {
-                model = new PartitionModel(selectModelDialog.getName(), model);
+                model = new PartitionModel(options, selectModelDialog.getName(), model);
                 options.addPartitionModel(model);
             }
 

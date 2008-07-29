@@ -536,7 +536,7 @@ public class BeautiFrame extends DocumentFrame {
                         }
                     }
                     if (partition.getPartitionModel() == null) {
-                        PartitionModel pm = new PartitionModel(partition);
+                        PartitionModel pm = new PartitionModel(beautiOptions, partition);
                         partition.setPartitionModel(pm);
                         beautiOptions.addPartitionModel(pm);
                     }

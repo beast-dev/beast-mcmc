@@ -11,8 +11,8 @@ import java.util.List;
  */
 public class PartitionModel extends ModelOptions {
 
-    public PartitionModel(DataPartition partition) {
-        this(partition.getName(), partition.getAlignment().getDataType());
+    public PartitionModel(BeautiOptions options, DataPartition partition) {
+        this(options, partition.getName(), partition.getAlignment().getDataType());
     }
 
     /**
@@ -21,8 +21,8 @@ public class PartitionModel extends ModelOptions {
      * @param name   the name of the new model
      * @param source the source model
      */
-    public PartitionModel(String name, PartitionModel source) {
-        this(name, source.dataType);
+    public PartitionModel(BeautiOptions options, String name, PartitionModel source) {
+        this(options, name, source.dataType);
 
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
@@ -38,118 +38,142 @@ public class PartitionModel extends ModelOptions {
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
     }
 
-    public PartitionModel(String name, DataType dataType) {
+    public PartitionModel(BeautiOptions options, String name, DataType dataType) {
 
+        this.options = options;
         this.name = name;
         this.dataType = dataType;
 
         double substWeights = 1.0;
 
         //Substitution model parameters
-        createParameter("hky.frequencies", "HKY base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("hky1.frequencies", "HKY base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("hky2.frequencies", "HKY base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("hky3.frequencies", "HKY base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("frequencies", "HKY base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP1.frequencies", "HKY base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP2.frequencies", "HKY base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP1+2.frequencies", "HKY base frequencies for codon positions 1 & 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP3.frequencies", "HKY base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
-        createScaleParameter("hky.kappa", "HKY transition-transversion parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("hky1.kappa", "HKY transition-transversion parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("hky2.kappa", "HKY transition-transversion parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("hky3.kappa", "HKY transition-transversion parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("kappa", "HKY transition-transversion parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1.kappa", "HKY transition-transversion parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP2.kappa", "HKY transition-transversion parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1+2.kappa", "HKY transition-transversion parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP3.kappa", "HKY transition-transversion parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createParameter("gtr.frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("gtr1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("gtr2.frequencies", "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("gtr3.frequencies", "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP2.frequencies", "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP1+2.frequencies", "GTR base frequencies for codon positions 1 & 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP3.frequencies", "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
-        createScaleParameter("gtr.ac", "GTR A-C substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr.ag", "GTR A-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr.at", "GTR A-T substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr.cg", "GTR C-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr.gt", "GTR G-T substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("ac", "GTR A-C substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("ag", "GTR A-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("at", "GTR A-T substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("cg", "GTR C-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("gt", "GTR G-T substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createScaleParameter("gtr1.ac", "GTR A-C substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr1.ag", "GTR A-G substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr1.at", "GTR A-T substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr1.cg", "GTR C-G substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr1.gt", "GTR G-T substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1.ac", "GTR A-C substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1.ag", "GTR A-G substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1.at", "GTR A-T substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1.cg", "GTR C-G substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1.gt", "GTR G-T substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createScaleParameter("gtr2.ac", "GTR A-C substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr2.ag", "GTR A-G substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr2.at", "GTR A-T substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr2.cg", "GTR C-G substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr2.gt", "GTR G-T substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP2.ac", "GTR A-C substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP2.ag", "GTR A-G substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP2.at", "GTR A-T substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP2.cg", "GTR C-G substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP2.gt", "GTR G-T substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createScaleParameter("gtr3.ac", "GTR A-C substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr3.ag", "GTR A-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr3.at", "GTR A-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr3.cg", "GTR C-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gtr3.gt", "GTR G-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1+2.ac", "GTR A-C substitution parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1+2.ag", "GTR A-G substitution parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1+2.at", "GTR A-T substitution parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1+2.cg", "GTR C-G substitution parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1+2.gt", "GTR G-T substitution parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createParameter("bsimple.frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
+        createScaleParameter("CP3.ac", "GTR A-C substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP3.ag", "GTR A-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP3.at", "GTR A-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP3.cg", "GTR C-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP3.gt", "GTR G-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createParameter("bcov.frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameter("bcov.hfrequencies", "Binary Covarion frequencies of the hidden rates", UNITY_SCALE, 0.5, 0.0, 1.0);
+        createParameter("frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
+
+        createParameter("frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
+        createParameter("hfrequencies", "Binary Covarion frequencies of the hidden rates", UNITY_SCALE, 0.5, 0.0, 1.0);
         createParameter("bcov.alpha", "Binary Covarion rate of evolution in slow mode", UNITY_SCALE, 0.5, 0.0, 1.0);
         createParameter("bcov.s", "Binary Covarion rate of flipping between slow and fast modes", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 100.0);
 
-        createParameter("siteModel.alpha", "gamma shape parameter", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("siteModel1.alpha", "gamma shape parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("siteModel2.alpha", "gamma shape parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("siteModel3.alpha", "gamma shape parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("alpha", "gamma shape parameter", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP1.alpha", "gamma shape parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP2.alpha", "gamma shape parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP3.alpha", "gamma shape parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
 
-        createParameter("siteModel.pInv", "proportion of invariant sites parameter", NONE, 0.5, 0.0, 1.0);
-        createParameter("siteModel1.pInv", "proportion of invariant sites parameter for codon position 1", NONE, 0.5, 0.0, 1.0);
-        createParameter("siteModel2.pInv", "proportion of invariant sites parameter for codon position 2", NONE, 0.5, 0.0, 1.0);
-        createParameter("siteModel3.pInv", "proportion of invariant sites parameter for codon position 3", NONE, 0.5, 0.0, 1.0);
+        createParameter("pInv", "proportion of invariant sites parameter", NONE, 0.5, 0.0, 1.0);
+        createParameter("CP1.pInv", "proportion of invariant sites parameter for codon position 1", NONE, 0.5, 0.0, 1.0);
+        createParameter("CP2.pInv", "proportion of invariant sites parameter for codon position 2", NONE, 0.5, 0.0, 1.0);
+        createParameter("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2", NONE, 0.5, 0.0, 1.0);
+        createParameter("CP3.pInv", "proportion of invariant sites parameter for codon position 3", NONE, 0.5, 0.0, 1.0);
 
-        createParameter("siteModel.mu", "relative rate parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("siteModel1.mu", "relative rate parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("siteModel2.mu", "relative rate parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("siteModel3.mu", "relative rate parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("mu", "relative rate parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP1.mu", "relative rate parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP2.mu", "relative rate parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP1+2.mu", "relative rate parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP3.mu", "relative rate parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
-        createScaleOperator("hky.kappa", substWeights);
-        createScaleOperator("hky1.kappa", substWeights);
-        createScaleOperator("hky2.kappa", substWeights);
-        createScaleOperator("hky3.kappa", substWeights);
+        createScaleOperator("kappa", substWeights);
+        createScaleOperator("CP1.kappa", substWeights);
+        createScaleOperator("CP2.kappa", substWeights);
+        createScaleOperator("CP1+2.kappa", substWeights);
+        createScaleOperator("CP3.kappa", substWeights);
 
-        createOperator("hky.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("hky1.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("hky2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("hky3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("CP1.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("CP2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("CP1+2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("CP3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
-        createScaleOperator("gtr.ac", substWeights);
-        createScaleOperator("gtr.ag", substWeights);
-        createScaleOperator("gtr.at", substWeights);
-        createScaleOperator("gtr.cg", substWeights);
-        createScaleOperator("gtr.gt", substWeights);
+        createScaleOperator("ac", substWeights);
+        createScaleOperator("ag", substWeights);
+        createScaleOperator("at", substWeights);
+        createScaleOperator("cg", substWeights);
+        createScaleOperator("gt", substWeights);
 
         for (int i = 1; i <= 3; i++) {
-            createScaleOperator("gtr" + i + ".ac", substWeights);
-            createScaleOperator("gtr" + i + ".ag", substWeights);
-            createScaleOperator("gtr" + i + ".at", substWeights);
-            createScaleOperator("gtr" + i + ".cg", substWeights);
-            createScaleOperator("gtr" + i + ".gt", substWeights);
+            createScaleOperator("CP" + i + ".ac", substWeights);
+            createScaleOperator("CP" + i + ".ag", substWeights);
+            createScaleOperator("CP" + i + ".at", substWeights);
+            createScaleOperator("CP" + i + ".cg", substWeights);
+            createScaleOperator("CP" + i + ".gt", substWeights);
         }
 
-        createOperator("gtr.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("gtr1.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("gtr2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("gtr3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createScaleOperator("CP1+2.ac", substWeights);
+        createScaleOperator("CP1+2.ag", substWeights);
+        createScaleOperator("CP1+2.at", substWeights);
+        createScaleOperator("CP1+2.cg", substWeights);
+        createScaleOperator("CP1+2.gt", substWeights);
+
+//      These already exist, above
+//        createOperator("gtr.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+//        createOperator("gtr1.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+//        createOperator("gtr2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+//        createOperator("gtr3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+//
+        createScaleOperator("alpha", substWeights);
+        for (int i = 1; i <= 3; i++) {
+            createScaleOperator("CP" + i + ".alpha", substWeights);
+        }
+        createScaleOperator("CP1+2.alpha", substWeights);
+
+        createScaleOperator("pInv", substWeights);
+        for (int i = 1; i <= 3; i++) {
+            createScaleOperator("CP" + i + ".pInv", substWeights);
+        }
+        createScaleOperator("CP1+2.pInv", substWeights);
 
         createScaleOperator("bcov.alpha", substWeights);
         createScaleOperator("bcov.s", substWeights);
-        createOperator("bcov.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("bcov.hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-
-        createScaleOperator("siteModel.alpha", substWeights);
-        for (int i = 1; i <= 3; i++) {
-            createScaleOperator("siteModel" + i + ".alpha", substWeights);
-        }
-
-        createScaleOperator("siteModel.pInv", substWeights);
-        for (int i = 1; i <= 3; i++) {
-            createScaleOperator("siteModel" + i + ".pInv", substWeights);
-        }
+        //createOperator("frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
     }
 
@@ -167,60 +191,95 @@ public class PartitionModel extends ModelOptions {
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
 
-                switch (nucSubstitutionModel) {
-                    case HKY:
-                        if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
-                            for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                                operators.add(getOperator("hky" + i + ".kappa"));
-                            }
-                        } else {
-                            operators.add(getOperator("hky.kappa"));
-                        }
-                        if (frequencyPolicy == BeautiOptions.ESTIMATED) {
-                            if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
-                                for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                                    operators.add(getOperator("hky" + i + ".frequencies"));
-                                }
-                            } else {
-                                operators.add(getOperator("hky.frequencies"));
-                            }
-                        }
-                        break;
+                if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                    if (codonHeteroPattern.equals("123")) {
+                        switch (nucSubstitutionModel) {
+                            case HKY:
+                                operators.add(getOperator("CP1.kappa"));
+                                operators.add(getOperator("CP2.kappa"));
+                                operators.add(getOperator("CP3.kappa"));
+                                break;
 
-                    case GTR:
-                        //if (frequencyPolicy == BeautiOptions.ESTIMATED || frequencyPolicy == BeautiOptions.EMPIRICAL){
-                        if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
-                            for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                                operators.add(getOperator("gtr" + i + ".ac"));
-                                operators.add(getOperator("gtr" + i + ".ag"));
-                                operators.add(getOperator("gtr" + i + ".at"));
-                                operators.add(getOperator("gtr" + i + ".cg"));
-                                operators.add(getOperator("gtr" + i + ".gt"));
-                            }
-                        } else {
-                            operators.add(getOperator("gtr.ac"));
-                            operators.add(getOperator("gtr.ag"));
-                            operators.add(getOperator("gtr.at"));
-                            operators.add(getOperator("gtr.cg"));
-                            operators.add(getOperator("gtr.gt"));
+                            case GTR:
+                                for (int i = 1; i <= getCodonPartitionCount(); i++) {
+                                    operators.add(getOperator("CP" + i + ".ac"));
+                                    operators.add(getOperator("CP" + i + ".ag"));
+                                    operators.add(getOperator("CP" + i + ".at"));
+                                    operators.add(getOperator("CP" + i + ".cg"));
+                                    operators.add(getOperator("CP" + i + ".gt"));
+                                }
+                                break;
+
+                            default:
+                                throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
-                        //}
 
                         if (frequencyPolicy == BeautiOptions.ESTIMATED) {
                             if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
-                                for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                                    operators.add(getOperator("gtr" + i + ".frequencies"));
-                                }
+                                operators.add(getOperator("CP1.frequencies"));
+                                operators.add(getOperator("CP2.frequencies"));
+                                operators.add(getOperator("CP3.frequencies"));
                             } else {
-                                operators.add(getOperator("gtr.frequencies"));
+                                operators.add(getOperator("frequencies"));
                             }
                         }
-                        break;
+                    } else if (codonHeteroPattern.equals("112")) {
+                        switch (nucSubstitutionModel) {
+                            case HKY:
+                                operators.add(getOperator("CP1+2.kappa"));
+                                operators.add(getOperator("CP3.kappa"));
+                                break;
 
-                    default:
-                        throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                            case GTR:
+                                operators.add(getOperator("CP1+2.ac"));
+                                operators.add(getOperator("CP1+2.ag"));
+                                operators.add(getOperator("CP1+2.at"));
+                                operators.add(getOperator("CP1+2.cg"));
+                                operators.add(getOperator("CP1+2.gt"));
+
+                                operators.add(getOperator("CP3.ac"));
+                                operators.add(getOperator("CP3.ag"));
+                                operators.add(getOperator("CP3.at"));
+                                operators.add(getOperator("CP3.cg"));
+                                operators.add(getOperator("CP3.gt"));
+                                break;
+
+                            default:
+                                throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                        }
+                        if (frequencyPolicy == BeautiOptions.ESTIMATED) {
+                            if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                                operators.add(getOperator("CP1+2.frequencies"));
+                                operators.add(getOperator("CP3.frequencies"));
+                            } else {
+                                operators.add(getOperator("frequencies"));
+                            }
+                        }
+
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
+                } else { // no codon partitioning
+                    switch (nucSubstitutionModel) {
+                        case HKY:
+                            operators.add(getOperator("kappa"));
+                            break;
+
+                        case GTR:
+                            operators.add(getOperator("ac"));
+                            operators.add(getOperator("ag"));
+                            operators.add(getOperator("at"));
+                            operators.add(getOperator("cg"));
+                            operators.add(getOperator("gt"));
+                            break;
+
+                        default:
+                            throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                    }
+                    if (frequencyPolicy == BeautiOptions.ESTIMATED) {
+                        operators.add(getOperator("frequencies"));
+                    }
                 }
-
                 break;
 
             case DataType.AMINO_ACIDS:
@@ -248,34 +307,41 @@ public class PartitionModel extends ModelOptions {
                 throw new IllegalArgumentException("Unknown data type");
         }
 
+
         // if gamma do shape move
         if (gammaHetero) {
             if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
-                for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                    operators.add(getOperator("siteModel" + i + ".alpha"));
+                if (codonHeteroPattern.equals("123")) {
+                    operators.add(getOperator("CP1.alpha"));
+                    operators.add(getOperator("CP2.alpha"));
+                    operators.add(getOperator("CP3.alpha"));
+                } else if (codonHeteroPattern.equals("112")) {
+                    operators.add(getOperator("CP1+2.alpha"));
+                    operators.add(getOperator("CP3.alpha"));
+                } else {
+                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
                 }
             } else {
-                operators.add(getOperator("siteModel.alpha"));
+                operators.add(getOperator("alpha"));
             }
         }
         // if pinv do pinv move
         if (invarHetero) {
             if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
-                for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                    operators.add(getOperator("siteModel" + i + ".pInv"));
+                if (codonHeteroPattern.equals("123")) {
+                    operators.add(getOperator("CP1.pInv"));
+                    operators.add(getOperator("CP2.alpha"));
+                    operators.add(getOperator("CP3.pInv"));
+                } else if (codonHeteroPattern.equals("112")) {
+                    operators.add(getOperator("CP1+2.pInv"));
+                    operators.add(getOperator("CP3.pInv"));
+                } else {
+                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
                 }
             } else {
-                operators.add(getOperator("siteModel.pInv"));
+                operators.add(getOperator("pInv"));
             }
         }
-
-        // Operators on mu are now done globally.
-//        if (codonPartitionCount > 1) {
-//            if (!codonHeteroPattern.equals("112")) {
-//                operators.add(getOperator("centeredMu"));
-//            }
-//            operators.add(getOperator("deltaMu"));
-//        }
 
         return operators;
     }
@@ -284,56 +350,90 @@ public class PartitionModel extends ModelOptions {
     /**
      * @return a list of parameters that are required
      */
-    List<Parameter> getParameters(boolean multiplePartitionModels) {
+    List<Parameter> getParameters(boolean includeRelativeRates) {
 
         List<Parameter> params = new ArrayList<Parameter>();
 
-        if (multiplePartitionModels) {
-            if (getCodonPartitionCount() > 1) {
-                for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                    params.add(getParameter("siteModel" + i + ".mu"));
-                }
-            } else {
-                params.add(getParameter("siteModel.mu"));
-            }
-        }
-
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
-                switch (nucSubstitutionModel) {
-                    case HKY:
-                        if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
-                            for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                                params.add(getParameter("hky" + i + ".kappa"));
-                            }
-                        } else {
-                            params.add(getParameter("hky.kappa"));
-                        }
-                        break;
-                    case GTR:
-                        if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
-                            for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                                params.add(getParameter("gtr" + i + ".ac"));
-                                params.add(getParameter("gtr" + i + ".ag"));
-                                params.add(getParameter("gtr" + i + ".at"));
-                                params.add(getParameter("gtr" + i + ".cg"));
-                                params.add(getParameter("gtr" + i + ".gt"));
-                            }
-                        } else {
-                            params.add(getParameter("gtr.ac"));
-                            params.add(getParameter("gtr.ag"));
-                            params.add(getParameter("gtr.at"));
-                            params.add(getParameter("gtr.cg"));
-                            params.add(getParameter("gtr.gt"));
-                        }
-                        break;
+                if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                    if (codonHeteroPattern.equals("123")) {
+                        switch (nucSubstitutionModel) {
+                            case HKY:
+                                params.add(getParameter("CP1.kappa"));
+                                params.add(getParameter("CP2.kappa"));
+                                params.add(getParameter("CP3.kappa"));
+                                break;
+                            case GTR:
+                                for (int i = 1; i <= getCodonPartitionCount(); i++) {
+                                    params.add(getParameter("CP" + i + ".ac"));
+                                    params.add(getParameter("CP" + i + ".ag"));
+                                    params.add(getParameter("CP" + i + ".at"));
+                                    params.add(getParameter("CP" + i + ".cg"));
+                                    params.add(getParameter("CP" + i + ".gt"));
+                                }
+                                break;
 
-                    default:
-                        throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                            default:
+                                throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                        }
+                        params.add(getParameter("CP1.mu"));
+                        params.add(getParameter("CP2.mu"));
+                        params.add(getParameter("CP3.mu"));
+                    } else if (codonHeteroPattern.equals("112")) {
+                        switch (nucSubstitutionModel) {
+                            case HKY:
+                                params.add(getParameter("CP1+2.kappa"));
+                                params.add(getParameter("CP3.kappa"));
+                                break;
+                            case GTR:
+                                params.add(getParameter("CP1+2.ac"));
+                                params.add(getParameter("CP1+2.ag"));
+                                params.add(getParameter("CP1+2.at"));
+                                params.add(getParameter("CP1+2.cg"));
+                                params.add(getParameter("CP1+2.gt"));
+
+                                params.add(getParameter("CP3.ac"));
+                                params.add(getParameter("CP3.ag"));
+                                params.add(getParameter("CP3.at"));
+                                params.add(getParameter("CP3.cg"));
+                                params.add(getParameter("CP3.gt"));
+                                break;
+
+                            default:
+                                throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                        }
+                        params.add(getParameter("CP1+2.mu"));
+                        params.add(getParameter("CP3.mu"));
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
+                } else { // no codon partitioning
+                    switch (nucSubstitutionModel) {
+                        case HKY:
+                            params.add(getParameter("kappa"));
+                            break;
+                        case GTR:
+                            params.add(getParameter("ac"));
+                            params.add(getParameter("ag"));
+                            params.add(getParameter("at"));
+                            params.add(getParameter("cg"));
+                            params.add(getParameter("gt"));
+                            break;
+
+                        default:
+                            throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                    }
+                    if (includeRelativeRates) {
+                        params.add(getParameter("mu"));
+                    }
                 }
                 break;
 
             case DataType.AMINO_ACIDS:
+                if (includeRelativeRates) {
+                    params.add(getParameter("mu"));
+                }
                 break;
 
             case DataType.TWO_STATES:
@@ -350,6 +450,9 @@ public class PartitionModel extends ModelOptions {
                     default:
                         throw new IllegalArgumentException("Unknown binary substitution model");
                 }
+                if (includeRelativeRates) {
+                    params.add(getParameter("mu"));
+                }
                 break;
 
             default:
@@ -359,28 +462,42 @@ public class PartitionModel extends ModelOptions {
         // if gamma do shape move
         if (gammaHetero) {
             if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
-                for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                    params.add(getParameter("siteModel" + i + ".alpha"));
+                if (codonHeteroPattern.equals("123")) {
+                    params.add(getParameter("CP1.alpha"));
+                    params.add(getParameter("CP2.alpha"));
+                    params.add(getParameter("CP3.alpha"));
+                } else if (codonHeteroPattern.equals("112")) {
+                    params.add(getParameter("CP1+2.alpha"));
+                    params.add(getParameter("CP3.alpha"));
+                } else {
+                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
                 }
             } else {
-                params.add(getParameter("siteModel.alpha"));
+                params.add(getParameter("alpha"));
             }
         }
         // if pinv do pinv move
         if (invarHetero) {
             if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
-                for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                    params.add(getParameter("siteModel" + i + ".pInv"));
+                if (codonHeteroPattern.equals("123")) {
+                    params.add(getParameter("CP1.pInv"));
+                    params.add(getParameter("CP2.alpha"));
+                    params.add(getParameter("CP3.pInv"));
+                } else if (codonHeteroPattern.equals("112")) {
+                    params.add(getParameter("CP1+2.pInv"));
+                    params.add(getParameter("CP3.pInv"));
+                } else {
+                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
                 }
             } else {
-                params.add(getParameter("siteModel.pInv"));
+                params.add(getParameter("pInv"));
             }
         }
 
         return params;
     }
 
-    public Parameter getParameter(String name, String prefix) {
+    public Parameter getParameter(String name) {
 
         if (name.startsWith(getName())) {
             name = name.substring(getName().length() + 1);
@@ -391,7 +508,7 @@ public class PartitionModel extends ModelOptions {
             throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
         }
 
-        parameter.setPrefix(prefix);
+        parameter.setPrefix(getPrefix());
 
         return parameter;
     }
@@ -537,6 +654,40 @@ public class PartitionModel extends ModelOptions {
     public void setDataType(DataType dataType) {
         this.dataType = dataType;
     }
+
+    public String getPrefix() {
+        String prefix = "";
+        if (options.getActiveModels().size() > 1) {
+            // There is more than one active partition model
+            prefix += getName() + ".";
+        }
+        return prefix;
+    }
+
+    public String getPrefix(int codonPartitionNumber) {
+        String prefix = "";
+        if (options.getActiveModels().size() > 1) {
+            // There is more than one active partition model
+            prefix += getName() + ".";
+        }
+        if (getCodonPartitionCount() > 1) {
+            if (getCodonHeteroPattern().equals("123")) {
+                prefix += "CP" + codonPartitionNumber + ".";
+            } else if (getCodonHeteroPattern().equals("112")) {
+                if (codonPartitionNumber == 1) {
+                    prefix += "CP1+2.";
+                } else {
+                    prefix += "CP3.";
+                }
+            } else {
+                throw new IllegalArgumentException("unsupported codon hetero pattern");
+            }
+
+        }
+        return prefix;
+    }
+
+    private final BeautiOptions options;
 
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private int aaSubstitutionModel = BeautiOptions.BLOSUM_62;

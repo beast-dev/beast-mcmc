@@ -91,7 +91,7 @@ public class NexusApplicationImporter extends NexusImporter {
      * Parses a 'PAUP' block.
      */
     public PartitionModel parsePAUPBlock(BeautiOptions options) throws ImportException, IOException {
-        PartitionModel model = new PartitionModel("nucs", Nucleotides.INSTANCE);
+        PartitionModel model = new PartitionModel(options, "nucs", Nucleotides.INSTANCE);
 
         readPAUPBlock(options, model);
 

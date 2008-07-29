@@ -153,12 +153,6 @@ public class PartitionModel extends ModelOptions {
         createScaleOperator("CP1+2.cg", substWeights);
         createScaleOperator("CP1+2.gt", substWeights);
 
-//      These already exist, above
-//        createOperator("gtr.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-//        createOperator("gtr1.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-//        createOperator("gtr2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-//        createOperator("gtr3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-//
         createScaleOperator("alpha", substWeights);
         for (int i = 1; i <= 3; i++) {
             createScaleOperator("CP" + i + ".alpha", substWeights);
@@ -568,11 +562,11 @@ public class PartitionModel extends ModelOptions {
         this.nucSubstitutionModel = nucSubstitutionModel;
     }
 
-    public int getAaSubstitutionModel() {
+    public AAModelType getAaSubstitutionModel() {
         return aaSubstitutionModel;
     }
 
-    public void setAaSubstitutionModel(int aaSubstitutionModel) {
+    public void setAaSubstitutionModel(AAModelType aaSubstitutionModel) {
         this.aaSubstitutionModel = aaSubstitutionModel;
     }
 
@@ -694,7 +688,7 @@ public class PartitionModel extends ModelOptions {
     private final BeautiOptions options;
 
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
-    private int aaSubstitutionModel = BeautiOptions.BLOSUM_62;
+    private AAModelType aaSubstitutionModel = AAModelType.BLOSUM_62;
     private int binarySubstitutionModel = BeautiOptions.BIN_SIMPLE;
 
     private FrequencyPolicy frequencyPolicy = FrequencyPolicy.ESTIMATED;

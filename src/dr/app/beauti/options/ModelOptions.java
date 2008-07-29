@@ -19,13 +19,6 @@ public class ModelOptions {
     public static final int BACKWARDS = 1;
     public static final int NONE = -1;
 
-    public static final int BLOSUM_62 = 0;
-    public static final int DAYHOFF = 1;
-    public static final int JTT = 2;
-    public static final int MT_REV_24 = 3;
-    public static final int CP_REV_45 = 4;
-    public static final int WAG = 5;
-
     public static final int BIN_SIMPLE = 0;
     public static final int BIN_COVARION = 1;
 
@@ -45,23 +38,23 @@ public class ModelOptions {
 
     protected void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
-        operators.put(parameterName, new Operator(parameterName, "", parameter, type, tuning, weight, this));
+        operators.put(parameterName, new Operator(parameterName, "", parameter, type, tuning, weight));
     }
 
     protected void createOperator(String key, String name, String description, String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
-        operators.put(key, new Operator(name, description, parameter, type, tuning, weight, this));
+        operators.put(key, new Operator(name, description, parameter, type, tuning, weight));
     }
 
     protected void createOperator(String key, String name, String description, String parameterName1, String parameterName2, OperatorType type, double tuning, double weight) {
         Parameter parameter1 = getParameter(parameterName1);
         Parameter parameter2 = getParameter(parameterName2);
-        operators.put(key, new Operator(name, description, parameter1, parameter2, type, tuning, weight, this));
+        operators.put(key, new Operator(name, description, parameter1, parameter2, type, tuning, weight));
     }
 
     protected void createScaleOperator(String parameterName, double weight) {
         Parameter parameter = getParameter(parameterName);
-        operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE, 0.75, weight, this));
+        operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE, 0.75, weight));
     }
 
     protected Parameter createParameter(String name, String description) {

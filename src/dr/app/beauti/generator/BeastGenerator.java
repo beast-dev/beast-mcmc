@@ -1362,5 +1362,4 @@ public class BeastGenerator extends Generator {
 
         treePriorGenerator.writeLikelihoodLog(writer);
     }
-
 }

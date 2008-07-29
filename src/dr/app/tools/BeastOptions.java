@@ -25,6 +25,7 @@
 
 package dr.app.tools;
 
+import dr.app.beauti.options.AAModelType;
 import dr.app.beauti.options.NucModelType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
@@ -65,13 +66,6 @@ public class BeastOptions {
     public static final int HKY = 1;
     public static final int GTR = 2;
 
-    public static final int BLOSUM_62 = 0;
-    public static final int DAYHOFF = 1;
-    public static final int JTT = 2;
-    public static final int MT_REV_24 = 3;
-    public static final int CP_REV_45 = 4;
-    public static final int WAG = 5;
-
     public static final int NONE = -1;
     public static final int CONSTANT = 0;
     public static final int EXPONENTIAL = 1;
@@ -98,7 +92,7 @@ public class BeastOptions {
     public boolean userTree = false;
 
     public int nucSubstitutionModel = HKY;
-    public int aaSubstitutionModel = BLOSUM_62;
+    public AAModelType aaSubstitutionModel = AAModelType.BLOSUM_62;
     public boolean gammaHetero = false;
     public int gammaCategories = 4;
     public boolean invarHetero = false;
@@ -607,28 +601,7 @@ public class BeastOptions {
                     }
         } else {
             // Amino Acid model
-            String aaModel = "";
-
-            switch (aaSubstitutionModel) {
-                case 0:
-                    aaModel = EmpiricalAminoAcidModel.BLOSUM_62;
-                    break;
-                case 1:
-                    aaModel = EmpiricalAminoAcidModel.DAYHOFF;
-                    break;
-                case 2:
-                    aaModel = EmpiricalAminoAcidModel.JTT;
-                    break;
-                case 3:
-                    aaModel = EmpiricalAminoAcidModel.MT_REV_24;
-                    break;
-                case 4:
-                    aaModel = EmpiricalAminoAcidModel.CP_REV_45;
-                    break;
-                case 5:
-                    aaModel = EmpiricalAminoAcidModel.WAG;
-                    break;
-            }
+            String aaModel = aaSubstitutionModel.getXMLName();
 
             writer.writeComment("The " + aaModel + " substitution model");
             writer.writeTag(
@@ -636,7 +609,6 @@ public class BeastOptions {
                     new Attribute[]{new Attribute.Default("id", "aa1"),
                             new Attribute.Default("type", aaModel)}, true
             );
-
         }
     }
 

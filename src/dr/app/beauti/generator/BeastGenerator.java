@@ -421,7 +421,7 @@ public class BeastGenerator extends Generator {
                 writer.writeComment("The unique patterns for codon positions 1 & 2");
                 writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                         new Attribute[]{
-                                new Attribute.Default<String>("id", model.getName() + ".patterns1"),
+                                new Attribute.Default<String>("id", model.getPrefix(1) + "patterns"),
                         }
                 );
                 for (DataPartition partition : options.dataPartitions) {
@@ -435,7 +435,7 @@ public class BeastGenerator extends Generator {
                 writer.writeComment("The unique patterns for codon positions 3");
                 writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                         new Attribute[]{
-                                new Attribute.Default<String>("id", model.getName() + ".patterns2"),
+                                new Attribute.Default<String>("id", model.getPrefix(2) + "patterns"),
                         }
                 );
 
@@ -454,7 +454,7 @@ public class BeastGenerator extends Generator {
                     writer.writeComment("The unique patterns for codon positions " + i);
                     writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", model.getName() + ".patterns" + i),
+                                    new Attribute.Default<String>("id", model.getPrefix(i) + "patterns"),
                             }
                     );
 
@@ -473,7 +473,7 @@ public class BeastGenerator extends Generator {
             writer.writeComment("The unique patterns site patterns");
             writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                     new Attribute[]{
-                            new Attribute.Default<String>("id", model.getName() + ".patterns"),
+                            new Attribute.Default<String>("id", model.getPrefix() + "patterns"),
                     }
             );
 

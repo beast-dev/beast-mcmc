@@ -261,7 +261,7 @@ public class DataPanel extends JPanel implements Exportable {
                 case 1:
                     return partition.getFileName();
                 case 2:
-                    return "" + (partition.getToSite() - partition.getFromSite() + 1);
+                    return "" + partition.getSiteCount();
                 case 3:
                     return partition.getAlignment().getDataType().getDescription();
                 case 4:

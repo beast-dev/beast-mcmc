@@ -71,7 +71,7 @@ public class ModelsPanel extends JPanel implements Exportable {
             new String[]{"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
     JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
 
-    JComboBox frequencyCombo = new JComboBox(new String[]{"Estimated", "Empirical", "All equal"});
+    JComboBox frequencyCombo = new JComboBox(FrequencyPolicy.values());
 
     JComboBox heteroCombo = new JComboBox(
             new String[]{"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
@@ -415,7 +415,7 @@ public class ModelsPanel extends JPanel implements Exportable {
                     nucSubstCombo.setSelectedIndex(0);
                 }
 
-                frequencyCombo.setSelectedIndex(model.getFrequencyPolicy());
+                frequencyCombo.setSelectedItem(model.getFrequencyPolicy());
 
                 break;
 
@@ -466,7 +466,9 @@ public class ModelsPanel extends JPanel implements Exportable {
         // middle of the setOptions() method.
         if (settingOptions) return;
 
-        getOptions(currentModel);
+        for (PartitionModel model : options.getActiveModels()) {
+            getOptions(model);
+        }
 
         options.clockType = (ClockType) clockModelCombo.getSelectedItem();
         options.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
@@ -486,7 +488,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         model.setBinarySubstitutionModel(binarySubstCombo.getSelectedIndex());
 
-        model.setFrequencyPolicy(frequencyCombo.getSelectedIndex());
+        model.setFrequencyPolicy((FrequencyPolicy) frequencyCombo.getSelectedItem());
 
         model.setGammaHetero(heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3);
 
@@ -494,12 +496,19 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         model.setGammaCategories(gammaCatCombo.getSelectedIndex() + 4);
 
-        if (codingCombo.getSelectedIndex() == 0) {
-            model.setCodonHeteroPattern(null);
-        } else if (codingCombo.getSelectedIndex() == 1) {
-            model.setCodonHeteroPattern("112");
-        } else {
-            model.setCodonHeteroPattern("123");
+        System.out.println(model.getName() + ".codingCombo.selectedIndex=" + codingCombo.getSelectedIndex());
+
+        switch (codingCombo.getSelectedIndex()) {
+            case 0:
+                model.setCodonHeteroPattern(null);
+                break;
+            case 1:
+                model.setCodonHeteroPattern("112");
+                break;
+            default:
+                model.setCodonHeteroPattern("123");
+                break;
+
         }
 
         model.setUnlinkedSubstitutionModel(substUnlinkCheck.isSelected());

@@ -185,6 +185,10 @@ public class BeautiOptions extends ModelOptions {
 
     public void addPartitionModel(PartitionModel model) {
         models.add(model);
+
+        // update delta mu opertor weight
+        Operator deltaMuOperator = getOperator("deltaMu");
+        deltaMuOperator.weight = getActiveModels().size();
     }
 
     /**
@@ -379,7 +383,7 @@ public class BeautiOptions extends ModelOptions {
             k += model.getCodonPartitionCount();
         }
 
-        assert(k == weights.length);
+        assert (k == weights.length);
 
         return weights;
     }
@@ -402,7 +406,8 @@ public class BeautiOptions extends ModelOptions {
         }
 
         if (multiplePartitions) {
-            ops.add(getOperator("deltaMu"));
+            Operator deltaMuOperator = getOperator("deltaMu");
+            ops.add(deltaMuOperator);
         }
 
         double initialRootHeight = 1;

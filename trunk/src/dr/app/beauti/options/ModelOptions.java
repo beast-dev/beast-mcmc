@@ -29,10 +29,6 @@ public class ModelOptions {
     public static final int BIN_SIMPLE = 0;
     public static final int BIN_COVARION = 1;
 
-    public static final int ESTIMATED = 0;
-    public static final int EMPIRICAL = 1;
-    public static final int ALLEQUAL = 2;
-
     public static final int GROWTH_RATE = 0;
     public static final int DOUBLING_TIME = 1;
     public static final int CONSTANT_SKYLINE = 0;

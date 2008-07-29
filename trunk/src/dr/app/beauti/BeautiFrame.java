@@ -605,7 +605,9 @@ public class BeautiFrame extends DocumentFrame {
         dataPanel.getOptions(beautiOptions);
         samplesPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
+
         modelsPanel.getOptions(beautiOptions);
+
         priorsPanel.getOptions(beautiOptions);
         operatorsPanel.getOptions(beautiOptions);
         mcmcPanel.getOptions(beautiOptions);

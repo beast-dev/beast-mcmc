@@ -18,8 +18,9 @@ public class PartitionModel extends ModelOptions {
     /**
      * A copy constructor
      *
-     * @param name   the name of the new model
-     * @param source the source model
+     * @param options the beauti options
+     * @param name    the name of the new model
+     * @param source  the source model
      */
     public PartitionModel(BeautiOptions options, String name, PartitionModel source) {
         this(options, name, source.dataType);
@@ -214,7 +215,7 @@ public class PartitionModel extends ModelOptions {
                                 throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
 
-                        if (frequencyPolicy == BeautiOptions.ESTIMATED) {
+                        if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
                             if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
                                 operators.add(getOperator("CP1.frequencies"));
                                 operators.add(getOperator("CP2.frequencies"));
@@ -247,7 +248,7 @@ public class PartitionModel extends ModelOptions {
                             default:
                                 throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
-                        if (frequencyPolicy == BeautiOptions.ESTIMATED) {
+                        if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
                             if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
                                 operators.add(getOperator("CP1+2.frequencies"));
                                 operators.add(getOperator("CP3.frequencies"));
@@ -276,7 +277,7 @@ public class PartitionModel extends ModelOptions {
                         default:
                             throw new IllegalArgumentException("Unknown nucleotides substitution model");
                     }
-                    if (frequencyPolicy == BeautiOptions.ESTIMATED) {
+                    if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
                         operators.add(getOperator("frequencies"));
                     }
                 }
@@ -306,7 +307,6 @@ public class PartitionModel extends ModelOptions {
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
-
 
         // if gamma do shape move
         if (gammaHetero) {
@@ -348,6 +348,7 @@ public class PartitionModel extends ModelOptions {
 
 
     /**
+     * @param includeRelativeRates true if relative rate parameters should be added
      * @return a list of parameters that are required
      */
     List<Parameter> getParameters(boolean includeRelativeRates) {
@@ -583,11 +584,11 @@ public class PartitionModel extends ModelOptions {
         this.binarySubstitutionModel = binarySubstitutionModel;
     }
 
-    public int getFrequencyPolicy() {
+    public FrequencyPolicy getFrequencyPolicy() {
         return frequencyPolicy;
     }
 
-    public void setFrequencyPolicy(int frequencyPolicy) {
+    public void setFrequencyPolicy(FrequencyPolicy frequencyPolicy) {
         this.frequencyPolicy = frequencyPolicy;
     }
 
@@ -623,6 +624,9 @@ public class PartitionModel extends ModelOptions {
         this.codonHeteroPattern = codonHeteroPattern;
     }
 
+    /**
+     * @return true if the rate matrix parameters are unlinked across codon positions
+     */
     public boolean isUnlinkedSubstitutionModel() {
         return unlinkedSubstitutionModel;
     }
@@ -670,7 +674,7 @@ public class PartitionModel extends ModelOptions {
             // There is more than one active partition model
             prefix += getName() + ".";
         }
-        if (getCodonPartitionCount() > 1) {
+        if (getCodonPartitionCount() > 1 && codonPartitionNumber > 0) {
             if (getCodonHeteroPattern().equals("123")) {
                 prefix += "CP" + codonPartitionNumber + ".";
             } else if (getCodonHeteroPattern().equals("112")) {
@@ -693,7 +697,7 @@ public class PartitionModel extends ModelOptions {
     private int aaSubstitutionModel = BeautiOptions.BLOSUM_62;
     private int binarySubstitutionModel = BeautiOptions.BIN_SIMPLE;
 
-    private int frequencyPolicy = BeautiOptions.ESTIMATED;
+    private FrequencyPolicy frequencyPolicy = FrequencyPolicy.ESTIMATED;
     private boolean gammaHetero = false;
     private int gammaCategories = 4;
     private boolean invarHetero = false;

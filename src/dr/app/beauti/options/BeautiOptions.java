@@ -147,12 +147,16 @@ public class BeautiOptions extends ModelOptions {
         createScaleOperator("uced.mean", rateWeights);
         createScaleOperator("ucld.mean", rateWeights);
         createScaleOperator("ucld.stdev", rateWeights);
+
+        createOperator("swapBranchRateCategories", "branchRates.categories",
+                "Performs a swap of branch rate categories", "branchRates.categories",
+                OperatorType.SWAP, 1, branchWeights / 3);
         createOperator("randomWalkBranchRateCategories", "branchRates.categories",
                 "Performs an integer random walk of branch rate categories", "branchRates.categories",
-                OperatorType.INTEGER_RANDOM_WALK, 1, branchWeights);
+                OperatorType.INTEGER_RANDOM_WALK, 1, branchWeights / 3);
         createOperator("unformBranchRateCategories", "branchRates.categories",
                 "Performs an integer uniform draw of branch rate categories", "branchRates.categories",
-                OperatorType.INTEGER_UNIFORM, 1, branchWeights);
+                OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
         createScaleOperator("localClock.rates", treeWeights);
         createOperator("localClock.changes", OperatorType.BITFLIP, 1, treeWeights);

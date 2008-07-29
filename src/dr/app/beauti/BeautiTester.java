@@ -25,14 +25,19 @@
 
 package dr.app.beauti;
 
-import dr.app.beauti.options.BeautiOptions;
-import dr.evolution.util.Date;
-import dr.evolution.util.TimeScale;
-import dr.evolution.util.Units;
+import dr.app.beauti.options.*;
+import dr.app.beauti.generator.BeastGenerator;
+import dr.evolution.util.*;
+import dr.evolution.datatype.GeneticCode;
+import dr.evolution.datatype.AminoAcids;
+import dr.evolution.alignment.*;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.io.Importer;
+import dr.evolution.tree.Tree;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import javax.swing.*;
+import java.io.*;
+import java.util.ArrayList;
 
 /**
  * @author Andrew Rambaut
@@ -42,366 +47,451 @@ import java.io.PrintWriter;
 public class BeautiTester {
 
     PrintWriter scriptWriter;
+    BeastGenerator generator;
 
     public BeautiTester() {
 
+        try {
+            scriptWriter = new PrintWriter(new FileWriter("tests/run_script.sh"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        BeautiOptions beautiOptions = createOptions();
+        importFromFile("examples/Primates.nex", beautiOptions, false);
+
+        generator = new BeastGenerator(beautiOptions);
+
+        buildNucModels("tests/pri_", beautiOptions);
+
+        beautiOptions = createOptions();
+        importFromFile("examples/Primates.nex", beautiOptions, true);
+
+        buildAAModels("tests/pri_", beautiOptions);
+
+        beautiOptions = createOptions();
+        importFromFile("examples/Dengue4.env.nex", beautiOptions, false);
+        beautiOptions.fixedSubstitutionRate = false;
+
+        buildNucModels("tests/den_", beautiOptions);
+
+        beautiOptions = createOptions();
+        importFromFile("examples/Dengue4.env.nex", beautiOptions, true);
+        beautiOptions.fixedSubstitutionRate = false;
+
+        buildAAModels("tests/den_", beautiOptions);
+
+        scriptWriter.close();
     }
-//    public BeautiTester() {
-//        BeastGenerator beautiOptions = createOptions();
-//
-//        try {
-//            scriptWriter = new PrintWriter(new FileWriter("tests/run_script.sh"));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        importFromFile("examples/Primates.nex", beautiOptions);
-//
-//        buildNucModels("tests/pri_", beautiOptions);
-//        buildAAModels("tests/pri_", beautiOptions);
-//
-//        importFromFile("examples/Dengue4.env.nex", beautiOptions);
-//        beautiOptions.fixedSubstitutionRate = false;
-//
-//        buildNucModels("tests/den_", beautiOptions);
-//        buildAAModels("tests/den_", beautiOptions);
-//
-//        scriptWriter.close();
-//    }
-//
-//    public BeastGenerator createOptions() {
-//
-//        BeastGenerator beautiOptions = new BeastGenerator();
-//
-//        beautiOptions.fileNameStem = "";
-//        beautiOptions.substTreeLog = false;
-//        beautiOptions.substTreeFileName = null;
-//
-//        // MCMC options
-//        beautiOptions.chainLength = 100;
-//        beautiOptions.logEvery = 100;
-//        beautiOptions.echoEvery = 100;
-//        beautiOptions.burnIn = 10;
-//        beautiOptions.fileName = null;
-//        beautiOptions.autoOptimize = true;
-//
-//        // Data options
-//        beautiOptions.taxonList = null;
-//        beautiOptions.tree = null;
-//
-//        beautiOptions.datesUnits = BeautiOptions.YEARS;
-//        beautiOptions.datesDirection = BeautiOptions.FORWARDS;
-//
-//        beautiOptions.userTree = false;
-//        beautiOptions.fixedTree = false;
-//
-//        beautiOptions.performTraceAnalysis = false;
-//        beautiOptions.generateCSV = true;  // until beuati button
-//
-//        beautiOptions.units = Units.Type.SUBSTITUTIONS;
-//        beautiOptions.maximumTipHeight = 0.0;
-//
-//        beautiOptions.meanSubstitutionRate = 1.0;
-//        beautiOptions.fixedSubstitutionRate = true;
-//        return beautiOptions;
-//    }
-//
-//    public void buildNucModels(String key, BeastGenerator beautiOptions) {
-//        beautiOptions.nucSubstitutionModel = BeautiOptions.HKY;
-//        buildCodonModels(key + "HKY", beautiOptions);
-//        beautiOptions.nucSubstitutionModel = BeautiOptions.GTR;
-//        buildCodonModels(key + "GTR", beautiOptions);
-//    }
-//
-//    public void buildCodonModels(String key, BeastGenerator beautiOptions) {
-//        beautiOptions.codonHeteroPattern = null;
-//        beautiOptions.unlinkedSubstitutionModel = false;
-//        beautiOptions.unlinkedHeterogeneityModel = false;
-//        buildHeteroModels(key + "", beautiOptions);
-//
-//        beautiOptions.codonHeteroPattern = "123";
-//        buildHeteroModels(key + "+C123", beautiOptions);
-//
-//        beautiOptions.unlinkedSubstitutionModel = true;
-//        beautiOptions.unlinkedHeterogeneityModel = false;
-//        buildHeteroModels(key + "+C123^S", beautiOptions);
-//
-//        beautiOptions.unlinkedSubstitutionModel = false;
-//        beautiOptions.unlinkedHeterogeneityModel = true;
-//        buildHeteroModels(key + "+C123^H", beautiOptions);
-//
-//        beautiOptions.unlinkedSubstitutionModel = true;
-//        beautiOptions.unlinkedHeterogeneityModel = true;
-//        buildHeteroModels(key + "+C123^SH", beautiOptions);
-//
-//        beautiOptions.codonHeteroPattern = "112";
-//        buildHeteroModels(key + "+C112", beautiOptions);
-//
-//        beautiOptions.unlinkedSubstitutionModel = true;
-//        beautiOptions.unlinkedHeterogeneityModel = false;
-//        buildHeteroModels(key + "+C112^S", beautiOptions);
-//
-//        beautiOptions.unlinkedSubstitutionModel = false;
-//        beautiOptions.unlinkedHeterogeneityModel = true;
-//        buildHeteroModels(key + "+C112^H", beautiOptions);
-//
-//        beautiOptions.unlinkedSubstitutionModel = true;
-//        beautiOptions.unlinkedHeterogeneityModel = true;
-//        buildHeteroModels(key + "+C112^SH", beautiOptions);
-//
-//    }
-//
-//    public void buildHeteroModels(String key, BeastGenerator beautiOptions) {
-//
-//        beautiOptions.gammaHetero = false;
-//        beautiOptions.gammaCategories = 4;
-//        beautiOptions.invarHetero = false;
-//        buildTreePriorModels(key + "", beautiOptions);
-//
-//        beautiOptions.gammaHetero = true;
-//        beautiOptions.invarHetero = false;
-//        buildTreePriorModels(key + "+G", beautiOptions);
-//
-//        beautiOptions.gammaHetero = false;
-//        beautiOptions.invarHetero = true;
-//        buildTreePriorModels(key + "+I", beautiOptions);
-//
-//        beautiOptions.gammaHetero = true;
-//        beautiOptions.invarHetero = true;
-//        buildTreePriorModels(key + "+GI", beautiOptions);
-//    }
-//
-//    public void buildAAModels(String key, BeastGenerator beautiOptions) {
-//
-////        beautiOptions.alignment = new ConvertAlignment(AminoAcids.INSTANCE, GeneticCode.UNIVERSAL, beautiOptions.originalAlignment);
-//        /*
-//        beautiOptions.aaSubstitutionModel = BeautiOptions.BLOSUM_62;
-//        buildHeteroModels(key+"BLOSUM62", beautiOptions);
-//
-//        beautiOptions.aaSubstitutionModel = BeautiOptions.CP_REV_45;
-//        buildHeteroModels(key+"CPREV45", beautiOptions);
-//
-//        beautiOptions.aaSubstitutionModel = BeautiOptions.DAYHOFF;
-//        buildHeteroModels(key+"DAYHOFF", beautiOptions);
-//
-//        beautiOptions.aaSubstitutionModel = BeautiOptions.JTT;
-//        buildHeteroModels(key+"JTT", beautiOptions);
-//
-//        beautiOptions.aaSubstitutionModel = BeautiOptions.MT_REV_24;
-//        buildHeteroModels(key+"MTREV24", beautiOptions);
-//        */
-//        beautiOptions.aaSubstitutionModel = BeautiOptions.WAG;
-//        buildHeteroModels(key + "WAG", beautiOptions);
-//    }
-//
-//    public void buildTreePriorModels(String key, BeastGenerator beautiOptions) {
-//
-//        beautiOptions.nodeHeightPrior = BeautiOptions.CONSTANT;
-//        buildClockModels(key + "+CP", beautiOptions);
-//
-//        beautiOptions.nodeHeightPrior = BeautiOptions.EXPONENTIAL;
-//        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-//        buildClockModels(key + "+EG", beautiOptions);
-//
-//        beautiOptions.nodeHeightPrior = BeautiOptions.LOGISTIC;
-//        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-//        buildClockModels(key + "+LG", beautiOptions);
-//
-//        beautiOptions.nodeHeightPrior = BeautiOptions.EXPANSION;
-//        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-//        buildClockModels(key + "+XG", beautiOptions);
-//
-//        beautiOptions.nodeHeightPrior = BeautiOptions.SKYLINE;
-//        beautiOptions.skylineGroupCount = 3;
-//        beautiOptions.skylineModel = BeautiOptions.CONSTANT_SKYLINE;
-//        buildClockModels(key + "+SKC", beautiOptions);
-//
-//        beautiOptions.skylineModel = BeautiOptions.LINEAR_SKYLINE;
-//        buildClockModels(key + "+SKL", beautiOptions);
-//
-//    }
-//
-//    public void buildClockModels(String key, BeastGenerator beautiOptions) {
-//        beautiOptions.clockModel = BeautiOptions.STRICT_CLOCK;
-//        generate(key + "+CLOC", beautiOptions);
-//        beautiOptions.clockModel = BeautiOptions.UNCORRELATED_EXPONENTIAL;
-//        generate(key + "+UCED", beautiOptions);
-//        beautiOptions.clockModel = BeautiOptions.UNCORRELATED_LOGNORMAL;
-//        generate(key + "+UCLD", beautiOptions);
-//    }
-//
-//    public void generate(String name, BeastGenerator beautiOptions) {
-//        beautiOptions.logFileName = name + ".log";
-//        beautiOptions.treeFileName = name + ".trees";
-//
-//        System.out.println("Generating: " + name);
-//        String fileName = name + ".xml";
-//        try {
-//            FileWriter fw = new FileWriter(fileName);
-//            beautiOptions.generateXML(fw);
-//            fw.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        scriptWriter.println("beast " + fileName);
-//    }
-//
-//    protected void importFromFile(String fileName, BeastGenerator beautiOptions) {
-////
-////        try {
-////            FileReader reader = new FileReader(fileName);
-////
-////            NexusApplicationImporter importer = new NexusApplicationImporter(reader);
-////
-////            boolean done = false;
-////
-////            beautiOptions.originalAlignment = null;
-////            beautiOptions.alignment = null;
-////            beautiOptions.tree = null;
-////            beautiOptions.taxonList = null;
-////
-////            while (!done) {
-////                try {
-////
-////                    NexusImporter.NexusBlock block = importer.findNextBlock();
-////
-////                    if (block == NexusImporter.TAXA_BLOCK) {
-////
-////                        if (beautiOptions.taxonList != null) {
-////                            throw new NexusImporter.MissingBlockException("TAXA block already defined");
-////                        }
-////
-////                        beautiOptions.taxonList = importer.parseTaxaBlock();
-////
-////                    } else if (block == NexusImporter.CALIBRATION_BLOCK) {
-////                        if (beautiOptions.taxonList == null) {
-////                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a CALIBRATION block");
-////                        }
-////
-////                        importer.parseCalibrationBlock(beautiOptions.taxonList);
-////
-////                    } else if (block == NexusImporter.CHARACTERS_BLOCK) {
-////
-////                        if (beautiOptions.taxonList == null) {
-////                            throw new NexusImporter.MissingBlockException("TAXA block must be defined before a CHARACTERS block");
-////                        }
-////
-////                        if (beautiOptions.originalAlignment != null) {
-////                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
-////                        }
-////
-////                        beautiOptions.originalAlignment = (SimpleAlignment)importer.parseCharactersBlock(beautiOptions.taxonList);
-////
-////                    } else if (block == NexusImporter.DATA_BLOCK) {
-////
-////                        if (beautiOptions.originalAlignment != null) {
-////                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
-////                        }
-////
-////                        // A data block doesn't need a taxon block before it
-////                        // but if one exists then it will use it.
-////                        beautiOptions.originalAlignment = (SimpleAlignment)importer.parseDataBlock(beautiOptions.taxonList);
-////                        if (beautiOptions.taxonList == null) {
-////                            beautiOptions.taxonList = beautiOptions.originalAlignment;
-////                        }
-////
-////                    } else if (block == NexusImporter.TREES_BLOCK) {
-////
-////                        if (beautiOptions.taxonList == null) {
-////                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a TREES block");
-////                        }
-////
-////                        if (beautiOptions.tree != null) {
-////                            throw new NexusImporter.MissingBlockException("TREES block already defined");
-////                        }
-////
-////                        Tree[] trees = importer.parseTreesBlock(beautiOptions.taxonList);
-////                        if (trees.length > 0) {
-////                            beautiOptions.tree = trees[0];
-////                        }
-////
-/////*					} else if (block == NexusApplicationImporter.PAUP_BLOCK) {
-////
-////						importer.parsePAUPBlock(beautiOptions);
-////
-////					} else if (block == NexusApplicationImporter.MRBAYES_BLOCK) {
-////
-////						importer.parseMrBayesBlock(beautiOptions);
-////
-////					} else if (block == NexusApplicationImporter.RHINO_BLOCK) {
-////
-////						importer.parseRhinoBlock(beautiOptions);
-////*/
-////                    } else {
-////                        // Ignore the block..
-////                    }
-////
-////                } catch (EOFException ex) {
-////                    done = true;
-////                }
-////            }
-////
-////            if (beautiOptions.originalAlignment == null) {
-////                throw new NexusImporter.MissingBlockException("DATA or CHARACTERS block is missing");
-////            }
-////
-////        } catch (FileNotFoundException fnfe) {
-////            System.err.println("File not found: " + fnfe);
-////            System.exit(1);
-////
-////        } catch (Importer.ImportException ime) {
-////            System.err.println("Error parsing imported file: " + ime);
-////            System.exit(1);
-////        } catch (IOException ioex) {
-////            System.err.println("File I/O Error: " + ioex);
-////            System.exit(1);
-////        } catch (Exception ex) {
-////            System.err.println("Fatal exception: " + ex);
-////            System.exit(1);
-////        }
-////
-////        // make sure they all have dates...
-////        for (int i = 0; i < beautiOptions.originalAlignment.getTaxonCount(); i++) {
-////            if (beautiOptions.originalAlignment.getTaxonAttribute(i, "date") == null) {
-////                java.util.Date origin = new java.util.Date(0);
-////
-////                dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
-////                beautiOptions.originalAlignment.getTaxon(i).setAttribute("date", date);
-////            }
-////        }
-////
-////        beautiOptions.alignment = beautiOptions.originalAlignment;
-////        beautiOptions.taxonList = beautiOptions.originalAlignment;
-////
-////        calculateHeights(beautiOptions);
-//    }
-//
-//    private void calculateHeights(BeautiOptions options) {
-//
-//        options.maximumTipHeight = 0.0;
-//        if (!options.hasData()) return;
-//
-//        dr.evolution.util.Date mostRecent = null;
-//        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-//            Date date = options.taxonList.getTaxon(i).getDate();
-//            if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
-//                mostRecent = date;
-//            }
-//        }
-//
-//        if (mostRecent != null) {
-//            TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
-//            double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
-//
-//            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-//                Date date = options.taxonList.getTaxon(i).getDate();
-//                if (date != null) {
-//                    double height = timeScale.convertTime(date.getTimeValue(), date) - time0;
-//                    if (height > options.maximumTipHeight) options.maximumTipHeight = height;
-//                }
-//            }
-//        }
-//    }
+
+    public BeautiOptions createOptions() {
+        BeautiOptions beautiOptions = new BeautiOptions();
+
+        beautiOptions.fileNameStem = "";
+        beautiOptions.substTreeLog = false;
+        beautiOptions.substTreeFileName = null;
+
+        // MCMC options
+        beautiOptions.chainLength = 100;
+        beautiOptions.logEvery = 100;
+        beautiOptions.echoEvery = 100;
+        beautiOptions.burnIn = 10;
+        beautiOptions.fileName = null;
+        beautiOptions.autoOptimize = true;
+
+        // Data options
+        beautiOptions.taxonList = null;
+        beautiOptions.tree = null;
+
+        beautiOptions.datesUnits = BeautiOptions.YEARS;
+        beautiOptions.datesDirection = BeautiOptions.FORWARDS;
+
+        beautiOptions.userTree = false;
+        beautiOptions.fixedTree = false;
+
+        beautiOptions.performTraceAnalysis = false;
+        beautiOptions.generateCSV = true;  // until beuati button
+
+        beautiOptions.units = Units.Type.SUBSTITUTIONS;
+        beautiOptions.maximumTipHeight = 0.0;
+
+        beautiOptions.meanSubstitutionRate = 1.0;
+        beautiOptions.fixedSubstitutionRate = true;
+        return beautiOptions;
+    }
+
+    public void buildNucModels(String key, BeautiOptions beautiOptions) {
+        PartitionModel model = beautiOptions.getPartitionModels().get(0);
+
+        model.setNucSubstitutionModel(NucModelType.HKY);
+        buildCodonModels(key + "HKY", beautiOptions);
+        model.setNucSubstitutionModel(NucModelType.GTR);
+        buildCodonModels(key + "GTR", beautiOptions);
+    }
+
+    public void buildCodonModels(String key, BeautiOptions beautiOptions) {
+        PartitionModel model = beautiOptions.getPartitionModels().get(0);
+
+        model.setCodonHeteroPattern(null);
+        model.setUnlinkedSubstitutionModel(false);
+        model.setUnlinkedHeterogeneityModel(false);
+        buildHeteroModels(key + "", beautiOptions);
+
+        model.setCodonHeteroPattern("123");
+        buildHeteroModels(key + "+C123", beautiOptions);
+
+        model.setUnlinkedSubstitutionModel(true);
+        model.setUnlinkedHeterogeneityModel(false);
+        buildHeteroModels(key + "+C123^S", beautiOptions);
+
+        model.setUnlinkedSubstitutionModel(false);
+        model.setUnlinkedHeterogeneityModel(true);
+        buildHeteroModels(key + "+C123^H", beautiOptions);
+
+        model.setUnlinkedSubstitutionModel(true);
+        model.setUnlinkedHeterogeneityModel(true);
+        buildHeteroModels(key + "+C123^SH", beautiOptions);
+
+        model.setCodonHeteroPattern("112");
+        buildHeteroModels(key + "+C112", beautiOptions);
+
+        model.setUnlinkedSubstitutionModel(true);
+        model.setUnlinkedHeterogeneityModel(false);
+        buildHeteroModels(key + "+C112^S", beautiOptions);
+
+        model.setUnlinkedSubstitutionModel(false);
+        model.setUnlinkedHeterogeneityModel(true);
+        buildHeteroModels(key + "+C112^H", beautiOptions);
+
+        model.setUnlinkedSubstitutionModel(true);
+        model.setUnlinkedHeterogeneityModel(true);
+        buildHeteroModels(key + "+C112^SH", beautiOptions);
+
+    }
+
+    public void buildHeteroModels(String key, BeautiOptions beautiOptions) {
+        PartitionModel model = beautiOptions.getPartitionModels().get(0);
+
+        model.setGammaHetero(false);
+        model.setGammaCategories(4);
+        model.setInvarHetero(false);
+        buildTreePriorModels(key + "", beautiOptions);
+
+        model.setGammaHetero(true);
+        model.setInvarHetero(false);
+        buildTreePriorModels(key + "+G", beautiOptions);
+
+        model.setGammaHetero(false);
+        model.setInvarHetero(true);
+        buildTreePriorModels(key + "+I", beautiOptions);
+
+        model.setGammaHetero(true);
+        model.setInvarHetero(true);
+        buildTreePriorModels(key + "+GI", beautiOptions);
+    }
+
+    public void buildAAModels(String key, BeautiOptions beautiOptions) {
+        PartitionModel model = beautiOptions.getPartitionModels().get(0);
+
+        model.setAaSubstitutionModel(AAModelType.BLOSUM_62);
+        buildHeteroModels(key+"BLOSUM62", beautiOptions);
+
+        model.setAaSubstitutionModel(AAModelType.CP_REV_45);
+        buildHeteroModels(key+"CPREV45", beautiOptions);
+
+        model.setAaSubstitutionModel(AAModelType.DAYHOFF);
+        buildHeteroModels(key+"DAYHOFF", beautiOptions);
+
+        model.setAaSubstitutionModel(AAModelType.JTT);
+        buildHeteroModels(key+"JTT", beautiOptions);
+
+        model.setAaSubstitutionModel(AAModelType.MT_REV_24);
+        buildHeteroModels(key+"MTREV24", beautiOptions);
+
+        model.setAaSubstitutionModel(AAModelType.WAG);
+        buildHeteroModels(key + "WAG", beautiOptions);
+    }
+
+    public void buildTreePriorModels(String key, BeautiOptions beautiOptions) {
+
+        beautiOptions.nodeHeightPrior = TreePrior.CONSTANT;
+        buildClockModels(key + "+CP", beautiOptions);
+
+        beautiOptions.nodeHeightPrior = TreePrior.EXPONENTIAL;
+        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
+        buildClockModels(key + "+EG", beautiOptions);
+
+        beautiOptions.nodeHeightPrior = TreePrior.LOGISTIC;
+        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
+        buildClockModels(key + "+LG", beautiOptions);
+
+        beautiOptions.nodeHeightPrior = TreePrior.EXPANSION;
+        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
+        buildClockModels(key + "+XG", beautiOptions);
+
+        beautiOptions.nodeHeightPrior = TreePrior.SKYLINE;
+        beautiOptions.skylineGroupCount = 3;
+        beautiOptions.skylineModel = BeautiOptions.CONSTANT_SKYLINE;
+        buildClockModels(key + "+SKC", beautiOptions);
+
+        beautiOptions.skylineModel = BeautiOptions.LINEAR_SKYLINE;
+        buildClockModels(key + "+SKL", beautiOptions);
+
+    }
+
+    public void buildClockModels(String key, BeautiOptions beautiOptions) {
+        beautiOptions.clockType = ClockType.STRICT_CLOCK;
+        generate(key + "+CLOC", beautiOptions);
+        beautiOptions.clockType = ClockType.UNCORRELATED_EXPONENTIAL;
+        generate(key + "+UCED", beautiOptions);
+        beautiOptions.clockType = ClockType.UNCORRELATED_LOGNORMAL;
+        generate(key + "+UCLD", beautiOptions);
+    }
+
+    public void generate(String name, BeautiOptions beautiOptions) {
+        beautiOptions.logFileName = name + ".log";
+        beautiOptions.treeFileName = name + ".trees";
+
+        System.out.println("Generating: " + name);
+        String fileName = name + ".xml";
+        try {
+            FileWriter fw = new FileWriter(fileName);
+            generator.generateXML(fw);
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        scriptWriter.println("beast " + fileName);
+    }
+
+    protected void importFromFile(String fileName, BeautiOptions beautiOptions, boolean translate) {
+
+        TaxonList taxa = null;
+        Alignment alignment = null;
+        Tree tree = null;
+        PartitionModel model = null;
+        java.util.List<NexusApplicationImporter.CharSet> charSets = null;
+
+        try {
+            FileReader reader = new FileReader(fileName);
+
+            NexusApplicationImporter importer = new NexusApplicationImporter(reader);
+
+            boolean done = false;
+
+            while (!done) {
+                try {
+
+                    NexusImporter.NexusBlock block = importer.findNextBlock();
+
+                    if (block == NexusImporter.TAXA_BLOCK) {
+
+                        if (taxa != null) {
+                            throw new NexusImporter.MissingBlockException("TAXA block already defined");
+                        }
+
+                        taxa = importer.parseTaxaBlock();
+
+                    } else if (block == NexusImporter.CALIBRATION_BLOCK) {
+                        if (taxa == null) {
+                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a CALIBRATION block");
+                        }
+
+                        importer.parseCalibrationBlock(taxa);
+
+                    } else if (block == NexusImporter.CHARACTERS_BLOCK) {
+
+                        if (taxa == null) {
+                            throw new NexusImporter.MissingBlockException("TAXA block must be defined before a CHARACTERS block");
+                        }
+
+                        if (alignment != null) {
+                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
+                        }
+
+                        alignment = (SimpleAlignment) importer.parseCharactersBlock(beautiOptions.taxonList);
+
+                    } else if (block == NexusImporter.DATA_BLOCK) {
+
+                        if (alignment != null) {
+                            throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
+                        }
+
+                        // A data block doesn't need a taxon block before it
+                        // but if one exists then it will use it.
+                        alignment = (SimpleAlignment) importer.parseDataBlock(beautiOptions.taxonList);
+                        if (taxa == null) {
+                            taxa = alignment;
+                        }
+
+                    } else if (block == NexusImporter.TREES_BLOCK) {
+
+                        if (taxa == null) {
+                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a TREES block");
+                        }
+
+                        if (tree != null) {
+                            throw new NexusImporter.MissingBlockException("TREES block already defined");
+                        }
+
+                        Tree[] trees = importer.parseTreesBlock(taxa);
+                        if (trees.length > 0) {
+                            tree = trees[0];
+                        }
+
+                    } else if (block == NexusApplicationImporter.PAUP_BLOCK) {
+
+                        model = importer.parsePAUPBlock(beautiOptions);
+
+                    } else if (block == NexusApplicationImporter.MRBAYES_BLOCK) {
+
+                        model = importer.parseMrBayesBlock(beautiOptions);
+
+                    } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK) {
+
+                        charSets = importer.parseAssumptionsBlock();
+
+                    } else {
+                        // Ignore the block..
+                    }
+
+                } catch (EOFException ex) {
+                    done = true;
+                }
+            }
+
+            // Allow the user to load taxa only (perhaps from a tree file) so that they can sample from a prior...
+            if (alignment == null && taxa == null) {
+                throw new NexusImporter.MissingBlockException("TAXON, DATA or CHARACTERS block is missing");
+            }
+
+        } catch (FileNotFoundException fnfe) {
+            System.err.println("File not found: " + fnfe);
+            System.exit(1);
+
+        } catch (Importer.ImportException ime) {
+            System.err.println("Error parsing imported file: " + ime);
+            System.exit(1);
+        } catch (IOException ioex) {
+            System.err.println("File I/O Error: " + ioex);
+            System.exit(1);
+        } catch (Exception ex) {
+            System.err.println("Fatal exception: " + ex);
+            System.exit(1);
+        }
+
+        if (beautiOptions.taxonList == null) {
+            // This is the first partition to be loaded...
+
+            beautiOptions.taxonList = taxa;
+
+            // check the taxon names for invalid characters
+            boolean foundAmp = false;
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                String name = taxa.getTaxon(i).getId();
+                if (name.indexOf('&') >= 0) {
+                    foundAmp = true;
+                }
+            }
+            if (foundAmp) {
+                System.err.println("One or more taxon names include an illegal character ('&').");
+                return;
+            }
+
+            // make sure they all have dates...
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                if (taxa.getTaxonAttribute(i, "date") == null) {
+                    java.util.Date origin = new java.util.Date(0);
+
+                    dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
+                    taxa.getTaxon(i).setAttribute("date", date);
+                }
+            }
+
+        } else {
+            // This is an additional partition so check it uses the same taxa
+
+            java.util.List<String> oldTaxa = new ArrayList<String>();
+            for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
+                oldTaxa.add(beautiOptions.taxonList.getTaxon(i).getId());
+            }
+            java.util.List<String> newTaxa = new ArrayList<String>();
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                newTaxa.add(taxa.getTaxon(i).getId());
+            }
+
+            if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
+                System.err.println("This file contains different taxa from the previously loaded");
+                return;
+            }
+        }
+
+        String fileNameStem = dr.app.util.Utils.trimExtensions(fileName,
+                new String[]{"NEX", "NEXUS", "TRE", "TREE"});
+
+        if (alignment != null) {
+            if (translate) {
+                alignment = new ConvertAlignment(AminoAcids.INSTANCE, GeneticCode.UNIVERSAL, alignment);
+            }
+            
+            java.util.List<DataPartition> partitions = new ArrayList<DataPartition>();
+            if (charSets != null && charSets.size() > 0) {
+                for (NexusApplicationImporter.CharSet charSet : charSets) {
+                    partitions.add(new DataPartition(charSet.getName(), fileName,
+                            alignment, charSet.getFromSite(), charSet.getToSite()));
+                }
+            } else {
+                partitions.add(new DataPartition(fileNameStem, fileName, alignment));
+            }
+            for (DataPartition partition : partitions) {
+                if (model != null) {
+                    partition.setPartitionModel(model);
+                    beautiOptions.addPartitionModel(model);
+                } else {
+                    for (PartitionModel pm : beautiOptions.getPartitionModels()) {
+                        if (pm.dataType == alignment.getDataType()) {
+                            partition.setPartitionModel(pm);
+                        }
+                    }
+                    if (partition.getPartitionModel() == null) {
+                        PartitionModel pm = new PartitionModel(beautiOptions, partition);
+                        partition.setPartitionModel(pm);
+                        beautiOptions.addPartitionModel(pm);
+                    }
+                }
+                beautiOptions.dataPartitions.add(partition);
+            }
+        }
+
+        calculateHeights(beautiOptions);
+    }
+
+    private void calculateHeights(BeautiOptions options) {
+
+        options.maximumTipHeight = 0.0;
+        if (!options.hasData()) return;
+
+        dr.evolution.util.Date mostRecent = null;
+        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+            Date date = options.taxonList.getTaxon(i).getDate();
+            if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
+                mostRecent = date;
+            }
+        }
+
+        if (mostRecent != null) {
+            TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
+            double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
+
+            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+                Date date = options.taxonList.getTaxon(i).getDate();
+                if (date != null) {
+                    double height = timeScale.convertTime(date.getTimeValue(), date) - time0;
+                    if (height > options.maximumTipHeight) options.maximumTipHeight = height;
+                }
+            }
+        }
+    }
 
     //Main method
     public static void main(String[] args) {

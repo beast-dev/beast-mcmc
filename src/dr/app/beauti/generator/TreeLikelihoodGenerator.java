@@ -32,10 +32,10 @@ public class TreeLikelihoodGenerator extends Generator {
 
         if (model.dataType == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
             for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
-                writeTreeLikelihood(model.getName() + ".treeLikelihood", i, model, writer);
+                writeTreeLikelihood("treeLikelihood", i, model, writer);
             }
         } else {
-            writeTreeLikelihood(model.getName() + ".treeLikelihood", -1, model, writer);
+            writeTreeLikelihood("treeLikelihood", -1, model, writer);
         }
     }
 
@@ -50,34 +50,35 @@ public class TreeLikelihoodGenerator extends Generator {
     public void writeTreeLikelihood(String id, int num, PartitionModel model, XMLWriter writer) {
 
         if (num > 0) {
+            String prefix = model.getPrefix(num);
             writer.writeOpenTag(
                     TreeLikelihood.TREE_LIKELIHOOD,
                     new Attribute[]{
-                            new Attribute.Default<String>("id", id + num),
+                            new Attribute.Default<String>("id", prefix + id),
                             new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(model))}
             );
             writer.writeTag(SitePatternsParser.PATTERNS,
-                    new Attribute[]{new Attribute.Default<String>("idref",
-                            model.getName()+".patterns" + num)}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
 
             writer.writeTag(TreeModel.TREE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>("idref", model.getName() + ".siteModel" + num)}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", prefix + "siteModel")}, true);
         } else {
+            String prefix = model.getPrefix();
             writer.writeOpenTag(
                     TreeLikelihood.TREE_LIKELIHOOD,
                     new Attribute[]{
-                            new Attribute.Default<String>("id", id),
+                            new Attribute.Default<String>("id", prefix + id),
                             new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(model))
                     }
             );
             writer.writeTag(SitePatternsParser.PATTERNS,
-                    new Attribute[]{new Attribute.Default<String>("idref", model.getName()+".patterns")}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
             writer.writeTag(TreeModel.TREE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>("idref", model.getName() + ".siteModel")}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", prefix + "siteModel")}, true);
         }
         if (options.clockType == ClockType.STRICT_CLOCK) {
             writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
@@ -95,11 +96,11 @@ public class TreeLikelihoodGenerator extends Generator {
             if (model.dataType == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
                 for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                     writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD,
-                            new Attribute.Default<String>("idref", model.getName() + ".treeLikelihood" + i), true);
+                            new Attribute.Default<String>("idref", model.getPrefix(i) + "treeLikelihood"), true);
                 }
             } else {
                 writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD,
-                        new Attribute.Default<String>("idref", model.getName() + ".treeLikelihood"), true);
+                        new Attribute.Default<String>("idref", model.getPrefix() + "treeLikelihood"), true);
             }
         }
     }

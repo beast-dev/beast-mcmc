@@ -126,8 +126,8 @@ public class Parameter {
         this.prefix = prefix;
     }
 
-    private String getFullName() {
-        if (prefix != null) return prefix + "." + baseName;
+    public String getFullName() {
+        if (prefix != null) return prefix + baseName;
         return baseName;
     }
 
@@ -150,9 +150,10 @@ public class Parameter {
     public String getDescription() {
         if (taxa != null) {
             return description + taxa.getId();
-        } else {
-            return description;
+        } else if (prefix != null) {
+            return description + " of partition " + prefix;
         }
+        return description;
     }
 
     private final String baseName;

@@ -518,7 +518,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         int result = createModelDialog.showDialog();
         if (result != JOptionPane.CANCEL_OPTION) {
-            PartitionModel model = new PartitionModel(createModelDialog.getName(), createModelDialog.getDataType());
+            PartitionModel model = new PartitionModel(options, createModelDialog.getName(), createModelDialog.getDataType());
             options.addPartitionModel(model);
             modelTableModel.fireTableDataChanged();
             int row = options.getPartitionModels().size() - 1;

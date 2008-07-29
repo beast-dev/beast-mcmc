@@ -37,6 +37,8 @@ import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
@@ -67,8 +69,7 @@ public class ModelsPanel extends JPanel implements Exportable {
     // Partition model parameters //////////////////////////////////////////////////////////////////////
 
     JComboBox nucSubstCombo = new JComboBox(new String[]{"HKY", "GTR"});
-    JComboBox aaSubstCombo = new JComboBox(
-            new String[]{"Blosum62", "Dayhoff", "JTT", "mtREV", "cpREV", "WAG"});
+    JComboBox aaSubstCombo = new JComboBox(AAModelType.values());
     JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
 
     JComboBox frequencyCombo = new JComboBox(FrequencyPolicy.values());
@@ -148,22 +149,33 @@ public class ModelsPanel extends JPanel implements Exportable {
         controlPanel1.setOpaque(false);
         controlPanel1.add(actionPanel1);
 
+        ChangeListener changeListener = new ChangeListener() {
+            public void stateChanged(ChangeEvent changeEvent) {
+                configurePartitionModel(currentModel);
+            }
+        };
+
         PanelUtils.setupComponent(substUnlinkCheck);
+        substUnlinkCheck.addChangeListener(changeListener);
         substUnlinkCheck.setEnabled(false);
         substUnlinkCheck.setToolTipText("" +
                 "<html>Gives each codon position partition different<br>" +
                 "substitution model parameters.</html>");
 
         PanelUtils.setupComponent(heteroUnlinkCheck);
+        heteroUnlinkCheck.addChangeListener(changeListener);
         heteroUnlinkCheck.setEnabled(false);
         heteroUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>rate heterogeneity model parameters.</html>");
 
         PanelUtils.setupComponent(freqsUnlinkCheck);
+        freqsUnlinkCheck.addChangeListener(changeListener);
         freqsUnlinkCheck.setEnabled(false);
         freqsUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>nucleotide frequency parameters.</html>");
 
         java.awt.event.ItemListener listener = new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent ev) {
+
+                configurePartitionModel(currentModel);
                 fireModelsChanged();
             }
         };
@@ -178,7 +190,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         PanelUtils.setupComponent(binarySubstCombo);
         binarySubstCombo.addItemListener(listener);
-        binarySubstCombo.setToolTipText("<html>Select the type of binay substitution model.</html>");
+        binarySubstCombo.setToolTipText("<html>Select the type of binary substitution model.</html>");
 
         PanelUtils.setupComponent(frequencyCombo);
         frequencyCombo.addItemListener(listener);
@@ -420,7 +432,7 @@ public class ModelsPanel extends JPanel implements Exportable {
                 break;
 
             case DataType.AMINO_ACIDS:
-                aaSubstCombo.setSelectedIndex(model.getAaSubstitutionModel());
+                aaSubstCombo.setSelectedItem(model.getAaSubstitutionModel());
                 break;
 
             case DataType.TWO_STATES:
@@ -466,9 +478,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         // middle of the setOptions() method.
         if (settingOptions) return;
 
-        for (PartitionModel model : options.getActiveModels()) {
-            getOptions(model);
-        }
+        configurePartitionModel(currentModel);
 
         options.clockType = (ClockType) clockModelCombo.getSelectedItem();
         options.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
@@ -476,47 +486,55 @@ public class ModelsPanel extends JPanel implements Exportable {
         options.meanSubstitutionRate = substitutionRateField.getValue();
     }
 
+    /**
+     * This method configures the given partition model according to the settings selected in the ModelsPanel
+     * in the model panel
+     *
+     * @param model the model to be configured.
+     */
+    private void configurePartitionModel(PartitionModel model) {
 
-    public void getOptions(PartitionModel model) {
+        if (model != null) {
+            if (nucSubstCombo.getSelectedIndex() == 1) {
+                model.setNucSubstitutionModel(NucModelType.GTR);
+            } else {
+                model.setNucSubstitutionModel(NucModelType.HKY);
+            }
+            model.setAaSubstitutionModel((AAModelType) aaSubstCombo.getSelectedItem());
 
-        if (nucSubstCombo.getSelectedIndex() == 1) {
-            model.setNucSubstitutionModel(NucModelType.GTR);
-        } else {
-            model.setNucSubstitutionModel(NucModelType.HKY);
+            model.setBinarySubstitutionModel(binarySubstCombo.getSelectedIndex());
+
+            model.setFrequencyPolicy((FrequencyPolicy) frequencyCombo.getSelectedItem());
+
+            model.setGammaHetero(heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3);
+
+            model.setInvarHetero(heteroCombo.getSelectedIndex() == 2 || heteroCombo.getSelectedIndex() == 3);
+
+            model.setGammaCategories(gammaCatCombo.getSelectedIndex() + 4);
+
+            System.out.println(model.getName() + ".codingCombo.selectedIndex=" + codingCombo.getSelectedIndex());
+
+            switch (codingCombo.getSelectedIndex()) {
+                case 0:
+                    model.setCodonHeteroPattern(null);
+                    break;
+                case 1:
+                    model.setCodonHeteroPattern("112");
+                    break;
+                default:
+                    model.setCodonHeteroPattern("123");
+                    break;
+
+            }
+
+            model.setUnlinkedSubstitutionModel(substUnlinkCheck.isSelected());
+            model.setUnlinkedHeterogeneityModel(heteroUnlinkCheck.isSelected());
+            model.setUnlinkedFrequencyModel(freqsUnlinkCheck.isSelected());
         }
-        model.setAaSubstitutionModel(aaSubstCombo.getSelectedIndex());
-
-        model.setBinarySubstitutionModel(binarySubstCombo.getSelectedIndex());
-
-        model.setFrequencyPolicy((FrequencyPolicy) frequencyCombo.getSelectedItem());
-
-        model.setGammaHetero(heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3);
-
-        model.setInvarHetero(heteroCombo.getSelectedIndex() == 2 || heteroCombo.getSelectedIndex() == 3);
-
-        model.setGammaCategories(gammaCatCombo.getSelectedIndex() + 4);
-
-        System.out.println(model.getName() + ".codingCombo.selectedIndex=" + codingCombo.getSelectedIndex());
-
-        switch (codingCombo.getSelectedIndex()) {
-            case 0:
-                model.setCodonHeteroPattern(null);
-                break;
-            case 1:
-                model.setCodonHeteroPattern("112");
-                break;
-            default:
-                model.setCodonHeteroPattern("123");
-                break;
-
-        }
-
-        model.setUnlinkedSubstitutionModel(substUnlinkCheck.isSelected());
-        model.setUnlinkedHeterogeneityModel(heteroUnlinkCheck.isSelected());
-        model.setUnlinkedFrequencyModel(freqsUnlinkCheck.isSelected());
     }
 
     private void fireModelsChanged() {
+
         frame.modelChanged();
     }
 
@@ -562,12 +580,17 @@ public class ModelsPanel extends JPanel implements Exportable {
 
         int selRow = modelTable.getSelectedRow();
         if (selRow >= 0) {
-            currentModel = options.getPartitionModels().get(selRow);
+            setCurrentModel(options.getPartitionModels().get(selRow));
             setupPanel(currentModel, modelPanel);
             frame.modelSelectionChanged(!isUsed(selRow));
 
             updateBorder();
         }
+    }
+
+    private void setCurrentModel(PartitionModel model) {
+        configurePartitionModel(currentModel);
+        currentModel = model;
     }
 
     private void updateBorder() {
@@ -726,6 +749,4 @@ public class ModelsPanel extends JPanel implements Exportable {
             createModel();
         }
     };
-
-
 }

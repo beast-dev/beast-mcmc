@@ -38,7 +38,9 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
-import javax.swing.table.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.HashSet;
@@ -174,14 +176,16 @@ public class DataPanel extends JPanel implements Exportable {
         fireDataChanged();
     }
 
-    public void unlinkModels() {
+    private void unlinkModels() {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
             DataPartition partition = options.dataPartitions.get(row);
-            if (!partition.getPartitionModel().getName().equals(partition.getName())) {
-                PartitionModel model = new PartitionModel(options, partition);
-                options.addPartitionModel(model);
-                partition.setPartitionModel(model);
+
+            PartitionModel model = partition.getPartitionModel();
+            if (!model.getName().equals(partition.getName())) {
+                PartitionModel newModel = new PartitionModel(options, partition.getName(), model);
+                options.addPartitionModel(newModel);
+                partition.setPartitionModel(newModel);
             }
         }
 
@@ -281,7 +285,7 @@ public class DataPanel extends JPanel implements Exportable {
                     }
                     break;
                 case 4:
-                    partition.setPartitionModel((PartitionModel)aValue);
+                    partition.setPartitionModel((PartitionModel) aValue);
                     break;
             }
             fireDataChanged();
@@ -364,7 +368,8 @@ public class DataPanel extends JPanel implements Exportable {
             return this;
         }
 
-        public void revalidate() {}
+        public void revalidate() {
+        }
 
     }
 

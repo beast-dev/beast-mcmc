@@ -181,6 +181,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void modelChanged() {
+
         modelsPanel.getOptions(beautiOptions);
 
         dataPanel.getOptions(beautiOptions);

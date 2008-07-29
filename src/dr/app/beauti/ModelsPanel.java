@@ -409,52 +409,52 @@ public class ModelsPanel extends JPanel implements Exportable {
         int dataType = model.dataType.getType();
         switch (dataType) {
             case DataType.NUCLEOTIDES:
-                if (model.nucSubstitutionModel == NucModelType.GTR) {
+                if (model.getNucSubstitutionModel() == NucModelType.GTR) {
                     nucSubstCombo.setSelectedIndex(1);
                 } else {
                     nucSubstCombo.setSelectedIndex(0);
                 }
 
-                frequencyCombo.setSelectedIndex(model.frequencyPolicy);
+                frequencyCombo.setSelectedIndex(model.getFrequencyPolicy());
 
                 break;
 
             case DataType.AMINO_ACIDS:
-                aaSubstCombo.setSelectedIndex(model.aaSubstitutionModel);
+                aaSubstCombo.setSelectedIndex(model.getAaSubstitutionModel());
                 break;
 
             case DataType.TWO_STATES:
             case DataType.COVARION:
-                binarySubstCombo.setSelectedIndex(model.binarySubstitutionModel);
+                binarySubstCombo.setSelectedIndex(model.getBinarySubstitutionModel());
                 break;
 
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
 
-        if (model.gammaHetero && !model.invarHetero) {
+        if (model.isGammaHetero() && !model.isInvarHetero()) {
             heteroCombo.setSelectedIndex(1);
-        } else if (!model.gammaHetero && model.invarHetero) {
+        } else if (!model.isGammaHetero() && model.isInvarHetero()) {
             heteroCombo.setSelectedIndex(2);
-        } else if (model.gammaHetero && model.invarHetero) {
+        } else if (model.isGammaHetero() && model.isInvarHetero()) {
             heteroCombo.setSelectedIndex(3);
         } else {
             heteroCombo.setSelectedIndex(0);
         }
 
-        gammaCatCombo.setSelectedIndex(model.gammaCategories - 4);
+        gammaCatCombo.setSelectedIndex(model.getGammaCategories() - 4);
 
-        if (model.codonHeteroPattern == null) {
+        if (model.getCodonHeteroPattern() == null) {
             codingCombo.setSelectedIndex(0);
-        } else if (model.codonHeteroPattern.equals("112")) {
+        } else if (model.getCodonHeteroPattern().equals("112")) {
             codingCombo.setSelectedIndex(1);
         } else {
             codingCombo.setSelectedIndex(2);
         }
 
-        substUnlinkCheck.setSelected(model.unlinkedSubstitutionModel);
-        heteroUnlinkCheck.setSelected(model.unlinkedHeterogeneityModel);
-        freqsUnlinkCheck.setSelected(model.unlinkedFrequencyModel);
+        substUnlinkCheck.setSelected(model.isUnlinkedSubstitutionModel());
+        heteroUnlinkCheck.setSelected(model.isUnlinkedHeterogeneityModel());
+        freqsUnlinkCheck.setSelected(model.isUnlinkedFrequencyModel());
 
         setupPanel(currentModel, modelPanel);
     }
@@ -478,33 +478,33 @@ public class ModelsPanel extends JPanel implements Exportable {
     public void getOptions(PartitionModel model) {
 
         if (nucSubstCombo.getSelectedIndex() == 1) {
-            model.nucSubstitutionModel = NucModelType.GTR;
+            model.setNucSubstitutionModel(NucModelType.GTR);
         } else {
-            model.nucSubstitutionModel = NucModelType.HKY;
+            model.setNucSubstitutionModel(NucModelType.HKY);
         }
-        model.aaSubstitutionModel = aaSubstCombo.getSelectedIndex();
+        model.setAaSubstitutionModel(aaSubstCombo.getSelectedIndex());
 
-        model.binarySubstitutionModel = binarySubstCombo.getSelectedIndex();
+        model.setBinarySubstitutionModel(binarySubstCombo.getSelectedIndex());
 
-        model.frequencyPolicy = frequencyCombo.getSelectedIndex();
+        model.setFrequencyPolicy(frequencyCombo.getSelectedIndex());
 
-        model.gammaHetero = heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3;
+        model.setGammaHetero(heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3);
 
-        model.invarHetero = heteroCombo.getSelectedIndex() == 2 || heteroCombo.getSelectedIndex() == 3;
+        model.setInvarHetero(heteroCombo.getSelectedIndex() == 2 || heteroCombo.getSelectedIndex() == 3);
 
-        model.gammaCategories = gammaCatCombo.getSelectedIndex() + 4;
+        model.setGammaCategories(gammaCatCombo.getSelectedIndex() + 4);
 
         if (codingCombo.getSelectedIndex() == 0) {
-            model.codonHeteroPattern = null;
+            model.setCodonHeteroPattern(null);
         } else if (codingCombo.getSelectedIndex() == 1) {
-            model.codonHeteroPattern = "112";
+            model.setCodonHeteroPattern("112");
         } else {
-            model.codonHeteroPattern = "123";
+            model.setCodonHeteroPattern("123");
         }
 
-        model.unlinkedSubstitutionModel = substUnlinkCheck.isSelected();
-        model.unlinkedHeterogeneityModel = heteroUnlinkCheck.isSelected();
-        model.unlinkedFrequencyModel = freqsUnlinkCheck.isSelected();
+        model.setUnlinkedSubstitutionModel(substUnlinkCheck.isSelected());
+        model.setUnlinkedHeterogeneityModel(heteroUnlinkCheck.isSelected());
+        model.setUnlinkedFrequencyModel(freqsUnlinkCheck.isSelected());
     }
 
     private void fireModelsChanged() {

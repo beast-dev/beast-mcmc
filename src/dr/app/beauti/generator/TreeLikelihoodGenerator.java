@@ -3,6 +3,7 @@ package dr.app.beauti.generator;
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.sitemodel.GammaSiteModel;
@@ -24,19 +25,17 @@ public class TreeLikelihoodGenerator extends Generator {
     /**
      * Write the tree likelihood XML block.
      *
-     * @param partition the data partition to write likelihood block for
+     * @param model     the partition model to write likelihood block for
      * @param writer    the writer
      */
-    void writeTreeLikelihood(DataPartition partition, XMLWriter writer) {
+    void writeTreeLikelihood(PartitionModel model, XMLWriter writer) {
 
-        PartitionModel model = partition.getPartitionModel();
-
-        if (partition.isCoding() && model.codonHeteroPattern != null) {
-            for (int i = 1; i <= model.codonPartitionCount; i++) {
-                writeTreeLikelihood(partition.getName() + ".treeLikelihood", i, writer, partition);
+        if (model.dataType == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
+            for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+                writeTreeLikelihood(model.getName() + ".treeLikelihood", i, model, writer);
             }
         } else {
-            writeTreeLikelihood(partition.getName() + ".treeLikelihood", -1, writer, partition);
+            writeTreeLikelihood(model.getName() + ".treeLikelihood", -1, model, writer);
         }
     }
 
@@ -45,53 +44,40 @@ public class TreeLikelihoodGenerator extends Generator {
      *
      * @param id        the id of the tree likelihood
      * @param num       the likelihood number
+     * @param model     the partition model to write likelihood block for
      * @param writer    the writer
-     * @param partition the partition for which likelihood block is being generated
      */
-    public void writeTreeLikelihood(String id, int num, XMLWriter writer, DataPartition partition) {
-
-        PartitionModel model = partition.getPartitionModel();
+    public void writeTreeLikelihood(String id, int num, PartitionModel model, XMLWriter writer) {
 
         if (num > 0) {
             writer.writeOpenTag(
                     TreeLikelihood.TREE_LIKELIHOOD,
                     new Attribute[]{
                             new Attribute.Default<String>("id", id + num),
-                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(partition))}
+                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(model))}
             );
-            if (model.codonHeteroPattern.equals("112")) {
-                if (num == 1) {
-                    writer.writeTag(SitePatternsParser.PATTERNS,
-                            new Attribute[]{new Attribute.Default<String>("idref",
-                                    partition.getPatternListId(0))}, true);
-                } else {
-                    writer.writeTag(SitePatternsParser.PATTERNS,
-                            new Attribute[]{new Attribute.Default<String>("idref",
-                                    partition.getPatternListId(1))}, true);
-                }
-            } else {
-                writer.writeTag(SitePatternsParser.PATTERNS,
-                        new Attribute[]{new Attribute.Default<String>("idref",
-                                partition.getPatternListId(num - 1))}, true);
-            }
+            writer.writeTag(SitePatternsParser.PATTERNS,
+                    new Attribute[]{new Attribute.Default<String>("idref",
+                            model.getName()+".patterns" + num)}, true);
+
             writer.writeTag(TreeModel.TREE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>("idref", "siteModel" + num)}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", model.getName() + ".siteModel" + num)}, true);
         } else {
             writer.writeOpenTag(
                     TreeLikelihood.TREE_LIKELIHOOD,
                     new Attribute[]{
                             new Attribute.Default<String>("id", id),
-                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(partition))
+                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(model))
                     }
             );
             writer.writeTag(SitePatternsParser.PATTERNS,
-                    new Attribute[]{new Attribute.Default<String>("idref", partition.getPatternListId(0))}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", model.getName()+".patterns")}, true);
             writer.writeTag(TreeModel.TREE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>("idref", "siteModel")}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", model.getName() + ".siteModel")}, true);
         }
         if (options.clockType == ClockType.STRICT_CLOCK) {
             writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
@@ -104,33 +90,28 @@ public class TreeLikelihoodGenerator extends Generator {
         writer.writeCloseTag(TreeLikelihood.TREE_LIKELIHOOD);
     }
 
-    void writeTreeLikelihoodReferences(XMLWriter writer) {
-        for (DataPartition partition : options.dataPartitions) {
-
-            PartitionModel model = partition.getPartitionModel();
-
-            if (partition.isCoding() && model.codonHeteroPattern != null) {
-                for (int i = 1; i <= model.codonPartitionCount; i++) {
+    public void writeTreeLikelihoodReferences(XMLWriter writer) {
+        for (PartitionModel model : options.getActiveModels()) {
+            if (model.dataType == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
+                for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                     writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD,
-                            new Attribute.Default<String>("idref", partition.getName() + ".treeLikelihood" + i), true);
+                            new Attribute.Default<String>("idref", model.getName() + ".treeLikelihood" + i), true);
                 }
             } else {
                 writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD,
-                        new Attribute.Default<String>("idref", partition.getName() + ".treeLikelihood"), true);
+                        new Attribute.Default<String>("idref", model.getName() + ".treeLikelihood"), true);
             }
         }
     }
 
-    private boolean useAmbiguities(DataPartition partition) {
+    private boolean useAmbiguities(PartitionModel model) {
         boolean useAmbiguities = false;
-
-        PartitionModel model = partition.getPartitionModel();
 
         switch (model.dataType.getType()) {
             case DataType.TWO_STATES:
             case DataType.COVARION:
 
-                switch (model.binarySubstitutionModel) {
+                switch (model.getBinarySubstitutionModel()) {
                     case ModelOptions.BIN_COVARION:
                         useAmbiguities = true;
                         break;

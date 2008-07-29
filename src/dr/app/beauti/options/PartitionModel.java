@@ -36,8 +36,6 @@ public class PartitionModel extends ModelOptions {
         unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
         unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
-
-        codonPartitionCount = source.codonPartitionCount;
     }
 
     public PartitionModel(String name, DataType dataType) {
@@ -171,16 +169,16 @@ public class PartitionModel extends ModelOptions {
 
                 switch (nucSubstitutionModel) {
                     case HKY:
-                        if (codonPartitionCount > 1 && unlinkedSubstitutionModel) {
-                            for (int i = 1; i <= codonPartitionCount; i++) {
+                        if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                            for (int i = 1; i <= getCodonPartitionCount(); i++) {
                                 operators.add(getOperator("hky" + i + ".kappa"));
                             }
                         } else {
                             operators.add(getOperator("hky.kappa"));
                         }
                         if (frequencyPolicy == BeautiOptions.ESTIMATED) {
-                            if (codonPartitionCount > 1 && unlinkedSubstitutionModel) {
-                                for (int i = 1; i <= codonPartitionCount; i++) {
+                            if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                                for (int i = 1; i <= getCodonPartitionCount(); i++) {
                                     operators.add(getOperator("hky" + i + ".frequencies"));
                                 }
                             } else {
@@ -191,8 +189,8 @@ public class PartitionModel extends ModelOptions {
 
                     case GTR:
                         //if (frequencyPolicy == BeautiOptions.ESTIMATED || frequencyPolicy == BeautiOptions.EMPIRICAL){
-                        if (codonPartitionCount > 1 && unlinkedSubstitutionModel) {
-                            for (int i = 1; i <= codonPartitionCount; i++) {
+                        if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                            for (int i = 1; i <= getCodonPartitionCount(); i++) {
                                 operators.add(getOperator("gtr" + i + ".ac"));
                                 operators.add(getOperator("gtr" + i + ".ag"));
                                 operators.add(getOperator("gtr" + i + ".at"));
@@ -209,8 +207,8 @@ public class PartitionModel extends ModelOptions {
                         //}
 
                         if (frequencyPolicy == BeautiOptions.ESTIMATED) {
-                            if (codonPartitionCount > 1 && unlinkedSubstitutionModel) {
-                                for (int i = 1; i <= codonPartitionCount; i++) {
+                            if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                                for (int i = 1; i <= getCodonPartitionCount(); i++) {
                                     operators.add(getOperator("gtr" + i + ".frequencies"));
                                 }
                             } else {
@@ -252,8 +250,8 @@ public class PartitionModel extends ModelOptions {
 
         // if gamma do shape move
         if (gammaHetero) {
-            if (codonPartitionCount > 1 && unlinkedHeterogeneityModel) {
-                for (int i = 1; i <= codonPartitionCount; i++) {
+            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+                for (int i = 1; i <= getCodonPartitionCount(); i++) {
                     operators.add(getOperator("siteModel" + i + ".alpha"));
                 }
             } else {
@@ -262,8 +260,8 @@ public class PartitionModel extends ModelOptions {
         }
         // if pinv do pinv move
         if (invarHetero) {
-            if (codonPartitionCount > 1 && unlinkedHeterogeneityModel) {
-                for (int i = 1; i <= codonPartitionCount; i++) {
+            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+                for (int i = 1; i <= getCodonPartitionCount(); i++) {
                     operators.add(getOperator("siteModel" + i + ".pInv"));
                 }
             } else {
@@ -291,8 +289,8 @@ public class PartitionModel extends ModelOptions {
         List<Parameter> params = new ArrayList<Parameter>();
 
         if (multiplePartitionModels) {
-            if (codonPartitionCount > 1) {
-                for (int i = 1; i <= codonPartitionCount; i++) {
+            if (getCodonPartitionCount() > 1) {
+                for (int i = 1; i <= getCodonPartitionCount(); i++) {
                     params.add(getParameter("siteModel" + i + ".mu"));
                 }
             } else {
@@ -304,8 +302,8 @@ public class PartitionModel extends ModelOptions {
             case DataType.NUCLEOTIDES:
                 switch (nucSubstitutionModel) {
                     case HKY:
-                        if (codonPartitionCount > 1 && unlinkedSubstitutionModel) {
-                            for (int i = 1; i <= codonPartitionCount; i++) {
+                        if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                            for (int i = 1; i <= getCodonPartitionCount(); i++) {
                                 params.add(getParameter("hky" + i + ".kappa"));
                             }
                         } else {
@@ -313,8 +311,8 @@ public class PartitionModel extends ModelOptions {
                         }
                         break;
                     case GTR:
-                        if (codonPartitionCount > 1 && unlinkedSubstitutionModel) {
-                            for (int i = 1; i <= codonPartitionCount; i++) {
+                        if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                            for (int i = 1; i <= getCodonPartitionCount(); i++) {
                                 params.add(getParameter("gtr" + i + ".ac"));
                                 params.add(getParameter("gtr" + i + ".ag"));
                                 params.add(getParameter("gtr" + i + ".at"));
@@ -360,8 +358,8 @@ public class PartitionModel extends ModelOptions {
 
         // if gamma do shape move
         if (gammaHetero) {
-            if (codonPartitionCount > 1 && unlinkedHeterogeneityModel) {
-                for (int i = 1; i <= codonPartitionCount; i++) {
+            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+                for (int i = 1; i <= getCodonPartitionCount(); i++) {
                     params.add(getParameter("siteModel" + i + ".alpha"));
                 }
             } else {
@@ -370,8 +368,8 @@ public class PartitionModel extends ModelOptions {
         }
         // if pinv do pinv move
         if (invarHetero) {
-            if (codonPartitionCount > 1 && unlinkedHeterogeneityModel) {
-                for (int i = 1; i <= codonPartitionCount; i++) {
+            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+                for (int i = 1; i <= getCodonPartitionCount(); i++) {
                     params.add(getParameter("siteModel" + i + ".pInv"));
                 }
             } else {
@@ -405,14 +403,23 @@ public class PartitionModel extends ModelOptions {
     }
 
     public int getCodonPartitionCount() {
-        return codonPartitionCount;
+        if (codonHeteroPattern == null || codonHeteroPattern.equals("111")) {
+            return 1;
+        }
+        if (codonHeteroPattern.equals("123")) {
+            return 3;
+        }
+        if (codonHeteroPattern.equals("112")) {
+            return 2;
+        }
+        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
     }
 
     public void addWeightsForPartition(DataPartition partition, int[] weights, int offset) {
         int n = partition.getSiteCount();
         int codonCount = n / 3;
         int remainder = n % 3;
-        switch (codonPartitionCount) {
+        switch (getCodonPartitionCount()) {
             case 1:
                 weights[offset] += n;
                 break;
@@ -434,20 +441,115 @@ public class PartitionModel extends ModelOptions {
         return getName();
     }
 
-    public NucModelType nucSubstitutionModel = NucModelType.HKY;
-    public int aaSubstitutionModel = BeautiOptions.BLOSUM_62;
-    public int binarySubstitutionModel = BeautiOptions.BIN_SIMPLE;
+    public NucModelType getNucSubstitutionModel() {
+        return nucSubstitutionModel;
+    }
 
-    public int frequencyPolicy = BeautiOptions.ESTIMATED;
-    public boolean gammaHetero = false;
-    public int gammaCategories = 4;
-    public boolean invarHetero = false;
-    public String codonHeteroPattern = null;
-    public boolean unlinkedSubstitutionModel = false;
-    public boolean unlinkedHeterogeneityModel = false;
-    public boolean unlinkedFrequencyModel = false;
+    public void setNucSubstitutionModel(NucModelType nucSubstitutionModel) {
+        this.nucSubstitutionModel = nucSubstitutionModel;
+    }
 
-    public int codonPartitionCount = 1;
+    public int getAaSubstitutionModel() {
+        return aaSubstitutionModel;
+    }
+
+    public void setAaSubstitutionModel(int aaSubstitutionModel) {
+        this.aaSubstitutionModel = aaSubstitutionModel;
+    }
+
+    public int getBinarySubstitutionModel() {
+        return binarySubstitutionModel;
+    }
+
+    public void setBinarySubstitutionModel(int binarySubstitutionModel) {
+        this.binarySubstitutionModel = binarySubstitutionModel;
+    }
+
+    public int getFrequencyPolicy() {
+        return frequencyPolicy;
+    }
+
+    public void setFrequencyPolicy(int frequencyPolicy) {
+        this.frequencyPolicy = frequencyPolicy;
+    }
+
+    public boolean isGammaHetero() {
+        return gammaHetero;
+    }
+
+    public void setGammaHetero(boolean gammaHetero) {
+        this.gammaHetero = gammaHetero;
+    }
+
+    public int getGammaCategories() {
+        return gammaCategories;
+    }
+
+    public void setGammaCategories(int gammaCategories) {
+        this.gammaCategories = gammaCategories;
+    }
+
+    public boolean isInvarHetero() {
+        return invarHetero;
+    }
+
+    public void setInvarHetero(boolean invarHetero) {
+        this.invarHetero = invarHetero;
+    }
+
+    public String getCodonHeteroPattern() {
+        return codonHeteroPattern;
+    }
+
+    public void setCodonHeteroPattern(String codonHeteroPattern) {
+        this.codonHeteroPattern = codonHeteroPattern;
+    }
+
+    public boolean isUnlinkedSubstitutionModel() {
+        return unlinkedSubstitutionModel;
+    }
+
+    public void setUnlinkedSubstitutionModel(boolean unlinkedSubstitutionModel) {
+        this.unlinkedSubstitutionModel = unlinkedSubstitutionModel;
+    }
+
+    public boolean isUnlinkedHeterogeneityModel() {
+        return unlinkedHeterogeneityModel;
+    }
+
+    public void setUnlinkedHeterogeneityModel(boolean unlinkedHeterogeneityModel) {
+        this.unlinkedHeterogeneityModel = unlinkedHeterogeneityModel;
+    }
+
+    public boolean isUnlinkedFrequencyModel() {
+        return unlinkedFrequencyModel;
+    }
+
+    public void setUnlinkedFrequencyModel(boolean unlinkedFrequencyModel) {
+        this.unlinkedFrequencyModel = unlinkedFrequencyModel;
+    }
+
+    public DataType getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(DataType dataType) {
+        this.dataType = dataType;
+    }
+
+    private NucModelType nucSubstitutionModel = NucModelType.HKY;
+    private int aaSubstitutionModel = BeautiOptions.BLOSUM_62;
+    private int binarySubstitutionModel = BeautiOptions.BIN_SIMPLE;
+
+    private int frequencyPolicy = BeautiOptions.ESTIMATED;
+    private boolean gammaHetero = false;
+    private int gammaCategories = 4;
+    private boolean invarHetero = false;
+    private String codonHeteroPattern = null;
+    private boolean unlinkedSubstitutionModel = false;
+    private boolean unlinkedHeterogeneityModel = false;
+
+    private boolean unlinkedFrequencyModel = false;
 
     public DataType dataType;
     public String name;

@@ -179,8 +179,10 @@ public class BeastGenerator extends Generator {
             index += 1;
         }
 
-        for (DataPartition partition : dataPartitions) {
-            writePatternLists(partition, writer);
+        partitionModelGenerator = new PartitionModelGenerator(options);
+
+        for (PartitionModel model : options.getPartitionModels()) {
+            writePatternList(model, writer);
         }
 
         treePriorGenerator = new TreePriorGenerator(options);
@@ -198,7 +200,6 @@ public class BeastGenerator extends Generator {
         writer.writeText("");
         new BranchRatesModelGenerator(options).writeBranchRatesModel(writer);
 
-        partitionModelGenerator = new PartitionModelGenerator(options);
         for (PartitionModel partitionModel : options.getPartitionModels()) {
             writer.writeText("");
             partitionModelGenerator.writeSubstitutionModel(partitionModel, writer);
@@ -221,9 +222,9 @@ public class BeastGenerator extends Generator {
         }
 
         treeLikelihoodGenerator = new TreeLikelihoodGenerator(options);
-        for (DataPartition partition : dataPartitions) {
+        for (PartitionModel model : options.getActiveModels()) {
             writer.writeText("");
-            treeLikelihoodGenerator.writeTreeLikelihood(partition, writer);
+            treeLikelihoodGenerator.writeTreeLikelihood(model, writer);
         }
 
         writer.writeText("");
@@ -405,88 +406,113 @@ public class BeastGenerator extends Generator {
     /**
      * Writes the pattern lists
      *
-     * @param partition the partition to write the pattern lists for
+     * @param model the partition model to write the pattern lists for
      * @param writer    the writer
      */
-    public void writePatternLists(DataPartition partition, XMLWriter writer) {
-
-        int from = partition.getFromSite();
-        int to = partition.getToSite();
-        Alignment alignment = partition.getAlignment();
-        String codonHeteroPattern = partition.getPartitionModel().codonHeteroPattern;
-
-        int partitionCount = getCodonPartionCount(codonHeteroPattern);
-
+    public void writePatternList(PartitionModel model, XMLWriter writer) {
         writer.writeText("");
-        if (alignment.getDataType() == Nucleotides.INSTANCE && codonHeteroPattern != null && partitionCount > 1) {
+
+        String codonHeteroPattern = model.getCodonHeteroPattern();
+        int partitionCount = model.getCodonPartitionCount();
+
+        if (model.dataType == Nucleotides.INSTANCE && codonHeteroPattern != null && partitionCount > 1) {
 
             if (codonHeteroPattern.equals("112")) {
                 writer.writeComment("The unique patterns for codon positions 1 & 2");
                 writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                         new Attribute[]{
-                                new Attribute.Default<String>("id", "patterns1+2"),
+                                new Attribute.Default<String>("id", model.getName() + ".patterns1"),
                         }
                 );
-                partition.addPatternListId(writePatternList(partition, 1, from, to, 3, writer));
-                partition.addPatternListId(writePatternList(partition, 2, from + 1, to, 3, writer));
+                for (DataPartition partition : options.dataPartitions) {
+                    if (partition.getPartitionModel() == model) {
+                        writePatternList(partition, 0, 3, writer);
+                        writePatternList(partition, 1, 3, writer);
+                    }
+                }
                 writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
-                writePatternList(partition, 3, from + 2, to, 3, writer);
+                writer.writeComment("The unique patterns for codon positions 3");
+                writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
+                        new Attribute[]{
+                                new Attribute.Default<String>("id", model.getName() + ".patterns2"),
+                        }
+                );
+
+                for (DataPartition partition : options.dataPartitions) {
+                    if (partition.getPartitionModel() == model) {
+                        writePatternList(partition, 2, 3, writer);
+                    }
+                }
+
+                writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
             } else {
                 // pattern is 123
                 // write pattern lists for all three codon positions
                 for (int i = 1; i <= 3; i++) {
-                    partition.addPatternListId(writePatternList(partition, i, from + i - 1, to, 3, writer));
+                    writer.writeComment("The unique patterns for codon positions " + i);
+                    writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
+                            new Attribute[]{
+                                    new Attribute.Default<String>("id", model.getName() + ".patterns" + i),
+                            }
+                    );
+
+                    for (DataPartition partition : options.dataPartitions) {
+                        if (partition.getPartitionModel() == model) {
+                            writePatternList(partition, i - 1, 3, writer);
+                        }
+                    }
+
+                    writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
                 }
 
             }
         } else {
             //partitionCount = 1;
-            partition.addPatternListId(writePatternList(partition, 1, from, to, 0, writer));
-        }
-    }
+            writer.writeComment("The unique patterns site patterns");
+            writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
+                    new Attribute[]{
+                            new Attribute.Default<String>("id", model.getName() + ".patterns"),
+                    }
+            );
 
-    private int getCodonPartionCount(String codonPattern) {
+            for (DataPartition partition : options.dataPartitions) {
+                if (partition.getPartitionModel() == model) {
+                    writePatternList(partition, 0, 1, writer);
+                }
+            }
 
-        if (codonPattern == null || codonPattern.equals("111")) {
-            return 1;
+            writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
         }
-        if (codonPattern.equals("123")) {
-            return 3;
-        }
-        if (codonPattern.equals("112")) {
-            return 2;
-        }
-        throw new IllegalArgumentException("codonPattern must be one of '111', '112' or '123'");
     }
 
     /**
      * Write a single pattern list
      *
      * @param partition the partition to write a pattern list for
-     * @param from      from site
-     * @param to        to site
+     * @param offset    offset by
      * @param every     skip every
      * @param writer    the writer
      */
-    private String writePatternList(DataPartition partition, int num, int from, int to, int every, XMLWriter writer) {
+    private void writePatternList(DataPartition partition, int offset, int every, XMLWriter writer) {
 
         Alignment alignment = partition.getAlignment();
-        String id = partition.getName() + ".patterns";
+        int from = partition.getFromSite();
+        int to = partition.getToSite();
 
         if (from < 1) from = 1;
         if (every < 1) every = 1;
-        writer.writeComment("The unique patterns from " + from + " to " + to + ((every > 1) ? " every " + every : ""));
 
-        if (every > 1) id += num;
+        from += offset;
+        
+        writer.writeComment("The unique patterns from " + from + " to " + (to > 0 ? to : "end") + ((every > 1) ? " every " + every : ""));
 
         // this object is created solely to calculate the number of patterns in the alignment
         SitePatterns patterns = new SitePatterns(alignment, from - 1, to - 1, every);
         writer.writeComment("npatterns=" + patterns.getPatternCount());
 
         List<Attribute> attributes = new ArrayList<Attribute>();
-        attributes.add(new Attribute.Default<String>("id", id));
         attributes.add(new Attribute.Default<String>("from", "" + from));
         if (to >= 0) attributes.add(new Attribute.Default<String>("to", "" + to));
 
@@ -497,8 +523,6 @@ public class BeastGenerator extends Generator {
 
         writer.writeTag("alignment", new Attribute.Default<String>("idref", alignment.getId()), true);
         writer.writeCloseTag(SitePatternsParser.PATTERNS);
-
-        return id;
     }
 
     /**
@@ -973,7 +997,7 @@ public class BeastGenerator extends Generator {
             // write likelihood block
             writer.writeOpenTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>("id", "likelihood"));
 
-            treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
+                treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
 
             writer.writeCloseTag(CompoundLikelihood.LIKELIHOOD);
 

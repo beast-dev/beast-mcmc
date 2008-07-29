@@ -419,22 +419,22 @@ public class PartitionModel extends ModelOptions {
         int n = partition.getSiteCount();
         int codonCount = n / 3;
         int remainder = n % 3;
-        switch (getCodonPartitionCount()) {
-            case 1:
-                weights[offset] += n;
-                break;
-            case 2:
-                weights[offset] += codonCount * 2 + remainder; // positions 1 + 2
-                weights[offset + 1] += codonCount; // position 3
-                break;
-            case 3:
-                weights[offset] += codonCount + (remainder > 0 ? 1 : 0);
-                weights[offset + 1] += codonCount + (remainder > 1 ? 1 : 0);
-                weights[offset + 2] += codonCount;
-                break;
-            default:
-                throw new IllegalArgumentException("illegal codonPartitionCount");
+        if (codonHeteroPattern == null || codonHeteroPattern.equals("111")) {
+            weights[offset] += n;
+            return;
         }
+        if (codonHeteroPattern.equals("123")) {
+            weights[offset] += codonCount + (remainder > 0 ? 1 : 0);
+            weights[offset + 1] += codonCount + (remainder > 1 ? 1 : 0);
+            weights[offset + 2] += codonCount;
+            return;
+        }
+        if (codonHeteroPattern.equals("112")) {
+            weights[offset] += codonCount * 2 + remainder; // positions 1 + 2
+            weights[offset + 1] += codonCount; // position 3
+            return;
+        }
+        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
     }
 
     public String toString() {

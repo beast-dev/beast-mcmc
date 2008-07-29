@@ -38,7 +38,7 @@ public class PartitionModelGenerator extends Generator {
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
                 // Jukes-Cantor model
-                if (model.nucSubstitutionModel == NucModelType.JC) {
+                if (model.getNucSubstitutionModel() == NucModelType.JC) {
                     writer.writeComment("The JC substitution model (Jukes & Cantor, 1969)");
                     writer.writeOpenTag(NucModelType.HKY.getXMLName(),
                             new Attribute[]{new Attribute.Default<String>("id", model.getName() + ".jc")}
@@ -71,9 +71,9 @@ public class PartitionModelGenerator extends Generator {
 
                 } else {
                     // Hasegawa Kishino and Yano 85 model
-                    if (model.nucSubstitutionModel == NucModelType.HKY) {
-                        if (model.unlinkedSubstitutionModel) {
-                            for (int i = 1; i <= model.codonPartitionCount; i++) {
+                    if (model.getNucSubstitutionModel() == NucModelType.HKY) {
+                        if (model.isUnlinkedSubstitutionModel()) {
+                            for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                                 writeHKYModel(i, writer, model);
                             }
                         } else {
@@ -81,9 +81,9 @@ public class PartitionModelGenerator extends Generator {
                         }
                     } else {
                         // General time reversible model
-                        if (model.nucSubstitutionModel == NucModelType.GTR) {
-                            if (model.unlinkedSubstitutionModel) {
-                                for (int i = 1; i <= model.codonPartitionCount; i++) {
+                        if (model.getNucSubstitutionModel() == NucModelType.GTR) {
+                            if (model.isUnlinkedSubstitutionModel()) {
+                                for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                                     writeGTRModel(i, writer, model);
                                 }
                             } else {
@@ -98,7 +98,7 @@ public class PartitionModelGenerator extends Generator {
                 // Amino Acid model
                 String aaModel = "";
 
-                switch (model.aaSubstitutionModel) {
+                switch (model.getAaSubstitutionModel()) {
                     case 0:
                         aaModel = EmpiricalAminoAcidModel.BLOSUM_62;
                         break;
@@ -131,7 +131,7 @@ public class PartitionModelGenerator extends Generator {
             case DataType.TWO_STATES:
             case DataType.COVARION:
 
-                switch (model.binarySubstitutionModel) {
+                switch (model.getBinarySubstitutionModel()) {
                     case ModelOptions.BIN_SIMPLE:
                         writeBinarySimpleModel(writer, model);
                         break;
@@ -170,10 +170,10 @@ public class PartitionModelGenerator extends Generator {
                         new Attribute.Default<String>("dataType", dataTypeDescription)
                 }
         );
-        // TODO what alignment should I use here in general?
-        writer.writeTag("alignment", new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
+
+        writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", model.getName() + ".patterns" + (num > 0 ? num : ""))}, true);
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
-        if (model.frequencyPolicy == ModelOptions.ALLEQUAL)
+        if (model.getFrequencyPolicy() == ModelOptions.ALLEQUAL)
             writeParameter(id + ".frequencies", 4, writer);
         else
             writeParameter(id + ".frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
@@ -212,9 +212,9 @@ public class PartitionModelGenerator extends Generator {
                         new Attribute.Default<String>("dataType", dataTypeDescription)
                 }
         );
-        writer.writeTag("alignment", new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
+        writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", model.getName() + ".patterns" + (num > 0 ? num : ""))}, true);
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
-        if (model.frequencyPolicy == ModelOptions.ALLEQUAL)
+        if (model.getFrequencyPolicy() == ModelOptions.ALLEQUAL)
             writeParameter(id + ".frequencies", 4, writer);
         else
             writeParameter(id + ".frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
@@ -300,8 +300,8 @@ public class PartitionModelGenerator extends Generator {
 
         switch (model.dataType.getType()) {
             case DataType.NUCLEOTIDES:
-                if (model.codonHeteroPattern != null) {
-                    for (int i = 1; i <= model.codonPartitionCount; i++) {
+                if (model.getCodonHeteroPattern() != null) {
+                    for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                         writeNucSiteModel(i, writeMuParameter, writer, model);
                     }
                     writer.println();
@@ -332,21 +332,21 @@ public class PartitionModelGenerator extends Generator {
      */
     public void writeMuParameterRefs(PartitionModel model, XMLWriter writer) {
 
-        if (model.dataType.getType() == DataType.NUCLEOTIDES && model.codonHeteroPattern != null) {
-            for (int i = 1; i <= model.codonPartitionCount; i++) {
+        if (model.dataType.getType() == DataType.NUCLEOTIDES && model.getCodonHeteroPattern() != null) {
+            for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                 writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute[]{new Attribute.Default<String>("idref", "siteModel" + i + ".mu")}, true);
+                        new Attribute[]{new Attribute.Default<String>("idref", model.getName() + ".siteModel" + i + ".mu")}, true);
             }
         } else {
             writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute[]{new Attribute.Default<String>("idref", "siteModel.mu")}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", model.getName() + ".siteModel.mu")}, true);
         }
 
     }
 
     public void writeLog(XMLWriter writer, PartitionModel model) {
 
-        int codonPartitionCount = model.codonPartitionCount;
+        int codonPartitionCount = model.getCodonPartitionCount();
         String id = model.getName() + ".";
 
         switch (model.dataType.getType()) {
@@ -354,12 +354,12 @@ public class PartitionModelGenerator extends Generator {
                 if (codonPartitionCount > 1) {
                     for (int i = 1; i <= codonPartitionCount; i++) {
                         writer.writeTag(ParameterParser.PARAMETER,
-                                new Attribute.Default<String>("idref", "siteModel" + i + ".mu"), true);
+                                new Attribute.Default<String>("idref", id + "siteModel" + i + ".mu"), true);
                     }
                 }
-                switch (model.nucSubstitutionModel) {
+                switch (model.getNucSubstitutionModel()) {
                     case HKY:
-                        if (codonPartitionCount > 1 && model.unlinkedSubstitutionModel) {
+                        if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
                             for (int i = 1; i <= codonPartitionCount; i++) {
                                 writer.writeTag(ParameterParser.PARAMETER,
                                         new Attribute.Default<String>("idref", id + "hky" + i + ".kappa"), true);
@@ -372,7 +372,7 @@ public class PartitionModelGenerator extends Generator {
 
                     case GTR:
                         id = model.getName() + ".gtr";
-                        if (codonPartitionCount > 1 && model.unlinkedSubstitutionModel) {
+                        if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
 
                             for (int i = 1; i <= codonPartitionCount; i++) {
                                 writer.writeTag(ParameterParser.PARAMETER,
@@ -408,7 +408,7 @@ public class PartitionModelGenerator extends Generator {
             case DataType.TWO_STATES:
             case DataType.COVARION:
 
-                switch (model.binarySubstitutionModel) {
+                switch (model.getBinarySubstitutionModel()) {
                     case ModelOptions.BIN_SIMPLE:
                         break;
                     case ModelOptions.BIN_COVARION:
@@ -426,25 +426,25 @@ public class PartitionModelGenerator extends Generator {
                 break;//BINARY
         }
 
-        if (model.gammaHetero) {
-            if (codonPartitionCount > 1 && model.unlinkedHeterogeneityModel) {
+        if (model.isGammaHetero()) {
+            if (codonPartitionCount > 1 && model.isUnlinkedHeterogeneityModel()) {
                 for (int i = 1; i <= codonPartitionCount; i++) {
                     writer.writeTag(ParameterParser.PARAMETER,
-                            new Attribute.Default<String>("idref", "siteModel" + i + ".alpha"), true);
+                            new Attribute.Default<String>("idref", id + "siteModel" + i + ".alpha"), true);
                 }
             } else {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "siteModel.alpha"), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", id + "siteModel.alpha"), true);
             }
         }
 
-        if (model.invarHetero) {
-            if (codonPartitionCount > 1 && model.unlinkedHeterogeneityModel) {
+        if (model.isInvarHetero()) {
+            if (codonPartitionCount > 1 && model.isUnlinkedHeterogeneityModel()) {
                 for (int i = 1; i <= codonPartitionCount; i++) {
                     writer.writeTag(ParameterParser.PARAMETER,
-                            new Attribute.Default<String>("idref", "siteModel" + i + ".pInv"), true);
+                            new Attribute.Default<String>("idref", id + "siteModel" + i + ".pInv"), true);
                 }
             } else {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "siteModel.pInv"), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", id + "siteModel.pInv"), true);
             }
         }
     }
@@ -470,8 +470,8 @@ public class PartitionModelGenerator extends Generator {
 
         writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
-        if (model.unlinkedSubstitutionModel) {
-            switch (model.nucSubstitutionModel) {
+        if (model.isUnlinkedSubstitutionModel()) {
+            switch (model.getNucSubstitutionModel()) {
                 // JC cannot be unlinked because it has no parameters
                 case JC:
                     writer.writeTag(NucModelType.HKY.getXMLName(), new Attribute.Default<String>("idref", "jc"), true);
@@ -488,7 +488,7 @@ public class PartitionModelGenerator extends Generator {
                     throw new IllegalArgumentException("Unknown substitution model.");
             }
         } else {
-            switch (model.nucSubstitutionModel) {
+            switch (model.getNucSubstitutionModel()) {
                 case JC:
                     writer.writeTag(NucModelType.HKY.getXMLName(),
                             new Attribute.Default<String>("idref", model.getName() + ".jc"), true);
@@ -511,31 +511,31 @@ public class PartitionModelGenerator extends Generator {
             writeParameter(GammaSiteModel.RELATIVE_RATE, id + ".mu", writer, model);
         }
 
-        if (model.gammaHetero) {
-            writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + model.gammaCategories));
-            if (num == -1 || model.unlinkedHeterogeneityModel) {
+        if (model.isGammaHetero()) {
+            writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+            if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
                 writeParameter(id + ".alpha", writer, model);
             } else {
                 // multiple partitions but linked heterogeneity
                 if (num == 1) {
-                    writeParameter("siteModel.alpha", writer, model);
+                    writeParameter(id + ".alpha", writer, model);
                 } else {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "siteModel.alpha"), true);
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", id + ".alpha"), true);
                 }
             }
             writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
         }
 
-        if (model.invarHetero) {
+        if (model.isInvarHetero()) {
             writer.writeOpenTag(GammaSiteModel.PROPORTION_INVARIANT);
-            if (num == -1 || model.unlinkedHeterogeneityModel) {
+            if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
                 writeParameter(id + ".pInv", writer, model);
             } else {
                 // multiple partitions but linked heterogeneity
                 if (num == 1) {
-                    writeParameter("siteModel.pInv", writer, model);
+                    writeParameter(id + ".pInv", writer, model);
                 } else {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "siteModel.pInv"), true);
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", id + ".pInv"), true);
                 }
             }
             writer.writeCloseTag(GammaSiteModel.PROPORTION_INVARIANT);
@@ -561,7 +561,7 @@ public class PartitionModelGenerator extends Generator {
 
         writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
-        switch (model.binarySubstitutionModel) {
+        switch (model.getBinarySubstitutionModel()) {
             case ModelOptions.BIN_SIMPLE:
                 //writer.writeTag(dr.evomodel.substmodel.GeneralSubstitutionModel.GENERAL_SUBSTITUTION_MODEL, new Attribute.Default<String>("idref", "bsimple"), true);
                 writer.writeTag(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, new Attribute.Default<String>("idref", "bsimple"), true);
@@ -579,14 +579,14 @@ public class PartitionModelGenerator extends Generator {
             writeParameter(GammaSiteModel.RELATIVE_RATE, id + ".mu", writer, model);
         }
 
-        if (model.gammaHetero) {
+        if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE,
-                    new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + model.gammaCategories));
+                    new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
             writeParameter(id + ".alpha", writer, model);
             writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
         }
 
-        if (model.invarHetero) {
+        if (model.isInvarHetero()) {
             writeParameter(GammaSiteModel.PROPORTION_INVARIANT, id + ".pInv", writer, model);
         }
 
@@ -619,15 +619,15 @@ public class PartitionModelGenerator extends Generator {
         }
 
 
-        if (model.gammaHetero) {
+        if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE,
                     new Attribute.Default<String>(
-                            GammaSiteModel.GAMMA_CATEGORIES, "" + model.gammaCategories));
+                            GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
             writeParameter(id + ".alpha", writer, model);
             writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
         }
 
-        if (model.invarHetero) {
+        if (model.isInvarHetero()) {
             writeParameter(GammaSiteModel.PROPORTION_INVARIANT, id + ".pInv", writer, model);
         }
 

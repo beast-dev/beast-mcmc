@@ -2,9 +2,6 @@ package dr.app.beauti.options;
 
 import dr.evolution.alignment.Alignment;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -76,7 +73,7 @@ public class DataPartition {
     }
 
     public int getSiteCount() {
-        return getFromSite() - getToSite() + 1;
+        return getToSite() - getFromSite() + 1;
     }
 
     public String toString() {

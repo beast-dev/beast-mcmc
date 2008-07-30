@@ -349,7 +349,7 @@ public class BeautiTester {
 
                     } else if (block == NexusApplicationImporter.MRBAYES_BLOCK) {
 
-                        model = importer.parseMrBayesBlock(beautiOptions);
+                        model = importer.parseMrBayesBlock(beautiOptions, charSets);
 
                     } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK) {
 

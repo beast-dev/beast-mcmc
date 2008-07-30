@@ -512,7 +512,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 
             model.setGammaCategories(gammaCatCombo.getSelectedIndex() + 4);
 
-            System.out.println(model.getName() + ".codingCombo.selectedIndex=" + codingCombo.getSelectedIndex());
+            //System.out.println(model.getName() + ".codingCombo.selectedIndex=" + codingCombo.getSelectedIndex());
 
             switch (codingCombo.getSelectedIndex()) {
                 case 0:

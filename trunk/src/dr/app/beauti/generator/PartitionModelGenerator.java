@@ -150,9 +150,10 @@ public class PartitionModelGenerator extends Generator {
         if (model.getFrequencyPolicy() == FrequencyPolicy.EMPIRICAL) {
             writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
         }
-        writer.writeOpenTag(FrequencyModel.FREQUENCIES);
 
+        writer.writeOpenTag(FrequencyModel.FREQUENCIES);
         switch (model.getFrequencyPolicy()) {
+            case ALLEQUAL:
             case ESTIMATED:
                 writer.writeTag(
                         ParameterParser.PARAMETER,
@@ -163,9 +164,6 @@ public class PartitionModelGenerator extends Generator {
                 break;
             case EMPIRICAL:
                 writeParameter(prefix + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
-                break;
-            case ALLEQUAL:
-                writer.writeOpenTag(FrequencyModel.FREQUENCIES);
                 break;
         }
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);
@@ -212,11 +210,11 @@ public class PartitionModelGenerator extends Generator {
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
         writer.writeCloseTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
 
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_C, prefix + "ac", writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_G, prefix + "ag", writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_T, prefix + "at", writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.C_TO_G, prefix + "cg", writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.G_TO_T, prefix + "gt", writer, model);
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_C, prefix + PartitionModel.GTR_RATE_NAMES[0], writer, model);
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[1], writer, model);
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[2], writer, model);
+        writeParameter(dr.evomodel.substmodel.GTR.C_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[3], writer, model);
+        writeParameter(dr.evomodel.substmodel.GTR.G_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[4], writer, model);
     }
 
 
@@ -341,13 +339,15 @@ public class PartitionModelGenerator extends Generator {
 
         switch (model.dataType.getType()) {
             case DataType.NUCLEOTIDES:
-                if (codonPartitionCount > 1) {
 
-                    for (int i = 1; i <= codonPartitionCount; i++) {
-                        writer.writeTag(ParameterParser.PARAMETER,
-                                new Attribute.Default<String>("idref", model.getPrefix(i) + "mu"), true);
-                    }
-                }
+// THIS IS DONE BY ALLMUS logging in BeastGenerator
+//                if (codonPartitionCount > 1) {
+//
+//                    for (int i = 1; i <= codonPartitionCount; i++) {
+//                        writer.writeTag(ParameterParser.PARAMETER,
+//                                new Attribute.Default<String>("idref", model.getPrefix(i) + "mu"), true);
+//                    }
+//                }
                 switch (model.getNucSubstitutionModel()) {
                     case HKY:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
@@ -366,29 +366,17 @@ public class PartitionModelGenerator extends Generator {
 
                             for (int i = 1; i <= codonPartitionCount; i++) {
                                 String prefix = model.getPrefix(i);
-                                writer.writeTag(ParameterParser.PARAMETER,
-                                        new Attribute.Default<String>("idref", prefix + "ac"), true);
-                                writer.writeTag(ParameterParser.PARAMETER,
-                                        new Attribute.Default<String>("idref", prefix + "ag"), true);
-                                writer.writeTag(ParameterParser.PARAMETER,
-                                        new Attribute.Default<String>("idref", prefix + "at"), true);
-                                writer.writeTag(ParameterParser.PARAMETER,
-                                        new Attribute.Default<String>("idref", prefix + "cg"), true);
-                                writer.writeTag(ParameterParser.PARAMETER,
-                                        new Attribute.Default<String>("idref", prefix + "gt"), true);
+                                for (String rateName : PartitionModel.GTR_RATE_NAMES) {
+                                    writer.writeTag(ParameterParser.PARAMETER,
+                                            new Attribute.Default<String>("idref", prefix + rateName), true);
+                                }
                             }
                         } else {
                             String prefix = model.getPrefix();
-                            writer.writeTag(ParameterParser.PARAMETER,
-                                    new Attribute.Default<String>("idref", prefix + "ac"), true);
-                            writer.writeTag(ParameterParser.PARAMETER,
-                                    new Attribute.Default<String>("idref", prefix + "ag"), true);
-                            writer.writeTag(ParameterParser.PARAMETER,
-                                    new Attribute.Default<String>("idref", prefix + "at"), true);
-                            writer.writeTag(ParameterParser.PARAMETER,
-                                    new Attribute.Default<String>("idref", prefix + "cg"), true);
-                            writer.writeTag(ParameterParser.PARAMETER,
-                                    new Attribute.Default<String>("idref", prefix + "gt"), true);
+                            for (String rateName : PartitionModel.GTR_RATE_NAMES) {
+                                writer.writeTag(ParameterParser.PARAMETER,
+                                        new Attribute.Default<String>("idref", prefix + rateName), true);
+                            }
                         }
                         break;
                 }

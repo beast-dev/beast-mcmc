@@ -130,7 +130,6 @@ public class PartitionModelGenerator extends Generator {
      * @param model  the partition model to write in BEAST XML
      */
     public void writeHKYModel(int num, XMLWriter writer, PartitionModel model) {
-        String dataTypeDescription = model.dataType.getDescription();
 
         String prefix = model.getPrefix(num);
 
@@ -140,6 +139,44 @@ public class PartitionModelGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>("id", prefix + "hky")}
         );
         writer.writeOpenTag(HKYParser.FREQUENCIES);
+        writeFrequencyModel(writer, model, num);
+        writer.writeCloseTag(HKYParser.FREQUENCIES);
+
+        writeParameter(HKYParser.KAPPA, prefix + "kappa", writer, model);
+        writer.writeCloseTag(NucModelType.HKY.getXMLName());
+    }
+
+    /**
+     * Write the GTR model XML block.
+     *
+     * @param num    the model number
+     * @param writer the writer
+     * @param model  the partition model to write in BEAST XML
+     */
+    public void writeGTRModel(int num, XMLWriter writer, PartitionModel model) {
+
+        String prefix = model.getPrefix(num);
+
+        writer.writeComment("The general time reversible (GTR) substitution model");
+        writer.writeOpenTag(
+                dr.evomodel.substmodel.GTR.GTR_MODEL,
+                new Attribute[]{new Attribute.Default<String>("id", prefix + "gtr")}
+        );
+        writer.writeOpenTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
+        writeFrequencyModel(writer, model, num);
+        writer.writeCloseTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
+
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_C, prefix + PartitionModel.GTR_RATE_NAMES[0], writer, model);
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[1], writer, model);
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[2], writer, model);
+        writeParameter(dr.evomodel.substmodel.GTR.C_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[3], writer, model);
+        writeParameter(dr.evomodel.substmodel.GTR.G_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[4], writer, model);
+        writer.writeCloseTag(dr.evomodel.substmodel.GTR.GTR_MODEL);
+    }
+
+    private void writeFrequencyModel(XMLWriter writer, PartitionModel model, int num) {
+        String dataTypeDescription = model.dataType.getDescription();
+        String prefix = model.getPrefix(num);
         writer.writeOpenTag(
                 FrequencyModel.FREQUENCY_MODEL,
                 new Attribute[]{
@@ -168,55 +205,7 @@ public class PartitionModelGenerator extends Generator {
         }
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
-        writer.writeCloseTag(HKYParser.FREQUENCIES);
-
-        writeParameter(HKYParser.KAPPA, prefix + "kappa", writer, model);
-        writer.writeCloseTag(NucModelType.HKY.getXMLName());
     }
-
-    /**
-     * Write the GTR model XML block.
-     *
-     * @param num    the model number
-     * @param writer the writer
-     * @param model  the partition model to write in BEAST XML
-     */
-    public void writeGTRModel(int num, XMLWriter writer, PartitionModel model) {
-        String dataTypeDescription = model.dataType.getDescription();
-
-        String prefix = model.getPrefix(num);
-
-        writer.writeComment("The general time reversible (GTR) substitution model");
-        writer.writeOpenTag(
-                dr.evomodel.substmodel.GTR.GTR_MODEL,
-                new Attribute[]{new Attribute.Default<String>("id", prefix + "gtr")}
-        );
-        writer.writeOpenTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
-        writer.writeOpenTag(
-                FrequencyModel.FREQUENCY_MODEL,
-                new Attribute[]{
-                        new Attribute.Default<String>("dataType", dataTypeDescription)
-                }
-        );
-        if (model.getFrequencyPolicy() == FrequencyPolicy.EMPIRICAL) {
-            writer.writeTag("patterns", new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
-        }
-        writer.writeOpenTag(FrequencyModel.FREQUENCIES);
-        if (model.getFrequencyPolicy() == FrequencyPolicy.ALLEQUAL)
-            writeParameter(prefix + "frequencies", 4, writer);
-        else
-            writeParameter(prefix + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
-        writer.writeCloseTag(FrequencyModel.FREQUENCIES);
-        writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
-        writer.writeCloseTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
-
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_C, prefix + PartitionModel.GTR_RATE_NAMES[0], writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[1], writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[2], writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.C_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[3], writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.G_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[4], writer, model);
-    }
-
 
     /**
      * Write the Binary  simple model XML block.
@@ -621,5 +610,4 @@ public class PartitionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
     }
-
 }

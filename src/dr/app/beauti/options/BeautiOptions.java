@@ -199,7 +199,7 @@ public class BeautiOptions extends ModelOptions {
     }
 
     /**
-     * @return a list of partition models
+     * @return a list of all partition models, whether or not they are used
      */
     public List<PartitionModel> getPartitionModels() {
         return models;

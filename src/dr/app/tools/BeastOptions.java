@@ -25,7 +25,7 @@
 
 package dr.app.tools;
 
-import dr.app.beauti.options.AAModelType;
+import dr.app.beauti.options.AminoAcidModelType;
 import dr.app.beauti.options.NucModelType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
@@ -92,7 +92,7 @@ public class BeastOptions {
     public boolean userTree = false;
 
     public int nucSubstitutionModel = HKY;
-    public AAModelType aaSubstitutionModel = AAModelType.BLOSUM_62;
+    public AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     public boolean gammaHetero = false;
     public int gammaCategories = 4;
     public boolean invarHetero = false;

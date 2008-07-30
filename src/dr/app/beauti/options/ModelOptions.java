@@ -73,7 +73,6 @@ public class ModelOptions {
         parameters.put(name, new Parameter(name, description, isNodeHeight, value, lower, upper));
     }
 
-
     protected void createScaleParameter(String name, String description, int scale, double value, double lower, double upper) {
         Parameter p = createParameter(name, description, scale, value, lower, upper);
         p.priorType = PriorType.JEFFREYS_PRIOR;
@@ -116,7 +115,6 @@ public class ModelOptions {
         if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
         return operator;
     }
-
 
     HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();
     HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();

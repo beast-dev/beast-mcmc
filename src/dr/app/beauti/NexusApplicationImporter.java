@@ -50,7 +50,7 @@ public class NexusApplicationImporter extends NexusImporter {
     public static final NexusBlock MRBAYES_BLOCK = new NexusBlock("MRBAYES");
 
     /**
-     * Constructor
+     * @param reader a reader to read the Nexus format from
      */
     public NexusApplicationImporter(Reader reader) {
         super(reader);
@@ -82,39 +82,11 @@ public class NexusApplicationImporter extends NexusImporter {
      * Parses an 'Assumptions' block.
      *
      * @param charSets a list of char sets to *add* to if any are defined in PAUP block
-     * @return a list of the charsets defined in the assumptions block
+     * @throws dr.evolution.io.Importer.ImportException
+     *                             if Assumptions block is poorly formed
+     * @throws java.io.IOException if I/O fails
      */
     public void parseAssumptionsBlock(List<CharSet> charSets) throws ImportException, IOException {
-        readAssumptionsBlock(charSets);
-    }
-
-    /**
-     * Parses a 'PAUP' block.
-     *
-     * @return a list of the charsets defined in the assumptions block
-     */
-    public PartitionModel parsePAUPBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
-        PartitionModel model = new PartitionModel(options, "nucs", Nucleotides.INSTANCE);
-
-        readPAUPBlock(options, model, charSets);
-
-        return model;
-    }
-
-    /**
-     * Parses a 'MRBAYES' block.
-     */
-    public PartitionModel parseMrBayesBlock(BeautiOptions options) throws ImportException, IOException {
-        return parseMrBayesBlock(options);
-    }
-
-    /**
-     * @param charSets a list of char sets to *add* to if any are defined in PAUP block
-     * @throws ImportException
-     * @throws IOException
-     */
-    private void readAssumptionsBlock(List<CharSet> charSets) throws ImportException, IOException {
-
         boolean done = false;
         while (!done) {
             String command = readToken(";");
@@ -128,6 +100,38 @@ public class NexusApplicationImporter extends NexusImporter {
                 System.err.println("The command, '" + command + "', is not used by BEAST and has been ignored");
             }
         }
+    }
+
+    /**
+     * Parses a 'PAUP' block.
+     *
+     * @param options  the BEAUti options
+     * @param charSets a list of char sets to *add* to if any are defined in PAUP block
+     * @return a partition model representing the model defined in the PAUP block
+     * @throws dr.evolution.io.Importer.ImportException
+     *                             if PAUP block is poorly formed
+     * @throws java.io.IOException if I/O fails
+     */
+    public PartitionModel parsePAUPBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
+        PartitionModel model = new PartitionModel(options, "nucs", Nucleotides.INSTANCE);
+        readTopLevelBlock(options, model, charSets);
+        return model;
+    }
+
+    /**
+     * Parses a 'MRBAYES' block.
+     *
+     * @param options  the BEAUti options
+     * @param charSets a list of char sets to *add* to if any are defined in PAUP block
+     * @return a partition model representing the model defined in the MRBAYES block
+     * @throws dr.evolution.io.Importer.ImportException
+     *                             if MRBAYES block is poorly formed
+     * @throws java.io.IOException if I/O fails
+     */
+    public PartitionModel parseMrBayesBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
+        PartitionModel model = new PartitionModel(options, "nucs", Nucleotides.INSTANCE);
+        readTopLevelBlock(options, model, charSets);
+        return model;
     }
 
     private CharSet readCharSetCommand() throws ImportException, IOException {
@@ -156,13 +160,16 @@ public class NexusApplicationImporter extends NexusImporter {
     }
 
     /**
+     * This method reads a PAUP or MrBayes block
+     *
      * @param options  the beauti options
      * @param model    the partition model
      * @param charSets a list of char sets to *add* to if any are defined in PAUP block
-     * @throws ImportException
-     * @throws IOException
+     * @throws dr.evolution.io.Importer.ImportException
+     *                             if top-level block is poorly formed
+     * @throws java.io.IOException if I/O fails
      */
-    private void readPAUPBlock(BeautiOptions options, PartitionModel model, List<CharSet> charSets)
+    private void readTopLevelBlock(BeautiOptions options, PartitionModel model, List<CharSet> charSets)
             throws ImportException, IOException {
         boolean done = false;
 

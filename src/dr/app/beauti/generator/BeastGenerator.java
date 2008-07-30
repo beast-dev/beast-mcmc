@@ -654,7 +654,7 @@ public class BeastGenerator extends Generator {
     }
 
     private void writeParameter1Ref(XMLWriter writer, Operator operator) {
-        writeParameterRefByName(writer, operator.parameter1.getName());
+        writeParameterRefByName(writer, operator.parameter1.getFullName());
     }
 
     private void writeScaleOperator(Operator operator, XMLWriter writer) {

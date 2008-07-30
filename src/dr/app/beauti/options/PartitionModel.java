@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class PartitionModel extends ModelOptions {
 
-    static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
+    public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
     static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
 
     public PartitionModel(BeautiOptions options, DataPartition partition) {
@@ -308,7 +308,6 @@ public class PartitionModel extends ModelOptions {
         return operators;
     }
 
-
     /**
      * @param includeRelativeRates true if relative rate parameters should be added
      * @return a list of parameters that are required
@@ -435,7 +434,7 @@ public class PartitionModel extends ModelOptions {
             if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
                     params.add(getParameter("CP1.pInv"));
-                    params.add(getParameter("CP2.alpha"));
+                    params.add(getParameter("CP2.pInv"));
                     params.add(getParameter("CP3.pInv"));
                 } else if (codonHeteroPattern.equals("112")) {
                     params.add(getParameter("CP1+2.pInv"));
@@ -446,6 +445,23 @@ public class PartitionModel extends ModelOptions {
             } else {
                 params.add(getParameter("pInv"));
             }
+        }
+        if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
+            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+                if (codonHeteroPattern.equals("123")) {
+                    params.add(getParameter("CP1.frequencies"));
+                    params.add(getParameter("CP2.frequencies"));
+                    params.add(getParameter("CP3.frequencies"));
+                } else if (codonHeteroPattern.equals("112")) {
+                    params.add(getParameter("CP1+2.frequencies"));
+                    params.add(getParameter("CP3.frequencies"));
+                } else {
+                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                }
+            } else {
+                params.add(getParameter("frequencies"));
+            }
+
         }
 
         return params;
@@ -468,9 +484,13 @@ public class PartitionModel extends ModelOptions {
     }
 
     Operator getOperator(String name) {
+
         Operator operator = operators.get(name);
+
         if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
+
         operator.setPrefix(getName());
+
         return operator;
     }
 

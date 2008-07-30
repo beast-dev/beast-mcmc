@@ -188,11 +188,14 @@ public class BeautiOptions extends ModelOptions {
     }
 
     public void addPartitionModel(PartitionModel model) {
-        models.add(model);
 
-        // update delta mu opertor weight
-        Operator deltaMuOperator = getOperator("deltaMu");
-        deltaMuOperator.weight = getActiveModels().size();
+        if (!models.contains(model)) {
+            models.add(model);
+
+            // update delta mu opertor weight
+            Operator deltaMuOperator = getOperator("deltaMu");
+            deltaMuOperator.weight = getActiveModels().size();
+        }
     }
 
     /**

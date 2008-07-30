@@ -69,7 +69,7 @@ public class ModelsPanel extends JPanel implements Exportable {
     // Partition model parameters //////////////////////////////////////////////////////////////////////
 
     JComboBox nucSubstCombo = new JComboBox(new String[]{"HKY", "GTR"});
-    JComboBox aaSubstCombo = new JComboBox(AAModelType.values());
+    JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
     JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
 
     JComboBox frequencyCombo = new JComboBox(FrequencyPolicy.values());
@@ -500,7 +500,7 @@ public class ModelsPanel extends JPanel implements Exportable {
             } else {
                 model.setNucSubstitutionModel(NucModelType.HKY);
             }
-            model.setAaSubstitutionModel((AAModelType) aaSubstCombo.getSelectedItem());
+            model.setAaSubstitutionModel((AminoAcidModelType) aaSubstCombo.getSelectedItem());
 
             model.setBinarySubstitutionModel(binarySubstCombo.getSelectedIndex());
 

@@ -25,13 +25,13 @@ public enum OperatorType {
     WIDE_EXCHANGE("wideExchange"),
     WILSON_BALDING("wilsonBalding");
 
-    OperatorType(String name) {
-        this.name = name;
+    OperatorType(String displayName) {
+        this.displayName = displayName;
     }
 
-    public String getName() {
-        return name;
+    public String toString() {
+        return displayName;
     }
 
-    private String name;
+    private String displayName;
 }

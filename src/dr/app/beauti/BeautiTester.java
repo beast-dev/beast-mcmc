@@ -274,7 +274,7 @@ public class BeautiTester {
         Alignment alignment = null;
         Tree tree = null;
         PartitionModel model = null;
-        java.util.List<NexusApplicationImporter.CharSet> charSets = null;
+        java.util.List<NexusApplicationImporter.CharSet> charSets = new ArrayList<NexusApplicationImporter.CharSet>();
 
         try {
             FileReader reader = new FileReader(fileName);
@@ -345,7 +345,7 @@ public class BeautiTester {
 
                     } else if (block == NexusApplicationImporter.PAUP_BLOCK) {
 
-                        model = importer.parsePAUPBlock(beautiOptions);
+                        model = importer.parsePAUPBlock(beautiOptions, charSets);
 
                     } else if (block == NexusApplicationImporter.MRBAYES_BLOCK) {
 
@@ -353,7 +353,7 @@ public class BeautiTester {
 
                     } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK) {
 
-                        charSets = importer.parseAssumptionsBlock();
+                        importer.parseAssumptionsBlock(charSets);
 
                     } else {
                         // Ignore the block..

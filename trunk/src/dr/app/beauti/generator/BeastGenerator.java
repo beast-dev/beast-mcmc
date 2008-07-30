@@ -181,7 +181,7 @@ public class BeastGenerator extends Generator {
 
         partitionModelGenerator = new PartitionModelGenerator(options);
 
-        for (PartitionModel model : options.getPartitionModels()) {
+        for (PartitionModel model : options.getActiveModels()) {
             writePatternList(model, writer);
         }
 
@@ -200,14 +200,14 @@ public class BeastGenerator extends Generator {
         writer.writeText("");
         new BranchRatesModelGenerator(options).writeBranchRatesModel(writer);
 
-        for (PartitionModel partitionModel : options.getPartitionModels()) {
+        for (PartitionModel partitionModel : options.getActiveModels()) {
             writer.writeText("");
             partitionModelGenerator.writeSubstitutionModel(partitionModel, writer);
         }
 
         boolean writeMuParameters = options.getTotalActivePartitionCount() > 1;
 
-        for (PartitionModel partitionModel : options.getPartitionModels()) {
+        for (PartitionModel partitionModel : options.getActiveModels()) {
             writer.writeText("");
             partitionModelGenerator.writeSiteModel(partitionModel, writeMuParameters, writer);
         }
@@ -215,7 +215,7 @@ public class BeastGenerator extends Generator {
         if (writeMuParameters) {
             writer.writeText("");
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>("id", "allMus")});
-            for (PartitionModel partitionModel : options.getPartitionModels()) {
+            for (PartitionModel partitionModel : options.getActiveModels()) {
                 partitionModelGenerator.writeMuParameterRefs(partitionModel, writer);
             }
             writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);

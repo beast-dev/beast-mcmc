@@ -25,7 +25,7 @@
 
 package dr.evomodel.substmodel;
 
-import dr.app.beauti.options.AAModelType;
+import dr.app.beauti.options.AminoAcidModelType;
 import dr.evolution.datatype.AminoAcids;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -114,17 +114,17 @@ public class EmpiricalAminoAcidModel extends AbstractAminoAcidModel {
 
             String type = xo.getStringAttribute(TYPE);
 
-            if (type.equals(AAModelType.BLOSUM_62.getXMLName())) {
+            if (type.equals(AminoAcidModelType.BLOSUM_62.getXMLName())) {
                 rateMatrix = Blosum62.INSTANCE;
-            } else if (type.equals(AAModelType.DAYHOFF.getXMLName())) {
+            } else if (type.equals(AminoAcidModelType.DAYHOFF.getXMLName())) {
                 rateMatrix = Dayhoff.INSTANCE;
-            } else if (type.equals(AAModelType.JTT.getXMLName())) {
+            } else if (type.equals(AminoAcidModelType.JTT.getXMLName())) {
                 rateMatrix = dr.evomodel.substmodel.JTT.INSTANCE;
-            } else if (type.equals(AAModelType.MT_REV_24.getXMLName())) {
+            } else if (type.equals(AminoAcidModelType.MT_REV_24.getXMLName())) {
                 rateMatrix = MTREV.INSTANCE;
-            } else if (type.equals(AAModelType.CP_REV_45.getXMLName())) {
+            } else if (type.equals(AminoAcidModelType.CP_REV_45.getXMLName())) {
                 rateMatrix = CPREV.INSTANCE;
-            } else if (type.equals(AAModelType.WAG.getXMLName())) {
+            } else if (type.equals(AminoAcidModelType.WAG.getXMLName())) {
                 rateMatrix = dr.evomodel.substmodel.WAG.INSTANCE;
             }
 
@@ -140,7 +140,7 @@ public class EmpiricalAminoAcidModel extends AbstractAminoAcidModel {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new StringAttributeRule(TYPE, "The type of empirical amino-acid rate matrix", AAModelType.xmlNames(), false),
+                new StringAttributeRule(TYPE, "The type of empirical amino-acid rate matrix", AminoAcidModelType.xmlNames(), false),
                 new ElementRule(FREQUENCIES, FrequencyModel.class, "If the frequencies are omitted than the empirical frequencies associated with the selected model are used.", true)
         };
 

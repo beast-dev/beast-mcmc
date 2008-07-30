@@ -3,7 +3,7 @@ package dr.app.beauti.options;
 /**
  * @author Alexei Drummond
  */
-public enum AAModelType {
+public enum AminoAcidModelType {
 
     BLOSUM_62("Blosum62", "blosum62"),
     DAYHOFF("Dayhoff", "dayhoff"),
@@ -12,11 +12,11 @@ public enum AAModelType {
     CP_REV_45("cpREV"),
     WAG("WAG");
 
-    AAModelType(String displayName) {
+    AminoAcidModelType(String displayName) {
         this(displayName, displayName);
     }
 
-    AAModelType(String displayName, String xmlName) {
+    AminoAcidModelType(String displayName, String xmlName) {
         this.displayName = displayName;
         this.xmlName = xmlName;
     }
@@ -32,7 +32,7 @@ public enum AAModelType {
 
     public static String[] xmlNames() {
 
-        AAModelType[] values = values();
+        AminoAcidModelType[] values = values();
 
         String[] xmlNames = new String[values.length];
         for (int i = 0; i < values.length; i++) {

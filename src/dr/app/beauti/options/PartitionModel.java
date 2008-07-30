@@ -11,6 +11,9 @@ import java.util.List;
  */
 public class PartitionModel extends ModelOptions {
 
+    static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
+    static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
+
     public PartitionModel(BeautiOptions options, DataPartition partition) {
         this(options, partition.getName(), partition.getAlignment().getDataType());
     }
@@ -48,11 +51,11 @@ public class PartitionModel extends ModelOptions {
         double substWeights = 1.0;
 
         //Substitution model parameters
-        createParameter("frequencies", "HKY base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP1.frequencies", "HKY base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP2.frequencies", "HKY base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP1+2.frequencies", "HKY base frequencies for codon positions 1 & 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP3.frequencies", "HKY base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("frequencies", "base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP1.frequencies", "base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP2.frequencies", "base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP3.frequencies", "base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
         createScaleParameter("kappa", "HKY transition-transversion parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         createScaleParameter("CP1.kappa", "HKY transition-transversion parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
@@ -60,45 +63,31 @@ public class PartitionModel extends ModelOptions {
         createScaleParameter("CP1+2.kappa", "HKY transition-transversion parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         createScaleParameter("CP3.kappa", "HKY transition-transversion parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        createParameter("frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP2.frequencies", "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP1+2.frequencies", "GTR base frequencies for codon positions 1 & 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP3.frequencies", "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
+//        createParameter("frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
+//        createParameter("CP1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
+//        createParameter("CP2.frequencies", "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+//        createParameter("CP1+2.frequencies", "GTR base frequencies for codon positions 1 & 2", UNITY_SCALE, 0.25, 0.0, 1.0);
+//        createParameter("CP3.frequencies", "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
-        createScaleParameter("ac", "GTR A-C substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("ag", "GTR A-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("at", "GTR A-T substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("cg", "GTR C-G substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("gt", "GTR G-T substitution parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        // create the relative rate parameters for the GTR rate matrix
+        for (int j = 0; j < 5; j++) {
+            createScaleParameter(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
+                    SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+            for (int i = 1; i <= 3; i++) {
 
-        createScaleParameter("CP1.ac", "GTR A-C substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1.ag", "GTR A-G substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1.at", "GTR A-T substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1.cg", "GTR C-G substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1.gt", "GTR G-T substitution parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+                createScaleParameter(
+                        "CP" + i + "." + GTR_RATE_NAMES[j],
+                        "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
+                        SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+            }
+            createScaleParameter("CP1+2." + GTR_RATE_NAMES[j],
+                    "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
+                    SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        }
 
-        createScaleParameter("CP2.ac", "GTR A-C substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP2.ag", "GTR A-G substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP2.at", "GTR A-T substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP2.cg", "GTR C-G substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP2.gt", "GTR G-T substitution parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-
-        createScaleParameter("CP1+2.ac", "GTR A-C substitution parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1+2.ag", "GTR A-G substitution parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1+2.at", "GTR A-T substitution parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1+2.cg", "GTR C-G substitution parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1+2.gt", "GTR G-T substitution parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-
-        createScaleParameter("CP3.ac", "GTR A-C substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP3.ag", "GTR A-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP3.at", "GTR A-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP3.cg", "GTR C-G substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP3.gt", "GTR G-T substitution parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-
-        createParameter("frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
-
-        createParameter("frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
+//        createParameter("frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
+//
+//        createParameter("frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
         createParameter("hfrequencies", "Binary Covarion frequencies of the hidden rates", UNITY_SCALE, 0.5, 0.0, 1.0);
         createParameter("bcov.alpha", "Binary Covarion rate of evolution in slow mode", UNITY_SCALE, 0.5, 0.0, 1.0);
         createParameter("bcov.s", "Binary Covarion rate of flipping between slow and fast modes", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 100.0);
@@ -133,25 +122,13 @@ public class PartitionModel extends ModelOptions {
         createOperator("CP1+2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
         createOperator("CP3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
-        createScaleOperator("ac", substWeights);
-        createScaleOperator("ag", substWeights);
-        createScaleOperator("at", substWeights);
-        createScaleOperator("cg", substWeights);
-        createScaleOperator("gt", substWeights);
-
-        for (int i = 1; i <= 3; i++) {
-            createScaleOperator("CP" + i + ".ac", substWeights);
-            createScaleOperator("CP" + i + ".ag", substWeights);
-            createScaleOperator("CP" + i + ".at", substWeights);
-            createScaleOperator("CP" + i + ".cg", substWeights);
-            createScaleOperator("CP" + i + ".gt", substWeights);
+        for (String rateName : GTR_RATE_NAMES) {
+            createScaleOperator(rateName, substWeights);
+            for (int j = 1; j <= 3; j++) {
+                createScaleOperator("CP" + j + "." + rateName, substWeights);
+            }
+            createScaleOperator("CP1+2." + rateName, substWeights);
         }
-
-        createScaleOperator("CP1+2.ac", substWeights);
-        createScaleOperator("CP1+2.ag", substWeights);
-        createScaleOperator("CP1+2.at", substWeights);
-        createScaleOperator("CP1+2.cg", substWeights);
-        createScaleOperator("CP1+2.gt", substWeights);
 
         createScaleOperator("alpha", substWeights);
         for (int i = 1; i <= 3; i++) {
@@ -196,12 +173,10 @@ public class PartitionModel extends ModelOptions {
                                 break;
 
                             case GTR:
-                                for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                                    operators.add(getOperator("CP" + i + ".ac"));
-                                    operators.add(getOperator("CP" + i + ".ag"));
-                                    operators.add(getOperator("CP" + i + ".at"));
-                                    operators.add(getOperator("CP" + i + ".cg"));
-                                    operators.add(getOperator("CP" + i + ".gt"));
+                                for (int i = 1; i <= 3; i++) {
+                                    for (String rateName : GTR_RATE_NAMES) {
+                                        operators.add(getOperator("CP" + i + "." + rateName));
+                                    }
                                 }
                                 break;
 
@@ -226,17 +201,12 @@ public class PartitionModel extends ModelOptions {
                                 break;
 
                             case GTR:
-                                operators.add(getOperator("CP1+2.ac"));
-                                operators.add(getOperator("CP1+2.ag"));
-                                operators.add(getOperator("CP1+2.at"));
-                                operators.add(getOperator("CP1+2.cg"));
-                                operators.add(getOperator("CP1+2.gt"));
-
-                                operators.add(getOperator("CP3.ac"));
-                                operators.add(getOperator("CP3.ag"));
-                                operators.add(getOperator("CP3.at"));
-                                operators.add(getOperator("CP3.cg"));
-                                operators.add(getOperator("CP3.gt"));
+                                for (String rateName : GTR_RATE_NAMES) {
+                                    operators.add(getOperator("CP1+2." + rateName));
+                                }
+                                for (String rateName : GTR_RATE_NAMES) {
+                                    operators.add(getOperator("CP3." + rateName));
+                                }
                                 break;
 
                             default:
@@ -261,11 +231,9 @@ public class PartitionModel extends ModelOptions {
                             break;
 
                         case GTR:
-                            operators.add(getOperator("ac"));
-                            operators.add(getOperator("ag"));
-                            operators.add(getOperator("at"));
-                            operators.add(getOperator("cg"));
-                            operators.add(getOperator("gt"));
+                            for (String rateName : GTR_RATE_NAMES) {
+                                operators.add(getOperator(rateName));
+                            }
                             break;
 
                         default:
@@ -361,11 +329,9 @@ public class PartitionModel extends ModelOptions {
                                 break;
                             case GTR:
                                 for (int i = 1; i <= getCodonPartitionCount(); i++) {
-                                    params.add(getParameter("CP" + i + ".ac"));
-                                    params.add(getParameter("CP" + i + ".ag"));
-                                    params.add(getParameter("CP" + i + ".at"));
-                                    params.add(getParameter("CP" + i + ".cg"));
-                                    params.add(getParameter("CP" + i + ".gt"));
+                                    for (String rateName : GTR_RATE_NAMES) {
+                                        params.add(getParameter("CP" + i + "." + rateName));
+                                    }
                                 }
                                 break;
 
@@ -382,17 +348,12 @@ public class PartitionModel extends ModelOptions {
                                 params.add(getParameter("CP3.kappa"));
                                 break;
                             case GTR:
-                                params.add(getParameter("CP1+2.ac"));
-                                params.add(getParameter("CP1+2.ag"));
-                                params.add(getParameter("CP1+2.at"));
-                                params.add(getParameter("CP1+2.cg"));
-                                params.add(getParameter("CP1+2.gt"));
-
-                                params.add(getParameter("CP3.ac"));
-                                params.add(getParameter("CP3.ag"));
-                                params.add(getParameter("CP3.at"));
-                                params.add(getParameter("CP3.cg"));
-                                params.add(getParameter("CP3.gt"));
+                                for (String rateName : GTR_RATE_NAMES) {
+                                    params.add(getParameter("CP1+2." + rateName));
+                                }
+                                for (String rateName : GTR_RATE_NAMES) {
+                                    params.add(getParameter("CP3." + rateName));
+                                }
                                 break;
 
                             default:
@@ -409,11 +370,9 @@ public class PartitionModel extends ModelOptions {
                             params.add(getParameter("kappa"));
                             break;
                         case GTR:
-                            params.add(getParameter("ac"));
-                            params.add(getParameter("ag"));
-                            params.add(getParameter("at"));
-                            params.add(getParameter("cg"));
-                            params.add(getParameter("gt"));
+                            for (String rateName : GTR_RATE_NAMES) {
+                                params.add(getParameter(rateName));
+                            }
                             break;
 
                         default:
@@ -562,11 +521,11 @@ public class PartitionModel extends ModelOptions {
         this.nucSubstitutionModel = nucSubstitutionModel;
     }
 
-    public AAModelType getAaSubstitutionModel() {
+    public AminoAcidModelType getAaSubstitutionModel() {
         return aaSubstitutionModel;
     }
 
-    public void setAaSubstitutionModel(AAModelType aaSubstitutionModel) {
+    public void setAaSubstitutionModel(AminoAcidModelType aaSubstitutionModel) {
         this.aaSubstitutionModel = aaSubstitutionModel;
     }
 
@@ -688,7 +647,7 @@ public class PartitionModel extends ModelOptions {
     private final BeautiOptions options;
 
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
-    private AAModelType aaSubstitutionModel = AAModelType.BLOSUM_62;
+    private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private int binarySubstitutionModel = BeautiOptions.BIN_SIMPLE;
 
     private FrequencyPolicy frequencyPolicy = FrequencyPolicy.ESTIMATED;
@@ -703,5 +662,4 @@ public class PartitionModel extends ModelOptions {
 
     public DataType dataType;
     public String name;
-
 }

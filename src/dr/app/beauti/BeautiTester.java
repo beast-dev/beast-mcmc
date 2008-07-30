@@ -25,17 +25,21 @@
 
 package dr.app.beauti;
 
-import dr.app.beauti.options.*;
 import dr.app.beauti.generator.BeastGenerator;
-import dr.evolution.util.*;
-import dr.evolution.datatype.GeneticCode;
+import dr.app.beauti.options.*;
+import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.ConvertAlignment;
+import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.AminoAcids;
-import dr.evolution.alignment.*;
-import dr.evolution.io.NexusImporter;
+import dr.evolution.datatype.GeneticCode;
 import dr.evolution.io.Importer;
+import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Date;
+import dr.evolution.util.TaxonList;
+import dr.evolution.util.TimeScale;
+import dr.evolution.util.Units;
 
-import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
 
@@ -192,22 +196,22 @@ public class BeautiTester {
     public void buildAAModels(String key, BeautiOptions beautiOptions) {
         PartitionModel model = beautiOptions.getPartitionModels().get(0);
 
-        model.setAaSubstitutionModel(AAModelType.BLOSUM_62);
-        buildHeteroModels(key+"BLOSUM62", beautiOptions);
+        model.setAaSubstitutionModel(AminoAcidModelType.BLOSUM_62);
+        buildHeteroModels(key + "BLOSUM62", beautiOptions);
 
-        model.setAaSubstitutionModel(AAModelType.CP_REV_45);
-        buildHeteroModels(key+"CPREV45", beautiOptions);
+        model.setAaSubstitutionModel(AminoAcidModelType.CP_REV_45);
+        buildHeteroModels(key + "CPREV45", beautiOptions);
 
-        model.setAaSubstitutionModel(AAModelType.DAYHOFF);
-        buildHeteroModels(key+"DAYHOFF", beautiOptions);
+        model.setAaSubstitutionModel(AminoAcidModelType.DAYHOFF);
+        buildHeteroModels(key + "DAYHOFF", beautiOptions);
 
-        model.setAaSubstitutionModel(AAModelType.JTT);
-        buildHeteroModels(key+"JTT", beautiOptions);
+        model.setAaSubstitutionModel(AminoAcidModelType.JTT);
+        buildHeteroModels(key + "JTT", beautiOptions);
 
-        model.setAaSubstitutionModel(AAModelType.MT_REV_24);
-        buildHeteroModels(key+"MTREV24", beautiOptions);
+        model.setAaSubstitutionModel(AminoAcidModelType.MT_REV_24);
+        buildHeteroModels(key + "MTREV24", beautiOptions);
 
-        model.setAaSubstitutionModel(AAModelType.WAG);
+        model.setAaSubstitutionModel(AminoAcidModelType.WAG);
         buildHeteroModels(key + "WAG", beautiOptions);
     }
 
@@ -433,7 +437,7 @@ public class BeautiTester {
             if (translate) {
                 alignment = new ConvertAlignment(AminoAcids.INSTANCE, GeneticCode.UNIVERSAL, alignment);
             }
-            
+
             java.util.List<DataPartition> partitions = new ArrayList<DataPartition>();
             if (charSets != null && charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {

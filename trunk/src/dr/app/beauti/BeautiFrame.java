@@ -521,7 +521,7 @@ public class BeautiFrame extends DocumentFrame {
 
         if (alignment != null) {
             java.util.List<DataPartition> partitions = new ArrayList<DataPartition>();
-            if (charSets != null && charSets.size() > 0) {
+            if (charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
                     partitions.add(new DataPartition(charSet.getName(), file.getName(),
                             alignment, charSet.getFromSite(), charSet.getToSite()));

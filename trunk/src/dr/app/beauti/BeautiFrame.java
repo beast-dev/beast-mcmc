@@ -343,7 +343,7 @@ public class BeautiFrame extends DocumentFrame {
         SimpleAlignment alignment = null;
         Tree tree = null;
         PartitionModel model = null;
-        java.util.List<NexusApplicationImporter.CharSet> charSets = null;
+        java.util.List<NexusApplicationImporter.CharSet> charSets = new ArrayList<NexusApplicationImporter.CharSet>();
 
         try {
             FileReader reader = new FileReader(file);
@@ -414,7 +414,7 @@ public class BeautiFrame extends DocumentFrame {
 
                     } else if (block == NexusApplicationImporter.PAUP_BLOCK) {
 
-                        model = importer.parsePAUPBlock(beautiOptions);
+                        model = importer.parsePAUPBlock(beautiOptions, charSets);
 
                     } else if (block == NexusApplicationImporter.MRBAYES_BLOCK) {
 
@@ -422,7 +422,7 @@ public class BeautiFrame extends DocumentFrame {
 
                     } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK) {
 
-                        charSets = importer.parseAssumptionsBlock();
+                        importer.parseAssumptionsBlock(charSets);
 
                     } else {
                         // Ignore the block..
@@ -442,16 +442,19 @@ public class BeautiFrame extends DocumentFrame {
             JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
                     "Error reading file",
                     JOptionPane.ERROR_MESSAGE);
+            ime.printStackTrace();
             return;
         } catch (IOException ioex) {
             JOptionPane.showMessageDialog(this, "File I/O Error: " + ioex,
                     "File I/O Error",
                     JOptionPane.ERROR_MESSAGE);
+            ioex.printStackTrace();
             return;
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
                     "Error reading file",
                     JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
             return;
         }
 

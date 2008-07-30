@@ -34,7 +34,6 @@ import dr.evolution.io.NexusImporter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -80,20 +79,24 @@ public class NexusApplicationImporter extends NexusImporter {
     }
 
     /**
-     * Parses a 'PAUP' block.
+     * Parses an 'Assumptions' block.
+     *
+     * @param charSets a list of char sets to *add* to if any are defined in PAUP block
+     * @return a list of the charsets defined in the assumptions block
      */
-    public List<CharSet> parseAssumptionsBlock() throws ImportException, IOException {
-        // PAUP is largely a subset of BEAST block
-        return readAssumptionsBlock();
+    public void parseAssumptionsBlock(List<CharSet> charSets) throws ImportException, IOException {
+        readAssumptionsBlock(charSets);
     }
 
     /**
      * Parses a 'PAUP' block.
+     *
+     * @return a list of the charsets defined in the assumptions block
      */
-    public PartitionModel parsePAUPBlock(BeautiOptions options) throws ImportException, IOException {
+    public PartitionModel parsePAUPBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
         PartitionModel model = new PartitionModel(options, "nucs", Nucleotides.INSTANCE);
 
-        readPAUPBlock(options, model);
+        readPAUPBlock(options, model, charSets);
 
         return model;
     }
@@ -105,8 +108,12 @@ public class NexusApplicationImporter extends NexusImporter {
         return parseMrBayesBlock(options);
     }
 
-    private List<CharSet> readAssumptionsBlock() throws ImportException, IOException {
-        List<CharSet> charSets = new ArrayList<CharSet>();
+    /**
+     * @param charSets a list of char sets to *add* to if any are defined in PAUP block
+     * @throws ImportException
+     * @throws IOException
+     */
+    private void readAssumptionsBlock(List<CharSet> charSets) throws ImportException, IOException {
 
         boolean done = false;
         while (!done) {
@@ -121,7 +128,6 @@ public class NexusApplicationImporter extends NexusImporter {
                 System.err.println("The command, '" + command + "', is not used by BEAST and has been ignored");
             }
         }
-        return charSets;
     }
 
     private CharSet readCharSetCommand() throws ImportException, IOException {
@@ -149,12 +155,22 @@ public class NexusApplicationImporter extends NexusImporter {
         return new CharSet(name, from, to);
     }
 
-    private void readPAUPBlock(BeautiOptions options, PartitionModel model) throws ImportException, IOException {
+    /**
+     * @param options  the beauti options
+     * @param model    the partition model
+     * @param charSets a list of char sets to *add* to if any are defined in PAUP block
+     * @throws ImportException
+     * @throws IOException
+     */
+    private void readPAUPBlock(BeautiOptions options, PartitionModel model, List<CharSet> charSets)
+            throws ImportException, IOException {
         boolean done = false;
 
         while (!done) {
             String command = readToken(";");
-            if (match("HSEARCH", command, 2)) {
+            if (command.equalsIgnoreCase("ENDBLOCK") || command.equalsIgnoreCase("END")) {
+                done = true;
+            } else if (match("HSEARCH", command, 2)) {
                 // Once we reach a search in PAUP then stop
                 done = true;
             } else if (match("MCMC", command, 4)) {
@@ -170,10 +186,11 @@ public class NexusApplicationImporter extends NexusImporter {
                 if (getLastDelimiter() != ';') {
                     readLSETCommand(model);
                 }
-            } else if (command.equalsIgnoreCase("ENDBLOCK") || command.equalsIgnoreCase("END")) {
-                done = true;
+            } else if (match("CHARSET", command, 5)) {
+                if (getLastDelimiter() != ';') {
+                    charSets.add(readCharSetCommand());
+                }
             } else {
-
                 System.err.println("The command, '" + command + "', is not used by BEAST and has been ignored");
             }
         }

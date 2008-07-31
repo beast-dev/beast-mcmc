@@ -35,5 +35,5 @@ Some notes on work and plans for future work on BEAST.
   *  MPI threading. Marc has implemented this in his ARG branch. This is used for distributing large numbers of independent likelihood evaluations.
 
 ==New Substitution Models==
-  * Selection bias - Alex & Marc are testing corrections to the tree likelihood calculator to account for selection bias in the observed site patterns
-  * Generalized Dollo and Wagner framework - Alex & Marc are almost finished with a substitution model that embeds a continuous-time Markov chain within a trait birth-death process to describe multi-state trait development.
+  * Selection bias - Alex & Marc are done with corrections to the tree likelihood calculator to account for selection bias in the observed site patterns. (AVA)
+  * Generalized Dollo and Wagner framework - Alex & Marc are finished with a substitution model that embeds a continuous-time Markov chain within a trait birth-death process to describe multi-state Dollo-like trait development. See ALSTreeLikelihood. (AVA)

@@ -33,6 +33,7 @@ import dr.evomodel.operators.PrecisionMatrixGibbsOperator;
 import dr.evomodel.operators.RandomWalkOnMapOperator;
 import dr.evomodelxml.LoggerParser;
 import dr.evomodelxml.TreeLoggerParser;
+import dr.evomodelxml.TreeModelParser;
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
@@ -201,7 +202,7 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(dr.evomodel.branchratemodel.ScaledTreeLengthRateModel.PARSER);
 
-        addXMLObjectParser(new dr.evomodel.tree.TreeModelParser());
+        addXMLObjectParser(new TreeModelParser());
         addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreelengthStatistic.PARSER);

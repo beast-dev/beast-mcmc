@@ -5,7 +5,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockType;
 import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeModelParser;
+import dr.evomodelxml.TreeModelParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 

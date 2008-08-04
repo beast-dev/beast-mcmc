@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.logging.Logger;
 
 /**
  * A likelihood function for speciation processes. Takes a tree and a speciation model.
@@ -57,6 +58,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
     public static final String SPECIATION_LIKELIHOOD = "speciationLikelihood";
     public static final String MODEL = "model";
     public static final String TREE = "speciesTree";
+    public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
 
     /**
@@ -224,6 +226,21 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
 
             Set<Taxon> excludeTaxa = null;
 
+            if (xo.hasChildNamed(INCLUDE)) {
+                excludeTaxa = new HashSet<Taxon>();
+                for (int i =0; i < tree.getTaxonCount(); i++) {
+                    excludeTaxa.add((Taxon)tree.getTaxon(i));
+                }
+
+                cxo = (XMLObject)xo.getChild(INCLUDE);
+                for (int i =0; i < cxo.getChildCount(); i++) {
+                    TaxonList taxonList = (TaxonList)cxo.getChild(i);
+                    for (int j = 0; j < taxonList.getTaxonCount(); j++) {
+                        excludeTaxa.remove(taxonList.getTaxon(j));
+                    }
+                }
+            }
+
             if (xo.hasChildNamed(EXCLUDE)) {
                 excludeTaxa = new HashSet<Taxon>();
                 cxo = (XMLObject)xo.getChild(EXCLUDE);
@@ -234,7 +251,11 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
                     }
                 }
             }
-
+            if (excludeTaxa != null) {
+            Logger.getLogger("dr.evomodel").info("Speciation model excluding " + excludeTaxa.size() + " taxa from prior - " +
+                    (tree.getTaxonCount() - excludeTaxa.size()) + " taxa remaining." );
+            }
+            
             return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
         }
 
@@ -261,7 +282,10 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
                 new ElementRule(TREE, new XMLSyntaxRule[]{
                         new ElementRule(Tree.class)
                 }),
-                new ElementRule(EXCLUDE, new XMLSyntaxRule[] {
+                new ElementRule(INCLUDE, new XMLSyntaxRule[] {
+                        new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
+                }, "One or more subsets of taxa which should be included from calculate the likelihood (the remaining taxa are excluded)", true),
+               new ElementRule(EXCLUDE, new XMLSyntaxRule[] {
                         new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
                 }, "One or more subsets of taxa which should be excluded from calculate the likelihood (which is calculated on the remaining subtree)", true)
         };

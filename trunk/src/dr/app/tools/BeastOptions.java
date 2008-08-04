@@ -45,7 +45,7 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeModelParser;
+import dr.evomodelxml.TreeModelParser;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.HKYParser;
 import dr.evomodelxml.LoggerParser;

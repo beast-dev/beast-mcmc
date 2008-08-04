@@ -116,7 +116,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
     }
 
 
-    void setupHeightBounds() {
+    public void setupHeightBounds() {
 
         for (int i = 0; i < nodeCount; i++) {
             nodes[i].setupHeightBounds();
@@ -803,7 +803,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
     /**
      * Get the root height parameter. Is private because it can only be called by the XMLParser
      */
-    Parameter getRootHeightParameter() {
+    public Parameter getRootHeightParameter() {
 
         return root.heightParameter;
     }
@@ -834,7 +834,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
         return parameter;
     }
 
-    Parameter getLeafHeightParameter(NodeRef node) {
+    public Parameter getLeafHeightParameter(NodeRef node) {
 
         if (!isExternal(node)) {
             throw new RuntimeException("only root and leaves can be used with setNodeHeightParameter");
@@ -846,7 +846,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
     /**
      * @return the relevant node rate parameter. Is private because it can only be called by the XMLParser
      */
-    Parameter createNodeRatesParameter(double[] initialValues, boolean rootNode, boolean internalNodes, boolean leafNodes) {
+    public Parameter createNodeRatesParameter(double[] initialValues, boolean rootNode, boolean internalNodes, boolean leafNodes) {
 
         if (!rootNode && !internalNodes && !leafNodes) {
             throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");

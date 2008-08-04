@@ -26,6 +26,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String MVGAMMA_SHAPE = "shapeParameter";
     public static final String MVGAMMA_SCALE = "scaleParameter";
     public static final String COUNTS = "countsParameter";
+    public static final String NON_INFORMATIVE = "nonInformative";
 
     public static final String DATA = "data";
 
@@ -166,15 +167,30 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            int df = xo.getIntegerAttribute(DF);
+            MultivariateDistributionLikelihood likelihood = null;
 
-            XMLObject cxo = (XMLObject) xo.getChild(SCALE_MATRIX);
-            MatrixParameter scaleMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
+            if ( xo.hasAttribute(NON_INFORMATIVE) && xo.getBooleanAttribute(NON_INFORMATIVE) ) {
+                // Make non-informative settings
+                XMLObject cxo = (XMLObject) xo.getChild(DATA);
+                int dim = ((MatrixParameter) cxo.getChild(0)).getColumnDimension();
+                likelihood = new MultivariateDistributionLikelihood( new WishartDistribution(dim));
+            } else {
+                if (!xo.hasAttribute(DF) || !xo.hasChildNamed(SCALE_MATRIX)) {
+                    throw new XMLParseException("Must specify both a df and scaleMatrix");
+                }
 
-            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(
+                int df = xo.getIntegerAttribute(DF);
+
+                XMLObject cxo = (XMLObject) xo.getChild(SCALE_MATRIX);
+                MatrixParameter scaleMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
+
+                likelihood = new MultivariateDistributionLikelihood(
                     new WishartDistribution(df, scaleMatrix.getParameterAsMatrix())
-            );
-            cxo = (XMLObject) xo.getChild(DATA);
+                );
+
+            }
+
+            XMLObject cxo = (XMLObject) xo.getChild(DATA);
             for (int j = 0; j < cxo.getChildCount(); j++) {
                 if (cxo.getChild(j) instanceof MatrixParameter) {
                     likelihood.addData((MatrixParameter) cxo.getChild(j));
@@ -192,9 +208,13 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newIntegerRule(DF),
+                AttributeRule.newBooleanRule(NON_INFORMATIVE,true),
+                AttributeRule.newIntegerRule(DF,true),
                 new ElementRule(SCALE_MATRIX,
-                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
+                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)},true),
+                new ElementRule(DATA,
+                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class,1,Integer.MAX_VALUE)}
+                        )
         };
 
         public String getParserDescription() {

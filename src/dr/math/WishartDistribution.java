@@ -13,7 +13,7 @@ public class WishartDistribution implements MultivariateDistribution {
 
     private int df;
     private int dim;
-    private double[][] inverseScaleMatrix;
+    private double[][] scaleMatrix;
     private Matrix S;
     private Matrix Sinv;
     private double logNormalizationConstant;
@@ -23,24 +23,31 @@ public class WishartDistribution implements MultivariateDistribution {
      * Expectation = \nu * S
      *
      * @param df
-     * @param inverseScaleMatrix
+     * @param scaleMatrix
      */
 
-    public WishartDistribution(int df, double[][] inverseScaleMatrix) {
+    public WishartDistribution(int df, double[][] scaleMatrix) {
         this.df = df;
-        this.inverseScaleMatrix = inverseScaleMatrix;
-        this.dim = inverseScaleMatrix.length;
+        this.scaleMatrix = scaleMatrix;
+        this.dim = scaleMatrix.length;
 
-        S = new Matrix(inverseScaleMatrix);
+        S = new Matrix(scaleMatrix);
         Sinv = S.inverse();
 
         computeNormalizationConstant();
 
     }
 
+    public WishartDistribution(int dim) { // returns a non-informative (unormalizable) density
+        this.df = 0;
+        this.scaleMatrix = null;
+        this.dim = dim;
+        logNormalizationConstant = 1.0;
+    }
+
 
     private void computeNormalizationConstant() {
-        logNormalizationConstant = computeNormalizationConstant(new Matrix(inverseScaleMatrix), df, dim);
+        logNormalizationConstant = computeNormalizationConstant(new Matrix(scaleMatrix), df, dim);
     }
 
     public static double computeNormalizationConstant(Matrix Sinv, int df, int dim) {
@@ -65,7 +72,7 @@ public class WishartDistribution implements MultivariateDistribution {
     }
 
     public double[][] getScaleMatrix() {
-        return inverseScaleMatrix;
+        return scaleMatrix;
     }
 
     public double[] getMean() {
@@ -108,12 +115,12 @@ public class WishartDistribution implements MultivariateDistribution {
         return df;
     }
 
-    public double[][] inverseScaleMatrix() {
-        return inverseScaleMatrix;
+    public double[][] scaleMatrix() {
+        return scaleMatrix;
     }
 
     public double[][] nextWishart() {
-        return nextWishart(df, inverseScaleMatrix);
+        return nextWishart(df, scaleMatrix);
     }
 
     /**
@@ -121,12 +128,12 @@ public class WishartDistribution implements MultivariateDistribution {
      * Follows Odell and Feiveson (1996) JASA 61, 199-203
      *
      * @param df
-     * @param inverseScaleMatrix
+     * @param scaleMatrix
      * @return
      */
-    public static double[][] nextWishart(int df, double[][] inverseScaleMatrix) {
+    public static double[][] nextWishart(int df, double[][] scaleMatrix) {
 
-        int dim = inverseScaleMatrix.length;
+        int dim = scaleMatrix.length;
         double[][] draw = new double[dim][dim];
 
         double[][] z = new double[dim][dim];
@@ -143,7 +150,7 @@ public class WishartDistribution implements MultivariateDistribution {
         double[][] cholesky = new double[dim][dim];
         for (int i = 0; i < dim; i++) {
             for (int j = i; j < dim; j++)
-                cholesky[i][j] = cholesky[j][i] = inverseScaleMatrix[i][j];
+                cholesky[i][j] = cholesky[j][i] = scaleMatrix[i][j];
         }
 
         try {
@@ -208,10 +215,14 @@ public class WishartDistribution implements MultivariateDistribution {
 
             // need only diagonal, no? seems a waste to compute
             // the whole matrix
-            Matrix product = Sinv.product(W);
+            if( Sinv != null ) {
+                Matrix product = Sinv.product(W);
 
-            for (int i = 0; i < dim; i++)
-                logDensity -= 0.5 * product.component(i, i);
+                for (int i = 0; i < dim; i++)
+                    logDensity -= 0.5 * product.component(i, i);
+            }
+
+           // System.err.println(Sinv);
 
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();
@@ -223,9 +234,18 @@ public class WishartDistribution implements MultivariateDistribution {
 
 	public static void main(String[] argv) {
 		WishartDistribution wd = new WishartDistribution(2, new double[][] { {500.0} });
-		GammaDistribution gd = new GammaDistribution(1.0 / 1000.0, 1000.0);
+        // The above is just an approximation
+        GammaDistribution gd = new GammaDistribution(1.0 / 1000.0, 1000.0);
 		double[] x = new double[] { 1.0 };
 		System.out.println("Wishart, df=2, scale = 500, PDF(1.0): " + wd.logPdf(x));
-		System.out.println("Gamma, scale = 1/1000, shape = 1000, PDF(1.0): " + gd.logPdf(x[0]));
-	}
+        System.out.println("Gamma, shape = 1/1000, scale = 1000, PDF(1.0): " + gd.logPdf(x[0]));
+
+        wd = new WishartDistribution(4, new double[][] { {5.0} });
+        gd = new GammaDistribution(2.0, 10.0);
+		x = new double[] { 1.0 };
+		System.out.println("Wishart, df=4, scale = 5, PDF(1.0): " + wd.logPdf(x));
+        System.out.println("Gamma, shape = 1/1000, scale = 10, PDF(1.0): " + gd.logPdf(x[0]));       
+        // These tests show the correspondence between a 1D Wishart and a Gamma
+
+    }
 }

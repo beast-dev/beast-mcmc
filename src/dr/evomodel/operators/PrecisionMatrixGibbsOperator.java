@@ -59,8 +59,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 	private MatrixParameter precisionParam;
 	private WishartDistribution priorDistribution;
 	private int priorDf;
-	//	private double[][] priorScaleMatrix;
-	private SymmetricMatrix priorScaleMatrix;
+	private SymmetricMatrix priorInverseScaleMatrix;
 	private TreeModel treeModel;
 	private int dim;
 	private int numberObservations;
@@ -77,7 +76,10 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 		this.precisionParam = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
 		this.priorDistribution = priorDistribution;
 		this.priorDf = priorDistribution.df();
-		this.priorScaleMatrix = new SymmetricMatrix(priorDistribution.inverseScaleMatrix());
+        this.priorInverseScaleMatrix = null;
+        if( priorDistribution.scaleMatrix() != null)
+            this.priorInverseScaleMatrix =
+                    (SymmetricMatrix) (new SymmetricMatrix(priorDistribution.scaleMatrix())).inverse();
 		setWeight(weight);
 		this.treeModel = traitModel.getTreeModel();
 		traitName = traitModel.getTraitName();
@@ -136,8 +138,10 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 		incrementsOuterProduct(S, treeModel.getRoot(), treeLength);
 
 		try {
-			S2 = priorScaleMatrix.add(new SymmetricMatrix(S));
-			inverseS2 = (SymmetricMatrix) S2.inverse();
+            S2 = new SymmetricMatrix(S);
+            if( priorInverseScaleMatrix != null )
+                S2 = priorInverseScaleMatrix.add(S2);
+            inverseS2 = (SymmetricMatrix) S2.inverse();
 
 		} catch (IllegalDimension illegalDimension) {
 			illegalDimension.printStackTrace();
@@ -147,7 +151,10 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
 		double[][] draw = WishartDistribution.nextWishart(df, inverseS2.toComponents());
 
-		for (int i = 0; i < dim; i++) {
+
+//        System.err.println("df = "+df+" delta = "+inverseS2.component(0,0));
+
+        for (int i = 0; i < dim; i++) {
 			Parameter column = precisionParam.getParameter(i);
 			for (int j = 0; j < dim; j++)
 				column.setParameterValueQuietly(j, draw[j][i]);

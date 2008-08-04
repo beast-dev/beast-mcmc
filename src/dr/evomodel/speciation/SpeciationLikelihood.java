@@ -27,11 +27,19 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.TaxonList;
+import dr.evolution.util.Taxon;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * A likelihood function for speciation processes. Takes a tree and a speciation model.
@@ -49,23 +57,26 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
     public static final String SPECIATION_LIKELIHOOD = "speciationLikelihood";
     public static final String MODEL = "model";
     public static final String TREE = "speciesTree";
+    public static final String EXCLUDE = "exclude";
 
     /**
      * @param tree            the tree
      * @param speciationModel the model of speciation
      * @param id              a unique identifier for this likelihood
      */
-    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id) {
-        this(SPECIATION_LIKELIHOOD, tree, speciationModel);
+    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude, String id) {
+        this(SPECIATION_LIKELIHOOD, tree, speciationModel, exclude);
         setId(id);
     }
 
-    public SpeciationLikelihood(String name, Tree tree, SpeciationModel speciationModel) {
+    public SpeciationLikelihood(String name, Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude) {
 
         super(name);
 
         this.tree = tree;
         this.speciationModel = speciationModel;
+        this.exclude = exclude;
+
         if (tree instanceof Model) {
             addModel((Model) tree);
         }
@@ -139,6 +150,10 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
      * @return the log likelihood
      */
     private double calculateLogLikelihood() {
+        if (exclude != null) {
+            return speciationModel.calculateTreeLogLikelihood(tree, exclude);
+        }
+
         return speciationModel.calculateTreeLogLikelihood(tree);
     }
 
@@ -207,7 +222,20 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
             cxo = (XMLObject) xo.getChild(TREE);
             Tree tree = (Tree) cxo.getChild(Tree.class);
 
-            return new SpeciationLikelihood(tree, specModel, null);
+            Set<Taxon> excludeTaxa = null;
+
+            if (xo.hasChildNamed(EXCLUDE)) {
+                excludeTaxa = new HashSet<Taxon>();
+                cxo = (XMLObject)xo.getChild(EXCLUDE);
+                for (int i =0; i < cxo.getChildCount(); i++) {
+                    TaxonList taxonList = (TaxonList)cxo.getChild(i);
+                    for (int j = 0; j < taxonList.getTaxonCount(); j++) {
+                        excludeTaxa.add(taxonList.getTaxon(j));
+                    }
+                }
+            }
+
+            return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
         }
 
         //************************************************************************
@@ -233,6 +261,9 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
                 new ElementRule(TREE, new XMLSyntaxRule[]{
                         new ElementRule(Tree.class)
                 }),
+                new ElementRule(EXCLUDE, new XMLSyntaxRule[] {
+                        new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
+                }, "One or more subsets of taxa which should be excluded from calculate the likelihood (which is calculated on the remaining subtree)", true)
         };
     };
 
@@ -249,6 +280,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
      * The tree.
      */
     Tree tree = null;
+    private final Set<Taxon> exclude;
 
     private double logLikelihood;
     private double storedLogLikelihood;

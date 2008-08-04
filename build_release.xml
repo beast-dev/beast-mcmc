@@ -68,6 +68,7 @@
             <fileset dir="${build}">
                 <include name="dr/app/beast/**/*.class"/>
                 <!--<include name="dr/app/beastdev/**/*.class"/>-->
+                <include name="dr/app/beauti/**/*.class"/>
                 <include name="dr/app/util/**/*.class"/>
                 <include name="dr/app/tools/**/*.class"/>
                 <include name="dr/evolution/**/*.class"/>

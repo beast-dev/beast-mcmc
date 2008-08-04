@@ -64,12 +64,12 @@ public class ExponentialLogistic extends LogisticGrowth {
 	public double getDemographic(double t) {
 
 		double transition_time = getTime();
-		double r1 = getR1();
-		
+
 		// size of the population under the logistic at transition_time
 		if (t < transition_time) {
 		    return super.getDemographic(t);
 		} else {
+            double r1 = getR1();
 			double N1 = super.getDemographic(transition_time);
 			return N1 * Math.exp(-r1*(t - transition_time));
 		}
@@ -154,4 +154,5 @@ public class ExponentialLogistic extends LogisticGrowth {
 	 * The growth rate of the exponential phase
 	 */
 	private double r1 = 0.0;
+
 }

@@ -128,13 +128,9 @@ public class ExponentialLogisticModel extends DemographicModel
 		double t = transistionTimeParameter.getParameterValue(0);
 		exponentialLogistic.setTime(t);
 
-		// AER 24/02/03
 		// logisticGrowth.setShape(Math.exp(shapeParameter.getParameterValue(0)));
-
-		// New parameterization of logistic shape to be the time at which the
-		// population reached some proportion alpha:
-		double C = ((1.0 - alpha) * Math.exp(- r * logisticShapeParameter.getParameterValue(0))) / alpha;
-		exponentialLogistic.setShape(C);
+        exponentialLogistic.setTime50(logisticShapeParameter.getParameterValue(0));
+		//exponentialLogistic.setShapeFromTimeAtAlpha(logisticShapeParameter.getParameterValue(0), alpha);
 
 		return exponentialLogistic;
 	}

@@ -225,10 +225,10 @@
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
-	<multivariateWishartPrior id="precisionPrior" df="2">
+	<multivariateWishartPrior id="precisionPrior" df="1">
 		<scaleMatrix>
 			<matrixParameter>
-				<parameter value="1.0"/>
+				<parameter value="100.0"/>
 			</matrixParameter>
 		</scaleMatrix>
 		<data>
@@ -267,13 +267,14 @@
      </operators>
 
 
-    <mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">
         <posterior id="posterior">
             <likelihood id="likelihood">
                 <multivariateTraitLikelihood idref="traitLikelihood"/>
             </likelihood>
             <prior id="prior">
                 <multivariateNormalPrior idref="rootPrior"/>
+                <multivariateWishartPrior idref="precisionPrior"/>
             </prior>
         </posterior>
 

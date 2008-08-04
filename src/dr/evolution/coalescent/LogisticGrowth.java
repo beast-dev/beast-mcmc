@@ -62,9 +62,15 @@ public class LogisticGrowth extends ExponentialGrowth {
      */
     public void setTime50(double time50) {
         c = 1.0 / (Math.exp(getGrowthRate() * time50) - 2.0);
-
     }
 
+    public void setShapeFromTimeAtAlpha(double time, double alpha) {
+
+        // New parameterization of logistic shape to be the time at which the
+        // population reached some proportion alpha:
+        double ert = Math.exp(- getGrowthRate() * time);
+        c = ((1.0 - alpha) * ert) / (ert - alpha);
+    }
     // Implementation of abstract methods
 
     /**

@@ -144,6 +144,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             int intNodeCount = treeModel.getInternalNodeCount();
 
             if (tipPartialsModel != null) {
+                tipPartials = new double[patternCount * stateCount];
+
                 for (int i = 0; i < extNodeCount; i++) {
                     // Find the id of tip i in the patternList
                     String id = treeModel.getTaxonId(i);
@@ -155,10 +157,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     }
 
                     tipPartialsModel.setStates(patternList, index, i);
+                    likelihoodCore.createNodePartials(i);
                 }
 
                 addModel(tipPartialsModel);
-                updateTipPartials();
                 useAmbiguities = true;
             } else {
                 for (int i = 0; i < extNodeCount; i++) {
@@ -238,7 +240,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         } else if (model == tipPartialsModel) {
 
-            updateTipPartials();
+            updateAllNodes();
 
         } else if (model instanceof SiteModel) {
 
@@ -250,17 +252,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         }
 
         super.handleModelChangedEvent(model, object, index);
-    }
-
-    private void updateTipPartials() {
-        int extNodeCount = treeModel.getExternalNodeCount();
-
-        for (int index = 0; index < extNodeCount; index++) {
-            double[] partials = tipPartialsModel.getTipPartials(index);
-            likelihoodCore.setNodePartials(index, partials);
-        }
-
-        updateAllNodes();
     }
 
     // **************************************************************
@@ -317,6 +308,18 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 siteCategories[i] = siteModel.getCategoryOfSite(i);
             }
         }
+
+        if (tipPartialsModel != null) {
+            int extNodeCount = treeModel.getExternalNodeCount();
+            for (int index = 0; index < extNodeCount; index++) {
+                if (updateNode[index]) {
+                    likelihoodCore.setNodePartialsForUpdate(index);
+                    tipPartialsModel.getTipPartials(index, tipPartials);
+                    likelihoodCore.setCurrentNodePartials(index, tipPartials);
+                }
+            }
+        }
+
 
         final NodeRef root = treeModel.getRoot();
         traverse(treeModel, root);
@@ -589,10 +592,16 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     protected int categoryCount;
 
     /**
-     * an array used to store transition probabilities
+     * an array used to transfer transition probabilities
      */
     protected double[] probabilities;
 
+
+    /**
+     * an array used to transfer tip partials
+     */
+    protected double[] tipPartials;
+    
     /**
      * the LikelihoodCore
      */

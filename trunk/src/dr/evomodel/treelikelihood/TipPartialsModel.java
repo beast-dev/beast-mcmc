@@ -43,7 +43,6 @@ public abstract class TipPartialsModel extends AbstractModel {
 		}
 
 		states = new int[extNodeCount][];
-		partials = new double[extNodeCount][];
 	}
 
 
@@ -52,22 +51,16 @@ public abstract class TipPartialsModel extends AbstractModel {
 			patternCount = patternList.getPatternCount();
 			stateCount = patternList.getDataType().getStateCount();
 		}
-
-		int[] states = new int[patternCount];
+        if (this.states[nodeIndex] == null) {
+            this.states[nodeIndex] = new int[patternCount];
+        }
 
 		for (int i = 0; i < patternCount; i++) {
-
-			states[i] = patternList.getPatternState(sequenceIndex, i);
+			this.states[nodeIndex][i] = patternList.getPatternState(sequenceIndex, i);
 		}
-
-		if (this.states[nodeIndex] == null) {
-			this.states[nodeIndex] = new int[patternCount];
-			this.partials[nodeIndex] = new double[patternCount * stateCount];
-		}
-		System.arraycopy(states, 0, this.states[nodeIndex], 0, patternCount);
 	}
 
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
 		fireModelChanged();
 	}
 
@@ -80,7 +73,6 @@ public abstract class TipPartialsModel extends AbstractModel {
 	 * can be safely called multiple times with minimal computational cost.
 	 */
 	protected void handleParameterChangedEvent(Parameter parameter, int index) {
-		updatePartials = true;
 		fireModelChanged();
 	}
 
@@ -96,7 +88,6 @@ public abstract class TipPartialsModel extends AbstractModel {
 	 * Sub-models are handled automatically and do not need to be considered in this method.
 	 */
 	protected void restoreState() {
-		updatePartials = true;
 	}
 
 	/**
@@ -106,17 +97,13 @@ public abstract class TipPartialsModel extends AbstractModel {
 	protected void acceptState() {
 	}
 
-
-	public abstract double[] getTipPartials(int nodeIndex);
+    public abstract void getTipPartials(int nodeIndex, double[] tipPartials);
 
 	protected int[][] states;
-	protected double[][] partials;
 	protected boolean[] excluded;
 
 	protected int patternCount = 0;
 	protected int stateCount;
 
 	protected final TreeModel treeModel;
-
-	protected boolean updatePartials = true;
 }

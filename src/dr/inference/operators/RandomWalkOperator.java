@@ -43,28 +43,31 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
     public static final String WINDOW_SIZE = "windowSize";
     public static final String UPDATE_INDEX = "updateIndex";
-    public static final String REFLECT = "reflect";
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
-    public static final String BOTH = "both";
 
-    public RandomWalkOperator(Parameter parameter, double windowSize, boolean reflectUpper, boolean reflectLower, double weight, CoercionMode mode) {
+    public static final String BOUNDARY_CONDITION = "boundaryCondition";
+
+    enum BoundaryCondition {
+        reflecting,
+        absorbing
+    }
+
+    public RandomWalkOperator(Parameter parameter, double windowSize, BoundaryCondition bc, double weight, CoercionMode mode) {
 
         super(mode);
         this.parameter = parameter;
         this.windowSize = windowSize;
-        this.reflectUpper = reflectUpper;
-        this.reflectLower = reflectLower;
+        this.condition = bc;
 
         setWeight(weight);
     }
 
-    public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, boolean reflectUpper, boolean reflectLower, double weight, CoercionMode mode) {
+    public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, BoundaryCondition bc, double weight, CoercionMode mode) {
         super(mode);
         this.parameter = parameter;
         this.windowSize = windowSize;
-        this.reflectUpper = reflectUpper;
-        this.reflectLower = reflectLower;
+        this.condition = bc;
 
         setWeight(weight);
         updateMap = new ArrayList<Integer>();
@@ -105,7 +108,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
         while (newValue < lower || newValue > upper) {
             if (newValue < lower) {
-                if (reflectLower) {
+                if (condition == BoundaryCondition.reflecting) {
                     newValue = lower + (lower - newValue);
                 } else {
                     throw new OperatorFailedException("proposed value outside boundaries");
@@ -113,7 +116,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
             }
             if (newValue > upper) {
-                if (reflectUpper) {
+                if (condition == BoundaryCondition.reflecting) {
                     newValue = upper - (newValue - upper);
                 } else {
                     throw new OperatorFailedException("proposed value outside boundaries");
@@ -192,32 +195,19 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
             double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-            boolean reflectUpper = false;
-            boolean reflectLower = false;
-            if (xo.hasAttribute(REFLECT)) {
-                String value = xo.getStringAttribute(REFLECT);
-                if (value.equalsIgnoreCase(UPPER)) {
-                    reflectUpper = true;
-                } else if (value.equalsIgnoreCase(LOWER)) {
-                    reflectLower = true;
-                } else if (value.equalsIgnoreCase(BOTH)) {
-                    reflectUpper = true;
-                    reflectLower = true;
-                } else {
-                    throw new XMLParseException("The 'reflect' attribute of " + getParserName() + " should be 'upper', 'lower' or 'both'");
-                }
-            }
+            BoundaryCondition condition = BoundaryCondition.valueOf(
+                    xo.getAttribute(BOUNDARY_CONDITION, BoundaryCondition.reflecting.name()));
 
             if (xo.hasChildNamed(UPDATE_INDEX)) {
                 XMLObject cxo = (XMLObject) xo.getChild(UPDATE_INDEX);
                 Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
                 if (updateIndex.getDimension() != parameter.getDimension())
                     throw new RuntimeException("Parameter to update and missing indices must have the same dimension");
-                return new RandomWalkOperator(parameter, updateIndex, windowSize, reflectUpper, reflectLower,
+                return new RandomWalkOperator(parameter, updateIndex, windowSize, condition,
                         weight, mode);
             }
 
-            return new RandomWalkOperator(parameter, windowSize, reflectUpper, reflectLower, weight, mode);
+            return new RandomWalkOperator(parameter, windowSize, condition, weight, mode);
         }
 
         //************************************************************************
@@ -238,9 +228,9 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WINDOW_SIZE),
-                AttributeRule.newStringRule(REFLECT, true),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+                new StringAttributeRule(BOUNDARY_CONDITION, null, BoundaryCondition.values(), true),
                 new ElementRule(Parameter.class)
         };
 
@@ -255,6 +245,5 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
     private Parameter parameter = null;
     private double windowSize = 0.01;
     private List<Integer> updateMap = null;
-    private boolean reflectUpper;
-    private boolean reflectLower;
+    private BoundaryCondition condition;
 }

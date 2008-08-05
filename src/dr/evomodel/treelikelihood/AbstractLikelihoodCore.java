@@ -201,6 +201,7 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
 
     }
 
+
     /**
      * Sets probability matrix for a node
      */
@@ -219,6 +220,22 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
 
     public void setNodePartialsForUpdate(int nodeIndex) {
         currentPartialsIndices[nodeIndex] = 1 - currentPartialsIndices[nodeIndex];
+    }
+
+    /**
+     * Sets the currently updating node partials for node nodeIndex. This may
+     * need to repeatedly copy the partials for the different category partitions
+     */
+    public void setCurrentNodePartials(int nodeIndex, double[] partials) {
+        if (partials.length < partialsSize) {
+            int k = 0;
+            for (int i = 0; i < matrixCount; i++) {
+                System.arraycopy(partials, 0, this.partials[currentPartialsIndices[nodeIndex]][nodeIndex], k, partials.length);
+                k += partials.length;
+            }
+        } else {
+            System.arraycopy(partials, 0, this.partials[currentPartialsIndices[nodeIndex]][nodeIndex], 0, partials.length);
+        }
     }
 
     /**

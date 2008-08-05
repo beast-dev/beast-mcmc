@@ -221,6 +221,15 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
     }
 
     /**
+     * Get the currently updating node partials for direct access
+     *
+     * @param nodeIndex
+     */
+    public void setCurrentNodePartials(int nodeIndex, double[] partials) {
+        throw new UnsupportedOperationException("setCurrentNodePartials is not supported by ArbitraryPrecisionLikelihoodCore");
+    }
+
+    /**
      * Calculates partial likelihoods at a node.
      *
      * @param nodeIndex1 the 'child 1' node

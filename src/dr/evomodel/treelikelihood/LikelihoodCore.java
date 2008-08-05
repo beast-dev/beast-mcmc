@@ -85,6 +85,13 @@ public interface LikelihoodCore {
     void setNodePartialsForUpdate(int nodeIndex);
 
     /**
+     * Set the currently updating node partials from the array...
+     *
+     * @param nodeIndex
+     */
+    void setCurrentNodePartials(int nodeIndex, double[] partials);
+
+    /**
      * Calculates partial likelihoods at a node using a matrixMap.
      *
      * @param nodeIndex1 the 'child 1' node

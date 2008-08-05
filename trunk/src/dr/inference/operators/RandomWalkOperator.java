@@ -59,7 +59,6 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         setWeight(weight);
     }
 
-
     public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, boolean reflectUpper, boolean reflectLower, double weight, CoercionMode mode) {
         super(mode);
         this.parameter = parameter;
@@ -133,7 +132,6 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         return parameter.getParameterName();
     }
 
-
     public double getCoercableParameter() {
         return Math.log(windowSize);
     }
@@ -200,9 +198,9 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
                 String value = xo.getStringAttribute(REFLECT);
                 if (value.equalsIgnoreCase(UPPER)) {
                     reflectUpper = true;
-                } else  if (value.equalsIgnoreCase(LOWER)) {
+                } else if (value.equalsIgnoreCase(LOWER)) {
                     reflectLower = true;
-                } else  if (value.equalsIgnoreCase(BOTH)) {
+                } else if (value.equalsIgnoreCase(BOTH)) {
                     reflectUpper = true;
                     reflectLower = true;
                 } else {

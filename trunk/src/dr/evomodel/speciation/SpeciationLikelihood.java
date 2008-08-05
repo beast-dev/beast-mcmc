@@ -26,20 +26,18 @@
 package dr.evomodel.speciation;
 
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Units;
 import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
 import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -65,10 +63,16 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
      * @param tree            the tree
      * @param speciationModel the model of speciation
      * @param id              a unique identifier for this likelihood
+     * @param exclude         taxa to exclude from this model
      */
     public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude, String id) {
         this(SPECIATION_LIKELIHOOD, tree, speciationModel, exclude);
         setId(id);
+    }
+
+    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id) {
+
+        this(tree, speciationModel, null, id);
     }
 
     public SpeciationLikelihood(String name, Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude) {
@@ -228,13 +232,13 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
 
             if (xo.hasChildNamed(INCLUDE)) {
                 excludeTaxa = new HashSet<Taxon>();
-                for (int i =0; i < tree.getTaxonCount(); i++) {
-                    excludeTaxa.add((Taxon)tree.getTaxon(i));
+                for (int i = 0; i < tree.getTaxonCount(); i++) {
+                    excludeTaxa.add(tree.getTaxon(i));
                 }
 
-                cxo = (XMLObject)xo.getChild(INCLUDE);
-                for (int i =0; i < cxo.getChildCount(); i++) {
-                    TaxonList taxonList = (TaxonList)cxo.getChild(i);
+                cxo = (XMLObject) xo.getChild(INCLUDE);
+                for (int i = 0; i < cxo.getChildCount(); i++) {
+                    TaxonList taxonList = (TaxonList) cxo.getChild(i);
                     for (int j = 0; j < taxonList.getTaxonCount(); j++) {
                         excludeTaxa.remove(taxonList.getTaxon(j));
                     }
@@ -243,19 +247,19 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
 
             if (xo.hasChildNamed(EXCLUDE)) {
                 excludeTaxa = new HashSet<Taxon>();
-                cxo = (XMLObject)xo.getChild(EXCLUDE);
-                for (int i =0; i < cxo.getChildCount(); i++) {
-                    TaxonList taxonList = (TaxonList)cxo.getChild(i);
+                cxo = (XMLObject) xo.getChild(EXCLUDE);
+                for (int i = 0; i < cxo.getChildCount(); i++) {
+                    TaxonList taxonList = (TaxonList) cxo.getChild(i);
                     for (int j = 0; j < taxonList.getTaxonCount(); j++) {
                         excludeTaxa.add(taxonList.getTaxon(j));
                     }
                 }
             }
             if (excludeTaxa != null) {
-            Logger.getLogger("dr.evomodel").info("Speciation model excluding " + excludeTaxa.size() + " taxa from prior - " +
-                    (tree.getTaxonCount() - excludeTaxa.size()) + " taxa remaining." );
+                Logger.getLogger("dr.evomodel").info("Speciation model excluding " + excludeTaxa.size() + " taxa from prior - " +
+                        (tree.getTaxonCount() - excludeTaxa.size()) + " taxa remaining.");
             }
-            
+
             return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
         }
 
@@ -282,10 +286,10 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
                 new ElementRule(TREE, new XMLSyntaxRule[]{
                         new ElementRule(Tree.class)
                 }),
-                new ElementRule(INCLUDE, new XMLSyntaxRule[] {
+                new ElementRule(INCLUDE, new XMLSyntaxRule[]{
                         new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
                 }, "One or more subsets of taxa which should be included from calculate the likelihood (the remaining taxa are excluded)", true),
-               new ElementRule(EXCLUDE, new XMLSyntaxRule[] {
+                new ElementRule(EXCLUDE, new XMLSyntaxRule[]{
                         new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
                 }, "One or more subsets of taxa which should be excluded from calculate the likelihood (which is calculated on the remaining subtree)", true)
         };

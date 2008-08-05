@@ -669,6 +669,7 @@ public class BeastGenerator extends Generator {
     }
 
     private void writeRandomWalkOperator(Operator operator, XMLWriter writer) {
+
         writer.writeOpenTag(
                 "randomWalkOperator",
                 new Attribute[]{
@@ -680,10 +681,14 @@ public class BeastGenerator extends Generator {
     }
 
     private void writeIntegerRandomWalkOperator(Operator operator, XMLWriter writer) {
+
+        int windowSize = (int) Math.round(operator.tuning);
+        if (windowSize < 1) windowSize = 1;
+
         writer.writeOpenTag(
                 "randomWalkIntegerOperator",
                 new Attribute[]{
-                        new Attribute.Default<Double>("windowSize", operator.tuning),
+                        new Attribute.Default<Integer>("windowSize", windowSize),
                         new Attribute.Default<Double>("weight", operator.weight)
                 });
         writeParameter1Ref(writer, operator);

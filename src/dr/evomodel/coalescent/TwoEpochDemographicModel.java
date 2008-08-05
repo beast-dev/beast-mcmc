@@ -35,39 +35,36 @@ import dr.xml.*;
  * This class models an exponentially growing model that suffers a
  * cataclysmic event and goes into exponential decline
  * This model is nested with the constant-population size model (r=0).
- * 
- * @version $Id: TwoEpochDemographicModel.java,v 1.6 2005/05/24 20:25:57 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @version $Id: TwoEpochDemographicModel.java,v 1.6 2005/05/24 20:25:57 rambaut Exp $
  */
-public class TwoEpochDemographicModel extends DemographicModel
-{
-	
-	//
-	// Public stuff
-	//
+public class TwoEpochDemographicModel extends DemographicModel {
+    //
+    // Public stuff
+    //
 
     public static String EPOCH_1 = "modernEpoch";
     public static String EPOCH_2 = "ancientEpoch";
-	public static String TRANSITION_TIME = "transitionTime";
-	
-	public static String TWO_EPOCH_MODEL = "twoEpoch";
+    public static String TRANSITION_TIME = "transitionTime";
 
-	/**
-	 * Construct demographic model with default settings.
-	 */
-	public TwoEpochDemographicModel( DemographicModel demo1, DemographicModel demo2, Parameter transitionTimeParameter, Type units) {
-	
-		this(TWO_EPOCH_MODEL, demo1, demo2, transitionTimeParameter, units);
-	}
+    public static String TWO_EPOCH_MODEL = "twoEpoch";
 
-	/**
-	 * Construct demographic model with default settings.
-	 */
-	public TwoEpochDemographicModel(String name, DemographicModel demo1, DemographicModel demo2, Parameter transitionTimeParameter, Type units) {
-	
-		super(name);
+    /**
+     * Construct demographic model with default settings.
+     */
+    public TwoEpochDemographicModel(DemographicModel demo1, DemographicModel demo2, Parameter transitionTimeParameter, Type units) {
+
+        this(TWO_EPOCH_MODEL, demo1, demo2, transitionTimeParameter, units);
+    }
+
+    /**
+     * Construct demographic model with default settings.
+     */
+    public TwoEpochDemographicModel(String name, DemographicModel demo1, DemographicModel demo2, Parameter transitionTimeParameter, Type units) {
+
+        super(name);
 
         this.demo1 = demo1;
         addModel(demo1);
@@ -84,68 +81,73 @@ public class TwoEpochDemographicModel extends DemographicModel
         this.transitionTimeParameter = transitionTimeParameter;
         addParameter(transitionTimeParameter);
 
-		setUnits(units);
-	}
+        setUnits(units);
+    }
 
+    // general functions
 
-	// general functions
-
-	public DemographicFunction getDemographicFunction() {
+    public DemographicFunction getDemographicFunction() {
 
         TwoEpochDemographic twoEpoch = new TwoEpochDemographic(demo1.getDemographicFunction(), demo2.getDemographicFunction(), getUnits());
         twoEpoch.setTransitionTime(transitionTimeParameter.getParameterValue(0));
 
-		return twoEpoch;
-	}
-	
-	/**
-	 * Parses an element from an DOM document into a ExponentialGrowth. 
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return TWO_EPOCH_MODEL; }
-			
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			Type units = XMLParser.Utils.getUnitsAttr(xo);
-			
-			XMLObject cxo = (XMLObject)xo.getChild(EPOCH_1);
-			DemographicModel demo1 = (DemographicModel)cxo.getChild(DemographicModel.class);
+        return twoEpoch;
+    }
 
-            cxo = (XMLObject)xo.getChild(EPOCH_2);
-            DemographicModel demo2 = (DemographicModel)cxo.getChild(DemographicModel.class);
+    /**
+     * Parses an element from an DOM document into a ExponentialGrowth.
+     */
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-			cxo = (XMLObject)xo.getChild(TRANSITION_TIME);
-			Parameter timeParameter = (Parameter)cxo.getChild(Parameter.class);
+        public String getParserName() {
+            return TWO_EPOCH_MODEL;
+        }
 
-			return new TwoEpochDemographicModel(demo1, demo2, timeParameter, units);
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return "A demographic model of two epochs.";
-		}
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		public Class getReturnType() { return TwoEpochDemographicModel.class; }
+            Type units = XMLParser.Utils.getUnitsAttr(xo);
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-	
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(EPOCH_1,
-				new XMLSyntaxRule[] { new ElementRule(DemographicModel.class) },
-					"The demographic model for the recent epoch." ),
-			new ElementRule(EPOCH_2,
-				new XMLSyntaxRule[] { new ElementRule(DemographicModel.class) },
-					"The demographic model for the ancient epoch." ),
-			new ElementRule(TRANSITION_TIME,
-				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }, 
-					"The time that splits the two epochs." ),
-			XMLUnits.SYNTAX_RULES[0]
-		};	
-	};
+            XMLObject cxo = (XMLObject) xo.getChild(EPOCH_1);
+            DemographicModel demo1 = (DemographicModel) cxo.getChild(DemographicModel.class);
+
+            cxo = (XMLObject) xo.getChild(EPOCH_2);
+            DemographicModel demo2 = (DemographicModel) cxo.getChild(DemographicModel.class);
+
+            cxo = (XMLObject) xo.getChild(TRANSITION_TIME);
+            Parameter timeParameter = (Parameter) cxo.getChild(Parameter.class);
+
+            return new TwoEpochDemographicModel(demo1, demo2, timeParameter, units);
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "A demographic model of two epochs.";
+        }
+
+        public Class getReturnType() {
+            return TwoEpochDemographicModel.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(EPOCH_1,
+                        new XMLSyntaxRule[]{new ElementRule(DemographicModel.class)},
+                        "The demographic model for the recent epoch."),
+                new ElementRule(EPOCH_2,
+                        new XMLSyntaxRule[]{new ElementRule(DemographicModel.class)},
+                        "The demographic model for the ancient epoch."),
+                new ElementRule(TRANSITION_TIME,
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
+                        "The time that splits the two epochs."),
+                XMLUnits.SYNTAX_RULES[0]
+        };
+    };
 
     private Parameter transitionTimeParameter = null;
     private DemographicModel demo1 = null;

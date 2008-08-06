@@ -1,9 +1,9 @@
 package dr.app.beauti.generator;
 
-import dr.app.beauti.PriorType;
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.TreePrior;
+import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;

@@ -1,6 +1,6 @@
 package dr.app.beauti.options;
 
-import dr.app.beauti.PriorType;
+import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.util.TaxonList;
 
 import java.util.HashMap;

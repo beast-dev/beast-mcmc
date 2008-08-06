@@ -1,6 +1,6 @@
 package dr.app.beauti.options;
 
-import dr.app.beauti.PriorType;
+import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.util.TaxonList;
 
 /**
@@ -127,7 +127,7 @@ public class Parameter {
         this.prefix = prefix;
     }
 
-    public String getFullName() {
+    private String getFullName() {
         if (prefix != null) return prefix + baseName;
         return baseName;
     }

@@ -12,6 +12,7 @@ import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;

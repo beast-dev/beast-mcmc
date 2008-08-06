@@ -1,6 +1,7 @@
 package dr.app.beauti;
 
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.priorsPanel.PriorType;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 

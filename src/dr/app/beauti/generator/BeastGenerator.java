@@ -500,9 +500,11 @@ public class BeastGenerator extends Generator {
         Alignment alignment = partition.getAlignment();
         int from = partition.getFromSite();
         int to = partition.getToSite();
+        int partEvery = partition.getEvery();
+        if (partEvery > 1 && every > 1) throw new IllegalArgumentException();
 
         if (from < 1) from = 1;
-        if (every < 1) every = 1;
+        every = Math.max(partEvery, every);
 
         from += offset;
 

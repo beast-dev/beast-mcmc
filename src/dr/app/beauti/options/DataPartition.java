@@ -9,10 +9,10 @@ import dr.evolution.alignment.Alignment;
 public class DataPartition {
 
     public DataPartition(String name, String fileName, Alignment alignment) {
-        this(name, fileName, alignment, -1, -1);
+        this(name, fileName, alignment, -1, -1, 1);
     }
 
-    public DataPartition(String name, String fileName, Alignment alignment, int fromSite, int toSite) {
+    public DataPartition(String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
         this.name = name;
         this.fileName = fileName;
         this.alignment = alignment;
@@ -20,6 +20,7 @@ public class DataPartition {
 
         this.fromSite = fromSite;
         this.toSite = toSite;
+        this.every = every;
 
 //        Patterns patterns = new Patterns(alignment);
 //        DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
@@ -72,6 +73,10 @@ public class DataPartition {
         return toSite;
     }
 
+    public int getEvery() {
+        return every;
+    }
+
     public int getSiteCount() {
         int from = getFromSite();
         if (from < 1) {
@@ -81,7 +86,7 @@ public class DataPartition {
         if (to < 1) {
             to = alignment.getSiteCount();
         }
-        return to - from + 1;
+        return (to - from + 1) / every;
     }
 
     public String toString() {
@@ -97,6 +102,8 @@ public class DataPartition {
 
     private int fromSite;
     private int toSite;
+    private int every = 1;
+
 
     private PartitionModel model;
 }

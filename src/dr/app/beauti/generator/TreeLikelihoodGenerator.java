@@ -1,14 +1,17 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.ClockType;
+import dr.app.beauti.options.ModelOptions;
+import dr.app.beauti.options.PartitionModel;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
-import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evoxml.SitePatternsParser;
 import dr.util.Attribute;
 
@@ -25,8 +28,8 @@ public class TreeLikelihoodGenerator extends Generator {
     /**
      * Write the tree likelihood XML block.
      *
-     * @param model     the partition model to write likelihood block for
-     * @param writer    the writer
+     * @param model  the partition model to write likelihood block for
+     * @param writer the writer
      */
     void writeTreeLikelihood(PartitionModel model, XMLWriter writer) {
 
@@ -42,10 +45,10 @@ public class TreeLikelihoodGenerator extends Generator {
     /**
      * Write the tree likelihood XML block.
      *
-     * @param id        the id of the tree likelihood
-     * @param num       the likelihood number
-     * @param model     the partition model to write likelihood block for
-     * @param writer    the writer
+     * @param id     the id of the tree likelihood
+     * @param num    the likelihood number
+     * @param model  the partition model to write likelihood block for
+     * @param writer the writer
      */
     public void writeTreeLikelihood(String id, int num, PartitionModel model, XMLWriter writer) {
 
@@ -84,7 +87,7 @@ public class TreeLikelihoodGenerator extends Generator {
             writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
                     new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
         } else {
-            writer.writeTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES,
+            writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
                     new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
         }
 

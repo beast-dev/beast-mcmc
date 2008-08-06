@@ -362,8 +362,8 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /*
-                               * Private recursive function used by getCommonAncestorNode.
-                               */
+         * Private recursive function used by getCommonAncestorNode.
+         */
         private static int getCommonAncestorNode(Tree tree, NodeRef node,
                                                  Set<String> leafNodes, int cardinality,
                                                  NodeRef[] mrca) {

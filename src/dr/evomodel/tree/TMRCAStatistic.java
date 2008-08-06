@@ -94,7 +94,8 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
             try {
                 return new TMRCAStatistic(name, tree, taxa, isRate);
             } catch (Tree.MissingTaxonException mte) {
-                throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
+                throw new XMLParseException(
+                        "Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
             }
         }
 
@@ -103,7 +104,8 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
         //************************************************************************
 
         public String getParserDescription() {
-            return "A statistic that has as its value the height of the most recent common ancestor of a set of taxa in a given tree";
+            return "A statistic that has as its value the height of the most recent common ancestor " +
+                    "of a set of taxa in a given tree";
         }
 
         public Class getReturnType() {
@@ -116,7 +118,8 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class),
-                new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
+                new StringAttributeRule("name",
+                        "A name for this statistic primarily for the purposes of logging", true),
                 AttributeRule.newBooleanRule("rate", true),
                 new ElementRule(MRCA,
                         new XMLSyntaxRule[]{new ElementRule(Taxa.class)})

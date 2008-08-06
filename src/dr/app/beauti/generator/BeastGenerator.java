@@ -26,9 +26,9 @@
 package dr.app.beauti.generator;
 
 import dr.app.beast.BeastVersion;
-import dr.app.beauti.PriorType;
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.*;
+import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
@@ -656,7 +656,7 @@ public class BeastGenerator extends Generator {
     }
 
     private void writeParameter1Ref(XMLWriter writer, Operator operator) {
-        writeParameterRefByName(writer, operator.parameter1.getFullName());
+        writeParameterRefByName(writer, operator.parameter1.getName());
     }
 
     private void writeScaleOperator(Operator operator, XMLWriter writer) {

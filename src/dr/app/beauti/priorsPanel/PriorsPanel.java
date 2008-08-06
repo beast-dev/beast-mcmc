@@ -23,8 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti;
+package dr.app.beauti.priorsPanel;
 
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.DiscretePriorDialog;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.TreePrior;
@@ -38,7 +40,6 @@ import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
@@ -79,7 +80,7 @@ public class PriorsPanel extends JPanel implements Exportable {
 
         this.frame = parent;
 
-        priorTableModel = new PriorTableModel();
+        priorTableModel = new PriorTableModel(this);
         priorTable = new JTable(priorTableModel);
 
         priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
@@ -291,73 +292,6 @@ public class PriorsPanel extends JPanel implements Exportable {
     }
 
     NumberFormatter formatter = new NumberFormatter(4);
-
-    class PriorTableModel extends AbstractTableModel {
-
-        /**
-         *
-         */
-        private static final long serialVersionUID = -8864178122484971872L;
-        String[] columnNames = {"Parameter", "Prior", "Description"};
-
-        public PriorTableModel() {
-        }
-
-        public int getColumnCount() {
-            return columnNames.length;
-        }
-
-        public int getRowCount() {
-            return parameters.size();
-        }
-
-        public Object getValueAt(int row, int col) {
-            Parameter param = (Parameter) parameters.get(row);
-            switch (col) {
-                case 0:
-                    return param.getFullName();
-                case 1:
-                    return param.priorType.getPriorString(param);
-                case 2:
-                    return param.getDescription();
-            }
-            return null;
-        }
-
-        public String getColumnName(int column) {
-            return columnNames[column];
-        }
-
-        public Class getColumnClass(int c) {
-            return getValueAt(0, c).getClass();
-        }
-
-        public boolean isCellEditable(int row, int col) {
-            return col == 1;
-        }
-
-        public String toString() {
-            StringBuffer buffer = new StringBuffer();
-
-            buffer.append(getColumnName(0));
-            for (int j = 1; j < getColumnCount(); j++) {
-                buffer.append("\t");
-                buffer.append(getColumnName(j));
-            }
-            buffer.append("\n");
-
-            for (int i = 0; i < getRowCount(); i++) {
-                buffer.append(getValueAt(i, 0));
-                for (int j = 1; j < getColumnCount(); j++) {
-                    buffer.append("\t");
-                    buffer.append(getValueAt(i, j));
-                }
-                buffer.append("\n");
-            }
-
-            return buffer.toString();
-        }
-    }
 
     class DoubleRenderer extends TableRenderer {
 

@@ -25,7 +25,7 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.PriorType;
+import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Date;
@@ -522,8 +522,11 @@ public class BeautiOptions extends ModelOptions {
                     statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
                     statistics.put(taxonSet, statistic);
                 }
+                System.err.println("Adding statistic " + statistic.getName());
                 params.add(statistic);
             }
+        } else {
+            System.err.println("TaxonSets are null");
         }
 
         if (clockType == ClockType.RANDOM_LOCAL_CLOCK) {

@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti;
+package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.options.Parameter;
 import dr.gui.chart.Axis;

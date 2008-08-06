@@ -1,9 +1,9 @@
 package dr.app.beauti.generator;
 
-import dr.app.beauti.PriorType;
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
+import dr.app.beauti.priorsPanel.PriorType;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;

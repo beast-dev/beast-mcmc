@@ -28,13 +28,11 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.xml.*;
-
-import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond
@@ -43,12 +41,6 @@ import java.util.logging.Logger;
  * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
 public class DiscretizedBranchRates extends AbstractModel implements BranchRateModel {
-
-    public static final String DISCRETIZED_BRANCH_RATES = "discretizedBranchRates";
-    public static final String DISTRIBUTION = "distribution";
-    public static final String RATE_CATEGORIES = "rateCategories";
-    public static final String SINGLE_ROOT_RATE = "singleRootRate";
-    public static final String OVERSAMPLING = "overSampling";
 
     private ParametricDistributionModel distributionModel;
     private TreeModel tree;
@@ -64,11 +56,17 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
     private final double step;
     private final double[] rates;
 
+    // my attempt to normalized rates stymied by store/restore issues - AJD
+    //private boolean normalize = false;
+    //private double normalizedRate = 1.0;
+    //private boolean meanIsCalculated = false;
+    //private double meanRate = 1.0;
+
     //overSampling control the number of effective categories
 
     public DiscretizedBranchRates(TreeModel tree, Parameter rateCategoryParameter, ParametricDistributionModel model, int overSampling) {
 
-        super(DISCRETIZED_BRANCH_RATES);
+        super(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
         this.tree = tree;
 
         categoryCount = (tree.getNodeCount() - 1) * overSampling;
@@ -84,7 +82,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
         this.rateCategoryParameter = rateCategoryParameter;
         int categoryCount = tree.getNodeCount() - 1;
-        if (rateCategoryParameter.getDimension() != categoryCount ) {
+        if (rateCategoryParameter.getDimension() != categoryCount) {
             throw new IllegalArgumentException("The rate category parameter must be of length " + categoryCount + " (nodes in the tree - 1)");
         }
 
@@ -111,6 +109,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             fireModelChanged();
         } else if (model == tree) {
             shuffleIndices();
+            //meanIsCalculated = false;
         }
     }
 
@@ -130,66 +129,18 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
     protected void acceptState() {
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return DISCRETIZED_BRANCH_RATES;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            int overSampling = xo.getAttribute(OVERSAMPLING, 1);
-
-            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-            ParametricDistributionModel distributionModel = (ParametricDistributionModel) xo.getElementFirstChild(DISTRIBUTION);
-
-            Parameter rateCategoryParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORIES);
-
-            Logger.getLogger("dr.evomodel").info("Using discretized relaxed clock model.");
-            Logger.getLogger("dr.evomodel").info("  over sampling = " + overSampling);
-            Logger.getLogger("dr.evomodel").info("  parametric model = " + distributionModel.getModelName());
-            Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryParameter.getDimension());
-
-            if (xo.hasAttribute(SINGLE_ROOT_RATE)) {
-                //singleRootRate = xo.getBooleanAttribute(SINGLE_ROOT_RATE);
-                Logger.getLogger("dr.evomodel").warning("   WARNING: single root rate is not implemented!");
-            }
-
-            return new DiscretizedBranchRates(tree, rateCategoryParameter, distributionModel, overSampling);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return
-                    "This element returns an discretized relaxed clock model." +
-                            "The branch rates are drawn from a discretized parametric distribution.";
-        }
-
-        public Class getReturnType() {
-            return DiscretizedBranchRates.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newBooleanRule(SINGLE_ROOT_RATE, true, "Whether only a single rate should be used for the two children branches of the root"),
-                AttributeRule.newIntegerRule(OVERSAMPLING, true, "The integer factor for oversampling the distribution model (1 means no oversampling)"),
-                new ElementRule(TreeModel.class),
-                new ElementRule(DISTRIBUTION, ParametricDistributionModel.class, "The distribution model for rates among branches", false),
-                new ElementRule(RATE_CATEGORIES, Parameter.class, "The rate categories parameter", false),
-        };
-    };
-
     public double getBranchRate(Tree tree, NodeRef node) {
+
 
         if (tree.isRoot(node)) {
             throw new IllegalArgumentException("root node doesn't have a rate!");
         }
+
+        double scale = 1.0;
+//        if (normalize) {
+//            calculateMeanRate(tree);
+//            scale = normalizedRate/meanRate;
+//        }
 
         int nodeNumber = node.getNumber();
 
@@ -200,11 +151,50 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         int rateCategory = (int) Math.round(rateCategoryParameter.getParameterValue(getCategoryIndexFromNodeNumber(nodeNumber)));
 
         if (rateCategory < rateCategoryParameter.getBounds().getLowerLimit(0) || rateCategory > rateCategoryParameter.getBounds().getUpperLimit(0)) {
-            throw new IllegalArgumentException("INTERNAL ERROR! invalid catergory number " + rateCategory);
+            throw new IllegalArgumentException("INTERNAL ERROR! invalid category number " + rateCategory);
         }
 
-        return rates[rateCategory];
+        return rates[rateCategory] * scale;
     }
+
+    /*   private void calculateMeanRate(Tree tree) {
+
+        if (meanIsCalculated) return;
+
+        int length = tree.getNodeCount();
+        int rootIndex = 0;
+
+        double[] branchLengths = new double[length];
+
+        for (int i = 0; i < length; i++) {
+            NodeRef child = tree.getNode(i);
+            if (!tree.isRoot(child)) {
+                NodeRef parent = tree.getParent(child);
+                branchLengths[child.getNumber()] = tree.getNodeHeight(parent) - tree.getNodeHeight(child);
+            } else {
+                rootIndex = i;
+            }
+        }
+
+        double totalWeightedRate = 0.0;
+        double totalTreeLength = 0.0;
+        for (int i = 0; i < length; i++) {
+
+            if (i != rootIndex) {
+                int nodeNumber = tree.getNode(i).getNumber();
+                int rateIndex = (int) Math.round(
+                        rateCategoryParameter.getParameterValue(
+                                getCategoryIndexFromNodeNumber(nodeNumber)));
+
+                totalWeightedRate += rates[rateIndex] * branchLengths[nodeNumber];
+                totalTreeLength += branchLengths[nodeNumber];
+            }
+        }
+
+        meanRate = totalWeightedRate / totalTreeLength;
+        meanIsCalculated = true;
+
+    }*/
 
 /*    public NodeRef getNodeForParameter(Parameter parameter, int index) {
 
@@ -255,6 +245,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             rates[i] = distributionModel.quantile(z);
             z += step;
         }
+        //meanIsCalculated = false;
     }
 
     private void shuffleIndices() {
@@ -316,4 +307,10 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         }
         rootNodeNumber = newRootNodeNumber;
     }
+
+    /*public void setNormalizedMean(double normalizedMean) {
+        this.normalizedRate = normalizedMean;
+        normalize = true;
+        meanIsCalculated = false;
+    }*/
 }

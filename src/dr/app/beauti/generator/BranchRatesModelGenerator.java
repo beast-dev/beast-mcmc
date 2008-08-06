@@ -3,12 +3,12 @@ package dr.app.beauti.generator;
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockType;
-import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.model.SumStatistic;
@@ -128,10 +128,16 @@ public class BranchRatesModelGenerator extends Generator {
 
         } else {
             writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut, 2006)");
-            writer.writeOpenTag(
-                    DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES,
-                    new Attribute[]{new Attribute.Default<String>("id", "branchRates")}
-            );
+            Attribute[] attributes;
+            //if (options.isFixedSubstitutionRate()) {
+            //    attributes = new Attribute[]{
+            //            new Attribute.Default<String>("id", "branchRates"),
+            //            new Attribute.Default<Double>(DiscretizedBranchRatesParser.NORMALIZED_MEAN, options.getMeanSubstitutionRate())
+            //    };
+            //} else {
+            attributes = new Attribute[]{new Attribute.Default<String>("id", "branchRates")};
+            //}
+            writer.writeOpenTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, attributes);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
             writer.writeOpenTag("distribution");
             if (options.clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
@@ -162,7 +168,7 @@ public class BranchRatesModelGenerator extends Generator {
             int categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
             writeParameter("branchRates.categories", categoryCount, writer);
             writer.writeCloseTag("rateCategories");
-            writer.writeCloseTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES);
+            writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 
             writer.writeText("");
             writer.writeOpenTag(
@@ -176,7 +182,7 @@ public class BranchRatesModelGenerator extends Generator {
                     }
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-            writer.writeTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>("idref", "branchRates"), true);
+            writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>("idref", "branchRates"), true);
             writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 
             writer.writeText("");
@@ -191,7 +197,7 @@ public class BranchRatesModelGenerator extends Generator {
                     }
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-            writer.writeTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>("idref", "branchRates"), true);
+            writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>("idref", "branchRates"), true);
             writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 
             writer.writeText("");
@@ -203,7 +209,7 @@ public class BranchRatesModelGenerator extends Generator {
                     }
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-            writer.writeTag(DiscretizedBranchRates.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>("idref", "branchRates"), true);
+            writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>("idref", "branchRates"), true);
             writer.writeCloseTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC);
         }
     }

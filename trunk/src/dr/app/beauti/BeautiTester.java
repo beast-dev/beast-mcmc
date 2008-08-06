@@ -442,7 +442,7 @@ public class BeautiTester {
             if (charSets != null && charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
                     partitions.add(new DataPartition(charSet.getName(), fileName,
-                            alignment, charSet.getFromSite(), charSet.getToSite()));
+                            alignment, charSet.getFromSite(), charSet.getToSite(), charSet.getEvery()));
                 }
             } else {
                 partitions.add(new DataPartition(fileNameStem, fileName, alignment));

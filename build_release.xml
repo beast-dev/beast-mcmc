@@ -129,6 +129,7 @@
                 <include name="dr/evomodel/substmodel/**/*.class"/>
                 <include name="dr/evomodel/tree/**/*.class"/>
                 <include name="dr/evomodel/treelikelihood/**/*.class"/>
+                <include name="dr/evomodelxml/**/*.class"/>
                 <include name="dr/evoxml/**/*.class"/>
                 <include name="dr/gui/chart/**"/>
                 <include name="dr/gui/table/**"/>

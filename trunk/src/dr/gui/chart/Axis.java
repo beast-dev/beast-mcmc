@@ -25,6 +25,8 @@
 
 package dr.gui.chart;
 
+import dr.util.NumberFormatter;
+
 import java.text.DecimalFormat;
 
 /**
@@ -66,11 +68,6 @@ public interface Axis {
      *	Set show label for first tick
      */
     void setLabelFirst(boolean labelFirst);
-
-    /**
-     *	Set the formatter for the tick labels
-     */
-    void setFormatter(DecimalFormat formatter);
 
     /**
      *	Set show label for last tick
@@ -128,9 +125,9 @@ public interface Axis {
     public double untransform(double value);
 
     /**
-     *	@return a DecimalFormat for formating the axis labels
+     *	@return a string that appropriately formats the value
      */
-    public DecimalFormat getFormatter();
+    public String format(double value);
 
     /**
      *	@return minimum range of the axis
@@ -223,7 +220,7 @@ public interface Axis {
 
         protected boolean isCalibrated = false;
 
-        protected DecimalFormat formatter = new DecimalFormat("0.0#######");
+        protected final NumberFormatter formatter = new NumberFormatter(8);
 
         // Used internally
         private double epsilon;
@@ -303,10 +300,15 @@ public interface Axis {
         }
 
         /**
-         *	Set the formatter for the tick labels
+         *	Set the number of significant figures for the tick labels
          */
-        public void setFormatter(DecimalFormat formatter) {
-            this.formatter = formatter;
+        public void setSignficantFigures(int sf) {
+            this.formatter.setSignificantFigures(sf);
+        }
+
+
+        public String format(double value) {
+            return formatter.format(value);
         }
 
         /**
@@ -732,13 +734,6 @@ public interface Axis {
 
             final double ta = transform(minAxis);
             return (transform(value)- ta)/(transform(maxAxis)- ta);
-        }
-
-        /**
-         *	@return a DecimalFormat for formating the axis labels
-         */
-        public DecimalFormat getFormatter() {
-            return formatter;
         }
 
         /**

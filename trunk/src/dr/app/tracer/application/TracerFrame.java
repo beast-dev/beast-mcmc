@@ -988,6 +988,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
             double value = 0.0;
             boolean warning = false;
+            boolean extremeWarning = false;
             switch (col) {
                 case 1:
                     value = td.getMean();
@@ -995,17 +996,18 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 case 2:
                     if (!td.isValid()) return "-";
                     value = td.getESS();
-                    if (value < 100.0) warning = true;
+                    if (value < 200.0) warning = true;
+                    if (value < 100.0) extremeWarning = true;
                     break;
             }
 
             String string;
-            if (Math.abs(value) < 0.1 || Math.abs(value) >= 10000.0) {
+            if (Math.abs(value) < 0.1 || Math.abs(value) >= 100000.0) {
                 string = formatter.format(value);
             } else string = formatter2.format(value);
 
             if (warning) {
-                return "<html><font color=\"#EE0000\">" + string + "</font></html> ";
+                return "<html><font color=\"" + (extremeWarning ? "#EE0000" : "#EEAA00") + "\">" + string + "</font></html> ";
             }
 
             return string;

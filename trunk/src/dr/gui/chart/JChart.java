@@ -475,20 +475,20 @@ public class JChart extends JPanel {
 		double maxWidth = 0;
 
 		if (axis.getLabelFirst()) { // Draw first minor tick as a major one (with a label)
-			label = axis.getFormatter().format(axis.getMinorTickValue(0, -1));
+			label = axis.format(axis.getMinorTickValue(0, -1));
 			width = g2.getFontMetrics().stringWidth(label);
 			if (maxWidth < width)
 				maxWidth = width;
 		}
 		int n = axis.getMajorTickCount();
 		for (int i = 0; i < n; i++) {
-			label = axis.getFormatter().format(axis.getMajorTickValue(i));
+			label = axis.format(axis.getMajorTickValue(i));
 			width = g2.getFontMetrics().stringWidth(label);
 			if (maxWidth < width)
 				maxWidth = width;
 		}
 		if (axis.getLabelLast()) { // Draw first minor tick as a major one (with a label)
-			label = axis.getFormatter().format(axis.getMinorTickValue(0, n - 1));
+			label = axis.format(axis.getMinorTickValue(0, n - 1));
 			width = g2.getFontMetrics().stringWidth(label);
 			if (maxWidth < width)
 				maxWidth = width;
@@ -543,7 +543,7 @@ public class JChart extends JPanel {
 		g2.setPaint(axisPaint);
 		g2.setStroke(axisStroke);
 		if (horizontalAxis) {
-			String label = xAxis.getFormatter().format(value);
+			String label = xAxis.format(value);
 			double pos = transformX(value);
 
 			Line2D line = new Line2D.Double(pos, plotBounds.getMaxY(), pos, plotBounds.getMaxY() + majorTickSize);
@@ -553,7 +553,7 @@ public class JChart extends JPanel {
 			double width = g2.getFontMetrics().stringWidth(label);
 			g2.drawString(label, (float)(pos - (width / 2)), (float)(plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
 		} else {
-			String label = yAxis.getFormatter().format(value);
+			String label = yAxis.format(value);
 			double pos = transformY(value);
 
 			Line2D line = new Line2D.Double(plotBounds.getMinX(), pos, plotBounds.getMinX() - majorTickSize, pos);

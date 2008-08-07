@@ -160,8 +160,8 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
         String[] rowNames = {MEAN_ROW, STDEV_ROW, MEDIAN_ROW, GEOMETRIC_MEAN_ROW, LOWER_ROW, UPPER_ROW, ACT_ROW, ESS_ROW};
 
-        private DecimalFormat formatter = new DecimalFormat("0.###E0");
-        private DecimalFormat formatter2 = new DecimalFormat("####0.###");
+        private DecimalFormat formatter = new DecimalFormat("0.####E0");
+        private DecimalFormat formatter2 = new DecimalFormat("####0.####");
 
         public StatisticsModel() {
         }
@@ -263,7 +263,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                 return "-";
             }
 
-            if (value > 0 && (Math.abs(value) < 0.1 || Math.abs(value) >= 10000.0)) {
+            if (value > 0 && (Math.abs(value) < 0.1 || Math.abs(value) >= 100000.0)) {
                 return formatter.format(value);
             } else return formatter2.format(value);
         }

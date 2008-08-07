@@ -48,12 +48,16 @@ public class DiscreteStatistics {
      */
     public static double mean(double[] x) {
         double m = 0;
-        int len = x.length;
-        for (int i = 0; i < len; i++) {
-            m += x[i];
+        int count = x.length;
+        for (int i = 0; i < x.length; i++) {
+            if (Double.isNaN(x[i])) {
+                count --;
+            } else {
+                m += x[i];
+            }
         }
 
-        return m / (double) len;
+        return m / (double) count;
     }
 
     /**
@@ -101,20 +105,23 @@ public class DiscreteStatistics {
      */
     public static double variance(double[] x, double mean) {
         double var = 0;
-        int len = x.length;
-        for (int i = 0; i < len; i++) {
-            double diff = x[i] - mean;
-            var += diff * diff;
+        int count = x.length;
+        for (int i = 0; i < x.length; i++) {
+            if (Double.isNaN(x[i])) {
+                count --;
+            } else {
+                double diff = x[i] - mean;
+                var += diff * diff;
+            }
         }
 
-        int n;
-        if (len < 2) {
-            n = 1; // to avoid division by zero
+        if (count < 2) {
+            count = 1; // to avoid division by zero
         } else {
-            n = len - 1; // for ML estimate
+            count = count - 1; // for ML estimate
         }
 
-        return var / (double) n;
+        return var / (double) count;
     }
 
 
@@ -146,11 +153,16 @@ public class DiscreteStatistics {
 
         if (x.length != y.length) throw new IllegalArgumentException("x and y arrays must be same length!");
 
+        int count = x.length;
         double covar = 0.0;
         for (int i = 0; i < x.length; i++) {
-            covar += (x[i] - xmean) * (y[i] - ymean);
+            if (Double.isNaN(x[i]) || Double.isNaN(y[i])) {
+                count --;
+            } else {
+                covar += (x[i] - xmean) * (y[i] - ymean);
+            }
         }
-        covar /= x.length;
+        covar /= count;
         covar /= (xstdev * ystdev);
         return covar;
     }

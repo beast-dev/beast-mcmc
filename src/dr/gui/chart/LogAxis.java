@@ -37,8 +37,8 @@ public class LogAxis extends Axis.AbstractAxis {
 	 */
 	public LogAxis() {
 		super();
-		formatter = new DecimalFormat("0.0#######E0");
-	}
+        setSignficantFigures(0);
+    }
 
 	/**
 	 * Axis flag constructor

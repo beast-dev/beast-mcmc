@@ -142,11 +142,19 @@ public class NexusApplicationImporter extends NexusImporter {
 
         int from;
         int to;
+        int every = 1;
 
         try {
             if (parts.length == 2) {
                 from = Integer.parseInt(parts[0]);
-                to = Integer.parseInt(parts[1]);
+
+                String[] toParts = parts[1].split("\\\\");
+
+                to = Integer.parseInt(toParts[0]);
+
+                every = 1;
+                if (toParts.length > 1) every = Integer.parseInt(toParts[1]);
+
             } else if (parts.length == 1) {
                 from = Integer.parseInt(parts[0]);
                 to = from;
@@ -156,7 +164,7 @@ public class NexusApplicationImporter extends NexusImporter {
         } catch (NumberFormatException nfe) {
             throw new ImportException("CharSet, " + name + ", unable to be parsed");
         }
-        return new CharSet(name, from, to);
+        return new CharSet(name, from, to, every);
     }
 
     /**
@@ -292,17 +300,26 @@ public class NexusApplicationImporter extends NexusImporter {
 
     private boolean match(String reference, String target, int min) throws ImportException {
         if (target.length() < min) {
-            throw new BadFormatException("Ambiguous command or subcommand, '" + target + "'");
+
+            //throw new BadFormatException("Ambiguous command or subcommand, '" + target + "'");
         }
 
         return reference.startsWith(target.toUpperCase());
     }
 
     public class CharSet {
+
         public CharSet(String name, int fromSite, int toSite) {
             this.name = name;
             this.fromSite = fromSite;
             this.toSite = toSite;
+        }
+
+        public CharSet(String name, int fromSite, int toSite, int every) {
+            this.name = name;
+            this.fromSite = fromSite;
+            this.toSite = toSite;
+            this.every = every;
         }
 
         public String getName() {
@@ -317,8 +334,13 @@ public class NexusApplicationImporter extends NexusImporter {
             return toSite;
         }
 
+        public int getEvery() {
+            return every;
+        }
+
         private final String name;
         private final int fromSite;
         private final int toSite;
+        private int every = 1;
     }
 }

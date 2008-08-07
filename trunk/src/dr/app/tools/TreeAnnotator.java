@@ -109,6 +109,7 @@ public class TreeAnnotator {
                     }
                     totalTrees++;
                 }
+
             } catch (Importer.ImportException e) {
                 System.err.println("Error Parsing Input Tree: " + e.getMessage());
                 return;
@@ -164,6 +165,9 @@ public class TreeAnnotator {
 
         FileReader fileReader = new FileReader(inputFileName);
         NexusImporter importer = new NexusImporter(fileReader);
+
+        // this call increments the clade counts and it shouldn't
+        // this is remedied with removeClades call after while loop below
         cladeSystem = new CladeSystem(targetTree);
         totalTreesUsed = 0;
         try {
@@ -188,7 +192,8 @@ public class TreeAnnotator {
                 counter++;
 
             }
-
+            cladeSystem.removeClades(targetTree, targetTree.getRoot(), true);
+            //System.out.println("totalTreesUsed=" + totalTreesUsed);
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
@@ -414,6 +419,9 @@ public class TreeAnnotator {
                     i++;
                 }
                 clade.attributeValues.add(values);
+
+                //System.out.println(clade + " " + clade.getCount());
+                clade.setCount(clade.getCount() + 1);
             }
         }
 
@@ -877,6 +885,43 @@ public class TreeAnnotator {
 //		    }
 
         }
+
+        public BitSet removeClades(Tree tree, NodeRef node, boolean includeTips) {
+
+            BitSet bits = new BitSet();
+
+            if (tree.isExternal(node)) {
+
+                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                bits.set(index);
+
+                if (includeTips) {
+                    removeClade(bits);
+                }
+
+            } else {
+
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                    NodeRef node1 = tree.getChild(node, i);
+
+                    bits.or(removeClades(tree, node1, includeTips));
+                }
+
+                removeClade(bits);
+            }
+
+            return bits;
+        }
+
+        private void removeClade(BitSet bits) {
+            Clade clade = cladeMap.get(bits);
+            if (clade != null) {
+                clade.setCount(clade.getCount() - 1);
+            }
+
+        }
+
 
         class Clade {
             public Clade(BitSet bits) {

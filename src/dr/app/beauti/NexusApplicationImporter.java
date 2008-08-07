@@ -310,9 +310,7 @@ public class NexusApplicationImporter extends NexusImporter {
     public class CharSet {
 
         public CharSet(String name, int fromSite, int toSite) {
-            this.name = name;
-            this.fromSite = fromSite;
-            this.toSite = toSite;
+            this(name, fromSite, toSite, 1);
         }
 
         public CharSet(String name, int fromSite, int toSite, int every) {
@@ -341,6 +339,6 @@ public class NexusApplicationImporter extends NexusImporter {
         private final String name;
         private final int fromSite;
         private final int toSite;
-        private int every = 1;
+        private final int every;
     }
 }

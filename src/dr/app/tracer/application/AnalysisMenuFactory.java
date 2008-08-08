@@ -38,12 +38,12 @@ public class AnalysisMenuFactory implements MenuFactory {
 	        item = new JMenuItem(((AnalysisMenuHandler)frame).getBayesianSkylineAction());
 	        menu.add(item);
 
-		    item = new JMenuItem(((AnalysisMenuHandler)frame).getLineagesThroughTimeAction());
-		    menu.add(item);
-
-            item = new JMenuItem(((AnalysisMenuHandler)frame).getTraitThroughTimeAction());
-            menu.add(item);
-
+//		    item = new JMenuItem(((AnalysisMenuHandler)frame).getLineagesThroughTimeAction());
+//		    menu.add(item);
+//
+//            item = new JMenuItem(((AnalysisMenuHandler)frame).getTraitThroughTimeAction());
+//            menu.add(item);
+//
 		    menu.addSeparator();
 
 		    item = new JMenuItem(((AnalysisMenuHandler)frame).getCreateTemporalAnalysisAction());
@@ -72,14 +72,14 @@ public class AnalysisMenuFactory implements MenuFactory {
 	        item.setEnabled(false);
 	        menu.add(item);
 
-		    item = new JMenuItem(LINEAGES_THROUGH_TIME);
-		    item.setEnabled(false);
-		    menu.add(item);
-
-            item = new JMenuItem(TRAIT_THROUGH_TIME);
-            item.setEnabled(false);
-            menu.add(item);
-
+//		    item = new JMenuItem(LINEAGES_THROUGH_TIME);
+//		    item.setEnabled(false);
+//		    menu.add(item);
+//
+//            item = new JMenuItem(TRAIT_THROUGH_TIME);
+//            item.setEnabled(false);
+//            menu.add(item);
+//
 		    menu.addSeparator();
 
 		    item = new JMenuItem(CREATE_TEMPORAL_ANALYSIS);

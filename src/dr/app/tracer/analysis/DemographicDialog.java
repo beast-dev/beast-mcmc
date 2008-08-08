@@ -52,7 +52,8 @@ public class DemographicDialog {
     private JComboBox demographicCombo;
     private WholeNumberField binCountField;
 
-    public static String[] demographicModels = {"Constant Population",
+    public static String[] demographicModels = {
+            "Constant Population",
             "Exponential Growth (Growth Rate)",
             "Exponential Growth (Doubling Time)",
             "Logistic Growth (Growth Rate)",
@@ -62,17 +63,19 @@ public class DemographicDialog {
 		    "Constant-Exponential",
 		    "Constant-Logistic",
 		    "Constant-Exponential-Constant",
+            "Exponential-Logistic",
             "Boom-Bust"};
 
     private String[][] argumentGuesses = {
             {"populationsize", "population", "popsize", "n0", "size", "pop"},
             {"ancestralsize", "ancestralproportion", "ancpopsize", "proportion", "ancestral", "n1"},
-            {"growthrate", "growth", "rate", "r"},
+            {"exponentialgrowthrate", "exponentialrate", "growthrate", "expgrowth", "growth", "rate", "r"},
             {"doublingtime", "doubling", "time", "t"},
-            {"logisticshape", "halflife", "t50", "time50", "shape"},
+            {"logisticshape", "halflife", "t50", "time50", "logt50", "shape"},
             {"spikefactor", "spike", "factor", "f"},
             {"cataclysmtime", "cataclysm", "time", "t"},
-		    {"transitiontime", "time1", "time", "t1", "t"}
+		    {"transitiontime", "time1", "time", "t1", "t"},
+            {"logisticgrowthrate", "logisticgrowth", "loggrowth", "logisticrate"}
     };
 
     private String[] argumentNames = new String[]{
@@ -83,7 +86,8 @@ public class DemographicDialog {
 		    "Logistic Shape",
 		    "Spike Factor",
 		    "Spike Time",
-		    "Transition Time"
+		    "Transition Time",
+            "Logistic Growth Rate",
     };
 
     private int[][] argumentIndices = {
@@ -97,7 +101,9 @@ public class DemographicDialog {
 		    {0, 1, 2},      // const-exp
 		    {0, 1, 2, 4},   // const-log
 		    {0, 1, 2, 7},   // const-exp-const
-		    {0, 2, 5, 6}};  // boom bust
+            {0, 2, 4, 7, 8},// exp-logistic
+		    {0, 2, 5, 6}    // boom bust
+    };
 
     private String[] argumentTraces = new String[argumentNames.length];
     private JComboBox[] argumentCombos = new JComboBox[argumentNames.length];
@@ -588,7 +594,7 @@ public class DemographicDialog {
                 }
 
             } else
-            if (demographicCombo.getSelectedIndex() == 7) { // ConstLogistic Growth
+            if (demographicCombo.getSelectedIndex() == 8) { // ConstLogistic Growth
                 title = "Constant-Logistic Growth";
                 ConstLogistic demo = new ConstLogistic();
                 for (int i = 0; i < n; i++) {
@@ -602,7 +608,7 @@ public class DemographicDialog {
                 }
 
             } else
-            if (demographicCombo.getSelectedIndex() == 7) { // ConstExpConst
+            if (demographicCombo.getSelectedIndex() == 9) { // ConstExpConst
 //                title = "Constant-Exponential-Constant";
 //                ConstExpConst demo = new ConstExpConst();
 //                for (int i = 0; i < n; i++) {
@@ -616,7 +622,22 @@ public class DemographicDialog {
 //                }
 
             } else
-            if (demographicCombo.getSelectedIndex() == 8) { // Cataclysm
+            if (demographicCombo.getSelectedIndex() == 10) { // ExpLogistic Growth
+                title = "Exponential-Logistic Growth";
+                ExponentialLogistic demo = new ExponentialLogistic();
+                for (int i = 0; i < n; i++) {
+                    demo.setN0(values[0][i]);
+                    demo.setR2(values[1][i]);
+                    demo.setTime50(values[2][i]);
+                    demo.setTime(values[3][i]);
+                    demo.setGrowthRate(values[4][i]);
+
+                    addDemographic(bins, binCount, maxHeight, delta, demo);
+                    current++;
+                }
+
+            } else
+            if (demographicCombo.getSelectedIndex() == 11) { // Cataclysm
                 title = "Boom-Bust";
                 CataclysmicDemographic demo = new CataclysmicDemographic();
                 for (int i = 0; i < n; i++) {

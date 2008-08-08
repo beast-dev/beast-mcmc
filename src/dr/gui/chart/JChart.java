@@ -279,7 +279,10 @@ public class JChart extends JPanel {
 		Graphics2D g2 = (Graphics2D)g;
 		Dimension size = getSize();
 
-		if (!calibrated) {
+//        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        if (!calibrated) {
 			calibrate(g2, size);
 			calibrated = true;
 		}

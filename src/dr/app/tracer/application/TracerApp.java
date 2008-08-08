@@ -34,15 +34,15 @@ public class TracerApp extends MultiDocApplication {
             try {
                 LookAndFeel lafClass;
 
-                if (Utils.getMacOSXVersion().startsWith("10.5")) {
-                    lafClass = ch.randelshofer.quaqua.subset.Quaqua14ColorChooserLAF.class.newInstance();
-                } else {
+                if (!Utils.getMacOSXVersion().startsWith("10.5")) {
+//                    lafClass = ch.randelshofer.quaqua.subset.Quaqua14ColorChooserLAF.class.newInstance();
+//                } else {
                     lafClass = QuaquaLookAndFeel.class.newInstance();
+                    UIManager.setLookAndFeel(lafClass);
+                    lafLoaded = true;
                 }
 
-                UIManager.setLookAndFeel(lafClass);
 
-                lafLoaded = true;
             } catch (Exception e) {
             }
 

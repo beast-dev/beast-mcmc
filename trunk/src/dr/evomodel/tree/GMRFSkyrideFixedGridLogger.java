@@ -187,8 +187,8 @@ public class GMRFSkyrideFixedGridLogger extends MCLogger{
 				fileName = xo.getStringAttribute(LoggerParser.FILE_NAME);
 			}
 			
-			if (xo.hasAttribute(LoggerParser.FILE_NAME)) {
-				logEvery = xo.getIntegerAttribute(LoggerParser.FILE_NAME);
+			if (xo.hasAttribute(LoggerParser.LOG_EVERY)) {
+				logEvery = xo.getIntegerAttribute(LoggerParser.LOG_EVERY);
 			}
 			
 			boolean logScale = true;

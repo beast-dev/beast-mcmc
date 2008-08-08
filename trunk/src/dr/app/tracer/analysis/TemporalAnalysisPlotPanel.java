@@ -262,11 +262,11 @@ public class TemporalAnalysisPlotPanel extends JPanel {
             this.timeLower = timeLower;
         }
 
-        public AnalysisData(String title, Variate xData, Variate yDataMean) {
+        public AnalysisData(String title, Variate xData, Variate yData) {
             this.title = title;
             this.isDemographic = false;
             this.xData = xData;
-            this.yDataMean = yDataMean;
+            this.yDataMean = yData;
         }
 
         String title;

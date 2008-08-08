@@ -33,6 +33,7 @@ import dr.xml.*;
 
 import java.util.List;
 import java.util.Vector;
+import java.util.logging.Logger;
 
 /**
  * This class implements a simple operator schedule.
@@ -173,7 +174,9 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
 			if (xo.hasAttribute(OPTIMIZATION_SCHEDULE)) {
 				String type = xo.getStringAttribute(OPTIMIZATION_SCHEDULE);
-				if (type.equals(OperatorSchedule.LOG_STRING))
+                Logger.getLogger("dr.inference").info("Optimization Scheduule: " + type);
+                 
+                if (type.equals(OperatorSchedule.LOG_STRING))
 					schedule.setOptimizationSchedule(OperatorSchedule.LOG_SCHEDULE);
 				else if (type.equals(OperatorSchedule.SQRT_STRING))
 					schedule.setOptimizationSchedule(SQRT_SCHEDULE);

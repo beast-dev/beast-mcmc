@@ -167,7 +167,10 @@ public class BayesianSkylineDialog {
         }
 
         if (roots.size() == 0) {
-            throw new IllegalArgumentException("no traces found with a range of numerical suffixes (1-n).");
+            JOptionPane.showMessageDialog(frame, "No traces found with a range of numerical suffixes (1-n).",
+                    "Probably not a Bayesian Skyline analysis",
+                    JOptionPane.ERROR_MESSAGE);
+            return JOptionPane.CANCEL_OPTION;
         }
 
         for (int i = 0; i < argumentCombos.length; i++) {

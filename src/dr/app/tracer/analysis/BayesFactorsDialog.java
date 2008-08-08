@@ -48,7 +48,7 @@ public class BayesFactorsDialog {
     private JFrame frame;
 
     private JComboBox likelihoodCombo;
-    private JCheckBox harmonicOnlyCheck;
+//    private JCheckBox harmonicOnlyCheck;
     private WholeNumberField bootstrapCountField;
 
     private String[] likelihoodGuesses = {
@@ -63,7 +63,7 @@ public class BayesFactorsDialog {
         this.frame = frame;
 
         likelihoodCombo = new JComboBox();
-        harmonicOnlyCheck = new JCheckBox("Calculate harmonic mean only (no smoothing)");
+//        harmonicOnlyCheck = new JCheckBox("Calculate harmonic mean only (no smoothing)");
         bootstrapCountField = new WholeNumberField(0, Integer.MAX_VALUE);
         bootstrapCountField.setValue(1000);
 
@@ -158,7 +158,7 @@ public class BayesFactorsDialog {
 
         optionPanel.addSeparator();
 
-        optionPanel.addComponent(harmonicOnlyCheck);
+//        optionPanel.addComponent(harmonicOnlyCheck);
         bootstrapCountField.setColumns(12);
         optionPanel.addComponents(new JLabel("Bootstrap replicates:"), bootstrapCountField);
 
@@ -169,15 +169,15 @@ public class BayesFactorsDialog {
 
     public void createBayesFactorsFrame(List<TraceList> traceLists, DocumentFrame parent) {
 
-        boolean harmonicOnly = harmonicOnlyCheck.isSelected();
+//        boolean harmonicOnly = harmonicOnlyCheck.isSelected();
         int bootstrapLength = bootstrapCountField.getValue();
 
         String info = "trace: " + likelihoodTrace + ", ";
-        if (harmonicOnly) {
-            info += "harmonic mean";
-        } else {
+//        if (harmonicOnly) {
+//            info += "harmonic mean";
+//        } else {
             info += "smoothed estimate";
-        }
+//        }
         if (bootstrapLength > 1) {
             info += " (S.E. estimated using " + bootstrapLength + " bootstrap replicates)";
         }
@@ -186,7 +186,7 @@ public class BayesFactorsDialog {
         frame.initialize();
         frame.setVisible(true);
 
-        final MarginalLikelihoodTask analyseTask = new MarginalLikelihoodTask(frame, traceLists, harmonicOnly, bootstrapLength);
+        final MarginalLikelihoodTask analyseTask = new MarginalLikelihoodTask(frame, traceLists, false, bootstrapLength);
 
         final ProgressMonitor progressMonitor = new ProgressMonitor(frame,
                 "Estimating Marginal Likelihoods",

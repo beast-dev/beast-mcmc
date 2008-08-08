@@ -60,6 +60,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private DemographicDialog demographicDialog = null;
     private BayesianSkylineDialog bayesianSkylineDialog = null;
+    private TimeDensityDialog timeDensityDialog = null;
     private LineagesThroughTimeDialog lineagesThroughTimeDialog = null;
     private TraitThroughTimeDialog traitThroughTimeDialog = null;
     private NewTemporalAnalysisDialog createTemporalAnalysisDialog = null;
@@ -207,8 +208,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         getCreateTemporalAnalysisAction().setEnabled(enabled);
         getAddDemographicAction().setEnabled(enabled && temporalAnalysisFrame != null);
         getAddBayesianSkylineAction().setEnabled(enabled && temporalAnalysisFrame != null);
-        //getAddTimeDensityAction().setEnabled(enabled && temporalAnalysisFrame != null);
-        getAddTimeDensityAction().setEnabled(false);
+        getAddTimeDensityAction().setEnabled(enabled && temporalAnalysisFrame != null);
 
         getExportAction().setEnabled(enabled);
         getExportDataAction().setEnabled(enabled);
@@ -740,7 +740,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         addBayesianSkylineAction.setEnabled(true);
         addDemographicAction.setEnabled(true);
-// addTimeDensity.setEnabled(true);
+        addTimeDensity.setEnabled(true);
 
         temporalAnalysisFrame.addWindowListener(new WindowAdapter() {
 
@@ -865,7 +865,22 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
     private void doAddTimeDensity() {
-        throw new UnsupportedOperationException("Not implemented yet...");
+        if (timeDensityDialog == null) {
+            timeDensityDialog = new TimeDensityDialog(this);
+        }
+
+        if (currentTraceLists.size() != 1) {
+            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
+                    "this analysis on, (or the Combined trace).",
+                    "Unable to perform analysis",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        if (timeDensityDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
+            return;
+        }
+
+        timeDensityDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
     }
 
     private void doCalculateBayesFactors() {

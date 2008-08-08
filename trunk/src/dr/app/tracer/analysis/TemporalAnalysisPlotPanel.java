@@ -169,24 +169,25 @@ public class TemporalAnalysisPlotPanel extends JPanel {
     }
 
     public void updatePlot(AnalysisData analysis) {
-        if (solidIntervalCheckBox.isSelected()) {
+        if (analysis.yDataUpper != null && analysis.yDataLower != null) {
+            if (solidIntervalCheckBox.isSelected()) {
 
-            AreaPlot areaPlot = new AreaPlot(analysis.xData, analysis.yDataUpper, analysis.xData, analysis.yDataLower);
-            areaPlot.setLineColor(new Color(0x9999FF));
-            demoChart.addPlot(areaPlot);
-        } else {
-            LinePlot plot = new LinePlot(analysis.xData, analysis.yDataLower);
-            plot.setLineStyle(new BasicStroke(1.0F), new Color(0x9999FF));
-            demoChart.addPlot(plot);
+                AreaPlot areaPlot = new AreaPlot(analysis.xData, analysis.yDataUpper, analysis.xData, analysis.yDataLower);
+                areaPlot.setLineColor(new Color(0x9999FF));
+                demoChart.addPlot(areaPlot);
+            } else {
+                LinePlot plot = new LinePlot(analysis.xData, analysis.yDataLower);
+                plot.setLineStyle(new BasicStroke(1.0F), new Color(0x9999FF));
+                demoChart.addPlot(plot);
 
-            plot = new LinePlot(analysis.xData, analysis.yDataUpper);
-            plot.setLineStyle(new BasicStroke(1.0F), new Color(0x9999FF));
-            demoChart.addPlot(plot);
-
+                plot = new LinePlot(analysis.xData, analysis.yDataUpper);
+                plot.setLineStyle(new BasicStroke(1.0F), new Color(0x9999FF));
+                demoChart.addPlot(plot);
+            }
         }
 
         LinePlot linePlot;
-        if (meanMedianComboBox.getSelectedItem().equals("Median")) {
+        if (meanMedianComboBox.getSelectedItem().equals("Median") && analysis.yDataMedian != null) {
             linePlot = new LinePlot(analysis.xData, analysis.yDataMedian);
         } else {
             linePlot = new LinePlot(analysis.xData, analysis.yDataMean);
@@ -281,5 +282,5 @@ public class TemporalAnalysisPlotPanel extends JPanel {
         double timeMean = -1;
         double timeUpper = -1;
         double timeLower = -1;
-	}
+    }
 }

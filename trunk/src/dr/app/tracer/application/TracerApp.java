@@ -8,6 +8,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
+import ch.randelshofer.quaqua.QuaquaLookAndFeel;
+
 public class TracerApp extends MultiDocApplication {
 
 	public TracerApp(String nameString, String aboutString, Icon icon,
@@ -19,39 +21,42 @@ public class TracerApp extends MultiDocApplication {
 	static public void main(String[] args) {
 		boolean lafLoaded = false;
 
-		if (Utils.isMacOSX()) {
+        if (Utils.isMacOSX()) {
+            System.setProperty("apple.awt.graphics.UseQuartz", "true");
+            System.setProperty("apple.awt.antialiasing","true");
+            System.setProperty("apple.awt.rendering","VALUE_RENDER_QUALITY");
 
-//		if (Utils.getMacOSXVersion().startsWith("10.5")) {
-//			System.setProperty("apple.awt.brushMetalLook","true");
-//		}
+            System.setProperty("apple.laf.useScreenMenuBar","true");
+            System.setProperty("apple.awt.draggableWindowBackground","true");
+            System.setProperty("apple.awt.showGrowBox","true");
 
-			System.setProperty("apple.laf.useScreenMenuBar","true");
-			System.setProperty("apple.awt.draggableWindowBackground","true");
-			System.setProperty("apple.awt.showGrowBox","true");
-			System.setProperty("apple.awt.graphics.UseQuartz","true");
-			System.setProperty("apple.awt.antialiasing","true");
+            // set the Quaqua Look and Feel in the UIManager
+            try {
+                LookAndFeel lafClass;
 
+                if (Utils.getMacOSXVersion().startsWith("10.5")) {
+                    lafClass = ch.randelshofer.quaqua.subset.Quaqua14ColorChooserLAF.class.newInstance();
+                } else {
+                    lafClass = QuaquaLookAndFeel.class.newInstance();
+                }
 
-			if (!Utils.getMacOSXVersion().startsWith("10.5")) {
-				// set the Quaqua Look and Feel in the UIManager
-				try {
-					UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
-					lafLoaded = true;
-				} catch (Exception e) {
-				}
-			}
+                UIManager.setLookAndFeel(lafClass);
 
-			UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
-			UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
-		}
+                lafLoaded = true;
+            } catch (Exception e) {
+            }
 
-		if (!lafLoaded) {
-			try {
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
-		}
+            UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
+            UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
+        }
+
+        if (!lafLoaded) {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+        }
 
 		try {
 			java.net.URL url = TracerApp.class.getResource("images/Tracer.png");

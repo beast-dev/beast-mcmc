@@ -664,6 +664,8 @@ public class PartitionModel extends ModelOptions {
         return prefix;
     }
 
+    // Instance variables
+
     private final BeautiOptions options;
 
     private NucModelType nucSubstitutionModel = NucModelType.HKY;

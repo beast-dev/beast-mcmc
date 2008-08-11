@@ -333,6 +333,7 @@ public class BeastGenerator extends Generator {
      * Determine and return the datatype description for these beast options
      * note that the datatype in XML may differ from the actual datatype
      *
+     * @param alignment the alignment to get data type description of
      * @return description
      */
 
@@ -1344,7 +1345,7 @@ public class BeastGenerator extends Generator {
         for (PartitionModel model : options.getActiveModels()) {
             partitionModelGenerator.writeLog(writer, model);
         }
-        if (options.getActiveModels().size() > 1) {
+        if (hasCodonOrUserPartitions()) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "allMus"), true);
         }
 
@@ -1368,5 +1369,13 @@ public class BeastGenerator extends Generator {
         }
 
         treePriorGenerator.writeLikelihoodLog(writer);
+    }
+
+    /**
+     * @return true either if the options have more than one partition or any partition is
+     *         broken into codon positions.
+     */
+    private boolean hasCodonOrUserPartitions() {
+        return (options.getActiveModels().size() > 1 || options.getActiveModels().get(0).getCodonPartitionCount() > 1);
     }
 }

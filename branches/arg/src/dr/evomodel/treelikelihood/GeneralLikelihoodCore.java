@@ -42,6 +42,7 @@ public class GeneralLikelihoodCore extends AbstractLikelihoodCore {
 	 */
 	public GeneralLikelihoodCore(int stateCount) {
 		super(stateCount);
+		
 	}
 
 	/**

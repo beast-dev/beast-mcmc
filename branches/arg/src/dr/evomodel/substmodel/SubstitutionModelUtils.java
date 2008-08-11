@@ -15,7 +15,7 @@ public class SubstitutionModelUtils {
 
         int expectedSize = size * size;
         if (isTriangle) expectedSize = (size * size) / 2 - size;
-
+        
         assert matrix.length == expectedSize;
 
         double[][] amat = new double[size][size];

@@ -97,10 +97,18 @@ public class ARGLikelihood extends AbstractARGLikelihood {
                     likelihoodCore = new CodonLikelihoodCore(patternList.getStateCount());
                     useAmbiguities = true;
                 } else {
-                    Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java general likelihood core");
-                    likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
+                	if(patternList.getDataType() instanceof dr.evolution.datatype.HiddenNucleotides &&
+                			NativeCovarionLikelihoodCore.isAvailable()){
+                		Logger.getLogger("dr.evomodel").info("TreeLikelihood using native covarion likelihood core");
+                        likelihoodCore = new NativeCovarionLikelihoodCore();
+                     }else{
+                		Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java general likelihood core");
+                        likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
+                	}
+                	
                 }
             } else {
+            		
                 Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java general likelihood core");
                 likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
             }

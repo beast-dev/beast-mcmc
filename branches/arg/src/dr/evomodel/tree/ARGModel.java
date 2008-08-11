@@ -1124,10 +1124,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		// numColumns += this.getMaxPartitionNumber();
 		// LogColumn[] logColumns = new LogColumn[numColumns +
 		// getMaxPartitionNumber()];
-		LogColumn[] logColumns = new LogColumn[4];
-		logColumns[0] = new IsReassortmentColumn("isReassortment");
-		logColumns[1] = new CountReassortmentColumn("numberReassortments");
-		logColumns[2] = new ExtremeNodeHeightColumn("maxNodeHeight") {
+		LogColumn[] logColumns = new LogColumn[3];
+		//logColumns[0] = new IsReassortmentColumn("isReassortment");
+		logColumns[0] = new CountReassortmentColumn("numberReassortments");
+		logColumns[1] = new ExtremeNodeHeightColumn("maxNodeHeight") {
 			double getStartValue() {
 				return 0;
 			}
@@ -1138,7 +1138,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 				return currentValue;
 			}
 		};
-		logColumns[3] = new ExtremeNodeHeightColumn("minNodeHeight") {
+		logColumns[2] = new ExtremeNodeHeightColumn("minNodeHeight") {
 			double getStartValue() {
 				return 0;
 			}
@@ -1154,6 +1154,31 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 				return currentValue;
 			}
 		};
+		/*logColumns[4] = new NumberColumn("Left Node"){
+			public double getDoubleValue() {
+				Node a = (Node) getRoot();
+				return a.leftChild.getHeight();
+			}
+		};
+		logColumns[5] = new NumberColumn("Right Node"){
+			public double getDoubleValue() {
+				Node a = (Node) getRoot();
+				return a.rightChild.getHeight();
+			}
+		};
+		logColumns[6] = new NumberColumn("Reassort Height"){
+			public double getDoubleValue() {
+				double b = 0;
+				for(Node a : nodes){
+					if(a.isReassortment()){
+						b = a.getHeight();
+						break;
+					}
+				}
+				return b;
+			}
+		};*/
+
 
 		// logColumns[2] = new IsRootTooHighColumn("isRootTooHigh");
 		// for (int i = 0; i < getMaxPartitionNumber(); i++)

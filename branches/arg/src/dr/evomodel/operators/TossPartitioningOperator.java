@@ -1,6 +1,7 @@
 package dr.evomodel.operators;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 import dr.evomodel.tree.ARGModel;
 import dr.inference.model.Parameter;
@@ -26,7 +27,7 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
 
     public TossPartitioningOperator(ARGModel arg, int tossSize) {
         this.arg = arg;
-        partitioningParameters = arg.getPartitioningParameters();
+        this.partitioningParameters = arg.getPartitioningParameters();
         this.tossSize = tossSize;
         this.isRecombination = arg.isRecombinationPartitionType();
     }
@@ -42,7 +43,7 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
     public final double doOperation() throws OperatorFailedException {
         double logq = 0;
         
-        int len = partitioningParameters.getNumberOfParameters();
+        int len = partitioningParameters.getNumParameters();
         
         if(len == 0){
         	throw new OperatorFailedException("");
@@ -73,15 +74,16 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
     	
     	assert currentBreakLocation > 0;
     	
-    	//Move break right 1
     	if(MathUtils.nextBoolean()){
+    		//Move break right 1
     		partition.setParameterValueQuietly(currentBreakLocation, 0.0);
     	}else{
     		partition.setParameterValueQuietly(currentBreakLocation - 1, 1.0);
     	}
     	
-    	if(!checkValidRecombinationPartition(partition))
+    	if(!checkValidRecombinationPartition(partition)){
     		throw new OperatorFailedException("");
+    	}
     	
     	
     	return 0;
@@ -89,7 +91,7 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
     
     private boolean checkValidRecombinationPartition(Parameter partition){
     	int l = partition.getDimension();
-    	if(partition.getParameterValue(0) != 1 && partition.getParameterValue(l - 1) != 0)
+    	if( (partition.getParameterValue(0) == 0 && partition.getParameterValue(l - 1) == 1))
     	  	return true;
     	
     	return false;
@@ -116,6 +118,10 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
     		}else{
     			partition.setParameterValueQuietly(a,0);
     		}
+    	}
+    	
+    	if(!checkValidReassortmentPartition(partition)){
+    		throw new OperatorFailedException("");
     	}
     	
         return 0;
@@ -166,6 +172,13 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
         public String getParserName() {
             return OPERATOR_NAME;
         }
+        
+        public String[] getParserNames(){
+        	return new String[]{
+        			OPERATOR_NAME,
+        			"tossPartitioningOperator",
+        	};
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -181,6 +194,8 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
                 	throw new XMLParseException("Toss size is incorrect");
                 }
             }
+            
+            Logger.getLogger("dr.evomodel").info("Creating ARGPartitionOperator" );
             
             
             return new TossPartitioningOperator(arg,tossSize);

@@ -727,22 +727,34 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		return logq;
 	}
 
-	private double drawReassortmentPartition(Parameter partition){
+	private int arraySum(int[] a){
 		int sum = 0;
 		
-		partition.setParameterValueQuietly(0, 0);
+		for(int b : a)
+			sum += b;
 		
-		while(sum == partition.getDimension() - 1 || sum == 0){
-			sum = 0;
+		return sum;
+	}
+	
+	private double drawReassortmentPartition(Parameter partition){
+		int[] values = new int[partition.getDimension()];
+		int length = partition.getDimension();
+		
+		while(arraySum(values) == 0){
 			for(int i = 1; i < partition.getDimension(); i++){
 				if(MathUtils.nextBoolean()){
-					partition.setParameterValueQuietly(i, 1);
-					sum++;
+					values[i] = 1;
 				}else{
-					partition.setParameterValueQuietly(i, 0);
+					values[i] = 0;
 				}
 			}
 		}
+		
+		
+		for(int i = 0; i < length; i ++){
+			partition.setParameterValueQuietly(i, (double)values[i]);
+		}
+		
 			
 		return 0.0;
 	}
@@ -751,9 +763,10 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		
 		int cut = MathUtils.nextInt(partition.getDimension() - 1);
 		
+		
 		int leftValue = 0;
 		int rightValue = 1;
-						
+								
 		for(int i = 0; i < cut + 1; i++){
 			partition.setParameterValueQuietly(i, leftValue);
 		}
@@ -931,6 +944,10 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		public String getParserName() {
 			return ARG_EVENT_OPERATOR;
 		}
+		
+		//public String[] getParserNames(){
+		//	return new String[]{getParserName(),"argEventOperator",};
+		//}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 		

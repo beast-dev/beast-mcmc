@@ -32,7 +32,6 @@ import java.util.Vector;
  * choosing the next operator during an MCMC run.
  *
  * @author Alexei Drummond
- *
  * @version $Id: OperatorSchedule.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface OperatorSchedule {
@@ -40,8 +39,23 @@ public interface OperatorSchedule {
 	public int getNextOperatorIndex();
 
 	public MCMCOperator getOperator(int index);
+
 	public int getOperatorCount();
 
 	public void addOperator(MCMCOperator op);
+
 	public void addOperators(Vector v);
+
+	/**
+	 * @return the optimization schedule
+	 */
+	public double getOptimizationTransform(double d);
+
+	final int DEFAULT_SCHEDULE = 0;
+	final int LOG_SCHEDULE = 1;
+	final int SQRT_SCHEDULE = 2;
+
+	final String DEFAULT_STRING = "default";
+	final String LOG_STRING = "log";
+	final String SQRT_STRING = "sqrt";
 }

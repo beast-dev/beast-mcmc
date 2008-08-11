@@ -32,23 +32,25 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.Vector;
+import java.util.logging.Logger;
 
 /**
  * This class implements a simple operator schedule.
  *
  * @author Alexei Drummond
- *
  * @version $Id: SimpleOperatorSchedule.java,v 1.5 2005/06/14 10:40:34 rambaut Exp $
  */
 public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
-	
+
 	public static final String OPERATOR_SCHEDULE = "operators";
 	public static final String SEQUENTIAL = "sequential";
+	public static final String OPTIMIZATION_SCHEDULE = "optimizationSchedule";
 
 	Vector operators = null;
 	int totalWeight = 0;
 	int current = 0;
 	boolean sequential = false;
+	int optimizationSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
 
 	public SimpleOperatorSchedule() {
 		operators = new Vector();
@@ -57,7 +59,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	public void addOperators(java.util.Vector ops) {
 		for (int i = 0; i < ops.size(); i++) {
 			operators.addElement(ops.elementAt(i));
-			totalWeight += ((MCMCOperator)ops.elementAt(i)).getWeight();
+			totalWeight += ((MCMCOperator) ops.elementAt(i)).getWeight();
 		}
 	}
 
@@ -67,7 +69,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	}
 
 	public int getWeight(int index) {
-		return ((MCMCOperator)operators.elementAt(index)).getWeight();
+		return ((MCMCOperator) operators.elementAt(index)).getWeight();
 	}
 
 	public int getNextOperatorIndex() {
@@ -80,7 +82,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 			}
 			return index;
 		}
-		
+
 		return getWeightedOperatorIndex(MathUtils.nextInt(totalWeight));
 	}
 
@@ -99,16 +101,28 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	}
 
 	public MCMCOperator getOperator(int index) {
-		return (MCMCOperator)operators.elementAt(index);
+		return (MCMCOperator) operators.elementAt(index);
 	}
 
 	public int getOperatorCount() {
 		return operators.size();
 	}
-	
-    // **************************************************************
-    // Loggable IMPLEMENTATION
-    // **************************************************************
+
+	public double getOptimizationTransform(double d) {
+		if (optimizationSchedule == OperatorSchedule.LOG_SCHEDULE)
+			return Math.log(d);
+		if (optimizationSchedule == OperatorSchedule.SQRT_SCHEDULE)
+			return Math.sqrt(d);
+		return d;
+	}
+
+	public void setOptimizationSchedule(int schedule) {
+		optimizationSchedule = schedule;
+	}
+
+	// **************************************************************
+	// Loggable IMPLEMENTATION
+	// **************************************************************
 
 	/**
 	 * @return the log columns.
@@ -124,48 +138,72 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
 	private class OperatorColumn extends NumberColumn {
 		private MCMCOperator op;
-		public OperatorColumn(String label, MCMCOperator op) { super(label); this.op = op; }
-		public double getDoubleValue() { 
-			return MCMCOperator.Utils.getAcceptanceProbability(op); 
+
+		public OperatorColumn(String label, MCMCOperator op) {
+			super(label);
+			this.op = op;
+		}
+
+		public double getDoubleValue() {
+			return MCMCOperator.Utils.getAcceptanceProbability(op);
 		}
 	}
 
 	public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return OPERATOR_SCHEDULE; }
-		
+
+		public String getParserName() {
+			return OPERATOR_SCHEDULE;
+		}
+
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-		
+
 			SimpleOperatorSchedule schedule = new SimpleOperatorSchedule();
-			
+
 			if (xo.hasAttribute(SEQUENTIAL)) {
 				schedule.setSequential(xo.getBooleanAttribute(SEQUENTIAL));
 			}
-				
-			for (int i = 0; i < xo.getChildCount(); i++) {	
+
+			if (xo.hasAttribute(OPTIMIZATION_SCHEDULE)) {
+				String type = xo.getStringAttribute(OPTIMIZATION_SCHEDULE);
+				Logger.getLogger("dr.inference").info("Optimization Scheduule: " + type);
+
+				if (type.equals(OperatorSchedule.LOG_STRING))
+					schedule.setOptimizationSchedule(OperatorSchedule.LOG_SCHEDULE);
+				else if (type.equals(OperatorSchedule.SQRT_STRING))
+					schedule.setOptimizationSchedule(SQRT_SCHEDULE);
+				else if (!type.equals(OperatorSchedule.DEFAULT_STRING))
+					throw new RuntimeException("Unsupported optimization schedule");
+			}
+
+			for (int i = 0; i < xo.getChildCount(); i++) {
 				Object child = xo.getChild(i);
 				if (child instanceof MCMCOperator) {
-					schedule.addOperator((MCMCOperator)child);
+					schedule.addOperator((MCMCOperator) child);
 				}
 			}
 			return schedule;
 		}
-		
+
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			AttributeRule.newBooleanRule(SEQUENTIAL, true),
-			new ElementRule(MCMCOperator.class, 1, Integer.MAX_VALUE )
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
+
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				AttributeRule.newBooleanRule(SEQUENTIAL, true),
+				new ElementRule(MCMCOperator.class, 1, Integer.MAX_VALUE),
+				AttributeRule.newStringRule(OPTIMIZATION_SCHEDULE, true)
 		};
-		
-		public String getParserDescription() { 
+
+		public String getParserDescription() {
 			return "A simple operator scheduler";
 		}
-	
-		public Class getReturnType() { return SimpleOperatorSchedule.class; }
+
+		public Class getReturnType() {
+			return SimpleOperatorSchedule.class;
+		}
 	};
 }

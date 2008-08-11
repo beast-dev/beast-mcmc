@@ -9,6 +9,7 @@
 package dr.app.beauti;
 
 import dr.app.beauti.generator.BeastGenerator;
+import dr.app.beauti.modelsPanel.ModelsPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import dr.app.beauti.options.PartitionModel;
@@ -184,8 +185,8 @@ public class BeautiFrame extends DocumentFrame {
     public final void modelChanged() {
 
         modelsPanel.getOptions(beautiOptions);
-
         dataPanel.getOptions(beautiOptions);
+
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         setDirty();

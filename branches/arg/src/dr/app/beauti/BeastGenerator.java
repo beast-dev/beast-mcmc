@@ -1637,7 +1637,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeOpenTag(TossPartitioningOperator.OPERATOR_NAME,
                 new Attribute[]{
                         new Attribute.Default("weight", Integer.toString((int) operator.weight)),
-                        new Attribute.Default(TossPartitioningOperator.IS_RECOMBINATION, "false")
+                        //new Attribute.Default(TossPartitioningOperator.IS_RECOMBINATION, "false")
                 });
         writer.writeTag(ARGModel.TREE_MODEL, new Attribute[]{new Attribute.Default("idref", "treeModel")}, true);
         writer.writeCloseTag(TossPartitioningOperator.OPERATOR_NAME);

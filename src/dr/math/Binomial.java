@@ -39,7 +39,13 @@ public class Binomial
 	//
 	// Public stuff
 	//
-
+	
+	public static double logChoose(int n, int k){
+		return GammaFunction.lnGamma(n + 1.0) -	GammaFunction.lnGamma(k + 1.0) 
+			- GammaFunction.lnGamma(n - k + 1.0);
+	}
+	
+	
 	/**
 	 * @return Binomial coefficient n choose k
      * @param n total elements

@@ -182,6 +182,8 @@ public class Parameter {
     public double uniformLower = 0.0;
     public double exponentialMean = 1.0;
     public double exponentialOffset = 0.0;
+    public double laplaceStdev = 1.0;
+    public double laplaceMean = 0.0;
     public double normalMean = 1.0;
     public double normalStdev = 1.0;
     public double logNormalMean = 0.0;

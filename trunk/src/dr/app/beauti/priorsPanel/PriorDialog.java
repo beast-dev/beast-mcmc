@@ -39,6 +39,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -52,6 +54,7 @@ public class PriorDialog {
     public static PriorType[] priors = {
             PriorType.UNIFORM_PRIOR,
             PriorType.EXPONENTIAL_PRIOR,
+            PriorType.LAPLACE_PRIOR,
             PriorType.NORMAL_PRIOR,
             PriorType.LOGNORMAL_PRIOR,
             PriorType.GAMMA_PRIOR,
@@ -62,23 +65,19 @@ public class PriorDialog {
             PriorType.NONE,
             PriorType.UNIFORM_PRIOR,
             PriorType.EXPONENTIAL_PRIOR,
+            PriorType.LAPLACE_PRIOR,
             PriorType.NORMAL_PRIOR,
             PriorType.LOGNORMAL_PRIOR,
             PriorType.GAMMA_PRIOR,
             PriorType.JEFFREYS_PRIOR,
     };
 
-    private String[] argumentNames = new String[]{
-            "Lower Bound", "Upper Bound", "Exponential Mean", "Zero Offset", "Normal Mean", "Normal Stdev",
-            "LogNormal Mean", "LogNormal Stdev", "Zero Offset",
-            "Gamma Shape (alpha)", "Gamma Scale (beta)", "Zero Offset",
-    };
+    private Map<PriorType, PriorOptionsPanel> optionsPanels = new HashMap<PriorType, PriorOptionsPanel>();
 
     private JComboBox priorCombo;
     private JComboBox rootHeightPriorCombo;
-    private int[][] argumentIndices = {{0, 1}, {2, 3}, {4, 5}, {6, 7, 8}, {9, 10, 11}, {}, {}, {4, 5, 0, 1}};
     private RealNumberField initialField = new RealNumberField();
-    private RealNumberField[] argumentFields = new RealNumberField[argumentNames.length];
+
     private OptionsPanel optionPanel;
     private JChart chart;
     private JLabel quantileLabels;
@@ -99,10 +98,14 @@ public class PriorDialog {
         truncatedCheck.setOpaque(false);
 
         initialField.setColumns(8);
-        for (int i = 0; i < argumentNames.length; i++) {
-            argumentFields[i] = new RealNumberField();
-            argumentFields[i].setColumns(8);
-        }
+
+        optionsPanels.put(PriorType.UNIFORM_PRIOR, new UniformOptionsPanel());
+        optionsPanels.put(PriorType.LAPLACE_PRIOR, new LaplaceOptionsPanel());
+        optionsPanels.put(PriorType.NORMAL_PRIOR, new NormalOptionsPanel());
+        optionsPanels.put(PriorType.TRUNC_NORMAL_PRIOR, new TruncatedNormalOptionsPanel());
+        optionsPanels.put(PriorType.LOGNORMAL_PRIOR, new LogNormalOptionsPanel());
+        optionsPanels.put(PriorType.GAMMA_PRIOR, new GammaOptionsPanel());
+        optionsPanels.put(PriorType.EXPONENTIAL_PRIOR, new ExponentialOptionsPanel());
 
         optionPanel = new OptionsPanel(12, 12);
 
@@ -121,11 +124,8 @@ public class PriorDialog {
 
     public int showDialog(final Parameter parameter) {
 
-        PriorType priorType;
-
         this.parameter = parameter;
-
-        priorType = parameter.priorType;
+        PriorType priorType = parameter.priorType;
 
         if (parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
             isTruncated = true;
@@ -147,7 +147,6 @@ public class PriorDialog {
             initialField.setRange(parameter.lower, parameter.upper);
             initialField.setValue(parameter.initial);
         }
-
 
         setArguments();
         setupComponents();
@@ -194,8 +193,11 @@ public class PriorDialog {
                 dialog.repaint();
             }
         };
-        for (int i = 0; i < argumentNames.length; i++) {
-            argumentFields[i].addKeyListener(listener);
+
+        for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
+            for (RealNumberField field : optionsPanel.getFields()) {
+                field.addKeyListener(listener);
+            }
         }
 
         dialog.setVisible(true);
@@ -214,28 +216,29 @@ public class PriorDialog {
     }
 
     private void setArguments() {
-        argumentFields[0].setRange(parameter.lower, parameter.upper);
-        argumentFields[0].setValue(parameter.uniformLower);
-        argumentFields[1].setRange(parameter.lower, parameter.upper);
-        argumentFields[1].setValue(parameter.uniformUpper);
 
-        argumentFields[2].setRange(0.0, Double.MAX_VALUE);
-        argumentFields[2].setValue(parameter.exponentialMean);
-        argumentFields[3].setValue(parameter.exponentialOffset);
+        optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(0).setRange(parameter.lower, parameter.upper);
+        optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(0).setValue(parameter.uniformLower);
+        optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(1).setRange(parameter.lower, parameter.upper);
+        optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(1).setValue(parameter.uniformUpper);
 
-        argumentFields[4].setValue(parameter.normalMean);
-        argumentFields[5].setRange(0.0, Double.MAX_VALUE);
-        argumentFields[5].setValue(parameter.normalStdev);
+        optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(0).setRange(0.0, Double.MAX_VALUE);
+        optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(0).setValue(parameter.exponentialMean);
+        optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(1).setValue(parameter.exponentialOffset);
 
-        argumentFields[6].setValue(parameter.logNormalMean);
-        argumentFields[7].setValue(parameter.logNormalStdev);
-        argumentFields[8].setValue(parameter.logNormalOffset);
+        optionsPanels.get(PriorType.NORMAL_PRIOR).getField(0).setValue(parameter.normalMean);
+        optionsPanels.get(PriorType.NORMAL_PRIOR).getField(1).setRange(0.0, Double.MAX_VALUE);
+        optionsPanels.get(PriorType.NORMAL_PRIOR).getField(1).setValue(parameter.normalStdev);
 
-        argumentFields[9].setRange(0.0, Double.MAX_VALUE);
-        argumentFields[9].setValue(parameter.gammaAlpha);
-        argumentFields[10].setRange(0.0, Double.MAX_VALUE);
-        argumentFields[10].setValue(parameter.gammaBeta);
-        argumentFields[11].setValue(parameter.gammaOffset);
+        optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(0).setValue(parameter.logNormalMean);
+        optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(1).setValue(parameter.logNormalStdev);
+        optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(2).setValue(parameter.logNormalOffset);
+
+        optionsPanels.get(PriorType.GAMMA_PRIOR).getField(0).setValue(parameter.gammaAlpha);
+        optionsPanels.get(PriorType.GAMMA_PRIOR).getField(0).setRange(0.0, Double.MAX_VALUE);
+        optionsPanels.get(PriorType.GAMMA_PRIOR).getField(1).setValue(parameter.gammaBeta);
+        optionsPanels.get(PriorType.GAMMA_PRIOR).getField(1).setRange(0.0, Double.MAX_VALUE);
+        optionsPanels.get(PriorType.GAMMA_PRIOR).getField(2).setValue(parameter.gammaOffset);
     }
 
     private void getArguments() {
@@ -256,40 +259,7 @@ public class PriorDialog {
 
         if (initialField.getValue() != null) parameter.initial = initialField.getValue();
 
-        switch (parameter.priorType) {
-            case UNIFORM_PRIOR:
-                if (argumentFields[0].getValue() != null) parameter.uniformLower = argumentFields[0].getValue();
-                if (argumentFields[1].getValue() != null) parameter.uniformUpper = argumentFields[1].getValue();
-                break;
-            case EXPONENTIAL_PRIOR:
-                if (argumentFields[2].getValue() != null) parameter.exponentialMean = argumentFields[2].getValue();
-                if (argumentFields[3].getValue() != null) parameter.exponentialOffset = argumentFields[3].getValue();
-                break;
-            case NORMAL_PRIOR:
-                if (argumentFields[4].getValue() != null) parameter.normalMean = argumentFields[4].getValue();
-                if (argumentFields[5].getValue() != null) parameter.normalStdev = argumentFields[5].getValue();
-                break;
-            case LOGNORMAL_PRIOR:
-                if (argumentFields[6].getValue() != null) parameter.logNormalMean = argumentFields[6].getValue();
-                if (argumentFields[7].getValue() != null) parameter.logNormalStdev = argumentFields[7].getValue();
-                if (argumentFields[8].getValue() != null) parameter.logNormalOffset = argumentFields[8].getValue();
-                break;
-            case GAMMA_PRIOR:
-                if (argumentFields[9].getValue() != null) parameter.gammaAlpha = argumentFields[9].getValue();
-                if (argumentFields[10].getValue() != null) parameter.gammaBeta = argumentFields[10].getValue();
-                if (argumentFields[11].getValue() != null) parameter.gammaOffset = argumentFields[11].getValue();
-                break;
-            case JEFFREYS_PRIOR:
-                break;
-            case TRUNC_NORMAL_PRIOR:
-                if (argumentFields[0].getValue() != null) parameter.uniformLower = argumentFields[0].getValue();
-                if (argumentFields[1].getValue() != null) parameter.uniformUpper = argumentFields[1].getValue();
-                if (argumentFields[4].getValue() != null) parameter.normalMean = argumentFields[4].getValue();
-                if (argumentFields[5].getValue() != null) parameter.normalStdev = argumentFields[5].getValue();
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown prior index");
-        }
+        optionsPanels.get(parameter.priorType).setParameterPrior(parameter);
     }
 
     private void setupComponents() {
@@ -320,10 +290,7 @@ public class PriorDialog {
                 optionPanel.addComponent(truncatedCheck);
             }
 
-            for (int i = 0; i < argumentIndices[priorType.ordinal() - 1].length; i++) {
-                int k = argumentIndices[priorType.ordinal() - 1][i];
-                optionPanel.addComponentWithLabel(argumentNames[k] + ":", argumentFields[k]);
-            }
+            optionPanel.addComponent(optionsPanels.get(priorType));
         }
 
         if (!parameter.isStatistic) {
@@ -364,46 +331,9 @@ public class PriorDialog {
         if (priorType == PriorType.TRUNC_NORMAL_PRIOR && !isTruncated)
             priorType = PriorType.NORMAL_PRIOR;
 
-        Distribution distribution = null;
         double offset = 0.0;
-        switch (priorType) {
-            case UNIFORM_PRIOR:
-                return;
-            case EXPONENTIAL_PRIOR:
-                double exponentialMean = getValue(argumentFields[2].getValue(), 1.0);
-                offset = getValue(argumentFields[3].getValue(), 0.0);
-                distribution = new ExponentialDistribution(1.0 / exponentialMean);
-                break;
-            case NORMAL_PRIOR:
-                double normalMean = getValue(argumentFields[4].getValue(), 0.0);
-                double normalStdev = getValue(argumentFields[5].getValue(), 1.0);
-                distribution = new NormalDistribution(normalMean, normalStdev);
-                break;
-            case LOGNORMAL_PRIOR:
-                double logNormalMean = getValue(argumentFields[6].getValue(), 0.0);
-                double logNormalStdev = getValue(argumentFields[7].getValue(), 1.0);
-                offset = getValue(argumentFields[8].getValue(), 0.0);
-                distribution = new LogNormalDistribution(logNormalMean, logNormalStdev);
-                break;
-            case GAMMA_PRIOR:
-                double gammaAlpha = getValue(argumentFields[9].getValue(), 1.0);
-                double gammaBeta = getValue(argumentFields[10].getValue(), 1.0);
-                offset = getValue(argumentFields[11].getValue(), 0.0);
-                distribution = new GammaDistribution(gammaAlpha, gammaBeta);
-                break;
-            case JEFFREYS_PRIOR:
-                break;
-            case TRUNC_NORMAL_PRIOR:
-                double truncNormalMean = getValue(argumentFields[4].getValue(), 0.0);
-                double truncNormalStdev = getValue(argumentFields[5].getValue(), 1.0);
-                double truncLower = getValue(argumentFields[0].getValue(), 0.0);
-                double truncUpper = getValue(argumentFields[1].getValue(), 1.0);
-                distribution = new TruncatedNormalDistribution(truncNormalMean, truncNormalStdev, truncLower, truncUpper);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown prior index");
+        Distribution distribution = optionsPanels.get(priorType).getDistribution();
 
-        }
         chart.addPlot(new PDFPlot(distribution, offset));
         if (distribution != null) {
             quantileText.setText(formatter.format(distribution.quantile(0.025)) +
@@ -414,10 +344,139 @@ public class PriorDialog {
         }
     }
 
-    private double getValue(Double field, double defaultValue) {
-        if (field != null) {
-            return field;
+    // options panels
+
+    class LaplaceOptionsPanel extends PriorOptionsPanel {
+
+        public LaplaceOptionsPanel() {
+            addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
         }
-        return defaultValue;
+
+        public Distribution getDistribution() {
+            return new LaplaceDistribution(getValue(0), getValue(1));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.laplaceMean = getValue(0);
+            parameter.laplaceStdev = getValue(1);
+        }
+    }
+
+    class UniformOptionsPanel extends PriorOptionsPanel {
+
+        public UniformOptionsPanel() {
+            addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        }
+
+        public Distribution getDistribution() {
+            return new UniformDistribution(getValue(0), getValue(1));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.uniformLower = getValue(0);
+            parameter.uniformUpper = getValue(1);
+        }
+
+    }
+
+    class ExponentialOptionsPanel extends PriorOptionsPanel {
+
+        public ExponentialOptionsPanel() {
+            addField("Mean", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+        }
+
+        public Distribution getDistribution() {
+            return new OffsetPositiveDistribution(
+                    new ExponentialDistribution(1.0 / getValue(0)), getValue(1));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.exponentialMean = getValue(0);
+            parameter.exponentialOffset = getValue(1);
+        }
+    }
+
+    class NormalOptionsPanel extends PriorOptionsPanel {
+
+        public NormalOptionsPanel() {
+
+            addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Stdev", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+        }
+
+        public Distribution getDistribution() {
+            return new NormalDistribution(getValue(0), getValue(1));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.normalMean = getValue(0);
+            parameter.normalStdev = getValue(1);
+        }
+    }
+
+    class TruncatedNormalOptionsPanel extends PriorOptionsPanel {
+
+        public TruncatedNormalOptionsPanel() {
+
+            addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Stdev", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        }
+
+        public Distribution getDistribution() {
+            return new TruncatedNormalDistribution(getValue(0), getValue(1), getValue(2), getValue(3));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.normalMean = getValue(0);
+            parameter.normalStdev = getValue(1);
+            parameter.uniformLower = getValue(2);
+            parameter.uniformUpper = getValue(3);
+        }
+    }
+
+    class LogNormalOptionsPanel extends PriorOptionsPanel {
+
+        public LogNormalOptionsPanel() {
+            addField("M", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("S", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+        }
+
+        public Distribution getDistribution() {
+            return new OffsetPositiveDistribution(
+                    new LogNormalDistribution(getValue(0), getValue(1)), getValue(2));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.logNormalMean = getValue(0);
+            parameter.logNormalStdev = getValue(1);
+            parameter.logNormalOffset = getValue(2);
+        }
+
+    }
+
+    class GammaOptionsPanel extends PriorOptionsPanel {
+
+        public GammaOptionsPanel() {
+            addField("Shape", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+        }
+
+        public Distribution getDistribution() {
+            return new OffsetPositiveDistribution(
+                    new GammaDistribution(getValue(0), getValue(1)), getValue(2));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.gammaAlpha = getValue(0);
+            parameter.gammaBeta = getValue(1);
+            parameter.gammaOffset = getValue(2);
+        }
     }
 }

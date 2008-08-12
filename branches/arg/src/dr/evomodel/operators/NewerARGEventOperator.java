@@ -38,12 +38,15 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	public static final String INTERNAL_AND_ROOT = "internalNodesPlusRoot";
 	public static final String NODE_RATES = "nodeRates";
 	public static final String BELOW_ROOT_PROBABILITY = "belowRootProbability";
+	public static final String FLIP_SIZE = "flipSize";
 	public static final double LOG_TWO = Math.log(2.0);
 
 	private ARGModel arg = null;
 	private double size = 0.0;  //Translates into add probability of 50%
 	
 	private double probBelowRoot = 0.9; //Transformed in constructor for computational efficiency
+	private int flipSize;
+	
 	private boolean isRecombination;
 	private int mode = CoercableMCMCOperator.COERCION_OFF;
 	private VariableSizeCompoundParameter internalNodeParameters;
@@ -52,11 +55,12 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	
 	
 	
+	
 	public NewerARGEventOperator(ARGModel arg, int weight, double size, int mode,
 	                             VariableSizeCompoundParameter param1,
 	                             VariableSizeCompoundParameter param2,
 	                             VariableSizeCompoundParameter param3,
-	                             double belowRootProbability) {
+	                             double belowRootProbability, int flipSize) {
 		this.arg = arg;
 		this.size = size;
 		this.internalNodeParameters = param1;
@@ -65,6 +69,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		
 		this.isRecombination = arg.isRecombinationPartitionType();
 		this.mode = mode;
+		this.flipSize = flipSize;
 		
 		setWeight(weight);
 		
@@ -984,10 +989,19 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 					throw new XMLParseException(BELOW_ROOT_PROBABILITY + " must fall in (0,1)");
 				}
 			}
-
+			
+			int flipSize = treeModel.getNumberOfPartitions();
+			if(xo.hasAttribute(FLIP_SIZE)){
+				flipSize = xo.getIntegerAttribute(FLIP_SIZE);
+				
+				if(flipSize < 1 || flipSize > treeModel.getNumberOfPartitions()){
+					throw new XMLParseException(FLIP_SIZE + " must fall in [1,numberOfPartitions]");
+				}
+			}
+			
 			return new NewerARGEventOperator(treeModel, weight, size,
 					mode, parameter1, parameter2, parameter3,
-					belowRootProb);
+					belowRootProb, flipSize);
 		}
 
 		public String getParserDescription() {

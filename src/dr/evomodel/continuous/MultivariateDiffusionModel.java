@@ -6,7 +6,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.math.MultivariateNormalDistribution;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -18,151 +18,151 @@ import org.w3c.dom.Element;
 
 public class MultivariateDiffusionModel extends AbstractModel implements TreeAttributeProvider {
 
-	public static final String DIFFUSION_PROCESS = "multivariateDiffusionModel";
-	public static final String DIFFUSION_CONSTANT = "precisionMatrix";
-	public static final String BIAS = "mu";
-	public static final String PRECISION_TREE_ATTRIBUTE = "precision";
+    public static final String DIFFUSION_PROCESS = "multivariateDiffusionModel";
+    public static final String DIFFUSION_CONSTANT = "precisionMatrix";
+    public static final String BIAS = "mu";
+    public static final String PRECISION_TREE_ATTRIBUTE = "precision";
 
-	/**
-	 * Construct a diffusion model.
-	 */
+    /**
+     * Construct a diffusion model.
+     */
 
-	public MultivariateDiffusionModel(MatrixParameter diffusionPrecisionMatrixParameter) {
+    public MultivariateDiffusionModel(MatrixParameter diffusionPrecisionMatrixParameter) {
 
-		super(DIFFUSION_PROCESS);
+        super(DIFFUSION_PROCESS);
 
-		this.diffusionPrecisionMatrixParameter = diffusionPrecisionMatrixParameter;
-		calculatePrecisionInfo();
-		addParameter(diffusionPrecisionMatrixParameter);
+        this.diffusionPrecisionMatrixParameter = diffusionPrecisionMatrixParameter;
+        calculatePrecisionInfo();
+        addParameter(diffusionPrecisionMatrixParameter);
 
-	}
+    }
 
-	public MultivariateDiffusionModel() {
-		super(DIFFUSION_PROCESS);
-	}
-
-
-	public void randomize(Parameter trait) {
-	}
-
-	public void check(Parameter trait) throws XMLParseException {
-	}
-
-	public Parameter getPrecisionParameter() {
-		return diffusionPrecisionMatrixParameter;
-	}
-
-	public double[][] getPrecisionmatrix() {
-		return diffusionPrecisionMatrixParameter.getParameterAsMatrix();
-	}
-
-	/**
-	 * @return the log likelihood of going from start to stop in the given time
-	 */
-	public double getLogLikelihood(double[] start, double[] stop, double time) {
-
-		double logDet = Math.log(determinatePrecisionMatrix);
-		return MultivariateNormalDistribution.logPdf(stop, start,
-				diffusionPrecisionMatrix, logDet, time);
-	}
+    public MultivariateDiffusionModel() {
+        super(DIFFUSION_PROCESS);
+    }
 
 
-	protected void calculatePrecisionInfo() {
-		diffusionPrecisionMatrix = diffusionPrecisionMatrixParameter.getParameterAsMatrix();
-		determinatePrecisionMatrix =
-				MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(
-						diffusionPrecisionMatrix);
-	}
+    public void randomize(Parameter trait) {
+    }
 
-	// *****************************************************************
-	// Interface Model
-	// *****************************************************************
-	public void handleModelChangedEvent(Model model, Object object, int index) {
-		// no intermediates need to be recalculated...
-	}
+    public void check(Parameter trait) throws XMLParseException {
+    }
 
-	public void handleParameterChangedEvent(Parameter parameter, int index) {
-		calculatePrecisionInfo();
-	}
+    public Parameter getPrecisionParameter() {
+        return diffusionPrecisionMatrixParameter;
+    }
 
-	protected void storeState() {
-		savedDeterminatePrecisionMatrix = determinatePrecisionMatrix;
-		savedDiffusionPrecisionMatrix = diffusionPrecisionMatrix;
-	}
+    public double[][] getPrecisionmatrix() {
+        return diffusionPrecisionMatrixParameter.getParameterAsMatrix();
+    }
 
-	protected void restoreState() {
-		determinatePrecisionMatrix = savedDeterminatePrecisionMatrix;
-		diffusionPrecisionMatrix = savedDiffusionPrecisionMatrix;
-	}
+    /**
+     * @return the log likelihood of going from start to stop in the given time
+     */
+    public double getLogLikelihood(double[] start, double[] stop, double time) {
 
-	protected void acceptState() {
-	} // no additional state needs accepting
+        double logDet = Math.log(determinatePrecisionMatrix);
+        return MultivariateNormalDistribution.logPdf(stop, start,
+                diffusionPrecisionMatrix, logDet, time);
+    }
 
-	public String getTreeAttributeLabel() {
-		return PRECISION_TREE_ATTRIBUTE;
-	}
 
-	public String getAttributeForTree(Tree tree) {
-		return diffusionPrecisionMatrixParameter.toSymmetricString();
-	}
+    protected void calculatePrecisionInfo() {
+        diffusionPrecisionMatrix = diffusionPrecisionMatrixParameter.getParameterAsMatrix();
+        determinatePrecisionMatrix =
+                MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(
+                        diffusionPrecisionMatrix);
+    }
 
-	// **************************************************************
-	// XMLElement IMPLEMENTATION
-	// **************************************************************
+    // *****************************************************************
+    // Interface Model
+    // *****************************************************************
+    public void handleModelChangedEvent(Model model, Object object, int index) {
+        // no intermediates need to be recalculated...
+    }
 
-	public Element createElement(Document document) {
-		throw new RuntimeException("Not implemented!");
-	}
+    public void handleParameterChangedEvent(Parameter parameter, int index) {
+        calculatePrecisionInfo();
+    }
 
-	// **************************************************************
-	// XMLObjectParser
-	// **************************************************************
+    protected void storeState() {
+        savedDeterminatePrecisionMatrix = determinatePrecisionMatrix;
+        savedDiffusionPrecisionMatrix = diffusionPrecisionMatrix;
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    protected void restoreState() {
+        determinatePrecisionMatrix = savedDeterminatePrecisionMatrix;
+        diffusionPrecisionMatrix = savedDiffusionPrecisionMatrix;
+    }
 
-		public String getParserName() {
-			return DIFFUSION_PROCESS;
-		}
+    protected void acceptState() {
+    } // no additional state needs accepting
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    public String getTreeAttributeLabel() {
+        return PRECISION_TREE_ATTRIBUTE;
+    }
 
-			XMLObject cxo = (XMLObject) xo.getChild(DIFFUSION_CONSTANT);
-			MatrixParameter diffusionParam = (MatrixParameter) cxo.getChild(MatrixParameter.class);
+    public String getAttributeForTree(Tree tree) {
+        return diffusionPrecisionMatrixParameter.toSymmetricString();
+    }
 
-			return new MultivariateDiffusionModel(diffusionParam);
-		}
+    // **************************************************************
+    // XMLElement IMPLEMENTATION
+    // **************************************************************
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+    public Element createElement(Document document) {
+        throw new RuntimeException("Not implemented!");
+    }
 
-		public String getParserDescription() {
-			return "Describes a multivariate normal diffusion process.";
-		}
+    // **************************************************************
+    // XMLObjectParser
+    // **************************************************************
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new ElementRule(DIFFUSION_CONSTANT,
-						new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
-		};
+        public String getParserName() {
+            return DIFFUSION_PROCESS;
+        }
 
-		public Class getReturnType() {
-			return MultivariateDiffusionModel.class;
-		}
-	};
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-	// **************************************************************
-	// Private instance variables
-	// **************************************************************
+            XMLObject cxo = (XMLObject) xo.getChild(DIFFUSION_CONSTANT);
+            MatrixParameter diffusionParam = (MatrixParameter) cxo.getChild(MatrixParameter.class);
 
-	protected MatrixParameter diffusionPrecisionMatrixParameter;
-	private double determinatePrecisionMatrix;
-	private double savedDeterminatePrecisionMatrix;
-	private double[][] diffusionPrecisionMatrix;
-	private double[][] savedDiffusionPrecisionMatrix;
+            return new MultivariateDiffusionModel(diffusionParam);
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "Describes a multivariate normal diffusion process.";
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(DIFFUSION_CONSTANT,
+                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
+        };
+
+        public Class getReturnType() {
+            return MultivariateDiffusionModel.class;
+        }
+    };
+
+    // **************************************************************
+    // Private instance variables
+    // **************************************************************
+
+    protected MatrixParameter diffusionPrecisionMatrixParameter;
+    private double determinatePrecisionMatrix;
+    private double savedDeterminatePrecisionMatrix;
+    private double[][] diffusionPrecisionMatrix;
+    private double[][] savedDiffusionPrecisionMatrix;
 
 }
 

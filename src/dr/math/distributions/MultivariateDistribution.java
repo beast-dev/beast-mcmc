@@ -1,4 +1,4 @@
-package dr.math;
+package dr.math.distributions;
 
 /**
  * Created by IntelliJ IDEA.

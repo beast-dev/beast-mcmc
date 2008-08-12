@@ -1,7 +1,7 @@
 package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.options.Parameter;
-import dr.math.Distribution;
+import dr.math.distributions.Distribution;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 

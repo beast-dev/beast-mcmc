@@ -35,7 +35,7 @@ import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.math.WishartDistribution;
+import dr.math.distributions.WishartDistribution;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.*;
@@ -45,187 +45,186 @@ import dr.xml.*;
  */
 public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-	public static final String VARIANCE_OPERATOR = "precisionGibbsOperator";
-	public static final String PRECISION_MATRIX = "precisionMatrix";
-	public static final String TREE_MODEL = "treeModel";
-	public static final String OUTCOME = "outcome";
-	public static final String MEAN = "mean";
-	public static final String PRIOR = "prior";
-	public static final String TRAIT_MODEL = "traitModel";
+    public static final String VARIANCE_OPERATOR = "precisionGibbsOperator";
+    public static final String PRECISION_MATRIX = "precisionMatrix";
+    public static final String TREE_MODEL = "treeModel";
+    public static final String OUTCOME = "outcome";
+    public static final String MEAN = "mean";
+    public static final String PRIOR = "prior";
+    public static final String TRAIT_MODEL = "traitModel";
 
-	//	private Parameter outcomeParam;
-	//	private Parameter meanParam;
-	private MultivariateTraitLikelihood traitModel;
-	private MatrixParameter precisionParam;
-	private WishartDistribution priorDistribution;
-	private int priorDf;
-	private SymmetricMatrix priorInverseScaleMatrix;
-	private TreeModel treeModel;
-	private int dim;
-	private int numberObservations;
-	private boolean inSubstitutionTime = false;
-	private String traitName;
+    //	private Parameter outcomeParam;
+    //	private Parameter meanParam;
+    private MultivariateTraitLikelihood traitModel;
+    private MatrixParameter precisionParam;
+    private WishartDistribution priorDistribution;
+    private int priorDf;
+    private SymmetricMatrix priorInverseScaleMatrix;
+    private TreeModel treeModel;
+    private int dim;
+    private int numberObservations;
+    private boolean inSubstitutionTime = false;
+    private String traitName;
 //	private int weight;
 
-	public PrecisionMatrixGibbsOperator(
-			MultivariateTraitLikelihood traitModel,
-			WishartDistribution priorDistribution,
-			double weight) {
-		super();
-		this.traitModel = traitModel;
-		this.precisionParam = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
-		this.priorDistribution = priorDistribution;
-		this.priorDf = priorDistribution.df();
+    public PrecisionMatrixGibbsOperator(
+            MultivariateTraitLikelihood traitModel,
+            WishartDistribution priorDistribution,
+            double weight) {
+        super();
+        this.traitModel = traitModel;
+        this.precisionParam = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
+        this.priorDistribution = priorDistribution;
+        this.priorDf = priorDistribution.df();
         this.priorInverseScaleMatrix = null;
-        if( priorDistribution.scaleMatrix() != null)
+        if (priorDistribution.scaleMatrix() != null)
             this.priorInverseScaleMatrix =
                     (SymmetricMatrix) (new SymmetricMatrix(priorDistribution.scaleMatrix())).inverse();
-		setWeight(weight);
-		this.treeModel = traitModel.getTreeModel();
-		traitName = traitModel.getTraitName();
-		dim = precisionParam.getRowDimension(); // assumed to be square
-		numberObservations = treeModel.getNodeCount() - 1; // do not count the root
+        setWeight(weight);
+        this.treeModel = traitModel.getTreeModel();
+        traitName = traitModel.getTraitName();
+        dim = precisionParam.getRowDimension(); // assumed to be square
+        numberObservations = treeModel.getNodeCount() - 1; // do not count the root
 
-	}
+    }
 
 
-	public int getStepCount() {
-		return 1;
-	}
+    public int getStepCount() {
+        return 1;
+    }
 
-	private void incrementsOuterProduct(double[][] S, NodeRef node, double treeLength) {
+    private void incrementsOuterProduct(double[][] S, NodeRef node, double treeLength) {
 
-		if (!treeModel.isRoot(node)) {
-			NodeRef parent = treeModel.getParent(node);
-			double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
-			// todo fix trait name
-			double[] childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
+        if (!treeModel.isRoot(node)) {
+            NodeRef parent = treeModel.getParent(node);
+            double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
+            // todo fix trait name
+            double[] childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
 //            double time = treeModel.getBranchLength(node);
-			double time = traitModel.getRescaledBranchLength(node);
+            double time = traitModel.getRescaledBranchLength(node);
 //            time /= treeLength;
 
 //            if (inSubstitutionTime)
 //                time *= treeModel.getNodeRate(node);
 
-			double sqrtTime = Math.sqrt(time);
+            double sqrtTime = Math.sqrt(time);
 
-			double[] delta = new double[dim];
+            double[] delta = new double[dim];
 
-			for (int i = 0; i < dim; i++)
-				delta[i] = (childTrait[i] - parentTrait[i]) / sqrtTime;
+            for (int i = 0; i < dim; i++)
+                delta[i] = (childTrait[i] - parentTrait[i]) / sqrtTime;
 
-			for (int i = 0; i < dim; i++) {            // symmetric matrix,
-				for (int j = i; j < dim; j++)
-					S[j][i] = S[i][j] += delta[i] * delta[j];
-			}
-		}
-		// recurse down tree
-		for (int i = 0; i < treeModel.getChildCount(node); i++)
-			incrementsOuterProduct(S, treeModel.getChild(node, i), treeLength);
-	}
+            for (int i = 0; i < dim; i++) {            // symmetric matrix,
+                for (int j = i; j < dim; j++)
+                    S[j][i] = S[i][j] += delta[i] * delta[j];
+            }
+        }
+        // recurse down tree
+        for (int i = 0; i < treeModel.getChildCount(node); i++)
+            incrementsOuterProduct(S, treeModel.getChild(node, i), treeLength);
+    }
 
 
-	public double doOperation() throws OperatorFailedException {
+    public double doOperation() throws OperatorFailedException {
 
 //        double treeLength = Tree.Utils.getTreeLength(treeModel,treeModel.getRoot());
-		double treeLength = treeModel.getNodeHeight(treeModel.getRoot());
+        double treeLength = treeModel.getNodeHeight(treeModel.getRoot());
 
-		// calculate sum-of-the-weighted-squares matrix over tree
+        // calculate sum-of-the-weighted-squares matrix over tree
 
-		double[][] S = new double[dim][dim];
-		SymmetricMatrix S2 = null;
-		SymmetricMatrix inverseS2 = null;
-		incrementsOuterProduct(S, treeModel.getRoot(), treeLength);
+        double[][] S = new double[dim][dim];
+        SymmetricMatrix S2 = null;
+        SymmetricMatrix inverseS2 = null;
+        incrementsOuterProduct(S, treeModel.getRoot(), treeLength);
 
-		try {
+        try {
             S2 = new SymmetricMatrix(S);
-            if( priorInverseScaleMatrix != null )
+            if (priorInverseScaleMatrix != null)
                 S2 = priorInverseScaleMatrix.add(S2);
             inverseS2 = (SymmetricMatrix) S2.inverse();
 
-		} catch (IllegalDimension illegalDimension) {
-			illegalDimension.printStackTrace();
-		}
+        } catch (IllegalDimension illegalDimension) {
+            illegalDimension.printStackTrace();
+        }
 
-		int df = priorDf + numberObservations;
+        int df = priorDf + numberObservations;
 
-		double[][] draw = WishartDistribution.nextWishart(df, inverseS2.toComponents());
-
+        double[][] draw = WishartDistribution.nextWishart(df, inverseS2.toComponents());
 
 //        System.err.println("df = "+df+" delta = "+inverseS2.component(0,0));
 
         for (int i = 0; i < dim; i++) {
-			Parameter column = precisionParam.getParameter(i);
-			for (int j = 0; j < dim; j++)
-				column.setParameterValueQuietly(j, draw[j][i]);
-		}
-		precisionParam.fireParameterChangedEvent();
+            Parameter column = precisionParam.getParameter(i);
+            for (int j = 0; j < dim; j++)
+                column.setParameterValueQuietly(j, draw[j][i]);
+        }
+        precisionParam.fireParameterChangedEvent();
 
-		return 0;
+        return 0;
 
-	}
+    }
 
-	public String getPerformanceSuggestion() {
-		return null;
-	}
+    public String getPerformanceSuggestion() {
+        return null;
+    }
 
-	public String getOperatorName() {
-		return VARIANCE_OPERATOR;
-	}
+    public String getOperatorName() {
+        return VARIANCE_OPERATOR;
+    }
 
-	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
-		public String getParserName() {
-			return VARIANCE_OPERATOR;
-		}
+        public String getParserName() {
+            return VARIANCE_OPERATOR;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			double weight = xo.getDoubleAttribute(WEIGHT);
-			MultivariateTraitLikelihood traitModel = (MultivariateTraitLikelihood) xo.getChild(MultivariateTraitLikelihood.class);
-			TreeModel treeModel = traitModel.getTreeModel();
+            double weight = xo.getDoubleAttribute(WEIGHT);
+            MultivariateTraitLikelihood traitModel = (MultivariateTraitLikelihood) xo.getChild(MultivariateTraitLikelihood.class);
+            TreeModel treeModel = traitModel.getTreeModel();
 
-			MatrixParameter precMatrix = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
+            MatrixParameter precMatrix = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
 
-			MultivariateDistributionLikelihood prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
-			if (!(prior.getDistribution() instanceof WishartDistribution))
-				throw new RuntimeException("Only a Wishart distribution is conjugate for Gibbs sampling");
+            MultivariateDistributionLikelihood prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
+            if (!(prior.getDistribution() instanceof WishartDistribution))
+                throw new RuntimeException("Only a Wishart distribution is conjugate for Gibbs sampling");
 
-			// Make sure precMatrix is square and dim(precMatrix) = dim(parameter)
+            // Make sure precMatrix is square and dim(precMatrix) = dim(parameter)
 
-			if (precMatrix.getColumnDimension() != precMatrix.getRowDimension())
-				throw new XMLParseException("The variance matrix is not square");
+            if (precMatrix.getColumnDimension() != precMatrix.getRowDimension())
+                throw new XMLParseException("The variance matrix is not square");
 
-			return new PrecisionMatrixGibbsOperator(
-					traitModel, (WishartDistribution) prior.getDistribution(), weight
+            return new PrecisionMatrixGibbsOperator(
+                    traitModel, (WishartDistribution) prior.getDistribution(), weight
 //                    precMatrix, (WishartDistribution) prior.getDistribution(), treeModel, weight
-			);
-		}
+            );
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element returns a multivariate normal random walk operator on a given parameter.";
-		}
+        public String getParserDescription() {
+            return "This element returns a multivariate normal random walk operator on a given parameter.";
+        }
 
-		public Class getReturnType() {
-			return MCMCOperator.class;
-		}
+        public Class getReturnType() {
+            return MCMCOperator.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				AttributeRule.newDoubleRule(WEIGHT),
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule(WEIGHT),
 //				new ElementRule(TreeModel.class),
-				new ElementRule(MultivariateTraitLikelihood.class),
-				new ElementRule(MultivariateDistributionLikelihood.class),
+                new ElementRule(MultivariateTraitLikelihood.class),
+                new ElementRule(MultivariateDistributionLikelihood.class),
 //				new ElementRule(MatrixParameter.class)
-		};
+        };
 
-	};
+    };
 
 }

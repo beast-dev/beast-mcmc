@@ -30,7 +30,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.math.GammaDistribution;
+import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -38,9 +38,8 @@ import java.util.logging.Logger;
 /**
  * GammaSiteModel - A SiteModel that has a gamma distributed rates across sites.
  *
- * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
- *
  * @author Andrew Rambaut
+ * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
 public class GammaSiteModel extends AbstractModel
@@ -58,11 +57,10 @@ public class GammaSiteModel extends AbstractModel
      * Constructor for gamma+invar distributed sites. Either shapeParameter or
      * invarParameter (or both) can be null to turn off that feature.
      */
-    public GammaSiteModel(	SubstitutionModel substitutionModel,
-                              Parameter muParameter,
-                              Parameter shapeParameter, int gammaCategoryCount,
-                              Parameter invarParameter )
-    {
+    public GammaSiteModel(SubstitutionModel substitutionModel,
+                          Parameter muParameter,
+                          Parameter shapeParameter, int gammaCategoryCount,
+                          Parameter invarParameter) {
 
         super(SITE_MODEL);
 
@@ -102,21 +100,21 @@ public class GammaSiteModel extends AbstractModel
     /**
      * set mu
      */
-    public void setMu(double mu)
-    {
+    public void setMu(double mu) {
         muParameter.setParameterValue(0, mu);
     }
 
     /**
      * @return mu
      */
-    public final double getMu() { return muParameter.getParameterValue(0); }
+    public final double getMu() {
+        return muParameter.getParameterValue(0);
+    }
 
     /**
      * set alpha
      */
-    public void setAlpha(double alpha)
-    {
+    public void setAlpha(double alpha) {
         shapeParameter.setParameterValue(0, alpha);
         ratesKnown = false;
     }
@@ -124,11 +122,21 @@ public class GammaSiteModel extends AbstractModel
     /**
      * @return alpha
      */
-    public final double getAlpha() { return shapeParameter.getParameterValue(0); }
+    public final double getAlpha() {
+        return shapeParameter.getParameterValue(0);
+    }
 
-    public Parameter getMutationRateParameter() { return muParameter; }
-    public Parameter getAlphaParameter() { return shapeParameter; }
-    public Parameter getPInvParameter() { return invarParameter; }
+    public Parameter getMutationRateParameter() {
+        return muParameter;
+    }
+
+    public Parameter getAlphaParameter() {
+        return shapeParameter;
+    }
+
+    public Parameter getPInvParameter() {
+        return invarParameter;
+    }
 
     public void setMutationRateParameter(Parameter parameter) {
         if (muParameter != null) removeParameter(muParameter);
@@ -148,14 +156,17 @@ public class GammaSiteModel extends AbstractModel
         if (invarParameter != null) addParameter(invarParameter);
     }
 
-
     // *****************************************************************
     // Interface SiteModel
     // *****************************************************************
 
-    public boolean integrateAcrossCategories() { return true; }
+    public boolean integrateAcrossCategories() {
+        return true;
+    }
 
-    public int getCategoryCount() { return categoryCount; }
+    public int getCategoryCount() {
+        return categoryCount;
+    }
 
     public int getCategoryOfSite(int site) {
         throw new IllegalArgumentException("Integrating across categories");
@@ -167,7 +178,7 @@ public class GammaSiteModel extends AbstractModel
     }
 
     public double getRateForCategory(int category) {
-        synchronized(this) {
+        synchronized (this) {
             if (!ratesKnown) {
                 calculateCategoryRates();
             }
@@ -177,7 +188,7 @@ public class GammaSiteModel extends AbstractModel
     }
 
     public double getSubstitutionsForCategory(int category, double time) {
-        synchronized(this) {
+        synchronized (this) {
             if (!ratesKnown) {
                 calculateCategoryRates();
             }
@@ -197,11 +208,12 @@ public class GammaSiteModel extends AbstractModel
 
     /**
      * Get the expected proportion of sites in this category.
+     *
      * @param category the category number
      * @return the proportion.
      */
     public double getProportionForCategory(int category) {
-        synchronized(this) {
+        synchronized (this) {
             if (!ratesKnown) {
                 calculateCategoryRates();
             }
@@ -212,10 +224,11 @@ public class GammaSiteModel extends AbstractModel
 
     /**
      * Get an array of the expected proportion of sites in this category.
+     *
      * @return an array of the proportion.
      */
     public double[] getCategoryProportions() {
-        synchronized(this) {
+        synchronized (this) {
             if (!ratesKnown) {
                 calculateCategoryRates();
             }
@@ -226,10 +239,11 @@ public class GammaSiteModel extends AbstractModel
 
     /**
      * Get an array of the expected proportion of sites in this category.
+     *
      * @return an array of the proportion.
      */
     public double[] getCategoryRates() {
-        synchronized(this) {
+        synchronized (this) {
             if (!ratesKnown) {
                 calculateCategoryRates();
             }
@@ -263,7 +277,7 @@ public class GammaSiteModel extends AbstractModel
 
             for (int i = 0; i < gammaCatCount; i++) {
 
-                categoryRates[i + cat] = GammaDistribution.quantile((2.0*i+1.0)/(2.0*gammaCatCount), a, 1.0/a);
+                categoryRates[i + cat] = GammaDistribution.quantile((2.0 * i + 1.0) / (2.0 * gammaCatCount), a, 1.0 / a);
                 mean += categoryRates[i + cat];
 
                 categoryProportions[i + cat] = propVariable / gammaCatCount;
@@ -286,15 +300,21 @@ public class GammaSiteModel extends AbstractModel
 
     /**
      * Get the frequencyModel for this SiteModel.
+     *
      * @return the frequencyModel.
      */
-    public FrequencyModel getFrequencyModel() { return substitutionModel.getFrequencyModel(); }
+    public FrequencyModel getFrequencyModel() {
+        return substitutionModel.getFrequencyModel();
+    }
 
     /**
      * Get the substitutionModel for this SiteModel.
+     *
      * @return the substitutionModel.
      */
-    public SubstitutionModel getSubstitutionModel() { return substitutionModel; }
+    public SubstitutionModel getSubstitutionModel() {
+        return substitutionModel;
+    }
 
     // *****************************************************************
     // Interface ModelComponent
@@ -316,28 +336,34 @@ public class GammaSiteModel extends AbstractModel
         listenerHelper.fireModelChanged(this, parameter, index);
     }
 
-    protected void storeState() {} // no additional state needs storing
+    protected void storeState() {
+    } // no additional state needs storing
+
     protected void restoreState() {
         ratesKnown = false;
     }
-    protected void acceptState() {} // no additional state needs accepting
+
+    protected void acceptState() {
+    } // no additional state needs accepting
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return SITE_MODEL; }
+        public String getParserName() {
+            return SITE_MODEL;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            SubstitutionModel substitutionModel = (SubstitutionModel)xo.getElementFirstChild(SUBSTITUTION_MODEL);
+            SubstitutionModel substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
 
             String msg = "";
 
             Parameter muParam = null;
             if (xo.hasChildNamed(MUTATION_RATE)) {
-                muParam = (Parameter)xo.getElementFirstChild(MUTATION_RATE);
+                muParam = (Parameter) xo.getElementFirstChild(MUTATION_RATE);
 
                 msg += "\n  with initial substitution rate = " + muParam.getParameterValue(0);
             } else if (xo.hasChildNamed(RELATIVE_RATE)) {
-                muParam = (Parameter)xo.getElementFirstChild(RELATIVE_RATE);
+                muParam = (Parameter) xo.getElementFirstChild(RELATIVE_RATE);
 
                 msg += "\n  with initial relative rate = " + muParam.getParameterValue(0);
             }
@@ -345,16 +371,16 @@ public class GammaSiteModel extends AbstractModel
             Parameter shapeParam = null;
             int catCount = 4;
             if (xo.hasChildNamed(GAMMA_SHAPE)) {
-                XMLObject cxo = (XMLObject)xo.getChild(GAMMA_SHAPE);
+                XMLObject cxo = (XMLObject) xo.getChild(GAMMA_SHAPE);
                 catCount = cxo.getIntegerAttribute(GAMMA_CATEGORIES);
-                shapeParam = (Parameter)cxo.getChild(Parameter.class);
+                shapeParam = (Parameter) cxo.getChild(Parameter.class);
 
                 msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
             }
 
             Parameter invarParam = null;
             if (xo.hasChildNamed(PROPORTION_INVARIANT)) {
-                invarParam = (Parameter)xo.getElementFirstChild(PROPORTION_INVARIANT);
+                invarParam = (Parameter) xo.getElementFirstChild(PROPORTION_INVARIANT);
                 msg += "\n  initial proportion of invariant sites = " + invarParam.getParameterValue(0);
             }
 
@@ -376,42 +402,54 @@ public class GammaSiteModel extends AbstractModel
             return "A SiteModel that has a gamma distributed rates across sites";
         }
 
-        public Class getReturnType() { return GammaSiteModel.class; }
+        public Class getReturnType() {
+            return GammaSiteModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
                         new ElementRule(SubstitutionModel.class)
                 }),
                 new XORRule(
-                        new ElementRule(MUTATION_RATE, new XMLSyntaxRule[] {
+                        new ElementRule(MUTATION_RATE, new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class)
                         }),
-                        new ElementRule(RELATIVE_RATE, new XMLSyntaxRule[] {
+                        new ElementRule(RELATIVE_RATE, new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class)
                         }), true
                 ),
-                new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[] {
+                new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[]{
                         AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
                         new ElementRule(Parameter.class)
                 }, true),
-                new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[] {
+                new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }, true)
         };
     };
 
-    /** the substitution model for these sites */
+    /**
+     * the substitution model for these sites
+     */
     private SubstitutionModel substitutionModel = null;
 
-    /** mutation rate parameter */
+    /**
+     * mutation rate parameter
+     */
     private Parameter muParameter;
 
-    /** shape parameter */
+    /**
+     * shape parameter
+     */
     private Parameter shapeParameter;
 
-    /** invariant sites parameter */
+    /**
+     * invariant sites parameter
+     */
     private Parameter invarParameter;
 
     private boolean ratesKnown;

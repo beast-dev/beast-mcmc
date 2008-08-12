@@ -23,8 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.math;
+package dr.math.distributions;
 
+import dr.math.UnivariateFunction;
 import dr.math.interfaces.OneVariableFunction;
 import dr.math.iterations.BisectionZeroFinder;
 

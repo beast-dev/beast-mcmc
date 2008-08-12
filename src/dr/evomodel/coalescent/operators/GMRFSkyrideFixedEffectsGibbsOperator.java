@@ -7,8 +7,8 @@ import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.math.MultivariateDistribution;
-import dr.math.MultivariateNormalDistribution;
+import dr.math.distributions.MultivariateDistribution;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.*;
 import no.uib.cipr.matrix.*;
 

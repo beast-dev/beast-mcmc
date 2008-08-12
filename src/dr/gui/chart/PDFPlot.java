@@ -25,8 +25,8 @@
 
 package dr.gui.chart;
 
+import dr.math.distributions.Distribution;
 import dr.util.Variate;
-import dr.math.Distribution;
 
 import java.awt.*;
 
@@ -47,21 +47,21 @@ public class PDFPlot extends Plot.AbstractPlot {
     }
 
     /**
-     *	Set data
+     * Set data
      */
     public void setData(double[] xData, double[] yData) {
         throw new UnsupportedOperationException("Not available");
     }
 
     /**
-     *	Set data
+     * Set data
      */
     public void setData(Variate xData, Variate yData) {
         throw new UnsupportedOperationException("Not available");
     }
 
     /**
-     *	Set up the axis with some data
+     * Set up the axis with some data
      */
     public void setupAxis(Axis xAxis, Axis yAxis, Variate xData, Variate yData) {
         if (distribution == null) {
@@ -100,7 +100,7 @@ public class PDFPlot extends Plot.AbstractPlot {
     }
 
     /**
-     *	Paint actual plot
+     * Paint actual plot
      */
     public void paintPlot(Graphics2D g2, double xScale, double yScale,
                           double xOffset, double yOffset) {
@@ -127,7 +127,7 @@ public class PDFPlot extends Plot.AbstractPlot {
     }
 
     /**
-     *	Paint data series
+     * Paint data series
      */
     protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
         // do nothing because paintPlot is overridden

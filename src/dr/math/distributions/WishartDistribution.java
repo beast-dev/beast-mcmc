@@ -1,5 +1,7 @@
-package dr.math;
+package dr.math.distributions;
 
+import dr.math.GammaFunction;
+import dr.math.MathUtils;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
@@ -215,14 +217,14 @@ public class WishartDistribution implements MultivariateDistribution {
 
             // need only diagonal, no? seems a waste to compute
             // the whole matrix
-            if( Sinv != null ) {
+            if (Sinv != null) {
                 Matrix product = Sinv.product(W);
 
                 for (int i = 0; i < dim; i++)
                     logDensity -= 0.5 * product.component(i, i);
             }
 
-           // System.err.println(Sinv);
+            // System.err.println(Sinv);
 
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();
@@ -232,19 +234,19 @@ public class WishartDistribution implements MultivariateDistribution {
         return logDensity;
     }
 
-	public static void main(String[] argv) {
-		WishartDistribution wd = new WishartDistribution(2, new double[][] { {500.0} });
+    public static void main(String[] argv) {
+        WishartDistribution wd = new WishartDistribution(2, new double[][]{{500.0}});
         // The above is just an approximation
         GammaDistribution gd = new GammaDistribution(1.0 / 1000.0, 1000.0);
-		double[] x = new double[] { 1.0 };
-		System.out.println("Wishart, df=2, scale = 500, PDF(1.0): " + wd.logPdf(x));
+        double[] x = new double[]{1.0};
+        System.out.println("Wishart, df=2, scale = 500, PDF(1.0): " + wd.logPdf(x));
         System.out.println("Gamma, shape = 1/1000, scale = 1000, PDF(1.0): " + gd.logPdf(x[0]));
 
-        wd = new WishartDistribution(4, new double[][] { {5.0} });
+        wd = new WishartDistribution(4, new double[][]{{5.0}});
         gd = new GammaDistribution(2.0, 10.0);
-		x = new double[] { 1.0 };
-		System.out.println("Wishart, df=4, scale = 5, PDF(1.0): " + wd.logPdf(x));
-        System.out.println("Gamma, shape = 1/1000, scale = 10, PDF(1.0): " + gd.logPdf(x[0]));       
+        x = new double[]{1.0};
+        System.out.println("Wishart, df=4, scale = 5, PDF(1.0): " + wd.logPdf(x));
+        System.out.println("Gamma, shape = 1/1000, scale = 10, PDF(1.0): " + gd.logPdf(x[0]));
         // These tests show the correspondence between a 1D Wishart and a Gamma
 
     }

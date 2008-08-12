@@ -34,7 +34,7 @@ import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.math.MultivariateNormalDistribution;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.*;
 
 /**

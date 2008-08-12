@@ -26,9 +26,9 @@
 package dr.evomodel.clock;
 
 import dr.evomodel.tree.TreeModel;
-import dr.math.ExponentialDistribution;
-import dr.xml.*;
 import dr.inference.model.Parameter;
+import dr.math.distributions.ExponentialDistribution;
+import dr.xml.*;
 
 
 /**

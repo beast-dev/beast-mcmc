@@ -3,7 +3,7 @@ package dr.inference.distribution;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.math.*;
+import dr.math.distributions.*;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -169,11 +169,11 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
             MultivariateDistributionLikelihood likelihood = null;
 
-            if ( xo.hasAttribute(NON_INFORMATIVE) && xo.getBooleanAttribute(NON_INFORMATIVE) ) {
+            if (xo.hasAttribute(NON_INFORMATIVE) && xo.getBooleanAttribute(NON_INFORMATIVE)) {
                 // Make non-informative settings
                 XMLObject cxo = (XMLObject) xo.getChild(DATA);
                 int dim = ((MatrixParameter) cxo.getChild(0)).getColumnDimension();
-                likelihood = new MultivariateDistributionLikelihood( new WishartDistribution(dim));
+                likelihood = new MultivariateDistributionLikelihood(new WishartDistribution(dim));
             } else {
                 if (!xo.hasAttribute(DF) || !xo.hasChildNamed(SCALE_MATRIX)) {
                     throw new XMLParseException("Must specify both a df and scaleMatrix");
@@ -185,7 +185,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                 MatrixParameter scaleMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
 
                 likelihood = new MultivariateDistributionLikelihood(
-                    new WishartDistribution(df, scaleMatrix.getParameterAsMatrix())
+                        new WishartDistribution(df, scaleMatrix.getParameterAsMatrix())
                 );
 
             }
@@ -208,13 +208,13 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newBooleanRule(NON_INFORMATIVE,true),
-                AttributeRule.newIntegerRule(DF,true),
+                AttributeRule.newBooleanRule(NON_INFORMATIVE, true),
+                AttributeRule.newIntegerRule(DF, true),
                 new ElementRule(SCALE_MATRIX,
-                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)},true),
+                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
                 new ElementRule(DATA,
-                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class,1,Integer.MAX_VALUE)}
-                        )
+                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class, 1, Integer.MAX_VALUE)}
+                )
         };
 
         public String getParserDescription() {

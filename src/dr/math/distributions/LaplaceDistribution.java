@@ -1,22 +1,27 @@
-package dr.math;
+package dr.math.distributions;
+
+import dr.math.UnivariateFunction;
 
 /**
  * @author Alexei Drummond
  */
 public class LaplaceDistribution implements Distribution {
 
-    //Parameters
+    // the mean parameter
     double mu;
 
-    //Parameters
+    // the scale parameter
     double beta;
 
-    //Parameters
+    // the maximum density
     double c;
 
     /**
      * This general constructor creates a new laplace distribution with a
-     * specified rate
+     * specified mean and scale
+     *
+     * @param mu   mean
+     * @param beta scale
      */
     public LaplaceDistribution(double mu, double beta) {
         setParameters(mu, beta);
@@ -30,7 +35,10 @@ public class LaplaceDistribution implements Distribution {
     }
 
     /**
-     * Set parameters and assign the default partition
+     * Set parameters of this distribution
+     *
+     * @param k mean
+     * @param b scale
      */
     public void setParameters(double k, double b) {
         if (b <= 0) b = 1;
@@ -42,21 +50,21 @@ public class LaplaceDistribution implements Distribution {
     }
 
     /**
-     * Get center parameters
+     * @return mean parameter
      */
     public double getMu() {
         return mu;
     }
 
     /**
-     * Get scale parameters
+     * @return scale parameter
      */
     public double getBeta() {
         return beta;
     }
 
     /**
-     * Maximum value of getDensity function
+     * @return maximum value of pdf function
      */
     public double getMaxDensity() {
         return c;

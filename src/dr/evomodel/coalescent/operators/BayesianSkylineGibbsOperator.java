@@ -8,7 +8,8 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.math.GammaDistribution;
+import dr.math.distributions.ExponentialDistribution;
+import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
 /**
@@ -268,8 +269,8 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
         double newLogL = (-exponent * Math.log(sample)) - rate / sample;
 
         if (bias > 0.0) {
-            oldLogL += dr.math.ExponentialDistribution.logPdf(popSizes[index], 1.0 / bias);
-            newLogL += dr.math.ExponentialDistribution.logPdf(sample, 1.0 / bias);
+            oldLogL += ExponentialDistribution.logPdf(popSizes[index], 1.0 / bias);
+            newLogL += ExponentialDistribution.logPdf(sample, 1.0 / bias);
         }
 
         // store new sample

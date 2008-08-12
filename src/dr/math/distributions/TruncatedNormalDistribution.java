@@ -1,4 +1,7 @@
-package dr.math;
+package dr.math.distributions;
+
+import dr.math.ErrorFunction;
+import dr.math.UnivariateFunction;
 
 /**
  * User: Michael Defoin Platel
@@ -174,8 +177,10 @@ public class TruncatedNormalDistribution implements Distribution {
     /**
      * mean
      *
-     * @param m  mean
-     * @param sd standard deviation
+     * @param m     mean
+     * @param sd    standard deviation
+     * @param lower the lower limit
+     * @param upper the upper limit
      * @return mean
      */
     public static double mean(double m, double sd, double lower, double upper) {
@@ -196,8 +201,10 @@ public class TruncatedNormalDistribution implements Distribution {
     /**
      * variance
      *
-     * @param m  mean
-     * @param sd standard deviation
+     * @param m     mean
+     * @param sd    standard deviation
+     * @param lower the lower limit
+     * @param upper the upper limit
      * @return variance
      */
     public static double variance(double m, double sd, double lower, double upper) {

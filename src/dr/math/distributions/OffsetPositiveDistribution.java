@@ -1,4 +1,6 @@
-package dr.math;
+package dr.math.distributions;
+
+import dr.math.UnivariateFunction;
 
 /**
  * A distribution that is offset, so that the origin is greater than 0

@@ -2,7 +2,7 @@ package dr.evomodel.continuous;
 
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.math.TDistribution;
+import dr.math.distributions.TDistribution;
 import dr.xml.*;
 
 /**
@@ -10,99 +10,99 @@ import dr.xml.*;
  */
 public class MultivariateTDiffusionModel extends MultivariateDiffusionModel {
 
-	public static final String DIFFUSION_PROCESS = "multivariateTDiffusionModel";
-	public static final String DIFFUSION_CONSTANT = "precisionParameter";
-//	public static final String BIAS = "mu";
-	//	public static final String PRECISION_TREE_ATTRIBUTE = "precision";
-	public static final String DF = "dfParameter";
+    public static final String DIFFUSION_PROCESS = "multivariateTDiffusionModel";
+    public static final String DIFFUSION_CONSTANT = "precisionParameter";
+    //	public static final String BIAS = "mu";
+    //	public static final String PRECISION_TREE_ATTRIBUTE = "precision";
+    public static final String DF = "dfParameter";
 
-	public MultivariateTDiffusionModel(Parameter df, Parameter precision) {
-		super();
-		this.dfParameter = df;
-		this.precisionParameter = precision;
-		addParameter(dfParameter);
-		addParameter(precisionParameter);
+    public MultivariateTDiffusionModel(Parameter df, Parameter precision) {
+        super();
+        this.dfParameter = df;
+        this.precisionParameter = precision;
+        addParameter(dfParameter);
+        addParameter(precisionParameter);
 
-	}
+    }
 
-	public double getLogLikelihood(double[] start, double[] stop, double time) {
+    public double getLogLikelihood(double[] start, double[] stop, double time) {
 
-		double df = dfParameter.getParameterValue(0);
+        double df = dfParameter.getParameterValue(0);
 //		double scale0 = diffusionPrecisionMatrixParameter.getParameterValue(0,0);
 //		double scale1 = diffusionPrecisionMatrixParameter.getParameterValue(1,1);
-		double scale0 = precisionParameter.getParameterValue(0);
-		double scale1 = precisionParameter.getParameterValue(1);
-		// todo Make this truely multivariate
-		return TDistribution.logPDF(stop[0], start[0], time / scale0, df) +
-				TDistribution.logPDF(stop[1], start[1], time / scale1, df);
-	}
+        double scale0 = precisionParameter.getParameterValue(0);
+        double scale1 = precisionParameter.getParameterValue(1);
+        // todo Make this truely multivariate
+        return TDistribution.logPDF(stop[0], start[0], time / scale0, df) +
+                TDistribution.logPDF(stop[1], start[1], time / scale1, df);
+    }
 
-	// *****************************************************************
-	// Interface Model
-	// *****************************************************************
-	public void handleModelChangedEvent(Model model, Object object, int index) {
-		super.handleModelChangedEvent(model, object, index);    //To change body of overridden methods use File | Settings | File Templates.
-	}
+    // *****************************************************************
+    // Interface Model
+    // *****************************************************************
+    public void handleModelChangedEvent(Model model, Object object, int index) {
+        super.handleModelChangedEvent(model, object, index);    //To change body of overridden methods use File | Settings | File Templates.
+    }
 
-	public void handleParameterChangedEvent(Parameter parameter, int index) {
+    public void handleParameterChangedEvent(Parameter parameter, int index) {
 //		if( parameter.getId().compareTo("allTraits")!= 0)
 //			System.err.println("parameter = "+parameter.getId());
-		super.handleParameterChangedEvent(parameter, index);    //To change body of overridden methods use File | Settings | File Templates.
-	}
+        super.handleParameterChangedEvent(parameter, index);    //To change body of overridden methods use File | Settings | File Templates.
+    }
 
-	public Parameter getPrecisionParameter() {
-		return precisionParameter;
-	}
+    public Parameter getPrecisionParameter() {
+        return precisionParameter;
+    }
 
-	protected void calculatePrecisionInfo() {
-		// Nothing to do?
-	}
+    protected void calculatePrecisionInfo() {
+        // Nothing to do?
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() {
-			return DIFFUSION_PROCESS;
-		}
+        public String getParserName() {
+            return DIFFUSION_PROCESS;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			XMLObject cxo = (XMLObject) xo.getChild(DIFFUSION_CONSTANT);
-			Parameter diffusionParam = (Parameter) cxo.getChild(Parameter.class);
-			cxo = (XMLObject) xo.getChild(DF);
-			Parameter df = (Parameter) cxo.getChild(Parameter.class);
+            XMLObject cxo = (XMLObject) xo.getChild(DIFFUSION_CONSTANT);
+            Parameter diffusionParam = (Parameter) cxo.getChild(Parameter.class);
+            cxo = (XMLObject) xo.getChild(DF);
+            Parameter df = (Parameter) cxo.getChild(Parameter.class);
 
-			return new MultivariateTDiffusionModel(df, diffusionParam);
-		}
+            return new MultivariateTDiffusionModel(df, diffusionParam);
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "Describes a multivariate t-distribution diffusion process.";
-		}
+        public String getParserDescription() {
+            return "Describes a multivariate t-distribution diffusion process.";
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new ElementRule(DIFFUSION_CONSTANT,
-						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-				new ElementRule(DF,
-						new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
-		};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(DIFFUSION_CONSTANT,
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                new ElementRule(DF,
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+        };
 
-		public Class getReturnType() {
-			return MultivariateTDiffusionModel.class;
-		}
-	};
+        public Class getReturnType() {
+            return MultivariateTDiffusionModel.class;
+        }
+    };
 
-	// **************************************************************
-	// Private instance variables
-	// **************************************************************
+    // **************************************************************
+    // Private instance variables
+    // **************************************************************
 
-	private Parameter dfParameter;
-	private Parameter precisionParameter;
+    private Parameter dfParameter;
+    private Parameter precisionParameter;
 
 }

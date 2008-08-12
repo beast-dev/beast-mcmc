@@ -2,7 +2,7 @@ package dr.inference.operators;
 
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.math.WishartDistribution;
+import dr.math.distributions.WishartDistribution;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 

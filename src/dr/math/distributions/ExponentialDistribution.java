@@ -23,7 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.math;
+package dr.math.distributions;
+
+import dr.math.UnivariateFunction;
 
 /**
  * exponential distribution.
@@ -157,8 +159,8 @@ public class ExponentialDistribution implements Distribution {
      * @return variance
      */
     public static double variance(double lambda) {
-        return 1.0/(lambda*lambda);
-	}
+        return 1.0 / (lambda * lambda);
+    }
 
     // the rate parameter of this exponential distribution (1/mean)
     double lambda;

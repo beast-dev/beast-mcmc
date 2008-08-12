@@ -27,7 +27,7 @@ package dr.evomodel.clock;
 
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.math.NormalDistribution;
+import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
 

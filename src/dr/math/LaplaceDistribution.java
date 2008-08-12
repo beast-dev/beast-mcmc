@@ -83,7 +83,10 @@ public class LaplaceDistribution implements Distribution {
     }
 
     public double quantile(double y) {
-        throw new UnsupportedOperationException();
+        double sign = 1;
+        if (y < 0.5) sign = -1;
+
+        return mu - beta * sign * Math.log(1 - 2 * Math.abs(y - 0.5));
     }
 
     public double mean() {

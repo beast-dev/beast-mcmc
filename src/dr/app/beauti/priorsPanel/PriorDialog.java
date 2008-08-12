@@ -56,6 +56,7 @@ public class PriorDialog {
             PriorType.EXPONENTIAL_PRIOR,
             PriorType.LAPLACE_PRIOR,
             PriorType.NORMAL_PRIOR,
+            PriorType.TRUNC_NORMAL_PRIOR,
             PriorType.LOGNORMAL_PRIOR,
             PriorType.GAMMA_PRIOR,
             PriorType.JEFFREYS_PRIOR,
@@ -67,6 +68,7 @@ public class PriorDialog {
             PriorType.EXPONENTIAL_PRIOR,
             PriorType.LAPLACE_PRIOR,
             PriorType.NORMAL_PRIOR,
+            PriorType.TRUNC_NORMAL_PRIOR,
             PriorType.LOGNORMAL_PRIOR,
             PriorType.GAMMA_PRIOR,
             PriorType.JEFFREYS_PRIOR,
@@ -83,9 +85,6 @@ public class PriorDialog {
     private JLabel quantileLabels;
     private JTextArea quantileText;
 
-    private JCheckBox truncatedCheck;
-    private boolean isTruncated;
-
     private Parameter parameter;
 
     public PriorDialog(JFrame frame) {
@@ -93,9 +92,6 @@ public class PriorDialog {
 
         priorCombo = new JComboBox(priors);
         rootHeightPriorCombo = new JComboBox(rootHeightPriors);
-
-        truncatedCheck = new JCheckBox("Use a truncated normal distribution");
-        truncatedCheck.setOpaque(false);
 
         initialField.setColumns(8);
 
@@ -126,12 +122,6 @@ public class PriorDialog {
 
         this.parameter = parameter;
         PriorType priorType = parameter.priorType;
-
-        if (parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-            isTruncated = true;
-            truncatedCheck.setSelected(isTruncated);
-            priorType = PriorType.NORMAL_PRIOR;
-        }
 
         if (parameter.isNodeHeight) {
             if (priorType != PriorType.NONE) {
@@ -172,15 +162,6 @@ public class PriorDialog {
 
         rootHeightPriorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-                setupComponents();
-                dialog.pack();
-                dialog.repaint();
-            }
-        });
-
-        truncatedCheck.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                isTruncated = truncatedCheck.isSelected();
                 setupComponents();
                 dialog.pack();
                 dialog.repaint();
@@ -254,9 +235,6 @@ public class PriorDialog {
             parameter.priorType = (PriorType) priorCombo.getSelectedItem();
         }
 
-        if (parameter.priorType == PriorType.NORMAL_PRIOR && isTruncated)
-            parameter.priorType = PriorType.TRUNC_NORMAL_PRIOR;
-
         if (initialField.getValue() != null) parameter.initial = initialField.getValue();
 
         optionsPanels.get(parameter.priorType).setParameterPrior(parameter);
@@ -280,15 +258,8 @@ public class PriorDialog {
             priorType = (PriorType) priorCombo.getSelectedItem();
         }
 
-        if (priorType == PriorType.NORMAL_PRIOR && isTruncated)
-            priorType = PriorType.TRUNC_NORMAL_PRIOR;
-
         if (priorType != PriorType.JEFFREYS_PRIOR) {
             optionPanel.addSeparator();
-
-            if (priorType == PriorType.NORMAL_PRIOR || priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-                optionPanel.addComponent(truncatedCheck);
-            }
 
             optionPanel.addComponent(optionsPanels.get(priorType));
         }
@@ -324,12 +295,6 @@ public class PriorDialog {
         } else {
             priorType = (PriorType) priorCombo.getSelectedItem();
         }
-
-        if (priorType == PriorType.NORMAL_PRIOR && isTruncated)
-            priorType = PriorType.TRUNC_NORMAL_PRIOR;
-
-        if (priorType == PriorType.TRUNC_NORMAL_PRIOR && !isTruncated)
-            priorType = PriorType.NORMAL_PRIOR;
 
         double offset = 0.0;
         Distribution distribution = optionsPanels.get(priorType).getDistribution();

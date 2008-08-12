@@ -1,5 +1,7 @@
 package dr.evomodel.tree;
 
+import java.util.logging.Logger;
+
 import dr.evomodel.operators.NewerARGEventOperator;
 import dr.inference.model.Likelihood;
 import dr.xml.AbstractXMLObjectParser;
@@ -30,9 +32,11 @@ public class UniformPartitionLikelihood extends Likelihood.Abstract{
 		return logPartitionNumber*arg.getReassortmentNodeCount();
 	}
 	
+	public double getLogPartitionNumber(){
+		return logPartitionNumber;
+	}
 	
-	
-	public XMLObjectParser PARSER = new AbstractXMLObjectParser(){
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
 
 		public String getParserDescription() {
 			return "Provides a uniform prior for partitions";
@@ -49,6 +53,8 @@ public class UniformPartitionLikelihood extends Likelihood.Abstract{
 		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+			Logger.getLogger("dr.evomodel").info("Creating " + UNIFORM_PARTITION_LIKELIHOOD);
+			
 			return new UniformPartitionLikelihood((ARGModel)xo.getChild(ARGModel.class));
 		}
 

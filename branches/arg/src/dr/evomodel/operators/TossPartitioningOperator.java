@@ -195,7 +195,7 @@ public class TossPartitioningOperator extends SimpleMCMCOperator {
                 }
             }
             
-            Logger.getLogger("dr.evomodel").info("Creating ARGPartitionOperator" );
+            Logger.getLogger("dr.evomodel").info("Creating ARGPartitionOperator with " + TOSS_SIZE + " of " + tossSize );
             
             
             return new TossPartitioningOperator(arg,tossSize);

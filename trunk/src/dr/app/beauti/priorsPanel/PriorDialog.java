@@ -30,7 +30,7 @@ import dr.gui.chart.Axis;
 import dr.gui.chart.JChart;
 import dr.gui.chart.LinearAxis;
 import dr.gui.chart.PDFPlot;
-import dr.math.*;
+import dr.math.distributions.*;
 import dr.util.NumberFormatter;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;

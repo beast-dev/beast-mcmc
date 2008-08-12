@@ -3,8 +3,8 @@ package dr.inference.operators;
 import dr.inference.distribution.LinearRegression;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
-import dr.math.MultivariateDistribution;
-import dr.math.MultivariateNormalDistribution;
+import dr.math.distributions.MultivariateDistribution;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.*;
 

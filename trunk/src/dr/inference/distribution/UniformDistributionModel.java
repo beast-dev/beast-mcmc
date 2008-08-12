@@ -28,8 +28,8 @@ package dr.inference.distribution;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.math.UniformDistribution;
 import dr.math.UnivariateFunction;
+import dr.math.distributions.UniformDistribution;
 import dr.xml.*;
 
 /**

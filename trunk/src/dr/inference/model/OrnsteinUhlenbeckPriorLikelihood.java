@@ -1,7 +1,7 @@
 package dr.inference.model;
 
 import dr.evomodel.coalescent.VariableDemographicModel;
-import dr.math.NormalDistribution;
+import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
 /**

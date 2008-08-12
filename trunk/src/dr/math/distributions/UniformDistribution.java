@@ -23,7 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.math;
+package dr.math.distributions;
+
+import dr.math.UnivariateFunction;
 
 /**
  * uniform distribution.

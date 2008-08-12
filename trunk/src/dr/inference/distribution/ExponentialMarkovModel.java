@@ -29,6 +29,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -185,10 +186,10 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
         for (int i = 1; i < chainParameter.getDimension(); i++) {
             final double mean = chainParameter.getParameterValue(index(i - 1));
             final double x = chainParameter.getParameterValue(index(i));
-            //logL += dr.math.ExponentialDistribution.logPdf(x, 1.0/mean);
+            //logL += dr.math.distributions.ExponentialDistribution.logPdf(x, 1.0/mean);
 
             final double scale = mean / shape;
-            logL += dr.math.GammaDistribution.logPdf(x, shape, scale);
+            logL += GammaDistribution.logPdf(x, shape, scale);
         }
         return logL;
     }

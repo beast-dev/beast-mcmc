@@ -1,10 +1,11 @@
-package dr.math;
+package dr.math.distributions;
 
+import dr.math.Poisson;
+import dr.math.UnivariateFunction;
 import org.apache.commons.math.MathException;
 
 /**
  * @author Alexei Drummond
- *
  * @version $Id$
  */
 public class PoissonDistribution implements Distribution {
@@ -22,12 +23,12 @@ public class PoissonDistribution implements Distribution {
     public double logPdf(double x) {
 
         double pdf = distribution.probability(x);
-        if( pdf == 0 ) { // bad estimate
+        if (pdf == 0) { // bad estimate
             final double mean = mean();
-            return x * Math.log(mean) - Poisson.gammln(x+1) - mean;            
+            return x * Math.log(mean) - Poisson.gammln(x + 1) - mean;
         }
         return Math.log(pdf);
-        
+
     }
 
     public double cdf(double x) {

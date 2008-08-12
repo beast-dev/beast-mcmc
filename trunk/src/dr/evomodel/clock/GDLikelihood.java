@@ -26,9 +26,9 @@
 package dr.evomodel.clock;
 
 import dr.evomodel.tree.TreeModel;
-import dr.math.GammaDistribution;
-import dr.xml.*;
 import dr.inference.model.Parameter;
+import dr.math.distributions.GammaDistribution;
+import dr.xml.*;
 
 /**
  * Calculates the likelihood of a set of rate changes in a tree, assuming a gamma distributed

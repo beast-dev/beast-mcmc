@@ -38,8 +38,8 @@ public class UniformDistribution implements Distribution {
     //
 
     /*
-      * Constructor
-      */
+     * Constructor
+     */
 
     public UniformDistribution(double lower, double upper) {
         this.lower = lower;
@@ -161,11 +161,10 @@ public class UniformDistribution implements Distribution {
      */
     public static double variance(double lower, double upper) {
         return (upper - lower) * (upper - lower) / 12;
-	}
+    }
 
-	// Private
+    // Private
 
-	private final double upper;
+    private final double upper;
     private final double lower;
-
 }

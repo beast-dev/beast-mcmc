@@ -12,6 +12,7 @@ public enum PriorType {
     NONE,
     UNIFORM_PRIOR,
     EXPONENTIAL_PRIOR,
+    LAPLACE_PRIOR,
     NORMAL_PRIOR,
     LOGNORMAL_PRIOR,
     GAMMA_PRIOR,
@@ -28,6 +29,8 @@ public enum PriorType {
                 return "Uniform";
             case EXPONENTIAL_PRIOR:
                 return "Exponential";
+            case LAPLACE_PRIOR:
+                return "Laplace";
             case NORMAL_PRIOR:
                 return "Normal";
             case LOGNORMAL_PRIOR:
@@ -71,6 +74,11 @@ public enum PriorType {
             case EXPONENTIAL_PRIOR:
                 buffer.append("Exponential [");
                 buffer.append(formatter.format(param.exponentialMean));
+                buffer.append("]");
+                break;
+            case LAPLACE_PRIOR:
+                buffer.append("Laplace [");
+                buffer.append(formatter.format(param.laplaceMean));
                 buffer.append("]");
                 break;
             case NORMAL_PRIOR:

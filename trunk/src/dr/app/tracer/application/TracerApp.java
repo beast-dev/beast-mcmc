@@ -8,8 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
-import ch.randelshofer.quaqua.QuaquaLookAndFeel;
-
 public class TracerApp extends MultiDocApplication {
 
 	public TracerApp(String nameString, String aboutString, Icon icon,
@@ -31,20 +29,20 @@ public class TracerApp extends MultiDocApplication {
             System.setProperty("apple.awt.showGrowBox","true");
 
             // set the Quaqua Look and Feel in the UIManager
-            try {
-                LookAndFeel lafClass;
-
-                if (!Utils.getMacOSXVersion().startsWith("10.5")) {
-//                    lafClass = ch.randelshofer.quaqua.subset.Quaqua14ColorChooserLAF.class.newInstance();
-//                } else {
-                    lafClass = QuaquaLookAndFeel.class.newInstance();
-                    UIManager.setLookAndFeel(lafClass);
-                    lafLoaded = true;
-                }
-
-
-            } catch (Exception e) {
-            }
+//            try {
+//                LookAndFeel lafClass;
+//
+//                if (!Utils.getMacOSXVersion().startsWith("10.5")) {
+////                    lafClass = ch.randelshofer.quaqua.subset.Quaqua14ColorChooserLAF.class.newInstance();
+////                } else {
+//                    lafClass = QuaquaLookAndFeel.class.newInstance();
+//                    UIManager.setLookAndFeel(lafClass);
+//                    lafLoaded = true;
+//                }
+//
+//
+//            } catch (Exception e) {
+//            }
 
             UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
             UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));

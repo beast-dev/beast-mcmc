@@ -1,5 +1,12 @@
 package dr.evolution.util;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
@@ -16,6 +23,8 @@ public class RandomTaxaSample extends Taxa{
 	
 	public static final String RANDOM_TAXA_SAMPLE = "randomTaxaSample";
 	public static final String SAMPLE="sample";
+	public static final String PRINT_TAXA = "printTaxa";
+	public static final String FILE_NAME= "fileName";
 	
 	public RandomTaxaSample(){
 	}
@@ -57,7 +66,7 @@ public class RandomTaxaSample extends Taxa{
 			for(int i = 0; i < N; i++)
 				indexes.add(i);
 			
-			Logger.getLogger("dr.evolution").info("Random Taxa Selected");
+			Logger.getLogger("dr.evolution").info("Generating a random taxa sample of size: " + n);
 								
 			for(int i = 0; i < n; i++){
 				int randomIndex = MathUtils.nextInt(indexes.size());
@@ -67,9 +76,55 @@ public class RandomTaxaSample extends Taxa{
 				sample.addTaxon(selectedTaxon);
 				
 				indexes.remove(randomIndex);
-			
-				Logger.getLogger("dr.evolution").info(Integer.toString(i + 1) + ": " + selectedTaxon.toString());
 			}
+			
+			if(xo.hasAttribute(PRINT_TAXA) && xo.getBooleanAttribute(PRINT_TAXA)){
+				String fileName = null;
+				if(xo.hasAttribute(FILE_NAME)){
+					fileName = xo.getStringAttribute(FILE_NAME);
+				}
+				
+				if(fileName != null){
+					try {
+						Writer write;
+					
+						File file = new File(fileName);
+						String name = file.getName();
+						String parent = file.getParent();
+
+						if (!file.isAbsolute()) {
+							parent = System.getProperty("user.dir");
+						}
+						
+						write = new FileWriter(new File(parent, name));
+							
+						write.write("<taxa id=\"randomTaxaSample\">\n" );
+						
+						for(int i = 0; i < n ;i++){
+							write.write("\t<taxon idref=\"" + sample.getTaxonId(i).toString() + "\"/>\n");
+						}
+						
+						write.write("</taxa id=\"randomTaxaSample\">\n");
+						
+						write.flush();
+					}catch (IOException fnfe) {
+							throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+					}
+				}else{
+					Logger.getLogger("dr.evomodel").info("<taxa id=\"randomTaxaSample\">");
+					
+					for(int i = 0; i < n ;i++){
+						Logger.getLogger("dr.evomodel").info("\t<taxon idref=\" " + sample.getTaxonId(i).toString() + " \"> ");
+					}
+					Logger.getLogger("dr.evomodel").info("</taxa id=\"randomTaxaSample\">");
+					
+				}
+				
+			}
+			
+			
+			
+			
 			
 			return sample;
 		}

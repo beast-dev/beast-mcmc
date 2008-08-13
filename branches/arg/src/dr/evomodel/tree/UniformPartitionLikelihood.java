@@ -3,7 +3,11 @@ package dr.evomodel.tree;
 import java.util.logging.Logger;
 
 import dr.evomodel.operators.NewerARGEventOperator;
+import dr.inference.loggers.LogColumn;
+import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
@@ -11,15 +15,17 @@ import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
-public class UniformPartitionLikelihood extends Likelihood.Abstract{
+public class UniformPartitionLikelihood extends AbstractModel implements Likelihood{
 
 	public static final String UNIFORM_PARTITION_LIKELIHOOD = "uniformPartitionLikelihood";
 	private double logPartitionNumber; //Transformed initially for computational reasons
 	private ARGModel arg;
 	
 	public UniformPartitionLikelihood(ARGModel arg) {
-		super(arg);
+		super("");
 		this.arg = arg;
+		
+		addModel(arg);
 		
 		if(arg.isRecombinationPartitionType()){
 			logPartitionNumber = -Math.log(arg.getNumberOfPartitions() - 1);
@@ -27,14 +33,7 @@ public class UniformPartitionLikelihood extends Likelihood.Abstract{
 			logPartitionNumber = -(arg.getNumberOfPartitions() - 1)*NewerARGEventOperator.LOG_TWO;
 		}
 	}
-	
-	public double calculateLogLikelihood() {
-		return logPartitionNumber*arg.getReassortmentNodeCount();
-	}
-	
-	public double getLogPartitionNumber(){
-		return logPartitionNumber;
-	}
+		
 	
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
 
@@ -63,5 +62,66 @@ public class UniformPartitionLikelihood extends Likelihood.Abstract{
 		}
 		
 	};
+
+	public double getLogLikelihood() {
+		return logPartitionNumber*arg.getReassortmentNodeCount();
+	}
+
+	public Model getModel() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void makeDirty() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public LogColumn[] getColumns() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String getId() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void setId(String id) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void acceptState() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void handleModelChangedEvent(Model model, Object object, int index) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void handleParameterChangedEvent(Parameter parameter, int index) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void restoreState() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void storeState() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	
 
 }

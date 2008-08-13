@@ -20,6 +20,8 @@ import dr.inference.model.VariableSizeParameter;
 import dr.inference.operators.*;
 import dr.math.Binomial;
 import dr.math.MathUtils;
+import dr.math.Poisson;
+import dr.math.PoissonDistribution;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -40,15 +42,18 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	public static final String INTERNAL_AND_ROOT = "internalNodesPlusRoot";
 	public static final String NODE_RATES = "nodeRates";
 	public static final String BELOW_ROOT_PROBABILITY = "belowRootProbability";
-	public static final String FLIP_SIZE = "flipSize";
+	public static final String FLIP_MEAN = "flipMean";
 	public static final double LOG_TWO = Math.log(2.0);
 
 	private ARGModel arg = null;
 	private double size = 0.0;  //Translates into add probability of 50%
 	
 	private double probBelowRoot = 0.9; //Transformed in constructor for computational efficiency
-	private int flipSize;
-	
+	private double flipMean;
+	private double logPoissonNormalizingFactor = 1;
+	private double logPartitionSize;
+	private PoissonDistribution pd;
+		
 	private boolean isRecombination;
 	private int mode = CoercableMCMCOperator.COERCION_OFF;
 	private VariableSizeCompoundParameter internalNodeParameters;
@@ -62,7 +67,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 	                             VariableSizeCompoundParameter param1,
 	                             VariableSizeCompoundParameter param2,
 	                             VariableSizeCompoundParameter param3,
-	                             double belowRootProbability, int flipSize) {
+	                             double belowRootProbability, double flipMean) {
 		this.arg = arg;
 		this.size = size;
 		this.internalNodeParameters = param1;
@@ -71,7 +76,23 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		
 		this.isRecombination = arg.isRecombinationPartitionType();
 		this.mode = mode;
-		this.flipSize = flipSize;
+		this.flipMean = flipMean;
+		
+		if(flipMean > -1){
+			this.pd = new PoissonDistribution(flipMean);
+			logPoissonNormalizingFactor = Math.log(pd.cdf(arg.getNumberOfPartitions() - 1) - pd.cdf(0));
+		}
+		
+		if(isRecombination){
+			logPartitionSize = Math.log(arg.getNumberOfPartitions() - 1);
+		}else if(arg.getNumberOfPartitions() > 40){
+			//The -1 factor only matters for smaller problems, 
+			//so we ignore when partition size gets big.
+			//Difference is very, very tiny.
+			logPartitionSize = (arg.getNumberOfPartitions() - 1)*LOG_TWO;
+		}else{
+			logPartitionSize = Math.log(Math.pow(2, arg.getNumberOfPartitions() - 1) - 1);
+		}
 		
 		setWeight(weight);
 		
@@ -96,7 +117,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			else
 				logq = RemoveOperation() + size;
 		} catch (NoReassortmentEventException nree) {
-			return Double.NEGATIVE_INFINITY;
+			throw new OperatorFailedException("");
 		}
 
 		assert !Double.isInfinite(logq) && !Double.isNaN(logq);
@@ -256,7 +277,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			arg.doubleAddChild(newReassortment, recNode);
 
 			VariableSizeParameter partitioning = new VariableSizeParameter(arg.getNumberOfPartitions());
-			logHastings += drawRandomPartitioning(partitioning);
+			drawRandomPartitioning(partitioning);
 
 			if (sisNode != recNode) {
 				arg.addChildAsRecombinant(newBifurcation, recParent,
@@ -300,7 +321,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			arg.singleAddChild(root, newBifurcation);
 
 			VariableSizeParameter partitioning = new VariableSizeParameter(arg.getNumberOfPartitions());
-			logHastings += drawRandomPartitioning(partitioning);
+			drawRandomPartitioning(partitioning);
 
 
 			arg.addChildAsRecombinant(root, recParent, newReassortment, partitioning);
@@ -332,7 +353,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			arg.doubleAddChild(root, newReassortment);
 
 			VariableSizeParameter partitioning = new VariableSizeParameter(arg.getNumberOfPartitions());
-			logHastings += drawRandomPartitioning(partitioning);
+			drawRandomPartitioning(partitioning);
 
 			newReassortment.partitioning = partitioning;
 
@@ -379,6 +400,9 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 		//You're done, return the hastings ratio!
 
+//		System.out.println(logHastings);
+		
+		logHastings +=  getPartitionAddHastingsRatio(newReassortment.partitioning.getParameterValues());
 
 		return logHastings;
 	}
@@ -468,6 +492,8 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 
 		Node recNode = (Node) potentialNodes.get(MathUtils.nextInt(totalPotentials));
 
+		double[] removePartitioningValues = recNode.partitioning.getParameterValues();
+				
 		double beforeReassortmentHeight = recNode.getHeight();
 		double beforeBifurcationHeight = 0;
 		double beforeTreeHeight = arg.getNodeHeight(arg.getRoot());
@@ -698,9 +724,10 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
 
 		logHastings -= Math.log((double) findPotentialAttachmentPoints(beforeBifurcationHeight, null)
-				* findPotentialAttachmentPoints(beforeReassortmentHeight, null))
-				- drawRandomPartitioning(null);
+				* findPotentialAttachmentPoints(beforeReassortmentHeight, null));
 
+		
+		logHastings -= getPartitionAddHastingsRatio(removePartitioningValues);
 		
 		
 		if (attachChild.leftParent != attachChild.rightParent &&
@@ -717,24 +744,52 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		}
 		assert nodeCheck();
 		assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
-
-
+		
+		
+		
 		return logHastings;
 	}
 
-
-	private double drawRandomPartitioning(Parameter partitioning) {
-		double logq = 0;
-		
-		if (isRecombination) {
-			logq = drawRecombinationPartition(partitioning);
-		} else if(flipSize > -1){
-			logq = drawReassortmentPartitionFixedFlip(partitioning);
+	private double getPartitionAddHastingsRatio(double[] values){
+		if(isRecombination){
+			return 0;
+		}else if(flipMean > -1){
+			return getFixedFlipRatio(values);
 		}else{
-			logq = drawReassortmentPartitionAllFlip(partitioning);
+			return 0;
+		}
+	}
+	
+	private double getFixedFlipRatio(double[] values){
+		int numberOfPartitionsMinusOne = arg.getNumberOfPartitions() - 1;
+		
+		int flipSize = 0;
+		for(double d : values){
+			flipSize += (int)d;
+		}
+	
+		
+		if(flipSize == numberOfPartitionsMinusOne){
+			return logPoissonNormalizingFactor - pd.logPdf(flipSize) - logPartitionSize;
 		}
 		
-		return logq;
+		int mirrorFlipSize = numberOfPartitionsMinusOne - flipSize;
+				
+		return LOG_TWO + logPoissonNormalizingFactor - logPartitionSize -
+		Math.log(pd.pdf(flipSize)/Binomial.choose(numberOfPartitionsMinusOne, flipSize)
+				+ pd.pdf(mirrorFlipSize)/Binomial.choose(numberOfPartitionsMinusOne, mirrorFlipSize));
+				
+	}
+		
+	
+	private void drawRandomPartitioning(Parameter partitioning) {
+		if (isRecombination) {
+			drawRecombinationPartition(partitioning);
+		} else if(flipMean > -1){
+			drawReassortmentPartitionFixedFlip(partitioning);
+		}else{
+			drawReassortmentPartitionAllFlip(partitioning);
+		}
 	}
 	
 	private int arraySum(int[] n){
@@ -744,77 +799,86 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 		return b;
 	}
 	
-	private double drawReassortmentPartitionAllFlip(Parameter partition){
-		int lengthMinusOne = arg.getNumberOfPartitions() - 1;
+	private void drawReassortmentPartitionAllFlip(Parameter partition){
+		int numberOfPartitionsMinusOne = arg.getNumberOfPartitions() - 1;
 				
-		if(partition != null){
-			int[] n = new int[lengthMinusOne];
+		int[] n = new int[numberOfPartitionsMinusOne];
 			
-			while(arraySum(n) == 0){
-				for(int i = 0; i < n.length; i++){
-					if(MathUtils.nextBoolean())
-						n[i] = 1;
-					else
-						n[i] = 0;
-				}
-			}
-						
+		while(arraySum(n) == 0){
 			for(int i = 0; i < n.length; i++){
-				partition.setParameterValueQuietly(i+1, n[i]);
-			}
-		}
-			
-		return (lengthMinusOne)*LOG_TWO;
-	}
-	
-	private double drawReassortmentPartitionFixedFlip(Parameter partition){
-		int lengthMinusOne = arg.getNumberOfPartitions() - 1;
-				
-		if(partition != null){
-			double fillValue = 0.0;
-			double replaceValue = 1.0;
-			if(MathUtils.nextBoolean()){
-				fillValue = 1.0;
-				replaceValue = 0.0;
-			}
-			
-			for(int i = 1; i <= lengthMinusOne; i++)
-				partition.setParameterValueQuietly(i, fillValue);
-			
-			
-			ArrayList<Integer> a = new ArrayList<Integer>(flipSize);
-			while(a.size() < flipSize){
-				int b = MathUtils.nextInt(lengthMinusOne) + 1;
-				if(!a.contains(b)){
-					a.add(b);
+				if(MathUtils.nextBoolean()){
+					n[i] = 1;
+				}else{
+					n[i] = 0;
 				}
 			}
-			
-			for(int b : a){
-				partition.setParameterValueQuietly(b, replaceValue);
-			}
-
 		}
-			
-		return LOG_TWO*Binomial.logChoose(lengthMinusOne,flipSize);
+						
+		for(int i = 0; i < numberOfPartitionsMinusOne; i++){
+			partition.setParameterValueQuietly(i+1, n[i]);
+		}
 	}
 	
-	private double drawRecombinationPartition(Parameter partition){
-		int lengthMinusOne = arg.getNumberOfPartitions() - 1;
-		
-		if(partition != null){
-			int cut = MathUtils.nextInt(lengthMinusOne);
-		
-			int leftValue = 0;  //At one time, these values could switch.
-			int rightValue = 1;
-								
-			for(int i = 0; i < cut + 1; i++)
-				partition.setParameterValueQuietly(i, leftValue);
-			for(int i = cut + 1; i < partition.getDimension(); i++)
-				partition.setParameterValueQuietly(i, rightValue);
+	private int nextFlipSize(){
+		int x = Poisson.nextPoisson(flipMean);
+		while(x > arg.getNumberOfPartitions() - 1 || x == 0){
+			x = Poisson.nextPoisson(flipMean);
 		}
 		
-		return Math.log(lengthMinusOne);
+		assert x != arg.getNumberOfPartitions();
+		assert x != 0;
+
+	
+		return x;
+	}
+	
+	private void drawReassortmentPartitionFixedFlip(Parameter partition){
+		int numberOfPartitionsMinusOne = arg.getNumberOfPartitions() - 1;
+		int flipSize = nextFlipSize();
+		
+		if(flipSize == numberOfPartitionsMinusOne){
+			for(int i = 1; i <= flipSize; i++)
+				partition.setParameterValueQuietly(i, 1.0);
+			return;
+		}
+		
+		double replaceValue = 1.0;
+		if(MathUtils.nextBoolean()){
+			replaceValue = 0.0;
+			
+			for(int i = 1; i <= numberOfPartitionsMinusOne; i++){
+				partition.setParameterValueQuietly(i, 1.0);
+			}
+		}
+		
+			
+		ArrayList<Integer> a = new ArrayList<Integer>(flipSize);
+		while(a.size() < flipSize){
+			int b = MathUtils.nextInt(numberOfPartitionsMinusOne) + 1;
+			if(!a.contains(b)){
+				a.add(b);
+			}
+		}
+		
+			
+		for(int b : a){
+			partition.setParameterValueQuietly(b, replaceValue);
+		}
+			
+	}
+	
+	private void drawRecombinationPartition(Parameter partition){
+		int lengthMinusOne = arg.getNumberOfPartitions() - 1;
+		
+		int cut = MathUtils.nextInt(lengthMinusOne);
+		
+		int leftValue = 0;  //At one time, these values could switch.
+		int rightValue = 1;
+								
+		for(int i = 0; i < cut + 1; i++)
+			partition.setParameterValueQuietly(i, leftValue);
+		for(int i = cut + 1; i < partition.getDimension(); i++)
+			partition.setParameterValueQuietly(i, rightValue);
 	}
 
 	/* Draws a new partitioning.
@@ -1024,14 +1088,14 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 				}
 			}
 			
-			int flipSize = -1;
-			if(xo.hasAttribute(FLIP_SIZE)){
-				flipSize = xo.getIntegerAttribute(FLIP_SIZE);
+			double flipMean = -1;
+			if(xo.hasAttribute(FLIP_MEAN)){
+				flipMean = xo.getDoubleAttribute(FLIP_MEAN);
 				
-				if(flipSize < 1 || flipSize > treeModel.getNumberOfPartitions()){
-					throw new XMLParseException(FLIP_SIZE + " must fall in (0,numberOfPartitions)");
+				if(flipMean < 0 ){
+					throw new XMLParseException(FLIP_MEAN + " must be greater than 0");
 				}
-				Logger.getLogger("dr.evomodel").info(ARG_EVENT_OPERATOR + " has a fixed " + FLIP_SIZE + " of " + flipSize);
+				Logger.getLogger("dr.evomodel").info(ARG_EVENT_OPERATOR + " has a fixed " + FLIP_MEAN + " of " + flipMean);
 			}else{
 				Logger.getLogger("dr.evomodel").info(ARG_EVENT_OPERATOR + " will randomly flip all partitions");
 			}
@@ -1039,7 +1103,7 @@ public class NewerARGEventOperator extends SimpleMCMCOperator implements Coercab
 			
 			return new NewerARGEventOperator(treeModel, weight, size,
 					mode, parameter1, parameter2, parameter3,
-					belowRootProb, flipSize);
+					belowRootProb, flipMean);
 		}
 
 		public String getParserDescription() {

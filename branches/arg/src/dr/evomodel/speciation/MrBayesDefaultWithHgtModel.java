@@ -27,7 +27,7 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.ARGModel;
+import dr.evomodel.arg.ARGModel;
 import dr.evoxml.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -117,7 +117,7 @@ public class MrBayesDefaultWithHgtModel extends SpeciationModel {
 		  System.err.printf("logGamma(%d) = %5.4f\n",count,logGamma(count));
   */
 //	    System.err.println(lambda);
-				
+
 		return -lambda + count * Math.log(lambda) - logFactorial(count);
 	}
 

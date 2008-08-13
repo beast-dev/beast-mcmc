@@ -28,54 +28,65 @@ package dr.evomodel.speciation;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evomodel.arg.ARGModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.evomodel.tree.ARGModel;
 
 /**
  * This interface provides methods that describe a speciation model.
+ *
  * @author Andrew Rambaut
  */
 public abstract class SpeciationModel extends AbstractModel implements Units {
 
-	public SpeciationModel(String name, int units) { 
-		super(name); 
+	public SpeciationModel(String name, int units) {
+		super(name);
 		setUnits(units);
 	}
 
-    //
-    // functions that define a speciation model
-    //
-    public abstract double logTreeProbability(int taxonCount);
+	//
+	// functions that define a speciation model
+	//
+	public abstract double logTreeProbability(int taxonCount);
+
 	//
 	// functions that define a speciation model
 	//
 	public abstract double logNodeProbability(Tree tree, NodeRef node);
-    
 
-    public double logReassortmentProbability(ARGModel tree) { return 0.0; }
 
-    // **************************************************************
-    // Model IMPLEMENTATION
-    // **************************************************************
-	
+	public double logReassortmentProbability(ARGModel tree) {
+		return 0.0;
+	}
+
+	// **************************************************************
+	// Model IMPLEMENTATION
+	// **************************************************************
+
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
 		// no intermediates need to be recalculated...
 	}
-	
+
 	protected void handleParameterChangedEvent(Parameter parameter, int index) {
 		// no intermediates need to be recalculated...
 	}
-	
-	protected void storeState() {} // no additional state needs storing
-	protected void restoreState() {} // no additional state needs restoring	
-	protected void acceptState() {} // no additional state needs accepting	
-	protected void adoptState(Model source) {} // no additional state needs adopting	
-		
-    // **************************************************************
-    // Units IMPLEMENTATION
-    // **************************************************************
+
+	protected void storeState() {
+	} // no additional state needs storing
+
+	protected void restoreState() {
+	} // no additional state needs restoring
+
+	protected void acceptState() {
+	} // no additional state needs accepting
+
+	protected void adoptState(Model source) {
+	} // no additional state needs adopting
+
+	// **************************************************************
+	// Units IMPLEMENTATION
+	// **************************************************************
 
 	/**
 	 * Units in which population size is measured.
@@ -87,16 +98,14 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 	 *
 	 * @param u units
 	 */
-	public void setUnits(int u)
-	{
+	public void setUnits(int u) {
 		units = u;
 	}
 
 	/**
 	 * returns units of measurement.
 	 */
-	public int getUnits()
-	{
+	public int getUnits() {
 		return units;
 	}
 }

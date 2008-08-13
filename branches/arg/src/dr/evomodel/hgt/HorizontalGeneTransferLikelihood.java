@@ -1,6 +1,6 @@
 package dr.evomodel.hgt;
 
-import dr.evomodel.tree.ARGModel;
+import dr.evomodel.arg.ARGModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -60,93 +60,92 @@ public class HorizontalGeneTransferLikelihood extends AbstractModel implements L
 	}
 
 
-
-	   private final double calculateAnalyticalLogLikelihood() {
-      int n = arg.getReassortmentNodeCount();
+	private final double calculateAnalyticalLogLikelihood() {
+		int n = arg.getReassortmentNodeCount();
 //		System.err.println("Prior for " + n + " reassortments.");
-        double p = 0.001;
-        double logL = n * Math.log(p);
+		double p = 0.001;
+		double logL = n * Math.log(p);
 
-        double height = arg.getNodeHeight(arg.getRoot());
-        logL -= height * 1.0;   // Exp(1)
-        // assumes a flat prior  over branch lengths given treeHeight
-        //logL = Math.log(1.0/Math.pow(lambda,n-1));
+		double height = arg.getNodeHeight(arg.getRoot());
+		logL -= height * 1.0;   // Exp(1)
+		// assumes a flat prior  over branch lengths given treeHeight
+		//logL = Math.log(1.0/Math.pow(lambda,n-1));
 //		System.err.println("COALESCENT PRIOR: end yoyoy");
-        return logL;
-    }
+		return logL;
+	}
 
 
 	public void makeDirty() {
 		//To change body of implemented methods use File | Settings | File Templates.
 	}
 
-	  // **************************************************************
-    // Loggable IMPLEMENTATION
-    // **************************************************************
+	// **************************************************************
+	// Loggable IMPLEMENTATION
+	// **************************************************************
 
-    /**
-     * @return the log columns.
-     */
-    public final dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[]{
-                new LikelihoodColumn(getId())
-        };
-    }
+	/**
+	 * @return the log columns.
+	 */
+	public final dr.inference.loggers.LogColumn[] getColumns() {
+		return new dr.inference.loggers.LogColumn[]{
+				new LikelihoodColumn(getId())
+		};
+	}
 
-    private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) {
-            super(label);
-        }
+	private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
+		public LikelihoodColumn(String label) {
+			super(label);
+		}
 
-        public double getDoubleValue() {
-            return getLogLikelihood();
-        }
-    }
+		public double getDoubleValue() {
+			return getLogLikelihood();
+		}
+	}
 
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() {
-            return HGT_LIKELIHOOD;
-        }
+		public String getParserName() {
+			return HGT_LIKELIHOOD;
+		}
 
-        public Object parseXMLObject(XMLObject xo) {
+		public Object parseXMLObject(XMLObject xo) {
 
 //            DemographicModel coalescentDemoModel = null;
-            XMLObject cxo;
-            cxo = (XMLObject) xo.getChild(GENE_GRAPH);
-            ARGModel argModel = (ARGModel) cxo.getChild(ARGModel.class);
+			XMLObject cxo;
+			cxo = (XMLObject) xo.getChild(GENE_GRAPH);
+			ARGModel argModel = (ARGModel) cxo.getChild(ARGModel.class);
 
-	        return  new HorizontalGeneTransferLikelihood(argModel);
+			return new HorizontalGeneTransferLikelihood(argModel);
 
 //            return new CoalescentWithRecombinationLikelihood(argModel, coalescentDemoModel, recombinationDemoModel);
-        }
+		}
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
 
-        public String getParserDescription() {
-            return "This element represents the likelihood of the ancestral recombination graph given the demographic function.";
-        }
+		public String getParserDescription() {
+			return "This element represents the likelihood of the ancestral recombination graph given the demographic function.";
+		}
 
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
+		public Class getReturnType() {
+			return Likelihood.class;
+		}
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                //	new ElementRule(MODEL, new XMLSyntaxRule[] {
-                //		new ElementRule(DemographicModel.class)
-                //	}),
-                new ElementRule(GENE_GRAPH, new XMLSyntaxRule[]{
-                        new ElementRule(ARGModel.class)
-                }),
-        };
-    };
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				//	new ElementRule(MODEL, new XMLSyntaxRule[] {
+				//		new ElementRule(DemographicModel.class)
+				//	}),
+				new ElementRule(GENE_GRAPH, new XMLSyntaxRule[]{
+						new ElementRule(ARGModel.class)
+				}),
+		};
+	};
 
 }
 

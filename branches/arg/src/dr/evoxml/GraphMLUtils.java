@@ -1,6 +1,6 @@
 package dr.evoxml;
 
-import dr.evomodel.tree.ARGModel;
+import dr.evomodel.arg.ARGModel;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;

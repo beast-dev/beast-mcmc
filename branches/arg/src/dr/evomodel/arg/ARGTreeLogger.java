@@ -1,5 +1,5 @@
 /*
- * ArgTreeLogger.java
+ * ARGTreeLogger.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -23,11 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.tree;
+package dr.evomodel.arg;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.structure.ColourSamplerModel;
+import dr.evomodel.tree.TreeLogger;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MLLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -43,9 +44,9 @@ import java.io.PrintWriter;
  * A logger that logs tree and clade frequencies from a given partition in an ARG
  *
  * @author Marc Suchard
- * @version $Id: ArgTreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
+ * @version $Id: ARGTreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
  */
-public class ArgTreeLogger extends TreeLogger {
+public class ARGTreeLogger extends TreeLogger {
 
 	public static final String LOG_ARG = "logArgTree";
 	public static final String PARTITION = "partition";
@@ -56,7 +57,7 @@ public class ArgTreeLogger extends TreeLogger {
 	/**
 	 * Constructor
 	 */
-	public ArgTreeLogger(Tree tree, int partition, BranchRateModel branchRateModel, String rateLabel,
+	public ARGTreeLogger(Tree tree, int partition, BranchRateModel branchRateModel, String rateLabel,
 	                     ColourSamplerModel colourSamplerModel, String colouringLabel,
 	                     Likelihood likelihood, String likelihoodLabel,
 	                     LogFormatter formatter, int logEvery, boolean nexusFormat, boolean substitutions) {
@@ -79,7 +80,7 @@ public class ArgTreeLogger extends TreeLogger {
 		ARGModel arg = (ARGModel) getTree();
 		return arg.getReassortmentNodeCount();
 	}
-	
+
 	private String getLogYuleProbabilityString() {
 		ARGTree tree = new ARGTree((ARGModel) getTree(), partition);
 //		BetaSplittingModel betaModel = new BetaSplittingModel(
@@ -195,7 +196,7 @@ public class ArgTreeLogger extends TreeLogger {
 
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-			ArgTreeLogger logger = new ArgTreeLogger(tree, partition, branchRateModel, rateLabel,
+			ARGTreeLogger logger = new ARGTreeLogger(tree, partition, branchRateModel, rateLabel,
 					colourSamplerModel, colouringLabel, likelihood, likelihoodLabel,
 					formatter, logEvery, nexusFormat, substitutions);
 

@@ -1,5 +1,6 @@
-package dr.evomodel.tree;
+package dr.evomodel.arg;
 
+import dr.evomodel.tree.TreeTraceAnalysis;
 import dr.xml.*;
 
 import java.io.File;
@@ -8,13 +9,10 @@ import java.io.FileReader;
 import java.io.Reader;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Jul 19, 2007
- * Time: 9:40:33 PM
- * To change this template use File | Settings | File Templates.
+ * @author Marc A. Suchard
  */
-public class ArgTraceAnalysisParser extends AbstractXMLObjectParser {
+
+public class ARGTraceAnalysisParser extends AbstractXMLObjectParser {
 
 	public final static String ARG_TRACE_ANALYSIS = "argTraceAnalysis";
 	public final static String BURN_IN = "burnIn";
@@ -51,7 +49,7 @@ public class ArgTraceAnalysisParser extends AbstractXMLObjectParser {
 				burnin = xo.getIntegerAttribute(BURN_IN);
 			}
 
-			ArgTraceAnalysis analysis = ArgTraceAnalysis.analyzeLogFile(new Reader[]{reader}, burnin, true);
+			ARGTraceAnalysis analysis = ARGTraceAnalysis.analyzeLogFile(new Reader[]{reader}, burnin, true);
 
 			analysis.report();
 

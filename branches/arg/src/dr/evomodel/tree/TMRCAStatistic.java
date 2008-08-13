@@ -29,6 +29,8 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.arg.ARGModel;
+import dr.evomodel.arg.ARGTree;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 
@@ -43,106 +45,106 @@ import java.util.Set;
  */
 public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic {
 
-    public static final String TMRCA_STATISTIC = "tmrcaStatistic";
-    public static final String MRCA = "mrca";
+	public static final String TMRCA_STATISTIC = "tmrcaStatistic";
+	public static final String MRCA = "mrca";
 //    public static final String PARTITION="partition";
 
-    public TMRCAStatistic(String name, ARGModel arg, TaxonList taxa, boolean isRate) throws Tree.MissingTaxonException {
-        super(name);
-        this.arg = arg;
-        ARGTree tree = new ARGTree(arg, 0);
+	public TMRCAStatistic(String name, ARGModel arg, TaxonList taxa, boolean isRate) throws Tree.MissingTaxonException {
+		super(name);
+		this.arg = arg;
+		ARGTree tree = new ARGTree(arg, 0);
 //        this.partition = partition;
-        this.numPartitions = arg.getNumberOfPartitions();
-        this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
-        this.isRate = isRate;
-    }
+		this.numPartitions = arg.getNumberOfPartitions();
+		this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
+		this.isRate = isRate;
+	}
 
-    public void setTree(Tree tree) {
-        throw new RuntimeException("Can not yet set the tree induced by a partition in an ARG");
-    }
+	public void setTree(Tree tree) {
+		throw new RuntimeException("Can not yet set the tree induced by a partition in an ARG");
+	}
 
-    public Tree getTree() {
-        throw new RuntimeException("Can not return a single tree from an ARG");
-    }
+	public Tree getTree() {
+		throw new RuntimeException("Can not return a single tree from an ARG");
+	}
 
-    public int getDimension() {
-        return numPartitions;
-    }
+	public int getDimension() {
+		return numPartitions;
+	}
 
-    /**
-     * @return the height of the MRCA node.
-     */
-    public double getStatisticValue(int dim) {
-        ARGTree tree = new ARGTree(arg, dim);
-        NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
-        if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
-        if (isRate) {
-            return tree.getNodeRate(node);
-        }
-        double height = tree.getNodeHeight(node);
-        return height;
-    }
+	/**
+	 * @return the height of the MRCA node.
+	 */
+	public double getStatisticValue(int dim) {
+		ARGTree tree = new ARGTree(arg, dim);
+		NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+		if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
+		if (isRate) {
+			return tree.getNodeRate(node);
+		}
+		double height = tree.getNodeHeight(node);
+		return height;
+	}
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() {
-            return TMRCA_STATISTIC;
-        }
+		public String getParserName() {
+			return TMRCA_STATISTIC;
+		}
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            String name;
-            if (xo.hasAttribute(NAME)) {
-                name = xo.getStringAttribute(NAME);
-            } else {
-                name = xo.getId();
-            }
-            ARGModel tree = (ARGModel) xo.getChild(Tree.class);
-            TaxonList taxa = (TaxonList) xo.getSocketChild(MRCA);
-            boolean isRate = false;
-            if (xo.hasAttribute("rate")) {
-                isRate = xo.getBooleanAttribute("rate");
-            }
+			String name;
+			if (xo.hasAttribute(NAME)) {
+				name = xo.getStringAttribute(NAME);
+			} else {
+				name = xo.getId();
+			}
+			ARGModel tree = (ARGModel) xo.getChild(Tree.class);
+			TaxonList taxa = (TaxonList) xo.getSocketChild(MRCA);
+			boolean isRate = false;
+			if (xo.hasAttribute("rate")) {
+				isRate = xo.getBooleanAttribute("rate");
+			}
 
 //            int partition = xo.getIntegerAttribute(PARTITION);
 
-            try {
-                return new TMRCAStatistic(name, tree, taxa, isRate);
-            } catch (Tree.MissingTaxonException mte) {
-                throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
-            }
-        }
+			try {
+				return new TMRCAStatistic(name, tree, taxa, isRate);
+			} catch (Tree.MissingTaxonException mte) {
+				throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
+			}
+		}
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
 
-        public String getParserDescription() {
-            return "A statistic that has as its value the height of the most recent common ancestor of a set of taxa in a given tree";
-        }
+		public String getParserDescription() {
+			return "A statistic that has as its value the height of the most recent common ancestor of a set of taxa in a given tree";
+		}
 
-        public Class getReturnType() {
-            return TMRCAStatistic.class;
-        }
+		public Class getReturnType() {
+			return TMRCAStatistic.class;
+		}
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(ARGModel.class),
-                new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				new ElementRule(ARGModel.class),
+				new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
 //            AttributeRule.newIntegerRule("partition"),
-                AttributeRule.newBooleanRule("rate", true),
-                new ElementRule(MRCA,
-                        new XMLSyntaxRule[]{new ElementRule(Taxa.class)})
-        };
-    };
+				AttributeRule.newBooleanRule("rate", true),
+				new ElementRule(MRCA,
+						new XMLSyntaxRule[]{new ElementRule(Taxa.class)})
+		};
+	};
 
-    //	private Tree tree = null;
-    private ARGModel arg = null;
-    private Set leafSet = null;
-    private boolean isRate;
-    private int numPartitions;
+	//	private Tree tree = null;
+	private ARGModel arg = null;
+	private Set leafSet = null;
+	private boolean isRate;
+	private int numPartitions;
 
 }

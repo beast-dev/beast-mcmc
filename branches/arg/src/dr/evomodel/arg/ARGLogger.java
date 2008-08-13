@@ -1,4 +1,4 @@
-package dr.evomodel.tree;
+package dr.evomodel.arg;
 
 import dr.evoxml.GraphMLUtils;
 import dr.inference.loggers.LogFormatter;
@@ -21,7 +21,7 @@ import java.io.PrintWriter;
  * Time: 2:16:08 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ArgLogger extends MCLogger {
+public class ARGLogger extends MCLogger {
 
 	public static final String LOG_ARG = "logArg";
 	public static final String DOT_FORMAT = "dotFormat";
@@ -30,11 +30,11 @@ public class ArgLogger extends MCLogger {
 	public static final String STRIPPED_NEWICK = "strippedNewick";
 	public static final String FULL_STRING = "fullString";
 	public static final String FORMAT = "format";
-	
+
 	private ARGModel argModel;
 	private String formatType;
-		
-	public ArgLogger(ARGModel argModel, LogFormatter formatter, int logEvery, String formatType) {
+
+	public ARGLogger(ARGModel argModel, LogFormatter formatter, int logEvery, String formatType) {
 		super(formatter, logEvery);
 		this.argModel = argModel;
 		this.formatType = formatType;
@@ -45,11 +45,11 @@ public class ArgLogger extends MCLogger {
 	public static final String GRAPHML_FOOTER = "</graphml>";
 
 	public void startLogging() {
-		if(formatType.equals(EXTENDED_NEWICK)){
+		if (formatType.equals(EXTENDED_NEWICK)) {
 			logLine("stateARG.string");
-		}else if(formatType.equals(STRIPPED_NEWICK)){
+		} else if (formatType.equals(STRIPPED_NEWICK)) {
 			logLine("StrippedARGString");
-		}else{
+		} else {
 			logLine(GRAPHML_HEADER);
 		}
 //		if (!dotFormat && !newickFormat)
@@ -59,7 +59,7 @@ public class ArgLogger extends MCLogger {
 	}
 
 	public void stopLogging() {
-		if(!formatType.equals(EXTENDED_NEWICK) && !formatType.equals(STRIPPED_NEWICK)){
+		if (!formatType.equals(EXTENDED_NEWICK) && !formatType.equals(STRIPPED_NEWICK)) {
 			logLine(GRAPHML_FOOTER);
 		}
 //		if (!dotFormat && !newickFormat)
@@ -72,20 +72,20 @@ public class ArgLogger extends MCLogger {
 		if (logEvery <= 0 || ((state % logEvery) == 0)) {
 			Element graphElement = argModel.toXML();
 			graphElement.setAttribute(ARGModel.ID_ATTRIBUTE, "STATE_" + state);
-			if(formatType.equals(DOT_FORMAT))
+			if (formatType.equals(DOT_FORMAT))
 				logLine(GraphMLUtils.dotFormat(graphElement));
-			else if(formatType.equals(COMPRESSED_STRING))
-				logLine("ARG STATE_" + state + " = " + argModel.toGraphStringCompressed(false));	
-			else if(formatType.equals(FULL_STRING))
+			else if (formatType.equals(COMPRESSED_STRING))
+				logLine("ARG STATE_" + state + " = " + argModel.toGraphStringCompressed(false));
+			else if (formatType.equals(FULL_STRING))
 				logLine(outputter.outputString(graphElement));
-			else if(formatType.equals(EXTENDED_NEWICK))
+			else if (formatType.equals(EXTENDED_NEWICK))
 				logLine(argModel.toExtendedNewick());
 			else
 				logLine(argModel.toStrippedNewick());
 		}
 //		logLine("ARG STATE_" + state + " = " + argModel.toExtendedNewick());
 	}
-	
+
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -122,8 +122,6 @@ public class ArgLogger extends MCLogger {
 			if (xo.hasAttribute(FORMAT)) {
 				argModelLoggerFormat = xo.getStringAttribute(FORMAT);
 			}
-
-			
 
 //			boolean substitutions = false;
 //			if (xo.hasAttribute(BRANCH_LENGTHS)) {
@@ -167,7 +165,7 @@ public class ArgLogger extends MCLogger {
 
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-			ArgLogger logger = new ArgLogger(argModel, formatter, logEvery, argModelLoggerFormat);
+			ARGLogger logger = new ARGLogger(argModel, formatter, logEvery, argModelLoggerFormat);
 
 //			TreeLogger logger = new TreeLogger(tree, branchRateModel, rateLabel,
 //					colourSamplerModel, colouringLabel, likelihood, likelihoodLabel,
@@ -188,13 +186,13 @@ public class ArgLogger extends MCLogger {
 		}
 
 		String[] validFormats = {DOT_FORMAT, EXTENDED_NEWICK,
-				 COMPRESSED_STRING, FULL_STRING, STRIPPED_NEWICK};
-		
+				COMPRESSED_STRING, FULL_STRING, STRIPPED_NEWICK};
+
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				
+
 				AttributeRule.newIntegerRule(LOG_EVERY),
-				new StringAttributeRule(FORMAT,"The type logger's output type",
-						validFormats,false),
+				new StringAttributeRule(FORMAT, "The type logger's output type",
+						validFormats, false),
 				new StringAttributeRule(FILE_NAME,
 						"The name of the file to send log output to. " +
 								"If no file name is specified then log is sent to standard output", true),

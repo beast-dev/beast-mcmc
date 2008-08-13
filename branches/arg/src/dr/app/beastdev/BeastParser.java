@@ -25,6 +25,10 @@
 
 package dr.app.beastdev;
 
+import dr.evomodel.arg.branchratemodel.ARGDiscretizedBranchRates;
+import dr.evomodel.arg.coalescent.BayesianSkylineLikelihood;
+import dr.evomodel.arg.coalescent.SkylineLikelihood;
+import dr.evomodel.arg.coalescent.VeryOldCoalescentLikelihood;
 import dr.xml.*;
 
 import java.util.Iterator;
@@ -32,12 +36,11 @@ import java.util.Iterator;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: BeastParser.java,v 1.14 2006/09/11 09:33:01 gerton Exp $
  */
 public class BeastParser extends XMLParser {
 
-	public BeastParser(String[] args)  throws XMLParseException {
+	public BeastParser(String[] args) throws XMLParseException {
 		super();
 		setup(args);
 	}
@@ -49,7 +52,7 @@ public class BeastParser extends XMLParser {
 		if (verbose) {
 			Iterator iterator = getParsers();
 			while (iterator.hasNext()) {
-				XMLObjectParser parser = (XMLObjectParser)iterator.next();
+				XMLObjectParser parser = (XMLObjectParser) iterator.next();
 				System.out.println(parser.toString());
 			}
 		}
@@ -61,14 +64,14 @@ public class BeastParser extends XMLParser {
 			storeObject(Integer.toString(i), args[i]);
 		}
 
-			// add all the XMLObject parsers you need
+		// add all the XMLObject parsers you need
 
 		addXMLObjectParser(new PropertyParser());
 		addXMLObjectParser(UserInput.STRING_PARSER);
 		addXMLObjectParser(UserInput.DOUBLE_PARSER);
 		addXMLObjectParser(UserInput.INTEGER_PARSER);
 
-        //addXMLObjectParser(ColouringTest.PARSER);
+		//addXMLObjectParser(ColouringTest.PARSER);
 
 		addXMLObjectParser(new dr.evoxml.GeneralDataTypeParser());
 		addXMLObjectParser(new dr.evoxml.AlignmentParser());
@@ -84,27 +87,27 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(new dr.evoxml.TaxonParser());
 		addXMLObjectParser(new dr.evoxml.TaxaParser());
 		addXMLObjectParser(new dr.evoxml.DateParser());
-        addXMLObjectParser(new dr.evoxml.DistanceMatrixParser());
+		addXMLObjectParser(new dr.evoxml.DistanceMatrixParser());
 
 		addXMLObjectParser(new AttributeParser());
 		addXMLObjectParser(new AttributesParser());
 
 
-        addXMLObjectParser(dr.evomodel.speciation.SpeciationLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.speciation.YuleModel.PARSER);
-        addXMLObjectParser(dr.evomodel.speciation.BirthDeathModel.PARSER);
-        addXMLObjectParser(dr.evomodel.speciation.BranchingLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.speciation.BetaSplittingModel.PARSER);
+		addXMLObjectParser(dr.evomodel.speciation.SpeciationLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.speciation.YuleModel.PARSER);
+		addXMLObjectParser(dr.evomodel.speciation.BirthDeathModel.PARSER);
+		addXMLObjectParser(dr.evomodel.speciation.BranchingLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.speciation.BetaSplittingModel.PARSER);
 
 		addXMLObjectParser(dr.evomodel.coalescent.CoalescentSimulator.PARSER);
-		addXMLObjectParser(dr.evomodel.coalescent.CoalescentLikelihood.PARSER);
+		addXMLObjectParser(VeryOldCoalescentLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.CoalescentMRCALikelihood.PARSER);
-		addXMLObjectParser(dr.evomodel.coalescent.SkylineLikelihood.PARSER);
-		addXMLObjectParser(dr.evomodel.coalescent.BayesianSkylineLikelihood.PARSER);
+		addXMLObjectParser(SkylineLikelihood.PARSER);
+		addXMLObjectParser(BayesianSkylineLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.ConstantPopulationModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.ExponentialGrowthModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.CataclysmicDemographicModel.PARSER);
-        addXMLObjectParser(dr.evomodel.coalescent.ExpConstExpDemographicModel.PARSER);
+		addXMLObjectParser(dr.evomodel.coalescent.ExpConstExpDemographicModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.LogisticGrowthModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.ConstantExponentialModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.ExpansionModel.PARSER);
@@ -115,21 +118,20 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.coalescent.ExponentialSawtoothModel.PARSER);
 		addXMLObjectParser(dr.evomodel.coalescent.EmpiricalPiecewiseModel.PARSER);
 
+		// Structured coalescent
+		addXMLObjectParser(dr.evomodel.coalescent.structure.StructuredCoalescentLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.coalescent.structure.ConstantMigrationModel.PARSER);
+		addXMLObjectParser(dr.evomodel.coalescent.structure.ColourSamplerModel.PARSER);
+		addXMLObjectParser(dr.evomodel.coalescent.structure.TreeColouringOperator.PARSER);
+		addXMLObjectParser(dr.evomodel.coalescent.structure.MetaPopulationModel.PARSER);
+		addXMLObjectParser(dr.evomodel.operators.ColouredExchangeOperator.NARROW_EXCHANGE_PARSER);
+		addXMLObjectParser(dr.evomodel.operators.ColouredExchangeOperator.WIDE_EXCHANGE_PARSER);
+		addXMLObjectParser(dr.evomodel.operators.ColouredSubtreeSlideOperator.PARSER);
+		addXMLObjectParser(dr.evomodel.operators.ColouredOperator.PARSER);
+		addXMLObjectParser(dr.evomodel.operators.FixedColouredOperator.PARSER);
 
-        // Structured coalescent
-        addXMLObjectParser(dr.evomodel.coalescent.structure.StructuredCoalescentLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.coalescent.structure.ConstantMigrationModel.PARSER);
-        addXMLObjectParser(dr.evomodel.coalescent.structure.ColourSamplerModel.PARSER);
-        addXMLObjectParser(dr.evomodel.coalescent.structure.TreeColouringOperator.PARSER);
-        addXMLObjectParser(dr.evomodel.coalescent.structure.MetaPopulationModel.PARSER);
-        addXMLObjectParser(dr.evomodel.operators.ColouredExchangeOperator.NARROW_EXCHANGE_PARSER);
-        addXMLObjectParser(dr.evomodel.operators.ColouredExchangeOperator.WIDE_EXCHANGE_PARSER);
-        addXMLObjectParser(dr.evomodel.operators.ColouredSubtreeSlideOperator.PARSER);
-        addXMLObjectParser(dr.evomodel.operators.ColouredOperator.PARSER);
-        addXMLObjectParser(dr.evomodel.operators.FixedColouredOperator.PARSER);
-
-        // Transmission models
-        addXMLObjectParser(dr.evomodel.transmission.TransmissionLikelihood.PARSER);
+		// Transmission models
+		addXMLObjectParser(dr.evomodel.transmission.TransmissionLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.transmission.TransmissionDemographicModel.PARSER);
 		addXMLObjectParser(dr.evomodel.transmission.TransmissionHistoryModel.PARSER);
 		addXMLObjectParser(dr.evomodel.transmission.TransmissionStatistic.PARSER);
@@ -140,13 +142,13 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.substmodel.GTR.PARSER);
 		addXMLObjectParser(dr.evomodel.substmodel.EmpiricalAminoAcidModel.PARSER);
 		addXMLObjectParser(dr.evomodel.substmodel.YangCodonModel.PARSER);
-        addXMLObjectParser(dr.evomodel.substmodel.CovarionSubstitutionModel.PARSER);
+		addXMLObjectParser(dr.evomodel.substmodel.CovarionSubstitutionModel.PARSER);
 
 		addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.treelikelihood.AdvancedTreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.treelikelihood.TipsTreeLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.treelikelihood.PurifyingTreeLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.treelikelihood.PurifyingGammaTreeLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.treelikelihood.PurifyingTreeLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.treelikelihood.PurifyingGammaTreeLikelihood.PARSER);
 
 		addXMLObjectParser(dr.evomodel.sitemodel.GammaSiteModel.PARSER);
 		addXMLObjectParser(dr.evomodel.sitemodel.CategorySiteModel.PARSER);
@@ -156,30 +158,30 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.clock.EDLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.clock.NDLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.clock.GDLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.branchratemodel.DiscretizedBranchRates.PARSER);
-        addXMLObjectParser(dr.evomodel.branchratemodel.StrictClockBranchRates.PARSER);
-        addXMLObjectParser(dr.evomodel.branchratemodel.DecayingRateModel.PARSER);
-        addXMLObjectParser(dr.evomodel.branchratemodel.TipBranchRateModel.PARSER);
-        addXMLObjectParser(dr.evomodel.branchratemodel.ColouredTreeRateModel.PARSER);
+		addXMLObjectParser(ARGDiscretizedBranchRates.PARSER);
+		addXMLObjectParser(dr.evomodel.branchratemodel.StrictClockBranchRates.PARSER);
+		addXMLObjectParser(dr.evomodel.branchratemodel.DecayingRateModel.PARSER);
+		addXMLObjectParser(dr.evomodel.branchratemodel.TipBranchRateModel.PARSER);
+		addXMLObjectParser(dr.evomodel.branchratemodel.ColouredTreeRateModel.PARSER);
 
 		addXMLObjectParser(dr.evomodel.tree.TreeModel.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.TreeShapeStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.TMRCAStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.RateCovarianceStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.RateStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.RateCovarianceStatistic.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.RateStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.MonophylyStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.ParsimonyStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.ParsimonyStateStatistic.PARSER);
 		addXMLObjectParser(dr.evomodel.tree.SpeciesTreeStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.UniformRootPrior.PARSER);
+		addXMLObjectParser(dr.evomodel.tree.UniformRootPrior.PARSER);
 
 		addXMLObjectParser(dr.evomodel.operators.ExchangeOperator.NARROW_EXCHANGE_PARSER);
 		addXMLObjectParser(dr.evomodel.operators.ExchangeOperator.WIDE_EXCHANGE_PARSER);
 		addXMLObjectParser(dr.evomodel.operators.WilsonBalding.PARSER);
 		addXMLObjectParser(dr.evomodel.operators.SubtreeSlideOperator.PARSER);
-        addXMLObjectParser(dr.evomodel.operators.RateExchangeOperator.PARSER);
+		addXMLObjectParser(dr.evomodel.operators.RateExchangeOperator.PARSER);
 
 		addXMLObjectParser(dr.evomodel.indel.TKF91Likelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.indel.TKF91Model.PARSER);
@@ -188,38 +190,38 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.model.CompoundParameter.PARSER);
 		addXMLObjectParser(dr.inference.model.CompoundLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.model.BooleanLikelihood.PARSER);
-        addXMLObjectParser(dr.inference.model.DummyLikelihood.PARSER);
+		addXMLObjectParser(dr.inference.model.DummyLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.model.JeffreysPriorLikelihood.PARSER);
 
 		addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.distribution.EmpiricalDistributionLikelihood.PARSER);
-        addXMLObjectParser(dr.inference.distribution.UniformDistributionModel.PARSER);
+		addXMLObjectParser(dr.inference.distribution.UniformDistributionModel.PARSER);
 		addXMLObjectParser(dr.inference.distribution.ExponentialDistributionModel.PARSER);
 		addXMLObjectParser(dr.inference.distribution.GammaDistributionModel.PARSER);
 		addXMLObjectParser(dr.inference.distribution.NormalDistributionModel.PARSER);
-        addXMLObjectParser(dr.inference.distribution.LogNormalDistributionModel.PARSER);
+		addXMLObjectParser(dr.inference.distribution.LogNormalDistributionModel.PARSER);
 		addXMLObjectParser(dr.inference.distribution.ExponentialMarkovModel.PARSER);
 
-        addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.UNIFORM_PRIOR_PARSER);
-        addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.EXPONENTIAL_PRIOR_PARSER);
-        addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.NORMAL_PRIOR_PARSER);
-        addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.LOG_NORMAL_PRIOR_PARSER);
-        addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.GAMMA_PRIOR_PARSER);
+		addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.UNIFORM_PRIOR_PARSER);
+		addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.EXPONENTIAL_PRIOR_PARSER);
+		addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.NORMAL_PRIOR_PARSER);
+		addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.LOG_NORMAL_PRIOR_PARSER);
+		addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.GAMMA_PRIOR_PARSER);
 
 		addXMLObjectParser(dr.inference.distribution.BinomialLikelihood.PARSER);
 
 		addXMLObjectParser(new dr.inference.model.StatisticParser());
 		addXMLObjectParser(new dr.inference.model.ParameterParser());
 		addXMLObjectParser(dr.inference.model.TestStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.VarianceStatistic.PARSER);
+		addXMLObjectParser(dr.inference.model.VarianceStatistic.PARSER);
 
 		addXMLObjectParser(dr.inference.model.MeanStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.ProductStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.SumStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.ReciprocalStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.NegateStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.ExponentiationStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.ExpressionStatistic.PARSER);
+		addXMLObjectParser(dr.inference.model.ProductStatistic.PARSER);
+		addXMLObjectParser(dr.inference.model.SumStatistic.PARSER);
+		addXMLObjectParser(dr.inference.model.ReciprocalStatistic.PARSER);
+		addXMLObjectParser(dr.inference.model.NegateStatistic.PARSER);
+		addXMLObjectParser(dr.inference.model.ExponentiationStatistic.PARSER);
+		addXMLObjectParser(dr.inference.model.ExpressionStatistic.PARSER);
 
 		addXMLObjectParser(dr.inference.mcmc.MCMC.PARSER);
 		addXMLObjectParser(dr.inference.ml.MLOptimizer.PARSER);
@@ -234,7 +236,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.operators.UniformOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.UpDownOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.SetOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.SwapOperator.PARSER);
+		addXMLObjectParser(dr.inference.operators.SwapOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.DeltaExchangeOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.CenteredScaleOperator.PARSER);
 

@@ -1,4 +1,4 @@
-package dr.evomodel.tree;
+package dr.evomodel.arg;
 
 import dr.evolution.io.Importer;
 import dr.evolution.util.TaxonList;
@@ -18,9 +18,9 @@ import java.util.StringTokenizer;
  * To change this template use File | Settings | File Templates.
  */
 
-public class ArgTrace implements Identifiable {
+public class ARGTrace implements Identifiable {
 
-	public ArgTrace() {
+	public ARGTrace() {
 	}
 
 	public int getTreeCount(int burnin) {
@@ -82,11 +82,11 @@ public class ArgTrace implements Identifiable {
 	 *
 	 * @return the TreeTrace
 	 */
-	public static ArgTrace loadARGTrace(Reader r) throws IOException, Importer.ImportException {
+	public static ARGTrace loadARGTrace(Reader r) throws IOException, Importer.ImportException {
 
 		BufferedReader reader = new BufferedReader(r);
 
-		ArgTrace trace = new ArgTrace();
+		ARGTrace trace = new ARGTrace();
 
 		dr.evolution.util.TaxonList taxonList = null;
 

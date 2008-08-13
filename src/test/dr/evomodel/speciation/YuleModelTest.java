@@ -43,13 +43,20 @@ public class YuleModelTest extends TraceTest {
     static final String TL = "TL";
     static final String TREE_HEIGHT = "rootHeight";
 
+    private FlexibleTree tree;
+
     public YuleModelTest(String name) {
         super(name);
     }
 
     public void setUp() throws Exception {
-
         super.setUp();
+
+        NewickImporter importer = new NewickImporter("((1:1.0,2:1.0):1.0,(3:1.0,4:1.0):1.0);");
+        tree = (FlexibleTree) importer.importTree(null);
+    }
+
+    public void testYuleModel() {
 
         MCMC mcmc = new MCMC("mcmc1");
         MCMCOptions options = new MCMCOptions();
@@ -59,8 +66,6 @@ public class YuleModelTest extends TraceTest {
         options.setTemperature(1.0);
         options.setFullEvaluationCount(2000);
 
-        NewickImporter importer = new NewickImporter("((1:1.0,2:1.0):1.0,(3:1.0,4:1.0):1.0);");
-        FlexibleTree tree = (FlexibleTree) importer.importTree(null);
 
         TreeModel treeModel = new TreeModel("treeModel", tree);
         TreelengthStatistic tls = new TreelengthStatistic(TL, treeModel);
@@ -116,13 +121,6 @@ public class YuleModelTest extends TraceTest {
                 traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
 
         assertExpectation(TREE_HEIGHT, treeHeightStats, 0.5416666);
-    }
-
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
-
-    public void testYuleModel() {
 
 
     }

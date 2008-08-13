@@ -221,6 +221,16 @@ public class MathUtils {
 	/**
 	 * Access a default instance of this class, access is synchronized
 	 */
+	public static double nextExponential(double lambda) {
+		synchronized (random) {
+			return -1.0 * Math.log(1 - random.nextDouble()) / lambda;
+		}
+	}
+
+
+	/**
+	 * Access a default instance of this class, access is synchronized
+	 */
 	public static float nextFloat() {
 		synchronized (random) {
 			return random.nextFloat();
@@ -301,4 +311,26 @@ public class MathUtils {
 			return result;
 		}
 	}
+
+	/**
+	 * Permutes an array.
+	 */
+	public static final void permute(int[] array) {
+		synchronized (random) {
+			random.permute(array);
+		}
+	}
+
+	/**
+	 * Returns a uniform random permutation of 0,...,l-1
+	 *
+	 * @param l length of the array required.
+	 */
+	public static int[] permuted(int l) {
+		synchronized (random) {
+			return random.permuted(l);
+		}
+	}
+
+
 }

@@ -4502,25 +4502,41 @@
 		<nodeHeights internalNodes="true" rootNode="true">
 			<parameter id="treeModel.allInternalNodeHeights"/>
 		</nodeHeights>
-	</argTreeModel>
+           <nodeRates internalNodes="true" leafNodes="true">
+            <parameter id="treeModel.rates"/>
+        </nodeRates>
+    </argTreeModel>
 
-	<mrbayesDefaultModel id="yule" units="substitutions">
-		<birthRate>
-			<parameter id="yule.birthRate" value="2" lower="0.0"/>
-		</birthRate>
-		<hgtRate>
-			<parameter id="yule.recRate" value="0.693"/>
-		</hgtRate>
-	</mrbayesDefaultModel>
+	<!--<mrbayesDefaultModel id="yule" units="substitutions">-->
+		<!--<birthRate>-->
+			<!--<parameter id="yule.birthRate" value="2" lower="0.0"/>-->
+		<!--</birthRate>-->
+		<!--<hgtRate>-->
+			<!--<parameter id="yule.recRate" value="0.693"/>-->
+		<!--</hgtRate>-->
+	<!--</mrbayesDefaultModel>-->
 
-	<speciationLikelihood id="speciation">
-		<model>
-			<yuleWithHgtModel idref="yule"/>
-		</model>
-		<speciesTree>
-			<argModel idref="treeModel"/>
-		</speciesTree>
-	</speciationLikelihood>
+     <argCoalescentLikelihood id="arg.prior">
+		<populationSize>
+			<parameter id="pop.size" value="10.0" upper="Infinity" />
+		</populationSize>
+		<recombinationRate>
+			<parameter id="recom.rate" value="0.1" lower="0.0"
+				upper="Infinity" />
+		</recombinationRate>
+		<argModel>
+			<argTreeModel idref="treeModel" />
+		</argModel>
+	</argCoalescentLikelihood>
+
+    <!--<speciationLikelihood id="speciation">-->
+		<!--<model>-->
+			<!--<yuleWithHgtModel idref="yule"/>-->
+		<!--</model>-->
+		<!--<speciesTree>-->
+			<!--<argModel idref="treeModel"/>-->
+		<!--</speciesTree>-->
+	<!--</speciationLikelihood>-->
 	<!--	<variableSizeCoalescentLikelihood id="coalescent">
 		<coalescentModel>
 			<constantSize idref="constant.Coalescent"/>
@@ -8239,10 +8255,15 @@
 				<deltaExchange delta="0.75" weight="10">
 					<parameter idref="allMus"/>
 				</deltaExchange> -->
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="siteModel1.mu"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="1">
+        <!---->
+        <!---->
+        <!--<scaleOperator scaleFactor="0.75" weight="1">-->
+			<!--<parameter idref="siteModel1.mu"/>-->
+		<!--</scaleOperator>-->
+
+
+
+        <scaleOperator scaleFactor="0.75" weight="1">
 			<parameter idref="siteModel2.mu"/>
 		</scaleOperator>
 		<scaleOperator scaleFactor="0.75" weight="1">
@@ -8574,36 +8595,68 @@
 			  <parameter idref="treeModel.rootHeight"/>
 		  </scaleOperator>
   -->
-		<uniformOperator weight="30">
-			<parameter idref="treeModel.internalNodeHeights"/>
-		</uniformOperator>
+		<!--<uniformOperator weight="30">-->
+			<!--<parameter idref="treeModel.internalNodeHeights"/>-->
+		<!--</uniformOperator>-->
 		<!--		<argSubtreeSlide size="0.1" gaussian="true" weight="15">
 			  <argTreeModel idref="treeModel"/>
 		  </argSubtreeSlide>
   -->
-		<argNarrowExchange weight="45">
-			<treeModel idref="treeModel"/>
-		</argNarrowExchange>
+		<!--<argNarrowExchange weight="45">-->
+			<!--<treeModel idref="treeModel"/>-->
+		<!--</argNarrowExchange>-->
 		<!--	<tossPartitioningOperator weight="60" isRecombination="false">
 			 <argTreeModel idref="treeModel"/>
 		 </tossPartitioningOperator>
 	 -->
-		<newARGEvent weight="20" gaussian="true" size="1.0" singlePartition="true">
-			<argTreeModel idref="treeModel"/>
-			<justInternalNodes>
-				<parameter idref="treeModel.internalNodeHeights"/>
-			</justInternalNodes>
-			<internalAndRootNodes>
-				<parameter idref="treeModel.allInternalNodeHeights"/>
-			</internalAndRootNodes>
-		</newARGEvent>
-	</operators>
+		<!--<newARGEvent weight="20" gaussian="true" size="1.0" singlePartition="true">-->
+			<!--<argTreeModel idref="treeModel"/>-->
+			<!--<justInternalNodes>-->
+				<!--<parameter idref="treeModel.internalNodeHeights"/>-->
+			<!--</justInternalNodes>-->
+			<!--<internalAndRootNodes>-->
+				<!--<parameter idref="treeModel.allInternalNodeHeights"/>-->
+			<!--</internalAndRootNodes>-->
+		<!--</newARGEvent>-->
 
 
-	<mcmc id="mcmc" chainLength="4000" autoOptimize="true">
+        <scaleOperator id="rootOperator" scaleFactor="0.5"
+			weight="10">
+			<parameter idref="treeModel.rootHeight" />
+		</scaleOperator>
+
+		<scaleOperator scaleFactor="0.95" weight="10">
+			<parameter idref="treeModel.internalNodeHeights" />
+		</scaleOperator>
+
+		<ARGEventOperator weight="5" addProbability="0.5"
+			autoOptimize="false">
+			<argTreeModel idref="treeModel" />
+			<internalNodes>
+				<parameter idref="treeModel.internalNodeHeights" />
+			</internalNodes>
+			<internalNodesPlusRoot>
+				<parameter idref="treeModel.allInternalNodeHeights" />
+			</internalNodesPlusRoot>
+			<nodeRates>
+				<parameter idref="treeModel.rates" />
+			</nodeRates>
+		</ARGEventOperator>
+
+        <argSwapOperator weight="5" type="fullSwap">
+			<argModel idref="treeModel"/>
+		</argSwapOperator>
+
+        <uniformOperator weight="30">
+            <parameter idref="treeModel.internalNodeHeights"/>
+        </uniformOperator>
+    </operators>
+
+
+	<mcmc id="mcmc" chainLength="40000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
-				<speciationLikelihood idref="speciation"/>
+				<argCoalescentLikelihood idref="arg.prior"/>
 
 				<!--		<gammaPrior idref="gamma.prior"/> -->
 
@@ -8726,7 +8779,7 @@
 			</likelihood>
 		</posterior>
 		<operators idref="operators"/>
-		<log id="screenLog" logEvery="10">
+		<log id="screenLog" logEvery="100">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -9052,7 +9105,7 @@
 				<treeLikelihood idref="treeLikelihood106"/>
 			</column>
 			<column label="L(coalecent)" dp="4" width="12">
-				<speciationLikelihood idref="speciation"/>
+				<argCoalescentLikelihood idref="arg.prior"/>
 			</column>
 			<column label="L(prior)" dp="4" width="12">
 				<prior idref="prior"/>
@@ -9172,7 +9225,7 @@
 			<treeLikelihood idref="treeLikelihood104"/>
 			<treeLikelihood idref="treeLikelihood105"/>
 			<treeLikelihood idref="treeLikelihood106"/>
-			<speciationLikelihood idref="speciation"/>
+			<argCoalescentLikelihood idref="arg.prior"/>
 			<parameter idref="clock.rate"/>
 			<parameter idref="treeModel.rootHeight"/>
 			<parameter idref="constant.popSize"/>
@@ -9816,7 +9869,7 @@
 			<argTreeModel idref="treeModel"/>
 			<posterior idref="posterior"/>
 		</logArgTree>
-		<logArg logEvery="1000" dotFormat="true" fileName="Rokas.args">
+		<logArg logEvery="1000" format="compressedString" fileName="Rokas.args">
 			<argTreeModel idref="treeModel"/>
 		</logArg>
 	</mcmc>
@@ -9934,4 +9987,6 @@
 	<treeTraceAnalysis fileName="YPR074C.trees" shortReport="true"/>
 	<treeTraceAnalysis fileName="YPR140W.trees" shortReport="true"/>
 	<treeTraceAnalysis fileName="YPR181C.trees" shortReport="true"/>
+
+	<argTraceAnalysis fileName="Rokas.args"/>
 </beast>

@@ -10,11 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Jan 15, 2007
- * Time: 10:11:59 AM
- * To change this template use File | Settings | File Templates.
+ * @author Marc Suchard
  */
 public class GraphMLUtils {
 

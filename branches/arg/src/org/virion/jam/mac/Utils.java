@@ -36,6 +36,10 @@ public class Utils {
         return MAC_OS_X;
     }
 
+    public static String getMacOSXVersion() {
+        return MAC_OS_X_VERSION;
+    }
+
     public static void macOSXRegistration(org.virion.jam.framework.Application application) {
         if (MAC_OS_X) {
 

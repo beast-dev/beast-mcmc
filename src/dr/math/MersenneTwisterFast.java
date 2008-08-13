@@ -148,10 +148,10 @@ class MersenneTwisterFast implements Serializable {
 	 * @param seed from constructor
 	 */
 	public final void setSeed(long seed) {
-        if( seed == 0 ) {
-            throw new IllegalArgumentException("Non zero random seed required."); 
-        }
-        initializationSeed = seed;
+		if (seed == 0) {
+			throw new IllegalArgumentException("Non zero random seed required.");
+		}
+		initializationSeed = seed;
 		haveNextNextGaussian = false;
 
 		mt = new int[N];
@@ -707,6 +707,20 @@ class MersenneTwisterFast implements Serializable {
 	}
 
 	/**
+	 * Returns a uniform random permutation of int objects in array
+	 */
+	public final void permute(int[] array) {
+		int l = array.length;
+		for (int i = 0; i < l; i++) {
+			int index = nextInt(l - i) + i;
+			int temp = array[index];
+			array[index] = array[i];
+			array[i] = temp;
+		}
+	}
+
+
+	/**
 	 * Shuffles an array.
 	 */
 	public final void shuffle(int[] array) {
@@ -749,6 +763,24 @@ class MersenneTwisterFast implements Serializable {
 			array[i] = i;
 		}
 		shuffle(array);
+
+		return array;
+	}
+
+	/**
+	 * Returns a uniform random permutation of ints 0,...,l-1
+	 *
+	 * @param l length of the array required.
+	 */
+	public int[] permuted(int l) {
+
+		int[] array = new int[l];
+
+		// initialize array
+		for (int i = 0; i < l; i++) {
+			array[i] = i;
+		}
+		permute(array);
 
 		return array;
 	}

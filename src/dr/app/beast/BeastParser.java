@@ -289,7 +289,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(new TreeLoggerParser());
 		addXMLObjectParser(dr.inference.loggers.Columns.PARSER);
 		addXMLObjectParser(dr.inference.operators.SimpleOperatorSchedule.PARSER);
-		addXMLObjectParser(new dr.inference.markovchain.ConvergenceListenerParser());
+//		addXMLObjectParser(new dr.inference.markovchain.ConvergenceListenerParser());
 
 
 		addXMLObjectParser(dr.inference.operators.RandomWalkIntegerOperator.PARSER);

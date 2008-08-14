@@ -505,11 +505,16 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new StringAttributeRule(TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
+                new ElementRule(TRAIT_PARAMETER, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class)
+                }),
                 AttributeRule.newBooleanRule(IN_REAL_TIME, true),
                 new ElementRule(MultivariateDiffusionModel.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class, true),
                 AttributeRule.newDoubleArrayRule("cut", true),
+                AttributeRule.newBooleanRule(REPORT_MULTIVARIATE,true),
+                AttributeRule.newBooleanRule(TREE_LENGTH,true),
                 new ElementRule(Parameter.class, true),
                 new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)

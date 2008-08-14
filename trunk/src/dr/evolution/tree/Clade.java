@@ -30,11 +30,16 @@ public class Clade implements Comparable<Clade> {
     }
 
     public int compareTo(Clade clade) {
-        int i = bits.cardinality();
-        int j = clade.bits.cardinality();
-        assert i == getSize() && j == clade.getSize();
-        return (i < j ? -1 : (i > j ? 1 : 0));
-    }
+		int setBitIndexI = 0;
+		int setBitIndexJ = 0;
+		do {
+			setBitIndexI = bits.nextSetBit(setBitIndexI + 1);
+			setBitIndexJ = clade.getBits().nextSetBit(setBitIndexJ + 1);
+		} while (setBitIndexI == setBitIndexJ && setBitIndexI != -1);
+
+		return (setBitIndexI < setBitIndexJ ? -1
+				: (setBitIndexI > setBitIndexJ ? 1 : 0));
+	}
 
     private final BitSet bits;
     private final double height;

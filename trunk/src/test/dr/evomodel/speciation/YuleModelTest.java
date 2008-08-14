@@ -27,6 +27,7 @@ import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import test.dr.evomodel.operators.ExchangeOperatorTest;
 import test.dr.inference.TraceTest;
 
 import java.util.List;
@@ -56,7 +57,26 @@ public class YuleModelTest extends TraceTest {
         tree = (FlexibleTree) importer.importTree(null);
     }
 
-    public void testYuleModel() {
+    public void testYuleWithSubtreeSlide() {
+
+        TreeModel treeModel = new TreeModel("treeModel", tree);
+
+        OperatorSchedule schedule = new SimpleOperatorSchedule();
+        MCMCOperator operator =
+                new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, CoercionMode.COERCION_ON);
+        schedule.addOperator(operator);
+
+        yuleTester(treeModel, schedule);
+
+    }
+
+    public void testYuleWithWideExchange() {
+
+        TreeModel treeModel = new TreeModel("treeModel", tree);
+        yuleTester(treeModel, ExchangeOperatorTest.getWideExchangeSchedule(treeModel));
+    }
+
+    private void yuleTester(TreeModel treeModel, OperatorSchedule schedule) {
 
         MCMC mcmc = new MCMC("mcmc1");
         MCMCOptions options = new MCMCOptions();
@@ -66,15 +86,8 @@ public class YuleModelTest extends TraceTest {
         options.setTemperature(1.0);
         options.setFullEvaluationCount(2000);
 
-
-        TreeModel treeModel = new TreeModel("treeModel", tree);
         TreelengthStatistic tls = new TreelengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
-
-        OperatorSchedule opsched = new SimpleOperatorSchedule();
-        MCMCOperator operator =
-                new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, CoercionMode.COERCION_ON);
-        opsched.addOperator(operator);
 
         Parameter b = new Parameter.Default("b", 2.0, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", 0.0, 0.0, Double.MAX_VALUE);
@@ -90,14 +103,14 @@ public class YuleModelTest extends TraceTest {
         loggers[0].add(rootHeight);
         loggers[0].add(tls);
 
-        loggers[1] = new MCLogger(new TabDelimitedFormatter(System.out), 10000, false);
+        loggers[1] = new MCLogger(new TabDelimitedFormatter(System.out), 100000, false);
         loggers[1].add(likelihood);
         loggers[1].add(rootHeight);
         loggers[1].add(tls);
 
         mcmc.setShowOperatorAnalysis(true);
 
-        mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, opsched, loggers);
+        mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
 
         mcmc.run();
 

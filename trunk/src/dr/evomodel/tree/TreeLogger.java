@@ -55,6 +55,12 @@ public class TreeLogger extends MCLogger {
     private List<String> taxaIds = new ArrayList<String>();
     private boolean mapNames = true;
 
+    public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
+                      boolean sortTranslationTable, boolean mapNames) {
+
+        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames);
+    }
+
     public TreeLogger(Tree tree, BranchRateController branchRateProvider,
                       TreeAttributeProvider[] treeAttributeProviders,
                       NodeAttributeProvider[] nodeAttributeProviders,
@@ -116,7 +122,7 @@ public class TreeLogger extends MCLogger {
             logLine("");
             logLine("Begin trees;");
 
-            if( mapNames ) {
+            if (mapNames) {
                 // This is needed if the trees use numerical taxon labels
                 logLine("\tTranslate");
                 int k = 1;

@@ -14,6 +14,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import dr.app.beauti.options.PartitionModel;
 import dr.app.beauti.priorsPanel.PriorsPanel;
+import dr.app.beauti.treespanel.TreesPanel;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
@@ -55,6 +56,7 @@ public class BeautiFrame extends DocumentFrame {
     private SamplesPanel samplesPanel;
     private TaxaPanel taxaPanel;
     private ModelsPanel modelsPanel;
+    private TreesPanel treesPanel;
     private PriorsPanel priorsPanel;
     private OperatorsPanel operatorsPanel;
     private MCMCPanel mcmcPanel;
@@ -84,6 +86,7 @@ public class BeautiFrame extends DocumentFrame {
         samplesPanel = new SamplesPanel(this);
         taxaPanel = new TaxaPanel(this);
         modelsPanel = new ModelsPanel(this, getDeleteAction());
+        treesPanel = new TreesPanel(this);
         priorsPanel = new PriorsPanel(this);
         operatorsPanel = new OperatorsPanel(this);
         mcmcPanel = new MCMCPanel(this);
@@ -92,6 +95,7 @@ public class BeautiFrame extends DocumentFrame {
         tabbedPane.addTab("Sample Dates", samplesPanel);
         tabbedPane.addTab("Taxon Sets", taxaPanel);
         tabbedPane.addTab("Models", modelsPanel);
+        tabbedPane.addTab("Trees", treesPanel);
         tabbedPane.addTab("Priors", priorsPanel);
         tabbedPane.addTab("Operators", operatorsPanel);
         tabbedPane.addTab("MCMC", mcmcPanel);
@@ -122,31 +126,54 @@ public class BeautiFrame extends DocumentFrame {
         getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
         getContentPane().add(panel, BorderLayout.CENTER);
 
+        setAllOptions();
+
+        setSize(new java.awt.Dimension(1024, 768));
+    }
+
+    /**
+     * set all the options for all panels
+     */
+    private final void setAllOptions() {
         dataPanel.setOptions(beautiOptions);
         samplesPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
         modelsPanel.setOptions(beautiOptions);
+        treesPanel.setOptions(beautiOptions);
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         mcmcPanel.setOptions(beautiOptions);
-
-        setSize(new java.awt.Dimension(1024, 768));
     }
+
+    /**
+     * get all the options for all panels
+     */
+    private final void getAllOptions() {
+        dataPanel.getOptions(beautiOptions);
+        samplesPanel.getOptions(beautiOptions);
+        taxaPanel.getOptions(beautiOptions);
+        modelsPanel.getOptions(beautiOptions);
+        treesPanel.getOptions(beautiOptions);
+        priorsPanel.getOptions(beautiOptions);
+        operatorsPanel.getOptions(beautiOptions);
+        mcmcPanel.getOptions(beautiOptions);
+    }
+
+    // These functions are called when controls in the different panels
+    // are changed. The minimum they do is call setDirty, but they may
+    // tell other panels to update from the options.
 
     public final void dataChanged() {
         samplesPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
         modelsPanel.setOptions(beautiOptions);
+        treesPanel.setOptions(beautiOptions);
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         setDirty();
     }
 
-    public final void samplesChanged() {
-        taxaPanel.setOptions(beautiOptions);
-        modelsPanel.setOptions(beautiOptions);
-        priorsPanel.setOptions(beautiOptions);
-        operatorsPanel.setOptions(beautiOptions);
+    public final void samplingTimesChanged() {
         setDirty();
     }
 
@@ -171,17 +198,6 @@ public class BeautiFrame extends DocumentFrame {
         setDirty();
     }
 
-
-    public void doDelete() {
-        if (tabbedPane.getSelectedComponent() == dataPanel) {
-            dataPanel.removeSelection();
-        } else if (tabbedPane.getSelectedComponent() == modelsPanel) {
-            modelsPanel.removeSelection();
-        } else {
-            throw new RuntimeException("Delete should only be accessable from the Data and Models panels");
-        }
-    }
-
     public final void modelChanged() {
 
         modelsPanel.getOptions(beautiOptions);
@@ -192,22 +208,36 @@ public class BeautiFrame extends DocumentFrame {
         setDirty();
     }
 
-    public final void operatorsChanged() {
+    public final void treePriorsChanged() {
+        treesPanel.getOptions(beautiOptions);
+
+        priorsPanel.setOptions(beautiOptions);
+        operatorsPanel.setOptions(beautiOptions);
+
         setDirty();
     }
 
     public final void priorsChanged() {
-        priorsPanel.getOptions(beautiOptions);
+        setDirty();
+    }
 
-        operatorsPanel.setOptions(beautiOptions);
-
-        priorsPanel.setOptions(beautiOptions);
-
+    public final void operatorsChanged() {
         setDirty();
     }
 
     public final void mcmcChanged() {
         setDirty();
+    }
+
+
+    public void doDelete() {
+        if (tabbedPane.getSelectedComponent() == dataPanel) {
+            dataPanel.removeSelection();
+        } else if (tabbedPane.getSelectedComponent() == modelsPanel) {
+            modelsPanel.removeSelection();
+        } else {
+            throw new RuntimeException("Delete should only be accessable from the Data and Models panels");
+        }
     }
 
     public boolean requestClose() {
@@ -343,7 +373,7 @@ public class BeautiFrame extends DocumentFrame {
 
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
-        Tree tree = null;
+        java.util.List<Tree> trees = new ArrayList<Tree>();
         PartitionModel model = null;
         java.util.List<NexusApplicationImporter.CharSet> charSets = new ArrayList<NexusApplicationImporter.CharSet>();
 
@@ -401,18 +431,19 @@ public class BeautiFrame extends DocumentFrame {
 
                     } else if (block == NexusImporter.TREES_BLOCK) {
 
-                        if (taxa == null) {
-                            throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a TREES block");
-                        }
-
-                        if (tree != null) {
+                        if (trees.size() > 0) {
                             throw new NexusImporter.MissingBlockException("TREES block already defined");
                         }
 
-                        Tree[] trees = importer.parseTreesBlock(taxa);
-                        if (trees.length > 0) {
-                            tree = trees[0];
+                        Tree[] treeArray = importer.parseTreesBlock(taxa);
+                        for (Tree tree : treeArray) {
+                            trees.add(tree);
                         }
+
+                        if (taxa == null && trees.size() > 0) {
+                            taxa = trees.get(0);
+                        }
+
 
                     } else if (block == NexusApplicationImporter.PAUP_BLOCK) {
 
@@ -551,6 +582,10 @@ public class BeautiFrame extends DocumentFrame {
             }
         }
 
+        if (trees.size() > 0) {
+            beautiOptions.trees.addAll(trees);
+        }
+
         if (beautiOptions.dataPartitions.size() > 0) {
             statusLabel.setText("Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
                     beautiOptions.dataPartitions.size() +
@@ -560,16 +595,11 @@ public class BeautiFrame extends DocumentFrame {
             beautiOptions.meanDistance = 0.0;
         }
 
-        dataPanel.setOptions(beautiOptions);
-        samplesPanel.setOptions(beautiOptions);
-        taxaPanel.setOptions(beautiOptions);
-        modelsPanel.setOptions(beautiOptions);
-        priorsPanel.setOptions(beautiOptions);
-        operatorsPanel.setOptions(beautiOptions);
-        mcmcPanel.setOptions(beautiOptions);
+        setAllOptions();
 
-        getOpenAction().setEnabled(true);
-        getSaveAction().setEnabled(true);
+        // @Todo templates are not implemented yet...
+//        getOpenAction().setEnabled(true);
+//        getSaveAction().setEnabled(true);
         getExportAction().setEnabled(true);
     }
 
@@ -608,15 +638,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     protected void generate(File file) throws IOException {
-        dataPanel.getOptions(beautiOptions);
-        samplesPanel.getOptions(beautiOptions);
-        taxaPanel.getOptions(beautiOptions);
-
-        modelsPanel.getOptions(beautiOptions);
-
-        priorsPanel.getOptions(beautiOptions);
-        operatorsPanel.getOptions(beautiOptions);
-        mcmcPanel.getOptions(beautiOptions);
+        getAllOptions();
 
         FileWriter fw = new FileWriter(file);
         generator.generateXML(fw);

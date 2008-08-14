@@ -80,7 +80,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         }
 
         public MissingBlockException(String message) {
-            super(message);
+            super(message); 
         }
     }
 

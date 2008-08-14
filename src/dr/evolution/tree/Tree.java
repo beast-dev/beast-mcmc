@@ -340,6 +340,35 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             }
         }
 
+
+        /**
+         * Gets a set of noderefs of the leaf nodes descended from the given node.
+         */
+        public static Set<NodeRef> getExternalNodes(Tree tree, NodeRef node) {
+
+            HashSet<NodeRef> set = new HashSet<NodeRef>();
+            getExternalNodes(tree, node, set);
+            return set;
+        }
+
+        /**
+         * Gets a set of taxa names (as strings) of the leaf nodes descended from the given node.
+         */
+        private static void getExternalNodes(Tree tree, NodeRef node, Set<NodeRef> set) {
+
+            if (tree.isExternal(node)) {
+                set.add(node);
+            } else {
+
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                    NodeRef node1 = tree.getChild(node, i);
+
+                    getExternalNodes(tree, node1, set);
+                }
+            }
+        }
+
         /**
          * Gets the most recent common ancestor (MRCA) node of a set of leaf nodes.
          *

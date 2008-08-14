@@ -53,31 +53,6 @@ public class FlexibleTree implements MutableTree {
 	 */
 	public FlexibleTree(Tree tree) {
         this(tree, false);
-        // Unbelievable code duplication
-
-//        setUnits(tree.getUnits());
-//
-//		root = new FlexibleNode(tree, tree.getRoot());
-//
-//		nodeCount = tree.getNodeCount();
-//		internalNodeCount = tree.getInternalNodeCount();
-//		externalNodeCount = tree.getExternalNodeCount();
-//
-//
-//		nodes = new FlexibleNode[nodeCount];
-//
-//		FlexibleNode node = root;
-//		do {
-//			node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
-//			if ((node.getNumber() >= externalNodeCount && node.isExternal()) ||
-//					(node.getNumber() < externalNodeCount && !node.isExternal())) {
-//				throw new RuntimeException("Error cloning tree: node numbers are incompatible");
-//			}
-//			nodes[node.getNumber()] = node;
-//		} while (node != root);
-//
-//		heightsKnown = tree.hasNodeHeights();
-//		lengthsKnown = tree.hasBranchLengths();
 	}
 
 	/**
@@ -494,46 +469,56 @@ public class FlexibleTree implements MutableTree {
 	 * Re-root the tree on the branch above the given node at the given height.
 	 */
 	public void changeRoot(NodeRef node, double height) {
+        FlexibleNode node1 = (FlexibleNode) node;
+        FlexibleNode parent = node1.getParent();
 
-		FlexibleNode node1 = (FlexibleNode) node;
-		FlexibleNode parent = node1.getParent();
-		if (parent == null || parent == root) {
-			// the node is already the root so nothing to do...
-			return;
-		}
+        double l1 = height - getNodeHeight(node);
+        if (l1 < 0.0) {
+            throw new IllegalArgumentException("New root height less than the node's height");
+        }
 
-		beginTreeEdit();
+        double l2 = getNodeHeight(parent) - height;
+        if (l2 < 0.0) {
+            throw new IllegalArgumentException("New root height above the node's parent's height");
+        }
 
-		double l1 = height - getNodeHeight(node);
-		if (l1 < 0.0) {
-			throw new IllegalArgumentException("New root height less than the node's height");
-		}
+        changeRoot(node, l1, l2);
+    }
 
-		double l2 = getNodeHeight(parent) - height;
-		if (l2 < 0.0) {
-			throw new IllegalArgumentException("New root height above the node's parent's height");
-		}
+    /**
+     * Re-root the tree on the branch above the given node with the given branch lengths.
+     */
+    public void changeRoot(NodeRef node, double l1, double l2) {
 
-		if (!lengthsKnown) {
-			calculateBranchLengths();
-		}
+        FlexibleNode node1 = (FlexibleNode) node;
+        FlexibleNode parent = node1.getParent();
+        if (parent == null || parent == root) {
+            // the node is already the root so nothing to do...
+            return;
+        }
 
-		FlexibleNode parent2 = parent.getParent();
+        beginTreeEdit();
 
-		swapParentNode(parent, parent2, null);
+        if (!lengthsKnown) {
+            calculateBranchLengths();
+        }
 
-		// the root is now free so use it as the root again
-		parent.removeChild(node1);
-		root.addChild(node1);
-		root.addChild(parent);
+        FlexibleNode parent2 = parent.getParent();
 
-		node1.setLength(l1);
-		parent.setLength(l2);
+        swapParentNode(parent, parent2, null);
 
-		heightsKnown = false;
+        // the root is now free so use it as the root again
+        parent.removeChild(node1);
+        root.addChild(node1);
+        root.addChild(parent);
 
-		endTreeEdit();
-	}
+        node1.setLength(l1);
+        parent.setLength(l2);
+
+        heightsKnown = false;
+
+        endTreeEdit();
+    }
 
 	/**
 	 * Work up through the tree putting the parent into the child.

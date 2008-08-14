@@ -25,9 +25,7 @@
 
 package dr.app.beauti;
 
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.NucModelType;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.*;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NexusImporter;
 
@@ -281,9 +279,10 @@ public class NexusApplicationImporter extends NexusImporter {
             } else if (match("STARTINGTREE", subcommand, 2)) {
                 String token = readToken(";");
                 if (match("USER", token, 1)) {
-                    options.userTree = true;
+                    // How do we know what tree to use?
+                    options.startingTreeType = StartingTreeType.USER;
                 } else if (match("RANDOM", token, 1)) {
-                    options.userTree = false;
+                    options.startingTreeType = StartingTreeType.RANDOM;
                 } else {
                     throw new BadFormatException("Unknown value, '" + token + "'");
                 }

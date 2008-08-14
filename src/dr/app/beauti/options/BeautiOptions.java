@@ -681,7 +681,7 @@ public class BeautiOptions extends ModelOptions {
         dataElement.addContent(createChild("datesUnits", datesUnits));
         dataElement.addContent(createChild("datesDirection", datesDirection));
         dataElement.addContent(createChild("translation", translation));
-        dataElement.addContent(createChild("userTree", userTree));
+        dataElement.addContent(createChild("startingTreeType", startingTreeType.name()));
 
         dataElement.addContent(createChild("guessDates", guessDates));
         dataElement.addContent(createChild("guessDateFromOrder", dateGuesser.guessDateFromOrder));
@@ -803,7 +803,6 @@ public class BeautiOptions extends ModelOptions {
 
         Element mcmcElement = new Element("mcmc");
 
-        mcmcElement.addContent(createChild("upgmaStartingTree", upgmaStartingTree));
         mcmcElement.addContent(createChild("chainLength", chainLength));
         mcmcElement.addContent(createChild("logEvery", logEvery));
         mcmcElement.addContent(createChild("echoEvery", echoEvery));
@@ -1059,13 +1058,14 @@ public class BeautiOptions extends ModelOptions {
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
     public List<DataPartition> dataPartitions = new ArrayList<DataPartition>();
-    public Tree tree = null;
+    public List<Tree> trees = new ArrayList<Tree>();
     public double meanDistance = 1.0;
     public int datesUnits = YEARS;
     public int datesDirection = FORWARDS;
     public double maximumTipHeight = 0.0;
     public int translation = 0;
-    public boolean userTree = false;
+    public StartingTreeType startingTreeType = StartingTreeType.RANDOM;
+    public Tree userStartingTree = null;
 
     // Model options
     List<PartitionModel> models = new ArrayList<PartitionModel>();
@@ -1086,7 +1086,6 @@ public class BeautiOptions extends ModelOptions {
     public ClockType clockType = ClockType.STRICT_CLOCK;
 
     // MCMC options
-    public boolean upgmaStartingTree = false;
     public int chainLength = 10000000;
     public int logEvery = 1000;
     public int echoEvery = 1000;

@@ -53,6 +53,12 @@ public class ScaleOperator extends AbstractCoercableOperator {
     private Parameter indicator;
     private double indicatorOnProb;
 
+    public ScaleOperator(Parameter parameter, double scale, CoercionMode mode, double weight) {
+
+        this(parameter, false, 0, scale, mode, null, 1.0, false);
+        setWeight(weight);
+    }
+
     public ScaleOperator(Parameter parameter, boolean scaleAll, int degreesOfFreedom, double scale,
                          CoercionMode mode, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
 

@@ -35,6 +35,7 @@ import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.evomodel.arg.OldTreeLogger;
 import dr.evomodel.arg.coalescent.VeryOldCoalescentLikelihood;
 import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.coalescent.ConstantPopulationModel;
@@ -46,7 +47,6 @@ import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.tree.TreeLogger;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evoxml.SitePatternsParser;
@@ -741,12 +741,12 @@ public class BeastOptions {
 					writeNucSiteModel(i, writer);
 				}
 				writer.println();
-				writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default("id", "allMus")});
+				writer.writeOpenTag(ARGCompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default("id", "allMus")});
 				for (int i = 1; i <= 3; i++) {
 					writer.writeTag(ParameterParser.PARAMETER,
 							new Attribute[]{new Attribute.Default("idref", "siteModel" + i + ".mu")}, true);
 				}
-				writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+				writer.writeCloseTag(ARGCompoundParameter.COMPOUND_PARAMETER);
 			} else {
 				writeNucSiteModel(1, writer);
 			}
@@ -1216,15 +1216,15 @@ public class BeastOptions {
 		if (treeFileName == null) {
 			treeFileName = fileNameStem + ".trees";
 		}
-		writer.writeOpenTag(TreeLogger.LOG_TREE,
+		writer.writeOpenTag(OldTreeLogger.LOG_TREE,
 				new Attribute[]{
 						new Attribute.Default("id", "treeFileLog"),
-						new Attribute.Default(TreeLogger.LOG_EVERY, logEvery + ""),
-						new Attribute.Default(TreeLogger.NEXUS_FORMAT, "true"),
-						new Attribute.Default(TreeLogger.FILE_NAME, treeFileName)
+						new Attribute.Default(OldTreeLogger.LOG_EVERY, logEvery + ""),
+						new Attribute.Default(OldTreeLogger.NEXUS_FORMAT, "true"),
+						new Attribute.Default(OldTreeLogger.FILE_NAME, treeFileName)
 				});
 		writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default("idref", "treeModel1"), true);
-		writer.writeCloseTag(TreeLogger.LOG_TREE);
+		writer.writeCloseTag(OldTreeLogger.LOG_TREE);
 
 		writer.writeCloseTag("mcmc");
 	}

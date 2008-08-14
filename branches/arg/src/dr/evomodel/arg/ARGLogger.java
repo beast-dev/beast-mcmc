@@ -167,7 +167,7 @@ public class ARGLogger extends MCLogger {
 
 			ARGLogger logger = new ARGLogger(argModel, formatter, logEvery, argModelLoggerFormat);
 
-//			TreeLogger logger = new TreeLogger(tree, branchRateModel, rateLabel,
+//			OldTreeLogger logger = new OldTreeLogger(tree, branchRateModel, rateLabel,
 //					colourSamplerModel, colouringLabel, likelihood, likelihoodLabel,
 //					formatter, logEvery, nexusFormat, substitutions);
 

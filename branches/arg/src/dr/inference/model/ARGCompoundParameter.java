@@ -1,5 +1,5 @@
 /*
- * CompoundParameter.java
+ * ARGCompoundParameter.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -32,13 +32,13 @@ import dr.xml.*;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: CompoundParameter.java,v 1.13 2005/06/14 10:40:34 rambaut Exp $
+ * @version $Id: ARGCompoundParameter.java,v 1.13 2005/06/14 10:40:34 rambaut Exp $
  */
-public class CompoundParameter extends Parameter.Abstract implements ParameterListener {
+public class ARGCompoundParameter extends Parameter.Abstract implements ParameterListener {
 
 	public static final String COMPOUND_PARAMETER = "compoundParameter";
 
-	public CompoundParameter(String name, Parameter[] parameters) {
+	public ARGCompoundParameter(String name, Parameter[] parameters) {
 //		this.name = name;
 		this.parameters = parameters;
 		dimension = 0;
@@ -49,7 +49,7 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 
 	}
 
-	public CompoundParameter(String name) {
+	public ARGCompoundParameter(String name) {
 //		this.name = name;
 		dimension = 0;
 	}
@@ -195,7 +195,7 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			CompoundParameter compoundParameter = new CompoundParameter(COMPOUND_PARAMETER);
+			ARGCompoundParameter compoundParameter = new ARGCompoundParameter(COMPOUND_PARAMETER);
 
 			for (int i = 0; i < xo.getChildCount(); i++) {
 				compoundParameter.addParameter((Parameter) xo.getChild(i));
@@ -220,7 +220,7 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 		};
 
 		public Class getReturnType() {
-			return CompoundParameter.class;
+			return ARGCompoundParameter.class;
 		}
 	};
 

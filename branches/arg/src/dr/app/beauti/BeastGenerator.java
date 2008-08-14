@@ -36,6 +36,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.arg.ARGLogger;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGTreeLogger;
+import dr.evomodel.arg.OldTreeLogger;
 import dr.evomodel.arg.branchratemodel.ARGDiscretizedBranchRates;
 import dr.evomodel.arg.coalescent.BayesianSkylineLikelihood;
 import dr.evomodel.arg.coalescent.VeryOldCoalescentLikelihood;
@@ -57,7 +58,6 @@ import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
-import dr.evomodel.tree.TreeLogger;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evoxml.*;
@@ -958,12 +958,12 @@ public class BeastGenerator extends BeautiOptions {
 					writeNucSiteModel(i, writer);
 				}
 				writer.println();
-				writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default("id", "allMus")});
+				writer.writeOpenTag(ARGCompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default("id", "allMus")});
 				for (int i = 1; i <= partitionCount; i++) {
 					writer.writeTag(ParameterParser.PARAMETER,
 							new Attribute[]{new Attribute.Default("idref", "siteModel" + i + ".mu")}, true);
 				}
-				writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+				writer.writeCloseTag(ARGCompoundParameter.COMPOUND_PARAMETER);
 			} else {
 				writeNucSiteModel(-1, writer);
 			}
@@ -1512,10 +1512,10 @@ public class BeastGenerator extends BeautiOptions {
 						new Attribute.Default("scaleAll", "true"),
 						new Attribute.Default("weight", Integer.toString((int) operator.weight)),
 				});
-		writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER);
+		writer.writeOpenTag(ARGCompoundParameter.COMPOUND_PARAMETER);
 		writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default("idref", operator.parameter1.getName())}, true);
 		writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default("idref", operator.parameter2.getName())}, true);
-		writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+		writer.writeCloseTag(ARGCompoundParameter.COMPOUND_PARAMETER);
 		writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
 	}
 
@@ -1819,7 +1819,7 @@ public class BeastGenerator extends BeautiOptions {
 				logName = ARGTreeLogger.LOG_ARG;
 				treeName = ARGModel.TREE_MODEL;
 			} else {
-				logName = TreeLogger.LOG_TREE;
+				logName = OldTreeLogger.LOG_TREE;
 				treeName = ARGModel.TREE_MODEL;
 			}
 			if (argModel) {
@@ -1827,18 +1827,18 @@ public class BeastGenerator extends BeautiOptions {
 						new Attribute[]{
 								new Attribute.Default("id", "treeFileLog" + (i + 1)),
 								new Attribute.Default("partition", (i)),
-								new Attribute.Default(TreeLogger.LOG_EVERY, logEvery + ""),
-								new Attribute.Default(TreeLogger.NEXUS_FORMAT, "true"),
-								new Attribute.Default(TreeLogger.FILE_NAME, treeFileName)
+								new Attribute.Default(OldTreeLogger.LOG_EVERY, logEvery + ""),
+								new Attribute.Default(OldTreeLogger.NEXUS_FORMAT, "true"),
+								new Attribute.Default(OldTreeLogger.FILE_NAME, treeFileName)
 						});
 
 			} else {
 				writer.writeOpenTag(logName,
 						new Attribute[]{
 								new Attribute.Default("id", "treeFileLog"),
-								new Attribute.Default(TreeLogger.LOG_EVERY, logEvery + ""),
-								new Attribute.Default(TreeLogger.NEXUS_FORMAT, "true"),
-								new Attribute.Default(TreeLogger.FILE_NAME, treeFileName)
+								new Attribute.Default(OldTreeLogger.LOG_EVERY, logEvery + ""),
+								new Attribute.Default(OldTreeLogger.NEXUS_FORMAT, "true"),
+								new Attribute.Default(OldTreeLogger.FILE_NAME, treeFileName)
 						});
 			}
 			writer.writeTag(treeName, new Attribute.Default("idref", "treeModel"), true);
@@ -1868,7 +1868,7 @@ public class BeastGenerator extends BeautiOptions {
 //            }
 //            writer.writeOpenTag("logML",
 //                    new Attribute[] {
-//                        new Attribute.Default(TreeLogger.FILE_NAME, mapTreeFileName)
+//                        new Attribute.Default(OldTreeLogger.FILE_NAME, mapTreeFileName)
 //                    });
 //            writer.writeOpenTag("ml");
 //            writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default("idref", "posterior"), true);
@@ -1886,13 +1886,13 @@ public class BeastGenerator extends BeautiOptions {
 			if (substTreeFileName == null) {
 				substTreeFileName = fileNameStem + "(subst).trees";
 			}
-			writer.writeOpenTag(TreeLogger.LOG_TREE,
+			writer.writeOpenTag(OldTreeLogger.LOG_TREE,
 					new Attribute[]{
 							new Attribute.Default("id", "substTreeFileLog"),
-							new Attribute.Default(TreeLogger.LOG_EVERY, logEvery + ""),
-							new Attribute.Default(TreeLogger.NEXUS_FORMAT, "true"),
-							new Attribute.Default(TreeLogger.FILE_NAME, substTreeFileName),
-							new Attribute.Default(TreeLogger.BRANCH_LENGTHS, TreeLogger.SUBSTITUTIONS)
+							new Attribute.Default(OldTreeLogger.LOG_EVERY, logEvery + ""),
+							new Attribute.Default(OldTreeLogger.NEXUS_FORMAT, "true"),
+							new Attribute.Default(OldTreeLogger.FILE_NAME, substTreeFileName),
+							new Attribute.Default(OldTreeLogger.BRANCH_LENGTHS, OldTreeLogger.SUBSTITUTIONS)
 					});
 			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default("idref", "treeModel"), true);
 			if (clockModel == STRICT_CLOCK) {
@@ -1900,7 +1900,7 @@ public class BeastGenerator extends BeautiOptions {
 			} else {
 				writer.writeTag(ARGDiscretizedBranchRates.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default("idref", "branchRates")}, true);
 			}
-			writer.writeCloseTag(TreeLogger.LOG_TREE);
+			writer.writeCloseTag(OldTreeLogger.LOG_TREE);
 		}
 
 		writer.writeCloseTag("mcmc");

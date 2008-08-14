@@ -28,7 +28,6 @@ package dr.evomodel.arg;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.structure.ColourSamplerModel;
-import dr.evomodel.tree.TreeLogger;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MLLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -46,7 +45,7 @@ import java.io.PrintWriter;
  * @author Marc Suchard
  * @version $Id: ARGTreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
  */
-public class ARGTreeLogger extends TreeLogger {
+public class ARGTreeLogger extends OldTreeLogger {
 
 	public static final String LOG_ARG = "logArgTree";
 	public static final String PARTITION = "partition";

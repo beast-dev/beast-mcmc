@@ -17,7 +17,7 @@ import dr.xml.*;
  * @author Marc Suchard
  * @version $Id: VariableSizeCompoundParameter.java,v 1.1.1.1 2006/10/02 20:47:46 msuchard Exp $
  */
-public class VariableSizeCompoundParameter extends CompoundParameter {
+public class VariableSizeCompoundParameter extends ARGCompoundParameter {
 
 	public static final String COMPOUND_PARAMETER = "variableSizeCompoundParameter";
 
@@ -128,7 +128,7 @@ public class VariableSizeCompoundParameter extends CompoundParameter {
 		};
 
 		public Class getReturnType() {
-			return CompoundParameter.class;
+			return ARGCompoundParameter.class;
 		}
 	};
 

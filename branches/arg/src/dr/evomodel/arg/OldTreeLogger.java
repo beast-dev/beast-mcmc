@@ -1,5 +1,5 @@
 /*
- * TreeLogger.java
+ * OldTreeLogger.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.tree;
+package dr.evomodel.arg;
 
 import dr.evolution.colouring.TreeColouring;
 import dr.evolution.tree.Tree;
@@ -46,9 +46,9 @@ import java.io.PrintWriter;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
+ * @version $Id: OldTreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
  */
-public class TreeLogger extends MCLogger {
+public class OldTreeLogger extends MCLogger {
 
 	public static final String LOG_TREE = "logTree";
 	public static final String NEXUS_FORMAT = "nexusFormat";
@@ -74,10 +74,10 @@ public class TreeLogger extends MCLogger {
 	/**
 	 * Constructor
 	 */
-	public TreeLogger(Tree tree, BranchRateModel branchRateModel, String rateLabel,
-	                  ColourSamplerModel colourSamplerModel, String colouringLabel,
-	                  Likelihood likelihood, String likelihoodLabel,
-	                  LogFormatter formatter, int logEvery, boolean nexusFormat, boolean substitutions) {
+	public OldTreeLogger(Tree tree, BranchRateModel branchRateModel, String rateLabel,
+	                     ColourSamplerModel colourSamplerModel, String colouringLabel,
+	                     Likelihood likelihood, String likelihoodLabel,
+	                     LogFormatter formatter, int logEvery, boolean nexusFormat, boolean substitutions) {
 
 		super(formatter, logEvery);
 
@@ -267,7 +267,7 @@ public class TreeLogger extends MCLogger {
 
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-			TreeLogger logger = new TreeLogger(tree, branchRateModel, rateLabel,
+			OldTreeLogger logger = new OldTreeLogger(tree, branchRateModel, rateLabel,
 					colourSamplerModel, colouringLabel, likelihood, likelihoodLabel,
 					formatter, logEvery, nexusFormat, substitutions);
 

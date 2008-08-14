@@ -3160,7 +3160,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 					"At least one of rootNode, internalNodes or leafNodes must be true");
 		}
 
-		// CompoundParameter parameter = new CompoundParameter("nodeRates");
+		// ARGCompoundParameter parameter = new ARGCompoundParameter("nodeRates");
 		VariableSizeCompoundParameter parameter = new VariableSizeCompoundParameter(
 				"nodeRates");
 
@@ -3197,7 +3197,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 					"At least one of rootNode, internalNodes or leafNodes must be true");
 		}
 
-		CompoundParameter parameter = new CompoundParameter("nodeTraits");
+		ARGCompoundParameter parameter = new ARGCompoundParameter("nodeTraits");
 
 		hasTraits = true;
 

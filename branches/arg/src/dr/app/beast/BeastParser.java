@@ -25,6 +25,8 @@
 
 package dr.app.beast;
 
+import dr.evomodel.arg.OldTreeLogger;
+import dr.inference.model.ARGCompoundParameter;
 import dr.xml.*;
 
 import java.util.Iterator;
@@ -186,7 +188,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.indel.TKF91Model.PARSER);
 		addXMLObjectParser(dr.evomodel.indel.IstvanOperator.PARSER);
 
-		addXMLObjectParser(dr.inference.model.CompoundParameter.PARSER);
+		addXMLObjectParser(ARGCompoundParameter.PARSER);
 		addXMLObjectParser(dr.inference.model.CompoundLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.model.BooleanLikelihood.PARSER);
 		addXMLObjectParser(dr.inference.model.DummyLikelihood.PARSER);
@@ -229,7 +231,7 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.mcmc.MCMC.PARSER);
 		addXMLObjectParser(dr.inference.loggers.MCLogger.PARSER);
 		addXMLObjectParser(dr.inference.loggers.MLLogger.ML_LOGGER_PARSER);
-		addXMLObjectParser(dr.evomodel.tree.TreeLogger.PARSER);
+		addXMLObjectParser(OldTreeLogger.PARSER);
 		addXMLObjectParser(dr.evomodel.arg.ARGTreeLogger.PARSER);
 		addXMLObjectParser(dr.evomodel.arg.ARGLogger.PARSER);
 		addXMLObjectParser(dr.inference.loggers.Columns.PARSER);

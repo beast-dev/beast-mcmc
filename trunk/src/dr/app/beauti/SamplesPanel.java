@@ -74,7 +74,6 @@ public class SamplesPanel extends JPanel implements Exportable {
 
     JComboBox unitsCombo = new JComboBox(new String[]{"Years", "Months", "Days"});
     JComboBox directionCombo = new JComboBox(new String[]{"Since some time in the past", "Before the present"});
-    //RealNumberField originField = new RealNumberField(0.0, Double.POSITIVE_INFINITY);
 
     BeautiFrame frame = null;
 
@@ -123,21 +122,13 @@ public class SamplesPanel extends JPanel implements Exportable {
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.setOpaque(false);
 
-        clearDatesAction.setEnabled(false);
-
-        guessDatesAction.setEnabled(false);
         PanelUtils.setupComponent(unitsCombo);
-        unitsCombo.setEnabled(false);
         PanelUtils.setupComponent(directionCombo);
-        directionCombo.setEnabled(false);
-        //originField.setEnabled(false);
-        //originField.setValue(0.0);
-        //originField.setColumns(12);
 
         JToolBar toolBar1 = new JToolBar();
         toolBar1.setFloatable(false);
         toolBar1.setOpaque(false);
-//		toolBar1.setLayout(new BoxLayout(toolBar1, javax.swing.BoxLayout.X_AXIS));
+
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
         JButton button = new JButton(clearDatesAction);
         PanelUtils.setupComponent(button);
@@ -146,10 +137,10 @@ public class SamplesPanel extends JPanel implements Exportable {
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
         toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
-        toolBar1.add(new JLabel("Dates specified as "));
+        final JLabel unitsLabel = new JLabel("Dates specified as ");
+        toolBar1.add(unitsLabel);
         toolBar1.add(unitsCombo);
         toolBar1.add(directionCombo);
-        //toolBar.add(originField);
 
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
@@ -165,14 +156,18 @@ public class SamplesPanel extends JPanel implements Exportable {
         clearDatesAction.setEnabled(false);
         guessDatesAction.setEnabled(false);
         directionCombo.setEnabled(false);
+        unitsLabel.setEnabled(false);
+        unitsCombo.setEnabled(false);
         scrollPane.setEnabled(false);
         dataTable.setEnabled(false);
 
         usingSamplingDates.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                boolean enabled = usingSamplingDates.isEnabled();
+                boolean enabled = usingSamplingDates.isSelected();
                 clearDatesAction.setEnabled(enabled);
                 guessDatesAction.setEnabled(enabled);
+                unitsLabel.setEnabled(enabled);
+                unitsCombo.setEnabled(enabled);
                 directionCombo.setEnabled(enabled);
                 scrollPane.setEnabled(enabled);
                 dataTable.setEnabled(enabled);
@@ -186,16 +181,6 @@ public class SamplesPanel extends JPanel implements Exportable {
         };
         unitsCombo.addItemListener(listener);
         directionCombo.addItemListener(listener);
-        //originField.addKeyListener(new java.awt.event.KeyAdapter() {
-        //	public void keyTyped(java.awt.event.KeyEvent ev) {
-        //		timeScaleChanged();
-        //	}});
-
-    }
-
-    public final void dataChanged() {
-        calculateHeights();
-        frame.dataChanged();
     }
 
     public final void timeScaleChanged() {
@@ -214,8 +199,6 @@ public class SamplesPanel extends JPanel implements Exportable {
 
         boolean backwards = directionCombo.getSelectedIndex() == 1;
 
-        //double origin = originField.getValue().doubleValue();
-
         for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
             Date date = options.taxonList.getTaxon(i).getDate();
             double d = date.getTimeValue();
@@ -228,7 +211,7 @@ public class SamplesPanel extends JPanel implements Exportable {
         calculateHeights();
 
         dataTableModel.fireTableDataChanged();
-        frame.dataChanged();
+        frame.samplingTimesChanged();
     }
 
     private Date createDate(double timeValue, Units.Type units, boolean backwards, double origin) {
@@ -240,17 +223,7 @@ public class SamplesPanel extends JPanel implements Exportable {
     }
 
     public void setOptions(BeautiOptions options) {
-
         this.options = options;
-
-        if (options.taxonList != null) {
-            clearDatesAction.setEnabled(true);
-            guessDatesAction.setEnabled(true);
-            unitsCombo.setEnabled(true);
-            directionCombo.setEnabled(true);
-
-            //originField.setEnabled(true);
-        }
 
         setupTable();
 
@@ -263,7 +236,7 @@ public class SamplesPanel extends JPanel implements Exportable {
     }
 
     private void setupTable() {
-//        dataTableModel.fireTableStructureChanged();
+        dataTableModel.fireTableDataChanged();
     }
 
     public void getOptions(BeautiOptions options) {
@@ -279,50 +252,6 @@ public class SamplesPanel extends JPanel implements Exportable {
         // nothing to do
     }
 
-//    public void deleteSelection() {
-//        int option = JOptionPane.showConfirmDialog(this, "Are you sure you wish to delete\n"+
-//                "the selected taxa?\n"+
-//                "This operation cannot be undone.",
-//                "Warning",
-//                JOptionPane.YES_NO_OPTION,
-//                JOptionPane.WARNING_MESSAGE);
-//
-//        if (option == JOptionPane.YES_OPTION) {
-//            int[] selRows = dataTable.getSelectedRows();
-//            String[] names = new String[selRows.length];
-//
-//            TableModel model = dataTable.getModel();
-//
-//            for (int i = 0; i < names.length; i++) {
-//                names[i] = (String)model.getValueAt(selRows[i], 0);
-//            }
-//
-//            for (int i = 0; i < names.length; i++) {
-//                if (options.originalAlignment != null) {
-//                    int index = options.originalAlignment.getTaxonIndex(names[i]);
-//                    options.originalAlignment.removeSequence(index);
-//                } else {
-//                    // there is no alignment so options.taxonList must be a Taxa object:
-//                    int index = options.taxonList.getTaxonIndex(names[i]);
-//                    ((Taxa)options.taxonList).removeTaxon(options.taxonList.getTaxon(index));
-//                }
-//            }
-//
-//            if (options.taxonList.getTaxonCount() == 0) {
-//                // if all the sequences are deleted we may as well throw
-//                // away the alignment...
-//
-//                options.originalAlignment = null;
-//                options.alignment = null;
-//                options.taxonList = null;
-//            }
-//
-//            dataTableModel.fireTableDataChanged();
-//            frame.dataChanged();
-//        }
-//
-//    }
-
     public void clearDates() {
         for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
             java.util.Date origin = new java.util.Date(0);
@@ -337,7 +266,6 @@ public class SamplesPanel extends JPanel implements Exportable {
         timeScaleChanged();
 
         dataTableModel.fireTableDataChanged();
-        frame.dataChanged();
     }
 
     public void guessDates() {
@@ -491,7 +419,6 @@ public class SamplesPanel extends JPanel implements Exportable {
         timeScaleChanged();
 
         dataTableModel.fireTableDataChanged();
-        frame.dataChanged();
     }
 
     public class ClearDatesAction extends AbstractAction {
@@ -612,7 +539,7 @@ public class SamplesPanel extends JPanel implements Exportable {
                 }
             }
 
-            dataChanged();
+            timeScaleChanged();
         }
 
         public boolean isCellEditable(int row, int col) {

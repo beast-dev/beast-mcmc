@@ -104,12 +104,11 @@ public class BeautiTester {
 
         // Data options
         beautiOptions.taxonList = null;
-        beautiOptions.tree = null;
 
         beautiOptions.datesUnits = BeautiOptions.YEARS;
         beautiOptions.datesDirection = BeautiOptions.FORWARDS;
 
-        beautiOptions.userTree = false;
+        beautiOptions.startingTreeType = StartingTreeType.RANDOM;
         beautiOptions.fixedTree = false;
 
         beautiOptions.performTraceAnalysis = false;

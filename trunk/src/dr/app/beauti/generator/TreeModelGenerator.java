@@ -1,8 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockType;
+import dr.app.beauti.options.*;
 import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeModelParser;
@@ -27,10 +26,10 @@ public class TreeModelGenerator extends Generator {
 
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("id", "treeModel"), false);
 
-        if (options.userTree) {
-            writer.writeTag("tree", new Attribute.Default<String>("idref", "startingTree"), true);
-        } else {
+        if (options.startingTreeType == StartingTreeType.RANDOM) {
             writer.writeTag(CoalescentSimulator.COALESCENT_TREE, new Attribute.Default<String>("idref", "startingTree"), true);
+        } else {
+            writer.writeTag("tree", new Attribute.Default<String>("idref", "startingTree"), true);
         }
 
         writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);

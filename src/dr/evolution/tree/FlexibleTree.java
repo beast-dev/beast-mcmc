@@ -829,7 +829,11 @@ public class FlexibleTree implements MutableTree {
 	 * @return whether two trees have the same topology
 	 */
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Tree)) {
+        if (obj == null) {
+            return false;
+        }
+        
+        if (!(obj instanceof Tree)) {
 			throw new IllegalArgumentException("FlexibleTree.equals can only compare instances of Tree");
 		}
 		return Tree.Utils.equal(this, (Tree) obj);

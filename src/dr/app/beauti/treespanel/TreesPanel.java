@@ -109,7 +109,6 @@ public class TreesPanel extends JPanel {
         bayesianSkylineCombo.addItemListener(listener);
 
         PanelUtils.setupComponent(startingTreeCombo);
-        startingTreeCombo.addItemListener(listener);
         startingTreeCombo.addItemListener(
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
@@ -120,7 +119,13 @@ public class TreesPanel extends JPanel {
         );
 
         PanelUtils.setupComponent(userTreeCombo);
-        userTreeCombo.addItemListener(listener);
+        userTreeCombo.addItemListener(
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                        fireUserTreeChanged();
+                    }
+                }
+        );
 
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
@@ -138,6 +143,13 @@ public class TreesPanel extends JPanel {
     private void fireTreePriorsChanged() {
         if (!settingOptions) {
             frame.treePriorsChanged();
+        }
+    }
+
+    private void fireUserTreeChanged() {
+        if (!settingOptions) {
+            frame.treePriorsChanged();
+            userTreePanel.setTree((Tree)userTreeCombo.getSelectedItem());
         }
     }
 
@@ -164,6 +176,7 @@ public class TreesPanel extends JPanel {
         treePriorPanel.addComponentWithLabel("                          Starting Tree:", startingTreeCombo);
         if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
             treePriorPanel.addComponentWithLabel("User Tree:", userTreeCombo);
+            userTreePanel.setTree((Tree)userTreeCombo.getSelectedItem());
         }
 
         validate();

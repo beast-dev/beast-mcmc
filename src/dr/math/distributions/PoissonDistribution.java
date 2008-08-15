@@ -58,4 +58,16 @@ public class PoissonDistribution implements Distribution {
     public UnivariateFunction getProbabilityDensityFunction() {
         throw new RuntimeException();
     }
+
+    public double truncatedMean(int max) {
+
+        double CDF = 0;
+        double mean = 0;
+        for(int i=0; i<=max; i++) {
+            double p = distribution.probability(i);
+            mean += i*p;
+            CDF += p;
+        }
+        return mean / CDF;        
+    }
 }

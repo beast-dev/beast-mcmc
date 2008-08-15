@@ -25,7 +25,7 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 	public CovariateGMRFSkylineLikelihood(Tree tree, Parameter popParameter, Parameter precParameter,
 	                                      Parameter lambda, Parameter beta, MatrixParameter dMatrix,
 	                                      Parameter data, Parameter times) {
-		super(tree, popParameter, null, precParameter, lambda, beta, dMatrix);
+		super(tree, popParameter, null, precParameter, lambda, beta, dMatrix, false);
 
 		covariateData = data;
 		covariateTimes = times;

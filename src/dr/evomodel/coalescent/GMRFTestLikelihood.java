@@ -22,7 +22,7 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 	public static final String SUFFSTAT_PARAMETER = "sufficientStatistics";
 
 	public GMRFTestLikelihood(Tree tree, Parameter popParameter, Parameter precParameter, Parameter lambda, Parameter beta, DesignMatrix design) {
-		super(tree, popParameter, null, precParameter, lambda, beta, design);
+		super(tree, popParameter, null, precParameter, lambda, beta, design,false);
 	}
 
 

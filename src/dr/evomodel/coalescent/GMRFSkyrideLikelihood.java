@@ -26,6 +26,8 @@
 package dr.evomodel.coalescent;
 
 
+import java.util.logging.Logger;
+
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -33,6 +35,8 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+import dr.math.distributions.LogNormalDistribution;
+import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.NotConvergedException;
@@ -61,6 +65,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	public static final String BETA_PARAMETER = "betaParameter";
 	public static final String COVARIATE_MATRIX = "covariateMatrix";
 	public static final String RANDOMIZE_TREE = "randomizeTree";
+	public static final String TIME_AWARE_SMOOTHING = "timeAwareSmoothing";
 	public static final double LOG_TWO_TIMES_PI = 1.837877;
 
 	// PRIVATE STUFF
@@ -80,13 +85,15 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	protected SymmTridiagMatrix weightMatrix;
 	protected SymmTridiagMatrix storedWeightMatrix;
 	protected MatrixParameter dMatrix;
+	protected boolean timeAwareSmoothing = false;
 
 	public GMRFSkyrideLikelihood() {
 		super(SKYLINE_LIKELIHOOD);
 	}
 
 	public GMRFSkyrideLikelihood(Tree tree, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
-	                             Parameter lambda, Parameter beta, MatrixParameter dMatrix) {
+	                             Parameter lambda, Parameter beta, MatrixParameter dMatrix,
+	                             boolean timeAwareSmoothing) {
 		super(SKYLINE_LIKELIHOOD);
 
 		
@@ -97,6 +104,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		this.lambdaParameter = lambda;
 		this.betaParameter = beta;
 		this.dMatrix = dMatrix;
+		this.timeAwareSmoothing = timeAwareSmoothing;
 
 		int tips = tree.getExternalNodeCount();
 		fieldLength = popSizeParameter.getDimension();
@@ -212,9 +220,17 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		double[] diag = new double[fieldLength];
 
 		//First set up the offdiagonal entries;
-		for (int i = 0; i < fieldLength - 1; i++) {
-			offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]);
+		
+		if(!timeAwareSmoothing){
+			for (int i = 0; i < fieldLength - 1; i++) {
+				offdiag[i] = -2.0;
+			}
+		}else{
+			for (int i = 0; i < fieldLength - 1; i++) {
+				offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]);
+			}
 		}
+		
 
 		//Then set up the diagonal entries;
 		for (int i = 1; i < fieldLength - 1; i++)
@@ -261,6 +277,17 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		}
 
 		a.set(fieldLength - 1, fieldLength - 1, precision * (1 - lambda + lambda * a.get(fieldLength - 1, fieldLength - 1)));
+		return a;
+	}
+	
+	public double[] getCoalescentIntervalHeights(){
+		double[] a = new double[coalescentIntervals.length];
+		
+		a[0] = coalescentIntervals[0];
+		
+		for(int i = 1; i < a.length; i++){
+			a[i] = a[i-1] + coalescentIntervals[i];
+		}
 		return a;
 	}
 
@@ -371,11 +398,23 @@ model {
 }
 
 */
-		return currentLike;
-
-
+		/*
+		 * This is a hard code for a normal prior on log(population size)
+		 * 
+		 * 8/14/08 Didn't really help much, but I left it in here in case 
+		 */
+		
+//		double  realMean = 10000;
+//		double  realStandardDeviation = 100000;
+//		double  realVariance = realStandardDeviation*realStandardDeviation;
+//		
+//		double sigma2 = Math.log(realVariance/(realMean*realMean) + 1);
+//		double mu = Math.log(realMean) - 0.5*sigma2;
+//		double sigma = Math.sqrt(sigma2);
+				
+		return currentLike;// + LogNormalDistribution.logPdf(Math.exp(popSizeParameter.getParameterValue(coalescentIntervals.length - 1)), mu, sigma);
 	}
-
+	
 	public static double logGeneralizedDeterminant(SymmTridiagMatrix X) {
 		//Set up the eigenvalue solver
 		SymmTridiagEVD eigen = new SymmTridiagEVD(X.numRows(), false);
@@ -486,6 +525,11 @@ model {
 				cxo = (XMLObject) xo.getChild(COVARIATE_MATRIX);
 				dMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
 			}
+			
+			boolean timeAwareSmoothing = false;
+			if(xo.hasAttribute(TIME_AWARE_SMOOTHING)){
+				timeAwareSmoothing = xo.getBooleanAttribute(TIME_AWARE_SMOOTHING);
+			}
 
 			if ((dMatrix != null && beta == null) || (dMatrix == null && beta != null))
 				throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
@@ -500,9 +544,11 @@ model {
 			if (xo.hasAttribute(RANDOMIZE_TREE) && xo.getBooleanAttribute(RANDOMIZE_TREE))
 				checkTree(treeModel);
 
+			Logger.getLogger("dr.evomodel").info("The " + SKYLINE_LIKELIHOOD + " has " + 
+					(timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 			
 			return new GMRFSkyrideLikelihood(treeModel, popParameter, groupParameter, precParameter,
-					lambda, beta, dMatrix);
+					lambda, beta, dMatrix, timeAwareSmoothing);
 		}
 
 		//************************************************************************
@@ -534,7 +580,8 @@ model {
 				new ElementRule(GROUP_SIZES, new XMLSyntaxRule[]{
 						new ElementRule(Parameter.class)
 				}),
-				AttributeRule.newBooleanRule(RANDOMIZE_TREE, true)
+				AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),
+				AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING,false),
 		};
 	};
 

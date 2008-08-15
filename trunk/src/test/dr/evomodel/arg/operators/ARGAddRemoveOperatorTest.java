@@ -64,11 +64,11 @@ public class ARGAddRemoveOperatorTest extends TraceTest {
 
     // 4 taxa args
     public void testFlatPrior4() throws IOException, Importer.ImportException {
-        flatPriorTester(arg4, 2000000, 1000, 2.0, 100.0, 0.5);
+        flatPriorTester(arg4, 2000000, 1000, 2.0, 100.0, 0.5, 3);
     }
 
     private void flatPriorTester(ARGModel arg, int chainLength, int sampleTreeEvery,
-                                 double nodeCountSetting, double rootHeightAlpha, double rootHeightBeta)
+                                 double nodeCountSetting, double rootHeightAlpha, double rootHeightBeta, int maxCount)
             throws IOException, Importer.ImportException {
 
         MCMC mcmc = new MCMC("mcmc1");
@@ -85,9 +85,11 @@ public class ARGAddRemoveOperatorTest extends TraceTest {
 
         OperatorSchedule schedule = getSchedule(arg);
 
-        ARGUniformPrior uniformPrior = new ARGUniformPrior(arg, Integer.MAX_VALUE, arg.getExternalNodeCount());
+        ARGUniformPrior uniformPrior = new ARGUniformPrior(arg, maxCount, arg.getExternalNodeCount());
 
-        DistributionLikelihood nodeCountPrior = new DistributionLikelihood(new PoissonDistribution(nodeCountSetting), 0.0);
+        PoissonDistribution poisson = new PoissonDistribution(nodeCountSetting);
+
+        DistributionLikelihood nodeCountPrior = new DistributionLikelihood(poisson, 0.0);
         ARGReassortmentNodeCountStatistic nodeCountStatistic = new ARGReassortmentNodeCountStatistic("nodeCount", arg);
         nodeCountPrior.addData(nodeCountStatistic);
 
@@ -149,7 +151,7 @@ public class ARGAddRemoveOperatorTest extends TraceTest {
         TraceCorrelation nodeCountStats = traceList.getCorrelationStatistics(1);
         TraceCorrelation rootHeightStats = traceList.getCorrelationStatistics(4);
 
-        assertExpectation("nodeCount", nodeCountStats, nodeCountSetting);
+        assertExpectation("nodeCount", nodeCountStats, poisson.truncatedMean(maxCount));
         assertExpectation("rootHeight", rootHeightStats, rootHeightAlpha * rootHeightBeta);
 
     }

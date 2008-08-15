@@ -33,24 +33,32 @@ import java.awt.*;
 public class RegressionPlot extends Plot.AbstractPlot {
 
 	private Regression regression;
-	
-	/**	
+
+    /**
+    * Constructor
+    */
+    public RegressionPlot(Regression regression) {
+        super(regression.getXData(), regression.getYData());
+        this.regression = regression;
+    }
+
+	/**
 	* Constructor
 	*/
 	public RegressionPlot(Variate xData, Variate yData, boolean forceOrigin) {
 		super(xData, yData);
 		setForceOrigin(forceOrigin);
 	}
-	
-	/**	
+
+	/**
 	* Constructor
 	*/
 	public RegressionPlot(double[] xData, double[] yData, boolean forceOrigin) {
 		super(xData, yData);
 		setForceOrigin(forceOrigin);
 	}
-	
-	/**	
+
+	/**
 	*	Set data
 	*/
 	public void setData(double[] xData, double[] yData) {
@@ -58,45 +66,45 @@ public class RegressionPlot extends Plot.AbstractPlot {
 		regression = new Regression(this.xData, this.yData);
 	}
 
-	/**	
+	/**
 	*	Set data
 	*/
 	public void setData(Variate xData, Variate yData) {
 		super.setData(xData, yData);
 		regression = new Regression(this.xData, this.yData);
 	}
-	
-	public void setForceOrigin(boolean forceOrigin) 
+
+	public void setForceOrigin(boolean forceOrigin)
 	{
 		regression.setForceOrigin(forceOrigin);
 	}
-	
-	public double getGradient() 
+
+	public double getGradient()
 	{
 		return regression.getGradient();
 	}
-	
-	public double getYIntercept() 
+
+	public double getYIntercept()
 	{
 		return regression.getYIntercept();
 	}
-	
-	public double getXIntercept() 
+
+	public double getXIntercept()
 	{
 		return regression.getXIntercept();
 	}
-	
-	public double getResidualMeanSquared() 
+
+	public double getResidualMeanSquared()
 	{
 		return regression.getResidualMeanSquared();
 	}
-	
-	public Regression getRegression() 
+
+	public Regression getRegression()
 	{
 		return regression;
 	}
-	
-	public String toString() 
+
+	public String toString()
 	{
 		StringBuffer statString=new StringBuffer("Gradient=");
 		statString.append(Double.toString(getGradient()));
@@ -104,11 +112,11 @@ public class RegressionPlot extends Plot.AbstractPlot {
 		statString.append(Double.toString(getYIntercept()));
 		statString.append(", RMS=");
 		statString.append(Double.toString(getResidualMeanSquared()));
-			
+
 		return statString.toString();
 	}
-	
-	/**	
+
+	/**
 	*	Paint data series
 	*/
 	protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
@@ -118,10 +126,10 @@ public class RegressionPlot extends Plot.AbstractPlot {
 
 		double gradient = getGradient();
 		double intercept = getYIntercept();
-		
+
 		double x1 = xAxis.getMinAxis();
 		double y1 = (gradient * x1) + intercept;
-		
+
 		double x2 = xAxis.getMaxAxis();
 		double y2 = (gradient * x2) + intercept;
 

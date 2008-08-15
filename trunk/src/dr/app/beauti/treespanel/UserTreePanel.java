@@ -28,8 +28,11 @@ package dr.app.beauti.treespanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.PanelUtils;
 import dr.app.beauti.options.*;
+import dr.app.tools.TemporalRooting;
 import dr.evolution.tree.Tree;
 import dr.gui.tree.*;
+import dr.gui.chart.*;
+import dr.stats.Regression;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
@@ -50,11 +53,11 @@ public class UserTreePanel extends JPanel {
     private Tree tree = null;
 
     BeautiFrame frame = null;
-
     JTabbedPane tabbedPane = new JTabbedPane();
 
     JTreeDisplay treePanel;
-    JPanel rootToTipPanel;
+    JChartPanel rootToTipPanel;
+    JChart rootToTipChart;
 
     public UserTreePanel(BeautiFrame parent) {
         super(new BorderLayout());
@@ -65,7 +68,11 @@ public class UserTreePanel extends JPanel {
 
         tabbedPane.add("Tree", treePanel);
 
-        rootToTipPanel = new JPanel();
+        rootToTipChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
+        rootToTipPanel = new JChartPanel(rootToTipChart, "", "time", "divergence");
+        rootToTipPanel.setOpaque(false);
+
+
         tabbedPane.add("Root-to-tip", rootToTipPanel);
 
         setOpaque(false);
@@ -80,6 +87,13 @@ public class UserTreePanel extends JPanel {
 
     private void setupPanel() {
         treePanel.setTree(tree);
+        TemporalRooting temporalRooting = new TemporalRooting(tree);
+        Regression r = temporalRooting.getRootToTipRegression(tree);
 
+        rootToTipChart.removeAllPlots();
+        rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
+        rootToTipChart.addPlot(new RegressionPlot(r));
+        rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
+        repaint();
     }
 }

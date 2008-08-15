@@ -1,9 +1,9 @@
 package test.dr.evomodel.operators;
 
 import dr.evolution.io.Importer;
+import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
-import dr.evolution.io.Importer.ImportException;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
@@ -62,14 +62,14 @@ public class ExchangeOperatorTest extends TestCase {
     }
 
     // 5 taxa trees should sample all 105 topologies
-    public void testIrreducibility5() throws IOException, Importer.ImportException {
-        irreducibilityTester(tree5, 105, 200000, 10);
+    public void testWideExchangeIrreducibility5() throws IOException, Importer.ImportException {
+        wideIrreducibilityTester(tree5, 105, 200000, 10);
     }
 
     // 6 taxa trees should sample all 945 topologies
-    public void testIrreducibility6() throws IOException, Importer.ImportException {
-        irreducibilityTester(tree6, 945, 2000000, 4);
-    }
+//    public void testWideExchangeIrreducibility6() throws IOException, Importer.ImportException {
+//        wideIrreducibilityTester(tree6, 945, 2000000, 2);
+//    }
 
     public void testWideExchangeOperator2() throws IOException, ImportException {
 
@@ -82,11 +82,11 @@ public class ExchangeOperatorTest extends TestCase {
         // total = 1/40
 
         //total = 1/16 + 1/40 = 0.0625 + 0.025 = 0.0875
-    	
-    	System.out.println("Test 1: Forward");
+
+        System.out.println("Test 1: Forward");
 
         String treeMatch = "(((D,C),(A,B)),E);";
-        
+
         int count = 0;
         int reps = 1000000;
 
@@ -104,25 +104,25 @@ public class ExchangeOperatorTest extends TestCase {
                 }
 
             } catch (OperatorFailedException e) {
-                e.printStackTrace();
+                // do nothing
             }
 
         }
         double p_1 = (double) count / (double) reps;
 
-        System.out.println("Number of proposals:\t" + count);
-        System.out.println("Number of tries:\t" + reps);
-        System.out.println("Number of ratio:\t" + p_1);
-        System.out.println("Number of expected ratio:\t" + 0.0875);
+        System.out.println("Number of matching proposals:\t" + count);
+        System.out.println("Number of total proposals:\t" + reps);
+        System.out.println("Ratio:\t" + p_1);
+        System.out.println("Expected ratio:\t" + 0.0875);
         assertExpectation(0.0875, p_1, reps);
-        
+
         // since this operator is supposed to be symmetric it got a hastings ratio of one
         // this means, it should propose the same move just backwards with the same probability
-        
+
         // BUT:
-        
+
         // (((D:2.0,C:2.0):1.0,(A:1.0,B:1.0):2.0):1.0,E:4.0) -> ((((A,B),C),D),E)
-        
+
         // probability of picking (A,B) node is 1/(2n-2) = 1/8
         // probability of swapping with D is 1/3
         // total = 1/24
@@ -132,9 +132,9 @@ public class ExchangeOperatorTest extends TestCase {
         // total = 1/32
 
         //total = 1/24 + 1/32 = 7/96 = 0.07291666666
-        
-    	System.out.println("Test 2: Backward");
-        
+
+        System.out.println("Test 2: Backward");
+
         treeMatch = "((((A,B),C),D),E);";
         NewickImporter importer = new NewickImporter("(((D:2.0,C:2.0):1.0,(A:1.0,B:1.0):2.0):1.0,E:4.0);");
         FlexibleTree tree5_2 = (FlexibleTree) importer.importTree(null);
@@ -155,16 +155,16 @@ public class ExchangeOperatorTest extends TestCase {
                 }
 
             } catch (OperatorFailedException e) {
-                e.printStackTrace();
+                // do nothing
             }
 
         }
         double p_2 = (double) count / (double) reps;
 
-        System.out.println("Number of proposals:\t" + count);
-        System.out.println("Number of tries:\t" + reps);
-        System.out.println("Number of ratio:\t" + p_2);
-        System.out.println("Number of expected ratio:\t" + 0.0791666);
+        System.out.println("Number of matching proposals:\t" + count);
+        System.out.println("Number of total proposals:\t" + reps);
+        System.out.println("Ratio:\t" + p_2);
+        System.out.println("Expected ratio:\t" + 0.0791666);
         assertExpectation(0.0791666, p_2, reps);
     }
 
@@ -186,8 +186,10 @@ public class ExchangeOperatorTest extends TestCase {
 
     }
 
-    private void irreducibilityTester(Tree tree, int numTopologies, int chainLength, int sampleTreeEvery)
+    private void wideIrreducibilityTester(Tree tree, int numTopologies, int chainLength, int sampleTreeEvery)
             throws IOException, Importer.ImportException {
+
+        int logScreenEvery = chainLength / 20;
 
         MCMC mcmc = new MCMC("mcmc1");
         MCMCOptions options = new MCMCOptions();
@@ -210,12 +212,8 @@ public class ExchangeOperatorTest extends TestCase {
         Likelihood likelihood = new SpeciationLikelihood(treeModel, speciationModel, "yule.like");
 
         MCLogger[] loggers = new MCLogger[2];
-//        loggers[0] = new MCLogger(new ArrayLogFormatter(false), 100, false);
-//        loggers[0].add(likelihood);
-//        loggers[0].add(rootHeight);
-//        loggers[0].add(tls);
 
-        loggers[0] = new MCLogger(new TabDelimitedFormatter(System.out), 10000, false);
+        loggers[0] = new MCLogger(new TabDelimitedFormatter(System.out), logScreenEvery, false);
         loggers[0].add(likelihood);
         loggers[0].add(rootHeight);
         loggers[0].add(tls);

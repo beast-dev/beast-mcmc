@@ -174,7 +174,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
 			if (xo.hasAttribute(OPTIMIZATION_SCHEDULE)) {
 				String type = xo.getStringAttribute(OPTIMIZATION_SCHEDULE);
-                Logger.getLogger("dr.inference").info("Optimization Scheduule: " + type);
+                Logger.getLogger("dr.inference").info("Optimization Schedule: " + type);
                  
                 if (type.equals(OperatorSchedule.LOG_STRING))
 					schedule.setOptimizationSchedule(OperatorSchedule.LOG_SCHEDULE);

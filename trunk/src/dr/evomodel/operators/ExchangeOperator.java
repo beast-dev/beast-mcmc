@@ -52,7 +52,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
     public static final int WIDE = 1;
     public static final int INTERMEDIATE = 2;
 
-    private static final int MAX_TRIES = 10000;
+    private static final int MAX_TRIES = 100;
 
     private int mode = NARROW;
     private TreeModel tree;

@@ -43,36 +43,4 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
 	        return tree.getChild(parent, 0);
 	    }
 	}
-
-	/**
-	 * Scales the subtree by the given factor starting from the node
-	 * subtreeRoot. The tips stay unchanged.
-	 *
-	 * @param tree        the tree on which the operation is transformed
-	 * @param subtreeRoot the root of the subtree to scale
-	 * @param factor      the scaling factor
-	 */
-	protected void scaleSubtree(TreeModel tree, NodeRef subtreeRoot,
-	                            double factor) {
-	    if (tree.getChildCount(subtreeRoot) > 0) {
-	        double height = tree.getNodeHeight(subtreeRoot);
-	        double newHeight = height * factor;
-	        tree.setNodeHeight(subtreeRoot, newHeight);
-
-	        for (int i = 0; i < tree.getChildCount(subtreeRoot); i++) {
-	            if (tree.getChild(subtreeRoot, i) != null) {
-	                scaleSubtree(tree, tree.getChild(subtreeRoot, i), factor);
-	            } else {
-	                scaleSubtree(tree, tree.getChild(subtreeRoot, 1), factor);
-	            }
-	        }
-
-	        assert (newHeight != Double.NaN);
-	        if (factor < 1) {
-	            assert (height >= newHeight);
-	        } else {
-	            assert (height <= newHeight);
-	        }
-	    }
-	}
 }

@@ -414,7 +414,7 @@ public class BeautiFrame extends DocumentFrame {
                             throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
                         }
 
-                        alignment = (SimpleAlignment) importer.parseCharactersBlock(beautiOptions.taxonList);
+                        alignment = (SimpleAlignment) importer.parseCharactersBlock(taxa);
 
                     } else if (block == NexusImporter.DATA_BLOCK) {
 
@@ -424,16 +424,17 @@ public class BeautiFrame extends DocumentFrame {
 
                         // A data block doesn't need a taxon block before it
                         // but if one exists then it will use it.
-                        alignment = (SimpleAlignment) importer.parseDataBlock(beautiOptions.taxonList);
+                        alignment = (SimpleAlignment) importer.parseDataBlock(taxa);
                         if (taxa == null) {
                             taxa = alignment;
                         }
 
                     } else if (block == NexusImporter.TREES_BLOCK) {
 
-                        if (trees.size() > 0) {
-                            throw new NexusImporter.MissingBlockException("TREES block already defined");
-                        }
+                        // I guess there is no reason not to allow multiple trees blocks
+//                        if (trees.size() > 0) {
+//                            throw new NexusImporter.MissingBlockException("TREES block already defined");
+//                        }
 
                         Tree[] treeArray = importer.parseTreesBlock(taxa);
                         for (Tree tree : treeArray) {

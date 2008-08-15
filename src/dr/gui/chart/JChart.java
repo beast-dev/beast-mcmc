@@ -156,8 +156,8 @@ public class JChart extends JPanel {
 	}
 
 	private void resetPlots() {
-		xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
-		yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
+//		xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
+//		yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
         for (Plot p : plots) {
             p.resetAxes();
         }
@@ -286,7 +286,7 @@ public class JChart extends JPanel {
 			calibrate(g2, size);
 			calibrated = true;
 		}
-	
+
 		g2.setFont(labelFont);
 
         double tickLabelHeight = g2.getFontMetrics().getHeight();

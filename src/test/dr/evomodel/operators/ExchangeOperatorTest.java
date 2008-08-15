@@ -3,6 +3,7 @@ package test.dr.evomodel.operators;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
+import dr.evolution.io.Importer.ImportException;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
@@ -70,7 +71,7 @@ public class ExchangeOperatorTest extends TestCase {
         irreducibilityTester(tree6, 945, 2000000, 4);
     }
 
-    public void testWideExchangeOperator2() {
+    public void testWideExchangeOperator2() throws IOException, ImportException {
 
         // probability of picking (A,B) node is 1/(2n-2) = 1/8
         // probability of swapping with D is 1/2
@@ -80,12 +81,14 @@ public class ExchangeOperatorTest extends TestCase {
         //probability of picking {A,B} is 1/5
         // total = 1/40
 
-        //total = 1/16 + 1/40 = 0.0625 + 0.025 = 0.085
+        //total = 1/16 + 1/40 = 0.0625 + 0.025 = 0.0875
+    	
+    	System.out.println("Test 1: Forward");
 
         String treeMatch = "(((D,C),(A,B)),E);";
-
+        
         int count = 0;
-        int reps = 10000;
+        int reps = 1000000;
 
         for (int i = 0; i < reps; i++) {
 
@@ -105,9 +108,64 @@ public class ExchangeOperatorTest extends TestCase {
             }
 
         }
-        double p = (double) count / (double) reps;
+        double p_1 = (double) count / (double) reps;
 
-        assertExpectation(0.085, p, reps);
+        System.out.println("Number of proposals:\t" + count);
+        System.out.println("Number of tries:\t" + reps);
+        System.out.println("Number of ratio:\t" + p_1);
+        System.out.println("Number of expected ratio:\t" + 0.0875);
+        assertExpectation(0.0875, p_1, reps);
+        
+        // since this operator is supposed to be symmetric it got a hastings ratio of one
+        // this means, it should propose the same move just backwards with the same probability
+        
+        // BUT:
+        
+        // (((D:2.0,C:2.0):1.0,(A:1.0,B:1.0):2.0):1.0,E:4.0) -> ((((A,B),C),D),E)
+        
+        // probability of picking (A,B) node is 1/(2n-2) = 1/8
+        // probability of swapping with D is 1/3
+        // total = 1/24
+
+        //probability of picking {D} node is 1/(2n-2) = 1/8
+        //probability of picking {A,B} is 1/4
+        // total = 1/32
+
+        //total = 1/24 + 1/32 = 7/96 = 0.07291666666
+        
+    	System.out.println("Test 2: Backward");
+        
+        treeMatch = "((((A,B),C),D),E);";
+        NewickImporter importer = new NewickImporter("(((D:2.0,C:2.0):1.0,(A:1.0,B:1.0):2.0):1.0,E:4.0);");
+        FlexibleTree tree5_2 = (FlexibleTree) importer.importTree(null);
+
+        count = 0;
+
+        for (int i = 0; i < reps; i++) {
+
+            try {
+                TreeModel treeModel = new TreeModel("treeModel", tree5_2);
+                ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
+                operator.doOperation();
+
+                String tree = Tree.Utils.newickNoLengths(treeModel);
+
+                if (tree.equals(treeMatch)) {
+                    count += 1;
+                }
+
+            } catch (OperatorFailedException e) {
+                e.printStackTrace();
+            }
+
+        }
+        double p_2 = (double) count / (double) reps;
+
+        System.out.println("Number of proposals:\t" + count);
+        System.out.println("Number of tries:\t" + reps);
+        System.out.println("Number of ratio:\t" + p_2);
+        System.out.println("Number of expected ratio:\t" + 0.0791666);
+        assertExpectation(0.0791666, p_2, reps);
     }
 
     /**

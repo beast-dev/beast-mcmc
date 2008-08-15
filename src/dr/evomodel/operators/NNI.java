@@ -19,7 +19,7 @@ import dr.xml.*;
  */
 public class NNI extends AbstractTreeOperator {
 
-    private TreeModel _tree = null;
+    private TreeModel tree = null;
 
     public static final String NNI = "NearestNeighborInterchange";
 
@@ -27,7 +27,7 @@ public class NNI extends AbstractTreeOperator {
      *
      */
     public NNI(TreeModel tree, double weight) {
-        _tree = tree;
+        this.tree = tree;
         setWeight(weight);
     }
 
@@ -40,33 +40,29 @@ public class NNI extends AbstractTreeOperator {
     public double doOperation() throws OperatorFailedException {
         double hastingsRatio = 0;
 
-        int tipCount = _tree.getExternalNodeCount();
+        int tipCount = tree.getExternalNodeCount();
 
-        final int nNodes = _tree.getNodeCount();
-        final NodeRef root = _tree.getRoot();
+        final int nNodes = tree.getNodeCount();
+        final NodeRef root = tree.getRoot();
 
         NodeRef i;
 
         // get a random node where neither you or your father is the root
         do {
-            i = _tree.getNode(MathUtils.nextInt(nNodes));
-        } while (root == i || _tree.getParent(i) == root);
+            i = tree.getNode(MathUtils.nextInt(nNodes));
+        } while (root == i || tree.getParent(i) == root);
 
         // get parent node
-        final NodeRef iParent = _tree.getParent(i);
+        final NodeRef iParent = tree.getParent(i);
         // get parent of parent -> grant parent :)
-        final NodeRef iGrandParent = _tree.getParent(iParent);
+        final NodeRef iGrandParent = tree.getParent(iParent);
         // get left child of grant parent -> uncle
-        NodeRef iUncle = _tree.getChild(iGrandParent, 0);
+        NodeRef iUncle = tree.getChild(iGrandParent, 0);
         // check if uncle == father
         if (iUncle == iParent) {
             // if so take right child -> sibling of father
-            iUncle = _tree.getChild(iGrandParent, 1);
+            iUncle = tree.getChild(iGrandParent, 1);
         }
-
-        // check if height of me smaller than height of my grant father
-        // (isn't it obvious?!?)
-        assert _tree.getNodeHeight(i) < _tree.getNodeHeight(iGrandParent);
 
         // change the height of my father to be randomly between my uncle's
         // heights and my grandfather's height
@@ -74,11 +70,11 @@ public class NNI extends AbstractTreeOperator {
         // is
         // younger anyway
 
-        double heightGrandfather = _tree.getNodeHeight(iGrandParent);
-        double heightUncle = _tree.getNodeHeight(iUncle);
-        double minHeightFather = Math.max(heightUncle, _tree.getNodeHeight(getOtherChild(_tree, iParent, i)));
-        double heightI = _tree.getNodeHeight(i);
-        double minHeightReverse = Math.max(heightI, _tree.getNodeHeight(getOtherChild(_tree, iParent, i)));
+        double heightGrandfather = tree.getNodeHeight(iGrandParent);
+        double heightUncle = tree.getNodeHeight(iUncle);
+        double minHeightFather = Math.max(heightUncle, tree.getNodeHeight(getOtherChild(tree, iParent, i)));
+        double heightI = tree.getNodeHeight(i);
+        double minHeightReverse = Math.max(heightI, tree.getNodeHeight(getOtherChild(tree, iParent, i)));
 
         double ran;
         do {
@@ -90,26 +86,25 @@ public class NNI extends AbstractTreeOperator {
         double newHeightFather = minHeightFather
                 + (ran * (heightGrandfather - minHeightFather));
         // set the new height for the father
-        _tree.setNodeHeight(iParent, newHeightFather);
+        tree.setNodeHeight(iParent, newHeightFather);
 
         // double prForward = 1 / (heightGrandfather - minHeightFather);
         // double prBackward = 1 / (heightGrandfather - minHeightReverse);
         // hastings ratio = backward Prob / forward Prob
-        hastingsRatio = Math.log(Math.min(1,
-                (heightGrandfather - minHeightFather)
-                        / (heightGrandfather - minHeightReverse)));
+        hastingsRatio = Math.log((heightGrandfather - minHeightFather)
+				/ (heightGrandfather - minHeightReverse));
         // now change the nodes
-        exchangeNodes(_tree, i, iUncle, iParent, iGrandParent);
+        exchangeNodes(tree, i, iUncle, iParent, iGrandParent);
 
-        _tree.pushTreeChangedEvent(iParent);
-        _tree.pushTreeChangedEvent(iGrandParent);
+        tree.pushTreeChangedEvent(iParent);
+        tree.pushTreeChangedEvent(iGrandParent);
         // throw new OperatorFailedException(
         // "Couldn't find valid narrow move on this tree!!");
         // maybe instead of a new try the height of the father can be
         // increment to be then between the uncle and the grant father
         // System.out.println("tries = " + tries);
 
-        if (_tree.getExternalNodeCount() != tipCount) {
+        if (tree.getExternalNodeCount() != tipCount) {
             throw new RuntimeException("Lost some tips in NNI operation");
         }
 

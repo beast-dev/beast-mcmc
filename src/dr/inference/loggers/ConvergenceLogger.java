@@ -22,7 +22,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodelxml.LoggerParser;
-import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.StringAttributeRule;
 import dr.xml.XMLObject;
@@ -360,7 +359,7 @@ public class ConvergenceLogger extends MCLogger {
 			}
 
 			Tree tree = (Tree) xo.getChild(Tree.class);
-			PrintWriter pw = getLogFile(xo, getParserName(), false);
+			PrintWriter pw = getLogFile(xo, getParserName());
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
 			ConvergenceLogger logger = new ConvergenceLogger(tree, formatter,

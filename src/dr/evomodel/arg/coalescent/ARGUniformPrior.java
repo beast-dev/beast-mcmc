@@ -103,7 +103,7 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood {
 
 	private ArrayList<Double> argNumber;
 
-	ARGUniformPrior(ARGModel arg, int max, int initial) {
+	public ARGUniformPrior(ARGModel arg, int max, int initial) {
 		super(ARG_UNIFORM_PRIOR, arg, max);
 
 		addModel(arg);

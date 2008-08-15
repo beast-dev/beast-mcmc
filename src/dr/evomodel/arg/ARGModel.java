@@ -746,7 +746,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		return partitioningParameters;
 	}
 
-	protected void setupHeightBounds() {
+	public void setupHeightBounds() {
 		for (Node node : nodes) {
 			node.setupHeightBounds();
 		}
@@ -3116,7 +3116,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	 * Get the root height parameter. Is private because it can only be called
 	 * by the XMLParser
 	 */
-	protected Parameter getRootHeightParameter() {
+	public Parameter getRootHeightParameter() {
 
 		return root.heightParameter;
 	}
@@ -3125,7 +3125,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	 * @return the relevant node height parameter. Is private because it can
 	 *         only be called by the XMLParser
 	 */
-	protected Parameter createNodeHeightsParameter(boolean rootNode,
+	public Parameter createNodeHeightsParameter(boolean rootNode,
 	                                               boolean internalNodes, boolean leafNodes) {
 
 		if (!rootNode && !internalNodes && !leafNodes) {
@@ -3152,7 +3152,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 		return parameter;
 	}
 
-	protected Parameter getLeafHeightParameter(NodeRef nr) {
+	public Parameter getLeafHeightParameter(NodeRef nr) {
 		Node node = (Node) nr;
 		if (!isExternal(node)) {
 			throw new RuntimeException(
@@ -3166,7 +3166,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	 * @return the relevant node rate parameter. Is private because it can only
 	 *         be called by the XMLParser
 	 */
-	protected Parameter createNodeRatesParameter(boolean rootNode,
+	public Parameter createNodeRatesParameter(boolean rootNode,
 	                                             boolean internalNodes, boolean leafNodes) {
 
 		if (!rootNode && !internalNodes && !leafNodes) {

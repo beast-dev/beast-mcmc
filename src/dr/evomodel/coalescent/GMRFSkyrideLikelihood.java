@@ -67,6 +67,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	public static final String RANDOMIZE_TREE = "randomizeTree";
 	public static final String TIME_AWARE_SMOOTHING = "timeAwareSmoothing";
 	public static final double LOG_TWO_TIMES_PI = 1.837877;
+	public static final boolean TIME_AWARE_IS_ON_BY_DEFAULT = true;
 
 	// PRIVATE STUFF
 
@@ -85,7 +86,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	protected SymmTridiagMatrix weightMatrix;
 	protected SymmTridiagMatrix storedWeightMatrix;
 	protected MatrixParameter dMatrix;
-	protected boolean timeAwareSmoothing = false;
+	protected boolean timeAwareSmoothing = TIME_AWARE_IS_ON_BY_DEFAULT;
 
 	public GMRFSkyrideLikelihood() {
 		super(SKYLINE_LIKELIHOOD);
@@ -230,6 +231,10 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 			double rootHeight = tree.getNodeHeight(tree.getRoot());
 			
 			rootHeight /= 100.0;
+			
+			//TODO Fix this re-scaling part.
+			//Not really sure if this re-scaling part is needed, but I'm afraid to know what happens
+			//when we have really big or really small numbers here.
 			
 			for (int i = 0; i < fieldLength - 1; i++) {
 				offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * rootHeight;
@@ -406,7 +411,7 @@ model {
 		/*
 		 * This is a hard code for a normal prior on log(population size)
 		 * 
-		 * 8/14/08 Didn't really help much, but I left it in here in case 
+		 * 8/14/08 Didn't really help much, but I left it in here in case we need it later 
 		 */
 		
 //		double  realMean = 10000;
@@ -531,7 +536,7 @@ model {
 				dMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
 			}
 			
-			boolean timeAwareSmoothing = false;
+			boolean timeAwareSmoothing = TIME_AWARE_IS_ON_BY_DEFAULT;
 			if(xo.hasAttribute(TIME_AWARE_SMOOTHING)){
 				timeAwareSmoothing = xo.getBooleanAttribute(TIME_AWARE_SMOOTHING);
 			}

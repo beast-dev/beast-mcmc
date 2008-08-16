@@ -221,17 +221,22 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 
 		//First set up the offdiagonal entries;
 		
+				
 		if(!timeAwareSmoothing){
 			for (int i = 0; i < fieldLength - 1; i++) {
 				offdiag[i] = -1.0;
 			}
 		}else{
+			double rootHeight = tree.getNodeHeight(tree.getRoot());
+			
+			rootHeight /= 100.0;
+			
 			for (int i = 0; i < fieldLength - 1; i++) {
-				offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]);
-			}
+				offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * rootHeight;
+			} 
 		}
 		
-
+		
 		//Then set up the diagonal entries;
 		for (int i = 1; i < fieldLength - 1; i++)
 			diag[i] = -(offdiag[i] + offdiag[i - 1]);

@@ -31,8 +31,14 @@ import dr.app.beauti.options.*;
 import dr.evolution.tree.Tree;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
+import org.virion.jam.panels.ActionPanel;
+import org.virion.jam.table.HeaderRenderer;
+import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.table.*;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.*;
@@ -44,29 +50,64 @@ import java.awt.event.*;
  */
 public class TreesPanel extends JPanel {
 
-    OptionsPanel treePriorPanel = new OptionsPanel();
-    JComboBox treePriorCombo;
-    JComboBox parameterizationCombo = new JComboBox(new String[]{
+    private OptionsPanel treePriorPanel = new OptionsPanel();
+    private JComboBox treePriorCombo;
+    private JComboBox parameterizationCombo = new JComboBox(new String[]{
             "Growth Rate", "Doubling Time"});
-    JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
+    private JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
             "Piecewise-constant", "Piecewise-linear"});
-    WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
+    private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
 //    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
 
-    JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());
-    JComboBox userTreeCombo = new JComboBox();
+    private JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());
+    private JComboBox userTreeCombo = new JComboBox();
 
-    UserTreePanel userTreePanel;
+    private TreeDisplayPanel treeDisplayPanel;
 
-    BeautiFrame frame = null;
+    private BeautiFrame frame = null;
+    private BeautiOptions options = null;
 
-    java.util.List<Tree> userTrees = null;
+    private JScrollPane scrollPane = new JScrollPane();
+    private JTable treesTable = null;
+    private TreesTableModel treesTableModel = null;
 
     public TreesPanel(BeautiFrame parent) {
 
         this.frame = parent;
 
+        treesTableModel = new TreesTableModel();
+        treesTable = new JTable(treesTableModel);
+
+        treesTable.getTableHeader().setReorderingAllowed(false);
+        treesTable.getTableHeader().setResizingAllowed(false);
+        treesTable.getTableHeader().setDefaultRenderer(
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+
+        final TableColumnModel model = treesTable.getColumnModel();
+        final TableColumn tableColumn0 = model.getColumn(0);
+
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(treesTable);
+
+        treesTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        treesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent evt) {
+                selectionChanged();
+            }
+        });
+
+        scrollPane = new JScrollPane(treesTable,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setOpaque(false);
+
+        ActionPanel actionPanel1 = new ActionPanel(false);
+        //actionPanel1.setAddAction(addTreeAction);
+        //actionPanel1.setRemoveAction(removeTreeAction);
+
+        JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        controlPanel1.setOpaque(false);
+        controlPanel1.add(actionPanel1);
         java.awt.event.ItemListener listener = new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent ev) {
                 fireTreePriorsChanged();
@@ -124,10 +165,23 @@ public class TreesPanel extends JPanel {
         userTreeCombo.addItemListener(
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        fireUserTreeChanged();
+                        fireTreePriorsChanged();
                     }
                 }
         );
+
+        JPanel panel1 = new JPanel(new BorderLayout(0, 0));
+        panel1.setOpaque(false);
+        panel1.add(scrollPane, BorderLayout.CENTER);
+        panel1.add(controlPanel1, BorderLayout.SOUTH);
+
+        treeDisplayPanel = new TreeDisplayPanel(parent);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, treeDisplayPanel);
+        splitPane.setDividerLocation(180);
+        splitPane.setContinuousLayout(true);
+        splitPane.setBorder(BorderFactory.createEmptyBorder());
+        splitPane.setOpaque(false);
 
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
@@ -136,8 +190,7 @@ public class TreesPanel extends JPanel {
         treePriorPanel.setBorder(null);
         add(treePriorPanel, BorderLayout.NORTH);
 
-        userTreePanel = new UserTreePanel(parent);
-        add(userTreePanel, BorderLayout.CENTER);
+        add(splitPane, BorderLayout.CENTER);
 
         setupPanel();
     }
@@ -148,11 +201,9 @@ public class TreesPanel extends JPanel {
         }
     }
 
-    private void fireUserTreeChanged() {
-        if (!settingOptions) {
-            frame.treePriorsChanged();
-            userTreePanel.setTree(getSelectedUserTree());
-        }
+    private void selectionChanged() {
+        int selRow = treesTable.getSelectedRow();
+        treeDisplayPanel.setTree(options.trees.get(selRow));
     }
 
     private void setupPanel() {
@@ -175,11 +226,18 @@ public class TreesPanel extends JPanel {
 
         treePriorPanel.addSeparator();
 
-        treePriorPanel.addComponentWithLabel("                          Starting Tree:", startingTreeCombo);
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panel.setOpaque(false);
+        panel.add(startingTreeCombo);
         if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
-            treePriorPanel.addComponentWithLabel("User Tree:", userTreeCombo);
-            userTreePanel.setTree(getSelectedUserTree());
+            panel.add(new JLabel("  Select Tree:"));
+            panel.add(userTreeCombo);
         }
+        treePriorPanel.addComponentWithLabel("                          Starting Tree:", panel);
+
+        treePriorPanel.addSeparator();
+
+        treesTableModel.fireTableDataChanged();
 
         validate();
         repaint();
@@ -188,6 +246,8 @@ public class TreesPanel extends JPanel {
     private boolean settingOptions = false;
 
     public void setOptions(BeautiOptions options) {
+        this.options = options;
+
         settingOptions = true;
 
         treePriorCombo.setSelectedItem(options.nodeHeightPrior);
@@ -200,13 +260,12 @@ public class TreesPanel extends JPanel {
 
         startingTreeCombo.setSelectedItem(options.startingTreeType);
 
-        userTrees = options.trees;
         userTreeCombo.removeAllItems();
-        if (userTrees.size() == 0) {
+        if (options.trees.size() == 0) {
             userTreeCombo.addItem("no trees loaded");
             userTreeCombo.setEnabled(false);
         } else {
-            for (Tree tree : userTrees) {
+            for (Tree tree : options.trees) {
                 userTreeCombo.addItem(tree.getId());
             }
             userTreeCombo.setEnabled(true);
@@ -248,7 +307,7 @@ public class TreesPanel extends JPanel {
 
     private Tree getSelectedUserTree() {
         String treeId = (String)userTreeCombo.getSelectedItem();
-        for (Tree tree : userTrees) {
+        for (Tree tree : options.trees) {
             if (tree.getId().equals(treeId)) {
                 return tree;
             }
@@ -256,4 +315,115 @@ public class TreesPanel extends JPanel {
         return null;
     }
 
+    class TreesTableModel extends AbstractTableModel {
+
+         private static final long serialVersionUID = -6707994233020715574L;
+         String[] columnNames = {"Trees"};
+
+         public TreesTableModel() {
+         }
+
+         public int getColumnCount() {
+             return columnNames.length;
+         }
+
+         public int getRowCount() {
+             if (options == null) return 0;
+             return options.trees.size();
+         }
+
+         public Object getValueAt(int row, int col) {
+             Tree tree = options.trees.get(row);
+             switch (col) {
+                 case 0:
+                     return tree.getId();
+                 default:
+                     throw new IllegalArgumentException("unknown column, " + col);
+             }
+         }
+
+         public void setValueAt(Object aValue, int row, int col) {
+             Tree tree = options.trees.get(row);
+             switch (col) {
+                 case 0:
+                     String name = ((String) aValue).trim();
+                     if (name.length() > 0) {
+                         tree.setId(name);
+                     }
+                     break;
+             }
+             fireTreePriorsChanged();
+         }
+
+         public boolean isCellEditable(int row, int col) {
+             boolean editable;
+
+             switch (col) {
+                 case 0:// name
+                     editable = true;
+                     break;
+                 default:
+                     editable = false;
+             }
+
+             return editable;
+         }
+
+
+         public String getColumnName(int column) {
+             return columnNames[column];
+         }
+
+         public Class getColumnClass(int c) {
+             if (getRowCount() == 0) {
+                 return Object.class;
+             }
+             return getValueAt(0, c).getClass();
+         }
+
+         public String toString() {
+             StringBuffer buffer = new StringBuffer();
+
+             buffer.append(getColumnName(0));
+             for (int j = 1; j < getColumnCount(); j++) {
+                 buffer.append("\t");
+                 buffer.append(getColumnName(j));
+             }
+             buffer.append("\n");
+
+             for (int i = 0; i < getRowCount(); i++) {
+                 buffer.append(getValueAt(i, 0));
+                 for (int j = 1; j < getColumnCount(); j++) {
+                     buffer.append("\t");
+                     buffer.append(getValueAt(i, j));
+                 }
+                 buffer.append("\n");
+             }
+
+             return buffer.toString();
+         }
+     }
+
+     public class UnlinkModelsAction extends AbstractAction {
+         public UnlinkModelsAction() {
+             super("Unlink Models");
+             setToolTipText("Use this tool to use a different model for each selected data partition");
+         }
+
+         public void actionPerformed(ActionEvent ae) {
+             //unlinkModels();
+         }
+     }
+
+
+     public class LinkModelsAction extends AbstractAction {
+         public LinkModelsAction() {
+             super("Link Models");
+             setToolTipText("Use this tool to set all the selected partitions to the same model");
+         }
+
+         public void actionPerformed(ActionEvent ae) {
+             //linkModels();
+         }
+     }
 }

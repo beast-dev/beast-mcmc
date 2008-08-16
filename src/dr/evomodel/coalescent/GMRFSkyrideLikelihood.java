@@ -223,7 +223,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		
 		if(!timeAwareSmoothing){
 			for (int i = 0; i < fieldLength - 1; i++) {
-				offdiag[i] = -2.0;
+				offdiag[i] = -1.0;
 			}
 		}else{
 			for (int i = 0; i < fieldLength - 1; i++) {

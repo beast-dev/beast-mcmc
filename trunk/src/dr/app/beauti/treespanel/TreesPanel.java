@@ -28,18 +28,23 @@ package dr.app.beauti.treespanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.PanelUtils;
 import dr.app.beauti.options.*;
-import dr.evolution.tree.Tree;
+import dr.app.tools.TemporalRooting;
+import dr.evolution.tree.*;
+import dr.evolution.distance.DistanceMatrix;
+import dr.evolution.distance.F84DistanceMatrix;
+import dr.evolution.alignment.Patterns;
+import dr.stats.Regression;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.table.*;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -63,6 +68,7 @@ public class TreesPanel extends JPanel {
     private JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());
     private JComboBox userTreeCombo = new JComboBox();
 
+    private CreateTreeAction createTreeAction = new CreateTreeAction();
     private TreeDisplayPanel treeDisplayPanel;
 
     private BeautiFrame frame = null;
@@ -71,6 +77,8 @@ public class TreesPanel extends JPanel {
     private JScrollPane scrollPane = new JScrollPane();
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
+
+    private CreateTreeDialog createTreeDialog = null;
 
     public TreesPanel(BeautiFrame parent) {
 
@@ -85,7 +93,6 @@ public class TreesPanel extends JPanel {
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         final TableColumnModel model = treesTable.getColumnModel();
-        final TableColumn tableColumn0 = model.getColumn(0);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(treesTable);
 
@@ -101,13 +108,28 @@ public class TreesPanel extends JPanel {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
 
-        ActionPanel actionPanel1 = new ActionPanel(false);
-        //actionPanel1.setAddAction(addTreeAction);
-        //actionPanel1.setRemoveAction(removeTreeAction);
+        JToolBar toolBar1 = new JToolBar();
+        toolBar1.setFloatable(false);
+        toolBar1.setOpaque(false);
+        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        JButton button = new JButton(createTreeAction);
+        createTreeAction.setEnabled(true);
+        PanelUtils.setupComponent(button);
+        toolBar1.add(button);
 
-        JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        controlPanel1.setOpaque(false);
-        controlPanel1.add(actionPanel1);
+//        button = new JButton(linkModelAction);
+//        linkModelAction.setEnabled(false);
+//        PanelUtils.setupComponent(button);
+//        toolBar1.add(button);
+
+//        ActionPanel actionPanel1 = new ActionPanel(false);
+//        actionPanel1.setAddAction(addTreeAction);
+//        actionPanel1.setRemoveAction(removeTreeAction);
+//
+//        JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+//        controlPanel1.setOpaque(false);
+//        controlPanel1.add(actionPanel1);
+
         java.awt.event.ItemListener listener = new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent ev) {
                 fireTreePriorsChanged();
@@ -173,7 +195,7 @@ public class TreesPanel extends JPanel {
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
         panel1.add(scrollPane, BorderLayout.CENTER);
-        panel1.add(controlPanel1, BorderLayout.SOUTH);
+//        panel1.add(controlPanel1, BorderLayout.SOUTH);
 
         treeDisplayPanel = new TreeDisplayPanel(parent);
 
@@ -183,6 +205,11 @@ public class TreesPanel extends JPanel {
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
 
+        JPanel panel2 = new JPanel(new BorderLayout(0, 0));
+        panel2.setOpaque(false);
+        panel2.add(toolBar1, BorderLayout.NORTH);
+        panel2.add(splitPane, BorderLayout.CENTER);
+
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
@@ -190,7 +217,7 @@ public class TreesPanel extends JPanel {
         treePriorPanel.setBorder(null);
         add(treePriorPanel, BorderLayout.NORTH);
 
-        add(splitPane, BorderLayout.CENTER);
+        add(panel2, BorderLayout.CENTER);
 
         setupPanel();
     }
@@ -203,7 +230,51 @@ public class TreesPanel extends JPanel {
 
     private void selectionChanged() {
         int selRow = treesTable.getSelectedRow();
+        if (selRow >= 0) {
         treeDisplayPanel.setTree(options.trees.get(selRow));
+        } else {            
+            treeDisplayPanel.setTree(null);
+        }
+    }
+
+    private void createTree() {
+        if (createTreeDialog == null) {
+            createTreeDialog = new CreateTreeDialog(frame);
+        }
+
+        int result = createTreeDialog.showDialog(options);
+        if (result != JOptionPane.CANCEL_OPTION) {
+            CreateTreeDialog.MethodTypes methodType = createTreeDialog.getMethodType();
+            DataPartition partition = createTreeDialog.getDataPartition();
+
+            Patterns patterns = new Patterns(partition.getAlignment());
+            DistanceMatrix distances = new F84DistanceMatrix(patterns);
+            Tree tree;
+            TemporalRooting temporalRooting;
+
+            switch (methodType) {
+                case NJ:
+                    tree = new NeighborJoiningTree(distances);
+                    temporalRooting = new TemporalRooting(tree);
+                    tree = temporalRooting.findRoot(tree);
+                    break;
+                case UPGMA:
+                    tree = new UPGMATree(distances);
+                    temporalRooting = new TemporalRooting(tree);
+                    break;
+                default:
+                    throw new IllegalArgumentException("unknown method type");
+            }
+
+            tree.setId(createTreeDialog.getName());
+            options.trees.add(tree);
+            treesTableModel.fireTableDataChanged();
+            int row = options.trees.size() - 1;
+            treesTable.getSelectionModel().setSelectionInterval(row, row);
+        }
+
+        fireTreePriorsChanged();
+
     }
 
     private void setupPanel() {
@@ -236,6 +307,8 @@ public class TreesPanel extends JPanel {
         treePriorPanel.addComponentWithLabel("                          Starting Tree:", panel);
 
         treePriorPanel.addSeparator();
+
+        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
         treesTableModel.fireTableDataChanged();
 
@@ -317,113 +390,103 @@ public class TreesPanel extends JPanel {
 
     class TreesTableModel extends AbstractTableModel {
 
-         private static final long serialVersionUID = -6707994233020715574L;
-         String[] columnNames = {"Trees"};
+        private static final long serialVersionUID = -6707994233020715574L;
+        String[] columnNames = {"Trees"};
 
-         public TreesTableModel() {
-         }
+        public TreesTableModel() {
+        }
 
-         public int getColumnCount() {
-             return columnNames.length;
-         }
+        public int getColumnCount() {
+            return columnNames.length;
+        }
 
-         public int getRowCount() {
-             if (options == null) return 0;
-             return options.trees.size();
-         }
+        public int getRowCount() {
+            if (options == null) return 0;
+            return options.trees.size();
+        }
 
-         public Object getValueAt(int row, int col) {
-             Tree tree = options.trees.get(row);
-             switch (col) {
-                 case 0:
-                     return tree.getId();
-                 default:
-                     throw new IllegalArgumentException("unknown column, " + col);
-             }
-         }
+        public Object getValueAt(int row, int col) {
+            Tree tree = options.trees.get(row);
+            switch (col) {
+                case 0:
+                    return tree.getId();
+                default:
+                    throw new IllegalArgumentException("unknown column, " + col);
+            }
+        }
 
-         public void setValueAt(Object aValue, int row, int col) {
-             Tree tree = options.trees.get(row);
-             switch (col) {
-                 case 0:
-                     String name = ((String) aValue).trim();
-                     if (name.length() > 0) {
-                         tree.setId(name);
-                     }
-                     break;
-             }
-             fireTreePriorsChanged();
-         }
+        public void setValueAt(Object aValue, int row, int col) {
+            Tree tree = options.trees.get(row);
+            switch (col) {
+                case 0:
+                    String name = ((String) aValue).trim();
+                    if (name.length() > 0) {
+                        tree.setId(name);
+                    }
+                    break;
+            }
+            fireTreePriorsChanged();
+        }
 
-         public boolean isCellEditable(int row, int col) {
-             boolean editable;
+        public boolean isCellEditable(int row, int col) {
+            boolean editable;
 
-             switch (col) {
-                 case 0:// name
-                     editable = true;
-                     break;
-                 default:
-                     editable = false;
-             }
+            switch (col) {
+                case 0:// name
+                    editable = true;
+                    break;
+                default:
+                    editable = false;
+            }
 
-             return editable;
-         }
-
-
-         public String getColumnName(int column) {
-             return columnNames[column];
-         }
-
-         public Class getColumnClass(int c) {
-             if (getRowCount() == 0) {
-                 return Object.class;
-             }
-             return getValueAt(0, c).getClass();
-         }
-
-         public String toString() {
-             StringBuffer buffer = new StringBuffer();
-
-             buffer.append(getColumnName(0));
-             for (int j = 1; j < getColumnCount(); j++) {
-                 buffer.append("\t");
-                 buffer.append(getColumnName(j));
-             }
-             buffer.append("\n");
-
-             for (int i = 0; i < getRowCount(); i++) {
-                 buffer.append(getValueAt(i, 0));
-                 for (int j = 1; j < getColumnCount(); j++) {
-                     buffer.append("\t");
-                     buffer.append(getValueAt(i, j));
-                 }
-                 buffer.append("\n");
-             }
-
-             return buffer.toString();
-         }
-     }
-
-     public class UnlinkModelsAction extends AbstractAction {
-         public UnlinkModelsAction() {
-             super("Unlink Models");
-             setToolTipText("Use this tool to use a different model for each selected data partition");
-         }
-
-         public void actionPerformed(ActionEvent ae) {
-             //unlinkModels();
-         }
-     }
+            return editable;
+        }
 
 
-     public class LinkModelsAction extends AbstractAction {
-         public LinkModelsAction() {
-             super("Link Models");
-             setToolTipText("Use this tool to set all the selected partitions to the same model");
-         }
+        public String getColumnName(int column) {
+            return columnNames[column];
+        }
 
-         public void actionPerformed(ActionEvent ae) {
-             //linkModels();
-         }
-     }
+        public Class getColumnClass(int c) {
+            if (getRowCount() == 0) {
+                return Object.class;
+            }
+            return getValueAt(0, c).getClass();
+        }
+
+        public String toString() {
+            StringBuffer buffer = new StringBuffer();
+
+            buffer.append(getColumnName(0));
+            for (int j = 1; j < getColumnCount(); j++) {
+                buffer.append("\t");
+                buffer.append(getColumnName(j));
+            }
+            buffer.append("\n");
+
+            for (int i = 0; i < getRowCount(); i++) {
+                buffer.append(getValueAt(i, 0));
+                for (int j = 1; j < getColumnCount(); j++) {
+                    buffer.append("\t");
+                    buffer.append(getValueAt(i, j));
+                }
+                buffer.append("\n");
+            }
+
+            return buffer.toString();
+        }
+    }
+
+    public class CreateTreeAction extends AbstractAction {
+        public CreateTreeAction() {
+            super("Create Tree");
+            setToolTipText("Create a NJ or UPGMA tree using a data partition");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            createTree();
+        }
+    }
+
+
 }

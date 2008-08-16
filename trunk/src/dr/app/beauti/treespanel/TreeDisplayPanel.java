@@ -56,6 +56,7 @@ public class TreeDisplayPanel extends JPanel {
     JTabbedPane tabbedPane = new JTabbedPane();
 
     JTreeDisplay treePanel;
+    JTreeDisplay scaledTreePanel;
     JChartPanel rootToTipPanel;
     JChart rootToTipChart;
 
@@ -72,8 +73,10 @@ public class TreeDisplayPanel extends JPanel {
         rootToTipPanel = new JChartPanel(rootToTipChart, "", "time", "divergence");
         rootToTipPanel.setOpaque(false);
 
-
         tabbedPane.add("Root-to-tip", rootToTipPanel);
+
+        scaledTreePanel = new JTreeDisplay(new SquareTreePainter());
+        tabbedPane.add("Re-scaled tree", scaledTreePanel);
 
         setOpaque(false);
 
@@ -94,6 +97,10 @@ public class TreeDisplayPanel extends JPanel {
         rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
         rootToTipChart.addPlot(new RegressionPlot(r));
         rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
+
+        scaledTreePanel.setTree(temporalRooting.adjustTreeToConstraints(tree, null));
+
+        
         repaint();
     }
 }

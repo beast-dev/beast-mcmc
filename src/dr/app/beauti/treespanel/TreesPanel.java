@@ -61,6 +61,8 @@ public class TreesPanel extends JPanel {
 
     BeautiFrame frame = null;
 
+    java.util.List<Tree> userTrees = null;
+
     public TreesPanel(BeautiFrame parent) {
 
         this.frame = parent;
@@ -149,7 +151,7 @@ public class TreesPanel extends JPanel {
     private void fireUserTreeChanged() {
         if (!settingOptions) {
             frame.treePriorsChanged();
-            userTreePanel.setTree((Tree)userTreeCombo.getSelectedItem());
+            userTreePanel.setTree(getSelectedUserTree());
         }
     }
 
@@ -172,11 +174,11 @@ public class TreesPanel extends JPanel {
         }
 
         treePriorPanel.addSeparator();
-        
+
         treePriorPanel.addComponentWithLabel("                          Starting Tree:", startingTreeCombo);
         if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
             treePriorPanel.addComponentWithLabel("User Tree:", userTreeCombo);
-            userTreePanel.setTree((Tree)userTreeCombo.getSelectedItem());
+            userTreePanel.setTree(getSelectedUserTree());
         }
 
         validate();
@@ -198,13 +200,14 @@ public class TreesPanel extends JPanel {
 
         startingTreeCombo.setSelectedItem(options.startingTreeType);
 
+        userTrees = options.trees;
         userTreeCombo.removeAllItems();
-        if (options.trees.size() == 0) {
+        if (userTrees.size() == 0) {
             userTreeCombo.addItem("no trees loaded");
             userTreeCombo.setEnabled(false);
         } else {
-            for (Tree tree : options.trees) {
-                userTreeCombo.addItem(tree);
+            for (Tree tree : userTrees) {
+                userTreeCombo.addItem(tree.getId());
             }
             userTreeCombo.setEnabled(true);
         }
@@ -240,6 +243,17 @@ public class TreesPanel extends JPanel {
         options.skylineModel = bayesianSkylineCombo.getSelectedIndex();
 
         options.startingTreeType = (StartingTreeType)startingTreeCombo.getSelectedItem();
+        options.userStartingTree = getSelectedUserTree();
+    }
+
+    private Tree getSelectedUserTree() {
+        String treeId = (String)userTreeCombo.getSelectedItem();
+        for (Tree tree : userTrees) {
+            if (tree.getId().equals(treeId)) {
+                return tree;
+            }
+        }
+        return null;
     }
 
 }

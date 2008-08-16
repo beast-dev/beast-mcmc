@@ -8,6 +8,7 @@ import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.math.MathUtils;
+import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
 import java.io.File;
@@ -26,10 +27,15 @@ import java.util.logging.Logger;
 
 public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger{
 
+	
+	
 	public static final String GMRF_SKYRIDE_FIXED_GRID_LOGGER = "skyrideFixedGridLogger";
 
 	private GMRFSkyrideLikelihood gsl;
 
+	private int extraDraws = 10;
+	private double extraDrawStdDev = 1.0;
+	private double extraDensity = 0;
 
 	public GMRFSkyrideFixedGridLogger(LogFormatter formatter, int logEvery,
 			GMRFSkyrideLikelihood gsl, double gridHeight, int intervalNumber) {
@@ -38,19 +44,65 @@ public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger{
 		this.gsl = gsl;
 	}
 
-
 	public double[] getPopSizes(){
-		return gsl.getPopSizeParameter().getParameterValues();
+		
+		extraDensity = 0;
+				
+		double[] bslPopSizes = gsl.getPopSizeParameter().getParameterValues();
+		double[] popSizes = new double[bslPopSizes.length + extraDraws];
+				
+		for(int i = 0; i < bslPopSizes.length; i++){
+			popSizes[i] = bslPopSizes[i];
+		}
+						
+		for(int i = bslPopSizes.length; i < popSizes.length; i++){
+			double extraDraw = MathUtils.nextGaussian()*extraDrawStdDev + popSizes[i-1];
+								
+			popSizes[i] = extraDraw;
+					
+			extraDensity += NormalDistribution.logPdf(popSizes[i], popSizes[i-1], extraDrawStdDev);
+		}
+					
+		return popSizes;
 	}
-
+	
 	public double[] getCoalescentHeights(){
-//		return  gsl.getCoalescentIntervalHeights();
-        return null;
-    }
-
-	public double getAdditionalDensity(){
-		return 0;
+			double[] bslGroupHeights = gsl.getCoalescentIntervalHeights();
+			
+			double[] groupHeights = new double[bslGroupHeights.length + extraDraws];
+				
+			for(int i = 0; i < bslGroupHeights.length; i++){
+				groupHeights[i] = bslGroupHeights[i];
+			}
+			
+			double length = (getGridStopTime() - bslGroupHeights[bslGroupHeights.length - 1])/extraDraws;
+			
+			for(int i = bslGroupHeights.length; i < groupHeights.length; i++){
+				groupHeights[i] = groupHeights[i - 1] + length;
+			}
+				
+			groupHeights[groupHeights.length - 1] = getGridStopTime();
+				
+			return  groupHeights;
 	}
+	
+	public double getAdditionalDensity(){
+		return extraDensity;
+	}
+	
+
+//	public double[] getPopSizes(){
+//		return gsl.getPopSizeParameter().getParameterValues();
+//	}
+//
+//	public double[] getCoalescentHeights(){
+////		return  gsl.getCoalescentIntervalHeights();
+//        return null;
+//    }
+//
+//	public double getAdditionalDensity(){
+//		return 0;
+//	}
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
 

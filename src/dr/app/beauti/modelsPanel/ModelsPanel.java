@@ -26,7 +26,7 @@
 package dr.app.beauti.modelsPanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.CreateModelDialog;
+import dr.app.beauti.modelsPanel.CreateModelDialog;
 import dr.app.beauti.PanelUtils;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockType;

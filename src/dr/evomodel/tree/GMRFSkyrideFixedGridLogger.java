@@ -187,7 +187,7 @@ public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger{
 			}
 
 
-			return (BayesianSkylineFixedGridLogger)logger;
+			return (GMRFSkyrideFixedGridLogger)logger;
 
 		}
 

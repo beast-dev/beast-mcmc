@@ -28,98 +28,108 @@ package dr.inference.loggers;
 /**
  * An interface for a column in a log.
  *
- * @version $Id: LogColumn.java,v 1.5 2005/05/24 20:25:59 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: LogColumn.java,v 1.5 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public interface LogColumn {
 
-	/**
-	 * Set the label (heading) for this column
-	 */
-	void setLabel(String label);
+    /**
+     * Set the label (heading) for this column
+     *
+     * @param label the column label
+     */
+    void setLabel(String label);
 
-	/**
-	 * @return the label (heading) for this column
-	 */
-	String getLabel();
+    /**
+     * @return the label (heading) for this column
+     */
+    String getLabel();
 
-	/**
-	 * Set the minimum width in characters for this column
-	 */
-	void setMinimumWidth(int minimumWidth);
+    /**
+     * Set the minimum width in characters for this column
+     *
+     * @param minimumWidth the minimum width in characters
+     */
+    void setMinimumWidth(int minimumWidth);
 
-	/**
-	 * @return the minimum width in characters for this column
-	 */
-	int getMinimumWidth();
+    /**
+     * @return the minimum width in characters for this column
+     */
+    int getMinimumWidth();
 
-	/**
-	 * Returns a string containing the current value for this column with
-	 * appropriate formatting.
-	 *
-	 * @return the formatted string.
-	 */
-	String getFormatted();
+    /**
+     * Returns a string containing the current value for this column with
+     * appropriate formatting.
+     *
+     * @return the formatted string.
+     */
+    String getFormatted();
 
-	public abstract class Abstract implements LogColumn {
+    public abstract class Abstract implements LogColumn {
 
-		private String label;
-		private int minimumWidth;
+        private String label;
+        private int minimumWidth;
 
-		public Abstract(String label) {
+        public Abstract(String label) {
 
-			setLabel(label);
-			minimumWidth = -1;
-		}
+            setLabel(label);
+            minimumWidth = -1;
+        }
 
-		public void setLabel(String label) {
-			if (label == null) throw new IllegalArgumentException("column label is null");
-			this.label = label;
-		}
+        public void setLabel(String label) {
+            if (label == null) throw new IllegalArgumentException("column label is null");
+            this.label = label;
+        }
 
-		public String getLabel() {
-			StringBuffer buffer = new StringBuffer(label);
+        public String getLabel() {
+            StringBuffer buffer = new StringBuffer(label);
 
-			if (minimumWidth > 0) {
-				while (buffer.length() < minimumWidth) {
-					buffer.append(' ');
-				}
-			}
+            if (minimumWidth > 0) {
+                while (buffer.length() < minimumWidth) {
+                    buffer.append(' ');
+                }
+            }
 
-			return buffer.toString();
-		}
+            return buffer.toString();
+        }
 
-		public void setMinimumWidth(int minimumWidth) { this.minimumWidth = minimumWidth; }
-		public int getMinimumWidth() { return minimumWidth; }
+        public void setMinimumWidth(int minimumWidth) {
+            this.minimumWidth = minimumWidth;
+        }
 
-		public final String getFormatted() {
-			StringBuffer buffer = new StringBuffer(getFormattedValue());
+        public int getMinimumWidth() {
+            return minimumWidth;
+        }
 
-			if (minimumWidth > 0) {
-				while (buffer.length() < minimumWidth) {
-					buffer.append(' ');
-				}
-			}
+        public final String getFormatted() {
+            StringBuffer buffer = new StringBuffer(getFormattedValue());
 
-			return buffer.toString();
-		}
+            if (minimumWidth > 0) {
+                while (buffer.length() < minimumWidth) {
+                    buffer.append(' ');
+                }
+            }
 
-		protected abstract String getFormattedValue();
-	}
+            return buffer.toString();
+        }
 
-	public class Default extends Abstract {
+        protected abstract String getFormattedValue();
+    }
 
-		private Object object;
+    public class Default extends Abstract {
 
-		public Default(String label, Object object) {
-			super(label);
-			this.object = object;
-		}
+        private Object object;
 
-		protected String getFormattedValue() { return object.toString(); }
-	}
+        public Default(String label, Object object) {
+            super(label);
+            this.object = object;
+        }
+
+        protected String getFormattedValue() {
+            return object.toString();
+        }
+    }
 
 }

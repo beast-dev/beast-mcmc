@@ -16,6 +16,7 @@ import dr.app.beauti.options.PartitionModel;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.alignment.Alignment;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
@@ -553,15 +554,32 @@ public class BeautiFrame extends DocumentFrame {
             }
         }
 
+        addAlignment(alignment, charSets, model, file.getName(), fileNameStem);
+
+        addTrees(trees);
+
+        setStatusMessage();
+
+        setAllOptions();
+
+        // @Todo templates are not implemented yet...
+//        getOpenAction().setEnabled(true);
+//        getSaveAction().setEnabled(true);
+        getExportAction().setEnabled(true);
+    }
+
+    private void addAlignment(Alignment alignment, java.util.List<NexusApplicationImporter.CharSet> charSets,
+                              PartitionModel model,
+                              String fileName, String fileNameStem) {
         if (alignment != null) {
             java.util.List<DataPartition> partitions = new ArrayList<DataPartition>();
             if (charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
-                    partitions.add(new DataPartition(charSet.getName(), file.getName(),
+                    partitions.add(new DataPartition(charSet.getName(), fileName,
                             alignment, charSet.getFromSite(), charSet.getToSite(), charSet.getEvery()));
                 }
             } else {
-                partitions.add(new DataPartition(fileNameStem, file.getName(), alignment));
+                partitions.add(new DataPartition(fileNameStem, fileName, alignment));
             }
             for (DataPartition partition : partitions) {
                 if (model != null) {
@@ -582,26 +600,48 @@ public class BeautiFrame extends DocumentFrame {
                 beautiOptions.dataPartitions.add(partition);
             }
         }
+    }
 
+    private void addTrees(java.util.List<Tree> trees) {
         if (trees.size() > 0) {
-            beautiOptions.trees.addAll(trees);
+            for (Tree tree : trees) {
+                String id = tree.getId();
+                if (id == null || id.trim().length() == 0) {
+                    tree.setId("tree_" + (beautiOptions.trees.size() + 1));
+                } else {
+                    String newId = id;
+                    int count = 1;
+                    for (Tree tree1 : beautiOptions.trees) {
+                        if (tree1.getId().equals(newId)) {
+                            newId = id + "_" + count;
+                            count ++;
+                        }
+                    }
+                    tree.setId(newId);
+                }
+                beautiOptions.trees.add(tree);
+            }
         }
+    }
 
+    private void setStatusMessage() {
+        String message = "";
         if (beautiOptions.dataPartitions.size() > 0) {
-            statusLabel.setText("Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
+            message += "Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
                     beautiOptions.dataPartitions.size() +
-                    (beautiOptions.dataPartitions.size() > 1 ? " partitions" : " partition"));
+                    (beautiOptions.dataPartitions.size() > 1 ? " partitions" : " partition");
+            if (beautiOptions.trees.size() > 0) {
+                message += ", " + beautiOptions.trees.size() +
+                        (beautiOptions.trees.size() > 1 ? " trees" : " tree");
+            }
+        } else if (beautiOptions.trees.size() > 0) {
+            message += "Trees only : " + beautiOptions.trees.size() +
+                    (beautiOptions.trees.size() > 1 ? " trees, " : " tree, ") +
+                    beautiOptions.taxonList.getTaxonCount() + " taxa";
         } else {
-            statusLabel.setText("Taxa only: " + beautiOptions.taxonList.getTaxonCount() + " taxa");
-            beautiOptions.meanDistance = 0.0;
+            message += "Taxa only: " + beautiOptions.taxonList.getTaxonCount() + " taxa";
         }
-
-        setAllOptions();
-
-        // @Todo templates are not implemented yet...
-//        getOpenAction().setEnabled(true);
-//        getSaveAction().setEnabled(true);
-        getExportAction().setEnabled(true);
+        statusLabel.setText(message);
     }
 
     public final boolean doGenerate() {

@@ -573,9 +573,23 @@ public class BeastGenerator extends Generator {
 	 * @param writer    the writer
 	 */
 	public void writeOperatorSchedule(ArrayList<Operator> operators, XMLWriter writer) {
+		Attribute[] operatorAttributes;
+//		switch (options.coolingSchedule) {
+//			case SimpleOperatorSchedule.LOG_SCHEDULE:
+		if (options.nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+			operatorAttributes = new Attribute[2];
+			operatorAttributes[1] = new Attribute.Default<String>(SimpleOperatorSchedule.OPTIMIZATION_SCHEDULE, SimpleOperatorSchedule.LOG_STRING);
+		} else {
+//				break;
+//			default:
+			operatorAttributes = new Attribute[1];
+		}
+		operatorAttributes[0] = new Attribute.Default<String>("id", "operators");
+
 		writer.writeOpenTag(
 				SimpleOperatorSchedule.OPERATOR_SCHEDULE,
-				new Attribute[]{new Attribute.Default<String>("id", "operators")}
+				operatorAttributes
+//				new Attribute[]{new Attribute.Default<String>("id", "operators")}
 		);
 
 		for (Operator operator : operators) {

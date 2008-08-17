@@ -26,8 +26,6 @@
 package dr.evomodel.coalescent;
 
 
-import java.util.logging.Logger;
-
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -35,13 +33,13 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.math.distributions.LogNormalDistribution;
-import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.NotConvergedException;
 import no.uib.cipr.matrix.SymmTridiagEVD;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
+
+import java.util.logging.Logger;
 
 /**
  * A likelihood function for a Gaussian Markov random field on a log population size trajectory.
@@ -97,8 +95,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	                             boolean timeAwareSmoothing) {
 		super(SKYLINE_LIKELIHOOD);
 
-		
-		
+
 		this.popSizeParameter = popParameter;
 		this.groupSizeParameter = groupParameter;
 		this.precisionParameter = precParameter;
@@ -142,12 +139,12 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		initializationReport();
 
 	}
-	
-	public double[] getCopyOfCoalescentIntervals(){
+
+	public double[] getCopyOfCoalescentIntervals() {
 		return coalescentIntervals.clone();
 	}
-	
-	public double[] getCoalescentIntervals(){
+
+	public double[] getCoalescentIntervals() {
 		return coalescentIntervals;
 	}
 
@@ -196,7 +193,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	}
 
 	protected void setupGMRFWeights() {
-	
+
 		int index = 0;
 
 		double length = 0;
@@ -212,8 +209,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 				weight = 0;
 
 			}
-			
-		
+
+
 		}
 
 		//Set up the weight Matrix
@@ -221,27 +218,26 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		double[] diag = new double[fieldLength];
 
 		//First set up the offdiagonal entries;
-		
-				
-		if(!timeAwareSmoothing){
+
+
+		if (!timeAwareSmoothing) {
 			for (int i = 0; i < fieldLength - 1; i++) {
 				offdiag[i] = -1.0;
 			}
-		}else{
+		} else {
 			double rootHeight = tree.getNodeHeight(tree.getRoot());
-			
+
 			rootHeight /= 100.0;
-			
+
 			//TODO Fix this re-scaling part.
 			//Not really sure if this re-scaling part is needed, but I'm afraid to know what happens
 			//when we have really big or really small numbers here.
-			
+
 			for (int i = 0; i < fieldLength - 1; i++) {
 				offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * rootHeight;
-			} 
+			}
 		}
-		
-		
+
 		//Then set up the diagonal entries;
 		for (int i = 1; i < fieldLength - 1; i++)
 			diag[i] = -(offdiag[i] + offdiag[i - 1]);
@@ -265,7 +261,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		a.set(fieldLength - 1, fieldLength - 1, a.get(fieldLength - 1, fieldLength - 1) * precision);
 		return a;
 	}
-	
+
 	public SymmTridiagMatrix getStoredScaledWeightMatrix(double precision) {
 		SymmTridiagMatrix a = storedWeightMatrix.copy();
 		for (int i = 0; i < a.numRows() - 1; i++) {
@@ -289,14 +285,14 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		a.set(fieldLength - 1, fieldLength - 1, precision * (1 - lambda + lambda * a.get(fieldLength - 1, fieldLength - 1)));
 		return a;
 	}
-	
-	public double[] getCoalescentIntervalHeights(){
+
+	public double[] getCoalescentIntervalHeights() {
 		double[] a = new double[coalescentIntervals.length];
-		
+
 		a[0] = coalescentIntervals[0];
-		
-		for(int i = 1; i < a.length; i++){
-			a[i] = a[i-1] + coalescentIntervals[i];
+
+		for (int i = 1; i < a.length; i++) {
+			a[i] = a[i - 1] + coalescentIntervals[i];
 		}
 		return a;
 	}
@@ -304,8 +300,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	public SymmTridiagMatrix getCopyWeightMatrix() {
 		return weightMatrix.copy();
 	}
-	
-	public SymmTridiagMatrix getStoredScaledWeightMatrix(double precision, double lambda){
+
+	public SymmTridiagMatrix getStoredScaledWeightMatrix(double precision, double lambda) {
 		if (lambda == 1)
 			return getStoredScaledWeightMatrix(precision);
 
@@ -413,7 +409,7 @@ model {
 		 * 
 		 * 8/14/08 Didn't really help much, but I left it in here in case we need it later 
 		 */
-		
+
 //		double  realMean = 10000;
 //		double  realStandardDeviation = 100000;
 //		double  realVariance = realStandardDeviation*realStandardDeviation;
@@ -421,10 +417,10 @@ model {
 //		double sigma2 = Math.log(realVariance/(realMean*realMean) + 1);
 //		double mu = Math.log(realMean) - 0.5*sigma2;
 //		double sigma = Math.sqrt(sigma2);
-				
+
 		return currentLike;// + LogNormalDistribution.logPdf(Math.exp(popSizeParameter.getParameterValue(coalescentIntervals.length - 1)), mu, sigma);
 	}
-	
+
 	public static double logGeneralizedDeterminant(SymmTridiagMatrix X) {
 		//Set up the eigenvalue solver
 		SymmTridiagEVD eigen = new SymmTridiagEVD(X.numRows(), false);
@@ -535,9 +531,9 @@ model {
 				cxo = (XMLObject) xo.getChild(COVARIATE_MATRIX);
 				dMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
 			}
-			
+
 			boolean timeAwareSmoothing = TIME_AWARE_IS_ON_BY_DEFAULT;
-			if(xo.hasAttribute(TIME_AWARE_SMOOTHING)){
+			if (xo.hasAttribute(TIME_AWARE_SMOOTHING)) {
 				timeAwareSmoothing = xo.getBooleanAttribute(TIME_AWARE_SMOOTHING);
 			}
 
@@ -554,9 +550,9 @@ model {
 			if (xo.hasAttribute(RANDOMIZE_TREE) && xo.getBooleanAttribute(RANDOMIZE_TREE))
 				checkTree(treeModel);
 
-			Logger.getLogger("dr.evomodel").info("The " + SKYLINE_LIKELIHOOD + " has " + 
+			Logger.getLogger("dr.evomodel").info("The " + SKYLINE_LIKELIHOOD + " has " +
 					(timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
-			
+
 			return new GMRFSkyrideLikelihood(treeModel, popParameter, groupParameter, precParameter,
 					lambda, beta, dMatrix, timeAwareSmoothing);
 		}
@@ -591,7 +587,7 @@ model {
 						new ElementRule(Parameter.class)
 				}),
 				AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),
-				AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING,false),
+				AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),
 		};
 	};
 

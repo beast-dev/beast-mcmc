@@ -30,6 +30,7 @@ import dr.evolution.tree.*;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
 
+import java.text.NumberFormat;
 import java.util.*;
 
 /**
@@ -55,10 +56,18 @@ public class TreeLogger extends MCLogger {
     private List<String> taxaIds = new ArrayList<String>();
     private boolean mapNames = true;
 
+    private NumberFormat format;
+
     public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
                       boolean sortTranslationTable, boolean mapNames) {
 
-        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames);
+        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, null);
+    }
+
+    public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
+                      boolean sortTranslationTable, boolean mapNames, NumberFormat format) {
+
+        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format);
     }
 
     public TreeLogger(Tree tree, BranchRateController branchRateProvider,
@@ -66,7 +75,7 @@ public class TreeLogger extends MCLogger {
                       NodeAttributeProvider[] nodeAttributeProviders,
                       BranchAttributeProvider[] branchAttributeProviders,
                       LogFormatter formatter, int logEvery, boolean nexusFormat,
-                      boolean sortTranslationTable, boolean mapNames) {
+                      boolean sortTranslationTable, boolean mapNames, NumberFormat format) {
 
         super(formatter, logEvery, false);
 
@@ -98,6 +107,8 @@ public class TreeLogger extends MCLogger {
             idMap.put(taxaId, k);
             k += 1;
         }
+
+        this.format = format;
     }
 
     public void startLogging() {
@@ -169,11 +180,11 @@ public class TreeLogger extends MCLogger {
             buffer.append(" = [&R] ");
 
             if (substitutions) {
-                Tree.Utils.newick(tree, tree.getRoot(), false, Tree.Utils.LENGTHS_AS_SUBSTITUTIONS,
-                        branchRateProvider, nodeAttributeProviders, branchAttributeProviders, idMap, buffer);
+                Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_SUBSTITUTIONS,
+                        format, branchRateProvider, nodeAttributeProviders, branchAttributeProviders, idMap, buffer);
             } else {
-                Tree.Utils.newick(tree, tree.getRoot(), !mapNames, Tree.Utils.LENGTHS_AS_TIME,
-                        null, nodeAttributeProviders, branchAttributeProviders, idMap, buffer);
+                Tree.Utils.newick(tree, tree.getRoot(), !mapNames, Tree.BranchLengthType.LENGTHS_AS_TIME,
+                        format, null, nodeAttributeProviders, branchAttributeProviders, idMap, buffer);
             }
 
             buffer.append(";");

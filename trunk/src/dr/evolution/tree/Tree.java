@@ -33,6 +33,7 @@ import dr.util.Identifiable;
 import jebl.evolution.graphs.Node;
 import jebl.evolution.trees.SimpleRootedTree;
 
+import java.text.NumberFormat;
 import java.util.*;
 
 /**
@@ -43,6 +44,10 @@ import java.util.*;
  * @version $Id: Tree.java,v 1.59 2006/09/08 17:34:23 rambaut Exp $
  */
 public interface Tree extends TaxonList, Units, Identifiable, Attributable {
+
+    public enum BranchLengthType {
+        NO_BRANCH_LENGTHS, LENGTHS_AS_TIME, LENGTHS_AS_SUBSTITUTIONS
+    }
 
     /**
      * @return root node of this tree.
@@ -56,7 +61,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
     int getNodeCount();
 
     /**
-     * @param i
+     * @param i node index, terminal nodes are first
      * @return the ith node.
      */
     NodeRef getNode(int i);
@@ -97,7 +102,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
     boolean hasNodeHeights();
 
     /**
-     * @param node
+     * @param node the node to retrieve height of
      * @return the height of node in the tree.
      */
     double getNodeHeight(NodeRef node);
@@ -108,13 +113,13 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
     boolean hasBranchLengths();
 
     /**
-     * @param node
+     * @param node the node to retrieve the length of branch to parent
      * @return the length of the branch from node to its parent.
      */
     double getBranchLength(NodeRef node);
 
     /**
-     * @param node
+     * @param node the node to retrieve the rate of
      * @return the rate of node in the tree.
      */
     double getNodeRate(NodeRef node);
@@ -133,26 +138,26 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
     Iterator getNodeAttributeNames(NodeRef node);
 
     /**
-     * @param node
+     * @param node the node to test if external
      * @return whether the node is external.
      */
     boolean isExternal(NodeRef node);
 
     /**
-     * @param node
+     * @param node the node to test if root
      * @return whether the node is the root.
      */
     boolean isRoot(NodeRef node);
 
     /**
-     * @param node
+     * @param node the node to get child count of
      * @return the number of children of node.
      */
     int getChildCount(NodeRef node);
 
     /**
-     * @param node
-     * @param j
+     * @param node the node to get jth child of
+     * @param j    the index of child to retrieve
      * @return the jth child of node
      */
     NodeRef getChild(NodeRef node, int j);
@@ -180,15 +185,11 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
      */
     public class Utils {
 
-        public static final int NO_BRANCH_LENGTHS = 0;
-        public static final int LENGTHS_AS_TIME = 1;
-        public static final int LENGTHS_AS_SUBSTITUTIONS = 2;
-
         /**
          * Count number of leaves in subtree whose root is node.
          *
-         * @param tree
-         * @param node
+         * @param tree the tree
+         * @param node the node to get leaf count below
          * @return the number of leaves under this node.
          */
         public static int getLeafCount(Tree tree, NodeRef node) {
@@ -234,7 +235,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
-         * @param tree
+         * @param tree the tree to test fo ultrametricity
          * @return true only if all tips have height 0.0
          */
         public static boolean isUltrametric(Tree tree) {
@@ -246,7 +247,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
-         * @param tree
+         * @param tree the tree to test if binary
          * @return true only if internal nodes have 2 children
          */
         public static boolean isBinary(Tree tree) {
@@ -258,7 +259,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
-         * @param tree
+         * @param tree the tree to retrieve leaf set of
          * @return a set of strings which are the taxa of the tree.
          */
         public static Set<String> getLeafSet(Tree tree) {
@@ -276,11 +277,11 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
-         * @param tree
-         * @param taxa
-         * @return Set of taxaon names (id's) associated with the taxa in taxa.
+         * @param tree the tree
+         * @param taxa the taxa
+         * @return Set of taxon names (id's) associated with the taxa in taxa.
          * @throws dr.evolution.tree.Tree.MissingTaxonException
-         *
+         *          if a taxon in taxa is not contained in the tree
          */
         public static Set<String> getLeavesForTaxa(Tree tree, TaxonList taxa) throws MissingTaxonException {
 
@@ -313,7 +314,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
-         * Gets a set of taxa names (as strings) of the leaf nodes descended from the given node.
+         * @param tree the tree
+         * @param node the node to get names of leaves below
+         * @return a set of taxa names (as strings) of the leaf nodes descended from the given node.
          */
         public static Set<String> getDescendantLeaves(Tree tree, NodeRef node) {
 
@@ -323,7 +326,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
-         * Gets a set of taxa names (as strings) of the leaf nodes descended from the given node.
+         * @param tree the tree
+         * @param node the node to get name of leaves below
+         * @param set  will be populated with taxa names (as strings) of the leaf nodes descended from the given node.
          */
         private static void getDescendantLeaves(Tree tree, NodeRef node, Set<String> set) {
 
@@ -342,7 +347,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
 
         /**
-         * Gets a set of noderefs of the leaf nodes descended from the given node.
+         * @param tree the tree
+         * @param node the node to get external nodes below
+         * @return a set of noderefs of the leaf nodes descended from the given node.
          */
         public static Set<NodeRef> getExternalNodes(Tree tree, NodeRef node) {
 
@@ -352,7 +359,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
-         * Gets a set of taxa names (as strings) of the leaf nodes descended from the given node.
+         * @param tree the tree
+         * @param node the node to get external nodes below
+         * @param set  is populated with noderefs of the leaf nodes descended from the given node.
          */
         private static void getExternalNodes(Tree tree, NodeRef node, Set<NodeRef> set) {
 
@@ -437,12 +446,13 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
-         * Performs the a monophyly test on a set of leaf nodes. The nodes are monophyletic
+         * Performs a monophyly test on a set of leaf nodes. The nodes are monophyletic
          * if there is a node in the tree which subtends all the taxa in the set (and
          * only those taxa).
          *
          * @param tree      a tree object to perform test on
-         * @param leafNodes a array with one boolean for each leaf node.
+         * @param leafNodes a set of leaf node ids
+         * @param ignore    a set of ids to ignore in monophyly assessment
          * @return boolean is monophyletic?
          */
         public static boolean isMonophyletic(Tree tree, Set<String> leafNodes, Set<String> ignore) {
@@ -473,6 +483,13 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
         /**
          * Private recursive function used by isMonophyletic.
+         *
+         * @param tree        a tree object to perform test on
+         * @param node        the node that is currently being assessed in recursive procedure
+         * @param leafNodes   a set of leaf node ids
+         * @param ignore      a set of ids to ignore in monophyly assessment
+         * @param cardinality the size of leafNodes set
+         * @return boolean is monophyletic?
          */
         private static boolean isMonophyletic(Tree tree, NodeRef node,
                                               Set<String> leafNodes, Set<String> ignore,
@@ -777,14 +794,32 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          */
         public static String newick(Tree tree) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, LENGTHS_AS_TIME, null, null, null, null, buffer);
+            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_TIME, null, null, null, null, null, buffer);
+            buffer.append(";");
+            return buffer.toString();
+        }
+
+        /**
+         * @param tree tree to return in newick format
+         * @param dp   the decimal places for branch lengths
+         * @return a string representation of the tree in newick format with branch lengths expressed with the given
+         *         number of decimal places
+         */
+        public static String newick(Tree tree, int dp) {
+            StringBuffer buffer = new StringBuffer();
+
+            // use the English locale to ensure there are no commas in the number!
+            NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
+            format.setMaximumFractionDigits(dp);
+
+            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_TIME, format, null, null, null, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
 
         public static String newick(Tree tree, BranchRateController branchRateController) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, LENGTHS_AS_SUBSTITUTIONS, branchRateController, null, null, null, buffer);
+            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_SUBSTITUTIONS, null, branchRateController, null, null, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
@@ -794,7 +829,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                                     BranchAttributeProvider[] branchAttributeProviders
         ) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, LENGTHS_AS_TIME, null, nodeAttributeProviders, branchAttributeProviders, null, buffer);
+            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_TIME, null, null, nodeAttributeProviders, branchAttributeProviders, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
@@ -804,7 +839,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          */
         public static String newickNoLengths(Tree tree) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, NO_BRANCH_LENGTHS, null, null, null, null, buffer);
+            newick(tree, tree.getRoot(), true, BranchLengthType.NO_BRANCH_LENGTHS, null, null, null, null, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
@@ -819,10 +854,11 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          * @param branchRateController     An optional BranchRateController (or null)
          * @param nodeAttributeProviders   An array of NodeAttributeProviders
          * @param branchAttributeProviders An array of BranchAttributeProviders
+         * @param format                   formatter for branch lengths
          * @param idMap                    A map if id names to integers that is used to overide node labels when present
          * @param buffer                   The StringBuffer
          */
-        public static void newick(Tree tree, NodeRef node, boolean labels, int lengths,
+        public static void newick(Tree tree, NodeRef node, boolean labels, BranchLengthType lengths, NumberFormat format,
                                   BranchRateController branchRateController,
                                   NodeAttributeProvider[] nodeAttributeProviders,
                                   BranchAttributeProvider[] branchAttributeProviders,
@@ -843,14 +879,14 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 }
             } else {
                 buffer.append("(");
-                newick(tree, tree.getChild(node, 0), labels, lengths,
+                newick(tree, tree.getChild(node, 0), labels, lengths, null,
                         branchRateController,
                         nodeAttributeProviders,
                         branchAttributeProviders, idMap,
                         buffer);
                 for (int i = 1; i < tree.getChildCount(node); i++) {
                     buffer.append(",");
-                    newick(tree, tree.getChild(node, i), labels, lengths,
+                    newick(tree, tree.getChild(node, i), labels, lengths, format,
                             branchRateController,
                             nodeAttributeProviders,
                             branchAttributeProviders, idMap,
@@ -887,7 +923,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 }
             }
 
-            if (parent != null && lengths != NO_BRANCH_LENGTHS) {
+            if (parent != null && lengths != BranchLengthType.NO_BRANCH_LENGTHS) {
                 buffer.append(":");
                 if (branchAttributeProviders != null) {
                     boolean hasAttribute = false;
@@ -908,16 +944,22 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                     }
                 }
 
-                if (lengths == LENGTHS_AS_TIME) {
+                if (lengths != BranchLengthType.NO_BRANCH_LENGTHS) {
                     double length = tree.getNodeHeight(parent) - tree.getNodeHeight(node);
-                    buffer.append(String.valueOf(length));
-                } else if (lengths == LENGTHS_AS_SUBSTITUTIONS) {
-                    if (branchRateController == null) {
-                        throw new IllegalArgumentException("No BranchRateController provided");
+                    if (lengths == BranchLengthType.LENGTHS_AS_SUBSTITUTIONS) {
+                        if (branchRateController == null) {
+                            throw new IllegalArgumentException("No BranchRateController provided");
+                        }
+                        length *= branchRateController.getBranchRate(tree, node);
                     }
-                    double length = tree.getNodeHeight(parent) - tree.getNodeHeight(node);
-                    double rate = branchRateController.getBranchRate(tree, node);
-                    buffer.append(String.valueOf(length * rate));
+                    String lengthString;
+                    if (format != null) {
+                        lengthString = format.format(length);
+                    } else {
+                        lengthString = String.valueOf(length);
+                    }
+
+                    buffer.append(lengthString);
                 }
             }
         }

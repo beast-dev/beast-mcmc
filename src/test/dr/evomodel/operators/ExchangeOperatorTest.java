@@ -222,7 +222,7 @@ public class ExchangeOperatorTest extends TestCase {
         file.deleteOnExit();
         FileOutputStream out = new FileOutputStream(file);
 
-        loggers[1] = new TreeLogger(treeModel, new TabDelimitedFormatter(out), sampleTreeEvery, true, true, false);
+        loggers[1] = new TreeLogger(treeModel, new TabDelimitedFormatter(out), sampleTreeEvery, true, true, false, null);
 
         mcmc.setShowOperatorAnalysis(true);
 

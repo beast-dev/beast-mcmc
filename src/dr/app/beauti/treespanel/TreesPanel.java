@@ -27,13 +27,17 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.PanelUtils;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.DataPartition;
+import dr.app.beauti.options.StartingTreeType;
+import dr.app.beauti.options.TreePrior;
 import dr.app.tools.TemporalRooting;
-import dr.evolution.tree.*;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.F84DistanceMatrix;
-import dr.evolution.alignment.Patterns;
-import dr.stats.Regression;
+import dr.evolution.tree.NeighborJoiningTree;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.UPGMATree;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
@@ -55,67 +59,70 @@ import java.awt.event.*;
  */
 public class TreesPanel extends JPanel {
 
-    private OptionsPanel treePriorPanel = new OptionsPanel();
-    private JComboBox treePriorCombo;
-    private JComboBox parameterizationCombo = new JComboBox(new String[]{
-            "Growth Rate", "Doubling Time"});
-    private JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
-            "Piecewise-constant", "Piecewise-linear"});
-    private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
+	private OptionsPanel treePriorPanel = new OptionsPanel();
+	private JComboBox treePriorCombo;
+	private JComboBox parameterizationCombo = new JComboBox(new String[]{
+			"Growth Rate", "Doubling Time"});
+	private JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
+			"Piecewise-constant", "Piecewise-linear"});
+	private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
+
+	JComboBox gmrfBayesianSkyrideCombo = new JComboBox(new String[]{
+			"Uniform", "Time-aware"});
 
 //    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
 
-    private JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());
-    private JComboBox userTreeCombo = new JComboBox();
+	private JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());
+	private JComboBox userTreeCombo = new JComboBox();
 
-    private CreateTreeAction createTreeAction = new CreateTreeAction();
-    private TreeDisplayPanel treeDisplayPanel;
+	private CreateTreeAction createTreeAction = new CreateTreeAction();
+	private TreeDisplayPanel treeDisplayPanel;
 
-    private BeautiFrame frame = null;
-    private BeautiOptions options = null;
+	private BeautiFrame frame = null;
+	private BeautiOptions options = null;
 
-    private JScrollPane scrollPane = new JScrollPane();
-    private JTable treesTable = null;
-    private TreesTableModel treesTableModel = null;
+	private JScrollPane scrollPane = new JScrollPane();
+	private JTable treesTable = null;
+	private TreesTableModel treesTableModel = null;
 
-    private CreateTreeDialog createTreeDialog = null;
+	private CreateTreeDialog createTreeDialog = null;
 
-    public TreesPanel(BeautiFrame parent) {
+	public TreesPanel(BeautiFrame parent) {
 
-        this.frame = parent;
+		this.frame = parent;
 
-        treesTableModel = new TreesTableModel();
-        treesTable = new JTable(treesTableModel);
+		treesTableModel = new TreesTableModel();
+		treesTable = new JTable(treesTableModel);
 
-        treesTable.getTableHeader().setReorderingAllowed(false);
-        treesTable.getTableHeader().setResizingAllowed(false);
-        treesTable.getTableHeader().setDefaultRenderer(
-                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+		treesTable.getTableHeader().setReorderingAllowed(false);
+		treesTable.getTableHeader().setResizingAllowed(false);
+		treesTable.getTableHeader().setDefaultRenderer(
+				new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        final TableColumnModel model = treesTable.getColumnModel();
+		final TableColumnModel model = treesTable.getColumnModel();
 
-        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(treesTable);
+		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(treesTable);
 
-        treesTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        treesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) {
-                selectionChanged();
-            }
-        });
+		treesTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		treesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent evt) {
+				selectionChanged();
+			}
+		});
 
-        scrollPane = new JScrollPane(treesTable,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setOpaque(false);
+		scrollPane = new JScrollPane(treesTable,
+				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		scrollPane.setOpaque(false);
 
-        JToolBar toolBar1 = new JToolBar();
-        toolBar1.setFloatable(false);
-        toolBar1.setOpaque(false);
-        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-        JButton button = new JButton(createTreeAction);
-        createTreeAction.setEnabled(true);
-        PanelUtils.setupComponent(button);
-        toolBar1.add(button);
+		JToolBar toolBar1 = new JToolBar();
+		toolBar1.setFloatable(false);
+		toolBar1.setOpaque(false);
+		toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+		JButton button = new JButton(createTreeAction);
+		createTreeAction.setEnabled(true);
+		PanelUtils.setupComponent(button);
+		toolBar1.add(button);
 
 //        button = new JButton(linkModelAction);
 //        linkModelAction.setEnabled(false);
@@ -130,363 +137,369 @@ public class TreesPanel extends JPanel {
 //        controlPanel1.setOpaque(false);
 //        controlPanel1.add(actionPanel1);
 
-        java.awt.event.ItemListener listener = new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                fireTreePriorsChanged();
-            }
-        };
+		java.awt.event.ItemListener listener = new java.awt.event.ItemListener() {
+			public void itemStateChanged(java.awt.event.ItemEvent ev) {
+				fireTreePriorsChanged();
+			}
+		};
 
-        treePriorCombo = new JComboBox(TreePrior.values());
+		treePriorCombo = new JComboBox(TreePrior.values());
 
-        PanelUtils.setupComponent(treePriorCombo);
-        treePriorCombo.addItemListener(
-                new java.awt.event.ItemListener() {
-                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        fireTreePriorsChanged();
-                        setupPanel();
-                    }
-                }
-        );
+		PanelUtils.setupComponent(treePriorCombo);
+		treePriorCombo.addItemListener(
+				new java.awt.event.ItemListener() {
+					public void itemStateChanged(java.awt.event.ItemEvent ev) {
+						fireTreePriorsChanged();
+						setupPanel();
+					}
+				}
+		);
 
-        KeyListener keyListener = new KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent ev) {
-                if (ev.getKeyCode() == KeyEvent.VK_ENTER) {
-                    fireTreePriorsChanged();
-                }
-            }
-        };
+		KeyListener keyListener = new KeyAdapter() {
+			public void keyTyped(java.awt.event.KeyEvent ev) {
+				if (ev.getKeyCode() == KeyEvent.VK_ENTER) {
+					fireTreePriorsChanged();
+				}
+			}
+		};
 
-        groupCountField.addKeyListener(keyListener);
+		groupCountField.addKeyListener(keyListener);
 //        samplingProportionField.addKeyListener(keyListener);
 
-        FocusListener focusListener = new FocusAdapter() {
-            public void focusLost(FocusEvent focusEvent) {
-                fireTreePriorsChanged();
-            }
-        };
-        groupCountField.addFocusListener(focusListener);
+		FocusListener focusListener = new FocusAdapter() {
+			public void focusLost(FocusEvent focusEvent) {
+				fireTreePriorsChanged();
+			}
+		};
+		groupCountField.addFocusListener(focusListener);
 //        samplingProportionField.addFocusListener(focusListener);
 
-        PanelUtils.setupComponent(parameterizationCombo);
-        parameterizationCombo.addItemListener(listener);
+		PanelUtils.setupComponent(parameterizationCombo);
+		parameterizationCombo.addItemListener(listener);
 
-        PanelUtils.setupComponent(bayesianSkylineCombo);
-        bayesianSkylineCombo.addItemListener(listener);
+		PanelUtils.setupComponent(bayesianSkylineCombo);
+		bayesianSkylineCombo.addItemListener(listener);
 
-        PanelUtils.setupComponent(startingTreeCombo);
-        startingTreeCombo.addItemListener(
-                new java.awt.event.ItemListener() {
-                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        fireTreePriorsChanged();
-                        setupPanel();
-                    }
-                }
-        );
+		PanelUtils.setupComponent(startingTreeCombo);
+		startingTreeCombo.addItemListener(
+				new java.awt.event.ItemListener() {
+					public void itemStateChanged(java.awt.event.ItemEvent ev) {
+						fireTreePriorsChanged();
+						setupPanel();
+					}
+				}
+		);
 
-        PanelUtils.setupComponent(userTreeCombo);
-        userTreeCombo.addItemListener(
-                new java.awt.event.ItemListener() {
-                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        fireTreePriorsChanged();
-                    }
-                }
-        );
+		PanelUtils.setupComponent(userTreeCombo);
+		userTreeCombo.addItemListener(
+				new java.awt.event.ItemListener() {
+					public void itemStateChanged(java.awt.event.ItemEvent ev) {
+						fireTreePriorsChanged();
+					}
+				}
+		);
 
-        JPanel panel1 = new JPanel(new BorderLayout(0, 0));
-        panel1.setOpaque(false);
-        panel1.add(scrollPane, BorderLayout.CENTER);
+		JPanel panel1 = new JPanel(new BorderLayout(0, 0));
+		panel1.setOpaque(false);
+		panel1.add(scrollPane, BorderLayout.CENTER);
 //        panel1.add(controlPanel1, BorderLayout.SOUTH);
 
-        treeDisplayPanel = new TreeDisplayPanel(parent);
+		treeDisplayPanel = new TreeDisplayPanel(parent);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, treeDisplayPanel);
-        splitPane.setDividerLocation(180);
-        splitPane.setContinuousLayout(true);
-        splitPane.setBorder(BorderFactory.createEmptyBorder());
-        splitPane.setOpaque(false);
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, treeDisplayPanel);
+		splitPane.setDividerLocation(180);
+		splitPane.setContinuousLayout(true);
+		splitPane.setBorder(BorderFactory.createEmptyBorder());
+		splitPane.setOpaque(false);
 
-        JPanel panel2 = new JPanel(new BorderLayout(0, 0));
-        panel2.setOpaque(false);
-        panel2.add(toolBar1, BorderLayout.NORTH);
-        panel2.add(splitPane, BorderLayout.CENTER);
+		JPanel panel2 = new JPanel(new BorderLayout(0, 0));
+		panel2.setOpaque(false);
+		panel2.add(toolBar1, BorderLayout.NORTH);
+		panel2.add(splitPane, BorderLayout.CENTER);
 
-        setOpaque(false);
-        setLayout(new BorderLayout(0, 0));
-        setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
+		setOpaque(false);
+		setLayout(new BorderLayout(0, 0));
+		setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
 
-        treePriorPanel.setBorder(null);
-        add(treePriorPanel, BorderLayout.NORTH);
+		treePriorPanel.setBorder(null);
+		add(treePriorPanel, BorderLayout.NORTH);
 
-        add(panel2, BorderLayout.CENTER);
+		add(panel2, BorderLayout.CENTER);
 
-        setupPanel();
-    }
+		setupPanel();
+	}
 
-    private void fireTreePriorsChanged() {
-        if (!settingOptions) {
-            frame.treePriorsChanged();
-        }
-    }
+	private void fireTreePriorsChanged() {
+		if (!settingOptions) {
+			frame.treePriorsChanged();
+		}
+	}
 
-    private void selectionChanged() {
-        int selRow = treesTable.getSelectedRow();
-        if (selRow >= 0) {
-        treeDisplayPanel.setTree(options.trees.get(selRow));
-        } else {            
-            treeDisplayPanel.setTree(null);
-        }
-    }
+	private void selectionChanged() {
+		int selRow = treesTable.getSelectedRow();
+		if (selRow >= 0) {
+			treeDisplayPanel.setTree(options.trees.get(selRow));
+		} else {
+			treeDisplayPanel.setTree(null);
+		}
+	}
 
-    private void createTree() {
-        if (createTreeDialog == null) {
-            createTreeDialog = new CreateTreeDialog(frame);
-        }
+	private void createTree() {
+		if (createTreeDialog == null) {
+			createTreeDialog = new CreateTreeDialog(frame);
+		}
 
-        int result = createTreeDialog.showDialog(options);
-        if (result != JOptionPane.CANCEL_OPTION) {
-            CreateTreeDialog.MethodTypes methodType = createTreeDialog.getMethodType();
-            DataPartition partition = createTreeDialog.getDataPartition();
+		int result = createTreeDialog.showDialog(options);
+		if (result != JOptionPane.CANCEL_OPTION) {
+			CreateTreeDialog.MethodTypes methodType = createTreeDialog.getMethodType();
+			DataPartition partition = createTreeDialog.getDataPartition();
 
-            Patterns patterns = new Patterns(partition.getAlignment());
-            DistanceMatrix distances = new F84DistanceMatrix(patterns);
-            Tree tree;
-            TemporalRooting temporalRooting;
+			Patterns patterns = new Patterns(partition.getAlignment());
+			DistanceMatrix distances = new F84DistanceMatrix(patterns);
+			Tree tree;
+			TemporalRooting temporalRooting;
 
-            switch (methodType) {
-                case NJ:
-                    tree = new NeighborJoiningTree(distances);
-                    temporalRooting = new TemporalRooting(tree);
-                    tree = temporalRooting.findRoot(tree);
-                    break;
-                case UPGMA:
-                    tree = new UPGMATree(distances);
-                    temporalRooting = new TemporalRooting(tree);
-                    break;
-                default:
-                    throw new IllegalArgumentException("unknown method type");
-            }
+			switch (methodType) {
+				case NJ:
+					tree = new NeighborJoiningTree(distances);
+					temporalRooting = new TemporalRooting(tree);
+					tree = temporalRooting.findRoot(tree);
+					break;
+				case UPGMA:
+					tree = new UPGMATree(distances);
+					temporalRooting = new TemporalRooting(tree);
+					break;
+				default:
+					throw new IllegalArgumentException("unknown method type");
+			}
 
-            tree.setId(createTreeDialog.getName());
-            options.trees.add(tree);
-            treesTableModel.fireTableDataChanged();
-            int row = options.trees.size() - 1;
-            treesTable.getSelectionModel().setSelectionInterval(row, row);
-        }
+			tree.setId(createTreeDialog.getName());
+			options.trees.add(tree);
+			treesTableModel.fireTableDataChanged();
+			int row = options.trees.size() - 1;
+			treesTable.getSelectionModel().setSelectionInterval(row, row);
+		}
 
-        fireTreePriorsChanged();
+		fireTreePriorsChanged();
 
-    }
+	}
 
-    private void setupPanel() {
+	private void setupPanel() {
 
-        treePriorPanel.removeAll();
+		treePriorPanel.removeAll();
 
-        treePriorPanel.addComponentWithLabel("Tree Prior:", treePriorCombo);
-        if (treePriorCombo.getSelectedItem() == TreePrior.EXPONENTIAL ||
-                treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC ||
-                treePriorCombo.getSelectedItem() == TreePrior.EXPANSION) {
-            treePriorPanel.addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.SKYLINE) {
-            groupCountField.setColumns(6);
-            treePriorPanel.addComponentWithLabel("Number of groups:", groupCountField);
-            treePriorPanel.addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.BIRTH_DEATH) {
+		treePriorPanel.addComponentWithLabel("Tree Prior:", treePriorCombo);
+		if (treePriorCombo.getSelectedItem() == TreePrior.EXPONENTIAL ||
+				treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC ||
+				treePriorCombo.getSelectedItem() == TreePrior.EXPANSION) {
+			treePriorPanel.addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
+		} else if (treePriorCombo.getSelectedItem() == TreePrior.SKYLINE) {
+			groupCountField.setColumns(6);
+			treePriorPanel.addComponentWithLabel("Number of groups:", groupCountField);
+			treePriorPanel.addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
+		} else if (treePriorCombo.getSelectedItem() == TreePrior.BIRTH_DEATH) {
 //            samplingProportionField.setColumns(8);
 //            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
-        }
+		} else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
+			treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
+		}
 
-        treePriorPanel.addSeparator();
+		treePriorPanel.addSeparator();
 
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panel.setOpaque(false);
-        panel.add(startingTreeCombo);
-        if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
-            panel.add(new JLabel("  Select Tree:"));
-            panel.add(userTreeCombo);
-        }
-        treePriorPanel.addComponentWithLabel("                          Starting Tree:", panel);
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		panel.setOpaque(false);
+		panel.add(startingTreeCombo);
+		if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
+			panel.add(new JLabel("  Select Tree:"));
+			panel.add(userTreeCombo);
+		}
+		treePriorPanel.addComponentWithLabel("                          Starting Tree:", panel);
 
-        treePriorPanel.addSeparator();
+		treePriorPanel.addSeparator();
 
-        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
+		createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
-        treesTableModel.fireTableDataChanged();
+		treesTableModel.fireTableDataChanged();
 
-        validate();
-        repaint();
-    }
+		validate();
+		repaint();
+	}
 
-    private boolean settingOptions = false;
+	private boolean settingOptions = false;
 
-    public void setOptions(BeautiOptions options) {
-        this.options = options;
+	public void setOptions(BeautiOptions options) {
+		this.options = options;
 
-        settingOptions = true;
+		settingOptions = true;
 
-        treePriorCombo.setSelectedItem(options.nodeHeightPrior);
+		treePriorCombo.setSelectedItem(options.nodeHeightPrior);
 
-        groupCountField.setValue(options.skylineGroupCount);
-        //samplingProportionField.setValue(options.birthDeathSamplingProportion);
+		groupCountField.setValue(options.skylineGroupCount);
+		//samplingProportionField.setValue(options.birthDeathSamplingProportion);
 
-        parameterizationCombo.setSelectedIndex(options.parameterization);
-        bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
+		parameterizationCombo.setSelectedIndex(options.parameterization);
+		bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
 
-        startingTreeCombo.setSelectedItem(options.startingTreeType);
+		gmrfBayesianSkyrideCombo.setSelectedIndex(options.skyrideSmoothing);
 
-        userTreeCombo.removeAllItems();
-        if (options.trees.size() == 0) {
-            userTreeCombo.addItem("no trees loaded");
-            userTreeCombo.setEnabled(false);
-        } else {
-            for (Tree tree : options.trees) {
-                userTreeCombo.addItem(tree.getId());
-            }
-            userTreeCombo.setEnabled(true);
-        }
+		startingTreeCombo.setSelectedItem(options.startingTreeType);
 
-        setupPanel();
+		userTreeCombo.removeAllItems();
+		if (options.trees.size() == 0) {
+			userTreeCombo.addItem("no trees loaded");
+			userTreeCombo.setEnabled(false);
+		} else {
+			for (Tree tree : options.trees) {
+				userTreeCombo.addItem(tree.getId());
+			}
+			userTreeCombo.setEnabled(true);
+		}
 
-        settingOptions = false;
+		setupPanel();
 
-        validate();
-        repaint();
-    }
+		settingOptions = false;
 
-    public void getOptions(BeautiOptions options) {
-        options.nodeHeightPrior = (TreePrior) treePriorCombo.getSelectedItem();
+		validate();
+		repaint();
+	}
 
-        if (options.nodeHeightPrior == TreePrior.SKYLINE) {
-            Integer groupCount = groupCountField.getValue();
-            if (groupCount != null) {
-                options.skylineGroupCount = groupCount;
-            } else {
-                options.skylineGroupCount = 5;
-            }
-        } else if (options.nodeHeightPrior == TreePrior.BIRTH_DEATH) {
+	public void getOptions(BeautiOptions options) {
+		options.nodeHeightPrior = (TreePrior) treePriorCombo.getSelectedItem();
+
+		if (options.nodeHeightPrior == TreePrior.SKYLINE) {
+			Integer groupCount = groupCountField.getValue();
+			if (groupCount != null) {
+				options.skylineGroupCount = groupCount;
+			} else {
+				options.skylineGroupCount = 5;
+			}
+		} else if (options.nodeHeightPrior == TreePrior.BIRTH_DEATH) {
 //            Double samplingProportion = samplingProportionField.getValue();
 //            if (samplingProportion != null) {
 //                options.birthDeathSamplingProportion = samplingProportion;
 //            } else {
 //                options.birthDeathSamplingProportion = 1.0;
 //            }
-        }
+		}
 
-        options.parameterization = parameterizationCombo.getSelectedIndex();
-        options.skylineModel = bayesianSkylineCombo.getSelectedIndex();
+		options.parameterization = parameterizationCombo.getSelectedIndex();
+		options.skylineModel = bayesianSkylineCombo.getSelectedIndex();
 
-        options.startingTreeType = (StartingTreeType)startingTreeCombo.getSelectedItem();
-        options.userStartingTree = getSelectedUserTree();
-    }
+		options.skyrideSmoothing = gmrfBayesianSkyrideCombo.getSelectedIndex();
 
-    private Tree getSelectedUserTree() {
-        String treeId = (String)userTreeCombo.getSelectedItem();
-        for (Tree tree : options.trees) {
-            if (tree.getId().equals(treeId)) {
-                return tree;
-            }
-        }
-        return null;
-    }
+		options.startingTreeType = (StartingTreeType) startingTreeCombo.getSelectedItem();
+		options.userStartingTree = getSelectedUserTree();
+	}
 
-    class TreesTableModel extends AbstractTableModel {
+	private Tree getSelectedUserTree() {
+		String treeId = (String) userTreeCombo.getSelectedItem();
+		for (Tree tree : options.trees) {
+			if (tree.getId().equals(treeId)) {
+				return tree;
+			}
+		}
+		return null;
+	}
 
-        private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Trees"};
+	class TreesTableModel extends AbstractTableModel {
 
-        public TreesTableModel() {
-        }
+		private static final long serialVersionUID = -6707994233020715574L;
+		String[] columnNames = {"Trees"};
 
-        public int getColumnCount() {
-            return columnNames.length;
-        }
+		public TreesTableModel() {
+		}
 
-        public int getRowCount() {
-            if (options == null) return 0;
-            return options.trees.size();
-        }
+		public int getColumnCount() {
+			return columnNames.length;
+		}
 
-        public Object getValueAt(int row, int col) {
-            Tree tree = options.trees.get(row);
-            switch (col) {
-                case 0:
-                    return tree.getId();
-                default:
-                    throw new IllegalArgumentException("unknown column, " + col);
-            }
-        }
+		public int getRowCount() {
+			if (options == null) return 0;
+			return options.trees.size();
+		}
 
-        public void setValueAt(Object aValue, int row, int col) {
-            Tree tree = options.trees.get(row);
-            switch (col) {
-                case 0:
-                    String name = ((String) aValue).trim();
-                    if (name.length() > 0) {
-                        tree.setId(name);
-                    }
-                    break;
-            }
-            fireTreePriorsChanged();
-        }
+		public Object getValueAt(int row, int col) {
+			Tree tree = options.trees.get(row);
+			switch (col) {
+				case 0:
+					return tree.getId();
+				default:
+					throw new IllegalArgumentException("unknown column, " + col);
+			}
+		}
 
-        public boolean isCellEditable(int row, int col) {
-            boolean editable;
+		public void setValueAt(Object aValue, int row, int col) {
+			Tree tree = options.trees.get(row);
+			switch (col) {
+				case 0:
+					String name = ((String) aValue).trim();
+					if (name.length() > 0) {
+						tree.setId(name);
+					}
+					break;
+			}
+			fireTreePriorsChanged();
+		}
 
-            switch (col) {
-                case 0:// name
-                    editable = true;
-                    break;
-                default:
-                    editable = false;
-            }
+		public boolean isCellEditable(int row, int col) {
+			boolean editable;
 
-            return editable;
-        }
+			switch (col) {
+				case 0:// name
+					editable = true;
+					break;
+				default:
+					editable = false;
+			}
+
+			return editable;
+		}
 
 
-        public String getColumnName(int column) {
-            return columnNames[column];
-        }
+		public String getColumnName(int column) {
+			return columnNames[column];
+		}
 
-        public Class getColumnClass(int c) {
-            if (getRowCount() == 0) {
-                return Object.class;
-            }
-            return getValueAt(0, c).getClass();
-        }
+		public Class getColumnClass(int c) {
+			if (getRowCount() == 0) {
+				return Object.class;
+			}
+			return getValueAt(0, c).getClass();
+		}
 
-        public String toString() {
-            StringBuffer buffer = new StringBuffer();
+		public String toString() {
+			StringBuffer buffer = new StringBuffer();
 
-            buffer.append(getColumnName(0));
-            for (int j = 1; j < getColumnCount(); j++) {
-                buffer.append("\t");
-                buffer.append(getColumnName(j));
-            }
-            buffer.append("\n");
+			buffer.append(getColumnName(0));
+			for (int j = 1; j < getColumnCount(); j++) {
+				buffer.append("\t");
+				buffer.append(getColumnName(j));
+			}
+			buffer.append("\n");
 
-            for (int i = 0; i < getRowCount(); i++) {
-                buffer.append(getValueAt(i, 0));
-                for (int j = 1; j < getColumnCount(); j++) {
-                    buffer.append("\t");
-                    buffer.append(getValueAt(i, j));
-                }
-                buffer.append("\n");
-            }
+			for (int i = 0; i < getRowCount(); i++) {
+				buffer.append(getValueAt(i, 0));
+				for (int j = 1; j < getColumnCount(); j++) {
+					buffer.append("\t");
+					buffer.append(getValueAt(i, j));
+				}
+				buffer.append("\n");
+			}
 
-            return buffer.toString();
-        }
-    }
+			return buffer.toString();
+		}
+	}
 
-    public class CreateTreeAction extends AbstractAction {
-        public CreateTreeAction() {
-            super("Create Tree");
-            setToolTipText("Create a NJ or UPGMA tree using a data partition");
-        }
+	public class CreateTreeAction extends AbstractAction {
+		public CreateTreeAction() {
+			super("Create Tree");
+			setToolTipText("Create a NJ or UPGMA tree using a data partition");
+		}
 
-        public void actionPerformed(ActionEvent ae) {
-            createTree();
-        }
-    }
+		public void actionPerformed(ActionEvent ae) {
+			createTree();
+		}
+	}
 
 
 }

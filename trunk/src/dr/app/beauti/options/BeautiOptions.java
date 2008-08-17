@@ -34,6 +34,7 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.BirthDeathModelParser;
+import dr.inference.operators.OperatorSchedule;
 import dr.util.NumberFormatter;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -1103,6 +1104,9 @@ public class BeautiOptions extends ModelOptions {
 
 	public Units.Type units = Units.Type.SUBSTITUTIONS;
 	public ClockType clockType = ClockType.STRICT_CLOCK;
+
+	// Operator schedule options
+	public int coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
 
 	// MCMC options
 	public int chainLength = 10000000;

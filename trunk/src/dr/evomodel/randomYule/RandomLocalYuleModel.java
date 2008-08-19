@@ -1,8 +1,9 @@
-package dr.evomodel.speciation;
+package dr.evomodel.randomYule;
 
 import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.speciation.SpeciationModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evoxml.XMLUnits;
 import dr.inference.model.Parameter;
@@ -54,31 +55,36 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
     }
 
     /**
-     * @param tree
-     * @param node
+     * @param tree the tree
+     * @param node the node to retrieve the birth rate of
      * @return the birth rate of the given node;
      */
-    private double getBirthRate(TreeModel tree, NodeRef node) {
+    double getBirthRate(TreeModel tree, NodeRef node) {
 
-        double birthRate = meanRate.getParameterValue(0);
+        double birthRate;
         if (!tree.isRoot(node)) {
 
+            double parentRate = getBirthRate(tree, tree.getParent(node));
             if (isRateChangeOnBranchAbove(tree, node)) {
                 birthRate = tree.getNodeTrait(node, "birthRate");
                 if (birthRatesAreMultipliers) {
-                    birthRate *= getBirthRate(tree, tree.getParent(node));
+                    birthRate *= parentRate;
+                } else {
+                    throw new RuntimeException("Rates must be multipliers in current implementation! " +
+                            "Otherwise root rate might be ignored");
                 }
             } else {
-                birthRate = getBirthRate(tree, tree.getParent(node));
+                birthRate = parentRate;
             }
+        } else {
+            birthRate = meanRate.getParameterValue(0);
         }
         return birthRate;
-
     }
 
 
-    public final boolean isRateChangeOnBranchAbove(Tree tree, NodeRef node) {
-        return (int) Math.round(((TreeModel) tree).getNodeTrait(node, "birthRateIndicator")) == 1;
+    boolean isRateChangeOnBranchAbove(TreeModel tree, NodeRef node) {
+        return (int) Math.round(tree.getNodeTrait(node, "birthRateIndicator")) == 1;
     }
 
     public String[] getNodeAttributeLabel() {
@@ -93,7 +99,7 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
             return new String[]{"0", rateString};
         }
 
-        return new String[]{(isRateChangeOnBranchAbove(tree, node) ? "1" : "0"), rateString};
+        return new String[]{(isRateChangeOnBranchAbove((TreeModel) tree, node) ? "1" : "0"), rateString};
     }
 
 
@@ -140,7 +146,7 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
 
     /**
      * Parses an element from an DOM document into a SpeciationModel. Recognises
-     * YuleModel.
+     * RandomLocalYuleModel.
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 

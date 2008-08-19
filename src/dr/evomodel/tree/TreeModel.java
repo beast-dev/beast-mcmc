@@ -873,6 +873,11 @@ public class TreeModel extends AbstractModel implements MutableTree {
         return parameter;
     }
 
+    public Parameter createNodeTraitsParameter(String name, double[] initialValues) {
+        return createNodeTraitsParameter(name, initialValues.length,
+                initialValues, true, true, true, true);
+    }
+
     /**
      * Create a node traits parameter. Is private because it can only be called by the XMLParser
      */
@@ -1043,6 +1048,9 @@ public class TreeModel extends AbstractModel implements MutableTree {
             }
         }
 
+        public final void createTraitParameter(String name, double[] initialValues, boolean firesTreeEvents) {
+            createTraitParameter(name, initialValues.length, initialValues, firesTreeEvents);
+        }
 
         public final void createTraitParameter(String name, int dim, double[] initialValues, boolean firesTreeEvents) {
 

@@ -164,7 +164,8 @@ public class LogFileTraces extends AbstractTraceList {
     /**
      * Loads all the traces in a file
      *
-     * @param r trace contents
+     * @param r             the reader to read traces from
+     * @param numberOfLines a hint about the number of lines - must be > 0
      * @throws TraceException      when trace contents is not valid
      * @throws java.io.IOException low level problems with file
      */
@@ -199,9 +200,12 @@ public class LogFileTraces extends AbstractTraceList {
         }
 
         // read label tokens
-        while (tokens.hasMoreTokens()) {
-            String label = tokens.nextToken();
-            addTrace(label, numberOfLines);
+
+        String[] labels = new String[tokens.countTokens()];
+
+        for (int i = 0; i < labels.length; i++) {
+            labels[i] = tokens.nextToken();
+            addTrace(labels[i], numberOfLines);
         }
 
         int statCount = getTraceCount();
@@ -228,6 +232,7 @@ public class LogFileTraces extends AbstractTraceList {
                     if (state == 1) state = 0;
                     firstState = false;
                 }
+
                 if (!addState(state)) {
                     throw new TraceException("State " + state + " is not consistent with previous spacing (Line " + reader.getLineNumber() + ")");
                 }
@@ -236,11 +241,13 @@ public class LogFileTraces extends AbstractTraceList {
                 throw new TraceException("State " + state + ":Expected real value in column " + reader.getLineNumber());
             }
 
+            double[] values = new double[statCount];
             for (int i = 0; i < statCount; i++) {
                 if (tokens.hasMoreTokens()) {
 
                     try {
-                        addValue(i, Double.parseDouble(tokens.nextToken()));
+                        values[i] = Double.parseDouble(tokens.nextToken());
+                        addValue(i, values[i]);
                     } catch (NumberFormatException nfe) {
                         throw new TraceException("State " + state + ": Expected real value in column " + (i + 1) +
                                 " (Line " + reader.getLineNumber() + ")");
@@ -248,7 +255,6 @@ public class LogFileTraces extends AbstractTraceList {
                 } else {
                     throw new TraceException("State " + state + ": missing values at line " + reader.getLineNumber());
                 }
-
             }
 
             tokens = reader.tokenizeLine();
@@ -266,7 +272,8 @@ public class LogFileTraces extends AbstractTraceList {
     /**
      * Add a trace for a statistic of the given name
      *
-     * @param name trace name
+     * @param name          trace name
+     * @param numberOfLines a hint about the number of lines, must be > 0
      */
     private void addTrace(String name, int numberOfLines) {
         traces.add(new Trace(name, numberOfLines));
@@ -278,7 +285,7 @@ public class LogFileTraces extends AbstractTraceList {
      * between stateNumbers should remain constant.
      *
      * @param stateNumber the state
-     * @returns false if the state number is inconsistent
+     * @return false if the state number is inconsistent
      */
     private boolean addState(int stateNumber) {
         if (firstState < 0) {

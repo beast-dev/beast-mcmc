@@ -37,6 +37,9 @@ import dr.util.Identifiable;
 import dr.util.NumberFormatter;
 import dr.xml.*;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 /**
@@ -55,9 +58,11 @@ public class MCMC implements Runnable, Identifiable {
     /**
      * Must be called before calling chain.
      *
-     * @param options  the options for this MCMC analysis
-     * @param prior    the prior disitrbution on the model parameters.
-     * @param schedule operator schedule to be used in chain.
+     * @param options    the options for this MCMC analysis
+     * @param prior      the prior disitrbution on the model parameters.
+     * @param schedule   operator schedule to be used in chain.
+     * @param likelihood the likelihood for this MCMC
+     * @param loggers    an array of loggers to record output of this MCMC run
      */
     public void init(
             MCMCOptions options,
@@ -234,37 +239,54 @@ public class MCMC implements Runnable, Identifiable {
             }
 
             if (showOperatorAnalysis) {
-                System.out.println();
-                System.out.println("Operator analysis");
-                System.out.println(
-                        formatter.formatToFieldWidth("Operator", 50) +
-                                formatter.formatToFieldWidth("", 8) +
-                                formatter.formatToFieldWidth("Pr(accept)", 11) +
-                                " Performance suggestion");
-                for (int i = 0; i < schedule.getOperatorCount(); i++) {
-
-                    final MCMCOperator op = schedule.getOperator(i);
-                    if (op instanceof JointOperator) {
-                        JointOperator jointOp = (JointOperator) op;
-                        for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++)
-                            System.out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
-                                    + formattedParameterString(jointOp.getSubOperator(k))
-                                    + formattedProbString(jointOp)
-                                    + formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)));
-                    } else
-                        System.out.println(formattedOperatorName(op.getOperatorName())
-                                + formattedParameterString(op)
-                                + formattedProbString(op)
-                                + formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)));
-
+                showOperatorAnalysis(System.out);
+                try {
+                    FileOutputStream out = new FileOutputStream("beast.operators");
+                    showOperatorAnalysis(new PrintStream(out));
+                    out.flush();
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                System.out.println();
             }
 
             // How should premature finish be flagged?
         }
 
     };
+
+    /**
+     * Writes ano operator analysis to the provided print stream
+     *
+     * @param out the print stream to write operator analysis to
+     */
+    private void showOperatorAnalysis(PrintStream out) {
+        out.println();
+        out.println("Operator analysis");
+        out.println(
+                formatter.formatToFieldWidth("Operator", 50) +
+                        formatter.formatToFieldWidth("", 8) +
+                        formatter.formatToFieldWidth("Pr(accept)", 11) +
+                        " Performance suggestion");
+        for (int i = 0; i < schedule.getOperatorCount(); i++) {
+
+            final MCMCOperator op = schedule.getOperator(i);
+            if (op instanceof JointOperator) {
+                JointOperator jointOp = (JointOperator) op;
+                for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++)
+                    out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
+                            + formattedParameterString(jointOp.getSubOperator(k))
+                            + formattedProbString(jointOp)
+                            + formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)));
+            } else
+                out.println(formattedOperatorName(op.getOperatorName())
+                        + formattedParameterString(op)
+                        + formattedProbString(op)
+                        + formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)));
+
+        }
+        out.println();
+    }
 
     private String formattedOperatorName(String operatorName) {
         return formatter.formatToFieldWidth(operatorName, 50);

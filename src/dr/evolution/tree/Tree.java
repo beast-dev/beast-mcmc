@@ -879,7 +879,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 }
             } else {
                 buffer.append("(");
-                newick(tree, tree.getChild(node, 0), labels, lengths, null,
+                newick(tree, tree.getChild(node, 0), labels, lengths, format,
                         branchRateController,
                         nodeAttributeProviders,
                         branchAttributeProviders, idMap,

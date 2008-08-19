@@ -110,7 +110,10 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(new dr.evomodelxml.YuleModelParser());
         addXMLObjectParser(new dr.evomodelxml.BirthDeathModelParser());
-        addXMLObjectParser(dr.evomodel.speciation.RandomLocalYuleModel.PARSER);
+
+        // RANDOM LOCAL YULE MODEL
+        addXMLObjectParser(dr.evomodel.randomYule.RandomLocalYuleModel.PARSER);
+        addXMLObjectParser(dr.evomodel.randomYule.RandomYuleLogger.PARSER);
 
         addXMLObjectParser(dr.evomodel.speciation.BranchingLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.speciation.BetaSplittingModel.PARSER);

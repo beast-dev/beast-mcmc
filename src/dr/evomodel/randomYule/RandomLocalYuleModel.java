@@ -26,7 +26,6 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
     public static String BIRTH_RATE_INDICATORS = "indicators";
     public static String RATES_AS_MULTIPLIERS = "ratesAsMultipliers";
 
-
     public RandomLocalYuleModel(Parameter birthRates, Parameter indicators, Parameter meanRate,
                                 boolean ratesAsMultipliers, Type units, int dp) {
 
@@ -36,7 +35,6 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
 
         addParameter(birthRates);
         birthRates.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, birthRates.getDimension()));
-
 
         this.indicators = indicators;
 
@@ -82,7 +80,6 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
         return birthRate;
     }
 
-
     boolean isRateChangeOnBranchAbove(TreeModel tree, NodeRef node) {
         return (int) Math.round(tree.getNodeTrait(node, "birthRateIndicator")) == 1;
     }
@@ -101,7 +98,6 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
 
         return new String[]{(isRateChangeOnBranchAbove((TreeModel) tree, node) ? "1" : "0"), rateString};
     }
-
 
     //
     // functions that define a speciation model
@@ -201,7 +197,6 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
                 XMLUnits.SYNTAX_RULES[0]
         };
     };
-
 
     //Protected stuff
     Parameter birthRates;

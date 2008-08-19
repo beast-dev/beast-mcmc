@@ -17,19 +17,20 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id$
  */
-public class TreeBitMoveOperator extends SimpleMCMCOperator {
+public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
 
-    public static final String BIT_MOVE_OPERATOR = "treeBitMoveOperator";
+    public static final String BIT_RANDOM_WALK_OPERATOR = "treeBitRandomWalk";
     public static final String INDICTATOR_TRAIT = "indicatorTrait";
     public static final String TRAIT2 = "trait2";
 
 
-    public TreeBitMoveOperator(TreeModel tree, String t1, String t2, double weight) {
+    public TreeBitRandomWalkOperator(TreeModel tree, String t1, String t2, double weight, int k) {
         this.tree = tree;
         this.indicatorTrait = t1;
         this.trait2 = t2;
 
         if (indicatorTrait == null) indicatorTrait = "trait";
+        this.k = k;
 
         setWeight(weight);
     }
@@ -40,51 +41,53 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
      */
     public final double doOperation() throws OperatorFailedException {
 
-        NodeRef root = tree.getRoot();
-
         // 1. collect nodes that form a pair with parent such that
         // one of them has a one and one has a zero
         List<NodeRef> candidates = new ArrayList<NodeRef>();
 
         for (int i = 0; i < tree.getNodeCount(); i++) {
-
             NodeRef node = tree.getNode(i);
-            if (node != root && tree.getParent(node) != root) {
+            if (tree.getNodeTrait(node, indicatorTrait) == 1.0) candidates.add(node);
+        }
 
-                NodeRef parent = tree.getParent(node);
+        if (candidates.size() == 0) throw new OperatorFailedException("No suitable bits!");
 
-                int sum = rateChange(tree, node) + rateChange(tree, parent);
+        NodeRef node = candidates.get(MathUtils.nextInt(candidates.size()));
 
-                if (sum == 1) candidates.add(node);
+        NodeRef newNode = node;
+
+        for (int i = 0; i < k; i++) {
+            int randomNode = MathUtils.nextInt(3);
+            if (randomNode < 2) {
+                if (!tree.isExternal(newNode)) {
+                    newNode = tree.getChild(newNode, randomNode);
+                }
+            } else if (!tree.isRoot(newNode)) {
+                newNode = tree.getParent(newNode);
             }
         }
 
-        if (candidates.size() == 0) throw new OperatorFailedException("No suitable pairs!");
-
-        NodeRef node = candidates.get(MathUtils.nextInt(candidates.size()));
-        NodeRef parent = tree.getParent(node);
-
-        double nodeTrait, parentTrait;
-        double nodeRate, parentRate;
+        double nodeTrait, newTrait;
+        double nodeRate, newRate;
 
         nodeTrait = tree.getNodeTrait(node, indicatorTrait);
-        parentTrait = tree.getNodeTrait(parent, indicatorTrait);
+        newTrait = tree.getNodeTrait(newNode, indicatorTrait);
 
-        tree.setNodeTrait(node, indicatorTrait, parentTrait);
-        tree.setNodeTrait(parent, indicatorTrait, nodeTrait);
+        tree.setNodeTrait(node, indicatorTrait, newTrait);
+        tree.setNodeTrait(newNode, indicatorTrait, nodeTrait);
 
         if (trait2 != null) {
             nodeTrait = tree.getNodeTrait(node, trait2);
-            parentTrait = tree.getNodeTrait(parent, trait2);
+            newTrait = tree.getNodeTrait(newNode, trait2);
 
-            tree.setNodeTrait(node, trait2, parentTrait);
-            tree.setNodeTrait(parent, trait2, nodeTrait);
+            tree.setNodeTrait(node, trait2, newTrait);
+            tree.setNodeTrait(newNode, trait2, nodeTrait);
         } else {
             nodeRate = tree.getNodeRate(node);
-            parentRate = tree.getNodeRate(parent);
+            newRate = tree.getNodeRate(newNode);
 
-            tree.setNodeRate(node, parentRate);
-            tree.setNodeRate(parent, nodeRate);
+            tree.setNodeRate(node, newRate);
+            tree.setNodeRate(newNode, nodeRate);
         }
 
         return 0.0;
@@ -96,7 +99,7 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
 
     // Interface MCMCOperator
     public final String getOperatorName() {
-        return "treeBitMove()";
+        return BIT_RANDOM_WALK_OPERATOR;
     }
 
     public final String getPerformanceSuggestion() {
@@ -111,7 +114,7 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return BIT_MOVE_OPERATOR;
+            return BIT_RANDOM_WALK_OPERATOR;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -125,8 +128,9 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
             String trait2 = null;
             if (xo.hasAttribute(INDICTATOR_TRAIT)) trait1 = xo.getStringAttribute(INDICTATOR_TRAIT);
             if (xo.hasAttribute(TRAIT2)) trait2 = xo.getStringAttribute(TRAIT2);
+            int k = xo.getAttribute("k", 1);
 
-            return new TreeBitMoveOperator(treeModel, trait1, trait2, weight);
+            return new TreeBitRandomWalkOperator(treeModel, trait1, trait2, weight, k);
         }
 
         //************************************************************************
@@ -134,7 +138,8 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
         //************************************************************************
 
         public String getParserDescription() {
-            return "This element returns a bit-move operator on a given parameter.";
+            return "This element returns a bit-random walk operator on a random " +
+                    "indicator/rate pair in the tree.";
         }
 
         public Class getReturnType() {
@@ -149,7 +154,8 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(TreeModel.class),
                 AttributeRule.newStringRule(INDICTATOR_TRAIT, true),
-                AttributeRule.newStringRule(TRAIT2, true)
+                AttributeRule.newStringRule(TRAIT2, true),
+                AttributeRule.newIntegerRule("k", true)
         };
 
     };
@@ -158,4 +164,5 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
     private TreeModel tree;
     private String indicatorTrait;
     private String trait2;
+    private int k;
 }

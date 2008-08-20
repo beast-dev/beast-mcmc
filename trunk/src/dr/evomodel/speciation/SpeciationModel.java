@@ -27,18 +27,17 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Units;
-import dr.evolution.util.TaxonList;
 import dr.evolution.util.Taxon;
+import dr.evolution.util.Units;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
-import java.util.List;
 import java.util.Set;
 
 /**
  * This interface provides methods that describe a speciation model.
+ *
  * @author Andrew Rambaut
  */
 public abstract class SpeciationModel extends AbstractModel implements Units {
@@ -49,7 +48,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     }
 
     /**
-     *  "fixed" part of likelihood. Guaranteed to be called before any logNodeProbability
+     * "fixed" part of likelihood. Guaranteed to be called before any logNodeProbability
      * calls for one evaluation of the tree.
      *
      * @param taxonCount Number of taxa in tree
@@ -58,7 +57,8 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     public abstract double logTreeProbability(int taxonCount);
 
     /**
-     *  Per node part of likelihood.
+     * Per node part of likelihood.
+     *
      * @param tree
      * @param node
      * @return node contribution to density
@@ -66,17 +66,17 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     public abstract double logNodeProbability(Tree tree, NodeRef node);
 
     /**
-     *
      * @return true if calls to logNodeProbability for terminal nodes (tips) are required
      */
     public abstract boolean includeExternalNodesInLikelihoodCalculation();
 
     /**
      * Generic likelihood calculation
+     *
      * @param tree
      * @return log-likelihood of density
      */
-    public double calculateTreeLogLikelihood(Tree tree) {
+    public final double calculateTreeLogLikelihood(Tree tree) {
         final int taxonCount = tree.getExternalNodeCount();
         double logL = logTreeProbability(taxonCount);
 
@@ -96,14 +96,15 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     /**
      * Alternative likelihood calculation that uses recursion over the tree and allows
      * a list of taxa to exclude
-     * @param tree     the tree
-     * @param exclude  a list of taxa to exclude
-     * @return         log-likelihood of density
+     *
+     * @param tree    the tree
+     * @param exclude a list of taxa to exclude
+     * @return log-likelihood of density
      */
     public double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude) {
         final int taxonCount = tree.getExternalNodeCount() - exclude.size();
 
-        double[] lnL = new double[] { logTreeProbability(taxonCount) };
+        double[] lnL = new double[]{logTreeProbability(taxonCount)};
 
         calculateNodeLogLikelihood(tree, tree.getRoot(), exclude, lnL);
 
@@ -113,10 +114,11 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     /**
      * Alternative likelihood calculation that uses recursion over the tree and allows
      * a list of taxa to exclude
-     * @param tree     the tree
-     * @param exclude  a list of taxa to exclude
-     * @param lnL      a reference to the lnL sum
-     * @return         the number of included daughter nodes
+     *
+     * @param tree    the tree
+     * @param exclude a list of taxa to exclude
+     * @param lnL     a reference to the lnL sum
+     * @return the number of included daughter nodes
      */
     private int calculateNodeLogLikelihood(Tree tree, NodeRef node, Set<Taxon> exclude, double[] lnL) {
         if (tree.isExternal(node)) {
@@ -160,9 +162,14 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         // no intermediates need to be recalculated...
     }
 
-    protected void storeState() {} // no additional state needs storing
-    protected void restoreState() {} // no additional state needs restoring
-    protected void acceptState() {} // no additional state needs accepting
+    protected void storeState() {
+    } // no additional state needs storing
+
+    protected void restoreState() {
+    } // no additional state needs restoring
+
+    protected void acceptState() {
+    } // no additional state needs accepting
 
     // **************************************************************
     // Units IMPLEMENTATION
@@ -178,16 +185,14 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
      *
      * @param u units
      */
-    public void setUnits(Type u)
-    {
+    public void setUnits(Type u) {
         units = u;
     }
 
     /**
      * returns units of measurement.
      */
-    public Type getUnits()
-    {
+    public Type getUnits() {
         return units;
     }
 }

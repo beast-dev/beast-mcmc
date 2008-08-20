@@ -1,4 +1,4 @@
-package dr.evomodel.tree;
+package dr.evomodel.coalescent;
 
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;

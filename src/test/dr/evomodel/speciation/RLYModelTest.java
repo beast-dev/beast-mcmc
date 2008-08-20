@@ -4,7 +4,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.util.Units;
 import dr.evomodel.operators.TreeBitRandomWalkOperator;
-import dr.evomodel.randomYule.RandomLocalYuleModel;
+import dr.evomodel.speciation.RandomLocalYuleModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.evomodel.tree.TreeHeightStatistic;

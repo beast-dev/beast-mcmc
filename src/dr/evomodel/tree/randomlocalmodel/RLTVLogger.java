@@ -1,4 +1,4 @@
-package dr.evomodel.randomYule;
+package dr.evomodel.tree.randomlocalmodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
@@ -12,26 +12,29 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- * A logger that the indicator and rate vector for random local clock.
+ * A logger for a random local tree variable.
+ * It logs only the selected parameters in pairs of node number, variable value
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: TreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
  */
-public class RandomYuleLogger extends MCLogger {
+public class RLTVLogger extends MCLogger {
 
-    private static final String RANDOM_YULE_LOGGER = "randomYuleLogger";
+    private static final String RANDOM_LOCAL_LOGGER = "randomLocalLogger";
     private static final String FILENAME = "fileName";
     private static final String LOG_EVERY = "logEvery";
 
     private TreeModel treeModel;
-    private RandomLocalYuleModel randomYule;
+    private RandomLocalTreeVariable randomLocal;
 
-    public RandomYuleLogger(LogFormatter formatter, int logEvery, TreeModel treeModel, RandomLocalYuleModel randomYule) {
+    public RLTVLogger(LogFormatter formatter,
+                      int logEvery, TreeModel treeModel,
+                      RandomLocalTreeVariable randomLocal) {
 
         super(formatter, logEvery, false);
         this.treeModel = treeModel;
-        this.randomYule = randomYule;
+        this.randomLocal = randomLocal;
     }
 
     public void startLogging() {
@@ -52,11 +55,11 @@ public class RandomYuleLogger extends MCLogger {
 
                 NodeRef node = treeModel.getNode(i);
 
-                if (randomYule.isRateChangeOnBranchAbove(treeModel, node)) {
+                if (randomLocal.isVariableSelected(treeModel, node)) {
                     builder.append("\t");
                     builder.append(node.getNumber());
                     builder.append("\t");
-                    builder.append(randomYule.getBirthRate(treeModel, node));
+                    builder.append(randomLocal.getVariable(treeModel, node));
                 }
             }
 
@@ -76,13 +79,14 @@ public class RandomYuleLogger extends MCLogger {
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return RANDOM_YULE_LOGGER;
+            return RANDOM_LOCAL_LOGGER;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            RandomLocalYuleModel randomYule = (RandomLocalYuleModel) xo.getChild(RandomLocalYuleModel.class);
+            RandomLocalTreeVariable randomLocal =
+                    (RandomLocalTreeVariable) xo.getChild(RandomLocalTreeVariable.class);
 
             String fileName = xo.getStringAttribute(FILENAME);
             int logEvery = xo.getIntegerAttribute(LOG_EVERY);
@@ -95,7 +99,7 @@ public class RandomYuleLogger extends MCLogger {
                 e.printStackTrace();
             }
 
-            return new RandomYuleLogger(formatter, logEvery, treeModel, randomYule);
+            return new RLTVLogger(formatter, logEvery, treeModel, randomLocal);
         }
 
         //************************************************************************
@@ -107,7 +111,7 @@ public class RandomYuleLogger extends MCLogger {
         }
 
         public Class getReturnType() {
-            return RandomLocalYuleModel.class;
+            return RLTVLogger.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -116,7 +120,7 @@ public class RandomYuleLogger extends MCLogger {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class),
-                new ElementRule(RandomLocalYuleModel.class),
+                new ElementRule(RandomLocalTreeVariable.class),
                 AttributeRule.newIntegerRule(LOG_EVERY),
                 AttributeRule.newStringRule(FILENAME),
         };

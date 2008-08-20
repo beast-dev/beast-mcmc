@@ -38,6 +38,10 @@ import dr.xml.*;
 import java.util.logging.Logger;
 
 /**
+ * A model of rates evolving along a tree, such that at each node the rate may change or not depending on an
+ * indicator which chooses whether the parent rate is inherited or a new rate begins on the branch above the node.
+ * This model is implemented using stochastic variable selection.
+ *
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
@@ -51,13 +55,11 @@ public class RandomLocalClockModel extends AbstractModel
     public static final String CLOCK_RATE = "clockRate";
     public static final String RATES_ARE_MULTIPLIERS = "ratesAreMultipliers";
 
-    // The rate categories of each branch
-
-    double scaleFactor;
-    TreeModel treeModel;
-    private boolean ratesAreMultipliers = false;
-
-    public RandomLocalClockModel(TreeModel treeModel, Parameter meanRateParameter, Parameter rateIndicatorParameter, Parameter ratesParameter, boolean ratesAreMultipliers) {
+    public RandomLocalClockModel(TreeModel treeModel,
+                                 Parameter meanRateParameter,
+                                 Parameter rateIndicatorParameter,
+                                 Parameter ratesParameter,
+                                 boolean ratesAreMultipliers) {
 
         super(LOCAL_BRANCH_RATES);
 
@@ -82,6 +84,11 @@ public class RandomLocalClockModel extends AbstractModel
         addParameter(ratesParameter);
         if (meanRateParameter != null) addParameter(meanRateParameter);
 
+        unscaledBranchRates = new double[treeModel.getNodeCount()];
+
+        indicatorName = rateIndicatorParameter.getParameterName();
+        Logger.getLogger("dr.evomodel").info("  indicator trait name is '" + indicatorName + "'");
+
         recalculateScaleFactor();
     }
 
@@ -90,7 +97,7 @@ public class RandomLocalClockModel extends AbstractModel
      * @param node the node to retrieve the variable of
      * @return the raw real-valued variable at this node
      */
-    public double getVariable(TreeModel tree, NodeRef node) {
+    public final double getVariable(TreeModel tree, NodeRef node) {
         return tree.getNodeRate(node);
     }
 
@@ -100,34 +107,8 @@ public class RandomLocalClockModel extends AbstractModel
      * @return true of the variable at this node is included in function, thus representing a change in the
      *         function looking down the tree.
      */
-    public boolean isVariableSelected(TreeModel tree, NodeRef node) {
-        return tree.getNodeTrait(node, "trait") > 0.5;
-    }
-
-    private void recalculateScaleFactor() {
-
-        double timeTotal = 0.0;
-        double branchTotal = 0.0;
-
-        for (int i = 0; i < treeModel.getNodeCount(); i++) {
-            NodeRef node = treeModel.getNode(i);
-            if (!treeModel.isRoot(node)) {
-
-                double branchInTime =
-                        treeModel.getNodeHeight(treeModel.getParent(node)) -
-                                treeModel.getNodeHeight(node);
-
-                double branchLength = branchInTime * getUnscaledBranchRate(treeModel, node);
-
-                timeTotal += branchInTime;
-                branchTotal += branchLength;
-            }
-        }
-
-        scaleFactor = timeTotal / branchTotal;
-
-        if (meanRateParameter != null)
-            scaleFactor *= meanRateParameter.getParameterValue(0);
+    public final boolean isVariableSelected(TreeModel tree, NodeRef node) {
+        return tree.getNodeTrait(node, indicatorName) > 0.5;
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -151,27 +132,69 @@ public class RandomLocalClockModel extends AbstractModel
     }
 
     public double getBranchRate(Tree tree, NodeRef node) {
-
-        return getUnscaledBranchRate(tree, node) * scaleFactor;
+        return unscaledBranchRates[node.getNumber()] * scaleFactor;
     }
 
-    private double getUnscaledBranchRate(Tree tree, NodeRef node) {
+    private void calculateUnscaledBranchRates(TreeModel tree) {
+        cubr(tree, tree.getRoot(), 1.0);
+    }
 
-        if (tree.isRoot(node)) {
-            return 1.0;
-        } else {
+    /**
+     * This is a recursive function that does the work of
+     * calculating the unscaled branch rates across the tree
+     * taking into account the indicator variables.
+     *
+     * @param tree the tree
+     * @param node the node
+     * @param rate the rate of the parent node
+     */
+    private void cubr(TreeModel tree, NodeRef node, double rate) {
 
-            double rate;
-            if (isVariableSelected((TreeModel) tree, node)) {
-                rate = tree.getNodeRate(node);
+        int nodeNumber = node.getNumber();
+
+        if (!tree.isRoot(node)) {
+            if (isVariableSelected(tree, node)) {
                 if (ratesAreMultipliers) {
-                    rate *= getUnscaledBranchRate(tree, tree.getParent(node));
+                    rate *= getVariable(tree, node);
+                } else {
+                    rate = getVariable(tree, node);
                 }
-            } else {
-                rate = getUnscaledBranchRate(tree, tree.getParent(node));
             }
-            return rate;
         }
+        unscaledBranchRates[nodeNumber] = rate;
+
+        int childCount = tree.getChildCount(node);
+        for (int i = 0; i < childCount; i++) {
+            cubr(tree, tree.getChild(node, i), rate);
+        }
+    }
+
+    private void recalculateScaleFactor() {
+
+        calculateUnscaledBranchRates(treeModel);
+
+        double timeTotal = 0.0;
+        double branchTotal = 0.0;
+
+        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+            NodeRef node = treeModel.getNode(i);
+            if (!treeModel.isRoot(node)) {
+
+                double branchInTime =
+                        treeModel.getNodeHeight(treeModel.getParent(node)) -
+                                treeModel.getNodeHeight(node);
+
+                double branchLength = branchInTime * unscaledBranchRates[node.getNumber()];
+
+                timeTotal += branchInTime;
+                branchTotal += branchLength;
+            }
+        }
+
+        scaleFactor = timeTotal / branchTotal;
+
+        if (meanRateParameter != null)
+            scaleFactor *= meanRateParameter.getParameterValue(0);
     }
 
     private static String[] attributeLabel = {"changed"};
@@ -219,9 +242,11 @@ public class RandomLocalClockModel extends AbstractModel
             boolean ratesAreMultipliers = xo.getAttribute(RATES_ARE_MULTIPLIERS, false);
 
             Logger.getLogger("dr.evomodel").info("Using random local clock (RLC) model.");
-            Logger.getLogger("dr.evomodel").info("  rates at change points are parameterized to be " + (ratesAreMultipliers ? " multipliers of parent rates." : "independent of parent rates."));
+            Logger.getLogger("dr.evomodel").info("  rates at change points are parameterized to be " +
+                    (ratesAreMultipliers ? " relative to parent rates." : "independent of parent rates."));
 
-            return new RandomLocalClockModel(tree, meanRateParameter, rateIndicatorParameter, ratesParameter, ratesAreMultipliers);
+            return new RandomLocalClockModel(tree, meanRateParameter, rateIndicatorParameter,
+                    ratesParameter, ratesAreMultipliers);
         }
 
         //************************************************************************
@@ -231,8 +256,9 @@ public class RandomLocalClockModel extends AbstractModel
         public String getParserDescription() {
             return
                     "This element returns an random local clock (RLC) model." +
-                            "Each branch either has a new independent rate or " +
-                            "inherits the rate of the branch above it depending on the indicator vector.";
+                            "Each branch either has a new rate or " +
+                            "inherits the rate of the branch above it depending on the indicator vector, " +
+                            "which is itself sampled.";
         }
 
         public Class getReturnType() {
@@ -246,11 +272,28 @@ public class RandomLocalClockModel extends AbstractModel
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class),
                 new ElementRule(RATE_INDICATORS, Parameter.class, "The rate change indicators parameter", false),
-                new ElementRule(RATES, Parameter.class, "The rate changes parameter", false),
+                new ElementRule(RATES, Parameter.class, "The rates parameter", false),
                 new ElementRule(CLOCK_RATE, Parameter.class, "The mean rate across all local clocks", true),
                 AttributeRule.newBooleanRule(RATES_ARE_MULTIPLIERS, false)
         };
     };
 
-    Parameter meanRateParameter;
+    // the scale factor necessary to maintain the mean rate
+    private double scaleFactor;
+
+    // the tree model
+    private TreeModel treeModel;
+
+    // true if the rate variables are treated as relative
+    // to the parent rate rather than absolute rates
+    private boolean ratesAreMultipliers = false;
+
+    // the unscaled rates of each branch, taking into account the indicators
+    private double[] unscaledBranchRates;
+
+    // the mean rate across all the tree, if null then mean rate is scaled to 1.0
+    private Parameter meanRateParameter;
+
+    // the name of the trait used to indicate the branch rate changes
+    private final String indicatorName;
 }

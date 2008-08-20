@@ -11,6 +11,7 @@ import dr.xml.*;
 
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.logging.Logger;
 
 /**
  * This class contains methods that describe a Yule speciation model whose rate of birth changes
@@ -49,9 +50,9 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
         format.setMaximumFractionDigits(dp);
 
         birthRatesName = birthRates.getParameterName();
-        System.out.println("  birth rates parameter is named '" + birthRatesName + "'");
+        Logger.getLogger("dr.evomodel").info("  birth rates parameter is named '" + birthRatesName + "'");
         indicatorsName = indicators.getParameterName();
-        System.out.println("  indicator parameter is named '" + indicatorsName + "'");
+        Logger.getLogger("dr.evomodel").info("  indicator parameter is named '" + indicatorsName + "'");
 
         this.birthRates = new double[birthRates.getDimension() + 1];
     }

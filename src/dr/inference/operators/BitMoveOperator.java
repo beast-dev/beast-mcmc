@@ -34,6 +34,7 @@ public class BitMoveOperator extends SimpleMCMCOperator {
      * Pick a random k ones in the vector and move them to a random k zero positions.
      */
     public final double doOperation() throws OperatorFailedException {
+
         final int dim = bitsParameter.getDimension();
         List<Integer> ones = new ArrayList<Integer>();
         List<Integer> zeros = new ArrayList<Integer>();
@@ -71,7 +72,16 @@ public class BitMoveOperator extends SimpleMCMCOperator {
 
     // Interface MCMCOperator
     public final String getOperatorName() {
-        return "bitMove(" + bitsParameter.getParameterName() + ", " + numBitsToMove + ")";
+        StringBuilder builder = new StringBuilder();
+        builder.append("bitMove(");
+        builder.append(bitsParameter.getParameterName());
+
+        if (valuesParameter != null) {
+            builder.append(", ").append(valuesParameter.getParameterName());
+        }
+        builder.append(", ").append(numBitsToMove).append(")");
+
+        return builder.toString();
     }
 
     public final String getPerformanceSuggestion() {

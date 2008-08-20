@@ -227,7 +227,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.tree.ParsimonyStateStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.SpeciesTreeStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.UniformRootPrior.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.BayesianSkylineFixedGridLogger.PARSER);
+        addXMLObjectParser(dr.evomodel.coalescent.BayesianSkylineFixedGridLogger.PARSER);
 
         addXMLObjectParser(dr.evomodel.operators.SubtreeSlideOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.ExchangeOperator.NARROW_EXCHANGE_PARSER);
@@ -359,7 +359,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkyrideFixedEffectsGibbsOperator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.GMRFTestLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.GMRFSkyrideFixedGridLogger.PARSER);
+        addXMLObjectParser(dr.evomodel.coalescent.GMRFSkyrideFixedGridLogger.PARSER);
 
         //SVS
         addXMLObjectParser(dr.evomodel.substmodel.SVSGeneralSubstitutionModel.PARSER);

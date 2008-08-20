@@ -1,7 +1,6 @@
-package dr.evomodel.tree;
+package dr.evomodel.coalescent;
 
 import dr.app.beast.BeastVersion;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodelxml.LoggerParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.LogFormatter;
@@ -33,8 +32,7 @@ public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger{
 
 	private GMRFSkyrideLikelihood gsl;
 
-	private int extraDraws = 10;
-	private double extraDrawStdDev = 1.0;
+	private int extraDraws = 20;
 	private double extraDensity = 0;
 
 	public GMRFSkyrideFixedGridLogger(LogFormatter formatter, int logEvery,
@@ -45,24 +43,36 @@ public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger{
 	}
 
 	public double[] getPopSizes(){
-		
 		extraDensity = 0;
+			
+		double[] coalescentHeights = this.getCoalescentHeights();
 				
 		double[] bslPopSizes = gsl.getPopSizeParameter().getParameterValues();
 		double[] popSizes = new double[bslPopSizes.length + extraDraws];
 				
+		double treeHeightScale = coalescentHeights[bslPopSizes.length - 1] / 100.0;
+		double precision = gsl.getPrecisionParameter().getParameterValue(0);
+		
 		for(int i = 0; i < bslPopSizes.length; i++){
 			popSizes[i] = bslPopSizes[i];
 		}
-						
+		
+		double previousMidPoint = (coalescentHeights[bslPopSizes.length - 1] + 
+									coalescentHeights[bslPopSizes.length - 2])/2.0;
+				
 		for(int i = bslPopSizes.length; i < popSizes.length; i++){
-			double extraDraw = MathUtils.nextGaussian()*extraDrawStdDev + popSizes[i-1];
-								
-			popSizes[i] = extraDraw;
-					
-			extraDensity += NormalDistribution.logPdf(popSizes[i], popSizes[i-1], extraDrawStdDev);
+			double currentMidPoint = (coalescentHeights[i] + coalescentHeights[i-1])/2.0;
+			double length = currentMidPoint - previousMidPoint;
+			
+			double stdev = Math.sqrt(length/precision/treeHeightScale);
+			
+			popSizes[i] = MathUtils.nextGaussian()*stdev + popSizes[i-1];
+			
+			extraDensity += NormalDistribution.logPdf(popSizes[i], popSizes[i-1], stdev);
+			
+			previousMidPoint = currentMidPoint;
 		}
-					
+							
 		return popSizes;
 	}
 	

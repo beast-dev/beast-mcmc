@@ -1,4 +1,4 @@
-package dr.evomodel.tree;
+package dr.evomodel.coalescent;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.logging.Logger;
 
 import dr.app.beast.BeastVersion;
-import dr.evomodel.coalescent.BayesianSkylineLikelihood;
 import dr.evomodelxml.LoggerParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.LogFormatter;

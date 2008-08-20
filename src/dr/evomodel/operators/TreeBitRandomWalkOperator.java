@@ -12,7 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A generic operator swaps a randomly selected rate change from parent to offspring or vice versa.
+ * A generic operator that randomly selects a 1-bit in the tree and choose a new
+ * location nearby, by doing k random steps on the tree with equal weights on the
+ * parent and two children for each random step. The 1 bit is swapped with the bit
+ * at the new location, optionally the associated variable values are swapped as well.
  *
  * @author Alexei Drummond
  * @version $Id$
@@ -22,15 +25,18 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
     public static final String BIT_RANDOM_WALK_OPERATOR = "treeBitRandomWalk";
     public static final String INDICTATOR_TRAIT = "indicatorTrait";
     public static final String TRAIT2 = "trait2";
+    public static final String SWAP_TRAIT2 = "swapTrait2";
 
 
-    public TreeBitRandomWalkOperator(TreeModel tree, String t1, String t2, double weight, int k) {
+    public TreeBitRandomWalkOperator(TreeModel tree, String t1, String t2, double weight, int k, boolean swapTrait2) {
         this.tree = tree;
         this.indicatorTrait = t1;
         this.trait2 = t2;
 
         if (indicatorTrait == null) indicatorTrait = "trait";
         this.k = k;
+
+        this.swapTrait2 = swapTrait2;
 
         setWeight(weight);
     }
@@ -67,6 +73,9 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
             }
         }
 
+        // this shortcut avoids unnecessary likelihood calculations
+        if (node == newNode) throw new OperatorFailedException("Moving to same node!");
+
         double nodeTrait, newTrait;
         double nodeRate, newRate;
 
@@ -76,18 +85,20 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
         tree.setNodeTrait(node, indicatorTrait, newTrait);
         tree.setNodeTrait(newNode, indicatorTrait, nodeTrait);
 
-        if (trait2 != null) {
-            nodeTrait = tree.getNodeTrait(node, trait2);
-            newTrait = tree.getNodeTrait(newNode, trait2);
+        if (swapTrait2) {
+            if (trait2 != null) {
+                nodeTrait = tree.getNodeTrait(node, trait2);
+                newTrait = tree.getNodeTrait(newNode, trait2);
 
-            tree.setNodeTrait(node, trait2, newTrait);
-            tree.setNodeTrait(newNode, trait2, nodeTrait);
-        } else {
-            nodeRate = tree.getNodeRate(node);
-            newRate = tree.getNodeRate(newNode);
+                tree.setNodeTrait(node, trait2, newTrait);
+                tree.setNodeTrait(newNode, trait2, nodeTrait);
+            } else {
+                nodeRate = tree.getNodeRate(node);
+                newRate = tree.getNodeRate(newNode);
 
-            tree.setNodeRate(node, newRate);
-            tree.setNodeRate(newNode, nodeRate);
+                tree.setNodeRate(node, newRate);
+                tree.setNodeRate(newNode, nodeRate);
+            }
         }
 
         return 0.0;
@@ -99,7 +110,7 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
 
     // Interface MCMCOperator
     public final String getOperatorName() {
-        return BIT_RANDOM_WALK_OPERATOR;
+        return BIT_RANDOM_WALK_OPERATOR + "(" + indicatorTrait + ")";
     }
 
     public final String getPerformanceSuggestion() {
@@ -129,8 +140,9 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
             if (xo.hasAttribute(INDICTATOR_TRAIT)) trait1 = xo.getStringAttribute(INDICTATOR_TRAIT);
             if (xo.hasAttribute(TRAIT2)) trait2 = xo.getStringAttribute(TRAIT2);
             int k = xo.getAttribute("k", 1);
+            boolean swapTrait2 = xo.getAttribute(SWAP_TRAIT2, true);
 
-            return new TreeBitRandomWalkOperator(treeModel, trait1, trait2, weight, k);
+            return new TreeBitRandomWalkOperator(treeModel, trait1, trait2, weight, k, swapTrait2);
         }
 
         //************************************************************************
@@ -139,7 +151,7 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
 
         public String getParserDescription() {
             return "This element returns a bit-random walk operator on a random " +
-                    "indicator/rate pair in the tree.";
+                    "indicator/variable pair in the tree.";
         }
 
         public Class getReturnType() {
@@ -155,14 +167,17 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
                 new ElementRule(TreeModel.class),
                 AttributeRule.newStringRule(INDICTATOR_TRAIT, true),
                 AttributeRule.newStringRule(TRAIT2, true),
+                AttributeRule.newBooleanRule(SWAP_TRAIT2, true),
                 AttributeRule.newIntegerRule("k", true)
         };
 
     };
+
     // Private instance variables
 
     private TreeModel tree;
     private String indicatorTrait;
     private String trait2;
     private int k;
+    private boolean swapTrait2 = true;
 }

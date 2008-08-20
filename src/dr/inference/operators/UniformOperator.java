@@ -25,8 +25,8 @@
 
 package dr.inference.operators;
 
-import dr.inference.model.Parameter;
 import dr.inference.model.Bounds;
+import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -84,22 +84,6 @@ public class UniformOperator extends SimpleMCMCOperator {
 
     public void setOptimizing(boolean opt) {
         throw new RuntimeException("This operator cannot be optimized!");
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
     }
 
     public String getPerformanceSuggestion() {

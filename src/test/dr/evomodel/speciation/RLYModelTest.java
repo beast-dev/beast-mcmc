@@ -71,7 +71,7 @@ public class RLYModelTest extends TraceTest {
         OperatorSchedule schedule = new SimpleOperatorSchedule();
 
         TreeBitRandomWalkOperator tbrw =
-                new TreeBitRandomWalkOperator(treeModel, birthRateIndicator, birthRate, 1.0, 4);
+                new TreeBitRandomWalkOperator(treeModel, birthRateIndicator, birthRate, 1.0, 4, true);
         BitFlipOperator bfo = new BitFlipOperator(I, 1.0);
 
         schedule.addOperator(tbrw);

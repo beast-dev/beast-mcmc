@@ -270,7 +270,6 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
         }
     }
 
-
     private List<Parameter> uniqueParameters = new ArrayList<Parameter>();
 
     private Parameter[] parameters = null;

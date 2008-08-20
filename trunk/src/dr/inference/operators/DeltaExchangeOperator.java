@@ -138,22 +138,6 @@ public class DeltaExchangeOperator extends AbstractCoercableOperator {
         return 0.234;
     }
 
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
     public final String getPerformanceSuggestion() {
 
         double prob = MCMCOperator.Utils.getAcceptanceProbability(this);

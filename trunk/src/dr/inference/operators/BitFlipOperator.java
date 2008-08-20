@@ -89,11 +89,10 @@ public class BitFlipOperator extends SimpleMCMCOperator {
 
     // Interface MCMCOperator
     public final String getOperatorName() {
-        return "bitflip(" + parameter.getParameterName() + ")";
+        return "bitFlip(" + parameter.getParameterName() + ")";
     }
 
     public final String getPerformanceSuggestion() {
-
         return "no performance suggestion";
     }
 

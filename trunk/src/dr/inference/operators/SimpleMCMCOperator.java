@@ -36,19 +36,19 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     }
 
     public double getMinimumAcceptanceLevel() {
-        return 0.10;
+        return 0.05;
     }
 
     public double getMaximumAcceptanceLevel() {
-        return 0.40;
+        return 0.50;
     }
 
     public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
+        return 0.10;
     }
 
     public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
+        return 0.40;
     }
 
     public abstract String getOperatorName();
@@ -66,7 +66,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     public final void setWeight(double w) {
         if (w > 0) {
             weight = w;
-        } else throw new IllegalArgumentException("Weight must be a positive real. (called with " + w + ")");
+        } else throw new IllegalArgumentException("Weight must be a positive real, but tried to set weight to " + w);
     }
 
     public final void accept(double deviation) {

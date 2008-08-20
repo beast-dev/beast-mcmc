@@ -18,7 +18,6 @@ public class BitMoveOperator extends SimpleMCMCOperator {
     public static final String BIT_MOVE_OPERATOR = "bitMoveOperator";
     public static final String NUM_BITS_TO_MOVE = "numBitsToMove";
 
-
     public BitMoveOperator(Parameter bitsParameter, Parameter valuesParameter, int numBitsToMove, double weight) {
         this.bitsParameter = bitsParameter;
         this.valuesParameter = valuesParameter;

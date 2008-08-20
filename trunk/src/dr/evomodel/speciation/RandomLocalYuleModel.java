@@ -112,7 +112,6 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
                     rate *= getVariable(tree, node);
                 } else {
                     rate = getVariable(tree, node);
-                    ;
                 }
             }
         }

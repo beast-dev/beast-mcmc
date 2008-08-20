@@ -31,12 +31,8 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
 
         super(RandomLocalYuleModel.YULE_MODEL, units);
 
-        this.birthRates = birthRates;
-
         addParameter(birthRates);
         birthRates.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, birthRates.getDimension()));
-
-        this.indicators = indicators;
 
         for (int i = 0; i < indicators.getDimension(); i++) {
             indicators.setParameterValueQuietly(i, 0.0);
@@ -50,22 +46,19 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
         birthRatesAreMultipliers = ratesAsMultipliers;
 
         format.setMaximumFractionDigits(dp);
+
+        birthRatesName = birthRates.getParameterName();
+        System.out.println("  birth rates parameter is named '" + birthRatesName + "'");
+        indicatorsName = indicators.getParameterName();
+        System.out.println("  indicator parameter is named '" + indicatorsName + "'");
     }
 
-    public final String getVariableName() {
-        return "birthRate";
+    public final double getVariable(TreeModel tree, NodeRef node) {
+        return tree.getNodeTrait(node, birthRatesName);
     }
 
-    public final String getSelectionIndicatorName() {
-        return "birthRateIndicator";
-    }
-
-    public double getVariable(TreeModel tree, NodeRef node) {
-        return tree.getNodeTrait(node, getVariableName());
-    }
-
-    public boolean isVariableSelected(TreeModel tree, NodeRef node) {
-        return (int) Math.round(tree.getNodeTrait(node, getSelectionIndicatorName())) == 1;
+    public final boolean isVariableSelected(TreeModel tree, NodeRef node) {
+        return tree.getNodeTrait(node, indicatorsName) > 0.5;
     }
 
     /**
@@ -186,7 +179,7 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
         //************************************************************************
 
         public String getParserDescription() {
-            return "A speciation model of a Yule process whose rate can evolve down the tree.";
+            return "A speciation model of a Yule process whose rate can change at random nodes in the tree.";
         }
 
         public Class getReturnType() {
@@ -210,13 +203,10 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
         };
     };
 
-    //Protected stuff
-    Parameter birthRates;
-    Parameter indicators;
+    private String birthRatesName = "birthRates";
+    private String indicatorsName = "birthRateIndicator";
 
-    Parameter meanRate;
-
-    boolean birthRatesAreMultipliers = false;
-
-    NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
+    private Parameter meanRate;
+    private boolean birthRatesAreMultipliers = false;
+    private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
 }

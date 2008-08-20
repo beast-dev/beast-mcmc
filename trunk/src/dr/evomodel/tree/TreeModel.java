@@ -881,13 +881,15 @@ public class TreeModel extends AbstractModel implements MutableTree {
     /**
      * Create a node traits parameter. Is private because it can only be called by the XMLParser
      */
-    public Parameter createNodeTraitsParameter(String name, int dim, double[] initialValues, boolean rootNode, boolean internalNodes, boolean leafNodes, boolean firesTreeEvents) {
+    public Parameter createNodeTraitsParameter(String name, int dim, double[] initialValues,
+                                               boolean rootNode, boolean internalNodes,
+                                               boolean leafNodes, boolean firesTreeEvents) {
 
         if (!rootNode && !internalNodes && !leafNodes) {
             throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
         }
 
-        CompoundParameter parameter = new CompoundParameter("nodeTraits");
+        CompoundParameter parameter = new CompoundParameter(name);
 
         hasTraits = true;
 

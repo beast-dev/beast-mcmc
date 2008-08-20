@@ -1,4 +1,4 @@
-package dr.evomodel.randomYule;
+package dr.evomodel.tree.randomlocalmodel;
 
 import dr.stats.DiscreteStatistics;
 
@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * @author Alexei Drummond
  */
-public class RandomYuleAnalyzer {
+public class RLTVAnalyzer {
 
     static TreeMap<Integer, List<Double>> nodeRates = new TreeMap<Integer, List<Double>>();
     static Map<String, Integer> comboCounts = new HashMap<String, Integer>();

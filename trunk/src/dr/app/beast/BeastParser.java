@@ -31,6 +31,7 @@ import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.operators.InternalTraitGibbsOperator;
 import dr.evomodel.operators.PrecisionMatrixGibbsOperator;
 import dr.evomodel.operators.RandomWalkOnMapOperator;
+import dr.evomodel.speciation.RandomLocalYuleModel;
 import dr.evomodel.treelikelihood.SequenceErrorModel;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evomodelxml.LoggerParser;
@@ -112,8 +113,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.evomodelxml.BirthDeathModelParser());
 
         // RANDOM LOCAL YULE MODEL
-        addXMLObjectParser(dr.evomodel.randomYule.RandomLocalYuleModel.PARSER);
-        addXMLObjectParser(dr.evomodel.randomYule.RandomYuleLogger.PARSER);
+        addXMLObjectParser(RandomLocalYuleModel.PARSER);
+        addXMLObjectParser(dr.evomodel.tree.randomlocalmodel.RLTVLogger.PARSER);
 
         addXMLObjectParser(dr.evomodel.speciation.BranchingLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.speciation.BetaSplittingModel.PARSER);

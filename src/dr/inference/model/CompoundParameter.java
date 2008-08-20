@@ -64,7 +64,7 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     }
 
     public CompoundParameter(String name) {
-        if (name != null) setId(name);
+        this.name = name;
         dimension = 0;
     }
 
@@ -97,7 +97,11 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
         param.addParameterListener(this);
     }
 
+    /**
+     * @return name if the parameter has been given a specific name, else it returns getId()
+     */
     public final String getParameterName() {
+        if (name != null) return name;
         return getId();
     }
 
@@ -273,4 +277,5 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     private int[] pindex = null;
     private IntersectionBounds bounds = null;
     private int dimension;
+    private String name;
 }

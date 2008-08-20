@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.randomlocalmodel.RandomLocalTreeVariable;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -41,7 +42,8 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
-public class RandomLocalClockModel extends AbstractModel implements BranchRateModel, NodeAttributeProvider {
+public class RandomLocalClockModel extends AbstractModel
+        implements BranchRateModel, NodeAttributeProvider, RandomLocalTreeVariable {
 
     public static final String LOCAL_BRANCH_RATES = "randomLocalClockModel";
     public static final String RATE_INDICATORS = "rateIndicator";
@@ -81,6 +83,25 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
         if (meanRateParameter != null) addParameter(meanRateParameter);
 
         recalculateScaleFactor();
+    }
+
+    /**
+     * @param tree the tree
+     * @param node the node to retrieve the variable of
+     * @return the raw real-valued variable at this node
+     */
+    public double getVariable(TreeModel tree, NodeRef node) {
+        return tree.getNodeRate(node);
+    }
+
+    /**
+     * @param tree the tree
+     * @param node the node
+     * @return true of the variable at this node is included in function, thus representing a change in the
+     *         function looking down the tree.
+     */
+    public boolean isVariableSelected(TreeModel tree, NodeRef node) {
+        return tree.getNodeTrait(node, "trait") > 0.5;
     }
 
     private void recalculateScaleFactor() {
@@ -141,7 +162,7 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
         } else {
 
             double rate;
-            if (isRateChangeOnBranchAbove(tree, node)) {
+            if (isVariableSelected((TreeModel) tree, node)) {
                 rate = tree.getNodeRate(node);
                 if (ratesAreMultipliers) {
                     rate *= getUnscaledBranchRate(tree, tree.getParent(node));
@@ -151,11 +172,6 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
             }
             return rate;
         }
-    }
-
-    public final boolean isRateChangeOnBranchAbove(Tree tree, NodeRef node) {
-        return ((TreeModel) tree).getNodeTrait(node, "trait") > 0.5;
-//        return (int) Math.round(((TreeModel) tree).getNodeTrait(node, "trait")) == 1;
     }
 
     private static String[] attributeLabel = {"changed"};
@@ -170,7 +186,7 @@ public class RandomLocalClockModel extends AbstractModel implements BranchRateMo
             return new String[]{"false"};
         }
 
-        return new String[]{(isRateChangeOnBranchAbove(tree, node) ? "true" : "false")};
+        return new String[]{(isVariableSelected((TreeModel) tree, node) ? "true" : "false")};
     }
 
     public String getBranchAttributeLabel() {

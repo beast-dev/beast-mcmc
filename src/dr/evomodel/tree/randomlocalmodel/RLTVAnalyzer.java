@@ -21,14 +21,19 @@ public class RLTVAnalyzer {
 
     public static void main(String[] args) throws IOException {
 
-        format.setMaximumFractionDigits(3);
+        int total = 0;
+
+        double priorChange = Double.parseDouble(args[1]);
+
+        format.setMaximumFractionDigits(5);
 
         BufferedReader reader = new BufferedReader(new FileReader(args[0]));
 
         // read header line
-        reader.readLine();
-
         String line = reader.readLine();
+        while (line.toLowerCase().startsWith("state")) {
+            line = reader.readLine();
+        }
 
         while (line != null) {
             StringTokenizer tokens = new StringTokenizer(line);
@@ -46,6 +51,7 @@ public class RLTVAnalyzer {
                 putRate(nodeNumber, rate);
             }
             putCombo(changes);
+            total += 1;
             line = reader.readLine();
         }
 
@@ -58,9 +64,13 @@ public class RLTVAnalyzer {
 
         Collections.sort(rateCombos, rateComboComparator);
 
-        System.out.println("combo\tfrequency");
+        System.out.println("combo\tPr");
         for (RateCombo rateCombo : rateCombos) {
-            System.out.println(rateCombo.combo + "\t" + rateCombo.count);
+            double posterior = (double) rateCombo.count / (double) total;
+
+            String[] nodes = rateCombo.combo.split("-");
+
+            System.out.println(rateCombo.combo + "\t" + format.format(posterior));
         }
 
         List<RateCombo> pairRateCombos = new ArrayList<RateCombo>();
@@ -72,9 +82,12 @@ public class RLTVAnalyzer {
         Collections.sort(pairRateCombos, rateComboComparator);
 
         System.out.println();
-        System.out.println("pair\tfrequency");
+        System.out.println("pair\tPr");
         for (RateCombo rateCombo : pairRateCombos) {
-            System.out.println(rateCombo.combo + "\t" + rateCombo.count);
+
+            double posterior = (double) rateCombo.count / (double) total;
+
+            System.out.println(rateCombo.combo + "\t" + format.format(posterior));
         }
 
         List<RateCombo> singleRateCombos = new ArrayList<RateCombo>();
@@ -83,9 +96,11 @@ public class RLTVAnalyzer {
 
             if (count > 1) {
                 double meanRate = getMeanRate(nodeNumber);
-                double stdev = getStdevRate(nodeNumber);
 
-                String details = format.format(meanRate) + "\t" + format.format(stdev);
+                double[] cpd = getRateCPD(nodeNumber);
+
+                String details = format.format(meanRate) +
+                        "\t" + format.format(cpd[0]) + "\t" + format.format(cpd[1]);
 
                 singleRateCombos.add(
                         new RateCombo(nodeNumber + "\t" + details, count));
@@ -95,10 +110,27 @@ public class RLTVAnalyzer {
         Collections.sort(singleRateCombos, rateComboComparator);
 
         System.out.println();
-        System.out.println("node change\trate\tstdev\tfrequency");
+        System.out.println("node change\trate\t95% lower\t95% upper\tPr\tBF");
         for (RateCombo rateCombo : singleRateCombos) {
-            System.out.println(rateCombo.combo + "\t" + rateCombo.count);
+
+            double posterior = (double) rateCombo.count / (double) total;
+            double bf = bayesFactor(posterior, priorChange);
+
+            System.out.println(rateCombo.combo + "\t" + format.format(posterior) + "\t" + format.format(bf));
         }
+    }
+
+    /**
+     * @param posterior the posterior probability
+     * @param prior     the prior probability of a *single* change
+     * @return
+     */
+    private static double bayesFactor(double posterior, double prior) {
+
+        double like1 = posterior / prior;
+        double like2 = (1 - posterior) / (1 - prior);
+
+        return like1 / like2;
     }
 
     private static void putCombo(List<Integer> changes) {
@@ -161,6 +193,17 @@ public class RLTVAnalyzer {
         }
 
         return DiscreteStatistics.stdev(r);
+    }
+
+    private static double[] getRateCPD(int nodeNumber) {
+        List<Double> rates = nodeRates.get(nodeNumber);
+
+        double[] r = new double[rates.size()];
+        for (int i = 0; i < r.length; i++) {
+            r[i] = rates.get(i);
+        }
+
+        return new double[]{DiscreteStatistics.quantile(0.025, r), DiscreteStatistics.quantile(0.975, r)};
     }
 
     private static double getMeanRate(int nodeNumber) {

@@ -37,8 +37,8 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
         XMLObject xoc;
         TaxonList taxa = null;
 
-        int from = 0;
-        int to = 0;
+        int from = -1;
+        int to = -1;
         int every = xo.getAttribute(EVERY, 1);
         if (every <= 0) throw new XMLParseException("illegal 'every' attribute in patterns element");
 
@@ -46,7 +46,6 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
         int stopInclude = -1;
         int startExclude = -1;
         int stopExclude = -1;
-
 
         if (xo.hasAttribute(FROM)) {
             from = xo.getIntegerAttribute(FROM) - 1;
@@ -71,13 +70,12 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
         if (to > alignment.getSiteCount())
             throw new XMLParseException("illegal 'to' attribute in patterns element");
 
-        int f = from + 1;
-        int t = to;
-        if (t == 0) t = alignment.getSiteCount();
+        if (from < 0) from = 0;
+        if (to < 0) to = alignment.getSiteCount() - 1;
 
         if (xo.hasAttribute("id")) {
             Logger.getLogger("dr.evoxml").info("Creating ascertained site patterns '" + xo.getId() + "' from positions " +
-                    Integer.toString(f) + "-" + Integer.toString(t) +
+                    Integer.toString(from + 1) + "-" + Integer.toString(to + 1) +
                     " of alignment '" + alignment.getId() + "'");
             if (every > 1) {
                 Logger.getLogger("dr.evoxml").info("  only using every " + every + " site");

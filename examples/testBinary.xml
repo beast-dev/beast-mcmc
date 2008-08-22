@@ -120,7 +120,7 @@
         <scaledTreeLengthModel idref="treeLengthScaling"/>
     </alsTreeLikelihood>
 
-    <alsDefaultPrior id="asPrior">
+    <alsGammaPrior id="asPrior">
         <treeModel idref="treeModel"/>
         <deathRate>       <parameter idref="als.death"/>    </deathRate>
         <immigrationRate> <parameter idref="als.birth"/>    </immigrationRate>
@@ -130,7 +130,7 @@
             <parameter idref="binary.frequencies"/>
         </freqParameter>
 
-    </alsDefaultPrior>
+    </alsGammaPrior>
 
     <operators id="operators">
         <scaleOperator scaleFactor="0.54" weight="1">

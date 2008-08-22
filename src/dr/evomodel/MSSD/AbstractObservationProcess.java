@@ -177,6 +177,10 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     }
 
     abstract public double calculateLogTreeWeight(BranchRateModel branchRateModel);
+    /*
+    setNodePatternInclusion populates nodePatternInclusion[][]
+    nodePatternInclusion[i][p] if for pattern p gain event above node i is valid
+     */
     abstract void setNodePatternInclusion();
 
     final public double getAverageRate(){

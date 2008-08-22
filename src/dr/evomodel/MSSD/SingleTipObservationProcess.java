@@ -48,7 +48,7 @@ public class SingleTipObservationProcess extends AnyTipObservationProcess{
             PatternList patterns = (PatternList)xo.getChild(PatternList.class);
             Taxon sourceTaxon = (Taxon)xo.getChild(Taxon.class);
             SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
-            Logger.getLogger("dr.treelikelihood").info("Creating SingleTipObservationProcess model. All traits are assumed extant in "+sourceTaxon.getId()+"Initial mu = " + mu.getParameterValue(0)+" initial lam = " + lam.getParameterValue(0));
+            Logger.getLogger("dr.evomodel.MSSD").info("Creating SingleTipObservationProcess model. All traits are assumed extant in "+sourceTaxon.getId()+"Initial mu = " + mu.getParameterValue(0)+" initial lam = " + lam.getParameterValue(0));
 
             return new SingleTipObservationProcess(treeModel, patterns, siteModel, mu, lam, sourceTaxon);
         }

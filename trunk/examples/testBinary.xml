@@ -112,7 +112,7 @@
             </scalingFactor>
     </scaledTreeLengthModel>
 
-    <alsTreeLikelihood id="alsLikelihood" useScaling="false">
+    <alsTreeLikelihood id="alsLikelihood" integrateGainRate="true">
         <patterns idref="shortPatterns"/>
         <treeModel idref="treeModel"/>
         <siteModel idref="siteModel"/>
@@ -120,17 +120,18 @@
         <scaledTreeLengthModel idref="treeLengthScaling"/>
     </alsTreeLikelihood>
 
-    <alsGammaPrior id="asPrior">
+    <exponentialBranchLengthsPrior id="treePrior">
         <treeModel idref="treeModel"/>
-        <deathRate>       <parameter idref="als.death"/>    </deathRate>
-        <immigrationRate> <parameter idref="als.birth"/>    </immigrationRate>
-        <ctmcScale>       <parameter idref="substitutionRate"/> </ctmcScale>
-        <scaledTreeLengthModel idref="treeLengthScaling"/>
-        <freqParameter>
-            <parameter idref="binary.frequencies"/>
-        </freqParameter>
+    </exponentialBranchLengthsPrior>
 
-    </alsGammaPrior>
+    <ctmcScalePrior id = "scalePrior">
+        <ctmcScale> <parameter idref="substitutionRate"/> </ctmcScale>
+        <treeModel idref="treeModel"/>
+    </ctmcScalePrior>
+
+    <gammaPrior id="deathRatePrior" scale="1" shape="0.0001" offset="0">
+        <parameter idref="als.death"/>
+    </gammaPrior>
 
     <operators id="operators">
         <scaleOperator scaleFactor="0.54" weight="1">
@@ -151,14 +152,11 @@
 		<posterior id="posterior">
             <likelihood id="likelihood">
 				<treeLikelihood idref="alsLikelihood"/>
-                <alsLambdaIntegrator id="immigrationIntegration">
-                    <patterns idref="shortPatterns"/>
-                    <anyTipObservationProcess idref="exonObservationProcess"/>
-                    <scaledTreeLengthModel idref="treeLengthScaling"/>
-                </alsLambdaIntegrator>
             </likelihood>
             <prior id="prior">
-                <alsDefaultPrior idref="asPrior"/>
+                <likelihood idref="treePrior"/>        
+                <likelihood idref="deathRatePrior"/>
+                <likelihood idref="scalePrior"/>
             </prior>
         </posterior>
 

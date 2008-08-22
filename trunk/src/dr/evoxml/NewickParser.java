@@ -45,6 +45,7 @@ public class NewickParser extends AbstractXMLObjectParser {
     public static final String NEWICK = "newick";
     public static final String UNITS = "units";
     public static final String RESCALE_HEIGHT = "rescaleHeight";
+    public static final String RESCALE_LENGTH = "rescaleLength";
 
     public String getParserName() {
         return NEWICK;
@@ -185,6 +186,14 @@ public class NewickParser extends AbstractXMLObjectParser {
             }
         }
 
+        if (xo.hasAttribute(RESCALE_LENGTH)) {
+            double rescaleLength = xo.getDoubleAttribute(RESCALE_LENGTH);
+            double scale = rescaleLength / Tree.Utils.getTreeLength(tree,tree.getRoot());
+            for (int i =0; i<tree.getInternalNodeCount(); i++) {
+                NodeRef n = tree.getInternalNode(i);
+                tree.setNodeHeight(n, tree.getNodeHeight(n) * scale);
+            }
+        }
         //System.out.println("Constructed newick tree = " + Tree.Utils.uniqueNewick(tree, tree.getRoot()));
         return tree;
     }
@@ -208,6 +217,7 @@ public class NewickParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newBooleanRule(SimpleTreeParser.USING_DATES, true),
             AttributeRule.newDoubleRule(RESCALE_HEIGHT, true, "Attempt to rescale the tree to the given root height"),
+            AttributeRule.newDoubleRule(RESCALE_LENGTH, true, "Attempt to rescale the tree to the given total length"),
             new StringAttributeRule(UNITS, "The branch length units of this tree", Units.UNIT_NAMES, true),
             new ElementRule(String.class, "The NEWICK format tree. Tip labels are taken to be Taxon IDs")
     };

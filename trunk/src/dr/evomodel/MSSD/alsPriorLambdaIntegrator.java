@@ -37,67 +37,71 @@ public class alsPriorLambdaIntegrator extends AbstractModel implements Likelihoo
     protected double gammaNorm;
 
     public alsPriorLambdaIntegrator(BranchRateModel branchRateModel,
-                                                             AbstractObservationProcess observationProcess,
-                                                             PatternList patterns) {
+                                    AbstractObservationProcess observationProcess,
+                                    PatternList patterns) {
         super(MODEL_NAME);
         this.deathRate = observationProcess.getMuParameter();
         this.creationRate = observationProcess.getLamParameter();
         this.observationProcess = observationProcess;
         this.branchRateModel = branchRateModel;
         this.patterns = patterns;
-        patternWeightKnown=false;
+        patternWeightKnown = false;
     }
 
-
-    public static final String MODEL_NAME="alsLambdaIntegrator";
+    public static final String MODEL_NAME = "alsLambdaIntegrator";
 
     /**
-	 * The XML parser
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+     * The XML parser
+     */
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return MODEL_NAME; }
+        public String getParserName() {
+            return MODEL_NAME;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating alsLambdaIntegrator model.");
             Logger.getLogger("dr.evolution").info("\tIf you publish results using this prior, please reference:");
             Logger.getLogger("dr.evolution").info("\t\t 1. Ferreira and Suchard (in press) for the conditional reference prior on CTMC scale parameter prior;");
             Logger.getLogger("dr.evolution").info("\t\t 2. Alekseyenko, Lee and Suchard (in submision).");
 
-            PatternList patterns= (PatternList) xo.getChild(PatternList.class);
+            PatternList patterns = (PatternList) xo.getChild(PatternList.class);
             BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-            if(branchRateModel == null){
+            if (branchRateModel == null) {
                 branchRateModel = new DefaultBranchRateModel();
                 Logger.getLogger("dr.evolution").info("\tUsing DefaultBranchRateModel\n---------------------------------\n");
             }
-            AbstractObservationProcess observationProcess = (AbstractObservationProcess)xo.getChild(AbstractObservationProcess.class);
+            AbstractObservationProcess observationProcess = (AbstractObservationProcess) xo.getChild(AbstractObservationProcess.class);
 
-            return new alsPriorLambdaIntegrator(branchRateModel,observationProcess, patterns);
+            return new alsPriorLambdaIntegrator(branchRateModel, observationProcess, patterns);
         }
 
-
         //************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element in conjunction with AlternativeSplicingModel integrates the immigration rate parameter.";
-		}
+        public String getParserDescription() {
+            return "This element in conjunction with AlternativeSplicingModel integrates the immigration rate parameter.";
+        }
 
-		public Class getReturnType() { return alsPriorLambdaIntegrator.class; }
+        public Class getReturnType() {
+            return alsPriorLambdaIntegrator.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(PatternList.class),
-            new ElementRule(AbstractObservationProcess.class),
-            new ElementRule(BranchRateModel.class,true)
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(PatternList.class),
+                new ElementRule(AbstractObservationProcess.class),
+                new ElementRule(BranchRateModel.class, true)
         };
-	};
+    };
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if(model==patterns){
-            patternWeightKnown=false;
+        if (model == patterns) {
+            patternWeightKnown = false;
         }
     }
 
@@ -110,8 +114,8 @@ public class alsPriorLambdaIntegrator extends AbstractModel implements Likelihoo
      * can be safely called multiple times with minimal computational cost.
      */
     protected void handleParameterChangedEvent(Parameter parameter, int index) {
-        if(parameter==patterns){
-            patternWeightKnown=false;
+        if (parameter == patterns) {
+            patternWeightKnown = false;
         }
     }
 
@@ -119,7 +123,7 @@ public class alsPriorLambdaIntegrator extends AbstractModel implements Likelihoo
      * Additional state information, outside of the sub-model is stored by this call.
      */
     protected void storeState() {
-          storedN=N;
+        storedN = N;
     }
 
     /**
@@ -156,20 +160,20 @@ public class alsPriorLambdaIntegrator extends AbstractModel implements Likelihoo
         return calculateLogLikelihood();  //AUTOGENERATED METHOD IMPLEMENTATION
     }
 
-    public double calculateLogLikelihood(){
-        double lam=creationRate.getParameterValue(0);
-        double mu=deathRate.getParameterValue(0);
-        if(!patternWeightKnown){
-            N=0.0;
+    public double calculateLogLikelihood() {
+        double lam = creationRate.getParameterValue(0);
+        double mu = deathRate.getParameterValue(0);
+        if (!patternWeightKnown) {
+            N = 0.0;
             patternCount = patterns.getPatternCount();
-            double patternWeights[]=patterns.getPatternWeights();
-            for(int i=0; i< patternCount; ++i){
-                N+=patternWeights[i];
+            double patternWeights[] = patterns.getPatternWeights();
+            for (int i = 0; i < patternCount; ++i) {
+                N += patternWeights[i];
             }
-            patternWeightKnown=true;
+            patternWeightKnown = true;
         }
-        double treeWeight =   observationProcess.getLogTreeWeight(branchRateModel);
-        return GammaFunction.lnGamma(N)-(N-1)*Math.log(lam)+N*Math.log(mu)- treeWeight -N*Math.log(-treeWeight*mu/lam);
+        double treeWeight = observationProcess.getLogTreeWeight(branchRateModel);
+        return GammaFunction.lnGamma(N) - (N - 1) * Math.log(lam) + N * Math.log(mu) - treeWeight - N * Math.log(-treeWeight * mu / lam);
     }
 
     /**

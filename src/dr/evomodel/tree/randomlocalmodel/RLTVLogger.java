@@ -38,8 +38,6 @@ public class RLTVLogger extends MCLogger {
     }
 
     public void startLogging() {
-
-        super.startLogging();
         logLine("State\tRate changes");
     }
 

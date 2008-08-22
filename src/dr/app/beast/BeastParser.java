@@ -26,7 +26,6 @@
 package dr.app.beast;
 
 import dr.evolution.datatype.MutationDeathType;
-import dr.evomodel.MSSD.*;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.operators.InternalTraitGibbsOperator;
 import dr.evomodel.operators.PrecisionMatrixGibbsOperator;
@@ -187,9 +186,9 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.treelikelihood.AncestralState.PARSER);
         addXMLObjectParser(SequenceErrorModel.PARSER);
 
-        addXMLObjectParser(ALSTreeLikelihood.PARSER);
-        addXMLObjectParser(SingleTipObservationProcess.PARSER);
-        addXMLObjectParser(AnyTipObservationProcess.PARSER);
+        addXMLObjectParser(dr.evomodel.MSSD.ALSTreeLikelihood.PARSER);
+        addXMLObjectParser(dr.evomodel.MSSD.SingleTipObservationProcess.PARSER);
+        addXMLObjectParser(dr.evomodel.MSSD.AnyTipObservationProcess.PARSER);
 
         addXMLObjectParser(dr.evomodel.sitemodel.GammaSiteModel.PARSER);
         addXMLObjectParser(dr.evomodel.sitemodel.CategorySiteModel.PARSER);
@@ -301,7 +300,6 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.operators.SimpleOperatorSchedule.PARSER);
 //		addXMLObjectParser(new dr.inference.markovchain.ConvergenceListenerParser());
 
-
         addXMLObjectParser(dr.inference.operators.RandomWalkIntegerOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.RandomWalkOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.ScaleOperator.PARSER);
@@ -373,8 +371,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.substmodel.MutationDeathModel.PARSER);
 
 
-        addXMLObjectParser(alsDefaultPrior.PARSER);
-        addXMLObjectParser(alsPriorLambdaIntegrator.PARSER);
+        addXMLObjectParser(dr.evomodel.MSSD.alsDefaultPrior.PARSER);
+        addXMLObjectParser(dr.evomodel.MSSD.alsPriorLambdaIntegrator.PARSER);
 
         // Ancestral Recombination Graphs
         addXMLObjectParser(dr.evomodel.arg.coalescent.ARGCoalescentLikelihood.PARSER);

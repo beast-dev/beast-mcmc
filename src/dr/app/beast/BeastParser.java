@@ -371,8 +371,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.substmodel.MutationDeathModel.PARSER);
 
         addXMLObjectParser(dr.evomodel.MSSD.ExponentialBranchLengthTreePrior.PARSER);
-        //addXMLObjectParser(dr.evomodel.MSSD.alsGammaPrior.PARSER);
-        //addXMLObjectParser(dr.evomodel.MSSD.alsPriorLambdaIntegrator.PARSER);
+        addXMLObjectParser(dr.evomodel.MSSD.CTMCScalePrior.PARSER);
 
         // Ancestral Recombination Graphs
         addXMLObjectParser(dr.evomodel.arg.coalescent.ARGCoalescentLikelihood.PARSER);

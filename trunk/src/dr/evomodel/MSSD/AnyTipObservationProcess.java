@@ -60,16 +60,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess{
             }
             logWeight+=(1.0-u0[i])*(1.0-p[i]);
         }
-/*        System.err.print("u0 ");
-        for(i=0;i<L;++i){
-            System.err.print(" "+u0[i]);
-        }
-        System.err.println("\n");
-        System.err.print("p ");
-        for(i=0;i<L;++i){
-            System.err.print(" "+p[i]);
-        }
-        System.err.println("\n");*/
+
         return -logWeight*lam.getParameterValue(0)/(getAverageRate()*mu.getParameterValue(0));
     }
 
@@ -108,8 +99,6 @@ public class AnyTipObservationProcess extends AbstractObservationProcess{
                 nodePatternInclusion[i][patternIndex] = (extantInTipsBelow[i]>=extantInTips);
             }
 
-            //setNodePatternInclusionRecursive(root,extantInTips,j);
-//            setNodePatternInclusionIterative(extantInTips,j);
         }
     }
 
@@ -126,7 +115,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess{
             TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
             PatternList patterns = (PatternList)xo.getChild(PatternList.class);
             SiteModel siteModel = (SiteModel)xo.getChild(SiteModel.class);
-            Logger.getLogger("dr.treelikelihood").info("Creating AnyTipObservationProcess model. Observed traits are assumed to be extant in at least one tip node. Initial mu = " + mu.getParameterValue(0)+" initial lam = " + lam.getParameterValue(0));
+            Logger.getLogger("dr.evomodel.MSSD").info("Creating AnyTipObservationProcess model. Observed traits are assumed to be extant in at least one tip node. Initial mu = " + mu.getParameterValue(0)+" initial lam = " + lam.getParameterValue(0));
 
             return new AnyTipObservationProcess(MODEL_NAME, treeModel, patterns, siteModel, mu, lam);
         }

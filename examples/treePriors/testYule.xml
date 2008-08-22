@@ -60,14 +60,6 @@
         </populationSize>
     </constantSize>
 
-    <!-- A prior on the distribution node heights defined given                  -->
-    <!-- a Yule speciation process (a pure birth process).                       -->
-    <yuleModel id="yule" units="substitutions">
-        <birthRate>
-            <parameter id="yule.birthRate" value="1.0" lower="0.0" upper="1000000.0"/>
-        </birthRate>
-    </yuleModel>
-
     <!-- Generate a random starting tree under the coalescent process            -->
     <coalescentTree id="startingTree">
         <taxa idref="taxa"/>
@@ -86,6 +78,14 @@
             <parameter id="treeModel.allInternalNodeHeights"/>
         </nodeHeights>
     </treeModel>
+
+    <!-- A prior on the distribution node heights defined given                  -->
+    <!-- a Yule speciation process (a pure birth process).                       -->
+    <yuleModel id="yule" units="substitutions">
+        <birthRate>
+            <parameter id="yule.birthRate" value="1.0" lower="0.0" upper="1000000.0"/>
+        </birthRate>
+    </yuleModel>
 
     <speciationLikelihood id="speciation">
         <model>

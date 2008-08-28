@@ -47,10 +47,19 @@ import java.util.logging.Logger;
  * @version $Id: FrequencyModel.java,v 1.26 2005/05/24 20:25:58 rambaut Exp $
  */
 public class FrequencyModel extends AbstractModel {
-
     public static final String FREQUENCIES = "frequencies";
     public static final String FREQUENCY_MODEL = "frequencyModel";
     public static final String NORMALIZE = "normalize";
+
+    /**
+     * A constructor which allows a more programmatic approach with
+     * fixed frequencies.
+     * @param dataType
+     * @param frequencyParameter
+     */
+    public FrequencyModel(DataType dataType, double[] frequencyParameter) {
+        this(dataType, new Parameter.Default(frequencyParameter));
+    }
 
     public FrequencyModel(DataType dataType, Parameter frequencyParameter) {
 
@@ -100,6 +109,14 @@ public class FrequencyModel extends AbstractModel {
         double[] frequencies = new double[getFrequencyCount()];
         for (int i = 0; i < frequencies.length; i++) {
             frequencies[i] = getFrequency(i);
+        }
+        return frequencies;
+    }
+
+    public double[] getCumulativeFrequencies() {
+        double[] frequencies = getFrequencies();
+        for (int i = 1; i < frequencies.length; i++) {
+            frequencies[i] += frequencies[i - 1];
         }
         return frequencies;
     }

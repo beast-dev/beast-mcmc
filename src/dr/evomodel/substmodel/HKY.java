@@ -58,6 +58,15 @@ public class HKY extends AbstractNucleotideModel {
     private double tab1T, tab2T, tab3T;
 
     /**
+     * A constructor which allows a more programmatic approach with
+     * fixed kappa.
+     * @param kappa
+     * @param freqModel
+     */
+    public HKY(double kappa, FrequencyModel freqModel) {
+        this(new Parameter.Default(kappa), freqModel);
+    }
+    /**
      * Constructor
      */
     public HKY(Parameter kappaParameter, FrequencyModel freqModel) {

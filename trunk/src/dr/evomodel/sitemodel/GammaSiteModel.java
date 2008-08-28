@@ -25,8 +25,7 @@
 
 package dr.evomodel.sitemodel;
 
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.*;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -52,6 +51,38 @@ public class GammaSiteModel extends AbstractModel
     public static final String GAMMA_SHAPE = "gammaShape";
     public static final String GAMMA_CATEGORIES = "gammaCategories";
     public static final String PROPORTION_INVARIANT = "proportionInvariant";
+
+    public GammaSiteModel(SubstitutionModel substitutionModel) {
+        this(substitutionModel,
+                null,
+                null,
+                0,
+                null);
+    }
+    
+    public GammaSiteModel(SubstitutionModel substitutionModel, double alpha, int categoryCount) {
+        this(substitutionModel,
+                null,
+                new Parameter.Default(alpha),
+                categoryCount,
+                null);
+    }
+
+    public GammaSiteModel(SubstitutionModel substitutionModel, double pInvar) {
+        this(substitutionModel,
+                null,
+                null,
+                0,
+                new Parameter.Default(pInvar));
+    }
+
+    public GammaSiteModel(SubstitutionModel substitutionModel, double alpha, int categoryCount, double pInvar) {
+        this(substitutionModel,
+                null,
+                new Parameter.Default(alpha),
+                categoryCount,
+                new Parameter.Default(pInvar));
+    }
 
     /**
      * Constructor for gamma+invar distributed sites. Either shapeParameter or

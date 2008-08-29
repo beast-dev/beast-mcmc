@@ -41,14 +41,14 @@ public class SequenceErrorModel extends TipPartialsModel {
 
     public void getTipPartials(int nodeIndex, double[] partials) {
         double base = 0.0;
-        double factor = 0.0;
+        double rate = 0.0;
 
         if (baseErrorRateParameter != null) {
             base = baseErrorRateParameter.getParameterValue(0);
         }
 
         if (ageRelatedErrorRateParameter != null) {
-            factor = ageRelatedErrorRateParameter.getParameterValue(0);
+            rate = ageRelatedErrorRateParameter.getParameterValue(0);
         }
 
         int[] states = this.states[nodeIndex];
@@ -58,7 +58,7 @@ public class SequenceErrorModel extends TipPartialsModel {
 
             if (ageRelatedErrorRateParameter != null) {
                 double age = treeModel.getNodeHeight(treeModel.getExternalNode(nodeIndex));
-                pUndamaged *= Math.exp(-factor * age);
+                pUndamaged *= Math.exp(-rate * age);
             }
 
             int k = 0;

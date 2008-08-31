@@ -471,6 +471,27 @@ public class Matrix {
 		return sb.toString();
 	}
 
+	public String toStringOctave() {
+		StringBuffer sb = new StringBuffer();
+		int n = rows();
+		int m = columns();
+		sb.append("[ ");
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < m; j++) {
+				sb.append(components[i][j]);
+				if (j == m - 1) {
+					if (i == n - 1)
+						sb.append(" ");
+					else
+						sb.append("; ");
+				} else
+					sb.append(", ");
+			}
+		}
+		sb.append("]");
+		return sb.toString();
+	}
+
 	/**
 	 * @return MatrixAlgebra.Matrix		transpose of the receiver
 	 */

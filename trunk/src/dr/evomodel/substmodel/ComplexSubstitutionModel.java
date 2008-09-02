@@ -5,8 +5,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.linalg.EigenvalueDecomposition;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
+import dr.evolution.datatype.*;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.MatrixEntryColumn;
@@ -14,6 +13,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
+import dr.xml.*;
 
 /**
  * <b>A general irreversible class for any
@@ -24,8 +24,14 @@ import dr.math.matrixAlgebra.Vector;
 
 public class ComplexSubstitutionModel extends AbstractSubstitutionModel implements Loggable {
 
+	public static final String COMPLEX_SUBSTITUTION_MODEL = "complexSubstitutionModel";
+	public static final String RATES = "rates";
+	public static final String ROOT_FREQUENCIES = "rootFrequencies";
+	public static final String INDICATOR = "rateIndicator";
+
 	public ComplexSubstitutionModel(String name, DataType dataType,
 	                                FrequencyModel rootFreqModel, Parameter parameter) {
+
 		super(name, dataType, rootFreqModel);
 		this.infinitesimalRates = parameter;
 
@@ -36,6 +42,11 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 					+ infinitesimalRates.getDimension() + ") must equal " + rateCount);
 		}
 
+		stationaryDistribution = new double[stateCount];
+		storedStationaryDistribution = new double[stateCount];
+
+		addParameter(infinitesimalRates);
+
 	}
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -45,8 +56,6 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 	}
 
 	protected void restoreState() {
-
-		updateMatrix = storedUpdateMatrix;
 
 		// To restore all this stuff just swap the pointers...
 //		DoubleMatrix2D tmp = eigenD;
@@ -61,7 +70,15 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 		storedEvalImag = EvalImag;
 		EvalImag = tmp3;
 
+		tmp3 = storedStationaryDistribution;
+		storedStationaryDistribution = stationaryDistribution;
+		stationaryDistribution = tmp3;
+
+		normalization = storedNormalization;
+
 		// Inherited
+		updateMatrix = storedUpdateMatrix;
+
 		double[] tmp1 = storedEval;
 		storedEval = Eval;
 		Eval = tmp1;
@@ -94,7 +111,9 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 //		storedEigenVImag = eigenVImag.copy();
 //
 
+		System.arraycopy(stationaryDistribution, 0, storedStationaryDistribution, 0, stateCount);
 		System.arraycopy(EvalImag, 0, storedEvalImag, 0, stateCount);
+		storedNormalization = normalization;
 
 		// Inherited
 		System.arraycopy(Eval, 0, storedEval, 0, stateCount);
@@ -172,28 +191,47 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 		pushiexp(iexp);
 	}
 
-	protected double[] getStationaryDistribution() {
-		if (stationaryDistribution == null) {
-			stationaryDistribution = new double[stateCount];
-			final double prop = 1.0 / stateCount;
-			for (int i = 0; i < stateCount; i++)
-				stationaryDistribution[i] = prop;
-			// todo Should calculate stationary distribution of rate matrix = first eigenvector (all real???)
-			// todo But there's circular dependence, as stationary distribution is needed for normalization
-			// todo Could calculate eigenvectors for unnormalized matrix (the same) and then just rescale the
-			// todo the eigenvalues after normalization
-		}
+	public double[] getStationaryDistribution() {
 		return stationaryDistribution;
+	}
+
+	protected void computeStationaryDistribution() {
+
+		int i;
+		final int end = stateCount - 1;
+		for (i = 0; i < end; i++) {
+			if (Math.abs(Eval[i]) < 1E-12)
+				break;
+		}
+
+		double total = 0.0;
+
+		for (int k = 0; k < stateCount; k++) {
+			double value = Evec[k][i];
+			total += value;
+			stationaryDistribution[k] = value;
+		}
+
+		for (int k = 0; k < stateCount; k++)
+			stationaryDistribution[k] /= total;
+
+	}
+
+
+	protected double[] getRates() {
+		return infinitesimalRates.getParameterValues();
 	}
 
 	protected void setupMatrix() {
 
-		if (!eigenInitialised)
+		if (!eigenInitialised) {
 			initialiseEigen();
+			storedEvalImag = new double[stateCount];
+		}
 
 		int i, j, k = 0;
 
-		double[] rates = infinitesimalRates.getParameterValues();
+		double[] rates = getRates();
 
 		// Set the instantaneous rate matrix
 		for (i = 0; i < stateCount; i++) {
@@ -202,24 +240,17 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 					amat[i][j] = rates[k++];
 			}
 		}
+
 		makeValid(amat, stateCount);
-		normalize(amat, getStationaryDistribution());
 
 		// compute eigenvalues and eigenvectors
 		EigenvalueDecomposition eigenDecomp = new EigenvalueDecomposition(new DenseDoubleMatrix2D(amat));
 
-		eigenD = eigenDecomp.getD(); // only used for debugging
-		eigenV = eigenDecomp.getV();
-		eigenVReal = eigenDecomp.getRealEigenvalues();
-		eigenVImag = eigenDecomp.getImagEigenvalues();
+		DoubleMatrix2D eigenV = eigenDecomp.getV();
+		DoubleMatrix1D eigenVReal = eigenDecomp.getRealEigenvalues();
+		DoubleMatrix1D eigenVImag = eigenDecomp.getImagEigenvalues();
 
-		checkComplexSolutions();
-
-		if (isComplex) {
-			System.err.println("Warning: Complex roots found!");
-		}
-
-		eigenVInv = alegbra.inverse(eigenV);
+		DoubleMatrix2D eigenVInv = alegbra.inverse(eigenV);
 
 		// fill AbstractSubstitutionModel parameters
 
@@ -227,6 +258,24 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 		Evec = eigenV.toArray();
 		Eval = eigenVReal.toArray();
 		EvalImag = eigenVImag.toArray();
+
+		checkComplexSolutions();
+
+		// compute normalization and rescale eigenvalues
+
+		computeStationaryDistribution();
+
+		double subst = 0.0;
+
+		for (i = 0; i < stateCount; i++)
+			subst += -amat[i][i] * stationaryDistribution[i];
+
+		normalization = subst;
+
+		for (i = 0; i < stateCount; i++) {
+			Eval[i] /= subst;
+			EvalImag[i] /= subst;
+		}
 
 //		printDebugSetupMatrix();
 		updateMatrix = false;
@@ -236,16 +285,17 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 		System.out.println("Normalized infinitesimal rate matrix:");
 		System.out.println(new Matrix(amat));
 		System.out.println(new Matrix(amat).toStringOctave());
+		System.out.println("Normalization = " + normalization);
 		System.out.println("Values in setupMatrix():");
-		System.out.println(eigenV);
-		System.out.println(eigenVInv);
-		System.out.println(eigenVReal);
+//		System.out.println(eigenV);
+//		System.out.println(eigenVInv);
+//		System.out.println(eigenVReal);
 	}
 
 	protected void checkComplexSolutions() {
 		boolean complex = false;
 		for (int i = 0; i < stateCount && !complex; i++) {
-			if (eigenVImag.getQuick(i) != 0)
+			if (EvalImag[i] != 0)
 				complex = true;
 		}
 		isComplex = complex;
@@ -264,7 +314,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 	protected void setupRelativeRates() {
 	}
 
-	private Parameter infinitesimalRates;
+	protected Parameter infinitesimalRates;
 
 	public LogColumn[] getColumns() {
 
@@ -297,11 +347,11 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 		System.out.println("Results:");
 		System.out.println(new Vector(finiteTimeProbs));
 
-		System.out.println("COLT value:");
-		// This should work, matches 'octave' results
-		DoubleMatrix2D result = alegbra.mult(substModel.eigenV, alegbra.mult(blockDiagonalExponential(1.0, substModel.eigenD), substModel.eigenVInv));
-
-		System.out.println(result);
+//		System.out.println("COLT value:");
+//		 This should work, matches 'octave' results
+//		DoubleMatrix2D result = alegbra.mult(substModel.eigenV, alegbra.mult(blockDiagonalExponential(1.0, substModel.eigenD), substModel.eigenVInv));
+//
+//		System.out.println(result);
 
 	}
 
@@ -324,23 +374,119 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 		return mat;
 	}
 
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-	private DoubleMatrix2D eigenD;
+		public String getParserName() {
+			return COMPLEX_SUBSTITUTION_MODEL;
+		}
+
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+			DataType dataType = null;
+
+			if (xo.hasAttribute(DataType.DATA_TYPE)) {
+				String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
+				if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
+					dataType = Nucleotides.INSTANCE;
+				} else if (dataTypeStr.equals(AminoAcids.DESCRIPTION)) {
+					dataType = AminoAcids.INSTANCE;
+				} else if (dataTypeStr.equals(Codons.DESCRIPTION)) {
+					dataType = Codons.UNIVERSAL;
+				} else if (dataTypeStr.equals(TwoStates.DESCRIPTION)) {
+					dataType = TwoStates.INSTANCE;
+				}
+			}
+
+			if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
+
+			XMLObject cxo = (XMLObject) xo.getChild(RATES);
+
+			Parameter ratesParameter = (Parameter) cxo.getChild(Parameter.class);
+
+			int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
+
+			if (ratesParameter.getDimension() != rateCount) {
+				throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However parameter dimension is " + ratesParameter.getDimension());
+			}
+
+
+			cxo = (XMLObject) xo.getChild(ROOT_FREQUENCIES);
+			FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+
+			if (dataType != rootFreq.getDataType()) {
+				throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
+			}
+
+			Parameter indicators = null;
+
+			if (xo.hasChildNamed(INDICATOR)) {
+				indicators = (Parameter) ((XMLObject) xo.getChild(INDICATOR)).getChild(Parameter.class);
+				if (ratesParameter.getDimension() != indicators.getDimension())
+					throw new XMLParseException("Rate parameter dimension must match indicator parameter dimension");
+			}
+
+			if (indicators == null)
+				return new ComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter);
+			else
+				return new SVSComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter, indicators);
+
+		}
+
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
+
+		public String getParserDescription() {
+			return "A general reversible model of sequence substitution for any data type with stochastic variable selection.";
+		}
+
+		public Class getReturnType() {
+			return SubstitutionModel.class;
+		}
+
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
+
+		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+				new XORRule(
+						new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
+						new ElementRule(DataType.class)
+				),
+				new ElementRule(ROOT_FREQUENCIES, FrequencyModel.class),
+				new ElementRule(RATES,
+						new XMLSyntaxRule[]{
+								new ElementRule(Parameter.class)}
+				),
+				new ElementRule(INDICATOR,
+						new XMLSyntaxRule[]{
+								new ElementRule(Parameter.class)
+						}),
+		};
+
+	};
+
+//	private DoubleMatrix2D eigenD;
 	//	private DoubleMatrix2D storedEigenD;
-	private DoubleMatrix2D eigenV;
-	private DoubleMatrix2D eigenVInv;
+//	private DoubleMatrix2D eigenV;
+//	private DoubleMatrix2D eigenVInv;
 //	private DoubleMatrix2D storedEigenV;
 	//	private DoubleMatrix2D storedEigenVInv;
-	private DoubleMatrix1D eigenVReal;
-	private DoubleMatrix1D eigenVImag;
+//	private DoubleMatrix1D eigenVReal;
+//	private DoubleMatrix1D eigenVImag;
 //	private DoubleMatrix1D storedEigenVReal;
 //	private DoubleMatrix1D storedEigenVImag;
 
 	private boolean isComplex = false;
 	private double[] stationaryDistribution = null;
+	private double[] storedStationaryDistribution;
+	private Double normalization;
+	private Double storedNormalization;
 
 	protected double[] EvalImag;
 	protected double[] storedEvalImag;
+
+//	private boolean normalizationAmat = false;
 
 	private static final Algebra alegbra = new Algebra();
 }

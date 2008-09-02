@@ -65,7 +65,7 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
             // leaving the burnin attribute off will result in 10% being used
             int burnin = xo.getAttribute(BURN_IN, -1);
 
-            TraceList traces = TraceAnalysis.report(fileName, burnin);
+            TraceList traces = TraceAnalysis.report(fileName, burnin, null);
             for (int x = 0; x < xo.getChildCount(); x++) {
                 XMLObject child = (XMLObject) xo.getChild(x);
                 String statName = child.getStringAttribute(Attribute.NAME);

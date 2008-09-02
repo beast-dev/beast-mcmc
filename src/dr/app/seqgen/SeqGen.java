@@ -76,7 +76,7 @@ public class SeqGen {
 
             FileWriter writer = null;
             try {
-                writer = new FileWriter(outputFileStem + i + ".nex");
+                writer = new FileWriter(outputFileStem + (i < 10? "00" : (i < 100? "0" : "")) + i + ".nex");
                 NexusExporter exporter = new NexusExporter(writer);
 
                 exporter.exportAlignment(alignment);

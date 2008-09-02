@@ -9,7 +9,7 @@ import java.util.*;
  * including the line '\t<patterns id="patterns" from="1">' comes from a set of XML numbered
  * from 1 to 100, the second half is read from a specified file and a new set numbered 1 to
  * 100 is created.
- * 
+ *
  * @author Andrew Rambaut
  * @version $Id$
  */
@@ -28,10 +28,10 @@ public class SpliceBeastFiles {
 
             reader.close();
 
-            for (int i = 1; i < 101; i++) {
-                reader = new BufferedReader(new FileReader(inputFileStem + i + ".xml"));
+            for (int i = 1; i < 201; i++) {
+                reader = new BufferedReader(new FileReader(inputFileStem + (i < 10? "00" : (i < 100? "0" : "")) +i + ".xml"));
 
-                PrintWriter writer = new PrintWriter(outputFileStem + i + ".xml");
+                PrintWriter writer = new PrintWriter(outputFileStem + (i < 10? "00" : (i < 100? "0" : "")) + i + ".xml");
 
                 line = reader.readLine();
                 while (line != null && !line.equals("\t<patterns id=\"patterns\" from=\"1\">")) {

@@ -42,7 +42,9 @@ public class LogAnalyser {
     private final static Version version = new BeastVersion();
 
 
-    public LogAnalyser(int burnin, String inputFileName, String outputFileName, boolean verbose, boolean hpds, boolean stdErr) throws java.io.IOException, TraceException {
+    public LogAnalyser(int burnin, String inputFileName, String outputFileName, boolean verbose,
+                       boolean hpds, boolean ess, boolean stdErr,
+                       String marginalLikelihood) throws java.io.IOException, TraceException {
 
         File parentFile = new File(inputFileName);
 
@@ -60,7 +62,7 @@ public class LogAnalyser {
             System.setOut(new PrintStream(outputStream));
         }
 
-        analyze(parentFile, burnin, verbose, new boolean[]{true}, hpds, stdErr);
+        analyze(parentFile, burnin, verbose, new boolean[]{true}, hpds, ess, stdErr, marginalLikelihood);
     }
 
     /**
@@ -75,18 +77,18 @@ public class LogAnalyser {
      * @throws dr.inference.trace.TraceException
      *          if the trace file is in the wrong format or corrupted
      */
-    private void analyze(File file, int burnin, boolean verbose, boolean[] drawHeader, boolean hpds, boolean stdErr) throws TraceException {
+    private void analyze(File file, int burnin, boolean verbose, boolean[] drawHeader,
+                         boolean hpds, boolean ess, boolean stdErr,
+                         String marginalLikelihood) throws TraceException {
 
         if (file.isFile()) {
             try {
 
                 String name = file.getCanonicalPath();
                 if (verbose) {
-                    TraceAnalysis.report(name, burnin);
+                    TraceAnalysis.report(name, burnin, marginalLikelihood);
                 } else {
-
-
-                    TraceAnalysis.shortReport(name, burnin, drawHeader[0], hpds, stdErr);
+                    TraceAnalysis.shortReport(name, burnin, drawHeader[0], hpds, ess, stdErr, marginalLikelihood);
                     drawHeader[0] = false;
                 }
             } catch (IOException e) {
@@ -96,9 +98,9 @@ public class LogAnalyser {
             File[] files = file.listFiles();
             for (File f : files) {
                 if (f.isDirectory()) {
-                    analyze(f, burnin, verbose, drawHeader, hpds, stdErr);
+                    analyze(f, burnin, verbose, drawHeader, hpds, ess, stdErr, marginalLikelihood);
                 } else if (f.getName().endsWith(".log") || f.getName().endsWith(".p")) {
-                    analyze(f, burnin, verbose, drawHeader, hpds, stdErr);
+                    analyze(f, burnin, verbose, drawHeader, hpds, ess, stdErr, marginalLikelihood);
                 } else {
                     if (verbose) System.out.println("Ignoring file: " + f);
                 }
@@ -153,8 +155,10 @@ public class LogAnalyser {
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.Option("short", "use this option to produce a short report"),
-                        new Arguments.Option("hpd", "use this option to produce hpds"),
+                        new Arguments.Option("hpd", "use this option to produce hpds for each trace"),
+                        new Arguments.Option("ess", "use this option to produce ESSs for each trace"),
                         new Arguments.Option("stdErr", "use this option to produce standard Error"),
+                        new Arguments.StringOption("marginal", "trace_name", "specify the trace to use to calculate the marginal likelihood"),
 //				new Arguments.Option("html", "format output as html"),
 //				new Arguments.Option("svg", "generate svg graphics"),
                         new Arguments.Option("help", "option to print this message")
@@ -179,8 +183,14 @@ public class LogAnalyser {
         }
 
         boolean hpds = arguments.hasOption("hpd");
+        boolean ess = arguments.hasOption("ess");
         boolean stdErr = arguments.hasOption("stdErr");
         boolean shortReport = arguments.hasOption("short");
+
+        String marginalLikelihood = null;
+        if (arguments.hasOption("marginal")) {
+            marginalLikelihood = arguments.getStringOption("marginal");
+        }
 
         String inputFileName = null;
         String outputFileName = null;
@@ -206,7 +216,7 @@ public class LogAnalyser {
             inputFileName = Utils.getLoadFileName("LogAnalyser " + version.getVersionString() + " - Select log file to analyse");
         }
 
-        new LogAnalyser(burnin, inputFileName, outputFileName, !shortReport, hpds, stdErr);
+        new LogAnalyser(burnin, inputFileName, outputFileName, !shortReport, hpds, ess, stdErr, marginalLikelihood);
 
         System.exit(0);
     }

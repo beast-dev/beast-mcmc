@@ -26,6 +26,7 @@
 package dr.inference.trace;
 
 import dr.util.NumberFormatter;
+import dr.xml.XMLParseException;
 
 import java.io.File;
 
@@ -57,10 +58,11 @@ public class TraceAnalysis {
 
     public static TraceList report(String fileName) throws java.io.IOException, TraceException {
 
-        return report(fileName, -1);
+        return report(fileName, -1, null);
     }
 
-    public static TraceList report(String fileName, int burnin) throws java.io.IOException, TraceException {
+    public static TraceList report(String fileName, int burnin, String likelihoodName)
+            throws java.io.IOException, TraceException {
 
         int fieldWidth = 14;
         int firstField = 25;
@@ -113,6 +115,35 @@ public class TraceAnalysis {
             System.out.println("            one or more statistics had very low effective sample sizes (ESS)");
         }
 
+        if (likelihoodName != null) {
+            System.out.println();
+            int traceIndex = -1;
+            for (int i = 0; i < traces.getTraceCount(); i++) {
+                String traceName = traces.getTraceName(i);
+                if (traceName.equals(likelihoodName)) {
+                    traceIndex = i;
+                    break;
+                }
+            }
+
+            if (traceIndex == -1) {
+                throw new TraceException("Column '" + likelihoodName + "' can not be found for marginal likelihood analysis.");
+            }
+
+            boolean harmonicOnly = false;
+            int bootstrapLength = 1000;
+
+            double sample[] = new double[traces.getStateCount()];
+            traces.getValues(traceIndex, sample);
+
+            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
+                    sample,
+                    traces.getTraceName(traceIndex), burnin,
+                    harmonicOnly, bootstrapLength);
+
+            System.out.println(analysis.toString());
+        }
+
         System.out.flush();
         return traces;
     }
@@ -128,7 +159,9 @@ public class TraceAnalysis {
      * @throws TraceException      if trace file in wrong format or corrupted
      */
     public static TraceList shortReport(String filename,
-                                        final int burnin, boolean drawHeader, boolean hpds, boolean stdErr) throws java.io.IOException, TraceException {
+                                        final int burnin, boolean drawHeader,
+                                        boolean hpds, boolean individualESSs, boolean stdErr,
+                                        String likelihoodName) throws java.io.IOException, TraceException {
 
         TraceList traces = analyzeLogFile(filename, burnin);
 
@@ -147,8 +180,16 @@ public class TraceAnalysis {
                     System.out.print(traceName + " hpdLower\t");
                     System.out.print(traceName + " hpdUpper\t");
                 }
+                if (individualESSs) {
+                    System.out.print(traceName + " ESS\t");
+                }
             }
-            System.out.println("minESS\tchainLength");
+            System.out.print("minESS\t");
+            if (likelihoodName != null) {
+                System.out.print("marginal likelihood\t");
+                System.out.print("stdErr\t");
+            }
+            System.out.println("chainLength");
         }
 
         System.out.print(filename + "\t");
@@ -162,12 +203,47 @@ public class TraceAnalysis {
                 System.out.print(distribution.getLowerHPD() + "\t");
                 System.out.print(distribution.getUpperHPD() + "\t");
             }
+            if (individualESSs) {
+                System.out.print(distribution.getESS() + "\t");
+            }
             double ess = distribution.getESS();
             if (ess < minESS) {
                 minESS = ess;
             }
         }
-        System.out.println(minESS + "\t" + maxState);
+
+        System.out.print(minESS + "\t");
+
+        if (likelihoodName != null) {
+            int traceIndex = -1;
+            for (int i = 0; i < traces.getTraceCount(); i++) {
+                String traceName = traces.getTraceName(i);
+                if (traceName.equals(likelihoodName)) {
+                    traceIndex = i;
+                    break;
+                }
+            }
+
+            if (traceIndex == -1) {
+                throw new TraceException("Column '" + likelihoodName + "' can not be found in file " + filename + ".");
+            }
+
+            boolean harmonicOnly = false;
+            int bootstrapLength = 1000;
+
+            double sample[] = new double[traces.getStateCount()];
+            traces.getValues(traceIndex, sample);
+
+            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
+                    sample,
+                    traces.getTraceName(traceIndex), burnin,
+                    harmonicOnly, bootstrapLength);
+
+            System.out.print(analysis.getLogMarginalLikelihood() + "\t");
+            System.out.print(analysis.getBootstrappedSE() + "\t");
+        }
+
+        System.out.println(maxState);
         return traces;
     }
 

@@ -30,6 +30,8 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 
 	public static final String IMPORTANCE_PRUNE_AND_REGRAFT = "ImportancePruneAndRegraft";
 
+	public final int SAMPLE_EVERY = 10;
+	
 	private TreeModel tree;
 
 	private int samples;
@@ -70,10 +72,14 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 	@Override
 	public double doOperation() throws OperatorFailedException {
 		if (!burnin) {
-			if (sampleCount < samples) {
-				probabilityEstimater.addTree(tree);
+			if (sampleCount < samples * SAMPLE_EVERY) {
+				sampleCount++;
+				if (sampleCount % SAMPLE_EVERY == 0){
+					probabilityEstimater.addTree(tree);					
+				}
 				setAccepted(0);
 				setRejected(0);
+				setTransitions(0);
 				
 				return fixedNodePruneAndRegraft();
 				
@@ -157,10 +163,6 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 	      throw new OperatorFailedException("Couldn't find valid SPR move on this tree!");
 	}
 
-	public double oldScore;
-	public double oldScore2;
-	public double adjustedLogScore;
-
 	private double importancePruneAndRegraft()
 			throws OperatorFailedException {
 		tree.storeModelState();
@@ -195,9 +197,9 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 				jP = tree.getParent(j);
 
 				if (j == oldBrother){					
-					secondNodeIndices.add(n);
-					probabilities.add(backward);
-					sum += backward;
+//					secondNodeIndices.add(n);
+//					probabilities.add(backward);
+//					sum += backward;
 				} else if ((i != j) && (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
 						&& (tree.getNodeHeight(iP) < tree.getNodeHeight(jP))) {
 					secondNodeIndices.add(n);
@@ -234,7 +236,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 		double forward = probabilities.get(index);		
 
 		double forwardProb = (forward / sum);
-		double backwardProb = (backward / sum);
+		double backwardProb = (backward / (sum - forward + backward));
 		double hastingsRatio = Math.log(backwardProb / forwardProb);
 
 		return hastingsRatio;
@@ -294,7 +296,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 		// return calculateTreeProbabilityMult(tree);
 //		return calculateTreeProbabilityLog(tree);
 		return probabilityEstimater.getTreeProbability(tree);
-//		return 10.5;
+//		return 0;
 	}
 
 	public void setBurnin(boolean burnin) {

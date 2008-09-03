@@ -33,9 +33,9 @@ public class GibbsSubtreeSwap extends SimpleGibbsOperator {
 
 	private TreeModel tree;
 	
-	private Prior prior;
-	
-	private Likelihood likelihood;
+//	private Prior prior;
+//	
+//	private Likelihood likelihood;
 
 	/**
 	 * 
@@ -58,13 +58,13 @@ public class GibbsSubtreeSwap extends SimpleGibbsOperator {
 	public double doOperation(Prior prior,
             Likelihood likelihood) throws OperatorFailedException {
 
-		this.prior = prior;
-		this.likelihood = likelihood;
+//		this.prior = prior;
+//		this.likelihood = likelihood;
 		
 		int tipCount = tree.getExternalNodeCount();
 
 		try {
-			wide();
+			return wide(prior, likelihood);
 		} catch (InvalidTreeException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -78,28 +78,19 @@ public class GibbsSubtreeSwap extends SimpleGibbsOperator {
 		return 0.0;
 	}
 
-//	private double forward;
-//	private double sum = 0.0;
-//	private double backward;
-//	private double sumBackward = 0.0;
-//	private double forwardProb;
-//	private double backwardProb;
-//	private double hastingsRatio;
-//	private double forwardLikelihood;
-//	private double backwardLikelihood;
-
 	/**
 	 * WARNING: Assumes strictly bifurcating tree.
 	 * @throws InvalidTreeException 
 	 */
-	public void wide() throws OperatorFailedException, InvalidTreeException {
+	public double wide(Prior prior, Likelihood likelihood) throws OperatorFailedException, InvalidTreeException {
 
 		final int nodeCount = tree.getNodeCount();
 		final NodeRef root = tree.getRoot();
 
 		NodeRef i;
 		int indexI;
-
+		int indexJ;
+		
 		do {
 			indexI = MathUtils.nextInt(nodeCount);
 			i = tree.getNode(indexI);
@@ -112,28 +103,28 @@ public class GibbsSubtreeSwap extends SimpleGibbsOperator {
 		NodeRef j, iP, jP;
 		iP = tree.getParent(i);
 		double sum = 0.0;
-		double backwardLikelihood = calculateTreeLikelihood(prior, likelihood, tree);
-		int offset = (int) -backwardLikelihood;
-		double backward = Math.exp(backwardLikelihood + offset);
+		double backward = calculateTreeLikelihood(prior, likelihood, tree);
+		int offset = (int) -backward;
+		backward = Math.exp(backward + offset);
 		for (int n = 0; n < nodeCount; n++) {
 			j = tree.getNode(n);
 			if (j != root) {
 				jP = tree.getParent(j);
 
-//				if ((iP != jP) && (i != jP) && (j != iP)
-				if ((i != j) && (i != jP) && (j != iP)
+				if ((iP != jP) && (i != jP) && (j != iP)
 						&& (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
 						&& (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
 					secondNodeIndices.add(n);
 
-					swap(tree, tree.getNode(indexI), tree.getNode(n));
-					double prob = Math.exp(calculateTreeLikelihood(prior,
-							likelihood, tree)
+					swap(tree, tree.getNode(indexI), tree
+							.getNode(n));
+					double prob = Math.exp(calculateTreeLikelihood(prior, likelihood, tree)
 							+ offset);
 					probabilities.add(prob);
+					undoSwap(tree, tree.getNode(indexI), tree
+							.getNode(n));
 					sum += prob;
 
-					undoSwap(tree, tree.getNode(indexI), tree.getNode(n));
 				}
 			}
 		}
@@ -149,6 +140,31 @@ public class GibbsSubtreeSwap extends SimpleGibbsOperator {
 		j = tree.getNode(secondNodeIndices.get(index));
 		jP = tree.getParent(j);
 
+		// *******************************************
+		// assuming we would have chosen j first
+		double sumForward2 = 0.0;
+		NodeRef k, kP;
+		indexJ = secondNodeIndices.get(index);
+		for (int n = 0; n < nodeCount; n++) {
+			k = tree.getNode(n);
+			if (k != root) {
+				kP = tree.getParent(k);
+
+				if ((jP != kP) && (j != kP) && (k != jP)
+						&& (tree.getNodeHeight(k) < tree.getNodeHeight(jP))
+						&& (tree.getNodeHeight(j) < tree.getNodeHeight(kP))) {
+
+					swap(tree, tree.getNode(indexJ), tree
+							.getNode(n));
+					double prob = Math.exp(calculateTreeLikelihood(prior, likelihood, tree)
+							+ offset);
+					sumForward2 += prob;
+					undoSwap(tree, tree.getNode(indexJ), tree
+							.getNode(n));
+				}
+			}
+		}
+
 		exchangeNodes(tree, i, j, iP, jP);
 		double forward = probabilities.get(index);
 
@@ -159,37 +175,63 @@ public class GibbsSubtreeSwap extends SimpleGibbsOperator {
 			if (j != root) {
 				jP = tree.getParent(j);
 
-//				if ((iP != jP) && (i != jP) && (j != iP)
-				if ((i != j) && (i != jP) && (j != iP)
+				if ((iP != jP) && (i != jP) && (j != iP)
 						&& (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
 						&& (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
 
-					swap(tree, tree.getNode(indexI), tree.getNode(n));
-					double prob = Math.exp(calculateTreeLikelihood(prior,
-							likelihood, tree)
+					swap(tree, tree.getNode(indexI), tree
+							.getNode(n));
+					double prob = Math.exp(calculateTreeLikelihood(prior, likelihood, tree)
 							+ offset);
 					sumBackward += prob;
+					undoSwap(tree, tree.getNode(indexI), tree
+							.getNode(n));
 
-					undoSwap(tree, tree.getNode(indexI), tree.getNode(n));
 				}
 			}
 		}
-		
-		tree.pushTreeChangedEvent(iP);
-		tree.pushTreeChangedEvent(jP);
-		
 
-		double forwardProb = (forward / sum);
-		double backwardProb = (backward / sumBackward);
-		
+		// *******************************************
+		// assuming we would have chosen j first
+		double sumBackward2 = 0.0;
+		j = tree.getNode(secondNodeIndices.get(index));
+		jP = tree.getParent(j);
+		for (int n = 0; n < nodeCount; n++) {
+			k = tree.getNode(n);
+			if (k != root) {
+				kP = tree.getParent(k);
+
+				if ((jP != kP) && (j != kP) && (k != jP)
+						&& (tree.getNodeHeight(k) < tree.getNodeHeight(jP))
+						&& (tree.getNodeHeight(j) < tree.getNodeHeight(kP))) {
+
+					swap(tree, tree.getNode(indexJ), tree
+							.getNode(n));
+					double prob = Math.exp(calculateTreeLikelihood(prior, likelihood, tree)
+							+ offset);
+					sumBackward2 += prob;
+					undoSwap(tree, tree.getNode(indexJ), tree
+							.getNode(n));
+				}
+			}
+		}
+
+		double forwardProb = (forward / sum) + (forward / sumForward2);
+		double backwardProb = (backward / sumBackward)
+				+ (backward / sumBackward2);
+
 		double hastingsRatio = Math.log(backwardProb / forwardProb);
 
-		//return hastingsRatio;
+		// throw new OperatorFailedException(
+		// "Couldn't find valid wide move on this tree!");
+
+		return hastingsRatio;
 	}	
 	
 	private double calculateTreeLikelihood(Prior prior, Likelihood likelihood,
 			TreeModel tree) {
 		return evaluate(likelihood, prior);
+//		return 0.0;
 	}
 	
 	/**
@@ -220,8 +262,8 @@ public class GibbsSubtreeSwap extends SimpleGibbsOperator {
 		tree.addChild(jP, i);
 		tree.addChild(iP, j);
 
-		tree.pushTreeChangedEvent(iP);
-		tree.pushTreeChangedEvent(jP);
+		tree.pushTreeChangedEvent(i);
+		tree.pushTreeChangedEvent(j);
 		
 		tree.endTreeEdit();
 

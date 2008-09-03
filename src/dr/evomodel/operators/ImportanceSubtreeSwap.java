@@ -34,13 +34,13 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 
 	public static final String IMPORTANCE_SUBTREE_SWAP = "ImportanceSubtreeSwap";
 
+	public final int SAMPLE_EVERY = 10;
+	
 	private TreeModel tree;
 
 	private int samples;
 	
 	private int sampleCount = 0;
-
-	private final int sampleEvery = 100;
 
 	private boolean burnin = false;
 
@@ -53,6 +53,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 		this.tree = tree;
 		setWeight(weight);
 		this.samples = samples;
+		sampleCount = 0;
 		probabilityEstimater = new ConditionalCladeFrequency(tree, epsilon);
 	}
 	
@@ -75,10 +76,14 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 	@Override
 	public double doOperation() throws OperatorFailedException {
 		if (!burnin) {
-			if (sampleCount < samples) {
-				probabilityEstimater.addTree(tree);
+			if (sampleCount < samples * SAMPLE_EVERY) {
+				sampleCount++;
+				if (sampleCount % SAMPLE_EVERY == 0){
+					probabilityEstimater.addTree(tree);					
+				}
 				setAccepted(0);
 				setRejected(0);
+				setTransitions(0);
 				
 				return wideExchange();
 				
@@ -136,7 +141,6 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 				|| (tree.getParent(i) == root && tree.getNodeHeight(i) > tree
 						.getNodeHeight(getOtherChild(tree, tree.getParent(i), i))));
 
-		List<SimpleTree> trees = new ArrayList<SimpleTree>();
 		List<Integer> secondNodeIndices = new ArrayList<Integer>();
 		List<Double> probabilities = new ArrayList<Double>();
 		NodeRef j, iP, jP;
@@ -158,8 +162,8 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 					secondNodeIndices.add(n);
 					clone = (SimpleTree) originalTree.getCopy();
 
-					trees.add(swap(clone, clone.getNode(indexI), clone
-							.getNode(n)));
+					swap(clone, clone.getNode(indexI), clone
+							.getNode(n));
 					double prob = Math.exp(calculateTreeProbability(clone)
 							+ offset);
 					probabilities.add(prob);
@@ -195,8 +199,8 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 						&& (tree.getNodeHeight(j) < tree.getNodeHeight(kP))) {
 					clone = (SimpleTree) originalTree.getCopy();
 
-					trees.add(swap(clone, clone.getNode(indexJ), clone
-							.getNode(n)));
+					swap(clone, clone.getNode(indexJ), clone
+							.getNode(n));
 					double prob = Math.exp(calculateTreeProbability(clone)
 							+ offset);
 					sumForward2 += prob;
@@ -220,8 +224,8 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 						&& (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
 					clone = (SimpleTree) originalTree.getCopy();
 
-					trees.add(swap(clone, clone.getNode(indexI), clone
-							.getNode(n)));
+					swap(clone, clone.getNode(indexI), clone
+							.getNode(n));
 					double prob = Math.exp(calculateTreeProbability(clone)
 							+ offset);
 					sumBackward += prob;
@@ -245,8 +249,8 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 						&& (tree.getNodeHeight(j) < tree.getNodeHeight(kP))) {
 					clone = (SimpleTree) originalTree.getCopy();
 
-					trees.add(swap(clone, clone.getNode(indexJ), clone
-							.getNode(n)));
+					swap(clone, clone.getNode(indexJ), clone
+							.getNode(n));
 					double prob = Math.exp(calculateTreeProbability(clone)
 							+ offset);
 					sumBackward2 += prob;

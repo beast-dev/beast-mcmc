@@ -10,6 +10,32 @@ import dr.inference.operators.SimpleMCMCOperator;
  * @version $Id$
  */
 public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
+	
+	private int transitions = 0;
+	
+	/**
+     * @return the number of transitions since last call to reset().
+     */
+    public int getTransitions(){
+    	return transitions;
+    }
+
+    /**
+     * Set the number of transitions since last call to reset(). This is used
+     * to restore the state of the operator
+     *
+     * @param rejected number of rejections
+     */
+    public void setTransitions(int transitions){
+    	this.transitions = transitions;
+    }
+    
+    public double getTransistionProbability() {
+        int accepted = getAccepted();
+        int rejected = getRejected();
+        int transition = getTransitions();
+        return (double) transition / (double) (accepted + rejected);
+    }
 
 	/* exchange subtrees whose root are i and j */
 	protected void exchangeNodes(TreeModel tree, NodeRef i, NodeRef j,
@@ -28,6 +54,10 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
 	    }
 	}
 
+	public void reset() {
+        super.reset();
+        transitions = 0;
+    }
 
 	/**
 	 * @param tree   the tree

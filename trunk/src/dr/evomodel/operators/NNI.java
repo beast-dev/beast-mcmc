@@ -174,7 +174,7 @@ public class NNI extends AbstractTreeOperator {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newIntegerRule("weight"),
+                AttributeRule.newDoubleRule("weight"),
                 new ElementRule(TreeModel.class)};
 
     };

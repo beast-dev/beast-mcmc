@@ -21,8 +21,10 @@ import java.util.Set;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.LoggerParser;
 import dr.xml.AttributeRule;
+import dr.xml.ElementRule;
 import dr.xml.StringAttributeRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLObjectParser;
@@ -380,7 +382,8 @@ public class ConvergenceLogger extends MCLogger {
 						"name of a tree log file", "trees.log"),
 				new StringAttributeRule(REFERENCE_FILE_NAME,
 						"name of a reference tree file", "trees.log"),
-				AttributeRule.newIntegerRule(CHECK_EVERY, true), };
+				AttributeRule.newIntegerRule(CHECK_EVERY, true), 
+				new ElementRule(TreeModel.class)};
 
 		public String getParserDescription() {
 			return "Checks the convergence in terms of distance to the reference run.";

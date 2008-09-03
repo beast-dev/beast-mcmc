@@ -73,18 +73,17 @@ public class GibbsPruneAndRegraft extends SimpleGibbsOperator {
 				tree);
 		int offset = (int) -backwardLikelihood;
 		double backward = Math.exp(backwardLikelihood + offset);
-		NodeRef oldBrother, oldGrandfather;
-		oldBrother = getOtherChild(tree, iP, i);
-		oldGrandfather = tree.getParent(iP);
+		final NodeRef oldBrother = getOtherChild(tree, iP, i);
+		final NodeRef oldGrandfather = tree.getParent(iP);
 		for (int n = 0; n < nodeCount; n++) {
 			j = tree.getNode(n);
 			if (j != root) {
 				jP = tree.getParent(j);
 
 				if (j == oldBrother) {
-					secondNodeIndices.add(n);
-					probabilities.add(backward);
-					sum += backward;
+//					secondNodeIndices.add(n);
+//					probabilities.add(backward);
+//					sum += backward;
 				} else if ((i != j)
 						&& (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
 						&& (tree.getNodeHeight(iP) < tree.getNodeHeight(jP))) {
@@ -118,11 +117,12 @@ public class GibbsPruneAndRegraft extends SimpleGibbsOperator {
 		}
 		double forward = probabilities.get(index);
 
-		tree.pushTreeChangedEvent(iP);
-		tree.pushTreeChangedEvent(jP);
+//		tree.pushTreeChangedEvent(jP);
+//		tree.pushTreeChangedEvent(oldGrandfather);
+		tree.pushTreeChangedEvent(i);
 
 		double forwardProb = (forward / sum);
-		double backwardProb = (backward / sum);
+		double backwardProb = (backward / (sum - forward + backward));
 		double hastingsRatio = Math.log(backwardProb / forwardProb);
 
 		return hastingsRatio;

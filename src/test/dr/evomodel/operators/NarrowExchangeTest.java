@@ -3,16 +3,17 @@
  */
 package test.dr.evomodel.operators;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Set;
+import static org.junit.Assert.*;
 
-import junit.framework.TestSuite;
+import java.io.IOException;
+
 import junit.framework.Test;
+import junit.framework.TestSuite;
 
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.tree.Tree;
-import dr.evomodel.operators.FNPR;
+import dr.evomodel.operators.ExchangeOperator;
+import dr.evomodel.operators.NNI;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
@@ -26,48 +27,37 @@ import dr.inference.operators.UniformOperator;
  * @author shhn001
  *
  */
-public class FNPRTest extends OperatorTest{
-
-    public static Test suite() {
-        return new TestSuite(FNPRTest.class);
-    }
+public class NarrowExchangeTest  extends OperatorTest{
     
+	public static Test suite() {
+        return new TestSuite(NarrowExchangeTest.class);
+    }
+
+
 	/**
-	 * Test method for {@link dr.evomodel.operators.ImportanceSubtreeSwap#doOperation()}.
-	 * @throws ImportException 
-	 * @throws IOException 
+	 * Test method for {@link dr.evomodel.operators.ExchangeOperator#narrow()}.
 	 */
-	public void testDoOperation() throws IOException, ImportException {
-		// if you pick A you can reattach it to 3 new branches
-		// if you pick B you can reattach it to 3 new branches
-		// if you pick {A,B} you can reattach it to 2 new branches
-		// if you pick C you can reattach it to 2 new branches
-		// if you pick {A,B,C} you can reattach it to 1 new branch
-		// if you pick D you can reattach it to 1 new branch
-		// total: 1/12 for every new tree
+	public void testNarrow() throws IOException, ImportException {
+		// probability of picking B node is 1/(2n-4) = 1/6
+        // probability of swapping it with C is 1/1
+        // total = 1/6
     	
     	System.out.println("Test 1: Forward");
 
-//        String treeMatch = "(((A,C),D),(B,E));";
-        String treeMatch = "(((A,C),D),(E,B));";
+        String treeMatch = "((((A,C),B),D),E);";
         
         int count = 0;
         int reps = 100000;
-        
-        HashMap<String, Boolean> trees = new HashMap<String, Boolean>();
 
         for (int i = 0; i < reps; i++) {
 
             try {
                 TreeModel treeModel = new TreeModel("treeModel", tree5);
-                FNPR operator = new FNPR(treeModel, 1);
+                ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1);
                 operator.doOperation();
 
                 String tree = Tree.Utils.newickNoLengths(treeModel);
-//System.out.println(tree);
-                if (!trees.containsKey(tree)){
-                	trees.put(tree, true);
-                }
+
                 if (tree.equals(treeMatch)) {
                     count += 1;
                 }
@@ -77,19 +67,13 @@ public class FNPRTest extends OperatorTest{
             }
 
         }
-        System.out.println("Number of trees found:\t" + trees.size());
-        Set<String> keys = trees.keySet();
-        for (String s : keys){
-        	System.out.println(s);
-        }
-        
         double p_1 = (double) count / (double) reps;
 
         System.out.println("Number of proposals:\t" + count);
         System.out.println("Number of tries:\t" + reps);
         System.out.println("Number of ratio:\t" + p_1);
-        System.out.println("Number of expected ratio:\t" + 1.0/12.0);
-        assertExpectation(1.0/12.0, p_1, reps);
+        System.out.println("Number of expected ratio:\t" + 1.0/6.0);
+        assertExpectation(1.0/6.0, p_1, reps);
         
 	}
 	
@@ -98,7 +82,7 @@ public class FNPRTest extends OperatorTest{
         Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
 
-        FNPR operator = new FNPR(treeModel, 1.0);
+        ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1.0);
         ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
         UniformOperator uniformOperator = new UniformOperator(internalHeights, 1.0);
 
@@ -109,5 +93,4 @@ public class FNPRTest extends OperatorTest{
 
         return schedule;
     }
-
 }

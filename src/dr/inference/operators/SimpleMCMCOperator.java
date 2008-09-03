@@ -94,7 +94,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         }
     }
 
-    public final void reset() {
+    public void reset() {
         operateAllowed = true;
         accepted = 0;
         rejected = 0;

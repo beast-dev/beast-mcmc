@@ -6,50 +6,36 @@ package test.dr.evomodel.operators;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import dr.evolution.io.NewickImporter;
 import dr.evolution.io.Importer.ImportException;
-import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evomodel.operators.NNI;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
+import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.OperatorSchedule;
+import dr.inference.operators.ScaleOperator;
+import dr.inference.operators.SimpleOperatorSchedule;
+import dr.inference.operators.UniformOperator;
 
 /**
- * @author shhn001
+ * @author Sebastian Hoehna
  *
  */
-public class NNITest extends TestCase{
-
-	private FlexibleTree tree5;
-    private FlexibleTree tree6;
+public class NNITest extends OperatorTest{
     
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@Before
-	public void setUp() throws Exception {
-		super.setUp();
-
-        NewickImporter importer = new NewickImporter(
-                "((((A:1.0,B:1.0):1.0,C:2.0):1.0,D:4.0):1.0,E:5.0);");
-        tree5 = (FlexibleTree) importer.importTree(null);
-
-        importer = new NewickImporter(
-                "(((((A:1.0,B:1.0):1.0,C:2.0):1.0,D:4.0):1.0,E:5.0),F:6.0);");
-        tree6 = (FlexibleTree) importer.importTree(null);
-	}
-
+	public static Test suite() {
+        return new TestSuite(NNITest.class);
+    }
+	
 	/**
 	 * Test method for {@link dr.evomodel.operators.ImportanceSubtreeSwap#doOperation()}.
 	 * @throws ImportException 
 	 * @throws IOException 
 	 */
-	@Test
 	public void testDoOperation() throws IOException, ImportException {
 		// probability of picking B node is 1/(2n-4) = 1/6
         // probability of swapping it with C is 1/1
@@ -90,21 +76,20 @@ public class NNITest extends TestCase{
         
 	}
 	
-	/**
-     * @param ep    the expected (binomial) probability of success
-     * @param ap    the actual proportion of successes
-     * @param count the number of attempts
-     */
-    protected void assertExpectation(double ep, double ap, int count) {
+	public OperatorSchedule getOperatorSchedule(TreeModel treeModel) {
 
-        if (count * ap < 5 || count * (1 - ap) < 5) throw new IllegalArgumentException();
+        Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
+        Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
 
-        double stdev = Math.sqrt(ap * (1.0 - ap) * count) / count;
-        double upper = ap + 2 * stdev;
-        double lower = ap - 2 * stdev;
+        NNI operator = new NNI(treeModel, 1.0);
+        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
+        UniformOperator uniformOperator = new UniformOperator(internalHeights, 1.0);
 
-        assertTrue("Expected p=" + ep + " but got " + ap + " +/- " + stdev,
-                upper > ep && lower < ep);
+        OperatorSchedule schedule = new SimpleOperatorSchedule();
+        schedule.addOperator(operator);
+//        schedule.addOperator(scaleOperator);
+//        schedule.addOperator(uniformOperator);
 
+        return schedule;
     }
 }

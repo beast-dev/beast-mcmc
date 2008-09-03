@@ -26,7 +26,7 @@ public class FNPR extends AbstractTreeOperator {
     /**
      *
      */
-    public FNPR(TreeModel tree, int weight) {
+    public FNPR(TreeModel tree, double weight) {
         this.tree = tree;
         setWeight(weight);
         // distances = new int[tree.getNodeCount()];
@@ -148,8 +148,7 @@ public class FNPR extends AbstractTreeOperator {
     * @see dr.inference.operators.MCMCOperator#getPerformanceSuggestion()
     */
     public String getPerformanceSuggestion() {
-        // TODO Auto-generated method stub
-        return null;
+        return "";
     }
 
     public static XMLObjectParser FNPR_PARSER = new AbstractXMLObjectParser() {
@@ -161,7 +160,7 @@ public class FNPR extends AbstractTreeOperator {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            int weight = xo.getIntegerAttribute("weight");
+            double weight = xo.getDoubleAttribute("weight");
 
             return new FNPR(treeModel, weight);
         }
@@ -184,7 +183,7 @@ public class FNPR extends AbstractTreeOperator {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newIntegerRule("weight"),
+                AttributeRule.newDoubleRule("weight"),
                 new ElementRule(TreeModel.class)};
 
     };

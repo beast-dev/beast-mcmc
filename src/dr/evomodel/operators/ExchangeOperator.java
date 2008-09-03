@@ -134,34 +134,27 @@ public class ExchangeOperator extends AbstractTreeOperator {
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 
-        // I don't know how to prove this but it seems that there are exactly k(k-1) permissable pairs for k+1
-        // contemporaneous tips, and since the total is 2k * (2k-1) / 2, so the average number of tries is 2.
-        // With serial data the average number of tries can be made arbitrarily high as tree becomes less balanced.
+        NodeRef i = root; 
 
-        for (int tries = 0; tries < MAX_TRIES; ++tries) {
+		while (root == i) {
+			i = tree.getNode(MathUtils.nextInt(nodeCount));
+		}
 
-            NodeRef i = root; // tree.getNode(MathUtils.nextInt(nodeCount));
+		NodeRef j = i; // tree.getNode(MathUtils.nextInt(nodeCount));
+		while (j == i || j == root) {
+			j = tree.getNode(MathUtils.nextInt(nodeCount));
+		}
 
-            while (root == i) {
-                i = tree.getNode(MathUtils.nextInt(nodeCount));
-            }
+		final NodeRef iP = tree.getParent(i);
+		final NodeRef jP = tree.getParent(j);
 
-            NodeRef j = i; //tree.getNode(MathUtils.nextInt(nodeCount));
-            while (j == i || j == root) {
-                j = tree.getNode(MathUtils.nextInt(nodeCount));
-            }
-
-            final NodeRef iP = tree.getParent(i);
-            final NodeRef jP = tree.getParent(j);
-
-            if ((iP != jP) && (i != jP) && (j != iP) &&
-                    (tree.getNodeHeight(j) < tree.getNodeHeight(iP)) &&
-                    (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
-                eupdate(i, j, iP, jP);
-                //System.out.println("tries = " + tries+1);
-                return;
-            }
-        }
+		if ((iP != jP) && (i != jP) && (j != iP)
+				&& (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
+				&& (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
+			eupdate(i, j, iP, jP);
+			// System.out.println("tries = " + tries+1);
+			return;
+		}
 
         throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
     }
@@ -212,7 +205,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
             final NodeRef jP = tree.getParent(j);
 
             // check if both parents are equal -> we are siblings :) (this
-            // wouldnt effect a change og topology)
+            // wouldnt effect a change on topology)
             // check if I m your parent or vice versa (this would destroy the
             // tree)
             // check if you are younger then my father

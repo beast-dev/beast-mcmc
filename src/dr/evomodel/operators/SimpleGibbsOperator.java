@@ -13,7 +13,7 @@ import dr.inference.operators.OperatorFailedException;
 import dr.inference.prior.Prior;
 
 /**
- * @author shhn001
+ * @author Sebastian Hoehna
  * 
  */
 public abstract class SimpleGibbsOperator extends SimpleOperator implements

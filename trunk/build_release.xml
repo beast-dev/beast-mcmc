@@ -98,7 +98,9 @@
 			<zipgroupfileset dir="${lib}" includes="jdom.jar"/>
 			<zipgroupfileset dir="${lib}" includes="commons-math-1.2.jar"/>
 			<zipgroupfileset dir="${lib}" includes="mtj.jar"/>
-			<zipgroupfileset dir="${lib}" includes="JRI.jar"/>
+			<zipgroupfileset dir="${lib}"
+		includes="JRI.jar"/>
+		<zipgroupfileset dir="${lib}" includes="colt.jar"/>
 		</jar>
 
 		<!-- Put everything in ${build} into the beauti.jar file -->

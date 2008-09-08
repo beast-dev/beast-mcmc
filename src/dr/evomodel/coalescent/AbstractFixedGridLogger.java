@@ -92,10 +92,10 @@ public abstract class AbstractFixedGridLogger extends MCLogger{
 		
 			values[0] = Integer.toString(state);
 			
-			values[values.length - 1] = "" + getAdditionalDensity();
-			
 			getStringGrid(values);
 			
+			values[values.length - 1] = "" + getAdditionalDensity();
+						
 			logValues(values);
 		}
 	}

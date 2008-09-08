@@ -32,17 +32,22 @@ public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger{
 
 	private GMRFSkyrideLikelihood gsl;
 
-	private int extraDraws = 20;
-	private double extraDensity = 0;
+	private int extraDraws = 1;
+	private double extraDensity;
 
 	public GMRFSkyrideFixedGridLogger(LogFormatter formatter, int logEvery,
 			GMRFSkyrideLikelihood gsl, double gridHeight, int intervalNumber) {
 		super(formatter, logEvery, gridHeight, intervalNumber);
 
+		
+		
 		this.gsl = gsl;
 	}
-
+	
+	
+	
 	public double[] getPopSizes(){
+		
 		extraDensity = 0;
 			
 		double[] coalescentHeights = this.getCoalescentHeights();
@@ -50,7 +55,7 @@ public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger{
 		double[] bslPopSizes = gsl.getPopSizeParameter().getParameterValues();
 		double[] popSizes = new double[bslPopSizes.length + extraDraws];
 				
-		double treeHeightScale = coalescentHeights[bslPopSizes.length - 1] / 100.0;
+		double treeHeightScale = coalescentHeights[bslPopSizes.length - 1];
 		double precision = gsl.getPrecisionParameter().getParameterValue(0);
 		
 		for(int i = 0; i < bslPopSizes.length; i++){
@@ -72,7 +77,8 @@ public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger{
 			
 			previousMidPoint = currentMidPoint;
 		}
-							
+		
+		
 		return popSizes;
 	}
 	
@@ -195,6 +201,8 @@ public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger{
 			for(int i = 0 ; i < intervalNumber; i++){
 				logger.addColumn(new LogColumn.Default("V" + (i+1),null));
 			}
+			
+			logger.addColumn(new LogColumn.Default("ExtraDensity",null));
 
 
 			return (GMRFSkyrideFixedGridLogger)logger;

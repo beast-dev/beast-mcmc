@@ -333,4 +333,10 @@ public class MathUtils {
 	}
 
 
+	 public static double logHyperSphereVolume(int dimension, double radius){
+	    	return dimension*(0.5723649429247001 + Math.log(radius))+
+			 - GammaFunction.lnGamma(dimension/2.0 + 1.0);
+	    }
+
+
 }

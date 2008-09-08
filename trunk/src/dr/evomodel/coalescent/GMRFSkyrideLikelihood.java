@@ -209,10 +209,9 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 				weight = 0;
 
 			}
-
-
+			
 		}
-
+		
 		//Set up the weight Matrix
 		double[] offdiag = new double[fieldLength - 1];
 		double[] diag = new double[fieldLength];
@@ -226,13 +225,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 			}
 		} else {
 			double rootHeight = tree.getNodeHeight(tree.getRoot());
-
-			rootHeight /= 100.0;
-
-			//TODO Fix this re-scaling part.
-			//Not really sure if this re-scaling part is needed, but I'm afraid to know what happens
-			//when we have really big or really small numbers here.
-
+			
 			for (int i = 0; i < fieldLength - 1; i++) {
 				offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * rootHeight;
 			}
@@ -361,7 +354,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 			currentLike += -currentGamma.get(i) - sufficientStatistics[i] * Math.exp(-currentGamma.get(i));
 		}
 
-
+		
+		
 		SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0));
 		currentQ.mult(currentGamma, diagonal1);
 
@@ -373,7 +367,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		} else {
 			currentLike -= fieldLength / 2.0 * LOG_TWO_TIMES_PI;
 		}
-
+	
 /*
 
 WinBUGS code to fixed tree:  (A:4.0,(B:2.0,(C:0.5,D:1.0):1.0):2.0)

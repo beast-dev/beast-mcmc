@@ -13,18 +13,21 @@ public class CoalescentIntervalStatistic extends Statistic.Abstract{
 
 	public static final String COALESCENT_INTERVAL_STATISTIC = "coalescentIntervalStatistic";
 	
-	private OldAbstractCoalescentLikelihood acl;
+	private GMRFSkyrideLikelihood acl;
+	private int dimension;
 	
-	public CoalescentIntervalStatistic(OldAbstractCoalescentLikelihood acl){
+	public CoalescentIntervalStatistic(GMRFSkyrideLikelihood acl){
 		this.acl = acl;
+		
+		dimension = acl.getCoalescentIntervalHeights().length;
 	}
 	
 	public int getDimension() {
-		return acl.getIntervalCount();
+		return dimension;
 	}
 
 	public double getStatisticValue(int dim) {
-			return acl.getInterval(dim);
+			return acl.getCoalescentIntervalHeights()[dim];
 	}
 
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
@@ -39,13 +42,13 @@ public class CoalescentIntervalStatistic extends Statistic.Abstract{
 
 		public XMLSyntaxRule[] getSyntaxRules() {
 			return new XMLSyntaxRule[]{
-					new ElementRule(OldAbstractCoalescentLikelihood.class),
+					new ElementRule(GMRFSkyrideLikelihood.class),
 			};
 		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			return new CoalescentIntervalStatistic(
-					(OldAbstractCoalescentLikelihood)xo.getChild(OldAbstractCoalescentLikelihood.class));
+					(GMRFSkyrideLikelihood)xo.getChild(GMRFSkyrideLikelihood.class));
 		}
 
 		public String getParserName() {

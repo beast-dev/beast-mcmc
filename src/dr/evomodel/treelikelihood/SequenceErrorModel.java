@@ -5,24 +5,43 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.logging.Logger;
+
 /**
  * @author Andrew Rambaut
  * @version $Id$
  */
 public class SequenceErrorModel extends TipPartialsModel {
+    public enum ErrorType {
+        TYPE_1_TRANSITIONS("type1Transitions"),
+        TYPE_2_TRANSITIONS("type2Transitions"),
+        TRANSITIONS_ONLY("transitionsOnly"),
+        ALL_SUBSTITUTIONS("allSubstitutions");
+
+
+        ErrorType(String label) {
+            this.label = label;
+        }
+
+        public String toString() {
+            return label;
+        }
+
+        final String label;
+    }
 
     public static final String SEQUENCE_ERROR_MODEL = "sequenceErrorModel";
     public static final String BASE_ERROR_RATE = "baseErrorRate";
     public static final String AGE_RELATED_RATE = "ageRelatedErrorRate";
-    public static final String ERROR_TYPE1 = "type1";
-    public static final String ERROR_TYPE2 = "type2";
 
     public static final String EXCLUDE = "exclude";
     public static final String INCLUDE = "include";
 
     public SequenceErrorModel(TreeModel treeModel, TaxonList includeTaxa, TaxonList excludeTaxa,
-                              Parameter baseErrorRateParameter, Parameter ageRelatedErrorRateParameter) {
+                              ErrorType errorType, Parameter baseErrorRateParameter, Parameter ageRelatedErrorRateParameter) {
         super(SEQUENCE_ERROR_MODEL, treeModel, includeTaxa, excludeTaxa);
+
+        this.errorType = errorType;
 
         if (baseErrorRateParameter != null) {
             this.baseErrorRateParameter = baseErrorRateParameter;
@@ -61,31 +80,45 @@ public class SequenceErrorModel extends TipPartialsModel {
                 pUndamaged *= Math.exp(-rate * age);
             }
 
+            double pDamagedTS, pDamagedTV;
+
+            if (errorType == ErrorType.ALL_SUBSTITUTIONS) {
+                pDamagedTS = (1.0 - pUndamaged) / 3.0;
+                pDamagedTV = pDamagedTS;
+
+            } else if (errorType == ErrorType.TRANSITIONS_ONLY) {
+                pDamagedTS = 1.0 - pUndamaged;
+                pDamagedTV = 0.0;
+            } else {
+                throw new IllegalArgumentException("only TRANSITIONS_ONLY and ALL_SUBSTITUTIONS are supported");
+            }
+
+
             int k = 0;
             for (int j = 0; j < patternCount; j++) {
                 switch (states[j]) {
                     case 0: // is an A
                         partials[k] = pUndamaged;
-                        partials[k + 1] = 0.0;
-                        partials[k + 2] = 1.0 - pUndamaged;
-                        partials[k + 3] = 0.0;
+                        partials[k + 1] = pDamagedTV;
+                        partials[k + 2] = pDamagedTS;
+                        partials[k + 3] = pDamagedTV;
                         break;
                     case 1: // is an C
-                        partials[k] = 0.0;
+                        partials[k] = pDamagedTV;
                         partials[k + 1] = pUndamaged;
-                        partials[k + 2] = 0.0;
-                        partials[k + 3] = 1.0 - pUndamaged;
+                        partials[k + 2] = pDamagedTV;
+                        partials[k + 3] = pDamagedTS;
                         break;
                     case 2: // is an G
-                        partials[k] = 1.0 - pUndamaged;
-                        partials[k + 1] = 0.0;
+                        partials[k] = pDamagedTS;
+                        partials[k + 1] = pDamagedTV;
                         partials[k + 2] = pUndamaged;
-                        partials[k + 3] = 0.0;
+                        partials[k + 3] = pDamagedTV;
                         break;
                     case 3: // is an T
-                        partials[k] = 0.0;
-                        partials[k + 1] = 1.0 - pUndamaged;
-                        partials[k + 2] = 0.0;
+                        partials[k] = pDamagedTV;
+                        partials[k + 1] = pDamagedTS;
+                        partials[k + 2] = pDamagedTV;
                         partials[k + 3] = pUndamaged;
                         break;
                     default: // is an ambiguity
@@ -143,6 +176,16 @@ public class SequenceErrorModel extends TipPartialsModel {
 
             TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
 
+            ErrorType errorType = ErrorType.ALL_SUBSTITUTIONS;
+
+            if (xo.hasAttribute("type")) {
+                if (xo.getStringAttribute("type").equalsIgnoreCase("transitions")) {
+                    errorType = ErrorType.TRANSITIONS_ONLY;
+                } else if (!xo.getStringAttribute("type").equalsIgnoreCase("all")) {
+                    throw new XMLParseException("unrecognized option for attribute, 'type': " + xo.getStringAttribute("type"));
+                }
+            }
+
             Parameter baseDamageRateParameter = null;
             if (xo.hasChildNamed(BASE_ERROR_RATE)) {
                 baseDamageRateParameter = (Parameter)xo.getElementFirstChild(BASE_ERROR_RATE);
@@ -168,9 +211,9 @@ public class SequenceErrorModel extends TipPartialsModel {
                 excludeTaxa = (TaxonList)xo.getElementFirstChild(EXCLUDE);
             }
 
-            SequenceErrorModel aDNADamageModel =  new SequenceErrorModel(treeModel, includeTaxa, excludeTaxa, baseDamageRateParameter, ageRelatedRateParameter);
+            SequenceErrorModel aDNADamageModel =  new SequenceErrorModel(treeModel, includeTaxa, excludeTaxa, errorType, baseDamageRateParameter, ageRelatedRateParameter);
 
-            System.out.println("Using aDNA damage model.");
+            Logger.getLogger("dr.evomodel").info("Using sequence error model, assuming errors cause " + (errorType == ErrorType.TRANSITIONS_ONLY ? "transitions only." : "any substitution."));
 
             return aDNADamageModel;
         }
@@ -189,6 +232,7 @@ public class SequenceErrorModel extends TipPartialsModel {
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                AttributeRule.newStringRule("type", true, "The type of errors that can occur (transitions or all)"),            
                 new ElementRule(TreeModel.class),
                 new ElementRule(BASE_ERROR_RATE, Parameter.class, "The base error rate per site per sequence", true),
                 new ElementRule(AGE_RELATED_RATE, Parameter.class, "The error rate per site per unit time", true),
@@ -199,6 +243,7 @@ public class SequenceErrorModel extends TipPartialsModel {
         };
     };
 
+    private final ErrorType errorType;
     private final Parameter baseErrorRateParameter;
     private final Parameter ageRelatedErrorRateParameter;
 }

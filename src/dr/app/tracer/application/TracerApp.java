@@ -99,7 +99,7 @@ public class TracerApp extends MultiDocApplication {
 				for (String fileName : args) {
 
 					File file = new File(fileName);
-					LogFileTraces traces = new LogFileTraces(fileName, file);
+					LogFileTraces[] traces = new LogFileTraces[] { new LogFileTraces(fileName, file) };
 
 					frame.processTraces(traces);
 				}

@@ -142,7 +142,7 @@ public class PartitionModelGenerator extends Generator {
         writeFrequencyModel(writer, model, num);
         writer.writeCloseTag(HKYParser.FREQUENCIES);
 
-        writeParameter(HKYParser.KAPPA, prefix + "kappa", writer, model);
+        writeParameter(HKYParser.KAPPA, prefix + "kappa", model, writer);
         writer.writeCloseTag(NucModelType.HKY.getXMLName());
     }
 
@@ -166,11 +166,11 @@ public class PartitionModelGenerator extends Generator {
         writeFrequencyModel(writer, model, num);
         writer.writeCloseTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
 
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_C, prefix + PartitionModel.GTR_RATE_NAMES[0], writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[1], writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[2], writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.C_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[3], writer, model);
-        writeParameter(dr.evomodel.substmodel.GTR.G_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[4], writer, model);
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_C, prefix + PartitionModel.GTR_RATE_NAMES[0], model, writer);
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[1], model, writer);
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[2], model, writer);
+        writeParameter(dr.evomodel.substmodel.GTR.C_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[3], model, writer);
+        writeParameter(dr.evomodel.substmodel.GTR.G_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[4], model, writer);
         writer.writeCloseTag(dr.evomodel.substmodel.GTR.GTR_MODEL);
     }
 
@@ -261,8 +261,8 @@ public class PartitionModelGenerator extends Generator {
         writeParameter(dr.evomodel.substmodel.BinaryCovarionModel.HIDDEN_FREQUENCIES,
                 prefix + "hfrequencies", 2, 0.5, 0.0, 1.0, writer);
 
-        writeParameter(dr.evomodel.substmodel.BinaryCovarionModel.ALPHA, prefix + "alpha", writer, options);
-        writeParameter(dr.evomodel.substmodel.BinaryCovarionModel.SWITCHING_RATE, prefix + "bcov.s", writer, options);
+        writeParameter(dr.evomodel.substmodel.BinaryCovarionModel.ALPHA, prefix + "alpha", options, writer);
+        writeParameter(dr.evomodel.substmodel.BinaryCovarionModel.SWITCHING_RATE, prefix + "bcov.s", options, writer);
 
         writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL);
     }
@@ -482,17 +482,17 @@ public class PartitionModelGenerator extends Generator {
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
         if (writeMuParameter) {
-            writeParameter(GammaSiteModel.RELATIVE_RATE, prefix + "mu", writer, model);
+            writeParameter(GammaSiteModel.RELATIVE_RATE, prefix + "mu", model, writer);
         }
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
             if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
-                writeParameter(prefix + "alpha", writer, model);
+                writeParameter(prefix + "alpha", model, writer);
             } else {
                 // multiple partitions but linked heterogeneity
                 if (num == 1) {
-                    writeParameter(prefix2 + "alpha", writer, model);
+                    writeParameter(prefix2 + "alpha", model, writer);
                 } else {
                     writer.writeTag(ParameterParser.PARAMETER,
                             new Attribute.Default<String>("idref", prefix2 + "alpha"), true);
@@ -504,11 +504,11 @@ public class PartitionModelGenerator extends Generator {
         if (model.isInvarHetero()) {
             writer.writeOpenTag(GammaSiteModel.PROPORTION_INVARIANT);
             if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
-                writeParameter(prefix + "pInv", writer, model);
+                writeParameter(prefix + "pInv", model, writer);
             } else {
                 // multiple partitions but linked heterogeneity
                 if (num == 1) {
-                    writeParameter(prefix2 + "pInv", writer, model);
+                    writeParameter(prefix2 + "pInv", model, writer);
                 } else {
                     writer.writeTag(ParameterParser.PARAMETER,
                             new Attribute.Default<String>("idref", prefix2 + "pInv"), true);
@@ -553,18 +553,18 @@ public class PartitionModelGenerator extends Generator {
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
         if (writeMuParameter) {
-            writeParameter(GammaSiteModel.RELATIVE_RATE, prefix + "mu", writer, model);
+            writeParameter(GammaSiteModel.RELATIVE_RATE, prefix + "mu", model, writer);
         }
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE,
                     new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
-            writeParameter(prefix + "alpha", writer, model);
+            writeParameter(prefix + "alpha", model, writer);
             writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
         }
 
         if (model.isInvarHetero()) {
-            writeParameter(GammaSiteModel.PROPORTION_INVARIANT, prefix + "pInv", writer, model);
+            writeParameter(GammaSiteModel.PROPORTION_INVARIANT, prefix + "pInv", model, writer);
         }
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
@@ -592,7 +592,7 @@ public class PartitionModelGenerator extends Generator {
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
         if (writeMuParameter) {
-            writeParameter(GammaSiteModel.RELATIVE_RATE, prefix + "mu", writer, model);
+            writeParameter(GammaSiteModel.RELATIVE_RATE, prefix + "mu", model, writer);
         }
 
 
@@ -600,12 +600,12 @@ public class PartitionModelGenerator extends Generator {
             writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE,
                     new Attribute.Default<String>(
                             GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
-            writeParameter(prefix + "alpha", writer, model);
+            writeParameter(prefix + "alpha", model, writer);
             writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
         }
 
         if (model.isInvarHetero()) {
-            writeParameter(GammaSiteModel.PROPORTION_INVARIANT, prefix + "pInv", writer, model);
+            writeParameter(GammaSiteModel.PROPORTION_INVARIANT, prefix + "pInv", model, writer);
         }
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);

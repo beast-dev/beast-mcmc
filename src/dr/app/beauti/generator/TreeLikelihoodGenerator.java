@@ -1,16 +1,14 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockType;
-import dr.app.beauti.options.ModelOptions;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.evomodel.treelikelihood.SequenceErrorModel;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evoxml.SitePatternsParser;
 import dr.util.Attribute;
@@ -23,6 +21,33 @@ public class TreeLikelihoodGenerator extends Generator {
 
     public TreeLikelihoodGenerator(BeautiOptions options) {
         super(options);
+    }
+
+    public void writeErrorModel(XMLWriter writer) {
+        String errorType = ( options.errorModelType == ErrorType.AGE_TRANSITIONS ||
+                options.errorModelType == ErrorType.BASE_TRANSITIONS ?
+                "transitions" : "all" );
+
+
+        writer.writeOpenTag(
+                SequenceErrorModel.SEQUENCE_ERROR_MODEL,
+                new Attribute[]{
+                        new Attribute.Default<String>("id", "errorModel"),
+                        new Attribute.Default<String>("type", errorType)
+                }
+        );
+
+        if (options.errorModelType == ErrorType.AGE_TRANSITIONS ||
+                options.errorModelType == ErrorType.AGE_ALL) {
+            writeParameter(SequenceErrorModel.AGE_RELATED_RATE, "errorModel.ageRate", 1, writer);
+        } else  if (options.errorModelType == ErrorType.BASE_TRANSITIONS || 
+                options.errorModelType == ErrorType.BASE_ALL) {
+            writeParameter(SequenceErrorModel.BASE_ERROR_RATE, "errorModel.baseRate", 1, writer);
+        } else {
+            throw new IllegalArgumentException("Unknown error type");
+        }
+
+        writer.writeCloseTag(SequenceErrorModel.SEQUENCE_ERROR_MODEL);
     }
 
     /**
@@ -83,12 +108,18 @@ public class TreeLikelihoodGenerator extends Generator {
             writer.writeTag(GammaSiteModel.SITE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", prefix + "siteModel")}, true);
         }
+
         if (options.clockType == ClockType.STRICT_CLOCK) {
             writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
                     new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
         } else {
             writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
                     new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+        }
+
+        if (options.errorModelType != ErrorType.NO_ERROR) {
+            writer.writeTag(SequenceErrorModel.SEQUENCE_ERROR_MODEL,
+                    new Attribute[]{new Attribute.Default<String>("idref", "errorModel")}, true);
         }
 
         writer.writeCloseTag(TreeLikelihood.TREE_LIKELIHOOD);

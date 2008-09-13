@@ -69,7 +69,7 @@ public class TreePriorGenerator extends Generator {
 			);
 
 			writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
-			writeParameter("constant.popSize", writer, options);
+			writeParameter("constant.popSize", options, writer);
 			writer.writeCloseTag(ConstantPopulationModel.POPULATION_SIZE);
 			writer.writeCloseTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL);
 
@@ -88,18 +88,18 @@ public class TreePriorGenerator extends Generator {
 
 			// write pop size socket
 			writer.writeOpenTag(ExponentialGrowthModel.POPULATION_SIZE);
-			writeParameter("exponential.popSize", writer, options);
+			writeParameter("exponential.popSize", options, writer);
 			writer.writeCloseTag(ExponentialGrowthModel.POPULATION_SIZE);
 
 			if (parameterization == ModelOptions.GROWTH_RATE) {
 				// write growth rate socket
 				writer.writeOpenTag(ExponentialGrowthModel.GROWTH_RATE);
-				writeParameter("exponential.growthRate", writer, options);
+				writeParameter("exponential.growthRate", options, writer);
 				writer.writeCloseTag(ExponentialGrowthModel.GROWTH_RATE);
 			} else {
 				// write doubling time socket
 				writer.writeOpenTag(ExponentialGrowthModel.DOUBLING_TIME);
-				writeParameter("exponential.doublingTime", writer, options);
+				writeParameter("exponential.doublingTime", options, writer);
 				writer.writeCloseTag(ExponentialGrowthModel.DOUBLING_TIME);
 			}
 
@@ -119,24 +119,24 @@ public class TreePriorGenerator extends Generator {
 
 			// write pop size socket
 			writer.writeOpenTag(LogisticGrowthModel.POPULATION_SIZE);
-			writeParameter("logistic.popSize", writer, options);
+			writeParameter("logistic.popSize", options, writer);
 			writer.writeCloseTag(LogisticGrowthModel.POPULATION_SIZE);
 
 			if (parameterization == ModelOptions.GROWTH_RATE) {
 				// write growth rate socket
 				writer.writeOpenTag(LogisticGrowthModel.GROWTH_RATE);
-				writeParameter("logistic.growthRate", writer, options);
+				writeParameter("logistic.growthRate", options, writer);
 				writer.writeCloseTag(LogisticGrowthModel.GROWTH_RATE);
 			} else {
 				// write doubling time socket
 				writer.writeOpenTag(LogisticGrowthModel.DOUBLING_TIME);
-				writeParameter("logistic.doublingTime", writer, options);
+				writeParameter("logistic.doublingTime", options, writer);
 				writer.writeCloseTag(LogisticGrowthModel.DOUBLING_TIME);
 			}
 
 			// write logistic t50 socket
 			writer.writeOpenTag(LogisticGrowthModel.TIME_50);
-			writeParameter("logistic.t50", writer, options);
+			writeParameter("logistic.t50", options, writer);
 			writer.writeCloseTag(LogisticGrowthModel.TIME_50);
 
 			writer.writeCloseTag(LogisticGrowthModel.LOGISTIC_GROWTH_MODEL);
@@ -157,19 +157,19 @@ public class TreePriorGenerator extends Generator {
 			);
 
 			// write pop size socket
-			writeParameter(ExpansionModel.POPULATION_SIZE, "expansion.popSize", writer, options);
+			writeParameter(ExpansionModel.POPULATION_SIZE, "expansion.popSize", options, writer);
 
 			if (options.parameterization == ModelOptions.GROWTH_RATE) {
 				// write growth rate socket
-				writeParameter(ExpansionModel.GROWTH_RATE, "expansion.growthRate", writer, options);
+				writeParameter(ExpansionModel.GROWTH_RATE, "expansion.growthRate", options, writer);
 			} else {
 				// write doubling time socket
-				writeParameter(ExpansionModel.DOUBLING_TIME, "expansion.doublingTime", writer, options);
+				writeParameter(ExpansionModel.DOUBLING_TIME, "expansion.doublingTime", options, writer);
 			}
 
 			// write ancestral proportion socket
 			writeParameter(ExpansionModel.ANCESTRAL_POPULATION_PROPORTION,
-					"expansion.ancestralProportion", writer, options);
+					"expansion.ancestralProportion", options, writer);
 
 			writer.writeCloseTag(ExpansionModel.EXPANSION_MODEL);
 
@@ -186,7 +186,7 @@ public class TreePriorGenerator extends Generator {
 					}
 			);
 
-			writeParameter(YuleModelParser.BIRTH_RATE, "yule.birthRate", writer, options);
+			writeParameter(YuleModelParser.BIRTH_RATE, "yule.birthRate", options, writer);
 			writer.writeCloseTag(YuleModel.YULE_MODEL);
 		} else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
 			writer.writeComment("A prior on the distribution node heights defined given");
@@ -200,9 +200,9 @@ public class TreePriorGenerator extends Generator {
 			);
 
 			writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE,
-					BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, writer, options);
+					BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, options, writer);
 			writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE,
-					BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, writer, options);
+					BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, options, writer);
 			writer.writeCloseTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL);
 		}
 

@@ -144,6 +144,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             int intNodeCount = treeModel.getInternalNodeCount();
 
             if (tipPartialsModel != null) {
+                tipPartialsModel.setTree(treeModel);
+                
                 tipPartials = new double[patternCount * stateCount];
 
                 for (int i = 0; i < extNodeCount; i++) {
@@ -601,7 +603,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * an array used to transfer tip partials
      */
     protected double[] tipPartials;
-    
+
     /**
      * the LikelihoodCore
      */

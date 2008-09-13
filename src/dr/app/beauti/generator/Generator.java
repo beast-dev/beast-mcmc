@@ -42,7 +42,7 @@ public abstract class Generator {
 	 * @param id     the id
 	 * @param writer the writer
 	 */
-	public void writeParameter(String id, XMLWriter writer, ModelOptions options) {
+	public void writeParameter(String id, ModelOptions options, XMLWriter writer) {
 		dr.app.beauti.options.Parameter parameter = options.getParameter(id);
 		if (parameter == null) {
 
@@ -59,18 +59,29 @@ public abstract class Generator {
 		}
 	}
 
+    /**
+     * write a parameter
+     *
+     * @param id     the id
+     * @param writer the writer
+     */
+    public void writeParameter(String wrapperName, String id, int dimension, XMLWriter writer) {
+        writer.writeOpenTag(wrapperName);
+        writeParameter(id, dimension, writer);
+        writer.writeCloseTag(wrapperName);
+    }
+
 	/**
 	 * write a parameter
 	 *
 	 * @param id     the id
 	 * @param writer the writer
 	 */
-	public void writeParameter(String wrapperName, String id, XMLWriter writer, ModelOptions options) {
+	public void writeParameter(String wrapperName, String id, ModelOptions options, XMLWriter writer) {
 		writer.writeOpenTag(wrapperName);
-		writeParameter(id, writer, options);
+		writeParameter(id, options, writer);
 		writer.writeCloseTag(wrapperName);
 	}
-
 
 	/**
 	 * write a parameter

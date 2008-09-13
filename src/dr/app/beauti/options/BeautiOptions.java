@@ -71,6 +71,9 @@ public class BeautiOptions extends ModelOptions {
 		createParameter("localClock.rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 		createParameter("localClock.changes", "random local clock rate change indicator");
 
+        createParameter("errorModel.ageRate", "age dependent sequence error rate", SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("errorModel.baseRate", "base sequence error rate", SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.POSITIVE_INFINITY);
+
 		createScaleParameter("constant.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
 		createScaleParameter("exponential.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -156,6 +159,9 @@ public class BeautiOptions extends ModelOptions {
 		createOperator("deltaMu", "Relative rates",
 				"Changes partition relative rates relative to each other maintaining their mean", "allMus",
 				OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
+
+        createScaleOperator("errorModel.ageRate", rateWeights);
+        createScaleOperator("errorModel.baseRate", rateWeights);
 
 		createScaleOperator("clock.rate", rateWeights);
 		createScaleOperator("uced.mean", rateWeights);
@@ -485,7 +491,13 @@ public class BeautiOptions extends ModelOptions {
 			}
 
 			rateParam.isFixed = fixed;
-		}
+
+            if (errorModelType == ErrorType.AGE_ALL || errorModelType == ErrorType.AGE_TRANSITIONS) {
+                params.add(getParameter("errorModel.ageRate"));
+            } else if (errorModelType == ErrorType.BASE_ALL || errorModelType == ErrorType.BASE_TRANSITIONS) {
+                params.add(getParameter("errorModel.baseRate"));
+            }
+        }
 
 		if (nodeHeightPrior == TreePrior.CONSTANT) {
 			params.add(getParameter("constant.popSize"));
@@ -626,6 +638,12 @@ public class BeautiOptions extends ModelOptions {
 					ops.add(getOperator("unformBranchRateCategories"));
 				}
 			}
+
+            if (errorModelType == ErrorType.AGE_ALL || errorModelType == ErrorType.AGE_TRANSITIONS) {
+                ops.add(getOperator("errorModel.ageRate"));
+            } else if (errorModelType == ErrorType.BASE_ALL || errorModelType == ErrorType.BASE_TRANSITIONS) {
+                ops.add(getOperator("errorModel.baseRate"));
+            }
 		}
 
 		if (nodeHeightPrior == TreePrior.CONSTANT) {
@@ -1104,6 +1122,7 @@ public class BeautiOptions extends ModelOptions {
 
 	public Units.Type units = Units.Type.SUBSTITUTIONS;
 	public ClockType clockType = ClockType.STRICT_CLOCK;
+    public ErrorType errorModelType = ErrorType.NO_ERROR;
 
 	// Operator schedule options
 	public int coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;

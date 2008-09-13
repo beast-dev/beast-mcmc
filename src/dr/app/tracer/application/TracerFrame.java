@@ -618,48 +618,133 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
 
     public final void doImport() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(true);
+        //chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        int returnVal = chooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File[] files = chooser.getSelectedFiles();
+            LogFileTraces[] traces = new LogFileTraces[files.length];
 
-        FileDialog dialog = new FileDialog(this,
-                "Import Trace File...",
-                FileDialog.LOAD);
 
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            File file = new File(dialog.getDirectory(), dialog.getFile());
-
-            LogFileTraces traces = new LogFileTraces(dialog.getFile(), file);
+            for (int i = 0; i < files.length; i++) {
+                traces[i] = new LogFileTraces(files[i].getName(), files[i]);
+            }
 
             processTraces(traces);
-
         }
+
+//        FileDialog dialog = new FileDialog(this,
+//                "Import Trace File...",
+//                FileDialog.LOAD);
+//
+//        dialog.setVisible(true);
+//        dialog.setMode(FileDialog.);
+//        if (dialog.getFile() != null) {
+//            File file = new File(dialog.getDirectory(), dialog.getFile());
+//
+//            LogFileTraces traces = new LogFileTraces(dialog.getFile(), file);
+//
+//            processTraces(traces);
+//
+//        }
 
     }
 
-    protected void processTraces(final LogFileTraces traces) {
+    protected void processTraces(final LogFileTraces[] tracesArray) {
 
-        try {
-            final String fileName = traces.getName();
-            final ProgressMonitorInputStream in = new ProgressMonitorInputStream(
-                    this,
-                    "Reading " + fileName,
-                    new FileInputStream(traces.getFile()));
+        final JFrame frame = this;
+        if (tracesArray.length == 1) {
+            try {
+                final LogFileTraces traces = tracesArray[0];
+                final String fileName = traces.getName();
+                final ProgressMonitorInputStream in = new ProgressMonitorInputStream(
+                        this,
+                        "Reading " + fileName,
+                        new FileInputStream(traces.getFile()));
+                in.getProgressMonitor().setMillisToDecideToPopup(0);
+                in.getProgressMonitor().setMillisToPopup(0);
 
-            final Reader reader = new InputStreamReader(in);
-            final JFrame frame = this;
+                final Reader reader = new InputStreamReader(in);
 
-// the monitored activity must be in a new thread.
+                Thread readThread = new Thread() {
+                    public void run() {
+                        try {
+                            traces.loadTraces(reader, -1);
+
+                            EventQueue.invokeLater(
+                                    new Runnable() {
+                                        public void run() {
+                                            analyseTraceList(traces);
+                                            addTraceList(traces);
+                                        }
+                                    });
+
+                        } catch (final TraceException te) {
+                            EventQueue.invokeLater(
+                                    new Runnable() {
+                                        public void run() {
+                                            JOptionPane.showMessageDialog(frame, "Problem with trace file: " + te.getMessage(),
+                                                    "Problem with tree file",
+                                                    JOptionPane.ERROR_MESSAGE);
+                                        }
+                                    });
+                        } catch (final InterruptedIOException iioex) {
+                            // The cancel dialog button was pressed - do nothing
+                        } catch (final IOException ioex) {
+                            EventQueue.invokeLater(
+                                    new Runnable() {
+                                        public void run() {
+                                            JOptionPane.showMessageDialog(frame, "File I/O Error: " + ioex.getMessage(),
+                                                    "File I/O Error",
+                                                    JOptionPane.ERROR_MESSAGE);
+                                        }
+                                    });
+//                    } catch (final Exception ex) {
+//                        EventQueue.invokeLater (
+//                                new Runnable () {
+//                                    public void run () {
+//                                        JOptionPane.showMessageDialog(frame, "Fatal exception: " + ex.getMessage(),
+//                                                "Error reading file",
+//                                                JOptionPane.ERROR_MESSAGE);
+//                                    }
+//                                });
+                        }
+
+                    }
+                };
+                readThread.start();
+
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (IOException ioex) {
+                JOptionPane.showMessageDialog(this, "File I/O Error: " + ioex,
+                        "File I/O Error",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+                        "Error reading file",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+        } else {
             Thread readThread = new Thread() {
                 public void run() {
                     try {
-                        traces.loadTraces(reader, -1);
+                        for (final LogFileTraces traces : tracesArray) {
+                            final Reader reader = new FileReader(traces.getFile());
+                            traces.loadTraces(reader, -1);
 
-                        EventQueue.invokeLater(
-                                new Runnable() {
-                                    public void run() {
-                                        analyseTraceList(traces);
-                                        addTraceList(traces);
-                                    }
-                                });
+                            EventQueue.invokeLater(
+                                    new Runnable() {
+                                        public void run() {
+                                            analyseTraceList(traces);
+                                            addTraceList(traces);
+                                        }
+                                    });
+                        }
 
                     } catch (final TraceException te) {
                         EventQueue.invokeLater(
@@ -696,18 +781,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             };
             readThread.start();
 
-        } catch (FileNotFoundException fnfe) {
-            JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-                    "Unable to open file",
-                    JOptionPane.ERROR_MESSAGE);
-        } catch (IOException ioex) {
-            JOptionPane.showMessageDialog(this, "File I/O Error: " + ioex,
-                    "File I/O Error",
-                    JOptionPane.ERROR_MESSAGE);
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
-                    "Error reading file",
-                    JOptionPane.ERROR_MESSAGE);
         }
     }
 

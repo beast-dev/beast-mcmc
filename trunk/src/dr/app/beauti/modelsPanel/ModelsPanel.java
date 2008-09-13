@@ -28,10 +28,7 @@ package dr.app.beauti.modelsPanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.modelsPanel.CreateModelDialog;
 import dr.app.beauti.PanelUtils;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockType;
-import dr.app.beauti.options.DataPartition;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
@@ -50,7 +47,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -82,6 +79,8 @@ public class ModelsPanel extends JPanel implements Exportable {
     RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
     JComboBox clockModelCombo = new JComboBox(ClockType.values());
+
+    JComboBox errorModelCombo = new JComboBox(ErrorType.values());
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -130,8 +129,19 @@ public class ModelsPanel extends JPanel implements Exportable {
         controlPanel1.setOpaque(false);
         controlPanel1.add(actionPanel1);
 
+        ItemListener comboListener = new ItemListener() {
+            public void itemStateChanged(ItemEvent event) {
+                fireModelsChanged();
+            }
+        };
+        PanelUtils.setupComponent(errorModelCombo);
+        errorModelCombo.setToolTipText("<html>Select how to model sequence error or<br>" +
+                "post-mortem DNA damage.</html>");
+        errorModelCombo.addItemListener(comboListener);
+
         PanelUtils.setupComponent(clockModelCombo);
         clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
+        clockModelCombo.addItemListener(comboListener);
 
         PanelUtils.setupComponent(fixedSubstitutionRateCheck);
         fixedSubstitutionRateCheck.setSelected(true);
@@ -165,6 +175,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         OptionsPanel panel = new OptionsPanel(10, 10);
         panel.addSeparator();
 
+        panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
         panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
         substitutionRateField.setColumns(10);
@@ -205,6 +216,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         //setModelOptions(currentModel);
 
         clockModelCombo.setSelectedItem(options.clockType);
+        errorModelCombo.setSelectedItem(options.errorModelType);
 
         settingOptions = false;
 
@@ -230,6 +242,8 @@ public class ModelsPanel extends JPanel implements Exportable {
         if (settingOptions) return;
 
         options.clockType = (ClockType) clockModelCombo.getSelectedItem();
+        options.errorModelType = (ErrorType) errorModelCombo.getSelectedItem();
+
         options.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
 
         options.meanSubstitutionRate = substitutionRateField.getValue();

@@ -37,9 +37,9 @@ public class SequenceErrorModel extends TipPartialsModel {
     public static final String EXCLUDE = "exclude";
     public static final String INCLUDE = "include";
 
-    public SequenceErrorModel(TreeModel treeModel, TaxonList includeTaxa, TaxonList excludeTaxa,
+    public SequenceErrorModel(TaxonList includeTaxa, TaxonList excludeTaxa,
                               ErrorType errorType, Parameter baseErrorRateParameter, Parameter ageRelatedErrorRateParameter) {
-        super(SEQUENCE_ERROR_MODEL, treeModel, includeTaxa, excludeTaxa);
+        super(SEQUENCE_ERROR_MODEL, includeTaxa, excludeTaxa);
 
         this.errorType = errorType;
 
@@ -76,7 +76,7 @@ public class SequenceErrorModel extends TipPartialsModel {
             double pUndamaged = (1.0 - base);
 
             if (ageRelatedErrorRateParameter != null) {
-                double age = treeModel.getNodeHeight(treeModel.getExternalNode(nodeIndex));
+                double age = tree.getNodeHeight(tree.getExternalNode(nodeIndex));
                 pUndamaged *= Math.exp(-rate * age);
             }
 
@@ -174,8 +174,6 @@ public class SequenceErrorModel extends TipPartialsModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
-
             ErrorType errorType = ErrorType.ALL_SUBSTITUTIONS;
 
             if (xo.hasAttribute("type")) {
@@ -211,7 +209,8 @@ public class SequenceErrorModel extends TipPartialsModel {
                 excludeTaxa = (TaxonList)xo.getElementFirstChild(EXCLUDE);
             }
 
-            SequenceErrorModel aDNADamageModel =  new SequenceErrorModel(treeModel, includeTaxa, excludeTaxa, errorType, baseDamageRateParameter, ageRelatedRateParameter);
+            SequenceErrorModel aDNADamageModel =  new SequenceErrorModel(includeTaxa, excludeTaxa,
+                    errorType, baseDamageRateParameter, ageRelatedRateParameter);
 
             Logger.getLogger("dr.evomodel").info("Using sequence error model, assuming errors cause " + (errorType == ErrorType.TRANSITIONS_ONLY ? "transitions only." : "any substitution."));
 
@@ -232,8 +231,7 @@ public class SequenceErrorModel extends TipPartialsModel {
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                AttributeRule.newStringRule("type", true, "The type of errors that can occur (transitions or all)"),            
-                new ElementRule(TreeModel.class),
+                AttributeRule.newStringRule("type", true),
                 new ElementRule(BASE_ERROR_RATE, Parameter.class, "The base error rate per site per sequence", true),
                 new ElementRule(AGE_RELATED_RATE, Parameter.class, "The error rate per site per unit time", true),
                 new XORRule(

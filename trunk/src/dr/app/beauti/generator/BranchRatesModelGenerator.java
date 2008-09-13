@@ -41,7 +41,7 @@ public class BranchRatesModelGenerator extends Generator {
                     StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
                     new Attribute[]{new Attribute.Default<String>("id", "branchRates")}
             );
-            writeParameter("rate", "clock.rate", writer, options);
+            writeParameter("rate", "clock.rate", options, writer);
             writer.writeCloseTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES);
         } else if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
             if (options.isFixedSubstitutionRate()) {
@@ -67,7 +67,7 @@ public class BranchRatesModelGenerator extends Generator {
             writer.writeTag("parameter", new Attribute.Default<String>("idref", "localClock.changes"), true);
             writer.writeCloseTag("rateIndicator");
 
-            writeParameter("clockRate", "clock.rate", writer, options);
+            writeParameter("clockRate", "clock.rate", options, writer);
 
             writer.writeCloseTag(RandomLocalClockModel.LOCAL_BRANCH_RATES);
 
@@ -148,7 +148,7 @@ public class BranchRatesModelGenerator extends Generator {
 
                 final String eModelName = ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL;
                 writer.writeOpenTag(eModelName);
-                writeParameter("mean", "uced.mean", writer, options);
+                writeParameter("mean", "uced.mean", options, writer);
                 writer.writeCloseTag(eModelName);
             } else if (options.clockType == ClockType.UNCORRELATED_LOGNORMAL) {
                 if (options.isFixedSubstitutionRate()) {
@@ -157,8 +157,8 @@ public class BranchRatesModelGenerator extends Generator {
                 }
 
                 writer.writeOpenTag("logNormalDistributionModel", new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
-                writeParameter("mean", "ucld.mean", writer, options);
-                writeParameter("stdev", "ucld.stdev", writer, options);
+                writeParameter("mean", "ucld.mean", options, writer);
+                writeParameter("stdev", "ucld.stdev", options, writer);
                 writer.writeCloseTag("logNormalDistributionModel");
             } else {
                 throw new RuntimeException("Unrecognised relaxed clock model");

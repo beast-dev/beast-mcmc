@@ -132,29 +132,33 @@ public class TreeLogAnalyser {
         }
     }
 
-	public static void printTitle() {
+    public static void printTitle() {
+        System.out.println();
+        centreLine("TreeLogAnalyser " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("MCMC Output analysis", 60);
+        centreLine("by", 60);
+        centreLine("Alexei Drummond and Andrew Rambaut", 60);
+        System.out.println();
+        centreLine("Department of Computer Science", 60);
+        centreLine("University of Auckland", 60);
+        centreLine("alexei@cs.auckland.ac.nz", 60);
+        System.out.println();
+        centreLine("Institute of Evolutionary Biology", 60);
+        centreLine("University of Edinburgh", 60);
+        centreLine("a.rambaut@ed.ac.uk", 60);
+        System.out.println();
+        System.out.println();
+    }
 
-		System.out.println("+-----------------------------------------------\\");
-		System.out.println("|           TreeLogAnalyser v1.3 2005           |\\");
-		System.out.println("|              MCMC Output analysis             ||");
+    public static void centreLine(String line, int pageWidth) {
+        int n = pageWidth - line.length();
+        int n1 = n / 2;
+        for (int i = 0; i < n1; i++) {
+            System.out.print(" ");
+        }
+        System.out.println(line);
+    }
 
-		String versionString = "BEAST Library: " + version.getVersionString();
-		System.out.print("|");
-		int n = 47 - versionString.length();
-		int n1 = n / 2;
-		int n2 = n1 + (n % 2);
-		for (int i = 0; i < n1; i++) { System.out.print(" "); }
-		System.out.print(versionString);
-		for (int i = 0; i < n2; i++) { System.out.print(" "); }
-		System.out.println("||");
-
-		System.out.println("|       Alexei Drummond and Andrew Rambaut      ||");
-		System.out.println("|              University of Oxford             ||");
-		System.out.println("|           http://beast.bio.ed.ac.uk/          ||");
-		System.out.println("\\-----------------------------------------------\\|");
-		System.out.println(" \\-----------------------------------------------\\");
-		System.out.println();
-	}
 
 	public static void printUsage(Arguments arguments) {
 

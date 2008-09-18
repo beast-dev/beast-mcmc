@@ -41,24 +41,37 @@ import dr.xml.*;
 public class NDLikelihood extends RateChangeLikelihood {
 
     public static final String ND_LIKELIHOOD = "NDLikelihood";
-    public static final String STDEV = "stdev";
+    public static final String VARIANCE = "variance";
+    public static final String ROOTRATE = "rootRate";
 
-    public NDLikelihood(TreeModel tree, Parameter ratesParameter, double stdev, int rootModel, boolean isEpisodic) {
 
-        super("Normally Distributed", tree, ratesParameter, rootModel, isEpisodic, false);
+    public NDLikelihood(TreeModel tree, Parameter ratesParameter, Parameter variance, Parameter rootRate, int rootModel, boolean isEpisodic, boolean isNormalized, boolean isLogSpace) {
 
-        this.stdev = stdev;
+        super((isLogSpace)?"LogNormally Distributed":"Normally Distributed", tree, ratesParameter, rootRate, rootModel, isEpisodic, isNormalized);
+
+        this.isLogSpace = isLogSpace;
+        this.variance = variance;
+
+        addParameter(variance);
     }
 
     /**
      * @return the log likelihood of the rate change from the parent to the child.
      */
     double branchRateChangeLogLikelihood(double parentRate, double childRate, double time) {
-        if (isEpisodic()) {
-            return NormalDistribution.logPdf(childRate, parentRate, stdev);
-        } else {
-            double scaledStdev = Math.sqrt(stdev * stdev * time);
-            return NormalDistribution.logPdf(childRate, parentRate, scaledStdev);
+        double var = variance.getParameterValue(0);
+
+        if (isEpisodic())
+            var *= time;
+
+        if (isLogSpace){
+            double logParentRate = Math.log(parentRate);
+            double logChildRate = Math.log(childRate);
+
+            return NormalDistribution.logPdf(logChildRate, logParentRate - (var /2.), Math.sqrt(var)) - logChildRate;
+
+        } else{
+            return NormalDistribution.logPdf(childRate, parentRate, Math.sqrt(var));
         }
     }
 
@@ -74,8 +87,21 @@ public class NDLikelihood extends RateChangeLikelihood {
 
             Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
 
-            double stdev = xo.getDoubleAttribute(STDEV);
+            Parameter variance = (Parameter)xo.getElementFirstChild(VARIANCE);
+
+            Parameter rootRate = null;
+             if (xo.hasChildNamed(ROOTRATE))
+                 rootRate = (Parameter)xo.getElementFirstChild(ROOTRATE);
+
             boolean isEpisodic = xo.getBooleanAttribute(EPISODIC);
+
+            boolean isNormalized = false;
+            if (xo.hasAttribute(NORMALIZED))
+                isNormalized = xo.getBooleanAttribute(NORMALIZED);
+
+             boolean isLogSpace = false;
+            if (xo.hasAttribute(LOGSPACE))
+                isLogSpace = xo.getBooleanAttribute(LOGSPACE);
 
             String rootModelString = MEAN_OF_CHILDREN;
             int rootModel = ROOT_RATE_MEAN_OF_CHILDREN;
@@ -85,10 +111,11 @@ public class NDLikelihood extends RateChangeLikelihood {
                 if (rootModelString.equals(MEAN_OF_ALL)) rootModel = ROOT_RATE_MEAN_OF_ALL;
                 if (rootModelString.equals(EQUAL_TO_CHILD)) rootModel = ROOT_RATE_EQUAL_TO_CHILD;
                 if (rootModelString.equals(IGNORE_ROOT)) rootModel = ROOT_RATE_IGNORE_ROOT;
+                if (rootModelString.equals(PARAMETER)) rootModel = ROOT_RATE_PARAMETER;
                 if (rootModelString.equals(NONE)) rootModel = ROOT_RATE_NONE;
             }
 
-            return new NDLikelihood(tree, ratesParameter, stdev, rootModel, isEpisodic);
+            return new NDLikelihood(tree, ratesParameter, variance,rootRate,  rootModel, isEpisodic, isNormalized, isLogSpace);
         }
 
         //************************************************************************
@@ -99,9 +126,9 @@ public class NDLikelihood extends RateChangeLikelihood {
             return
                     "This element returns an object that can calculate the likelihood " +
                             "of rate changes in a tree under the assumption of " +
-                            "normally distributed rate changes among lineages. " +
+                            "(log)normally distributed rate changes among lineages. " +
                             "Specifically, each branch is assumed to draw a rate from a " +
-                            "normal distribution with mean of the rate in the " +
+                            "(log)normal distribution with mean of the rate in the " +
                             "parent branch and the given standard deviation (the variance can be optionally proportional to " +
                             "branch length).";
         }
@@ -118,11 +145,15 @@ public class NDLikelihood extends RateChangeLikelihood {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class),
                 new ElementRule(RATES, Parameter.class, "The branch rates parameter", false),
-                AttributeRule.newDoubleRule(STDEV, false, "The unit stdev of the model. The variance is scaled by the branch length to get the actual variance in the non-episodic version of the model."),
-                AttributeRule.newStringRule(ROOT_MODEL, true, "specify the rate model to use at the root. Should be one of: 'meanOfChildren', 'meanOfAll', 'equalToChild', 'ignoreRoot' or 'none'."),
-                AttributeRule.newBooleanRule(EPISODIC, false, "true if model is branch length independent, false if length-dependent.")
+                AttributeRule.newStringRule(ROOT_MODEL, true, "specify the rate model to use at the root. Should be one of: 'meanOfChildren', 'meanOfAll', 'equalToChild', 'ignoreRoot', 'parameterRoot' or 'none'."),
+                AttributeRule.newBooleanRule(EPISODIC, false, "true if model is branch length independent, false if length-dependent."),
+                AttributeRule.newBooleanRule(NORMALIZED, true, "true if relative rates"),
+                AttributeRule.newBooleanRule(LOGSPACE, true, "true if model considers the log of the rates."),
+                new ElementRule(ROOTRATE, Parameter.class, "The root rate parameter", true),
+                new ElementRule(VARIANCE, Parameter.class, "The variance of the (log)normal distribution"),
         };
     };
 
-    double stdev = 1.0;
+   private Parameter variance;
+    boolean isLogSpace = false;
 }

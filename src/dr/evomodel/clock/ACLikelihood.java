@@ -3,6 +3,7 @@ package dr.evomodel.clock;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.distributions.NormalDistribution;
+import dr.math.MathUtils;
 import dr.xml.*;
 
 /**
@@ -45,6 +46,22 @@ public class ACLikelihood extends RateEvolutionLikelihood {
 
         } else {
             return NormalDistribution.logPdf(childRate, parentRate, Math.sqrt(var));
+        }
+    }
+
+    double branchRateSample(double parentRate, double time){
+
+        double var = variance.getParameterValue(0);
+
+        if (!isEpisodic())
+            var *= time;
+
+        if (isLogSpace) {
+            double logParentRate = Math.log(parentRate);
+
+            return Math.exp (  (MathUtils.nextGaussian() + logParentRate - (var / 2.)) * Math.sqrt(var) );
+        } else {
+            return Math.exp (  (MathUtils.nextGaussian() + parentRate) * Math.sqrt(var) );
         }
     }
 

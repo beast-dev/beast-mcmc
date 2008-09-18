@@ -42,9 +42,9 @@ public class GDLikelihood extends RateChangeLikelihood {
     public static final String GD_LIKELIHOOD = "GDLikelihood";
     public static final String STDEV = "stdev";
 
-    public GDLikelihood(TreeModel tree, Parameter ratesParameter, double stdev, int rootModel, boolean isEpisodic) {
+    public GDLikelihood(TreeModel tree, Parameter ratesParameter, double stdev, int rootModel, boolean isEpisodic, boolean isNormalized) {
 
-        super("Gamma Distributed", tree, ratesParameter, rootModel, isEpisodic, true);
+        super("Gamma Distributed", tree, ratesParameter, null, rootModel, isEpisodic, isNormalized);
         this.unitVariance = stdev * stdev;
     }
 
@@ -82,6 +82,10 @@ public class GDLikelihood extends RateChangeLikelihood {
             double stdev = xo.getDoubleAttribute(STDEV);
             boolean episodic = xo.getBooleanAttribute(EPISODIC);
 
+            boolean isNormalized=false;
+            if (xo.hasAttribute(NORMALIZED))
+                isNormalized = xo.getBooleanAttribute(NORMALIZED);
+
             String rootModelString = MEAN_OF_CHILDREN;
             int rootModel = ROOT_RATE_MEAN_OF_CHILDREN;
             if (xo.hasAttribute(ROOT_MODEL)) {
@@ -97,7 +101,7 @@ public class GDLikelihood extends RateChangeLikelihood {
             System.out.println("  parametric model = Gamma distribution");
             System.out.println("  root rate model = " + rootModelString);
 
-            return new GDLikelihood(tree, ratesParameter, stdev, rootModel, episodic);
+            return new GDLikelihood(tree, ratesParameter, stdev, rootModel, episodic, isNormalized);
         }
 
         //************************************************************************
@@ -125,6 +129,7 @@ public class GDLikelihood extends RateChangeLikelihood {
                 new ElementRule(RATES, Parameter.class, "The branch rates parameter", false),
                 AttributeRule.newDoubleRule(STDEV, false, "The unit stdev of the model. The variance is scaled by the branch length to get the actual variance in the non-episodic version of the model."),
                 AttributeRule.newStringRule(ROOT_MODEL, true, "specify the rate model to use at the root. Should be one of: 'meanOfChildren', 'meanOfAll', 'equalToChild', 'ignoreRoot' or 'none'."),
+                AttributeRule.newBooleanRule(NORMALIZED, true, "true if relative rates"),
                 AttributeRule.newBooleanRule(EPISODIC, false, "true if model is branch length independent, false if length-dependent.")
         };
     };

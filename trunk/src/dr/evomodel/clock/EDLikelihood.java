@@ -44,7 +44,7 @@ public class EDLikelihood extends RateChangeLikelihood {
 
     public EDLikelihood(TreeModel tree, Parameter ratesParameter, int rootRatePrior, boolean isNormalized) {
 
-        super("Exponentially Distributed", tree, ratesParameter, rootRatePrior, true, isNormalized);
+        super("Exponentially Distributed", tree, ratesParameter, null, rootRatePrior, true, isNormalized);
 
 
     }
@@ -68,7 +68,9 @@ public class EDLikelihood extends RateChangeLikelihood {
 
             Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
 
-            boolean isNormalized = xo.getBooleanAttribute(NORMALIZED);
+            boolean isNormalized=false;
+            if (xo.hasAttribute(NORMALIZED))
+                isNormalized = xo.getBooleanAttribute(NORMALIZED);
 
             String rootModelString = MEAN_OF_CHILDREN;
             int rootModel = ROOT_RATE_MEAN_OF_CHILDREN;
@@ -114,7 +116,7 @@ public class EDLikelihood extends RateChangeLikelihood {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class),
                 AttributeRule.newStringRule(ROOT_MODEL, true, "specify the rate model to use at the root. Should be one of: 'meanOfChildren', 'meanOfAll', 'equalToChild', 'ignoreRoot', 'fixedRoot' or 'none'."),
-                AttributeRule.newBooleanRule(NORMALIZED, false, "true if relative rates"),
+                AttributeRule.newBooleanRule(NORMALIZED, true, "true if relative rates"),
                 new ElementRule(RATES, Parameter.class, "The branch rates parameter", false)
         };
     };

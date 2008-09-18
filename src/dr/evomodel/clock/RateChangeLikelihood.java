@@ -47,10 +47,13 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
     public static final int ROOT_RATE_EQUAL_TO_CHILD = 2;
     public static final int ROOT_RATE_IGNORE_ROOT = 3;
     public static final int ROOT_RATE_FIXED_ROOT = 4;
-    public static final int ROOT_RATE_NONE = 5;
+    public static final int ROOT_RATE_PARAMETER = 5;
+    public static final int ROOT_RATE_NONE = 6;
 
     public static final String RATES = "rates";
     public static final String EPISODIC = "episodic";
+    public static final String LOGSPACE = "logspace";
+
     public static final String ROOT_MODEL = "rootModel";
     public static final String NORMALIZED = "isNormalized";
     public static final String MEAN_OF_CHILDREN = "meanOfChildren";
@@ -58,6 +61,7 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
     public static final String EQUAL_TO_CHILD = "equalToChild";
     public static final String IGNORE_ROOT = "ignoreRoot";
     public static final String FIXED_ROOT = "fixedRoot";
+    public static final String PARAMETER = "parameterRoot";    
     public static final String NONE = "none";
 
     // the index of the root node.
@@ -70,7 +74,7 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
     private boolean ratesKnown = false;
 
-    public RateChangeLikelihood(String name, TreeModel treeModel, Parameter ratesParameter, int rootModel, boolean isEpisodic, boolean isNormalized) {
+    public RateChangeLikelihood(String name, TreeModel treeModel, Parameter ratesParameter, Parameter rootRateParameter, int rootModel, boolean isEpisodic, boolean isNormalized) {
 
         super(name);
 
@@ -80,10 +84,16 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
         this.ratesParameter = ratesParameter;
         addParameter(ratesParameter);
 
+        if (rootModel == ROOT_RATE_PARAMETER){
+            this.rootRateParameter = rootRateParameter;
+            addParameter(rootRateParameter);
+        }else
+            this.rootRateParameter = null;        
+
         this.isNormalized = isNormalized;
 
         rateCount = treeModel.getNodeCount() - 1;
-        rates = new double[rateCount + 1];
+        rates = new double[rateCount  + 1];
 
         if (ratesParameter.getDimension() != rateCount) {
             throw new IllegalArgumentException("The rate category parameter must be of dimension nodeCount-1");
@@ -106,6 +116,7 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
         if (rootModel == ROOT_RATE_EQUAL_TO_CHILD) rootModelName = EQUAL_TO_CHILD;
         if (rootModel == ROOT_RATE_IGNORE_ROOT) rootModelName = IGNORE_ROOT;
         if (rootModel == ROOT_RATE_FIXED_ROOT) rootModelName = FIXED_ROOT;
+        if (rootModel == ROOT_RATE_PARAMETER) rootModelName = PARAMETER;
         if (rootModel == ROOT_RATE_NONE) rootModelName = NONE;
         Logger.getLogger("dr.evomodel").info("Relaxed clock: " + name + " model, root model = " + rootModelName + (isEpisodic ? " (episodic)." : "."));
 
@@ -134,6 +145,7 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
     protected void restoreState() {
         ratesKnown = false;
+        likelihoodKnown = false;
     }
 
     protected void acceptState() {
@@ -283,7 +295,7 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
         rootNodeNumber = treeModel.getRoot().getNumber();
 
         int j = 0;
-        for (int i = 0; i < rateCount; i++) {
+        for (int i = 0; i < rateCount + 1; i++) {
             if (i != rootNodeNumber) {
                 rates[i] = ratesParameter.getParameterValue(j);
                 j++;
@@ -298,13 +310,13 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
         double nodeRate1 = rates[node1.getNumber()];
         double nodeRate2 = rates[node2.getNumber()];
 
-        if (!isEpisodic) {
+    /*    if (!isEpisodic) {
             // interpolate between the two rates to determine the rate at the root
             // i.e root_rate = (r1*b2 + r2*b1) / (b1+b2)
             double b1 = treeModel.getBranchLength(node1);
             double b2 = treeModel.getBranchLength(node2);
             rootRate = (nodeRate1 * b2 + nodeRate2 * b1) / (b1 + b2);
-        } else {
+        } else */ { 
             if (rootModel == ROOT_RATE_MEAN_OF_CHILDREN) {
 
                 rootRate = (nodeRate1 + nodeRate2) / 2.0;
@@ -312,13 +324,13 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
             } else if (rootModel == ROOT_RATE_MEAN_OF_ALL) {
 
                 double sum = 0;
-                for (int i = 0; i < rateCount; i++) {
+                for (int i = 0; i < rateCount + 1; i++) {
                     if (i != rootNodeNumber) {
                         sum += rates[i];
                     }
                 }
 
-                rootRate = sum / (rateCount - 1);
+                rootRate = sum / rateCount;
 
             } else if (rootModel == ROOT_RATE_EQUAL_TO_CHILD) {
 
@@ -332,6 +344,8 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
                 // The root rate is not used so set it to something silly...
                 rootRate = -1;
+            } else if (rootModel == ROOT_RATE_PARAMETER){
+                rootRate =  rootRateParameter.getParameterValue(0);
             }
         }
 
@@ -340,7 +354,7 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
         if (isNormalized) normalizeRates();
     }
 
-    private void normalizeRates() {
+    private void normalizeRates_old() {
         double timeTotal = 0.0;
         double branchTotal = 0.0;
 
@@ -361,12 +375,15 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
         double scaleFactor = timeTotal / branchTotal;
 
-        meanRate = 0.0;
         for (int i = 0; i < rates.length; i++) {
             rates[i] *= scaleFactor;
-            meanRate += rates[i];
         }
-        meanRate /= rates.length;
+    }
+
+     private void normalizeRates() {
+        for (int i = 0; i < rates.length; i++) {
+            rates[i] /=  rates[rootNodeNumber];
+        }
     }
 
     public String getBranchAttributeLabel() {
@@ -383,8 +400,8 @@ public abstract class RateChangeLikelihood extends AbstractModel implements Bran
 
     private final TreeModel treeModel;
     private final Parameter ratesParameter;
+    private final Parameter rootRateParameter;
     private final int rootModel;
     private final boolean isEpisodic;
-    private double meanRate = 0.0;
 
 }

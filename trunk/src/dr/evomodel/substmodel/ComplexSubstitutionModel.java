@@ -50,7 +50,9 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
 		addParameter(infinitesimalRates);
 
-	}
+        illConditionedProbabilities = new double[stateCount*stateCount];
+
+    }
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
 		if (model == freqModel)
@@ -138,6 +140,11 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 				setupMatrix();
 			}
 		}
+
+        if( !wellConditioned ) {
+            System.arraycopy(illConditionedProbabilities,0,matrix,0,stateCount*stateCount);
+            return;
+        }
 
 // Eigenvalues and eigenvectors of a real matrix A.
 //
@@ -256,9 +263,20 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 		DoubleMatrix1D eigenVReal = eigenDecomp.getRealEigenvalues();
 		DoubleMatrix1D eigenVImag = eigenDecomp.getImagEigenvalues();
 
-		DoubleMatrix2D eigenVInv = alegbra.inverse(eigenV);
 
-		// fill AbstractSubstitutionModel parameters
+        //
+
+        DoubleMatrix2D eigenVInv = null;
+
+        try {
+            eigenVInv = alegbra.inverse(eigenV);
+        } catch (IllegalArgumentException e) {
+            wellConditioned = false;
+            return;
+//            throw e;
+        }
+
+        // fill AbstractSubstitutionModel parameters
 
 		Ievc = eigenVInv.toArray();
 		Evec = eigenV.toArray();
@@ -284,7 +302,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 		}
 
 //		printDebugSetupMatrix();
-		updateMatrix = false;
+        wellConditioned = true;
+        updateMatrix = false;
 	}
 
 	private void printDebugSetupMatrix() {
@@ -494,5 +513,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
 //	private boolean normalizationAmat = false;
 
-	private static final Algebra alegbra = new Algebra();
+    private boolean wellConditioned = true;
+    private double[] illConditionedProbabilities;
+
+    private static final Algebra alegbra = new Algebra();
 }

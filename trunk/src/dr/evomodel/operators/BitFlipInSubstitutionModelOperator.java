@@ -25,7 +25,7 @@
 
 package dr.evomodel.operators;
 
-import dr.evomodel.substmodel.SVSGeneralSubstitutionModel;
+import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
@@ -42,10 +42,10 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
     public static final String BIT_FLIP_OPERATOR = "bitFlipInSubstitutionModelOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
 
-    public BitFlipInSubstitutionModelOperator(SVSGeneralSubstitutionModel subModel, Parameter rateParameter, double weight, double scaleFactor, CoercionMode mode) {
+    public BitFlipInSubstitutionModelOperator(BayesianStochasticSearchVariableSelection subModel, Parameter rateParameter, double weight, double scaleFactor, CoercionMode mode) {
         super(mode);
-        this.subModel = subModel;
-        this.indicatorParameter = subModel.getRateIndicators();
+        this.model = subModel;
+        this.indicatorParameter = subModel.getIndicators();
         this.rateParameter = rateParameter;
         this.scaleFactor = scaleFactor;
         setWeight(weight);
@@ -108,7 +108,7 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
 
         rateParameter.setParameterValue(0, newValue);
 
-//        if (!subModel.myIsValid()) {
+//        if (!model.myIsValid()) {
 //		    System.err.println("invalid model");
 //            throw new OperatorFailedException("Out of bounds");
 //        } //                  else System.err.println("valid");
@@ -197,7 +197,7 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
 
 
             Parameter rateParameter = (Parameter) xo.getChild(Parameter.class);
-            SVSGeneralSubstitutionModel subModel = (SVSGeneralSubstitutionModel) xo.getChild(SVSGeneralSubstitutionModel.class);
+            BayesianStochasticSearchVariableSelection subModel = (BayesianStochasticSearchVariableSelection) xo.getChild(BayesianStochasticSearchVariableSelection.class);
 
 //	        if (xo.hasAttribute(MIN) && xo.hasAttribute(MAX)) {
 //		        int min = xo.getIntegerAttribute(MIN);
@@ -229,7 +229,7 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 new ElementRule(Parameter.class),
-                new ElementRule(SVSGeneralSubstitutionModel.class)
+                new ElementRule(BayesianStochasticSearchVariableSelection.class)
         };
 
     };
@@ -237,6 +237,6 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
 
     private Parameter indicatorParameter = null;
     private Parameter rateParameter = null;
-    private SVSGeneralSubstitutionModel subModel;
+    private BayesianStochasticSearchVariableSelection model;
     private double scaleFactor;
 }

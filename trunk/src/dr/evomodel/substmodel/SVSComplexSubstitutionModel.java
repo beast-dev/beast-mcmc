@@ -1,12 +1,13 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
 
 /**
  * @author Marc A. Suchard
  */
-public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel {
+public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implements BayesianStochasticSearchVariableSelection {
 
 	public SVSComplexSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel, Parameter parameter, Parameter indicators) {
 		super(name, dataType, rootFreqModel, parameter);
@@ -23,6 +24,8 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel {
 		return rates;
 	}
 
-	private Parameter indicators;
+    public Parameter getIndicators() { return indicators; }
+
+    private Parameter indicators;
 
 }

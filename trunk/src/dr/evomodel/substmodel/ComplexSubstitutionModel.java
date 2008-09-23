@@ -5,6 +5,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.linalg.EigenvalueDecomposition;
+import cern.colt.matrix.linalg.Property;
 import dr.evolution.datatype.*;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
@@ -28,6 +29,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 	public static final String RATES = "rates";
 	public static final String ROOT_FREQUENCIES = "rootFrequencies";
 	public static final String INDICATOR = "rateIndicator";
+
+	private static final double minProb = Property.DEFAULT.tolerance();
 
 	public ComplexSubstitutionModel(String name, DataType dataType,
 	                                FrequencyModel rootFreqModel, Parameter parameter) {
@@ -184,7 +187,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 				for (k = 0; k < stateCount; k++) {
 					temp += Evec[i][k] * iexp[k][j];
 				}
-				matrix[u] = temp;
+				if (temp < 0.0)
+					matrix[u] = minProb;
+				else
+					matrix[u] = temp;
 				u++;
 			}
 		}

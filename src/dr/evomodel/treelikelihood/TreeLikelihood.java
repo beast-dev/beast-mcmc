@@ -119,7 +119,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
                     useAmbiguities = true;
                 } else {
-                    likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
+                    if (!forceJavaCore && GPUGeneralLikelihoodCore.isAvailable()) {
+                        coreName  = "GPU general";
+                        likelihoodCore = new GPUGeneralLikelihoodCore(patternList.getStateCount());
+                    } else {
+                        coreName = "Java general";
+                        likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
+                    }
                 }
             } else {
                 likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
@@ -144,8 +150,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             int intNodeCount = treeModel.getInternalNodeCount();
 
             if (tipPartialsModel != null) {
-                tipPartialsModel.setTree(treeModel);
-                
+//                tipPartialsModel.setTree(treeModel);
+                // todo TipPartialsModel is out-of-date on SVN
+
                 tipPartials = new double[patternCount * stateCount];
 
                 for (int i = 0; i < extNodeCount; i++) {
@@ -603,7 +610,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * an array used to transfer tip partials
      */
     protected double[] tipPartials;
-
+    
     /**
      * the LikelihoodCore
      */

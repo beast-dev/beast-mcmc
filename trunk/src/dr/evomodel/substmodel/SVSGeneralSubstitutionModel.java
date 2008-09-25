@@ -1,6 +1,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.*;
+import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -12,7 +13,7 @@ import dr.xml.*;
  * @version $Id: SVSGeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 msuchard Exp $
  */
 
-public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
+public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implements BayesianStochasticSearchVariableSelection {
 
     public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
     public static final String INDICATOR = "rateIndicator";
@@ -31,7 +32,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel {
         super(name, dataType, freqModel, relativeTo);
     }
 
-    public Parameter getRateIndicators() {
+    public Parameter getIndicators() {
         return rateIndicator;
     }
 

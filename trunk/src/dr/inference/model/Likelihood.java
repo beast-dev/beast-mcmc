@@ -68,13 +68,13 @@ public interface Likelihood extends Loggable, Identifiable {
 			if (model != null) model.addModelListener(this);
 		}
 
-		public void modelChangedEvent(Model model, Object object, int index) {
-			makeDirty();
-		}
+        public void modelChangedEvent(Model model, Object object, int index) {
+            makeDirty();
+        }
 
-        // by default resore is the same as changed
+        // by default restore is the same as changed
         public void modelRestored(Model model) {
-           makeDirty();
+            makeDirty();
         }
 
         // **************************************************************

@@ -70,11 +70,16 @@ public interface XMLSyntaxRule {
 
     /**
      *  Check for possible elements: catch typos, old syntax and elements with identical names to global
-     *  xml elemen parsers.
+     *  xml element parsers.
      * @param elementName
      * @return true if rule allows an element with that name
      */
     boolean isAllowed(String elementName);
 
+    /**
+     *
+     * @param c
+     * @return
+     */
     boolean isAllowed(Class c);
 }

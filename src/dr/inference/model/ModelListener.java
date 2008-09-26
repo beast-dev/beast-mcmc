@@ -44,5 +44,11 @@ public interface ModelListener {
 	 */
 	void modelChangedEvent(Model model, Object object, int index);
 
+    /**
+     * The model has been restored.
+     * Required only for notification of non-models (say pure likelihoods) which depend on
+     * models.
+     * @param model
+     */
     void modelRestored(Model model);
 }

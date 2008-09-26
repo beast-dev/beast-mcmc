@@ -83,5 +83,10 @@ public interface XMLObjectParser {
      */
     XMLSyntaxRule[] getSyntaxRules();
 
+    /**
+     * True if a top level element with that name is allowed.
+     * @param elementName
+     * @return
+     */
     boolean isAllowed(String elementName);
 }

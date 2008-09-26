@@ -29,9 +29,10 @@ public class SpliceBeastFiles {
             reader.close();
 
             for (int i = 1; i < 201; i++) {
-                reader = new BufferedReader(new FileReader(inputFileStem + (i < 10? "00" : (i < 100? "0" : "")) +i + ".xml"));
+                String number = (i < 10? "00" : (i < 100? "0" : "")) + i;
+                reader = new BufferedReader(new FileReader(inputFileStem + number + ".xml"));
 
-                PrintWriter writer = new PrintWriter(outputFileStem + (i < 10? "00" : (i < 100? "0" : "")) + i + ".xml");
+                PrintWriter writer = new PrintWriter(outputFileStem + number + ".xml");
 
                 line = reader.readLine();
                 while (line != null && !line.equals("\t<patterns id=\"patterns\" from=\"1\">")) {
@@ -41,7 +42,7 @@ public class SpliceBeastFiles {
 
                 for (String line1 : template) {
                     if (line1.contains("$stem")) {
-                        line1 = line1.replace("$stem", "sim" + i);
+                        line1 = line1.replace("$stem", "sim" + number);
                     }
                     writer.println(line1);
                 }

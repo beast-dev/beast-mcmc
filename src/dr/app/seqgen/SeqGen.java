@@ -29,9 +29,9 @@ public class SeqGen {
         double[] frequencies = new double[] { 0.25, 0.25, 0.25, 0.25 };
         double kappa = 10.0;
         double alpha = 0.5;
-        double substitutionRate = 1.5E-7;
-        int categoryCount = 8;
-        double damageRate = 0.7E-7;
+        double substitutionRate = 1.0E-7;
+        int categoryCount = 0;
+        double damageRate = 3.2E-7;
 
         FrequencyModel freqModel = new FrequencyModel(dr.evolution.datatype.Nucleotides.INSTANCE, frequencies);
 

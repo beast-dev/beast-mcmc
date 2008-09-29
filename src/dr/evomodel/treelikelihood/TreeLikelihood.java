@@ -122,6 +122,12 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 					if (!forceJavaCore && GPUGeneralLikelihoodCore.isAvailable()) {
 						coreName = "GPU general";
 						likelihoodCore = new GPUGeneralLikelihoodCore(patternList.getStateCount());
+					} else if (!forceJavaCore && NativeMemoryLikelihoodCore.isAvailable()) {
+						coreName = "native memory general";
+						likelihoodCore = new NativeMemoryLikelihoodCore(patternList.getStateCount());
+					} else if (!forceJavaCore && NativeGeneralLikelihoodCore.isAvailable()) {
+						coreName = "native general";
+						likelihoodCore = new NativeGeneralLikelihoodCore(patternList.getStateCount());
 					} else {
 						coreName = "Java general";
 						likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
@@ -203,6 +209,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 		}
 	}
 
+	public final LikelihoodCore getLikelihoodCore() {
+		return likelihoodCore;
+	}
+	
 	// **************************************************************
 	// ModelListener IMPLEMENTATION
 	// **************************************************************

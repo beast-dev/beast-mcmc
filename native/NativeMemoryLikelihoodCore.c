@@ -17,6 +17,8 @@ JNIEXPORT jlong JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCo
   (JNIEnv *env, jobject obj, jint length) 
 {  
 
+
+
 #ifdef DEBUG
 	fprintf(stderr,"Entering ANMA\n");
 #endif
@@ -63,17 +65,17 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 
 	jdouble *fromJavaArray = (jdouble*)(*env)->GetPrimitiveArrayCritical(env, inFromJavaArray, 0);
 	
-	if (inNativePtr == 0) {
-		fprintf(stderr,"Throwing null pointer native exception\n");
-		jclass nullPtr = (*env)->FindClass(env,"java/lang/NullPointerException");
-		(*env)->ThrowNew(env,nullPtr,"Null native pointer in setNativeMemoryArray(double[])");
-	}
+	//	if (inNativePtr == 0) {
+	//		fprintf(stderr,"Throwing null pointer native exception\n");
+	//		jclass nullPtr = (*env)->FindClass(env,"java/lang/NullPointerException");
+	//		(*env)->ThrowNew(env,nullPtr,"Null native pointer in setNativeMemoryArray(double[])");
+	//	}
 	
 	// copy entry-by-entry to ensure conversion to REAL
-	REAL *toPtr = (REAL *)inNativePtr;
+	REAL *toPtr = ((REAL *)inNativePtr) + SIZE_REAL*toOffset;
 	int i;
 	for(i=0; i<length; i++) {
-		toPtr[i+toOffset] = (REAL) fromJavaArray[i+fromOffset]; // Can speed-up by moving starting pointers by offset, TODO
+		toPtr[i] = (REAL) fromJavaArray[i+fromOffset]; // Can speed-up by moving starting pointers by offset, TODO
 	}
 	
   	(*env)->ReleasePrimitiveArrayCritical(env, inFromJavaArray, fromJavaArray, JNI_ABORT);  

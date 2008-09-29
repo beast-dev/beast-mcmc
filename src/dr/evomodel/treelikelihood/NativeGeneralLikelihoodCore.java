@@ -1,8 +1,8 @@
 package dr.evomodel.treelikelihood;
 
-public class GPUGeneralLikelihoodCore extends AbstractLikelihoodCore {
+public class NativeGeneralLikelihoodCore extends AbstractLikelihoodCore {
 
-	public GPUGeneralLikelihoodCore(int stateCount) {
+	public NativeGeneralLikelihoodCore(int stateCount) {
 		super(stateCount);
 	}
 
@@ -91,17 +91,16 @@ public class GPUGeneralLikelihoodCore extends AbstractLikelihoodCore {
 	protected native void setMode(int mode);
 
 	public static boolean isAvailable() {
-		return isNativeGPUAvailable;
+		return isNativeAvailable;
 	}
 
-	private static boolean isNativeGPUAvailable = false;
+	private static boolean isNativeAvailable = false;
 
 	static {
 		try {
-			System.loadLibrary("GPUGeneralLikelihoodCore");
-			isNativeGPUAvailable = true;
+			System.loadLibrary("GeneralLikelihoodCore");
+			isNativeAvailable = true;
 		} catch (UnsatisfiedLinkError e) {
-//            System.err.println("Using Java general likelihood core " + e.toString());
 		}
 	}
 }

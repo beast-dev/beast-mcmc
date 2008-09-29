@@ -19,3 +19,20 @@ cc -c -arch i386 -O2 -funroll-loops -I/Library/Java/Home/include -o AminoAcidLik
 cc -o libAminoAcidLikelihoodCore.i386.jnilib -framework JavaVM -arch i386 -dynamiclib AminoAcidLikelihoodCore.i386.o
 
 lipo -create libAminoAcidLikelihoodCore.PPC.jnilib libAminoAcidLikelihoodCore.i386.jnilib -output libAminoAcidLikelihoodCore.jnilib
+
+##GeneralLikelihoodCore
+cc -c -arch i386  -O2 -funroll-loops -I/Library/Java/Home/include \
+   -o GeneralLikelihoodCore.i386.o GeneralLikelihoodCore.c
+
+cc -o libGeneralLikelihoodCore.i386.jnilib -framework JavaVM -arch i386 -dynamiclib GeneralLikelihoodCore.i386.o
+
+lipo -create libGeneralLikelihoodCore.i386.jnilib -output libGeneralLikelihoodCore.jnilib
+
+##NativeMemoryLikelihoodCore -- Generates pointer cast warnings
+#cc -c -arch i386  -O2 -funroll-loops -I/Library/Java/Home/include \
+#   -o NativeMemoryLikelihoodCore.i386.o NativeMemoryLikelihoodCore.c
+#
+#cc -o libNativeMemoryLikelihoodCore.i386.jnilib -framework JavaVM -arch i386 -dynamiclib NativeMemoryLikelihoodCore.i386.o
+#
+#lipo -create libNativeMemoryLikelihoodCore.i386.jnilib -output libNativeMemoryLikelihoodCore.jnilib
+

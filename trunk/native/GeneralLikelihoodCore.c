@@ -8,7 +8,7 @@
 
 
 /*
- * Class:     dr_evomodel_treelikelihood_GeneralLikelihoodCore
+ * Class:     dr_evomodel_treelikelihood_NativeGeneralLikelihoodCore
  * Method:    nativeStatesStatesPruning
  * Signature: ([I[D[I[DII[D)V
  */
@@ -17,7 +17,7 @@
 	 Calculates partial likelihoods at a node when both children have states.
 */
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_GeneralLikelihoodCore_nativeStatesStatesPruning
+JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeGeneralLikelihoodCore_nativeStatesStatesPruning
 	(JNIEnv *env, jobject obj, jintArray inStates1, jdoubleArray inMatrices1, 
 								jintArray inStates2, jdoubleArray inMatrices2, 
 								jint patternCount, jint matrixCount,
@@ -86,11 +86,11 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_GeneralLikelihoodCore_nat
 
 
 /*
- * Class:     dr_evomodel_treelikelihood_GeneralLikelihoodCore
+ * Class:     dr_evomodel_treelikelihood_NativeGeneralLikelihoodCore
  * Method:    nativeIntegratePartials
  * Signature: ([D[DII[D)V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_GeneralLikelihoodCore_nativeIntegratePartials
+JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeGeneralLikelihoodCore_nativeIntegratePartials
 	(JNIEnv *env, jobject obj, jdoubleArray inPartials, jdoubleArray inProportions, 
 								jint patternCount, jint matrixCount,
 								jdoubleArray outPartials,
@@ -129,12 +129,12 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_GeneralLikelihoodCore_nat
 }
 
 /*
- * Class:     dr_evomodel_treelikelihood_GeneralLikelihoodCore
+ * Class:     dr_evomodel_treelikelihood_NativeGeneralLikelihoodCore
  * Method:    nativeStatesPartialsPruning
  * Signature: ([I[D[D[DII[D)V
  */
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_GeneralLikelihoodCore_nativeStatesPartialsPruning
+JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeGeneralLikelihoodCore_nativeStatesPartialsPruning
 	(JNIEnv *env, jobject obj, jintArray inStates1, jdoubleArray inMatrices1, 
 								jdoubleArray inPartials2, jdoubleArray inMatrices2, 
 								jint patternCount, jint matrixCount,
@@ -209,12 +209,12 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_GeneralLikelihoodCore_nat
 							
 
 /*
- * Class:     dr_evomodel_treelikelihood_GeneralLikelihoodCore
+ * Class:     dr_evomodel_treelikelihood_NativeGeneralLikelihoodCore
  * Method:    nativePartialsPartialsPruning
  * Signature: ([D[D[D[DII[D)V
  */
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_GeneralLikelihoodCore_nativePartialsPartialsPruning
+JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeGeneralLikelihoodCore_nativePartialsPartialsPruning
 	(JNIEnv *env, jobject obj, jdoubleArray inPartials1, jdoubleArray inMatrices1, 
 								jdoubleArray inPartials2, jdoubleArray inMatrices2, 
 								jint patternCount, jint matrixCount,

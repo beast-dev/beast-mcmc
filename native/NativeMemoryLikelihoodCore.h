@@ -14,6 +14,10 @@ extern "C" {
  */
 JNIEXPORT jlong JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_allocateNativeMemoryArray
   (JNIEnv *, jobject, jint);
+  
+JNIEXPORT jlong JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_allocateNativeIntMemoryArray
+  (JNIEnv *, jobject, jint);
+
 
 /*
  * Class:     dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore

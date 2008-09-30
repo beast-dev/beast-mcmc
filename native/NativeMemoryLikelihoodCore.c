@@ -12,6 +12,8 @@
 
 #define REAL		double
 #define SIZE_REAL	sizeof(REAL)
+#define INT			int
+#define SIZE_INT	sizeof(int)
 
 JNIEXPORT jlong JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_allocateNativeMemoryArray
   (JNIEnv *env, jobject obj, jint length) 
@@ -35,6 +37,28 @@ JNIEXPORT jlong JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCo
   
   return (jlong) data;
 } 
+
+JNIEXPORT jlong JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_allocateNativeIntMemoryArray
+  (JNIEnv *env, jobject obj, jint length) 
+{  
+
+#ifdef DEBUG
+	fprintf(stderr,"Entering ANMA\n");
+#endif
+
+  INT *data = (INT *)malloc(SIZE_INT * length);
+  if (data == NULL) {
+	fprintf(stderr,"Failed to allocate memory!");
+	exit(-1);
+  }
+  
+#ifdef DEBUG
+	fprintf(stderr,"Leaving ANMA\n");
+#endif  
+  
+  return (jlong) data;
+} 
+
 
 JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_freeNativeMemoryArray
   (JNIEnv *env, jobject obj, jlong inNativePtr)
@@ -102,10 +126,10 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 		(*env)->ThrowNew(env,nullPtr,"Null native pointer in setNativeMemoryArray(double[])");
 	}
 	// copy entry-by-entry to ensure conversion to REAL
-	REAL *toPtr = (REAL *)inNativePtr;
+	INT *toPtr = (INT *)inNativePtr;
 	int i;
 	for(i=0; i<length; i++) {
-		toPtr[i+toOffset] = (REAL) fromJavaArray[i+fromOffset];  // Can speed-up by moving starting pointers by offset, TODO
+		toPtr[i+toOffset] = (INT) fromJavaArray[i+fromOffset];  // Can speed-up by moving starting pointers by offset, TODO
 	}
 	
   	(*env)->ReleasePrimitiveArrayCritical(env, inFromJavaArray, fromJavaArray, JNI_ABORT);  
@@ -157,7 +181,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 #endif	
   	  
 	// copy entry-by-entry to ensure conversion to Java type
-	REAL *fromPtr = (REAL *)inNativePtr;
+	INT *fromPtr = (INT *)inNativePtr;
 	int i;
 	for(i=0; i<length; i++) {
 		toJavaArray[i+toOffset] = (jint) fromPtr[i+fromOffset]; // TODO precompute offsets
@@ -238,7 +262,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
   (JNIEnv *env, jobject obj, jlong inStates1, jlong inMatrices1, jlong inPartials2, jlong inMatrices2, 
   jint patternCount, jint matrixCount, jlong outPartials, jint stateCount) 
 {
-	REAL *states1 = (REAL *)inStates1;
+	INT  *states1   = (INT *) inStates1;
 	REAL *matrices1 = (REAL *)inMatrices1;
 	REAL *partials2 = (REAL *)inPartials2;
 	REAL *matrices2 = (REAL *)inMatrices2;
@@ -272,7 +296,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 	for (l = 0; l < matrixCount; l++) {
 		for (k = 0; k < patternCount; k++) {
 		
-			int state1 = (int) states1[k];
+			int state1 = states1[k];
 
 #ifdef DEBUG			
 			fprintf(stderr,"Read datum %d for m = %d, p = %d\n",state1,l,k);
@@ -389,8 +413,8 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 {
 	int j, k, u, v, w, state1, state2, m;
 	
-	REAL *states1 = (REAL *) inStates1;
-	REAL *states2 = (REAL *) inStates2;
+	INT  *states1   = (INT *)  inStates1;
+	INT  *states2   = (INT *)  inStates2;
 	
 	REAL *matrices1 = (REAL *) inMatrices1;
 	REAL *matrices2 = (REAL *) inMatrices2;
@@ -423,8 +447,8 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 		
 			w = u;
 			
-			state1 = (int) states1[k];
-			state2 = (int) states2[k];
+			state1 = states1[k];
+			state2 = states2[k];
 			
 	//		fprintf(stderr,"p = %d:%d\n",state1,state2);
 							

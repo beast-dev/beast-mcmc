@@ -4,6 +4,10 @@ public class GPUGeneralLikelihoodCore extends AbstractLikelihoodCore {
 
 	public GPUGeneralLikelihoodCore(int stateCount) {
 		super(stateCount);
+		String nameGPU = nativeCheckGPU();
+		if (nameGPU == null) 
+		    throw new RuntimeException("Missing GPU");
+		System.err.println("Using GPU: "+nameGPU);
 	}
 
 
@@ -15,13 +19,13 @@ public class GPUGeneralLikelihoodCore extends AbstractLikelihoodCore {
 	protected void calculatePartialsPartialsPruning(double[] partials1,
 	                                                double[] matrices1, double[] partials2, double[] matrices2,
 	                                                double[] partials3) {
-		nativePartialsPartialsPruning(partials1, matrices1, partials2, matrices2, patternCount, matrixCount, partials3, stateCount);
+		nativeGPUPartialsPartialsPruning(partials1, matrices1, partials2, matrices2, patternCount, matrixCount, partials3, stateCount);
 	}
 
 	protected void calculateStatesPartialsPruning(int[] states1,
 	                                              double[] matrices1, double[] partials2, double[] matrices2,
 	                                              double[] partials3) {
-		nativeStatesPartialsPruning(states1, matrices1, partials2, matrices2, patternCount, matrixCount, partials3, stateCount);
+		nativeGPUStatesPartialsPruning(states1, matrices1, partials2, matrices2, patternCount, matrixCount, partials3, stateCount);
 	}
 
 	protected void calculateStatesStatesPruning(int[] states1,
@@ -70,7 +74,18 @@ public class GPUGeneralLikelihoodCore extends AbstractLikelihoodCore {
 	                                           double[] outPartials,
 	                                           int stateCount);
 
+	public native void nativeGPUIntegratePartials(double[] partials, double[] proportions,
+	                                           int patternCount, int matrixCount,
+	                                           double[] outPartials,
+	                                           int stateCount);
+
 	protected native void nativePartialsPartialsPruning(double[] partials1, double[] matrices1,
+	                                                    double[] partials2, double[] matrices2,
+	                                                    int patternCount, int matrixCount,
+	                                                    double[] partials3,
+	                                                    int stateCount);
+
+	protected native void nativeGPUPartialsPartialsPruning(double[] partials1, double[] matrices1,
 	                                                    double[] partials2, double[] matrices2,
 	                                                    int patternCount, int matrixCount,
 	                                                    double[] partials3,
@@ -82,13 +97,28 @@ public class GPUGeneralLikelihoodCore extends AbstractLikelihoodCore {
 	                                                  double[] partials3,
 	                                                  int stateCount);
 
+	protected native void nativeGPUStatesPartialsPruning(int[] states1, double[] matrices1,
+	                                                  double[] partials2, double[] matrices2,
+	                                                  int patternCount, int matrixCount,
+	                                                  double[] partials3,
+	                                                  int stateCount);
+
 	protected native void nativeStatesStatesPruning(int[] states1, double[] matrices1,
 	                                                int[] states2, double[] matrices2,
 	                                                int patternCount, int matrixCount,
 	                                                double[] partials3,
 	                                                int stateCount);
 
+	protected native void nativeGPUStatesStatesPruning(int[] states1, double[] matrices1,
+	                                                int[] states2, double[] matrices2,
+	                                                int patternCount, int matrixCount,
+	                                                double[] partials3,
+	                                                int stateCount);
+
+
 	protected native void setMode(int mode);
+
+        protected native String nativeCheckGPU();
 
 	public static boolean isAvailable() {
 		return isNativeGPUAvailable;

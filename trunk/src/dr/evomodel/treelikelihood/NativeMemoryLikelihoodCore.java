@@ -103,15 +103,15 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 		for (int i = 0; i < ptrPartials.length; i++) {
 			for (int j = 0; j < ptrPartials[i].length; j++)
-				wrapperFreeNativeMemoryArray(ptrPartials[i][j]);
+				freeNativeMemoryArray(ptrPartials[i][j]);
 		}
 
 		for (int i = 0; i < ptrStates.length; i++)
-			wrapperFreeNativeMemoryArray(ptrStates[i]);
+			freeNativeMemoryArray(ptrStates[i]);
 
 		for (int i = 0; i < ptrMatrices.length; i++) {
 			for (int j = 0; j < ptrMatrices[i].length; j++)
-				wrapperFreeNativeMemoryArray(ptrMatrices[i][j]);
+				freeNativeMemoryArray(ptrMatrices[i][j]);
 		}
 
 	}
@@ -151,8 +151,8 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	 */
 	public void createNodePartials(int nodeIndex) {
 
-		this.ptrPartials[0][nodeIndex] = wrapperAllocateNativeMemoryArray(partialsSize);
-		this.ptrPartials[1][nodeIndex] = wrapperAllocateNativeMemoryArray(partialsSize);
+		this.ptrPartials[0][nodeIndex] = allocateNativeMemoryArray(partialsSize);
+		this.ptrPartials[1][nodeIndex] = allocateNativeMemoryArray(partialsSize);
 
 	}
 
@@ -187,7 +187,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	 */
 	public void createNodeStates(int nodeIndex) {
 
-		this.ptrStates[nodeIndex] = wrapperAllocateNativeMemoryArray(patternCount);
+		this.ptrStates[nodeIndex] = allocateNativeIntMemoryArray(patternCount);
 	}
 
 	/**
@@ -226,7 +226,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	public void setNodeMatrix(int nodeIndex, int matrixIndex, double[] matrix) {
 
 		if (ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] == 0) {
-			ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] = wrapperAllocateNativeMemoryArray(matrixSize * matrixCount);
+			ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] = allocateNativeMemoryArray(matrixSize * matrixCount);
 		}
 
 		assert ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] > DEBUG;
@@ -606,24 +606,26 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 	// Debug wrapper
 
-	private long wrapperAllocateNativeMemoryArray(int length) {
+//	private long allocateNativeMemoryArray(int length) {
+//
+//		long rtnValue = aallocateNativeMemoryArray(length);
+//
+//		assert rtnValue > DEBUG;
+//
+//		return rtnValue;
+//	}
 
-		long rtnValue = allocateNativeMemoryArray(length);
-
-		assert rtnValue > DEBUG;
-
-		return rtnValue;
-	}
-
-	private void wrapperFreeNativeMemoryArray(long nativePtr) {
-		assert nativePtr > DEBUG;
-
-		freeNativeMemoryArray(nativePtr);
-	}
+//	private void freeNativeMemoryArray(long nativePtr) {
+//		assert nativePtr > DEBUG;
+//
+//		ffreeNativeMemoryArray(nativePtr);
+//	}
 
 	private native long allocateNativeMemoryArray(int length);
 
-	private native void freeNativeMemoryArray(long nativePtr);
+    private native long allocateNativeIntMemoryArray(int length);
+
+    private native void freeNativeMemoryArray(long nativePtr);
 
 	private native void setNativeMemoryArray(double[] fromArray, int fromOffset,
 	                                         long toNativePtr, int toOffset, int length);

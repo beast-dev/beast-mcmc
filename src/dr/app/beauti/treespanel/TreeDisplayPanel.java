@@ -89,18 +89,23 @@ public class TreeDisplayPanel extends JPanel {
     }
 
     private void setupPanel() {
-        treePanel.setTree(tree);
-        TemporalRooting temporalRooting = new TemporalRooting(tree);
-        Regression r = temporalRooting.getRootToTipRegression(tree);
+        if (tree != null) {
+            treePanel.setTree(tree);
+            TemporalRooting temporalRooting = new TemporalRooting(tree);
+            Regression r = temporalRooting.getRootToTipRegression(tree);
 
-        rootToTipChart.removeAllPlots();
-        rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
-        rootToTipChart.addPlot(new RegressionPlot(r));
-        rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
+            rootToTipChart.removeAllPlots();
+            rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
+            rootToTipChart.addPlot(new RegressionPlot(r));
+            rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
 
-        scaledTreePanel.setTree(temporalRooting.adjustTreeToConstraints(tree, null));
+            scaledTreePanel.setTree(temporalRooting.adjustTreeToConstraints(tree, null));
+        } else {
+            treePanel.setTree(null);
+            rootToTipChart.removeAllPlots();
+            scaledTreePanel.setTree(null);
+        }
 
-        
         repaint();
     }
 }

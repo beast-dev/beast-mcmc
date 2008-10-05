@@ -12,8 +12,19 @@
 
 #define REAL		double
 #define SIZE_REAL	sizeof(REAL)
-#define INT			int
+#define INT		int
 #define SIZE_INT	sizeof(int)
+
+
+JNIEXPORT jint JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_getNativeRealSize
+  (JNIEnv *env, jobject obj) {
+	return (jint) SIZE_REAL;
+}
+
+JNIEXPORT jint JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_getNativeIntSize
+  (JNIEnv *env, jobject obj) {
+	return (jint) SIZE_INT;
+}
 
 JNIEXPORT jlong JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_allocateNativeMemoryArray
   (JNIEnv *env, jobject obj, jint length) 
@@ -96,7 +107,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 	//	}
 	
 	// copy entry-by-entry to ensure conversion to REAL
-	REAL *toPtr = ((REAL *)inNativePtr) + SIZE_REAL*toOffset;
+	REAL *toPtr = (REAL *)(inNativePtr + SIZE_REAL*toOffset);
 	int i;
 	for(i=0; i<length; i++) {
 		toPtr[i] = (REAL) fromJavaArray[i+fromOffset]; // Can speed-up by moving starting pointers by offset, TODO

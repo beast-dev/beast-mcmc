@@ -32,8 +32,10 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.NativeSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -125,6 +127,14 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 					} else if (!forceJavaCore && NativeMemoryLikelihoodCore.isAvailable()) {
 						coreName = "native memory general";
 						likelihoodCore = new NativeMemoryLikelihoodCore(patternList.getStateCount());
+						// Decide if we can calculate finite-transitions probabilities natively
+						// todo Total hack, to be cleaned up
+						if (siteModel instanceof GammaSiteModel) {
+							if ( ((GammaSiteModel)siteModel).getSubstitutionModel() instanceof NativeSubstitutionModel ) {
+								nativeTransitionProbabilitiesAndPeeling = true;
+								coreName = "native probabilities and memory general";
+							}
+						}
 					} else if (!forceJavaCore && NativeGeneralLikelihoodCore.isAvailable()) {
 						coreName = "native general";
 						likelihoodCore = new NativeGeneralLikelihoodCore(patternList.getStateCount());
@@ -429,8 +439,15 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
 			for (int i = 0; i < categoryCount; i++) {
 
-				siteModel.getTransitionProbabilitiesForCategory(i, branchTime, probabilities);
-				likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
+				if (nativeTransitionProbabilitiesAndPeeling) {
+					// get native memory computed transition probabilities
+					// todo Total hack, to be cleaned up
+					((NativeMemoryLikelihoodCore)likelihoodCore).calculateAndSetNodeMatrix(nodeNum,i,branchTime,siteModel);
+
+				}  else {
+					siteModel.getTransitionProbabilitiesForCategory(i, branchTime, probabilities);
+					likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
+				}
 			}
 
 			update = true;
@@ -592,6 +609,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 	private final boolean storePartials;
 
 	private final boolean integrateAcrossCategories;
+
+	/**
+	 * all native memory transition probabilities and peeling
+	 */
+
+	private boolean nativeTransitionProbabilitiesAndPeeling = false;
+
 
 	/**
 	 * the categories for each site

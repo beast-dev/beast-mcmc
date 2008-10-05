@@ -1,5 +1,12 @@
 package dr.evomodel.treelikelihood;
 
+import dr.evomodel.sitemodel.GammaSiteModel;
+import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.substmodel.NativeSubstitutionModel;
+import dr.math.matrixAlgebra.Vector;
+
+import java.util.logging.Logger;
+
 /*
  * NativeMemoryLikelihoodCore.java
  *
@@ -12,12 +19,16 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 	private static final long DEBUG = 100;
 
+
+    protected static boolean DEBUG_PRINT = false;
+
 	protected int stateCount;
 	protected int nodeCount;
 	protected int patternCount;
 	protected int partialsSize;
 	protected int matrixSize;
 	protected int matrixCount;
+	protected int matrixMemorySize;
 
 	protected boolean integrateCategories;
 
@@ -34,6 +45,8 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 	protected double[][][] scalingFactors;
 
+    protected int[][] statesData;
+
 //    private double scalingThreshold = 1.0E-100;
 
 	/**
@@ -45,6 +58,26 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 		this.stateCount = stateCount;
 
 	}
+
+
+
+	protected void migrateThread() {
+		// todo Something is still wrong with migration in native CPU space
+		// I believe the matrices need to be set for recalculation.
+		// However, migration is unnecessary.
+
+
+//		System.err.println("Migrating native memory storage for 2nd thread....");
+//		allocateNativeMemory();
+//
+//		migrateThreadStates();
+//		migrateThreadMatrices();
+//		migrateThreadPartials();
+//
+//		System.err.println("Done with migration!");
+
+	}
+
 
 	/**
 	 * initializes partial likelihood arrays.
@@ -77,12 +110,82 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 		storedPartialsIndices = new int[nodeCount];
 
 		ptrStates = new long[nodeCount];
+		statesData = new int[nodeCount][];
 
 		matrixSize = stateCount * stateCount;
+		matrixMemorySize = matrixSize * getNativeRealSize();
 
 		ptrMatrices = new long[2][nodeCount];
 
+		allocateNativeMemory();
+
 	}
+
+    protected void allocateNativeMemory() {
+	    if (cacheStates != 0)
+	        freeNativeMemoryArray(cacheStates);
+	    if (cacheMatrices != 0)
+	        freeNativeMemoryArray(cacheMatrices);
+	    if (cachePartials != 0)
+	        freeNativeMemoryArray(cachePartials);
+	    
+		currentCachePtrStates   = cacheStates   = allocateNativeIntMemoryArray(nodeCount*patternCount);
+		currentCachePtrMatrices = cacheMatrices = allocateNativeMemoryArray(2*nodeCount*matrixSize*matrixCount);
+		currentCachePtrPartials = cachePartials = allocateNativeMemoryArray(2*nodeCount*partialsSize);
+
+		offsetMatrices = getNativeRealSize() * matrixSize * matrixCount;
+		offsetStates   = getNativeIntSize()  * patternCount;
+		offsetPartials = getNativeRealSize() * partialsSize;
+
+	    if (cacheStates == 0 || cachePartials == 0 | cacheMatrices == 0) {
+		    Logger.getLogger("dr.evomodel.treelikelihood").severe("Unable to allocate native storage!");
+	    }
+
+    }
+
+    long cacheStates = 0;
+    long offsetStates = 0;
+    long currentCachePtrStates = 0;
+
+    long cacheMatrices = 0;
+    long offsetMatrices = 0;
+    long currentCachePtrMatrices = 0;
+
+    long cachePartials = 0;
+    long offsetPartials = 0;
+    long currentCachePtrPartials = 0;
+
+    protected long createPartials() {
+		long ptr = currentCachePtrPartials;
+		currentCachePtrPartials += offsetPartials;
+		return ptr;
+    }
+
+    protected long createMatrices() {
+		long ptr = currentCachePtrMatrices;
+		currentCachePtrMatrices += offsetMatrices;
+		return ptr;
+    }
+
+  public void createNodeStates(int nodeIndex) {
+		ptrStates[nodeIndex] = createStates();
+		//System.err.println("Created node state!");
+    }
+
+    public void createNodePartials(int nodeIndex) {
+		ptrPartials[0][nodeIndex] = createPartials();
+		ptrPartials[1][nodeIndex] = createPartials();
+		//System.err.println("Creaded node partials!");
+    }
+
+    protected long createStates() {
+	long ptr = currentCachePtrStates;
+	currentCachePtrStates += offsetStates;
+	return ptr;
+    }
+
+    //    protected void allocateNativeMemory() { }
+    
 
 	/**
 	 * cleans up and deallocates arrays.
@@ -101,19 +204,9 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 //        scalingFactors = null;
 
-		for (int i = 0; i < ptrPartials.length; i++) {
-			for (int j = 0; j < ptrPartials[i].length; j++)
-				freeNativeMemoryArray(ptrPartials[i][j]);
-		}
-
-		for (int i = 0; i < ptrStates.length; i++)
-			freeNativeMemoryArray(ptrStates[i]);
-
-		for (int i = 0; i < ptrMatrices.length; i++) {
-			for (int j = 0; j < ptrMatrices[i].length; j++)
-				freeNativeMemoryArray(ptrMatrices[i][j]);
-		}
-
+		freeNativeMemoryArray(cacheStates);
+		freeNativeMemoryArray(cacheMatrices);
+		freeNativeMemoryArray(cachePartials);
 	}
 
 
@@ -149,12 +242,12 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	/**
 	 * Allocates partials for a node
 	 */
-	public void createNodePartials(int nodeIndex) {
-
-		this.ptrPartials[0][nodeIndex] = allocateNativeMemoryArray(partialsSize);
-		this.ptrPartials[1][nodeIndex] = allocateNativeMemoryArray(partialsSize);
-
-	}
+	//public void createNodePartials(int nodeIndex) {
+    //
+    //	this.ptrPartials[0][nodeIndex] = allocateNativeMemoryArray(partialsSize);
+    //	this.ptrPartials[1][nodeIndex] = allocateNativeMemoryArray(partialsSize);
+    //
+    //}
 
 
 	/**
@@ -185,10 +278,10 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	/**
 	 * Allocates states for a node
 	 */
-	public void createNodeStates(int nodeIndex) {
-
-		this.ptrStates[nodeIndex] = allocateNativeIntMemoryArray(patternCount);
-	}
+	//public void createNodeStates(int nodeIndex) {
+    //
+    //		this.ptrStates[nodeIndex] = allocateNativeIntMemoryArray(patternCount);
+    //	}
 
 	/**
 	 * Sets states for a node
@@ -202,6 +295,14 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 		assert this.ptrStates[nodeIndex] > DEBUG;
 
 		setNativeMemoryArray(states, 0, this.ptrStates[nodeIndex], 0, patternCount);
+
+		if (DEBUG_PRINT) {
+		    int[] tmp = new int[patternCount];
+		    getNativeMemoryArray(this.ptrStates[nodeIndex],0,tmp,0,patternCount);
+		    System.err.println("Setting tip ("+nodeIndex+") with "+new Vector(tmp)+" at "+ptrStates[nodeIndex]);
+		}
+
+		statesData[nodeIndex] = states;
 	}
 
 	/**
@@ -220,17 +321,54 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	}
 
 
+    //protected long createMatrices() {
+    //	return allocateNativeMemoryArray(matrixSize * matrixCount);
+    //}
+
+	GammaSiteModel gammaSiteModel;
+	NativeSubstitutionModel substitutionModel;
+
+
+	public void calculateAndSetNodeMatrix(int nodeIndex, int matrixIndex, double branchTime, SiteModel siteModel) {
+		// this is all a big hack.  if it works, we should consider updating the interfaces
+		// instead of passing ptr long as first element in double matrix
+
+		if (ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] == 0) {
+		    ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] = createMatrices();
+		}
+
+		if (gammaSiteModel == null)
+				gammaSiteModel = (GammaSiteModel) siteModel;
+
+		if (substitutionModel == null)
+				substitutionModel = (NativeSubstitutionModel) gammaSiteModel.getSubstitutionModel();
+
+		long ptr = ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] + matrixIndex * matrixMemorySize;
+
+		double substitutions = siteModel.getSubstitutionsForCategory(matrixIndex,branchTime);
+		substitutionModel.getTransitionProbabilities(substitutions, ptr);
+	
+//		        siteModel.getTransitionProbabilitiesForCategory(i, branchTime, probabilities);
+//				likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
+	}
+
+
 	/**
 	 * Sets probability matrix for a node
 	 */
 	public void setNodeMatrix(int nodeIndex, int matrixIndex, double[] matrix) {
 
 		if (ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] == 0) {
-			ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] = allocateNativeMemoryArray(matrixSize * matrixCount);
+		    ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] = createMatrices();
 		}
 
 		assert ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] > DEBUG;
 		assert matrix != null;
+
+		if (false) {
+		    System.err.println("Setting matrix = "+new Vector(matrix));
+		    System.err.println("Info = "+currentMatricesIndices[nodeIndex]);
+		}
 
 		setNativeMemoryArray(matrix, 0, ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex],
 				matrixIndex * matrixSize, matrixSize);
@@ -276,6 +414,18 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 		setNativeMemoryArray(expandedPartials, 0, this.ptrPartials[0][nodeIndex], 0, expandedPartials.length);
 	}
 
+    protected void printStates() {
+	for(int i=0; i<ptrStates.length; i++) {
+	    if(ptrStates[i] != 0) {
+		int[] data = new int[patternCount];
+		getNativeMemoryArray(ptrStates[i],0,data,0,patternCount);
+		System.err.println("Tip ("+i+") = "+new Vector(data)+" at "+ptrStates[i]);
+	    }
+	}
+    }
+
+
+
 	/**
 	 * Calculates partial likelihoods at a node.
 	 *
@@ -285,25 +435,45 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	 */
 	public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3) {
 
+	    if (DEBUG_PRINT) printStates();
+
 		if (ptrStates[nodeIndex1] != 0) {
 			if (ptrStates[nodeIndex2] != 0) {
 				calculateStatesStatesPruning(
 						ptrStates[nodeIndex1], ptrMatrices[currentMatricesIndices[nodeIndex1]][nodeIndex1],
 						ptrStates[nodeIndex2], ptrMatrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],
 						ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3]);
-//		        double[] tmp = new double[partialsSize];
-//		        getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
-//		        System.err.println("NATIVE: STATE-STATE");
-//		        System.err.println(new Vector(tmp));
+				if (DEBUG_PRINT) {
+				double[] tmp = new double[partialsSize];
+				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
+				System.err.println("NATIVE: STATE-STATE");
+
+				//double[] mat = new double[matrixSize * matrixCount];
+				//getNativeMemoryArray(ptrMatrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],0,mat,0,matrixSize*matrixCount);
+				//System.err.println("M2 = "+ new Vector(mat));
+				int[] states = new int[patternCount];
+				getNativeMemoryArray(ptrStates[nodeIndex1],0,states,0,patternCount);
+				System.err.println("S1 ("+nodeIndex1+") = "+new Vector(states)+" at "+ptrStates[nodeIndex1]);
+				getNativeMemoryArray(ptrStates[nodeIndex2],0,states,0,patternCount);
+				System.err.println("S2 ("+nodeIndex2+") = "+new Vector(states)+" at "+ptrStates[nodeIndex2]);
+
+				System.err.println(new Vector(tmp));
+				debugCount++;
+				if( debugCount == 6 )
+				    System.exit(-1);
+				}
 			} else {
 				calculateStatesPartialsPruning(
 						ptrStates[nodeIndex1], ptrMatrices[currentMatricesIndices[nodeIndex1]][nodeIndex1],
 						ptrPartials[currentPartialsIndices[nodeIndex2]][nodeIndex2], ptrMatrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],
 						ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3]);
-//		        double[] tmp = new double[partialsSize];
-//		        getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
-//		        System.err.println("NATIVE: STATE-PARTIAL");
-//		        System.err.println(new Vector(tmp));
+				if (DEBUG_PRINT) {
+				double[] tmp = new double[partialsSize];
+				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
+				System.err.println("NATIVE: STATE-PARTIAL");
+				System.err.println(new Vector(tmp));
+				System.exit(-1);
+				}
 			}
 		} else {
 			if (ptrStates[nodeIndex2] != 0) {
@@ -311,20 +481,26 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 						ptrStates[nodeIndex2], ptrMatrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],
 						ptrPartials[currentPartialsIndices[nodeIndex1]][nodeIndex1], ptrMatrices[currentMatricesIndices[nodeIndex1]][nodeIndex1],
 						ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3]);
-//			    double[] tmp = new double[partialsSize];
-//		        getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
-//		        System.err.println("NATIVE: PARTIAL-STATE");
-//		        System.err.println(new Vector(tmp));
+				if (DEBUG_PRINT) {
+				double[] tmp = new double[partialsSize];
+				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
+				System.err.println("NATIVE: PARTIAL-STATE");
+				System.err.println(new Vector(tmp));
+				//System.exit(-1);
+				}
 			} else {
 //			    System.err.println("Doing: PARTIAL-PARTIAL");
 				calculatePartialsPartialsPruning(
 						ptrPartials[currentPartialsIndices[nodeIndex1]][nodeIndex1], ptrMatrices[currentMatricesIndices[nodeIndex1]][nodeIndex1],
 						ptrPartials[currentPartialsIndices[nodeIndex2]][nodeIndex2], ptrMatrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],
 						ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3]);
-//			    double[] tmp = new double[partialsSize];
-//		        getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
-//		        System.err.println("NATIVE: PARTIAL-PARTIAL");
-//		        System.err.println(new Vector(tmp));
+				if (DEBUG_PRINT) {
+				double[] tmp = new double[partialsSize];
+				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
+				System.err.println("NATIVE: PARTIAL-PARTIAL");
+				System.err.println(new Vector(tmp));
+				//System.exit(-1);
+				}
 			}
 		}
 
@@ -470,8 +646,26 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	}
 
 
+    int debugCount = 0;
+
 	public void integratePartials(int nodeIndex, double[] proportions, double[] outPartials) {
+	    if (DEBUG_PRINT) {
+		System.err.println("Integrate Partials");
+		double[] tmp = new double[partialsSize];
+		getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex]][nodeIndex],0,tmp,0,partialsSize);
+		System.err.println("Root = "+new Vector(tmp));
+		//System.exit(-1);
+	    }
+				  
+	
 		calculateIntegratePartials(ptrPartials[currentPartialsIndices[nodeIndex]][nodeIndex], proportions, outPartials);
+		if (DEBUG_PRINT) {
+		    System.err.println("Integrated Root = "+new Vector(outPartials));
+		    //debugCount++;
+		    //if( debugCount == 2)
+		    //	System.exit(-1);
+		}
+		if( DEBUG_PRINT ) printStates();
 	}
 
 	public void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods) {
@@ -579,6 +773,8 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 				outPartials, 0, partialsSize);
 	}
 
+
+    private boolean firstCall = true;
 	/**
 	 * Store current state
 	 */
@@ -586,6 +782,10 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 		System.arraycopy(currentMatricesIndices, 0, storedMatricesIndices, 0, nodeCount);
 		System.arraycopy(currentPartialsIndices, 0, storedPartialsIndices, 0, nodeCount);
+		if( firstCall ) {
+		    firstCall = false;
+		    migrateThread();
+		}
 	}
 
 	/**
@@ -621,23 +821,27 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 //		ffreeNativeMemoryArray(nativePtr);
 //	}
 
-	private native long allocateNativeMemoryArray(int length);
+	protected native long allocateNativeMemoryArray(int length);
 
-    private native long allocateNativeIntMemoryArray(int length);
+        protected native long allocateNativeIntMemoryArray(int length);
 
-    private native void freeNativeMemoryArray(long nativePtr);
+        protected native void freeNativeMemoryArray(long nativePtr);
 
-	private native void setNativeMemoryArray(double[] fromArray, int fromOffset,
+	protected native void setNativeMemoryArray(double[] fromArray, int fromOffset,
 	                                         long toNativePtr, int toOffset, int length);
 
-	private native void setNativeMemoryArray(int[] fromArray, int fromOffset,
+	protected native void setNativeMemoryArray(int[] fromArray, int fromOffset,
 	                                         long toNativePtr, int toOffset, int length);
 
-	private native void getNativeMemoryArray(long fromNativePtr, int fromOffset,
+	protected native void getNativeMemoryArray(long fromNativePtr, int fromOffset,
 	                                         double[] toArray, int toOffset, int length);
 
-	private native void getNativeMemoryArray(long fromNativePtr, int fromOffset,
+	protected native void getNativeMemoryArray(long fromNativePtr, int fromOffset,
 	                                         int[] toArray, int toOffset, int length);
+
+        protected native int getNativeRealSize();
+        
+        protected native int getNativeIntSize();
 
 	/* Native peeling functions */
 

@@ -544,7 +544,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 
 			TipPartialsModel tipPartialsModel = (TipPartialsModel) xo.getChild(TipPartialsModel.class);
 
-			return new TreeLikelihood(
+			return new ExperimentalTreeLikelihood(
 					patternList,
 					treeModel,
 					siteModel,

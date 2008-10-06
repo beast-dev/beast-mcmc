@@ -121,7 +121,18 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 					likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
 					useAmbiguities = true;
 				} else {
-					if (!forceJavaCore && GPUGeneralLikelihoodCore.isAvailable()) {
+				    if (!forceJavaCore && GPUMemoryLikelihoodCore.isAvailable()) {
+					coreName = "GPU memory";
+					likelihoodCore = new GPUMemoryLikelihoodCore(patternList.getStateCount());
+					if (siteModel instanceof GammaSiteModel) {
+					    if ( ((GammaSiteModel)siteModel).getSubstitutionModel() instanceof NativeSubstitutionModel) {
+						nativeTransitionProbabilitiesAndPeeling = true;
+						coreName ="GPU probabilities and memory";
+					    }
+						
+					}
+					
+				    } else if (!forceJavaCore && GPUGeneralLikelihoodCore.isAvailable()) {
 						coreName = "GPU general";
 						likelihoodCore = new GPUGeneralLikelihoodCore(patternList.getStateCount());
 					} else if (!forceJavaCore && NativeMemoryLikelihoodCore.isAvailable()) {

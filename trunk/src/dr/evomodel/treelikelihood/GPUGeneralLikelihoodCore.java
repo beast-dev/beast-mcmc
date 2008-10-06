@@ -13,7 +13,7 @@ public class GPUGeneralLikelihoodCore extends AbstractLikelihoodCore {
 
 	protected void calculateIntegratePartials(double[] inPartials,
 	                                          double[] proportions, double[] outPartials) {
-		nativeIntegratePartials(inPartials, proportions, patternCount, matrixCount, outPartials, stateCount);
+		nativeGPUIntegratePartials(inPartials, proportions, patternCount, matrixCount, outPartials, stateCount);
 	}
 
 	protected void calculatePartialsPartialsPruning(double[] partials1,
@@ -33,7 +33,7 @@ public class GPUGeneralLikelihoodCore extends AbstractLikelihoodCore {
 	                                            double[] partials3) {
 
 
-		nativeStatesStatesPruning(states1, matrices1, states2, matrices2, patternCount, matrixCount, partials3, stateCount);
+		nativeGPUStatesStatesPruning(states1, matrices1, states2, matrices2, patternCount, matrixCount, partials3, stateCount);
 	}
 
 	protected void calculatePartialsPartialsPruning(double[] partials1,

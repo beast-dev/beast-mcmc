@@ -11,6 +11,7 @@ import dr.inference.loggers.Loggable;
 import dr.inference.loggers.MatrixEntryColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Likelihood;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
@@ -26,7 +27,7 @@ import java.util.logging.Logger;
  */
 
 public class NativeSubstitutionModel extends AbstractSubstitutionModel
-		implements  Loggable {
+    implements  Loggable, Likelihood {
 
 	public static final String NATIVE_SUBSTITUTION_MODEL = "nativeSubstitutionModel";
 	public static final String RATES = "rates";
@@ -60,6 +61,17 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 		Logger.getLogger("dr.evomodel.substmodel").info("Trying a native substitution model. Best of luck to you!") ;
 
     }
+
+    public Model getModel() { return this; }
+
+    public double getLogLikelihood() { // this can be used as a 0/1 prior on complex matrices
+	if( isComplex ) 
+	    return Double.NEGATIVE_INFINITY;
+	else
+	    return 0.0;
+    }
+
+    public void makeDirty() { }
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
 		if (model == freqModel)
@@ -103,7 +115,8 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 				setupMatrix();
 			}
 //		}
-
+//			if ( isComplex )
+//			    nativeGetTransitionProbabilities(A
 		nativeGetTransitionProbabilities(ptrCache, distance, ptrMatrix, stateCount);
 
 	}
@@ -218,6 +231,12 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 
 		nativeSetup(ptrCache,Ievc,Evec,Eval,EvalImag,stateCount);
 
+		//int length = 2 * (stateCount*stateCount + stateCount);
+		//double[] tmp = new double[length];
+		//getNativeMemoryArray(ptrCache,0,tmp,0,length);
+		//System.err.println("Cache = "+new Vector(tmp));
+		//System.exit(-1);
+
         wellConditioned = true;
         updateMatrix = false;
 	}
@@ -231,6 +250,10 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 				complex = true;
 		}
 		isComplex = complex;
+		//	if( isComplex && usingGPU ) {
+		//  System.err.println("No complex GPU support!!!");
+		    //System.exit(-1);
+		//}
 	}
 
 	public boolean getIsComplex() {
@@ -262,8 +285,8 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 
 	public static void main(String[] arg) {
 
-		Parameter rates = new Parameter.Default(new double[]{5.0, 1.0, 1.0, 0.1, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
-//		Parameter rates = new Parameter.Default(new double[] {5.0, 1.0, 1.0, 1.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
+	    	Parameter rates = new Parameter.Default(new double[]{5.0, 1.0, 1.0, 0.1, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
+		//			Parameter rates = new Parameter.Default(new double[] {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
 //		Parameter rates = new Parameter.Default(new double[] {1.0, 1.0});
 
 		NativeSubstitutionModel substModel = new NativeSubstitutionModel("test",
@@ -272,11 +295,28 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 				null,
 				rates);
 
+		ComplexSubstitutionModel testModel = new ComplexSubstitutionModel("test",
+										  Nucleotides.INSTANCE, null, rates);
+
+		int states = substModel.getDataType().getStateCount();
+
 		double[] finiteTimeProbs = new double[substModel.getDataType().getStateCount() * substModel.getDataType().getStateCount()];
 		double time = 1.0;
 //		substModel.getTransitionProbabilities(time, finiteTimeProbs);
 
 		long ptrMatrix = substModel.allocateNativeMemoryArray(substModel.getDataType().getStateCount()*substModel.getDataType().getStateCount());
+
+
+				int len = 2 * (states*states + states);
+				//		double[] mem = new double[len];
+				//		substModel.getNativeMemoryArray(substModel.ptrCache,0,mem,0,len);
+				//		System.out.println("Cache = "+new Vector(mem));
+		
+		if(substModel.getIsComplex()) {
+		    System.err.println("GPU current does not support complex stuff.");
+		    System.exit(-1);
+
+		}
 
 		substModel.getTransitionProbabilities(time, ptrMatrix);
 
@@ -285,6 +325,9 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 //		finiteTimeProbs = new double[substModel.getDataType().getStateCount()*substModel.getDataType().getStateCount()];
 
 		substModel.getNativeMemoryArray(ptrMatrix,0,finiteTimeProbs,0,substModel.getDataType().getStateCount()*substModel.getDataType().getStateCount());
+		System.out.println(new Vector(finiteTimeProbs));
+
+		testModel.getTransitionProbabilities(time,finiteTimeProbs);
 		System.out.println(new Vector(finiteTimeProbs));
 
 	}
@@ -423,16 +466,24 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 	protected native void getNativeMemoryArray(long from, int fromOffset, double[] to, int toOffset, int length);
 	
 	protected native void nativeGetTransitionProbabilities(long ptrCache, double distance,
-	                                                       long ptrMatrix, int stateCount);
+	                                                           long ptrMatrix, int stateCount);
+
+    protected native void nativeGetTransitionProbabilitiesComplex(long ptrCache, double distance, long ptrMatrix, int stateCount);
+
+    private static boolean usingGPU = false;
 
 	static {
 
 		try {
-			System.loadLibrary("NativeMemoryLikelihoodCore");
+			System.loadLibrary("GPUMemoryLikelihoodCore");
+			usingGPU = true;
 		} catch (UnsatisfiedLinkError e) {
-
+		    try {
+		    
+			System.loadLibrary("NativeMemoryLikelihoodCore");
+		    } catch (UnsatisfiedLinkError e2) {
+		    }
 		}
-
 	}
 
 	int stateCountSquared;

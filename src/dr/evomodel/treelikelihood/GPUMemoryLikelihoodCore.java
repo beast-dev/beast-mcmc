@@ -80,11 +80,11 @@ public class GPUMemoryLikelihoodCore extends NativeMemoryLikelihoodCore {
 	}
 
 
-	public void calculateAndSetNodeMatrix(int nodeIndex, int matrixIndex,
-	                                      double branchTime, SiteModel siteModel) {
-
-		throw new UnsupportedOperationException("Not yet implemented!");
-	}
+    //	public void calculateAndSetNodeMatrix(int nodeIndex, int matrixIndex,
+    //	                                      double branchTime, SiteModel siteModel) {
+    //
+    //		throw new UnsupportedOperationException("Not yet implemented!");
+    //	}
 
 
 	public void finalize() throws Throwable {

@@ -67,16 +67,55 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 		// However, migration is unnecessary.
 
 
-//		System.err.println("Migrating native memory storage for 2nd thread....");
-//		allocateNativeMemory();
+		System.err.println("Migrating native memory storage for 2nd thread....");
+		allocateNativeMemory();
 //
-//		migrateThreadStates();
-//		migrateThreadMatrices();
-//		migrateThreadPartials();
+		migrateThreadStates();
+		migrateThreadMatrices();
+		migrateThreadPartials();
 //
-//		System.err.println("Done with migration!");
+		System.err.println("Done with migration!");
 
 	}
+
+
+	protected void migrateThreadStates() {
+		for (int i = 0; i < ptrStates.length; i++) {
+			if (ptrStates[i] != 0) {
+				ptrStates[i] = createStates();
+				// restore values
+				setNativeMemoryArray(statesData[i], 0, ptrStates[i], 0, patternCount);
+
+				if (DEBUG_PRINT) {
+					int[] tmp = new int[patternCount];
+					getNativeMemoryArray(this.ptrStates[i], 0, tmp, 0, patternCount);
+					System.err.println("Setting tip (" + i + ") with " + new Vector(tmp) + " at " + ptrStates[i]);
+				}
+
+			}
+		}
+	}
+
+	protected void migrateThreadMatrices() {
+			for (int i = 0; i < ptrMatrices.length; i++) {
+				for (int j = 0; j < ptrMatrices[i].length; j++) {
+					if (ptrMatrices[i][j] != 0)
+						ptrMatrices[i][j] = createMatrices();
+				}
+			}
+		}
+
+		protected void migrateThreadPartials() {
+
+			for (int i = 0; i < ptrPartials.length; i++) {
+				for (int j = 0; j < ptrPartials[i].length; j++) {
+					if (ptrPartials[i][j] != 0)
+						ptrPartials[i][j] = createPartials();
+				}
+			}
+
+		}
+
 
 
 	/**
@@ -459,8 +498,8 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 				System.err.println(new Vector(tmp));
 				debugCount++;
-				if( debugCount == 6 )
-				    System.exit(-1);
+//				if( debugCount == 6 )
+//				    System.exit(-1);
 				}
 			} else {
 				calculateStatesPartialsPruning(
@@ -782,10 +821,6 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 		System.arraycopy(currentMatricesIndices, 0, storedMatricesIndices, 0, nodeCount);
 		System.arraycopy(currentPartialsIndices, 0, storedPartialsIndices, 0, nodeCount);
-		if( firstCall ) {
-		    firstCall = false;
-		    migrateThread();
-		}
 	}
 
 	/**
@@ -800,6 +835,11 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 		int[] tmp2 = currentPartialsIndices;
 		currentPartialsIndices = storedPartialsIndices;
 		storedPartialsIndices = tmp2;
+
+		if( firstCall ) {
+		    firstCall = false;
+		    migrateThread();
+		}
 	}
 
 	/* Native memory handing functions */
@@ -876,6 +916,8 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	}
 
 	private static boolean isNativeAvailable = false;
+
+	private AbstractTreeLikelihood treeLikelihood;
 
 	static {
 

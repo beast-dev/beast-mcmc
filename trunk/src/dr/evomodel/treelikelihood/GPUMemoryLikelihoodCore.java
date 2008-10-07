@@ -28,65 +28,6 @@ public class GPUMemoryLikelihoodCore extends NativeMemoryLikelihoodCore {
 		Logger.getLogger("dr.evomodel.treelikelihood").info(sb.toString());
 	}
 
-
-	protected void migrateThreadStates() {
-		for (int i = 0; i < ptrStates.length; i++) {
-			if (ptrStates[i] != 0) {
-				ptrStates[i] = createStates();
-				// restore values
-				setNativeMemoryArray(statesData[i], 0, ptrStates[i], 0, patternCount);
-
-				if (DEBUG_PRINT) {
-					int[] tmp = new int[patternCount];
-					getNativeMemoryArray(this.ptrStates[i], 0, tmp, 0, patternCount);
-					System.err.println("Setting tip (" + i + ") with " + new Vector(tmp) + " at " + ptrStates[i]);
-				}
-
-			}
-		}
-	}
-
-	protected void migrateThreadMatrices() {
-		for (int i = 0; i < ptrMatrices.length; i++) {
-			for (int j = 0; j < ptrMatrices[i].length; j++) {
-				if (ptrMatrices[i][j] != 0)
-					ptrMatrices[i][j] = createMatrices();
-			}
-		}
-	}
-
-	protected void migrateThreadPartials() {
-
-		for (int i = 0; i < ptrPartials.length; i++) {
-			for (int j = 0; j < ptrPartials[i].length; j++) {
-				if (ptrPartials[i][j] != 0)
-					ptrPartials[i][j] = createPartials();
-			}
-		}
-
-	}
-
-	protected void migrateThread() {
-
-		System.err.println("Migrating native memory storage for 2nd thread....");
-		allocateNativeMemory();
-
-		migrateThreadStates();
-		migrateThreadMatrices();
-		migrateThreadPartials();
-
-		System.err.println("Done with migration!");
-
-	}
-
-
-    //	public void calculateAndSetNodeMatrix(int nodeIndex, int matrixIndex,
-    //	                                      double branchTime, SiteModel siteModel) {
-    //
-    //		throw new UnsupportedOperationException("Not yet implemented!");
-    //	}
-
-
 	public void finalize() throws Throwable {
 		super.finalize();
 		nativeFinalize();

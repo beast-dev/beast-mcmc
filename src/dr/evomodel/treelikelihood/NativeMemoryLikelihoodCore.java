@@ -813,7 +813,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	}
 
 
-    private boolean firstCall = true;
+    protected boolean firstCall = true;
 	/**
 	 * Store current state
 	 */

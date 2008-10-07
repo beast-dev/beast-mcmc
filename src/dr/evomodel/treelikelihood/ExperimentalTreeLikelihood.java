@@ -123,7 +123,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 				} else {
 				    if (!forceJavaCore && GPUMemoryLikelihoodCore.isAvailable()) {
 					coreName = "GPU memory";
-					likelihoodCore = new GPUMemoryLikelihoodCore(patternList.getStateCount());
+					likelihoodCore = new GPUMemoryLikelihoodCore(this,patternList.getStateCount());
 					if (siteModel instanceof GammaSiteModel) {
 					    if ( ((GammaSiteModel)siteModel).getSubstitutionModel() instanceof NativeSubstitutionModel) {
 						nativeTransitionProbabilitiesAndPeeling = true;
@@ -157,7 +157,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 			} else {
 				likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
 			}
-			logger.info("TreeLikelihood using " + coreName + " likelihood core");
+			logger.info("ExperimentalTreeLikelihood using " + coreName + " likelihood core");
 
 			logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
 

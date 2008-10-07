@@ -94,8 +94,13 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 
 	}
 
+    protected void migrateThread() {
+	updateMatrix = true;
+	eigenInitialised = false;
+    }
 
 
+    protected boolean firstCall = true;
 
 	protected void storeState() {
 
@@ -105,6 +110,10 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 		storedNormalization = normalization;
 
 		nativeStoreState();
+		if( firstCall ) {
+		    firstCall = false;
+		    migrateThread();
+		}
 
 	}
 
@@ -450,6 +459,10 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 	}
 
 	protected void nativeInitialiseEigen() {
+
+	    //   if( ptrCache != 0 )
+	    //;
+
 		ptrCache = allocateNativeMemoryArray(2*stateCountSquared + 2*stateCount);
 		ptrStoredCache = allocateNativeMemoryArray(2*stateCountSquared + 2*stateCount);
 	}

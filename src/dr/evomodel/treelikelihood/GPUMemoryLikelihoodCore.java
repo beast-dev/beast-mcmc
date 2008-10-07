@@ -18,7 +18,7 @@ public class GPUMemoryLikelihoodCore extends NativeMemoryLikelihoodCore {
 	 *
 	 * @param stateCount number of states
 	 */
-	public GPUMemoryLikelihoodCore(int stateCount) {
+    public GPUMemoryLikelihoodCore(AbstractTreeLikelihood treeLikelihood, int stateCount) {
 		super(stateCount);
 		StringBuffer sb = new StringBuffer();
 		sb.append("Constructing GPU likelihood core:\n");
@@ -26,12 +26,22 @@ public class GPUMemoryLikelihoodCore extends NativeMemoryLikelihoodCore {
 		sb.append("\tOther info here\n");
 		sb.append("If you publish results using this core, please reference Hunyh and Suchard (in preparation)\n");
 		Logger.getLogger("dr.evomodel.treelikelihood").info(sb.toString());
+		this.treeLikelihood = treeLikelihood;
+
 	}
+
+    private AbstractTreeLikelihood treeLikelihood;
 
 	public void finalize() throws Throwable {
 		super.finalize();
 		nativeFinalize();
 	}
+
+
+    protected void migrateThread() {
+	super.migrateThread();
+	treeLikelihood.makeDirty();
+    }
 
 	private double[] tmpPartials = null;
 
@@ -73,6 +83,20 @@ public class GPUMemoryLikelihoodCore extends NativeMemoryLikelihoodCore {
 
 	}
 
+
+
+	public void storeState() {
+
+		System.arraycopy(currentMatricesIndices, 0, storedMatricesIndices, 0, nodeCount);
+		System.arraycopy(currentPartialsIndices, 0, storedPartialsIndices, 0, nodeCount);
+
+		if (firstCall ) {
+		    firstCall = false;
+		    migrateThread();
+		}
+	}
+
+	
 	/* GPU memory handing functions */
 
 	protected native long allocateNativeMemoryArray(int length);

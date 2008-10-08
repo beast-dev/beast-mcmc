@@ -97,6 +97,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 }
             }
 
+            updateSubstitutionMatrix = true;
+
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
@@ -140,10 +142,12 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         } else if (model == frequencyModel) {
 
+            updateSubstitutionMatrix = true;
             updateAllNodes();
 
         } else if (model instanceof SiteModel) {
 
+            updateSubstitutionMatrix = true;
             updateAllNodes();
 
         } else {
@@ -209,6 +213,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         final NodeRef root = treeModel.getRoot();
         traverse(treeModel, root, null);
 
+        if (updateSubstitutionMatrix) {
+            likelihoodCore.updateSubstitutionModel(siteModel.getSubstitutionModel());
+        }
+
         if (rates == null) {
             rates = new double[siteModel.getCategoryCount()];
         }
@@ -224,7 +232,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         double[] frequencies = frequencyModel.getFrequencies();
         double[] proportions = siteModel.getCategoryProportions();
 
-        likelihoodCore.calculateLogLikelihoods(frequencies, proportions, patternLogLikelihoods);
+        likelihoodCore.calculateLogLikelihoods(root.getNumber(), frequencies, proportions, patternLogLikelihoods);
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
@@ -237,6 +245,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         for (int i = 0; i < nodeCount; i++) {
             updateNode[i] = false;
         }
+
+        updateSubstitutionMatrix = false;
         //********************************************************************
 
         return logL;
@@ -419,4 +429,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * the LikelihoodCore
      */
     protected LikelihoodCore likelihoodCore;
+
+    /**
+     * Flag to specify that the subsitution matrix has changed
+     */
+    protected boolean updateSubstitutionMatrix;
+    
 }

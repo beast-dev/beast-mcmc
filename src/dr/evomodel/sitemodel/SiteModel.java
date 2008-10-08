@@ -23,9 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.sitemodel; 
+package dr.evomodel.sitemodel;
 
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Model;
 
 /**
@@ -39,19 +40,25 @@ import dr.inference.model.Model;
 
 public interface SiteModel extends Model {
 
-	/**
-	 * Specifies whether SiteModel should integrate over the different categories at 
+    /**
+     * Get this site model's substitution model
+     * @return the substitution model
+     */
+    SubstitutionModel getSubstitutionModel();
+
+    /**
+	 * Specifies whether SiteModel should integrate over the different categories at
 	 * each site. If true, the SiteModel will calculate the likelihood of each site
 	 * for each category. If false it will assume that there is each site can have a
 	 * different category.
 	 */
 	boolean integrateAcrossCategories();
-	
+
 	/**
 	 * @return the number of categories of substitution processes
 	 */
 	int getCategoryCount();
-	
+
 	/**
 	 * Get the category of a particular site. If integrateAcrossCategories is true.
 	 * then throws an IllegalArgumentException.
@@ -67,14 +74,14 @@ public interface SiteModel extends Model {
 	 * @param matrix an array of suitable size
 	 */
 	void getTransitionProbabilitiesForCategory(int category, double time, double[] matrix);
-			
+
 	/**
 	 * Get the rate for a particular category.
 	 * @param category the category number
 	 * @return the rate.
 	 */
 	double getRateForCategory(int category);
-			
+
 	/**
 	 * Get the number of substitutions per site for a particular category for a given time.
 	 * @param category the category number
@@ -82,31 +89,31 @@ public interface SiteModel extends Model {
 	 * @return the expected number of substitutions per site.
 	 */
 	double getSubstitutionsForCategory(int category, double time);
-			
+
 	/**
 	 * Get the transition probability matrix for a given number of substitutions per site.
 	 * @param substitutions the branch length in expected number of substitutions per site
 	 * @param matrix an array of suitable size
 	 */
 	void getTransitionProbabilities(double substitutions, double[] matrix);
-						
+
 	/**
 	 * Get the expected proportion of sites in this category.
 	 * @param category the category number
 	 * @return the proportion.
 	 */
 	double getProportionForCategory(int category);
-	
+
 	/**
 	 * Get an array of the expected proportion of sites in this category.
 	 * @return an array of the proportion.
 	 */
 	double[] getCategoryProportions();
-			
+
 	/**
 	 * Get the frequencyModel for this SiteModel.
 	 * @return the frequencyModel.
 	 */
 	FrequencyModel getFrequencyModel();
-			
+
 }

@@ -25,6 +25,8 @@
 
 package dr.evomodel.newtreelikelihood;
 
+import dr.evomodel.substmodel.SubstitutionModel;
+
 /**
  * LikelihoodCore - An interface describing the core likelihood functions.
  *
@@ -56,13 +58,10 @@ public interface LikelihoodCore {
     void setTipPartials(int tipIndex, double[] partials);
 
     /**
-     * Sets the precursor matrix - this will be
-     * used to produce transition probability matrices for each
-     * branch. This is only called when a parameter of the substitution
-     * model changes.
-     * @param matrix the matrix
+     * Called when the substitution model has been updated so precalculations
+     * can be obtained.
      */
-    void setPrecursorMatrix(double[] matrix);
+    void updateSubstitutionModel(SubstitutionModel substitutionModel);
 
     /**
      * Specify the branch lengths that are being updated. These will be used to construct
@@ -88,11 +87,12 @@ public interface LikelihoodCore {
     /**
      * Calculates pattern log likelihoods at a node.
      *
+     * @param rootNodeIndex the index of the root node
      * @param frequencies an array of state frequencies
      * @param proportions the proportion of patterns in each rate category
      * @param outLogLikelihoods an array into which the log likelihoods will go
      */
-    void calculateLogLikelihoods(double[] frequencies, double[] proportions, double[] outLogLikelihoods);
+    void calculateLogLikelihoods(int rootNodeIndex, double[] frequencies, double[] proportions, double[] outLogLikelihoods);
 
     /**
      * Store current state
@@ -103,4 +103,5 @@ public interface LikelihoodCore {
      * Restore the stored state
      */
     void restoreState();
+
 }

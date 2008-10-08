@@ -25,6 +25,8 @@
 
 package dr.evomodel.newtreelikelihood;
 
+import dr.evomodel.substmodel.SubstitutionModel;
+
 public class GeneralLikelihoodCore implements LikelihoodCore {
 
     protected int stateCount;
@@ -34,9 +36,10 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
     protected int matrixSize;
     protected int matrixCount;
 
-    protected double[][] eigenVectors;
+    protected double[] cMatrix;
+    protected double[] storedCMatrix;
     protected double[] eigenValues;
-    protected double[][] iexp;
+    protected double[] storedEigenValues;
 
     protected double[][][] partials;
 
@@ -133,14 +136,11 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
     }
 
     /**
-     * Sets the precursor matrix - this will be
-     * used to produce transition probability matrices for each
-     * branch. This is only called when a parameter of the substitution
-     * model changes.
-     * @param matrix the matrix
+     * Called when the substitution model has been updated so precalculations
+     * can be obtained.
      */
-    public void setPrecursorMatrix(double[] matrix) {
-        // to be implemented
+    public void updateSubstitutionModel(SubstitutionModel substitutionModel) {
+        substitutionModel.getEigenDecomposition(cMatrix, eigenValues);
     }
 
     /**
@@ -160,7 +160,25 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
     }
 
     private void calculateMatrix(int nodeIndex, double branchLength) {
-        // to be implemented
+        double[] tmp = new double[stateCount];
+
+        for (int i = 0; i < stateCount; i++) {
+            tmp[i] =  Math.exp(eigenValues[i] * branchLength);
+        }
+
+        int l = 0;
+        int m = 0;
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                double sum = 0.0;
+                for (int k = 0; k < stateCount; k++) {
+                    sum += cMatrix[l] * tmp[k];
+                    l++;
+                }
+                matrices[currentMatricesIndices[nodeIndex]][nodeIndex][m] = sum;
+                m++;
+            }
+        }
     }
 
     /**
@@ -228,14 +246,60 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         }
     }
 
-
     /**
      * Calculates pattern log likelihoods at a node.
      *
-     * @param frequencies       an array of state frequencies
+     * @param rootNodeIndex the index of the root node
+     * @param frequencies an array of state frequencies
+     * @param proportions the proportion of patterns in each rate category
      * @param outLogLikelihoods an array into which the log likelihoods will go
      */
-    public void calculateLogLikelihoods(double[] frequencies, double[] proportions, double[] outLogLikelihoods) {
+    public void calculateLogLikelihoods(int rootNodeIndex, double[] frequencies, double[] proportions, double[] outLogLikelihoods) {
+
+        // @todo I have a feeling this could be done in a single set of nested loops.
+
+        double[] rootPartials = partials[currentPartialsIndices[rootNodeIndex]][rootNodeIndex];
+
+        double[] tmp = new double[patternCount * stateCount];
+
+        int u = 0;
+        int v = 0;
+        for (int k = 0; k < patternCount; k++) {
+
+            for (int i = 0; i < stateCount; i++) {
+
+                tmp[u] = rootPartials[v] * proportions[0];
+                u++;
+                v++;
+            }
+        }
+
+
+        for (int l = 1; l < matrixCount; l++) {
+            u = 0;
+
+            for (int k = 0; k < patternCount; k++) {
+
+                for (int i = 0; i < stateCount; i++) {
+
+                    tmp[u] += rootPartials[v] * proportions[l];
+                    u++;
+                    v++;
+                }
+            }
+        }
+
+        u = 0;
+        for (int k = 0; k < patternCount; k++) {
+
+            double sum = 0.0;
+            for (int i = 0; i < stateCount; i++) {
+
+                sum += frequencies[i] * tmp[u];
+                u++;
+            }
+            outLogLikelihoods[k] = Math.log(sum);
+        }
     }
 
 //    public void setNodePartialsForUpdate(int nodeIndex) {
@@ -247,6 +311,9 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      */
     public void storeState() {
 
+        System.arraycopy(cMatrix, 0, storedCMatrix, 0, cMatrix.length);
+        System.arraycopy(eigenValues, 0, storedEigenValues, 0, eigenValues.length);
+
         System.arraycopy(currentMatricesIndices, 0, storedMatricesIndices, 0, nodeCount);
         System.arraycopy(currentPartialsIndices, 0, storedPartialsIndices, 0, nodeCount);
     }
@@ -256,12 +323,20 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      */
     public void restoreState() {
         // Rather than copying the stored stuff back, just swap the pointers...
-        int[] tmp1 = currentMatricesIndices;
-        currentMatricesIndices = storedMatricesIndices;
-        storedMatricesIndices = tmp1;
+        double[] tmp1 = cMatrix;
+        cMatrix = storedCMatrix;
+        storedCMatrix = tmp1;
 
-        int[] tmp2 = currentPartialsIndices;
+        double[] tmp2 = eigenValues;
+        eigenValues = storedEigenValues;
+        storedEigenValues = tmp2;
+
+        int[] tmp3 = currentMatricesIndices;
+        currentMatricesIndices = storedMatricesIndices;
+        storedMatricesIndices = tmp3;
+
+        int[] tmp4 = currentPartialsIndices;
         currentPartialsIndices = storedPartialsIndices;
-        storedPartialsIndices = tmp2;
+        storedPartialsIndices = tmp4;
     }
 }

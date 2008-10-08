@@ -73,8 +73,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             final Logger logger = Logger.getLogger("dr.evomodel");
 
-
-            likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
+            likelihoodCore = LikelihoodCoreFactory.getLikelihoodCore(stateCount);
 
             logger.info("Crazy new TreeLikelihood");
 

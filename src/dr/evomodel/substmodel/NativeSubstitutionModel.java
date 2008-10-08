@@ -91,13 +91,24 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 		updateMatrix = storedUpdateMatrix;
 
 		nativeRestoreState();
+		
+		//nativeStoreState();
+		
+		if (DEBUG_PRINT)
+			System.err.println("Restore SM");
+		
+//		if( firstCall ) {
+//		    firstCall = false;
+//		    migrateThread();
+//		}
 
 	}
 
     protected void migrateThread() {
-	updateMatrix = true;
-	eigenInitialised = false;
-    }
+		updateMatrix = true;
+		eigenInitialised = false;
+		setupMatrix();
+	}
 
 
     protected boolean firstCall = true;
@@ -109,11 +120,16 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 		System.arraycopy(stationaryDistribution, 0, storedStationaryDistribution, 0, stateCount);
 		storedNormalization = normalization;
 
-		nativeStoreState();
+		if (DEBUG_PRINT)
+			System.err.println("Storing SM");
+		
 		if( firstCall ) {
-		    firstCall = false;
-		    migrateThread();
-		}
+			firstCall = false;
+			migrateThread();
+		}		
+	
+		nativeStoreState();
+
 
 	}
 
@@ -126,7 +142,7 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 //		}
 //			if ( isComplex )
 //			    nativeGetTransitionProbabilities(A
-		nativeGetTransitionProbabilities(ptrCache, distance, ptrMatrix, stateCount);
+		nativeGetTransitionProbabilities(ptrEigenDecomposition, distance, ptrMatrix, ptrExtraCache, stateCount);
 
 	}
 
@@ -238,7 +254,7 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 			EvalImag[i] /= subst;
 		}
 
-		nativeSetup(ptrCache,Ievc,Evec,Eval,EvalImag,stateCount);
+		nativeSetup(ptrEigenDecomposition,Ievc,Evec,Eval,EvalImag,stateCount);
 
 		//int length = 2 * (stateCount*stateCount + stateCount);
 		//double[] tmp = new double[length];
@@ -294,18 +310,24 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 
 	public static void main(String[] arg) {
 
-	    	Parameter rates = new Parameter.Default(new double[]{5.0, 1.0, 1.0, 0.1, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
+	    //	Parameter rates = new Parameter.Default(new double[]{5.0, 1.0, 1.0, 0.1, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
 		//			Parameter rates = new Parameter.Default(new double[] {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
 //		Parameter rates = new Parameter.Default(new double[] {1.0, 1.0});
+		
+		double[] r = new double[3660];
+		for(int i=0; i<r.length; i++)
+			r[i] = 1.0;
+		Parameter rates = new Parameter.Default(r);
 
 		NativeSubstitutionModel substModel = new NativeSubstitutionModel("test",
 //				TwoStates.INSTANCE,
-				Nucleotides.INSTANCE,
+//				Nucleotides.INSTANCE,
+				Codons.UNIVERSAL,
 				null,
 				rates);
 
 		ComplexSubstitutionModel testModel = new ComplexSubstitutionModel("test",
-										  Nucleotides.INSTANCE, null, rates);
+										  Codons.UNIVERSAL, null, rates);
 
 		int states = substModel.getDataType().getStateCount();
 
@@ -449,28 +471,45 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
     private static final Algebra alegbra = new Algebra();
 
 	protected void nativeStoreState() {
-		copyNativeMemoryArray(ptrCache,ptrStoredCache, 2*(stateCount + stateCountSquared));
+		copyNativeMemoryArray(ptrEigenDecomposition,ptrStoredEigenDecomposition, 2*(stateCount + stateCountSquared));
 	}
 
 	protected void nativeRestoreState() {
-		long tmpPtr = ptrCache;
-		ptrCache = ptrStoredCache;
-		ptrStoredCache = tmpPtr;
+		long tmpPtr = ptrEigenDecomposition;
+		ptrEigenDecomposition = ptrStoredEigenDecomposition;
+		ptrStoredEigenDecomposition = tmpPtr;
 	}
 
+	protected boolean DEBUG_PRINT = false;
+	int count = 0;
+	
+	
+	
+	
 	protected void nativeInitialiseEigen() {
 
-	    //   if( ptrCache != 0 )
-	    //;
-
-		ptrCache = allocateNativeMemoryArray(2*stateCountSquared + 2*stateCount);
-		ptrStoredCache = allocateNativeMemoryArray(2*stateCountSquared + 2*stateCount);
+		if (DEBUG_PRINT)
+			System.err.println("Allocating substitution matrix memory");
+		ptrEigenDecomposition = allocateNativeMemoryArray(2*stateCountSquared + 2*stateCount);
+		ptrStoredEigenDecomposition = allocateNativeMemoryArray(2*stateCountSquared + 2*stateCount);
+		if( stateCount > 32)
+			ptrExtraCache = allocateNativeMemoryArray(stateCountSquared);
+		if (DEBUG_PRINT) {
+			System.err.println("Done allocating matrix memory");
+			System.err.println("Cache = "+ptrEigenDecomposition+" to "+(ptrEigenDecomposition +(2*stateCountSquared + 2*stateCount)*getNativeRealSize()));	
+			if (++count == 3)
+				System.exit(-1);
+		}
 	}
 
 
 	protected native void nativeSetup(long ptr, double[][] Ievc, double[][] Evec, double[] Eval,
 	                                  double[] EvalImag, int stateCount);
 
+	protected native long getContext();
+	
+	protected native void migrate();
+	
 	protected native long allocateNativeMemoryArray(int length);
 	protected native void copyNativeMemoryArray(long from, long to, int length);
 
@@ -478,8 +517,8 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 
 	protected native void getNativeMemoryArray(long from, int fromOffset, double[] to, int toOffset, int length);
 	
-	protected native void nativeGetTransitionProbabilities(long ptrCache, double distance,
-	                                                           long ptrMatrix, int stateCount);
+	protected native void nativeGetTransitionProbabilities(long ptrEigendecomposition, double distance,
+	                                                           long ptrMatrix, long extraCache, int stateCount);
 
     protected native void nativeGetTransitionProbabilitiesComplex(long ptrCache, double distance, long ptrMatrix, int stateCount);
 
@@ -501,13 +540,14 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 
 	int stateCountSquared;
 
-	long ptrCache;
+	long ptrEigenDecomposition;
+	long ptrExtraCache;
 //  long ptrIevc;
 //	long ptrEvec;
 //	long ptrEval;
 //	long ptrEvalImag;
 
-	long ptrStoredCache;
+	long ptrStoredEigenDecomposition;
 //	long ptrStoredIevc;
 //	long ptrStoredEvec;
 //	long ptrStoredEval;

@@ -47,6 +47,15 @@ public interface SubstitutionModel extends Model {
     public void getTransitionProbabilities(double distance, double[] matrix);
 
     /**
+     * This function precalculates the product of the eigenvectors and their
+     * inverse for faster calculation of transition probabilities. The output
+     * is a vector of precalculated values and the eigenValues
+     * @param cMatrix
+     * @param eigenValues
+     */
+    public void getEigenDecomposition(double[] cMatrix, double[] eigenValues);
+
+    /**
      * get the state frequencies
      *
      * @return the frequencies

@@ -39,8 +39,8 @@ public class GPUMemoryLikelihoodCore extends NativeMemoryLikelihoodCore {
 
 
     protected void migrateThread() {
-	super.migrateThread();
-	treeLikelihood.makeDirty();
+    	super.migrateThread();
+    	treeLikelihood.makeDirty();
     }
 
 	private double[] tmpPartials = null;

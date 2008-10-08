@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 	private static final long DEBUG = 100;
+    int SIZE = 10;
 
 
     protected static boolean DEBUG_PRINT = false;
@@ -46,6 +47,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	protected double[][][] scalingFactors;
 
     protected int[][] statesData;
+    protected double[][][] partialsData;
 
 //    private double scalingThreshold = 1.0E-100;
 
@@ -69,11 +71,11 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 		System.err.println("Migrating native memory storage for 2nd thread....");
 		allocateNativeMemory();
-//
+
 		migrateThreadStates();
 		migrateThreadMatrices();
 		migrateThreadPartials();
-//
+
 		System.err.println("Done with migration!");
 
 	}
@@ -111,6 +113,9 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 				for (int j = 0; j < ptrPartials[i].length; j++) {
 					if (ptrPartials[i][j] != 0)
 						ptrPartials[i][j] = createPartials();
+						if (partialsData[i][j] != null) {
+							setNativeMemoryArray(partialsData[i][j],0,ptrPartials[i][j],0,partialsSize);
+						}
 				}
 			}
 
@@ -141,6 +146,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 		}
 
 		ptrPartials = new long[2][nodeCount];
+		partialsData = new double[2][nodeCount][];
 
 		currentMatricesIndices = new int[nodeCount];
 		storedMatricesIndices = new int[nodeCount];
@@ -161,16 +167,23 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	}
 
     protected void allocateNativeMemory() {
-	    if (cacheStates != 0)
+	    if (cacheStates != 0 && firstCall)
 	        freeNativeMemoryArray(cacheStates);
-	    if (cacheMatrices != 0)
+	    if (cacheMatrices != 0 && firstCall)
 	        freeNativeMemoryArray(cacheMatrices);
-	    if (cachePartials != 0)
+	    if (cachePartials != 0 && firstCall)
 	        freeNativeMemoryArray(cachePartials);
-	    
+	    if (DEBUG_PRINT)
+	    	System.err.println("Allocating states.");
 		currentCachePtrStates   = cacheStates   = allocateNativeIntMemoryArray(nodeCount*patternCount);
+	    if (DEBUG_PRINT)
+	    	System.err.println("Allocating matrices.");
 		currentCachePtrMatrices = cacheMatrices = allocateNativeMemoryArray(2*nodeCount*matrixSize*matrixCount);
+	    if (DEBUG_PRINT)
+	    	System.err.println("Allocating partials.");
 		currentCachePtrPartials = cachePartials = allocateNativeMemoryArray(2*nodeCount*partialsSize);
+	    if (DEBUG_PRINT)
+	    	System.err.println("Done with allocation.");
 
 		offsetMatrices = getNativeRealSize() * matrixSize * matrixCount;
 		offsetStates   = getNativeIntSize()  * patternCount;
@@ -311,6 +324,8 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 		assert this.ptrPartials[0][nodeIndex] > DEBUG;
 
 		setNativeMemoryArray(expandedPartials, 0, this.ptrPartials[0][nodeIndex], 0, expandedPartials.length);
+		
+		partialsData[0][nodeIndex] = expandedPartials;
 	}
 
 
@@ -475,6 +490,8 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3) {
 
 	    if (DEBUG_PRINT) printStates();
+	    
+
 
 		if (ptrStates[nodeIndex1] != 0) {
 			if (ptrStates[nodeIndex2] != 0) {
@@ -483,18 +500,18 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 						ptrStates[nodeIndex2], ptrMatrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],
 						ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3]);
 				if (DEBUG_PRINT) {
-				double[] tmp = new double[partialsSize];
-				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
+				double[] tmp = new double[SIZE];
+				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,SIZE);
 				System.err.println("NATIVE: STATE-STATE");
 
 				//double[] mat = new double[matrixSize * matrixCount];
 				//getNativeMemoryArray(ptrMatrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],0,mat,0,matrixSize*matrixCount);
 				//System.err.println("M2 = "+ new Vector(mat));
-				int[] states = new int[patternCount];
-				getNativeMemoryArray(ptrStates[nodeIndex1],0,states,0,patternCount);
-				System.err.println("S1 ("+nodeIndex1+") = "+new Vector(states)+" at "+ptrStates[nodeIndex1]);
-				getNativeMemoryArray(ptrStates[nodeIndex2],0,states,0,patternCount);
-				System.err.println("S2 ("+nodeIndex2+") = "+new Vector(states)+" at "+ptrStates[nodeIndex2]);
+				//int[] states = new int[patternCount];
+				//getNativeMemoryArray(ptrStates[nodeIndex1],0,states,0,patternCount);
+				//System.err.println("S1 ("+nodeIndex1+") = "+new Vector(states)+" at "+ptrStates[nodeIndex1]);
+				//getNativeMemoryArray(ptrStates[nodeIndex2],0,states,0,patternCount);
+				//System.err.println("S2 ("+nodeIndex2+") = "+new Vector(states)+" at "+ptrStates[nodeIndex2]);
 
 				System.err.println(new Vector(tmp));
 				debugCount++;
@@ -507,11 +524,11 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 						ptrPartials[currentPartialsIndices[nodeIndex2]][nodeIndex2], ptrMatrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],
 						ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3]);
 				if (DEBUG_PRINT) {
-				double[] tmp = new double[partialsSize];
-				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
+				double[] tmp = new double[SIZE];
+				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,SIZE);
 				System.err.println("NATIVE: STATE-PARTIAL");
 				System.err.println(new Vector(tmp));
-				System.exit(-1);
+				//System.exit(-1);
 				}
 			}
 		} else {
@@ -521,8 +538,8 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 						ptrPartials[currentPartialsIndices[nodeIndex1]][nodeIndex1], ptrMatrices[currentMatricesIndices[nodeIndex1]][nodeIndex1],
 						ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3]);
 				if (DEBUG_PRINT) {
-				double[] tmp = new double[partialsSize];
-				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
+				double[] tmp = new double[SIZE];
+				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,SIZE);
 				System.err.println("NATIVE: PARTIAL-STATE");
 				System.err.println(new Vector(tmp));
 				//System.exit(-1);
@@ -534,8 +551,8 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 						ptrPartials[currentPartialsIndices[nodeIndex2]][nodeIndex2], ptrMatrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],
 						ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3]);
 				if (DEBUG_PRINT) {
-				double[] tmp = new double[partialsSize];
-				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,partialsSize);
+				double[] tmp = new double[SIZE];
+				getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex3]][nodeIndex3],0,tmp,0,SIZE);
 				System.err.println("NATIVE: PARTIAL-PARTIAL");
 				System.err.println(new Vector(tmp));
 				//System.exit(-1);
@@ -690,8 +707,8 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	public void integratePartials(int nodeIndex, double[] proportions, double[] outPartials) {
 	    if (DEBUG_PRINT) {
 		System.err.println("Integrate Partials");
-		double[] tmp = new double[partialsSize];
-		getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex]][nodeIndex],0,tmp,0,partialsSize);
+		double[] tmp = new double[SIZE];
+		getNativeMemoryArray(ptrPartials[currentPartialsIndices[nodeIndex]][nodeIndex],0,tmp,0,SIZE);
 		System.err.println("Root = "+new Vector(tmp));
 		//System.exit(-1);
 	    }
@@ -699,7 +716,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	
 		calculateIntegratePartials(ptrPartials[currentPartialsIndices[nodeIndex]][nodeIndex], proportions, outPartials);
 		if (DEBUG_PRINT) {
-		    System.err.println("Integrated Root = "+new Vector(outPartials));
+		    //System.err.println("Integrated Root = "+new Vector(outPartials));
 		    //debugCount++;
 		    //if( debugCount == 2)
 		    //	System.exit(-1);

@@ -94,7 +94,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 			final Logger logger = Logger.getLogger("dr.evomodel");
 			String coreName = "Java general";
 			if (integrateAcrossCategories) {
-
+				
 				final DataType dataType = patternList.getDataType();
 
 				if (dataType instanceof dr.evolution.datatype.Nucleotides) {
@@ -116,10 +116,10 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 						likelihoodCore = new AminoAcidLikelihoodCore();
 					}
 
-				} else if (dataType instanceof dr.evolution.datatype.Codons) {
-					// The codon core was out of date and did nothing more than the general core...
-					likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
-					useAmbiguities = true;
+//				} else if (dataType instanceof dr.evolution.datatype.Codons) {
+//					// The codon core was out of date and did nothing more than the general core...
+//					likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
+//					useAmbiguities = true;
 				} else {
 				    if (!forceJavaCore && GPUMemoryLikelihoodCore.isAvailable()) {
 					coreName = "GPU memory";
@@ -146,13 +146,15 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 								coreName = "native probabilities and memory general";
 							}
 						}
-					} else if (!forceJavaCore && NativeGeneralLikelihoodCore.isAvailable()) {
+					} else if (!forceJavaCore && NativeGeneralLikelihoodCore.isAvailable()) {						
 						coreName = "native general";
 						likelihoodCore = new NativeGeneralLikelihoodCore(patternList.getStateCount());
-					} else {
+					} else {						
 						coreName = "Java general";
 						likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
 					}
+				    if (dataType instanceof dr.evolution.datatype.Codons)
+				    	useAmbiguities = true;
 				}
 			} else {
 				likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());

@@ -9,6 +9,7 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodel.treelikelihood.SequenceErrorModel;
+import dr.evomodel.clock.ACLikelihood;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evoxml.SitePatternsParser;
 import dr.util.Attribute;
@@ -24,9 +25,9 @@ public class TreeLikelihoodGenerator extends Generator {
     }
 
     public void writeErrorModel(XMLWriter writer) {
-        String errorType = ( options.errorModelType == ErrorType.AGE_TRANSITIONS ||
+        String errorType = (options.errorModelType == ErrorType.AGE_TRANSITIONS ||
                 options.errorModelType == ErrorType.BASE_TRANSITIONS ?
-                "transitions" : "all" );
+                "transitions" : "all");
 
 
         writer.writeOpenTag(
@@ -40,7 +41,7 @@ public class TreeLikelihoodGenerator extends Generator {
         if (options.errorModelType == ErrorType.AGE_TRANSITIONS ||
                 options.errorModelType == ErrorType.AGE_ALL) {
             writeParameter(SequenceErrorModel.AGE_RELATED_RATE, "errorModel.ageRate", 1, writer);
-        } else  if (options.errorModelType == ErrorType.BASE_TRANSITIONS || 
+        } else if (options.errorModelType == ErrorType.BASE_TRANSITIONS ||
                 options.errorModelType == ErrorType.BASE_ALL) {
             writeParameter(SequenceErrorModel.BASE_ERROR_RATE, "errorModel.baseRate", 1, writer);
         } else {
@@ -109,13 +110,34 @@ public class TreeLikelihoodGenerator extends Generator {
                     new Attribute[]{new Attribute.Default<String>("idref", prefix + "siteModel")}, true);
         }
 
-        if (options.clockType == ClockType.STRICT_CLOCK) {
+        switch (options.clockType) {
+            case STRICT_CLOCK:
+                writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
+                        new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+                break;
+            case UNCORRELATED_EXPONENTIAL:
+            case UNCORRELATED_LOGNORMAL:
+            case RANDOM_LOCAL_CLOCK:
+                writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+                        new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+                break;
+
+            case AUTOCORRELATED_LOGNORMAL:
+                writer.writeTag(ACLikelihood.AC_LIKELIHOOD,
+                        new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
+        }
+
+        /*if (options.clockType == ClockType.STRICT_CLOCK) {
             writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
                     new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
         } else {
             writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
                     new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
-        }
+        }*/
 
         if (options.errorModelType != ErrorType.NO_ERROR) {
             writer.writeTag(SequenceErrorModel.SEQUENCE_ERROR_MODEL,

@@ -50,6 +50,7 @@ import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.SequenceErrorModel;
+import dr.evomodel.clock.ACLikelihood;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evomodelxml.LoggerParser;
 import dr.evomodelxml.TreeLoggerParser;
@@ -731,10 +732,16 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>("scaleAll", "true"),
                         new Attribute.Default<Double>("weight", operator.weight),
                 });
-        writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER);
-        writeParameter1Ref(writer, operator);
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>("idref", operator.parameter2.getName())}, true);
-        writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+
+        if (operator.parameter2 == null) {
+            writeParameter1Ref(writer, operator);
+        } else {
+            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER);
+            writeParameter1Ref(writer, operator);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>("idref", operator.parameter2.getName())}, true);
+            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+        }
+
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
     }
 
@@ -1049,6 +1056,11 @@ public class BeastGenerator extends Generator {
 
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
 
+            if (options.clockType == ClockType.AUTOCORRELATED_LOGNORMAL) {
+                writer.writeTag(ACLikelihood.AC_LIKELIHOOD,
+                        new Attribute.Default<String>("idref", "branchRates"), true);
+            }
+
             writer.writeCloseTag(CompoundLikelihood.LIKELIHOOD);
 
 
@@ -1096,9 +1108,29 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
                 });
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-        if (options.clockType != ClockType.STRICT_CLOCK) {
-            writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+
+        switch (options.clockType) {
+            case STRICT_CLOCK:
+                break;
+
+            case UNCORRELATED_EXPONENTIAL:
+            case UNCORRELATED_LOGNORMAL:
+            case RANDOM_LOCAL_CLOCK:
+                writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+                break;
+
+            case AUTOCORRELATED_LOGNORMAL:
+                writer.writeTag(ACLikelihood.AC_LIKELIHOOD, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
         }
+
+        /*if (options.clockType != ClockType.STRICT_CLOCK) {
+            writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+        }*/
+
         if (options.hasData()) {
             // we have data...
             writer.writeTag("posterior", new Attribute.Default<String>("idref", "posterior"), true);
@@ -1139,11 +1171,27 @@ public class BeastGenerator extends Generator {
                             new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
                     });
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-            if (options.clockType == ClockType.STRICT_CLOCK) {
-                writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
-            } else {
-                writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+
+            switch (options.clockType) {
+                case STRICT_CLOCK:
+                    writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+                    break;
+
+                case UNCORRELATED_EXPONENTIAL:
+                case UNCORRELATED_LOGNORMAL:
+                case RANDOM_LOCAL_CLOCK:
+                    writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+                    break;
+
+                case AUTOCORRELATED_LOGNORMAL:
+                    writer.writeTag(ACLikelihood.AC_LIKELIHOOD, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unknown clock model");
             }
+
+
             writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
         }
 
@@ -1346,6 +1394,8 @@ public class BeastGenerator extends Generator {
         } else {
             writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "meanRate"), true);
         }
+
+
         writer.writeCloseTag(Columns.COLUMN);
 
         if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
@@ -1399,7 +1449,40 @@ public class BeastGenerator extends Generator {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "allMus"), true);
         }
 
-        if (options.clockType != ClockType.STRICT_CLOCK) {
+        switch (options.clockType) {
+            case STRICT_CLOCK:
+                break;
+
+            case UNCORRELATED_EXPONENTIAL:
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "uced.mean"), true);
+                writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "coefficientOfVariation"), true);
+                writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>("idref", "covariance"), true);
+                break;
+            case UNCORRELATED_LOGNORMAL:
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.mean"), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.stdev"), true);
+                writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "coefficientOfVariation"), true);
+                writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>("idref", "covariance"), true);
+                break;
+
+            case AUTOCORRELATED_LOGNORMAL:
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "treeModel.rootRate"), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "branchRates.var"), true);
+                writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "coefficientOfVariation"), true);
+                writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>("idref", "covariance"), true);
+                break;
+
+            case RANDOM_LOCAL_CLOCK:
+                writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "coefficientOfVariation"), true);
+                writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>("idref", "covariance"), true);
+                writer.writeTag("sumStatistic", new Attribute.Default<String>("idref", "rateChanges"), true);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
+        }
+
+        /*if (options.clockType != ClockType.STRICT_CLOCK) {
             if (options.clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "uced.mean"), true);
             } else if (options.clockType == ClockType.UNCORRELATED_LOGNORMAL) {
@@ -1412,7 +1495,7 @@ public class BeastGenerator extends Generator {
             if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
                 writer.writeTag("sumStatistic", new Attribute.Default<String>("idref", "rateChanges"), true);
             }
-        }
+        }*/
 
         if (options.hasData()) {
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);

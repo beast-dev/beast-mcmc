@@ -6,6 +6,7 @@ import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeModelParser;
 import dr.inference.model.ParameterParser;
+import dr.inference.model.CompoundParameter;
 import dr.util.Attribute;
 
 /**
@@ -49,7 +50,58 @@ public class TreeModelGenerator extends Generator {
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "treeModel.allInternalNodeHeights"), true);
         writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
-        if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
+        switch (options.clockType) {
+            case STRICT_CLOCK:
+            case UNCORRELATED_EXPONENTIAL:
+            case UNCORRELATED_LOGNORMAL:
+                break;
+
+            case AUTOCORRELATED_LOGNORMAL:
+                writer.writeOpenTag(TreeModelParser.NODE_RATES,
+                        new Attribute[]{
+                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
+                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
+                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
+                        });
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "treeModel.nodeRates"), true);
+                writer.writeCloseTag(TreeModelParser.NODE_RATES);
+
+                writer.writeOpenTag(TreeModelParser.NODE_RATES,
+                        new Attribute[]{
+                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true"),
+                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "false"),
+                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
+                        });
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "treeModel.rootRate"), true);
+                writer.writeCloseTag(TreeModelParser.NODE_RATES);
+                break;
+
+
+            case RANDOM_LOCAL_CLOCK:
+                writer.writeOpenTag(TreeModelParser.NODE_RATES,
+                        new Attribute[]{
+                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
+                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
+                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
+                        });
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "localClock.rates"), true);
+                writer.writeCloseTag(TreeModelParser.NODE_RATES);
+
+                writer.writeOpenTag(TreeModelParser.NODE_TRAITS,
+                        new Attribute[]{
+                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
+                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
+                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
+                        });
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "localClock.changes"), true);
+                writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
+        }
+
+        /*if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
             writer.writeOpenTag(TreeModelParser.NODE_RATES,
                     new Attribute[]{
                             new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
@@ -67,8 +119,16 @@ public class TreeModelGenerator extends Generator {
                     });
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "localClock.changes"), true);
             writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
-        }
+        }*/
 
         writer.writeCloseTag(TreeModel.TREE_MODEL);
+
+        if (options.clockType == ClockType.AUTOCORRELATED_LOGNORMAL) {
+            writer.writeText("");
+            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>("id", "treeModel.allRates")});
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "treeModel.nodeRates"), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "treeModel.rootRate"), true);
+            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+        }
     }
 }

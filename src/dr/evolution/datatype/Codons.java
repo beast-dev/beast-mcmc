@@ -61,6 +61,7 @@ public class Codons extends DataType {
 	public static final Codons ASCIDIAN_MT = new Codons(GeneticCode.ASCIDIAN_MT);
 	public static final Codons FLATWORM_MT = new Codons(GeneticCode.FLATWORM_MT);
 	public static final Codons BLEPHARISMA_NUC = new Codons(GeneticCode.BLEPHARISMA_NUC);
+	public static final Codons NO_STOPS = new Codons(GeneticCode.NO_STOPS);
 
     public static final int UNKNOWN_STATE = 64;
 	public static final int GAP_STATE = 65;

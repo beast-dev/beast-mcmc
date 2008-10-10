@@ -55,6 +55,7 @@ public final class GeneticCode implements CodonTable {
 	public static final int ASCIDIAN_MT_ID = 11;
 	public static final int FLATWORM_MT_ID = 12;
 	public static final int BLEPHARISMA_NUC_ID = 13;
+	public static final int NO_STOPS_ID = 14;
 
 	/**
 	 * Standard genetic code tables from GENBANK
@@ -89,7 +90,9 @@ public final class GeneticCode implements CodonTable {
 		// Flatworm Mitochondrial
 		"NNKNTTTTSSSSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVVYY*YSSSSWCWCLFLF",
 		// Blepharisma Nuclear
-		"KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*YQYSSSS*CWCLFLF"
+		"KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*YQYSSSS*CWCLFLF",
+		// No stops
+		"KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVVYYQYSSSSWCWCLFLF"
 	};
 
 	/**
@@ -99,7 +102,7 @@ public final class GeneticCode implements CodonTable {
 		"universal", "vertebrateMitochondrial", "yeast", "moldProtozoanMitochondrial",
 		"mycoplasma", "invertebrateMitochondrial", "ciliate", "echinodermMitochondrial",
 		"euplotidNuclear", "bacterial", "alternativeYeast", "ascidianMitochondrial",
-		"flatwormMitochondrial", "blepharismaNuclear"
+		"flatwormMitochondrial", "blepharismaNuclear", "noStops"
 	};
 
 	/**
@@ -109,7 +112,7 @@ public final class GeneticCode implements CodonTable {
 		"Universal", "Vertebrate Mitochondrial", "Yeast", "Mold Protozoan Mitochondrial",
 		"Mycoplasma", "Invertebrate Mitochondrial", "Ciliate", "Echinoderm Mitochondrial",
 		"Euplotid Nuclear", "Bacterial", "Alternative Yeast", "Ascidian Mitochondrial",
-		"Flatworm Mitochondrial", "Blepharisma Nuclear"
+		"Flatworm Mitochondrial", "Blepharisma Nuclear", "Test case with no stop codons"
 	};
 
 	public static final GeneticCode UNIVERSAL = new GeneticCode(UNIVERSAL_ID);
@@ -126,11 +129,12 @@ public final class GeneticCode implements CodonTable {
 	public static final GeneticCode ASCIDIAN_MT = new GeneticCode(ASCIDIAN_MT_ID);
 	public static final GeneticCode FLATWORM_MT = new GeneticCode(FLATWORM_MT_ID);
 	public static final GeneticCode BLEPHARISMA_NUC = new GeneticCode(BLEPHARISMA_NUC_ID);
+	public static final GeneticCode NO_STOPS = new GeneticCode(NO_STOPS_ID);
 
 	public static final GeneticCode[] GENETIC_CODES = {
 		UNIVERSAL, VERTEBRATE_MT, YEAST, MOLD_PROTOZOAN_MT, MYCOPLASMA, INVERTEBRATE_MT,
 		CILIATE, ECHINODERM_MT, EUPLOTID_NUC, BACTERIAL, ALT_YEAST, ASCIDIAN_MT,
-		FLATWORM_MT, BLEPHARISMA_NUC
+		FLATWORM_MT, BLEPHARISMA_NUC, NO_STOPS
 	};
 
 	public GeneticCode(int geneticCode) {

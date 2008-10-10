@@ -21,7 +21,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
     int SIZE = 10;
 
 
-    protected static boolean DEBUG_PRINT = false;
+    protected static final boolean DEBUG_PRINT = false;
 
 	protected int stateCount;
 	protected int nodeCount;

@@ -48,51 +48,15 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
 
         Alignment alignment = (Alignment)xo.getChild(Alignment.class);
 
-        DataType dataType = null;
 
-        String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
+	    // Old parser always returned UNIVERSAL type for codon conversion
+	    DataType dataType = DataTypeUtils.getDataType(xo);
 
-        if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
-            dataType = Nucleotides.INSTANCE;
-        } else if (dataTypeStr.equals(AminoAcids.DESCRIPTION)) {
-            dataType = AminoAcids.INSTANCE;
-        } else if (dataTypeStr.equals(Codons.DESCRIPTION)) {
-            dataType = Codons.UNIVERSAL;
-        } else if (dataTypeStr.equals(TwoStates.DESCRIPTION)) {
-            dataType = TwoStates.INSTANCE;
-        }
 
-        GeneticCode geneticCode = GeneticCode.UNIVERSAL;
-        if (xo.hasAttribute(GeneticCode.GENETIC_CODE)) {
-            String codeStr = xo.getStringAttribute(GeneticCode.GENETIC_CODE);
-            if (codeStr.equals(GeneticCode.UNIVERSAL.getName())) {
-                geneticCode = GeneticCode.UNIVERSAL;
-            } else if (codeStr.equals(GeneticCode.VERTEBRATE_MT.getName())) {
-                geneticCode = GeneticCode.VERTEBRATE_MT;
-            } else if (codeStr.equals(GeneticCode.YEAST.getName())) {
-                geneticCode = GeneticCode.YEAST;
-            } else if (codeStr.equals(GeneticCode.MOLD_PROTOZOAN_MT.getName())) {
-                geneticCode = GeneticCode.MOLD_PROTOZOAN_MT;
-            } else if (codeStr.equals(GeneticCode.INVERTEBRATE_MT.getName())) {
-                geneticCode = GeneticCode.INVERTEBRATE_MT;
-            } else if (codeStr.equals(GeneticCode.CILIATE.getName())) {
-                geneticCode = GeneticCode.CILIATE;
-            } else if (codeStr.equals(GeneticCode.ECHINODERM_MT.getName())) {
-                geneticCode = GeneticCode.ECHINODERM_MT;
-            } else if (codeStr.equals(GeneticCode.EUPLOTID_NUC.getName())) {
-                geneticCode = GeneticCode.EUPLOTID_NUC;
-            } else if (codeStr.equals(GeneticCode.BACTERIAL.getName())) {
-                geneticCode = GeneticCode.BACTERIAL;
-            } else if (codeStr.equals(GeneticCode.ALT_YEAST.getName())) {
-                geneticCode = GeneticCode.ALT_YEAST;
-            } else if (codeStr.equals(GeneticCode.ASCIDIAN_MT.getName())) {
-                geneticCode = GeneticCode.ASCIDIAN_MT;
-            } else if (codeStr.equals(GeneticCode.FLATWORM_MT.getName())) {
-                geneticCode = GeneticCode.FLATWORM_MT;
-            } else if (codeStr.equals(GeneticCode.BLEPHARISMA_NUC.getName())) {
-                geneticCode = GeneticCode.BLEPHARISMA_NUC;
-            }
-        }
+	    GeneticCode geneticCode = GeneticCode.UNIVERSAL;
+	    if (dataType instanceof Codons) {
+		    ((Codons)dataType).getGeneticCode();
+	    }
 
         ConvertAlignment convert = new ConvertAlignment(dataType, geneticCode, alignment);
 	    Logger.getLogger("dr.evoxml").info("Converted alignment, '" + xo.getId() + "', from " +

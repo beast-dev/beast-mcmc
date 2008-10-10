@@ -111,7 +111,11 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 	// *****************************************************************
 	// Interface SiteModel
 	// *****************************************************************
-	
+
+	public SubstitutionModel getSubstitutionModel() {
+		return null;
+	}
+
 	public boolean integrateAcrossCategories() { return true; }
 
 	public int getCategoryCount() { return categoryCount; }

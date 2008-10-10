@@ -108,7 +108,11 @@ public class SampleStateAndCategoryModel extends AbstractModel
 	// *****************************************************************
 	// Interface SiteModel
 	// *****************************************************************
-	
+
+	public SubstitutionModel getSubstitutionModel() {
+		return null;
+	}
+
 	public boolean integrateAcrossCategories() { return false; }
 
 	public int getCategoryCount() { return categoryCount; }

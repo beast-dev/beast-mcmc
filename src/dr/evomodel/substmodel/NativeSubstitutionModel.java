@@ -6,6 +6,7 @@ import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.linalg.EigenvalueDecomposition;
 import dr.evolution.datatype.*;
+import dr.evoxml.DataTypeUtils;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.MatrixEntryColumn;
@@ -314,6 +315,7 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 		//			Parameter rates = new Parameter.Default(new double[] {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
 //		Parameter rates = new Parameter.Default(new double[] {1.0, 1.0});
 		
+//		double[] r = new double[4032];
 		double[] r = new double[3660];
 		for(int i=0; i<r.length; i++)
 			r[i] = 1.0;
@@ -330,6 +332,8 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 										  Codons.UNIVERSAL, null, rates);
 
 		int states = substModel.getDataType().getStateCount();
+		
+		System.err.println("States = "+states);
 
 		double[] finiteTimeProbs = new double[substModel.getDataType().getStateCount() * substModel.getDataType().getStateCount()];
 		double time = 1.0;
@@ -356,10 +360,44 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 //		finiteTimeProbs = new double[substModel.getDataType().getStateCount()*substModel.getDataType().getStateCount()];
 
 		substModel.getNativeMemoryArray(ptrMatrix,0,finiteTimeProbs,0,substModel.getDataType().getStateCount()*substModel.getDataType().getStateCount());
-		System.out.println(new Vector(finiteTimeProbs));
-
+		double[] print = new double[10];
+		
+		int count = 0;
+		for(int i=0; i<finiteTimeProbs.length; i++) {
+			if(Double.isNaN(finiteTimeProbs[i]))
+				System.err.println("BAD NUMBER!!!");
+			if ( finiteTimeProbs[i] == 1E-10)
+				count++;
+		}
+		
+		System.out.println("Zeroes = "+count);
+		//System.out.println(new Vector(finiteTimeProbs));
+		//System.exit(0);
+		for(int i=0; i<10; i++)
+//			print[i] = finiteTimeProbs[finiteTimeProbs.length-i-1];
+			print[i] = finiteTimeProbs[states-i-1];
+		System.out.println(new Vector(print));
+		for(int i=0; i<10; i++)
+//			print[i] = finiteTimeProbs[finiteTimeProbs.length-i-1];
+			print[i] = finiteTimeProbs[2*states+i];
+		System.out.println(new Vector(print));
+		for(int i=0; i<10; i++)
+			print[i] = finiteTimeProbs[finiteTimeProbs.length-i-1];
+		System.out.println(new Vector(print));
+		
+		System.out.println();
 		testModel.getTransitionProbabilities(time,finiteTimeProbs);
-		System.out.println(new Vector(finiteTimeProbs));
+		for(int i=0; i<10; i++)
+//			print[i] = finiteTimeProbs[finiteTimeProbs.length-i-1];
+			print[i] = finiteTimeProbs[states-i-1];	
+		System.out.println(new Vector(print));
+		for(int i=0; i<10; i++)
+//			print[i] = finiteTimeProbs[finiteTimeProbs.length-i-1];
+			print[i] = finiteTimeProbs[2*states+i];	
+		System.out.println(new Vector(print));
+		for(int i=0; i<10; i++)
+			print[i] = finiteTimeProbs[finiteTimeProbs.length-i-1];
+		System.out.println(new Vector(print));
 
 	}
 
@@ -373,22 +411,24 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			DataType dataType = null;
-
-			if (xo.hasAttribute(DataType.DATA_TYPE)) {
-				String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
-				if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
-					dataType = Nucleotides.INSTANCE;
-				} else if (dataTypeStr.equals(AminoAcids.DESCRIPTION)) {
-					dataType = AminoAcids.INSTANCE;
-				} else if (dataTypeStr.equals(Codons.DESCRIPTION)) {
-					dataType = Codons.UNIVERSAL;
-				} else if (dataTypeStr.equals(TwoStates.DESCRIPTION)) {
-					dataType = TwoStates.INSTANCE;
-				}
-			}
-
-			if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
+//			DataType dataType = null;
+//
+//			if (xo.hasAttribute(DataType.DATA_TYPE)) {
+//				String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
+//				if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
+//					dataType = Nucleotides.INSTANCE;
+//				} else if (dataTypeStr.equals(AminoAcids.DESCRIPTION)) {
+//					dataType = AminoAcids.INSTANCE;
+//				} else if (dataTypeStr.equals(Codons.DESCRIPTION)) {
+//					dataType = Codons.UNIVERSAL;
+//				} else if (dataTypeStr.equals(TwoStates.DESCRIPTION)) {
+//					dataType = TwoStates.INSTANCE;
+//				}
+//			}
+//
+//			if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
+			
+	         DataType dataType = DataTypeUtils.getDataType(xo);
 
 			XMLObject cxo = (XMLObject) xo.getChild(RATES);
 
@@ -440,10 +480,11 @@ public class NativeSubstitutionModel extends AbstractSubstitutionModel
 		}
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new XORRule(
-						new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
-						new ElementRule(DataType.class)
-				),
+				 new XORRule(
+	                        new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
+	                                DataType.getRegisteredDataTypeNames(), false),
+	                        new ElementRule(DataType.class)
+	                ),
 				new ElementRule(ROOT_FREQUENCIES, FrequencyModel.class),
 				new ElementRule(RATES,
 						new XMLSyntaxRule[]{

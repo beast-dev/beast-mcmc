@@ -15,6 +15,7 @@ import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
+import dr.evoxml.DataTypeUtils;
 
 /**
  * <b>A general irreversible class for any
@@ -407,21 +408,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			DataType dataType = null;
-
-			if (xo.hasAttribute(DataType.DATA_TYPE)) {
-				String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
-				if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
-					dataType = Nucleotides.INSTANCE;
-				} else if (dataTypeStr.equals(AminoAcids.DESCRIPTION)) {
-					dataType = AminoAcids.INSTANCE;
-				} else if (dataTypeStr.equals(Codons.DESCRIPTION)) {
-					dataType = Codons.UNIVERSAL;
-				} else if (dataTypeStr.equals(TwoStates.DESCRIPTION)) {
-					dataType = TwoStates.INSTANCE;
-				}
-			}
-
+			DataType dataType = DataTypeUtils.getDataType(xo);
+			
 			if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
 
 			XMLObject cxo = (XMLObject) xo.getChild(RATES);
@@ -474,10 +462,11 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 		}
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new XORRule(
-						new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
-						new ElementRule(DataType.class)
-				),
+                new XORRule(
+                        new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
+                                DataType.getRegisteredDataTypeNames(), false),
+                        new ElementRule(DataType.class)
+                ),
 				new ElementRule(ROOT_FREQUENCIES, FrequencyModel.class),
 				new ElementRule(RATES,
 						new XMLSyntaxRule[]{

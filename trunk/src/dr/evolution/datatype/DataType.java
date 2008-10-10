@@ -79,6 +79,7 @@ public abstract class DataType
             registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.ASCIDIAN_MT.getName(), Codons.ASCIDIAN_MT);
             registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.FLATWORM_MT.getName(), Codons.FLATWORM_MT);
             registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.BLEPHARISMA_NUC.getName(), Codons.BLEPHARISMA_NUC);
+            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.NO_STOPS.getName(), Codons.NO_STOPS);
             registerDataType(TwoStates.DESCRIPTION, TwoStates.INSTANCE);
             registerDataType(HiddenNucleotides.DESCRIPTION, HiddenNucleotides.INSTANCE);
             registerDataType(TwoStateCovarion.DESCRIPTION, TwoStateCovarion.INSTANCE);

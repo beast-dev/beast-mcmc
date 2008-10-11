@@ -16,7 +16,7 @@ import java.util.logging.Logger;
  *
  */
 
-public class NativeMemoryLikelihoodCore implements LikelihoodCore {
+public class NativeLikelihoodCore implements LikelihoodCore {
 
 	public static final String LIBRARY_NAME = "NativeMemoryLikelihoodCore";
 
@@ -59,7 +59,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	 *
 	 * @param stateCount number of states
 	 */
-	public NativeMemoryLikelihoodCore(int stateCount) {
+	public NativeLikelihoodCore(int stateCount) {
 		this.stateCount = stateCount;
 
 	}
@@ -970,7 +970,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 			} catch (UnsatisfiedLinkError e) {
 				return null;
 			}
-			return new NativeMemoryLikelihoodCore(configuration[0]);
+			return new NativeLikelihoodCore(configuration[0]);
 		}
 	}
 

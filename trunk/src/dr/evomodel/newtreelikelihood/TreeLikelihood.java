@@ -26,12 +26,9 @@
 package dr.evomodel.newtreelikelihood;
 
 import dr.evolution.alignment.PatternList;
-import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
@@ -101,7 +98,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 }
             }
 
-            updateSubstitutionMatrix = true;
+            updateSubstitutionModel = true;
+            updateSiteModel = true;
 
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
@@ -146,12 +144,12 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         } else if (model == frequencyModel) {
 
-            updateSubstitutionMatrix = true;
+            updateSubstitutionModel = true;
             updateAllNodes();
 
         } else if (model instanceof SiteModel) {
 
-            updateSubstitutionMatrix = true;
+            updateSubstitutionModel = true;
             updateAllNodes();
 
         } else {
@@ -218,26 +216,19 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         final NodeRef root = treeModel.getRoot();
         traverse(treeModel, root, null);
 
-        if (updateSubstitutionMatrix) {
+        if (updateSubstitutionModel) {
             likelihoodCore.updateSubstitutionModel(siteModel.getSubstitutionModel());
         }
 
-        if (rates == null) {
-            rates = new double[siteModel.getCategoryCount()];
+        if (updateSiteModel) {
+            likelihoodCore.updateSiteModel(siteModel);
         }
 
-        for (int i = 0; i < categoryCount; i++) {
-            rates[i] = siteModel.getRateForCategory(i);
-        }
-
-        likelihoodCore.updateMatrices(branchUpdateIndices, branchLengths, branchUpdateCount, rates);
+        likelihoodCore.updateMatrices(branchUpdateIndices, branchLengths, branchUpdateCount);
 
         likelihoodCore.updatePartials(operations, dependencies, operationCount);
 
-        double[] frequencies = frequencyModel.getFrequencies();
-        double[] proportions = siteModel.getCategoryProportions();
-
-        likelihoodCore.calculateLogLikelihoods(root.getNumber(), frequencies, proportions, patternLogLikelihoods);
+        likelihoodCore.calculateLogLikelihoods(root.getNumber(), patternLogLikelihoods);
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
@@ -251,7 +242,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             updateNode[i] = false;
         }
 
-        updateSubstitutionMatrix = false;
+        updateSubstitutionModel = false;
         //********************************************************************
 
         return logL;
@@ -439,8 +430,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     protected LikelihoodCore likelihoodCore;
 
     /**
-     * Flag to specify that the subsitution matrix has changed
+     * Flag to specify that the substitution model has changed
      */
-    protected boolean updateSubstitutionMatrix;
+    protected boolean updateSubstitutionModel;
+
+    /**
+     * Flag to specify that the site model has changed
+     */
+    protected boolean updateSiteModel;
 
 }

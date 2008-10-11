@@ -401,6 +401,17 @@ public class MCMC implements Runnable, Identifiable {
         return mc.isStopped();
     }
 
+	public boolean getSpawnable() {
+		return spawnable;
+	}
+
+	private boolean spawnable = true;
+
+	public void setSpawnable(boolean spawnable) {
+		this.spawnable = spawnable;
+	}
+
+
     //PRIVATE METHODS *****************************************
     private boolean isPreBurninNeeded() {
 
@@ -474,6 +485,8 @@ public class MCMC implements Runnable, Identifiable {
                 throw new IllegalArgumentException(message);
             }
 
+	        if (!xo.getAttribute(SPAWN,true))
+	            mcmc.setSpawnable(false);
 
             return mcmc;
         }
@@ -500,6 +513,7 @@ public class MCMC implements Runnable, Identifiable {
                 AttributeRule.newIntegerRule(PRE_BURNIN, true),
                 AttributeRule.newDoubleRule(TEMPERATURE, true),
                 AttributeRule.newIntegerRule(FULL_EVALUATION, true),
+		        AttributeRule.newBooleanRule(SPAWN,true),
                 new ElementRule(OperatorSchedule.class),
                 new ElementRule(Likelihood.class),
                 new ElementRule(Logger.class, 1, Integer.MAX_VALUE)
@@ -547,5 +561,6 @@ public class MCMC implements Runnable, Identifiable {
     public static final String FULL_EVALUATION = "fullEvaluation";
     public static final String WEIGHT = "weight";
     public static final String TEMPERATURE = "temperature";
+	public static final String SPAWN ="spawn";
 }
 

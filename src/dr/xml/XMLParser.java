@@ -26,6 +26,7 @@
 package dr.xml;
 
 import dr.evolution.util.Units;
+import dr.inference.mcmc.MCMC;
 import dr.util.Identifiable;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
@@ -210,10 +211,14 @@ public class XMLParser {
                         waitForThread((Thread) thread1);
                     }
                 } else if (obj instanceof Runnable && !concurrent) {
-                    Thread thread = new Thread((Runnable) obj);
-                    thread.start();
-                    threads.add(thread);
-                    waitForThread(thread);
+	                if (obj instanceof MCMC && !((MCMC)obj).getSpawnable()) {		                
+	                    ((MCMC)obj).run();		               
+	                } else {
+                        Thread thread = new Thread((Runnable) obj);
+                        thread.start();
+                        threads.add(thread);
+                        waitForThread(thread);
+	                }
                 }
                 threads.removeAllElements();
             }

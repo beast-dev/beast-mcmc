@@ -26,6 +26,7 @@
 package dr.evomodel.newtreelikelihood;
 
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.sitemodel.SiteModel;
 
 public class GeneralLikelihoodCore implements LikelihoodCore {
 
@@ -40,6 +41,12 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
     protected double[] storedCMatrix;
     protected double[] eigenValues;
     protected double[] storedEigenValues;
+
+    protected double[] frequencies;
+    protected double[] storedFrequencies;
+    protected double[] proportions;
+    protected double[] categoryRates;
+    protected double[] storedCategoryRates;
 
     protected double[][][] partials;
 
@@ -74,6 +81,20 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         this.nodeCount = nodeCount;
         this.patternCount = patternCount;
         this.matrixCount = matrixCount;
+
+        cMatrix = new double[stateCount * stateCount * stateCount];
+        storedCMatrix = new double[stateCount * stateCount];
+
+        eigenValues = new double[stateCount];
+        storedEigenValues = new double[stateCount];
+
+        frequencies = new double[stateCount];
+        storedFrequencies = new double[stateCount];
+
+        categoryRates = new double[matrixCount];
+        storedCategoryRates = new double[matrixCount];
+
+        proportions = new double[matrixCount];
 
         partialsSize = patternCount * stateCount * matrixCount;
 
@@ -140,7 +161,23 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      * can be obtained.
      */
     public void updateSubstitutionModel(SubstitutionModel substitutionModel) {
+        for (int i = 0; i < stateCount; i++) {
+            substitutionModel.getFrequencyModel().getFrequency(i);
+        }
         substitutionModel.getEigenDecomposition(cMatrix, eigenValues);
+    }
+
+    /**
+     * Called when the site model has been updated so rates and proportions
+     * can be obtained.
+     */
+    public void updateSiteModel(SiteModel siteModel) {
+        for (int i = 0; i < matrixCount; i++) {
+            categoryRates[i] = siteModel.getRateForCategory(i);
+        }
+        for (int i = 0; i < matrixCount; i++) {
+            proportions[i] = siteModel.getProportionForCategory(i);
+        }
     }
 
     /**
@@ -150,9 +187,8 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      * @param branchUpdateIndices the node indices of the branches to be updated
      * @param branchLengths       the branch lengths of the branches to be updated
      * @param branchUpdateCount   the number of branch updates
-     * @param matrixRates         the relative rates for each rate category
      */
-    public void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount, double[] matrixRates) {
+    public void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount) {
 //        currentMatricesIndices[nodeIndex] = 1 - currentMatricesIndices[nodeIndex];
         for (int i = 0; i < branchUpdateCount; i++) {
             calculateMatrix(branchUpdateIndices[i], branchLengths[i]);
@@ -250,11 +286,9 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      * Calculates pattern log likelihoods at a node.
      *
      * @param rootNodeIndex the index of the root node
-     * @param frequencies an array of state frequencies
-     * @param proportions the proportion of patterns in each rate category
      * @param outLogLikelihoods an array into which the log likelihoods will go
      */
-    public void calculateLogLikelihoods(int rootNodeIndex, double[] frequencies, double[] proportions, double[] outLogLikelihoods) {
+    public void calculateLogLikelihoods(int rootNodeIndex, double[] outLogLikelihoods) {
 
         // @todo I have a feeling this could be done in a single set of nested loops.
 
@@ -314,6 +348,9 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         System.arraycopy(cMatrix, 0, storedCMatrix, 0, cMatrix.length);
         System.arraycopy(eigenValues, 0, storedEigenValues, 0, eigenValues.length);
 
+        System.arraycopy(frequencies, 0, storedFrequencies, 0, frequencies.length);
+        System.arraycopy(categoryRates, 0, storedCategoryRates, 0, categoryRates.length);
+
         System.arraycopy(currentMatricesIndices, 0, storedMatricesIndices, 0, nodeCount);
         System.arraycopy(currentPartialsIndices, 0, storedPartialsIndices, 0, nodeCount);
     }
@@ -323,13 +360,21 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      */
     public void restoreState() {
         // Rather than copying the stored stuff back, just swap the pointers...
-        double[] tmp1 = cMatrix;
+        double[] tmp = cMatrix;
         cMatrix = storedCMatrix;
-        storedCMatrix = tmp1;
+        storedCMatrix = tmp;
 
-        double[] tmp2 = eigenValues;
+        tmp = eigenValues;
         eigenValues = storedEigenValues;
-        storedEigenValues = tmp2;
+        storedEigenValues = tmp;
+
+        tmp = frequencies;
+        frequencies = storedFrequencies;
+        storedFrequencies = tmp;
+
+        tmp = categoryRates;
+        categoryRates = storedCategoryRates;
+        storedCategoryRates = tmp;
 
         int[] tmp3 = currentMatricesIndices;
         currentMatricesIndices = storedMatricesIndices;

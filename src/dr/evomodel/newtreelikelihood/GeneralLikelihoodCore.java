@@ -189,30 +189,33 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      * @param branchUpdateCount   the number of branch updates
      */
     public void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount) {
-//        currentMatricesIndices[nodeIndex] = 1 - currentMatricesIndices[nodeIndex];
         for (int i = 0; i < branchUpdateCount; i++) {
-            calculateMatrix(branchUpdateIndices[i], branchLengths[i]);
+//            currentMatricesIndices[branchUpdateIndices[i]] = 1 - currentMatricesIndices[branchUpdateIndices[i]];
+            calculateTransitionProbabilityMatrices(branchUpdateIndices[i], branchLengths[i]);
         }
     }
 
-    private void calculateMatrix(int nodeIndex, double branchLength) {
+    private void calculateTransitionProbabilityMatrices(int nodeIndex, double branchLength) {
+
         double[] tmp = new double[stateCount];
 
-        for (int i = 0; i < stateCount; i++) {
-            tmp[i] =  Math.exp(eigenValues[i] * branchLength);
-        }
+        int n = 0;
+        for (int l = 0; l < matrixCount; l++) {
+            for (int i = 0; i < stateCount; i++) {
+                tmp[i] =  Math.exp(eigenValues[i] * branchLength * categoryRates[l]);
+            }
 
-        int l = 0;
-        int m = 0;
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                double sum = 0.0;
-                for (int k = 0; k < stateCount; k++) {
-                    sum += cMatrix[l] * tmp[k];
-                    l++;
+            int m = 0;
+            for (int i = 0; i < stateCount; i++) {
+                for (int j = 0; j < stateCount; j++) {
+                    double sum = 0.0;
+                    for (int k = 0; k < stateCount; k++) {
+                        sum += cMatrix[m] * tmp[k];
+                        m++;
+                    }
+                    matrices[currentMatricesIndices[nodeIndex]][nodeIndex][n] = sum;
+                    n++;
                 }
-                matrices[currentMatricesIndices[nodeIndex]][nodeIndex][m] = sum;
-                m++;
             }
         }
     }
@@ -243,6 +246,8 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
             x++;
             int nodeIndex3 = operations[x];
             x++;
+
+ //           currentPartialsIndices[nodeIndex1] = 1 - currentPartialsIndices[nodeIndex1];
 
             double[] matrices1 = matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1];
             double[] matrices2 = matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2];
@@ -335,10 +340,6 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
             outLogLikelihoods[k] = Math.log(sum);
         }
     }
-
-//    public void setNodePartialsForUpdate(int nodeIndex) {
-//        currentPartialsIndices[nodeIndex] = 1 - currentPartialsIndices[nodeIndex];
-//    }
 
     /**
      * Store current state

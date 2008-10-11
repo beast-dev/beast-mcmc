@@ -182,11 +182,19 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
     }
 
     /**
-     * Specify the updates to be made. Firstly the branches specified in the
-     * branchIndices array are updated using the branchLengths - these are used
-     * to update the appropriate probability transition matrices.
-     * @param operations an array of partial likelihood calculations. The indices
-     * are [ancestoral dependency, isDependent, source node 1, source node 2, destination node].
+     * Specify the updates to be made. This specifies which partials are to be
+     * calculated and by giving the dependencies between the operations, they
+     * can be done in parallel if required.
+     * @param operations an array of partial likelihood calculations to be done.
+     *      This is an array of triplets of node numbers specifying the two source
+     *      (descendent) nodes and the destination node for which the partials are
+     *      being calculated.
+     * @param dependencies an array of dependencies for each of the operations
+     *      This is an array of pairs of integers for each of the operations above.
+     *      The first of each pair specifies which future operation is dependent
+     *      on this one. The second is just a boolean (0,1) as to whether this operation
+     *      is dependent on another. If these dependencies are not used then the
+     *      operations can safely be done in order.
      * @param operationCount the number of operators
      */
     public void updatePartials(int[] operations, int[] dependencies, int operationCount) {

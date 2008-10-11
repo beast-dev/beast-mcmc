@@ -208,7 +208,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         }
 
         if (operations == null) {
-            operations = new int[nodeCount];
+            operations = new int[nodeCount * 3];
+            dependencies = new int[nodeCount * 2];
         }
 
         branchUpdateCount = 0;
@@ -231,7 +232,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         likelihoodCore.updateMatrices(branchUpdateIndices, branchLengths, branchUpdateCount, rates);
 
-        likelihoodCore.updatePartials(operations, operationCount);
+        likelihoodCore.updatePartials(operations, dependencies, operationCount);
 
         double[] frequencies = frequencyModel.getFrequencies();
         double[] proportions = siteModel.getCategoryProportions();
@@ -263,6 +264,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     private int branchUpdateCount;
 
     private int[] operations;
+    private int[] dependencies;
     private int operationCount;
 
     /**
@@ -309,26 +311,28 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             // If either child node was updated then update this node too
             if (update1 || update2) {
 
-                int x = operationCount * 5;
-                operations[x] = -1; // dependent ancestor
-                operations[x + 1] = 0; // isDependent?
-                operations[x + 2] = child1.getNumber(); // source node 1
-                operations[x + 3] = child2.getNumber(); // source node 2
-                operations[x + 4] = nodeNum; // destination node
+                int x = operationCount * 3;
+                operations[x] = child1.getNumber(); // source node 1
+                operations[x + 1] = child2.getNumber(); // source node 2
+                operations[x + 2] = nodeNum; // destination node
+
+                int y = operationCount * 3;
+                dependencies[y] = -1; // dependent ancestor
+                dependencies[y + 1] = 0; // isDependent?
 
                 // if one of the child nodes have an update then set the dependency
                 // element to this operation.
                 if (op1[0] != -1) {
-                    operations[op1[0] * 4] = operationCount;
-                    operations[x + 1] = 1; // isDependent?
+                    dependencies[op1[0] * 3] = operationCount;
+                    dependencies[y + 1] = 1; // isDependent?
                 }
                 if (op2[0] != -1) {
-                    operations[op2[0] * 4] = operationCount;
-                    operations[x + 1] = 1; // isDependent?
+                    dependencies[op2[0] * 3] = operationCount;
+                    dependencies[y + 1] = 1; // isDependent?
                 }
 
                 if (operatorNumber != null) {
-                    operatorNumber[0] = operationCount;
+                    dependencies[y] = operationCount;
                 }
 
                 operationCount ++;
@@ -438,5 +442,5 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * Flag to specify that the subsitution matrix has changed
      */
     protected boolean updateSubstitutionMatrix;
-    
+
 }

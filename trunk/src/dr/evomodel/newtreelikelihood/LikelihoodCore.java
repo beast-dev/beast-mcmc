@@ -78,11 +78,13 @@ public interface LikelihoodCore {
      * Specify the updates to be made. Firstly the branches specified in the
      * branchIndices array are updated using the branchLengths - these are used
      * to update the appropriate probability transition matrices.
-     * @param operations an array of partial likelihood calculations. The indices
-     * are [ancestoral dependency, isDependent, source node 1, source node 2, destination node].
+     * @param operations an array of partial likelihood calculations to be done.
+     *      The indices are [source node 1, source node 2, destination node].
+     * @param dependencies an array of dependencies for each of the operations
+     *      The elements are [ancestor dependency, is this operation dependent on another?]
      * @param operationCount the number of operators
      */
-    void updatePartials(int[] operations, int operationCount);
+    void updatePartials(int[] operations, int[] dependencies, int operationCount);
 
     /**
      * Calculates pattern log likelihoods at a node.

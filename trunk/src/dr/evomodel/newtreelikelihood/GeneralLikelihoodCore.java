@@ -189,18 +189,10 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      * are [ancestoral dependency, isDependent, source node 1, source node 2, destination node].
      * @param operationCount the number of operators
      */
-    public void updatePartials(int[] operations, int operationCount) {
-        
+    public void updatePartials(int[] operations, int[] dependencies, int operationCount) {
+
         int x = 0;
         for (int op = 0; op < operationCount; op++) {
-            // the operation that requires on this one.
-            // Not used in this implementation
-            int dependency = operations[x];
-            x++;
-            // does this operation depend on another?
-            // Not used in this implementation
-            int isDependent = operations[x];
-            x++;
             int nodeIndex1 = operations[x];
             x++;
             int nodeIndex2 = operations[x];

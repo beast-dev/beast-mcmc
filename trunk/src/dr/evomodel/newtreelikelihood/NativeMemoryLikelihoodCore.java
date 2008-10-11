@@ -280,7 +280,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 	}
 
-	public void updatePartials(int[] operations, int operationCount) {
+	public void updatePartials(int[] operations, int[] dependencies, int operationCount) {
 
 	}
 

@@ -26,6 +26,7 @@
 package dr.evomodel.newtreelikelihood;
 
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.sitemodel.SiteModel;
 
 /**
  * LikelihoodCore - An interface describing the core likelihood functions.
@@ -64,15 +65,19 @@ public interface LikelihoodCore {
     void updateSubstitutionModel(SubstitutionModel substitutionModel);
 
     /**
+     * Called when the site model has been updated so rates and proportions
+     * can be obtained.
+     */
+    void updateSiteModel(SiteModel siteModel);
+
+    /**
      * Specify the branch lengths that are being updated. These will be used to construct
      * the transition probability matrices for each branch.
      * @param branchUpdateIndices the node indices of the branches to be updated
      * @param branchLengths the branch lengths of the branches to be updated
      * @param branchUpdateCount the number of branch updates
-     * @param matrixRates the relative rates for each rate category
      */
-    void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount,
-                        double[] matrixRates);
+    void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount);
 
     /**
      * Specify the updates to be made. This specifies which partials are to be
@@ -96,11 +101,9 @@ public interface LikelihoodCore {
      * Calculates pattern log likelihoods at a node.
      *
      * @param rootNodeIndex the index of the root node
-     * @param frequencies an array of state frequencies
-     * @param proportions the proportion of patterns in each rate category
      * @param outLogLikelihoods an array into which the log likelihoods will go
      */
-    void calculateLogLikelihoods(int rootNodeIndex, double[] frequencies, double[] proportions, double[] outLogLikelihoods);
+    void calculateLogLikelihoods(int rootNodeIndex, double[] outLogLikelihoods);
 
     /**
      * Store current state

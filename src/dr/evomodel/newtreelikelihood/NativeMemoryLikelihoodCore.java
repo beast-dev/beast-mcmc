@@ -276,7 +276,11 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 	}
 
-	public void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount, double[] matrixRates) {
+    public void updateSiteModel(SiteModel siteModel) {
+
+    }
+
+	public void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount) {
 
 	}
 
@@ -284,7 +288,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 	}
 
-	public void calculateLogLikelihoods(int rootNodeIndex, double[] frequencies, double[] proportions, double[] outLogLikelihoods) {
+	public void calculateLogLikelihoods(int rootNodeIndex, double[] outLogLikelihoods) {
 
 	}
 

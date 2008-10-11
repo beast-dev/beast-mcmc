@@ -137,11 +137,11 @@
 		</mutationRate>
     </siteModel>
 
-	<crazyTreeLikelihood id="crazyTreeLikelihood7">
+	<treeLikelihood id="crazyTreeLikelihood7">
 		<patterns idref="patterns1"/>
 		<treeModel idref="treeModel1"/>
 		<siteModel idref="siteModel7"/>
-	</crazyTreeLikelihood>
+	</treeLikelihood>
 
 	<report>
 		GTR:

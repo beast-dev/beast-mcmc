@@ -92,8 +92,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             likelihoodCore = LikelihoodCoreFactory.loadLikelihoodCore(configuration, this);
 
-            probabilities = new double[stateCount * stateCount];
-
             likelihoodCore.initialize(nodeCount, patternCount, categoryCount);
 
             int extNodeCount = treeModel.getExternalNodeCount();
@@ -169,6 +167,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         } else if (model instanceof SiteModel) {
 
+            updateSubstitutionModel = true;
             updateSiteModel = true;
             updateAllNodes();
 
@@ -426,12 +425,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 	protected final BranchRateModel branchRateModel;
 
     /**
-     * the categories for each site
-     */
-    protected int[] siteCategories = null;
-
-
-    /**
      * the pattern likelihoods
      */
     protected double[] patternLogLikelihoods = null;
@@ -440,12 +433,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * the number of rate categories
      */
     protected int categoryCount;
-
-    /**
-     * an array used to transfer transition probabilities
-     */
-    protected double[] probabilities;
-
 
     /**
      * an array used to transfer tip partials

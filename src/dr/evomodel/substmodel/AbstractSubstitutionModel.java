@@ -225,6 +225,14 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
      * @param eigenValues
      */
     public void getEigenDecomposition(double[] cMatrix, double[] eigenValues) {
+        // this must be synchronized to avoid being called simultaneously by
+        // two different likelihood threads - AJD
+        synchronized (this) {
+            if (updateMatrix) {
+                setupMatrix();
+            }
+        }
+
         int l =0;
         for (int i = 0; i < stateCount; i++) {
             for (int j = 0; j < stateCount; j++) {

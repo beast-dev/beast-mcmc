@@ -31,7 +31,6 @@ import dr.evomodel.operators.InternalTraitGibbsOperator;
 import dr.evomodel.operators.PrecisionMatrixGibbsOperator;
 import dr.evomodel.operators.RandomWalkOnMapOperator;
 import dr.evomodel.speciation.RandomLocalYuleModel;
-import dr.evomodel.treelikelihood.SequenceErrorModel;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evomodelxml.LoggerParser;
 import dr.evomodelxml.TreeLoggerParser;
@@ -180,11 +179,11 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.substmodel.TwoStateCovarionModel.PARSER);
 		addXMLObjectParser(dr.evomodel.substmodel.BinaryCovarionModel.PARSER);
 
-		addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
+		addXMLObjectParser(dr.evomodel.newtreelikelihood.TreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.treelikelihood.AdvancedTreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.treelikelihood.AncestralStateTreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.treelikelihood.AncestralState.PARSER);
-		addXMLObjectParser(SequenceErrorModel.PARSER);
+		addXMLObjectParser(dr.evomodel.treelikelihood.SequenceErrorModel.PARSER);
 
 		addXMLObjectParser(dr.evomodel.MSSD.ALSTreeLikelihood.PARSER);
 		addXMLObjectParser(dr.evomodel.MSSD.SingleTipObservationProcess.PARSER);

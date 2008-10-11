@@ -83,7 +83,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         this.matrixCount = matrixCount;
 
         cMatrix = new double[stateCount * stateCount * stateCount];
-        storedCMatrix = new double[stateCount * stateCount];
+        storedCMatrix = new double[stateCount * stateCount * stateCount];
 
         eigenValues = new double[stateCount];
         storedEigenValues = new double[stateCount];
@@ -162,7 +162,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      */
     public void updateSubstitutionModel(SubstitutionModel substitutionModel) {
         for (int i = 0; i < stateCount; i++) {
-            substitutionModel.getFrequencyModel().getFrequency(i);
+            frequencies[i] = substitutionModel.getFrequencyModel().getFrequency(i);
         }
         substitutionModel.getEigenDecomposition(cMatrix, eigenValues);
     }

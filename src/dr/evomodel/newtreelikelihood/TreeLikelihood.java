@@ -283,7 +283,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             branchUpdateIndices[branchUpdateCount] = nodeNum;
             branchLengths[branchUpdateCount] = branchTime;
-
+            branchUpdateCount++;
+            
             update = true;
         }
 

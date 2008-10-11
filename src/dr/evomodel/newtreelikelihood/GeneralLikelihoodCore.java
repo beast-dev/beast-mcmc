@@ -190,7 +190,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      */
     public void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount) {
         for (int i = 0; i < branchUpdateCount; i++) {
-//            currentMatricesIndices[branchUpdateIndices[i]] = 1 - currentMatricesIndices[branchUpdateIndices[i]];
+            currentMatricesIndices[branchUpdateIndices[i]] = 1 - currentMatricesIndices[branchUpdateIndices[i]];
             calculateTransitionProbabilityMatrices(branchUpdateIndices[i], branchLengths[i]);
         }
     }
@@ -247,13 +247,14 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
             int nodeIndex3 = operations[x];
             x++;
 
- //           currentPartialsIndices[nodeIndex1] = 1 - currentPartialsIndices[nodeIndex1];
 
             double[] matrices1 = matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1];
             double[] matrices2 = matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2];
 
             double[] partials1 = partials[currentPartialsIndices[nodeIndex1]][nodeIndex1];
             double[] partials2 = partials[currentPartialsIndices[nodeIndex2]][nodeIndex2];
+
+            currentPartialsIndices[nodeIndex3] = 1 - currentPartialsIndices[nodeIndex3];
             double[] partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
 
             double sum1, sum2;

@@ -148,7 +148,7 @@ public class GPUMemoryLikelihoodCore extends NativeMemoryLikelihoodCore {
 	                                                long ptrPartials3,
 	                                                int stateCount);
 
-	
+
 	public static class LikelihoodCoreLoader implements LikelihoodCoreFactory.LikelihoodCoreLoader {
 
 		public String getLibraryName() { return "GPUMemoryLikelihoodCore"; }

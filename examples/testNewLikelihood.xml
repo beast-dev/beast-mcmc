@@ -137,15 +137,15 @@
 		</mutationRate>
     </siteModel>
 
-	<treeLikelihood id="treeLikelihood7">
+	<crazyTreeLikelihood id="crazyTreeLikelihood7">
 		<patterns idref="patterns1"/>
 		<treeModel idref="treeModel1"/>
 		<siteModel idref="siteModel7"/>
-	</treeLikelihood>
+	</crazyTreeLikelihood>
 
 	<report>
 		GTR:
-		ln L = <likelihood idref="treeLikelihood7"/>
+		ln L = <likelihood idref="crazyTreeLikelihood7"/>
 		(PAUP = -1969.14584)
 
 	</report>
@@ -190,15 +190,15 @@
 		</proportionInvariant>
     </siteModel>
 
-	<treeLikelihood id="treeLikelihood8">
+	<crazyTreeLikelihood id="crazyTreeLikelihood8">
 		<patterns idref="patterns1"/>
 		<treeModel idref="treeModel1"/>
 		<siteModel idref="siteModel8"/>
-	</treeLikelihood>
+	</crazyTreeLikelihood>
 
 	<report>
 		GTR+I:
-		ln L = <likelihood idref="treeLikelihood8"/>
+		ln L = <likelihood idref="crazyTreeLikelihood8"/>
 		(PAUP = -1948.84175)
 
 	</report>
@@ -243,15 +243,15 @@
 		</gammaShape>
     </siteModel>
 
-	<treeLikelihood id="treeLikelihood9">
+	<crazyTreeLikelihood id="crazyTreeLikelihood9">
 		<patterns idref="patterns1"/>
 		<treeModel idref="treeModel1"/>
 		<siteModel idref="siteModel9"/>
-	</treeLikelihood>
+	</crazyTreeLikelihood>
 
 	<report>
 		GTR+G:
-		ln L = <likelihood idref="treeLikelihood9"/>
+		ln L = <likelihood idref="crazyTreeLikelihood9"/>
 		(PAUP = -1949.03601)
 
 	</report>
@@ -299,15 +299,15 @@
 		</proportionInvariant>
     </siteModel>
 
-	<treeLikelihood id="treeLikelihood10">
+	<crazyTreeLikelihood id="crazyTreeLikelihood10">
 		<patterns idref="patterns1"/>
 		<treeModel idref="treeModel1"/>
 		<siteModel idref="siteModel10"/>
-	</treeLikelihood>
+	</crazyTreeLikelihood>
 
 	<report>
 		GTR+GI:
-		ln L = <likelihood idref="treeLikelihood10"/>
+		ln L = <likelihood idref="crazyTreeLikelihood10"/>
 		(PAUP = -1947.58294)
 
 	</report>

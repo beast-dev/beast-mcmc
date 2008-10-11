@@ -29,6 +29,8 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
@@ -48,29 +50,40 @@ import java.util.logging.Logger;
 
 public class TreeLikelihood extends AbstractTreeLikelihood {
 
-    public static final String TREE_LIKELIHOOD = "treeLikelihood";
+    public static final String TREE_LIKELIHOOD = "crazyTreeLikelihood";
 
     /**
      * Constructor.
      */
     public TreeLikelihood(PatternList patternList,
                           TreeModel treeModel,
-                          SiteModel siteModel) {
+                          SiteModel siteModel,
+                          	                      BranchRateModel branchRateModel
+    ) {
 
         super(TREE_LIKELIHOOD, patternList, treeModel);
 
         try {
+            final Logger logger = Logger.getLogger("dr.evomodel");
+
+            logger.info("Crazy new TreeLikelihood");
+
             this.siteModel = siteModel;
             addModel(siteModel);
 
             this.frequencyModel = siteModel.getFrequencyModel();
             addModel(frequencyModel);
 
+			if (branchRateModel != null) {
+				this.branchRateModel = branchRateModel;
+				logger.info("Branch rate model used: " + branchRateModel.getModelName());
+			} else {
+				this.branchRateModel = new DefaultBranchRateModel();
+			}
+			addModel(this.branchRateModel);
+
             this.categoryCount = siteModel.getCategoryCount();
 
-            final Logger logger = Logger.getLogger("dr.evomodel");
-
-            logger.info("Crazy new TreeLikelihood");
 
 	        int[] configuration = new int[3];
 	        configuration[0] = stateCount;
@@ -142,6 +155,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 }
             }
 
+		} else if (model == branchRateModel) {
+			if (index == -1) {
+				updateAllNodes();
+			} else {
+				updateNode(treeModel.getNode(index));
+			}
+
         } else if (model == frequencyModel) {
 
             updateSubstitutionModel = true;
@@ -149,7 +169,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         } else if (model instanceof SiteModel) {
 
-            updateSubstitutionModel = true;
+            updateSiteModel = true;
             updateAllNodes();
 
         } else {
@@ -272,7 +292,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         // First update the transition probability matrix(ices) for this branch
         if (parent != null && updateNode[nodeNum]) {
 
-            final double branchRate = 1.0;
+			final double branchRate = branchRateModel.getBranchRate(tree, node);
 
             // Get the operational time of the branch
             final double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
@@ -352,11 +372,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             PatternList patternList = (PatternList) xo.getChild(PatternList.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
+            BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
             return new TreeLikelihood(
                     patternList,
                     treeModel,
-                    siteModel
+                    siteModel,
+                    branchRateModel
             );
         }
 
@@ -380,6 +402,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(SiteModel.class),
+                new ElementRule(BranchRateModel.class, true)
         };
     };
 
@@ -397,6 +420,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      */
     protected final SiteModel siteModel;
 
+	/**
+	 * the branch rate model
+	 */
+	protected final BranchRateModel branchRateModel;
 
     /**
      * the categories for each site

@@ -3,6 +3,8 @@ package dr.evomodel.newtreelikelihood;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 
+import java.util.logging.Logger;
+
 /*
  * NativeLikelihoodCore.java
  *
@@ -15,7 +17,9 @@ public class NativeLikelihoodCore implements LikelihoodCore {
     public static final String LIBRARY_NAME = "NewNativeLikelihoodCore";
 
     public NativeLikelihoodCore() {
-        // don't need to do any thing;
+        StringBuffer sb = new StringBuffer();
+        sb.append("Constructing native likelihood core\n");
+        Logger.getLogger("dr.evomodel.treelikelihood").info(sb.toString());
     }
 
     public native void initialize(int nodeCount, int patternCount, int matrixCount);
@@ -79,11 +83,10 @@ public class NativeLikelihoodCore implements LikelihoodCore {
         public LikelihoodCore createLikelihoodCore(int[] configuration, AbstractTreeLikelihood treeLikelihood) {
             int stateCount = configuration[0];
             try {
-                System.loadLibrary(getLibraryName()+"-"+stateCount);
+                System.loadLibrary(getLibraryName() + "-" + stateCount);
             } catch (UnsatisfiedLinkError e) {
                 return null;
             }
-            // System.out.println("Successfully loaded native library: " + getLibraryName()+"-"+stateCount);
             return new NativeLikelihoodCore();
         }
     }

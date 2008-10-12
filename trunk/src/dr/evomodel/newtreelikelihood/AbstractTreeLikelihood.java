@@ -217,7 +217,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 		if (!likelihoodKnown) {
 			logLikelihood = calculateLogLikelihood();
 			likelihoodKnown = true;
-		}
+        }
 		return logLikelihood;
 	}
 
@@ -233,9 +233,12 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 	protected abstract double calculateLogLikelihood();
 
 	public String toString() {
-        return getClass().getName() + "(" + getLogLikelihood() + ")";
-
-	}
+        if (hasInitialized) {
+            return getClass().getName() + "(" + getLogLikelihood() + ")";
+        } else {
+            return getClass().getName() + "(uninitialized)";
+        }
+    }
 
 	// **************************************************************
 	// Loggable IMPLEMENTATION
@@ -290,4 +293,5 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 	private boolean likelihoodKnown = false;
 	private boolean storedLikelihoodKnown = false;
 
+    protected boolean hasInitialized = false;
 }

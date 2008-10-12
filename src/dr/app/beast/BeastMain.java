@@ -101,7 +101,7 @@ public class BeastMain {
                     return record.getLevel().intValue() >= Level.WARNING.intValue();
                 }
             });
-            logger.addHandler(handler);
+//            logger.addHandler(handler);
 
             logger.setUseParentHandlers(false);
 

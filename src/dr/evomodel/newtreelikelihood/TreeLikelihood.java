@@ -263,6 +263,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         }
 
         updateSubstitutionModel = false;
+        updateSiteModel = false;
         //********************************************************************
 
         return logL;

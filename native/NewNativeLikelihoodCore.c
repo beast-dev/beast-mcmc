@@ -35,6 +35,14 @@ int* storedMatricesIndices;
 int* currentPartialsIndices;
 int* storedPartialsIndices;
 
+void printArray(char* name, double *array, int length) {
+	fprintf(stdout, "%s:", name);
+	for (int i = 0; i < length; i++) {
+		fprintf(stdout, " %f", array[i]);
+	}
+	fprintf(stdout, "\n");
+}
+
 /*
  * Class:     dr_evomodel_newtreelikelihood_NativeLikelihoodCore
  * Method:    initialize
@@ -119,7 +127,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_s
 		memcpy(partials[0][tipIndex] + k, tipPartials, sizeof(double) * patternCount * STATE_COUNT);
 		k += patternCount * STATE_COUNT;
 	}
-
+	
 	(*env)->ReleasePrimitiveArrayCritical(env, inTipPartials, tipPartials, JNI_ABORT);
 }
 
@@ -196,10 +204,10 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
 {
 	jint *nodeIndices = (jint*)(*env)->GetPrimitiveArrayCritical(env, inNodeIndices, 0);
 	jdouble *branchLengths = (jdouble*)(*env)->GetPrimitiveArrayCritical(env, inBranchLengths, 0);
-	
+	        	
 	static double tmp[STATE_COUNT];
 	
-	for (int x; x < count; x++) {
+	for (int x = 0; x < count; x++) {
 		int nodeIndex = nodeIndices[x];
 		double branchLength = branchLengths[x];
 		
@@ -224,6 +232,8 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
                 }
             }
         }
+        
+
 	}
 	
 	(*env)->ReleasePrimitiveArrayCritical(env, inBranchLengths, branchLengths, JNI_ABORT);
@@ -271,21 +281,25 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
 
 		for (int l = 0; l < matrixCount; l++) {
 
-			for (int k = 0; k < patternCount; k++, v += STATE_COUNT) {
+			for (int k = 0; k < patternCount; k++) {
 
 				int w = l * MATRIX_SIZE;
 
-				for (int i = 0; i < STATE_COUNT; i++, u++) {
+				for (int i = 0; i < STATE_COUNT; i++) {
 
 					sum1 = sum2 = 0.0;
 
-					for (int j = 0; j < STATE_COUNT; j++, w++) {
+					for (int j = 0; j < STATE_COUNT; j++) {
 						sum1 += matrices1[w] * partials1[v + j];
 						sum2 += matrices2[w] * partials2[v + j];
+						w++;
 					}
 
 					partials3[u] = sum1 * sum2;
-				}			
+					
+					u++;
+				}		
+				v += STATE_COUNT;
 			}
 		}
 	}
@@ -308,7 +322,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_c
 	jdouble *logLikelihoods = (jdouble*)(*env)->GetPrimitiveArrayCritical(env, outLogLikelihoods, 0);
 
 	double* rootPartials = partials[currentPartialsIndices[rootNodeIndex]][rootNodeIndex];
-
+	
 	int u = 0;
 	int v = 0;
 	for (int k = 0; k < patternCount; k++) {

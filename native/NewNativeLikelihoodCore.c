@@ -139,11 +139,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_s
 JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_updateRootFrequencies
   (JNIEnv *env, jobject obj, jdoubleArray inFrequencies) 
 {
-	jdouble *tmpFrequencies = (jdouble*)(*env)->GetPrimitiveArrayCritical(env, inFrequencies, 0);
-	
-	memcpy(frequencies, tmpFrequencies, sizeof(double) * STATE_COUNT);
-	
-	(*env)->ReleasePrimitiveArrayCritical(env, inFrequencies, tmpFrequencies, JNI_ABORT);
+    (*env)->GetDoubleArrayRegion(env, inFrequencies, 0, STATE_COUNT, frequencies);
 }
 
 /*
@@ -154,9 +150,24 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
 JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_updateEigenDecomposition
   (JNIEnv *env, jobject obj, jobjectArray inEigenVectors, jobjectArray inInvEigenVectors, jdoubleArray inEigenValues)
 {
-	jdouble **Evec = (jdouble**)(*env)->GetPrimitiveArrayCritical(env, inEigenVectors, 0);
-	jdouble **Ievc = (jdouble**)(*env)->GetPrimitiveArrayCritical(env, inInvEigenVectors, 0);
-	jdouble *Eval = (jdouble*)(*env)->GetPrimitiveArrayCritical(env, inEigenValues, 0);
+	double Evec[STATE_COUNT][STATE_COUNT];
+	double Ievc[STATE_COUNT][STATE_COUNT];
+	
+	for (int i = 0; i < STATE_COUNT; i++) {
+		jdoubleArray oneDim = (jdoubleArray)(*env)->GetObjectArrayElement(env, inEigenVectors, i);
+		jdouble *element = (*env)->GetDoubleArrayElements(env, oneDim, 0);
+		for(int j = 0; j < STATE_COUNT; j++) {
+			Evec[i][j]= element[j];
+		}
+	}
+
+	for (int i = 0; i < STATE_COUNT; i++) {
+		jdoubleArray oneDim = (jdoubleArray)(*env)->GetObjectArrayElement(env, inInvEigenVectors, i);
+		jdouble *element = (*env)->GetDoubleArrayElements(env, oneDim, 0);
+		for(int j = 0; j < STATE_COUNT; j++) {
+			Ievc[i][j]= element[j];
+		}
+	}
 	
 	int l =0;
 	for (int i = 0; i < STATE_COUNT; i++) {
@@ -168,11 +179,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
 		}
 	}
 
-	memcpy(eigenValues, Eval, sizeof(double) * STATE_COUNT);
-	
-	(*env)->ReleasePrimitiveArrayCritical(env, inEigenValues, Eval, JNI_ABORT);
-	(*env)->ReleasePrimitiveArrayCritical(env, inInvEigenVectors, Ievc, JNI_ABORT);
-	(*env)->ReleasePrimitiveArrayCritical(env, inEigenVectors, Evec, JNI_ABORT);
+    (*env)->GetDoubleArrayRegion(env, inEigenValues, 0, STATE_COUNT, eigenValues);
 }
 
 /*
@@ -183,11 +190,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
 JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_updateCategoryRates
   (JNIEnv *env, jobject obj, jdoubleArray inRates)
 {
-	jdouble *tmpRates = (jdouble*)(*env)->GetPrimitiveArrayCritical(env, inRates, 0);
-	
-	memcpy(categoryRates, tmpRates, sizeof(double) * matrixCount);
-	
-	(*env)->ReleasePrimitiveArrayCritical(env, inRates, tmpRates, JNI_ABORT);
+    (*env)->GetDoubleArrayRegion(env, inRates, 0, matrixCount, categoryRates);
 }
 
 /*
@@ -198,11 +201,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
 JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_updateCategoryProportions
   (JNIEnv *env, jobject obj, jdoubleArray inProportions)
 {
-	jdouble *tmpProportions = (jdouble*)(*env)->GetPrimitiveArrayCritical(env, inProportions, 0);
-	
-	memcpy(categoryProportions, tmpProportions, sizeof(double) * matrixCount);
-	
-	(*env)->ReleasePrimitiveArrayCritical(env, inProportions, tmpProportions, JNI_ABORT);
+    (*env)->GetDoubleArrayRegion(env, inProportions, 0, matrixCount, categoryProportions);
 }
 
 /*

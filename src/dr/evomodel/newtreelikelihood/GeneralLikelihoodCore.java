@@ -165,7 +165,18 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
     public void updateSubstitutionModel(SubstitutionModel substitutionModel) {
         System.arraycopy(substitutionModel.getFrequencyModel().getFrequencies(), 0, frequencies, 0, frequencies.length);
 
-        System.arraycopy(substitutionModel.getCMatrix(), 0, cMatrix, 0, cMatrix.length);
+        double[][] Evec = substitutionModel.getEigenVectors();
+        double[][] Ievc = substitutionModel.getInverseEigenVectors();
+        int l =0;
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                for (int k = 0; k < stateCount; k++) {
+                    cMatrix[l] = Evec[i][k] * Ievc[k][j];
+                    l++;
+                }
+            }
+        }
+
         System.arraycopy(substitutionModel.getEigenValues(), 0, eigenValues, 0, eigenValues.length);
 
     }

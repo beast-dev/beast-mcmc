@@ -260,6 +260,8 @@ public class YangCodonModel extends AbstractCodonModel
 					codons = Codons.FLATWORM_MT;
 				} else if (codeStr.equals(GeneticCode.BLEPHARISMA_NUC.getName())) {
 					codons = Codons.BLEPHARISMA_NUC;
+				} else if (codeStr.equals(GeneticCode.NO_STOPS.getName())) {
+					codons = Codons.NO_STOPS;
 				}
 			}
 
@@ -297,7 +299,8 @@ public class YangCodonModel extends AbstractCodonModel
 					GeneticCode.ALT_YEAST.getName(),
 					GeneticCode.ASCIDIAN_MT.getName(),
 					GeneticCode.FLATWORM_MT.getName(),
-					GeneticCode.BLEPHARISMA_NUC.getName()}, true),
+					GeneticCode.BLEPHARISMA_NUC.getName(),
+					GeneticCode.NO_STOPS.getName()}, true),
 			new ElementRule(OMEGA, 
 				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
 			new ElementRule(KAPPA, 

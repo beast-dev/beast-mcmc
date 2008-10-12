@@ -83,7 +83,7 @@ public class NativeLikelihoodCore implements LikelihoodCore {
             } catch (UnsatisfiedLinkError e) {
                 return null;
             }
-            System.out.println("Successfully loaded native library: " + getLibraryName()+"-"+stateCount);
+            // System.out.println("Successfully loaded native library: " + getLibraryName()+"-"+stateCount);
             return new NativeLikelihoodCore();
         }
     }

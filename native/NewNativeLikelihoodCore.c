@@ -8,11 +8,9 @@
 #define STATE_COUNT 4
 #define MATRIX_SIZE STATE_COUNT * STATE_COUNT
 
-int stateCount;
 int nodeCount;
 int patternCount;
 int partialsSize;
-int matrixSize;
 int matrixCount;
 
 double* cMatrix;
@@ -44,21 +42,19 @@ int* storedPartialsIndices;
  */
 JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_initialize
   (JNIEnv *env, jobject obj, jint inNodeCount, jint inPatternCount, jint inMatrixCount)
-{
-	stateCount = STATE_COUNT;
-	
+{	
 	nodeCount = inNodeCount;
 	patternCount = inPatternCount;
 	matrixCount = inMatrixCount;
 	
-	cMatrix = (double *)malloc(sizeof(double) * stateCount * stateCount * stateCount);
-	storedCMatrix = (double *)malloc(sizeof(double) * stateCount * stateCount * stateCount);
+	cMatrix = (double *)malloc(sizeof(double) * STATE_COUNT * STATE_COUNT * STATE_COUNT);
+	storedCMatrix = (double *)malloc(sizeof(double) * STATE_COUNT * STATE_COUNT * STATE_COUNT);
 
-	eigenValues = (double *)malloc(sizeof(double) * stateCount);
-	storedEigenValues = (double *)malloc(sizeof(double) * stateCount);
+	eigenValues = (double *)malloc(sizeof(double) * STATE_COUNT);
+	storedEigenValues = (double *)malloc(sizeof(double) * STATE_COUNT);
 
-	frequencies = (double *)malloc(sizeof(double) * stateCount);
-	storedFrequencies = (double *)malloc(sizeof(double) * stateCount);
+	frequencies = (double *)malloc(sizeof(double) * STATE_COUNT);
+	storedFrequencies = (double *)malloc(sizeof(double) * STATE_COUNT);
 
 	categoryRates = (double *)malloc(sizeof(double) * matrixCount);
 	storedCategoryRates = (double *)malloc(sizeof(double) * matrixCount);
@@ -69,7 +65,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_i
 	// a temporary array used in calculating log likelihoods
 	integrationTmp = (double *)malloc(sizeof(double) * patternCount * STATE_COUNT);
 
-	partialsSize = patternCount * stateCount * matrixCount;
+	partialsSize = patternCount * STATE_COUNT * matrixCount;
 
 	partials = (double ***)malloc(sizeof(double**) * 2);
 	partials[0] = (double **)malloc(sizeof(double*) * nodeCount);
@@ -80,20 +76,21 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_i
 	}
 
   	currentMatricesIndices = (int *)malloc(sizeof(int) * nodeCount);
+  	memset(currentMatricesIndices, 0, sizeof(int) * nodeCount);
   	storedMatricesIndices = (int *)malloc(sizeof(int) * nodeCount);
 
   	currentPartialsIndices = (int *)malloc(sizeof(int) * nodeCount);
+  	memset(currentPartialsIndices, 0, sizeof(int) * nodeCount);
   	storedPartialsIndices = (int *)malloc(sizeof(int) * nodeCount);
        
-    matrixSize = stateCount * stateCount;
-
 	matrices = (double ***)malloc(sizeof(double**) * 2);
 	matrices[0] = (double **)malloc(sizeof(double*) * nodeCount);
 	matrices[1] = (double **)malloc(sizeof(double*) * nodeCount);
 	for (int i = 0; i < nodeCount; i++) {
-		matrices[0][i] = (double *)malloc(sizeof(double) * matrixCount * matrixSize);
-		matrices[1][i] = (double *)malloc(sizeof(double) * matrixCount * matrixSize);
+		matrices[0][i] = (double *)malloc(sizeof(double) * matrixCount * MATRIX_SIZE);
+		matrices[1][i] = (double *)malloc(sizeof(double) * matrixCount * MATRIX_SIZE);
 	}
+	
 }
 
 /*
@@ -265,6 +262,8 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
 		currentPartialsIndices[nodeIndex3] = 1 - currentPartialsIndices[nodeIndex3];
 		double* partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
 
+		/* fprintf(stdout, "*** operation %d: %d, %d -> %d\n", op, nodeIndex1, nodeIndex2, nodeIndex3); */
+
 		double sum1, sum2;
 
 		int u = 0;
@@ -272,25 +271,21 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
 
 		for (int l = 0; l < matrixCount; l++) {
 
-			for (int k = 0; k < patternCount; k++) {
+			for (int k = 0; k < patternCount; k++, v += STATE_COUNT) {
 
-				int w = l * matrixSize;
+				int w = l * MATRIX_SIZE;
 
-				for (int i = 0; i < STATE_COUNT; i++) {
+				for (int i = 0; i < STATE_COUNT; i++, u++) {
 
 					sum1 = sum2 = 0.0;
 
-					for (int j = 0; j < STATE_COUNT; j++) {
+					for (int j = 0; j < STATE_COUNT; j++, w++) {
 						sum1 += matrices1[w] * partials1[v + j];
 						sum2 += matrices2[w] * partials2[v + j];
-
-						w++;
 					}
 
 					partials3[u] = sum1 * sum2;
-					u++;
-				}
-				v += STATE_COUNT;
+				}			
 			}
 		}
 	}
@@ -352,6 +347,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_c
 		}
 		logLikelihoods[k] = log(sum);
 	}
+	
 	(*env)->ReleasePrimitiveArrayCritical(env, outLogLikelihoods, logLikelihoods, JNI_ABORT);
 }
 

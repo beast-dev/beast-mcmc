@@ -115,6 +115,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
+        hasInitialized = true;
     }
 
     public final LikelihoodCore getLikelihoodCore() {

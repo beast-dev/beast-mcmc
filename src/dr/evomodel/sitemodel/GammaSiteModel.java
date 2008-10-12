@@ -59,7 +59,7 @@ public class GammaSiteModel extends AbstractModel
                 0,
                 null);
     }
-    
+
     public GammaSiteModel(SubstitutionModel substitutionModel, double alpha, int categoryCount) {
         this(substitutionModel,
                 null,
@@ -203,34 +203,18 @@ public class GammaSiteModel extends AbstractModel
         throw new IllegalArgumentException("Integrating across categories");
     }
 
-    public void getTransitionProbabilitiesForCategory(int category, double time, double[] matrix) {
-        double substitutions = getSubstitutionsForCategory(category, time);
-        getTransitionProbabilities(substitutions, matrix);
-    }
-
     public double getRateForCategory(int category) {
         synchronized (this) {
             if (!ratesKnown) {
                 calculateCategoryRates();
             }
         }
-
-        return categoryRates[category];
-    }
-
-    public double getSubstitutionsForCategory(int category, double time) {
-        synchronized (this) {
-            if (!ratesKnown) {
-                calculateCategoryRates();
-            }
-        }
-
         double mu = 1.0;
         if (muParameter != null) {
             mu = muParameter.getParameterValue(0);
         }
 
-        return time * mu * categoryRates[category];
+        return categoryRates[category] * mu;
     }
 
     public void getTransitionProbabilities(double substitutions, double[] matrix) {
@@ -266,21 +250,6 @@ public class GammaSiteModel extends AbstractModel
         }
 
         return categoryProportions;
-    }
-
-    /**
-     * Get an array of the expected proportion of sites in this category.
-     *
-     * @return an array of the proportion.
-     */
-    public double[] getCategoryRates() {
-        synchronized (this) {
-            if (!ratesKnown) {
-                calculateCategoryRates();
-            }
-        }
-
-        return categoryRates;
     }
 
     /**

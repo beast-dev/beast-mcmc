@@ -237,7 +237,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
     }
 
     //    protected void allocateNativeMemory() { }
-    
+
 
 	/**
 	 * cleans up and deallocates arrays.
@@ -324,7 +324,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 		assert this.ptrPartials[0][nodeIndex] > DEBUG;
 
 		setNativeMemoryArray(expandedPartials, 0, this.ptrPartials[0][nodeIndex], 0, expandedPartials.length);
-		
+
 		partialsData[0][nodeIndex] = expandedPartials;
 	}
 
@@ -399,9 +399,9 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 		long ptr = ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] + matrixIndex * matrixMemorySize;
 
-		double substitutions = siteModel.getSubstitutionsForCategory(matrixIndex,branchTime);
+		double substitutions = siteModel.getRateForCategory(matrixIndex) * branchTime;
 		substitutionModel.getTransitionProbabilities(substitutions, ptr);
-	
+
 //		        siteModel.getTransitionProbabilitiesForCategory(i, branchTime, probabilities);
 //				likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
 	}
@@ -490,7 +490,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3) {
 
 	    if (DEBUG_PRINT) printStates();
-	    
+
 
 
 		if (ptrStates[nodeIndex1] != 0) {
@@ -712,8 +712,8 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 		System.err.println("Root = "+new Vector(tmp));
 		//System.exit(-1);
 	    }
-				  
-	
+
+
 		calculateIntegratePartials(ptrPartials[currentPartialsIndices[nodeIndex]][nodeIndex], proportions, outPartials);
 		if (DEBUG_PRINT) {
 		    //System.err.println("Integrated Root = "+new Vector(outPartials));
@@ -897,7 +897,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 	                                         int[] toArray, int toOffset, int length);
 
         protected native int getNativeRealSize();
-        
+
         protected native int getNativeIntSize();
 
 	/* Native peeling functions */

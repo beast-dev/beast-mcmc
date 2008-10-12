@@ -135,10 +135,6 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
         }
     }
 
-	public void getEigenDecomposition(double[] cMatrix, double[] eigenValues) {
-		throw new UnsupportedOperationException("Not yet implemented.");
-
-	}
 
     /**
      * Parses an element from an DOM document into a TwoStateCovarionModel

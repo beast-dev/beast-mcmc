@@ -44,26 +44,31 @@ public interface SubstitutionModel extends Model {
      * @param distance the time (branch length)
      * @param matrix   an array to store the matrix
      */
-    public void getTransitionProbabilities(double distance, double[] matrix);
+    void getTransitionProbabilities(double distance, double[] matrix);
 
     /**
-     * This function precalculates the product of the eigenvectors and their
-     * inverse for faster calculation of transition probabilities. The output
-     * is a vector of precalculated values and the eigenValues
-     * @param cMatrix
-     * @param eigenValues
+     * This function returns the a matrix which is the precalculated product
+     * of the Eigen vectors and the inverse Eigen vectors.
+     * @return the cMatrix
      */
-    public void getEigenDecomposition(double[] cMatrix, double[] eigenValues);
+    double[] getCMatrix();
+
+    /**
+     * This function returns the Eigen values.
+     * @return the Eigen values
+     */
+    double[] getEigenValues();
 
     /**
      * get the state frequencies
      *
      * @return the frequencies
      */
-    public FrequencyModel getFrequencyModel();
+    FrequencyModel getFrequencyModel();
 
     /**
      * @return the data type
      */
-    public DataType getDataType();
+    DataType getDataType();
+
 }

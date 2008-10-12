@@ -375,8 +375,8 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 			}
 
 			for (int i = 0; i < categoryCount; i++) {
-
-				siteModel.getTransitionProbabilitiesForCategory(i, branchTime, probabilities);
+                double branchLength = siteModel.getRateForCategory(i) * branchTime;
+                siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probabilities);
 				likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
 			}
 

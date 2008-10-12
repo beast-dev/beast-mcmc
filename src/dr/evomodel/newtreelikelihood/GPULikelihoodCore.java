@@ -4,163 +4,83 @@ import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
+ * @author Andrew Rambaut
  * @author Dat Hunyh
  *
  */
 
-public class GPULikelihoodCore extends NativeMemoryLikelihoodCore {
+public class GPULikelihoodCore extends NativeLikelihoodCore {
 
 	/**
 	 * Constructor
 	 *
 	 * @param treeLikelihood reference back to ATL, should be able to remove at some point
-	 * @param stateCount number of states
+	 * @param gpuInfo number of states
 	 */
-    public GPULikelihoodCore(AbstractTreeLikelihood treeLikelihood, int stateCount) {
-		super(stateCount);
+    public GPULikelihoodCore(AbstractTreeLikelihood treeLikelihood, GPUInfo gpuInfo) {
+//		super();  // super() only prints out information
 		StringBuffer sb = new StringBuffer();
 		sb.append("Constructing GPU likelihood core:\n");
-		sb.append("\tGPU Name: \n");
-		sb.append("\tOther info here\n");
-		sb.append("If you publish results using this core, please reference Hunyh and Suchard (in preparation)\n");
+		sb.append("\tGPU Name: "+gpuInfo.name+"\n");
+		sb.append("\tOther info here: "+gpuInfo.memorySize+"\n");
+		sb.append("If you publish results using this core, please reference Hunyh, Rambaut and Suchard (in preparation)\n");
 		Logger.getLogger("dr.evomodel.treelikelihood").info(sb.toString());
 		this.treeLikelihood = treeLikelihood;
-
 	}
 
-    private AbstractTreeLikelihood treeLikelihood;
+    private AbstractTreeLikelihood treeLikelihood;   // TODO Not needed if everything runs in one thread or I get GPU contexts working
 
-	public void finalize() throws Throwable {
-		super.finalize();
-		nativeFinalize();
-	}
+	/** GPU-specific loading **/
 
+	protected static String GPU_LIBRARY_NAME = "GPULikelihoodCore";
 
-    protected void migrateThread() {
-    	super.migrateThread();
-    	treeLikelihood.makeDirty();
-    }
-
-	private double[] tmpPartials = null;
-
-	protected void calculateIntegratePartials(long ptrInPartials, double[] proportions, double[] outPartials) {
-
-		if (tmpPartials == null)
-			tmpPartials = new double[partialsSize];
-
-		double[] inPartials = tmpPartials;
-
-		getNativeMemoryArray(ptrInPartials, 0, tmpPartials, 0, partialsSize);
-
-		int u = 0;
-		int v = 0;
-		for (int k = 0; k < patternCount; k++) {
-
-			for (int i = 0; i < stateCount; i++) {
-
-				outPartials[u] = inPartials[v] * proportions[0];
-				u++;
-				v++;
-			}
-		}
-
-
-		for (int l = 1; l < matrixCount; l++) {
-			u = 0;
-
-			for (int k = 0; k < patternCount; k++) {
-
-				for (int i = 0; i < stateCount; i++) {
-
-					outPartials[u] += inPartials[v] * proportions[l];
-					u++;
-					v++;
-				}
-			}
-		}
-
+	protected static boolean isCompatible(GPUInfo gpuInfo, int[] configuration) {
+		return true;
 	}
 
 
+	/** GPU-specific native interface **/
 
-	public void storeState() {
+	private static native GPUInfo getGPUInfo();
 
-		System.arraycopy(currentMatricesIndices, 0, storedMatricesIndices, 0, nodeCount);
-		System.arraycopy(currentPartialsIndices, 0, storedPartialsIndices, 0, nodeCount);
+	/** Native interface overriding NativeLikelihoodCore **/
 
-		if (firstCall ) {
-		    firstCall = false;
-		    migrateThread();
-		}
-	}
+	protected native void updateRootFrequencies(double[] frequencies);
 
+	protected native void updateEigenDecomposition(double[][] eigenVectors, double[][] inverseEigenValues, double[] eigenValues);
 
-	/* GPU memory handing functions */
+	protected native void updateCategoryRates(double[] rates);
 
-	protected native long allocateNativeMemoryArray(int length);
+    protected native void updateCategoryProportions(double[] proportions);
 
-	protected native long allocateNativeIntMemoryArray(int length);
+    public native void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount);
 
-	protected native void freeNativeMemoryArray(long nativePtr);
+    public native void updatePartials(int[] operations, int[] dependencies, int operationCount);
 
-	protected native void setNativeMemoryArray(double[] fromArray, int fromOffset,
-	                                           long toNativePtr, int toOffset, int length);
+    public native void calculateLogLikelihoods(int rootNodeIndex, double[] outLogLikelihoods);
 
-	protected native void setNativeMemoryArray(int[] fromArray, int fromOffset,
-	                                           long toNativePtr, int toOffset, int length);
+    public native void storeState();
 
-	protected native void getNativeMemoryArray(long fromNativePtr, int fromOffset,
-	                                           double[] toArray, int toOffset, int length);
-
-	protected native void getNativeMemoryArray(long fromNativePtr, int fromOffset,
-	                                           int[] toArray, int toOffset, int length);
-
-	protected native int getNativeRealSize();
-
-	protected native int getNativeIntSize();
-
-	protected native long getNativeRealDelta(long inPtr, int length);
-
-	private native void nativeFinalize();
-
-	/* GPU peeling functions */
-
-	public native void nativeIntegratePartials(long ptrPartials, long ptrProportions,
-	                                           long ptrOutPartials,
-	                                           int patternCount, int matrixCount,
-	                                           int stateCount);
-
-	protected native void nativePartialsPartialsPruning(long ptrPartials1, long ptrMatrices1,
-	                                                    long ptrPartials2, long ptrMatrices2,
-	                                                    int patternCount, int matrixCount,
-	                                                    long ptrPartials3,
-	                                                    int stateCount);
-
-	protected native void nativeStatesPartialsPruning(long ptrStates1, long ptrMatrices1,
-	                                                  long ptrPartials2, long ptrMatrices2,
-	                                                  int patternCount, int matrixCount,
-	                                                  long ptrPartials3,
-	                                                  int stateCount);
-
-	protected native void nativeStatesStatesPruning(long ptrStates1, long ptrMatrices1,
-	                                                long ptrStates2, long ptrMatrices2,
-	                                                int patternCount, int matrixCount,
-	                                                long ptrPartials3,
-	                                                int stateCount);
-
+    public native void restoreState();
 
 	public static class LikelihoodCoreLoader implements LikelihoodCoreFactory.LikelihoodCoreLoader {
 
-		public String getLibraryName() { return "GPULikelihoodCore"; }
+		public String getLibraryName() { return GPU_LIBRARY_NAME; }
 
 		public LikelihoodCore createLikelihoodCore(int[] configuration, AbstractTreeLikelihood treeLikelihood) {
 			int stateCount = configuration[0];
+			GPUInfo gpuInfo;
 			try {
 				System.loadLibrary(getLibraryName()+"-"+stateCount);
+				gpuInfo = GPULikelihoodCore.getGPUInfo();
+				if (gpuInfo == null) // No GPU is present
+					return null;
+				if (!GPULikelihoodCore.isCompatible(gpuInfo, configuration)) // GPU is not compatible
+					return null;
 			} catch (UnsatisfiedLinkError e) {
 				return null;
 			}
-			return new GPULikelihoodCore(treeLikelihood,configuration[0]);
+			return new GPULikelihoodCore(treeLikelihood, GPULikelihoodCore.getGPUInfo());
 		}
 	}
 }

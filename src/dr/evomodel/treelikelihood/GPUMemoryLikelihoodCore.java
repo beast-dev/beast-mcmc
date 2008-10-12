@@ -1,8 +1,5 @@
 package dr.evomodel.treelikelihood;
 
-import dr.evomodel.sitemodel.SiteModel;
-import dr.math.matrixAlgebra.Vector;
-
 import java.util.logging.Logger;
 
 /**

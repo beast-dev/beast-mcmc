@@ -47,11 +47,16 @@ public interface SubstitutionModel extends Model {
     void getTransitionProbabilities(double distance, double[] matrix);
 
     /**
-     * This function returns the a matrix which is the precalculated product
-     * of the Eigen vectors and the inverse Eigen vectors.
-     * @return the cMatrix
+     * This function returns the Eigen vectors.
+     * @return the array
      */
-    double[] getCMatrix();
+    double[][] getEigenVectors();
+
+    /**
+     * This function returns the inverse Eigen vectors.
+     * @return the array
+     */
+    double[][] getInverseEigenVectors();
 
     /**
      * This function returns the Eigen values.

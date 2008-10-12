@@ -149,19 +149,30 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
 /*
  * Class:     dr_evomodel_newtreelikelihood_NativeLikelihoodCore
  * Method:    updateEigenDecomposition
- * Signature: ([D[D)V
+ * Signature: ([[D[[D[D)V
  */
 JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_updateEigenDecomposition
-  (JNIEnv *env, jobject obj, jdoubleArray inCMatrix, jdoubleArray inEigenValues)
+  (JNIEnv *env, jobject obj, jobjectArray inEigenVectors, jobjectArray inInvEigenVectors, jdoubleArray inEigenValues)
 {
-	jdouble *tmpCMatrix = (jdouble*)(*env)->GetPrimitiveArrayCritical(env, inCMatrix, 0);
-	jdouble *tmpEigenValues = (jdouble*)(*env)->GetPrimitiveArrayCritical(env, inEigenValues, 0);
+	jdouble **Evec = (jdouble**)(*env)->GetPrimitiveArrayCritical(env, inEigenVectors, 0);
+	jdouble **Ievc = (jdouble**)(*env)->GetPrimitiveArrayCritical(env, inInvEigenVectors, 0);
+	jdouble *Eval = (jdouble*)(*env)->GetPrimitiveArrayCritical(env, inEigenValues, 0);
 	
-	memcpy(cMatrix, tmpCMatrix, sizeof(double) * STATE_COUNT * STATE_COUNT * STATE_COUNT);
-	memcpy(eigenValues, tmpEigenValues, sizeof(double) * STATE_COUNT);
+	int l =0;
+	for (int i = 0; i < STATE_COUNT; i++) {
+		for (int j = 0; j < STATE_COUNT; j++) {
+			for (int k = 0; k < STATE_COUNT; k++) {
+				cMatrix[l] = Evec[i][k] * Ievc[k][j];
+				l++;
+			}
+		}
+	}
+
+	memcpy(eigenValues, Eval, sizeof(double) * STATE_COUNT);
 	
-	(*env)->ReleasePrimitiveArrayCritical(env, inEigenValues, tmpEigenValues, JNI_ABORT);
-	(*env)->ReleasePrimitiveArrayCritical(env, inCMatrix, tmpCMatrix, JNI_ABORT);
+	(*env)->ReleasePrimitiveArrayCritical(env, inEigenValues, Eval, JNI_ABORT);
+	(*env)->ReleasePrimitiveArrayCritical(env, inInvEigenVectors, Ievc, JNI_ABORT);
+	(*env)->ReleasePrimitiveArrayCritical(env, inEigenVectors, Evec, JNI_ABORT);
 }
 
 /*

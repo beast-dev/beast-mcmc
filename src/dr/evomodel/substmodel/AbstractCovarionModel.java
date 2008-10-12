@@ -115,7 +115,11 @@ public abstract class AbstractCovarionModel extends AbstractModel
 
     abstract protected void setupUnnormalizedQMatrix();
 
-    public double[] getCMatrix() {
+    public double[][] getEigenVectors() {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    public double[][] getInverseEigenVectors() {
         throw new UnsupportedOperationException("Not yet implemented.");
     }
 

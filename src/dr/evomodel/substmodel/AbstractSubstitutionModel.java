@@ -218,29 +218,29 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
     }
 
     /**
-     * This function returns the a matrix which is the precalculated product
-     * of the Eigen vectors and the inverse Eigen vectors.
+     * This function returns the Eigen vectors.
+     * @return the array
      */
-    public double[] getCMatrix() {
+    public double[][] getEigenVectors() {
         synchronized (this) {
             if (updateMatrix) {
                 setupMatrix();
             }
         }
+        return Evec;
+    }
 
-        double[] cMatrix = new double[stateCount * stateCount * stateCount];
-
-        int l =0;
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                for (int k = 0; k < stateCount; k++) {
-                    cMatrix[l] = Evec[i][k] * Ievc[k][j];
-                    l++;
-                }
+    /**
+     * This function returns the inverse Eigen vectors.
+     * @return the array
+     */
+    public double[][] getInverseEigenVectors() {
+        synchronized (this) {
+            if (updateMatrix) {
+                setupMatrix();
             }
         }
-
-        return cMatrix;
+        return Ievc;
     }
 
     /**

@@ -176,7 +176,11 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 			getRawTransitionProbabilities(distance, matrix);
 	}
 
-    public double[] getCMatrix() {
+    public double[][] getEigenVectors() {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    public double[][] getInverseEigenVectors() {
         throw new UnsupportedOperationException("Not yet implemented.");
     }
 

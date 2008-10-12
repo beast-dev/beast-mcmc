@@ -36,12 +36,14 @@ public class NativeLikelihoodCore implements LikelihoodCore {
     public void updateSubstitutionModel(SubstitutionModel substitutionModel) {
         updateRootFrequencies(substitutionModel.getFrequencyModel().getFrequencies());
         updateEigenDecomposition(
-                substitutionModel.getCMatrix(),
+                substitutionModel.getEigenVectors(),
+                substitutionModel.getInverseEigenVectors(),
                 substitutionModel.getEigenValues());
     }
 
     private native void updateRootFrequencies(double[] frequencies);
-    private native void updateEigenDecomposition(double[] cMatrix,
+    private native void updateEigenDecomposition(double[][] eigenVectors,
+                                                 double[][] inverseEigenValues,
                                                  double[] eigenValues);
 
     public void updateSiteModel(SiteModel siteModel) {

@@ -41,8 +41,9 @@ public class NativeLikelihoodCore implements LikelihoodCore {
                 substitutionModel.getEigenValues());
     }
 
-    private native void updateRootFrequencies(double[] frequencies);
-    private native void updateEigenDecomposition(double[][] eigenVectors,
+    protected native void updateRootFrequencies(double[] frequencies);
+
+    protected native void updateEigenDecomposition(double[][] eigenVectors,
                                                  double[][] inverseEigenValues,
                                                  double[] eigenValues);
 
@@ -62,9 +63,9 @@ public class NativeLikelihoodCore implements LikelihoodCore {
      */
     private double[] rates = null;
 
+    protected native void updateCategoryRates(double[] rates);
 
-    private native void updateCategoryRates(double[] rates);
-    private native void updateCategoryProportions(double[] proportions);
+    protected native void updateCategoryProportions(double[] proportions);
 
     public native void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount);
 

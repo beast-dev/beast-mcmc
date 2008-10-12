@@ -44,7 +44,8 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
 
     protected double[] frequencies;
     protected double[] storedFrequencies;
-    protected double[] proportions;
+    protected double[] categoryProportions;
+    protected double[] storedCategoryProportions;
     protected double[] categoryRates;
     protected double[] storedCategoryRates;
 
@@ -94,7 +95,8 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         categoryRates = new double[matrixCount];
         storedCategoryRates = new double[matrixCount];
 
-        proportions = new double[matrixCount];
+        categoryProportions = new double[matrixCount];
+        storedCategoryProportions = new double[matrixCount];
 
         partialsSize = patternCount * stateCount * matrixCount;
 
@@ -161,10 +163,11 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      * can be obtained.
      */
     public void updateSubstitutionModel(SubstitutionModel substitutionModel) {
-        for (int i = 0; i < stateCount; i++) {
-            frequencies[i] = substitutionModel.getFrequencyModel().getFrequency(i);
-        }
-        substitutionModel.getEigenDecomposition(cMatrix, eigenValues);
+        System.arraycopy(substitutionModel.getFrequencyModel().getFrequencies(), 0, frequencies, 0, frequencies.length);
+
+        System.arraycopy(substitutionModel.getCMatrix(), 0, cMatrix, 0, cMatrix.length);
+        System.arraycopy(substitutionModel.getEigenValues(), 0, eigenValues, 0, eigenValues.length);
+
     }
 
     /**
@@ -172,12 +175,10 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      * can be obtained.
      */
     public void updateSiteModel(SiteModel siteModel) {
-        for (int i = 0; i < matrixCount; i++) {
+        for (int i = 0; i < categoryRates.length; i++) {
             categoryRates[i] = siteModel.getRateForCategory(i);
         }
-        for (int i = 0; i < matrixCount; i++) {
-            proportions[i] = siteModel.getProportionForCategory(i);
-        }
+        System.arraycopy(siteModel.getCategoryProportions(), 0, categoryProportions, 0, categoryProportions.length);
     }
 
     /**
@@ -308,7 +309,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
 
             for (int i = 0; i < stateCount; i++) {
 
-                tmp[u] = rootPartials[v] * proportions[0];
+                tmp[u] = rootPartials[v] * categoryProportions[0];
                 u++;
                 v++;
             }
@@ -322,7 +323,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
 
                 for (int i = 0; i < stateCount; i++) {
 
-                    tmp[u] += rootPartials[v] * proportions[l];
+                    tmp[u] += rootPartials[v] * categoryProportions[l];
                     u++;
                     v++;
                 }
@@ -352,6 +353,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
 
         System.arraycopy(frequencies, 0, storedFrequencies, 0, frequencies.length);
         System.arraycopy(categoryRates, 0, storedCategoryRates, 0, categoryRates.length);
+        System.arraycopy(categoryProportions, 0, storedCategoryProportions, 0, categoryProportions.length);
 
         System.arraycopy(currentMatricesIndices, 0, storedMatricesIndices, 0, nodeCount);
         System.arraycopy(currentPartialsIndices, 0, storedPartialsIndices, 0, nodeCount);
@@ -377,6 +379,10 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         tmp = categoryRates;
         categoryRates = storedCategoryRates;
         storedCategoryRates = tmp;
+
+        tmp = categoryProportions;
+        categoryProportions = storedCategoryProportions;
+        storedCategoryProportions = tmp;
 
         int[] tmp3 = currentMatricesIndices;
         currentMatricesIndices = storedMatricesIndices;

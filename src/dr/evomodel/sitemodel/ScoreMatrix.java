@@ -64,7 +64,7 @@ public class ScoreMatrix {
 
     public void setTime(double time) {
         this.time = time;
-        siteModel.getTransitionProbabilities(time, matrix);
+        siteModel.getSubstitutionModel().getTransitionProbabilities(time, matrix);
 
         //base frequencies
 

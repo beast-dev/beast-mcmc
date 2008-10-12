@@ -430,7 +430,7 @@ public class NativeMemoryLikelihoodCore implements LikelihoodCore {
 
 		long ptr = ptrMatrices[currentMatricesIndices[nodeIndex]][nodeIndex] + matrixIndex * matrixMemorySize;
 
-		double substitutions = siteModel.getSubstitutionsForCategory(matrixIndex,branchTime);
+		double substitutions = siteModel.getRateForCategory(matrixIndex) * branchTime;
 		substitutionModel.getTransitionProbabilities(substitutions, ptr);
 
 //		        siteModel.getTransitionProbabilitiesForCategory(i, branchTime, probabilities);

@@ -94,7 +94,7 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 			final Logger logger = Logger.getLogger("dr.evomodel");
 			String coreName = "Java general";
 			if (integrateAcrossCategories) {
-				
+
 				final DataType dataType = patternList.getDataType();
 
 				if (dataType instanceof dr.evolution.datatype.Nucleotides) {
@@ -129,9 +129,9 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 						nativeTransitionProbabilitiesAndPeeling = true;
 						coreName ="GPU probabilities and memory";
 					    }
-						
+
 					}
-					
+
 				    } else if (!forceJavaCore && GPUGeneralLikelihoodCore.isAvailable()) {
 						coreName = "GPU general";
 						likelihoodCore = new GPUGeneralLikelihoodCore(patternList.getStateCount());
@@ -146,10 +146,10 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 								coreName = "native probabilities and memory general";
 							}
 						}
-					} else if (!forceJavaCore && NativeGeneralLikelihoodCore.isAvailable()) {						
+					} else if (!forceJavaCore && NativeGeneralLikelihoodCore.isAvailable()) {
 						coreName = "native general";
 						likelihoodCore = new NativeGeneralLikelihoodCore(patternList.getStateCount());
-					} else {						
+					} else {
 						coreName = "Java general";
 						likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
 					}
@@ -458,7 +458,8 @@ public class ExperimentalTreeLikelihood extends AbstractTreeLikelihood {
 					((NativeMemoryLikelihoodCore)likelihoodCore).calculateAndSetNodeMatrix(nodeNum,i,branchTime,siteModel);
 
 				}  else {
-					siteModel.getTransitionProbabilitiesForCategory(i, branchTime, probabilities);
+                    double branchLength = siteModel.getRateForCategory(i) * branchTime;
+                    siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probabilities);
 					likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
 				}
 			}

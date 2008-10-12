@@ -94,7 +94,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
             final int len = stateCount * stateCount;
             double[] test = new double[len];
             try {
-                siteModel.getTransitionProbabilities(1.0, test);
+                siteModel.getSubstitutionModel().getTransitionProbabilities(1.0, test);
             } catch (ArithmeticException exception) { // AbstractSubstitutionModel throws numerical errors
                 return Double.NEGATIVE_INFINITY;
             }

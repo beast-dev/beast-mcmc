@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.sitemodel; 
+package dr.evomodel.sitemodel;
 
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -53,35 +53,35 @@ public class SampleStateAndCategoryModel extends AbstractModel
 	public static final double OMEGA_MIN_VALUE = 0.0;;
 
 
-	
+
     /**
-     * Constructor 
+     * Constructor
      */
-    public SampleStateAndCategoryModel( Parameter muParameter, 
+    public SampleStateAndCategoryModel( Parameter muParameter,
   		 					Parameter categoriesParameter,
      						Vector substitutionModels){
-    	
+
 		super(SAMPLE_STATE_AND_CATEGORY_MODEL);
-		
-		
+
+
 		this.substitutionModels = substitutionModels;
-		
-		for(int i = 0; i<substitutionModels.size(); i++){	
+
+		for(int i = 0; i<substitutionModels.size(); i++){
 			addModel((SubstitutionModel)substitutionModels.elementAt(i));
-			
+
 		}
-		
+
 		this.categoryCount = substitutionModels.size();
 		sitesInCategory = new int[categoryCount];
 	//	stateCount = ((SubstitutionModel)substitutionModels.elementAt(0)).getDataType().getStateCount();
-		
+
 		this.muParameter = muParameter;
 		addParameter(muParameter);
 		muParameter.addBounds(new Parameter.DefaultBounds(1000.0, 0.0, 1));
-		
+
 		this.categoriesParameter = categoriesParameter;
 		addParameter(categoriesParameter);
-		
+
 		if(categoryCount > 1){
 			for(int i = 0; i < categoryCount; i++){
 				Parameter p = ((YangCodonModel)substitutionModels.elementAt(i)).getParameter(0);
@@ -104,7 +104,7 @@ public class SampleStateAndCategoryModel extends AbstractModel
 			}
 		}
 	}
-           
+
 	// *****************************************************************
 	// Interface SiteModel
 	// *****************************************************************
@@ -117,20 +117,10 @@ public class SampleStateAndCategoryModel extends AbstractModel
 
 	public int getCategoryCount() { return categoryCount; }
 
-	public int getCategoryOfSite(int site) { 
+	public int getCategoryOfSite(int site) {
 		return (int)categoriesParameter.getParameterValue(site);
 	}
 
-	public void getTransitionProbabilitiesForCategory(int category, double branchLength, double[] matrix) {
-		
-		
-		double substitutions = branchLength * muParameter.getParameterValue(0);
-		
-		((SubstitutionModel)substitutionModels.elementAt(category))
-				.getTransitionProbabilities(substitutions, matrix);
-	}	
-
-	
 	public double getRateForCategory(int category) {
 		throw new RuntimeException("getRateForCategory not available in this siteModel");
 	}
@@ -138,100 +128,100 @@ public class SampleStateAndCategoryModel extends AbstractModel
 	public double getSubstitutionsForCategory(int category, double time) {
 		throw new RuntimeException("getSubstitutionsForCategory not available in this siteModel");
 	}
-	
+
 	public void getTransitionProbabilities(double substitutions, double[] matrix) {
 		throw new RuntimeException("getTransitionProbabilities not available in this siteModel");
 	}
-	
+
 	/**
 	 * Get the frequencyModel for this SiteModel.
 	 * @return the frequencyModel.
 	 */
-	public FrequencyModel getFrequencyModel() { 
+	public FrequencyModel getFrequencyModel() {
 		return ((SubstitutionModel)substitutionModels.elementAt(0)).getFrequencyModel(); }
-	
-	
+
+
 	// *****************************************************************
 	// Interface CategorySampleModel
 	// *****************************************************************
-	
+
 	/**
-	* provide information to the categoriesParameter 
+	* provide information to the categoriesParameter
 	* about the number of sites
 	*/
 	public void setCategoriesParameter(int siteCount){
 		categoriesParameter.setDimension(siteCount);
 		categoriesParameter.addBounds(new Parameter.DefaultBounds(categoryCount, 0.0, siteCount));
 		for(int i = 0; i < siteCount; i++){
-		
+
 			int r = (int)(Math.random()*categoryCount);
 			categoriesParameter.setParameterValue(i,r);
 		}
-		
+
 		for(int j = 0; j < categoryCount; j++){
 			sitesInCategory[j] = 0;
 		}
-		
+
 		for(int i = 0; i < siteCount; i++){
 			int value = (int)categoriesParameter.getParameterValue(i);
 			sitesInCategory[value] = sitesInCategory[value] + 1;
-		}	
+		}
 	}
-	
+
 	public void addSitesInCategoryCount(int category){
 		sitesInCategory[category] = sitesInCategory[category] + 1;
 	}
-	
+
 	public void subtractSitesInCategoryCount(int category){
 		sitesInCategory[category] = sitesInCategory[category] - 1;
 	}
-	
+
 	public int getSitesInCategoryCount(int category){
 		return sitesInCategory[category];
 	}
 
-	public void toggleRandomSite(){}		
+	public void toggleRandomSite(){}
 
-	
+
 	/**
 	 * Get the expected proportion of sites in this category.
 	 * @param category the category number
 	 * @return the proportion.
 	 */
 	public double getProportionForCategory(int category) {
-		throw new IllegalArgumentException("Not integrating across categories"); 
+		throw new IllegalArgumentException("Not integrating across categories");
 	}
-	
+
 	/**
 	 * Get an array of the expected proportion of sites in this category.
 	 * @return an array of the proportion.
 	 */
 	public double[] getCategoryProportions(){
-		throw new IllegalArgumentException("Not integrating across categories"); 
+		throw new IllegalArgumentException("Not integrating across categories");
 	}
-	
+
 	// *****************************************************************
 	// Interface ModelComponent
 	// *****************************************************************
-		
+
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
 		// Substitution model has changed so fire model changed event
 		listenerHelper.fireModelChanged(this, object, index);
 	}
-	
+
 	public void handleParameterChangedEvent(Parameter parameter, int index) {
-		
+
 		if(parameter == categoriesParameter) // instructs TreeLikelihood to set update flag for this pattern
 			listenerHelper.fireModelChanged(this, this, index);
 	}
-	
+
 	protected void storeState(){}
 	protected void restoreState(){}
 	protected void acceptState() {} // no additional state needs accepting
 
 	public String toString(){
 		StringBuffer s = new StringBuffer();
-		
+
 		for(int i = 0; i < categoryCount; i++){
 			s.append(String.valueOf(sitesInCategory[i]) + "\t");
 		}
@@ -239,28 +229,28 @@ public class SampleStateAndCategoryModel extends AbstractModel
 			t = (int)(categoriesParameter.getParameterValue(i));// get result as integer
 			s.append(String.valueOf(t) + "\t");
 		}*/
-		
+
 		return s.toString();
 	}
-	
+
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 		public String getParserName() { return SAMPLE_STATE_AND_CATEGORY_MODEL; }
-		
+
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
+
 			XMLObject cxo = (XMLObject)xo.getChild(MUTATION_RATE);
 			Parameter muParam = (Parameter)cxo.getChild(Parameter.class);
-			
+
 			cxo = (XMLObject)xo.getChild(CATEGORY_PARAMETER);
 			Parameter catParam = (Parameter)cxo.getChild(Parameter.class);
-			
+
 			Vector subModels = new Vector();
 			for (int i =0; i < xo.getChildCount(); i++) {
-			
+
 				if (xo.getChild(i) instanceof SubstitutionModel) {
 					subModels.addElement(xo.getChild(i));
-				} 
-			
+				}
+
 			}
 
 			return new SampleStateAndCategoryModel(muParam, catParam, subModels);
@@ -269,7 +259,7 @@ public class SampleStateAndCategoryModel extends AbstractModel
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
-		
+
 		public String getParserDescription() {
 			return "A SiteModel that has a discrete distribution of substitution models over sites, " +
 					"designed for sampling of rate categories and internal states.";
@@ -278,29 +268,29 @@ public class SampleStateAndCategoryModel extends AbstractModel
 		public Class getReturnType() { return SampleStateAndCategoryModel.class; }
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
+
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(MUTATION_RATE, 
+			new ElementRule(MUTATION_RATE,
 				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-			new ElementRule(CATEGORY_PARAMETER, 
+			new ElementRule(CATEGORY_PARAMETER,
 				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
 			new ElementRule(SubstitutionModel.class, 1, Integer.MAX_VALUE)
 		};
 
 	};
-	
+
 	private class omegaBounds implements Bounds{
-	
+
 		private Parameter lowerOmega, upperOmega;
-		
+
 		public omegaBounds(Parameter lowerOmega, Parameter upperOmega){
-			
+
 			this.lowerOmega = lowerOmega;
 			this.upperOmega = upperOmega;
 		}
-		
+
 		public omegaBounds(Parameter nearestOmega, boolean isUpper){
-		
+
 			if(isUpper){
 				lowerOmega = nearestOmega;
 				upperOmega = null;
@@ -309,34 +299,34 @@ public class SampleStateAndCategoryModel extends AbstractModel
 				upperOmega = nearestOmega;
 			}
 		}
-		
+
 		/**
 	 	* @return the upper limit of this hypervolume in the given dimension.
 	 	*/
 		public double getUpperLimit(int dimension){
-			
+
 			if(dimension != 0)
 				throw new RuntimeException("omega parameters have wrong dimension " + dimension);
-			
+
 			if(upperOmega == null)
 				return OMEGA_MAX_VALUE;
 			else
 				return upperOmega.getParameterValue(dimension);
-			
+
 		}
-		
+
 		/**
 		 * @return the lower limit of this hypervolume in the given dimension.
 		 */
 		public double getLowerLimit(int dimension){
-		
+
 			if(dimension != 0)
 				throw new RuntimeException("omega parameters have wrong dimension " + dimension);
-			
+
 			if(lowerOmega == null)
 				return OMEGA_MIN_VALUE;
-			
-			else	
+
+			else
 				return lowerOmega.getParameterValue(dimension);
 		}
 
@@ -346,19 +336,19 @@ public class SampleStateAndCategoryModel extends AbstractModel
 		public int getBoundsDimension(){
 			return 1;
 		}
-		
+
 	};
 
 	/** mutation rate parameter */
 	private Parameter muParameter;
-	
+
 	private int[] sitesInCategory;
-	
+
 	private Parameter categoriesParameter;
-		
+
 	private Vector substitutionModels;
-	
+
 	private int categoryCount;
-			
+
 //	private int stateCount;
 }

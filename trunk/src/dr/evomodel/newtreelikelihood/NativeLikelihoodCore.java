@@ -12,7 +12,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 
 public class NativeLikelihoodCore implements LikelihoodCore {
 
-    public static final String LIBRARY_NAME = "NativeLikelihoodCore";
+    public static final String LIBRARY_NAME = "NewNativeLikelihoodCore";
 
     public NativeLikelihoodCore() {
         // don't need to do any thing;
@@ -29,9 +29,36 @@ public class NativeLikelihoodCore implements LikelihoodCore {
 
     public native void setTipPartials(int tipIndex, double[] partials);
 
-    public native void updateSubstitutionModel(SubstitutionModel substitutionModel);
+    public void updateSubstitutionModel(SubstitutionModel substitutionModel) {
+        updateRootFrequencies(substitutionModel.getFrequencyModel().getFrequencies());
+        updateEigenDecomposition(
+                substitutionModel.getCMatrix(),
+                substitutionModel.getEigenValues());
+    }
 
-    public native void updateSiteModel(SiteModel siteModel);
+    private native void updateRootFrequencies(double[] frequencies);
+    private native void updateEigenDecomposition(double[] cMatrix,
+                                                 double[] eigenValues);
+
+    public void updateSiteModel(SiteModel siteModel) {
+        if (rates == null) {
+            rates = new double[siteModel.getCategoryCount()];
+        }
+        for (int i = 0; i < rates.length; i++) {
+            rates[i] = siteModel.getRateForCategory(i);
+        }
+        updateCategoryRates(rates);
+        updateCategoryProportions(siteModel.getCategoryProportions());
+    }
+
+    /**
+     * A utility array to transfer category rates
+     */
+    private double[] rates = null;
+
+
+    private native void updateCategoryRates(double[] rates);
+    private native void updateCategoryProportions(double[] proportions);
 
     public native void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount);
 
@@ -47,7 +74,7 @@ public class NativeLikelihoodCore implements LikelihoodCore {
 
     public static class LikelihoodCoreLoader implements LikelihoodCoreFactory.LikelihoodCoreLoader {
 
-        public String getLibraryName() { return "NativeLikelihoodCore"; }
+        public String getLibraryName() { return LIBRARY_NAME; }
 
         public LikelihoodCore createLikelihoodCore(int[] configuration, AbstractTreeLikelihood treeLikelihood) {
             int stateCount = configuration[0];
@@ -56,6 +83,7 @@ public class NativeLikelihoodCore implements LikelihoodCore {
             } catch (UnsatisfiedLinkError e) {
                 return null;
             }
+            System.out.println("Successfully loaded native library: " + getLibraryName()+"-"+stateCount);
             return new NativeLikelihoodCore();
         }
     }

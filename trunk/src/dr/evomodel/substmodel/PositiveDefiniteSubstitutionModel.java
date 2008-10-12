@@ -176,10 +176,13 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
 			getRawTransitionProbabilities(distance, matrix);
 	}
 
-	public void getEigenDecomposition(double[] cMatrix, double[] eigenValues) {
-		throw new UnsupportedOperationException("Not yet implemented.");
+    public double[] getCMatrix() {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
 
-	}
+    public double[] getEigenValues() {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
 
 	private boolean checkPrecomputedAndRawValues(double distance, double[] precalculated) {
 		double[] compare = new double[Ksquared];

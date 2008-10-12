@@ -416,8 +416,8 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
             }
 
             for (int i = 0; i < categoryCount; i++) {
-
-                currentSiteModel.getTransitionProbabilitiesForCategory(i, branchTime, probabilities);
+                double branchLength = currentSiteModel.getRateForCategory(i) * branchTime;
+                currentSiteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probabilities);
                 likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
             }
 

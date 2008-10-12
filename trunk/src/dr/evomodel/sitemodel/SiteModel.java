@@ -51,7 +51,8 @@ public interface SiteModel extends Model {
 	 * each site. If true, the SiteModel will calculate the likelihood of each site
 	 * for each category. If false it will assume that there is each site can have a
 	 * different category.
-	 */
+     * @return the boolean
+     */
 	boolean integrateAcrossCategories();
 
 	/**
@@ -66,36 +67,14 @@ public interface SiteModel extends Model {
 	 * @return the index of the category
 	 */
 	int getCategoryOfSite(int site);
-	
-	/**
-	 * Get the transition probability matrix for a particular category for a given time.
-	 * @param category the category number
-	 * @param time the branch length in units of time
-	 * @param matrix an array of suitable size
-	 */
-	void getTransitionProbabilitiesForCategory(int category, double time, double[] matrix);
 
 	/**
-	 * Get the rate for a particular category.
+	 * Get the rate for a particular category. This will include the 'mu' parameter, an overall
+     * scaling of the siteModel.
 	 * @param category the category number
 	 * @return the rate.
 	 */
 	double getRateForCategory(int category);
-
-	/**
-	 * Get the number of substitutions per site for a particular category for a given time.
-	 * @param category the category number
-	 * @param time the branch length in units of time
-	 * @return the expected number of substitutions per site.
-	 */
-	double getSubstitutionsForCategory(int category, double time);
-
-	/**
-	 * Get the transition probability matrix for a given number of substitutions per site.
-	 * @param substitutions the branch length in expected number of substitutions per site
-	 * @param matrix an array of suitable size
-	 */
-	void getTransitionProbabilities(double substitutions, double[] matrix);
 
 	/**
 	 * Get the expected proportion of sites in this category.

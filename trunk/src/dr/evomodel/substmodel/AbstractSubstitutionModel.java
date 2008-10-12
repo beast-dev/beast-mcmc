@@ -218,20 +218,17 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
     }
 
     /**
-     * This function precalculates the product of the eigenvectors and their
-     * inverse for faster calculation of transition probabilities. The output
-     * is a vector of precalculated values and the eigenValues
-     * @param cMatrix
-     * @param eigenValues
+     * This function returns the a matrix which is the precalculated product
+     * of the Eigen vectors and the inverse Eigen vectors.
      */
-    public void getEigenDecomposition(double[] cMatrix, double[] eigenValues) {
-        // this must be synchronized to avoid being called simultaneously by
-        // two different likelihood threads - AJD
+    public double[] getCMatrix() {
         synchronized (this) {
             if (updateMatrix) {
                 setupMatrix();
             }
         }
+
+        double[] cMatrix = new double[stateCount * stateCount * stateCount];
 
         int l =0;
         for (int i = 0; i < stateCount; i++) {
@@ -242,7 +239,20 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
                 }
             }
         }
-        System.arraycopy(Eval, 0, eigenValues, 0, stateCount);
+
+        return cMatrix;
+    }
+
+    /**
+     * This function returns the Eigen values.
+     */
+    public double[] getEigenValues() {
+        synchronized (this) {
+            if (updateMatrix) {
+                setupMatrix();
+            }
+        }
+        return Eval;
     }
 
     /**

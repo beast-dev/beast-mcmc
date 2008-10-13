@@ -1,8 +1,8 @@
 #
-# command-line: make STATECOUNT=<#> mac/linux
+# command-line: make STATE_COUNT=<#> mac/linux
 # 
 
-STATECOUNT = 4
+STATE_COUNT = 4
 
 INNAME 		:= NewNativeLikelihoodCore.c
 OUTNAME		:= NativeLikelihoodCore-$(STATECOUNT)
@@ -27,6 +27,7 @@ OPTIONS		:= -funroll-loops -ffast-math -fstrict-aliasing
 
 mac :
 	cc -c -arch $(ARCH) -O3 $(OPTIONS) $(MAC_INCLUDES) -std=c99 \
+	   -DSTATE_COUNT=$(STATE_COUNT) \
 	   -o $(OUTNAME).$(ARCH).o $(INNAME)
 	cc -o lib$(OUTNAME).$(ARCH).jnilib -framework JavaVM -arch $(ARCH) \
 	   -$(MAC_LINK) $(OUTNAME).$(ARCH).o 
@@ -35,6 +36,7 @@ mac :
 
 linux :
 	gcc -O4 $(OPTIONS) $(LINUX_INCLUDES) $(INNAME) -std=c99 \
+	    -DSTATE_COUNT=$(STATE_COUNT) \
 	    -o lib$(OUTNAME).o
 	ld -$(LINUX_LINK) -o lib$(OUTNAME).so lib$(OUTNAME).o
 

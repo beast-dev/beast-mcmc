@@ -5,7 +5,6 @@
 
 #include "NewNativeLikelihoodCore.h"
 
-#define STATE_COUNT 4
 #define MATRIX_SIZE STATE_COUNT * STATE_COUNT
 
 int nodeCount;

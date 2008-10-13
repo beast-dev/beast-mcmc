@@ -5,7 +5,7 @@
 STATE_COUNT = 4
 
 INNAME 		:= NewNativeLikelihoodCore.c
-OUTNAME		:= NativeLikelihoodCore-$(STATECOUNT)
+OUTNAME		:= NativeLikelihoodCore-$(STATE_COUNT)
 
 ############
 

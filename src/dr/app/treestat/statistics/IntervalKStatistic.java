@@ -37,11 +37,15 @@ import dr.evolution.tree.Tree;
  */
 public class IntervalKStatistic extends AbstractTreeSummaryStatistic {
 
-	public IntervalKStatistic(int k ) {
-		this.k = k;
+	public IntervalKStatistic() {
+		this.k = 2;
 	}
 
-	public double[] getSummaryStatistic(Tree tree) {
+    public void setInteger(int value) {
+        this.k = value;
+    }
+
+    public double[] getSummaryStatistic(Tree tree) {
 
 		TreeIntervals intervals = new TreeIntervals(tree);
 
@@ -72,8 +76,8 @@ public class IntervalKStatistic extends AbstractTreeSummaryStatistic {
 
 	public static final TreeSummaryStatistic.Factory FACTORY = new TreeSummaryStatistic.Factory() {
 
-		public TreeSummaryStatistic createStatistic(int value) {
-			return new IntervalKStatistic(value);
+		public TreeSummaryStatistic createStatistic() {
+			return new IntervalKStatistic();
 		}
 
 		public String getSummaryStatisticName() {
@@ -99,12 +103,12 @@ public class IntervalKStatistic extends AbstractTreeSummaryStatistic {
 
 		public TreeSummaryStatistic.Category getCategory() { return TreeSummaryStatistic.Category.POPULATION_GENETIC; }
 
-        public boolean allowsWholeTree() { return true; };
-        public boolean allowsCharacter() { return false; };
-        public boolean allowsCharacterState() { return false; };
-        public boolean allowsTaxonList() { return false; };
-        public boolean allowsInteger() { return true; };
-        public boolean allowsDouble() { return false; };
+        public boolean allowsWholeTree() { return true; }
+        public boolean allowsCharacter() { return false; }
+        public boolean allowsCharacterState() { return false; }
+        public boolean allowsTaxonList() { return false; }
+        public boolean allowsInteger() { return true; }
+        public boolean allowsDouble() { return false; }
 	};
 
 	int k = 1;

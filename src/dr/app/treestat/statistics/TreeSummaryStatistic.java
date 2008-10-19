@@ -43,7 +43,12 @@ public interface TreeSummaryStatistic extends SummaryStatisticDescription {
 
 	String getStatisticLabel(Tree tree, int i);
 
-	/**
+    void setTaxonList(TaxonList taxonList);
+    void setInteger(int value);
+    void setDouble(double value);
+    void setString(String value);
+
+    /**
 	 * @return the value of this summary statistic for the given tree.
 	 */
 	double[] getSummaryStatistic(Tree tree);
@@ -53,30 +58,14 @@ public interface TreeSummaryStatistic extends SummaryStatisticDescription {
 			throw new RuntimeException("This factory method is not implemented");
 		}
 
-		public TreeSummaryStatistic createStatistic(Map<String, Object> characterMap, String characterState) {
-			throw new RuntimeException("This factory method is not implemented");
-		}
-
-		public TreeSummaryStatistic createStatistic(TaxonList taxonList) {
-			throw new RuntimeException("This factory method is not implemented");
-		}
-
-		public TreeSummaryStatistic createStatistic(int value) {
-			throw new RuntimeException("This factory method is not implemented");
-		}
-
-		public TreeSummaryStatistic createStatistic(double value) {
-			throw new RuntimeException("This factory method is not implemented");
-		}
-
 		public boolean allowsWholeTree() { return true; }
-		public boolean allowsCharacter() { return false; }
-		public boolean allowsCharacterState() { return false; }
 		public boolean allowsTaxonList() { return false; }
 		public boolean allowsInteger() { return false; }
 		public boolean allowsDouble() { return false; }
+        public boolean allowsString() { return false; }
 
 		public String getValueName() { return ""; }
-	}
+
+    }
 }
 

@@ -27,6 +27,7 @@ package dr.app.treestat.statistics;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 
 /**
  *
@@ -36,16 +37,20 @@ import dr.evolution.tree.Tree;
  */
 public class RankProportionStatistic extends AbstractTreeSummaryStatistic {
 
-	private RankProportionStatistic(int rank) {
-		this(rank, true);
+	private RankProportionStatistic() {
+		this(true);
 	}
 
-	private RankProportionStatistic(int rank, boolean proportion) {
-		this.rank = rank;
+	private RankProportionStatistic(boolean proportion) {
+		this.rank = 1;
 		this.proportion = proportion;
 	}
 
-	public double[] getSummaryStatistic(Tree tree) {
+    public void setInteger(int value) {
+        this.rank = value;
+    }
+
+    public double[] getSummaryStatistic(Tree tree) {
 
 		double externalLength = 0.0;
 		double internalLength = 0.0;
@@ -129,8 +134,8 @@ public class RankProportionStatistic extends AbstractTreeSummaryStatistic {
 
 	public static final TreeSummaryStatistic.Factory FACTORY = new TreeSummaryStatistic.Factory() {
 
-		public TreeSummaryStatistic createStatistic(int value) {
-			return new RankProportionStatistic(value);
+		public TreeSummaryStatistic createStatistic() {
+			return new RankProportionStatistic();
 		}
 
 		public String getSummaryStatisticName() {

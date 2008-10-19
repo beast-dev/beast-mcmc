@@ -12,9 +12,13 @@ import dr.evolution.tree.Tree;
  */
 public class MRCAOlderThanStatistic extends AbstractTreeSummaryStatistic {
 
-	public MRCAOlderThanStatistic(double t) {
-		this.t = t;
+	public MRCAOlderThanStatistic() {
+		this.t = 1.0;
 	}
+
+    public void setDouble(double value) {
+        this.t = value;
+    }
 
 	public double[] getSummaryStatistic(Tree tree) {
 
@@ -47,8 +51,8 @@ public class MRCAOlderThanStatistic extends AbstractTreeSummaryStatistic {
 
 	public static final Factory FACTORY = new Factory() {
 
-		public TreeSummaryStatistic createStatistic(double value) {
-			return new MRCAOlderThanStatistic(value);
+		public TreeSummaryStatistic createStatistic() {
+			return new MRCAOlderThanStatistic();
 		}
 
 		public String getSummaryStatisticName() {

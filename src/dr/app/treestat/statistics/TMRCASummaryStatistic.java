@@ -39,27 +39,13 @@ import java.util.*;
  */
 public class TMRCASummaryStatistic extends AbstractTreeSummaryStatistic {
 
-	private TMRCASummaryStatistic(Map<String, Object> characterMap, String characterState) {
-		taxonList = new Taxa();
-        this.characterState = characterState;
-        for (Map.Entry entry : characterMap.entrySet()) {
-            if (entry.getValue().equals(characterState)) {
-                Object o = entry.getKey();
-                if (o instanceof String) {
-                    ((Taxa) taxonList).addTaxon(new Taxon((String) o));
-                } else if (o instanceof Taxon) {
-                    ((Taxa) taxonList).addTaxon((Taxon) o);
-                } else throw new RuntimeException("Unknown key type!");
-            }
-        }
-    }
-
-	private TMRCASummaryStatistic(TaxonList taxonList) {
-		this.taxonList = taxonList;
-	}
-
 	private TMRCASummaryStatistic() {
+		this.taxonList = null;
 	}
+
+    public void setTaxonList(TaxonList taxonList) {
+        this.taxonList = taxonList;
+    }
 
 	public double[] getSummaryStatistic(Tree tree) {
 		if (taxonList == null) {
@@ -101,14 +87,6 @@ public class TMRCASummaryStatistic extends AbstractTreeSummaryStatistic {
 	public SummaryStatisticDescription.Category getCategory() { return FACTORY.getCategory(); }
 
 	public static final TreeSummaryStatistic.Factory FACTORY = new TreeSummaryStatistic.Factory() {
-
-		public TreeSummaryStatistic createStatistic(Map<String, Object> characterMap, String characterState) {
-			return new TMRCASummaryStatistic(characterMap, characterState);
-		}
-
-		public TreeSummaryStatistic createStatistic(TaxonList taxonList) {
-			return new TMRCASummaryStatistic(taxonList);
-		}
 
 		public TreeSummaryStatistic createStatistic() {
 			return new TMRCASummaryStatistic();

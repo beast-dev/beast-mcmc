@@ -27,6 +27,7 @@ package dr.app.treestat.statistics;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 
 import java.util.Arrays;
 
@@ -60,6 +61,22 @@ public class NodeHeights implements TreeSummaryStatistic {
         Arrays.sort(stats);
 
         return stats;
+    }
+
+    public void setTaxonList(TaxonList taxonList) {
+        throw new UnsupportedOperationException("not implemented in this statistic");
+    }
+
+    public void setInteger(int value) {
+        throw new UnsupportedOperationException("not implemented in this statistic");
+    }
+
+    public void setDouble(double value) {
+        throw new UnsupportedOperationException("not implemented in this statistic");
+    }
+
+    public void setString(String value) {
+        throw new UnsupportedOperationException("not implemented in this statistic");
     }
 
     public String getSummaryStatisticName() { return FACTORY.getSummaryStatisticName(); }

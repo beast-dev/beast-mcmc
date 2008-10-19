@@ -12,9 +12,13 @@ import dr.evolution.tree.Tree;
  */
 public class LineageProportionStatistic extends AbstractTreeSummaryStatistic {
 
-	public LineageProportionStatistic(double t) {
-		this.t = t;
+	public LineageProportionStatistic() {
+		this.t = 1.0;
 	}
+
+    public void setDouble(double value) {
+        this.t = value;
+    }
 
 	public double[] getSummaryStatistic(Tree tree) {
 
@@ -48,8 +52,8 @@ public class LineageProportionStatistic extends AbstractTreeSummaryStatistic {
 
 	public static final Factory FACTORY = new Factory() {
 
-		public TreeSummaryStatistic createStatistic(double value) {
-			return new LineageProportionStatistic(value);
+		public TreeSummaryStatistic createStatistic() {
+			return new LineageProportionStatistic();
 		}
 
 		public String getSummaryStatisticName() {

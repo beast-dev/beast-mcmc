@@ -25,7 +25,6 @@ public class ALSTreeLikelihood extends TreeLikelihood {
     public static final String LIKE_NAME = "alsTreeLikelihood";
     public static final String INTEGRATE_GAIN_RATE = "integrateGainRate";
 
-
     protected AbstractObservationProcess observationProcess;
 
     public ALSTreeLikelihood(AbstractObservationProcess observationProcess, PatternList patternList, TreeModel treeModel, SiteModel siteModel, BranchRateModel branchRateModel, boolean useAmbiguities, boolean storePartials) {
@@ -66,7 +65,6 @@ public class ALSTreeLikelihood extends TreeLikelihood {
         // let the observationProcess handle the rest
         return observationProcess.nodePatternLikelihood(freqs, branchRateModel, likelihoodCore);
     }
-
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == observationProcess || model == treeModel) {

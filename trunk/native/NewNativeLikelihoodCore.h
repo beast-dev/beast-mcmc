@@ -43,7 +43,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
  * Class:     dr_evomodel_newtreelikelihood_NativeLikelihoodCore
  * Method:    updateEigenDecomposition
  * Signature: ([[D[[D[D)V
- */  
+ */
 JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_updateEigenDecomposition
   (JNIEnv *, jobject, jobjectArray, jobjectArray, jdoubleArray);
 

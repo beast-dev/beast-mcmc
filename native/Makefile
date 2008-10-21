@@ -1,6 +1,6 @@
 #
 # command-line: make STATE_COUNT=<#> mac/linux
-# 
+#
 
 STATE_COUNT = 4
 
@@ -30,7 +30,7 @@ mac :
 	   -DSTATE_COUNT=$(STATE_COUNT) \
 	   -o $(OUTNAME).$(ARCH).o $(INNAME)
 	cc -o lib$(OUTNAME).$(ARCH).jnilib -framework JavaVM -arch $(ARCH) \
-	   -$(MAC_LINK) $(OUTNAME).$(ARCH).o 
+	   -$(MAC_LINK) $(OUTNAME).$(ARCH).o
 	lipo -create lib$(OUTNAME).$(ARCH).jnilib \
 	     -output lib$(OUTNAME).jnilib
 

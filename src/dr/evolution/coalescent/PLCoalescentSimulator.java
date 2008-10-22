@@ -9,11 +9,13 @@ import dr.evolution.util.Units;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author Alexei Drummond
  */
 public class PLCoalescentSimulator {
+    private static PrintStream debug = System.err;
 
     public static void main(String[] arg) throws IOException {
 
@@ -29,6 +31,16 @@ public class PLCoalescentSimulator {
         }
         if (arg.length > 3) {
             generationTime = Double.parseDouble(arg[3]);
+        }
+
+        PrintWriter populationFuncLogger = null;
+        if( arg.length > 5 ) {
+            String logFileName = arg[5];
+            if( logFileName.equals("-") ) {
+              populationFuncLogger = new PrintWriter(System.out);
+            } else {
+              populationFuncLogger = new PrintWriter(new FileWriter(logFileName));
+            }
         }
 
         List<Double> times = new ArrayList<Double>();
@@ -84,7 +96,7 @@ public class PLCoalescentSimulator {
 
                         double sampleTime = time / generationTime;
                         for (int i = 0; i < k; i++) {
-                            Taxon taxon = new Taxon(id + "");
+                            Taxon taxon = new Taxon("t" + id);
                             taxon.setAttribute(dr.evolution.util.Date.DATE, new Date(sampleTime, Units.Type.GENERATIONS, true));
                             taxa.addTaxon(taxon);
                             id += 1;
@@ -111,20 +123,28 @@ public class PLCoalescentSimulator {
         double minTheta = Double.MAX_VALUE;
         double maxTheta = 0.0;
 
-        PrintWriter out = new PrintWriter(System.out);
+        PrintWriter out;
         if (arg.length > 4) {
             out = new PrintWriter(new FileWriter(arg[4]));
+        } else {
+            out = new PrintWriter(System.out);
         }
 
-        for (int i = 0; i < popSizes.length; i++) {
-            double[] thetas = new double[popSizes[i].size()];
+        int pp = 0;
+        for (List<Double> popSize : popSizes) {
+            double[] thetas = new double[popSize.size()];
             double[] intervals = new double[times.size() - 1];
 
+            if( populationFuncLogger != null ) {
+                populationFuncLogger.println("# " + pp);
+                ++pp;
+            }
+            
             // must reverse the direction of the model
             for (int j = intervals.length; j > 0; j--) {
                 intervals[intervals.length - j] = times.get(j) - times.get(j - 1);
 
-                double theta = popSizes[i].get(j) * popSizeScale;
+                final double theta = popSize.get(j) * popSizeScale;
                 thetas[intervals.length - j] = theta;
                 if (theta < minTheta) {
                     minTheta = theta;
@@ -133,13 +153,16 @@ public class PLCoalescentSimulator {
                     maxTheta = theta;
                 }
 
-                double t = times.get(intervals.length) - times.get(j);
-
-                System.out.println(t + "\t" + theta);
+                final double t = times.get(intervals.length) - times.get(j);
+                if( populationFuncLogger != null ) {
+                   populationFuncLogger.println(t + "\t" + theta);
+                }
             }
 
-            System.out.println("min theta = " + minTheta);
-            System.out.println("max theta = " + maxTheta);
+            if( debug != null ) {
+                debug.println("min theta = " + minTheta);
+                debug.println("max theta = " + maxTheta);
+            }
 
             PiecewiseLinearPopulation demo = new PiecewiseLinearPopulation(intervals, thetas, Units.Type.GENERATIONS);
 
@@ -147,8 +170,16 @@ public class PLCoalescentSimulator {
             Tree tree = simulator.simulateTree(taxa, demo);
 
             out.println(Tree.Utils.newick(tree));
-            System.err.println(Tree.Utils.newick(tree));
+            if( debug != null ) {
+                debug.println(Tree.Utils.newick(tree));
+            }
         }
+        
+        if( populationFuncLogger != null ) {
+            populationFuncLogger.flush();
+            populationFuncLogger.close();
+        }
+
         out.flush();
         out.close();
     }

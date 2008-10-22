@@ -80,7 +80,11 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
         final double N2 = getEpochDemographic(epoch + 1);
         final double w = getEpochDuration(epoch);
 
-        return w * Math.log(N2 / N1) / (N2 - N1);
+        if( N1 != N2 ) {
+            return w * Math.log(N2 / N1) / (N2 - N1);
+        } else {
+            return w/N1;
+        }
     }
 
     /**
@@ -93,7 +97,11 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
         final double N2 = getEpochDemographic(epoch + 1);
         final double w = getEpochDuration(epoch);
 
-        return w * Math.log(N1 * w / (N2 * relativeTime + N1 * (w - relativeTime))) / (N1 - N2);
+        if( N1 != N2 ) {
+          return w * Math.log(N1 * w / (N2 * relativeTime + N1 * (w - relativeTime))) / (N1 - N2);
+        } else {
+            return relativeTime/N1;
+        }
     }
 
     /**
@@ -130,7 +138,13 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
         final double N2 = getEpochDemographic(epoch + 1);
         final double w = getEpochDuration(epoch);
 
-        double time = -N1 * w * (Math.exp(I * (N2 - N1) / w) - 1.0) / (N1 - N2);
+        final double dn = N2 - N1;
+        double time;
+        if( dn != 0.0 ) {
+           time = N1 * w * (Math.exp(I * dn / w) - 1.0) / dn;
+        } else {
+            time = I * N1;
+        }
 
         return time;
     }

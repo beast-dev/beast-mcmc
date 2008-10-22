@@ -75,7 +75,12 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
      * @return the value of the intensity function for the given epoch.
      */
     protected final double getIntensity(int epoch) {
-        return 2.0 * getEpochDuration(epoch) / (getEpochDemographic(epoch) + getEpochDemographic(epoch + 1));
+
+        final double N1 = getEpochDemographic(epoch);
+        final double N2 = getEpochDemographic(epoch + 1);
+        final double w = getEpochDuration(epoch);
+
+        return w * Math.log(N2 / N1) / (N2 - N1);
     }
 
     /**
@@ -84,7 +89,11 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
     protected final double getIntensity(int epoch, double relativeTime) {
         assert relativeTime <= getEpochDuration(epoch);
 
-        return 2.0 * relativeTime / (getEpochDemographic(epoch) + getDemographic(epoch, relativeTime));
+        final double N1 = getEpochDemographic(epoch);
+        final double N2 = getEpochDemographic(epoch + 1);
+        final double w = getEpochDuration(epoch);
+
+        return w * Math.log(N1 * w / (N2 * relativeTime + N1 * (w - relativeTime))) / (N1 - N2);
     }
 
     /**
@@ -121,7 +130,7 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
         final double N2 = getEpochDemographic(epoch + 1);
         final double w = getEpochDuration(epoch);
 
-        double time = 2 * N1 * I * w / (2 * w + I * (N1 - N2));
+        double time = -N1 * w * (Math.exp(I * (N2 - N1) / w) - 1.0) / (N1 - N2);
 
         return time;
     }

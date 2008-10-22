@@ -10,7 +10,8 @@ OUTNAME		:= NativeLikelihoodCore-$(STATE_COUNT)
 ############
 
 MAC_JAVA_HOME	:= /Library/Java/Home
-LINUX_JAVA_HOME	:= /usr/java/j2sdk1.4.1_01
+#LINUX_JAVA_HOME	:= /usr/java/j2sdk1.4.1_01
+LINUX_JAVA_HOME	:= /usr/java/jdk1.6.0_07
 
 MAC_INCLUDES	+= -I$(MAC_JAVA_HOME)/include
 LINUX_INCLUDES	+= -I$(LINUX_JAVA_HOME)/include -I$(LINUX_JAVA_HOME)/include/linux
@@ -35,8 +36,6 @@ mac :
 	     -output lib$(OUTNAME).jnilib
 
 linux :
-	gcc -O4 $(OPTIONS) $(LINUX_INCLUDES) $(INNAME) -std=c99 \
-	    -DSTATE_COUNT=$(STATE_COUNT) \
-	    -o lib$(OUTNAME).o
+	gcc -c -O4 $(OPTIONS) $(LINUX_INCLUDES) -c $(INNAME) -std=c99 -DSTATE_COUNT=$(STATE_COUNT)  -o lib$(OUTNAME).o
 	ld -$(LINUX_LINK) -o lib$(OUTNAME).so lib$(OUTNAME).o
 

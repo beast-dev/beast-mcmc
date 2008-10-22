@@ -223,6 +223,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 			for (int i = 0; i < fieldLength - 1; i++) {
 				offdiag[i] = -1.0;
 			}
+			
+			
 		} else {
 			double rootHeight = tree.getNodeHeight(tree.getRoot());
 			
@@ -353,8 +355,6 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		for (int i = 0; i < fieldLength; i++) {
 			currentLike += -currentGamma.get(i) - sufficientStatistics[i] * Math.exp(-currentGamma.get(i));
 		}
-
-		
 		
 		SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0));
 		currentQ.mult(currentGamma, diagonal1);
@@ -487,6 +487,10 @@ model {
 
 		public String getParserName() {
 			return SKYLINE_LIKELIHOOD;
+		}
+		
+		public String[] getParserNames(){
+			return new String[]{getParserName(),"skyrideLikelihood","gmrfSkylineLikelihood"};
 		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {

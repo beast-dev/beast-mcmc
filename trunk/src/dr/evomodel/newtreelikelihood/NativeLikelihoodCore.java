@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 
 public class NativeLikelihoodCore implements LikelihoodCore {
 
-    public static final String LIBRARY_NAME = "NewNativeLikelihoodCore";
+    public static final String LIBRARY_NAME = "NativeLikelihoodCore";
 
     public NativeLikelihoodCore() {
         StringBuffer sb = new StringBuffer();

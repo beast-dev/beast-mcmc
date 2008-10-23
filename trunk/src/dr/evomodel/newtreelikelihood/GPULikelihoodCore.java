@@ -45,6 +45,12 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 
 	/** Native interface overriding NativeLikelihoodCore **/
 
+    public native void initialize(int nodeCount, int patternCount, int matrixCount);
+
+    private native void freeNativeMemory();
+
+    public native void setTipPartials(int tipIndex, double[] partials);
+
 	protected native void updateRootFrequencies(double[] frequencies);
 
 	protected native void updateEigenDecomposition(double[][] eigenVectors, double[][] inverseEigenValues, double[] eigenValues);

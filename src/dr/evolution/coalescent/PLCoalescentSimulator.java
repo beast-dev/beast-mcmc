@@ -9,7 +9,6 @@ import dr.evolution.util.Units;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Arrays;
 
 /**
  * @author Alexei Drummond
@@ -34,12 +33,12 @@ public class PLCoalescentSimulator {
         }
 
         PrintWriter populationFuncLogger = null;
-        if( arg.length > 5 ) {
+        if (arg.length > 5) {
             String logFileName = arg[5];
-            if( logFileName.equals("-") ) {
-              populationFuncLogger = new PrintWriter(System.out);
+            if (logFileName.equals("-")) {
+                populationFuncLogger = new PrintWriter(System.out);
             } else {
-              populationFuncLogger = new PrintWriter(new FileWriter(logFileName));
+                populationFuncLogger = new PrintWriter(new FileWriter(logFileName));
             }
         }
 
@@ -135,11 +134,11 @@ public class PLCoalescentSimulator {
             double[] thetas = new double[popSize.size()];
             double[] intervals = new double[times.size() - 1];
 
-            if( populationFuncLogger != null ) {
+            if (populationFuncLogger != null) {
                 populationFuncLogger.println("# " + pp);
                 ++pp;
             }
-            
+
             // must reverse the direction of the model
             for (int j = intervals.length; j > 0; j--) {
                 intervals[intervals.length - j] = times.get(j) - times.get(j - 1);
@@ -154,12 +153,12 @@ public class PLCoalescentSimulator {
                 }
 
                 final double t = times.get(intervals.length) - times.get(j);
-                if( populationFuncLogger != null ) {
-                   populationFuncLogger.println(t + "\t" + theta);
+                if (populationFuncLogger != null) {
+                    populationFuncLogger.println(t + "\t" + theta);
                 }
             }
 
-            if( debug != null ) {
+            if (debug != null) {
                 debug.println("min theta = " + minTheta);
                 debug.println("max theta = " + maxTheta);
             }
@@ -170,12 +169,12 @@ public class PLCoalescentSimulator {
             Tree tree = simulator.simulateTree(taxa, demo);
 
             out.println(Tree.Utils.newick(tree));
-            if( debug != null ) {
+            if (debug != null) {
                 debug.println(Tree.Utils.newick(tree));
             }
         }
-        
-        if( populationFuncLogger != null ) {
+
+        if (populationFuncLogger != null) {
             populationFuncLogger.flush();
             populationFuncLogger.close();
         }

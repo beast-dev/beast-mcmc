@@ -25,10 +25,11 @@
 
 package dr.evolution.coalescent;
 
+import java.util.Collections;
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: PiecewiseLinearPopulation.java,v 1.7 2005/05/24 20:25:56 rambaut Exp $
  */
 public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
 
@@ -48,6 +49,7 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
      * @return the value of the demographic function for the given epoch and time relative to start of epoch.
      */
     protected final double getDemographic(int epoch, double t) {
+
         // if in last epoch then the population is flat.
         if (epoch == (thetas.length - 1)) {
             return getEpochDemographic(epoch);
@@ -80,10 +82,10 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
         final double N2 = getEpochDemographic(epoch + 1);
         final double w = getEpochDuration(epoch);
 
-        if( N1 != N2 ) {
+        if (N1 != N2) {
             return w * Math.log(N2 / N1) / (N2 - N1);
         } else {
-            return w/N1;
+            return w / N1;
         }
     }
 
@@ -97,10 +99,10 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
         final double N2 = getEpochDemographic(epoch + 1);
         final double w = getEpochDuration(epoch);
 
-        if( N1 != N2 ) {
-          return w * Math.log(N1 * w / (N2 * relativeTime + N1 * (w - relativeTime))) / (N1 - N2);
+        if (N1 != N2) {
+            return w * Math.log(N1 * w / (N2 * relativeTime + N1 * (w - relativeTime))) / (N1 - N2);
         } else {
-            return relativeTime/N1;
+            return relativeTime / N1;
         }
     }
 
@@ -110,21 +112,42 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
      */
     public final double getInverseIntensity(double targetI) {
 
-        int epoch = 0;
-        double cI = 0;
-        double eI = getIntensity(epoch);
-        double time = 0.0;
-        while (cI + eI < targetI) {
-            cI += eI;
-            time += getEpochDuration(epoch);
+        if (cif != null) {
 
-            epoch += 1;
-            eI = getIntensity(epoch);
+            int epoch = Collections.binarySearch(cif, targetI);
+
+            if (epoch < 0) {
+                epoch = -epoch - 1;
+
+                if (epoch > 0) {
+
+                    return endTime.get(epoch - 1) +
+                            getInverseIntensity(epoch, targetI - cif.get(epoch - 1));
+                } else {
+                    assert epoch == 0;
+                    return getInverseIntensity(0, targetI);
+                }
+            } else {
+                return endTime.get(epoch);
+            }
+        } else {
+
+            int epoch = 0;
+            double cI = 0;
+            double eI = getIntensity(epoch);
+            double time = 0.0;
+            while (cI + eI < targetI) {
+                cI += eI;
+                time += getEpochDuration(epoch);
+
+                epoch += 1;
+                eI = getIntensity(epoch);
+            }
+
+            time += getInverseIntensity(epoch, targetI - cI);
+
+            return time;
         }
-
-        time += getInverseIntensity(epoch, targetI - cI);
-
-        return time;
     }
 
     /**
@@ -140,8 +163,8 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
 
         final double dn = N2 - N1;
         double time;
-        if( dn != 0.0 ) {
-           time = N1 * w * (Math.exp(I * dn / w) - 1.0) / dn;
+        if (dn != 0.0) {
+            time = N1 * w * (Math.exp(I * dn / w) - 1.0) / dn;
         } else {
             time = I * N1;
         }

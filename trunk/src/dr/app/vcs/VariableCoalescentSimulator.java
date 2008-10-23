@@ -18,33 +18,37 @@ import java.util.List;
  * a piecewise-linear function.
  * <p/>
  * Usage:
- * java -jar vcs.jar [options] <infile> <outfile>
+ * java -jar vcs.jar [options] &lt;infile&gt; &lt;outfile&gt;
  * <p/>
  * Options:
- * -g <value>   sets the generation time to the given value. This is used to scale
+ * <ul>
+ * <li> <b> -g &lt;genTime&gt; </b>  sets the generation time to the given value. This is used to scale
  * times in the input file into units of generations.
  * The default value is 1.0
- * -n <int>     sets the number of samples to generate the trees from.
+ * <li> <b> -n &lt;numSamples&gt; </b>    sets the number of samples to generate the trees from.
  * The default value is 50
- * -p <value>   sets the population size scale factor to the given value. This scale
+ * <li> <b> -p &lt;popScale&gt; </b>  sets the population size scale factor to the given value. This scale
  * factor transforms the population sizes in the input  file to
  * effective population sizes. This is useful if the population size
  * profiles are expressed, for example, as prevalences, so then scale
  * factor would represent the effective numbers of hosts in the
  * population of interest.
  * The default value is 1.0
- * -se <value>  the time at which last taxa is sampled, in the time scale provided by the input
+ * <li> <b> -se &lt;sampleEnd&gt; </b> the time at which last taxa is sampled, in the time scale provided by the input
  * file. If this differs from the time specified be -ss option then the
  * samples will be evenly spaced between the two times.
  * The default value is the last time if -f is set and the first time
  * otherwise.
- * -ss <value>  the time at which first taxa is sampled, in the time scale provided by the input
+ * <li> <b> -ss &lt;sampleStart&gt; </b> the time at which first taxa is sampled, in the time scale provided by the input
  * file. If this differs from the time specified be -se option then the
  * samples will be evenly spaced between the two times.
  * The default value is the last time if -f is set and the first time
  * otherwise.
- * -f           specifies that the population size history proceeds forward in time.
- * Otherwise the population size history is assumed to proceed into the past.
+ * <li> <b> -f </b>          specifies that the population size history proceeds forward in time.
+ * Otherwise the population size history is assumed to proceed into the past. <br>
+ * <li> <b> -reps &lt;reps&gt; </b> the number of replicate simulations that will be performed.
+ * Each replicate will be separated in the output file by a comment line that labels the replicate, e.g. #rep 0.
+ * </ul>
  * <p/>
  * <infile>     a whitespace-delimited plain text file. The first column contains the time
  * and should be ascending from zero. Subsequent columns contain the population size
@@ -58,6 +62,8 @@ public class VariableCoalescentSimulator {
 
     public static void main(String[] arg) throws IOException {
 
+        long startTime = System.currentTimeMillis();
+
         Options options = new Options(arg, 0, 7);
 
         options.getSet().addOption("g", Options.Separator.EQUALS, Options.Multiplicity.ZERO_OR_ONE);
@@ -65,6 +71,7 @@ public class VariableCoalescentSimulator {
         options.getSet().addOption("p", Options.Separator.EQUALS, Options.Multiplicity.ZERO_OR_ONE);
         options.getSet().addOption("se", Options.Separator.EQUALS, Options.Multiplicity.ZERO_OR_ONE);
         options.getSet().addOption("ss", Options.Separator.EQUALS, Options.Multiplicity.ZERO_OR_ONE);
+        options.getSet().addOption("reps", Options.Separator.EQUALS, Options.Multiplicity.ZERO_OR_ONE);
         options.getSet().addOption("f", Options.Multiplicity.ZERO_OR_ONE);
 
         if (!options.check()) {
@@ -79,6 +86,7 @@ public class VariableCoalescentSimulator {
         int n = 50;
         double ss = -1;
         double se = -1;
+        int reps = 1;
 
         boolean timeForward = options.getSet().isSet("f");
         if (options.getSet().isSet("g")) {
@@ -105,6 +113,11 @@ public class VariableCoalescentSimulator {
             String sampleEnd = options.getSet().getOption("se").getResultValue(0);
             se = Double.parseDouble(sampleEnd);
             System.out.println("sample end time = " + se);
+        }
+        if (options.getSet().isSet("reps")) {
+            String replicates = options.getSet().getOption("reps").getResultValue(0);
+            reps = Integer.parseInt(replicates);
+            System.out.println("replicates = " + reps);
         }
 
         String filename = options.getSet().getData().get(0);
@@ -174,6 +187,9 @@ public class VariableCoalescentSimulator {
         PrintWriter out = new PrintWriter(new FileWriter(outfile));
 
         int popHistory = 0;
+
+        PiecewiseLinearPopulation[] demography = new PiecewiseLinearPopulation[popSizes.length];
+
         for (List<Double> popSize : popSizes) {
             double[] thetas = new double[popSize.size()];
             double[] intervals = new double[times.size() - 1];
@@ -199,17 +215,30 @@ public class VariableCoalescentSimulator {
 
             System.out.println("N" + popHistory + "(t) range = [" + minTheta + ", " + maxTheta + "]");
 
-            PiecewiseLinearPopulation demo = new PiecewiseLinearPopulation(intervals, thetas, Units.Type.GENERATIONS);
+            demography[popHistory] = new PiecewiseLinearPopulation(intervals, thetas, Units.Type.GENERATIONS);
 
-            CoalescentSimulator simulator = new CoalescentSimulator();
-            Tree tree = simulator.simulateTree(taxa, demo);
-
-            out.println(Tree.Utils.newick(tree));
-            //System.err.println(Tree.Utils.newick(tree));
             popHistory += 1;
         }
+
+        CoalescentSimulator simulator = new CoalescentSimulator();
+        for (int i = 0; i < reps; i++) {
+
+            out.println("#rep " + i);
+            for (int j = 0; j < demography.length; j++) {
+                Tree tree = simulator.simulateTree(taxa, demography[j]);
+
+                out.println(Tree.Utils.newick(tree));
+                //System.err.println(Tree.Utils.newick(tree));
+            }
+
+
+        }
+
         out.flush();
         out.close();
+
+        long stopTime = System.currentTimeMillis();
+        System.out.println("Took " + (stopTime - startTime) / 1000.0 + " seconds");
     }
 
     private static Taxa readSampleFile(String fileName, double generationTime) throws IOException {
@@ -271,6 +300,9 @@ public class VariableCoalescentSimulator {
                         "               samples will be evenly spaced between the two times.\n" +
                         "               The default value is the last time if -f is set and the first time\n" +
                         "               otherwise.\n" +
+                        "  -reps <reps> the number of replicate simulations that will be performed. \n" +
+                        "               Each replicate will be separated in the output file by a comment line that\n" +
+                        "               labels the replicate, e.g. #rep 0.\n" +
                         "  -f           specifies that the population size history proceeds forward in time.\n" +
                         "               Otherwise the population size history is assumed to proceed into the past.\n" +
                         "\n" +

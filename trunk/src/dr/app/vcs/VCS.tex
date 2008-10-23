@@ -1,7 +1,7 @@
 \documentclass[12pt]{article}
 \begin{document}
 
-\title{VCS 0.1: Variable Coalescent Simulator}
+\title{VCS 0.2: Variable Coalescent Simulator}
 \author{Alexei Drummond}
 \date{\today{}}
 \maketitle
@@ -23,11 +23,18 @@ java -jar vcs.jar [options] <infile> <outfile>
 The options are
 
 \begin{itemize}
- \item \texttt{-g <gentime>}  sets the generation time to the given value. This is used to scale times in the input file into units of generations. The default value is 1.
- \item \texttt{ -n <sampleSize> } sets the number of samples to generate the trees from. The default value is 50.
+\item \texttt{-g <gentime>}  sets the generation time to the given value. This is used to scale times in the input file into units of generations. The default value is 1.
+
+\item \texttt{-n <sampleSize>} sets the number of samples to generate the trees from. The default value is 50.
+
 \item \texttt{-p <popSizeScale>}   sets the population size scale factor. This scale factor transforms the population sizes in the input  file to effective population sizes. This is useful if the population size profiles are expressed, for example, as prevalences, so then scale factor would represent the effective numbers of hosts in the population of interest. The default value is 1.
- \item \texttt{-se <sampledEnd>}  the time at which the last taxon is sampled, in the time scale provided by the input file. If this differs from the time specified be \texttt{-ss} option then the samples will be evenly spaced between the two times. The default value is the last time if \texttt{-f} is set and the first time otherwise.
+ 
+\item \texttt{-reps <reps>} the number of replicate simulations that will be performed. Each replicate will be separated in the output file by a comment line that labels the replicate, e.g. \texttt{\#rep 0}.
+ 
+\item \texttt{-se <sampledEnd>}  the time at which the last taxon is sampled, in the time scale provided by the input file. If this differs from the time specified be \texttt{-ss} option then the samples will be evenly spaced between the two times. The default value is the last time if \texttt{-f} is set and the first time otherwise.
+ 
 \item \texttt{-ss <sampleStart>}  the time at which the first taxon is sampled, in the time scale provided in the input file. If this differs from the time specified be \texttt{-se} option then the samples will be evenly spaced between the two times. The default value is the last time if \texttt{-f} is set and the first time otherwise.
+
 \item \texttt{-f} specifies that the population size history proceeds forward in time. Otherwise the population size history is assumed to proceed into the past.
 \end{itemize}
 

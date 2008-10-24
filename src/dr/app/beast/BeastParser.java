@@ -39,6 +39,7 @@ import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
+import dr.inference.model.PathLikelihood;
 
 import java.util.Iterator;
 
@@ -301,7 +302,10 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.inference.operators.SimpleOperatorSchedule.PARSER);
 //		addXMLObjectParser(new dr.inference.markovchain.ConvergenceListenerParser());
 
-		addXMLObjectParser(dr.inference.operators.RandomWalkIntegerOperator.PARSER);
+        addXMLObjectParser(dr.inference.mcmc.MarginalLikelihoodEstimator.PARSER);
+        addXMLObjectParser(PathLikelihood.PARSER);
+
+        addXMLObjectParser(dr.inference.operators.RandomWalkIntegerOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.RandomWalkOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.ScaleOperator.PARSER);
 		addXMLObjectParser(dr.inference.operators.UniformOperator.PARSER);

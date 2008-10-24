@@ -1,6 +1,7 @@
 package dr.app.beauti.modelsPanel;
 
 import dr.app.beauti.PanelUtils;
+import dr.app.beauti.BeautiApp;
 import dr.app.beauti.options.AminoAcidModelType;
 import dr.app.beauti.options.FrequencyPolicy;
 import dr.app.beauti.options.NucModelType;
@@ -102,6 +103,16 @@ public class PartitionModelPanel extends OptionsPanel {
         setSRD06Button.setToolTipText("<html>Sets the SRD06 model as described in<br>" +
                 "Shapiro, Rambaut & Drummond (2006) <i>MBE</i> <b>23</b>: 7-9.</html>");
 
+
+        PanelUtils.setupComponent(dolloCheck);
+        dolloCheck.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                model.setDolloModel(true);
+            }
+        });
+        dolloCheck.setEnabled(true);
+        dolloCheck.setToolTipText("<html>Activates a stochastic dollo model - Alekseyenko, Lee & Suchard(2008) Syst Biol 57: 772-784.</html>");
+
         setupPanel();
         setOpaque(false);
     }
@@ -168,6 +179,8 @@ public class PartitionModelPanel extends OptionsPanel {
         substUnlinkCheck.setSelected(model.isUnlinkedSubstitutionModel());
         heteroUnlinkCheck.setSelected(model.isUnlinkedHeterogeneityModel());
         freqsUnlinkCheck.setSelected(model.isUnlinkedFrequencyModel());
+
+        dolloCheck.setSelected(model.isDolloModel());
     }
 
 
@@ -232,6 +245,12 @@ public class PartitionModelPanel extends OptionsPanel {
                 throw new IllegalArgumentException("Unknown data type");
 
         }
+
+        if (BeautiApp.advanced) {
+            addSeparator();
+            addComponent(dolloCheck);   
+        }
+
         setupComponents();
     }
 
@@ -304,7 +323,6 @@ public class PartitionModelPanel extends OptionsPanel {
                     }
                 }
         );
-
     }
 
     // Actions
@@ -341,5 +359,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
     private JButton setSRD06Button;
 
+    private JCheckBox dolloCheck = new JCheckBox("Use Stochastic Dollo Model");
+    // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical", "Sample"});
 
 }

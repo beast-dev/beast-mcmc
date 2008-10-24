@@ -632,6 +632,14 @@ public class PartitionModel extends ModelOptions {
         this.dataType = dataType;
     }
 
+    public boolean isDolloModel() {
+        return dolloModel;
+    }
+
+    public void setDolloModel(boolean dolloModel) {
+        this.dolloModel = dolloModel;
+    }
+
     public String getPrefix() {
         String prefix = "";
         if (options.getActiveModels().size() > 1) {
@@ -682,6 +690,9 @@ public class PartitionModel extends ModelOptions {
 
     private boolean unlinkedFrequencyModel = false;
 
+    private boolean dolloModel = false;
+
     public DataType dataType;
     public String name;
+
 }

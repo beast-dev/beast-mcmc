@@ -78,8 +78,8 @@ public class BeautiApp extends MultiDocApplication {
 
         } else {
 
-            if (args.length == 1 && args[0].equalsIgnoreCase("-developer")) {
-                developer = true;
+            if (args.length == 1 && args[0].equalsIgnoreCase("-advanced")) {
+                advanced = true;
             }
 
 	        if (Utils.isMacOSX()) {
@@ -136,5 +136,5 @@ public class BeautiApp extends MultiDocApplication {
         }
     }
 
-    public static boolean developer = false;
+    public static boolean advanced = false;
 }

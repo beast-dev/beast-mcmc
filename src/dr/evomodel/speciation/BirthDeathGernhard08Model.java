@@ -22,13 +22,21 @@ public class BirthDeathGernhard08Model extends SpeciationModel {
 
     public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
 
-    private Parameter relativeDeathRateParameter;
-    private Parameter birthDiffRateParameter;
+    Parameter relativeDeathRateParameter;
+    Parameter birthDiffRateParameter;
 
 
-    public BirthDeathGernhard08Model(Parameter birthDiffRateParameter, Parameter relativeDeathRateParameter, Type units) {
+    public BirthDeathGernhard08Model(Parameter birthDiffRateParameter,
+                                     Parameter relativeDeathRateParameter,
+                                     Type units) {
 
-        super(BIRTH_DEATH_MODEL, units);
+        this(BIRTH_DEATH_MODEL, birthDiffRateParameter, relativeDeathRateParameter, units);
+    }
+
+    BirthDeathGernhard08Model(String modelName,
+                              Parameter birthDiffRateParameter, Parameter relativeDeathRateParameter, Type units) {
+
+        super(modelName, units);
 
         this.birthDiffRateParameter = birthDiffRateParameter;
         addParameter(birthDiffRateParameter);

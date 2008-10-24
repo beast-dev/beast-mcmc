@@ -159,7 +159,11 @@ public class FloatGeneralLikelihoodCore implements LikelihoodCore {
      * can be obtained.
      */
     public void updateSubstitutionModel(SubstitutionModel substitutionModel) {
-        System.arraycopy(substitutionModel.getFrequencyModel().getFrequencies(), 0, frequencies, 0, frequencies.length);
+//        System.arraycopy(substitutionModel.getFrequencyModel().getFrequencies(), 0, frequencies, 0, frequencies.length);
+    	// Must down-cast from double to float
+    	double[] doubleFreqs = substitutionModel.getFrequencyModel().getFrequencies();
+    	for(int i=0; i<frequencies.length; i++)
+    		frequencies[i] = (float) doubleFreqs[i];
 
         double[][] Evec = substitutionModel.getEigenVectors();
         double[][] Ievc = substitutionModel.getInverseEigenVectors();

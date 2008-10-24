@@ -105,7 +105,7 @@ public class ALSTreeLikelihood extends TreeLikelihood {
 
             BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
             Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating ALSTreeLikelihood model.");
-            Logger.getLogger("dr.evolution").info("\tIf you publish results using Acquisition-Loss-Mutaion (ALS) Model likelihood, please reference Alekseyenko, Lee and Suchard (in submision).\n---------------------------------\n");
+            Logger.getLogger("dr.evolution").info("\tIf you publish results using Acquisition-Loss-Mutaion (ALS) Model likelihood, please reference Alekseyenko, Lee and Suchard (2008) Syst. Biol 57: 772-784.\n---------------------------------\n");
 
             return new ALSTreeLikelihood(observationProcess, patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials);
         }

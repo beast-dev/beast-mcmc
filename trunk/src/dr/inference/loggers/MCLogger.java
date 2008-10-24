@@ -63,6 +63,14 @@ public class MCLogger implements Logger {
         return title;
     }
 
+    public int getLogEvery() {
+        return logEvery;
+    }
+
+    public void setLogEvery(int logEvery) {
+        this.logEvery = logEvery;
+    }
+
     public final void addFormatter(LogFormatter formatter) {
 
         formatters.add(formatter);

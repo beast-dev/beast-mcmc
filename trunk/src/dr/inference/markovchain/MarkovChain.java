@@ -336,6 +336,10 @@ public final class MarkovChain {
         return currentLength;
     }
 
+    public void setCurrentLength(int currentLength) {
+        this.currentLength = currentLength;
+    }
+
     public double getCurrentScore() {
         return currentScore;
     }

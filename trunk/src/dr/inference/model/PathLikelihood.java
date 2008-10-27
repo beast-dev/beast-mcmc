@@ -1,5 +1,5 @@
 /*
- * CompoundLikelihood.java
+ * PathLikelihood.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -36,8 +36,8 @@ import java.util.logging.Logger;
 /**
  * A likelihood function which is simply the product of a set of likelihood functions.
  *
- * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Alex Alekseyenko
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
 public class PathLikelihood implements Likelihood {
@@ -46,12 +46,12 @@ public class PathLikelihood implements Likelihood {
     public static final String PRIOR = "prior";
     public static final String LIKELIHOOD = "likelihood";
 
-    public PathLikelihood(Likelihood likelihood, Likelihood prior) {
-        this.likelihood = likelihood;
-        this.prior = prior;
+    public PathLikelihood(Likelihood source, Likelihood destination) {
+        this.source = source;
+        this.destination = destination;
 
-        compoundModel.addModel(likelihood.getModel());
-        compoundModel.addModel(prior.getModel());
+        compoundModel.addModel(source.getModel());
+        compoundModel.addModel(destination.getModel());
     }
 
     public double getPathParameter() {
@@ -71,13 +71,12 @@ public class PathLikelihood implements Likelihood {
 	}
 
 	public double getLogLikelihood() {
-        double logPrior = prior.getLogLikelihood();
-        return ((likelihood.getLogLikelihood() + logPrior) * pathParameter) + (logPrior * (1.0 - pathParameter));
+        return (source.getLogLikelihood() * pathParameter) + (destination.getLogLikelihood() * (1.0 - pathParameter));
 	}
 
 	public void makeDirty() {
-        likelihood.makeDirty();
-        prior.makeDirty();
+        source.makeDirty();
+        destination.makeDirty();
     }
 
 	public String toString() {
@@ -131,8 +130,8 @@ public class PathLikelihood implements Likelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Likelihood likelihood = (Likelihood) xo.getElementFirstChild("likelihood");
-            Likelihood prior = (Likelihood) xo.getElementFirstChild("prior");
+            Likelihood likelihood = (Likelihood) xo.getElementFirstChild("source");
+            Likelihood prior = (Likelihood) xo.getElementFirstChild("destination");
 
             return new PathLikelihood(likelihood, prior);
         }
@@ -142,7 +141,7 @@ public class PathLikelihood implements Likelihood {
         //************************************************************************
 
         public String getParserDescription() {
-            return "A likelihood function used for estimating marginal likelihoods using path sampling.";
+            return "A likelihood function used for estimating marginal likelihoods and Bayes factors using path sampling.";
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -150,9 +149,9 @@ public class PathLikelihood implements Likelihood {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(LIKELIHOOD,
+                new ElementRule("source",
                         new XMLSyntaxRule[]{new ElementRule(Likelihood.class)}),
-                new ElementRule(PRIOR,
+                new ElementRule("destination",
                         new XMLSyntaxRule[]{new ElementRule(Likelihood.class)}),
         };
 
@@ -161,8 +160,8 @@ public class PathLikelihood implements Likelihood {
         }
     };
 
-	private final Likelihood likelihood;
-    private final Likelihood prior;
+	private final Likelihood source;
+    private final Likelihood destination;
 
     private double pathParameter;
 

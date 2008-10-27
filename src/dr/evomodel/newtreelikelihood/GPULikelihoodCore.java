@@ -17,7 +17,7 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 	 * @param treeLikelihood reference back to ATL, should be able to remove at some point
 	 * @param gpuInfo number of states
 	 */
-    public GPULikelihoodCore(AbstractTreeLikelihood treeLikelihood, GPUInfo gpuInfo) {
+    public GPULikelihoodCore(int stateCount, AbstractTreeLikelihood treeLikelihood, GPUInfo gpuInfo) {
 //		super();  // super() only prints out information
 		StringBuffer sb = new StringBuffer();
 		sb.append("Constructing GPU likelihood core:\n");
@@ -26,8 +26,11 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 		sb.append("If you publish results using this core, please reference Hunyh, Rambaut and Suchard (in preparation)\n");
 		Logger.getLogger("dr.evomodel.treelikelihood").info(sb.toString());
 		this.treeLikelihood = treeLikelihood;
+		this.stateCount = stateCount;
 	}
 
+    private int stateCount;
+    
     private AbstractTreeLikelihood treeLikelihood;   // TODO Not needed if everything runs in one thread or I get GPU contexts working
 
 	/** GPU-specific loading **/
@@ -44,8 +47,12 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 	private static native GPUInfo getGPUInfo();
 
 	/** Native interface overriding NativeLikelihoodCore **/
+	
+	public void initialize(int nodeCount, int patternCount, int matrixCount) {
+		initialize(nodeCount, patternCount, matrixCount, stateCount);
+	}
 
-    public native void initialize(int nodeCount, int patternCount, int matrixCount);
+    public native void initialize(int nodeCount, int patternCount, int matrixCount, int stateCount);
 
     private native void freeNativeMemory();
 
@@ -75,9 +82,18 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 
 		public LikelihoodCore createLikelihoodCore(int[] configuration, AbstractTreeLikelihood treeLikelihood) {
 			int stateCount = configuration[0];
+			int paddedStateCount = stateCount;
+			if ( stateCount == 4 )
+				paddedStateCount = 4;
+			else if ( stateCount <= 16 )
+				paddedStateCount = 16;
+			else if (stateCount <= 32 )
+				paddedStateCount = 32;
+			else if (stateCount <= 64 )
+				paddedStateCount = 64;			
 			GPUInfo gpuInfo;
 			try {
-				System.loadLibrary(getLibraryName()+"-"+stateCount);
+				System.loadLibrary(getLibraryName()+"-"+paddedStateCount);
 				gpuInfo = GPULikelihoodCore.getGPUInfo();
 				if (gpuInfo == null) // No GPU is present
 					return null;
@@ -86,7 +102,7 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 			} catch (UnsatisfiedLinkError e) {
 				return null;
 			}
-			return new GPULikelihoodCore(treeLikelihood, GPULikelihoodCore.getGPUInfo());
+			return new GPULikelihoodCore(stateCount, treeLikelihood, GPULikelihoodCore.getGPUInfo());
 		}
 	}
 }

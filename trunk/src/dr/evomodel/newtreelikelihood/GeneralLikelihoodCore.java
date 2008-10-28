@@ -25,8 +25,8 @@
 
 package dr.evomodel.newtreelikelihood;
 
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 
 public class GeneralLikelihoodCore implements LikelihoodCore {
 
@@ -59,6 +59,10 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
     protected int[] storedMatricesIndices;
     protected int[] currentPartialsIndices;
     protected int[] storedPartialsIndices;
+
+    protected boolean useScaling = true;
+
+    protected double[][][] scalingFactors;
 
 
     /**
@@ -102,6 +106,8 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
 
         partials = new double[2][nodeCount][];
 
+        scalingFactors = new double[2][nodeCount][];
+
         currentMatricesIndices = new int[nodeCount];
         storedMatricesIndices = new int[nodeCount];
 
@@ -113,6 +119,8 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         for (int i = 0; i < nodeCount; i++) {
             partials[0][i] = new double[partialsSize];
             partials[1][i] = new double[partialsSize];
+            scalingFactors[0][i] = new double[patternCount];
+            scalingFactors[1][i] = new double[patternCount];
         }
 
         matrixSize = stateCount * stateCount;
@@ -297,8 +305,84 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
                     v += stateCount;
                 }
             }
+
+            if (useScaling) {
+               scalePartials(nodeIndex3);
+            }
         }
     }
+
+    /**
+      * Scale the partials at a given node. This uses a scaling suggested by Ziheng Yang in
+      * Yang (2000) J. Mol. Evol. 51: 423-432
+      * <p/>
+      * This function looks over the partial likelihoods for each state at each pattern
+      * and finds the largest. If this is less than the scalingThreshold (currently set
+      * to 1E-40) then it rescales the partials for that pattern by dividing by this number
+      * (i.e., normalizing to between 0, 1). It then stores the log of this scaling.
+      * This is called for every internal node after the partials are calculated so provides
+      * most of the performance hit. Ziheng suggests only doing this on a proportion of nodes
+      * but this sounded like a headache to organize (and he doesn't use the threshold idea
+      * which improves the performance quite a bit).
+      *
+      * @param nodeIndex
+      */
+     protected void scalePartials(int nodeIndex) {
+         int u = 0;
+
+         for (int i = 0; i < patternCount; i++) {
+
+             double scaleFactor = 0.0;
+             int v = u;
+             for (int k = 0; k < matrixCount; k++) {
+                 for (int j = 0; j < stateCount; j++) {
+                     if (partials[currentPartialsIndices[nodeIndex]][nodeIndex][v] > scaleFactor) {
+                         scaleFactor = partials[currentPartialsIndices[nodeIndex]][nodeIndex][v];
+                     }
+                     v++;
+                 }
+                 v += (patternCount - 1) * stateCount;
+             }
+
+             if (scaleFactor < 1E+40) {
+
+                 v = u;
+                 for (int k = 0; k < matrixCount; k++) {
+                     for (int j = 0; j < stateCount; j++) {
+                         partials[currentPartialsIndices[nodeIndex]][nodeIndex][v] /= scaleFactor;
+                         v++;
+                     }
+                     v += (patternCount - 1) * stateCount;
+                 }
+                 scalingFactors[currentPartialsIndices[nodeIndex]][nodeIndex][i] = Math.log(scaleFactor);
+
+             } else {
+                 scalingFactors[currentPartialsIndices[nodeIndex]][nodeIndex][i] = 0.0;
+             }
+             u += stateCount;
+
+
+         }
+     }
+
+
+     /**
+     * This function returns the scaling factor for that pattern by summing over
+     * the log scalings used at each node. If scaling is off then this just returns
+     * a 0.
+     *
+     * @return the log scaling factor
+     */
+    public double getLogScalingFactor(int pattern) {
+        double logScalingFactor = 0.0;
+        if (useScaling) {
+            for (int i = 0; i < nodeCount; i++) {
+                logScalingFactor += scalingFactors[currentPartialsIndices[i]][i][pattern];
+            }
+        }
+        return logScalingFactor;
+    }
+    
 
     /**
      * Calculates pattern log likelihoods at a node.
@@ -350,7 +434,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
                 sum += frequencies[i] * tmp[u];
                 u++;
             }
-            outLogLikelihoods[k] = Math.log(sum);
+            outLogLikelihoods[k] = Math.log(sum) + getLogScalingFactor(k);
         }
     }
 

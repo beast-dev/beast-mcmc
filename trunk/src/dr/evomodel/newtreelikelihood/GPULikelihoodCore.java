@@ -48,11 +48,12 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 
 	/** Native interface overriding NativeLikelihoodCore **/
 
-	public void initialize(int nodeCount, int patternCount, int matrixCount) {
-		initialize(nodeCount, patternCount, matrixCount, stateCount);
+	public void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount) {
+//		System.err.println("stateCOunt = "+stateCount+" in java");
+		initialize(nodeCount, stateTipCount, patternCount, matrixCount, stateCount);
 	}
 
-    public native void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount);
+    public native void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount, int stateCount);
 
     private native void freeNativeMemory();
 

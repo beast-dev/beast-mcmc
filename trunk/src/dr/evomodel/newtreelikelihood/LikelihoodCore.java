@@ -38,12 +38,15 @@ import dr.evomodel.sitemodel.SiteModel;
 public interface LikelihoodCore {
 
     /**
-     * initializes partial likelihood arrays.
-     * @param nodeCount the number of nodes in the tree (internal and external)
-     * @param patternCount the number of patterns
-     * @param matrixCount the number of rate categories
+     * Initializes the likelihood core. Provides the information need to to
+     * allocate the required memory.
+     *
+     * @param nodeCount           the number of nodes in the tree
+     * @param stateTipCount       the number of tips with states (zero if using tip partials)
+     * @param patternCount        the number of patterns
+     * @param matrixCount         the number of matrices (i.e., number of categories)
      */
-    void initialize(int nodeCount, int patternCount, int matrixCount);
+    void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount);
 
     /**
      * cleans up and deallocates arrays.
@@ -59,14 +62,24 @@ public interface LikelihoodCore {
     void setTipPartials(int tipIndex, double[] partials);
 
     /**
+     * Sets partials for a tip - these are numbered from 0 and remain
+     * constant throughout the run.
+     * @param tipIndex the tip index
+     * @param states an array of patternCount state indices
+     */
+    void setTipStates(int tipIndex, int[] states);
+
+    /**
      * Called when the substitution model has been updated so precalculations
      * can be obtained.
+     * @param substitutionModel the substitution model
      */
     void updateSubstitutionModel(SubstitutionModel substitutionModel);
 
     /**
      * Called when the site model has been updated so rates and proportions
      * can be obtained.
+     * @param siteModel the site model
      */
     void updateSiteModel(SiteModel siteModel);
 

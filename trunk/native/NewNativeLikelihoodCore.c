@@ -5,9 +5,10 @@
 
 #include "NewNativeLikelihoodCore.h"
 
-#define MATRIX_SIZE STATE_COUNT * STATE_COUNT
+#define MATRIX_SIZE (STATE_COUNT + 1) * STATE_COUNT
 
 int nodeCount;
+int stateTipCount;
 int patternCount;
 int partialsSize;
 int matrixCount;
@@ -27,12 +28,17 @@ double* storedCategoryRates;
 double* integrationTmp;
 
 double*** partials;
+int** states;
 double*** matrices;
 
 int* currentMatricesIndices;
 int* storedMatricesIndices;
 int* currentPartialsIndices;
 int* storedPartialsIndices;
+
+void updateStatesStates(int nodeIndex1, int nodeIndex2, int nodeIndex3);
+void updateStatesPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3);
+void updatePartialsPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3);
 
 void printArray(char* name, double *array, int length) {
 	fprintf(stdout, "%s:", name);
@@ -48,9 +54,10 @@ void printArray(char* name, double *array, int length) {
  * Signature: (III)V
  */
 JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_initialize
-  (JNIEnv *env, jobject obj, jint inNodeCount, jint inPatternCount, jint inMatrixCount)
+  (JNIEnv *env, jobject obj, jint inNodeCount, jint inStateTipCount, jint inPatternCount, jint inMatrixCount)
 {	
 	nodeCount = inNodeCount;
+	stateTipCount = inStateTipCount;
 	patternCount = inPatternCount;
 	matrixCount = inMatrixCount;
 	
@@ -77,9 +84,13 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_i
 	partials = (double ***)malloc(sizeof(double**) * 2);
 	partials[0] = (double **)malloc(sizeof(double*) * nodeCount);
 	partials[1] = (double **)malloc(sizeof(double*) * nodeCount);
+
+	states = (int **)malloc(sizeof(int*) * nodeCount);
+	
 	for (int i = 0; i < nodeCount; i++) {
 		partials[0][i] = (double *)malloc(sizeof(double) * partialsSize);
 		partials[1][i] = (double *)malloc(sizeof(double) * partialsSize);
+		states[i] = (int *)malloc(sizeof(int) * patternCount * matrixCount);
 	}
 
   	currentMatricesIndices = (int *)malloc(sizeof(int) * nodeCount);
@@ -128,6 +139,27 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_s
 	}
 	
 	(*env)->ReleasePrimitiveArrayCritical(env, inTipPartials, tipPartials, JNI_ABORT);
+}
+
+/*
+ * Class:     dr_evomodel_newtreelikelihood_NativeLikelihoodCore
+ * Method:    setTipStates
+ * Signature: (I[I)V
+ */
+JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_setTipStates
+  (JNIEnv *env, jobject obj, jint tipIndex, jintArray inTipStates)
+{
+	jint *tipStates = (jint*)(*env)->GetPrimitiveArrayCritical(env, inTipStates, 0);
+
+	int k = 0;
+	for (int i = 0; i < matrixCount; i++) {
+		for (int j = 0; j < patternCount; j++) {
+			states[tipIndex][k] = (tipStates[j] < STATE_COUNT ? tipStates[j] : STATE_COUNT);
+			k++;
+		}
+	}
+	
+	(*env)->ReleasePrimitiveArrayCritical(env, inTipStates, tipStates, JNI_ABORT);
 }
 
 /*
@@ -239,6 +271,8 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
                     matrices[currentMatricesIndices[nodeIndex]][nodeIndex][n] = sum;
                     n++;
                 }
+                matrices[currentMatricesIndices[nodeIndex]][nodeIndex][n] = 1.0;
+                n++;
             }
         }
         
@@ -270,45 +304,19 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
 		x++;
 		int nodeIndex3 = operations[x];
 		x++;
-
-
-		double* matrices1 = matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1];
-		double* matrices2 = matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2];
-
-		double* partials1 = partials[currentPartialsIndices[nodeIndex1]][nodeIndex1];
-		double* partials2 = partials[currentPartialsIndices[nodeIndex2]][nodeIndex2];
-
 		currentPartialsIndices[nodeIndex3] = 1 - currentPartialsIndices[nodeIndex3];
-		double* partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
 
-		/* fprintf(stdout, "*** operation %d: %d, %d -> %d\n", op, nodeIndex1, nodeIndex2, nodeIndex3); */
-
-		double sum1, sum2;
-
-		int u = 0;
-		int v = 0;
-
-		for (int l = 0; l < matrixCount; l++) {
-
-			for (int k = 0; k < patternCount; k++) {
-
-				int w = l * MATRIX_SIZE;
-
-				for (int i = 0; i < STATE_COUNT; i++) {
-
-					sum1 = sum2 = 0.0;
-
-					for (int j = 0; j < STATE_COUNT; j++) {
-						sum1 += matrices1[w] * partials1[v + j];
-						sum2 += matrices2[w] * partials2[v + j];
-						w++;
-					}
-
-					partials3[u] = sum1 * sum2;
-					
-					u++;
-				}		
-				v += STATE_COUNT;
+		if (nodeIndex1 < stateTipCount) {
+			if (nodeIndex2 < stateTipCount) {
+				updateStatesStates(nodeIndex1, nodeIndex2, nodeIndex3);
+			} else {
+				updateStatesPartials(nodeIndex1, nodeIndex2, nodeIndex3);
+			}
+		} else {
+			if (nodeIndex2 < stateTipCount) {
+				updateStatesPartials(nodeIndex2, nodeIndex1, nodeIndex3);
+			} else {
+				updatePartialsPartials(nodeIndex1, nodeIndex2, nodeIndex3);
 			}
 		}
 	}
@@ -316,7 +324,134 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_u
 	(*env)->ReleasePrimitiveArrayCritical(env, inDependencies, dependencies, JNI_ABORT);
 	*/
 	(*env)->ReleasePrimitiveArrayCritical(env, inOperations, operations, JNI_ABORT);
+}
 
+/*
+ * Calculates partial likelihoods at a node when both children have states.
+ */
+void updateStatesStates(int nodeIndex1, int nodeIndex2, int nodeIndex3)
+{
+	double* matrices1 = matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1];
+	double* matrices2 = matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2];
+
+	int* states1 = states[nodeIndex1];
+	int* states2 = states[nodeIndex2];
+
+	double* partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
+
+	int v = 0;
+
+	for (int l = 0; l < matrixCount; l++) {
+
+		for (int k = 0; k < patternCount; k++) {
+
+			int state1 = states1[k];
+			int state2 = states2[k];
+
+			int w = l * MATRIX_SIZE;
+
+			for (int i = 0; i < STATE_COUNT; i++) {
+
+				partials3[v] = matrices1[w + state1] * matrices2[w + state2];
+
+				v++;
+				w += (STATE_COUNT + 1);
+			}
+
+		}
+	}
+}
+
+/*
+ * Calculates partial likelihoods at a node when one child has states and one has partials.
+ */
+void updateStatesPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3)
+{
+	double* matrices1 = matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1];
+	double* matrices2 = matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2];
+
+	int* states1 = states[nodeIndex1];
+	double* partials2 = partials[currentPartialsIndices[nodeIndex2]][nodeIndex2];
+
+	double* partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
+
+	double sum, tmp;
+
+	int u = 0;
+	int v = 0;
+
+	for (int l = 0; l < matrixCount; l++) {
+		for (int k = 0; k < patternCount; k++) {
+
+			int state1 = states1[k];
+
+			int w = l * MATRIX_SIZE;
+
+			for (int i = 0; i < STATE_COUNT; i++) {
+
+				tmp = matrices1[w + state1];
+
+				sum = 0.0;
+				for (int j = 0; j < STATE_COUNT; j++) {
+					sum += matrices2[w] * partials2[v + j];
+					w++;
+				}
+
+				// increment for the extra column at the end
+				w++;
+
+				partials3[u] = tmp * sum;
+				u++;
+			}
+
+			v += STATE_COUNT;
+		}
+	}
+}
+
+void updatePartialsPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3)
+{
+	double* matrices1 = matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1];
+	double* matrices2 = matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2];
+
+	double* partials1 = partials[currentPartialsIndices[nodeIndex1]][nodeIndex1];
+	double* partials2 = partials[currentPartialsIndices[nodeIndex2]][nodeIndex2];
+
+	double* partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
+
+	/* fprintf(stdout, "*** operation %d: %d, %d -> %d\n", op, nodeIndex1, nodeIndex2, nodeIndex3); */
+
+	double sum1, sum2;
+
+	int u = 0;
+	int v = 0;
+
+	for (int l = 0; l < matrixCount; l++) {
+
+		for (int k = 0; k < patternCount; k++) {
+
+			int w = l * MATRIX_SIZE;
+
+			for (int i = 0; i < STATE_COUNT; i++) {
+
+				sum1 = sum2 = 0.0;
+
+				for (int j = 0; j < STATE_COUNT; j++) {
+					sum1 += matrices1[w] * partials1[v + j];
+					sum2 += matrices2[w] * partials2[v + j];
+					w++;
+				}
+
+				// increment for the extra column at the end
+				w++;
+
+				partials3[u] = sum1 * sum2;
+				
+				u++;
+			}		
+			v += STATE_COUNT;
+		}
+	}
 }
 
 /*

@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     dr_evomodel_newtreelikelihood_NativeLikelihoodCore
  * Method:    initialize
- * Signature: (III)V
+ * Signature: (IIII)V
  */
 JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_initialize
-  (JNIEnv *, jobject, jint, jint, jint);
+  (JNIEnv *, jobject, jint, jint, jint, jint);
 
 /*
  * Class:     dr_evomodel_newtreelikelihood_NativeLikelihoodCore
@@ -30,6 +30,14 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_f
  */
 JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_setTipPartials
   (JNIEnv *, jobject, jint, jdoubleArray);
+
+/*
+ * Class:     dr_evomodel_newtreelikelihood_NativeLikelihoodCore
+ * Method:    setTipStates
+ * Signature: (I[I)V
+ */
+JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_setTipPartials
+  (JNIEnv *, jobject , jint, jintArray);
 
 /*
  * Class:     dr_evomodel_newtreelikelihood_NativeLikelihoodCore

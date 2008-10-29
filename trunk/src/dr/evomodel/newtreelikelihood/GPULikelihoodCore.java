@@ -17,13 +17,13 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 	 * @param treeLikelihood reference back to ATL, should be able to remove at some point
 	 * @param gpuInfo number of states
 	 */
-    public GPULikelihoodCore(int stateCount, AbstractTreeLikelihood treeLikelihood, GPUInfo gpuInfo) {
-//		super();  // super() only prints out information
+    public GPULikelihoodCore(int deviceNumber, int stateCount, AbstractTreeLikelihood treeLikelihood, GPUInfo gpuInfo) {
+
 		StringBuffer sb = new StringBuffer();
 		sb.append("Constructing GPU likelihood core:\n");
-		sb.append("\tGPU Name: "+gpuInfo.name+"\n");
-		sb.append("\tOther info here: "+gpuInfo.memorySize+"\n");
-		sb.append("If you publish results using this core, please reference Hunyh, Rambaut and Suchard (in preparation)\n");
+		sb.append("\tGPU Name: "+gpuInfo.getName(deviceNumber)+"\n");
+//		sb.append("\tOther info here: "+gpuInfo.memorySize[deviceNumber]+"\n");
+		sb.append("If you publish results using this core, please reference Suchard and Rambaut (in preparation)\n");
 		Logger.getLogger("dr.evomodel.treelikelihood").info(sb.toString());
 		this.treeLikelihood = treeLikelihood;
 		this.stateCount = stateCount;
@@ -78,6 +78,8 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
     public native void storeState();
 
     public native void restoreState();
+    
+    private static GPUInfo gpuInfo = null;
 
 	public static class LikelihoodCoreLoader implements LikelihoodCoreFactory.LikelihoodCoreLoader {
 
@@ -86,6 +88,7 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 		public LikelihoodCore createLikelihoodCore(int[] configuration, AbstractTreeLikelihood treeLikelihood) {
 			int stateCount = configuration[0];
 			int paddedStateCount = stateCount;
+			int deviceNumber = 0;
 			if ( stateCount == 4 )
 				paddedStateCount = 4;
 			else if ( stateCount <= 16 )
@@ -94,18 +97,20 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 				paddedStateCount = 32;
 			else if (stateCount <= 64 )
 				paddedStateCount = 64;
-			GPUInfo gpuInfo;
 			try {
 				System.loadLibrary(getLibraryName()+"-"+paddedStateCount);
-				gpuInfo = GPULikelihoodCore.getGPUInfo();
-				if (gpuInfo == null) // No GPU is present
-					return null;
+				if (gpuInfo == null) {
+					gpuInfo = GPULikelihoodCore.getGPUInfo();
+					if (gpuInfo == null) // No GPU is present
+						return null;
+					Logger.getLogger("dr.evomodel.treelikelihood").info(gpuInfo.toString());	
+				}
 				if (!GPULikelihoodCore.isCompatible(gpuInfo, configuration)) // GPU is not compatible
 					return null;
 			} catch (UnsatisfiedLinkError e) {
 				return null;
 			}
-			return new GPULikelihoodCore(stateCount, treeLikelihood, GPULikelihoodCore.getGPUInfo());
+			return new GPULikelihoodCore(deviceNumber,stateCount, treeLikelihood, gpuInfo);
 		}
 	}
 }

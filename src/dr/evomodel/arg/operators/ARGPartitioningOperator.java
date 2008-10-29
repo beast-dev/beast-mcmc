@@ -6,6 +6,7 @@ import dr.inference.model.VariableSizeCompoundParameter;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
+import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
@@ -25,7 +26,9 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
 	private boolean isRecombination;
 	private int tossSize;
 
-	public ARGPartitioningOperator(ARGModel arg, int tossSize) {
+	public ARGPartitioningOperator(ARGModel arg, int tossSize, int weight) {
+		super.setWeight(weight);
+		
 		this.arg = arg;
 		this.partitioningParameters = arg.getPartitioningParameters();
 		this.tossSize = tossSize;
@@ -198,7 +201,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
 			Logger.getLogger("dr.evomodel").info("Creating ARGPartitionOperator with " + TOSS_SIZE + " of " + tossSize);
 
 
-			return new ARGPartitioningOperator(arg, tossSize);
+			return new ARGPartitioningOperator(arg, tossSize, weight);
 		}
 
 		//************************************************************************
@@ -219,7 +222,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
 		}
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-//			AttributeRule.newIntegerRule(WEIGHT),
+			AttributeRule.newIntegerRule(WEIGHT),
 				new ElementRule(ARGModel.class)
 		};
 	};

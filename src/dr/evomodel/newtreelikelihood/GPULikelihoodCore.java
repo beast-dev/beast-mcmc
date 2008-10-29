@@ -30,7 +30,7 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 	}
 
     private int stateCount;
-    
+
     private AbstractTreeLikelihood treeLikelihood;   // TODO Not needed if everything runs in one thread or I get GPU contexts working
 
 	/** GPU-specific loading **/
@@ -47,16 +47,18 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 	private static native GPUInfo getGPUInfo();
 
 	/** Native interface overriding NativeLikelihoodCore **/
-	
+
 	public void initialize(int nodeCount, int patternCount, int matrixCount) {
 		initialize(nodeCount, patternCount, matrixCount, stateCount);
 	}
 
-    public native void initialize(int nodeCount, int patternCount, int matrixCount, int stateCount);
+    public native void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount);
 
     private native void freeNativeMemory();
 
     public native void setTipPartials(int tipIndex, double[] partials);
+
+    public native void setTipStates(int tipIndex, int[] states);
 
 	protected native void updateRootFrequencies(double[] frequencies);
 
@@ -90,7 +92,7 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 			else if (stateCount <= 32 )
 				paddedStateCount = 32;
 			else if (stateCount <= 64 )
-				paddedStateCount = 64;			
+				paddedStateCount = 64;
 			GPUInfo gpuInfo;
 			try {
 				System.loadLibrary(getLibraryName()+"-"+paddedStateCount);

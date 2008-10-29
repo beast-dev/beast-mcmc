@@ -51,6 +51,7 @@ import java.util.logging.Logger;
 public class TreeLikelihood extends AbstractTreeLikelihood {
 
     public static final String TREE_LIKELIHOOD = "crazyTreeLikelihood";
+    public static final String USE_AMBIGUITIES = "useAmbiguities";
 
     /**
      * Constructor.
@@ -58,7 +59,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     public TreeLikelihood(PatternList patternList,
                           TreeModel treeModel,
                           SiteModel siteModel,
-                          	                      BranchRateModel branchRateModel
+                          BranchRateModel branchRateModel,
+                          boolean useAmbiguities
     ) {
 
         super(TREE_LIKELIHOOD, patternList, treeModel);
@@ -84,6 +86,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             this.categoryCount = siteModel.getCategoryCount();
 
+            int extNodeCount = treeModel.getExternalNodeCount();
 
 	        int[] configuration = new int[3];
 	        configuration[0] = stateCount;
@@ -92,9 +95,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             likelihoodCore = LikelihoodCoreFactory.loadLikelihoodCore(configuration, this);
 
-            likelihoodCore.initialize(nodeCount, patternCount, categoryCount);
-
-            int extNodeCount = treeModel.getExternalNodeCount();
+            likelihoodCore.initialize(nodeCount, 
+                    (useAmbiguities ? 0 : extNodeCount),
+                    patternCount,
+                    categoryCount);
 
             for (int i = 0; i < extNodeCount; i++) {
                 // Find the id of tip i in the patternList
@@ -105,7 +109,11 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + treeModel.getId() +
                             ", is not found in patternList, " + patternList.getId());
                 } else {
-                    setPartials(likelihoodCore, patternList, categoryCount, index, i);
+                    if (useAmbiguities) {
+                        setPartials(likelihoodCore, patternList, index, i);
+                    } else {
+                        setStates(likelihoodCore, patternList, index, i);
+                    }
                 }
             }
 
@@ -305,7 +313,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             branchUpdateIndices[branchUpdateCount] = nodeNum;
             branchLengths[branchUpdateCount] = branchTime;
             branchUpdateCount++;
-            
+
             update = true;
         }
 
@@ -370,6 +378,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+            boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
+
             PatternList patternList = (PatternList) xo.getChild(PatternList.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
@@ -379,7 +389,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     patternList,
                     treeModel,
                     siteModel,
-                    branchRateModel
+                    branchRateModel,
+                    useAmbiguities
             );
         }
 
@@ -400,6 +411,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(SiteModel.class),

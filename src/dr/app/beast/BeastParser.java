@@ -401,9 +401,6 @@ public class BeastParser extends XMLParser {
 		// Complex substitution models
 		addXMLObjectParser(dr.evomodel.substmodel.ComplexSubstitutionModel.PARSER);
 
-		// GPU code
-		addXMLObjectParser(dr.evomodel.substmodel.NativeSubstitutionModel.PARSER);
-		addXMLObjectParser(dr.evomodel.treelikelihood.ExperimentalTreeLikelihood.PARSER);
 
 	}
 

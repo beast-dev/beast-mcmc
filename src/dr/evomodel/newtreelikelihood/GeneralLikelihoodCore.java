@@ -31,6 +31,8 @@ import dr.evomodel.substmodel.SubstitutionModel;
 
 public class GeneralLikelihoodCore implements LikelihoodCore {
 
+    public static final boolean DEBUG = false;
+
     protected int stateCount;
     protected int nodeCount;
     protected int stateTipCount;
@@ -182,7 +184,9 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         System.arraycopy(substitutionModel.getFrequencyModel().getFrequencies(), 0, frequencies, 0, frequencies.length);
 
         double[][] Evec = substitutionModel.getEigenVectors();
+//        if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(Evec[0]));
         double[][] Ievc = substitutionModel.getInverseEigenVectors();
+//        if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(Ievc[0]));
         int l =0;
         for (int i = 0; i < stateCount; i++) {
             for (int j = 0; j < stateCount; j++) {
@@ -194,6 +198,10 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         }
 
         System.arraycopy(substitutionModel.getEigenValues(), 0, eigenValues, 0, eigenValues.length);
+        
+  //      if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(cMatrix));
+//        if (DEBUG) System.err.println(cMatrix[stateCount*stateCount*stateCount-1]);
+ //       if (DEBUG) System.exit(-1);
 
     }
 
@@ -218,10 +226,13 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      */
     public void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount) {
         for (int i = 0; i < branchUpdateCount; i++) {
+	    if (DEBUG) System.err.println("Updating matrix for node "+branchUpdateIndices[i]);
             currentMatricesIndices[branchUpdateIndices[i]] = 1 - currentMatricesIndices[branchUpdateIndices[i]];
             calculateTransitionProbabilityMatrices(branchUpdateIndices[i], branchLengths[i]);
         }
     }
+
+    int debugCount = 0;
 
     private void calculateTransitionProbabilityMatrices(int nodeIndex, double branchLength) {
 
@@ -229,9 +240,12 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
 
         int n = 0;
         for (int l = 0; l < matrixCount; l++) {
+//	    if (DEBUG) System.err.println("1: Rate "+l+" = "+categoryRates[l]);
             for (int i = 0; i < stateCount; i++) {
                 tmp[i] =  Math.exp(eigenValues[i] * branchLength * categoryRates[l]);
             }
+//            if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(tmp));
+    //        if (DEBUG) System.exit(-1);
 
             int m = 0;
             for (int i = 0; i < stateCount; i++) {
@@ -241,12 +255,15 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
                         sum += cMatrix[m] * tmp[k];
                         m++;
                     }
+	//	    if (DEBUG) System.err.println("1: matrices[][]["+n+"] = "+sum);
                     matrices[currentMatricesIndices[nodeIndex]][nodeIndex][n] = sum;
                     n++;
                 }
                 matrices[currentMatricesIndices[nodeIndex]][nodeIndex][n] = 1.0;
                 n++;
             }
+//            if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(matrices[currentMatricesIndices[nodeIndex]][nodeIndex]));
+//            if (DEBUG) System.exit(0);
         }
     }
 
@@ -382,7 +399,11 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
 
                 v += stateCount;
             }
-
+        
+	  
+            if (useScaling) {
+               scalePartials(nodeIndex3);
+            }
         }
     }
 
@@ -425,9 +446,20 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
                     u++;
                 }
                 v += stateCount;
+
             }
+            
+            if (DEBUG) {
+    	    	System.err.println("1:PP node = "+nodeIndex3);
+    	    	for(int p=0; p<partials3.length; p++) {
+    	    		System.err.println("1:PP\t"+partials3[p]);
+    	    	}
+    	    	System.err.println(new dr.math.matrixAlgebra.Vector(scalingFactors[currentPartialsIndices[nodeIndex3]][nodeIndex3]));
+    	    	//System.exit(-1);
+    	    }
         }
     }
+
 
     /**
      * Scale the partials at a given node. This uses a scaling suggested by Ziheng Yang in
@@ -495,8 +527,11 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         if (useScaling) {
             for (int i = 0; i < nodeCount; i++) {
                 logScalingFactor += scalingFactors[currentPartialsIndices[i]][i][pattern];
+                if (DEBUG && pattern == 1) System.err.println("Adding "+scalingFactors[currentPartialsIndices[i]][i][pattern]);
             }
         }
+        
+        if (DEBUG) System.err.println("1:SF "+logScalingFactor+" for "+pattern);
         return logScalingFactor;
     }
 
@@ -552,7 +587,11 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
                 u++;
             }
             outLogLikelihoods[k] = Math.log(sum) + getLogScalingFactor(k);
+            if (DEBUG) {
+            	System.err.println("log lik "+k+" = "+outLogLikelihoods[k]);
+            }
         }
+        if (DEBUG) System.exit(-1);
     }
 
     /**

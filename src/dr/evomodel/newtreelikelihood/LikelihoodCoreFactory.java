@@ -22,14 +22,14 @@ public class LikelihoodCoreFactory {
 		}
 
 		for(LikelihoodCoreLoader loader: coreRegistry) {
-            System.out.print("Attempting to load core: " + loader.getLibraryName());
+//            System.out.print("Attempting to load core: " + loader.getLibraryName());
             LikelihoodCore core = loader.createLikelihoodCore(configuration, treeLikelihood);
 			if (core != null) {
-                System.out.println(" - SUCCESS");
+//                System.out.println(" - SUCCESS");
 
 				return core;
             }
-            System.out.println(" - FAILED");
+//            System.out.println(" - FAILED");
 		}
 
 		// No libraries/processes available

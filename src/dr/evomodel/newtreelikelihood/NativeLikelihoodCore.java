@@ -22,7 +22,7 @@ public class NativeLikelihoodCore implements LikelihoodCore {
         Logger.getLogger("dr.evomodel.treelikelihood").info(sb.toString());
     }
 
-    public native void initialize(int nodeCount, int patternCount, int matrixCount);
+    public native void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount);
 
     public void finalize() throws Throwable {
         super.finalize();
@@ -32,6 +32,8 @@ public class NativeLikelihoodCore implements LikelihoodCore {
     private native void freeNativeMemory();
 
     public native void setTipPartials(int tipIndex, double[] partials);
+
+    public native void setTipStates(int tipIndex, int[] states);
 
     public void updateSubstitutionModel(SubstitutionModel substitutionModel) {
         updateRootFrequencies(substitutionModel.getFrequencyModel().getFrequencies());

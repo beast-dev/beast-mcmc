@@ -25,6 +25,7 @@
 
 package dr.evomodel.newtreelikelihood;
 
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 
@@ -32,6 +33,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
 
     protected int stateCount;
     protected int nodeCount;
+    protected int stateTipCount;
     protected int patternCount;
     protected int partialsSize;
     protected int matrixSize;
@@ -78,12 +80,14 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      * initializes partial likelihood arrays.
      *
      * @param nodeCount           the number of nodes in the tree
+     * @param stateTipCount       the number of tips with states (rather than partials - can be zero)
      * @param patternCount        the number of patterns
      * @param matrixCount         the number of matrices (i.e., number of categories)
      */
-    public void initialize(int nodeCount, int patternCount, int matrixCount) {
+    public void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount) {
 
         this.nodeCount = nodeCount;
+        this.stateTipCount = stateTipCount;
         this.patternCount = patternCount;
         this.matrixCount = matrixCount;
 
@@ -104,28 +108,21 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
 
         partialsSize = patternCount * stateCount * matrixCount;
 
-        partials = new double[2][nodeCount][];
+        partials = new double[2][nodeCount][partialsSize];
 
-        scalingFactors = new double[2][nodeCount][];
+        scalingFactors = new double[2][nodeCount][patternCount];
+
+        states = new int[nodeCount][patternCount * matrixCount];
+
+        matrixSize = (stateCount + 1) * stateCount;
+
+        matrices = new double[2][nodeCount][matrixCount * matrixSize];
 
         currentMatricesIndices = new int[nodeCount];
         storedMatricesIndices = new int[nodeCount];
 
         currentPartialsIndices = new int[nodeCount];
         storedPartialsIndices = new int[nodeCount];
-
-        states = new int[nodeCount][];
-
-        for (int i = 0; i < nodeCount; i++) {
-            partials[0][i] = new double[partialsSize];
-            partials[1][i] = new double[partialsSize];
-            scalingFactors[0][i] = new double[patternCount];
-            scalingFactors[1][i] = new double[patternCount];
-        }
-
-        matrixSize = stateCount * stateCount;
-
-        matrices = new double[2][nodeCount][matrixCount * matrixSize];
     }
 
     /**
@@ -153,16 +150,27 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      */
     public void setTipPartials(int tipIndex, double[] partials) {
 
-        if (partials.length < partialsSize) {
-            // duplicate out the partials for each matrix
+        int k = 0;
+        for (int i = 0; i < matrixCount; i++) {
+            System.arraycopy(partials, 0, this.partials[0][tipIndex], k, partials.length);
+            k += partials.length;
+        }
+    }
 
-            int k = 0;
-            for (int i = 0; i < matrixCount; i++) {
-                System.arraycopy(partials, 0, this.partials[0][tipIndex], k, partials.length);
-                k += partials.length;
+    /**
+     * Sets partials for a tip - these are numbered from 0 and remain
+     * constant throughout the run.
+     *
+     * @param tipIndex the tip index
+     * @param states   an array of patternCount state indices
+     */
+    public void setTipStates(int tipIndex, int[] states) {
+        int k = 0;
+        for (int i = 0; i < matrixCount; i++) {
+            for (int j = 0; j < states.length; j++) {
+                this.states[tipIndex][k] = (states[j] < stateCount ? states[j] : stateCount);
+                k++;
             }
-        } else {
-            System.arraycopy(partials, 0, this.partials[0][tipIndex], 0, partials.length);
         }
     }
 
@@ -236,6 +244,8 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
                     matrices[currentMatricesIndices[nodeIndex]][nodeIndex][n] = sum;
                     n++;
                 }
+                matrices[currentMatricesIndices[nodeIndex]][nodeIndex][n] = 1.0;
+                n++;
             }
         }
     }
@@ -267,106 +277,213 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
             int nodeIndex3 = operations[x];
             x++;
 
-
-            double[] matrices1 = matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1];
-            double[] matrices2 = matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2];
-
-            double[] partials1 = partials[currentPartialsIndices[nodeIndex1]][nodeIndex1];
-            double[] partials2 = partials[currentPartialsIndices[nodeIndex2]][nodeIndex2];
-
             currentPartialsIndices[nodeIndex3] = 1 - currentPartialsIndices[nodeIndex3];
-            double[] partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
 
-            double sum1, sum2;
-
-            int u = 0;
-            int v = 0;
-
-            for (int l = 0; l < matrixCount; l++) {
-
-                for (int k = 0; k < patternCount; k++) {
-
-                    int w = l * matrixSize;
-
-                    for (int i = 0; i < stateCount; i++) {
-
-                        sum1 = sum2 = 0.0;
-
-                        for (int j = 0; j < stateCount; j++) {
-                            sum1 += matrices1[w] * partials1[v + j];
-                            sum2 += matrices2[w] * partials2[v + j];
-
-                            w++;
-                        }
-
-                        partials3[u] = sum1 * sum2;
-                        u++;
-                    }
-                    v += stateCount;
+            if (nodeIndex1 < stateTipCount) {
+                if (nodeIndex2 < stateTipCount) {
+                    updateStatesStates(nodeIndex1, nodeIndex2, nodeIndex3);
+                } else {
+                    updateStatesPartials(nodeIndex1, nodeIndex2, nodeIndex3);
+                }
+            } else {
+                if (nodeIndex2 < stateTipCount) {
+                    updateStatesPartials(nodeIndex2, nodeIndex1, nodeIndex3);
+                } else {
+                    updatePartialsPartials(nodeIndex1, nodeIndex2, nodeIndex3);
                 }
             }
 
             if (useScaling) {
-               scalePartials(nodeIndex3);
+                scalePartials(nodeIndex3);
             }
         }
     }
 
     /**
-      * Scale the partials at a given node. This uses a scaling suggested by Ziheng Yang in
-      * Yang (2000) J. Mol. Evol. 51: 423-432
-      * <p/>
-      * This function looks over the partial likelihoods for each state at each pattern
-      * and finds the largest. If this is less than the scalingThreshold (currently set
-      * to 1E-40) then it rescales the partials for that pattern by dividing by this number
-      * (i.e., normalizing to between 0, 1). It then stores the log of this scaling.
-      * This is called for every internal node after the partials are calculated so provides
-      * most of the performance hit. Ziheng suggests only doing this on a proportion of nodes
-      * but this sounded like a headache to organize (and he doesn't use the threshold idea
-      * which improves the performance quite a bit).
-      *
-      * @param nodeIndex
-      */
-     protected void scalePartials(int nodeIndex) {
-         int u = 0;
+     * Calculates partial likelihoods at a node when both children have states.
+     */
+    private void updateStatesStates(int nodeIndex1, int nodeIndex2, int nodeIndex3)
+    {
+        double[] matrices1 = matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1];
+        double[] matrices2 = matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2];
 
-         for (int i = 0; i < patternCount; i++) {
+        int[] states1 = states[nodeIndex1];
+        int[] states2 = states[nodeIndex2];
 
-             double scaleFactor = 0.0;
-             int v = u;
-             for (int k = 0; k < matrixCount; k++) {
-                 for (int j = 0; j < stateCount; j++) {
-                     if (partials[currentPartialsIndices[nodeIndex]][nodeIndex][v] > scaleFactor) {
-                         scaleFactor = partials[currentPartialsIndices[nodeIndex]][nodeIndex][v];
-                     }
-                     v++;
-                 }
-                 v += (patternCount - 1) * stateCount;
-             }
+        double[] partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
 
-             if (scaleFactor < 1E+40) {
+        int v = 0;
 
-                 v = u;
-                 for (int k = 0; k < matrixCount; k++) {
-                     for (int j = 0; j < stateCount; j++) {
-                         partials[currentPartialsIndices[nodeIndex]][nodeIndex][v] /= scaleFactor;
-                         v++;
-                     }
-                     v += (patternCount - 1) * stateCount;
-                 }
-                 scalingFactors[currentPartialsIndices[nodeIndex]][nodeIndex][i] = Math.log(scaleFactor);
+        for (int l = 0; l < matrixCount; l++) {
 
-             } else {
-                 scalingFactors[currentPartialsIndices[nodeIndex]][nodeIndex][i] = 0.0;
-             }
-             u += stateCount;
+            for (int k = 0; k < patternCount; k++) {
+
+                int state1 = states1[k];
+                int state2 = states2[k];
+
+                int w = l * matrixSize;
+
+                for (int i = 0; i < stateCount; i++) {
+
+                    partials3[v] = matrices1[w + state1] * matrices2[w + state2];
+
+                    v++;
+                    w += (stateCount + 1);
+                }
+
+            }
+        }
+    }
+
+    /**
+     * Calculates partial likelihoods at a node when one child has states and one has partials.
+     * @param nodeIndex1
+     * @param nodeIndex2
+     * @param nodeIndex3
+     */
+    private void updateStatesPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3)
+    {
+        double[] matrices1 = matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1];
+        double[] matrices2 = matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2];
+
+        int[] states1 = states[nodeIndex1];
+        double[] partials2 = partials[currentPartialsIndices[nodeIndex2]][nodeIndex2];
+
+        double[] partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
+
+        double sum, tmp;
+
+        int u = 0;
+        int v = 0;
+
+        for (int l = 0; l < matrixCount; l++) {
+            for (int k = 0; k < patternCount; k++) {
+
+                int state1 = states1[k];
+
+                int w = l * matrixSize;
+
+                for (int i = 0; i < stateCount; i++) {
+
+                    tmp = matrices1[w + state1];
+
+                    sum = 0.0;
+                    for (int j = 0; j < stateCount; j++) {
+                        sum += matrices2[w] * partials2[v + j];
+                        w++;
+                    }
+
+                    // increment for the extra column at the end
+                    w++;
+
+                    partials3[u] = tmp * sum;
+                    u++;
+                }
+
+                v += stateCount;
+            }
+
+        }
+    }
+
+    private void updatePartialsPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3)
+    {
+        double[] matrices1 = matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1];
+        double[] matrices2 = matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2];
+
+        double[] partials1 = partials[currentPartialsIndices[nodeIndex1]][nodeIndex1];
+        double[] partials2 = partials[currentPartialsIndices[nodeIndex2]][nodeIndex2];
+
+        double[] partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
+
+        double sum1, sum2;
+
+        int u = 0;
+        int v = 0;
+
+        for (int l = 0; l < matrixCount; l++) {
+
+            for (int k = 0; k < patternCount; k++) {
+
+                int w = l * matrixSize;
+
+                for (int i = 0; i < stateCount; i++) {
+
+                    sum1 = sum2 = 0.0;
+
+                    for (int j = 0; j < stateCount; j++) {
+                        sum1 += matrices1[w] * partials1[v + j];
+                        sum2 += matrices2[w] * partials2[v + j];
+
+                        w++;
+                    }
+
+                    // increment for the extra column at the end
+                    w++;
+
+                    partials3[u] = sum1 * sum2;
+                    u++;
+                }
+                v += stateCount;
+            }
+        }
+    }
+
+    /**
+     * Scale the partials at a given node. This uses a scaling suggested by Ziheng Yang in
+     * Yang (2000) J. Mol. Evol. 51: 423-432
+     * <p/>
+     * This function looks over the partial likelihoods for each state at each pattern
+     * and finds the largest. If this is less than the scalingThreshold (currently set
+     * to 1E-40) then it rescales the partials for that pattern by dividing by this number
+     * (i.e., normalizing to between 0, 1). It then stores the log of this scaling.
+     * This is called for every internal node after the partials are calculated so provides
+     * most of the performance hit. Ziheng suggests only doing this on a proportion of nodes
+     * but this sounded like a headache to organize (and he doesn't use the threshold idea
+     * which improves the performance quite a bit).
+     *
+     * @param nodeIndex
+     */
+    protected void scalePartials(int nodeIndex) {
+        int u = 0;
+
+        for (int i = 0; i < patternCount; i++) {
+
+            double scaleFactor = 0.0;
+            int v = u;
+            for (int k = 0; k < matrixCount; k++) {
+                for (int j = 0; j < stateCount; j++) {
+                    if (partials[currentPartialsIndices[nodeIndex]][nodeIndex][v] > scaleFactor) {
+                        scaleFactor = partials[currentPartialsIndices[nodeIndex]][nodeIndex][v];
+                    }
+                    v++;
+                }
+                v += (patternCount - 1) * stateCount;
+            }
+
+            if (scaleFactor < 1E+40) {
+
+                v = u;
+                for (int k = 0; k < matrixCount; k++) {
+                    for (int j = 0; j < stateCount; j++) {
+                        partials[currentPartialsIndices[nodeIndex]][nodeIndex][v] /= scaleFactor;
+                        v++;
+                    }
+                    v += (patternCount - 1) * stateCount;
+                }
+                scalingFactors[currentPartialsIndices[nodeIndex]][nodeIndex][i] = Math.log(scaleFactor);
+
+            } else {
+                scalingFactors[currentPartialsIndices[nodeIndex]][nodeIndex][i] = 0.0;
+            }
+            u += stateCount;
 
 
-         }
-     }
+        }
+    }
 
 
-     /**
+    /**
      * This function returns the scaling factor for that pattern by summing over
      * the log scalings used at each node. If scaling is off then this just returns
      * a 0.
@@ -382,7 +499,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         }
         return logScalingFactor;
     }
-    
+
 
     /**
      * Calculates pattern log likelihoods at a node.

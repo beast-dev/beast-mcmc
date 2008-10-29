@@ -119,13 +119,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
                     useAmbiguities = true;
                 } else {
-                    if (!forceJavaCore && GPUGeneralLikelihoodCore.isAvailable()) {
-                        coreName = "GPU general";
-                        likelihoodCore = new GPUGeneralLikelihoodCore(patternList.getStateCount());
-                    } else if (!forceJavaCore && NativeMemoryLikelihoodCore.isAvailable()) {
-                        coreName = "native memory general";
-                        likelihoodCore = new NativeMemoryLikelihoodCore(patternList.getStateCount());
-                    } else if (!forceJavaCore && NativeGeneralLikelihoodCore.isAvailable()) {
+                    if (!forceJavaCore && NativeGeneralLikelihoodCore.isAvailable()) {
                         coreName = "native general";
                         likelihoodCore = new NativeGeneralLikelihoodCore(patternList.getStateCount());
                     } else {

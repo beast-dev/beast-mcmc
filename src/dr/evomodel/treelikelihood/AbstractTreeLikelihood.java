@@ -279,7 +279,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 	protected abstract double calculateLogLikelihood();
 
 	public String toString() {
-		return getClass().getName() + "(" + logLikelihood + ")";
+        getLogLikelihood();
+        return getClass().getName() + "(" + logLikelihood + ")";
 
 	}
 

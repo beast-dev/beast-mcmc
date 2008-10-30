@@ -137,6 +137,7 @@
                 <include name="dr/evoxml/**/*.class"/>
                 <include name="dr/gui/chart/**"/>
                 <include name="dr/gui/table/**"/>
+                <include name="dr/gui/tree/**"/>
                 <include name="dr/inference/**/*.class"/>
                 <include name="dr/math/**/*.class"/>
                 <include name="dr/matrix/**/*.class"/>

@@ -98,14 +98,27 @@ public interface PatternList extends TaxonList, Identifiable {
     public static class Utils {
         /**
          * Returns a double array containing the empirically estimated frequencies
-         * for the states of patternList. This function deals correctly with any
-         * state ambiguities.
+         * for the states of patternList. This currently calls the version that maps
+         * to PAUP's estimates.
          *
          * @param patternList the pattern list to calculate the empirical state
          *                    frequencies from
          * @return the empirical state frequencies of the given pattern list
          */
         public static double[] empiricalStateFrequencies(PatternList patternList) {
+            return empiricalStateFrequenciesPAUP(patternList);
+        }
+
+        /**
+         * Returns a double array containing the empirically estimated frequencies
+         * for the states of patternList. This version of the routine should match
+         * the values produced by PAUP.
+         *
+         * @param patternList the pattern list to calculate the empirical state
+         *                    frequencies from
+         * @return the empirical state frequencies of the given pattern list
+         */
+        public static double[] empiricalStateFrequenciesPAUP(PatternList patternList) {
             int i, j, k;
             double total, sum, x, w, difference;
 
@@ -121,6 +134,7 @@ public interface PatternList extends TaxonList, Identifiable {
             int[] pattern;
             boolean[] state;
 
+            int count = 0;
             do {
                 for (i = 0; i < stateCount; i++)
                     tempFreq[i] = 0.0;
@@ -154,7 +168,63 @@ public interface PatternList extends TaxonList, Identifiable {
                     difference += Math.abs((tempFreq[i] / total) - freqs[i]);
                     freqs[i] = tempFreq[i] / total;
                 }
-            } while (difference > 1E-8);
+                count ++;
+            } while (difference > 1E-8 && count < 1000);
+
+            return freqs;
+        }
+
+        /**
+         * Returns a double array containing the empirically estimated frequencies
+         * for the states of patternList. This version of the routine should match
+         * the values produced by MrBayes.
+         *
+         * @param patternList the pattern list to calculate the empirical state
+         *                    frequencies from
+         * @return the empirical state frequencies of the given pattern list
+         */
+        public static double[] empiricalStateFrequenciesMrBayes(PatternList patternList) {
+
+            DataType dataType = patternList.getDataType();
+
+            int stateCount = patternList.getStateCount();
+            int patternLength = patternList.getPatternLength();
+            int patternCount = patternList.getPatternCount();
+
+            double[] freqs = equalStateFrequencies(patternList);
+
+            double sumTotal = 0.0;
+
+            double[] sumFreq = new double[stateCount];
+
+            for (int i = 0; i < patternCount; i++) {
+                int[] pattern = patternList.getPattern(i);
+                double w = patternList.getPatternWeight(i);
+
+                for (int k = 0; k < patternLength; k++) {
+                    boolean[] state = dataType.getStateSet(pattern[k]);
+
+                    double sum = 0.0;
+                    for (int j = 0; j < stateCount; j++) {
+                        if (state[j]) {
+                            sum += freqs[j];
+                        }
+                    }
+
+                    for (int j = 0; j < stateCount; j++) {
+                        if (state[j]) {
+                            double x = (freqs[j] * w) / sum;
+                            sumFreq[j] += x;
+                            sumTotal += x;
+                        }
+                    }
+                }
+
+            }
+
+            for (int i = 0; i < stateCount; i++) {
+                freqs[i] = sumFreq[i] / sumTotal;
+            }
 
             return freqs;
         }
@@ -169,13 +239,13 @@ public interface PatternList extends TaxonList, Identifiable {
          */
         public static double[] equalStateFrequencies(PatternList patternList) {
             int i, n = patternList.getStateCount();
-			double[] freqs = new double[n];
-			double f = 1.0 / n;
-			
-			for (i = 0; i < n; i++) 
-				freqs[i] = f;
-			
-			return freqs;
-		}
-	}
+            double[] freqs = new double[n];
+            double f = 1.0 / n;
+
+            for (i = 0; i < n; i++)
+                freqs[i] = f;
+
+            return freqs;
+        }
+    }
 }

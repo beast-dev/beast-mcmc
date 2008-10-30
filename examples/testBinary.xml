@@ -51,7 +51,7 @@
             <parameter dimension="2" value="0.5 0.5" id="binary.frequencies"/>
         </frequencies>
     </frequencyModel>
-
+                                                                            
 	<generalSubstitutionModel id="binaryModel">
 		<frequencies>
 			<frequencyModel idref="binaryFreqModel"/>

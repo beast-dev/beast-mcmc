@@ -19,7 +19,7 @@ import junit.framework.TestSuite;
 public class ExchangeOperatorTest extends OperatorTest {
 
     static final String TL = "TL";
-    static final String TREE_HEIGHT = "rootHeight";
+    //static final String TREE_HEIGHT = "rootHeight";
 
     public static Test suite() {
         return new TestSuite(ExchangeOperatorTest.class);

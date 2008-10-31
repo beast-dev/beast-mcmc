@@ -1475,7 +1475,6 @@
 		</wideExchange>
 		<wilsonBalding weight="3.0">
 			<treeModel idref="treeModel"/>
-			<constantSize idref="constant"/>
 		</wilsonBalding>
 		<scaleOperator scaleFactor="0.75" weight="1.0">
 			<parameter idref="kappa"/>

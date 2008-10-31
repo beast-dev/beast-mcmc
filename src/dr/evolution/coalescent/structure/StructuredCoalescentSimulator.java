@@ -32,6 +32,7 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.TimeScale;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.colouring.ColourChangeMatrix;
+import dr.evomodel.coalescent.CoalescentSimulator;
 
 /**
  * This class provides the basic engine for coalescent simulation of a given demographic model over a given time period.
@@ -44,7 +45,7 @@ public class StructuredCoalescentSimulator {
 	
 	public static final String COALESCENT_TREE = "structuredCoalescentTree";
 	public static final String COALESCENT_SIMULATOR = "structuredCoalescentSimulator";
-	public static final String ROOT_HEIGHT = "rootHeight";
+	public static final String ROOT_HEIGHT = CoalescentSimulator.ROOT_HEIGHT;
 	
 	public StructuredCoalescentSimulator() {}
 	
@@ -52,7 +53,7 @@ public class StructuredCoalescentSimulator {
 	/**
 	 * Simulates a coalescent tree, given a taxon list.
 	 * @param taxa the set of taxa to simulate a coalescent tree between
-	 * @param demoFunction the demographic function to use
+	 * @param demoFunctions the demographic function to use
 	 */
 	public Tree simulateTree(TaxonList[] taxa, DemographicFunction[] demoFunctions, ColourChangeMatrix colourChangeMatrix) {
 
@@ -84,6 +85,7 @@ public class StructuredCoalescentSimulator {
         }
 
         if (usingDates) {
+            assert mostRecent != null;
             TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
 
             for (int i = 0; i < taxa.length; i++) {

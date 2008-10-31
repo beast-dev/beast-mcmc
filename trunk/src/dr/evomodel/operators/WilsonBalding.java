@@ -36,8 +36,6 @@ import dr.xml.*;
 
 /**
  * Implements the unweighted wilson-balding brach swapping move.
- * WARNING: Because of the way it handles root moves this
- * move only works for constant populations!!!
  *
  * @author Alexei Drummond
  * @version $Id: WilsonBalding.java,v 1.38 2005/06/14 10:40:34 rambaut Exp $
@@ -49,13 +47,11 @@ public class WilsonBalding extends AbstractTreeOperator {
 
     private double logq;
     private TreeModel tree = null;
-    private ConstantPopulationModel demoModel;
     private int tipCount;
 
 
-    public WilsonBalding(TreeModel tree, ConstantPopulationModel demoModel, double weight) {
+    public WilsonBalding(TreeModel tree, double weight) {
         this.tree = tree;
-        this.demoModel = demoModel;
         tipCount = tree.getExternalNodeCount();
         setWeight(weight);
     }
@@ -79,7 +75,7 @@ public class WilsonBalding extends AbstractTreeOperator {
     public void proposeTree() throws OperatorFailedException {
 
         NodeRef i;
-        double delta, oldMinAge, newMinAge, newRange, oldRange, newAge, q;
+        double oldMinAge, newMinAge, newRange, oldRange, newAge, q;
 
         //Bchoose
 
@@ -237,16 +233,11 @@ public class WilsonBalding extends AbstractTreeOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            ConstantPopulationModel demoModel = null;
-            if (xo.hasAttribute(DEMOGRAPHIC_MODEL)) {
-                demoModel = (ConstantPopulationModel) xo.getElementFirstChild(DEMOGRAPHIC_MODEL);
-            }
+            final double weight = xo.getDoubleAttribute(WEIGHT);
 
-            double weight = xo.getDoubleAttribute(WEIGHT);
+            final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-
-            return new WilsonBalding(treeModel, demoModel, weight);
+            return new WilsonBalding(treeModel, weight);
         }
 
         //************************************************************************
@@ -259,8 +250,6 @@ public class WilsonBalding extends AbstractTreeOperator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
-                new ElementRule(DEMOGRAPHIC_MODEL,
-                        new XMLSyntaxRule[]{new ElementRule(ConstantPopulationModel.class)}, true),
                 new ElementRule(TreeModel.class)
         };
 

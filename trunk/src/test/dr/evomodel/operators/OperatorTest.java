@@ -24,6 +24,7 @@ import dr.evomodel.tree.TreeHeightStatistic;
 import dr.evomodel.tree.TreeLogger;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreelengthStatistic;
+import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.mcmc.MCMC;
@@ -41,7 +42,7 @@ import junit.framework.TestCase;
 public abstract class OperatorTest extends TestCase {
 
 	static final String TL = "TL";
-    static final String TREE_HEIGHT = "rootHeight";
+    static final String TREE_HEIGHT = CoalescentSimulator.ROOT_HEIGHT;
 
     protected FlexibleTree tree5;
     protected FlexibleTree tree6;

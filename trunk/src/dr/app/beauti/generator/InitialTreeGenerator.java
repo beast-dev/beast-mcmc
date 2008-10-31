@@ -78,7 +78,8 @@ public class InitialTreeGenerator extends Generator {
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
                                     new Attribute.Default<String>("id", "startingTree"),
-                                    new Attribute.Default<String>("rootHeight", "" + rootHeight.initial)
+                                    new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT,
+                                            "" + rootHeight.initial)
                             }
                     );
                 } else {

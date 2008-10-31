@@ -10,6 +10,7 @@ import dr.evomodel.speciation.SpeciationModel;
 import dr.evomodel.tree.TreeHeightStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreelengthStatistic;
+import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -40,7 +41,7 @@ import java.util.List;
 public class RLYModelTest extends TraceTest {
 
     static final String TL = "TL";
-    static final String TREE_HEIGHT = "rootHeight";
+    static final String TREE_HEIGHT = CoalescentSimulator.ROOT_HEIGHT;
     static final String birthRateIndicator = "birthRateIndicator";
     static final String birthRate = "birthRate";
 

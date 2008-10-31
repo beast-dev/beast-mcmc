@@ -48,7 +48,7 @@ public abstract class AbstractImportanceDistributionOperator extends SimpleMCMCO
         ExchangeOperator wideExchange = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 3);
         SubtreeSlideOperator subtreeSlide = new SubtreeSlideOperator(treeModel, 10.0, 1.0, true, false, false, false, CoercionMode.COERCION_ON);
         NNI nni = new NNI(treeModel, 10.0);
-        WilsonBalding wilsonBalding = new WilsonBalding(treeModel, null, 3.0);
+        WilsonBalding wilsonBalding = new WilsonBalding(treeModel, 3.0);
         FNPR fnpr = new FNPR(treeModel, 5.0);
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();
@@ -80,9 +80,9 @@ public abstract class AbstractImportanceDistributionOperator extends SimpleMCMCO
      * Set the number of transitions since last call to reset(). This is used
      * to restore the state of the operator
      *
-     * @param rejected number of rejections
+     * @param transitions number of transitions
      */
-    public void setTransitions(int transitions){
+    public void setTransitions(int transitions) {
     	this.transitions = transitions;
     }
     

@@ -262,7 +262,6 @@
         </wideExchange>
         <wilsonBalding weight="3">
             <treeModel idref="treeModel"/>
-            <constantSize idref="constant"/>
         </wilsonBalding>
     </operators>
 

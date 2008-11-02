@@ -27,7 +27,7 @@ OPTIONS		:= -funroll-loops -ffast-math -fstrict-aliasing
 
 
 mac :
-	cc -c -arch $(ARCH) -O3 $(OPTIONS) $(MAC_INCLUDES) -std=c99 \
+	cc -c -arch $(ARCH) -O3 -fast $(OPTIONS) $(MAC_INCLUDES) -std=c99 \
 	   -DSTATE_COUNT=$(STATE_COUNT) \
 	   -o $(OUTNAME).$(ARCH).o $(INNAME)
 	cc -o lib$(OUTNAME).$(ARCH).jnilib -framework JavaVM -arch $(ARCH) \

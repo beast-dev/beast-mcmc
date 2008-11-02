@@ -22,6 +22,14 @@ public class NativeLikelihoodCore implements LikelihoodCore {
         Logger.getLogger("dr.evomodel.treelikelihood").info(sb.toString());
     }
 
+    public boolean canHandleTipPartials() {
+        return true;
+    }
+
+    public boolean canHandleTipStates() {
+        return true;
+    }
+
     public native void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount);
 
     public void finalize() throws Throwable {

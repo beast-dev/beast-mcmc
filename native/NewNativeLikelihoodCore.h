@@ -36,7 +36,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_s
  * Method:    setTipStates
  * Signature: (I[I)V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_setTipPartials
+JNIEXPORT void JNICALL Java_dr_evomodel_newtreelikelihood_NativeLikelihoodCore_setTipStates
   (JNIEnv *, jobject , jint, jintArray);
 
 /*

@@ -37,8 +37,8 @@ public class GPUInfo {
 
 	
 	public String getName(int deviceNumber) { return nameList[deviceNumber]; }
-	public int getMemorySize(int deviceNumber) { return memorySizeList[deviceNumber]; }
-	public int getClockSpeed(int deviceNumber) { return clockSpeedList[deviceNumber]; }
+	public int getMemorySize(int deviceNumber) { return (int)Math.round((double)memorySizeList[deviceNumber] / (1024.0 * 1024.0)); }
+	public double getClockSpeed(int deviceNumber) { return (double)clockSpeedList[deviceNumber] / 1000000.0; }
 	
 	public String toString() {
 		

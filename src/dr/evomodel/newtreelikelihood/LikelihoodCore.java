@@ -37,6 +37,10 @@ import dr.evomodel.sitemodel.SiteModel;
 
 public interface LikelihoodCore {
 
+    boolean canHandleTipPartials();
+
+    boolean canHandleTipStates();    
+
     /**
      * Initializes the likelihood core. Provides the information need to to
      * allocate the required memory.

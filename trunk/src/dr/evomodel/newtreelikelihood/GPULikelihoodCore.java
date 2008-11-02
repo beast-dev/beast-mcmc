@@ -46,6 +46,14 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 
 	private static native GPUInfo getGPUInfo();
 
+    public boolean canHandleTipPartials() {
+        return true;
+    }
+
+    public boolean canHandleTipStates() {
+        return false;
+    }
+
 	/** Native interface overriding NativeLikelihoodCore **/
 
 	public void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount) {

@@ -33,7 +33,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
 
     public static final boolean DEBUG = false;
 
-    protected int stateCount;
+    protected final int stateCount;
     protected int nodeCount;
     protected int stateTipCount;
     protected int patternCount;
@@ -64,7 +64,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
     protected int[] currentPartialsIndices;
     protected int[] storedPartialsIndices;
 
-    protected boolean useScaling = true;
+    protected boolean useScaling = false;
 
     protected double[][][] scalingFactors;
 
@@ -76,6 +76,14 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      */
     public GeneralLikelihoodCore(int stateCount) {
         this.stateCount = stateCount;
+    }
+
+    public boolean canHandleTipPartials() {
+        return true;
+    }
+
+    public boolean canHandleTipStates() {
+        return true;
     }
 
     /**
@@ -374,6 +382,7 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
         int v = 0;
 
         for (int l = 0; l < matrixCount; l++) {
+
             for (int k = 0; k < patternCount; k++) {
 
                 int state1 = states1[k];
@@ -398,11 +407,6 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
                 }
 
                 v += stateCount;
-            }
-        
-	  
-            if (useScaling) {
-               scalePartials(nodeIndex3);
             }
         }
     }

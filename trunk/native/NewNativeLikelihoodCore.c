@@ -6,6 +6,9 @@
 #include "NewNativeLikelihoodCore.h"
 
 #define MATRIX_SIZE (STATE_COUNT + 1) * STATE_COUNT
+#if (STATE_COUNT==4)
+#define IS_NUCLEOTIDES
+#endif
 
 int nodeCount;
 int stateTipCount;
@@ -339,8 +342,33 @@ void updateStatesStates(int nodeIndex1, int nodeIndex2, int nodeIndex3)
 
 	double* partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
 
-	int v = 0;
+    #ifdef IS_NUCLEOTIDES
 
+	int v = 0;
+	for (int l = 0; l < matrixCount; l++) {
+
+		for (int k = 0; k < patternCount; k++) {
+
+			int state1 = states1[k];
+			int state2 = states2[k];
+
+			int w = l * MATRIX_SIZE;
+
+			partials3[v] = matrices1[w + state1] * matrices2[w + state2];
+			v++;	w += (STATE_COUNT + 1);
+			partials3[v] = matrices1[w + state1] * matrices2[w + state2];
+			v++;	w += (STATE_COUNT + 1);
+			partials3[v] = matrices1[w + state1] * matrices2[w + state2];
+			v++;	w += (STATE_COUNT + 1);
+			partials3[v] = matrices1[w + state1] * matrices2[w + state2];
+			v++;	w += (STATE_COUNT + 1);
+
+		}
+	}
+
+	#else
+
+	int v = 0;
 	for (int l = 0; l < matrixCount; l++) {
 
 		for (int k = 0; k < patternCount; k++) {
@@ -360,6 +388,7 @@ void updateStatesStates(int nodeIndex1, int nodeIndex2, int nodeIndex3)
 
 		}
 	}
+	#endif
 }
 
 /*
@@ -375,8 +404,60 @@ void updateStatesPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3)
 
 	double* partials3 = partials[currentPartialsIndices[nodeIndex3]][nodeIndex3];
 
-	double sum, tmp;
+    #ifdef IS_NUCLEOTIDES
 
+	int u = 0;
+	int v = 0;
+
+	for (int l = 0; l < matrixCount; l++) {
+		for (int k = 0; k < patternCount; k++) {
+
+			int state1 = states1[k];
+
+			int w = l * MATRIX_SIZE;
+
+			partials3[u] = matrices1[w + state1];
+
+			double sum = matrices2[w] * partials2[v]; w++;
+			sum +=	matrices2[w] * partials2[v + 1]; w++;
+			sum +=	matrices2[w] * partials2[v + 2]; w++;
+			sum +=	matrices2[w] * partials2[v + 3]; w++;
+			w++; // increment for the extra column at the end
+			partials3[u] *= sum;	u++;
+
+			partials3[u] = matrices1[w + state1];
+
+			sum = matrices2[w] * partials2[v]; w++;
+			sum +=	matrices2[w] * partials2[v + 1]; w++;
+			sum +=	matrices2[w] * partials2[v + 2]; w++;
+			sum +=	matrices2[w] * partials2[v + 3]; w++;
+			w++; // increment for the extra column at the end
+			partials3[u] *= sum;	u++;
+
+			partials3[u] = matrices1[w + state1];
+
+			sum = matrices2[w] * partials2[v]; w++;
+			sum +=	matrices2[w] * partials2[v + 1]; w++;
+			sum +=	matrices2[w] * partials2[v + 2]; w++;
+			sum +=	matrices2[w] * partials2[v + 3]; w++;
+			w++; // increment for the extra column at the end
+			partials3[u] *= sum;	u++;
+
+			partials3[u] = matrices1[w + state1];
+
+			sum = matrices2[w] * partials2[v]; w++;
+			sum +=	matrices2[w] * partials2[v + 1]; w++;
+			sum +=	matrices2[w] * partials2[v + 2]; w++;
+			sum +=	matrices2[w] * partials2[v + 3]; w++;
+			w++; // increment for the extra column at the end
+			partials3[u] *= sum;	u++;
+
+			v += 4;
+
+		}
+	}
+
+	#else
 	int u = 0;
 	int v = 0;
 
@@ -389,9 +470,9 @@ void updateStatesPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3)
 
 			for (int i = 0; i < STATE_COUNT; i++) {
 
-				tmp = matrices1[w + state1];
+				double tmp = matrices1[w + state1];
 
-				sum = 0.0;
+				double sum = 0.0;
 				for (int j = 0; j < STATE_COUNT; j++) {
 					sum += matrices2[w] * partials2[v + j];
 					w++;
@@ -407,6 +488,7 @@ void updateStatesPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3)
 			v += STATE_COUNT;
 		}
 	}
+	#endif
 }
 
 void updatePartialsPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3)
@@ -422,6 +504,67 @@ void updatePartialsPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3)
 	/* fprintf(stdout, "*** operation %d: %d, %d -> %d\n", op, nodeIndex1, nodeIndex2, nodeIndex3); */
 
 	double sum1, sum2;
+
+    #ifdef IS_NUCLEOTIDES
+
+	int u = 0;
+	int v = 0;
+
+	for (int l = 0; l < matrixCount; l++) {
+		for (int k = 0; k < patternCount; k++) {
+
+			int w = l * MATRIX_SIZE;
+
+			sum1 = matrices1[w] * partials1[v];
+			sum2 = matrices2[w] * partials2[v]; w++;
+			sum1 += matrices1[w] * partials1[v + 1];
+			sum2 += matrices2[w] * partials2[v + 1]; w++;
+			sum1 += matrices1[w] * partials1[v + 2];
+			sum2 += matrices2[w] * partials2[v + 2]; w++;
+			sum1 += matrices1[w] * partials1[v + 3];
+			sum2 += matrices2[w] * partials2[v + 3]; w++;
+			w++; // increment for the extra column at the end
+			partials3[u] = sum1 * sum2; u++;
+
+			sum1 = matrices1[w] * partials1[v];
+			sum2 = matrices2[w] * partials2[v]; w++;
+			sum1 += matrices1[w] * partials1[v + 1];
+			sum2 += matrices2[w] * partials2[v + 1]; w++;
+			sum1 += matrices1[w] * partials1[v + 2];
+			sum2 += matrices2[w] * partials2[v + 2]; w++;
+			sum1 += matrices1[w] * partials1[v + 3];
+			sum2 += matrices2[w] * partials2[v + 3]; w++;
+			w++; // increment for the extra column at the end
+			partials3[u] = sum1 * sum2; u++;
+
+			sum1 = matrices1[w] * partials1[v];
+			sum2 = matrices2[w] * partials2[v]; w++;
+			sum1 += matrices1[w] * partials1[v + 1];
+			sum2 += matrices2[w] * partials2[v + 1]; w++;
+			sum1 += matrices1[w] * partials1[v + 2];
+			sum2 += matrices2[w] * partials2[v + 2]; w++;
+			sum1 += matrices1[w] * partials1[v + 3];
+			sum2 += matrices2[w] * partials2[v + 3]; w++;
+			w++; // increment for the extra column at the end
+			partials3[u] = sum1 * sum2; u++;
+
+			sum1 = matrices1[w] * partials1[v];
+			sum2 = matrices2[w] * partials2[v]; w++;
+			sum1 += matrices1[w] * partials1[v + 1];
+			sum2 += matrices2[w] * partials2[v + 1]; w++;
+			sum1 += matrices1[w] * partials1[v + 2];
+			sum2 += matrices2[w] * partials2[v + 2]; w++;
+			sum1 += matrices1[w] * partials1[v + 3];
+			sum2 += matrices2[w] * partials2[v + 3]; w++;
+			w++; // increment for the extra column at the end
+			partials3[u] = sum1 * sum2; u++;
+
+			v += 4;
+
+		}
+	}
+
+	#else
 
 	int u = 0;
 	int v = 0;
@@ -452,6 +595,8 @@ void updatePartialsPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3)
 			v += STATE_COUNT;
 		}
 	}
+
+	#endif
 }
 
 /*

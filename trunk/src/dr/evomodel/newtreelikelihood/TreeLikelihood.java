@@ -95,6 +95,14 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             likelihoodCore = LikelihoodCoreFactory.loadLikelihoodCore(configuration, this);
 
+            // override use preference on useAmbiguities based on actual ability of the likelihood core
+            if (!likelihoodCore.canHandleTipPartials()) {
+                useAmbiguities = false;
+            }
+            if (!likelihoodCore.canHandleTipStates()){
+                useAmbiguities = true;
+            }
+
             likelihoodCore.initialize(nodeCount, 
                     (useAmbiguities ? 0 : extNodeCount),
                     patternCount,
@@ -208,7 +216,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     protected void restoreState() {
 
         likelihoodCore.restoreState();
-
         super.restoreState();
 
     }
@@ -255,6 +262,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         likelihoodCore.updateMatrices(branchUpdateIndices, branchLengths, branchUpdateCount);
 
         likelihoodCore.updatePartials(operations, dependencies, operationCount);
+
+        nodeEvaluationCount += operationCount;
 
         likelihoodCore.calculateLogLikelihoods(root.getNumber(), patternLogLikelihoods);
 
@@ -468,4 +477,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      */
     protected boolean updateSiteModel;
 
+    private int nodeEvaluationCount = 0;
+
+    public int getNodeEvaluationCount() {
+        return nodeEvaluationCount;
+    }
 }

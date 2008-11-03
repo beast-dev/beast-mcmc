@@ -44,23 +44,20 @@ public class RateScaleOperator extends AbstractCoercableOperator {
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
 
         int index;
-        if (noRoot){
-        do{
-            index = MathUtils.nextInt(tree.getNodeCount());
-        }while(index == tree.getRoot().getNumber());
-        }else{
+        if (noRoot) {
+            do {
+                index = MathUtils.nextInt(tree.getNodeCount());
+            } while (index == tree.getRoot().getNumber());
+        } else {
             index = MathUtils.nextInt(tree.getNodeCount());
         }
-
-        //NodeRef root =  tree.getRoot();
-        //index = root.getNumber(); 
 
         List<NodeRef> listNode = new ArrayList<NodeRef>();
         getSubtree(listNode, tree.getNode(index));
 
         double oldValue, newValue;
-        double logq=0;
-        for( NodeRef node : listNode){
+        double logq = 0;
+        for (NodeRef node : listNode) {
 
             oldValue = tree.getNodeRate(node);
             newValue = oldValue * scale;
@@ -68,17 +65,17 @@ public class RateScaleOperator extends AbstractCoercableOperator {
             tree.setNodeRate(node, newValue);
         }
 
-        //  According to the hastings ratio in the scale Operator
-        logq = (listNode.size()  - 2) * Math.log(scale);
+        //  According to the hastings ratio defined in the original scale Operator
+        logq = (listNode.size() - 2) * Math.log(scale);
 
         return logq;
     }
 
-    void getSubtree(List<NodeRef> listNode, NodeRef parent){
+    void getSubtree(List<NodeRef> listNode, NodeRef parent) {
 
         listNode.add(parent);
         int nbChildren = tree.getChildCount(parent);
-        for (int c=0; c < nbChildren; c++ ){
+        for (int c = 0; c < nbChildren; c++) {
             getSubtree(listNode, tree.getChild(parent, c));
         }
     }
@@ -156,7 +153,7 @@ public class RateScaleOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-           CoercionMode mode = CoercionMode.parseMode(xo);
+            CoercionMode mode = CoercionMode.parseMode(xo);
 
             final double weight = xo.getDoubleAttribute(WEIGHT);
             final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
@@ -194,7 +191,8 @@ public class RateScaleOperator extends AbstractCoercableOperator {
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-				new ElementRule(TreeModel.class),
+                AttributeRule.newBooleanRule(NO_ROOT, true),
+                new ElementRule(TreeModel.class),
         };
 
     };

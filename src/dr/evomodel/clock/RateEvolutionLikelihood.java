@@ -24,9 +24,6 @@ public abstract class RateEvolutionLikelihood extends AbstractModel implements B
     public static final String EPISODIC = "episodic";
     public static final String LOGSPACE = "logspace";
 
-    // the index of the root node.
-    private int rootNodeNumber;
-
     private final int rateCount;
     private final double[] rates;
 
@@ -46,10 +43,10 @@ public abstract class RateEvolutionLikelihood extends AbstractModel implements B
         this.rootRateParameter = rootRateParameter;
         addParameter(rootRateParameter);
 
-        rateCount = treeModel.getNodeCount() - 1;
-        rates = new double[rateCount + 1];
+        rateCount = treeModel.getNodeCount();
+        rates = new double[rateCount];
 
-        if (ratesParameter.getDimension() != rateCount) {
+        if (ratesParameter.getDimension() != rateCount - 1) {
             throw new IllegalArgumentException("The rates parameter must be of dimension nodeCount-1");
         }
 
@@ -58,8 +55,6 @@ public abstract class RateEvolutionLikelihood extends AbstractModel implements B
         }
 
         ratesKnown = false;
-
-        rootNodeNumber = treeModel.getRoot().getNumber();
 
         this.isEpisodic = isEpisodic;
 
@@ -77,13 +72,20 @@ public abstract class RateEvolutionLikelihood extends AbstractModel implements B
 
         ratesKnown = false;
         likelihoodKnown = false;
-        fireModelChanged();
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index) {
-        ratesKnown = false;
-        likelihoodKnown = false;
-        fireModelChanged();
+
+        if (parameter == rootRateParameter) {
+            ratesKnown = false;
+            likelihoodKnown = false;
+        } else if (parameter == ratesParameter) {
+            ratesKnown = false;
+            likelihoodKnown = false;
+        } else {
+            //eg, the variance parameter in ACLikelihood
+            likelihoodKnown = false;
+        }
     }
 
     protected void storeState() {
@@ -174,15 +176,15 @@ public abstract class RateEvolutionLikelihood extends AbstractModel implements B
 
     abstract double branchRateSample(double parentRate, double time);
 
-    public void sampleRate(NodeRef node){
+    public void sampleRate(NodeRef node) {
 
         final NodeRef parent = treeModel.getParent(node);
         final double length = treeModel.getBranchLength(node);
-        final double rate =  branchRateSample(getBranchRate(treeModel, parent),  length);
-        ratesParameter.setParameterValue(node.getNumber(), rate);
+        final double rate = branchRateSample(getBranchRate(treeModel, parent), length);
+
+        treeModel.setNodeRate(node, rate);
+
     }
-
-
 
     // **************************************************************
     // Loggable IMPLEMENTATION
@@ -230,20 +232,11 @@ public abstract class RateEvolutionLikelihood extends AbstractModel implements B
     // Private members
     // **************************************************************
 
-    /**
-     * Sets the appropriate root rate for this model of rate change.
-     */
     private void setupRates() {
 
-        rootNodeNumber = treeModel.getRoot().getNumber();
-        rates[rootNodeNumber] = rootRateParameter.getParameterValue(0);
-
-        int j = 0;
-        for (int i = 0; i < rateCount + 1; i++) {
-            if (i != rootNodeNumber) {
-                rates[i] = ratesParameter.getParameterValue(j);
-                j++;
-            }
+        for (int i = 0; i < rateCount; i++) {
+            final NodeRef node = treeModel.getNode(i);
+            rates[node.getNumber()] = treeModel.getNodeRate(node);
         }
     }
 

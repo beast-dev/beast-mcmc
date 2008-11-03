@@ -627,6 +627,9 @@ public class BeastGenerator extends Generator {
             case SCALE_ALL:
                 writeScaleAllOperator(operator, writer);
                 break;
+            case SCALE_INDEPENDENTLY:
+                writeScaleOperator(operator, writer, true);
+                break;
             case CENTERED_SCALE:
                 writeCenteredOperator(operator, writer);
                 break;
@@ -692,6 +695,18 @@ public class BeastGenerator extends Generator {
                 new Attribute[]{
                         new Attribute.Default<Double>("scaleFactor", operator.tuning),
                         new Attribute.Default<Double>("weight", operator.weight),
+                });
+        writeParameter1Ref(writer, operator);
+        writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
+    }
+
+    private void writeScaleOperator(Operator operator, XMLWriter writer, boolean indepedently) {
+        writer.writeOpenTag(
+                ScaleOperator.SCALE_OPERATOR,
+                new Attribute[]{
+                        new Attribute.Default<Double>("scaleFactor", operator.tuning),
+                        new Attribute.Default<Double>("weight", operator.weight),
+                        new Attribute.Default<String>("scaleAllIndependently", indepedently ? "true" : "false")
                 });
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);

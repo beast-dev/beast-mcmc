@@ -6,6 +6,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
+import dr.inference.operators.GibbsOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -24,9 +25,9 @@ public class RateSampleOperator extends SimpleMCMCOperator {
 
     private boolean sampleAll;
 
-    RateEvolutionLikelihood  rateEvolution;
+    RateEvolutionLikelihood rateEvolution;
 
-    public RateSampleOperator(TreeModel tree, boolean sampleAll, RateEvolutionLikelihood  rateEvolution) {
+    public RateSampleOperator(TreeModel tree, boolean sampleAll, RateEvolutionLikelihood rateEvolution) {
 
         this.tree = tree;
         this.sampleAll = sampleAll;
@@ -39,28 +40,72 @@ public class RateSampleOperator extends SimpleMCMCOperator {
     public final double doOperation() throws OperatorFailedException {
 
         int index;
-        if (sampleAll){
+        if (sampleAll) {
             index = tree.getRoot().getNumber();
-        }else{
-            index = MathUtils.nextInt(tree.getNodeCount());
+        } else {
+            do {
+                index = MathUtils.nextInt(tree.getNodeCount());
+            } while (tree.isExternal(tree.getNode(index)));
         }
 
 
-        double backward = rateEvolution.getLogLikelihood();
-        sampleSubtree(tree.getNode(index));
-        double forward = rateEvolution.getLogLikelihood();
+        double logBackward = rateEvolution.getLogLikelihood();
 
-        return backward-forward;
+        //sampleOne(tree.getNode(index));
+
+        //sampleSubtree(tree.getNode(index));
+        sampleNode(tree.getNode(index));
+
+        //sampleSister(tree.getNode(index));
+
+        double logForward = rateEvolution.getLogLikelihood();
+
+        return logBackward - logForward;
     }
 
-    void  sampleSubtree( NodeRef parent){
+    void sampleSubtree(NodeRef parent) {
 
         int nbChildren = tree.getChildCount(parent);
-        for (int c=0; c < nbChildren; c++ ){
+        for (int c = 0; c < nbChildren; c++) {
             final NodeRef node = tree.getChild(parent, c);
             rateEvolution.sampleRate(node);
             sampleSubtree(node);
-        }        
+        }
+    }
+
+    void sampleSister(NodeRef parent) {
+
+        int nbChildren = tree.getChildCount(parent);
+        for (int c = 0; c < nbChildren; c++) {
+            final NodeRef node = tree.getChild(parent, c);
+            rateEvolution.sampleRate(node);
+        }
+
+    }
+
+    void sampleNode(NodeRef parent) {
+
+        int nbChildren = tree.getChildCount(parent);
+
+        if (nbChildren > 0) {
+            final int c = MathUtils.nextInt(nbChildren);
+
+            final NodeRef node = tree.getChild(parent, c);
+            rateEvolution.sampleRate(node);
+        }
+
+    }
+
+    void sampleOne(NodeRef parent) {
+
+        int nbChildren = tree.getChildCount(parent);
+
+        if (nbChildren > 0) {
+
+            final NodeRef node = tree.getChild(parent, 0);
+            rateEvolution.sampleRate(node);
+        }
+
     }
 
     /**
@@ -120,7 +165,7 @@ public class RateSampleOperator extends SimpleMCMCOperator {
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-            RateEvolutionLikelihood  rateEvolution = (RateEvolutionLikelihood) xo.getChild(RateEvolutionLikelihood.class);
+            RateEvolutionLikelihood rateEvolution = (RateEvolutionLikelihood) xo.getChild(RateEvolutionLikelihood.class);
 
             RateSampleOperator operator = new RateSampleOperator(treeModel, sampleAll, rateEvolution);
             operator.setWeight(weight);
@@ -132,7 +177,7 @@ public class RateSampleOperator extends SimpleMCMCOperator {
         //************************************************************************
 
         public String getParserDescription() {
-            return "This element returns a rateScale operator on a given parameter.";
+            return "This element returns a rateSample operator on a given parameter.";
         }
 
         public Class getReturnType() {
@@ -153,7 +198,7 @@ public class RateSampleOperator extends SimpleMCMCOperator {
     };
 
     public String toString() {
-        return "rateSampleOperator(" ;
+        return "rateSampleOperator(";
     }
 
     //PRIVATE STUFF

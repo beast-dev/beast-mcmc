@@ -74,16 +74,16 @@ public class BeautiOptions extends ModelOptions {
         {
             final Parameter p = createParameter("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate", ROOT_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
             p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 0.001;
-            p.gammaBeta = 1000;
+            p.gammaAlpha = 100;
+            p.gammaBeta = 0.01;
         }
         createParameter("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         {
             final Parameter p = createParameter("branchRates.var", "autocorrelated lognormal relaxed clock rate variance ", LOG_VAR_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
             p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 0.001;
-            p.gammaBeta = 1000;
+            p.gammaAlpha = 100;
+            p.gammaBeta = 0.01;
         }
 
         createParameter("errorModel.ageRate", "age dependent sequence error rate", SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.POSITIVE_INFINITY);
@@ -186,9 +186,10 @@ public class BeautiOptions extends ModelOptions {
         createScaleOperator("treeModel.rootRate", rateWeights);
         createScaleAllOperator("treeModel.allRates", rateWeights);
         createScaleOperator("treeModel.nodeRates", branchWeights);
+        //createScaleIndependentalyOperator("treeModel.nodeRates", rateWeights);
         createOperator("upDownAllRatesHeights", "All rates and heights",
                 "Scales all rates inversely to node heights of the tree", "treeModel.allRates",
-                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
+                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, branchWeights);
         createScaleOperator("branchRates.var", rateWeights);
 
         createOperator("swapBranchRateCategories", "branchRates.categories",
@@ -368,14 +369,14 @@ public class BeautiOptions extends ModelOptions {
 
                     case ROOT_RATE_SCALE:
                         param.initial = initialRate;
-                        param.gammaAlpha = initialRate * 0.001;
-                        param.gammaBeta = 1000;
+                        param.gammaAlpha = initialRate * 100;
+                        param.gammaBeta = 0.01;
                         break;
 
                     case LOG_VAR_SCALE:
-                        param.initial = initialRate * 10;
-                        param.gammaAlpha = param.initial * 0.001;
-                        param.gammaBeta = 1000;
+                        param.initial = initialRate;
+                        param.gammaAlpha = param.initial * 100;
+                        param.gammaBeta = 0.01;
                         break;
 
                 }

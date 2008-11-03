@@ -49,7 +49,9 @@ public class ACLikelihood extends RateEvolutionLikelihood {
         }
     }
 
-    double branchRateSample(double parentRate, double time){
+    double branchRateSample(double parentRate, double time) {
+
+        //System.out.println(parentRate);
 
         double var = variance.getParameterValue(0);
 
@@ -57,11 +59,11 @@ public class ACLikelihood extends RateEvolutionLikelihood {
             var *= time;
 
         if (isLogSpace) {
-            double logParentRate = Math.log(parentRate);
+            final double logParentRate = Math.log(parentRate);
 
-            return Math.exp (  (MathUtils.nextGaussian() + logParentRate - (var / 2.)) * Math.sqrt(var) );
+            return Math.exp(MathUtils.nextGaussian() * Math.sqrt(var) + logParentRate - (var / 2.));
         } else {
-            return Math.exp (  (MathUtils.nextGaussian() + parentRate) * Math.sqrt(var) );
+            return MathUtils.nextGaussian() * Math.sqrt(var) + parentRate;
         }
     }
 

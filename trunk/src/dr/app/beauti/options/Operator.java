@@ -45,7 +45,7 @@ public class Operator {
     public String getDescription() {
         if (description == null || description.length() == 0) {
             String prefix = "";
-            if (type == OperatorType.SCALE) {
+            if (type == OperatorType.SCALE || type == OperatorType.SCALE_ALL) {
                 prefix = "Scales the ";
             } else if (type == OperatorType.RANDOM_WALK) {
                 prefix = "A random-walk on the ";

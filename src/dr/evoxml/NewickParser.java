@@ -127,6 +127,9 @@ public class NewickParser extends AbstractXMLObjectParser {
                 if (date != null && ((mostRecent == null) || date.after(mostRecent))) {
                     mostRecent = date;
                 }
+                if( date == null ) {
+                    tree.setNodeHeight(tree.getExternalNode(i) , 0.0);
+                }
             }
 
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
@@ -175,6 +178,15 @@ public class NewickParser extends AbstractXMLObjectParser {
 
 
             MutableTree.Utils.correctHeightsForTips(tree);
+        } else {
+            // not using dates
+           for (int i = 0; i < tree.getTaxonCount(); i++) {
+               final NodeRef leaf = tree.getExternalNode(i);
+               final double h = tree.getNodeHeight(leaf);
+               if( h != 0.0 ) {
+                 tree.setNodeHeight(leaf, 0.0);
+               }
+           }
         }
 
         if (xo.hasAttribute(RESCALE_HEIGHT)) {

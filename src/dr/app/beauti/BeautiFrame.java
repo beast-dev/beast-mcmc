@@ -34,6 +34,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author Andrew Rambaut
@@ -135,7 +136,7 @@ public class BeautiFrame extends DocumentFrame {
     /**
      * set all the options for all panels
      */
-    private final void setAllOptions() {
+    private void setAllOptions() {
         dataPanel.setOptions(beautiOptions);
         samplesPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
@@ -149,7 +150,7 @@ public class BeautiFrame extends DocumentFrame {
     /**
      * get all the options for all panels
      */
-    private final void getAllOptions() {
+    private void getAllOptions() {
         dataPanel.getOptions(beautiOptions);
         samplesPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
@@ -438,9 +439,7 @@ public class BeautiFrame extends DocumentFrame {
 //                        }
 
                         Tree[] treeArray = importer.parseTreesBlock(taxa);
-                        for (Tree tree : treeArray) {
-                            trees.add(tree);
-                        }
+                        trees.addAll(Arrays.asList(treeArray));
 
                         if (taxa == null && trees.size() > 0) {
                             taxa = trees.get(0);

@@ -61,7 +61,7 @@ public class SumStatistic extends Statistic.Abstract {
     }
 
     public int getDimension() {
-        return dimension;
+        return elementwise ? 1 : dimension;
     }
 
     /**
@@ -70,6 +70,8 @@ public class SumStatistic extends Statistic.Abstract {
     public double getStatisticValue(int dim) {
 
         double sum = 0.0;
+        
+        if( elementwise ) { assert dim == 0; }
 
         for (Statistic statistic : statistics) {
             if (elementwise) {

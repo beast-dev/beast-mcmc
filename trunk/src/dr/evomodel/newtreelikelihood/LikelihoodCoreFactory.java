@@ -34,7 +34,7 @@ public class LikelihoodCoreFactory {
 		// No libraries/processes available
 
 		int stateCount = configuration[0];
-		return new GeneralLikelihoodCore(stateCount);
+		return new OTFPCGeneralLikelihoodCore(stateCount);
 	}
 
 	private static List<LikelihoodCoreLoader> coreRegistry;

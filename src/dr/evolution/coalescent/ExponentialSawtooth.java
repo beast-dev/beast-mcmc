@@ -146,7 +146,7 @@ public class ExponentialSawtooth extends ExponentialGrowth {
 		return df;
 	}
 	
-	public static final void main(String[] args) {
+	public static void main(String[] args) {
 	
 		double N0 = Double.parseDouble(args[0]);
 		double growthRate = Double.parseDouble(args[1]);

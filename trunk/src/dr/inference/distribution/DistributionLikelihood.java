@@ -383,7 +383,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
             double mean = xo.getDoubleAttribute(MEAN);
             double stdev = xo.getDoubleAttribute(STDEV);
-            double offset = xo.getDoubleAttribute(OFFSET);
+            double offset = xo.getAttribute(OFFSET, 0.0);
             boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
 
             if (meanInRealSpace) {
@@ -413,7 +413,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(MEAN),
                 AttributeRule.newDoubleRule(STDEV),
-                AttributeRule.newDoubleRule(OFFSET),
+                AttributeRule.newDoubleRule(OFFSET, true),
                 AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };

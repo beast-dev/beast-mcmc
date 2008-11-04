@@ -103,7 +103,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 useAmbiguities = true;
             }
 
-            likelihoodCore.initialize(nodeCount, 
+            likelihoodCore.initialize(nodeCount,
                     (useAmbiguities ? 0 : extNodeCount),
                     patternCount,
                     categoryCount);

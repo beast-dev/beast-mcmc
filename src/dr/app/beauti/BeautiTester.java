@@ -29,7 +29,6 @@ import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.options.*;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.ConvertAlignment;
-import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.GeneticCode;
 import dr.evolution.io.Importer;
@@ -312,7 +311,7 @@ public class BeautiTester {
                             throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
                         }
 
-                        alignment = (SimpleAlignment) importer.parseCharactersBlock(beautiOptions.taxonList);
+                        alignment = importer.parseCharactersBlock(beautiOptions.taxonList);
 
                     } else if (block == NexusImporter.DATA_BLOCK) {
 
@@ -322,7 +321,7 @@ public class BeautiTester {
 
                         // A data block doesn't need a taxon block before it
                         // but if one exists then it will use it.
-                        alignment = (SimpleAlignment) importer.parseDataBlock(beautiOptions.taxonList);
+                        alignment = importer.parseDataBlock(beautiOptions.taxonList);
                         if (taxa == null) {
                             taxa = alignment;
                         }

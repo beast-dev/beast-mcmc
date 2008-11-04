@@ -27,9 +27,13 @@ package dr.evomodel.newtreelikelihood;
 
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.NodeRef;
 
-public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
+import java.util.Map;
+import java.util.HashMap;
+
+public class OTFPCGeneralLikelihoodCore implements LikelihoodCore {
 
     public static final boolean DEBUG = false;
 
@@ -55,8 +59,17 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
 
     protected double[][][][] partials;
 
-    protected int[][] patternIndices;
-    protected int[] patternCounts;
+    protected int[][][] nodePatterns;
+    protected int[][][] nodePatternIndices;
+
+    protected int[] nodePatternCounts;
+    protected int[] storedNodePatternCounts;
+
+    protected int[] currentNodePatterns;
+    protected int[] storedNodePatterns;
+
+    protected int[] currentNodePatternsIndices;
+    protected int[] storedNodePatternsIndices;
 
     protected double[][][] matrices;
 
@@ -77,6 +90,14 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
      */
     public OTFPCGeneralLikelihoodCore(int stateCount) {
         this.stateCount = stateCount;
+    }
+
+    public boolean canHandleTipPartials() {
+        return false;
+    }
+
+    public boolean canHandleTipStates() {
+        return true;
     }
 
     /**
@@ -115,8 +136,16 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
 
         scalingFactors = new double[2][nodeCount][patternCount];
 
-        patternIndices = new int[nodeCount][patternCount];
-        patternCounts = new int[nodeCount];
+        nodePatterns = new int[2][nodeCount][patternCount];
+        currentNodePatterns = new int[nodeCount];
+        storedNodePatterns = new int[nodeCount];
+
+        nodePatternCounts = new int[nodeCount];
+        storedNodePatternCounts = new int[nodeCount];
+
+        nodePatternIndices = new int[2][nodeCount][patternCount];
+        currentNodePatternsIndices = new int[nodeCount];
+        storedNodePatternsIndices = new int[nodeCount];
 
         matrixSize = (stateCount + 1) * stateCount;
 
@@ -147,9 +176,21 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
         storedMatricesIndices = null;
     }
 
-    public void setNodePatternIndices(int nodeIndex, int[] patternIndices, int count) {
-        System.arraycopy(patternIndices, 0, this.patternIndices[nodeIndex], 0, count);
-        patternCounts[nodeIndex] = count;
+    public void setTipPartials(int tipIndex, double[] partials) {
+        throw new UnsupportedOperationException("setTipPartials not implemented in OTFPCGeneralLikelihoodCore");
+    }
+
+    /**
+     * Sets partials for a tip - these are numbered from 0 and remain
+     * constant throughout the run.
+     *
+     * @param tipIndex the tip index
+     * @param states   an array of patternCount state indices
+     */
+    public void setTipStates(int tipIndex, int[] states) {
+        for (int j = 0; j < states.length; j++) {
+            nodePatternIndices[0][tipIndex][j] = (states[j] < stateCount ? states[j] : stateCount);
+        }
     }
 
     /**
@@ -175,9 +216,9 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
 
         System.arraycopy(substitutionModel.getEigenValues(), 0, eigenValues, 0, eigenValues.length);
 
-  //      if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(cMatrix));
+        //      if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(cMatrix));
 //        if (DEBUG) System.err.println(cMatrix[stateCount*stateCount*stateCount-1]);
- //       if (DEBUG) System.exit(-1);
+        //       if (DEBUG) System.exit(-1);
 
     }
 
@@ -202,7 +243,7 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
      */
     public void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount) {
         for (int i = 0; i < branchUpdateCount; i++) {
-	    if (DEBUG) System.err.println("Updating matrix for node "+branchUpdateIndices[i]);
+            if (DEBUG) System.err.println("Updating matrix for node "+branchUpdateIndices[i]);
             currentMatricesIndices[branchUpdateIndices[i]] = 1 - currentMatricesIndices[branchUpdateIndices[i]];
             calculateTransitionProbabilityMatrices(branchUpdateIndices[i], branchLengths[i]);
         }
@@ -221,7 +262,7 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
                 tmp[i] =  Math.exp(eigenValues[i] * branchLength * categoryRates[l]);
             }
 //            if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(tmp));
-    //        if (DEBUG) System.exit(-1);
+            //        if (DEBUG) System.exit(-1);
 
             int m = 0;
             for (int i = 0; i < stateCount; i++) {
@@ -231,7 +272,7 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
                         sum += cMatrix[m] * tmp[k];
                         m++;
                     }
-	//	    if (DEBUG) System.err.println("1: matrices[][]["+n+"] = "+sum);
+                    //	    if (DEBUG) System.err.println("1: matrices[][]["+n+"] = "+sum);
                     matrices[currentMatricesIndices[nodeIndex]][nodeIndex][n] = sum;
                     n++;
                 }
@@ -270,8 +311,14 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
             int nodeIndex3 = operations[x];
             x++;
 
+            // Switch the current set of partials to write to before doing so. This
+            // will enable an easy restore.
             currentPartialsIndices[nodeIndex3] = 1 - currentPartialsIndices[nodeIndex3];
 
+            calculateSubtreePatterns(nodeIndex1, nodeIndex2, nodeIndex3);
+
+            // if a nodeIndex < stateTipCount then it is a tip with state information
+            // otherwise it is an internal node with partials
             if (nodeIndex1 < stateTipCount) {
                 if (nodeIndex2 < stateTipCount) {
                     updateStatesStates(nodeIndex1, nodeIndex2, nodeIndex3);
@@ -293,6 +340,40 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
     }
 
     /**
+     * Compress the patterns at nodeIndex using the patterns at the two childIndex nodes.
+     * We assume these are done in post order traversal so lower down nodes are done first.
+     * @param childIndex1
+     * @param childIndex2
+     * @param nodeIndex
+     */
+    private void calculateSubtreePatterns(int childIndex1, int childIndex2, int nodeIndex) {
+
+        int[] childIndices1 = nodePatternIndices[currentNodePatternsIndices[childIndex1]][childIndex1];
+        int[] childIndices2 = nodePatternIndices[currentNodePatternsIndices[childIndex2]][childIndex2];
+
+        currentNodePatterns[childIndex1] = 1 - currentNodePatterns[childIndex1];
+        currentNodePatterns[childIndex2] = 1 - currentNodePatterns[childIndex2];
+        currentNodePatternsIndices[nodeIndex] = 1 - currentNodePatternsIndices[nodeIndex];
+
+        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+        int j = 0;
+        for (int i = 0; i < patternCount; i++) {
+            Integer key = childIndices1[i] * patternCount + childIndices2[i];
+            Integer index = map.get(key);
+            if (index == null) {
+                // This is a new pattern so add it
+                nodePatterns[currentNodePatterns[childIndex1]][childIndex1][j] = childIndices1[i];
+                nodePatterns[currentNodePatterns[childIndex2]][childIndex2][j] = childIndices2[i];
+                index = j;
+                map.put(key, index);
+                j++;
+            }
+            nodePatternIndices[currentNodePatternsIndices[nodeIndex]][nodeIndex][i] = index;
+        }
+        nodePatternCounts[nodeIndex] = map.keySet().size();
+    }
+
+    /**
      * Calculates partial likelihoods at a node when both children have states.
      */
     private void updateStatesStates(int nodeIndex1, int nodeIndex2, int nodeIndex3)
@@ -306,10 +387,10 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
 
             int v = 0;
 
-            for (int k = 0; k < patternCounts[nodeIndex1]; k++) {
+            for (int k = 0; k < nodePatternCounts[nodeIndex3]; k++) {
 
-                int state1 = patternIndices[nodeIndex1][k];
-                int state2 = patternIndices[nodeIndex2][k];
+                int state1 = nodePatterns[currentNodePatterns[nodeIndex1]][nodeIndex1][k];
+                int state2 = nodePatterns[currentNodePatterns[nodeIndex2]][nodeIndex2][k];
 
                 int w = l * matrixSize;
 
@@ -344,10 +425,10 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
 
         for (int l = 0; l < matrixCount; l++) {
             int u = 0;
-            for (int k = 0; k < patternCounts[nodeIndex1]; k++) {
+            for (int k = 0; k < nodePatternCounts[nodeIndex3]; k++) {
 
-                int state1 = patternIndices[nodeIndex1][k];
-                int pattern2 = patternIndices[nodeIndex2][k] * stateCount;
+                int state1 = nodePatterns[currentNodePatterns[nodeIndex1]][nodeIndex1][k];
+                int pattern2 = nodePatterns[currentNodePatterns[nodeIndex2]][nodeIndex2][k] * stateCount;
 
                 int w = l * matrixSize;
 
@@ -370,7 +451,7 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
             }
 
             if (useScaling) {
-               scalePartials(nodeIndex3);
+                scalePartials(nodeIndex3);
             }
         }
     }
@@ -390,10 +471,10 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
         for (int l = 0; l < matrixCount; l++) {
             int u = 0;
 
-            for (int k = 0; k < patternCounts[nodeIndex1]; k++) {
+            for (int k = 0; k < nodePatternCounts[nodeIndex3]; k++) {
 
-                int pattern1 = patternIndices[nodeIndex1][k] * stateCount;
-                int pattern2 = patternIndices[nodeIndex2][k] * stateCount;
+                int pattern1 = nodePatterns[currentNodePatterns[nodeIndex1]][nodeIndex1][k] * stateCount;
+                int pattern2 = nodePatterns[currentNodePatterns[nodeIndex2]][nodeIndex2][k] * stateCount;
 
                 int w = l * matrixSize;
 
@@ -418,13 +499,13 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
             }
 
             if (DEBUG) {
-    	    	System.err.println("1:PP node = "+nodeIndex3);
-    	    	for(int p=0; p<partials3.length; p++) {
-    	    		System.err.println("1:PP\t"+partials3[p]);
-    	    	}
-    	    	System.err.println(new dr.math.matrixAlgebra.Vector(scalingFactors[currentPartialsIndices[nodeIndex3]][nodeIndex3]));
-    	    	//System.exit(-1);
-    	    }
+                System.err.println("1:PP node = "+nodeIndex3);
+                for(int p=0; p<partials3.length; p++) {
+                    System.err.println("1:PP\t"+partials3[p]);
+                }
+                System.err.println(new dr.math.matrixAlgebra.Vector(scalingFactors[currentPartialsIndices[nodeIndex3]][nodeIndex3]));
+                //System.exit(-1);
+            }
         }
     }
 
@@ -557,7 +638,7 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
             }
             outLogLikelihoods[k] = Math.log(sum) + getLogScalingFactor(k);
             if (DEBUG) {
-            	System.err.println("log lik "+k+" = "+outLogLikelihoods[k]);
+                System.err.println("log lik "+k+" = "+outLogLikelihoods[k]);
             }
         }
         if (DEBUG) System.exit(-1);
@@ -577,6 +658,10 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
 
         System.arraycopy(currentMatricesIndices, 0, storedMatricesIndices, 0, nodeCount);
         System.arraycopy(currentPartialsIndices, 0, storedPartialsIndices, 0, nodeCount);
+
+        System.arraycopy(nodePatternCounts, 0, storedNodePatternCounts, 0, nodeCount);
+        System.arraycopy(currentNodePatterns, 0, storedNodePatterns, 0, nodeCount);
+        System.arraycopy(currentNodePatternsIndices, 0, storedNodePatternsIndices, 0, nodeCount);
     }
 
     /**
@@ -604,12 +689,24 @@ public class OTFPCGeneralLikelihoodCore implements OTFPCLikelihoodCore {
         categoryProportions = storedCategoryProportions;
         storedCategoryProportions = tmp;
 
-        int[] tmp3 = currentMatricesIndices;
+        int[] tmp2 = currentMatricesIndices;
         currentMatricesIndices = storedMatricesIndices;
-        storedMatricesIndices = tmp3;
+        storedMatricesIndices = tmp2;
 
-        int[] tmp4 = currentPartialsIndices;
+        tmp2 = currentPartialsIndices;
         currentPartialsIndices = storedPartialsIndices;
-        storedPartialsIndices = tmp4;
+        storedPartialsIndices = tmp2;
+
+        tmp2 = nodePatternCounts;
+        nodePatternCounts = storedPartialsIndices;
+        storedPartialsIndices = tmp2;
+
+        tmp2 = currentNodePatterns;
+        currentNodePatterns = storedNodePatterns;
+        storedNodePatterns = tmp2;
+
+        tmp2 = currentNodePatternsIndices;
+        currentNodePatternsIndices = storedNodePatternsIndices;
+        storedNodePatternsIndices = tmp2;
     }
 }

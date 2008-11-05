@@ -89,15 +89,14 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
 		// Nothing to precalculate
 	}
 
-	protected void setupRelativeRates() {
-
-		for (int i = 0; i < relativeRates.length; i++) {
+    protected void setupRelativeRates(double[] rates) {
+		for (int i = 0; i < rates.length; i++) {
 			if (i == ratesRelativeTo) {
-				relativeRates[i] = 1.0;
+				rates[i] = 1.0;
 			} else if (i < ratesRelativeTo) {
-				relativeRates[i] = ratesParameter.getParameterValue(i);
+				rates[i] = ratesParameter.getParameterValue(i);
 			} else {
-				relativeRates[i] = ratesParameter.getParameterValue(i - 1);
+				rates[i] = ratesParameter.getParameterValue(i - 1);
 			}
 		}
 	}

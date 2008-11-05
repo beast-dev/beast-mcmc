@@ -70,15 +70,24 @@ public class FloatGeneralLikelihoodCore implements LikelihoodCore {
         this.stateCount = stateCount;
     }
 
-    /**
-     * initializes partial likelihood arrays.
-     *
-     * @param nodeCount           the number of nodes in the tree
-     * @param patternCount        the number of patterns
-     * @param matrixCount         the number of matrices (i.e., number of categories)
-     */
-    public void initialize(int nodeCount, int patternCount, int matrixCount) {
+    public boolean canHandleTipPartials() {
+        return true;
+    }
 
+    public boolean canHandleTipStates() {
+        return false;
+    }
+
+    /**
+     * Initializes the likelihood core. Provides the information need to to
+     * allocate the required memory.
+     *
+     * @param nodeCount     the number of nodes in the tree
+     * @param stateTipCount the number of tips with states (zero if using tip partials)
+     * @param patternCount  the number of patterns
+     * @param matrixCount   the number of matrices (i.e., number of categories)
+     */
+    public void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount) {
         this.nodeCount = nodeCount;
         this.patternCount = patternCount;
         this.matrixCount = matrixCount;
@@ -152,6 +161,17 @@ public class FloatGeneralLikelihoodCore implements LikelihoodCore {
                 k++;
             }
         }
+    }
+
+    /**
+     * Sets partials for a tip - these are numbered from 0 and remain
+     * constant throughout the run.
+     *
+     * @param tipIndex the tip index
+     * @param states   an array of patternCount state indices
+     */
+    public void setTipStates(int tipIndex, int[] states) {
+        throw new UnsupportedOperationException("setTipStates not implemented in FloatGeneralLikelihoodCore");
     }
 
     /**

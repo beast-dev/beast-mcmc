@@ -567,7 +567,17 @@ public class TreeAnnotator {
                         double minValue = Double.MAX_VALUE;
                         double maxValue = -Double.MAX_VALUE;
 
-                        boolean isDoubleArray = v[i] instanceof Object[] && ((Object[]) v[i])[0] instanceof Double;
+                        final boolean isArray = v[i] instanceof Object[];
+                        boolean isDoubleArray = isArray && ((Object[]) v[i])[0] instanceof Double;
+                        // This is Java, friends - first value type does not imply all.
+                        if (isDoubleArray) {
+                            for(Object n : (Object[])v[i]) {
+                               if( ! (n instanceof Double) )  {
+                                    isDoubleArray = false;
+                                   break;
+                               }
+                            }
+                        }
                         // todo Handle other types of arrays
 
                         double[][] valuesArray = null;
@@ -608,9 +618,12 @@ public class TreeAnnotator {
                                     if (valuesArray[k][j] > maxValueArray[k]) maxValueArray[k] = valuesArray[k][j];
                                 }
                             } else {
-                                values[j] = ((Number) value).doubleValue();
-                                if (values[j] < minValue) minValue = values[j];
-                                if (values[j] > maxValue) maxValue = values[j];
+                                // Ignore other (unknown) types
+                                if ( value instanceof Number ) {
+                                    values[j] = ((Number) value).doubleValue();
+                                    if (values[j] < minValue) minValue = values[j];
+                                    if (values[j] > maxValue) maxValue = values[j];
+                                }
                             }
                         }
                         if (isHeight) {

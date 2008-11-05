@@ -11,6 +11,8 @@ import java.util.List;
  *
  */
 public class LikelihoodCoreFactory {
+	
+	public static final boolean useFloats = false;
 
 	public static LikelihoodCore loadLikelihoodCore(int[] configuration, AbstractTreeLikelihood treeLikelihood) {
 
@@ -34,7 +36,10 @@ public class LikelihoodCoreFactory {
 		// No libraries/processes available
 
 		int stateCount = configuration[0];
-		return new GeneralLikelihoodCore(stateCount);
+		if (useFloats)
+			return new FloatGeneralLikelihoodCore(stateCount);
+		else 
+			return new GeneralLikelihoodCore(stateCount);
 	}
 
 	private static List<LikelihoodCoreLoader> coreRegistry;

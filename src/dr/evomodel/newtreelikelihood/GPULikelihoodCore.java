@@ -115,7 +115,7 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 				}
 				if (!GPULikelihoodCore.isCompatible(gpuInfo, configuration)) // GPU is not compatible
 					return null;
-			} catch (UnsatisfiedLinkError e) {
+			} catch (UnsatisfiedLinkError e) { // No library present
 				return null;
 			}
 			return new GPULikelihoodCore(deviceNumber,stateCount, treeLikelihood, gpuInfo);

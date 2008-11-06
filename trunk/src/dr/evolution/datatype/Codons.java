@@ -78,10 +78,16 @@ public class Codons extends DataType {
 		"???", "---"
 	};
 
-	/**
-	 * Private constructor - DEFAULT_INSTANCE provides the only instance
+	/*
+	 * Default unused constructor 
 	 */
-	private Codons(GeneticCode geneticCode) {
+
+	public Codons() { }
+
+	/**
+	 * Protected constructor - DEFAULT_INSTANCE and descendents provide the only instance
+	 */
+	protected Codons(GeneticCode geneticCode) {
 		this.geneticCode = geneticCode;
 		
 		stateCount = 64 - geneticCode.getStopCodonCount();
@@ -271,7 +277,7 @@ public class Codons extends DataType {
 
 	// Private members
 	
-	private GeneticCode geneticCode;
-	private int[] stateMap;
-	private int[] reverseMap;
+	protected GeneticCode geneticCode;
+	protected int[] stateMap;
+	protected int[] reverseMap;
 }

@@ -46,12 +46,12 @@ public class YangCodonModel extends AbstractCodonModel
 	public static final String KAPPA = "kappa";
 	
 	/** kappa */
-	private Parameter kappaParameter;
+	protected Parameter kappaParameter;
 	
 	/** omega */
-	private Parameter omegaParameter;
+	protected Parameter omegaParameter;
 	
-	private byte[] rateMap;
+	protected byte[] rateMap;
 	
 	/**
 	 * Constructor
@@ -65,11 +65,13 @@ public class YangCodonModel extends AbstractCodonModel
 		
 		this.omegaParameter = omegaParameter;
 		addParameter(omegaParameter);
-		omegaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+		omegaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
+				omegaParameter.getDimension()));
 
 		this.kappaParameter = kappaParameter;
 		addParameter(kappaParameter);
-		kappaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+		kappaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
+				kappaParameter.getDimension()));
 
 		constructRateMap();
 
@@ -142,7 +144,7 @@ public class YangCodonModel extends AbstractCodonModel
 	 *		3: non-synonymous transition
 	 *		4: non-synonymous transversion
 	 */
-	private void constructRateMap()
+	protected void constructRateMap()
 	{
 		int u, v, i1, j1, k1, i2, j2, k2;
 		byte rateClass;

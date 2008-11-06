@@ -400,6 +400,7 @@ public class BeastParser extends XMLParser {
 
 		// Complex substitution models
 		addXMLObjectParser(dr.evomodel.substmodel.ComplexSubstitutionModel.PARSER);
+		addXMLObjectParser(dr.evomodel.substmodel.MarkovModulatedYangModel.PARSER);
 
 
 	}

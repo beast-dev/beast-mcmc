@@ -141,7 +141,7 @@ public class MarkovModulatedYangModel extends YangCodonModel {
 //				} else if (codeStr.equals(GeneticCode.NO_STOPS.getName())) {
 //					codons = Codons.NO_STOPS;
 //				}
-//			}                        ÷
+//			}                        
 
 			DataType dataType = DataTypeUtils.getDataType(xo);
 			HiddenCodons codons = null;

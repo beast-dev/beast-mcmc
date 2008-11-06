@@ -7,7 +7,8 @@ public class HiddenCodons extends Codons {
 		
 	public static final String DESCRIPTION = "hiddenCodon";
 
-	public static final HiddenCodons UNIVERSAL_HIDDEN = new HiddenCodons(GeneticCode.UNIVERSAL,3);
+	public static final HiddenCodons UNIVERSAL_HIDDEN_2 = new HiddenCodons(GeneticCode.UNIVERSAL,2);
+	public static final HiddenCodons UNIVERSAL_HIDDEN_3 = new HiddenCodons(GeneticCode.UNIVERSAL,3);
 	
 	/**
 	 * Private constructor - DEFAULT_INSTANCE provides the only instance

@@ -234,9 +234,13 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
      */
     public void updateMatrices(int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount) {
         for (int i = 0; i < branchUpdateCount; i++) {
-	    if (DEBUG) System.err.println("Updating matrix for node "+branchUpdateIndices[i]);
+        	if (DEBUG) System.err.println("Updating matrix for node "+branchUpdateIndices[i]);
             currentMatricesIndices[branchUpdateIndices[i]] = 1 - currentMatricesIndices[branchUpdateIndices[i]];
             calculateTransitionProbabilityMatrices(branchUpdateIndices[i], branchLengths[i]);
+            if (DEBUG && branchUpdateIndices[i] == 0) {
+            	System.err.println(matrices[currentMatricesIndices[0]][0][0]);
+            	System.err.println(matrices[currentMatricesIndices[0]][0][184]);
+            }
         }
     }
 
@@ -454,10 +458,12 @@ public class GeneralLikelihoodCore implements LikelihoodCore {
             }
             
             if (DEBUG) {
-    	    	System.err.println("1:PP node = "+nodeIndex3);
-    	    	for(int p=0; p<partials3.length; p++) {
-    	    		System.err.println("1:PP\t"+partials3[p]);
-    	    	}
+//    	    	System.err.println("1:PP node = "+nodeIndex3);
+//    	    	for(int p=0; p<partials3.length; p++) {
+//    	    		System.err.println("1:PP\t"+partials3[p]);
+//    	    	}
+            	System.err.println("node = "+nodeIndex3);
+            	System.err.println(new dr.math.matrixAlgebra.Vector(partials3));
     	    	System.err.println(new dr.math.matrixAlgebra.Vector(scalingFactors[currentPartialsIndices[nodeIndex3]][nodeIndex3]));
     	    	//System.exit(-1);
     	    }

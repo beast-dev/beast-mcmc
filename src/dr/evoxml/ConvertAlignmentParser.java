@@ -79,7 +79,7 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
         new StringAttributeRule(DataType.DATA_TYPE,
             "The type of sequence data",
             new String[] {Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION,
-		            HiddenCodons.DESCRIPTION},
+		            HiddenCodons.DESCRIPTION+"2",HiddenCodons.DESCRIPTION+"3"},
             false )
     };
 }

@@ -15,8 +15,10 @@ import java.util.logging.Logger;
 public class NativeLikelihoodCore implements LikelihoodCore {
 
     public static final String LIBRARY_NAME = "NativeLikelihoodCore";
+    
+    public NativeLikelihoodCore() { }
 
-    public NativeLikelihoodCore() {
+    public NativeLikelihoodCore(int stateCount) {
         StringBuffer sb = new StringBuffer();
         sb.append("Constructing native likelihood core\n");
         Logger.getLogger("dr.evomodel.treelikelihood").info(sb.toString());
@@ -100,7 +102,7 @@ public class NativeLikelihoodCore implements LikelihoodCore {
             } catch (UnsatisfiedLinkError e) {
                 return null;
             }
-            return new NativeLikelihoodCore();
+            return new NativeLikelihoodCore(stateCount);
         }
     }
 

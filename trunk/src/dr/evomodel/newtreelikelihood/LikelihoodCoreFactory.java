@@ -18,7 +18,8 @@ public class LikelihoodCoreFactory {
 
 		if (coreRegistry == null) {  // Lazy loading
 			coreRegistry = new ArrayList<LikelihoodCoreLoader>();  // List libraries in order of load-priority
-			coreRegistry.add(new GPULikelihoodCore.LikelihoodCoreLoader());
+            coreRegistry.add(new ThreadedGPULikelihoodCore.LikelihoodCoreLoader());
+            coreRegistry.add(new GPULikelihoodCore.LikelihoodCoreLoader());
             coreRegistry.add(new NativeLikelihoodCore.LikelihoodCoreLoader());
 		}
 

@@ -25,6 +25,8 @@
 
 package dr.evomodel.newtreelikelihood;
 
+import java.util.logging.Logger;
+
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
 
@@ -68,6 +70,7 @@ public class FloatGeneralLikelihoodCore implements LikelihoodCore {
      */
     public FloatGeneralLikelihoodCore(int stateCount) {
         this.stateCount = stateCount;
+        Logger.getLogger("dr.evomodel.treelikelihood").info("Constructing float-precision java likelihood core.");
     }
 
     public boolean canHandleTipPartials() {

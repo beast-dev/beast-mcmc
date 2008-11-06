@@ -162,6 +162,10 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
                 paddedStateCount = 32;
             else if (stateCount <= 64)
                 paddedStateCount = 64;
+            else if (stateCount >= 122 && stateCount <= 128)
+            	paddedStateCount = 128;
+        	else if (stateCount >= 183 && stateCount <= 192)
+				paddedStateCount = 192;
             try {
                 System.loadLibrary(getLibraryName() + "-" + paddedStateCount);
                 if (gpuInfo == null) {

@@ -173,11 +173,11 @@ public class SimpleTree implements MutableTree {
     }
 
 
-    public final NodeRef getExternalNode(int i) {
+    public final SimpleNode getExternalNode(int i) {
         return nodes[i];
     }
 
-    public final NodeRef getInternalNode(int i) {
+    public final SimpleNode getInternalNode(int i) {
         return nodes[i+externalNodeCount];
     }
 
@@ -326,7 +326,7 @@ public class SimpleTree implements MutableTree {
      * @return the ith taxon in the list.
      */
     public Taxon getTaxon(int taxonIndex) {
-        return ((SimpleNode)getExternalNode(taxonIndex)).getTaxon();
+        return getExternalNode(taxonIndex).getTaxon();
     }
 
     /**
@@ -338,7 +338,7 @@ public class SimpleTree implements MutableTree {
         if (taxon != null)
             return taxon.getId();
         else
-            return ((SimpleNode)getExternalNode(taxonIndex)).getId();
+            return getExternalNode(taxonIndex).getId();
     }
 
     /**
@@ -373,7 +373,7 @@ public class SimpleTree implements MutableTree {
         if (taxon != null)
             return taxon.getAttribute(name);
         else
-            return ((SimpleNode)getExternalNode(taxonIndex)).getAttribute(name);
+            return getExternalNode(taxonIndex).getAttribute(name);
     }
 
     // **************************************************************
@@ -392,7 +392,7 @@ public class SimpleTree implements MutableTree {
         if (taxon != null)
             taxon.setId(id);
         else
-            ((SimpleNode)getExternalNode(taxonIndex)).setId(id);
+            getExternalNode(taxonIndex).setId(id);
 
         fireTreeChanged();
         fireTaxaChanged();
@@ -410,7 +410,7 @@ public class SimpleTree implements MutableTree {
         if (taxon != null)
             taxon.setAttribute(name, value);
         else
-            ((SimpleNode)getExternalNode(taxonIndex)).setAttribute(name, value);
+            getExternalNode(taxonIndex).setAttribute(name, value);
 
         fireTreeChanged();
         fireTaxaChanged();

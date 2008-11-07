@@ -18,7 +18,7 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
     public static final String RATE_CATEGORIES = "rateCategories";
     public static final String SINGLE_ROOT_RATE = "singleRootRate";
     public static final String OVERSAMPLING = "overSampling";
-    public static final String NORMALIZED_MEAN = "normalizedMean";
+    //public static final String NORMALIZED_MEAN = "normalizedMean";
 
 
     public String getParserName() {
@@ -27,7 +27,7 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        int overSampling = xo.getAttribute(OVERSAMPLING, 1);
+        final int overSampling = xo.getAttribute(OVERSAMPLING, 1);
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         ParametricDistributionModel distributionModel = (ParametricDistributionModel) xo.getElementFirstChild(DISTRIBUTION);
@@ -44,14 +44,11 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").warning("   WARNING: single root rate is not implemented!");
         }
 
-        DiscretizedBranchRates dbr =
-                new DiscretizedBranchRates(tree, rateCategoryParameter, distributionModel, overSampling);
-
         /* if (xo.hasAttribute(NORMALIZED_MEAN)) {
             dbr.setNormalizedMean(xo.getDoubleAttribute(NORMALIZED_MEAN));
         }*/
 
-        return dbr;
+        return new DiscretizedBranchRates(tree, rateCategoryParameter, distributionModel, overSampling);
     }
 
     //************************************************************************

@@ -301,8 +301,10 @@ public class TreePriorGenerator extends Generator {
 					tagName,
 					new Attribute[]{
 							new Attribute.Default<String>("id", VariableDemographicModel.demoElementName),
-							new Attribute.Default<String>(VariableDemographicModel.TYPE, options.extendedSkylineModel)
-					}
+							new Attribute.Default<String>(VariableDemographicModel.TYPE, options.extendedSkylineModel),
+                            // use midpoint by default (todo) would be nice to have a user 'tickable' option
+                            new Attribute.Default<String>(VariableDemographicModel.USE_MIDPOINTS, "true")
+                    }
 			);
 
 			writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);

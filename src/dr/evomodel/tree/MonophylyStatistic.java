@@ -147,7 +147,8 @@ public class MonophylyStatistic extends BooleanStatistic implements TreeStatisti
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new StringAttributeRule(NAME, "A name for this statistic for the purpose of logging", true),
-                new ElementRule(TreeModel.class),
+                // Any tree will do, no need to insist on a Tree Model
+                new ElementRule(Tree.class),
                 new ElementRule(MRCA, new XMLSyntaxRule[]{
                         new XORRule(
                                 new ElementRule(Taxon.class, 1, Integer.MAX_VALUE),

@@ -54,18 +54,43 @@ public class TreeAnnotator {
 
     private final static Version version = new BeastVersion();
 
-    public final static int MAX_CLADE_CREDIBILITY = 0;
-    public final static int MAX_SUM_CLADE_CREDIBILITY = 1;
-    public final static int USER_TARGET_TREE = 2;
+    enum Target {
+        MAX_CLADE_CREDIBILITY( "Maximum clade credibility tree"),
+        MAX_SUM_CLADE_CREDIBILITY("Maximum sum of clade credibilities"),
+        USER_TARGET_TREE("User target tree");
 
-    public final static int KEEP_HEIGHTS = 0;
-    public final static int MEAN_HEIGHTS = 1;
-    public final static int MEDIAN_HEIGHTS = 2;
+        String desc;
+        Target(String s) {
+            desc = s;
+        }
+
+        public String toString() {
+            return desc;
+        }
+    }
+
+    enum HeightsSummary {
+        KEEP_HEIGHTS("Keep target heights"),
+        MEAN_HEIGHTS("Mean heights"),
+        MEDIAN_HEIGHTS("Median heights");
+
+        String desc;
+        HeightsSummary(String s) {
+            desc = s;
+        }
+
+        public String toString() {
+            return desc;
+        }
+    }
+
+    // Messages to stderr, output to stdout
+    private static PrintStream  progressStream = System.err;
 
     public TreeAnnotator(int burnin,
-                         int heightsOption,
+                         HeightsSummary heightsOption,
                          double posteriorLimit,
-                         int targetOption,
+                         Target targetOption,
                          String targetTreeFileName,
                          String inputFileName,
                          String outputFileName
@@ -81,14 +106,14 @@ public class TreeAnnotator {
         totalTrees = 10000;
         totalTreesUsed = 0;
 
-        System.out.println("Reading trees (bar assumes 10,000 trees)...");
-        System.out.println("0              25             50             75            100");
-        System.out.println("|--------------|--------------|--------------|--------------|");
+        progressStream.println("Reading trees (bar assumes 10,000 trees)...");
+        progressStream.println("0              25             50             75            100");
+        progressStream.println("|--------------|--------------|--------------|--------------|");
 
         int stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
 
-        if (targetOption != USER_TARGET_TREE) {
+        if (targetOption != Target.USER_TARGET_TREE) {
             cladeSystem = new CladeSystem();
             FileReader fileReader = new FileReader(inputFileName);
             TreeImporter importer = new NexusImporter(fileReader);
@@ -104,8 +129,8 @@ public class TreeAnnotator {
                     }
 
                     if (totalTrees > 0 && totalTrees % stepSize == 0) {
-                        System.out.print("*");
-                        System.out.flush();
+                        progressStream.print("*");
+                        progressStream.flush();
                     }
                     totalTrees++;
                 }
@@ -115,25 +140,25 @@ public class TreeAnnotator {
                 return;
             }
             fileReader.close();
-            System.out.println();
-            System.out.println();
+            progressStream.println();
+            progressStream.println();
 
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
 
-            System.out.println("Total trees read: " + totalTrees);
+            progressStream.println("Total trees read: " + totalTrees);
             if (burnin > 0) {
-                System.out.println("Ignoring first " + burnin + " trees.");
+                progressStream.println("Ignoring first " + burnin + " trees.");
             }
 
-            System.out.println("Total unique clades: " + cladeSystem.getCladeMap().keySet().size());
-            System.out.println();
+            progressStream.println("Total unique clades: " + cladeSystem.getCladeMap().keySet().size());
+            progressStream.println();
         }
 
         MutableTree targetTree;
 
-        if (targetOption == USER_TARGET_TREE) {
+        if (targetOption == Target.USER_TARGET_TREE) {
             if (targetTreeFileName != null) {
-                System.out.println("Reading user specified target tree, " + targetTreeFileName);
+                progressStream.println("Reading user specified target tree, " + targetTreeFileName);
 
                 NexusImporter importer = new NexusImporter(new FileReader(targetTreeFileName));
                 try {
@@ -146,19 +171,19 @@ public class TreeAnnotator {
                 System.err.println("No user target tree specified.");
                 return;
             }
-        } else if (targetOption == MAX_CLADE_CREDIBILITY) {
-            System.out.println("Finding maximum credibility tree...");
+        } else if (targetOption == Target.MAX_CLADE_CREDIBILITY) {
+            progressStream.println("Finding maximum credibility tree...");
             targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, false));
-        } else if (targetOption == MAX_SUM_CLADE_CREDIBILITY) {
-            System.out.println("Finding maximum sum clade credibility tree...");
+        } else if (targetOption == Target.MAX_SUM_CLADE_CREDIBILITY) {
+            progressStream.println("Finding maximum sum clade credibility tree...");
             targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, true));
         } else {
             throw new RuntimeException("Unknown target tree option");
         }
 
-        System.out.println("Collecting node information...");
-        System.out.println("0              25             50             75            100");
-        System.out.println("|--------------|--------------|--------------|--------------|");
+        progressStream.println("Collecting node information...");
+        progressStream.println("0              25             50             75            100");
+        progressStream.println("|--------------|--------------|--------------|--------------|");
 
         stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
@@ -186,27 +211,27 @@ public class TreeAnnotator {
                     totalTreesUsed += 1;
                 }
                 if (counter > 0 && counter % stepSize == 0) {
-                    System.out.print("*");
-                    System.out.flush();
+                    progressStream.print("*");
+                    progressStream.flush();
                 }
                 counter++;
 
             }
             cladeSystem.removeClades(targetTree, targetTree.getRoot(), true);
-            //System.out.println("totalTreesUsed=" + totalTreesUsed);
+            //progressStream.println("totalTreesUsed=" + totalTreesUsed);
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             return;
         }
-        System.out.println();
-        System.out.println();
+        progressStream.println();
+        progressStream.println();
         fileReader.close();
 
-        System.out.println("Annotating target tree...");
+        progressStream.println("Annotating target tree...");
         cladeSystem.annotateTree(targetTree, targetTree.getRoot(), null, heightsOption);
 
-        System.out.println("Writing annotated tree....");
+        progressStream.println("Writing annotated tree....");
         if (outputFileName != null) {
             NexusExporter exporter = new NexusExporter(new PrintStream(new FileOutputStream(outputFileName)));
             exporter.exportTree(targetTree);
@@ -235,9 +260,9 @@ public class TreeAnnotator {
         Tree bestTree = null;
         double bestScore = Double.NEGATIVE_INFINITY;
 
-        System.out.println("Analyzing " + totalTreesUsed + " trees...");
-        System.out.println("0              25             50             75            100");
-        System.out.println("|--------------|--------------|--------------|--------------|");
+        progressStream.println("Analyzing " + totalTreesUsed + " trees...");
+        progressStream.println("0              25             50             75            100");
+        progressStream.println("|--------------|--------------|--------------|--------------|");
 
         int stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
@@ -250,15 +275,15 @@ public class TreeAnnotator {
 
                 if (counter >= burnin) {
                     double score = scoreTree(tree, cladeSystem, useSumCladeCredibility);
-//                    System.out.println(score);
+//                    progressStream.println(score);
                     if (score > bestScore) {
                         bestTree = tree;
                         bestScore = score;
                     }
                 }
                 if (counter > 0 && counter % stepSize == 0) {
-                    System.out.print("*");
-                    System.out.flush();
+                    progressStream.print("*");
+                    progressStream.flush();
                 }
                 counter++;
             }
@@ -266,12 +291,12 @@ public class TreeAnnotator {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             return null;
         }
-        System.out.println();
-        System.out.println();
+        progressStream.println();
+        progressStream.println();
         if (useSumCladeCredibility) {
-            System.out.println("Highest Sum Clade Credibility: " + bestScore);
+            progressStream.println("Highest Sum Clade Credibility: " + bestScore);
         } else {
-            System.out.println("Highest Log Clade Credibility: " + bestScore);
+            progressStream.println("Highest Log Clade Credibility: " + bestScore);
         }
 
         return bestTree;
@@ -315,10 +340,10 @@ public class TreeAnnotator {
             // annotation purposes).
             addClades(tree, tree.getRoot(), includeTips);
         }
-
-        public Clade getClade(NodeRef node) {
-            return null;
-        }
+//
+//        public Clade getClade(NodeRef node) {
+//            return null;
+//        }
 
         private BitSet addClades(Tree tree, NodeRef node, boolean includeTips) {
 
@@ -412,7 +437,7 @@ public class TreeAnnotator {
                     }
 
                     //if (value == null) {
-                    //    System.out.println("attribute " + attributeNames[i] + " is null.");
+                    //    progressStream.println("attribute " + attributeNames[i] + " is null.");
                     //}
 
                     values[i] = value;
@@ -420,7 +445,7 @@ public class TreeAnnotator {
                 }
                 clade.attributeValues.add(values);
 
-                //System.out.println(clade + " " + clade.getCount());
+                //progressStream.println(clade + " " + clade.getCount());
                 clade.setCount(clade.getCount() + 1);
             }
         }
@@ -506,7 +531,7 @@ public class TreeAnnotator {
             return clade.getCredibility();
         }
 
-        public void annotateTree(MutableTree tree, NodeRef node, BitSet bits, int heightsOption) {
+        public void annotateTree(MutableTree tree, NodeRef node, BitSet bits, HeightsSummary heightsOption) {
 
             BitSet bits2 = new BitSet();
 
@@ -533,15 +558,13 @@ public class TreeAnnotator {
             }
         }
 
-        private void annotateNode(MutableTree tree, NodeRef node, BitSet bits, boolean isTip, int heightsOption) {
+        private void annotateNode(MutableTree tree, NodeRef node, BitSet bits, boolean isTip, HeightsSummary heightsOption) {
             Clade clade = cladeMap.get(bits);
-            if (clade == null) {
-                throw new RuntimeException("Clade missing");
-            }
+            assert  clade != null :  "Clade missing?";
 
             boolean filter = false;
             if (!isTip) {
-                double posterior = clade.getCredibility();
+                final double posterior = clade.getCredibility();
                 tree.setNodeAttribute(node, "posterior", posterior);
                 if (posterior < posteriorLimit) {
                     filter = true;
@@ -559,7 +582,7 @@ public class TreeAnnotator {
                     Object[] v = clade.attributeValues.get(0);
                     if (v[i] != null) {
 
-                        boolean isHeight = attributeName.equals("height");
+                        final boolean isHeight = attributeName.equals("height");
                         boolean isBoolean = v[i] instanceof Boolean;
 
                         boolean isDiscrete = v[i] instanceof String;
@@ -627,11 +650,11 @@ public class TreeAnnotator {
                             }
                         }
                         if (isHeight) {
-                            if (heightsOption == MEAN_HEIGHTS) {
-                                double mean = DiscreteStatistics.mean(values);
+                            if (heightsOption == HeightsSummary.MEAN_HEIGHTS) {
+                                final double mean = DiscreteStatistics.mean(values);
                                 tree.setNodeHeight(node, mean);
-                            } else if (heightsOption == MEDIAN_HEIGHTS) {
-                                double median = DiscreteStatistics.median(values);
+                            } else if (heightsOption == HeightsSummary.MEDIAN_HEIGHTS) {
+                                final double median = DiscreteStatistics.median(values);
                                 tree.setNodeHeight(node, median);
                             } else {
                                 // keep the existing height
@@ -1013,41 +1036,41 @@ public class TreeAnnotator {
     }
 
     public static void printTitle() {
-        System.out.println();
+        progressStream.println();
         centreLine("TreeAnnotator " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("MCMC Output analysis", 60);
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
-        System.out.println();
+        progressStream.println();
         centreLine("Institute of Evolutionary Biology", 60);
         centreLine("University of Edinburgh", 60);
         centreLine("a.rambaut@ed.ac.uk", 60);
-        System.out.println();
+        progressStream.println();
         centreLine("Department of Computer Science", 60);
         centreLine("University of Auckland", 60);
         centreLine("alexei@cs.auckland.ac.nz", 60);
-        System.out.println();
-        System.out.println();
+        progressStream.println();
+        progressStream.println();
     }
 
     public static void centreLine(String line, int pageWidth) {
         int n = pageWidth - line.length();
         int n1 = n / 2;
         for (int i = 0; i < n1; i++) {
-            System.out.print(" ");
+            progressStream.print(" ");
         }
-        System.out.println(line);
+        progressStream.println(line);
     }
 
 
     public static void printUsage(Arguments arguments) {
 
         arguments.printUsage("treeannotator", "<input-file-name> [<output-file-name>]");
-        System.out.println();
-        System.out.println("  Example: treeannotator test.trees out.txt");
-        System.out.println("  Example: treeannotator -burnin 100 -heights mean test.trees out.txt");
-        System.out.println("  Example: treeannotator -burnin 100 -target map.tree test.trees out.txt");
-        System.out.println();
+        progressStream.println();
+        progressStream.println("  Example: treeannotator test.trees out.txt");
+        progressStream.println("  Example: treeannotator -burnin 100 -heights mean test.trees out.txt");
+        progressStream.println("  Example: treeannotator -burnin 100 -target map.tree test.trees out.txt");
+        progressStream.println();
     }
 
     //Main method
@@ -1095,11 +1118,11 @@ public class TreeAnnotator {
 
             int burnin = dialog.getBurnin();
             double posteriorLimit = dialog.getPosteriorLimit();
-            int targetOption = dialog.getTargetOption();
-            int heightsOption = dialog.getHeightsOption();
+            Target targetOption = dialog.getTargetOption();
+            HeightsSummary heightsOption = dialog.getHeightsOption();
 
             targetTreeFileName = dialog.getTargetFileName();
-            if (targetOption == USER_TARGET_TREE && targetTreeFileName == null) {
+            if (targetOption == Target.USER_TARGET_TREE && targetTreeFileName == null) {
                 System.err.println("No target file specified");
                 return;
             }
@@ -1129,7 +1152,7 @@ public class TreeAnnotator {
                 System.err.println("Exception: " + ex.getMessage());
             }
 
-            System.out.println("Finished - Quit program to exit.");
+            progressStream.println("Finished - Quit program to exit.");
             while (true) {
                 try {
                     Thread.sleep(1000);
@@ -1144,7 +1167,8 @@ public class TreeAnnotator {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         //new Arguments.StringOption("target", new String[] { "maxclade", "maxtree" }, false, "an option of 'maxclade' or 'maxtree'"),
-                        new Arguments.StringOption("heights", new String[]{"keep", "median", "mean"}, false, "an option of 'keep', 'median' or 'mean'"),
+                        new Arguments.StringOption("heights", new String[]{"keep", "median", "mean"}, false,
+                                "an option of 'keep' (default), 'median' or 'mean'"),
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annoated"),
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
@@ -1154,7 +1178,7 @@ public class TreeAnnotator {
         try {
             arguments.parseArguments(args);
         } catch (Arguments.ArgumentException ae) {
-            System.out.println(ae);
+            progressStream.println(ae);
             printUsage(arguments);
             System.exit(1);
         }
@@ -1164,13 +1188,13 @@ public class TreeAnnotator {
             System.exit(0);
         }
 
-        int heights = KEEP_HEIGHTS;
+        HeightsSummary heights = HeightsSummary.KEEP_HEIGHTS;
         if (arguments.hasOption("heights")) {
             String value = arguments.getStringOption("heights");
             if (value.equalsIgnoreCase("mean")) {
-                heights = MEAN_HEIGHTS;
+                heights =  HeightsSummary.MEAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("median")) {
-                heights = MEDIAN_HEIGHTS;
+                heights =  HeightsSummary.MEDIAN_HEIGHTS;
             }
         }
 
@@ -1184,28 +1208,27 @@ public class TreeAnnotator {
             posteriorLimit = arguments.getRealOption("limit");
         }
 
-        int target = MAX_CLADE_CREDIBILITY;
+        Target target = Target.MAX_CLADE_CREDIBILITY;
         if (arguments.hasOption("target")) {
-            target = USER_TARGET_TREE;
+            target = Target.USER_TARGET_TREE;
             targetTreeFileName = arguments.getStringOption("target");
         }
 
-        String[] args2 = arguments.getLeftoverArguments();
+        final String[] args2 = arguments.getLeftoverArguments();
 
-        if (args2.length > 2) {
-            System.err.println("Unknown option: " + args2[2]);
-            System.err.println();
-            printUsage(arguments);
-            System.exit(1);
-        }
-
-        if (args2.length == 2) {
-            inputFileName = args2[0];
-            outputFileName = args2[1];
-        } else {
-            System.err.println("Missing input or output file name");
-            printUsage(arguments);
-            System.exit(1);
+        switch ( args2.length ) {
+            case 2:
+                outputFileName = args2[1];
+                // fall to
+            case 1:
+                inputFileName = args2[0];
+                break;
+            default: {
+                System.err.println("Unknown option: " + args2[2]);
+                System.err.println();
+                printUsage(arguments);
+                System.exit(1);
+            }
         }
 
         new TreeAnnotator(burnin,
@@ -1218,6 +1241,5 @@ public class TreeAnnotator {
 
         System.exit(0);
     }
-
 }
 

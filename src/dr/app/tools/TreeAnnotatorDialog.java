@@ -46,8 +46,17 @@ public class TreeAnnotatorDialog {
     private WholeNumberField burninText = new WholeNumberField(0, Integer.MAX_VALUE);
 	private RealNumberField limitText = new RealNumberField(0.0, 1.0);
 
-    private JComboBox summaryTreeCombo = new JComboBox(new String[] { "Maximum clade credibility tree", "Maximum sum of clade credibilities", "User target tree" });
-    private JComboBox nodeHeightsCombo = new JComboBox(new String[] { "Keep target heights", "Mean heights", "Median heights" });
+    private JComboBox summaryTreeCombo = new JComboBox(new String[]{
+            TreeAnnotator.Target.values()[0].toString(),
+            TreeAnnotator.Target.values()[1].toString(),
+            TreeAnnotator.Target.values()[2].toString()
+    });
+
+    private JComboBox nodeHeightsCombo = new JComboBox(new String[] {
+            TreeAnnotator.HeightsSummary.values()[0].toString(),
+            TreeAnnotator.HeightsSummary.values()[1].toString(),
+            TreeAnnotator.HeightsSummary.values()[2].toString()
+    });
 
 	private File targetFile = null;
 	private File inputFile = null;
@@ -188,19 +197,19 @@ public class TreeAnnotatorDialog {
 	}
 
     public int getBurnin() {
-        return burninText.getValue().intValue();
+        return burninText.getValue();
     }
 
 	public double getPosteriorLimit() {
-		return limitText.getValue().doubleValue();
+		return limitText.getValue();
 	}
 
-    public int getTargetOption() {
-        return summaryTreeCombo.getSelectedIndex();
+    public TreeAnnotator.Target getTargetOption() {
+        return TreeAnnotator.Target.values()[summaryTreeCombo.getSelectedIndex()];
     }
 
-    public int getHeightsOption() {
-        return nodeHeightsCombo.getSelectedIndex();
+    public TreeAnnotator.HeightsSummary getHeightsOption() {
+        return TreeAnnotator.HeightsSummary.values()[nodeHeightsCombo.getSelectedIndex()];
     }
 
     public String getTargetFileName() {

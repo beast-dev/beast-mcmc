@@ -40,5 +40,6 @@ import dr.inference.model.Model;
  */
 public interface BranchRateModel extends Model, BranchRateController, BranchAttributeProvider {
 
-    double getBranchRate(Tree tree, NodeRef node);
+    // There is no need to override an interface in a derived interface, is there?
+    //double getBranchRate(Tree tree, NodeRef node);
 }

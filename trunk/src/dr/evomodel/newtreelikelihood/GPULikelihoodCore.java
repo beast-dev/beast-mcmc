@@ -2,8 +2,6 @@ package dr.evomodel.newtreelikelihood;
 
 import java.util.logging.Logger;
 
-import com.sun.servicetag.SystemEnvironment;
-
 /**
  * @author Marc Suchard
  * @author Andrew Rambaut
@@ -88,7 +86,7 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
     public native void storeState();
 
     public native void restoreState();
-    
+
     private static GPUInfo gpuInfo = null;
 
 	public static class LikelihoodCoreLoader implements LikelihoodCoreFactory.LikelihoodCoreLoader {
@@ -106,14 +104,14 @@ public class GPULikelihoodCore extends NativeLikelihoodCore {
 			else if (stateCount <= 32 )
 				paddedStateCount = 32;
 			else if (stateCount <= 64 )
-				paddedStateCount = 64;		
-			try {				
+				paddedStateCount = 64;
+			try {
 				System.loadLibrary(getLibraryName()+"-"+paddedStateCount);
 				if (gpuInfo == null) {
 					gpuInfo = GPULikelihoodCore.getGPUInfo();
 					if (gpuInfo == null) // No GPU is present
 						return null;
-					Logger.getLogger("dr.evomodel.treelikelihood").info(gpuInfo.toString());	
+					Logger.getLogger("dr.evomodel.treelikelihood").info(gpuInfo.toString());
 				}
 				if (!GPULikelihoodCore.isCompatible(gpuInfo, configuration)) // GPU is not compatible
 					return null;

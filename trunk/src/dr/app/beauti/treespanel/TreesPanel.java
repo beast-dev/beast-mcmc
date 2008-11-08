@@ -67,6 +67,9 @@ public class TreesPanel extends JPanel {
 			"Piecewise-constant", "Piecewise-linear"});
 	private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
+    JComboBox extendedBayesianSkylineCombo = new JComboBox(new String[]{
+            "Single-Locus", "Multi-Loci"});
+
 	JComboBox gmrfBayesianSkyrideCombo = new JComboBox(new String[]{
 			"Uniform", "Time-aware"});
 
@@ -179,6 +182,12 @@ public class TreesPanel extends JPanel {
 
 		PanelUtils.setupComponent(bayesianSkylineCombo);
 		bayesianSkylineCombo.addItemListener(listener);
+
+        PanelUtils.setupComponent(extendedBayesianSkylineCombo);
+        extendedBayesianSkylineCombo.addItemListener(listener);
+
+        PanelUtils.setupComponent(gmrfBayesianSkyrideCombo);
+        gmrfBayesianSkyrideCombo.addItemListener(listener);
 
 		PanelUtils.setupComponent(startingTreeCombo);
 		startingTreeCombo.addItemListener(
@@ -300,6 +309,8 @@ public class TreesPanel extends JPanel {
 		} else if (treePriorCombo.getSelectedItem() == TreePrior.BIRTH_DEATH) {
 //            samplingProportionField.setColumns(8);
 //            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
+        } else if (treePriorCombo.getSelectedItem() == TreePrior.EXTENDED_SKYLINE) {
+            treePriorPanel.addComponentWithLabel("Type:", extendedBayesianSkylineCombo);
 		} else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
 			treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
 		}
@@ -339,6 +350,8 @@ public class TreesPanel extends JPanel {
 
 		parameterizationCombo.setSelectedIndex(options.parameterization);
 		bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
+
+        extendedBayesianSkylineCombo.setSelectedIndex(options.multiLoci ? 1 : 0);
 
 		gmrfBayesianSkyrideCombo.setSelectedIndex(options.skyrideSmoothing);
 
@@ -384,6 +397,7 @@ public class TreesPanel extends JPanel {
 
 		options.parameterization = parameterizationCombo.getSelectedIndex();
 		options.skylineModel = bayesianSkylineCombo.getSelectedIndex();
+        options.multiLoci = extendedBayesianSkylineCombo.getSelectedIndex() == 1;
 
 		options.skyrideSmoothing = gmrfBayesianSkyrideCombo.getSelectedIndex();
 

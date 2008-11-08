@@ -44,12 +44,8 @@ import java.util.*;
  *
  */
 public class CoalescentSimulator {
-
-	//public static final String COALESCENT_TREE = "coalescentTree";
-	//public static final String COALESCENT_SIMULATOR = "coalescentSimulator";
-	//public static final String ROOT_HEIGHT = "rootHeight";
-
-	public CoalescentSimulator() {}
+    
+    public CoalescentSimulator() {}
 
 
 	/**

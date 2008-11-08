@@ -1263,6 +1263,7 @@ public class BeautiOptions extends ModelOptions {
     public int skylineModel = CONSTANT_SKYLINE;
     public int skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
     public String extendedSkylineModel = VariableDemographicModel.LINEAR;
+    public boolean multiLoci = false;
     public double birthDeathSamplingProportion = 1.0;
     public boolean fixedTree = false;
 

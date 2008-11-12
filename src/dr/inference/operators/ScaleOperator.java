@@ -121,11 +121,13 @@ public class ScaleOperator extends AbstractCoercableOperator {
                 logq = (dim - 2) * Math.log(scale);
 
             for (int i = 0; i < dim; i++) {
-                final double value = parameter.getParameterValue(i) * scale;
-                if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
+                parameter.setParameterValue(i, parameter.getParameterValue(i) * scale);
+            }
+            for (int i = 0; i < dim; i++) {
+                if (parameter.getParameterValue(i) < parameter.getBounds().getLowerLimit(i) ||
+                        parameter.getParameterValue(i) > parameter.getBounds().getUpperLimit(i)) {
                     throw new OperatorFailedException("proposed value outside boundaries");
                 }
-                parameter.setParameterValue(i, value);
             }
         } else {
             logq = -Math.log(scale);

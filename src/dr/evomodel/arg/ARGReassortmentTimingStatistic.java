@@ -2,8 +2,10 @@ package dr.evomodel.arg;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.logging.Logger;
 
 import dr.evomodel.arg.ARGModel.Node;
+
 import dr.inference.model.Statistic;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
@@ -75,6 +77,8 @@ public class ARGReassortmentTimingStatistic extends Statistic.Abstract{
 			String name = xo.getAttribute(NAME, "");
 			int dim = xo.getIntegerAttribute(DIMENSION);
 			ARGModel arg = (ARGModel)xo.getChild(ARGModel.class);
+			
+			Logger.getLogger("dr.evomodel").info("Creating timing statistic of dimension " + dim);
 			
 			return new ARGReassortmentTimingStatistic(name,dim,arg);
 		}

@@ -38,11 +38,13 @@ public class ARGReassortmentTimingStatistic extends Statistic.Abstract{
 		if(arg.getReassortmentNodeCount() == dimension){
 			ArrayList<Double> reassortmentHeights = new ArrayList<Double>();
 			
-			for(int i = 0; i < arg.getInternalNodeCount(); i++){
+			for(int i = 0; i < arg.getNodeCount(); i++){
 				Node x = (Node)arg.getNode(i);
 				if(x.isReassortment()){
 					reassortmentHeights.add(x.getHeight());
 				}
+				
+				
 			}
 			
 			Collections.sort(reassortmentHeights);

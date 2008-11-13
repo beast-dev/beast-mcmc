@@ -120,9 +120,12 @@ public class ScaleOperator extends AbstractCoercableOperator {
             else
                 logq = (dim - 2) * Math.log(scale);
 
+            // Must first set all parameters first and check for boundries later for the operator to work
+            // correctly with dependent parameters such as tree node heights.
             for (int i = 0; i < dim; i++) {
                 parameter.setParameterValue(i, parameter.getParameterValue(i) * scale);
             }
+            
             for (int i = 0; i < dim; i++) {
                 if (parameter.getParameterValue(i) < parameter.getBounds().getLowerLimit(i) ||
                         parameter.getParameterValue(i) > parameter.getBounds().getUpperLimit(i)) {

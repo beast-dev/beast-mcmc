@@ -36,8 +36,6 @@ import dr.inference.prior.Prior;
 import dr.util.Identifiable;
 import dr.xml.*;
 
-import java.util.ArrayList;
-
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
  *
@@ -47,7 +45,8 @@ import java.util.ArrayList;
  */
 public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
-    public MarginalLikelihoodEstimator(String id, int chainLength, int pathSteps, boolean linear,
+    public MarginalLikelihoodEstimator(String id, int chainLength, int pathSteps,
+                                       boolean linear, boolean lacing,
                                        PathLikelihood pathLikelihood,
                                        OperatorSchedule schedule,
                                        MCLogger logger) {
@@ -56,6 +55,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         this.chainLength = chainLength;
         this.pathSteps = pathSteps;
         this.linear = linear;
+        this.lacing = lacing;
 
         MCMCCriterion criterion = new MCMCCriterion();
 
@@ -70,48 +70,115 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         this.logger = logger;
     }
 
+    public void linearIntegration() {
+        burnin = (int) (0.1 * chainLength);
+        for (int step = 0; step < pathSteps; step++) {
+            pathLikelihood.setPathParameter(pathParameter);
+            mc.setCurrentLength(0);
+            mc.chain(chainLength + burnin, false, 0, false);
+            pathParameter -= pathDelta;
+
+        }
+
+        pathLikelihood.setPathParameter(0.0);
+        mc.setCurrentLength(0);
+        mc.chain(chainLength + burnin, false, 0, false);
+    }
+
+    public void linearShoeLacing() {
+        burnin = (int) (0.1 * chainLength);
+        if (pathSteps % 2 == 0) //Works only for odd number of steps
+            pathSteps += 1;
+        for (int step = 0; step < pathSteps; step++) {
+            pathLikelihood.setPathParameter(pathParameter);
+            mc.setCurrentLength(0);
+            mc.chain(chainLength + burnin, false, 0, false);
+            if (step == 0)
+                pathParameter -= 2 * pathDelta;
+            else if (step % 2 == 0) {
+                pathParameter -= 3 * pathDelta;
+            } else {
+                pathParameter += pathDelta;
+            }
+
+        }
+
+        pathLikelihood.setPathParameter(0.0);
+        mc.setCurrentLength(0);
+        mc.chain(chainLength + burnin, false, 0, false);
+
+    }
+
+    public void geometricShoeLacing() {
+        int logCount = chainLength / logger.getLogEvery();
+        if (pathSteps % 2 == 0) //Works only for odd number of steps
+            pathSteps += 1;
+
+        for (int step = 0; step < pathSteps; step++) {
+            double p = 1.0 - (((double) step) / pathSteps);
+            int cl = (int) (20.0 * chainLength / ((19.0 * p) + 1));
+            logger.setLogEvery(cl / logCount);
+            burnin = (int) (0.1 * cl);
+
+            pathLikelihood.setPathParameter(pathParameter);
+            mc.setCurrentLength(0);
+            mc.chain(cl + burnin, false, 0, false);
+            if (step == 0) {
+                pathParameter /= 4;
+            } else if (step % 2 == 0) {
+                pathParameter /= 8;
+            } else {
+                pathParameter *= 2;
+            }
+        }
+
+        int cl = 20 * chainLength;
+        logger.setLogEvery(cl / logCount);
+        burnin = (int) (0.1 * cl);
+        pathLikelihood.setPathParameter(0.0);
+        mc.setCurrentLength(0);
+        mc.chain(cl + burnin, false, 0, false);
+    }
+
+    public void geometricIntegration() {
+        int logCount = chainLength / logger.getLogEvery();
+
+        for (int step = 0; step < pathSteps; step++) {
+            double p = 1.0 - (((double) step) / pathSteps);
+            int cl = (int) (20.0 * chainLength / ((19.0 * p) + 1));
+            logger.setLogEvery(cl / logCount);
+            burnin = (int) (0.1 * cl);
+
+            pathLikelihood.setPathParameter(pathParameter);
+            mc.setCurrentLength(0);
+            mc.chain(cl + burnin, false, 0, false);
+            pathParameter /= 2;
+
+        }
+
+        int cl = 20 * chainLength;
+        logger.setLogEvery(cl / logCount);
+        burnin = (int) (0.1 * cl);
+        pathLikelihood.setPathParameter(0.0);
+        mc.setCurrentLength(0);
+        mc.chain(cl + burnin, false, 0, false);
+    }
+
     public void run() {
 
         logger.startLogging();
         mc.addMarkovChainListener(chainListener);
 
         if (linear) {
-            burnin = (int)(0.1 * chainLength);
-            for (int step = 0; step < pathSteps; step++) {
-                pathLikelihood.setPathParameter(pathParameter);
-                mc.setCurrentLength(0);
-                mc.chain(chainLength + burnin, false, 0, false);
-                pathParameter -= pathDelta;
-
-            }
-
-            pathLikelihood.setPathParameter(0.0);
-            mc.setCurrentLength(0);
-            mc.chain(chainLength + burnin, false, 0, false);
-
-
+            if (lacing)
+                linearShoeLacing();
+            else
+                linearIntegration();
         } else {
-            int logCount = chainLength / logger.getLogEvery();
-
-            for (int step = 0; step < pathSteps; step++) {
-                double p = 1.0 - (((double)step) / pathSteps);
-                int cl = (int)(20.0 * chainLength / ((19.0 * p) + 1));
-                logger.setLogEvery(cl / logCount);
-                burnin = (int)(0.1 * cl);
-
-                pathLikelihood.setPathParameter(pathParameter);
-                mc.setCurrentLength(0);
-                mc.chain(cl + burnin, false, 0, false);
-                pathParameter /= 2;
-
-            }
-
-            int cl = 20 * chainLength;
-            logger.setLogEvery(cl / logCount);
-            burnin = (int)(0.1 * cl);
-            pathLikelihood.setPathParameter(0.0);
-            mc.setCurrentLength(0);
-            mc.chain(cl + burnin, false, 0, false);
+            if (lacing)
+                geometricShoeLacing();
+            else
+                geometricIntegration();
         }
 
         mc.removeMarkovChainListener(chainListener);
@@ -188,9 +255,13 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             int chainLength = xo.getIntegerAttribute(CHAIN_LENGTH);
             int pathSteps = xo.getIntegerAttribute(PATH_STEPS);
             boolean linear = true;
+            boolean lacing = false;
 
             if (!xo.getAttribute(LINEAR, true))
                 linear = false;
+
+            if (xo.getAttribute(LACING, false))
+                lacing = true;
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Object child = xo.getChild(i);
@@ -203,9 +274,9 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                     "\n  pathSteps=" + pathSteps);
 
             MarginalLikelihoodEstimator mle = new MarginalLikelihoodEstimator(MARGINAL_LIKELIHOOD_ESTIMATOR, chainLength,
-                    pathSteps, linear, pathLikelihood, mcmc.getOperatorSchedule(), logger);
+                    pathSteps, linear, lacing, pathLikelihood, mcmc.getOperatorSchedule(), logger);
 
-            if (!xo.getAttribute(SPAWN,true))
+            if (!xo.getAttribute(SPAWN, true))
                 mle.setSpawnable(false);
 
             return mle;
@@ -230,8 +301,9 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newIntegerRule(CHAIN_LENGTH),
                 AttributeRule.newIntegerRule(PATH_STEPS),
-                AttributeRule.newBooleanRule(LINEAR,true),
-                AttributeRule.newBooleanRule(SPAWN,true),
+                AttributeRule.newBooleanRule(LINEAR, true),
+                AttributeRule.newBooleanRule(LACING, true),
+                AttributeRule.newBooleanRule(SPAWN, true),
                 new ElementRule(MCMC.class),
                 new ElementRule(PathLikelihood.class),
                 new ElementRule(MCLogger.class)
@@ -262,6 +334,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     private int burnin;
     private int pathSteps;
     private boolean linear;
+    private boolean lacing;
     private double pathDelta;
     private double pathParameter;
 
@@ -273,5 +346,6 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     public static final String CHAIN_LENGTH = "chainLength";
     public static final String PATH_STEPS = "pathSteps";
     public static final String LINEAR = "linear";
-    public static final String SPAWN ="spawn";
+    public static final String LACING = "lacing";
+    public static final String SPAWN = "spawn";
 }

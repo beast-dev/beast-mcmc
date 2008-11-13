@@ -397,7 +397,8 @@ public class BeastParser extends XMLParser {
 		addXMLObjectParser(dr.evomodel.arg.ARGLogger.PARSER);
 		addXMLObjectParser(dr.evomodel.arg.ARGReassortmentNodeCountStatistic.PARSER);
 		addXMLObjectParser(new dr.evomodel.arg.ARGTraceAnalysisParser());
-
+		addXMLObjectParser(dr.evomodel.arg.ARGReassortmentTimingStatistic.PARSER);
+		
 		// Complex substitution models
 		addXMLObjectParser(dr.evomodel.substmodel.ComplexSubstitutionModel.PARSER);
 		addXMLObjectParser(dr.evomodel.substmodel.MarkovModulatedYangModel.PARSER);

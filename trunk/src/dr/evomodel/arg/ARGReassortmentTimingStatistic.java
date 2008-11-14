@@ -21,12 +21,13 @@ public class ARGReassortmentTimingStatistic extends Statistic.Abstract{
 	private ARGModel arg;
 	
 	public static final String ARG_TIMING_STATISTIC = "argTimingStatistic";
-	public static final String DIMENSION = "dimension";  //TODO This is probably somewhere else in BEAST.
+	public static final String NUMBER_OF_REASSORTMENTS = "reassortments";  //TODO This is probably somewhere else in BEAST.
 	
-	public ARGReassortmentTimingStatistic(String name, int dim, ARGModel arg){
+	public ARGReassortmentTimingStatistic(String name, ARGModel arg){
 		super(name);
 		
-		this.dimension = dim;
+		
+		this.dimension = arg.getExternalNodeCount() + 1;
 		this.arg = arg;
 	}
 	
@@ -35,54 +36,64 @@ public class ARGReassortmentTimingStatistic extends Statistic.Abstract{
 	}
 
 	public double getStatisticValue(int dim) {
-		if(arg.getReassortmentNodeCount() == dimension){
-			ArrayList<Double> reassortmentHeights = new ArrayList<Double>();
-			
+		if(arg.getReassortmentNodeCount() != 1){
+			return Double.NaN;
+		}
+		
+		if(dim == dimension - 1){
 			for(int i = 0; i < arg.getNodeCount(); i++){
 				Node x = (Node)arg.getNode(i);
+						
 				if(x.isReassortment()){
-					reassortmentHeights.add(x.getHeight());
+					return (x.getHeight());
 				}
 				
 				
 			}
-			
-			Collections.sort(reassortmentHeights);
-			return reassortmentHeights.get(dim);
 		}
-		return Double.NaN;
+		
+		ArrayList<Double> reassortmentHeights = new ArrayList<Double>();
+		
+		for(int i = 0; i < arg.getInternalNodeCount(); i++){
+			
+			reassortmentHeights.add( ((Node)arg.getInternalNode(i)).getHeight() );
+		}
+		
+		Collections.sort(reassortmentHeights);
+		
+		
+		return reassortmentHeights.get(dim);
 	}
 	
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
 
 		public String getParserDescription() {
-			// TODO Auto-generated method stub
+			
 			return "";
 		}
 
 		public Class getReturnType() {
-			// TODO Auto-generated method stub
+			
 			return ARGReassortmentTimingStatistic.class;
 		}
 
-		@Override
+		
 		public XMLSyntaxRule[] getSyntaxRules() {
 			return new XMLSyntaxRule[]{
 				new ElementRule(ARGModel.class,false),
-				AttributeRule.newIntegerRule(DIMENSION,false),
 				AttributeRule.newStringRule(NAME,true),
 			};
 		}
 
-		@Override
+		
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			String name = xo.getAttribute(NAME, "");
-			int dim = xo.getIntegerAttribute(DIMENSION);
+			String name = xo.getId();
+//			int dim = xo.getIntegerAttribute(DIMENSION);
 			ARGModel arg = (ARGModel)xo.getChild(ARGModel.class);
 			
-			Logger.getLogger("dr.evomodel").info("Creating timing statistic of dimension " + dim);
+			Logger.getLogger("dr.evomodel").info("Creating timing statistic");
 			
-			return new ARGReassortmentTimingStatistic(name,dim,arg);
+			return new ARGReassortmentTimingStatistic(name,arg);
 		}
 
 		public String getParserName() {

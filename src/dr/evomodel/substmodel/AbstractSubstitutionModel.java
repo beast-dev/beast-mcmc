@@ -85,6 +85,10 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
         updateMatrix = true;
     }
 
+    public int getStateCount() {
+        return stateCount;
+    }
+
     private void setStateCount(int stateCount) {
         eigenInitialised = false;
 
@@ -219,6 +223,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
 
     /**
      * This function returns the Eigen vectors.
+     *
      * @return the array
      */
     public double[][] getEigenVectors() {
@@ -232,6 +237,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
 
     /**
      * This function returns the inverse Eigen vectors.
+     *
      * @return the array
      */
     public double[][] getInverseEigenVectors() {

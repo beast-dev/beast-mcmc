@@ -30,7 +30,6 @@ import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * A likelihood function which is simply the product of a set of likelihood functions.
@@ -97,9 +96,9 @@ public class ThreadedCompoundLikelihood implements Likelihood {
             // now wait for the results to be set...
             Double result = thread.getResult();
             while (result == null) {
-                result = thread.getResult();
-                logLikelihood += result;
+                result = thread.getResult();                
             }
+            logLikelihood += result;
         }
 
         return logLikelihood;
@@ -274,7 +273,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
         }
 
         public void setCaller(LikelihoodCaller caller) {
-            this.result = null;
+            this.result = Double.NaN;
             this.caller = caller;
         }
 
@@ -286,6 +285,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
                 if (caller != null) {
                     synchronized (result) {
                         result = caller.call();
+                        resultAvailable = true;
                         caller = null;
                     }
                 }
@@ -293,12 +293,15 @@ public class ThreadedCompoundLikelihood implements Likelihood {
         }
 
         public Double getResult() {
-            Double r = result;
-            result = null;
-            return r;
+            if (resultAvailable) {
+                resultAvailable = false;
+                return result;
+            }
+            return null;
         }
 
         private LikelihoodCaller caller = null;
-        private Double result = null;
+        private Double result = Double.NaN;
+        private boolean resultAvailable = false;
     }
 }

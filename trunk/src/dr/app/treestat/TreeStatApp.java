@@ -45,7 +45,7 @@ public class TreeStatApp {
             String nameString = "TreeStat";
 
             String aboutString = "<html><center><p>Tree Statistic Calculation Tool<br>" +
-                    "Version 1.1, 2005-2007</p>" +
+                    "Version 1.2, 2005-2008</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +

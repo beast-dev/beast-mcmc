@@ -80,7 +80,8 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         availableStatistics.add(NodeHeights.FACTORY);
         availableStatistics.add(RootToTipLengths.FACTORY);
         availableStatistics.add(TMRCASummaryStatistic.FACTORY);
-        availableStatistics.add(ExternalInternalRatio.FACTORY);
+        availableStatistics.add(CladeMRCAAttributeStatistic.FACTORY);
+        availableStatistics.add(CladeMeanAttributeStatistic.FACTORY);
 //        availableStatistics.add(MeanRootToTipLength.FACTORY);
 //        availableStatistics.add(MedianRootToTipLength.FACTORY);
 
@@ -93,6 +94,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         availableStatistics.add(DeltaStatistic.FACTORY);
 //        availableStatistics.add(MonophylySummaryStatistic.FACTORY);
 //        availableStatistics.add(ParsimonySummaryStatistic.FACTORY);
+        availableStatistics.add(ExternalInternalRatio.FACTORY);
         availableStatistics.add(FuLiD.FACTORY);
         availableStatistics.add(RankProportionStatistic.FACTORY);
         availableStatistics.add(IntervalKStatistic.FACTORY);
@@ -100,7 +102,6 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         availableStatistics.add(LineageProportionStatistic.FACTORY);
         availableStatistics.add(MRCAOlderThanStatistic.FACTORY);
 
-        availableStatistics.add(CladeAttributeStatistic.FACTORY);
 
 //		if (treeStatDataeeStatDatanull) {
 //			for (int i = 0; i < treeStatDataSets.size(); i++) {

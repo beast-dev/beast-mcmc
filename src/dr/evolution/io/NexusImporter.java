@@ -80,7 +80,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         }
 
         public MissingBlockException(String message) {
-            super(message); 
+            super(message);
         }
     }
 
@@ -846,7 +846,6 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                 }
 
                 try {
-
                     if (nextCharacter() != '(') {
                         throw new BadFormatException("Missing tree definition in TREE command of TREES block");
                     }
@@ -1328,9 +1327,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         } else {
             System.err.println("usage: filterTrees <tree-file-name> <sample-frequency> <include-branch-lengths>");
-		}
+        }
 
 
-	}
+    }
 
 }

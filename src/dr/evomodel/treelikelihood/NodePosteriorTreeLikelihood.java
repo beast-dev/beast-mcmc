@@ -65,11 +65,7 @@ public class NodePosteriorTreeLikelihood extends TreeLikelihood implements NodeA
         }
         return nodePosteriors[nodeNum];
     }
-
-    public int getPatternCount() {
-        return patternCount;
-    }
-
+  
     public void getNodeMatrix(int nodeNum, double[] probabilities) {
         ((AbstractLikelihoodCore) likelihoodCore).getNodeMatrix(nodeNum, 0, probabilities);
     }

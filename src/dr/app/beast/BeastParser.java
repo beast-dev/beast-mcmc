@@ -347,6 +347,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.MVGAMMA_PRIOR_PARSER);
         addXMLObjectParser(dr.evomodel.continuous.InhibitionAssayLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.tree.NodeTraitLogger.PARSER);
+	    addXMLObjectParser(dr.evomodel.operators.TipStateSwapOperator.PARSER);
         //addXMLObjectParser(dr.evomodel.continuous.CostMapModel.PARSER);
 
         //Multivariate OU Process

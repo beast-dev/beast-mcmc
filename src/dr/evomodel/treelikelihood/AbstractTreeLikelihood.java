@@ -88,6 +88,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 		likelihoodCore.setNodeStates(nodeIndex, states);
 	}
 
+	public TreeModel getTreeModel() { return treeModel; }
+
 	/**
 	 * Sets the partials from a sequence in an alignment.
 	 */
@@ -217,6 +219,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 
 	public final double[] getPatternWeights() { return patternWeights; }
 
+	public final int getPatternCount() { return patternCount; }
+	
 	// **************************************************************
 	// ParameterListener IMPLEMENTATION
 	// **************************************************************

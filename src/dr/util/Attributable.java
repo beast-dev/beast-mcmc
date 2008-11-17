@@ -89,9 +89,7 @@ public interface Attributable {
 		// **************************************************************
 		
 		private HashMap attributes = new HashMap();
-	};
-	
-	
+	}
 }
 
 

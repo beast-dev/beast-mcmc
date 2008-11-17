@@ -22,11 +22,11 @@ public class ARGTraceAnalysis {
 		this.trace = trace;
 
 		int minMaxState = Integer.MAX_VALUE;
-		for (int i = 0; i < trace.length; i++) {
-			if (trace[i].getMaximumState() < minMaxState) {
-				minMaxState = trace[i].getMaximumState();
-			}
-		}
+        for (ARGTrace aTrace : trace) {
+            if (aTrace.getMaximumState() < minMaxState) {
+                minMaxState = aTrace.getMaximumState();
+            }
+        }
 
 		if (burnIn < 0 || burnIn >= minMaxState) {
 			this.burnin = minMaxState / (10 * trace[0].getStepSize());
@@ -50,37 +50,37 @@ public class ARGTraceAnalysis {
 		}
 
 		ARGModel arg = getARG(0);
-		argSet = new FrequencySet();
+		argSet = new FrequencySet<ARGModel>();
 		argSet.add(arg);
 
 
-		for (int t = 0; t < trace.length; t++) {
-			int treeCount = trace[t].getTreeCount(burnin * trace[t].getStepSize());
-			double stepSize = treeCount / 60.0;
-			int counter = 1;
+        for (ARGTrace aTrace : trace) {
+            int treeCount = aTrace.getTreeCount(burnin * aTrace.getStepSize());
+            double stepSize = treeCount / 60.0;
+            int counter = 1;
 
-			if (verbose) {
-				System.out.println("Analyzing " + treeCount + " ARGs...");
-				System.out.println("0              25             50             75            100");
-				System.out.println("|--------------|--------------|--------------|--------------|");
-				System.out.print("*");
-			}
-			for (int i = 1; i < treeCount; i++) {
-				arg = trace[t].getARG(i, burnin * trace[t].getStepSize());
+            if (verbose) {
+                System.out.println("Analyzing " + treeCount + " ARGs...");
+                System.out.println("0              25             50             75            100");
+                System.out.println("|--------------|--------------|--------------|--------------|");
+                System.out.print("*");
+            }
+            for (int i = 1; i < treeCount; i++) {
+                arg = aTrace.getARG(i, burnin * aTrace.getStepSize());
 //                cladeSet.add(tree);
-				argSet.add(arg);
-				if (i >= (int) Math.round(counter * stepSize) && counter <= 60) {
-					if (verbose) {
-						System.out.print("*");
-						System.out.flush();
-					}
-					counter += 1;
-				}
-			}
-			if (verbose) {
-				System.out.println("*");
-			}
-		}
+                argSet.add(arg);
+                if (i >= (int) Math.round(counter * stepSize) && counter <= 60) {
+                    if (verbose) {
+                        System.out.print("*");
+                        System.out.flush();
+                    }
+                    counter += 1;
+                }
+            }
+            if (verbose) {
+                System.out.println("*");
+            }
+        }
 	}
 
 	/**
@@ -126,9 +126,9 @@ public class ARGTraceAnalysis {
 	public final int getTreeCount() {
 
 		int treeCount = 0;
-		for (int i = 0; i < trace.length; i++) {
-			treeCount += trace[i].getTreeCount(burnin * trace[i].getStepSize());
-		}
+        for (ARGTrace aTrace : trace) {
+            treeCount += aTrace.getTreeCount(burnin * aTrace.getStepSize());
+        }
 		return treeCount;
 	}
 
@@ -136,14 +136,14 @@ public class ARGTraceAnalysis {
 
 		int oldTreeCount = 0;
 		int newTreeCount = 0;
-		for (int i = 0; i < trace.length; i++) {
-			newTreeCount += trace[i].getTreeCount(burnin * trace[i].getStepSize());
+        for (ARGTrace aTrace : trace) {
+            newTreeCount += aTrace.getTreeCount(burnin * aTrace.getStepSize());
 
-			if (index < newTreeCount) {
-				return trace[i].getARG(index - oldTreeCount, burnin * trace[i].getStepSize());
-			}
-			oldTreeCount = newTreeCount;
-		}
+            if (index < newTreeCount) {
+                return aTrace.getARG(index - oldTreeCount, burnin * aTrace.getStepSize());
+            }
+            oldTreeCount = newTreeCount;
+        }
 		throw new RuntimeException("Couldn't find ARG " + index);
 	}
 
@@ -212,7 +212,7 @@ public class ARGTraceAnalysis {
 
 		System.out.println("DOT Format for most probable ARG:");
 		System.out.println(GraphMLUtils.dotFormat(
-				((ARGModel) argSet.get(0)).toXML())
+				argSet.get(0).toXML())
 		);
 //		System.out.println(argSet.);
 		/*	System.out.println("Majority rule clades (" + cladeSet.size() + " unique clades):");
@@ -310,14 +310,12 @@ public class ARGTraceAnalysis {
 
 		}
 
-		ARGTraceAnalysis analysis = new ARGTraceAnalysis(trace, burnin, verbose);
-
-		return analysis;
+        return new ARGTraceAnalysis(trace, burnin, verbose);
 	}
 
 	private int burnin = -1;
 	private ARGTrace[] trace;
 
 	//	private CladeSet cladeSet;
-	private FrequencySet argSet;
+	private FrequencySet<ARGModel> argSet;
 }

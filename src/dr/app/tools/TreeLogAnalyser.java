@@ -48,7 +48,8 @@ public class TreeLogAnalyser {
 
     static boolean combine = true;
 
-	public TreeLogAnalyser(int burnin, String inputFileName, String outputFileName, String trueTreeFileName, boolean verbose) throws java.io.IOException {
+	public TreeLogAnalyser(int burnin, String inputFileName, String outputFileName, String trueTreeFileName,
+                           String exportFileName, boolean verbose) throws java.io.IOException {
 
 		List<File> files = new ArrayList<File>();
         File inputFile = new File(inputFileName);
@@ -79,7 +80,7 @@ public class TreeLogAnalyser {
             }
         }
 
-		analyze(files, burnin, trueTree, verbose, new boolean[] {true});
+		analyze(files, burnin, trueTree, verbose, exportFileName, new boolean[] {true});
 	}
 
     private static void collectFiles(File file, List<File> files) {
@@ -96,7 +97,8 @@ public class TreeLogAnalyser {
         }
     }
 
-    private static void analyze(List<File> files, int burnin, Tree tree, boolean verbose, boolean[] drawHeader) {
+    private static void analyze(List<File> files, int burnin, Tree tree, boolean verbose, String exportFileName,
+                                boolean[] drawHeader) {
 
         if (combine) {
             try {
@@ -105,11 +107,18 @@ public class TreeLogAnalyser {
                     readers[i] = new FileReader(files.get(i));
                 }
                 TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(readers, burnin, verbose);
-                if (verbose) {
-                    analysis.report(0.05);
+                if( exportFileName != null ) {
+                    PrintStream exportStream = new PrintStream(exportFileName);
+                    System.err.println("Exporting trees ...");
+                    analysis.export(exportStream, 0);
                 } else {
-                    analysis.shortReport("combined", tree, drawHeader[0]);
-                    drawHeader[0] = false;
+                    if (verbose) {
+                        analysis.report(0.05);
+                    } else {
+                        final String name = files.size() > 1 ? "combined" : files.get(0).toString();
+                        analysis.shortReport(name, tree, drawHeader[0]);
+                        drawHeader[0] = false;
+                    }
                 }
 
             } catch (IOException ioe) {
@@ -118,7 +127,8 @@ public class TreeLogAnalyser {
         } else {
             for (File file : files) {
                 try {
-                    TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(new Reader[]{new FileReader(file)}, burnin, verbose);
+                    final Reader[] readers = {new FileReader(file)};
+                    TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(readers, burnin, verbose);
                     if (verbose) {
                         analysis.report();
                     } else {
@@ -176,6 +186,7 @@ public class TreeLogAnalyser {
 		Arguments arguments = new Arguments(
 			new Arguments.Option[] {
 				new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
+                new Arguments.StringOption("export", "file-name", "name of file to export"),
                 new Arguments.Option("short", "use this option to produce a short report"),
 				new Arguments.Option("help", "option to print this message")
 			});
@@ -200,7 +211,12 @@ public class TreeLogAnalyser {
 
         boolean shortReport = arguments.hasOption("short");
 
-		String inputFileName = null;
+        String exportFileName = null;
+        if (arguments.hasOption("export")) {
+            exportFileName = arguments.getStringOption("export");
+        }
+
+        String inputFileName = null;
         String trueTreeFileName = null;
 		String outputFileName = null;
 
@@ -230,7 +246,7 @@ public class TreeLogAnalyser {
 			inputFileName = Utils.getLoadFileName("TreeLogAnalyser v1.3 - Select log file to analyse");
 		}
 
-		new TreeLogAnalyser(burnin, inputFileName, outputFileName, trueTreeFileName, !shortReport);
+		new TreeLogAnalyser(burnin, inputFileName, outputFileName, trueTreeFileName, exportFileName, !shortReport);
 
 		System.exit(0);
 	}

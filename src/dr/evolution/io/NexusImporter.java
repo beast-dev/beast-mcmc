@@ -837,7 +837,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                 }
 
                 String token2 = readToken("=;");
-
+                // Save tree comment and attach it later
                 final String comment = getLastMetaComment();
                 clearLastMetaComment();
 
@@ -850,7 +850,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                         throw new BadFormatException("Missing tree definition in TREE command of TREES block");
                     }
 
-                    // Save tree comment and attach it later
+                     // tree special comments
+                     final String scomment = getLastMetaComment();
+                     clearLastMetaComment();
 
                     FlexibleNode root = readInternalNode(translationList);
                     tree = new FlexibleTree(root, false, true);
@@ -865,17 +867,39 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                         throw new BadFormatException("Expecting ';' after tree, '" + token2 + "', TREE command of TREES block");
                     }
 
-                    if (comment != null) {
-                        // if '[W number]' (MrBayes), set weight attribute
-                        if (comment.matches("^W\\s+[\\+\\-]?[\\d\\.]+")) {
-                            tree.setAttribute("weight", new Float(comment.substring(2)));
-                        } else {
-                            try {
-                                parseMetaCommentPairs(comment, tree);
-                            } catch (Importer.BadFormatException e) {
-                                // set generic comment attribute
-                                tree.setAttribute("comment", comment);
+                    if (scomment != null) {
+                        // below is correct only if [&W] appears on it own
+                        String c = scomment;
+                        while( c.length() > 0 ) {
+                            final char ch = c.charAt(0);
+                            if( ch == ';' ) {
+                                c = c.substring(1);
+                                continue;
                             }
+                            if( ch == 'R' ) {
+                                // we only have rooted trees anyway
+                                c = c.substring(1);
+                            } else if ( ch == 'W' ) {
+                                int e = c.indexOf(';');
+                                if( e < 0 ) e = c.length();
+
+                                try {
+                                  final Float value = new Float(c.substring(2, e));
+                                  tree.setAttribute("weight", value);
+                                } catch ( NumberFormatException ex) {
+                                    // don't fail, ignore
+                                }
+                                c = c.substring(e);
+                            }
+                        }
+                    }
+
+                    if( comment != null ) {
+                        try {
+                            parseMetaCommentPairs(comment, tree);
+                        } catch (Importer.BadFormatException e) {
+                            // set generic comment attribute
+                            tree.setAttribute("comment", comment);
                         }
                     }
 

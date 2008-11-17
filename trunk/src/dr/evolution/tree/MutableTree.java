@@ -163,7 +163,7 @@ public interface MutableTree extends Tree, MutableTaxonList {
 
 			if (!tree.isExternal(node)) {
 				// pre-order recursion
-				for (int i =0; i < tree.getChildCount(node); i++) {
+				for (int i = 0; i < tree.getChildCount(node); i++) {
 					correctHeightsForTips(tree, tree.getChild(node, i));
 				}
 			}

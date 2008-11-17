@@ -220,11 +220,11 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     // Private methods
     // **************************************************************
 
-    private final double getShape() {
+    private double getShape() {
         return shapeParameter.getParameterValue(0);
     }
 
-    private final double getScale() {
+    private double getScale() {
         if (scaleParameter == null) return (1.0 / getShape());
         return scaleParameter.getParameterValue(0);
     }

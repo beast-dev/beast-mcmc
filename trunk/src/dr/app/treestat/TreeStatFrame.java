@@ -40,11 +40,13 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.Tree;
 import dr.app.treestat.statistics.TreeSummaryStatistic;
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceException;
 
 public class TreeStatFrame extends DocumentFrame {
 
     /**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -1775448072034877658L;
 
@@ -97,6 +99,8 @@ public class TreeStatFrame extends DocumentFrame {
 
         JPanel panel2 = new JPanel(new FlowLayout());
         JButton goButton = new JButton(processTreeFileAction);
+        goButton.setFocusable(false);
+        goButton.putClientProperty("JButton.buttonType", "square");
         goButton.setMargin(new Insets(4,4,4,4));
         panel2.add(goButton);
         panel2.add(progressPanel);
@@ -238,26 +242,35 @@ public class TreeStatFrame extends DocumentFrame {
         }
     }
 
-    protected void processTreeFile(File inFile, File outFile) throws FileNotFoundException, IOException, Importer.ImportException {
-
+    protected void processTreeFile(File inFile, File outFile) throws IOException, Importer.ImportException {
         processTreeFileAction.setEnabled(false);
 
-        BufferedReader reader = new BufferedReader(new FileReader(inFile));
-        String line = reader.readLine();
-        TreeImporter importer = null;
+        BufferedReader r = new BufferedReader(new FileReader(inFile));
+        String line = r.readLine();
+        r.close();
 
+        final ProgressMonitorInputStream in = new ProgressMonitorInputStream(
+                this,
+                "Reading " + inFile.getName(),
+                new FileInputStream(inFile));
+        in.getProgressMonitor().setMillisToDecideToPopup(0);
+        in.getProgressMonitor().setMillisToPopup(0);
+
+        final Reader reader = new InputStreamReader(new BufferedInputStream(in));
+
+//        final Reader reader = new FileReader(inFile);
+        final TreeImporter importer;
 
         if (line.toUpperCase().startsWith("#NEXUS")) {
             importer = new NexusImporter(reader);
         } else {
             reader.close();
-            reader = new BufferedReader(new FileReader(inFile));
             importer = new NewickImporter(reader);
         }
 
-        Tree tree = importer.importNextTree();
-        boolean isUltrametric = Tree.Utils.isUltrametric(tree);
-        boolean isBinary = Tree.Utils.isBinary(tree);
+        final Tree firstTree = importer.importNextTree();
+        boolean isUltrametric = Tree.Utils.isUltrametric(firstTree);
+        boolean isBinary = Tree.Utils.isBinary(firstTree);
         boolean stop = false;
 
         // check that the trees conform with the requirements of the selected statistics
@@ -293,41 +306,78 @@ public class TreeStatFrame extends DocumentFrame {
             return;
         }
 
-        PrintWriter writer = new PrintWriter(new FileWriter(outFile));
+        final PrintWriter writer = new PrintWriter(new FileWriter(outFile));
 
-        writer.print("state");
-        for (int i = 0; i < treeStatData.statistics.size(); i++) {
-            TreeSummaryStatistic tss = (TreeSummaryStatistic)treeStatData.statistics.get(i);
+//        Thread readThread = new Thread() {
+//            public void run() {
+                Tree tree = firstTree;
 
-            int dim = tss.getStatisticDimensions(tree);
-            for (int j = 0; j < dim; j++) {
-                writer.print("\t" + tss.getStatisticLabel(tree, j));
-            }
+                writer.print("state");
+                for (int i = 0; i < treeStatData.statistics.size(); i++) {
+                    TreeSummaryStatistic tss = (TreeSummaryStatistic)treeStatData.statistics.get(i);
 
-        }
-        writer.println();
+                    int dim = tss.getStatisticDimensions(tree);
+                    for (int j = 0; j < dim; j++) {
+                        writer.print("\t" + tss.getStatisticLabel(tree, j));
+                    }
 
-        int state = 0;
-        do {
-            writer.print(state);
-
-            for (int i = 0; i < treeStatData.statistics.size(); i++) {
-                TreeSummaryStatistic tss = (TreeSummaryStatistic)treeStatData.statistics.get(i);
-                double[] stats = tss.getSummaryStatistic(tree);
-                for (int j = 0; j < stats.length; j++) {
-                    writer.print("\t" + stats[j]);
                 }
-            }
-            writer.println();
-            state += 1;
+                writer.println();
 
-            progressLabel.setText("Processing Tree " + state + "...");
+                state = 0;
+                do {
+                    writer.print(state);
 
-            if (state == 82) {
-                System.out.println();
-            }
-            tree = importer.importNextTree();
-        } while (tree != null);
+                    for (int i = 0; i < treeStatData.statistics.size(); i++) {
+                        TreeSummaryStatistic tss = (TreeSummaryStatistic)treeStatData.statistics.get(i);
+                        double[] stats = tss.getSummaryStatistic(tree);
+                        for (int j = 0; j < stats.length; j++) {
+                            writer.print("\t" + stats[j]);
+                        }
+                    }
+                    writer.println();
+                    state += 1;
+
+                    final int currentState = state;
+
+                    in.getProgressMonitor().setNote("Processing Tree " + currentState + "...");
+//                    EventQueue.invokeLater(
+//                            new Runnable() {
+//                                public void run() {
+//                                    progressLabel.setText("Processing Tree " + currentState + "...");
+//                                }
+//                            });
+
+
+//                    try {
+                        tree = importer.importNextTree();
+//                    } catch (final IOException e) {
+//                        EventQueue.invokeLater(
+//                                new Runnable() {
+//                                    public void run() {
+//                                        JOptionPane.showMessageDialog(TreeStatFrame.this, "File I/O Error: " + e.getMessage(),
+//                                                "File I/O Error",
+//                                                JOptionPane.ERROR_MESSAGE);
+//                                    }
+//                                });
+//                    } catch (final Importer.ImportException e) {
+//                        EventQueue.invokeLater(
+//                                new Runnable() {
+//                                    public void run() {
+//                                        JOptionPane.showMessageDialog(TreeStatFrame.this, "Error importing tree: " + e.getMessage(),
+//                                                "Tree Import Error",
+//                                                JOptionPane.ERROR_MESSAGE);
+//                                    }
+//                                });
+//                    }
+                } while (tree != null);
+//            }
+//        };
+//
+//        readThread.start();
+//        while (readThread.isAlive()) {
+//            Thread.yield();
+//        }
 
         reader.close();
         writer.close();
@@ -335,6 +385,8 @@ public class TreeStatFrame extends DocumentFrame {
         progressLabel.setText("" + state + " trees processed.");
         processTreeFileAction.setEnabled(true);
     }
+
+    private int state = 0;
 
     public void doCopy() {
 //		statisticsPanel.doCopy();
@@ -347,7 +399,7 @@ public class TreeStatFrame extends DocumentFrame {
 
       protected AbstractAction importTaxaAction = new AbstractAction("Import Taxa...") {
           /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -3185667996732228702L;
 
@@ -358,7 +410,7 @@ public class TreeStatFrame extends DocumentFrame {
 
       protected AbstractAction processTreeFileAction = new AbstractAction("Process Tree File...", gearIcon) {
           /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -8285433136692586532L;
 

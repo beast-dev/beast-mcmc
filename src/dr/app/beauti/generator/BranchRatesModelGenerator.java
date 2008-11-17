@@ -90,10 +90,10 @@ public class BranchRatesModelGenerator extends Generator {
                     throw new RuntimeException("Unrecognised relaxed clock model");
                 }
                 writer.writeCloseTag("distribution");
-                writer.writeOpenTag("rateCategories");
+                writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
                 categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
                 writeParameter("branchRates.categories", categoryCount, writer);
-                writer.writeCloseTag("rateCategories");
+                writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
                 writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 
                 writer.writeText("");
@@ -430,10 +430,10 @@ public class BranchRatesModelGenerator extends Generator {
                 throw new RuntimeException("Unrecognised relaxed clock model");
             }
             writer.writeCloseTag("distribution");
-            writer.writeOpenTag("rateCategories");
+            writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
             int categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
             writeParameter("branchRates.categories", categoryCount, writer);
-            writer.writeCloseTag("rateCategories");
+            writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
             writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 
             writer.writeText("");

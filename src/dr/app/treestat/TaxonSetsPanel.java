@@ -39,15 +39,15 @@ import java.util.ArrayList;
 
 public class TaxonSetsPanel extends JPanel implements Exportable {
 
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -9013475414423166476L;
 	TreeStatFrame frame = null;
 	TreeStatData treeStatData = null;
 	TreeStatData.TaxonSet selectedTaxonSet = null;
-	
+
 	JScrollPane scrollPane1 = null;
 	JTable taxonSetsTable = null;
 	TaxonSetsTableModel taxonSetsTableModel = null;
@@ -59,12 +59,12 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 	JScrollPane scrollPane3 = null;
 	JTable includedTaxaTable = null;
 	TaxaTableModel includedTaxaTableModel = null;
-	
+
 	public TaxonSetsPanel(TreeStatFrame frame, TreeStatData treeStatData) {
-		
+
 		this.frame = frame;
 		setOpaque(false);
-	
+
 		this.treeStatData = treeStatData;
 
 		Icon addIcon = null, removeIcon = null, includeIcon = null, excludeIcon = null;
@@ -76,10 +76,12 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 		} catch (Exception e) {
 			// do nothing
 		}
-		
+
         JPanel buttonPanel = new JPanel(new BorderLayout());
         buttonPanel.setOpaque(false);
         JButton importButton = new JButton(frame.getImportAction());
+        importButton.setFocusable(false);
+        importButton.putClientProperty("JButton.buttonType", "square");
         importButton.setMargin(new Insets(4,4,4,4));
         buttonPanel.add(importButton, BorderLayout.WEST);
         buttonPanel.add(new JLabel("    To define taxon sets, first import a list of taxa (i.e., from the trees to be analysed)"), BorderLayout.SOUTH);
@@ -92,19 +94,19 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 
 		taxonSetsTable.getColumnModel().getColumn(0).setCellRenderer(
 			new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-		
+
 		taxonSetsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent evt) { taxonSetsTableSelectionChanged(); }
 		});
 
-   		scrollPane1 = new JScrollPane(taxonSetsTable, 
-										JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, 
+   		scrollPane1 = new JScrollPane(taxonSetsTable,
+										JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 										JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
  		JPanel buttonPanel1 = createAddRemoveButtonPanel(addTaxonSetAction, addIcon, "Create a new taxon set",
  															removeTaxonSetAction, removeIcon, "Remove a taxon set",
  															javax.swing.BoxLayout.X_AXIS);
- 															      
+
 		// Excluded Taxon List
 		excludedTaxaTableModel = new TaxaTableModel(false);
         sorter = new TableSorter(excludedTaxaTableModel);
@@ -113,19 +115,19 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 
 		excludedTaxaTable.getColumnModel().getColumn(0).setCellRenderer(
 			new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-		
+
 		excludedTaxaTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent evt) { excludedTaxaTableSelectionChanged(); }
 		});
 
-   		scrollPane2 = new JScrollPane(excludedTaxaTable, 
-										JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, 
+   		scrollPane2 = new JScrollPane(excludedTaxaTable,
+										JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 										JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
  		JPanel buttonPanel2 = createAddRemoveButtonPanel(includeTaxonAction, includeIcon, "Include selected taxa in the taxon set",
  															excludeTaxonAction, excludeIcon, "Exclude selected taxa from the taxon set",
  															javax.swing.BoxLayout.Y_AXIS);
-     
+
  		// Included Taxon List
 		includedTaxaTableModel = new TaxaTableModel(true);
         sorter = new TableSorter(includedTaxaTableModel);
@@ -134,13 +136,13 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 
 		includedTaxaTable.getColumnModel().getColumn(0).setCellRenderer(
 			new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-		
+
 		includedTaxaTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent evt) { includedTaxaTableSelectionChanged(); }
 		});
 
-   		scrollPane3 = new JScrollPane(includedTaxaTable, 
-										JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, 
+   		scrollPane3 = new JScrollPane(includedTaxaTable,
+										JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 										JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         JPanel panel = new JPanel();
@@ -197,10 +199,10 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
         add(panel, BorderLayout.CENTER);
 
 	}
-	
+
 	JPanel createAddRemoveButtonPanel(Action addAction, Icon addIcon, String addToolTip,
 										Action removeAction, Icon removeIcon, String removeToolTip, int axis) {
-	
+
  		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, axis));
 		buttonPanel.setOpaque(false);
@@ -213,7 +215,7 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 		addButton.putClientProperty("JButton.buttonType", "toolbar");
 		addButton.setOpaque(false);
 		addAction.setEnabled(false);
-		
+
 		JButton removeButton = new JButton(removeAction);
 		if (removeIcon != null) {
 			removeButton.setIcon(removeIcon);
@@ -223,23 +225,23 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 		removeButton.putClientProperty("JButton.buttonType", "toolbar");
 		removeButton.setOpaque(false);
 		removeAction.setEnabled(false);
-		
+
 		buttonPanel.add(addButton);
 		buttonPanel.add(new JToolBar.Separator(new Dimension(6,6)));
 		buttonPanel.add(removeButton);
-	
+
 		return buttonPanel;
 	}
-	
+
 	public void dataChanged() {
 
 		addTaxonSetAction.setEnabled(treeStatData.allTaxa.size() > 0);
-		
+
 		taxonSetsTableModel.fireTableDataChanged();
 		includedTaxaTableModel.fireTableDataChanged();
 		excludedTaxaTableModel.fireTableDataChanged();
 	}
-      
+
 	private void taxonSetsTableSelectionChanged() {
 		if (taxonSetsTable.getSelectedRowCount() == 0) {
 			selectedTaxonSet = null;
@@ -250,32 +252,32 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 		}
 		includedTaxaTableModel.fireTableDataChanged();
 		excludedTaxaTableModel.fireTableDataChanged();
-	} 	
-      
+	}
+
 	private void excludedTaxaTableSelectionChanged() {
 		if (excludedTaxaTable.getSelectedRowCount() == 0) {
 			includeTaxonAction.setEnabled(false);
 		} else {
 			includeTaxonAction.setEnabled(true);
 		}
-	} 	
-      
+	}
+
 	private void includedTaxaTableSelectionChanged() {
 		if (includedTaxaTable.getSelectedRowCount() == 0) {
 			excludeTaxonAction.setEnabled(false);
 		} else {
 			excludeTaxonAction.setEnabled(true);
 		}
-	} 	
-      
+	}
+
     public JComponent getExportableComponent() {
 		return this;
-	} 	
-      
+	}
+
   	Action addTaxonSetAction = new AbstractAction("+") {
-  		
+
   		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 1831933175582860833L;
 
@@ -285,16 +287,16 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 			taxonSet.taxa = new ArrayList();
 			treeStatData.taxonSets.add(taxonSet);
 			dataChanged();
-			
+
 			int sel = treeStatData.taxonSets.size() - 1;
 			taxonSetsTable.setRowSelectionInterval(sel, sel);
   		}
   	};
 
   	Action removeTaxonSetAction = new AbstractAction("-") {
-  		
+
   		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -8662527333546044639L;
 
@@ -310,9 +312,9 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
   		}
   	};
 
-  	Action includeTaxonAction = new AbstractAction("->") {  		
+  	Action includeTaxonAction = new AbstractAction("->") {
   		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -1875904513948242608L;
 
@@ -330,9 +332,9 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
   	};
 
   	Action excludeTaxonAction = new AbstractAction("<-") {
-  		
+
   		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 4523480086490780822L;
 
@@ -346,30 +348,30 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 			taxonSetsTable.setRowSelectionInterval(saved, saved);
   		}
   	};
-  	
+
 	class TaxonSetsTableModel extends AbstractTableModel {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 219223813257870207L;
 
 		public TaxonSetsTableModel() {
 		}
 
-		public int getColumnCount() { 
-			return 1; 
+		public int getColumnCount() {
+			return 1;
 		}
-		
+
 		public int getRowCount() {
 			return treeStatData.taxonSets.size();
 		}
-		
-		public Object getValueAt(int row, int col) {	
+
+		public Object getValueAt(int row, int col) {
 			return (treeStatData.taxonSets.get(row)).name;
 		}
 
-		public void setValueAt(Object value, int row, int col) {	
+		public void setValueAt(Object value, int row, int col) {
 			(treeStatData.taxonSets.get(row)).name = (String)value;
 		}
 
@@ -380,26 +382,26 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 		public String getColumnName(int column) {
 			return "Taxon Sets";
 		}
-		
+
 		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
 	}
 
     class TaxaTableModel extends AbstractTableModel {
-		
+
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 1559408662356843275L;
 		boolean included;
-		
+
 		public TaxaTableModel(boolean included) {
 			this.included = included;
 		}
 
-		public int getColumnCount() { 
-			return 1; 
+		public int getColumnCount() {
+			return 1;
 		}
-		
+
 		public int getRowCount() {
 			if (selectedTaxonSet == null) return 0;
 
@@ -409,9 +411,9 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 				return treeStatData.allTaxa.size() - selectedTaxonSet.taxa.size();
 			}
 		}
-		
+
 		public Object getValueAt(int row, int col) {
-		
+
 			if (included) {
 				return selectedTaxonSet.taxa.get(row);
 			} else {
@@ -429,7 +431,7 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 			if (included) return "Included Taxa";
 			else return "Excluded Taxa";
 		}
-		
+
 		public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
 	}
 }

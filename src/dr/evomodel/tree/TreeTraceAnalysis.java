@@ -27,17 +27,16 @@ package dr.evomodel.tree;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.CladeSet;
-import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
 import dr.util.FrequencySet;
 import dr.util.NumberFormatter;
+import dr.app.tools.NexusExporter;
 import jebl.evolution.treemetrics.RobinsonsFouldMetric;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.PrintStream;
 import java.util.Set;
 
 /**
@@ -60,9 +59,11 @@ public class TreeTraceAnalysis {
 
 		if (burnIn < 0 || burnIn >= minMaxState) {
 			this.burnin = minMaxState / (10 * traces[0].getStepSize());
-			if (verbose)
-				System.out.println("WARNING: Burn-in larger than total number of states - using 10% of smallest trace");
-		} else {
+			if (verbose) {
+                String reason = burnIn < 0 ? "Defalt burn-in" : "WARNING: Burn-in larger than total number of states";
+				System.out.println(reason + " - using 10% of smallest trace");
+            }
+        } else {
 			this.burnin = burnIn;
 		}
 
@@ -75,8 +76,7 @@ public class TreeTraceAnalysis {
 		RobinsonsFouldMetric metric = new RobinsonsFouldMetric();
 		jebl.evolution.trees.RootedTree jreference = Tree.Utils.asJeblTree(targetTree);
 		for (int i = 0; i < symDistance.length; i++) {
-			jebl.evolution.trees.RootedTree tree = Tree.Utils.asJeblTree(treeTrace.getTree(i, 0));
-
+			final jebl.evolution.trees.RootedTree tree = Tree.Utils.asJeblTree(treeTrace.getTree(i, 0));
 
 			symDistance[i] = metric.getMetric(jreference, tree);
 		}
@@ -95,19 +95,21 @@ public class TreeTraceAnalysis {
 			if (traces.length > 1) System.out.println("Combining " + traces.length + " traces.");
 		}
 
-		Tree tree = getTree(0);
+		final Tree tree0 = getTree(0);
 
-		double[][] changed = new double[tree.getNodeCount()][tree.getNodeCount()];
-		double[] rateConditionalOnChange = new double[tree.getNodeCount()];
+		double[][] changed = new double[tree0.getNodeCount()][tree0.getNodeCount()];
+		double[] rateConditionalOnChange = new double[tree0.getNodeCount()];
 		boolean changesFound = false;
 
-		cladeSet = new CladeSet(tree);
-		treeSet = new FrequencySet();
-		treeSet.add(Tree.Utils.uniqueNewick(tree, tree.getRoot()));
+		cladeSet = new CladeSet(tree0);
+		treeSet = new FrequencySet<String>();
+		treeSet.add(Tree.Utils.uniqueNewick(tree0, tree0.getRoot()));
 
-		for (TreeTrace trace : traces) {
-			int treeCount = trace.getTreeCount(burnin * trace.getStepSize());
-			double stepSize = treeCount / 60.0;
+        final int reportRate = 60;
+
+        for (TreeTrace trace : traces) {
+			final int treeCount = trace.getTreeCount(burnin * trace.getStepSize());
+			final double stepSize = treeCount / (double)reportRate;
 			int counter = 1;
 
 			if (verbose) {
@@ -116,8 +118,9 @@ public class TreeTraceAnalysis {
 				System.out.println("|--------------|--------------|--------------|--------------|");
 				System.out.print("*");
 			}
-			for (int i = 1; i < treeCount; i++) {
-				tree = trace.getTree(i, burnin * trace.getStepSize());
+
+            for (int i = 1; i < treeCount; i++) {
+				Tree tree = trace.getTree(i, burnin * trace.getStepSize());
 				for (int j = 0; j < tree.getNodeCount(); j++) {
 					if (tree.getNode(j) != tree.getRoot() && tree.getNodeAttribute(tree.getNode(j), "changed") != null) {
 						changesFound = true;
@@ -139,32 +142,31 @@ public class TreeTraceAnalysis {
 
 				cladeSet.add(tree);
 				treeSet.add(Tree.Utils.uniqueNewick(tree, tree.getRoot()));
-				if (i >= (int) Math.round(counter * stepSize) && counter <= 60) {
-					if (verbose) {
-						System.out.print("*");
-						System.out.flush();
-					}
-					counter += 1;
-				}
+
+                if (verbose && i >= (int) Math.round(counter * stepSize) && counter <= reportRate) {
+                    System.out.print("*");
+                    System.out.flush();
+
+                    counter += 1;
+                }
 			}
 			if (verbose) {
 				System.out.println("*");
 			}
 		}
 		if (changesFound) {
-			for (int j = 0; j < tree.getNodeCount(); j++) {
+			for (int j = 0; j < tree0.getNodeCount(); j++) {
 				System.out.println(j + "\t" + rateConditionalOnChange[j]);
 			}
 			System.out.println();
-			for (int j = 0; j < tree.getNodeCount(); j++) {
-				for (int k = 0; k < tree.getNodeCount(); k++) {
+			for (int j = 0; j < tree0.getNodeCount(); j++) {
+				for (int k = 0; k < tree0.getNodeCount(); k++) {
 					System.out.print(changed[j][k] + "\t");
 				}
 				System.out.println();
 			}
 
 		}
-
 	}
 
 	/**
@@ -173,39 +175,45 @@ public class TreeTraceAnalysis {
 	 * @param target a tree in uniqueNewick format
 	 * @return a tree with mean node heights
 	 */
-	public final Tree analyzeTree(String target) {
+	public final MutableTree analyzeTree(String target) {
 
-		int n = getTreeCount();
+		final int n = getTreeCount();
 
 		FlexibleTree meanTree = null;
 
 		for (int i = 0; i < n; i++) {
-			Tree tree = getTree(i);
+			final Tree tree = getTree(i);
 
 			if (Tree.Utils.uniqueNewick(tree, tree.getRoot()).equals(target)) {
 				meanTree = new FlexibleTree(tree);
 				break;
 			}
 		}
-		if (meanTree == null) throw new RuntimeException("No target tree in trace");
+		if (meanTree == null) {
+            throw new RuntimeException("No target tree in trace");
+        }
 
-		int m = meanTree.getInternalNodeCount();
-		for (int j = 0; j < m; j++) {
+		final int inc = meanTree.getInternalNodeCount();
+		for (int j = 0; j < inc; j++) {
 			double[] heights = new double[n];
-			NodeRef node1 = meanTree.getInternalNode(j);
-			Set<String> leafSet = Tree.Utils.getDescendantLeaves(meanTree, node1);
+			NodeRef nodej = meanTree.getInternalNode(j);
+			Set<String> leafSet = Tree.Utils.getDescendantLeaves(meanTree, nodej);
 
-			for (int i = 0; i < n; i++) {
-				Tree tree = getTree(i);
+            for (int i = 0; i < n; i++) {
+                final Tree tree = getTree(i);
 
-				NodeRef node2 = Tree.Utils.getCommonAncestorNode(tree, leafSet);
-				heights[i] = tree.getNodeHeight(node2);
-			}
-			meanTree.setNodeHeight(node1, dr.stats.DiscreteStatistics.mean(heights));
-			meanTree.setNodeAttribute(node1, "upper", dr.stats.DiscreteStatistics.quantile(0.975, heights));
-			meanTree.setNodeAttribute(node1, "lower", dr.stats.DiscreteStatistics.quantile(0.025, heights));
+                NodeRef can = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+                heights[i] = tree.getNodeHeight(can);
+            }
 
-		}
+            meanTree.setNodeHeight(nodej, dr.stats.DiscreteStatistics.mean(heights));
+            final double upper = dr.stats.DiscreteStatistics.quantile(0.975, heights);
+            meanTree.setNodeAttribute(nodej, "upper", upper);
+            final double lower = dr.stats.DiscreteStatistics.quantile(0.025, heights);
+            meanTree.setNodeAttribute(nodej, "lower", lower);
+            // Make it possible to display bars in figtree
+            meanTree.setNodeAttribute(nodej, "range", new Double[]{lower, upper});
+        }
 		return meanTree;
 	}
 
@@ -223,10 +231,11 @@ public class TreeTraceAnalysis {
 		int oldTreeCount = 0;
 		int newTreeCount = 0;
 		for (TreeTrace trace : traces) {
-			newTreeCount += trace.getTreeCount(burnin * trace.getStepSize());
+            final int br = burnin * trace.getStepSize();
+            newTreeCount += trace.getTreeCount(br);
 
 			if (index < newTreeCount) {
-				return trace.getTree(index - oldTreeCount, burnin * trace.getStepSize());
+				return trace.getTree(index - oldTreeCount, br);
 			}
 			oldTreeCount = newTreeCount;
 		}
@@ -249,12 +258,12 @@ public class TreeTraceAnalysis {
 
 		System.err.println("making report");
 
-		int fieldWidth = 14;
+		final int fieldWidth = 14;
 		NumberFormatter formatter = new NumberFormatter(6);
 		formatter.setPadding(true);
 		formatter.setFieldWidth(fieldWidth);
 
-		int n = treeSet.size();
+		final int nTreeSet = treeSet.size();
 		int totalTrees = treeSet.getSumFrequency();
 
 		System.out.println();
@@ -263,14 +272,16 @@ public class TreeTraceAnalysis {
 		System.out.println();
 
 
-		System.out.println((Math.round(credSetProbability * 100.0)) + "% credible set (" + n + " unique trees, " + totalTrees + " total):");
-		System.out.println("Count\tPercent\tTree");
+		System.out.println((Math.round(credSetProbability * 100.0))
+                + "% credible set (" + nTreeSet + " unique trees, " + totalTrees + " total):");
+
+        System.out.println("Count\tPercent\tTree");
 		int credSet = (int) (credSetProbability * totalTrees);
 		int sumFreq = 0;
 
 		NumberFormatter nf = new NumberFormatter(8);
 
-		for (int i = 0; i < n; i++) {
+		for (int i = 0; i < nTreeSet; i++) {
 			int freq = treeSet.getFrequency(i);
 			double prop = ((double) freq) / totalTrees;
 			System.out.print(freq);
@@ -280,7 +291,7 @@ public class TreeTraceAnalysis {
 			double sumProp = ((double) sumFreq) / totalTrees;
 			System.out.print("\t" + nf.formatDecimal(sumProp * 100.0, 2) + "%");
 
-			String newickTree = (String) treeSet.get(i);
+			String newickTree = treeSet.get(i);
 
 			if (freq > 100) {
 				// calculate conditional average node heights
@@ -301,10 +312,10 @@ public class TreeTraceAnalysis {
 		System.out.println();
 		System.out.println(Math.round(minCladeProbability * 100.0) +
 				"%-rule clades (" + cladeSet.size() + " unique clades):");
-		n = cladeSet.size();
-		for (int i = 0; i < n; i++) {
-			int freq = cladeSet.getFrequency(i);
-			double prop = ((double) freq) / totalTrees;
+		final int nCladeSet = cladeSet.size();
+		for (int i = 0; i < nCladeSet; i++) {
+			final int freq = cladeSet.getFrequency(i);
+			final double prop = ((double) freq) / totalTrees;
 			if (prop >= minCladeProbability) {
 				System.out.print(freq);
 				System.out.print("\t" + nf.formatDecimal(prop * 100.0, 2) + "%");
@@ -321,13 +332,14 @@ public class TreeTraceAnalysis {
 		int fiveCredSet = (5 * totalTrees) / 100;
 		int halfCredSet = (50 * totalTrees) / 100;
 		sumFreq = 0;
-		n = treeSet.size();
-		CladeSet tempCladeSet = new CladeSet();
-		for (int i = 0; i < n; i++) {
+		assert nTreeSet == treeSet.size();
 
-			sumFreq += treeSet.getFrequency(i);
+        final CladeSet tempCladeSet = new CladeSet();
+		for (int nt = 0; nt < nTreeSet; nt++) {
 
-			String newickTree = (String) treeSet.get(i);
+			sumFreq += treeSet.getFrequency(nt);
+
+			String newickTree = treeSet.get(nt);
 			NewickImporter importer = new NewickImporter(new StringReader(newickTree));
 
 			try {
@@ -344,33 +356,32 @@ public class TreeTraceAnalysis {
 				// don't do it more than once
 				fiveCredSet = totalTrees + 1;
 			}
-			if (sumFreq >= halfCredSet) {
+
+            if (sumFreq >= halfCredSet) {
 				System.out.println();
 				System.out.println("50% credible set has " + tempCladeSet.getCladeCount() + " clades.");
 				// don't do it more than once
 				halfCredSet = totalTrees + 1;
 			}
-
 		}
 
 		System.out.flush();
-
-
 	}
 
 	public void shortReport(String name, Tree tree, boolean drawHeader) throws IOException {
 		shortReport(name, tree, drawHeader, 0.5, 0.95);
 	}
 
-	public void shortReport(String name, Tree tree, boolean drawHeader, double minCladeProbability, double credSetProbability) throws IOException {
+	public void shortReport(String name, Tree tree, boolean drawHeader, double minCladeProbability,
+                            double credSetProbability) throws IOException {
 
 		String targetTree = "";
 		if (tree != null) targetTree = Tree.Utils.uniqueNewick(tree, tree.getRoot());
 
-		int n = treeSet.size();
-		int totalTrees = treeSet.getSumFrequency();
+		final int n = treeSet.size();
+		final int totalTrees = treeSet.getSumFrequency();
 		double highestProp = ((double) treeSet.getFrequency(0)) / totalTrees;
-		String mapTree = (String) treeSet.get(0);
+		String mapTree = treeSet.get(0);
 
 		if (drawHeader) {
 			System.out.println("file\ttrees\tuniqueTrees\tp(MAP)\tMAP tree\t" + (int) credSetProbability * 100 + "credSize\ttrue_I\tp(true)\tcum(true)");
@@ -396,7 +407,7 @@ public class TreeTraceAnalysis {
 			sumFreq += freq;
 			double sumProp = ((double) sumFreq) / totalTrees;
 
-			String newickTree = (String) treeSet.get(i);
+			String newickTree = treeSet.get(i);
 
 			if (newickTree.equals(targetTree)) {
 				targetTreeIndex = i + 1;
@@ -415,7 +426,35 @@ public class TreeTraceAnalysis {
 		System.out.println(targetTreeCum);
 	}
 
-	public int getBurnin() {
+    public void export(PrintStream out, double minTreeProbability) {
+        NexusExporter exporter = new NexusExporter(out);
+        int n = treeSet.size();
+        final int totalTrees = treeSet.getSumFrequency();
+
+        Tree[] trees = new Tree[n];
+
+        for (int i = 0; i < n; i++) {
+			int freq = treeSet.getFrequency(i);
+            double prop = ((double) freq) / totalTrees;
+            if( prop < minTreeProbability ) {
+                continue;
+            }
+            final String newickTree = treeSet.get(i);
+            // calculate conditional average node heights
+            final MutableTree tree = analyzeTree(newickTree);
+            tree.setAttribute("weight", prop);
+            cladeSet.annotate(tree, "posterior");
+            trees[i] = tree;
+        }
+
+        exporter.exportTrees(trees, true);
+    }
+
+    public void export(PrintStream out) {
+        export(out, 0.05);
+    }
+
+    public int getBurnin() {
 		return burnin;
 	}
 
@@ -446,5 +485,5 @@ public class TreeTraceAnalysis {
 	private TreeTrace[] traces;
 
 	private CladeSet cladeSet;
-	private FrequencySet treeSet;
+	private FrequencySet<String> treeSet;
 }

@@ -557,7 +557,8 @@ public abstract class Importer {
 			write = true;
 		} else if (nextCharacter() == metaComment) {
 			read();
-			meta = new StringBuffer();
+            // combine two consecutive meta comments
+            meta = lastMetaComment!= null ? new StringBuffer(lastMetaComment + ";") : new StringBuffer();
 		}
 		
         lastMetaComment = null;

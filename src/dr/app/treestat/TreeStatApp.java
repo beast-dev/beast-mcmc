@@ -28,9 +28,30 @@ package dr.app.treestat;
 import javax.swing.*;
 
 import org.virion.jam.framework.SingleDocApplication;
+import org.virion.jam.mac.Utils;
 
-public class TreeStatApp {
-    public TreeStatApp() {
+import java.awt.*;
+
+public class TreeStatApp extends SingleDocApplication {
+    public TreeStatApp(String nameString, String aboutString, Icon icon, String websiteURLString, String helpURLString) {
+        super(nameString, aboutString, icon, websiteURLString, helpURLString);
+    }
+
+    // Main entry point
+    static public void main(String[] args) {
+
+
+
+        if (Utils.isMacOSX()) {
+            if (Utils.getMacOSXVersion().startsWith("10.5")) {
+                System.setProperty("apple.awt.brushMetalLook","true");
+            }
+            System.setProperty("apple.laf.useScreenMenuBar","true");
+            System.setProperty("apple.awt.showGrowBox","true");
+            UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
+            UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
+        }
+
         try {
 
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -43,7 +64,6 @@ public class TreeStatApp {
             }
 
             String nameString = "TreeStat";
-
             String aboutString = "<html><center><p>Tree Statistic Calculation Tool<br>" +
                     "Version 1.2, 2005-2008</p>" +
                     "<p>by<br>" +
@@ -56,23 +76,19 @@ public class TreeStatApp {
                     "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                     "</center></html>";
 
-            SingleDocApplication app = new SingleDocApplication(nameString, aboutString, icon);
+            String websiteURLString = "http://beast.bio.ed.ac.uk/";
+            String helpURLString = "http://beast.bio.ed.ac.uk/TreeStat/";
 
-
-            TreeStatFrame frame = new TreeStatFrame(app, nameString);
-            app.setDocumentFrame(frame);
+            TreeStatApp app = new TreeStatApp(nameString, aboutString, icon,
+                    websiteURLString, helpURLString);
+            app.setDocumentFrame(new TreeStatFrame(app, nameString));
+            app.initialize();
 
         } catch (Exception e) {
+            JOptionPane.showMessageDialog(new JFrame(), "Fatal exception: " + e,
+                    "Please report this to the authors",
+                    JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
     }
-
-    // Main entry point
-    static public void main(String[] args) {
-        System.setProperty("com.apple.macos.useScreenMenuBar","true");
-        System.setProperty("apple.laf.useScreenMenuBar","true");
-
-        new TreeStatApp();
-    }
-
 }

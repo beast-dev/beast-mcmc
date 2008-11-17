@@ -34,7 +34,7 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  */
-public class FrequencySet
+public class FrequencySet<T>
 {
 	//
 	// Public stuff
@@ -51,7 +51,7 @@ public class FrequencySet
 	}
 
 	/** get object in frequency order */
-	public Object get(int i) {
+	public T get(int i) {
 
 		//return null;
 
@@ -59,17 +59,26 @@ public class FrequencySet
 			sortByFrequency();
 		}
 
-		return ((Bin)list.get(i)).object;
+		return list.get(i).object;
 	}
 
-	/** get frequency of ith object */
+
+    protected Integer getFrequency(Object b) {
+        Bin bin = hash.get(b.toString());
+        if( bin == null ) {
+            return null;
+        }
+        return bin.frequency;
+    }
+
+    /** get frequency of ith object */
 	public int getFrequency(int i)
 	{
 		if (!sorted) {
 			sortByFrequency();
 		}
 
-		return ((Bin)list.get(i)).frequency;
+		return list.get(i).frequency;
 	}
 
 	/** get sum of all frequencies */
@@ -83,7 +92,7 @@ public class FrequencySet
 	}
 
 	/** adds an object to the set */
-	public void add(Object object)
+	public void add(T object)
 	{
 		add(object, 1);
 	}
@@ -92,7 +101,7 @@ public class FrequencySet
      * adds an object to the set with an initial frequency, or if object already
      * in frequency set then frequency is incremented by 1. 
      */
-	public void add(Object object, int frequency) {
+	public void add(T object, int frequency) {
 
 		Bin bin = hash.get(object.toString());
 		if (bin != null) {
@@ -106,8 +115,9 @@ public class FrequencySet
 	}
 
 	/** The frequencySets are equal if their inner sets are equal */
-	public boolean equals(Object obj) {
-		return set.equals(((FrequencySet)obj).set);
+	@Override
+    public boolean equals(Object obj) {
+		return (obj instanceof FrequencySet) && set.equals(((FrequencySet)obj).set);
 	}
 
 	/** sort by descending frequency */
@@ -133,15 +143,16 @@ public class FrequencySet
 	private int size = 0;
 
 	private class Bin {
-		Object object;
+		T object;
         int frequency;
 
-		public Bin(Object object, int frequency) {
+		public Bin(T object, int frequency) {
 			this.object = object;
 			this.frequency = frequency;
 		}
 
-		public boolean equals(Object obj) {
+		@Override
+        public boolean equals(Object obj) {
 			return object.equals(((Bin)obj).object);
 		}
 
@@ -154,6 +165,5 @@ public class FrequencySet
 		public int compare(Bin bin1, Bin bin2) {
 			return bin2.frequency - bin1.frequency;
 		}
-
 	};
 }

@@ -50,8 +50,7 @@ public class CladeSet extends FrequencySet {
      */
     public CladeSet(Tree tree)
     {
-        this.taxonList = tree;
-        add(tree);
+        this(tree, tree);
     }
 
     /**
@@ -114,6 +113,8 @@ public class CladeSet extends FrequencySet {
             taxonList = tree;
         }
 
+        totalTrees += 1;
+
         // Recurse over the tree and add all the clades (or increment their
         // frequency if already present). The root clade is not added.
         addClades(tree, tree.getRoot(), null);
@@ -172,6 +173,48 @@ public class CladeSet extends FrequencySet {
         }
     }
 
+    private BitSet annotate(MutableTree tree, NodeRef node, String freqAttrName) {
+        BitSet b = null;
+        if (tree.isExternal(node)) {
+            int index;
+            if (taxonList != null) {
+                index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+
+            } else {
+                index = node.getNumber();
+            }
+            b = new BitSet(tree.getExternalNodeCount());
+            b.set(index);
+
+        } else {
+
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                NodeRef child = tree.getChild(node, i);
+                BitSet b1 = annotate(tree, child, freqAttrName);
+                if( i == 0 ) {
+                    b = b1;
+                } else {
+                    b.or(b1);
+                }
+            }
+            int total = getFrequency(b);
+            if( total >= 0 ) {
+                tree.setNodeAttribute(node, freqAttrName, total / (double)totalTrees );
+            }
+        }
+        return b;
+    }
+
+    /**
+     * Annotate clades of tree with posterior probability
+     * @param tree
+     * @param freqAttrName name of attribute to set per node
+     */
+    public void annotate(MutableTree tree, String freqAttrName) {
+        annotate(tree, tree.getRoot(), freqAttrName);
+    }
+
     public boolean hasClade(int index, Tree tree) {
         BitSet bits = (BitSet)get(index);
 
@@ -181,7 +224,7 @@ public class CladeSet extends FrequencySet {
         return (mrca[0] != null);
     }
 
-    public int findClade(BitSet bitSet, Tree tree, NodeRef node, NodeRef[] cladeMRCA) {
+    private int findClade(BitSet bitSet, Tree tree, NodeRef node, NodeRef[] cladeMRCA) {
 
         if (tree.isExternal(node)) {
 
@@ -216,4 +259,5 @@ public class CladeSet extends FrequencySet {
     //
     TaxonList taxonList = null;
     Map<BitSet, Double> totalNodeHeight = new HashMap<BitSet, Double>();
+    int totalTrees = 0;
 }

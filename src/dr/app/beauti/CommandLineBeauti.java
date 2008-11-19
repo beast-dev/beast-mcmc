@@ -89,7 +89,7 @@ public class CommandLineBeauti {
         }
     }
 
-    private boolean readFromFile(File file) throws FileNotFoundException, IOException {
+    private boolean readFromFile(File file) throws IOException {
         try {
             SAXBuilder parser = new SAXBuilder();
             Document doc = parser.build(file);
@@ -107,7 +107,7 @@ public class CommandLineBeauti {
         return true;
     }
 
-    private boolean importFromFile(File file) throws FileNotFoundException, IOException {
+    private boolean importFromFile(File file) throws IOException {
 
         Alignment alignment = null;
         Tree tree = null;

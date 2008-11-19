@@ -170,7 +170,8 @@ public class Coevolve {
         newDataType.addAmbiguity('?', ambiguities);
 
         return newDataType;
-    };
+    }
+
     /**
      * @param alignment
      * @param dist the distance |i-j| between the site pairs (j = i + dist).

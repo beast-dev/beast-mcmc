@@ -149,5 +149,5 @@ public interface IntervalList extends Units {
 
 			return (top / bottom);
 		}
-	};
+	}
 }

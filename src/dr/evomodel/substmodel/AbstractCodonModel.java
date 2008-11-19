@@ -57,4 +57,4 @@ abstract public class AbstractCodonModel extends AbstractSubstitutionModel  {
 	
 	protected Codons codonDataType;
 	protected GeneticCode geneticCode;
-};
+}

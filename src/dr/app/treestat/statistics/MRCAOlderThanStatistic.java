@@ -77,13 +77,18 @@ public class MRCAOlderThanStatistic extends AbstractTreeSummaryStatistic {
 
 		public Category getCategory() { return Category.POPULATION_GENETIC; }
 
-        public boolean allowsWholeTree() { return true; };
-        public boolean allowsCharacter() { return false; };
-        public boolean allowsCharacterState() { return false; };
-        public boolean allowsTaxonList() { return false; };
-        public boolean allowsInteger() { return false; };
-        public boolean allowsDouble() { return true; };
-	};
+        public boolean allowsWholeTree() { return true; }
+
+        public boolean allowsCharacter() { return false; }
+
+        public boolean allowsCharacterState() { return false; }
+
+        public boolean allowsTaxonList() { return false; }
+
+        public boolean allowsInteger() { return false; }
+
+        public boolean allowsDouble() { return true; }
+    };
 
 	double t = 1.0;
 }

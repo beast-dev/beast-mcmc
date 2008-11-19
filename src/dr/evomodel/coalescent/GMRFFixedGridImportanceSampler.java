@@ -247,7 +247,7 @@ public class GMRFFixedGridImportanceSampler implements Logger{
             double gridHeight = xo.getDoubleAttribute(
             		dr.evomodel.coalescent.AbstractFixedGridLogger.GRID_STOP_TIME);
             try {
-            	File[] file = new File[3];;
+            	File[] file = new File[3];
                 String[] name = new String[3];
                 String[] parent = new String[3];
                 

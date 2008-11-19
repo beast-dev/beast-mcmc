@@ -46,15 +46,10 @@ public class FrequencySet<T>
 	public int size()
 	{
 		return size;
-		//return list.size();
-
 	}
 
 	/** get object in frequency order */
 	public T get(int i) {
-
-		//return null;
-
 		if (!sorted) {
 			sortByFrequency();
 		}

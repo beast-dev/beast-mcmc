@@ -90,12 +90,12 @@ public final class MarkovChain {
 
     /**
      * Run the chain for a given number of states.
-     *
-     * @param length                  number of states to run the chain.
+     * @param length number of states to run the chain.
      * @param onTheFlyOperatorWeights
-     * @param logOps                  Hack to log likelihood change with operators to stdout
+     * @param logOps Hack to log likelihood change with operators to stdout
      */
     public int chain(int length, boolean disableCoerce, int onTheFlyOperatorWeights, boolean logOps) {
+        boolean verbose = false;
 
         currentScore = evaluate(likelihood, prior);
 
@@ -167,7 +167,7 @@ public final class MarkovChain {
                 // The new model is proposed
 //                assert Profiler.startProfile("Operate");
 
-//                System.out.println("Operator: " + mcmcOperator.getOperatorName());
+               if( verbose ) System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
 
                 hastingsRatio = mcmcOperator.operate();
 
@@ -183,6 +183,8 @@ public final class MarkovChain {
 
                 // The new model is proposed
 //                    assert Profiler.startProfile("Evaluate");
+
+                if( verbose ) System.out.println("** Evaluate");
 
                 // The new model is evaluated
                 score = evaluate(likelihood, prior);
@@ -201,24 +203,25 @@ public final class MarkovChain {
 
             // The new model is accepted or rejected
             if (accept) {
-                //               System.out.println("Move accepted: new score = " + score + ", old score = " + oldScore);
-                if (logOps) System.err.println("##" + (score - currentScore) + " " + mcmcOperator.getOperatorName());
+                if( verbose ) System.out.println("** Move accepted: new score = " + score + ", old score = " + oldScore);
+
+                if( logOps ) System.err.println("##" + (score - currentScore) + " " + mcmcOperator.getOperatorName());
 
                 mcmcOperator.accept(deviation);
                 currentModel.acceptModelState();
                 currentScore = score;
 
-                if (otfcounter > 0) {
+                if( otfcounter > 0 ) {
                     --otfcounter;
-                    if (otfcounter == 0) {
+                    if( otfcounter == 0 ) {
                         adjustOpWeights(currentState);
                         otfcounter = onTheFlyOperatorWeights;
                     }
                 }
             } else {
-                //               System.out.println("Move rejected: new score = " + score + ", old score = " + oldScore);
+                if( verbose ) System.out.println("** Move rejected: new score = " + score + ", old score = " + oldScore);
 
-                mcmcOperator.reject();
+				mcmcOperator.reject();
 
                 //               assert Profiler.startProfile("Restore");
 

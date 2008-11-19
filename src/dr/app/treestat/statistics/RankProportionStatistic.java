@@ -162,13 +162,18 @@ public class RankProportionStatistic extends AbstractTreeSummaryStatistic {
 
 		public SummaryStatisticDescription.Category getCategory() { return SummaryStatisticDescription.Category.POPULATION_GENETIC; }
 
-        public boolean allowsWholeTree() { return true; };
-        public boolean allowsCharacter() { return false; };
-        public boolean allowsCharacterState() { return false; };
-        public boolean allowsTaxonList() { return false; };
-        public boolean allowsInteger() { return true; };
-        public boolean allowsDouble() { return false; };
-	};
+        public boolean allowsWholeTree() { return true; }
+
+        public boolean allowsCharacter() { return false; }
+
+        public boolean allowsCharacterState() { return false; }
+
+        public boolean allowsTaxonList() { return false; }
+
+        public boolean allowsInteger() { return true; }
+
+        public boolean allowsDouble() { return false; }
+    };
 
 	private int rank = 2;
 	private boolean proportion = true;

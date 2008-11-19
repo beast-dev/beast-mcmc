@@ -46,5 +46,5 @@ public abstract class BooleanStatistic extends Statistic.Abstract {
 	
 	public abstract boolean getBoolean(int dim);
 	
-};
+}
 

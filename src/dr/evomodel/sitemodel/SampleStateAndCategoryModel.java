@@ -50,8 +50,7 @@ public class SampleStateAndCategoryModel extends AbstractModel
 	public static final String MUTATION_RATE = "mutationRate";
 	public static final String CATEGORY_PARAMETER = "categoriesParameter";
 	public static final double OMEGA_MAX_VALUE = 100.0;
-	public static final double OMEGA_MIN_VALUE = 0.0;;
-
+	public static final double OMEGA_MIN_VALUE = 0.0;
 
 
     /**
@@ -337,9 +336,9 @@ public class SampleStateAndCategoryModel extends AbstractModel
 			return 1;
 		}
 
-	};
+	}
 
-	/** mutation rate parameter */
+    /** mutation rate parameter */
 	private Parameter muParameter;
 
 	private int[] sitesInCategory;

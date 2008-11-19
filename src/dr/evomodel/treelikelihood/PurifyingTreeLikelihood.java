@@ -338,7 +338,7 @@ public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
 
     private double rateIntegral(double time, double mu, double p, double lambda) {
         return mu * ( (p * time) - (((1.0 - p) / lambda) * (Math.exp(-lambda * time) - 1.0)));
-    };
+    }
 
     /**
      * Traverse the tree calculating partial likelihoods.

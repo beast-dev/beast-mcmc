@@ -342,7 +342,7 @@ public class TransmissionDemographicModel extends DemographicModel
 
         private double r;
         private double N1;
-    };
+    }
 
     private class TransmissionLogisticGrowth extends TransmissionDemographicFunction
     {
@@ -411,7 +411,7 @@ public class TransmissionDemographicModel extends DemographicModel
         private double N0;
         private double r;
         private double N1;
-    };
+    }
 
     //
     // protected stuff

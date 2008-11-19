@@ -198,9 +198,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.sitemodel.SampleStateAndCategoryModel.PARSER);
 
         addXMLObjectParser(dr.evomodel.clock.ACLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.clock.EDLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.clock.NDLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.clock.GDLikelihood.PARSER);
+        addXMLObjectParser(dr.evomodel.clock.UCLikelihood.PARSER);
         addXMLObjectParser(new DiscretizedBranchRatesParser());
         addXMLObjectParser(dr.evomodel.branchratemodel.StrictClockBranchRates.PARSER);
         addXMLObjectParser(dr.evomodel.branchratemodel.RateEpochBranchRateModel.PARSER);
@@ -241,13 +239,16 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.TreeBitMoveOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TreeBitRandomWalkOperator.PARSER);
 
+        addXMLObjectParser(dr.evomodel.operators.RateScaleOperator.PARSER);
+        addXMLObjectParser(dr.evomodel.operators.RateVarianceScaleOperator.PARSER);
+        addXMLObjectParser(dr.evomodel.operators.RateSampleOperator.PARSER);
+
         addXMLObjectParser(dr.evomodel.indel.TKF91Likelihood.PARSER);
         addXMLObjectParser(dr.evomodel.indel.TKF91Model.PARSER);
         addXMLObjectParser(dr.evomodel.indel.IstvanOperator.PARSER);
 
         addXMLObjectParser(dr.inference.model.CompoundParameter.PARSER);
         addXMLObjectParser(dr.inference.model.CompoundLikelihood.PARSER);
-        addXMLObjectParser(dr.inference.model.ThreadedCompoundLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.BooleanLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.DummyLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.JeffreysPriorLikelihood.PARSER);
@@ -347,7 +348,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.distribution.MultivariateDistributionLikelihood.MVGAMMA_PRIOR_PARSER);
         addXMLObjectParser(dr.evomodel.continuous.InhibitionAssayLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.tree.NodeTraitLogger.PARSER);
-	    addXMLObjectParser(dr.evomodel.operators.TipStateSwapOperator.PARSER);
+        addXMLObjectParser(dr.evomodel.operators.TipStateSwapOperator.PARSER);
         //addXMLObjectParser(dr.evomodel.continuous.CostMapModel.PARSER);
 
         //Multivariate OU Process

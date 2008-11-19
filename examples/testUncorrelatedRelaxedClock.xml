@@ -370,7 +370,7 @@
      coalescent               -72.0313      -77.6206      -66.4644      2383.69
      -->
 
-    <traceAnalysis fileName="testRelaxedClock.log">
+    <traceAnalysis fileName="testUncorrelatedRelaxedClock.log">
         <expectation name="posterior" value="-3927.81"/>
         <expectation name="ucld.mean" value="8.28472E-4"/>
         <expectation name="ucld.stdev" value="0.17435"/>

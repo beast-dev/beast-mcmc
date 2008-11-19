@@ -74,16 +74,16 @@ public class BeautiOptions extends ModelOptions {
         {
             final Parameter p = createParameter("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate", ROOT_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
             p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 100;
-            p.gammaBeta = 0.01;
+            p.gammaAlpha = 1;
+            p.gammaBeta = 0.0001;
         }
         createParameter("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         {
             final Parameter p = createParameter("branchRates.var", "autocorrelated lognormal relaxed clock rate variance ", LOG_VAR_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
             p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 100;
-            p.gammaBeta = 0.01;
+            p.gammaAlpha = 1;
+            p.gammaBeta = 0.0001;
         }
 
         createParameter("errorModel.ageRate", "age dependent sequence error rate", SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.POSITIVE_INFINITY);
@@ -183,10 +183,20 @@ public class BeautiOptions extends ModelOptions {
         createScaleOperator("ucld.mean", rateWeights);
         createScaleOperator("ucld.stdev", rateWeights);
 
-        createScaleOperator("treeModel.rootRate", rateWeights);
-        createScaleAllOperator("treeModel.allRates", rateWeights);
-        createScaleOperator("treeModel.nodeRates", branchWeights);
-        //createScaleIndependentalyOperator("treeModel.nodeRates", rateWeights);
+
+        createOperator("scaleRootRate", "treeModel.rootRate",
+                "Scales root rate", "treeModel.rootRate",
+                OperatorType.SCALE, 0.75, rateWeights);
+        createOperator("scaleOneRate", "treeModel.nodeRates",
+                "Scales one non-root rate", "treeModel.nodeRates",
+                OperatorType.SCALE, 0.75, branchWeights);
+        createOperator("scaleAllRates", "treeModel.allRates",
+                "Scales all rates simultaneously", "treeModel.allRates",
+                OperatorType.SCALE_ALL, 0.75, rateWeights);
+        createOperator("scaleAllRatesIndependently", "treeModel.nodeRates",
+                "Scales all non-root rates independently", "treeModel.nodeRates",
+                OperatorType.SCALE_INDEPENDENTLY, 0.75, rateWeights);
+
         createOperator("upDownAllRatesHeights", "All rates and heights",
                 "Scales all rates inversely to node heights of the tree", "treeModel.allRates",
                 "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, branchWeights);
@@ -369,14 +379,14 @@ public class BeautiOptions extends ModelOptions {
 
                     case ROOT_RATE_SCALE:
                         param.initial = initialRate;
-                        param.gammaAlpha = initialRate * 100;
-                        param.gammaBeta = 0.01;
+                        param.gammaAlpha = 0.5;
+                        param.gammaBeta = param.initial / 0.5;
                         break;
 
                     case LOG_VAR_SCALE:
                         param.initial = initialRate;
-                        param.gammaAlpha = param.initial * 100;
-                        param.gammaBeta = 0.01;
+                        param.gammaAlpha = 2.0;
+                        param.gammaBeta = param.initial / 2.0;
                         break;
 
                 }
@@ -685,9 +695,10 @@ public class BeautiOptions extends ModelOptions {
                         break;
 
                     case AUTOCORRELATED_LOGNORMAL:
-                        ops.add(getOperator("treeModel.rootRate"));
-                        ops.add(getOperator("treeModel.nodeRates"));
-                        ops.add(getOperator("treeModel.allRates"));
+                        ops.add(getOperator("scaleRootRate"));
+                        ops.add(getOperator("scaleOneRate"));
+                        ops.add(getOperator("scaleAllRates"));
+                        ops.add(getOperator("scaleAllRatesIndependently"));
                         ops.add(getOperator("upDownAllRatesHeights"));
                         ops.add(getOperator("branchRates.var"));
                         break;
@@ -723,7 +734,8 @@ public class BeautiOptions extends ModelOptions {
                         break;
 
                     case AUTOCORRELATED_LOGNORMAL:
-                        ops.add(getOperator("treeModel.nodeRates"));
+                        ops.add(getOperator("scaleOneRate"));
+                        ops.add(getOperator("scaleAllRatesIndependently"));
                         ops.add(getOperator("branchRates.var"));
                         break;
 

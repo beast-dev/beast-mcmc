@@ -253,7 +253,7 @@ public abstract class RateEvolutionLikelihood extends AbstractModel implements B
 
     private final TreeModel treeModel;
     private final Parameter ratesParameter;
-    private final Parameter rootRateParameter;
+    protected final Parameter rootRateParameter;
     private final boolean isEpisodic;
 
 }

@@ -745,7 +745,7 @@ public class AncestralSequenceAnnotator {
                                 value = value.replaceAll("-", "");
                             }
                             if (hashMap.containsKey(value)) {
-                                int count = (Integer) hashMap.get(value);
+                                int count = hashMap.get(value);
                                 hashMap.put(value, count + 1);
 //								System.err.println("good");
                             } else {
@@ -839,7 +839,7 @@ public class AncestralSequenceAnnotator {
 //						Iterator iter = values.keySet().iterator();
 
                         for (String key : values.keySet()) {
-                            int thisCount = (Integer) values.get(key);
+                            int thisCount = values.get(key);
                             weight[i] = thisCount;
                             pw.write(">" + i + " " + thisCount + "\n");
                             pw.write(key + "\n");
@@ -957,9 +957,9 @@ public class AncestralSequenceAnnotator {
                 int totalCount = 0;
 
                 for (String key : (String[]) values.keySet().toArray()) {
-                    int thisCount = (Integer) values.get(key);
+                    int thisCount = values.get(key);
                     if (thisCount == maxCount)
-                        mode.concat("+" + key);
+                        mode = mode.concat("+" + key);
                     else if (thisCount > maxCount) {
                         mode = key;
                         maxCount = thisCount;

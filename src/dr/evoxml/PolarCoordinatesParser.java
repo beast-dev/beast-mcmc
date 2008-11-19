@@ -61,5 +61,5 @@ public class PolarCoordinatesParser extends AbstractXMLObjectParser {
 			AttributeRule.newDoubleRule("longitude"),
 			AttributeRule.newDoubleRule("latitude")
 		};
-	};
+	}
 

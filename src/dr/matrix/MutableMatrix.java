@@ -392,6 +392,6 @@ public interface MutableMatrix extends Matrix {
 				setElement(i, i, 1.0);
 		}
 		
-	};
-	
+	}
+
 }

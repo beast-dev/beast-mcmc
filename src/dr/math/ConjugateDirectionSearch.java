@@ -104,9 +104,9 @@ public class ConjugateDirectionSearch extends MultivariateMinimum
 		checkBounds(x);
 		h = step;
 
-		dim = fun.getNumArguments();;
+		dim = fun.getNumArguments();
 
-		d = new double[dim];
+        d = new double[dim];
 		y = new double[dim];
 		z = new double[dim];
 		q0 = new double[dim];

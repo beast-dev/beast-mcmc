@@ -655,8 +655,8 @@ public interface Matrix {
 		public String getColumnId(int column) { return null; }
 		
 
-	};
-	
+	}
+
 }
 
 class ColumnVector extends Matrix.AbstractMatrix {

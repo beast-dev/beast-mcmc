@@ -68,10 +68,6 @@ public class ModelOptions {
         operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE_ALL, 0.75, weight));
     }
 
-    protected void createScaleIndependentalyOperator(String parameterName, double weight) {
-        Parameter parameter = getParameter(parameterName);
-        operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE_INDEPENDENTLY, 0.75, weight));
-    }
 
     protected Parameter createParameter(String name, String description) {
         final Parameter parameter = new Parameter(name, description);

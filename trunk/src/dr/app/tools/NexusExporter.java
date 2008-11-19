@@ -105,7 +105,7 @@ public class NexusExporter implements TreeExporter {
 
     public void writeNexusTree(Tree tree, int i, boolean attributes, Map<String, Integer> idMap) {
         // PAUP marks rooted trees thou
-        String treeAttributes = "[&R]";
+        String treeAttributes = "[&R] ";
 
         // Place tree level attributes in tree comment
         StringBuilder treeComment = null;
@@ -117,7 +117,7 @@ public class NexusExporter implements TreeExporter {
                     final String value = tree.getAttribute(name).toString();
 
                     if( name.equals("weight") ) {
-                        treeAttributes = treeAttributes + " [&W " + value + " ]";
+                        treeAttributes = treeAttributes + "[&W " + value + " ] ";
                     } else {
                         if( treeComment == null ) {
                             treeComment = new StringBuilder(" [");

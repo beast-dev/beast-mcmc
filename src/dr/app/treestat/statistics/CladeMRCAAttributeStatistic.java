@@ -27,15 +27,13 @@ package dr.app.treestat.statistics;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.*;
+import dr.evolution.util.TaxonList;
 
-import java.util.*;
+import java.util.Set;
 
 /**
- *
- * @version $Id: TMRCASummaryStatistic.java,v 1.3 2006/05/09 10:24:27 rambaut Exp $
- *
  * @author Alexei Drummond
+ * @version $Id: TMRCASummaryStatistic.java,v 1.3 2006/05/09 10:24:27 rambaut Exp $
  */
 public class CladeMRCAAttributeStatistic extends AbstractTreeSummaryStatistic {
 
@@ -70,15 +68,20 @@ public class CladeMRCAAttributeStatistic extends AbstractTreeSummaryStatistic {
             throw new RuntimeException("Attribute, " + attributeName + ", missing from clade");
         }
         if (item instanceof Number) {
-            return new double[] { ((Number)item).doubleValue() };
+            return new double[]{((Number) item).doubleValue()};
         }
         if (item instanceof Object[]) {
             Object[] array = (Object[]) item;
             double[] values = new double[array.length];
             for (int i = 0; i < array.length; i++) {
-                values[i] = ((Number)array[i]).doubleValue();
+                values[i] = ((Number) array[i]).doubleValue();
             }
             return values;
+        }
+        if (item.toString().equals("true")) {
+            return new double[]{1.0};
+        } else if (item.toString().equals("false")) {
+            return new double[]{0.0};
         }
         return null;
     }
@@ -98,11 +101,25 @@ public class CladeMRCAAttributeStatistic extends AbstractTreeSummaryStatistic {
         return "Extracts a named attribute at the root of the tree.";
     }
 
-    public String getSummaryStatisticReference() { return FACTORY.getSummaryStatisticReference(); }
-    public boolean allowsPolytomies() { return FACTORY.allowsPolytomies(); }
-    public boolean allowsNonultrametricTrees() { return FACTORY.allowsNonultrametricTrees(); }
-    public boolean allowsUnrootedTrees() { return FACTORY.allowsUnrootedTrees(); }
-    public Category getCategory() { return FACTORY.getCategory(); }
+    public String getSummaryStatisticReference() {
+        return FACTORY.getSummaryStatisticReference();
+    }
+
+    public boolean allowsPolytomies() {
+        return FACTORY.allowsPolytomies();
+    }
+
+    public boolean allowsNonultrametricTrees() {
+        return FACTORY.allowsNonultrametricTrees();
+    }
+
+    public boolean allowsUnrootedTrees() {
+        return FACTORY.allowsUnrootedTrees();
+    }
+
+    public Category getCategory() {
+        return FACTORY.getCategory();
+    }
 
     public static final Factory FACTORY = new Factory() {
 
@@ -122,21 +139,37 @@ public class CladeMRCAAttributeStatistic extends AbstractTreeSummaryStatistic {
             return "-";
         }
 
-        public String getValueName() { return "The attribute name:"; }
+        public String getValueName() {
+            return "The attribute name:";
+        }
 
-        public boolean allowsPolytomies() { return true; }
+        public boolean allowsPolytomies() {
+            return true;
+        }
 
-        public boolean allowsNonultrametricTrees() { return true; }
+        public boolean allowsNonultrametricTrees() {
+            return true;
+        }
 
-        public boolean allowsUnrootedTrees() { return false; }
+        public boolean allowsUnrootedTrees() {
+            return false;
+        }
 
-        public Category getCategory() { return Category.GENERAL; }
+        public Category getCategory() {
+            return Category.GENERAL;
+        }
 
-        public boolean allowsWholeTree() { return true; }
+        public boolean allowsWholeTree() {
+            return true;
+        }
 
-        public boolean allowsTaxonList() { return true; }
+        public boolean allowsTaxonList() {
+            return true;
+        }
 
-        public boolean allowsString() { return true; }
+        public boolean allowsString() {
+            return true;
+        }
     };
 
     private String attributeName = null;

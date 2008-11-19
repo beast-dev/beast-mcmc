@@ -105,5 +105,5 @@ public interface EmpiricalRateMatrix {
 				frequencies[i] = freqs[u];
 			}
 		}
-	};
+	}
 }

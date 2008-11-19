@@ -132,7 +132,7 @@ public class TreeStatFrame extends DocumentFrame {
 
     }
 
-    protected boolean readFromFile(File file) throws FileNotFoundException, IOException {
+    protected boolean readFromFile(File file) throws IOException {
         return false;
     }
 
@@ -174,7 +174,7 @@ public class TreeStatFrame extends DocumentFrame {
 
     }
 
-    protected void importFromFile(File file) throws FileNotFoundException, IOException, Importer.ImportException {
+    protected void importFromFile(File file) throws IOException, Importer.ImportException {
 
         BufferedReader reader = new BufferedReader(new FileReader(file));
 

@@ -238,6 +238,6 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
         Set leafSet;
         boolean isClade;
         boolean includeStem;
-    };
+    }
 
 }

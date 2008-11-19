@@ -114,8 +114,7 @@ public class LUPDecomposition {
 		} catch (ArithmeticException e) {
 			parity = 0;
 		}
-		;
-	}
+    }
 
 	/**
 	 * @return boolean	true if decomposition was done already

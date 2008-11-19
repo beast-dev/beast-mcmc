@@ -271,8 +271,8 @@ public double[] roots( double desiredPrecision)
 			break;
 		rootFinder.setFunction( p);
 		try { rootFinder.setDerivative( p.derivative());}
-				catch ( IllegalArgumentException e) {};
-	}
+				catch ( IllegalArgumentException e) {}
+    }
 	double[] roots = new double[ rootCollection.size()];
 	Enumeration e = rootCollection.elements();
 	int n = 0;

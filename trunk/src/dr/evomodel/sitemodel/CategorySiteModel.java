@@ -311,4 +311,4 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
 	private int siteCount;
 	private int relativeTo = 0;
 
-};
+}

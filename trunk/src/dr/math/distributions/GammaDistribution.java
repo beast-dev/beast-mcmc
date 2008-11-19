@@ -312,8 +312,6 @@ public class GammaDistribution implements Distribution {
         return sample;
     }
 
-    ;
-
     /**
      * Sample from the gamma distribution, modified by a factor exp(
      * -(x*bias)^-1 ), i.e. from x^(shape - 1) exp(-x/scale) exp(-1/(bias*x))

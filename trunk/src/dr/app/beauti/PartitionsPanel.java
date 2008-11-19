@@ -207,6 +207,4 @@ public class PartitionsPanel extends JPanel implements Exportable {
         }
     }
 
-    ;
-
 }

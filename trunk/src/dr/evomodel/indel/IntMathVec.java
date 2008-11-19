@@ -152,7 +152,7 @@ class IntMathVec implements Cloneable {
 	    iV[i] -= iVec.iV[i];
     }
     
-};
+}
 	
 
 

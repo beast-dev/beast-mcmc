@@ -53,7 +53,7 @@ public class CreateTreeDialog {
     public static enum MethodTypes {
             NJ,
             UPGMA
-    };
+    }
 
 
     JTextField nameField;

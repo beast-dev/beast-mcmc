@@ -38,7 +38,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class CladeSet extends FrequencySet {
+public class CladeSet extends FrequencySet<BitSet> {
     //
     // Public stuff
     //
@@ -71,7 +71,7 @@ public class CladeSet extends FrequencySet {
     /** get clade bit set */
     public String getClade(int index)
     {
-        BitSet bits = (BitSet)get(index);
+        BitSet bits = get(index);
 
         StringBuffer buffer = new StringBuffer("{");
         boolean first = true;
@@ -101,7 +101,7 @@ public class CladeSet extends FrequencySet {
 
 
     /** get clade frequency */
-    public int getCladeFrequency(int index)
+    int getCladeFrequency(int index)
     {
         return getFrequency(index);
     }
@@ -150,7 +150,7 @@ public class CladeSet extends FrequencySet {
     }
 
     public double getMeanNodeHeight(int i) {
-        BitSet bits = (BitSet)get(i);
+        BitSet bits = get(i);
 
         return getTotalNodeHeight(bits) / getFrequency(i);
     }
@@ -165,13 +165,15 @@ public class CladeSet extends FrequencySet {
         totalNodeHeight.put(bits, (getTotalNodeHeight(bits) + height));
     }
 
-    /** adds all the clades in the CladeSet */
-    public void add(CladeSet cladeSet)
-    {
-        for (int i = 0, n = cladeSet.getCladeCount(); i < n; i++) {
-            add(cladeSet.getClade(i), cladeSet.getCladeFrequency(i));
-        }
-    }
+    // Generifying found that this code was buggy. Kuckily it is not used anymore.
+
+//    /** adds all the clades in the CladeSet */
+//    public void add(CladeSet cladeSet)
+//    {
+//        for (int i = 0, n = cladeSet.getCladeCount(); i < n; i++) {
+//            add(cladeSet.getClade(i), cladeSet.getCladeFrequency(i));
+//        }
+//    }
 
     private BitSet annotate(MutableTree tree, NodeRef node, String freqAttrName) {
         BitSet b = null;
@@ -179,7 +181,6 @@ public class CladeSet extends FrequencySet {
             int index;
             if (taxonList != null) {
                 index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-
             } else {
                 index = node.getNumber();
             }
@@ -189,7 +190,6 @@ public class CladeSet extends FrequencySet {
         } else {
 
             for (int i = 0; i < tree.getChildCount(node); i++) {
-
                 NodeRef child = tree.getChild(node, i);
                 BitSet b1 = annotate(tree, child, freqAttrName);
                 if( i == 0 ) {
@@ -198,7 +198,7 @@ public class CladeSet extends FrequencySet {
                     b.or(b1);
                 }
             }
-            int total = getFrequency(b);
+            final int total = getFrequency(b);
             if( total >= 0 ) {
                 tree.setNodeAttribute(node, freqAttrName, total / (double)totalTrees );
             }
@@ -210,13 +210,21 @@ public class CladeSet extends FrequencySet {
      * Annotate clades of tree with posterior probability
      * @param tree
      * @param freqAttrName name of attribute to set per node
+     * @return sum(log(all clades probability))
      */
-    public void annotate(MutableTree tree, String freqAttrName) {
+    public double annotate(MutableTree tree, String freqAttrName) {
         annotate(tree, tree.getRoot(), freqAttrName);
+
+        double logClade = 0.0;
+        for(int n = 0; n < tree.getInternalNodeCount(); ++n) {
+            final double f = (Double)tree.getNodeAttribute(tree.getInternalNode(n), freqAttrName);
+            logClade += Math.log(f);
+        }
+        return logClade;
     }
 
     public boolean hasClade(int index, Tree tree) {
-        BitSet bits = (BitSet)get(index);
+        BitSet bits = get(index);
 
         NodeRef[] mrca = new NodeRef[1];
         findClade(bits, tree, tree.getRoot(), mrca);
@@ -257,7 +265,7 @@ public class CladeSet extends FrequencySet {
     //
     // Private stuff
     //
-    TaxonList taxonList = null;
-    Map<BitSet, Double> totalNodeHeight = new HashMap<BitSet, Double>();
-    int totalTrees = 0;
+    private TaxonList taxonList = null;
+    private final Map<BitSet, Double> totalNodeHeight = new HashMap<BitSet, Double>();
+    private int totalTrees = 0;
 }

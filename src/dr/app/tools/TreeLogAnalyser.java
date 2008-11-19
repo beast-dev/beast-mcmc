@@ -49,7 +49,7 @@ public class TreeLogAnalyser {
     static boolean combine = true;
 
 	public TreeLogAnalyser(int burnin, String inputFileName, String outputFileName, String trueTreeFileName,
-                           String exportFileName, boolean verbose) throws java.io.IOException {
+                           String exportFileName, double minSupport, int maxExport, boolean verbose) throws IOException {
 
 		List<File> files = new ArrayList<File>();
         File inputFile = new File(inputFileName);
@@ -76,11 +76,11 @@ public class TreeLogAnalyser {
             try {
                 trueTree = importer.importNextTree();
             } catch (Importer.ImportException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                throw new IOException(e.getMessage());
             }
         }
 
-		analyze(files, burnin, trueTree, verbose, exportFileName, new boolean[] {true});
+		analyze(files, burnin, trueTree, verbose, exportFileName, minSupport, maxExport, new boolean[] {true});
 	}
 
     private static void collectFiles(File file, List<File> files) {
@@ -98,7 +98,7 @@ public class TreeLogAnalyser {
     }
 
     private static void analyze(List<File> files, int burnin, Tree tree, boolean verbose, String exportFileName,
-                                boolean[] drawHeader) {
+                                double minSupport, int maxExport, boolean[] drawHeader) {
 
         if (combine) {
             try {
@@ -109,8 +109,8 @@ public class TreeLogAnalyser {
                 TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(readers, burnin, verbose);
                 if( exportFileName != null ) {
                     PrintStream exportStream = new PrintStream(exportFileName);
-                    System.err.println("Exporting trees ...");
-                    analysis.export(exportStream, 0);
+                    //System.err.println("Exporting trees ...");
+                    analysis.export(exportStream, minSupport, maxExport, verbose);
                 } else {
                     if (verbose) {
                         analysis.report(0.05);
@@ -122,7 +122,7 @@ public class TreeLogAnalyser {
                 }
 
             } catch (IOException ioe) {
-
+              //
             }
         } else {
             for (File file : files) {
@@ -136,7 +136,7 @@ public class TreeLogAnalyser {
                         drawHeader[0] = false;
                     }
                 } catch (IOException ioe) {
-
+                  //
                 }
             }
         }
@@ -172,7 +172,7 @@ public class TreeLogAnalyser {
 
 	public static void printUsage(Arguments arguments) {
 
-		arguments.printUsage("treeloganalyser", "[-burnin <burnin>] [-short] <input-file-name> [<true-tree-file-name> [<output-file-name>]]");
+		arguments.printUsage("treeloganalyser", "<input-file-name> [<true-tree-file-name> [<output-file-name>]]");
 		System.out.println();
 		System.out.println("  Example: treeloganalyser test.trees trueTree.tree out.txt");
 		System.out.println();
@@ -186,10 +186,12 @@ public class TreeLogAnalyser {
 		Arguments arguments = new Arguments(
 			new Arguments.Option[] {
 				new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                new Arguments.StringOption("export", "file-name", "name of file to export"),
-                new Arguments.Option("short", "use this option to produce a short report"),
-				new Arguments.Option("help", "option to print this message")
-			});
+                    new Arguments.StringOption("export", "file-name", "name of file to export"),
+                    new Arguments.RealOption("limit", "don't export trees with support lower than limit"),
+                    new Arguments.IntegerOption("max", "export no more than max trees"),
+                    new Arguments.Option("short", "use this option to produce a short report"),
+                    new Arguments.Option("help", "option to print this message")
+            });
 
 		try {
 			arguments.parseArguments(args);
@@ -214,6 +216,16 @@ public class TreeLogAnalyser {
         String exportFileName = null;
         if (arguments.hasOption("export")) {
             exportFileName = arguments.getStringOption("export");
+        }
+
+        double minSupport = 0.0;
+        if (arguments.hasOption("limit")) {
+            minSupport = arguments.getRealOption("limit");
+        }
+
+        int maxExport = -1;
+        if (arguments.hasOption("max")) {
+            maxExport = arguments.getIntegerOption("max");
         }
 
         String inputFileName = null;
@@ -246,7 +258,8 @@ public class TreeLogAnalyser {
 			inputFileName = Utils.getLoadFileName("TreeLogAnalyser v1.3 - Select log file to analyse");
 		}
 
-		new TreeLogAnalyser(burnin, inputFileName, outputFileName, trueTreeFileName, exportFileName, !shortReport);
+		new TreeLogAnalyser(burnin, inputFileName, outputFileName, trueTreeFileName, exportFileName,
+                minSupport, maxExport, !shortReport);
 
 		System.exit(0);
 	}

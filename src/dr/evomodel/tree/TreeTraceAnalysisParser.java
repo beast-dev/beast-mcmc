@@ -116,7 +116,7 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
             TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(new Reader[]{reader}, burnin, true);
 
             if (shortReport) {
-                analysis.shortReport(name, referenceTree, true, minCladeProbability, credSetProbability);
+                analysis.shortReport(name, referenceTree, true, credSetProbability);
             } else {
                 analysis.report(minCladeProbability, credSetProbability);
             }

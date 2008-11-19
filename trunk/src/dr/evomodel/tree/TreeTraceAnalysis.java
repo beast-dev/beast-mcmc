@@ -38,6 +38,8 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.PrintStream;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Alexei Drummond
@@ -46,7 +48,7 @@ import java.util.Set;
  */
 public class TreeTraceAnalysis {
 
-	public TreeTraceAnalysis(TreeTrace[] traces, int burnIn, boolean verbose) {
+	private TreeTraceAnalysis(TreeTrace[] traces, int burnIn, boolean verbose) {
 
 		this.traces = traces;
 
@@ -89,7 +91,7 @@ public class TreeTraceAnalysis {
 	 *
 	 * @param verbose if true then progress is logged to stdout
 	 */
-	public void analyze(boolean verbose) {
+    void analyze(boolean verbose) {
 
 		if (verbose) {
 			if (traces.length > 1) System.out.println("Combining " + traces.length + " traces.");
@@ -175,13 +177,14 @@ public class TreeTraceAnalysis {
 	 * @param target a tree in uniqueNewick format
 	 * @return a tree with mean node heights
 	 */
-	public final MutableTree analyzeTree(String target) {
+	final MutableTree analyzeTree(String target) {
 
 		final int n = getTreeCount();
 
 		FlexibleTree meanTree = null;
 
-		for (int i = 0; i < n; i++) {
+        // todo using CladeSet may probably spped this a lot
+        for (int i = 0; i < n; i++) {
 			final Tree tree = getTree(i);
 
 			if (Tree.Utils.uniqueNewick(tree, tree.getRoot()).equals(target)) {
@@ -217,7 +220,7 @@ public class TreeTraceAnalysis {
 		return meanTree;
 	}
 
-	public final int getTreeCount() {
+	final int getTreeCount() {
 
 		int treeCount = 0;
 		for (TreeTrace trace : traces) {
@@ -226,7 +229,7 @@ public class TreeTraceAnalysis {
 		return treeCount;
 	}
 
-	public final Tree getTree(int index) {
+	final Tree getTree(int index) {
 
 		int oldTreeCount = 0;
 		int newTreeCount = 0;
@@ -368,12 +371,11 @@ public class TreeTraceAnalysis {
 		System.out.flush();
 	}
 
-	public void shortReport(String name, Tree tree, boolean drawHeader) throws IOException {
-		shortReport(name, tree, drawHeader, 0.5, 0.95);
+	public void shortReport(String name, Tree tree, boolean drawHeader) {
+		shortReport(name, tree, drawHeader, 0.95);
 	}
 
-	public void shortReport(String name, Tree tree, boolean drawHeader, double minCladeProbability,
-                            double credSetProbability) throws IOException {
+	public void shortReport(String name, Tree tree, boolean drawHeader, double credSetProbability) {
 
 		String targetTree = "";
 		if (tree != null) targetTree = Tree.Utils.uniqueNewick(tree, tree.getRoot());
@@ -426,13 +428,24 @@ public class TreeTraceAnalysis {
 		System.out.println(targetTreeCum);
 	}
 
-    public void export(PrintStream out, double minTreeProbability) {
+    public void export(PrintStream out, double minTreeProbability, int max, boolean verbose) {
         NexusExporter exporter = new NexusExporter(out);
         int n = treeSet.size();
+        if( max < 0 ) max = n;
+        
         final int totalTrees = treeSet.getSumFrequency();
 
-        Tree[] trees = new Tree[n];
+        List<Tree> trees = new ArrayList<Tree>();
 
+        final int totExport = Math.min(max, n);
+        final boolean progress = verbose && totExport > 60;
+        if (progress) {
+            System.out.println("Exporting " + totExport + " trees...");
+            System.out.println("0              25             50             75            100");
+            System.out.println("|--------------|--------------|--------------|--------------|");
+            System.out.print("*");
+        }
+        // todo have an option for threshold and sort by NCP. 
         for (int i = 0; i < n; i++) {
 			int freq = treeSet.getFrequency(i);
             double prop = ((double) freq) / totalTrees;
@@ -443,15 +456,22 @@ public class TreeTraceAnalysis {
             // calculate conditional average node heights
             final MutableTree tree = analyzeTree(newickTree);
             tree.setAttribute("weight", prop);
-            cladeSet.annotate(tree, "posterior");
-            trees[i] = tree;
+            double p = cladeSet.annotate(tree, "posterior");
+            tree.setNodeAttribute(tree.getRoot(), "posterior", Math.exp(p / tree.getInternalNodeCount()));
+            trees.add(tree);
+
+            if( progress && ((i+1) % (totExport/60)) == 0 ) {
+                System.out.print("*");
+            }
+
+            if( trees.size() == max ) {
+                break;
+            }
         }
 
-        exporter.exportTrees(trees, true);
-    }
-
-    public void export(PrintStream out) {
-        export(out, 0.05);
+        if( trees.size() > 0 ) {
+            exporter.exportTrees(trees.toArray(new Tree[trees.size()]), true);
+        }
     }
 
     public int getBurnin() {
@@ -482,7 +502,7 @@ public class TreeTraceAnalysis {
 	}
 
 	private int burnin = -1;
-	private TreeTrace[] traces;
+	private final TreeTrace[] traces;
 
 	private CladeSet cladeSet;
 	private FrequencySet<String> treeSet;

@@ -30,6 +30,7 @@ import dr.app.util.Arguments;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
@@ -87,7 +88,7 @@ public class TreeAnnotator {
     // Messages to stderr, output to stdout
     private static PrintStream  progressStream = System.err;
 
-    public TreeAnnotator(int burnin,
+    public TreeAnnotator(final int burnin,
                          HeightsSummary heightsOption,
                          double posteriorLimit,
                          Target targetOption,
@@ -143,6 +144,12 @@ public class TreeAnnotator {
             progressStream.println();
             progressStream.println();
 
+            if( totalTreesUsed <= 1 ) {
+               if( burnin > 0 ) {
+                 System.err.println("No trees to use: burnin too high");
+                   return;
+               }
+            }
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
 
             progressStream.println("Total trees read: " + totalTrees);
@@ -154,31 +161,47 @@ public class TreeAnnotator {
             progressStream.println();
         }
 
-        MutableTree targetTree;
+        MutableTree targetTree = null;
 
-        if (targetOption == Target.USER_TARGET_TREE) {
-            if (targetTreeFileName != null) {
-                progressStream.println("Reading user specified target tree, " + targetTreeFileName);
+        switch( targetOption ) {
+            case USER_TARGET_TREE:
+            {
+                if (targetTreeFileName != null) {
+                    progressStream.println("Reading user specified target tree, " + targetTreeFileName);
 
-                NexusImporter importer = new NexusImporter(new FileReader(targetTreeFileName));
-                try {
-                    targetTree = new FlexibleTree(importer.importNextTree());
-                } catch (Importer.ImportException e) {
-                    System.err.println("Error Parsing Target Tree: " + e.getMessage());
+                    NexusImporter importer = new NexusImporter(new FileReader(targetTreeFileName));
+                    try {
+                        Tree tree = importer.importNextTree();
+                        if( tree == null ) {
+                             NewickImporter x = new NewickImporter(new FileReader(targetTreeFileName));
+                             tree = x.importNextTree();
+                        }
+                        if( tree == null ) {
+                            System.err.println("No tree in target nexus or newick file " + targetTreeFileName);
+                            return;
+                        }
+                        targetTree = new FlexibleTree(tree);
+                    } catch (Importer.ImportException e) {
+                        System.err.println("Error Parsing Target Tree: " + e.getMessage());
+                        return;
+                    }
+                } else {
+                    System.err.println("No user target tree specified.");
                     return;
                 }
-            } else {
-                System.err.println("No user target tree specified.");
-                return;
+                break;
             }
-        } else if (targetOption == Target.MAX_CLADE_CREDIBILITY) {
-            progressStream.println("Finding maximum credibility tree...");
-            targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, false));
-        } else if (targetOption == Target.MAX_SUM_CLADE_CREDIBILITY) {
-            progressStream.println("Finding maximum sum clade credibility tree...");
-            targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, true));
-        } else {
-            throw new RuntimeException("Unknown target tree option");
+            case MAX_CLADE_CREDIBILITY: {
+                progressStream.println("Finding maximum credibility tree...");
+                targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, false));
+                break;
+            }
+            case MAX_SUM_CLADE_CREDIBILITY:
+            {
+                progressStream.println("Finding maximum sum clade credibility tree...");
+                targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, true));
+                break;
+            }
         }
 
         progressStream.println("Collecting node information...");
@@ -232,14 +255,12 @@ public class TreeAnnotator {
         cladeSystem.annotateTree(targetTree, targetTree.getRoot(), null, heightsOption);
 
         progressStream.println("Writing annotated tree....");
-        if (outputFileName != null) {
-            NexusExporter exporter = new NexusExporter(new PrintStream(new FileOutputStream(outputFileName)));
-            exporter.exportTree(targetTree);
-        } else {
-            NexusExporter exporter = new NexusExporter(System.out);
-            exporter.exportTree(targetTree);
-        }
 
+        final PrintStream stream = outputFileName != null ?
+                new PrintStream(new FileOutputStream(outputFileName)) :
+                System.out;
+        
+        new NexusExporter(stream).exportTree(targetTree);
     }
 
     private void setupAttributes(Tree tree) {
@@ -255,7 +276,8 @@ public class TreeAnnotator {
         }
     }
 
-    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName, boolean useSumCladeCredibility) throws IOException {
+    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName,
+                                boolean useSumCladeCredibility) throws IOException {
 
         Tree bestTree = null;
         double bestScore = Double.NEGATIVE_INFINITY;
@@ -1231,13 +1253,7 @@ public class TreeAnnotator {
             }
         }
 
-        new TreeAnnotator(burnin,
-                heights,
-                posteriorLimit,
-                target,
-                targetTreeFileName,
-                inputFileName,
-                outputFileName);
+        new TreeAnnotator(burnin, heights, posteriorLimit, target, targetTreeFileName,inputFileName, outputFileName);
 
         System.exit(0);
     }

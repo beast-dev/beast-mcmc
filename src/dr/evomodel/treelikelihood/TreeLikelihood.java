@@ -25,6 +25,7 @@
 
 package dr.evomodel.treelikelihood;
 
+import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
@@ -337,8 +338,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         traverse(treeModel, root);
 
         double logL = 0.0;
+        double ascertainmentCorrection = getAscertainmentCorrection(patternLogLikelihoods);
         for (int i = 0; i < patternCount; i++) {
-            logL += patternLogLikelihoods[i] * patternWeights[i];
+            logL += (patternLogLikelihoods[i] - ascertainmentCorrection) * patternWeights[i];
         }
 
         if (logL == Double.NEGATIVE_INFINITY) {
@@ -353,8 +355,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             traverse(treeModel, root);
 
             logL = 0.0;
+            ascertainmentCorrection = getAscertainmentCorrection(patternLogLikelihoods);
             for (int i = 0; i < patternCount; i++) {
-                logL += patternLogLikelihoods[i] * patternWeights[i];
+                logL += (patternLogLikelihoods[i] - ascertainmentCorrection) * patternWeights[i];
             }
         }
 
@@ -367,6 +370,36 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         //********************************************************************
 
         return logL;
+    }
+
+    /* Calculate ascertainment correction if working off of AscertainedSitePatterns
+    @param patternProbs log pattern probabilities
+    @return the log total probability for a pattern.
+    */
+    protected double getAscertainmentCorrection(double[] patternProbs) {
+        // This function probably belongs better to the AscertainedSitePatterns
+        double excludeProb = 0, includeProb = 0, returnProb = 1.0;
+        if (patternList instanceof AscertainedSitePatterns) {
+            int[] includeIndices = ((AscertainedSitePatterns) patternList).getIncludePatternIndices();
+            int[] excludeIndices = ((AscertainedSitePatterns) patternList).getExcludePatternIndices();
+            for (int i = 0; i < ((AscertainedSitePatterns) patternList).getIncludePatternCount(); i++) {
+                int index = includeIndices[i];
+                includeProb += Math.exp(patternProbs[index]);
+            }
+            for (int j = 0; j < ((AscertainedSitePatterns) patternList).getExcludePatternCount(); j++) {
+                int index = excludeIndices[j];
+                excludeProb += Math.exp(patternProbs[index]);
+            }
+            if (includeProb == 0.0) {
+                returnProb -= excludeProb;
+            } else if (excludeProb == 0.0) {
+                returnProb = includeProb;
+            } else {
+                returnProb = includeProb - excludeProb;
+            }
+        }
+
+        return Math.log(returnProb);
     }
 
     /**

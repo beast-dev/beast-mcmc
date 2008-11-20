@@ -122,38 +122,72 @@ public class EBSPAnalysis extends TabularData {
             double[] pop = new double[nIndicators + 1];
             Tree[] tt = new Tree[treeFiles.length];
 
+
+
+            boolean match = true;
             for (int ns = 0; ns < nStates; ++ns) {
+
                 ltraces.getStateValues(ns, indicators, indicatorsFirstColumn);
                 ltraces.getStateValues(ns, pop, populationFirstColumn);
 
-                for (int nt = 0; nt < tt.length; ++nt) {
-                    tt[nt] = treeImporters[nt].importNextTree();
-                }
-                final VDdemographicFunction demoFunction =
-                        new VDdemographicFunction(tt, modelType, indicators, pop, logSpace, mid);
+                if(match){
+                    for (int nt = 0; nt < tt.length; ++nt) {
+                        tt[nt] = treeImporters[nt].importNextTree();
 
-                if (demoFunction.numberOfChanges() == restrictToNchanges) {
-                    continue;
-                }
-
-                double[] xs = demoFunction.allTimePoints();
-                for (int k = 0; k < xs.length; ++k) {
-                    xPoints[k + 1] += xs[k];
-                }
-                if (coalPointBins > 0) {
-                    for (double x : xs) {
-                        coalBins[Math.min((int) (x / binSize), coalBins.length - 1)]++;
                     }
                 }
-                allDemog[nDataPoints] = demoFunction;
-                ++nDataPoints;
+                //Get tree state number
+                String name1 = tt[0].getId();
+                int state1 = Integer.parseInt(name1.substring(name1.indexOf('_')+1, name1.length()));
+                String name2 = tt[1].getId();
+                int state2 = Integer.parseInt(name1.substring(name2.indexOf('_')+1, name2.length()));
 
-                demoFunction.freeze();
+                if (state1 != state2){     //... can this happen at all?
+                    throw new  TraceException("NEXUS tree files have different rates or corrupted!!!!"); //Not too sure what kind of message is appropriate here.
+
+
+                }else if((ns+intBurnIn)*ltraces.getStepSize() == state1){                   //Check if log state matches tree state
+                    match = true;
+                    final VDdemographicFunction demoFunction =
+                            new VDdemographicFunction(tt, modelType, indicators, pop, logSpace, mid);
+
+                    if (demoFunction.numberOfChanges() == restrictToNchanges) {
+                            continue;
+                    }
+
+                    double[] xs = demoFunction.allTimePoints();
+                    for (int k = 0; k < xs.length; ++k) {
+                        xPoints[k + 1] += xs[k];
+                    }
+                    if (coalPointBins > 0) {
+                        for (double x : xs) {
+                            coalBins[Math.min((int) (x / binSize), coalBins.length - 1)]++;
+                        }
+                    }
+                    allDemog[nDataPoints] = demoFunction;
+                    ++nDataPoints;
+
+                    demoFunction.freeze();
+                }else{
+                    match = false;
+                }
+
             }
 
             for (int k = 0; k < xPoints.length; ++k) {
                 xPoints[k] /= nStates;
             }
+            if(nStates != nDataPoints){                                                     //Warning if log file ant tree files
+                                                                                            // have different rates
+                System.err.println("Different Rates is \"main\" and \"tree\" log files");
+
+            }
+            if(nDataPoints < 10){                                                           //Warning if number of states is not sufficient
+                                                                                            // enough to do the analysis
+                System.err.println("Warning!!! Not Sufficient number of data points");
+
+            }
+
         }
 
         double[] popValues = new double[nDataPoints];

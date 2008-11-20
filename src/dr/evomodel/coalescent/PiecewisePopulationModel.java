@@ -25,9 +25,7 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.PiecewiseConstantPopulation;
-import dr.evolution.coalescent.PiecewiseLinearPopulation;
+import dr.evolution.coalescent.*;
 import dr.evoxml.XMLUnits;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -42,131 +40,180 @@ import dr.xml.*;
  */
 public class PiecewisePopulationModel extends DemographicModel
 {
-	//
-	// Public stuff
-	//
-	
-	public static String PIECEWISE_POPULATION = "piecewisePopulation";
-	public static String EPOCH_SIZES = "epochSizes";
-	public static String EPOCH_WIDTHS = "epochWidths";
 
-	/**
-	 * Construct demographic model with default settings
-	 */
-	public PiecewisePopulationModel(Parameter N0Parameter, double[] epochLengths, boolean linear, Type units) {
-		this(PIECEWISE_POPULATION, N0Parameter, epochLengths, linear, units);
-	}
+    //
+    // Public stuff
+    //
 
-	/**
-	 * Construct demographic model with default settings
-	 */
-	public PiecewisePopulationModel(String name, Parameter N0Parameter,  double[] epochLengths, boolean linear, Type units) {
-	
-		super(name);
-		
-		if (N0Parameter.getDimension() != (epochLengths.length + 1)) {
-			throw new IllegalArgumentException(
-				"epochSize parameter must have one less components than the number of epochs: (" + (epochLengths.length + 1) + 
-				") but instead has " + N0Parameter.getDimension() + "!"
-			);
-		}
-		
-		this.N0Parameter = N0Parameter;
-		this.epochLengths = epochLengths;
-		addParameter(N0Parameter);
-		//addParameter(epochLengths);
-		N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, N0Parameter.getDimension()));
-		//epochLengths.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, epochLengths.getDimension()));
-		
-		setUnits(units);
-		
-		if (linear) {
-			piecewiseFunction = new PiecewiseLinearPopulation(epochLengths, new double[N0Parameter.getDimension()], units);
-		} else {
-			piecewiseFunction = new PiecewiseConstantPopulation(epochLengths, new double[N0Parameter.getDimension()], units);
-		}
-	}
+    public static String PIECEWISE_POPULATION = "piecewisePopulation";
+    public static String EPOCH_SIZES = "epochSizes";
+    public static String POPULATION_SIZE = "populationSize";
+    public static String GROWTH_RATES = "growthRates";
+    public static String EPOCH_WIDTHS = "epochWidths";
 
-	public DemographicFunction getDemographicFunction() {
-		for (int i = 0; i < N0Parameter.getDimension(); i++) {
-			piecewiseFunction.setArgument(i, N0Parameter.getParameterValue(i));
-		}
-		return piecewiseFunction;
-	}
-	
-	// **************************************************************
+    /**
+     * Construct demographic model with default settings
+     */
+    public PiecewisePopulationModel(String name, Parameter N0Parameter, double[] epochLengths, boolean isLinear, Type units) {
+
+        super(name);
+
+        if (N0Parameter.getDimension() != (epochLengths.length + 1)) {
+            throw new IllegalArgumentException(
+                    "epochSize parameter must have one less components than the number of epochs: (" + (epochLengths.length + 1) +
+                            ") but instead has " + N0Parameter.getDimension() + "!"
+            );
+        }
+
+        this.N0Parameter = N0Parameter;
+        addParameter(N0Parameter);
+        N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, N0Parameter.getDimension()));
+
+        //addParameter(epochLengths);
+        //epochLengths.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, epochLengths.getDimension()));
+
+        setUnits(units);
+
+        if (isLinear) {
+            piecewiseFunction = new PiecewiseLinearPopulation(epochLengths, new double[N0Parameter.getDimension()], units);
+        } else {
+            piecewiseFunction = new PiecewiseConstantPopulation(epochLengths, new double[N0Parameter.getDimension()], units);
+        }
+    }
+
+    /**
+     * Construct demographic model with default settings
+     */
+    public PiecewisePopulationModel(String name, Parameter N0Parameter, Parameter growthRatesParameter,
+                                    double[] epochLengths, Type units) {
+
+        super(name);
+
+        if (growthRatesParameter.getDimension() != (epochLengths.length + 1)) {
+            throw new IllegalArgumentException(
+                    "epochSize parameter must have one less components than the number of epochs: (" + (epochLengths.length + 1) +
+                            ") but instead has " + N0Parameter.getDimension() + "!"
+            );
+        }
+
+        this.N0Parameter = N0Parameter;
+        this.growthRatesParameter = growthRatesParameter;
+        addParameter(N0Parameter);
+        N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, N0Parameter.getDimension()));
+
+        addParameter(growthRatesParameter);
+        growthRatesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, growthRatesParameter.getDimension()));
+
+        setUnits(units);
+
+        piecewiseFunction = new PiecewiseExponentialPopulation(epochLengths,
+                N0Parameter.getParameterValue(0),
+                new double[growthRatesParameter.getDimension()], units);
+    }
+
+    public DemographicFunction getDemographicFunction() {
+        if (growthRatesParameter != null) {
+            // exponential growth
+            piecewiseFunction.setArgument(0, N0Parameter.getParameterValue(0));
+            for (int i = 0; i < growthRatesParameter.getDimension(); i++) {
+                piecewiseFunction.setArgument(i + 1, growthRatesParameter.getParameterValue(i));
+            }
+        } else {
+            // constant or linear growth
+            for (int i = 0; i < N0Parameter.getDimension(); i++) {
+                piecewiseFunction.setArgument(i, N0Parameter.getParameterValue(i));
+            }
+        }
+        return piecewiseFunction;
+    }
+
+    // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
-	
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		// no intermediates need to be recalculated...
-	}
-	
-	protected void handleParameterChangedEvent(Parameter parameter, int index) {
 
-		if (parameter == N0Parameter) {
-			//System.out.println("popSize parameter changed..");
-		}
-		
-		// no intermediates need to be recalculated...
-	}
-	
-	protected void storeState() {} // no additional state needs storing
-	protected void restoreState() {} // no additional state needs restoring	
-	protected void acceptState() {} // no additional state needs accepting	
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        // no intermediates need to be recalculated...
+    }
 
-	/**
-	 * Parses an element from an DOM document into a PiecewisePopulation. 
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return PIECEWISE_POPULATION; }
-			
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			Type units = XMLParser.Utils.getUnitsAttr(xo);
-				
-			XMLObject cxo = (XMLObject)xo.getChild(EPOCH_SIZES);
-			Parameter epochSizes = (Parameter)cxo.getChild(Parameter.class);
-	
-			
-			XMLObject obj = (XMLObject)xo.getChild(EPOCH_WIDTHS);
-			double[] epochWidths = obj.getDoubleArrayAttribute("widths");
-			
-			boolean isLinear =  xo.getBooleanAttribute("linear");
-					
-			return new PiecewisePopulationModel(epochSizes, epochWidths, isLinear, units);
-		}
-	
-	
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+    protected void handleParameterChangedEvent(Parameter parameter, int index) {
 
-		public String getParserDescription() {
-			return "This element represents a piecewise population model";
-		}
+        if (parameter == N0Parameter) {
+            //System.out.println("popSize parameter changed..");
+        }
 
-		public Class getReturnType() { return PiecewisePopulationModel.class; }
+        // no intermediates need to be recalculated...
+    }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-	
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(EPOCH_SIZES, 
-				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-			new ElementRule(EPOCH_WIDTHS, 
-				new XMLSyntaxRule[] { AttributeRule.newDoubleArrayRule("widths", false), }),
-			XMLUnits.SYNTAX_RULES[0],
-			AttributeRule.newBooleanRule("linear")
-		};
-	};
+    protected void storeState() {} // no additional state needs storing
+    protected void restoreState() {} // no additional state needs restoring
+    protected void acceptState() {} // no additional state needs accepting
+
+    /**
+     * Parses an element from an DOM document into a PiecewisePopulation.
+     */
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() { return PIECEWISE_POPULATION; }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            Type units = XMLParser.Utils.getUnitsAttr(xo);
+
+            XMLObject obj = (XMLObject)xo.getChild(EPOCH_WIDTHS);
+            double[] epochWidths = obj.getDoubleArrayAttribute("widths");
+
+            if (xo.hasChildNamed(EPOCH_SIZES)) {
+                Parameter epochSizes = (Parameter)xo.getElementFirstChild(EPOCH_SIZES);
+
+                boolean isLinear = false;
+                if (xo.hasAttribute("linear")) {
+                    isLinear = xo.getBooleanAttribute("linear");
+                }
+
+                return new PiecewisePopulationModel(PIECEWISE_POPULATION, epochSizes, epochWidths, isLinear, units);
+            } else {
+                Parameter populationSize = (Parameter)xo.getElementFirstChild(POPULATION_SIZE);
+                Parameter growthRates = (Parameter)xo.getElementFirstChild(GROWTH_RATES);
+                return new PiecewisePopulationModel(PIECEWISE_POPULATION, populationSize, growthRates, epochWidths, units);
+            }
+        }
 
 
-	//
-	// protected stuff
-	//
-	
-	Parameter N0Parameter;
-	double[] epochLengths;
-	DemographicFunction piecewiseFunction = null;
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "This element represents a piecewise population model";
+        }
+
+        public Class getReturnType() { return PiecewisePopulationModel.class; }
+
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                new XORRule(
+                        new ElementRule(EPOCH_SIZES,
+                                new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
+                        new AndRule(
+                                new ElementRule(POPULATION_SIZE,
+                                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
+                                new ElementRule(GROWTH_RATES,
+                                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) })
+                        )
+                ),
+                new ElementRule(EPOCH_WIDTHS,
+                        new XMLSyntaxRule[] { AttributeRule.newDoubleArrayRule("widths") }),
+                AttributeRule.newBooleanRule("linear", true)
+        };
+    };
+
+
+    //
+    // private stuff
+    //
+
+    private Parameter N0Parameter;
+    private Parameter growthRatesParameter;
+    private DemographicFunction piecewiseFunction = null;
 }

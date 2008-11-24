@@ -25,6 +25,7 @@ import dr.math.GammaFunction;
  */
 abstract public class AbstractObservationProcess extends AbstractModel {
     protected boolean[][] nodePatternInclusion;
+    protected boolean[][] storedNodePatternInclusion;
     protected double[] cumLike;
     protected double[] nodePartials;
     protected double[] nodeLikelihoods;
@@ -47,6 +48,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     protected int deathState;
     protected SiteModel siteModel;
     private double logN;
+    protected boolean nodePatternInclusionKnown = false;
 
     public AbstractObservationProcess(String Name, TreeModel treeModel, PatternList patterns, SiteModel siteModel,
                                       Parameter mu, Parameter lam) {
@@ -57,6 +59,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         this.lam = lam;
         this.siteModel = siteModel;
         addModel(treeModel);
+        addModel(siteModel);
         addParameter(mu);
         addParameter(lam);
 
@@ -96,7 +99,8 @@ abstract public class AbstractObservationProcess extends AbstractModel {
 
         double birthRate = lam.getParameterValue(0);
         double prob;
-
+        if (!nodePatternInclusionKnown)
+            setNodePatternInclusion();
         if (nodePartials == null)
             nodePartials = new double[patternCount * stateCount];
 
@@ -211,9 +215,11 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == treeModel) {
+        if (model == treeModel || model == siteModel) {
             weightKnown = false;
         }
+        if (model == treeModel)
+            nodePatternInclusionKnown = false;
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index) {
@@ -226,10 +232,12 @@ abstract public class AbstractObservationProcess extends AbstractModel {
 
     protected void storeState() {
         storedLogTreeWeight = logTreeWeight;
+        storedNodePatternInclusion = nodePatternInclusion;
     }
 
     protected void restoreState() {
         logTreeWeight = storedLogTreeWeight;
+        nodePatternInclusion = storedNodePatternInclusion;
     }
 
     protected void acceptState() {

@@ -27,12 +27,17 @@ package dr.evomodel.coalescent;
 
 import dr.app.tools.NexusExporter;
 import dr.evolution.tree.*;
-import dr.inference.loggers.LogFormatter;
-import dr.inference.loggers.MCLogger;
+import dr.evolution.util.Units;
+import dr.inference.loggers.*;
 import dr.inference.model.Parameter;
+import dr.xml.*;
+import dr.evoxml.XMLUnits;
+import dr.evomodelxml.LoggerParser;
+import dr.math.MathUtils;
 
 import java.text.NumberFormat;
 import java.util.*;
+import java.io.PrintWriter;
 
 /**
  * A logger that logs tree and clade frequencies.
@@ -41,41 +46,30 @@ import java.util.*;
  * @author Alexei Drummond
  * @version $Id: TreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
  */
-public class DemographicLogger extends MCLogger {
+public class DemographicLogger implements Logger {
+    public static final String DEMOGRAPHIC_LOG = "demographicLog";
+    public static final String TITLE = "title";
+    public static final String FILE_NAME = "fileName";
+    public static final String LOG_EVERY = "logEvery";
 
-    private Tree tree;
-    private Parameter[] parameters;
+    private DemographicReconstructor reconstructor;
 
-    public DemographicLogger(Tree tree, Parameter[] parameters,
-                      LogFormatter formatter, int logEvery) {
+    public DemographicLogger(DemographicReconstructor reconstructor,
+                             LogFormatter formatter, int logEvery) {
 
-        super(formatter, logEvery, false);
+        addFormatter(formatter);
+        this.logEvery = logEvery;
 
-        this.tree = tree;
-        this.parameters = parameters;
+        this.reconstructor = reconstructor;
     }
 
     public void startLogging() {
-        String title = "";
+        String title = reconstructor.getTitle();
+        DemographicReconstructor.ChangeType type = reconstructor.getChangeType();
         for (LogFormatter formatter : formatters) {
             formatter.startLogging(title);
-        }
-
-        if (title != null) {
-            logHeading(title);
-        }
-
-        if (logEvery > 0) {
-            final int columnCount = getColumnCount();
-            String[] labels = new String[columnCount + 1];
-
-            labels[0] = "state";
-
-            for (int i = 0; i < columnCount; i++) {
-                labels[i + 1] = getColumnLabel(i);
-            }
-
-            logLabels(labels);
+            formatter.logHeading(title);
+            formatter.logHeading("type=" + type.name());
         }
     }
 
@@ -83,17 +77,31 @@ public class DemographicLogger extends MCLogger {
 
         if (logEvery > 0 && (state % logEvery == 0)) {
 
-            final int columnCount = getColumnCount();
+            double[] intervals = reconstructor.getIntervals();
+            double[] popSizes = reconstructor.getPopSizes();
+
+            final int columnCount = 1 + intervals.length + popSizes.length;
 
             String[] values = new String[columnCount];
 
-            values[0] = Integer.toString(state);
+            int k = 0;
 
-            for (int i = 0; i < columnCount; i++) {
-                values[i + 1] = getColumnFormatted(i);
+            values[k] = Integer.toString(state);
+            k++;
+
+            for (int i = 0; i < intervals.length; i++) {
+                values[k] = Double.toString(intervals[i]);
+                k++;
             }
 
-            logValues(values);
+            for (int i = 0; i < popSizes.length; i++) {
+                values[k] = Double.toString(popSizes[i]);
+                k++;
+            }
+
+            for (LogFormatter formatter : formatters) {
+                formatter.logValues(values);
+            }
         }
     }
 
@@ -103,5 +111,52 @@ public class DemographicLogger extends MCLogger {
         }
     }
 
+    protected final void addFormatter(LogFormatter formatter) {
+        formatters.add(formatter);
+    }
+
+    /**
+     * Parses an element from an DOM document into a ExponentialGrowth.
+     */
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() { return DEMOGRAPHIC_LOG; }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            final int logEvery = xo.getIntegerAttribute(LOG_EVERY);
+
+            final PrintWriter pw = LoggerParser.getLogFile(xo, getParserName());
+
+            final LogFormatter formatter = new TabDelimitedFormatter(pw);
+
+            DemographicReconstructor reconstructor = (DemographicReconstructor)xo.getChild(DemographicReconstructor.class);
+
+            return new DemographicLogger(reconstructor, formatter, logEvery);
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "A demographic model of constant population size followed by logistic growth.";
+        }
+
+        public Class getReturnType() { return ConstantLogisticModel.class; }
+
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                AttributeRule.newIntegerRule(LOG_EVERY),
+                new StringAttributeRule(FILE_NAME,
+                        "The name of the file to send log output to. " +
+                                "If no file name is specified then log is sent to standard output", true),
+             new ElementRule(DemographicReconstructor.class)
+        };
+    };
+
+    protected int logEvery = 0;
+    protected List<LogFormatter> formatters = new ArrayList<LogFormatter>();
 
 }

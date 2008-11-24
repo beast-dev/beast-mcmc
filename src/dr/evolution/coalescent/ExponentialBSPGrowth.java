@@ -35,46 +35,37 @@ package dr.evolution.coalescent;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class ExponentialGrowth extends ConstantPopulation {
+public class ExponentialBSPGrowth extends DemographicFunction.Abstract {
 
     /**
      * Construct demographic model with default settings
      * @param units of time
      */
-    public ExponentialGrowth(Type units) {
-
+    public ExponentialBSPGrowth(Type units) {
         super(units);
     }
 
-    /**
-     * @return growth rate.
-     */
-    public final double getGrowthRate() { return r; }
-
-    /**
-     * sets growth rate to r.
-     * @param r
-     */
-    public void setGrowthRate(double r) { this.r = r; }
-
-    /**
-     * An alternative parameterization of this model. This
-     * function sets growth rate for a given doubling time.
-     * @param doublingTime
-     */
-    public void setDoublingTime(double doublingTime) {
-        setGrowthRate( Math.log(2) / doublingTime );
+    public void setup(double N0, double N1, double time) {
+        this.N0 = N0;
+        this.r = (Math.log(N0) - Math.log(N1)) / time;
     }
 
     // Implementation of abstract methods
 
     public double getDemographic(double t) {
 
-        double r = getGrowthRate();
         if (r == 0) {
-            return getN0();
+            return N0;
         } else {
-            return getN0() * Math.exp(-t * r);
+            return N0 * Math.exp(-t * r);
+        }
+    }
+
+    public double getLogDemographic(double t) {
+        if (r == 0) {
+            return Math.log(N0);
+        } else {
+            return Math.log(N0) - (t * r);
         }
     }
 
@@ -83,81 +74,73 @@ public class ExponentialGrowth extends ConstantPopulation {
      */
     @Override
     public double getIntegral(double start, double finish) {
-        double r = getGrowthRate();
+//        double integral1 = getNumericalIntegral(start, finish);
+
+        double integral;
         if (r == 0.0) {
-            return (finish - start)/getN0();
+            integral = (finish - start) / N0;
         } else {
-            return (Math.exp(finish*r) - Math.exp(start*r))/getN0()/r;
+            integral = (Math.exp(finish*r) - Math.exp(start*r))/N0/r;
         }
+        return integral;
     }
 
-    public double getIntensity(double t)
-    {
-        double r = getGrowthRate();
-        if (r == 0.0) {
-            return t/getN0();
-        } else {
-            return (Math.exp(t*r)-1.0)/getN0()/r;
-        }
+    /**
+     * @return the number of arguments for this function.
+     */
+    public int getNumArguments() {
+        return 0;
+    }
+
+    /**
+     * @return the name of the n'th argument of this function.
+     */
+    public String getArgumentName(int n) {
+        return null;
+    }
+
+    /**
+     * @return the value of the n'th argument of this function.
+     */
+    public double getArgument(int n) {
+        return 0;
+    }
+
+    /**
+     * Sets the value of the nth argument of this function.
+     */
+    public void setArgument(int n, double value) {
+    }
+
+    /**
+     * @return the lower bound of the nth argument of this function.
+     */
+    public double getLowerBound(int n) {
+        return 0;
+    }
+
+    /**
+     * Returns the upper bound of the nth argument of this function.
+     */
+    public double getUpperBound(int n) {
+        return 0;
+    }
+
+    /**
+     * Returns a copy of this function.
+     */
+    public DemographicFunction getCopy() {
+        return null;
+    }
+
+    public double getIntensity(double t) {
+        throw new RuntimeException("not implemented");
     }
 
     public double getInverseIntensity(double x) {
-
-        double r = getGrowthRate();
-        if (r == 0.0) {
-            return getN0()*x;
-        } else {
-            return Math.log(1.0+getN0()*x*r)/r;
-        }
+        throw new RuntimeException("not implemented");
     }
 
-    public int getNumArguments() {
-        return 2;
-    }
 
-    public String getArgumentName(int n) {
-        if (n == 0) {
-            return "N0";
-        } else {
-            return "r";
-        }
-    }
-
-    public double getArgument(int n) {
-        if (n == 0) {
-            return getN0();
-        } else {
-            return getGrowthRate();
-        }
-    }
-
-    public void setArgument(int n, double value) {
-        if (n == 0) {
-            setN0(value);
-        } else {
-            setGrowthRate(value);
-        }
-    }
-
-    public double getLowerBound(int n) {
-        return 0.0;
-    }
-
-    public double getUpperBound(int n) {
-        return Double.POSITIVE_INFINITY;
-    }
-
-    public DemographicFunction getCopy() {
-        ExponentialGrowth df = new ExponentialGrowth(getUnits());
-        df.setN0(getN0());
-        df.r = r;
-
-        return df;
-    }
-
-    //
-    // private stuff
-    //
-
-    private double r;
+    private double r, N0;
 }

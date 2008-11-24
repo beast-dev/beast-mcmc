@@ -301,6 +301,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.loggers.MLLogger.ML_LOGGER_PARSER);
         addXMLObjectParser(new TreeLoggerParser());
         addXMLObjectParser(dr.inference.loggers.Columns.PARSER);
+        addXMLObjectParser(dr.evomodel.coalescent.DemographicLogger.PARSER);
         addXMLObjectParser(dr.inference.operators.SimpleOperatorSchedule.PARSER);
 //		addXMLObjectParser(new dr.inference.markovchain.ConvergenceListenerParser());
 

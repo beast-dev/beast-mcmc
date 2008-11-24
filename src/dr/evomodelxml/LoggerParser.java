@@ -132,7 +132,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
      * @return logger object
      * @throws XMLParseException if file can't be created for some reason
      */
-    protected static PrintWriter getLogFile(XMLObject xo, String parserName) throws XMLParseException {
+    public static PrintWriter getLogFile(XMLObject xo, String parserName) throws XMLParseException {
         if (xo.hasAttribute(FILE_NAME)) {
 
             final String fileName = xo.getStringAttribute(FILE_NAME);

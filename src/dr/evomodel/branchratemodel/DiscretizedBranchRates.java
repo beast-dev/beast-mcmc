@@ -64,12 +64,19 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
     //overSampling control the number of effective categories
 
-    public DiscretizedBranchRates(TreeModel tree, Parameter rateCategoryParameter, ParametricDistributionModel model, int overSampling) {
+    public DiscretizedBranchRates(TreeModel tree, Parameter rateCategoryParameter, ParametricDistributionModel model,
+                                  int overSampling) {
 
         super(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
         this.tree = tree;
 
-        categoryCount = (tree.getNodeCount() - 1) * overSampling;
+        // todo we should set this automatically if this is a requirment
+        int nBranches = tree.getNodeCount() - 1;
+        if (rateCategoryParameter.getDimension() != nBranches) {
+            throw new IllegalArgumentException("The rate category parameter must be of length " + nBranches + " (nodes in the tree - 1)");
+        }
+
+        categoryCount = nBranches * overSampling;
         step = 1.0 / (double) categoryCount;
 
         rates = new double[categoryCount];
@@ -81,10 +88,6 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         rateCategoryParameter.addBounds(bound);
 
         this.rateCategoryParameter = rateCategoryParameter;
-        int categoryCount = tree.getNodeCount() - 1;
-        if (rateCategoryParameter.getDimension() != categoryCount) {
-            throw new IllegalArgumentException("The rate category parameter must be of length " + categoryCount + " (nodes in the tree - 1)");
-        }
 
         for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
             int index = (int) Math.floor((i + 0.5) * overSampling);
@@ -129,32 +132,35 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
     protected void acceptState() {
     }
 
-    public double getBranchRate(Tree tree, NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
 
+        assert ! tree.isRoot(node) : "root node doesn't have a rate!";
 
-        if (tree.isRoot(node)) {
-            throw new IllegalArgumentException("root node doesn't have a rate!");
-        }
-
-        double scale = 1.0;
+//       final double scale = 1.0;
 //        if (normalize) {
 //            calculateMeanRate(tree);
 //            scale = normalizedRate/meanRate;
 //        }
 
-        int nodeNumber = node.getNumber();
+        final int nodeNumber = node.getNumber();
 
-        if (nodeNumber == rootNodeNumber) {
-            throw new IllegalArgumentException("INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.");
-        }
+        assert nodeNumber != rootNodeNumber :
+            "INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.";
 
-        int rateCategory = (int) Math.round(rateCategoryParameter.getParameterValue(getCategoryIndexFromNodeNumber(nodeNumber)));
+        final int dim = getCategoryIndexFromNodeNumber(nodeNumber);
+        final int rateCategory = (int) Math.round(rateCategoryParameter.getParameterValue(dim));
+
 
         if (rateCategory < rateCategoryParameter.getBounds().getLowerLimit(0) || rateCategory > rateCategoryParameter.getBounds().getUpperLimit(0)) {
             throw new IllegalArgumentException("INTERNAL ERROR! invalid category number " + rateCategory);
         }
 
-        return rates[rateCategory] * scale;
+//        // todo this should be nodeNumber, no?
+//        assert (rateCategory >= rateCategoryParameter.getBounds().getLowerLimit(nodeNumber) &&
+//                rateCategory <= rateCategoryParameter.getBounds().getUpperLimit(nodeNumber)) :
+//            ("INTERNAL ERROR! invalid category number " + rateCategory);
+
+        return rates[rateCategory] /** scale*/;
     }
 
     /*   private void calculateMeanRate(Tree tree) {
@@ -249,7 +255,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
     }
 
     private void shuffleIndices() {
-        int newRootNodeNumber = tree.getRoot().getNumber();
+        final int newRootNodeNumber = tree.getRoot().getNumber();
 
         //if (newRootNodeNumber != rootNodeNumber) {
         //    System.out.println("old root node number =" + rootNodeNumber);
@@ -264,10 +270,10 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             //System.out.println();
 
 //            int oldRateIndex = (int) Math.round(
-            double oldRateIndex =
+            final double oldRateIndex =
                     rateCategoryParameter.getParameterValue(newRootNodeNumber);
 
-            int end = Math.min(rateCategoryParameter.getDimension() - 1, rootNodeNumber);
+            final int end = Math.min(rateCategoryParameter.getDimension() - 1, rootNodeNumber);
             for (int i = newRootNodeNumber; i < end; i++) {
                 rateCategoryParameter.setParameterValue(i, rateCategoryParameter.getParameterValue(i + 1));
             }
@@ -289,10 +295,9 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             //}
             //System.out.println();
 
-            int end = Math.min(rateCategoryParameter.getDimension() - 1, newRootNodeNumber);
+            final int end = Math.min(rateCategoryParameter.getDimension() - 1, newRootNodeNumber);
 
-            int oldRateIndex = (int) Math.round(
-                    rateCategoryParameter.getParameterValue(end));
+            final int oldRateIndex = (int) Math.round(rateCategoryParameter.getParameterValue(end));
 
             for (int i = end; i > rootNodeNumber; i--) {
                 rateCategoryParameter.setParameterValue(i, rateCategoryParameter.getParameterValue(i - 1));

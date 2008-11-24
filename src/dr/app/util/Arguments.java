@@ -53,7 +53,13 @@ public class Arguments {
 	}
 	
 	public static class StringOption extends Option {
-		
+        /**
+         *
+         * @param label  Option name:
+         * @param tag    Descriptive name of option argument.
+         * Example - tag "file-name" will show '-save <file-name>' in the usage.
+         * @param description
+         */
 		public StringOption(String label, String tag, String description) {
 			super(label, description);
 			this.tag = tag;

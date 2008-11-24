@@ -81,7 +81,7 @@ public class BayesianSkylineDialog {
     private JCheckBox manualRangeCheckBox;
     private RealNumberField minTimeField;
     private RealNumberField maxTimeField;
-    private JComboBox stepwiseLinearCombo = new JComboBox(new String[]{"Stepwise (Constant)", "Linear Change"});
+    private JComboBox changeTypeCombo = new JComboBox(new String[]{"Stepwise (Constant)", "Linear Change", "Exponential Change"});
     private String rootHeightTrace = "None selected";
 
     private RealNumberField ageOfYoungestField = new RealNumberField();
@@ -288,7 +288,7 @@ public class BayesianSkylineDialog {
 
         optionPanel.addSeparator();
 
-        optionPanel.addComponentWithLabel("Bayesian skyline variant: ", stepwiseLinearCombo);
+        optionPanel.addComponentWithLabel("Bayesian skyline variant: ", changeTypeCombo);
 
         optionPanel.addSeparator();
 
@@ -389,11 +389,11 @@ public class BayesianSkylineDialog {
         int firstGroupSize = traceList.getTraceIndex(argumentTraces[1]);
         int groupSizeCount = getTraceRange(traceList, firstGroupSize);
 
-        boolean isLinear = stepwiseLinearCombo.getSelectedIndex() > 0;
-        if (isLinear) {
+        boolean isLinearOrExponential = changeTypeCombo.getSelectedIndex() > 0;
+        if (isLinearOrExponential) {
             if (groupSizeCount != popSizeCount - 1) {
                 JOptionPane.showMessageDialog(frame,
-                        "For the linear change Bayesian skyline model there should\n" +
+                        "For the linear or exponential change Bayesian skyline model there should\n" +
                                 "one fewer group size than population size parameters. Either\n" +
                                 "this is a stepwise (constant) model or the wrong parameters\n" +
                                 "were specified. Please try again and check.",
@@ -465,7 +465,8 @@ public class BayesianSkylineDialog {
 
         private int lengthOfTask = 0;
         private int current = 0;
-        private boolean isLinear;
+        private boolean isLinearOrExponential;
+        private boolean isExponential;
 
         public AnalyseBayesianSkylineTask(TraceList traceList, File treeFile, int firstPopSize, int popSizeCount,
                                           int firstGroupSize, int groupSizeCount,
@@ -481,7 +482,8 @@ public class BayesianSkylineDialog {
             this.binCount = frame.getBinCount();
             this.rangeSet = frame.isRangeSet();
 
-            isLinear = stepwiseLinearCombo.getSelectedIndex() > 0;
+            isLinearOrExponential = changeTypeCombo.getSelectedIndex() > 0;
+            isExponential = changeTypeCombo.getSelectedIndex() > 1;
             ageOfYoungest = ageOfYoungestField.getValue();
 
             lengthOfTask = traceList.getStateCount() + binCount;
@@ -690,7 +692,7 @@ public class BayesianSkylineDialog {
                     if (height >= 0.0 && height <= maxHeight) {
                         for (state = 0; state < stateCount; state++) {
 
-                            if (isLinear) {
+                            if (isLinearOrExponential) {
                                 double lastGroupTime = 0.0;
 
                                 int index = 0;
@@ -701,10 +703,17 @@ public class BayesianSkylineDialog {
 
                                 if (index < groupTimes[state].length - 1) {
                                     double t = (height - lastGroupTime) / (groupTimes[state][index] - lastGroupTime);
-                                    double p1 = getPopSize(index, state);
-                                    double p2 = getPopSize(index + 1, state);
-                                    double popsize = p1 + ((p2 - p1) * t);
-                                    bins[k].add(popsize);
+                                    if (isExponential) {
+                                        double p1 = Math.log(getPopSize(index, state));
+                                        double p2 = Math.log(getPopSize(index + 1, state));
+                                        double popsize = p1 + ((p2 - p1) * t);
+                                        bins[k].add(Math.exp(popsize));
+                                    } else {
+                                        double p1 = getPopSize(index, state);
+                                        double p2 = getPopSize(index + 1, state);
+                                        double popsize = p1 + ((p2 - p1) * t);
+                                        bins[k].add(popsize);
+                                    }
                                 }
                             } else {
                                 int index = 0;

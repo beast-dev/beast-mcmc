@@ -72,26 +72,26 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
     public void linearIntegration() {
         burnin = (int) (0.1 * chainLength);
+        mc.setCurrentLength(0);
         for (int step = 0; step < pathSteps; step++) {
             pathLikelihood.setPathParameter(pathParameter);
-            mc.setCurrentLength(0);
             mc.chain(chainLength + burnin, false, 0, false);
             pathParameter -= pathDelta;
 
         }
 
         pathLikelihood.setPathParameter(0.0);
-        mc.setCurrentLength(0);
+        ;
         mc.chain(chainLength + burnin, false, 0, false);
     }
 
     public void linearShoeLacing() {
         burnin = (int) (0.1 * chainLength);
+        mc.setCurrentLength(0);
         if (pathSteps % 2 == 0) //Works only for odd number of steps
             pathSteps += 1;
         for (int step = 0; step < pathSteps; step++) {
             pathLikelihood.setPathParameter(pathParameter);
-            mc.setCurrentLength(0);
             mc.chain(chainLength + burnin, false, 0, false);
             if (step == 0)
                 pathParameter -= 2 * pathDelta;
@@ -104,13 +104,13 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         }
 
         pathLikelihood.setPathParameter(0.0);
-        mc.setCurrentLength(0);
         mc.chain(chainLength + burnin, false, 0, false);
 
     }
 
     public void geometricShoeLacing() {
         int logCount = chainLength / logger.getLogEvery();
+        mc.setCurrentLength(0);
         if (pathSteps % 2 == 0) //Works only for odd number of steps
             pathSteps += 1;
 
@@ -121,7 +121,6 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             burnin = (int) (0.1 * cl);
 
             pathLikelihood.setPathParameter(pathParameter);
-            mc.setCurrentLength(0);
             mc.chain(cl + burnin, false, 0, false);
             if (step == 0) {
                 pathParameter /= 4;
@@ -136,13 +135,12 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         logger.setLogEvery(cl / logCount);
         burnin = (int) (0.1 * cl);
         pathLikelihood.setPathParameter(0.0);
-        mc.setCurrentLength(0);
         mc.chain(cl + burnin, false, 0, false);
     }
 
     public void geometricIntegration() {
         int logCount = chainLength / logger.getLogEvery();
-
+        mc.setCurrentLength(0);
         for (int step = 0; step < pathSteps; step++) {
             double p = 1.0 - (((double) step) / pathSteps);
             int cl = (int) (20.0 * chainLength / ((19.0 * p) + 1));
@@ -150,7 +148,6 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             burnin = (int) (0.1 * cl);
 
             pathLikelihood.setPathParameter(pathParameter);
-            mc.setCurrentLength(0);
             mc.chain(cl + burnin, false, 0, false);
             pathParameter /= 2;
 
@@ -160,7 +157,6 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         logger.setLogEvery(cl / logCount);
         burnin = (int) (0.1 * cl);
         pathLikelihood.setPathParameter(0.0);
-        mc.setCurrentLength(0);
         mc.chain(cl + burnin, false, 0, false);
     }
 

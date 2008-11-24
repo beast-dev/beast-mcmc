@@ -197,16 +197,22 @@
         </logTree>
     </mcmc>
 
-    <marginalLikelihoodEstimator chainLength="100000" pathSteps="10">
+    <marginalLikelihoodEstimator chainLength="100000" pathSteps="20" linear="false" lacing="true">
         <mcmc idref="mcmc"/>
         <pathLikelihood id="pathLikelihood">
-            <likelihood><likelihood idref="likelihood"/></likelihood>
-            <prior><prior idref="prior"/></prior>
+            <source>
+                <likelihood idref="posterior"/>
+            </source>
+            <destination>
+                <prior idref="prior"/>
+            </destination>
         </pathLikelihood>
         <log logEvery="100" fileName="testPathSampling.ML.log">
-            <property name="pathParameter">
-                <pathLikelihood idref="pathLikelihood"/>
-            </property>
+            <column label="theta" dp="4" width="12">
+                <property name="pathParameter">
+                    <pathLikelihood idref="pathLikelihood"/>
+                </property>
+            </column>
             <pathLikelihood idref="pathLikelihood"/>
             <likelihood idref="likelihood"/>
             <prior idref="prior"/>

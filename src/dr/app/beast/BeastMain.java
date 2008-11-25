@@ -55,7 +55,7 @@ public class BeastMain {
         public void doStop() {
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
-                Thread thread = (Thread)iter.next();
+                Thread thread = (Thread) iter.next();
                 thread.stop();
             }
         }
@@ -76,7 +76,7 @@ public class BeastMain {
 
             FileReader fileReader = new FileReader(inputFile);
 
-            XMLParser parser = new BeastParser(new String[] {fileName}, verbose, strictXML);
+            XMLParser parser = new BeastParser(new String[]{fileName}, verbose, strictXML);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -85,6 +85,7 @@ public class BeastMain {
             // Add a handler to handle warnings and errors. This is a ConsoleHandler
             // so the messages will go to StdOut..
             Logger logger = Logger.getLogger("dr");
+
             Handler handler = new MessageLogHandler();
             handler.setFilter(new Filter() {
                 public boolean isLoggable(LogRecord record) {
@@ -108,12 +109,13 @@ public class BeastMain {
             infoLogger.info("Parsing XML file: " + fileName);
             infoLogger.info("  File encoding: " + fileReader.getEncoding());
 
-			// This is a special logger that is for logging numerical and statistical errors
-	        // during the MCMC run. It will tolerate up to maxErrorCount before throwing a
-	        // RuntimeException to shut down the run.
-	        //Logger errorLogger = Logger.getLogger("error");
-	        handler = new ErrorLogHandler(maxErrorCount);
-	        logger.addHandler(handler);
+            // This is a special logger that is for logging numerical and statistical errors
+            // during the MCMC run. It will tolerate up to maxErrorCount before throwing a
+            // RuntimeException to shut down the run.
+            //Logger errorLogger = Logger.getLogger("error");
+            handler = new ErrorLogHandler(maxErrorCount);
+            handler.setLevel(Level.WARNING);
+            logger.addHandler(handler);
 
             parser.parse(fileReader, true);
 
@@ -183,7 +185,9 @@ public class BeastMain {
     public static void centreLine(String line, int pageWidth) {
         int n = pageWidth - line.length();
         int n1 = n / 2;
-        for (int i = 0; i < n1; i++) { System.out.print(" "); }
+        for (int i = 0; i < n1; i++) {
+            System.out.print(" ");
+        }
         System.out.println(line);
     }
 
@@ -236,15 +240,15 @@ public class BeastMain {
 
         printTitle();
         Arguments arguments = new Arguments(
-                new Arguments.Option[] {
+                new Arguments.Option[]{
 
                         new Arguments.Option("verbose", "verbose XML parsing messages"),
                         new Arguments.Option("strict", "Fail on non conforming BEAST XML file"),
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "specify a random number generator seed"),
-		                new Arguments.IntegerOption("errors", "maximum number of numerical errors before stopping"),
-                       // new Arguments.Option("logops", "hack: log ops to stderr"),
+                        new Arguments.IntegerOption("errors", "maximum number of numerical errors before stopping"),
+                        // new Arguments.Option("logops", "hack: log ops to stderr"),
                         new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
                                 "in number of states."),
                         new Arguments.Option("help", "option to print this message"),
@@ -274,7 +278,7 @@ public class BeastMain {
 
         // (HACK)
         //MCMC.logOps =  arguments.hasOption("logops");
-        MCMC.ontheflyFreq =  arguments.hasOption("otfops") ? arguments.getIntegerOption("otfops") : 0;
+        MCMC.ontheflyFreq = arguments.hasOption("otfops") ? arguments.getIntegerOption("otfops") : 0;
 
         long seed = MathUtils.getSeed();
         if (arguments.hasOption("seed")) {
@@ -287,13 +291,13 @@ public class BeastMain {
             MathUtils.setSeed(seed);
         }
 
-	    int maxErrorCount = 0;
-	    if (arguments.hasOption("errors")) {
-	        maxErrorCount = arguments.getIntegerOption("errors");
-	        if (maxErrorCount < 0) {
-	            maxErrorCount = 0;
-	        }
-	    }
+        int maxErrorCount = 0;
+        if (arguments.hasOption("errors")) {
+            maxErrorCount = arguments.getIntegerOption("errors");
+            if (maxErrorCount < 0) {
+                maxErrorCount = 0;
+            }
+        }
 
 //		if (System.getProperty("dr.app.beast.main.window", "false").toLowerCase().equals("true")) {
 //			window = true;
@@ -302,9 +306,9 @@ public class BeastMain {
         BeastConsoleApp consoleApp = null;
 
         if (window) {
-            System.setProperty("com.apple.macos.useScreenMenuBar","true");
-            System.setProperty("apple.laf.useScreenMenuBar","true");
-            System.setProperty("apple.awt.showGrowBox","true");
+            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+            System.setProperty("apple.awt.showGrowBox", "true");
 
             javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 
@@ -320,9 +324,9 @@ public class BeastMain {
                     "<p><a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                     "<p>Source code distributed under the GNU LGPL:<br>" +
                     "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
-		            "<p>Model contributions from:<br>" +
-		            "Erik Bloomquist, Roald Forsberg, Joseph Heled, Gerton Lunter, Sidney Markowitz, " +
-		            "Vladimir Minin, Oliver Pybus, Marc Suchard, Jen Tom</p>" +
+                    "<p>Model contributions from:<br>" +
+                    "Erik Bloomquist, Roald Forsberg, Joseph Heled, Gerton Lunter, Sidney Markowitz, " +
+                    "Vladimir Minin, Oliver Pybus, Marc Suchard, Jen Tom</p>" +
                     "<p>Thanks to Korbinian Strimmer for use of his code</p>" +
                     "</center></html>";
 
@@ -350,7 +354,7 @@ public class BeastMain {
 
         if (inputFileName == null) {
             // No input file name was given so throw up a dialog box...
-            inputFile = Utils.getLoadFile("BEAST "+version.getVersionString()+" - Select XML input file");
+            inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
         }
 
         if (inputFile != null && working) {

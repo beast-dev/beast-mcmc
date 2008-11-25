@@ -48,11 +48,16 @@ public class LoggerParser extends AbstractXMLObjectParser {
         // You must say how often you want to log
         final int logEvery = xo.getIntegerAttribute(LOG_EVERY);
 
+        String fileName = null;
+        if (xo.hasAttribute(FILE_NAME)) {
+        	fileName = xo.getStringAttribute(FILE_NAME);
+        }
+        
         final PrintWriter pw = getLogFile(xo, getParserName());
 
         final LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-        final MCLogger logger = new MCLogger(formatter, logEvery, !xo.hasAttribute(FILE_NAME));
+        final MCLogger logger = new MCLogger(fileName, formatter, logEvery, !xo.hasAttribute(FILE_NAME));
 
         if (xo.hasAttribute(TITLE)) {
             logger.setTitle(xo.getStringAttribute(TITLE));

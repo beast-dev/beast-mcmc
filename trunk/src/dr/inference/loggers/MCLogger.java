@@ -37,8 +37,13 @@ import java.util.List;
  * @version $Id: MCLogger.java,v 1.18 2005/05/24 20:25:59 rambaut Exp $
  */
 public class MCLogger implements Logger {
-    /**
-     * Output perfomance stats in this log
+    
+	// the file that this logger is logging to or 
+	// null if the LogFormatter is logging to a non-file print stream
+	String fileName;
+	
+	/**
+     * Output performance stats in this log
      */
      private boolean performanceReport;
 
@@ -48,11 +53,22 @@ public class MCLogger implements Logger {
      * @param formatter the formatter of this logger
      * @param logEvery  logging frequency
      */
-    public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport) {
+    public MCLogger(String fileName, LogFormatter formatter, int logEvery, boolean performanceReport) {
 
         addFormatter(formatter);
         this.logEvery = logEvery;
         this.performanceReport = performanceReport;
+        this.fileName = fileName;
+    }
+    
+    /**
+     * Constructor. Will log every logEvery.
+     *
+     * @param formatter the formatter of this logger
+     * @param logEvery  logging frequency
+     */
+    public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport) {
+        this(null, formatter, logEvery, performanceReport);
     }
 
     public final void setTitle(String title) {
@@ -114,6 +130,13 @@ public class MCLogger implements Logger {
     public final String getColumnFormatted(int index) {
 
         return columns.get(index).getFormatted();
+    }
+    
+    /**
+     * @return file name or null if this logger is logging to a non-file print stream
+     */
+    public final String getFileName() {
+    	return fileName;
     }
 
     protected void logHeading(String heading) {

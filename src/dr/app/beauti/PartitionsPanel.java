@@ -100,7 +100,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
     }
 
     public final void dataChanged() {
-        frame.dataChanged();
+        frame.setDirty();
     }
 
     public void setOptions(BeautiOptions options) {

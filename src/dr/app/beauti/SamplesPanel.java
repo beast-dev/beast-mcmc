@@ -57,7 +57,7 @@ import java.util.GregorianCalendar;
  * @author Alexei Drummond
  * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
-public class SamplesPanel extends JPanel implements Exportable {
+public class SamplesPanel extends BeautiPanel implements Exportable {
 
     /**
      *
@@ -211,7 +211,7 @@ public class SamplesPanel extends JPanel implements Exportable {
         calculateHeights();
 
         dataTableModel.fireTableDataChanged();
-        frame.samplingTimesChanged();
+        frame.setDirty();
     }
 
     private Date createDate(double timeValue, Units.Type units, boolean backwards, double origin) {

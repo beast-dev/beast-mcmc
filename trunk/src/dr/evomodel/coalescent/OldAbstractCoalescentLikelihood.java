@@ -465,8 +465,8 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
         }
 
         int nIntervals;
-        int[] lineagesCount;
-        double[] intervals;
+        final int[] lineagesCount;
+        final double[] intervals;
 
     }
 
@@ -835,7 +835,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
     /**
      * The demographic model.
      */
-    DemographicModel demoModel = null;
+    private DemographicModel demoModel = null;
 
     /**
      * The tree.

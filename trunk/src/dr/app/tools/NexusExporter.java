@@ -253,7 +253,7 @@ public class NexusExporter implements TreeExporter {
         }
     }
 
-    private PrintStream out;
+    private final PrintStream out;
     private NumberFormat formatter = null;
     private String treePrefix = DEFAULT_TREE_PREFIX;
     private boolean sorted = false;

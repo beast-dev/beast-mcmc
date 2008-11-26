@@ -168,7 +168,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
         pushTreeChangedEvent(node, parameter, index);
     }
 
-    private List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
+    private final List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
 
     public boolean hasRates() {
         return hasRates;
@@ -176,9 +176,9 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
     public class TreeChangedEvent {
 
-        Node node;
-        Parameter parameter;
-        int index;
+        final Node node;
+        final Parameter parameter;
+        final int index;
 
         public TreeChangedEvent() {
             this(null, null, -1);
@@ -590,9 +590,9 @@ public class TreeModel extends AbstractModel implements MutableTree {
         throw new IllegalArgumentException();
     }
 
-    public String getModelComponentName() {
-        return TREE_MODEL;
-    }
+//    public String getModelComponentName() {
+//        return TREE_MODEL;
+//    }
 
     // **************************************************************
     // TaxonList IMPLEMENTATION
@@ -690,7 +690,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
     // Identifiable IMPLEMENTATION
     // **************************************************************
 
-    protected String id = null;
+    private String id = null;
 
     /**
      * @return the id.
@@ -1203,12 +1203,12 @@ public class TreeModel extends AbstractModel implements MutableTree {
             return node;
         }
 
-        public boolean hasChildren() {
-            return (leftChild != null || rightChild != null);
+        public boolean hasNoChildren() {
+            return (leftChild == null && rightChild == null);
         }
 
         public boolean isExternal() {
-            return !hasChildren();
+            return hasNoChildren();
         }
 
         public boolean isRoot() {
@@ -1282,17 +1282,17 @@ public class TreeModel extends AbstractModel implements MutableTree {
     /**
      * number of nodes (including root and tips)
      */
-    private int nodeCount;
+    private final int nodeCount;
 
     /**
      * number of external nodes
      */
-    private int externalNodeCount;
+    private final int externalNodeCount;
 
     /**
      * number of internal nodes (including root)
      */
-    private int internalNodeCount;
+    private final int internalNodeCount;
 
     /**
      * holds the units of the trees branches.

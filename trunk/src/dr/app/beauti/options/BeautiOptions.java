@@ -152,7 +152,7 @@ public class BeautiOptions extends ModelOptions {
                 "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
 
         createOperator("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", "skyride.popSize",
-                "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 0.5, 2);
+                "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
 
         createScaleOperator("yule.birthRate", demoWeights);
 
@@ -1229,6 +1229,7 @@ public class BeautiOptions extends ModelOptions {
     public int skylineGroupCount = 10;
     public int skylineModel = CONSTANT_SKYLINE;
     public int skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
+    public int skyrideIntervalCount = 1;
     public String extendedSkylineModel = VariableDemographicModel.LINEAR;
     public boolean multiLoci = false;
     public double birthDeathSamplingProportion = 1.0;

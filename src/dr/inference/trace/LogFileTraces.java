@@ -313,9 +313,9 @@ public class LogFileTraces extends AbstractTraceList {
     }
 
     private final File file;
-    private String name;
+    private final String name;
 
-    private List<Trace> traces = new ArrayList<Trace>();
+    private final List<Trace> traces = new ArrayList<Trace>();
 
     private int burnIn = -1;
     private int firstState = -1;

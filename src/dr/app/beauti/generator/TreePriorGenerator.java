@@ -4,6 +4,7 @@ import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.TreePrior;
+import dr.app.beauti.options.StartingTreeType;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.*;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
@@ -360,16 +361,18 @@ public class TreePriorGenerator extends Generator {
 					new Attribute[]{
 							new Attribute.Default<String>("id", "skyride"),
 							new Attribute.Default<String>(GMRFSkyrideLikelihood.TIME_AWARE_SMOOTHING,
-									options.skyrideSmoothing == ModelOptions.SKYRIDE_TIME_AWARE_SMOOTHING ? "true" : "false")
+									options.skyrideSmoothing == ModelOptions.SKYRIDE_TIME_AWARE_SMOOTHING ? "true" : "false"),
+                            new Attribute.Default<String>(GMRFSkyrideLikelihood.RANDOMIZE_TREE,
+                                    options.startingTreeType == StartingTreeType.UPGMA ? "true" : "false"),
 					}
 			);
 
 			writer.writeOpenTag(GMRFSkyrideLikelihood.POPULATION_PARAMETER);
-			writeParameter("skyride.popSize", options.skylineGroupCount, writer);
+			writeParameter("skyride.popSize", options.skyrideIntervalCount, writer);
 			writer.writeCloseTag(GMRFSkyrideLikelihood.POPULATION_PARAMETER);
 
 			writer.writeOpenTag(GMRFSkyrideLikelihood.GROUP_SIZES);
-			writeParameter("skyride.groupSize", options.skylineGroupCount, writer);
+			writeParameter("skyride.groupSize", options.skyrideIntervalCount, writer);
 			writer.writeCloseTag(GMRFSkyrideLikelihood.GROUP_SIZES);
 
 			writer.writeOpenTag(GMRFSkyrideLikelihood.PRECISION_PARAMETER);

@@ -59,9 +59,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 	public void reject() {
 		super.reject();
 		// There is currently no restore functions for tip states, so manually adjust state
-		swap(index1, index2);
-		treeLikelihood.makeDirty();
-						                    
+		swap(index1, index2);						                    
     }
 
 	public String getPerformanceSuggestion() {
@@ -110,7 +108,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 
 	        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 	                AttributeRule.newDoubleRule("weight"),
-			        new ElementRule(AncestralStateTreeLikelihood.class),
+			        new ElementRule(TreeLikelihood.class),
 	        };
 
 	    };

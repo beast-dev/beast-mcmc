@@ -149,9 +149,9 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	}
 
 	public void initializationReport() {
-		System.out.println("Creating a GMRF smoothed skyline model:");
+		System.out.println("Creating a GMRF smoothed skyride model:");
 		System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
-		System.out.println("\tIf you publish results using this model, please reference: Minin, Bloomquist and Suchard (in press).");
+		System.out.println("\tIf you publish results using this model, please reference: Minin, Bloomquist and Suchard (2008) Molecular Biology and Evolution, 25, 1459-1471.");
 	}
 
 	private static void checkTree(TreeModel treeModel) {

@@ -179,12 +179,14 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.substmodel.YangCodonModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.TwoStateCovarionModel.PARSER);
         addXMLObjectParser(dr.evomodel.substmodel.BinaryCovarionModel.PARSER);
+	    addXMLObjectParser(dr.evomodel.substmodel.SubstitutionEpochModel.PARSER);
 
         addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.AdvancedTreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.AncestralStateTreeLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.AncestralState.PARSER);
         addXMLObjectParser(dr.evomodel.treelikelihood.SequenceErrorModel.PARSER);
+	    addXMLObjectParser(dr.evomodel.treelikelihood.EpochTreeLikelihood.PARSER);
 
         addXMLObjectParser(dr.evomodel.newtreelikelihood.TreeLikelihood.PARSER);
 

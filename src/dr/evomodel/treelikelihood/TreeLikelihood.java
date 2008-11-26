@@ -432,7 +432,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      *
      * @return whether the partials for this node were recalculated.
      */
-    private boolean traverse(Tree tree, NodeRef node) {
+    protected boolean traverse(Tree tree, NodeRef node) {
 
         boolean update = false;
 
@@ -619,7 +619,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
     private final boolean storePartials;
 
-    private final boolean integrateAcrossCategories;
+    protected final boolean integrateAcrossCategories;
 
     /**
      * the categories for each site

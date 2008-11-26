@@ -121,6 +121,12 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentSimulator.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.CoalescentLikelihood.PARSER);
 
+        addXMLObjectParser(dr.evomodel.speciation.SpeciesTreeModel.PARSER);
+        addXMLObjectParser(dr.evomodel.speciation.SpeciesBindings.PARSER);
+        addXMLObjectParser(dr.evomodel.speciation.SpeciesBindings.PPARSER);
+        addXMLObjectParser(dr.evomodel.speciation.TreePartitionCoalescent.PARSER);
+        addXMLObjectParser(dr.evomodel.operators.TreeNodeSlide.PARSER);
+
         addXMLObjectParser(dr.evomodel.coalescent.SkylineLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.BayesianSkylineLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.coalescent.operators.BayesianSkylineGibbsOperator.PARSER);

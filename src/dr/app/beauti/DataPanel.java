@@ -51,7 +51,7 @@ import java.util.Set;
  * @author Alexei Drummond
  * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
-public class DataPanel extends JPanel implements Exportable {
+public class DataPanel extends BeautiPanel implements Exportable {
 
     JScrollPane scrollPane = new JScrollPane();
     JTable dataTable = null;
@@ -130,7 +130,7 @@ public class DataPanel extends JPanel implements Exportable {
 
 
     private void fireDataChanged() {
-        frame.dataChanged();
+        frame.setDirty();
     }
 
     private void modelsChanged() {

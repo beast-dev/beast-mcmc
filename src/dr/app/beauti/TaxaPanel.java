@@ -52,7 +52,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: TaxaPanel.java,v 1.1 2006/09/05 13:29:34 rambaut Exp $
  */
-public class TaxaPanel extends JPanel implements Exportable {
+public class TaxaPanel extends BeautiPanel implements Exportable {
 
 
     /**
@@ -379,7 +379,7 @@ public class TaxaPanel extends JPanel implements Exportable {
             options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
         }
 
-        frame.taxonSetsChanged();
+        frame.setDirty();
     }
 
     public void setOptions(BeautiOptions options) {

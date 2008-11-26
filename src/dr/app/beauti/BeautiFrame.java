@@ -63,6 +63,8 @@ public class BeautiFrame extends DocumentFrame {
     private OperatorsPanel operatorsPanel;
     private MCMCPanel mcmcPanel;
 
+    private BeautiPanel currentPanel;
+
     final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
 
     public BeautiFrame(String title) {
@@ -101,13 +103,19 @@ public class BeautiFrame extends DocumentFrame {
         tabbedPane.addTab("Priors", priorsPanel);
         tabbedPane.addTab("Operators", operatorsPanel);
         tabbedPane.addTab("MCMC", mcmcPanel);
+        currentPanel = (BeautiPanel)tabbedPane.getSelectedComponent();
+
         tabbedPane.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
-                if (tabbedPane.getSelectedComponent() == dataPanel) {
+                BeautiPanel selectedPanel = (BeautiPanel)tabbedPane.getSelectedComponent();
+                if (selectedPanel == dataPanel) {
                     dataPanel.selectionChanged();
                 } else {
                     getDeleteAction().setEnabled(false);
                 }
+                currentPanel.getOptions(beautiOptions);
+                setAllOptions();
+                currentPanel = selectedPanel;
             }
         });
 
@@ -164,20 +172,19 @@ public class BeautiFrame extends DocumentFrame {
     // These functions are called when controls in the different panels
     // are changed. The minimum they do is call setDirty, but they may
     // tell other panels to update from the options.
+    //
+    // AR 26/11/08 - have attempted to make this more robust. When you switch
+    // to a new tab 'getOptions' is called on the previously select panel, then 'getAllOptions' is
+    // called. The individual panels should now just call 'setDirty' directly when something changes.
 
-    public final void dataChanged() {
-        samplesPanel.setOptions(beautiOptions);
-        taxaPanel.setOptions(beautiOptions);
-        modelsPanel.setOptions(beautiOptions);
-        treesPanel.setOptions(beautiOptions);
-        priorsPanel.setOptions(beautiOptions);
-        operatorsPanel.setOptions(beautiOptions);
-        setDirty();
-    }
 
-    public final void samplingTimesChanged() {
-        setDirty();
-    }
+//    public final void dataChanged() {
+//        setDirty();
+//    }
+//
+//    public final void samplingTimesChanged() {
+//        setDirty();
+//    }
 
     public final void dataSelectionChanged(boolean isSelected) {
         if (isSelected) {
@@ -195,41 +202,29 @@ public class BeautiFrame extends DocumentFrame {
         }
     }
 
-    public void taxonSetsChanged() {
-        priorsPanel.setOptions(beautiOptions);
-        setDirty();
-    }
-
-    public final void modelChanged() {
-
-        modelsPanel.getOptions(beautiOptions);
-        dataPanel.getOptions(beautiOptions);
-
-        priorsPanel.setOptions(beautiOptions);
-        operatorsPanel.setOptions(beautiOptions);
-        setDirty();
-    }
-
-    public final void treePriorsChanged() {
-        treesPanel.getOptions(beautiOptions);
-
-        priorsPanel.setOptions(beautiOptions);
-        operatorsPanel.setOptions(beautiOptions);
-
-        setDirty();
-    }
-
-    public final void priorsChanged() {
-        setDirty();
-    }
-
-    public final void operatorsChanged() {
-        setDirty();
-    }
-
-    public final void mcmcChanged() {
-        setDirty();
-    }
+//    public void taxonSetsChanged() {
+//        setDirty();
+//    }
+//
+//    public final void modelChanged() {
+//        setDirty();
+//    }
+//
+//    public final void treePriorsChanged() {
+//        setDirty();
+//    }
+//
+//    public final void priorsChanged() {
+//        setDirty();
+//    }
+//
+//    public final void operatorsChanged() {
+//        setDirty();
+//    }
+//
+//    public final void mcmcChanged() {
+//        setDirty();
+//    }
 
 
     public void doDelete() {
@@ -581,6 +576,7 @@ public class BeautiFrame extends DocumentFrame {
                 partitions.add(new DataPartition(fileNameStem, fileName, alignment));
             }
             for (DataPartition partition : partitions) {
+                beautiOptions.dataPartitions.add(partition);
                 if (model != null) {
                     partition.setPartitionModel(model);
                     beautiOptions.addPartitionModel(model);
@@ -596,7 +592,6 @@ public class BeautiFrame extends DocumentFrame {
                         beautiOptions.addPartitionModel(pm);
                     }
                 }
-                beautiOptions.dataPartitions.add(partition);
             }
         }
     }

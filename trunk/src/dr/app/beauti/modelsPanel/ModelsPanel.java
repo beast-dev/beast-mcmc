@@ -28,6 +28,7 @@ package dr.app.beauti.modelsPanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.modelsPanel.CreateModelDialog;
 import dr.app.beauti.PanelUtils;
+import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.components.RealNumberField;
@@ -57,7 +58,7 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
-public class ModelsPanel extends JPanel implements Exportable {
+public class ModelsPanel extends BeautiPanel implements Exportable {
 
     private static final long serialVersionUID = 2778103564318492601L;
 
@@ -164,7 +165,7 @@ public class ModelsPanel extends JPanel implements Exportable {
         substitutionRateField.setValue(1.0);
         substitutionRateField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
-                frame.mcmcChanged();
+                frame.setDirty();
             }
         });
         substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
@@ -250,7 +251,7 @@ public class ModelsPanel extends JPanel implements Exportable {
     }
 
     private void fireModelsChanged() {
-        frame.modelChanged();
+        frame.setDirty();
     }
 
     private void createModel() {

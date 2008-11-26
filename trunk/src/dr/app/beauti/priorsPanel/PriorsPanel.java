@@ -26,6 +26,7 @@
 package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.*;
 import dr.util.NumberFormatter;
 import org.virion.jam.framework.Exportable;
@@ -45,7 +46,7 @@ import java.util.ArrayList;
  * @author Alexei Drummond
  * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
-public class PriorsPanel extends JPanel implements Exportable {
+public class PriorsPanel extends BeautiPanel implements Exportable {
 
     /**
      *

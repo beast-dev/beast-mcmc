@@ -27,6 +27,7 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.PanelUtils;
+import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import dr.app.beauti.options.StartingTreeType;
@@ -57,7 +58,7 @@ import java.awt.event.*;
  * @author Alexei Drummond
  * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
-public class TreesPanel extends JPanel {
+public class TreesPanel extends BeautiPanel {
 
 	private OptionsPanel treePriorPanel = new OptionsPanel();
 	private JComboBox treePriorCombo;
@@ -240,7 +241,7 @@ public class TreesPanel extends JPanel {
 
 	private void fireTreePriorsChanged() {
 		if (!settingOptions) {
-			frame.treePriorsChanged();
+            frame.setDirty();
 		}
 	}
 
@@ -415,7 +416,11 @@ public class TreesPanel extends JPanel {
 		return null;
 	}
 
-	class TreesTableModel extends AbstractTableModel {
+    public JComponent getExportableComponent() {
+        return treeDisplayPanel;
+    }
+
+    class TreesTableModel extends AbstractTableModel {
 
 		private static final long serialVersionUID = -6707994233020715574L;
 		String[] columnNames = {"Trees"};

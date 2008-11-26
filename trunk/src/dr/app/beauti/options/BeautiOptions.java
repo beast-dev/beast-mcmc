@@ -183,7 +183,6 @@ public class BeautiOptions extends ModelOptions {
         createScaleOperator("ucld.mean", rateWeights);
         createScaleOperator("ucld.stdev", rateWeights);
 
-
         createOperator("scaleRootRate", "treeModel.rootRate",
                 "Scales root rate", "treeModel.rootRate",
                 OperatorType.SCALE, 0.75, rateWeights);
@@ -245,10 +244,6 @@ public class BeautiOptions extends ModelOptions {
 
         if (!models.contains(model)) {
             models.add(model);
-
-            // update delta mu opertor weight
-            Operator deltaMuOperator = getOperator("deltaMu");
-            deltaMuOperator.weight = getActiveModels().size();
         }
     }
 
@@ -480,6 +475,13 @@ public class BeautiOptions extends ModelOptions {
 
         if (multiplePartitions) {
             Operator deltaMuOperator = getOperator("deltaMu");
+
+            // update delta mu operator weight
+            deltaMuOperator.weight = 0.0;
+            for (PartitionModel pm : getActiveModels()) {
+                deltaMuOperator.weight += pm.getCodonPartitionCount();
+            }
+
             ops.add(deltaMuOperator);
         }
 
@@ -749,53 +751,6 @@ public class BeautiOptions extends ModelOptions {
                         throw new IllegalArgumentException("Unknown clock model");
                 }
             }
-
-            // if not fixed then do mutation rate move and up/down move
-            /*if (!isFixedSubstitutionRate()) {
-                   if (clockType == ClockType.STRICT_CLOCK) {
-                       ops.add(getOperator("clock.rate"));
-                       ops.add(getOperator("upDownRateHeights"));
-                   } else if (clockType == ClockType.RANDOM_LOCAL_CLOCK) {
-                       ops.add(getOperator("clock.rate"));
-                       ops.add(getOperator("upDownRateHeights"));
-                       ops.add(getOperator("localClock.rates"));
-                       ops.add(getOperator("localClock.changes"));
-                       ops.add(getOperator("treeBitMove"));
-                   } else {
-                       if (clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
-                           ops.add(getOperator("uced.mean"));
-                           ops.add(getOperator("upDownUCEDMeanHeights"));
-                       } else if (clockType == ClockType.UNCORRELATED_LOGNORMAL) {
-                           ops.add(getOperator("ucld.mean"));
-                           ops.add(getOperator("ucld.stdev"));
-                           ops.add(getOperator("upDownUCLDMeanHeights"));
-                       } else {
-                           throw new IllegalArgumentException("Unknown clock model");
-                       }
-                       ops.add(getOperator("swapBranchRateCategories"));
-                       ops.add(getOperator("randomWalkBranchRateCategories"));
-                       ops.add(getOperator("unformBranchRateCategories"));
-                   }
-               } else {
-                   if (clockType == ClockType.STRICT_CLOCK) {
-                       // no parameter to operator on
-                   } else if (clockType == ClockType.RANDOM_LOCAL_CLOCK) {
-                       ops.add(getOperator("localClock.rates"));
-                       ops.add(getOperator("localClock.changes"));
-                       ops.add(getOperator("treeBitMove"));
-                   } else {
-                       if (clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
-                           // no parameter to operator on
-                       } else if (clockType == ClockType.UNCORRELATED_LOGNORMAL) {
-                           ops.add(getOperator("ucld.stdev"));
-                       } else {
-                           throw new IllegalArgumentException("Unknown clock model");
-                       }
-                       ops.add(getOperator("swapBranchRateCategories"));
-                       ops.add(getOperator("randomWalkBranchRateCategories"));
-                       ops.add(getOperator("unformBranchRateCategories"));
-                   }
-               }*/
 
             if (errorModelType == ErrorType.AGE_ALL || errorModelType == ErrorType.AGE_TRANSITIONS) {
                 ops.add(getOperator("errorModel.ageRate"));

@@ -34,13 +34,14 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
+import java.awt.*;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: MCMCPanel.java,v 1.16 2006/09/05 13:29:34 rambaut Exp $
  */
-public class MCMCPanel extends OptionsPanel implements Exportable {
+public class MCMCPanel extends BeautiPanel {
 
     /**
      *
@@ -60,35 +61,38 @@ public class MCMCPanel extends OptionsPanel implements Exportable {
     JTextField substTreeFileNameField = new JTextField("untitled(subst).trees");
 
     BeautiFrame frame = null;
+    private final OptionsPanel optionsPanel;
 
     public MCMCPanel(BeautiFrame parent) {
+        setLayout(new BorderLayout());
 
-        super(12, 24);
+        optionsPanel = new OptionsPanel(12, 24);
 
         this.frame = parent;
 
         setOpaque(false);
+        optionsPanel.setOpaque(false);
 
         chainLengthField.setValue(100000);
         chainLengthField.setColumns(10);
-        addComponentWithLabel("Length of chain:", chainLengthField);
+        optionsPanel.addComponentWithLabel("Length of chain:", chainLengthField);
 
-        addSeparator();
+        optionsPanel.addSeparator();
 
         echoEveryField.setValue(1000);
         echoEveryField.setColumns(10);
-        addComponentWithLabel("Echo state to screen every:", echoEveryField);
+        optionsPanel.addComponentWithLabel("Echo state to screen every:", echoEveryField);
 
         logEveryField.setValue(100);
         logEveryField.setColumns(10);
-        addComponentWithLabel("Log parameters every:", logEveryField);
+        optionsPanel.addComponentWithLabel("Log parameters every:", logEveryField);
 
-        addSeparator();
+        optionsPanel.addSeparator();
 
         logFileNameField.setColumns(32);
-        addComponentWithLabel("Log file name:", logFileNameField);
+        optionsPanel.addComponentWithLabel("Log file name:", logFileNameField);
         treeFileNameField.setColumns(32);
-        addComponentWithLabel("Trees file name:", treeFileNameField);
+        optionsPanel.addComponentWithLabel("Trees file name:", treeFileNameField);
 
 //        addComponent(mapTreeLogCheck);
 //        mapTreeLogCheck.setOpaque(false);
@@ -101,31 +105,31 @@ public class MCMCPanel extends OptionsPanel implements Exportable {
 //        mapTreeFileNameField.setColumns(32);
 //        addComponentWithLabel("MAP tree file name:", mapTreeFileNameField);
 
-        addComponent(substTreeLogCheck);
+        optionsPanel.addComponent(substTreeLogCheck);
         substTreeLogCheck.setOpaque(false);
         substTreeLogCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 substTreeFileNameField.setEnabled(substTreeLogCheck.isSelected());
-                frame.mcmcChanged();
+                frame.setDirty();
             }
         });
 
         substTreeFileNameField.setColumns(32);
-        addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);
+        optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);
 
         java.awt.event.KeyListener listener = new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
-                frame.mcmcChanged();
+                frame.setDirty();
             }
         };
 
-        addSeparator();
+        optionsPanel.addSeparator();
 
-        addComponent(samplePriorCheckBox);
+        optionsPanel.addComponent(samplePriorCheckBox);
         samplePriorCheckBox.setOpaque(false);
         samplePriorCheckBox.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent changeEvent) {
-                frame.mcmcChanged();
+                frame.setDirty();
             }
         });
 
@@ -136,6 +140,9 @@ public class MCMCPanel extends OptionsPanel implements Exportable {
         treeFileNameField.addKeyListener(listener);
         //mapTreeFileNameField.addKeyListener(listener);
         substTreeFileNameField.addKeyListener(listener);
+
+        add(optionsPanel, BorderLayout.CENTER);
+
     }
 
     public void setOptions(BeautiOptions options) {
@@ -191,15 +198,15 @@ public class MCMCPanel extends OptionsPanel implements Exportable {
 
         samplePriorCheckBox.setSelected(options.samplePriorOnly);
 
-        validate();
-        repaint();
+        optionsPanel.validate();
+        optionsPanel.repaint();
     }
 
     public void getOptions(BeautiOptions options) {
-        options.chainLength = chainLengthField.getValue().intValue();
+        options.chainLength = chainLengthField.getValue();
 
-        options.echoEvery = echoEveryField.getValue().intValue();
-        options.logEvery = logEveryField.getValue().intValue();
+        options.echoEvery = echoEveryField.getValue();
+        options.logEvery = logEveryField.getValue();
 
         options.logFileName = logFileNameField.getText();
         options.treeFileName = treeFileNameField.getText();
@@ -214,7 +221,7 @@ public class MCMCPanel extends OptionsPanel implements Exportable {
     }
 
     public JComponent getExportableComponent() {
-        return this;
+        return optionsPanel;
     }
 
 }

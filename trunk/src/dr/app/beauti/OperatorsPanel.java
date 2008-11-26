@@ -43,7 +43,7 @@ import java.util.ArrayList;
  * @author Alexei Drummond
  * @version $Id: OperatorsPanel.java,v 1.12 2005/07/11 14:07:25 rambaut Exp $
  */
-public class OperatorsPanel extends JPanel implements Exportable {
+public class OperatorsPanel extends BeautiPanel implements Exportable {
 
     /**
      *
@@ -122,7 +122,7 @@ public class OperatorsPanel extends JPanel implements Exportable {
     }
 
     public final void operatorsChanged() {
-        frame.operatorsChanged();
+        frame.setDirty();
     }
 
     public void setOptions(BeautiOptions options) {

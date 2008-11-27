@@ -2,10 +2,7 @@ package dr.evomodel.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeAttributeProvider;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.*;
 import org.w3c.dom.Document;
@@ -81,7 +78,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         // no intermediates need to be recalculated...
     }
 
-    public void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         calculatePrecisionInfo();
     }
 

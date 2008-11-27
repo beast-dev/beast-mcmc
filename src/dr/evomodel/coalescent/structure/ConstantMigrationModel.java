@@ -27,18 +27,17 @@ package dr.evomodel.coalescent.structure;
 
 import dr.evolution.colouring.ColourChangeMatrix;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 /**
  * A wrapper for ConstantPopulation.
  *
- * @version $Id: ConstantMigrationModel.java,v 1.4 2006/09/08 14:28:07 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: ConstantMigrationModel.java,v 1.4 2006/09/08 14:28:07 rambaut Exp $
  */
-public class ConstantMigrationModel extends MigrationModel
-{
+public class ConstantMigrationModel extends MigrationModel {
     //
     // Public stuff
     //
@@ -81,32 +80,33 @@ public class ConstantMigrationModel extends MigrationModel
     }
 
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         colourChangeMatrix = null;
     }
 
     protected void restoreState() {
         colourChangeMatrix = null;
-    } 
+    }
 
     /**
      * Parses an element from an DOM document into a ConstantPopulation.
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return CONSTANT_MIGRATION_MODEL; }
+        public String getParserName() {
+            return CONSTANT_MIGRATION_MODEL;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             int demeCount = 2;
 
-            XMLObject cxo = (XMLObject)xo.getChild(MIGRATION_RATES);
-            Parameter migrationParameter = (Parameter)cxo.getChild(Parameter.class);
+            XMLObject cxo = (XMLObject) xo.getChild(MIGRATION_RATES);
+            Parameter migrationParameter = (Parameter) cxo.getChild(Parameter.class);
 
 
             return new ConstantMigrationModel(demeCount, migrationParameter);
         }
-
 
         //************************************************************************
         // AbstractXMLObjectParser implementation
@@ -116,16 +116,19 @@ public class ConstantMigrationModel extends MigrationModel
             return "A migration model representing constant migration rates through time.";
         }
 
-        public Class getReturnType() { return ConstantMigrationModel.class; }
+        public Class getReturnType() {
+            return ConstantMigrationModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(MIGRATION_RATES,
-                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) })
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
         };
     };
-
 
     //
     // protected stuff

@@ -25,14 +25,17 @@
 
 package dr.evomodel.branchratemodel;
 
+import dr.evolution.colouring.BranchColouring;
+import dr.evolution.colouring.TreeColouring;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.colouring.TreeColouring;
-import dr.evolution.colouring.BranchColouring;
-import dr.inference.model.*;
-import dr.xml.*;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.coalescent.structure.ColourSamplerModel;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
+import dr.xml.*;
 
 import java.util.logging.Logger;
 
@@ -42,11 +45,10 @@ import java.util.logging.Logger;
  * that branch. The rates for each colour are specified in a multidimensional parameter.
  *
  * @author Andrew Rambaut
- *
  * @version $Id: ColouredTreeRateModel.java,v 1.2 2006/01/10 16:48:27 rambaut Exp $
  */
-public class ColouredTreeRateModel extends AbstractModel implements BranchRateModel  {
-	public static final String COLOURED_TREE_RATE_MODEL = "colouredTreeRateModel";
+public class ColouredTreeRateModel extends AbstractModel implements BranchRateModel {
+    public static final String COLOURED_TREE_RATE_MODEL = "colouredTreeRateModel";
     public static final String SUBSTITUTION_RATES = "substitutionRates";
 
     private final ColourSamplerModel colourSamplerModel;
@@ -77,7 +79,7 @@ public class ColouredTreeRateModel extends AbstractModel implements BranchRateMo
         fireModelChanged();
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         // Rate Parameters have changed
         ratesCalculated = false;
         fireModelChanged();
@@ -108,13 +110,13 @@ public class ColouredTreeRateModel extends AbstractModel implements BranchRateMo
         return rates[node.getNumber()];
     }
 
-	public String getBranchAttributeLabel() {
-		return "rate";
-	}
+    public String getBranchAttributeLabel() {
+        return "rate";
+    }
 
-	public String getAttributeForBranch(Tree tree, NodeRef node) {
-		return Double.toString(getBranchRate(tree, node));
-	}
+    public String getAttributeForBranch(Tree tree, NodeRef node) {
+        return Double.toString(getBranchRate(tree, node));
+    }
 
     /**
      * Traverse the tree calculating rates.
@@ -154,15 +156,17 @@ public class ColouredTreeRateModel extends AbstractModel implements BranchRateMo
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return COLOURED_TREE_RATE_MODEL; }
+        public String getParserName() {
+            return COLOURED_TREE_RATE_MODEL;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-            ColourSamplerModel colourSamplerModel = (ColourSamplerModel)xo.getChild(ColourSamplerModel.class);
+            ColourSamplerModel colourSamplerModel = (ColourSamplerModel) xo.getChild(ColourSamplerModel.class);
 
-            Parameter substitutionRatesParameter = (Parameter)xo.getElementFirstChild(SUBSTITUTION_RATES);
+            Parameter substitutionRatesParameter = (Parameter) xo.getElementFirstChild(SUBSTITUTION_RATES);
 
             Logger.getLogger("dr.evomodel").info("Using coloured tree clock model.");
 
@@ -180,11 +184,15 @@ public class ColouredTreeRateModel extends AbstractModel implements BranchRateMo
                             "that branch. The rates for each colour are specified in a multidimensional parameter.";
         }
 
-        public Class getReturnType() { return ColouredTreeRateModel.class; }
+        public Class getReturnType() {
+            return ColouredTreeRateModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class, "The tree model"),
                 new ElementRule(ColourSamplerModel.class, "The colour sampler model"),
                 new ElementRule(SUBSTITUTION_RATES, Parameter.class, "The substitution rates of the different colours", false)

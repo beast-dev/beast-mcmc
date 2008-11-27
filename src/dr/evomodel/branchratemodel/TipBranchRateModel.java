@@ -30,14 +30,14 @@ import dr.evolution.tree.Tree;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 /**
  * @author Andrew Rambaut
- *
  * @version $Id: TipBranchRateModel.java,v 1.1 2005/12/14 16:46:20 rambaut Exp $
  */
-public class TipBranchRateModel extends AbstractModel implements BranchRateModel  {
+public class TipBranchRateModel extends AbstractModel implements BranchRateModel {
 
     public static final String TIP_BRANCH_RATE_MODEL = "tipBranchRateModel";
     public static final String EXTERNAL_RATE = "externalRate";
@@ -61,7 +61,7 @@ public class TipBranchRateModel extends AbstractModel implements BranchRateModel
         fireModelChanged();
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         fireModelChanged();
     }
 
@@ -71,18 +71,21 @@ public class TipBranchRateModel extends AbstractModel implements BranchRateModel
     protected void restoreState() {
     }
 
-    protected void acceptState() {}
+    protected void acceptState() {
+    }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return TIP_BRANCH_RATE_MODEL; }
+        public String getParserName() {
+            return TIP_BRANCH_RATE_MODEL;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Parameter externalRateParameter = (Parameter)xo.getElementFirstChild(EXTERNAL_RATE);
-            Parameter internalRateParameter = (Parameter)xo.getElementFirstChild(INTERNAL_RATE);
+            Parameter externalRateParameter = (Parameter) xo.getElementFirstChild(EXTERNAL_RATE);
+            Parameter internalRateParameter = (Parameter) xo.getElementFirstChild(INTERNAL_RATE);
 
-            TipBranchRateModel tipBranchRateModel =  new TipBranchRateModel(externalRateParameter, internalRateParameter);
+            TipBranchRateModel tipBranchRateModel = new TipBranchRateModel(externalRateParameter, internalRateParameter);
 
             System.out.println("Using tip branch rate model.");
 
@@ -98,11 +101,15 @@ public class TipBranchRateModel extends AbstractModel implements BranchRateModel
                     "This element returns a branch rate model that has a different rate for external branches than internal.";
         }
 
-        public Class getReturnType() { return TipBranchRateModel.class; }
+        public Class getReturnType() {
+            return TipBranchRateModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(EXTERNAL_RATE, Parameter.class, "The molecular evolutionary rate parameter for external branches", false),
                 new ElementRule(INTERNAL_RATE, Parameter.class, "The molecular evolutionary rate parameter for internal branches", false)
         };
@@ -117,13 +124,13 @@ public class TipBranchRateModel extends AbstractModel implements BranchRateModel
         }
     }
 
-	public String getBranchAttributeLabel() {
-		return "rate";
-	}
+    public String getBranchAttributeLabel() {
+        return "rate";
+    }
 
-	public String getAttributeForBranch(Tree tree, NodeRef node) {
-		return Double.toString(getBranchRate(tree, node));
-	}
+    public String getAttributeForBranch(Tree tree, NodeRef node) {
+        return Double.toString(getBranchRate(tree, node));
+    }
 
 
 }

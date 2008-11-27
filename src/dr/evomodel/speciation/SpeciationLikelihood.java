@@ -30,10 +30,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.HashSet;
@@ -103,7 +100,7 @@ public class SpeciationLikelihood extends AbstractModel implements Likelihood, U
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
     } // No parameters to respond to
 
     // **************************************************************

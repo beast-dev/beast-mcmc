@@ -163,7 +163,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
     /**
      * Called when a parameter changes.
      */
-    public void handleParameterChangedEvent(Parameter parameter, int index) {
+    public void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         Node node = getNodeOfParameter(parameter);
         pushTreeChangedEvent(node, parameter, index);
     }

@@ -25,25 +25,20 @@
 
 package dr.evomodel.coalescent.structure;
 
-import dr.inference.model.Parameter;
-import dr.inference.model.Model;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Statistic;
-import dr.xml.*;
 import dr.evomodel.coalescent.DemographicModel;
+import dr.inference.model.*;
+import dr.xml.*;
 
-import java.util.*;
+import java.util.ArrayList;
 
 /**
  * A wrapper for ConstantPopulation.
  *
- * @version $Id: MetaPopulationModel.java,v 1.3 2006/09/11 09:33:01 gerton Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: MetaPopulationModel.java,v 1.3 2006/09/11 09:33:01 gerton Exp $
  */
-public class MetaPopulationModel extends AbstractModel
-{
+public class MetaPopulationModel extends AbstractModel {
     //
     // Public stuff
     //
@@ -66,29 +61,29 @@ public class MetaPopulationModel extends AbstractModel
         super(name);
 
         this.populationProportions = populationProportions;
- 
+
         if (populationProportions != null) {
-        	
-        	// Single demographic, each with a different weight
+
+            // Single demographic, each with a different weight
             addParameter(populationProportions);
             populationProportions.addBounds(new Parameter.DefaultBounds(1.0, 0.0, populationProportions.getDimension()));
-        	populationCount = populationProportions.getDimension() + 1;
-        	// Add copies of the demographicModel to the array
-            for (int i=1; i<populationCount; i++) {
-            	demographicModelList.add( demographicModelList.get(0) );
+            populationCount = populationProportions.getDimension() + 1;
+            // Add copies of the demographicModel to the array
+            for (int i = 1; i < populationCount; i++) {
+                demographicModelList.add(demographicModelList.get(0));
             }
-            demographicModels = demographicModelList.toArray( new DemographicModel[0] );
+            demographicModels = demographicModelList.toArray(new DemographicModel[0]);
             addModel(demographicModels[0]);
 
         } else {
-        
-        	// Several demographic models
-        	populationCount = demographicModelList.size();
-        	demographicModels = demographicModelList.toArray( new DemographicModel[0] );
-        	for (int i=0; i<populationCount; i++) {
-        		addModel( demographicModels[i] );
-        	}
-        	
+
+            // Several demographic models
+            populationCount = demographicModelList.size();
+            demographicModels = demographicModelList.toArray(new DemographicModel[0]);
+            for (int i = 0; i < populationCount; i++) {
+                addModel(demographicModels[i]);
+            }
+
         }
 
         addStatistic(populationSizesStatistic);
@@ -96,55 +91,55 @@ public class MetaPopulationModel extends AbstractModel
 
     // general functions
 
-    private double getProportion( int population ) {
-    	
-    	if (populationProportions == null) {
-    		return 1.0;
-    	}
-    	if (population > 0) {
-    		return populationProportions.getParameterValue( population - 1);
-    	}
-    	double proportion = 1.0;
-    	for (int i = 1; i < populationCount; i++) {
-    		proportion -= populationProportions.getParameterValue( i-1 );
-    	}
-    	return proportion;
+    private double getProportion(int population) {
+
+        if (populationProportions == null) {
+            return 1.0;
+        }
+        if (population > 0) {
+            return populationProportions.getParameterValue(population - 1);
+        }
+        double proportion = 1.0;
+        for (int i = 1; i < populationCount; i++) {
+            proportion -= populationProportions.getParameterValue(i - 1);
+        }
+        return proportion;
     }
 
-    
+
     int getPopulationCount() {
-    	
-    	return populationCount;
-    	
+
+        return populationCount;
+
     }
 
     public double[] getPopulationSizes(double time) {
 
-    	// make population size array
+        // make population size array
         double[] N = new double[populationCount];
         for (int i = 0; i < populationCount; i++) {
-            N[i] = demographicModels[i].getDemographicFunction().getDemographic(time) * getProportion( i );
+            N[i] = demographicModels[i].getDemographicFunction().getDemographic(time) * getProportion(i);
         }
-        
+
         return N;
     }
-    
+
     /* returns value of demographic function at time t  (population size; one entry of double[] getPopulationSizes)
-     * (This function mirrors an equivalent function in DemographicFunction)
-     */
+    * (This function mirrors an equivalent function in DemographicFunction)
+    */
     public double getDemographic(double time, int population) {
-    	
-    	return demographicModels[population].getDemographicFunction().getDemographic(time) * getProportion( population );
-    	
+
+        return demographicModels[population].getDemographicFunction().getDemographic(time) * getProportion(population);
+
     }
-    
+
     /* calculates the integral 1/N(x) dx from start to finish, for one of the populations
-     * (This function mirrors an equivalent function in DemographicFunction)
-     */ 
+    * (This function mirrors an equivalent function in DemographicFunction)
+    */
     public double getIntegral(double start, double finish, int population) {
-    	
-    	double integral = demographicModels[population].getDemographicFunction().getIntegral( start, finish );
-    	return integral / getProportion(population);
+
+        double integral = demographicModels[population].getDemographicFunction().getIntegral(start, finish);
+        return integral / getProportion(population);
 
     }
 
@@ -156,13 +151,17 @@ public class MetaPopulationModel extends AbstractModel
         fireModelChanged();
     }
 
-    protected void storeState() {} // no additional state needs storing
+    protected void storeState() {
+    } // no additional state needs storing
+
     protected void restoreState() {
         fireModelChanged();
     } // no additional state needs restoring
-    protected void acceptState() {} // no additional state needs accepting
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected void acceptState() {
+    } // no additional state needs accepting
+
+    public void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         // nothing to do
     }
 
@@ -172,10 +171,12 @@ public class MetaPopulationModel extends AbstractModel
             return "populationSizes";
         }
 
-        public int getDimension() { return populationCount; }
+        public int getDimension() {
+            return populationCount;
+        }
 
         public double getStatisticValue(int dim) {
-        	
+
             double metaN0 = demographicModels[dim].getDemographicFunction().getDemographic(0);
             return metaN0 * getProportion(dim);
         }
@@ -187,41 +188,42 @@ public class MetaPopulationModel extends AbstractModel
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return MetaPopulationModel.META_POPULATION_MODEL; }
-        
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-        	ArrayList<DemographicModel> demographics = new ArrayList<DemographicModel>(0);
-        	Parameter populationProportions = null;
-        	
-        	for (int i=0; i<xo.getChildCount(); ++i) {
-        		final Object o = xo.getChild(i);
-        		if ( o instanceof DemographicModel ) {
-        			demographics.add( (DemographicModel) o );
-        		} else if ( o instanceof Parameter ) {
-        			if ( populationProportions != null) {
-        				throw new Error("Allowed at most one Parameter in a MetaPopulationModel");
-        			}
-        			populationProportions = (Parameter)o;
-        		} else {
-        			throw new Error("A MetaPopulationModel may only have children of type Parameter or DemographicModel");
-        		}
-        	}
-        	
-        	// Do sanity checking.
-        	if (populationProportions == null) {
-        		if (demographics.size() < 2) {
-        			throw new Error("A MetaPopulationModel must have at least 2 DemographicModels (or a Parameter)");
-        		}
-        	} else {
-        		if (demographics.size() != 1) {
-        			throw new Error("A MetaPopulationModel with a Parameter must have exactly one DemographicModel");
-        		}
-        	}
-        	
-            return new MetaPopulationModel(demographics, populationProportions);
+        public String getParserName() {
+            return MetaPopulationModel.META_POPULATION_MODEL;
         }
 
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            ArrayList<DemographicModel> demographics = new ArrayList<DemographicModel>(0);
+            Parameter populationProportions = null;
+
+            for (int i = 0; i < xo.getChildCount(); ++i) {
+                final Object o = xo.getChild(i);
+                if (o instanceof DemographicModel) {
+                    demographics.add((DemographicModel) o);
+                } else if (o instanceof Parameter) {
+                    if (populationProportions != null) {
+                        throw new Error("Allowed at most one Parameter in a MetaPopulationModel");
+                    }
+                    populationProportions = (Parameter) o;
+                } else {
+                    throw new Error("A MetaPopulationModel may only have children of type Parameter or DemographicModel");
+                }
+            }
+
+            // Do sanity checking.
+            if (populationProportions == null) {
+                if (demographics.size() < 2) {
+                    throw new Error("A MetaPopulationModel must have at least 2 DemographicModels (or a Parameter)");
+                }
+            } else {
+                if (demographics.size() != 1) {
+                    throw new Error("A MetaPopulationModel with a Parameter must have exactly one DemographicModel");
+                }
+            }
+
+            return new MetaPopulationModel(demographics, populationProportions);
+        }
 
         //************************************************************************
         // AbstractXMLObjectParser implementation
@@ -231,16 +233,19 @@ public class MetaPopulationModel extends AbstractModel
             return "A model that represents a subdivided population.";
         }
 
-        public Class getReturnType() { return MetaPopulationModel.class; }
+        public Class getReturnType() {
+            return MetaPopulationModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                new ElementRule(DemographicModel.class,1,999),    // at least one required
-                new ElementRule(Parameter.class,true)             // optional
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(DemographicModel.class, 1, 999),    // at least one required
+                new ElementRule(Parameter.class, true)             // optional
         };
     };
-
 
     //
     // protected stuff

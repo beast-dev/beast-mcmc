@@ -1,12 +1,12 @@
 package dr.evomodel.treelikelihood;
 
+import dr.evolution.alignment.PatternList;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.evolution.alignment.PatternList;
-import dr.evolution.util.TaxonList;
-import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
+import dr.inference.model.ParameterChangeType;
 
 /**
  * @author Andrew Rambaut
@@ -27,7 +27,7 @@ public abstract class TipPartialsModel extends AbstractModel {
 
     public final void setTree(Tree tree) {
         this.tree = tree;
-        
+
         int extNodeCount = tree.getExternalNodeCount();
 
         excluded = new boolean[extNodeCount];
@@ -77,7 +77,7 @@ public abstract class TipPartialsModel extends AbstractModel {
      * some information that requires them. This mechanism is 'lazy' so that this method
      * can be safely called multiple times with minimal computational cost.
      */
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         fireModelChanged();
     }
 

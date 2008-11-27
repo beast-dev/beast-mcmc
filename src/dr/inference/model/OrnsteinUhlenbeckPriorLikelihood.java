@@ -96,7 +96,7 @@ public class OrnsteinUhlenbeckPriorLikelihood extends Likelihood.Abstract implem
         return logL;
     }
 
-    public void parameterChangedEvent(Parameter parameter, int index) {
+    public void parameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         makeDirty();
     }
 

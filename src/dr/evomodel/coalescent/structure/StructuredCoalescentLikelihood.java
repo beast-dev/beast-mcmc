@@ -38,10 +38,9 @@ import java.util.logging.Logger;
 /**
  * A likelihood function for a structered coalescent model
  *
- * @version $Id: StructuredCoalescentLikelihood.java,v 1.20 2006/09/11 09:33:01 gerton Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: StructuredCoalescentLikelihood.java,v 1.20 2006/09/11 09:33:01 gerton Exp $
  */
 public class StructuredCoalescentLikelihood extends AbstractModel implements Likelihood {
 
@@ -52,7 +51,7 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
     public static final String MIGRATION_MODEL = "migrationModel";
     public static final String POPULATION = "population";
 
-    public StructuredCoalescentLikelihood(TreeModel treeModel, MetaPopulationModel metaPopulationModel, ColourSamplerModel colourSamplerModel, MigrationModel migrationModel)  {
+    public StructuredCoalescentLikelihood(TreeModel treeModel, MetaPopulationModel metaPopulationModel, ColourSamplerModel colourSamplerModel, MigrationModel migrationModel) {
         this(STRUCTURED_COALESCENT_LIKELIHOOD, treeModel, metaPopulationModel, colourSamplerModel, migrationModel);
     }
 
@@ -94,7 +93,7 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         likelihoodKnown = false;
     }
 
@@ -116,13 +115,16 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
         logLikelihood = storedLogLikelihood;
     }
 
-    protected final void acceptState() { } // nothing to do
+    protected final void acceptState() {
+    } // nothing to do
 
     // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-    public final Model getModel() { return this; }
+    public final Model getModel() {
+        return this;
+    }
 
     public final double getLogLikelihood() {
         likelihoodKnown = false;
@@ -156,7 +158,6 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
         return logL;
     }
 
-
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
@@ -165,14 +166,19 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
      * @return the log columns.
      */
     public final dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[] {
+        return new dr.inference.loggers.LogColumn[]{
                 new LikelihoodColumn(getId())
         };
     }
 
     private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) { super(label); }
-        public double getDoubleValue() { return getLogLikelihood(); }
+        public LikelihoodColumn(String label) {
+            super(label);
+        }
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
     }
 
     // ****************************************************************
@@ -185,7 +191,9 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
             return "migrationWaitingTimes";
         }
 
-        public int getDimension() { return metaPopulationModel.getPopulationCount(); }
+        public int getDimension() {
+            return metaPopulationModel.getPopulationCount();
+        }
 
         public double getStatisticValue(int dim) {
             double[] migrationRates = migrationModel.getMigrationRates(0);
@@ -200,7 +208,9 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
             return "coalescentWaitingTime";
         }
 
-        public int getDimension() { return 1; }
+        public int getDimension() {
+            return 1;
+        }
 
         public double getStatisticValue(int dim) {
             double[] popSizes = metaPopulationModel.getPopulationSizes(0);
@@ -208,7 +218,7 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
 
             double sum = 0.0;
             for (int i = 0; i < popSizes.length; i++) {
-                sum += ((double)counts[i]) / popSizes[i];
+                sum += ((double) counts[i]) / popSizes[i];
             }
 
             return 1.0 / sum;
@@ -218,17 +228,19 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return STRUCTURED_COALESCENT_LIKELIHOOD; }
+        public String getParserName() {
+            return STRUCTURED_COALESCENT_LIKELIHOOD;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-            ColourSamplerModel colourSamplerModel = (ColourSamplerModel)xo.getChild(ColourSamplerModel.class);
+            ColourSamplerModel colourSamplerModel = (ColourSamplerModel) xo.getChild(ColourSamplerModel.class);
 
-            MigrationModel migrationModel = (MigrationModel)xo.getChild(MigrationModel.class);
+            MigrationModel migrationModel = (MigrationModel) xo.getChild(MigrationModel.class);
 
-            MetaPopulationModel metaPopulationModel = (MetaPopulationModel)xo.getChild(MetaPopulationModel.class);
+            MetaPopulationModel metaPopulationModel = (MetaPopulationModel) xo.getChild(MetaPopulationModel.class);
 
             StructuredCoalescentLikelihood likelihood = new StructuredCoalescentLikelihood(treeModel, metaPopulationModel, colourSamplerModel, migrationModel);
 
@@ -245,11 +257,15 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
             return "This element represents a likelihood function for transmission.";
         }
 
-        public Class getReturnType() { return StructuredCoalescentLikelihood.class; }
+        public Class getReturnType() {
+            return StructuredCoalescentLikelihood.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class, "The tree."),
                 new ElementRule(ColourSamplerModel.class, "The colour sampler model."),
                 new ElementRule(MigrationModel.class, "The migration model."),

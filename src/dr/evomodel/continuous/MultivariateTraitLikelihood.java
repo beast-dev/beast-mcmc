@@ -143,7 +143,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
 
         likelihoodKnown = false;
 
@@ -513,8 +513,8 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class, true),
                 AttributeRule.newDoubleArrayRule("cut", true),
-                AttributeRule.newBooleanRule(REPORT_MULTIVARIATE,true),
-                AttributeRule.newBooleanRule(TREE_LENGTH,true),
+                AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),
+                AttributeRule.newBooleanRule(TREE_LENGTH, true),
                 new ElementRule(Parameter.class, true),
                 new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)

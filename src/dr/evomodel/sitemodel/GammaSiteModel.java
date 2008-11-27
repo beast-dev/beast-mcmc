@@ -25,10 +25,12 @@
 
 package dr.evomodel.sitemodel;
 
-import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
@@ -325,7 +327,7 @@ public class GammaSiteModel extends AbstractModel
         listenerHelper.fireModelChanged(this, object, index);
     }
 
-    public void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         if (parameter == shapeParameter) {
             ratesKnown = false;
         } else if (parameter == invarParameter) {

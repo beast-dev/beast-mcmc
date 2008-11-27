@@ -23,12 +23,13 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.substmodel;                                 
+package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.math.MachineAccuracy;
 
 import java.util.LinkedList;
@@ -112,7 +113,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
         frequenciesChanged();
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         // relativeRates changed
         updateMatrix = true;
         ratesChanged();

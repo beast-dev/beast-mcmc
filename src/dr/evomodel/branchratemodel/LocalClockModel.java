@@ -27,12 +27,13 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
 import dr.evolution.util.Taxa;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -40,10 +41,9 @@ import java.util.Set;
 
 /**
  * @author Andrew Rambaut
- *
  * @version $Id: LocalClockModel.java,v 1.1 2005/04/05 09:27:48 rambaut Exp $
  */
-public class LocalClockModel extends AbstractModel implements BranchRateModel  {
+public class LocalClockModel extends AbstractModel implements BranchRateModel {
 
     public static final String LOCAL_CLOCK_MODEL = "localClockModel";
     public static final String CLADE = "clade";
@@ -55,13 +55,13 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
     protected ArrayList localClocks = new ArrayList();
 
 
-	public LocalClockModel(TreeModel treeModel) {
+    public LocalClockModel(TreeModel treeModel) {
 
         super(LOCAL_CLOCK_MODEL);
         this.treeModel = treeModel;
 
         addModel(treeModel);
-	}
+    }
 
     private void addExternalBranchClock(Parameter rateParameter, TaxonList taxonList) throws Tree.MissingTaxonException {
         Set leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
@@ -76,11 +76,11 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
         localClocks.add(clock);
     }
 
-	public void handleModelChangedEvent(Model model, Object object, int index) {
+    public void handleModelChangedEvent(Model model, Object object, int index) {
         fireModelChanged();
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         fireModelChanged();
     }
 
@@ -90,28 +90,31 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
     protected void restoreState() {
     }
 
-    protected void acceptState() {}
+    protected void acceptState() {
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return LOCAL_CLOCK_MODEL; }
+        public String getParserName() {
+            return LOCAL_CLOCK_MODEL;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			TreeModel tree = (TreeModel)xo.getChild(TreeModel.class);
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
-            LocalClockModel localClockModel =  new LocalClockModel(tree);
+            LocalClockModel localClockModel = new LocalClockModel(tree);
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 if (xo.getChild(i) instanceof XMLObject) {
 
-                    XMLObject xoc = (XMLObject)xo.getChild(i);
+                    XMLObject xoc = (XMLObject) xo.getChild(i);
                     if (xoc.getName().equals(CLADE)) {
 
-                        Parameter rateParameter = (Parameter)xoc.getElementFirstChild(RELATIVE_RATE);
-                        TaxonList taxonList = (TaxonList)xoc.getChild(TaxonList.class);
+                        Parameter rateParameter = (Parameter) xoc.getElementFirstChild(RELATIVE_RATE);
+                        TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
 
-                        if (taxonList.getTaxonCount()==1) {
+                        if (taxonList.getTaxonCount() == 1) {
                             throw new XMLParseException("A local clock for a clade must be defined by at least two taxa");
                         }
 
@@ -129,8 +132,8 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
                         }
                     } else if (xoc.getName().equals(EXTERNAL_BRANCHES)) {
 
-                        Parameter rateParameter = (Parameter)xoc.getElementFirstChild(RELATIVE_RATE);
-                        TaxonList taxonList = (TaxonList)xoc.getChild(TaxonList.class);
+                        Parameter rateParameter = (Parameter) xoc.getElementFirstChild(RELATIVE_RATE);
+                        TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
 
 
                         try {
@@ -146,35 +149,39 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
 
             System.out.println("Using local clock branch rate model.");
 
-			return localClockModel;
+            return localClockModel;
         }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return
-				"This element returns a branch rate model that adds a delta to each terminal branch length.";
-		}
+        public String getParserDescription() {
+            return
+                    "This element returns a branch rate model that adds a delta to each terminal branch length.";
+        }
 
-		public Class getReturnType() { return LocalClockModel.class; }
+        public Class getReturnType() {
+            return LocalClockModel.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(TreeModel.class),
-            new ElementRule(EXTERNAL_BRANCHES,
-                new XMLSyntaxRule[] {
-                    new ElementRule(Taxa.class, "A local clock that will be applied only to the external branches for these taxa"),
-                    new ElementRule(RELATIVE_RATE, Parameter.class, "The relative rate parameter", false),
-                }, 0, Integer.MAX_VALUE),
-            new ElementRule(CLADE,
-                new XMLSyntaxRule[] {
-                    AttributeRule.newBooleanRule(INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel."),
-                    new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
-                    new ElementRule(RELATIVE_RATE, Parameter.class, "The relative rate parameter", false),
-                }, 0, Integer.MAX_VALUE)
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(TreeModel.class),
+                new ElementRule(EXTERNAL_BRANCHES,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(Taxa.class, "A local clock that will be applied only to the external branches for these taxa"),
+                                new ElementRule(RELATIVE_RATE, Parameter.class, "The relative rate parameter", false),
+                        }, 0, Integer.MAX_VALUE),
+                new ElementRule(CLADE,
+                        new XMLSyntaxRule[]{
+                                AttributeRule.newBooleanRule(INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel."),
+                                new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
+                                new ElementRule(RELATIVE_RATE, Parameter.class, "The relative rate parameter", false),
+                        }, 0, Integer.MAX_VALUE)
         };
     };
 
@@ -193,13 +200,13 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
         return 1.0;
     }
 
-	public String getBranchAttributeLabel() {
-		return "rate";
-	}
+    public String getBranchAttributeLabel() {
+        return "rate";
+    }
 
-	public String getAttributeForBranch(Tree tree, NodeRef node) {
-		return Double.toString(getBranchRate(tree, node));
-	}
+    public String getAttributeForBranch(Tree tree, NodeRef node) {
+        return Double.toString(getBranchRate(tree, node));
+    }
 
     private Parameter findRateParameter(Tree tree, NodeRef node, NodeRef targetNode) {
         if (tree.isExternal(node)) {
@@ -230,9 +237,17 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel  {
             return Tree.Utils.getCommonAncestorNode(treeModel, leafSet).getNumber();
         }
 
-        boolean includeStem() { return this.includeStem; }
-        boolean isClade() { return this.isClade; }
-        Parameter getRateParameter() { return this.rateParameter; }
+        boolean includeStem() {
+            return this.includeStem;
+        }
+
+        boolean isClade() {
+            return this.isClade;
+        }
+
+        Parameter getRateParameter() {
+            return this.rateParameter;
+        }
 
         Parameter rateParameter;
         Set leafSet;

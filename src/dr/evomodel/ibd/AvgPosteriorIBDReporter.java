@@ -9,10 +9,7 @@ import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.substmodel.HKY;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.NodePosteriorTreeLikelihood;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
 
 /**
@@ -259,7 +256,7 @@ public class AvgPosteriorIBDReporter extends AbstractModel implements NodeAttrib
         }
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         if (parameter == mutationParameter) {
             weightsKnown = false;
         } else {

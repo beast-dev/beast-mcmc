@@ -35,10 +35,7 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
 
 /**
@@ -47,10 +44,9 @@ import dr.xml.*;
  * hosts with known history of transmission. The viruses tree should have tip
  * attributes specifying which host they are from (host="").
  *
- * @version $Id: TransmissionLikelihood.java,v 1.13 2005/06/15 17:20:54 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: TransmissionLikelihood.java,v 1.13 2005/06/15 17:20:54 rambaut Exp $
  */
 public class TransmissionLikelihood extends AbstractModel implements Likelihood, Units {
 
@@ -75,12 +71,12 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
 
         this.hostTree = hostTree;
         if (hostTree instanceof TreeModel) {
-            addModel((TreeModel)hostTree);
+            addModel((TreeModel) hostTree);
         }
 
         this.virusTree = virusTree;
         if (virusTree instanceof TreeModel) {
-            addModel((TreeModel)virusTree);
+            addModel((TreeModel) virusTree);
         }
 
         this.sourceDemographic = sourceDemographic;
@@ -90,8 +86,9 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
         addModel(transmissionModel);
 
         for (int i = 0; i < virusTree.getExternalNodeCount(); i++) {
-            Taxon hostTaxon = (Taxon)virusTree.getTaxonAttribute(i, "host");
-            if (hostTaxon == null) throw new TaxonList.MissingTaxonException("One or more of the viruses tree's taxa are missing the 'host' attribute");
+            Taxon hostTaxon = (Taxon) virusTree.getTaxonAttribute(i, "host");
+            if (hostTaxon == null)
+                throw new TaxonList.MissingTaxonException("One or more of the viruses tree's taxa are missing the 'host' attribute");
 
             int host = hostTree.getTaxonIndex(hostTaxon);
             if (host == -1) throw new TaxonList.MissingTaxonException("One of the viruses tree's host attribute, " +
@@ -116,11 +113,11 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
         super(name);
 
         this.transmissionHistoryModel = transmissionHistoryModel;
-        addModel((TransmissionHistoryModel)transmissionHistoryModel);
+        addModel((TransmissionHistoryModel) transmissionHistoryModel);
 
         this.virusTree = virusTree;
         if (virusTree instanceof TreeModel) {
-            addModel((TreeModel)virusTree);
+            addModel((TreeModel) virusTree);
         }
 
         this.sourceDemographic = sourceDemographic;
@@ -130,8 +127,9 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
         addModel(transmissionModel);
 
         for (int i = 0; i < virusTree.getExternalNodeCount(); i++) {
-            Taxon hostTaxon = (Taxon)virusTree.getTaxonAttribute(i, "host");
-            if (hostTaxon == null) throw new TaxonList.MissingTaxonException("One or more of the viruses tree's taxa are missing the 'host' attribute");
+            Taxon hostTaxon = (Taxon) virusTree.getTaxonAttribute(i, "host");
+            if (hostTaxon == null)
+                throw new TaxonList.MissingTaxonException("One or more of the viruses tree's taxa are missing the 'host' attribute");
 
             int host = transmissionHistoryModel.getHostIndex(hostTaxon);
             if (host == -1) throw new TaxonList.MissingTaxonException("One of the viruses tree's host attribute, " +
@@ -221,7 +219,8 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index) { } // No parameters to respond to
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    }
 
     // **************************************************************
     // Model IMPLEMENTATION
@@ -240,13 +239,16 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
         likelihoodKnown = false;
     }
 
-    protected final void acceptState() { } // nothing to do
+    protected final void acceptState() {
+    } // nothing to do
 
     // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-    public final Model getModel() { return this; }
+    public final Model getModel() {
+        return this;
+    }
 
     public final double getLogLikelihood() {
         if (!likelihoodKnown) {
@@ -358,7 +360,7 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
         int host;
 
         if (virusTree.isExternal(node)) {
-            Taxon hostTaxon = (Taxon)virusTree.getTaxonAttribute(node.getNumber(), "host");
+            Taxon hostTaxon = (Taxon) virusTree.getTaxonAttribute(node.getNumber(), "host");
 
             if (transmissionHistoryModel != null) {
                 host = transmissionHistoryModel.getHostIndex(hostTaxon);
@@ -415,14 +417,19 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
      * @return the log columns.
      */
     public final dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[] {
+        return new dr.inference.loggers.LogColumn[]{
                 new LikelihoodColumn(getId())
         };
     }
 
     private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) { super(label); }
-        public double getDoubleValue() { return getLogLikelihood(); }
+        public LikelihoodColumn(String label) {
+            super(label);
+        }
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
     }
 
     // **************************************************************
@@ -433,8 +440,7 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
      * Sets the units these coalescent intervals are
      * measured in.
      */
-    public final void setUnits(Type u)
-    {
+    public final void setUnits(Type u) {
         transmissionModel.setUnits(u);
     }
 
@@ -442,33 +448,34 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
      * Returns the units these coalescent intervals are
      * measured in.
      */
-    public final Type getUnits()
-    {
+    public final Type getUnits() {
         return transmissionModel.getUnits();
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return TRANSMISSION_LIKELIHOOD; }
+        public String getParserName() {
+            return TRANSMISSION_LIKELIHOOD;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            DemographicModel demoModel0 = (DemographicModel)xo.getElementFirstChild(SOURCE_PATIENT);
-            TransmissionDemographicModel demoModel1 = (TransmissionDemographicModel)xo.getChild(TransmissionDemographicModel.class);
+            DemographicModel demoModel0 = (DemographicModel) xo.getElementFirstChild(SOURCE_PATIENT);
+            TransmissionDemographicModel demoModel1 = (TransmissionDemographicModel) xo.getChild(TransmissionDemographicModel.class);
 
-            Tree virusTree = (Tree)xo.getElementFirstChild("parasiteTree");
+            Tree virusTree = (Tree) xo.getElementFirstChild("parasiteTree");
 
             TransmissionLikelihood likelihood = null;
 
             if (xo.getChild(TransmissionHistoryModel.class) != null) {
-                TransmissionHistoryModel history = (TransmissionHistoryModel)xo.getChild(TransmissionHistoryModel.class);
+                TransmissionHistoryModel history = (TransmissionHistoryModel) xo.getChild(TransmissionHistoryModel.class);
                 try {
                     likelihood = new TransmissionLikelihood(history, virusTree, demoModel0, demoModel1);
                 } catch (TaxonList.MissingTaxonException e) {
                     throw new XMLParseException(e.toString());
                 }
             } else {
-                Tree hostTree = (Tree)xo.getElementFirstChild("hostTree");
+                Tree hostTree = (Tree) xo.getElementFirstChild("hostTree");
                 try {
                     likelihood = new TransmissionLikelihood(hostTree, virusTree, demoModel0, demoModel1);
                 } catch (TaxonList.MissingTaxonException e) {
@@ -487,23 +494,27 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
             return "This element represents a likelihood function for transmission.";
         }
 
-        public Class getReturnType() { return TransmissionLikelihood.class; }
+        public Class getReturnType() {
+            return TransmissionLikelihood.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(SOURCE_PATIENT, DemographicModel.class,
                         "This describes the demographic process for the source donor patient."),
                 new ElementRule(TransmissionDemographicModel.class,
                         "This describes the demographic process for the recipient patients."),
                 new XORRule(
                         new ElementRule("hostTree",
-                                new XMLSyntaxRule[] { new ElementRule(Tree.class) }),
+                                new XMLSyntaxRule[]{new ElementRule(Tree.class)}),
                         new ElementRule(TransmissionHistoryModel.class,
                                 "This describes the transmission history of the patients.")
                 ),
                 new ElementRule("parasiteTree",
-                        new XMLSyntaxRule[] { new ElementRule(Tree.class) })
+                        new XMLSyntaxRule[]{new ElementRule(Tree.class)})
         };
     };
 
@@ -520,32 +531,47 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
     }
 
 
-
-    /** The demographic models. */
+    /**
+     * The demographic models.
+     */
     private DemographicModel sourceDemographic = null;
     private TransmissionDemographicModel transmissionModel = null;
 
-    /** The host tree. */
+    /**
+     * The host tree.
+     */
     private Tree hostTree = null;
 
     private TransmissionHistoryModel transmissionHistoryModel = null;
 
-    /** The viruses tree. */
+    /**
+     * The viruses tree.
+     */
     private Tree virusTree = null;
 
-    /** The number of hosts. */
+    /**
+     * The number of hosts.
+     */
     private int hostCount;
 
-    /** The intervals for each host. */
+    /**
+     * The intervals for each host.
+     */
     private Intervals[] intervals;
 
-    /** The donor host for each recipient host (-1 for initial host). */
+    /**
+     * The donor host for each recipient host (-1 for initial host).
+     */
     private int[] donorHost;
 
-    /** The time of transmission into this host (POSITIVE_INFINITY for initial host). */
+    /**
+     * The time of transmission into this host (POSITIVE_INFINITY for initial host).
+     */
     private double[] transmissionTime;
 
-    /** The size of the donor population at time of transmission into recipient host. */
+    /**
+     * The size of the donor population at time of transmission into recipient host.
+     */
     private double[] donorSize;
 
     private boolean likelihoodKnown = false;

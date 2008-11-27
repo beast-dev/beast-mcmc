@@ -11,120 +11,120 @@ import java.util.List;
  */
 public class WeightedMixtureModel extends AbstractModel implements Likelihood {
 
-	public static final String MIXTURE_MODEL = "mixtureModel";
-	public static final String MIXTURE_WEIGHTS = "weights";
-	public static final String NORMALIZE = "normalize";
+    public static final String MIXTURE_MODEL = "mixtureModel";
+    public static final String MIXTURE_WEIGHTS = "weights";
+    public static final String NORMALIZE = "normalize";
 
-	public WeightedMixtureModel(List<Likelihood> likelihoodList, Parameter mixtureWeights) {
-		super(MIXTURE_MODEL);
-		this.likelihoodList = likelihoodList;
-		this.mixtureWeights = mixtureWeights;
-		addParameter(mixtureWeights);
-	}
+    public WeightedMixtureModel(List<Likelihood> likelihoodList, Parameter mixtureWeights) {
+        super(MIXTURE_MODEL);
+        this.likelihoodList = likelihoodList;
+        this.mixtureWeights = mixtureWeights;
+        addParameter(mixtureWeights);
+    }
 
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
-	}
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+    }
 
-	protected void handleParameterChangedEvent(Parameter parameter, int index) {
-	}
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    }
 
-	protected void storeState() {
-	}
+    protected void storeState() {
+    }
 
-	protected void restoreState() {
-	}
+    protected void restoreState() {
+    }
 
-	protected void acceptState() {
-	}
+    protected void acceptState() {
+    }
 
-	public Model getModel() {
-		return this;
-	}
+    public Model getModel() {
+        return this;
+    }
 
-	public double getLogLikelihood() {
-		double sum = 0.0;
-		for (int i = 0; i < likelihoodList.size(); i++) {
-			// todo is there some way to keep everything on the log scale?
-			sum += mixtureWeights.getParameterValue(i) * Math.exp(likelihoodList.get(i).getLogLikelihood());
-		}
-		return Math.log(sum);
-	}
+    public double getLogLikelihood() {
+        double sum = 0.0;
+        for (int i = 0; i < likelihoodList.size(); i++) {
+            // todo is there some way to keep everything on the log scale?
+            sum += mixtureWeights.getParameterValue(i) * Math.exp(likelihoodList.get(i).getLogLikelihood());
+        }
+        return Math.log(sum);
+    }
 
-	public void makeDirty() {
-	}
+    public void makeDirty() {
+    }
 
-	public LogColumn[] getColumns() {
-		return new LogColumn[0];  //To change body of implemented methods use File | Settings | File Templates.
-	}
+    public LogColumn[] getColumns() {
+        return new LogColumn[0];  //To change body of implemented methods use File | Settings | File Templates.
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() {
-			return MIXTURE_MODEL;
-		}
+        public String getParserName() {
+            return MIXTURE_MODEL;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			Parameter weights = (Parameter) xo.getChild(Parameter.class);
-			List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+            Parameter weights = (Parameter) xo.getChild(Parameter.class);
+            List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
 
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				if (xo.getChild(i) instanceof Likelihood)
-					likelihoodList.add((Likelihood) xo.getChild(i));
-			}
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                if (xo.getChild(i) instanceof Likelihood)
+                    likelihoodList.add((Likelihood) xo.getChild(i));
+            }
 
-			if (weights.getDimension() != likelihoodList.size()) {
-				throw new XMLParseException("Dim of " + weights.getId() + " does not match the number of likelihoods");
-			}
+            if (weights.getDimension() != likelihoodList.size()) {
+                throw new XMLParseException("Dim of " + weights.getId() + " does not match the number of likelihoods");
+            }
 
-			if (xo.hasAttribute(NORMALIZE)) {
-				if (xo.getBooleanAttribute(NORMALIZE)) {
-					double sum = 0;
-					for (int i = 0; i < weights.getDimension(); i++)
-						sum += weights.getParameterValue(i);
-					for (int i = 0; i < weights.getDimension(); i++)
-						weights.setParameterValue(i, weights.getParameterValue(i) / sum);
-				}
-			}
+            if (xo.hasAttribute(NORMALIZE)) {
+                if (xo.getBooleanAttribute(NORMALIZE)) {
+                    double sum = 0;
+                    for (int i = 0; i < weights.getDimension(); i++)
+                        sum += weights.getParameterValue(i);
+                    for (int i = 0; i < weights.getDimension(); i++)
+                        weights.setParameterValue(i, weights.getParameterValue(i) / sum);
+                }
+            }
 
-			if (!normalized(weights))
-				throw new XMLParseException("Parameter +" + weights.getId() + " must lie on the simplex");
+            if (!normalized(weights))
+                throw new XMLParseException("Parameter +" + weights.getId() + " must lie on the simplex");
 
-			return new WeightedMixtureModel(likelihoodList, weights);
-		}
+            return new WeightedMixtureModel(likelihoodList, weights);
+        }
 
-		private boolean normalized(Parameter p) {
-			double sum = 0;
-			for (int i = 0; i < p.getDimension(); i++)
-				sum += p.getParameterValue(i);
-			return (sum == 1.0 ? true : false);
-		}
+        private boolean normalized(Parameter p) {
+            double sum = 0;
+            for (int i = 0; i < p.getDimension(); i++)
+                sum += p.getParameterValue(i);
+            return (sum == 1.0 ? true : false);
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element represents a discrete mixture of tree likelihood models.";
-		}
+        public String getParserDescription() {
+            return "This element represents a discrete mixture of tree likelihood models.";
+        }
 
-		public Class getReturnType() {
-			return CompoundModel.class;
-		}
+        public Class getReturnType() {
+            return CompoundModel.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 //			new ElementRule(TreeLikelihood.class,2,2),
 //			new ElementRule(Parameter.class)
-		};
-	};
+        };
+    };
 
 
-	private Parameter mixtureWeights;
-	List<Likelihood> likelihoodList;
+    private Parameter mixtureWeights;
+    List<Likelihood> likelihoodList;
 
 
 }

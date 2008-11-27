@@ -8,73 +8,73 @@ import dr.xml.*;
  */
 public class MatrixInverseStatistic extends Statistic.Abstract implements ParameterListener {
 
-	public static final String INVERSE_STATISTIC = "matrixInverse";
+    public static final String INVERSE_STATISTIC = "matrixInverse";
 
-	public MatrixInverseStatistic(MatrixParameter matrix) {
-		this.matrix = matrix;
-		matrix.addParameterListener(this);
-	}
+    public MatrixInverseStatistic(MatrixParameter matrix) {
+        this.matrix = matrix;
+        matrix.addParameterListener(this);
+    }
 
-	public int getDimension() {
-		return matrix.getDimension();
-	}
+    public int getDimension() {
+        return matrix.getDimension();
+    }
 
-	public double getStatisticValue(int dim) {
+    public double getStatisticValue(int dim) {
 
-		if (!inverseKnown) {
-			inverse = (new Matrix(matrix.getParameterAsMatrix()).inverse().toComponents());
-			inverseKnown = true;
-		}
+        if (!inverseKnown) {
+            inverse = (new Matrix(matrix.getParameterAsMatrix()).inverse().toComponents());
+            inverseKnown = true;
+        }
 
-		int x = dim / matrix.getColumnDimension();
-		int y = dim - x * matrix.getColumnDimension();
+        int x = dim / matrix.getColumnDimension();
+        int y = dim - x * matrix.getColumnDimension();
 
-		return inverse[x][y];
-	}
+        return inverse[x][y];
+    }
 
-	public void parameterChangedEvent(Parameter parameter, int index) {
-		inverseKnown = false;
-	}
+    public void parameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+        inverseKnown = false;
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() {
-			return INVERSE_STATISTIC;
-		}
+        public String getParserName() {
+            return INVERSE_STATISTIC;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			MatrixParameter matrix = (MatrixParameter) xo.getChild(MatrixParameter.class);
+            MatrixParameter matrix = (MatrixParameter) xo.getChild(MatrixParameter.class);
 
-			if (matrix.getColumnDimension() != matrix.getRowDimension())
-				throw new XMLParseException("Only square matrices can be inverted");
+            if (matrix.getColumnDimension() != matrix.getRowDimension())
+                throw new XMLParseException("Only square matrices can be inverted");
 
-			return new MatrixInverseStatistic(matrix);
+            return new MatrixInverseStatistic(matrix);
 
-		}
+        }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		public String getParserDescription() {
-			return "This element returns a statistic that is the matrix inverse of the child statistic.";
-		}
+        public String getParserDescription() {
+            return "This element returns a statistic that is the matrix inverse of the child statistic.";
+        }
 
-		public Class getReturnType() {
-			return MatrixInverseStatistic.class;
-		}
+        public Class getReturnType() {
+            return MatrixInverseStatistic.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new ElementRule(MatrixParameter.class)
-		};
-	};
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(MatrixParameter.class)
+        };
+    };
 
-	private boolean inverseKnown = false;
-	private double[][] inverse;
-	private MatrixParameter matrix;
+    private boolean inverseKnown = false;
+    private double[][] inverse;
+    private MatrixParameter matrix;
 }

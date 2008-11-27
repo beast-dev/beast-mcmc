@@ -7,6 +7,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.util.HeapSort;
 import dr.xml.*;
 import jebl.util.FixedBitSet;
@@ -14,7 +15,6 @@ import jebl.util.FixedBitSet;
 import java.util.*;
 
 /**
- *
  * Binds taxa in gene trees with species information.
  *
  * @author joseph
@@ -32,7 +32,7 @@ public class SpeciesBindings extends AbstractModel {
     Map<Taxon, Integer> taxon2Species = new HashMap<Taxon, Integer>();
 
     // Species definition
-    SPinfo[]  species;
+    SPinfo[] species;
 
     private double[][] popTimesPair;
     private boolean dirty_pp;
@@ -48,12 +48,12 @@ public class SpeciesBindings extends AbstractModel {
 
         final int nsp = species.length;
 
-        for(int ns = 0; ns < nsp; ++ns) {
-            for( Taxon t : species[ns].taxa ) {
-                if( taxon2Species.containsKey(t) )  {
+        for (int ns = 0; ns < nsp; ++ns) {
+            for (Taxon t : species[ns].taxa) {
+                if (taxon2Species.containsKey(t)) {
                     throw new Error("Multiple assignments for taxon" + t);
                 }
-               taxon2Species.put(t, ns);
+                taxon2Species.put(t, ns);
             }
         }
 
@@ -65,24 +65,24 @@ public class SpeciesBindings extends AbstractModel {
             this.geneTrees[i] = new GeneTreeInfo(t);
         }
 
-        for(GeneTreeInfo gt : this.geneTrees ) {
-             for(int ns = 0; ns < nsp; ++ns) {
-                 if( gt.nLineages(ns) == 0 ) {
-                   throw new Error("Every gene tree must contain at least one tip from each species");
-                 }
-             }
+        for (GeneTreeInfo gt : this.geneTrees) {
+            for (int ns = 0; ns < nsp; ++ns) {
+                if (gt.nLineages(ns) == 0) {
+                    throw new Error("Every gene tree must contain at least one tip from each species");
+                }
+            }
         }
 
         popTimesSingle = new double[nsp][];
-        for(int ns = 0; ns < popTimesSingle.length; ++ns) {
-           popTimesSingle[ns] = new double[allCoalPointsCount(ns)];
+        for (int ns = 0; ns < popTimesSingle.length; ++ns) {
+            popTimesSingle[ns] = new double[allCoalPointsCount(ns)];
         }
         dirty_sg = true;
 
-        popTimesPair = new double[(nsp*(nsp-1))/2][];
+        popTimesPair = new double[(nsp * (nsp - 1)) / 2][];
         {
             final int nps = allPairCoalPointsCount();
-            for(int ns = 0; ns < popTimesPair.length; ++ns) {
+            for (int ns = 0; ns < popTimesPair.length; ++ns) {
                 popTimesPair[ns] = new double[nps];
             }
         }
@@ -96,29 +96,29 @@ public class SpeciesBindings extends AbstractModel {
 
     /**
      * Per species coalecent times.
-     *
+     * <p/>
      * Indexed by sp index, a list of coalescent times of taxa of this sp from all gene trees.
      *
-     * @return  Per species coalecent times
+     * @return Per species coalecent times
      */
     public double[][] getPopTimesSingle() {
-        if( dirty_sg ) {
-           for(int ns = 0; ns < popTimesSingle.length; ++ns) {
-              getAllCoalPoints(ns, popTimesSingle[ns]);
-           }
+        if (dirty_sg) {
+            for (int ns = 0; ns < popTimesSingle.length; ++ns) {
+                getAllCoalPoints(ns, popTimesSingle[ns]);
+            }
             dirty_sg = false;
         }
         return popTimesSingle;
     }
 
     public double[][] getPopTimesPair() {
-        if( dirty_pp ) {
+        if (dirty_pp) {
             final int nsp = nSpecies();
-            for(int ns1 = 0; ns1 < nsp-1; ++ns1) {
-                final int z = (ns1*(2*nsp - ns1 - 3))/2 - 1;
+            for (int ns1 = 0; ns1 < nsp - 1; ++ns1) {
+                final int z = (ns1 * (2 * nsp - ns1 - 3)) / 2 - 1;
 
-                for(int ns2 = ns1+1; ns2 < nsp; ++ns2) {
-                    getAllPairCoalPoints(ns1, ns2, popTimesPair[z+ns2]);
+                for (int ns2 = ns1 + 1; ns2 < nsp; ++ns2) {
+                    getAllPairCoalPoints(ns1, ns2, popTimesPair[z + ns2]);
                 }
             }
         }
@@ -129,8 +129,8 @@ public class SpeciesBindings extends AbstractModel {
 
         for (int i = 0; i < geneTrees.length; i++) {
             for (CoalInfo ci : geneTrees[i].getCoalInfo()) {
-                if ( (ci.sinfo[0].contains(ns1) && ci.sinfo[1].contains(ns2)) ||
-                     (ci.sinfo[1].contains(ns1) && ci.sinfo[0].contains(ns2)) ) {
+                if ((ci.sinfo[0].contains(ns1) && ci.sinfo[1].contains(ns2)) ||
+                        (ci.sinfo[1].contains(ns1) && ci.sinfo[0].contains(ns2))) {
                     popTimes[i] = ci.ctime;
                     break;
                 }
@@ -141,10 +141,10 @@ public class SpeciesBindings extends AbstractModel {
 
     private int allCoalPointsCount(int spIndex) {
         int tot = 0;
-        for( GeneTreeInfo t : geneTrees ) {
-           if( t.nLineages(spIndex) > 0 ) {
-             tot += t.nLineages(spIndex) - 1;
-           }
+        for (GeneTreeInfo t : geneTrees) {
+            if (t.nLineages(spIndex) > 0) {
+                tot += t.nLineages(spIndex) - 1;
+            }
         }
         return tot;
     }
@@ -152,29 +152,29 @@ public class SpeciesBindings extends AbstractModel {
     void getAllCoalPoints(int spIndex, double[] points) {
 
         int k = 0;
-        for( GeneTreeInfo t : geneTrees ) {
+        for (GeneTreeInfo t : geneTrees) {
             int k1 = t.nLineages(spIndex) - 1;
             int savek = k;
-            for( CoalInfo ci : t.getCoalInfo() ) {
+            for (CoalInfo ci : t.getCoalInfo()) {
 //               if( ci == null ) {
 //                assert ci != null;
 //            }
-                if ( ci.allHas(spIndex) ) {
+                if (ci.allHas(spIndex)) {
                     points[k] = ci.ctime;
                     ++k;
                 }
             }
-            if( ! (k1 >= 0 && savek + k1 == k) || (k1 < 0 && savek == k) )   {
+            if (!(k1 >= 0 && savek + k1 == k) || (k1 < 0 && savek == k)) {
                 System.err.println(k1);
             }
-           assert (k1 >= 0 && savek + k1 == k) || (k1 < 0 && savek == k);
+            assert (k1 >= 0 && savek + k1 == k) || (k1 < 0 && savek == k);
         }
         assert k == points.length;
         HeapSort.sort(points);
     }
 
-     private int allPairCoalPointsCount() {
-       return geneTrees.length;
+    private int allPairCoalPointsCount() {
+        return geneTrees.length;
     }
 
     public double speciationUpperBound(FixedBitSet sub1, FixedBitSet sub2) {
@@ -188,9 +188,9 @@ public class SpeciesBindings extends AbstractModel {
                 if (ci.ctime >= bound) {
                     break;
                 }
-                if(   (ci.sinfo[0].intersectCardinality(sub1) > 0 && ci.sinfo[1].intersectCardinality(sub2) > 0)
-                    ||
-                      (ci.sinfo[0].intersectCardinality(sub2) > 0 && ci.sinfo[1].intersectCardinality(sub1) > 0) ) {
+                if ((ci.sinfo[0].intersectCardinality(sub1) > 0 && ci.sinfo[1].intersectCardinality(sub2) > 0)
+                        ||
+                        (ci.sinfo[0].intersectCardinality(sub2) > 0 && ci.sinfo[1].intersectCardinality(sub1) > 0)) {
                     bound = ci.ctime;
                     break;
                 }
@@ -233,18 +233,17 @@ public class SpeciesBindings extends AbstractModel {
         }
 
         /**
-         *
          * @param s
          * @return true if all children have at least one taxa from sp 's'
          */
-       public boolean allHas(int s) {
-           for( FixedBitSet b : sinfo ) {
-               if( ! b.contains(s) ) {
-                   return false;
-               }
-           }
-           return true;
-       }
+        public boolean allHas(int s) {
+            for (FixedBitSet b : sinfo) {
+                if (!b.contains(s)) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     /**
@@ -253,31 +252,31 @@ public class SpeciesBindings extends AbstractModel {
      * @param tree
      * @param node
      * @param loc  Place node data in loc, sub-tree info before that.
-     * @param info  array to fill
-     * @return  location of next available location
+     * @param info array to fill
+     * @return location of next available location
      */
     private int collectCoalInfo(Tree tree, NodeRef node, int loc, CoalInfo[] info) {
 
         info[loc] = new CoalInfo(tree.getNodeHeight(node), tree.getChildCount(node));
 
-        int newLoc = loc-1;
+        int newLoc = loc - 1;
         for (int i = 0; i < 2; i++) {
-			NodeRef child = tree.getChild(node, i);
+            NodeRef child = tree.getChild(node, i);
             info[loc].sinfo[i] = new FixedBitSet(nSpecies());
 
-            if( tree.isExternal(child) ) {
-                info[loc].sinfo[i].set( taxon2Species.get(tree.getNodeTaxon(child)) );
+            if (tree.isExternal(child)) {
+                info[loc].sinfo[i].set(taxon2Species.get(tree.getNodeTaxon(child)));
                 assert tree.getNodeHeight(child) == 0;
-			} else {
-				final int used = collectCoalInfo(tree, child, newLoc, info);
-                for(int j = 0; j < info[newLoc].sinfo.length; ++j) {
-                   info[loc].sinfo[i].union(info[newLoc].sinfo[j]);
+            } else {
+                final int used = collectCoalInfo(tree, child, newLoc, info);
+                for (int j = 0; j < info[newLoc].sinfo.length; ++j) {
+                    info[loc].sinfo[i].union(info[newLoc].sinfo[j]);
                 }
                 newLoc = used;
             }
         }
         return newLoc;
-	}
+    }
 
     public class GeneTreeInfo {
         public final TreeModel tree;
@@ -293,9 +292,9 @@ public class SpeciesBindings extends AbstractModel {
             lineagesCount = new int[species.length];
             Arrays.fill(lineagesCount, 0);
 
-            for(int nl = 0; nl < lineagesCount.length; ++nl) {
-                for( Taxon t : species[nl].taxa  ) {
-                    if( tree.getTaxonIndex(t) >= 0 ) {
+            for (int nl = 0; nl < lineagesCount.length; ++nl) {
+                for (Taxon t : species[nl].taxa) {
+                    if (tree.getTaxonIndex(t) >= 0) {
                         ++lineagesCount[nl];
                     }
                 }
@@ -313,10 +312,10 @@ public class SpeciesBindings extends AbstractModel {
         }
 
         public CoalInfo[] getCoalInfo() {
-            if( dirty ) {
+            if (dirty) {
                 swap();
 
-                collectCoalInfo(tree, tree.getRoot(), cList.length-1, cList);
+                collectCoalInfo(tree, tree.getRoot(), cList.length - 1, cList);
                 HeapSort.sort(cList);
                 dirty = false;
                 wasBacked = true;
@@ -336,8 +335,8 @@ public class SpeciesBindings extends AbstractModel {
         }
 
         boolean restore() {
-            if( verbose)  System.out.println(" SP binding: restore " + tree.getId() + " (" + wasBacked + ")");
-            if( wasBacked ) {
+            if (verbose) System.out.println(" SP binding: restore " + tree.getId() + " (" + wasBacked + ")");
+            if (wasBacked) {
 //                if( false ) {
 //                    swap();
 //                    dirty = true;
@@ -357,7 +356,7 @@ public class SpeciesBindings extends AbstractModel {
         }
 
         void accept() {
-            if( verbose)  System.out.println(" SP binding: accept " + tree.getId());
+            if (verbose) System.out.println(" SP binding: accept " + tree.getId());
 
             wasBacked = false;
         }
@@ -368,13 +367,13 @@ public class SpeciesBindings extends AbstractModel {
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if( verbose )  System.out.println(" SP binding: model changed " + model.getId());
+        if (verbose) System.out.println(" SP binding: model changed " + model.getId());
 
         dirty_sg = true;
         dirty_pp = true;
 
-        for( GeneTreeInfo g : geneTrees ) {
-            if( g.tree == model ) {
+        for (GeneTreeInfo g : geneTrees) {
+            if (g.tree == model) {
                 g.wasChanged();
                 break;
             }
@@ -382,17 +381,17 @@ public class SpeciesBindings extends AbstractModel {
         fireModelChanged(object, index);
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
-      assert false;
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+        assert false;
     }
 
     protected void storeState() {
-      // do on a per need basis
+        // do on a per need basis
     }
 
     protected void restoreState() {
-        for( GeneTreeInfo g : geneTrees ) {
-            if( g.restore() ) {
+        for (GeneTreeInfo g : geneTrees) {
+            if (g.restore()) {
                 dirty_sg = true;
                 dirty_pp = true;
             }
@@ -400,7 +399,7 @@ public class SpeciesBindings extends AbstractModel {
     }
 
     protected void acceptState() {
-        for( GeneTreeInfo g : geneTrees ) {
+        for (GeneTreeInfo g : geneTrees) {
             g.accept();
         }
     }
@@ -414,21 +413,21 @@ public class SpeciesBindings extends AbstractModel {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             List<SPinfo> sp = new ArrayList<SPinfo>();
-            for(int k = 0; k < xo.getChildCount(); ++k) {
+            for (int k = 0; k < xo.getChildCount(); ++k) {
                 final Object child = xo.getChild(k);
-                if( child instanceof SPinfo ) {
-                    sp.add((SPinfo)child);
+                if (child instanceof SPinfo) {
+                    sp.add((SPinfo) child);
                 }
             }
 
             XMLObject xogt = (XMLObject) xo.getChild(GENE_TREES);
             TreeModel[] trees = new TreeModel[xogt.getChildCount()];
-            for(int nt = 0; nt < trees.length; ++nt) {
-                trees[nt] = (TreeModel)xogt.getChild(nt);
+            for (int nt = 0; nt < trees.length; ++nt) {
+                trees[nt] = (TreeModel) xogt.getChild(nt);
             }
 
             try {
-               return new SpeciesBindings(sp.toArray(new SPinfo[sp.size()]) , trees);
+                return new SpeciesBindings(sp.toArray(new SPinfo[sp.size()]), trees);
             } catch (Error e) {
                 throw new XMLParseException(e.getMessage());
             }
@@ -459,8 +458,8 @@ public class SpeciesBindings extends AbstractModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             Taxon[] taxa = new Taxon[xo.getChildCount()];
-            for(int nt = 0; nt < taxa.length; ++nt) {
-                taxa[nt] = (Taxon)xo.getChild(nt);
+            for (int nt = 0; nt < taxa.length; ++nt) {
+                taxa[nt] = (Taxon) xo.getChild(nt);
             }
             return new SPinfo(xo.getId(), taxa);
         }

@@ -28,6 +28,7 @@ package dr.evomodel.indel;
 import dr.evoxml.XMLUnits;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -36,102 +37,118 @@ import org.w3c.dom.Element;
  * This class models a constant mutation rate
  * (parameter: mu = mutation rate). <BR>
  *
- * @version $Id: TKF91Model.java,v 1.7 2005/05/24 20:25:57 rambaut Exp $
- *
  * @author Alexei Drummond
+ * @version $Id: TKF91Model.java,v 1.7 2005/05/24 20:25:57 rambaut Exp $
  */
 public class TKF91Model extends IndelModel {
 
-	public static final String TKF91_MODEL = "tkf91Model";
-	public static final String BIRTH_RATE = "birthRate";
-	public static final String DEATH_RATE = "deathRate";
-	
-	private Parameter lengthDistParameter, deathRateParameter;
+    public static final String TKF91_MODEL = "tkf91Model";
+    public static final String BIRTH_RATE = "birthRate";
+    public static final String DEATH_RATE = "deathRate";
 
-	public TKF91Model(Parameter lengthDistParameter, Parameter deathRateParameter, Type units) {
-		super(TKF91_MODEL);
-		
-		this.lengthDistParameter = lengthDistParameter;
-		addParameter(lengthDistParameter);
-		
-		this.deathRateParameter = deathRateParameter;
-		addParameter(deathRateParameter);
-		
-		setUnits(units);
-	}
-	
-	public final double getLengthDistributionValue() { return lengthDistParameter.getParameterValue(0); }
-	
-	public final double getBirthRate(int length) { 
-		
-		throw new RuntimeException("Not implemented");
-		//return birthRateParameter.getParameterValue(0); 
-		
-	}
-	
-	public final double getDeathRate(int length) { return deathRateParameter.getParameterValue(0); }
+    private Parameter lengthDistParameter, deathRateParameter;
 
-	// *****************************************************************
-	// Interface ModelComponent
-	// *****************************************************************
-	
-	public String getModelComponentName() { return TKF91_MODEL; }
-		
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		// Substitution model has changed so fire model changed event
-		listenerHelper.fireModelChanged(this, object, index);
-	}
-	
-	protected void handleParameterChangedEvent(Parameter parameter, int index) {
-		// no intermediates need to be recalculated...
-	}
-	
-	protected void storeState() {} // no extra state apart from parameters
-	protected void acceptState() {} // no extra state apart from parameters
-	protected void restoreState() {} // no extra state apart from parameters
+    public TKF91Model(Parameter lengthDistParameter, Parameter deathRateParameter, Type units) {
+        super(TKF91_MODEL);
+
+        this.lengthDistParameter = lengthDistParameter;
+        addParameter(lengthDistParameter);
+
+        this.deathRateParameter = deathRateParameter;
+        addParameter(deathRateParameter);
+
+        setUnits(units);
+    }
+
+    public final double getLengthDistributionValue() {
+        return lengthDistParameter.getParameterValue(0);
+    }
+
+    public final double getBirthRate(int length) {
+
+        throw new RuntimeException("Not implemented");
+        //return birthRateParameter.getParameterValue(0);
+
+    }
+
+    public final double getDeathRate(int length) {
+        return deathRateParameter.getParameterValue(0);
+    }
+
+    // *****************************************************************
+    // Interface ModelComponent
+    // *****************************************************************
+
+    public String getModelComponentName() {
+        return TKF91_MODEL;
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        // Substitution model has changed so fire model changed event
+        listenerHelper.fireModelChanged(this, object, index);
+    }
+
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+        // no intermediates need to be recalculated...
+    }
+
+    protected void storeState() {
+    } // no extra state apart from parameters
+
+    protected void acceptState() {
+    } // no extra state apart from parameters
+
+    protected void restoreState() {
+    } // no extra state apart from parameters
 
     // **************************************************************
     // XMLElement IMPLEMENTATION
     // **************************************************************
-    
-    public Element createElement(Document doc) {
-    	throw new RuntimeException("Not implemented!");
-    }
-    
-    /**
-	 * Parses an element from an DOM document into a ConstantPopulation. 
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return TKF91_MODEL; }
-			
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			Parameter lengthDistParameter = (Parameter)xo.getElementFirstChild("lengthDistribution");
-			Parameter deathParameter = (Parameter)xo.getElementFirstChild("deathRate");
-			Type units = XMLParser.Utils.getUnitsAttr(xo);
-				
-			return new TKF91Model(lengthDistParameter, deathParameter, units);
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return "The TKF91 (Thorne, Kishino & Felsenstein 1991) model of insertion-deletion.";
-		}
-	
-		public Class getReturnType() { return TKF91Model.class; }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule("lengthDistribution", 
-				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-			new ElementRule("deathRate", 
-				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-			XMLUnits.SYNTAX_RULES[0]
-		};
-	};
+    public Element createElement(Document doc) {
+        throw new RuntimeException("Not implemented!");
+    }
+
+    /**
+     * Parses an element from an DOM document into a ConstantPopulation.
+     */
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return TKF91_MODEL;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            Parameter lengthDistParameter = (Parameter) xo.getElementFirstChild("lengthDistribution");
+            Parameter deathParameter = (Parameter) xo.getElementFirstChild("deathRate");
+            Type units = XMLParser.Utils.getUnitsAttr(xo);
+
+            return new TKF91Model(lengthDistParameter, deathParameter, units);
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "The TKF91 (Thorne, Kishino & Felsenstein 1991) model of insertion-deletion.";
+        }
+
+        public Class getReturnType() {
+            return TKF91Model.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule("lengthDistribution",
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                new ElementRule("deathRate",
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                XMLUnits.SYNTAX_RULES[0]
+        };
+    };
 }

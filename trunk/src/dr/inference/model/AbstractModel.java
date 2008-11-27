@@ -40,172 +40,172 @@ import java.util.ArrayList;
  */
 public abstract class AbstractModel implements Model, ModelListener, ParameterListener, StatisticList, MPISerializable {
 
-	/**
-	 * @param name Model Name
-	 */
-	public AbstractModel(String name) {
-		this.name = name;
-	}
+    /**
+     * @param name Model Name
+     */
+    public AbstractModel(String name) {
+        this.name = name;
+    }
 
-	/**
-	 * Adds a sub-model to this model. If the model is already in the
-	 * list then it does nothing.
-	 */
-	public void addModel(Model model) {
+    /**
+     * Adds a sub-model to this model. If the model is already in the
+     * list then it does nothing.
+     */
+    public void addModel(Model model) {
 
-		if (!models.contains(model)) {
-			models.add(model);
-			model.addModelListener(this);
-		}
-	}
+        if (!models.contains(model)) {
+            models.add(model);
+            model.addModelListener(this);
+        }
+    }
 
-	public void removeModel(Model model) {
-		models.remove(model);
-		model.removeModelListener(this);
-	}
+    public void removeModel(Model model) {
+        models.remove(model);
+        model.removeModelListener(this);
+    }
 
-	public int getModelCount() {
-		return models.size();
-	}
+    public int getModelCount() {
+        return models.size();
+    }
 
-	public final Model getModel(int i) {
-		return models.get(i);
-	}
+    public final Model getModel(int i) {
+        return models.get(i);
+    }
 
-	public final void addParameter(Parameter parameter) {
-		parameters.add(parameter);
-		parameter.addParameterListener(this);
+    public final void addParameter(Parameter parameter) {
+        parameters.add(parameter);
+        parameter.addParameterListener(this);
 
-		// parameters are also statistics
-		addStatistic(parameter);
-	}
+        // parameters are also statistics
+        addStatistic(parameter);
+    }
 
-	public final void removeParameter(Parameter parameter) {
-		parameters.remove(parameter);
-		parameter.removeParameterListener(this);
+    public final void removeParameter(Parameter parameter) {
+        parameters.remove(parameter);
+        parameter.removeParameterListener(this);
 
-		// parameters are also statistics
-		removeStatistic(parameter);
-	}
+        // parameters are also statistics
+        removeStatistic(parameter);
+    }
 
-	/**
-	 * @param parameter
-	 * @return true of the given parameter is contained in this model
-	 */
-	public final boolean hasParameter(Parameter parameter) {
-		return parameters.contains(parameter);
-	}
+    /**
+     * @param parameter
+     * @return true of the given parameter is contained in this model
+     */
+    public final boolean hasParameter(Parameter parameter) {
+        return parameters.contains(parameter);
+    }
 
-	/**
-	 * Adds a model listener.
-	 */
-	public void addModelListener(ModelListener listener) {
-		listenerHelper.addModelListener(listener);
-	}
+    /**
+     * Adds a model listener.
+     */
+    public void addModelListener(ModelListener listener) {
+        listenerHelper.addModelListener(listener);
+    }
 
-	/**
-	 * remove a model listener.
-	 */
-	public void removeModelListener(ModelListener listener) {
-		listenerHelper.removeModelListener(listener);
-	}
+    /**
+     * remove a model listener.
+     */
+    public void removeModelListener(ModelListener listener) {
+        listenerHelper.removeModelListener(listener);
+    }
 
-	public void addModelRestoreListener(ModelListener listener) {
-		listenerHelper.addModelRestoreListener(listener);
-	}
+    public void addModelRestoreListener(ModelListener listener) {
+        listenerHelper.addModelRestoreListener(listener);
+    }
 
-	/**
-	 * Fires a model changed event.
-	 */
-	public void fireModelChanged() {
-		listenerHelper.fireModelChanged(this, this, -1);
-	}
+    /**
+     * Fires a model changed event.
+     */
+    public void fireModelChanged() {
+        listenerHelper.fireModelChanged(this, this, -1);
+    }
 
-	public void fireModelChanged(Object object) {
-		listenerHelper.fireModelChanged(this, object, -1);
-	}
+    public void fireModelChanged(Object object) {
+        listenerHelper.fireModelChanged(this, object, -1);
+    }
 
-	public void fireModelChanged(Object object, int index) {
-		listenerHelper.fireModelChanged(this, object, index);
-	}
+    public void fireModelChanged(Object object, int index) {
+        listenerHelper.fireModelChanged(this, object, index);
+    }
 
-	public final int getParameterCount() {
-		return parameters.size();
-	}
+    public final int getParameterCount() {
+        return parameters.size();
+    }
 
-	public final Parameter getParameter(int i) {
-		return parameters.get(i);
-	}
+    public final Parameter getParameter(int i) {
+        return parameters.get(i);
+    }
 
-	/**
-	 * @return the parameter of the component that is called name
-	 */
-	public final Parameter getParameter(String name) {
+    /**
+     * @return the parameter of the component that is called name
+     */
+    public final Parameter getParameter(String name) {
 
-		final int n = getParameterCount();
+        final int n = getParameterCount();
 
-		for (int i = 0; i < n; i++) {
-			final Parameter parameter = getParameter(i);
-			if (parameter.getParameterName().equals(name)) {
-				return parameter;
-			}
-		}
+        for (int i = 0; i < n; i++) {
+            final Parameter parameter = getParameter(i);
+            if (parameter.getParameterName().equals(name)) {
+                return parameter;
+            }
+        }
 
-		return null;
-		//throw new IllegalArgumentException("Parameter named " + name + " not found.");
-	}
+        return null;
+        //throw new IllegalArgumentException("Parameter named " + name + " not found.");
+    }
 
-	// **************************************************************
-	// MPI IMPLEMENTATION
-	// **************************************************************
-
-
-	public void sendState(int toRank) {
-
-		// Iterate through child models
-		for (Model model : models) {
-			((AbstractModel) model).sendState(toRank);
-		}
-		// Send current model parameters
-		for (Parameter parameter : parameters) {
-			((Parameter.Abstract) parameter).sendState(toRank);
-		}
-
-	}
+    // **************************************************************
+    // MPI IMPLEMENTATION
+    // **************************************************************
 
 
-	public void sendStateNoParameters(int toRank) {
+    public void sendState(int toRank) {
 
-		// Iterate through child models
-		for (Model model : models) {
-			((AbstractModel) model).sendState(toRank);
-		}
+        // Iterate through child models
+        for (Model model : models) {
+            ((AbstractModel) model).sendState(toRank);
+        }
+        // Send current model parameters
+        for (Parameter parameter : parameters) {
+            ((Parameter.Abstract) parameter).sendState(toRank);
+        }
 
-	}
-
-	public void receiveStateNoParameters(int fromRank) {
-		for (Model model : models) {
-			((AbstractModel) model).receiveState(fromRank);
-		}
-	}
-
-	public void receiveState(int fromRank) {
-		for (Model model : models) {
-			((AbstractModel) model).receiveState(fromRank);
-		}
-		// Send current model parameters
-		for (Parameter parameter : parameters) {
-			((Parameter.Abstract) parameter).receiveState(fromRank);
-		}
+    }
 
 
-	}
+    public void sendStateNoParameters(int toRank) {
 
-	// **************************************************************
-	// ModelListener IMPLEMENTATION
-	// **************************************************************
+        // Iterate through child models
+        for (Model model : models) {
+            ((AbstractModel) model).sendState(toRank);
+        }
 
-	public final void modelChangedEvent(Model model, Object object, int index) {
+    }
+
+    public void receiveStateNoParameters(int fromRank) {
+        for (Model model : models) {
+            ((AbstractModel) model).receiveState(fromRank);
+        }
+    }
+
+    public void receiveState(int fromRank) {
+        for (Model model : models) {
+            ((AbstractModel) model).receiveState(fromRank);
+        }
+        // Send current model parameters
+        for (Parameter parameter : parameters) {
+            ((Parameter.Abstract) parameter).receiveState(fromRank);
+        }
+
+
+    }
+
+    // **************************************************************
+    // ModelListener IMPLEMENTATION
+    // **************************************************************
+
+    public final void modelChangedEvent(Model model, Object object, int index) {
 
 //		String message = "  model: " + getModelName() + "/" + getId() + "  component: " + model.getModelName();
 //		if (object != null) {
@@ -216,199 +216,199 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 //		}
 //		System.out.println(message);
 
-		handleModelChangedEvent(model, object, index);
-	}
+        handleModelChangedEvent(model, object, index);
+    }
 
-	// do nothing by default
-	public void modelRestored(Model model) {
-	}
+    // do nothing by default
+    public void modelRestored(Model model) {
+    }
 
-	abstract protected void handleModelChangedEvent(Model model, Object object, int index);
+    abstract protected void handleModelChangedEvent(Model model, Object object, int index);
 
-	// **************************************************************
-	// ParameterListener IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // ParameterListener IMPLEMENTATION
+    // **************************************************************
 
-	public final void parameterChangedEvent(Parameter parameter, int index) {
-		handleParameterChangedEvent(parameter, index);
-		listenerHelper.fireModelChanged(this, parameter, index);
-	}
+    public final void parameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+        handleParameterChangedEvent(parameter, index, type);
+        listenerHelper.fireModelChanged(this, parameter, index);
+    }
 
-	/**
-	 * This method is called whenever a parameter is changed.
-	 * <p/>
-	 * It is strongly recommended that the model component sets a "dirty" flag and does no
-	 * further calculations. Recalculation is typically done when the model component is asked for
-	 * some information that requires them. This mechanism is 'lazy' so that this method
-	 * can be safely called multiple times with minimal computational cost.
-	 */
-	protected abstract void handleParameterChangedEvent(Parameter parameter, int index);
+    /**
+     * This method is called whenever a parameter is changed.
+     * <p/>
+     * It is strongly recommended that the model component sets a "dirty" flag and does no
+     * further calculations. Recalculation is typically done when the model component is asked for
+     * some information that requires them. This mechanism is 'lazy' so that this method
+     * can be safely called multiple times with minimal computational cost.
+     */
+    protected abstract void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type);
 
-	// **************************************************************
-	// Model IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // Model IMPLEMENTATION
+    // **************************************************************
 
-	public final void storeModelState() {
-		if (isValidState) {
-			//System.out.println("STORE MODEL: " + getModelName() + "/" + getId());
+    public final void storeModelState() {
+        if (isValidState) {
+            //System.out.println("STORE MODEL: " + getModelName() + "/" + getId());
 
-			for (Model m : models) {
-				m.storeModelState();
-			}
+            for (Model m : models) {
+                m.storeModelState();
+            }
 
-			for (Parameter parameter : parameters) {
-				parameter.storeParameterValues();
-			}
+            for (Parameter parameter : parameters) {
+                parameter.storeParameterValues();
+            }
 
-			storeState();
-			isValidState = false;
-		}
-	}
+            storeState();
+            isValidState = false;
+        }
+    }
 
-	public final void restoreModelState() {
-		if (!isValidState) {
-			//System.out.println("RESTORE MODEL: " + getModelName() + "/" + getId());
+    public final void restoreModelState() {
+        if (!isValidState) {
+            //System.out.println("RESTORE MODEL: " + getModelName() + "/" + getId());
 
-			for (Parameter parameter : parameters) {
-				parameter.restoreParameterValues();
-			}
-			for (Model m : models) {
-				m.restoreModelState();
-			}
+            for (Parameter parameter : parameters) {
+                parameter.restoreParameterValues();
+            }
+            for (Model m : models) {
+                m.restoreModelState();
+            }
 
-			restoreState();
-			isValidState = true;
+            restoreState();
+            isValidState = true;
 
-			listenerHelper.fireModelRestored(this);
-		}
-	}
+            listenerHelper.fireModelRestored(this);
+        }
+    }
 
-	public final void acceptModelState() {
-		if (!isValidState) {
-			//System.out.println("ACCEPT MODEL: " + getModelName() + "/" + getId());
+    public final void acceptModelState() {
+        if (!isValidState) {
+            //System.out.println("ACCEPT MODEL: " + getModelName() + "/" + getId());
 
-			for (Parameter parameter : parameters) {
-				parameter.acceptParameterValues();
-			}
+            for (Parameter parameter : parameters) {
+                parameter.acceptParameterValues();
+            }
 
-			for (Model m : models) {
-				m.acceptModelState();
-			}
+            for (Model m : models) {
+                m.acceptModelState();
+            }
 
-			acceptState();
+            acceptState();
 
-			isValidState = true;
-		}
-	}
+            isValidState = true;
+        }
+    }
 
-	public boolean isValidState() {
-		return isValidState;
-	}
+    public boolean isValidState() {
+        return isValidState;
+    }
 
-	public final String getModelName() {
-		return name;
-	}
-
-
-	/**
-	 * Additional state information, outside of the sub-model is stored by this call.
-	 */
-	protected abstract void storeState();
-
-	/**
-	 * After this call the model is guaranteed to have returned its extra state information to
-	 * the values coinciding with the last storeState call.
-	 * Sub-models are handled automatically and do not need to be considered in this method.
-	 */
-	protected abstract void restoreState();
-
-	/**
-	 * This call specifies that the current state is accept. Most models will not need to do anything.
-	 * Sub-models are handled automatically and do not need to be considered in this method.
-	 */
-	protected abstract void acceptState();
-
-	// **************************************************************
-	// StatisticList IMPLEMENTATION
-	// **************************************************************
-
-	public final void addStatistic(Statistic statistic) {
-
-		statistics.add(statistic);
-	}
-
-	public final void removeStatistic(Statistic statistic) {
-
-		statistics.remove(statistic);
-	}
-
-	/**
-	 * @return the number of statistics of this component.
-	 */
-	public int getStatisticCount() {
-
-		return statistics.size();
-	}
-
-	/**
-	 * @return the ith statistic of the component
-	 */
-	public Statistic getStatistic(int i) {
-
-		return statistics.get(i);
-	}
-
-	public final Statistic getStatistic(String name) {
-
-		for (int i = 0; i < getStatisticCount(); i++) {
-			Statistic statistic = getStatistic(i);
-			if (name.equals(statistic.getStatisticName())) {
-				return statistic;
-			}
-		}
-
-		return null;
-	}
-
-	// **************************************************************
-	// Identifiable IMPLEMENTATION
-	// **************************************************************
-
-	private String id = null;
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public String getId() {
-		return id;
-	}
+    public final String getModelName() {
+        return name;
+    }
 
 
-	public String toString() {
-		if (id != null) {
-			return id;
-		} else if (name != null) {
-			return name;
-		}
-		return super.toString();
-	}
+    /**
+     * Additional state information, outside of the sub-model is stored by this call.
+     */
+    protected abstract void storeState();
 
-	// **************************************************************
-	// XMLElement IMPLEMENTATION
-	// **************************************************************
+    /**
+     * After this call the model is guaranteed to have returned its extra state information to
+     * the values coinciding with the last storeState call.
+     * Sub-models are handled automatically and do not need to be considered in this method.
+     */
+    protected abstract void restoreState();
 
-	public Element createElement(Document d) {
-		throw new RuntimeException("Not implemented!");
-	}
+    /**
+     * This call specifies that the current state is accept. Most models will not need to do anything.
+     * Sub-models are handled automatically and do not need to be considered in this method.
+     */
+    protected abstract void acceptState();
 
-	boolean isValidState = true;
+    // **************************************************************
+    // StatisticList IMPLEMENTATION
+    // **************************************************************
 
-	protected Model.ListenerHelper listenerHelper = new Model.ListenerHelper();
+    public final void addStatistic(Statistic statistic) {
 
-	private ArrayList<Model> models = new ArrayList<Model>();
-	private ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-	private ArrayList<Statistic> statistics = new ArrayList<Statistic>();
+        statistics.add(statistic);
+    }
 
-	private String name;
+    public final void removeStatistic(Statistic statistic) {
+
+        statistics.remove(statistic);
+    }
+
+    /**
+     * @return the number of statistics of this component.
+     */
+    public int getStatisticCount() {
+
+        return statistics.size();
+    }
+
+    /**
+     * @return the ith statistic of the component
+     */
+    public Statistic getStatistic(int i) {
+
+        return statistics.get(i);
+    }
+
+    public final Statistic getStatistic(String name) {
+
+        for (int i = 0; i < getStatisticCount(); i++) {
+            Statistic statistic = getStatistic(i);
+            if (name.equals(statistic.getStatisticName())) {
+                return statistic;
+            }
+        }
+
+        return null;
+    }
+
+    // **************************************************************
+    // Identifiable IMPLEMENTATION
+    // **************************************************************
+
+    private String id = null;
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+
+    public String toString() {
+        if (id != null) {
+            return id;
+        } else if (name != null) {
+            return name;
+        }
+        return super.toString();
+    }
+
+    // **************************************************************
+    // XMLElement IMPLEMENTATION
+    // **************************************************************
+
+    public Element createElement(Document d) {
+        throw new RuntimeException("Not implemented!");
+    }
+
+    boolean isValidState = true;
+
+    protected Model.ListenerHelper listenerHelper = new Model.ListenerHelper();
+
+    private ArrayList<Model> models = new ArrayList<Model>();
+    private ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+    private ArrayList<Statistic> statistics = new ArrayList<Statistic>();
+
+    private String name;
 }

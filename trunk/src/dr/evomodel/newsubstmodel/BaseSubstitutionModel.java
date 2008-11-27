@@ -29,7 +29,7 @@ import dr.evolution.datatype.DataType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.math.MachineAccuracy;
+import dr.inference.model.ParameterChangeType;
 
 /**
  * An abstract base class for substitution models.
@@ -113,7 +113,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         frequenciesChanged();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         // relativeRates changed
         updateMatrix = true;
         ratesChanged();
@@ -227,6 +227,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
     /**
      * This function returns the Eigen vectors.
+     *
      * @return the array
      */
     public double[][] getEigenVectors() {
@@ -240,6 +241,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
     /**
      * This function returns the inverse Eigen vectors.
+     *
      * @return the array
      */
     public double[][] getInverseEigenVectors() {

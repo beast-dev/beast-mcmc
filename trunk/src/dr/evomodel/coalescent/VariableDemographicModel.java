@@ -6,6 +6,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -155,9 +156,9 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         fireModelChanged(this);
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         //System.out.println("parm changed: " + parameter);
-        super.handleParameterChangedEvent(parameter, index);
+        super.handleParameterChangedEvent(parameter, index, type);
         if (demoFunction != null) {
             if (demoFunction == savedDemoFunction) {
                 demoFunction = new VDdemographicFunction(demoFunction);

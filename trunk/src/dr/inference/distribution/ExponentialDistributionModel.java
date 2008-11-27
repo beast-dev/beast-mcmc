@@ -28,6 +28,7 @@ package dr.inference.distribution;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.ExponentialDistribution;
 import dr.xml.*;
@@ -128,7 +129,7 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
         // no intermediates need to be recalculated...
     }
 
-    public void handleParameterChangedEvent(Parameter parameter, int index) {
+    public void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         // no intermediates need to be recalculated...
     }
 

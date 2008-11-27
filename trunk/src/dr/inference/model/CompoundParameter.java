@@ -49,15 +49,11 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
             parameter.addParameterListener(this);
         }
 
-        this.parameters = new Parameter[dimension];
-        this.pindex = new int[dimension];
-        int k = 0;
         for (Parameter parameter : params) {
             for (int j = 0; j < parameter.getDimension(); j++) {
-                parameters[j + k] = parameter;
-                pindex[j + k] = j;
+                parameters.add(parameter);
+                pindex.add(j);
             }
-            k += parameter.getDimension();
             uniqueParameters.add(parameter);
         }
 
@@ -71,29 +67,12 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     public void addParameter(Parameter param) {
 
         uniqueParameters.add(param);
-        if (parameters == null) {
-            parameters = new Parameter[param.getDimension()];
-            this.pindex = new int[param.getDimension()];
-            for (int j = 0; j < param.getDimension(); j++) {
-                parameters[j] = param;
-                pindex[j] = j;
-            }
-        } else {
-            Parameter[] newParams = new Parameter[parameters.length + param.getDimension()];
-            int[] newIndices = new int[pindex.length + param.getDimension()];
-            System.arraycopy(parameters, 0, newParams, 0, parameters.length);
-            System.arraycopy(pindex, 0, newIndices, 0, pindex.length);
-
-            for (int j = 0; j < param.getDimension(); j++) {
-                newParams[j + parameters.length] = param;
-                newIndices[j + pindex.length] = j;
-            }
-
-            parameters = newParams;
-            pindex = newIndices;
+        for (int j = 0; j < param.getDimension(); j++) {
+            parameters.add(param);
+            pindex.add(j);
         }
         dimension += param.getDimension();
-        if (dimension != parameters.length) throw new RuntimeException();
+        if (dimension != parameters.size()) throw new RuntimeException();
         param.addParameterListener(this);
     }
 
@@ -115,7 +94,7 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 
     public final String getDimensionName(int dim) {
 
-        return parameters[dim].getDimensionName(pindex[dim]);
+        return parameters.get(dim).getDimensionName(pindex.get(dim));
     }
 
     public int getDimension() {
@@ -138,13 +117,42 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
         return bounds;
     }
 
+    public void addDimension(int index, double value) {
+        Parameter p = parameters.get(index);
+        int pi = pindex.get(index);
+
+        parameters.add(index, p);
+        pindex.add(index, pi);
+
+        p.addDimension(pi, value);
+        for (int i = pi; i < p.getDimension(); i++) {
+            pindex.set(index, i);
+            index += 1;
+        }
+    }
+
+    public double removeDimension(int index) {
+        Parameter p = parameters.get(index);
+        int pi = pindex.get(index);
+
+        parameters.remove(index);
+        pindex.remove(index);
+
+        double v = p.removeDimension(pi);
+        for (int i = pi; i < p.getDimension(); i++) {
+            pindex.set(index, i);
+            index += 1;
+        }
+        return v;
+    }
+
     private void createBounds() {
         bounds = new IntersectionBounds(getDimension());
         bounds.addBounds(new CompoundBounds());
     }
 
     public double getParameterValue(int dim) {
-        return parameters[dim].getParameterValue(pindex[dim]);
+        return parameters.get(dim).getParameterValue(pindex.get(dim));
     }
 
     public double[] inspectParametersValues() {
@@ -152,11 +160,11 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     }
 
     public void setParameterValue(int dim, double value) {
-        parameters[dim].setParameterValue(pindex[dim], value);
+        parameters.get(dim).setParameterValue(pindex.get(dim), value);
     }
 
     public void setParameterValueQuietly(int dim, double value) {
-        parameters[dim].setParameterValueQuietly(pindex[dim], value);
+        parameters.get(dim).setParameterValueQuietly(pindex.get(dim), value);
     }
 
     protected void storeValues() {
@@ -239,12 +247,12 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     // Parameter listener interface
     // ****************************************************************
 
-    public void parameterChangedEvent(Parameter parameter, int index) {
+    public void parameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
 
         int dim = 0;
         for (Parameter parameter1 : uniqueParameters) {
             if (parameter == parameter1) {
-                fireParameterChangedEvent(dim + index);
+                fireParameterChangedEvent(dim + index, type);
                 break;
             }
             dim += parameter1.getDimension();
@@ -258,11 +266,11 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     private class CompoundBounds implements Bounds {
 
         public double getUpperLimit(int dim) {
-            return parameters[dim].getBounds().getUpperLimit(pindex[dim]);
+            return parameters.get(dim).getBounds().getUpperLimit(pindex.get(dim));
         }
 
         public double getLowerLimit(int dim) {
-            return parameters[dim].getBounds().getLowerLimit(pindex[dim]);
+            return parameters.get(dim).getBounds().getLowerLimit(pindex.get(dim));
         }
 
         public int getBoundsDimension() {
@@ -272,8 +280,8 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 
     private List<Parameter> uniqueParameters = new ArrayList<Parameter>();
 
-    private Parameter[] parameters = null;
-    private int[] pindex = null;
+    private ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+    private ArrayList<Integer> pindex = new ArrayList<Integer>();
     private IntersectionBounds bounds = null;
     private int dimension;
     private String name;

@@ -2,6 +2,7 @@ package dr.evomodel.continuous;
 
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.math.distributions.TDistribution;
 import dr.xml.*;
 
@@ -44,10 +45,10 @@ public class MultivariateTDiffusionModel extends MultivariateDiffusionModel {
         super.handleModelChangedEvent(model, object, index);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
-    public void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
 //		if( parameter.getId().compareTo("allTraits")!= 0)
 //			System.err.println("parameter = "+parameter.getId());
-        super.handleParameterChangedEvent(parameter, index);    //To change body of overridden methods use File | Settings | File Templates.
+        super.handleParameterChangedEvent(parameter, index, type);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
     public Parameter getPrecisionParameter() {

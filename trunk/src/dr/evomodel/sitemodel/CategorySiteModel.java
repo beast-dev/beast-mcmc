@@ -30,100 +30,106 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 /**
  * CategorySiteModel - A SiteModel that has a different rate for each category;
  *
- * @version $Id: CategorySiteModel.java,v 1.3 2004/10/01 22:40:04 alexei Exp $
- *
  * @author Alexei Drummond
+ * @version $Id: CategorySiteModel.java,v 1.3 2004/10/01 22:40:04 alexei Exp $
  */
 
 public class CategorySiteModel extends AbstractModel implements SiteModel {
 
-	public static final String SITE_MODEL = "categorySiteModel";
-	public static final String SUBSTITUTION_MODEL = "substitutionModel";
-	public static final String MUTATION_RATE = "mutationRate";
-	public static final String RATE_PARAMETER = "rates";
-	public static final String CATEGORIES = "categories";
-	public static final String CATEGORY_STATES = "states";
-	public static final String CATEGORY_STRING = "values";
-	public static final String RELATIVE_TO = "relativeTo";
+    public static final String SITE_MODEL = "categorySiteModel";
+    public static final String SUBSTITUTION_MODEL = "substitutionModel";
+    public static final String MUTATION_RATE = "mutationRate";
+    public static final String RATE_PARAMETER = "rates";
+    public static final String CATEGORIES = "categories";
+    public static final String CATEGORY_STATES = "states";
+    public static final String CATEGORY_STRING = "values";
+    public static final String RELATIVE_TO = "relativeTo";
 
     /**
      * @param rateParameter (relative to the rate of category 1)
      */
-    public CategorySiteModel(	SubstitutionModel substitutionModel,
-    							Parameter muParameter,
-    							Parameter rateParameter,
-    							String categoryString,
-    							String stateString,
-    							int relativeTo)
-	{
+    public CategorySiteModel(SubstitutionModel substitutionModel,
+                             Parameter muParameter,
+                             Parameter rateParameter,
+                             String categoryString,
+                             String stateString,
+                             int relativeTo) {
 
-		super(SITE_MODEL);
+        super(SITE_MODEL);
 
-		this.substitutionModel = substitutionModel;
-		addModel(substitutionModel);
+        this.substitutionModel = substitutionModel;
+        addModel(substitutionModel);
 
-		this.muParameter = muParameter;
-		addParameter(muParameter);
-		muParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.muParameter = muParameter;
+        addParameter(muParameter);
+        muParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
-		this.rateParameter = rateParameter;
-		addParameter(rateParameter);
-		rateParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, Double.MIN_VALUE, rateParameter.getDimension()));
+        this.rateParameter = rateParameter;
+        addParameter(rateParameter);
+        rateParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, Double.MIN_VALUE, rateParameter.getDimension()));
 
-		states = stateString;
+        states = stateString;
 
-		if (states.length() != (rateParameter.getDimension() + 1)) {
-			throw new IllegalArgumentException("States must have one more dimension than rate parameter!");
-		}
-		categoryCount = states.length();
+        if (states.length() != (rateParameter.getDimension() + 1)) {
+            throw new IllegalArgumentException("States must have one more dimension than rate parameter!");
+        }
+        categoryCount = states.length();
 
-		categories = new int[categoryString.length()];
-		categoryWeights = new int[categoryCount];
-		categoryRates = new double[categoryCount];
-		for (int i = 0; i < categories.length; i++) {
-			char state = categoryString.charAt(i);
-			categories[i] = states.indexOf(state);
-			categoryWeights[categories[i]] += 1;
-		}
+        categories = new int[categoryString.length()];
+        categoryWeights = new int[categoryCount];
+        categoryRates = new double[categoryCount];
+        for (int i = 0; i < categories.length; i++) {
+            char state = categoryString.charAt(i);
+            categories[i] = states.indexOf(state);
+            categoryWeights[categories[i]] += 1;
+        }
 
-		siteCount = categories.length;
-		this.relativeTo = relativeTo;
-		ratesKnown = false;
-	}
+        siteCount = categories.length;
+        this.relativeTo = relativeTo;
+        ratesKnown = false;
+    }
 
-	/**
-	 * set mu
-	 */
-	public void setMu(double mu)
-	{
-		muParameter.setParameterValue(0, mu);
-	}
+    /**
+     * set mu
+     */
+    public void setMu(double mu) {
+        muParameter.setParameterValue(0, mu);
+    }
 
-	/**
-	 * @return mu
-	 */
-	public final double getMu() { return muParameter.getParameterValue(0); }
+    /**
+     * @return mu
+     */
+    public final double getMu() {
+        return muParameter.getParameterValue(0);
+    }
 
 
-	public Parameter getMutationRateParameter() { return muParameter; }
+    public Parameter getMutationRateParameter() {
+        return muParameter;
+    }
 
-	// *****************************************************************
-	// Interface SiteModel
-	// *****************************************************************
+    // *****************************************************************
+    // Interface SiteModel
+    // *****************************************************************
 
-	public boolean integrateAcrossCategories() { return false; }
+    public boolean integrateAcrossCategories() {
+        return false;
+    }
 
-	public int getCategoryCount() { return categoryCount; }
+    public int getCategoryCount() {
+        return categoryCount;
+    }
 
-	public int getCategoryOfSite(int site) {
+    public int getCategoryOfSite(int site) {
 
-		return categories[site];
-	}
+        return categories[site];
+    }
 
     public double getRateForCategory(int category) {
         synchronized (this) {
@@ -138,175 +144,200 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
 
         return categoryRates[category] * mu;
     }
-	
-	public void getTransitionProbabilities(double substitutions, double[] matrix) {
-		substitutionModel.getTransitionProbabilities(substitutions, matrix);
-	}
 
-	/**
-	 * Get the expected proportion of sites in this category.
-	 * @param category the category number
-	 * @return the proportion.
-	 */
-	public double getProportionForCategory(int category) {
-		throw new UnsupportedOperationException();
-	}
+    public void getTransitionProbabilities(double substitutions, double[] matrix) {
+        substitutionModel.getTransitionProbabilities(substitutions, matrix);
+    }
 
-	/**
-	 * Get an array of the expected proportion of sites in this category.
-	 * @return an array of the proportion.
-	 */
-	public double[] getCategoryProportions(){
-		throw new UnsupportedOperationException();
-	}
+    /**
+     * Get the expected proportion of sites in this category.
+     *
+     * @param category the category number
+     * @return the proportion.
+     */
+    public double getProportionForCategory(int category) {
+        throw new UnsupportedOperationException();
+    }
 
-	/**
-	 * Get an array of the expected proportion of sites in this category.
-	 * @return an array of the proportion.
-	 */
-	public double[] getCategoryRates() {
-		return categoryRates;
-	}
+    /**
+     * Get an array of the expected proportion of sites in this category.
+     *
+     * @return an array of the proportion.
+     */
+    public double[] getCategoryProportions() {
+        throw new UnsupportedOperationException();
+    }
 
-	/**
-	 *
-	 */
-	private void calculateCategoryRates() {
+    /**
+     * Get an array of the expected proportion of sites in this category.
+     *
+     * @return an array of the proportion.
+     */
+    public double[] getCategoryRates() {
+        return categoryRates;
+    }
 
-		categoryRates[relativeTo] = 1.0;
-		double total = 1.0;
-		int count = 0;
-		for (int i = 0; i < categoryRates.length; i++) {
-			if (i != relativeTo) {
-				categoryRates[i] = rateParameter.getParameterValue(count);
-				total = categoryRates[i] * categoryWeights[i];
-				count += 1;
-			}
-		}
-		total /= (double)siteCount;
+    /**
+     *
+     */
+    private void calculateCategoryRates() {
 
-		// normalize so that total output rate is 1.0
-		for (int i = 0; i < categoryRates.length; i++) {
-			categoryRates[i] /= total;
-		}
+        categoryRates[relativeTo] = 1.0;
+        double total = 1.0;
+        int count = 0;
+        for (int i = 0; i < categoryRates.length; i++) {
+            if (i != relativeTo) {
+                categoryRates[i] = rateParameter.getParameterValue(count);
+                total = categoryRates[i] * categoryWeights[i];
+                count += 1;
+            }
+        }
+        total /= (double) siteCount;
 
-		ratesKnown = true;
-	}
+        // normalize so that total output rate is 1.0
+        for (int i = 0; i < categoryRates.length; i++) {
+            categoryRates[i] /= total;
+        }
 
-	/**
-	 * Get the frequencyModel for this SiteModel.
-	 * @return the frequencyModel.
-	 */
-	public FrequencyModel getFrequencyModel() { return substitutionModel.getFrequencyModel(); }
+        ratesKnown = true;
+    }
 
-	/**
-	 * Get the substitutionModel for this SiteModel.
-	 * @return the substitutionModel.
-	 */
-	public SubstitutionModel getSubstitutionModel() { return substitutionModel; }
+    /**
+     * Get the frequencyModel for this SiteModel.
+     *
+     * @return the frequencyModel.
+     */
+    public FrequencyModel getFrequencyModel() {
+        return substitutionModel.getFrequencyModel();
+    }
 
-	// *****************************************************************
-	// Interface ModelComponent
-	// *****************************************************************
+    /**
+     * Get the substitutionModel for this SiteModel.
+     *
+     * @return the substitutionModel.
+     */
+    public SubstitutionModel getSubstitutionModel() {
+        return substitutionModel;
+    }
 
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		// Substitution model has changed so fire model changed event
-		listenerHelper.fireModelChanged(this, object, index);
-	}
+    // *****************************************************************
+    // Interface ModelComponent
+    // *****************************************************************
 
-	public void handleParameterChangedEvent(Parameter parameter, int index) {
-		if (parameter == rateParameter) {
-			ratesKnown = false;
-		}
-		listenerHelper.fireModelChanged(this, parameter, index);
-	}
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        // Substitution model has changed so fire model changed event
+        listenerHelper.fireModelChanged(this, object, index);
+    }
 
-	protected void storeState() {} // no additional state needs storing
-	protected void restoreState() {
-		ratesKnown = false;
-	}
-	protected void acceptState() {} // no additional state needs accepting
+    public void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+        if (parameter == rateParameter) {
+            ratesKnown = false;
+        }
+        listenerHelper.fireModelChanged(this, parameter, index);
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    protected void storeState() {
+    } // no additional state needs storing
 
-		public String getParserName() { return SITE_MODEL; }
+    protected void restoreState() {
+        ratesKnown = false;
+    }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    protected void acceptState() {
+    } // no additional state needs accepting
 
-			XMLObject cxo = (XMLObject)xo.getChild(SUBSTITUTION_MODEL);
-			SubstitutionModel substitutionModel = (SubstitutionModel)cxo.getChild(SubstitutionModel.class);
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-			cxo = (XMLObject)xo.getChild(MUTATION_RATE);
-			Parameter muParam = (Parameter)cxo.getChild(Parameter.class);
+        public String getParserName() {
+            return SITE_MODEL;
+        }
 
-			cxo = (XMLObject)xo.getChild(RATE_PARAMETER);
-			Parameter rateParam = null;
-			int relativeTo = 0;
-			if (cxo != null) {
-				rateParam = (Parameter)cxo.getChild(Parameter.class);
-				relativeTo = cxo.getIntegerAttribute(RELATIVE_TO);
-			}
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			cxo = (XMLObject)xo.getChild(CATEGORIES);
-			String categories = "";
-			String states = "";
-			if (cxo != null) {
-				categories = cxo.getStringAttribute(CATEGORY_STRING);
-				states = cxo.getStringAttribute(CATEGORY_STATES);
-			}
+            XMLObject cxo = (XMLObject) xo.getChild(SUBSTITUTION_MODEL);
+            SubstitutionModel substitutionModel = (SubstitutionModel) cxo.getChild(SubstitutionModel.class);
 
-			return new CategorySiteModel(substitutionModel, muParam, rateParam, categories, states, relativeTo);
+            cxo = (XMLObject) xo.getChild(MUTATION_RATE);
+            Parameter muParam = (Parameter) cxo.getChild(Parameter.class);
 
-		}
+            cxo = (XMLObject) xo.getChild(RATE_PARAMETER);
+            Parameter rateParam = null;
+            int relativeTo = 0;
+            if (cxo != null) {
+                rateParam = (Parameter) cxo.getChild(Parameter.class);
+                relativeTo = cxo.getIntegerAttribute(RELATIVE_TO);
+            }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            cxo = (XMLObject) xo.getChild(CATEGORIES);
+            String categories = "";
+            String states = "";
+            if (cxo != null) {
+                categories = cxo.getStringAttribute(CATEGORY_STRING);
+                states = cxo.getStringAttribute(CATEGORY_STATES);
+            }
 
-		public String getParserDescription() {
-			return "A SiteModel that has a gamma distributed rates across sites";
-		}
+            return new CategorySiteModel(substitutionModel, muParam, rateParam, categories, states, relativeTo);
 
-		public Class getReturnType() { return CategorySiteModel.class; }
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[] {
-				new ElementRule(SubstitutionModel.class)
-			}),
-			new ElementRule(MUTATION_RATE, new XMLSyntaxRule[] {
-				new ElementRule(Parameter.class)
-			}),
-			new ElementRule(RATE_PARAMETER, new XMLSyntaxRule[] {
-				AttributeRule.newIntegerRule(RELATIVE_TO, true),
-				new ElementRule(Parameter.class)
-			}, true),
-			new ElementRule(CATEGORIES, new XMLSyntaxRule[] {
-				AttributeRule.newStringRule(CATEGORY_STRING, true),
-				AttributeRule.newStringRule(CATEGORY_STATES, true)
-			}, true),
-		};
-	};
+        public String getParserDescription() {
+            return "A SiteModel that has a gamma distributed rates across sites";
+        }
 
-	/** the substitution model for these sites */
-	private SubstitutionModel substitutionModel = null;
+        public Class getReturnType() {
+            return CategorySiteModel.class;
+        }
 
-	/** mutation rate parameter */
-	private Parameter muParameter;
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-	/** rates parameter */
-	private Parameter rateParameter;
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
+                        new ElementRule(SubstitutionModel.class)
+                }),
+                new ElementRule(MUTATION_RATE, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class)
+                }),
+                new ElementRule(RATE_PARAMETER, new XMLSyntaxRule[]{
+                        AttributeRule.newIntegerRule(RELATIVE_TO, true),
+                        new ElementRule(Parameter.class)
+                }, true),
+                new ElementRule(CATEGORIES, new XMLSyntaxRule[]{
+                        AttributeRule.newStringRule(CATEGORY_STRING, true),
+                        AttributeRule.newStringRule(CATEGORY_STATES, true)
+                }, true),
+        };
+    };
 
-	private boolean ratesKnown;
+    /**
+     * the substitution model for these sites
+     */
+    private SubstitutionModel substitutionModel = null;
 
-	private int categoryCount;
+    /**
+     * mutation rate parameter
+     */
+    private Parameter muParameter;
 
-	private double[] categoryRates;
+    /**
+     * rates parameter
+     */
+    private Parameter rateParameter;
+
+    private boolean ratesKnown;
+
+    private int categoryCount;
+
+    private double[] categoryRates;
 
 
-	private int[] categoryWeights;
-	private int[] categories;
+    private int[] categoryWeights;
+    private int[] categories;
 	private String states;
 	private int siteCount;
 	private int relativeTo = 0;

@@ -26,45 +26,46 @@
 package dr.util;
 
 /**
- * interface for the transform of a continuous variable.
+ * interface for the one-to-one transform of a continuous variable.
  * A static member Transform.LOG provides an instance of LogTransform
  *
- * @version $Id: Transform.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
- *
  * @author Andrew Rambaut
+ * @version $Id: Transform.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
  */
-public interface Transform
-{
-	/**
-	 * @return the transformed value
-	 */
-	double transform(double value);
+public interface Transform {
+    /**
+     * @return the transformed value
+     */
+    double transform(double value);
 
-	/**
-	 * @return the inverse transformed value
-	 */
-	double inverse(double value);
+    /**
+     * @return the inverse transformed value
+     */
+    double inverse(double value);
 
-	/**
-	 * @return the transform's name
-	 */
-	String getTransformName();
-	
+    /**
+     * @return the transform's name
+     */
+    String getTransformName();
 
-	public class LogTransform implements Transform {
-	
-		private LogTransform() { }
-		
-		public double transform(double value) {
-			return Math.log(value);
-		}
 
-		public double inverse(double value) {
-			return Math.exp(value);
-		}
-		
-		public String getTransformName() { return "log"; }
-	}
-	
-	public static final LogTransform LOG = new LogTransform();
+    public class LogTransform implements Transform {
+
+        private LogTransform() {
+        }
+
+        public double transform(double value) {
+            return Math.log(value);
+        }
+
+        public double inverse(double value) {
+            return Math.exp(value);
+        }
+
+        public String getTransformName() {
+            return "log";
+        }
+    }
+
+    public static final LogTransform LOG = new LogTransform();
 }

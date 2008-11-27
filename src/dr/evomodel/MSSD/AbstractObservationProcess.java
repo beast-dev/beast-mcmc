@@ -11,7 +11,6 @@ import dr.evomodel.treelikelihood.LikelihoodCore;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.math.GammaFunction;
 
 /**
@@ -223,7 +222,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
             nodePatternInclusionKnown = false;
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         if (parameter == mu || parameter == lam) {
             weightKnown = false;
         } else {

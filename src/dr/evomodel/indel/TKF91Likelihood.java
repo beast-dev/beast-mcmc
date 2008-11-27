@@ -94,7 +94,7 @@ public class TKF91Likelihood extends AbstractModel implements Likelihood {
         //throw new RuntimeException("Not implemented!");
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         //throw new RuntimeException("Not implemented!");
     }
 

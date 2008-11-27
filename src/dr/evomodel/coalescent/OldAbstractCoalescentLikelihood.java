@@ -60,9 +60,9 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
     // PUBLIC STUFF
 
     //public static final String COALESCENT_LIKELIHOOD = "oldcoalescentLikelihood";
-//    public static final String ANALYTICAL = "analytical";
-//    public static final String MODEL = "model";
-//
+    //    public static final String ANALYTICAL = "analytical";
+    //    public static final String MODEL = "model";
+    //
     //    public static final String POPULATION_TREE = "populationTree";
     //    public static final String POPULATION_FACTOR = "factor";
     private MultiLociTreeSet treesSet = null;
@@ -172,7 +172,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
 
     // No parameters to respond to
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
     }
 
     // **************************************************************

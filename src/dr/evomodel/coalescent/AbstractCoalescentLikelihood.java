@@ -113,7 +113,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModel impleme
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
     } // No parameters to respond to
 
     // **************************************************************

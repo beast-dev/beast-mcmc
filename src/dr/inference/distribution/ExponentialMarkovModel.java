@@ -25,7 +25,10 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.*;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 import org.w3c.dom.Document;
@@ -76,7 +79,7 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
         // no intermediates need to be recalculated...
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // no intermediates need to be recalculated...
     }
 

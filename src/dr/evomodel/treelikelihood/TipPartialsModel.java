@@ -6,7 +6,6 @@ import dr.evolution.util.TaxonList;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 
 /**
  * @author Andrew Rambaut
@@ -77,7 +76,7 @@ public abstract class TipPartialsModel extends AbstractModel {
      * some information that requires them. This mechanism is 'lazy' so that this method
      * can be safely called multiple times with minimal computational cost.
      */
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         fireModelChanged();
     }
 

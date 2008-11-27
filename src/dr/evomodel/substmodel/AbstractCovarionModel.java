@@ -4,7 +4,6 @@ import dr.evolution.datatype.DataType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.math.MachineAccuracy;
 
 import java.util.LinkedList;
@@ -68,7 +67,7 @@ public abstract class AbstractCovarionModel extends AbstractModel
         frequenciesChanged();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // relativeRates changed
         updateMatrix = true;
         ratesChanged();

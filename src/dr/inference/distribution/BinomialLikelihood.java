@@ -25,7 +25,10 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.*;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.math.Binomial;
 import dr.xml.*;
 import org.w3c.dom.Document;
@@ -111,7 +114,7 @@ public class BinomialLikelihood extends AbstractModel implements Likelihood {
         // DO NOTHING
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // DO NOTHING
     }
 
@@ -208,6 +211,6 @@ public class BinomialLikelihood extends AbstractModel implements Likelihood {
     Binomial binom = new Binomial();
     Parameter trialsParameter;
     Parameter proportionParameter;
-	int[] counts;
+    int[] counts;
 }
 

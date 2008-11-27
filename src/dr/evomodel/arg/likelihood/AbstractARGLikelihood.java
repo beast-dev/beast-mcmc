@@ -14,7 +14,10 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.treelikelihood.LikelihoodCore;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.ParallelLikelihood;
+import dr.inference.model.Parameter;
 
 /**
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
@@ -174,7 +177,7 @@ public abstract class AbstractARGLikelihood extends AbstractModel implements Par
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // do nothing
     }
 

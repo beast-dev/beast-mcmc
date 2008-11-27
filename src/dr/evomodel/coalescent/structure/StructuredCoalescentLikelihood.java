@@ -93,7 +93,7 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         likelihoodKnown = false;
     }
 

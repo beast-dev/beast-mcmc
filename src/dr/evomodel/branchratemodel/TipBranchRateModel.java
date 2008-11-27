@@ -30,7 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 /**
@@ -61,7 +60,7 @@ public class TipBranchRateModel extends AbstractModel implements BranchRateModel
         fireModelChanged();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         fireModelChanged();
     }
 

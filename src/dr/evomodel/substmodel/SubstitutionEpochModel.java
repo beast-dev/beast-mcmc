@@ -3,7 +3,6 @@ package dr.evomodel.substmodel;
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
@@ -157,7 +156,7 @@ public class SubstitutionEpochModel extends AbstractSubstitutionModel {
         throw new RuntimeException("Should not get here in a substitution epoch model.");
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         super.handleParameterChangedEvent(parameter, index, type);
 
         if (parameter == transitionTimesParameter) {

@@ -31,5 +31,5 @@ package dr.inference.model;
  */
 public interface ParameterListener {
 
-    void parameterChangedEvent(Parameter parameter, int index, ParameterChangeType type);
+    void parameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type);
 }

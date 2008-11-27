@@ -49,17 +49,20 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     protected SiteModel siteModel;
     private double logN;
     protected boolean nodePatternInclusionKnown = false;
+    BranchRateModel branchRateModel;
 
     public AbstractObservationProcess(String Name, TreeModel treeModel, PatternList patterns, SiteModel siteModel,
-                                      Parameter mu, Parameter lam) {
+                                      BranchRateModel branchRateModel, Parameter mu, Parameter lam) {
         super(Name);
         this.treeModel = treeModel;
         this.patterns = patterns;
         this.mu = mu;
         this.lam = lam;
         this.siteModel = siteModel;
+        this.branchRateModel = branchRateModel;
         addModel(treeModel);
         addModel(siteModel);
+        addModel(branchRateModel);
         addParameter(mu);
         addParameter(lam);
 
@@ -93,7 +96,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     }
 
 
-    public final double nodePatternLikelihood(double[] freqs, BranchRateModel branchRateModel, LikelihoodCore likelihoodCore) {
+    public final double nodePatternLikelihood(double[] freqs, LikelihoodCore likelihoodCore) {
         int i, j;
         double logL = gammaNorm;
 
@@ -123,7 +126,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
                     and then multiplying by equilibrium probs
             */
             likelihoodCore.calculateLogLikelihoods(nodePartials, freqs, nodeLikelihoods);
-            prob = Math.log(getNodeSurvivalProbability(i, branchRateModel));
+            prob = Math.log(getNodeSurvivalProbability(i));
 
             for (j = 0; j < patternCount; ++j) {
                 if (nodePatternInclusion[i][j])
@@ -140,7 +143,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
 
         double deathRate = mu.getParameterValue(0);
 
-        double logTreeWeight = getLogTreeWeight(branchRateModel);
+        double logTreeWeight = getLogTreeWeight();
 
 /*        System.err.println("Patterns contribution "+logL);
         System.err.println("Patterns less gammanorm "+(logL-gammaNorm));
@@ -179,16 +182,16 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         return returnProb;
     }
 
-    final public double getLogTreeWeight(BranchRateModel branchRateModel) {
+    final public double getLogTreeWeight() {
         if (!weightKnown) {
-            logTreeWeight = calculateLogTreeWeight(branchRateModel);
+            logTreeWeight = calculateLogTreeWeight();
             weightKnown = true;
         }
 
         return logTreeWeight;
     }
 
-    abstract public double calculateLogTreeWeight(BranchRateModel branchRateModel);
+    abstract public double calculateLogTreeWeight();
 
     abstract void setNodePatternInclusion();
 
@@ -201,7 +204,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         return avgRate;
     }
 
-    public double getNodeSurvivalProbability(int index, BranchRateModel branchRateModel) {
+    public double getNodeSurvivalProbability(int index) {
         NodeRef node = treeModel.getNode(index);
         NodeRef parent = treeModel.getParent(node);
 
@@ -215,7 +218,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == treeModel || model == siteModel) {
+        if (model == treeModel || model == siteModel || model == branchRateModel) {
             weightKnown = false;
         }
         if (model == treeModel)

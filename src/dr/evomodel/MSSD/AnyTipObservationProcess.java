@@ -28,11 +28,11 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
     protected double[] p;
 
     public AnyTipObservationProcess(String modelName, TreeModel treeModel, PatternList patterns, SiteModel siteModel,
-                                    Parameter mu, Parameter lam) {
-        super(modelName, treeModel, patterns, siteModel, mu, lam);
+                                    BranchRateModel branchRateModel, Parameter mu, Parameter lam) {
+        super(modelName, treeModel, patterns, siteModel, branchRateModel, mu, lam);
     }
 
-    public double calculateLogTreeWeight(BranchRateModel branchRateModel) {
+    public double calculateLogTreeWeight() {
         int L = treeModel.getNodeCount();
         if (u0 == null || p == null) {
             u0 = new double[L];    // probability that the trait at node i survives to no leaf
@@ -43,7 +43,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
         double logWeight = 0.0;
 
         for (i = 0; i < L; ++i) {
-            p[i] = 1.0 - getNodeSurvivalProbability(i, branchRateModel);
+            p[i] = 1.0 - getNodeSurvivalProbability(i);
         }
 
         for (i = 0; i < treeModel.getExternalNodeCount(); ++i) {
@@ -117,9 +117,10 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             PatternList patterns = (PatternList) xo.getChild(PatternList.class);
             SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
+            BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
             Logger.getLogger("dr.evomodel.MSSD").info("Creating AnyTipObservationProcess model. Observed traits are assumed to be extant in at least one tip node. Initial mu = " + mu.getParameterValue(0) + " initial lam = " + lam.getParameterValue(0));
 
-            return new AnyTipObservationProcess(MODEL_NAME, treeModel, patterns, siteModel, mu, lam);
+            return new AnyTipObservationProcess(MODEL_NAME, treeModel, patterns, siteModel, branchRateModel, mu, lam);
         }
 
         //************************************************************************
@@ -142,6 +143,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
                 new ElementRule(TreeModel.class),
                 new ElementRule(PatternList.class),
                 new ElementRule(SiteModel.class),
+                new ElementRule(BranchRateModel.class),
                 new ElementRule(DEATH_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(IMMIGRATION_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
         };

@@ -9,18 +9,21 @@
     </taxa>
 
     <generalDataType id="binaryDataType">
-        <state code="1"/>  <!-- No splice sites -->
-        <state code="2"/>  <!-- Splice sites present -->
+        <state code="1"/>
+        <!-- No splice sites -->
+        <state code="2"/>
+        <!-- Splice sites present -->
         <ambiguity code="B" states="12"/>
     </generalDataType>
 
     <extendedDataType id="alsDataType">
         <dataType idref="binaryDataType"/>
-        <deathState code="0"/>    <!-- Exon not present -->
+        <deathState code="0"/>
+        <!-- Exon not present -->
         <ambiguity code="U"/>
     </extendedDataType>
 
-<!--    <alignment id="short">
+    <!--    <alignment id="short">
         <dataType idref="alsDataType"/>
         <sequence> <taxon idref="hg"/>    222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222</sequence>
         <sequence> <taxon idref="panTro"/>U000000000000000000000000011111111111111111111111112222222222222222222222222BBBBBBBBBBBBBBBBBBBBBBBBBUUUUUUUUUUUUUUUUUUUUUUUUU</sequence>
@@ -30,15 +33,27 @@
 
     <alignment id="short">
         <dataType idref="alsDataType"/>
-        <sequence> <taxon idref="hg"/>     12222 </sequence>
-        <sequence> <taxon idref="panTro"/> U212U </sequence>
-        <sequence> <taxon idref="mm"/>     U122U </sequence>
-        <sequence> <taxon idref="rn"/>     U012U </sequence>
+        <sequence>
+            <taxon idref="hg"/>
+            12222
+        </sequence>
+        <sequence>
+            <taxon idref="panTro"/>
+            U212U
+        </sequence>
+        <sequence>
+            <taxon idref="mm"/>
+            U122U
+        </sequence>
+        <sequence>
+            <taxon idref="rn"/>
+            U012U
+        </sequence>
     </alignment>
 
     <newick id="shortTree"> <!-- rescaleHeight="0.1">   -->
-	((hg:0.1,panTro:0.1):1.8,(rn:0.9,mm:0.9):1);
-	</newick>
+        ((hg:0.1,panTro:0.1):1.8,(rn:0.9,mm:0.9):1);
+    </newick>
     <ascertainedPatterns from="2" id="shortPatterns">
         <alignment idref="short"/>
         <!--<excludePatterns from="5" to="6"/>-->
@@ -51,15 +66,15 @@
             <parameter dimension="2" value="0.5 0.5" id="binary.frequencies"/>
         </frequencies>
     </frequencyModel>
-                                                                            
-	<generalSubstitutionModel id="binaryModel">
-		<frequencies>
-			<frequencyModel idref="binaryFreqModel"/>
-		</frequencies>
-		<rates relativeTo="1">
-			<parameter id="binary.rates" dimension="0"/>
-		</rates>
-	</generalSubstitutionModel>
+
+    <generalSubstitutionModel id="binaryModel">
+        <frequencies>
+            <frequencyModel idref="binaryFreqModel"/>
+        </frequencies>
+        <rates relativeTo="1">
+            <parameter id="binary.rates" dimension="0"/>
+        </rates>
+    </generalSubstitutionModel>
 
     <mutationDeathModel id="alsModel">
         <parameter id="als.death" lower="0.0" value="1.0"/>
@@ -92,40 +107,29 @@
         </nodeHeights>
     </treeModel>
 
-    <anyTipObservationProcess id="exonObservationProcess">
-        <taxon idref="hg"/>
-        <treeModel idref="treeModel"/>
-        <patterns idref="shortPatterns"/>
-        <deathRate>
-            <parameter idref="als.death"/>
-        </deathRate>
-        <immigrationRate>
-            <parameter id="als.birth" lower="0.0" value="0.0001"/>
-        </immigrationRate>
-        <siteModel idref="siteModel"/>
-    </anyTipObservationProcess>
-
     <scaledTreeLengthModel id="treeLengthScaling">
-            <treeModel idref="treeModel"/>
-            <scalingFactor>
-                <parameter id="totalTreeLength" lower="0.0" value="1.0"/>
-            </scalingFactor>
+        <treeModel idref="treeModel"/>
+        <scalingFactor>
+            <parameter id="totalTreeLength" lower="0.0" value="1.0"/>
+        </scalingFactor>
     </scaledTreeLengthModel>
 
     <alsTreeLikelihood id="alsLikelihood" integrateGainRate="true">
         <patterns idref="shortPatterns"/>
         <treeModel idref="treeModel"/>
         <siteModel idref="siteModel"/>
-        <anyTipObservationProcess idref="exonObservationProcess"/>
         <scaledTreeLengthModel idref="treeLengthScaling"/>
+        <observationProcess type="singleTip" taxon="hg"/>
     </alsTreeLikelihood>
 
     <exponentialBranchLengthsPrior id="treePrior">
         <treeModel idref="treeModel"/>
     </exponentialBranchLengthsPrior>
 
-    <ctmcScalePrior id = "scalePrior">
-        <ctmcScale> <parameter idref="substitutionRate"/> </ctmcScale>
+    <ctmcScalePrior id="scalePrior">
+        <ctmcScale>
+            <parameter idref="substitutionRate"/>
+        </ctmcScale>
         <treeModel idref="treeModel"/>
     </ctmcScalePrior>
 
@@ -143,18 +147,18 @@
         <scaleOperator scaleFactor="0.65" weight="1">
             <parameter idref="als.death"/>
         </scaleOperator>
-<!--         <scaleOperator scaleFactor="0.5" weight="1">
+        <!--         <scaleOperator scaleFactor="0.5" weight="1">
             <parameter idref="als.birth"/>
         </scaleOperator>-->
     </operators>
 
-	<mcmc id="mcmc" chainLength="300000" autoOptimize="false">
-		<posterior id="posterior">
+    <mcmc id="mcmc" chainLength="300000" autoOptimize="false">
+        <posterior id="posterior">
             <likelihood id="likelihood">
-				<treeLikelihood idref="alsLikelihood"/>
+                <treeLikelihood idref="alsLikelihood"/>
             </likelihood>
             <prior id="prior">
-                <likelihood idref="treePrior"/>        
+                <likelihood idref="treePrior"/>
                 <likelihood idref="deathRatePrior"/>
                 <likelihood idref="scalePrior"/>
             </prior>
@@ -162,9 +166,9 @@
 
         <operators idref="operators"/>
         <log logEvery="100">
-            <column label="Lam" sf="4" width="12">
-                <parameter idref="als.birth"/>
-            </column>
+            <!--            <column label="Lam" sf="4" width="12">
+           <parameter idref="als.birth"/>
+       </column>     -->
             <column label="Del" sf="4" width="12">
                 <parameter idref="als.death"/>
             </column>
@@ -185,15 +189,15 @@
             </column>
         </log>
         <log id="fileLog" logEvery="1" fileName="scalePrior.log">
-	<parameter idref="als.birth" />
-	<parameter idref="als.death"/>
-	<parameter idref="binary.frequencies" dimension="1"/>
-	<parameter idref="substitutionRate"/>
-    <likelihood idref="likelihood"/>
-    <!--<alsTreeLikelihood idref="alsLikelihood"/>-->
-<!--	<likelihood idref="prior"/>
-	<likelihood idref="posterior"/>-->
-      </log>
+            <!--	<parameter idref="als.birth" />         -->
+            <parameter idref="als.death"/>
+            <parameter idref="binary.frequencies" dimension="1"/>
+            <parameter idref="substitutionRate"/>
+            <likelihood idref="likelihood"/>
+            <!--<alsTreeLikelihood idref="alsLikelihood"/>-->
+            <!--	<likelihood idref="prior"/>
+       <likelihood idref="posterior"/>-->
+        </log>
     </mcmc>
 
 </beast>

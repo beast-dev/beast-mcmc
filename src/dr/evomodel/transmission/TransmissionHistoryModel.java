@@ -37,6 +37,7 @@ import dr.evoxml.XMLUnits;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -50,13 +51,11 @@ import java.util.logging.Logger;
  * can optionally be obtained as parameters for sampling. In future it may be possible
  * to sample the direction of transmission where this is not known.
  *
- * @version $Id: TransmissionHistoryModel.java,v 1.3 2005/04/11 11:25:50 alexei Exp $
- *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @version $Id: TransmissionHistoryModel.java,v 1.3 2005/04/11 11:25:50 alexei Exp $
  */
-public class TransmissionHistoryModel extends AbstractModel implements TreeColouringProvider, Units
-{
+public class TransmissionHistoryModel extends AbstractModel implements TreeColouringProvider, Units {
 
     //
     // Public stuff
@@ -105,7 +104,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
             hosts.add(recipient);
         }
 
-        Logger.getLogger("dr.evomodel").info( "Transmission from " + donor + " to " + recipient + " at " + parameter.getParameterValue(0));
+        Logger.getLogger("dr.evomodel").info("Transmission from " + donor + " to " + recipient + " at " + parameter.getParameterValue(0));
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -115,7 +114,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
     /**
      * Called when a parameter changes.
      */
-    public void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
     }
 
     public int getTransmissionEventCount() {
@@ -123,11 +122,11 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
     }
 
     public TransmissionEvent getTransmissionEvent(int index) {
-        return (TransmissionEvent)transmissionEvents.get(index);
+        return (TransmissionEvent) transmissionEvents.get(index);
     }
 
     public TransmissionEvent getTransmissionEventToHost(Taxon recipient) {
-        return (TransmissionEvent)transmissionEventMap.get(recipient);
+        return (TransmissionEvent) transmissionEventMap.get(recipient);
     }
 
     // *****************************************************************
@@ -151,7 +150,8 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
     /**
      * accept the stored state
      */
-    protected void acceptState() {} // nothing to do
+    protected void acceptState() {
+    } // nothing to do
 
     // **************************************************************
     // Units IMPLEMENTATION
@@ -161,8 +161,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
      * Sets the units these coalescent intervals are
      * measured in.
      */
-    public final void setUnits(Type u)
-    {
+    public final void setUnits(Type u) {
         units = u;
     }
 
@@ -170,8 +169,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
      * Returns the units these coalescent intervals are
      * measured in.
      */
-    public final Type getUnits()
-    {
+    public final Type getUnits() {
         return units;
     }
 
@@ -182,7 +180,9 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return TRANSMISSION_HISTORY_MODEL; }
+        public String getParserName() {
+            return TRANSMISSION_HISTORY_MODEL;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -191,16 +191,16 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
             TransmissionHistoryModel history = new TransmissionHistoryModel(units);
 
             for (int i = 0; i < xo.getChildCount(); i++) {
-                XMLObject xoc = (XMLObject)xo.getChild(i);
+                XMLObject xoc = (XMLObject) xo.getChild(i);
                 if (xoc.getName().equals(TRANSMISSION)) {
-                    Taxon donor = (Taxon)xoc.getElementFirstChild(DONOR);
-                    Taxon recipient = (Taxon)xoc.getElementFirstChild(RECIPIENT);
+                    Taxon donor = (Taxon) xoc.getElementFirstChild(DONOR);
+                    Taxon recipient = (Taxon) xoc.getElementFirstChild(RECIPIENT);
                     if (donor.equals(recipient)) {
                         throw new XMLParseException("Donor and recipient in TransmissionHistoryModel are the same: " + donor);
                     }
 
                     // Date date = (Date)xoc.getChild(Date.class);
-                    Parameter parameter = (Parameter)xoc.getChild(Parameter.class);
+                    Parameter parameter = (Parameter) xoc.getChild(Parameter.class);
                     history.addTransmission(donor, recipient, parameter);
                 }
             }
@@ -216,20 +216,24 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
             return "Defines a transmission history";
         }
 
-        public Class getReturnType() { return TransmissionHistoryModel.class; }
+        public Class getReturnType() {
+            return TransmissionHistoryModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 XMLUnits.UNITS_RULE,
                 new ElementRule(TRANSMISSION,
-                        new XMLSyntaxRule[] {
+                        new XMLSyntaxRule[]{
                                 //new ElementRule(Date.class),
                                 new ElementRule(Parameter.class),
                                 new ElementRule(DONOR,
-                                        new XMLSyntaxRule[] {new ElementRule(Taxon.class)}),
+                                        new XMLSyntaxRule[]{new ElementRule(Taxon.class)}),
                                 new ElementRule(RECIPIENT,
-                                        new XMLSyntaxRule[] {new ElementRule(Taxon.class)})
+                                        new XMLSyntaxRule[]{new ElementRule(Taxon.class)})
                         }, 1, Integer.MAX_VALUE
                 )
         };
@@ -261,7 +265,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
         Taxon childHost = null;
 
         if (tree.isExternal(node)) {
-            childHost = (Taxon)tree.getNodeTaxon(node).getAttribute("host");
+            childHost = (Taxon) tree.getNodeTaxon(node).getAttribute("host");
             if (childHost == null) {
                 throw new RuntimeException("One or more of the viruses tree's taxa are missing the 'host' attribute");
             }
@@ -307,8 +311,8 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
                 int host2 = getHostIndex(parentHost);
                 branchColouring = new DefaultBranchColouring(host2, host1);
                 for (int i = hosts.size() - 1; i >= 0; i--) {
-                    int host = getHostIndex((Taxon)hosts.get(i));
-                    double time = ((Double)times.get(i)).doubleValue();
+                    int host = getHostIndex((Taxon) hosts.get(i));
+                    double time = ((Double) times.get(i)).doubleValue();
                     branchColouring.addEvent(host, time);
                 }
 

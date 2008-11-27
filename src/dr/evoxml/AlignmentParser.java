@@ -27,7 +27,8 @@ package dr.evoxml;
 
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.sequence.Sequence;
 import dr.xml.*;
 
@@ -36,14 +37,15 @@ import java.util.logging.Logger;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: AlignmentParser.java,v 1.3 2005/07/11 14:06:25 rambaut Exp $
  */
-public class AlignmentParser extends  AbstractXMLObjectParser {
+public class AlignmentParser extends AbstractXMLObjectParser {
 
     public static final String ALIGNMENT = "alignment";
 
-    public String getParserName() { return ALIGNMENT; }
+    public String getParserName() {
+        return ALIGNMENT;
+    }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -61,7 +63,7 @@ public class AlignmentParser extends  AbstractXMLObjectParser {
 
             Object child = xo.getChild(i);
             if (child instanceof Sequence) {
-                Sequence seq = (Sequence)child;
+                Sequence seq = (Sequence) child;
                 alignment.addSequence(seq);
             } else if (child instanceof DataType) {
                 // already dealt with
@@ -70,17 +72,17 @@ public class AlignmentParser extends  AbstractXMLObjectParser {
             }
         }
 
-	    if (xo.hasAttribute("id")) {
-		    Logger.getLogger("dr.evoxml").info("Read alignment, '" + xo.getId() + "':"+
-		            "\n  Sequences = " + alignment.getSequenceCount() +
-		            "\n      Sites = " + alignment.getSiteCount() +
-		            "\n   Datatype = " + alignment.getDataType().getDescription());
-	    } else {
-		    Logger.getLogger("dr.evoxml").info("Read alignment:"+
-		            "\n  Sequences = " + alignment.getSequenceCount() +
-		            "\n      Sites = " + alignment.getSiteCount() +
-		            "\n   Datatype = " + alignment.getDataType().getDescription());
-	    }
+        if (xo.hasAttribute("id")) {
+            Logger.getLogger("dr.evoxml").info("Read alignment, '" + xo.getId() + "':" +
+                    "\n  Sequences = " + alignment.getSequenceCount() +
+                    "\n      Sites = " + alignment.getSiteCount() +
+                    "\n   Datatype = " + alignment.getDataType().getDescription());
+        } else {
+            Logger.getLogger("dr.evoxml").info("Read alignment:" +
+                    "\n  Sequences = " + alignment.getSequenceCount() +
+                    "\n      Sites = " + alignment.getSiteCount() +
+                    "\n   Datatype = " + alignment.getDataType().getDescription());
+        }
         return alignment;
     }
 
@@ -88,38 +90,42 @@ public class AlignmentParser extends  AbstractXMLObjectParser {
         return "This element represents an alignment of molecular sequences.";
     }
 
-    public Class getReturnType() { return Alignment.class; }
+    public Class getReturnType() {
+        return Alignment.class;
+    }
 
     public String getExample() {
 
         return
-            "<!-- An alignment of three short DNA sequences -->\n" +
-            "<alignment missing=\"-?\" dataType=\"" + Nucleotides.DESCRIPTION + "\">\n" +
-            "  <sequence>\n" +
-            "    <taxon idref=\"taxon1\"/>\n" +
-            "    ACGACTAGCATCGAGCTTCG--GATAGCAGGC\n" +
-            "  </sequence>\n" +
-            "  <sequence>\n" +
-            "    <taxon idref=\"taxon2\"/>\n" +
-            "    ACGACTAGCATCGAGCTTCGG-GATAGCATGC\n" +
-            "  </sequence>\n" +
-            "  <sequence>\n" +
-            "    <taxon idref=\"taxon3\"/>\n" +
-            "    ACG?CTAGAATCGAGCTTCGAGGATAGCATGC\n" +
-            "  </sequence>\n" +
-            "</alignment>\n";
+                "<!-- An alignment of three short DNA sequences -->\n" +
+                        "<alignment missing=\"-?\" dataType=\"" + Nucleotides.DESCRIPTION + "\">\n" +
+                        "  <sequence>\n" +
+                        "    <taxon idref=\"taxon1\"/>\n" +
+                        "    ACGACTAGCATCGAGCTTCG--GATAGCAGGC\n" +
+                        "  </sequence>\n" +
+                        "  <sequence>\n" +
+                        "    <taxon idref=\"taxon2\"/>\n" +
+                        "    ACGACTAGCATCGAGCTTCGG-GATAGCATGC\n" +
+                        "  </sequence>\n" +
+                        "  <sequence>\n" +
+                        "    <taxon idref=\"taxon3\"/>\n" +
+                        "    ACG?CTAGAATCGAGCTTCGAGGATAGCATGC\n" +
+                        "  </sequence>\n" +
+                        "</alignment>\n";
     }
 
-    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-        new XORRule(
-            new StringAttributeRule(
-                DataType.DATA_TYPE,
-                "The data type",
-                DataType.getRegisteredDataTypeNames(), false),
-            new ElementRule(DataType.class)
+    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            new XORRule(
+                    new StringAttributeRule(
+                            DataType.DATA_TYPE,
+                            "The data type",
+                            DataType.getRegisteredDataTypeNames(), false),
+                    new ElementRule(DataType.class)
             ),
-        new ElementRule(Sequence.class, 1, Integer.MAX_VALUE)
+            new ElementRule(Sequence.class, 1, Integer.MAX_VALUE)
     };
 }

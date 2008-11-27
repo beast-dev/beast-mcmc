@@ -1,13 +1,10 @@
 package dr.evomodel.clock;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
-import dr.inference.model.Model;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.*;
 
 import java.util.logging.Logger;
 
@@ -74,7 +71,7 @@ public abstract class RateEvolutionLikelihood extends AbstractModel implements B
         likelihoodKnown = false;
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
 
         if (parameter == rootRateParameter) {
             ratesKnown = false;

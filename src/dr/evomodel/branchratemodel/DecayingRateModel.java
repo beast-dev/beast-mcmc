@@ -27,18 +27,20 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.inference.model.*;
-import dr.xml.*;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
+import dr.xml.*;
 
 import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
- *
  * @version $Id: DecayingRateModel.java,v 1.3 2006/01/10 16:48:27 rambaut Exp $
  */
-public class DecayingRateModel extends AbstractModel implements BranchRateModel  {
+public class DecayingRateModel extends AbstractModel implements BranchRateModel {
 
     public static final String DECAYING_RATE_MODEL = "decayingRateModel";
     public static final String MUTATION_RATE = "mutationRate";
@@ -88,7 +90,8 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
         fireModelChanged();
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+
         // Parameters have changed
         ratesCalculated = false;
         fireModelChanged();
@@ -118,9 +121,9 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
                 k = substitutionRateParameter.getParameterValue(0);
             }
 
-            double lambda = Math.log(2)/halfLifeParameter.getParameterValue(0);
+            double lambda = Math.log(2) / halfLifeParameter.getParameterValue(0);
 
-            calculateNodeRates(tree, tree.getRoot(), mu,  k, lambda);
+            calculateNodeRates(tree, tree.getRoot(), mu, k, lambda);
 
             ratesCalculated = true;
         }
@@ -128,16 +131,17 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
         return rates[node.getNumber()];
     }
 
-	public String getBranchAttributeLabel() {
-		return "rate";
-	}
+    public String getBranchAttributeLabel() {
+        return "rate";
+    }
 
-	public String getAttributeForBranch(Tree tree, NodeRef node) {
-		return Double.toString(getBranchRate(tree, node));
-	}
+    public String getAttributeForBranch(Tree tree, NodeRef node) {
+        return Double.toString(getBranchRate(tree, node));
+    }
 
     /**
      * Traverse the tree calculating partial likelihoods.
+     *
      * @return whether the partials for this node were recalculated.
      */
     private final double calculateNodeRates(Tree tree, NodeRef node, double mu, double k, double lambda) {
@@ -185,34 +189,36 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
     }
 
     private static double rateIntegral(double time, double mu, double k, double lambda) {
-        return  ((k * time) + (((mu - k) / lambda) * (1.0 - Math.exp(-lambda * time))));
+        return ((k * time) + (((mu - k) / lambda) * (1.0 - Math.exp(-lambda * time))));
     }
 
     private static double rate(double time, double mu, double k, double lambda) {
-        return  k + ((mu - k) * Math.exp(-lambda * time));
+        return k + ((mu - k) * Math.exp(-lambda * time));
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return DECAYING_RATE_MODEL; }
+        public String getParserName() {
+            return DECAYING_RATE_MODEL;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             boolean useAveraging = xo.getBooleanAttribute(AVERAGE);
 
-            TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-            Parameter mutationRateParameter = (Parameter)xo.getElementFirstChild(MUTATION_RATE);
+            Parameter mutationRateParameter = (Parameter) xo.getElementFirstChild(MUTATION_RATE);
 
             Parameter proportionParameter = null;
             Parameter substitutionRateParameter = null;
 
             if (xo.hasChildNamed(PROPORTION)) {
-                proportionParameter = (Parameter)xo.getElementFirstChild(PROPORTION);
+                proportionParameter = (Parameter) xo.getElementFirstChild(PROPORTION);
             } else {
-                substitutionRateParameter = (Parameter)xo.getElementFirstChild(SUBSTITUTION_RATE);
+                substitutionRateParameter = (Parameter) xo.getElementFirstChild(SUBSTITUTION_RATE);
             }
-            Parameter halfLifeParameter = (Parameter)xo.getElementFirstChild(HALF_LIFE);
+            Parameter halfLifeParameter = (Parameter) xo.getElementFirstChild(HALF_LIFE);
 
             Logger.getLogger("dr.evomodel").info("Using decaying-rate clock model.");
 
@@ -229,11 +235,15 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
                             "molecular evolution decays to a substitution rate in the past.";
         }
 
-        public Class getReturnType() { return DecayingRateModel.class; }
+        public Class getReturnType() {
+            return DecayingRateModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newBooleanRule(AVERAGE, false),
                 new ElementRule(TreeModel.class, "The tree model"),
                 new ElementRule(MUTATION_RATE, Parameter.class, "The mutation rate parameter", false),
@@ -248,7 +258,7 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
     public static void main(String[] argv) {
         double mu = 1E-4;
         double k = 1E-5;
-        double lambda = Math.log(2)/1.0;
+        double lambda = Math.log(2) / 1.0;
 
         double time1 = 0.000001;
         for (int i = 0; i < 100; i++) {

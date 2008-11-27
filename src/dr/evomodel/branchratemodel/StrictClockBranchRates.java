@@ -27,7 +27,10 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -35,30 +38,29 @@ import java.util.logging.Logger;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: StrictClockBranchRates.java,v 1.3 2006/01/09 17:44:30 rambaut Exp $
  */
-public class StrictClockBranchRates extends AbstractModel implements BranchRateModel  {
+public class StrictClockBranchRates extends AbstractModel implements BranchRateModel {
 
     public static final String STRICT_CLOCK_BRANCH_RATES = "strictClockBranchRates";
     public static final String RATE = "rate";
 
     private final Parameter rateParameter;
 
-	public StrictClockBranchRates(Parameter rateParameter) {
+    public StrictClockBranchRates(Parameter rateParameter) {
 
         super(STRICT_CLOCK_BRANCH_RATES);
 
         this.rateParameter = rateParameter;
 
         addParameter(rateParameter);
-	}
+    }
 
-	public void handleModelChangedEvent(Model model, Object object, int index) {
+    public void handleModelChangedEvent(Model model, Object object, int index) {
         // nothing to do
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         fireModelChanged();
     }
 
@@ -78,43 +80,49 @@ public class StrictClockBranchRates extends AbstractModel implements BranchRateM
         return rateParameter.getParameterValue(0);
     }
 
-	public String getBranchAttributeLabel() {
-		return "rate";
-	}
+    public String getBranchAttributeLabel() {
+        return "rate";
+    }
 
-	public String getAttributeForBranch(Tree tree, NodeRef node) {
-		return Double.toString(getBranchRate(tree, node));
-	}
+    public String getAttributeForBranch(Tree tree, NodeRef node) {
+        return Double.toString(getBranchRate(tree, node));
+    }
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() { return STRICT_CLOCK_BRANCH_RATES; }
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Parameter rateParameter = (Parameter)xo.getElementFirstChild(RATE);
-
-			Logger.getLogger("dr.evomodel").info("Using strict molecular clock model.");
-
-			return new StrictClockBranchRates(rateParameter);
+        public String getParserName() {
+            return STRICT_CLOCK_BRANCH_RATES;
         }
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		public String getParserDescription() {
-			return
-				"This element provides a strict clock model. " +
-                "All branches have the same rate of molecular evolution.";
-		}
+            Parameter rateParameter = (Parameter) xo.getElementFirstChild(RATE);
 
-		public Class getReturnType() { return StrictClockBranchRates.class; }
+            Logger.getLogger("dr.evomodel").info("Using strict molecular clock model.");
 
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+            return new StrictClockBranchRates(rateParameter);
+        }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(RATE, Parameter.class, "The molecular evolutionary rate parameter", false),
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return
+                    "This element provides a strict clock model. " +
+                            "All branches have the same rate of molecular evolution.";
+        }
+
+        public Class getReturnType() {
+            return StrictClockBranchRates.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(RATE, Parameter.class, "The molecular evolutionary rate parameter", false),
         };
     };
 

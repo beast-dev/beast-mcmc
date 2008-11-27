@@ -38,6 +38,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -213,10 +214,10 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         // deltaParameter has changed...
         updateAllNodes();
-        super.handleParameterChangedEvent(parameter, index);
+        super.handleParameterChangedEvent(parameter, index, type);
     }
 
     // **************************************************************

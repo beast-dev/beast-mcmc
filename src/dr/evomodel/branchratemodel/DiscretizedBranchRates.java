@@ -33,6 +33,7 @@ import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterChangeType;
 
 /**
  * @author Alexei Drummond
@@ -116,7 +117,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         }
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
         fireModelChanged(null, getNodeNumberFromCategoryIndex(index));
     }
 
@@ -134,7 +135,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
 
-        assert ! tree.isRoot(node) : "root node doesn't have a rate!";
+        assert !tree.isRoot(node) : "root node doesn't have a rate!";
 
 //       final double scale = 1.0;
 //        if (normalize) {
@@ -145,7 +146,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         final int nodeNumber = node.getNumber();
 
         assert nodeNumber != rootNodeNumber :
-            "INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.";
+                "INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.";
 
         final int dim = getCategoryIndexFromNodeNumber(nodeNumber);
         final int rateCategory = (int) Math.round(rateCategoryParameter.getParameterValue(dim));

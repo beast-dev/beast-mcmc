@@ -223,9 +223,8 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         final int[] iSingle = new int[cps.length];
         final int[] iPair = new int[cpp.length];
 
-        // TODO - Make this more efficient
-        final double[] indicators = coalPointsIndicator.getParameterValues();
-        final double[] pops = coalPointsPops.getParameterValues();
+        final double[] indicators = ((Parameter.Default) coalPointsIndicator).inspectParameterValues();
+        final double[] pops = ((Parameter.Default) coalPointsPops).inspectParameterValues();
 
         private double findPrev(double val, double low) {
             low = fp(val, low, cps, iSingle);
@@ -356,9 +355,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
                     }
                     int removed = (j - k - 1);
                     all[k] = new Points(t, v / (removed + 1));
-                    for (int i = k + 1; i < len - removed; ++i) {
-                        all[i] = all[i + removed];
-                    }
+                    System.arraycopy(all, k + 1 + removed, all, k + 1, len - removed - k + 1);
                     //System.arraycopy(all, j, all, k + 1, all.length - j + 1);
                     len -= removed;
                 }
@@ -439,8 +436,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         Points[][] perBranchPoints = new Points[getNodeCount()][];
         getDemographicPoints(getRoot(), args, perBranchPoints);
 
-        // TODO -- the call to getParameterValues is currently inefficient
-        setDemographics(getRoot(), 0, -1, sppSplitPopulations.getParameterValues(), perBranchPoints);
+        setDemographics(getRoot(), 0, -1, ((Parameter.Default) sppSplitPopulations).inspectParameterValues(), perBranchPoints);
     }
 
     private Map<NodeRef, NodeProperties> getProps() {

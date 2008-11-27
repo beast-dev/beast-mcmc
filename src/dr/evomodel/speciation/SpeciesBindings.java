@@ -7,7 +7,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.util.HeapSort;
 import dr.xml.*;
 import jebl.util.FixedBitSet;
@@ -381,7 +380,7 @@ public class SpeciesBindings extends AbstractModel {
         fireModelChanged(object, index);
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         assert false;
     }
 

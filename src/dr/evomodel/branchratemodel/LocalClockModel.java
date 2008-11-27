@@ -33,7 +33,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -80,7 +79,7 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel {
         fireModelChanged();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         fireModelChanged();
     }
 

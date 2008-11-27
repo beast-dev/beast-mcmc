@@ -232,7 +232,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // todo store and restore Xbeta and Scale
     }
 

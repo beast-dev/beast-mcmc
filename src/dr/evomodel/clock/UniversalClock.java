@@ -31,7 +31,6 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 
 /**
  * A class that calculates the rate of evolution based on of the mass and temperature
@@ -82,7 +81,7 @@ public class UniversalClock extends AbstractModel implements BranchRateModel {
         // no submodels so nothing to do
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
 
         if ((parameter == massParameter) || (parameter == temperatureParameter)) {
             if (index == -1) {

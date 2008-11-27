@@ -28,7 +28,10 @@ package dr.evomodel.sitemodel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.YangCodonModel;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Bounds;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.Vector;
@@ -182,7 +185,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
     }
 
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         /*if(categoryCount > 1){
               for(int i = 0; i < categoryCount; i++){
                   if(parameter == classSizes[i] && i == 0) // proportions have changed
@@ -388,7 +391,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
      */
     private Parameter proportionParameter;
 
-	private int categoryCount;
+    private int categoryCount;
 
 //	private int stateCount;
 }

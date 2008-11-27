@@ -25,7 +25,7 @@ public class WeightedMixtureModel extends AbstractModel implements Likelihood {
     protected void handleModelChangedEvent(Model model, Object object, int index) {
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
     }
 
     protected void storeState() {

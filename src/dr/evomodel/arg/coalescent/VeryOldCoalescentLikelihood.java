@@ -140,7 +140,7 @@ public class VeryOldCoalescentLikelihood extends AbstractModel implements Likeli
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
     } // No parameters to respond to
 
     // **************************************************************

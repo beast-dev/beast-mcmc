@@ -229,7 +229,7 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    public final void parameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    public final void parameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         handleParameterChangedEvent(parameter, index, type);
         listenerHelper.fireModelChanged(this, parameter, index);
     }
@@ -242,7 +242,7 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
      * some information that requires them. This mechanism is 'lazy' so that this method
      * can be safely called multiple times with minimal computational cost.
      */
-    protected abstract void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type);
+    protected abstract void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type);
 
     // **************************************************************
     // Model IMPLEMENTATION

@@ -23,7 +23,7 @@ public class DummyModel extends AbstractModel implements Likelihood {
 
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
 
     }
 

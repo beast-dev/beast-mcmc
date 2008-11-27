@@ -28,7 +28,6 @@ package dr.evomodel.continuous;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.math.MathUtils;
 import dr.xml.*;
 import org.w3c.dom.Document;
@@ -128,7 +127,7 @@ public class DiffusionModel extends AbstractModel {
         // no intermediates need to be recalculated...
     }
 
-    public void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    public void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // no intermediates need to be recalculated...
     }
 

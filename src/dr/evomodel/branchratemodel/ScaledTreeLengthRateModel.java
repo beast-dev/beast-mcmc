@@ -6,7 +6,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -77,7 +76,7 @@ public class ScaledTreeLengthRateModel extends AbstractModel implements BranchRa
      * some information that requires them. This mechanism is 'lazy' so that this method
      * can be safely called multiple times with minimal computational cost.
      */
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         if (parameter == totalLength) {
             currentFactorKnown = false;
         }

@@ -28,7 +28,6 @@ package dr.evomodel.speciation;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.math.GammaFunction;
 import dr.xml.*;
 
@@ -119,7 +118,7 @@ public class BetaSplittingModel extends BranchingModel {
     // XMLElement IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         //System.out.println("parameter changed:" + parameter.getParameterName());
         makeSplitProbs(logProbs);
     }

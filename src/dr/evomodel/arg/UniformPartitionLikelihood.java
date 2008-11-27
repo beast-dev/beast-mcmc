@@ -2,7 +2,10 @@ package dr.evomodel.arg;
 
 import dr.evomodel.arg.operators.ARGAddRemoveEventOperator;
 import dr.inference.loggers.LogColumn;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -97,7 +100,7 @@ public class UniformPartitionLikelihood extends AbstractModel implements Likelih
     }
 
     @Override
-    protected void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // TODO Auto-generated method stub
 
     }

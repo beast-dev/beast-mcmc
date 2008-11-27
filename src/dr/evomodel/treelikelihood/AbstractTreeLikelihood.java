@@ -29,7 +29,10 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 
 /**
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
@@ -226,7 +229,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
     // ParameterListener IMPLEMENTATION
     // **************************************************************
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // do nothing
     }
 

@@ -29,7 +29,6 @@ import dr.evolution.datatype.DataType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 
 /**
  * An abstract base class for substitution models.
@@ -113,7 +112,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         frequenciesChanged();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // relativeRates changed
         updateMatrix = true;
         ratesChanged();

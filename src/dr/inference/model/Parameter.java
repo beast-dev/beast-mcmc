@@ -388,6 +388,15 @@ public interface Parameter extends Statistic {
             return copyOfValues;
         }
 
+        /**
+         * Do not write to the returned array directly!!
+         *
+         * @return the parameter values
+         */
+        public final double[] inspectParameterValues() {
+            return values;
+        }
+
         public Bounds getBounds() {
             if (bounds == null) {
                 throw new NullPointerException(getParameterName() + " parameter: Bounds not set");
@@ -564,9 +573,9 @@ public interface Parameter extends Statistic {
         }
 
         public int getBoundsDimension() {
-			return uppers.length;
-		}
+            return uppers.length;
+        }
 
-		private double[] uppers, lowers;
-	}
+        private double[] uppers, lowers;
+    }
 }

@@ -30,7 +30,6 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 /**
@@ -229,7 +228,7 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
         listenerHelper.fireModelChanged(this, object, index);
     }
 
-    public void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    public void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         if (parameter == rateParameter) {
             ratesKnown = false;
         }
@@ -338,8 +337,8 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
 
     private int[] categoryWeights;
     private int[] categories;
-	private String states;
-	private int siteCount;
-	private int relativeTo = 0;
+    private String states;
+    private int siteCount;
+    private int relativeTo = 0;
 
 }

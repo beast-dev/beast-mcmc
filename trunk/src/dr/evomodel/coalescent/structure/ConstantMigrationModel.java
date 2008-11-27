@@ -27,7 +27,6 @@ package dr.evomodel.coalescent.structure;
 
 import dr.evolution.colouring.ColourChangeMatrix;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 
 /**
@@ -80,7 +79,7 @@ public class ConstantMigrationModel extends MigrationModel {
     }
 
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         colourChangeMatrix = null;
     }
 

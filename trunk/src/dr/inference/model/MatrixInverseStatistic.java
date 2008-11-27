@@ -32,7 +32,7 @@ public class MatrixInverseStatistic extends Statistic.Abstract implements Parame
         return inverse[x][y];
     }
 
-    public void parameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    public void parameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         inverseKnown = false;
     }
 

@@ -38,6 +38,13 @@ import java.util.ArrayList;
  * @version $Id: Parameter.java,v 1.22 2005/06/08 11:23:25 alexei Exp $
  */
 public interface Parameter extends Statistic {
+
+    public enum ChangeType {
+        VALUE_CHANGED,
+        REMOVED,
+        ADDED
+    }
+
     /**
      * @param dim the index of the parameter dimension of interest
      * @return the parameter's scalar value in the given dimension
@@ -178,7 +185,7 @@ public interface Parameter extends Statistic {
          * Fired when all dimensions of the parameter have changed
          */
         public void fireParameterChangedEvent() {
-            fireParameterChangedEvent(-1, ParameterChangeType.VALUE_CHANGED);
+            fireParameterChangedEvent(-1, Parameter.ChangeType.VALUE_CHANGED);
         }
 
         /**
@@ -187,7 +194,7 @@ public interface Parameter extends Statistic {
          * @param index which dimention changed
          * @param type  the type of parameter change event
          */
-        public void fireParameterChangedEvent(int index, ParameterChangeType type) {
+        public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
             if (listeners != null) {
                 for (ParameterListener listener : listeners) {
                     listener.parameterChangedEvent(this, index, type);
@@ -443,7 +450,7 @@ public interface Parameter extends Statistic {
             newValues[index] = value;
             System.arraycopy(values, index, newValues, index + 1, n - index);
             values = newValues;
-            fireParameterChangedEvent(index, ParameterChangeType.ADDED);
+            fireParameterChangedEvent(index, Parameter.ChangeType.ADDED);
         }
 
 
@@ -461,14 +468,14 @@ public interface Parameter extends Statistic {
             System.arraycopy(values, index, newValues, index - 1, n - index);
             values = newValues;
 
-            fireParameterChangedEvent(index, ParameterChangeType.REMOVED);
+            fireParameterChangedEvent(index, Parameter.ChangeType.REMOVED);
             return value;
         }
 
 
         public void setParameterValue(int i, double val) {
             values[i] = val;
-            fireParameterChangedEvent(i, ParameterChangeType.VALUE_CHANGED);
+            fireParameterChangedEvent(i, Parameter.ChangeType.VALUE_CHANGED);
         }
 
         /**

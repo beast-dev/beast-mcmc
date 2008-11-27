@@ -30,7 +30,6 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterChangeType;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -112,7 +111,7 @@ public class PseudoCodonModel extends AbstractModel {
         calculateSubstitutionModel();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // parameter changed!
         calculateSubstitutionModel();
     }

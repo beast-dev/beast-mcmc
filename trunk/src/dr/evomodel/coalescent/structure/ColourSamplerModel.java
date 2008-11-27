@@ -181,7 +181,7 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
         resample();
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // do nothing
     }
 

@@ -1018,7 +1018,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     /**
      * Called when a parameter changes.
      */
-    public void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    public void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
 
         Node node = getNodeOfParameter(parameter);
         pushTreeChangedEvent(node, parameter, index);

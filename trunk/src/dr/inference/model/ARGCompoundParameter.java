@@ -240,7 +240,7 @@ public class ARGCompoundParameter extends Parameter.Abstract implements Paramete
     // Parameter listener interface
     // ****************************************************************
 
-    public void parameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    public void parameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
 
         int dim = 0;
         for (Parameter parameter1 : parameters) {

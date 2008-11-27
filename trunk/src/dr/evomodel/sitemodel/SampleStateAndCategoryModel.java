@@ -28,7 +28,10 @@ package dr.evomodel.sitemodel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.YangCodonModel;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Bounds;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.Vector;
@@ -214,7 +217,7 @@ public class SampleStateAndCategoryModel extends AbstractModel
         listenerHelper.fireModelChanged(this, object, index);
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
 
         if (parameter == categoriesParameter) // instructs TreeLikelihood to set update flag for this pattern
             listenerHelper.fireModelChanged(this, this, index);
@@ -366,7 +369,7 @@ public class SampleStateAndCategoryModel extends AbstractModel
 
     private Vector substitutionModels;
 
-	private int categoryCount;
+    private int categoryCount;
 
 //	private int stateCount;
 }

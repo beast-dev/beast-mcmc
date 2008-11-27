@@ -247,7 +247,7 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     // Parameter listener interface
     // ****************************************************************
 
-    public void parameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    public void parameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
 
         int dim = 0;
         for (Parameter parameter1 : uniqueParameters) {

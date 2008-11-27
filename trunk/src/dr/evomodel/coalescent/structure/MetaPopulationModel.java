@@ -26,7 +26,10 @@
 package dr.evomodel.coalescent.structure;
 
 import dr.evomodel.coalescent.DemographicModel;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -161,7 +164,7 @@ public class MetaPopulationModel extends AbstractModel {
     protected void acceptState() {
     } // no additional state needs accepting
 
-    public void handleParameterChangedEvent(Parameter parameter, int index, ParameterChangeType type) {
+    public void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
         // nothing to do
     }
 

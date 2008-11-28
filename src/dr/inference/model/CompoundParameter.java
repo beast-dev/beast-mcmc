@@ -44,7 +44,7 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     public CompoundParameter(Parameter[] params) {
 
         dimension = 0;
-        for (Parameter parameter : parameters) {
+        for (Parameter parameter : params) {
             dimension += parameter.getDimension();
             parameter.addParameterListener(this);
         }
@@ -72,8 +72,36 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
             pindex.add(j);
         }
         dimension += param.getDimension();
-        if (dimension != parameters.size()) throw new RuntimeException();
+        if (dimension != parameters.size()) {
+            throw new RuntimeException(
+                    "dimension=" + dimension + " parameters.size()=" + parameters.size()
+            );
+        }
         param.addParameterListener(this);
+    }
+
+    public void removeParameter(Parameter param) {
+
+        int dim = 0;
+        for (Parameter parameter : uniqueParameters) {
+            if (parameter == param) {
+                break;
+            }
+            dim += parameter.getDimension();
+        }
+
+        for (int i = 0; i < param.getDimension(); i++) {
+            parameters.remove(dim);
+            pindex.remove(dim);
+        }
+
+        if (parameters.contains(param)) throw new RuntimeException();
+
+        uniqueParameters.remove(param);
+
+        dimension -= param.getDimension();
+        if (dimension != parameters.size()) throw new RuntimeException();
+        param.removeParameterListener(this);
     }
 
     /**
@@ -285,4 +313,17 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     private IntersectionBounds bounds = null;
     private int dimension;
     private String name;
+
+    public static void main(String[] args) {
+
+        Parameter param1 = new Parameter.Default(2);
+        Parameter param2 = new Parameter.Default(2);
+        Parameter param3 = new Parameter.Default(2);
+
+        System.out.println(param1.getDimension());
+
+        CompoundParameter parameter = new CompoundParameter(new Parameter[]{param1, param2});
+        parameter.addParameter(param3);
+        parameter.removeParameter(param2);
+    }
 }

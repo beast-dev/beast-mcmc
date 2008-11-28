@@ -13,8 +13,8 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGModel.Node;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
-import dr.inference.model.VariableSizeCompoundParameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.math.functionEval.GammaFunction;
@@ -50,16 +50,16 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
     //   private boolean swapRates;
     //   private boolean swapTraits;
     //	private int mode = CoercableMCMCOperator.DEFAULT;
-    private VariableSizeCompoundParameter internalNodeParameters;
-    private VariableSizeCompoundParameter internalAndRootNodeParameters;
-    private VariableSizeCompoundParameter nodeRates;
+    private CompoundParameter internalNodeParameters;
+    private CompoundParameter internalAndRootNodeParameters;
+    private CompoundParameter nodeRates;
 //	private int maxTips = 1;
 
     public ObsoleteARGAddRemoveEventOperator(ARGModel arg, int weight, double size, boolean gaussian,
                                              boolean swapRates, boolean swapTraits, CoercionMode mode,
-                                             VariableSizeCompoundParameter param1,
-                                             VariableSizeCompoundParameter param2,
-                                             VariableSizeCompoundParameter param3,
+                                             CompoundParameter param1,
+                                             CompoundParameter param2,
+                                             CompoundParameter param3,
                                              double singlePartitionProbability, boolean isRecombination) {
         super(mode);
         this.arg = arg;
@@ -387,7 +387,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
     private void checkAllHeights() {
         int len = arg.getInternalNodeCount();
         System.err.println("# internal nodes = " + len);
-        int n = internalNodeParameters.getNumParameters();
+        int n = internalNodeParameters.getNumberOfParameters();
         System.err.println("VSCP (" + n + ")");
         for (int i = 0; i < n; i++) {
             System.err.println(internalNodeParameters.getParameterValue(i));
@@ -998,13 +998,11 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
                 System.err.println("Must specify a variable size tree model to use the AddRemoveSubtreeOperators");
                 System.exit(-1);
             }
-//        	VariableSizeCompoundParameter parameter = (VariableSizeCompoundParameter)xo.getChild(Parameter.class);
 
-            VariableSizeCompoundParameter parameter1 = (VariableSizeCompoundParameter) xo.getChild(JUST_INTERNAL);
-            VariableSizeCompoundParameter parameter2 = (VariableSizeCompoundParameter) xo.getChild(INTERNAL_AND_ROOT);
-            VariableSizeCompoundParameter parameter3 = (VariableSizeCompoundParameter) xo.getChild(NODE_RATES);
+            CompoundParameter parameter1 = (CompoundParameter) xo.getChild(JUST_INTERNAL);
+            CompoundParameter parameter2 = (CompoundParameter) xo.getChild(INTERNAL_AND_ROOT);
+            CompoundParameter parameter3 = (CompoundParameter) xo.getChild(NODE_RATES);
 
-            //VariableSizeTreeModel treeModel = (VariableSizeTreeModel)xo.getChild(TreeModel.class);
             int weight = xo.getIntegerAttribute("weight");
 //            int maxTips = xo.getIntegerAttribute(MAX_VALUE);
             double size = xo.getDoubleAttribute("size");

@@ -15,7 +15,7 @@ import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.VariableSizeCompoundParameter;
+import dr.inference.model.CompoundParameter;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.ScaleOperator;
@@ -94,7 +94,7 @@ public class ARGAddRemoveOperatorTest extends TraceTest {
         nodeCountPrior.addData(nodeCountStatistic);
 
         DistributionLikelihood rootPrior = new DistributionLikelihood(new GammaDistribution(rootHeightAlpha, rootHeightBeta), 0.0);
-        VariableSizeCompoundParameter rootHeight = (VariableSizeCompoundParameter) arg.createNodeHeightsParameter(true, false, false);
+        CompoundParameter rootHeight = (CompoundParameter) arg.createNodeHeightsParameter(true, false, false);
         rootPrior.addData(rootHeight);
 
         CompoundLikelihood compoundLikelihood = new CompoundLikelihood(1);
@@ -158,10 +158,10 @@ public class ARGAddRemoveOperatorTest extends TraceTest {
 
     public static OperatorSchedule getSchedule(ARGModel arg) {
 
-        VariableSizeCompoundParameter rootHeight = (VariableSizeCompoundParameter) arg.createNodeHeightsParameter(true, false, false);
-        VariableSizeCompoundParameter internalHeights = (VariableSizeCompoundParameter) arg.createNodeHeightsParameter(false, true, false);
-        VariableSizeCompoundParameter allInternalNodeHeights = (VariableSizeCompoundParameter) arg.createNodeHeightsParameter(true, true, false);
-        VariableSizeCompoundParameter rates = (VariableSizeCompoundParameter) arg.createNodeRatesParameter(false, true, true);
+        CompoundParameter rootHeight = (CompoundParameter) arg.createNodeHeightsParameter(true, false, false);
+        CompoundParameter internalHeights = (CompoundParameter) arg.createNodeHeightsParameter(false, true, false);
+        CompoundParameter allInternalNodeHeights = (CompoundParameter) arg.createNodeHeightsParameter(true, true, false);
+        CompoundParameter rates = (CompoundParameter) arg.createNodeRatesParameter(false, true, true);
 
         ARGAddRemoveEventOperator operator1 = new ARGAddRemoveEventOperator(arg, 5, 0.5,
                 CoercionMode.COERCION_ON, internalHeights, allInternalNodeHeights, rates, 0.9, -1.0);

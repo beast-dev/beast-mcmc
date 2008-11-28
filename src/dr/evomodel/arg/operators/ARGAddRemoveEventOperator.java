@@ -14,8 +14,8 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGModel.Node;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
-import dr.inference.model.VariableSizeCompoundParameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
@@ -59,15 +59,15 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
     private boolean isRecombination;
     //	private int mode = CoercableMCMCOperator.COERCION_OFF;
-    private VariableSizeCompoundParameter internalNodeParameters;
-    private VariableSizeCompoundParameter internalAndRootNodeParameters;
-    private VariableSizeCompoundParameter nodeRates;
+    private CompoundParameter internalNodeParameters;
+    private CompoundParameter internalAndRootNodeParameters;
+    private CompoundParameter nodeRates;
 
 
     public ARGAddRemoveEventOperator(ARGModel arg, int weight, double size, CoercionMode mode,
-                                     VariableSizeCompoundParameter param1,
-                                     VariableSizeCompoundParameter param2,
-                                     VariableSizeCompoundParameter param3,
+                                     CompoundParameter param1,
+                                     CompoundParameter param2,
+                                     CompoundParameter param3,
                                      double belowRootProbability, double flipMean) {
         super(mode);
         this.arg = arg;
@@ -1066,12 +1066,12 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
             ARGModel treeModel = (ARGModel) xo.getChild(ARGModel.class);
 
-            VariableSizeCompoundParameter parameter1 =
-                    (VariableSizeCompoundParameter) ((XMLObject) xo.getChild(INTERNAL_NODES)).getChild(0);
-            VariableSizeCompoundParameter parameter2 =
-                    (VariableSizeCompoundParameter) ((XMLObject) xo.getChild(INTERNAL_AND_ROOT)).getChild(0);
-            VariableSizeCompoundParameter parameter3 =
-                    (VariableSizeCompoundParameter) ((XMLObject) xo.getChild(NODE_RATES)).getChild(0);
+            CompoundParameter parameter1 =
+                    (CompoundParameter) ((XMLObject) xo.getChild(INTERNAL_NODES)).getChild(0);
+            CompoundParameter parameter2 =
+                    (CompoundParameter) ((XMLObject) xo.getChild(INTERNAL_AND_ROOT)).getChild(0);
+            CompoundParameter parameter3 =
+                    (CompoundParameter) ((XMLObject) xo.getChild(NODE_RATES)).getChild(0);
 
             int weight = xo.getIntegerAttribute("weight");
             double size = xo.getDoubleAttribute(ADD_PROBABILITY);
@@ -1125,13 +1125,13 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 new ElementRule(ARGModel.class),
                 new ElementRule(INTERNAL_NODES,
                         new XMLSyntaxRule[]{
-                                new ElementRule(VariableSizeCompoundParameter.class)}),
+                                new ElementRule(CompoundParameter.class)}),
                 new ElementRule(INTERNAL_AND_ROOT,
                         new XMLSyntaxRule[]{
-                                new ElementRule(VariableSizeCompoundParameter.class)}),
+                                new ElementRule(CompoundParameter.class)}),
                 new ElementRule(NODE_RATES,
                         new XMLSyntaxRule[]{
-                                new ElementRule(VariableSizeCompoundParameter.class)}),
+                                new ElementRule(CompoundParameter.class)}),
         };
     };
 

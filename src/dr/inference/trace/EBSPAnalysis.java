@@ -139,8 +139,12 @@ public class EBSPAnalysis extends TabularData {
                 //Get tree state number
                 String name1 = tt[0].getId();
                 int state1 = Integer.parseInt(name1.substring(name1.indexOf('_')+1, name1.length()));
-                String name2 = tt[1].getId();
-                int state2 = Integer.parseInt(name1.substring(name2.indexOf('_')+1, name2.length()));
+                int state2 = state1;
+
+                if (tt.length > 1) {
+                    String name2 = tt[1].getId();
+                    state2 = Integer.parseInt(name1.substring(name2.indexOf('_')+1, name2.length()));
+                }
 
                 if (state1 != state2){     //... can this happen at all?
                     throw new  TraceException("NEXUS tree files have different rates or corrupted!!!!"); //Not too sure what kind of message is appropriate here.
@@ -152,7 +156,7 @@ public class EBSPAnalysis extends TabularData {
                             new VDdemographicFunction(tt, modelType, indicators, pop, logSpace, mid);
 
                     if (demoFunction.numberOfChanges() == restrictToNchanges) {
-                            continue;
+                        continue;
                     }
 
                     double[] xs = demoFunction.allTimePoints();
@@ -178,12 +182,12 @@ public class EBSPAnalysis extends TabularData {
                 xPoints[k] /= nStates;
             }
             if(nStates != nDataPoints){                                                     //Warning if log file ant tree files
-                                                                                            // have different rates
+                // have different rates
                 System.err.println("Different Rates is \"main\" and \"tree\" log files");
 
             }
             if(nDataPoints < 10){                                                           //Warning if number of states is not sufficient
-                                                                                            // enough to do the analysis
+                // enough to do the analysis
                 System.err.println("Warning!!! Not Sufficient number of data points");
 
             }

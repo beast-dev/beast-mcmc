@@ -38,6 +38,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.clock.ACLikelihood;
 import dr.evomodel.coalescent.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
@@ -49,8 +50,6 @@ import dr.evomodel.operators.TreeBitMoveOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.tree.*;
-import dr.evomodel.treelikelihood.SequenceErrorModel;
-import dr.evomodel.clock.ACLikelihood;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evomodelxml.LoggerParser;
 import dr.evomodelxml.TreeLoggerParser;
@@ -900,9 +899,10 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag(WilsonBalding.WILSON_BALDING,
                 new Attribute.Default<Double>("weight", operator.weight));
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
-        if (options.nodeHeightPrior == TreePrior.CONSTANT) {
-            treePriorGenerator.writeNodeHeightPriorModelRef(writer);
-        }
+        // not supported anymore. probably never worked. (todo) get it out of GUI too
+//        if (options.nodeHeightPrior == TreePrior.CONSTANT) {
+//            treePriorGenerator.writeNodeHeightPriorModelRef(writer);
+//        }
         writer.writeCloseTag(WilsonBalding.WILSON_BALDING);
     }
 

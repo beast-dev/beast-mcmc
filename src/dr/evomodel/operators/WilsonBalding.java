@@ -27,9 +27,7 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.coalescent.ConstantPopulationModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -47,7 +45,7 @@ public class WilsonBalding extends AbstractTreeOperator {
 
     private double logq;
     private TreeModel tree = null;
-    private int tipCount;
+    private final int tipCount;
 
 
     public WilsonBalding(TreeModel tree, double weight) {
@@ -212,13 +210,16 @@ public class WilsonBalding extends AbstractTreeOperator {
     }
 
     public String getPerformanceSuggestion() {
-        if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-            return "";
-        } else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-            return "";
-        } else {
-            return "";
-        }
+        // seems like equvivalent code to me :)
+        return "";
+
+//        if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
+//            return "";
+//        } else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
+//            return "";
+//        } else {
+//            return "";
+//        }
     }
 
     public String getOperatorName() {
@@ -248,7 +249,7 @@ public class WilsonBalding extends AbstractTreeOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(TreeModel.class)
         };

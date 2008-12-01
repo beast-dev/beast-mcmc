@@ -88,6 +88,10 @@ public class TreeAnnotator {
     // Messages to stderr, output to stdout
     private static PrintStream  progressStream = System.err;
 
+    private String location1Attribute = "longLat1";
+    private String location2Attribute = "longLat2";
+    private String locationOutputAttribute = "location";
+
     public TreeAnnotator(final int burnin,
                          HeightsSummary heightsOption,
                          double posteriorLimit,
@@ -451,6 +455,16 @@ public class TreeAnnotator {
                         value = tree.getNodeHeight(node);
                     } else if (attributeName.equals("length")) {
                         value = tree.getBranchLength(node);
+                    } else if (attributeName.equals(location1Attribute)) {
+                        // If this is one of the two specified bivariate location names then
+                        // merge this and the other one into a single array.
+                        Object value1 = tree.getNodeAttribute(node, attributeName);
+                        Object value2 = tree.getNodeAttribute(node, location2Attribute);
+
+                        value = new Object[] { value1, value2 };
+                    } else if (attributeName.equals(location2Attribute)) {
+                        // do nothing - already dealt with this...
+                        value = null;
                     } else {
                         value = tree.getNodeAttribute(node, attributeName);
                         if (value instanceof String && ((String) value).startsWith("\"")) {
@@ -704,12 +718,16 @@ public class TreeAnnotator {
                                 annotateRangeAttribute(tree, node, attributeName + "_range", values);
                             }
                             if (isDoubleArray) {
+                                String name = attributeName;
+                                if (name.equals(location1Attribute)) {
+                                    name = locationOutputAttribute;
+                                }
                                 for (int k = 0; k < lenArray; k++) {
                                     if (minValueArray[k] < maxValueArray[k]) {
-                                        annotateMedianAttribute(tree, node, attributeName + (k + 1) + "_median", valuesArray[k]);
-                                        annotateRangeAttribute(tree, node, attributeName + (k + 1) + "_range", valuesArray[k]);
+                                        annotateMedianAttribute(tree, node, name + (k + 1) + "_median", valuesArray[k]);
+                                        annotateRangeAttribute(tree, node, name + (k + 1) + "_range", valuesArray[k]);
                                         if (!processBivariateAttributes || lenArray != 2)
-                                            annotateHPDAttribute(tree, node, attributeName + (k + 1) + "_95%_HPD", 0.95, valuesArray[k]);
+                                            annotateHPDAttribute(tree, node, name + (k + 1) + "_95%_HPD", 0.95, valuesArray[k]);
                                     }
                                 }
                                 // 2D contours
@@ -719,13 +737,13 @@ public class TreeAnnotator {
                                     boolean variationInSecond = (minValueArray[1] < maxValueArray[1]);
 
                                     if (variationInFirst && !variationInSecond)
-                                        annotateHPDAttribute(tree, node, attributeName + "1" + "_95%_HPD", 0.95, valuesArray[0]);
+                                        annotateHPDAttribute(tree, node, name + "1" + "_95%_HPD", 0.95, valuesArray[0]);
 
                                     if (variationInSecond && !variationInFirst)
-                                        annotateHPDAttribute(tree, node, attributeName + "2" + "_95%_HPD", 0.95, valuesArray[1]);
+                                        annotateHPDAttribute(tree, node, name + "2" + "_95%_HPD", 0.95, valuesArray[1]);
 
                                     if (variationInFirst && variationInSecond)
-                                        annotate2DHPDAttribute(tree, node, attributeName, "_95%HPD", 0.95, valuesArray);
+                                        annotate2DHPDAttribute(tree, node, name, "_95%HPD", 0.95, valuesArray);
                                 }
                             }
                         }

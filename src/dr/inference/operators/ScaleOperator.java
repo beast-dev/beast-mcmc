@@ -25,6 +25,8 @@
 
 package dr.inference.operators;
 
+import java.util.logging.Logger;
+
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -100,7 +102,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
 
                 final double scaleOne = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
                 final double value = scaleOne * parameter.getParameterValue(i);
-
+                
                 logq -= Math.log(scaleOne);
 
                 if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
@@ -134,7 +136,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
             }
         } else {
             logq = -Math.log(scale);
-
+            
             // which bit to scale
             int index;
             if (indicator != null) {
@@ -170,6 +172,17 @@ public class ScaleOperator extends AbstractCoercableOperator {
             }
 
             final double oldValue = parameter.getParameterValue(index);
+            
+            if(oldValue == 0){
+            	Logger.getLogger("dr.inference").warning("The " + SCALE_OPERATOR + 
+            			" for " +
+            			parameter.getParameterName()
+            			+ " has failed since the parameter has a value of 0.0." +
+            			"\nTo fix this problem, initalize the value of " +
+            			parameter.getParameterName() + " to be a positive real number"
+            			      			 );
+            	throw new OperatorFailedException("");
+            }
             final double newValue = scale * oldValue;
 
             if (newValue < bounds.getLowerLimit(index) || newValue > bounds.getUpperLimit(index)) {

@@ -104,7 +104,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     public double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude) {
         final int taxonCount = tree.getExternalNodeCount() - exclude.size();
 
-        double[] lnL = new double[]{logTreeProbability(taxonCount)};
+        double[] lnL = {logTreeProbability(taxonCount)};
 
         calculateNodeLogLikelihood(tree, tree.getRoot(), exclude, lnL);
 

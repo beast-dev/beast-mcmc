@@ -17,11 +17,11 @@ import dr.xml.*;
  *         Date: 25/04/2008
  */
 public class OrnsteinUhlenbeckPriorLikelihood extends Likelihood.Abstract implements ParameterListener {
-    private Parameter mean;
-    private Parameter sigma;
-    private Parameter lambda;
-    private boolean logSpace;
-    private boolean normalize;
+    private final Parameter mean;
+    private final Parameter sigma;
+    private final Parameter lambda;
+    private final boolean logSpace;
+    private final boolean normalize;
     private Parameter data;
     private Parameter times;
 
@@ -80,7 +80,6 @@ public class OrnsteinUhlenbeckPriorLikelihood extends Likelihood.Abstract implem
             // make the process have a SD of sigma
             sigma *= Math.sqrt(2 * lambda);
         }
-
 
         double logL = NormalDistribution.logPdf(vals[0], mean, sigma);
 

@@ -19,7 +19,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     public static final String POPULATION_SIZES = "populationSizes";
     public static final String INDICATOR_PARAMETER = "indicators";
     public static final String POPULATION_TREES = "trees";
-    private static String PLOIDY = "ploidy";
+    private static final String PLOIDY = "ploidy";
     public static String POP_TREE = "ptree";
 
     public static final String LOG_SPACE = "logUnits";
@@ -32,15 +32,15 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
 
     public static final String demoElementName = "demographic";
 
-    private Parameter popSizeParameter;
-    private Parameter indicatorParameter;
-    private Type type;
-    private boolean logSpace;
-    private boolean mid;
-    private TreeModel[] trees;
+    private final Parameter popSizeParameter;
+    private final Parameter indicatorParameter;
+    private final Type type;
+    private final boolean logSpace;
+    private final boolean mid;
+    private final TreeModel[] trees;
     private VDdemographicFunction demoFunction = null;
     private VDdemographicFunction savedDemoFunction = null;
-    private double[] populationFactors;
+    private final double[] populationFactors;
 
     public Parameter getPopulationValues() {
         return popSizeParameter;
@@ -246,24 +246,23 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
             return rules;
         }
 
-        private XMLSyntaxRule[] rules =
-                new XMLSyntaxRule[]{
-                        AttributeRule.newStringRule(VariableSkylineLikelihood.TYPE, true),
-                        AttributeRule.newBooleanRule(LOG_SPACE, true),
-                        AttributeRule.newBooleanRule(USE_MIDPOINTS, true),
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newStringRule(VariableSkylineLikelihood.TYPE, true),
+                AttributeRule.newBooleanRule(LOG_SPACE, true),
+                AttributeRule.newBooleanRule(USE_MIDPOINTS, true),
 
-                        new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class)
-                        }),
-                        new ElementRule(VariableSkylineLikelihood.INDICATOR_PARAMETER, new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class)
-                        }),
-                        new ElementRule(POPULATION_TREES, new XMLSyntaxRule[]{
-                                new ElementRule(POP_TREE, new XMLSyntaxRule[]{
-                                        AttributeRule.newDoubleRule(PLOIDY, true),
-                                        new ElementRule(TreeModel.class),
-                                }, 1, Integer.MAX_VALUE)
-                        })
-                };
+                new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class)
+                }),
+                new ElementRule(VariableSkylineLikelihood.INDICATOR_PARAMETER, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class)
+                }),
+                new ElementRule(POPULATION_TREES, new XMLSyntaxRule[]{
+                        new ElementRule(POP_TREE, new XMLSyntaxRule[]{
+                                AttributeRule.newDoubleRule(PLOIDY, true),
+                                new ElementRule(TreeModel.class),
+                        }, 1, Integer.MAX_VALUE)
+                })
+        };
     };
 }

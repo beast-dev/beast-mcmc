@@ -12,7 +12,6 @@ import jebl.util.FixedBitSet;
 import java.util.Arrays;
 
 /**
- *
  * Compute coalecent log-liklihood of a set of gene trees embedded inside one species tree.
  *
  * @author joseph
@@ -20,10 +19,10 @@ import java.util.Arrays;
  */
 public class TreePartitionCoalescent extends Likelihood.Abstract implements Units {
     public static final String SPECIES_COALESCENT = "speciesCoalescent";
-    private SpeciesTreeModel spTree;
-    private SpeciesBindings species;
+    private final SpeciesTreeModel spTree;
+    private final SpeciesBindings species;
     private boolean checkCompatibility;
-    private boolean[] compatibleCheckRequited;
+    private final boolean[] compatibleCheckRequited;
 
     public TreePartitionCoalescent(SpeciesBindings species, SpeciesTreeModel tree) {
         super(tree);
@@ -35,7 +34,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         // recompute on any change in geneTree -
         // possible optimization: keep track which tree changed.
         final SpeciesBindings.GeneTreeInfo[] trees = species.getGeneTrees();
-        for (SpeciesBindings.GeneTreeInfo geneTree : trees) {
+        for(SpeciesBindings.GeneTreeInfo geneTree : trees) {
             geneTree.tree.addModelListener(this);
         }
 
@@ -50,13 +49,13 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
 
             for(int i = 0; i < compatibleCheckRequited.length; ++i) {
                 if( compatibleCheckRequited[i] ) {
-                    if( ! spTree.isCompatible(species.getGeneTrees()[i])) {
+                    if( !spTree.isCompatible(species.getGeneTrees()[i]) ) {
                         compatibility = false;
                     }
-                   compatibleCheckRequited[i] = false;
+                    compatibleCheckRequited[i] = false;
                 }
             }
-            if( ! compatibility ) {
+            if( !compatibility ) {
                 return Double.NEGATIVE_INFINITY;
             }
             checkCompatibility = false;
@@ -64,15 +63,15 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
 
         double logl = 0;
         int[] info = {0, 0};
-        for (SpeciesBindings.GeneTreeInfo geneTree : species.getGeneTrees()) {
+        for(SpeciesBindings.GeneTreeInfo geneTree : species.getGeneTrees()) {
             logl += treeLogLikelihood(geneTree, spTree.getRoot(), info);
         }
-        
+
         return logl;
     }
 
     boolean verbose = false;
-    
+
     private double treeLogLikelihood(SpeciesBindings.GeneTreeInfo geneTree, NodeRef node, int[] info) {
         // number of lineages remaining at node
         int nLineages;
@@ -88,19 +87,19 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         if( verbose && spTree.isRoot(node) ) {
             System.err.println("gtree:" + geneTree.tree.getId());
             System.err.println("t0 " + t0);
-            for(int k = 0; k < cList.length; ++k ) {
-                System.err.println(k + " " + cList[k].ctime + " " +  cList[k].sinfo[0] + " " +  cList[k].sinfo[1]);
+            for(int k = 0; k < cList.length; ++k) {
+                System.err.println(k + " " + cList[k].ctime + " " + cList[k].sinfo[0] + " " + cList[k].sinfo[1]);
             }
         }
 
-        if (spTree.isExternal(node)) {
+        if( spTree.isExternal(node) ) {
             nLineages = geneTree.nLineages(spTree.speciesIndex(node));
             indexInClist = 0;
         } else {
             //assert spTree.getChildCount(node) == 2;
 
             nLineages = 0;
-            for (int nc = 0; nc < 2; ++nc) {
+            for(int nc = 0; nc < 2; ++nc) {
                 final NodeRef child = spTree.getChild(node, nc);
                 like += treeLogLikelihood(geneTree, child, info);
                 nLineages += info[0];
@@ -114,7 +113,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
             // Skip over (presumably, not tested by assert) non interesting coalescent
             // events to the first event before speciation point
 
-            while (cList[indexInClist].ctime < t0) {
+            while( cList[indexInClist].ctime < t0 ) {
                 ++indexInClist;
             }
         }
@@ -139,14 +138,12 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
                     + " " + subspeciesSet + " t0 - st " + t0 + " - " + stopTime);
         }
 
-        while (nLineages > 1) {
-            if( indexInClist >= cList.length) {
-                assert false;
-            }
-            
+        while( nLineages > 1 ) {
+            assert indexInClist < cList.length;
+
             final double nextT = cList[indexInClist].ctime;
 
-            if (nextT > stopTime) {
+            if( nextT > stopTime ) {
                 break;
             }
 
@@ -168,7 +165,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         }
 
 
-        if (nLineages > 1) {
+        if( nLineages > 1 ) {
             // add term for No coalescent until root
             final double interval = demog.getIntegral(lastTime, stopTime - t0);
 
@@ -189,8 +186,8 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
     public void modelChangedEvent(Model model, Object object, int index) {
         super.modelChangedEvent(model, object, index);
         final SpeciesBindings.GeneTreeInfo[] trees = species.getGeneTrees();
-        for (int i = 0; i < species.getGeneTrees().length; i++) {
-            if ( trees[i].tree == model ) {
+        for(int i = 0; i < species.getGeneTrees().length; i++) {
+            if( trees[i].tree == model ) {
                 checkCompatibility = true;
                 compatibleCheckRequited[i] = true;
             }
@@ -198,8 +195,8 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
     }
 
     private boolean nonEmptyIntersection(FixedBitSet[] sinfo, FixedBitSet subspeciesSet) {
-        for (FixedBitSet nodeSpSet : sinfo) {
-            if (nodeSpSet.intersectCardinality(subspeciesSet) == 0) {
+        for(FixedBitSet nodeSpSet : sinfo) {
+            if( nodeSpSet.intersectCardinality(subspeciesSet) == 0 ) {
                 return false;
             }
         }
@@ -218,8 +215,8 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final SpeciesBindings sb = (SpeciesBindings)xo.getChild(SpeciesBindings.class);
-            final SpeciesTreeModel tree = (SpeciesTreeModel)xo.getChild(SpeciesTreeModel.class);
+            final SpeciesBindings sb = (SpeciesBindings) xo.getChild(SpeciesBindings.class);
+            final SpeciesTreeModel tree = (SpeciesTreeModel) xo.getChild(SpeciesTreeModel.class);
             return new TreePartitionCoalescent(sb, tree);
         }
 

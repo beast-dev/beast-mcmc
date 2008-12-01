@@ -29,18 +29,18 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
     private static final String COALESCENT_POINTS_INDICATORS = "coalescentPointsIndicators";
 
     private final SimpleTree spTree;
-    private SpeciesBindings species;
-    Map<NodeRef, NodeProperties> props = new HashMap<NodeRef, NodeProperties>();
+    private final SpeciesBindings species;
+    private final Map<NodeRef, NodeProperties> props = new HashMap<NodeRef, NodeProperties>();
     public final Parameter sppSplitPopulations;
     private int[] singleStartPoints;
     private int[] pairStartPoints;
 
-    private Parameter coalPointsPops;
-    private Parameter coalPointsIndicator;
+    private final Parameter coalPointsPops;
+    private final Parameter coalPointsIndicator;
     private boolean nodePropsReady;
 
-    private NodeRef[] children;
-    private double[] heights;
+    private final NodeRef[] children;
+    private final double[] heights;
 
     // any change of underlying parameters / models
     private boolean anyChange;
@@ -530,7 +530,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         return new SimpleTree(subs.get(0));
     }
 
-    private boolean verbose = false;
+    private final boolean verbose = false;
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (verbose) System.out.println(" SPtree: model changed " + model.getId());

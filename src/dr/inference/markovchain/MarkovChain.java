@@ -128,7 +128,7 @@ public final class MarkovChain {
 
         int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights : 0;
 
-        double[] logr = new double[]{0.0};
+        double[] logr = {0.0};
 
         while (!pleaseStop && (currentState < (currentLength + length))) {
 

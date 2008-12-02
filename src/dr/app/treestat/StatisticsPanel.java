@@ -207,7 +207,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
             addButton.setText(null);
         }
         addButton.setToolTipText(addToolTip);
-        addButton.putClientProperty("JButton.buttonType", "toolbar");
+        addButton.putClientProperty("JButton.buttonType", "textured");
         addButton.setOpaque(false);
         addAction.setEnabled(false);
 
@@ -217,7 +217,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
             removeButton.setText(null);
         }
         removeButton.setToolTipText(removeToolTip);
-        removeButton.putClientProperty("JButton.buttonType", "toolbar");
+        removeButton.putClientProperty("JButton.buttonType", "textured");
         removeButton.setOpaque(false);
         removeAction.setEnabled(false);
 

@@ -81,7 +81,7 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
         buttonPanel.setOpaque(false);
         JButton importButton = new JButton(frame.getImportAction());
         importButton.setFocusable(false);
-        importButton.putClientProperty("JButton.buttonType", "square");
+        importButton.putClientProperty("JButton.buttonType", "textured");
         importButton.setMargin(new Insets(4,4,4,4));
         buttonPanel.add(importButton, BorderLayout.WEST);
         buttonPanel.add(new JLabel("    To define taxon sets, first import a list of taxa (i.e., from the trees to be analysed)"), BorderLayout.SOUTH);
@@ -212,7 +212,7 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 			addButton.setText(null);
 		}
    	  	addButton.setToolTipText(addToolTip);
-		addButton.putClientProperty("JButton.buttonType", "toolbar");
+		addButton.putClientProperty("JButton.buttonType", "textured");
 		addButton.setOpaque(false);
 		addAction.setEnabled(false);
 
@@ -222,7 +222,7 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 			removeButton.setText(null);
 		}
    	  	removeButton.setToolTipText(removeToolTip);
-		removeButton.putClientProperty("JButton.buttonType", "toolbar");
+		removeButton.putClientProperty("JButton.buttonType", "textured");
 		removeButton.setOpaque(false);
 		removeAction.setEnabled(false);
 

@@ -100,7 +100,7 @@ public class TreeStatFrame extends DocumentFrame {
         JPanel panel2 = new JPanel(new FlowLayout());
         JButton goButton = new JButton(processTreeFileAction);
         goButton.setFocusable(false);
-        goButton.putClientProperty("JButton.buttonType", "square");
+        goButton.putClientProperty("JButton.buttonType", "textured");
         goButton.setMargin(new Insets(4,4,4,4));
         panel2.add(goButton);
         panel2.add(progressPanel);

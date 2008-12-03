@@ -65,10 +65,11 @@ public class BeastParser extends XMLParser {
         setup(args);
 
         if (verbose) {
+            System.out.println("Built-in parsers:");
             Iterator iterator = getParsers();
             while (iterator.hasNext()) {
                 XMLObjectParser parser = (XMLObjectParser) iterator.next();
-                System.out.println(parser.toString());
+                System.out.println(parser.getParserName());
             }
 
             System.out.println();

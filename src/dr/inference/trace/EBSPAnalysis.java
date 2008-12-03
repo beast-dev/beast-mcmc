@@ -22,16 +22,16 @@ import java.util.Arrays;
  */
 public class EBSPAnalysis extends TabularData {
 
-    private double[] xPoints;
-    private double[] means;
-    private double[] medians;
-    private double[][] hpdLower;
-    private double[][] hpdHigh;
-    private double[] HPDLevels;
+    private final double[] xPoints;
+    private final double[] means;
+    private final double[] medians;
+    private final double[][] hpdLower;
+    private final double[][] hpdHigh;
+    private final double[] HPDLevels;
     // each bin covers xPoints[-1]/coalBins.length
     private int[] coalBins;
 
-    private boolean quantiles;
+    private final boolean quantiles;
 
     EBSPAnalysis(File log, File[] treeFiles, VariableDemographicModel.Type modelType,
                  String firstColumnName, String firstIndicatorColumnName,
@@ -397,7 +397,7 @@ public class EBSPAnalysis extends TabularData {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(BURN_IN, true, "The number of states (not sampled states, but" +
                         " actual states) that are discarded from the beginning of the trace and are excluded from " +
                         "the analysis"),

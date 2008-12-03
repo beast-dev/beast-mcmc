@@ -175,7 +175,7 @@ public class CompoundModel implements Model {
 	};*/
 	
 	private String name = null;
-	private ArrayList<Model> models = new ArrayList<Model>();
-    private List<ModelListener> listeners = new ArrayList<ModelListener>();
+	private final ArrayList<Model> models = new ArrayList<Model>();
+    private final List<ModelListener> listeners = new ArrayList<ModelListener>();
 }
 		

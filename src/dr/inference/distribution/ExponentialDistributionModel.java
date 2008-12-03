@@ -106,7 +106,7 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
         return pdfFunction;
     }
 
-    private UnivariateFunction pdfFunction = new UnivariateFunction() {
+    private final UnivariateFunction pdfFunction = new UnivariateFunction() {
         public final double evaluate(double x) {
             return pdf(x);
         }
@@ -186,7 +186,7 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(OFFSET, true),
                 new XORRule(
                         new ElementRule(MEAN, Double.class),

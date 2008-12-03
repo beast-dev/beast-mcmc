@@ -112,10 +112,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
 
     private double getStDev() {
-        if (usesStDev)
-            return getS();
-        else
-            return Math.sqrt(1.0 / getS());
+        return usesStDev ? getS() : Math.sqrt(1.0 / getS());
     }
 
     /**
@@ -189,7 +186,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         return pdfFunction;
     }
 
-    private UnivariateFunction pdfFunction = new UnivariateFunction() {
+    private final UnivariateFunction pdfFunction = new UnivariateFunction() {
         public final double evaluate(double x) {
             return pdf(Math.log(x));
         }
@@ -287,7 +284,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE),
                 AttributeRule.newDoubleRule(OFFSET, true),
                 new ElementRule(MEAN,
@@ -329,8 +326,8 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     // Private instance variables
     // **************************************************************
 
-    private Parameter meanParameter;
-    private Parameter scaleParameter;
+    private final Parameter meanParameter;
+    private final Parameter scaleParameter;
     //	private Parameter precParameter;
     private final double offset;
 

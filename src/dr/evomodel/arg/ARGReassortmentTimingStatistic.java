@@ -5,8 +5,12 @@ import java.util.Collections;
 import java.util.logging.Logger;
 
 import dr.evomodel.arg.ARGModel.Node;
+import dr.evomodel.arg.operators.ARGPartitioningOperator.PartitionChangedEvent;
 
+import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
+import dr.inference.operators.OperatorFailedException;
+import dr.math.MathUtils;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -27,43 +31,93 @@ public class ARGReassortmentTimingStatistic extends Statistic.Abstract{
 		super(name);
 		
 		
-		this.dimension = arg.getExternalNodeCount() + 1;
+		this.dimension = arg.getExternalNodeCount() + 4;
 		this.arg = arg;
 	}
 	
 	public int getDimension() {
 		return dimension;
 	}
+	
+	public String getDimensionName(int dim) {
+		if(dim < dimension - 4){
+			return "Bifurcation" + (dim + 1);
+		}else if(dim == dimension - 4){
+			return "ReassortHeight";
+		}else if(dim == dimension - 3){
+			return "ReassortChildHeight";
+		}else if(dim == dimension - 2){
+			return "ReassortLeftParentHeight";
+		}
+		
+		
+		
+		return "ReassortRightParentHeight";
+	}
 
 	public double getStatisticValue(int dim) {
-		if(arg.getReassortmentNodeCount() != 1){
+		String max = "((((((<(FC,FN)>,CN),CC),<(FC,FN)>),DC),((EC,EN),DN)),AN);";
+		
+		
+		if(!arg.toExtendedNewick().equals(max)){
 			return Double.NaN;
 		}
 		
-		if(dim == dimension - 1){
+		
+		
+		
+		if(dim < dimension - 4){
+			ArrayList<Double> reassortmentHeights = new ArrayList<Double>();
+			
+			for(int i = 0; i < arg.getInternalNodeCount(); i++){
+				if(arg.isBifurcation(arg.getInternalNode(i)))
+					reassortmentHeights.add( ((Node)arg.getInternalNode(i)).getHeight() );
+			}
+			
+			Collections.sort(reassortmentHeights);
+			
+			return reassortmentHeights.get(dim);
+		}else if(dim == dimension - 4){
 			for(int i = 0; i < arg.getNodeCount(); i++){
 				Node x = (Node)arg.getNode(i);
 						
 				if(x.isReassortment()){
 					return (x.getHeight());
 				}
-				
-				
+			}
+		}else if(dim == dimension - 3){
+			for(int i = 0; i < arg.getNodeCount(); i++){
+				Node x = (Node)arg.getNode(i);
+						
+				if(x.isReassortment()){
+					return (x.getChild(ARGModel.LEFT).getHeight());
+				}
+			}
+		}else if(dim == dimension - 2){
+			for(int i = 0; i < arg.getNodeCount(); i++){
+				Node x = (Node)arg.getNode(i);
+						
+				if(x.isReassortment()){
+					return (x.getParent(ARGModel.LEFT).getHeight());
+				}
 			}
 		}
 		
-		ArrayList<Double> reassortmentHeights = new ArrayList<Double>();
-		
-		for(int i = 0; i < arg.getInternalNodeCount(); i++){
-			
-			reassortmentHeights.add( ((Node)arg.getInternalNode(i)).getHeight() );
+		double rValue = 0;
+		for(int i = 0; i < arg.getNodeCount(); i++){
+			Node x = (Node)arg.getNode(i);
+					
+			if(x.isReassortment()){
+				rValue = (x.getParent(ARGModel.RIGHT).getHeight());
+			}
 		}
-		
-		Collections.sort(reassortmentHeights);
-		
-		
-		return reassortmentHeights.get(dim);
+			
+		return rValue;
 	}
+	
+	
+    
+	
 	
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
 

@@ -1278,7 +1278,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     }
 
     public boolean isRecombinationPartitionType() {
-        System.out.println(partitionType);
         if (partitionType.equals(RECOMBINATION_PARTITION)) {
             return true;
         }

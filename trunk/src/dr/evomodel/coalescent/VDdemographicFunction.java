@@ -74,8 +74,17 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
     }
 
     // Hack so that VDdemo can be used as just a linear piecewise demography (the BEAST one is broken)
+    // Alexei fixed PiecewiseLinearPopulation, but did not say yet if it is tested or not.
     public VDdemographicFunction(double[] t, double[] p, Type units) {
         super(units);
+
+// seem safe to remove them for now
+//        assert t[0] >= 0;
+//        for(int k = 1; k < t.length; ++k) {
+//            assert t[k-1] <= t[k];
+//        }
+//        assert t.length + 1 == p.length;
+//
         this.type = VariableDemographicModel.Type.LINEAR;
         final int tot = p.length;
         times = new double[tot+1];
@@ -426,6 +435,25 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
 
     public double[] allTimePoints() {
         return alltimes;
+    }
+
+    public String toString() {
+        final StringBuilder sb = new StringBuilder(32);
+
+        for(int k = 1; k < times.length-1; ++k) {
+            if( k > 1 ) {
+                sb.append(",");
+            }
+            sb.append(times[k]);
+        }
+        sb.append("|");
+        sb.append(values[0]);
+        for(int k = 1; k < values.length; ++k) {
+
+            sb.append(",");
+            sb.append(values [k]);
+        }
+        return sb.toString();
     }
 }
 

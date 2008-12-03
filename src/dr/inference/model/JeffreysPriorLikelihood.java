@@ -69,7 +69,8 @@ public class JeffreysPriorLikelihood extends Likelihood.Abstract {
 
         for (Statistic statistic : dataList) {
             for (int j = 0; j < statistic.getDimension(); j++) {
-                logL += Math.log(1.0 / statistic.getStatisticValue(j));
+                // replace v += log(1/x) with v -= log(x) , save a division
+                logL -= Math.log(statistic.getStatisticValue(j));
             }
         }
         return logL;
@@ -108,7 +109,7 @@ public class JeffreysPriorLikelihood extends Likelihood.Abstract {
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
             new XORRule(
                     new ElementRule(Statistic.class, 1, Integer.MAX_VALUE ),
                     new ElementRule(DATA, new XMLSyntaxRule[] {new ElementRule(Statistic.class,  1, Integer.MAX_VALUE )})

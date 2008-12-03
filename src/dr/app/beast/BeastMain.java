@@ -76,7 +76,7 @@ public class BeastMain {
 
             FileReader fileReader = new FileReader(inputFile);
 
-            XMLParser parser = new BeastParser("release_parsers.properties", new String[]{fileName}, verbose, strictXML);
+            XMLParser parser = new BeastParser(new String[]{fileName}, verbose, strictXML);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;

@@ -34,6 +34,11 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
 
     private final Parameter popSizeParameter;
     private final Parameter indicatorParameter;
+
+    public Type getType() {
+        return type;
+    }
+
     private final Type type;
     private final boolean logSpace;
     private final boolean mid;

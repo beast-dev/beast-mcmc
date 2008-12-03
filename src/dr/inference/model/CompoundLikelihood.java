@@ -261,7 +261,7 @@ public class CompoundLikelihood implements Likelihood {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 				new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE),
 				AttributeRule.newIntegerRule(THREADS, true)
 		};
@@ -273,10 +273,11 @@ public class CompoundLikelihood implements Likelihood {
 
 	private final ExecutorService pool;
 
-	private ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
-	private CompoundModel compoundModel = new CompoundModel("compoundModel");
+	private final ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
+	private final CompoundModel compoundModel = new CompoundModel("compoundModel");
 
-	private List<Callable<Double>> likelihoodCallers = new ArrayList<Callable<Double>>();
+
+	private final List<Callable<Double>> likelihoodCallers = new ArrayList<Callable<Double>>();
 
 	class LikelihoodCaller implements Callable<Double> {
 

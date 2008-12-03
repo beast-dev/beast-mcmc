@@ -43,7 +43,7 @@ public abstract class NumberColumn extends LogColumn.Abstract {
 	
 	private double upperCutoff;
 	private double[] cutoffTable;
-	private DecimalFormat decimalFormat = new DecimalFormat();
+	private final DecimalFormat decimalFormat = new DecimalFormat();
 	private DecimalFormat scientificFormat = null;
 
 

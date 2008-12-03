@@ -107,7 +107,7 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
         return pdfFunction;
     }
 
-    private UnivariateFunction pdfFunction = new UnivariateFunction() {
+    private final UnivariateFunction pdfFunction = new UnivariateFunction() {
         public final double evaluate(double x) {
             return pdf(x);
         }
@@ -160,23 +160,13 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            final XMLObject cxo = (XMLObject) xo.getChild(SHAPE);
+            Parameter shapeParam = cxo.getChild(0) instanceof Parameter ?
+                    (Parameter) cxo.getChild(Parameter.class) : new Parameter.Default(cxo.getDoubleChild(0));
 
-            Parameter shapeParam;
-            Parameter scaleParam;
-
-            XMLObject cxo = (XMLObject) xo.getChild(SHAPE);
-            if (cxo.getChild(0) instanceof Parameter) {
-                shapeParam = (Parameter) cxo.getChild(Parameter.class);
-            } else {
-                shapeParam = new Parameter.Default(cxo.getDoubleChild(0));
-            }
-
-            cxo = (XMLObject) xo.getChild(SCALE);
-            if (cxo.getChild(0) instanceof Parameter) {
-                scaleParam = (Parameter) cxo.getChild(Parameter.class);
-            } else {
-                scaleParam = new Parameter.Default(cxo.getDoubleChild(0));
-            }
+            final XMLObject cxo1 = (XMLObject) xo.getChild(SCALE);
+            Parameter scaleParam = cxo1.getChild(0) instanceof Parameter ?
+                    (Parameter) cxo1.getChild(Parameter.class) : new Parameter.Default(cxo1.getDoubleChild(0));
 
             return new GammaDistributionModel(shapeParam, scaleParam);
         }
@@ -189,7 +179,7 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(SHAPE,
                         new XMLSyntaxRule[]{
                                 new XORRule(
@@ -235,6 +225,5 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
 
     private Parameter shapeParameter = null;
     private Parameter scaleParameter = null;
-
 }
 

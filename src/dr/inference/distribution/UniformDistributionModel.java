@@ -101,7 +101,7 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
         return pdfFunction;
     }
 
-    private UnivariateFunction pdfFunction = new UnivariateFunction() {
+    private final UnivariateFunction pdfFunction = new UnivariateFunction() {
         public final double evaluate(double x) {
             return 1.0;
         }
@@ -175,7 +175,7 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(LOWER,
                         new XMLSyntaxRule[]{
                                 new XORRule(
@@ -205,7 +205,7 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
     // Private instance variables
     // **************************************************************
 
-    private Parameter lowerParameter;
-    private Parameter upperParameter;
+    private final Parameter lowerParameter;
+    private final Parameter upperParameter;
 
 }

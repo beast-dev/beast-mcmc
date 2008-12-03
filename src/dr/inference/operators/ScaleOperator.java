@@ -25,12 +25,12 @@
 
 package dr.inference.operators;
 
-import java.util.logging.Logger;
-
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.xml.*;
+
+import java.util.logging.Logger;
 
 /**
  * A generic scale operator for use with a multi-dimensional parameters.
@@ -307,7 +307,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newBooleanRule(SCALE_ALL, true),
                 AttributeRule.newBooleanRule(SCALE_ALL_IND, true),

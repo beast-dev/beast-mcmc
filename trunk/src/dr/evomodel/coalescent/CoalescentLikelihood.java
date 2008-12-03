@@ -203,7 +203,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
                 new ElementRule(MODEL, new XMLSyntaxRule[] {
                         new ElementRule(DemographicModel.class)
                 }, "The demographic model which describes the effective population size over time"),

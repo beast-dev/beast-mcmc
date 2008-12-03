@@ -148,7 +148,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(DISTRIBUTION,
                         new XMLSyntaxRule[]{new ElementRule(ParametricDistributionModel.class)}),
                 new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)})
@@ -208,7 +208,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(LOWER),
                 AttributeRule.newDoubleRule(UPPER),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
@@ -253,7 +253,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(MEAN),
                 AttributeRule.newDoubleRule(OFFSET, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
@@ -298,7 +298,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(MEAN),
                 AttributeRule.newDoubleRule(OFFSET),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
@@ -344,7 +344,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(MEAN),
                 AttributeRule.newDoubleRule(STDEV),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
@@ -410,7 +410,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(MEAN),
                 AttributeRule.newDoubleRule(STDEV),
                 AttributeRule.newDoubleRule(OFFSET, true),
@@ -459,7 +459,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(SHAPE),
                 AttributeRule.newDoubleRule(SCALE),
                 AttributeRule.newDoubleRule(OFFSET),

@@ -51,7 +51,7 @@ import java.util.logging.Logger;
 
 public class PrecisionTestTreeLikelihood extends AbstractTreeLikelihood {
 
-    public static final String TREE_LIKELIHOOD = "treeLikelihood";
+    public static final String TREE_LIKELIHOOD = "precisionTestTreeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String ALLOW_MISSING_TAXA = "allowMissingTaxa";
     public static final String STORE_PARTIALS = "storePartials";

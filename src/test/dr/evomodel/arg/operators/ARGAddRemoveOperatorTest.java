@@ -164,7 +164,7 @@ public class ARGAddRemoveOperatorTest extends TraceTest {
         CompoundParameter rates = (CompoundParameter) arg.createNodeRatesParameter(false, true, true);
 
         ARGAddRemoveEventOperator operator1 = new ARGAddRemoveEventOperator(arg, 5, 0.5,
-                CoercionMode.COERCION_ON, internalHeights, allInternalNodeHeights, rates, 0.9, -1.0);
+                CoercionMode.COERCION_ON, internalHeights, allInternalNodeHeights, rates, 0.9, -1.0, -1);
 
         ScaleOperator operator2 = new ScaleOperator(rootHeight, 0.75, CoercionMode.COERCION_ON, 5);
         ScaleOperator operator3 = new ScaleOperator(internalHeights, 0.75, CoercionMode.COERCION_ON, 10);

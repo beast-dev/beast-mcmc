@@ -33,8 +33,8 @@
         <javac source="1.5" srcdir="${src}" destdir="${build}"
                classpath="${lib}/jebl.jar:${lib}/jdom.jar:${lib}/commons-math-1.2.jar:${lib}/mtj.jar:lib/colt.jar:lib/itext-1.4.5.jar:lib/junit-4.4.jar:lib/JRI.jar:${lib}/mpj.jar">
             <include name="dr/app/beast/**"/>
-            <!--<include name="dr/app/beastdev/**"/>-->
             <include name="dr/app/beauti/**"/>
+            <include name="dr/app/oldbeauti/**"/>
             <include name="dr/app/seqgen/**"/>
             <include name="dr/app/tools/**"/>
             <include name="dr/app/util/**"/>
@@ -93,6 +93,7 @@
             <fileset dir="${src}">
                 <include name="dr/**/*.png"/>
                 <include name="org/virion/jam/**/*.png"/>
+                <include name="dr/**/*.properties"/>
             </fileset>
             <zipgroupfileset dir="${lib}" includes="jebl.jar"/>
             <zipgroupfileset dir="${lib}" includes="jdom.jar"/>
@@ -112,6 +113,7 @@
             <fileset dir="${build}">
                 <include name="dr/app/beast/BeastVersion.class"/>
                 <include name="dr/app/beauti/**/*.class"/>
+                <include name="dr/app/oldbeauti/**/*.class"/>
                 <include name="dr/app/util/**/*.class"/>
                 <include name="dr/evolution/alignment/**/*.class"/>
                 <include name="dr/evolution/coalescent/**/*.class"/>

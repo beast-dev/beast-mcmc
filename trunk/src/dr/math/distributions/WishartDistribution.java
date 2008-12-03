@@ -249,5 +249,13 @@ public class WishartDistribution implements MultivariateDistribution {
         System.out.println("Gamma, shape = 1/1000, scale = 10, PDF(1.0): " + gd.logPdf(x[0]));
         // These tests show the correspondence between a 1D Wishart and a Gamma
 
+        wd = new WishartDistribution(1);
+        x = new double[]{0.1};
+        System.out.println("Wishart, uninformative, PDF(0.1): " + wd.logPdf(x));
+        x = new double[]{1.0};
+        System.out.println("Wishart, uninformative, PDF(1.0): " + wd.logPdf(x));
+        x = new double[]{10.0};
+        System.out.println("Wishart, uninformative, PDF(10.0): " + wd.logPdf(x));
+        // These tests show the correspondence between a 1D Wishart and a Gamma
     }
 }

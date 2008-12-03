@@ -20,7 +20,7 @@ import dr.inference.model.BooleanLikelihood;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.SumStatistic;
 import dr.inference.model.TestStatistic;
-import dr.inference.trace.EBSPAnalysis;
+import dr.evomodel.coalescent.EBSPAnalysis;
 import dr.util.Attribute;
 
 /**

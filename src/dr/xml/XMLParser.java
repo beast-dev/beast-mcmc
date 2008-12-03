@@ -61,7 +61,7 @@ public class XMLParser {
         for (String parserName : parserNames) {
             XMLObjectParser oldParser = parserStore.get(parserName);
             if (oldParser != null) {
-                throw new IllegalArgumentException("New parser ( " + parser + " ) cannot replace existing parser (" + oldParser + ")");
+                throw new IllegalArgumentException("New parser (" + parser.getParserName() + ") cannot replace existing parser (" + oldParser.getParserName() + ")");
             }
 
             parserStore.put(parserName, parser);

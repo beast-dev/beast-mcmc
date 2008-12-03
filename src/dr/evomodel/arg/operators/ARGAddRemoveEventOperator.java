@@ -14,6 +14,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGModel.Node;
+import dr.evomodel.arg.operators.ARGPartitioningOperator.PartitionChangedEvent;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
@@ -46,7 +47,10 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
     public static final String NODE_RATES = "nodeRates";
     public static final String BELOW_ROOT_PROBABILITY = "belowRootProbability";
     public static final String FLIP_MEAN = "flipMean";
+    public static final String JOINT_PARTITIONING = "jointPartitioning";
+        
     public static final double LOG_TWO = Math.log(2.0);
+    
 
     private ARGModel arg = null;
     private double size = 0.0;  //Translates into add probability of 50%
@@ -62,13 +66,15 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
     private CompoundParameter internalNodeParameters;
     private CompoundParameter internalAndRootNodeParameters;
     private CompoundParameter nodeRates;
+    
+    private int tossSize = -1;
 
 
     public ARGAddRemoveEventOperator(ARGModel arg, int weight, double size, CoercionMode mode,
                                      CompoundParameter param1,
                                      CompoundParameter param2,
                                      CompoundParameter param3,
-                                     double belowRootProbability, double flipMean) {
+                                     double belowRootProbability, double flipMean, int tossSize) {
         super(mode);
         this.arg = arg;
         this.size = size;
@@ -102,6 +108,8 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
         //This is for computational efficiency
         probBelowRoot = -Math.log(1 - Math.sqrt(probBelowRoot));
+        
+       this.tossSize = tossSize;
     }
 
 
@@ -114,10 +122,11 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         double logq = 0;
 
         try {
-            if (MathUtils.nextDouble() < 1.0 / (1 + Math.exp(-size)))
-                logq = AddOperation() - size;
-            else
+            if (MathUtils.nextDouble() < 1.0 / (1 + Math.exp(-size))){
+            	logq = AddOperation() - size;
+            }else{
                 logq = RemoveOperation() + size;
+            }
         } catch (NoReassortmentEventException nree) {
             throw new OperatorFailedException("");
         }
@@ -127,11 +136,11 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
         return logq;
     }
-
-
+    
     private double AddOperation() throws OperatorFailedException {
-
         double logHastings = 0;
+        
+        
         double treeHeight = arg.getNodeHeight(arg.getRoot());
         double newBifurcationHeight = Double.POSITIVE_INFINITY;
         double newReassortmentHeight = Double.POSITIVE_INFINITY;
@@ -250,6 +259,9 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
         //6. Begin editing the tree.
         arg.beginTreeEdit();
+        
+        adjustRandomPartitioning();
+        
 
         //6a. This is when we do not create a new root.
         if (newBifurcationHeight < treeHeight) {
@@ -471,8 +483,9 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
 
     private double RemoveOperation() throws OperatorFailedException {
+    	
         double logHastings = 0;
-
+        
         // 1. Draw reassortment node uniform randomly
 
         ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
@@ -687,16 +700,26 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 x.number--;
             }
         }
-
+      
+        	
+        adjustRandomPartitioning();
+        	
+        
+        
+        
 
         arg.pushTreeSizeChangedEvent();
+        
+       
+       
+        
         try {
             arg.endTreeEdit();
         } catch (MutableTree.InvalidTreeException ite) {
             throw new RuntimeException(ite.toString() + "\n" + arg.toString()
                     + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
         }
-
+        
         assert nodeCheck() : arg.toARGSummary();
 
         //Do the backwards stuff now :(
@@ -780,6 +803,74 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
     }
 
+    private void adjustRandomPartitioning(){
+    	if(tossSize < 1){
+    		return;
+    	}
+    	
+    	if(arg.getReassortmentNodeCount() > 0){
+        	int total = arg.getReassortmentNodeCount();
+        	Parameter xyz = arg.getPartitioningParameters().getParameter(MathUtils.nextInt(total));
+        	
+        
+        	if (isRecombination) {
+                adjustRecombinationPartition(xyz);
+            }else{
+            	adjustReassortmentPartition(xyz);
+            }
+        }
+    	
+    }
+
+	private void adjustRecombinationPartition(Parameter part){
+		double[] values = part.getParameterValues();
+		
+		
+	}
+    
+	private void adjustReassortmentPartition(Parameter part){
+		double[] values = part.getParameterValues();
+				
+		boolean stop = false;
+		
+		while(!stop){
+			values = part.getParameterValues();
+				
+			ArrayList<Integer> list = new ArrayList<Integer>();
+			
+			while(list.size() < tossSize){
+				int z = MathUtils.nextInt(values.length - 1) + 1;
+				if(!list.contains(z)){
+					list.add(z);
+				}
+			}
+			
+			
+			for(int z : list){
+				if(values[z] == 0){
+					values[z] = 1;
+				}else{
+					values[z] = 0;
+				}
+			}
+			
+			
+			if(arraySum(values) > 0){
+				stop = true;
+			}
+		}
+		
+		for(int i = 0; i < values.length; i++){
+			
+			
+			part.setParameterValueQuietly(i, values[i]);
+		}
+		
+		ARGPartitioningOperator.checkValidReassortmentPartition(part);
+		
+		
+		
+	}
 
     private void drawRandomPartitioning(Parameter partitioning) {
         if (isRecombination) {
@@ -794,6 +885,13 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
     private int arraySum(int[] n) {
         int b = 0;
         for (int a : n)
+            b += a;
+        return b;
+    }
+    
+    private double arraySum(double[] n) {
+        double b = 0;
+        for (double a : n)
             b += a;
         return b;
     }
@@ -812,10 +910,17 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 }
             }
         }
-
+       
+        partition.setParameterValueQuietly(0, 0);
+        
         for (int i = 0; i < numberOfPartitionsMinusOne; i++) {
             partition.setParameterValueQuietly(i + 1, n[i]);
         }
+        
+        
+        
+        assert ARGPartitioningOperator.checkValidReassortmentPartition(partition);
+
     }
 
     private int nextFlipSize() {
@@ -988,6 +1093,11 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             }
         }
     }
+    
+    
+    
+    
+    
 
     ////
     ////Coercible MCMC Operator stuff
@@ -1099,11 +1209,19 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             } else {
                 Logger.getLogger("dr.evomodel").info(ARG_EVENT_OPERATOR + " will randomly flip all partitions");
             }
+            
+            
+            int tossSize = 0;
+            if(xo.hasAttribute(ARGPartitioningOperator.TOSS_SIZE)){
+            		tossSize = xo.getIntegerAttribute(ARGPartitioningOperator.TOSS_SIZE);
+            		Logger.getLogger("dr.evomodel").info(ARG_EVENT_OPERATOR + " is joint with " + ARGPartitioningOperator.OPERATOR_NAME);
+            }
+            
 
 
             return new ARGAddRemoveEventOperator(treeModel, weight, size,
                     mode, parameter1, parameter2, parameter3,
-                    belowRootProb, flipMean);
+                    belowRootProb, flipMean, tossSize);
         }
 
         public String getParserDescription() {
@@ -1122,6 +1240,9 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 AttributeRule.newDoubleRule(ADD_PROBABILITY, false,
                         "The probability that the operator adds a new"
                                 + " reassortment event"),
+                AttributeRule.newBooleanRule(JOINT_PARTITIONING, true),
+                AttributeRule.newIntegerRule(ARGPartitioningOperator.TOSS_SIZE, true),
+                AttributeRule.newDoubleRule(ADD_PROBABILITY, true),
                 new ElementRule(ARGModel.class),
                 new ElementRule(INTERNAL_NODES,
                         new XMLSyntaxRule[]{

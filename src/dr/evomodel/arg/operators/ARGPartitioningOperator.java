@@ -45,7 +45,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         int len = partitioningParameters.getNumberOfParameters();
 
         if (len == 0) {
-            throw new OperatorFailedException("");
+            return 0;
         }
 
         if (isRecombination) {
@@ -88,7 +88,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         return 0;
     }
 
-    private boolean checkValidRecombinationPartition(Parameter partition) {
+    public static boolean checkValidRecombinationPartition(Parameter partition) {
         int l = partition.getDimension();
         if ((partition.getParameterValue(0) == 0 && partition.getParameterValue(l - 1) == 1))
             return true;
@@ -118,7 +118,8 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
                 partition.setParameterValueQuietly(a, 0);
             }
         }
-
+        
+        
         if (!checkValidReassortmentPartition(partition)) {
             throw new OperatorFailedException("");
         }
@@ -126,7 +127,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         return 0;
     }
 
-    private boolean checkValidReassortmentPartition(Parameter partition) {
+    public static boolean checkValidReassortmentPartition(Parameter partition) {
         if (partition.getParameterValue(0) != 0)
             return false;
 

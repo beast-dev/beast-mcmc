@@ -46,14 +46,14 @@ public class BeastVersion implements Version {
 	/**
 	 * Version string: assumed to be in format x.x.x
 	 */
-	private static String VERSION = "1.5beta";
+	private static String VERSION = "1.5beta2";
 	private static String DATE_STRING = "2002-2008";
 
 	/**
      * this used to parse the CVS ID string but there is no equivalent
      * for SVN. We must increment this manually.
 	 */
-	private static String BUILD_ID = "Build r1096";
+	private static String BUILD_ID = "Build r1362";
 
 	public String getVersionString() {
 		return "v" + VERSION;

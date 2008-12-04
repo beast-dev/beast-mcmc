@@ -13,6 +13,7 @@ import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel;
+import dr.evomodel.arg.ARGPartitionLikelihood;
 import dr.evomodel.arg.ARGModel.Node;
 import dr.evomodel.arg.operators.ARGPartitioningOperator.PartitionChangedEvent;
 import dr.inference.model.CompoundParameter;
@@ -54,14 +55,11 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
     private ARGModel arg = null;
     private double size = 0.0;  //Translates into add probability of 50%
-
     private double probBelowRoot = 0.9; //Transformed in constructor for computational efficiency
-    private double flipMean;
-    private double logPoissonNormalizingFactor = 1;
-    private double logPartitionSize;
-    private PoissonDistribution pd;
 
-    private boolean isRecombination;
+    private ARGPartitionLikelihood partLike;
+    
+   
     //	private int mode = CoercableMCMCOperator.COERCION_OFF;
     private CompoundParameter internalNodeParameters;
     private CompoundParameter internalAndRootNodeParameters;
@@ -74,7 +72,9 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                                      CompoundParameter param1,
                                      CompoundParameter param2,
                                      CompoundParameter param3,
-                                     double belowRootProbability, double flipMean, int tossSize) {
+                                     double belowRootProbability, 
+                                     ARGPartitionLikelihood partLike, 
+                                     int tossSize) {
         super(mode);
         this.arg = arg;
         this.size = size;
@@ -82,25 +82,27 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         this.internalAndRootNodeParameters = param2;
         this.nodeRates = param3;
 
-        this.isRecombination = arg.isRecombinationPartitionType();
-//		this.mode = mode;
-        this.flipMean = flipMean;
-
-        if (flipMean > -1) {
-            this.pd = new PoissonDistribution(flipMean);
-            logPoissonNormalizingFactor = Math.log(pd.cdf(arg.getNumberOfPartitions() - 1) - pd.cdf(0));
-        }
-
-        if (isRecombination) {
-            logPartitionSize = Math.log(arg.getNumberOfPartitions() - 1);
-        } else if (arg.getNumberOfPartitions() > 40) {
-            //The -1 factor only matters for smaller problems,
-            //so we ignore when partition size gets big.
-            //Difference is very, very tiny.
-            logPartitionSize = (arg.getNumberOfPartitions() - 1) * LOG_TWO;
-        } else {
-            logPartitionSize = Math.log(Math.pow(2, arg.getNumberOfPartitions() - 1) - 1);
-        }
+        this.partLike = partLike;
+        
+//        this.isRecombination = arg.isRecombinationPartitionType();
+////		this.mode = mode;
+//        this.flipMean = flipMean;
+//
+//        if (flipMean > -1) {
+//            this.pd = new PoissonDistribution(flipMean);
+//            logPoissonNormalizingFactor = Math.log(pd.cdf(arg.getNumberOfPartitions() - 1) - pd.cdf(0));
+//        }
+//
+//        if (isRecombination) {
+//            logPartitionSize = Math.log(arg.getNumberOfPartitions() - 1);
+//        } else if (arg.getNumberOfPartitions() > 40) {
+//            //The -1 factor only matters for smaller problems,
+//            //so we ignore when partition size gets big.
+//            //Difference is very, very tiny.
+//            logPartitionSize = (arg.getNumberOfPartitions() - 1) * LOG_TWO;
+//        } else {
+//            logPartitionSize = Math.log(Math.pow(2, arg.getNumberOfPartitions() - 1) - 1);
+//        }
 
         setWeight(weight);
 
@@ -773,34 +775,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
     }
 
     private double getPartitionAddHastingsRatio(double[] values) {
-        if (isRecombination) {
-            return 0;
-        } else if (flipMean > -1) {
-            return getFixedFlipRatio(values);
-        } else {
-            return 0;
-        }
-    }
-
-    private double getFixedFlipRatio(double[] values) {
-        int numberOfPartitionsMinusOne = arg.getNumberOfPartitions() - 1;
-
-        int flipSize = 0;
-        for (double d : values) {
-            flipSize += (int) d;
-        }
-
-
-        if (flipSize == numberOfPartitionsMinusOne) {
-            return logPoissonNormalizingFactor - pd.logPdf(flipSize) - logPartitionSize;
-        }
-
-        int mirrorFlipSize = numberOfPartitionsMinusOne - flipSize;
-
-        return LOG_TWO + logPoissonNormalizingFactor - logPartitionSize -
-                Math.log(pd.pdf(flipSize) / Binomial.choose(numberOfPartitionsMinusOne, flipSize)
-                        + pd.pdf(mirrorFlipSize) / Binomial.choose(numberOfPartitionsMinusOne, mirrorFlipSize));
-
+        return -partLike.getLogLikelihood(values);
     }
 
     private void adjustRandomPartitioning(){
@@ -813,7 +788,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         	Parameter xyz = arg.getPartitioningParameters().getParameter(MathUtils.nextInt(total));
         	
         
-        	if (isRecombination) {
+        	if (arg.isRecombinationPartitionType()) {
                 adjustRecombinationPartition(xyz);
             }else{
             	adjustReassortmentPartition(xyz);
@@ -825,8 +800,15 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 	private void adjustRecombinationPartition(Parameter part){
 		double[] values = part.getParameterValues();
 		
-		
+		Logger.getLogger("dr.evomodel").severe("NOT IMPLENTED");
 	}
+	
+	private double arraySum(double[] n) {
+      double b = 0;
+      for (double a : n)
+          b += a;
+      return b;
+  }
     
 	private void adjustReassortmentPartition(Parameter part){
 		double[] values = part.getParameterValues();
@@ -873,117 +855,110 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 	}
 
     private void drawRandomPartitioning(Parameter partitioning) {
-        if (isRecombination) {
-            drawRecombinationPartition(partitioning);
-        } else if (flipMean > -1) {
-            drawReassortmentPartitionFixedFlip(partitioning);
-        } else {
-            drawReassortmentPartitionAllFlip(partitioning);
-        }
-    }
-
-    private int arraySum(int[] n) {
-        int b = 0;
-        for (int a : n)
-            b += a;
-        return b;
-    }
-    
-    private double arraySum(double[] n) {
-        double b = 0;
-        for (double a : n)
-            b += a;
-        return b;
-    }
-
-    private void drawReassortmentPartitionAllFlip(Parameter partition) {
-        int numberOfPartitionsMinusOne = arg.getNumberOfPartitions() - 1;
-
-        int[] n = new int[numberOfPartitionsMinusOne];
-
-        while (arraySum(n) == 0) {
-            for (int i = 0; i < n.length; i++) {
-                if (MathUtils.nextBoolean()) {
-                    n[i] = 1;
-                } else {
-                    n[i] = 0;
-                }
-            }
-        }
-       
-        partition.setParameterValueQuietly(0, 0);
+        double[] values = partLike.generatePartition();
         
-        for (int i = 0; i < numberOfPartitionsMinusOne; i++) {
-            partition.setParameterValueQuietly(i + 1, n[i]);
-        }
-        
-        
-        
-        assert ARGPartitioningOperator.checkValidReassortmentPartition(partition);
-
+        for(int i = 0; i < values.length; i++)
+        	partitioning.setParameterValueQuietly(i, values[i]);
+    	
     }
 
-    private int nextFlipSize() {
-        int x = Poisson.nextPoisson(flipMean);
-        while (x > arg.getNumberOfPartitions() - 1 || x == 0) {
-            x = Poisson.nextPoisson(flipMean);
-        }
-
-        assert x != arg.getNumberOfPartitions();
-        assert x != 0;
-
-
-        return x;
-    }
-
-    private void drawReassortmentPartitionFixedFlip(Parameter partition) {
-        int numberOfPartitionsMinusOne = arg.getNumberOfPartitions() - 1;
-        int flipSize = nextFlipSize();
-
-        if (flipSize == numberOfPartitionsMinusOne) {
-            for (int i = 1; i <= flipSize; i++)
-                partition.setParameterValueQuietly(i, 1.0);
-            return;
-        }
-
-        double replaceValue = 1.0;
-        if (MathUtils.nextBoolean()) {
-            replaceValue = 0.0;
-
-            for (int i = 1; i <= numberOfPartitionsMinusOne; i++) {
-                partition.setParameterValueQuietly(i, 1.0);
-            }
-        }
-
-
-        ArrayList<Integer> a = new ArrayList<Integer>(flipSize);
-        while (a.size() < flipSize) {
-            int b = MathUtils.nextInt(numberOfPartitionsMinusOne) + 1;
-            if (!a.contains(b)) {
-                a.add(b);
-            }
-        }
-
-
-        for (int b : a) {
-            partition.setParameterValueQuietly(b, replaceValue);
-        }
-
-    }
-
-    private void drawRecombinationPartition(Parameter partition) {
-        int lengthMinusOne = arg.getNumberOfPartitions() - 1;
-
-        int cut = MathUtils.nextInt(lengthMinusOne);
-
-        int leftValue = 0;  //At one time, these values could switch.
-        int rightValue = 1;
-
-        for (int i = 0; i < cut + 1; i++)
-            partition.setParameterValueQuietly(i, leftValue);
-        for (int i = cut + 1; i < partition.getDimension(); i++)
-            partition.setParameterValueQuietly(i, rightValue);
-    }
+//    private int arraySum(int[] n) {
+//        int b = 0;
+//        for (int a : n)
+//            b += a;
+//        return b;
+//    }
+//    
+//    
+//
+//    private void drawReassortmentPartitionAllFlip(Parameter partition) {
+//        int numberOfPartitionsMinusOne = arg.getNumberOfPartitions() - 1;
+//
+//        int[] n = new int[numberOfPartitionsMinusOne];
+//
+//        while (arraySum(n) == 0) {
+//            for (int i = 0; i < n.length; i++) {
+//                if (MathUtils.nextBoolean()) {
+//                    n[i] = 1;
+//                } else {
+//                    n[i] = 0;
+//                }
+//            }
+//        }
+//       
+//        partition.setParameterValueQuietly(0, 0);
+//        
+//        for (int i = 0; i < numberOfPartitionsMinusOne; i++) {
+//            partition.setParameterValueQuietly(i + 1, n[i]);
+//        }
+//        
+//        
+//        
+//        assert ARGPartitioningOperator.checkValidReassortmentPartition(partition);
+//
+//    }
+//
+//    private int nextFlipSize() {
+//        int x = Poisson.nextPoisson(flipMean);
+//        while (x > arg.getNumberOfPartitions() - 1 || x == 0) {
+//            x = Poisson.nextPoisson(flipMean);
+//        }
+//
+//        assert x != arg.getNumberOfPartitions();
+//        assert x != 0;
+//
+//
+//        return x;
+//    }
+//
+//    private void drawReassortmentPartitionFixedFlip(Parameter partition) {
+//        int numberOfPartitionsMinusOne = arg.getNumberOfPartitions() - 1;
+//        int flipSize = nextFlipSize();
+//
+//        if (flipSize == numberOfPartitionsMinusOne) {
+//            for (int i = 1; i <= flipSize; i++)
+//                partition.setParameterValueQuietly(i, 1.0);
+//            return;
+//        }
+//
+//        double replaceValue = 1.0;
+//        if (MathUtils.nextBoolean()) {
+//            replaceValue = 0.0;
+//
+//            for (int i = 1; i <= numberOfPartitionsMinusOne; i++) {
+//                partition.setParameterValueQuietly(i, 1.0);
+//            }
+//        }
+//
+//
+//        ArrayList<Integer> a = new ArrayList<Integer>(flipSize);
+//        while (a.size() < flipSize) {
+//            int b = MathUtils.nextInt(numberOfPartitionsMinusOne) + 1;
+//            if (!a.contains(b)) {
+//                a.add(b);
+//            }
+//        }
+//
+//
+//        for (int b : a) {
+//            partition.setParameterValueQuietly(b, replaceValue);
+//        }
+//
+//    }
+//
+//    private void drawRecombinationPartition(Parameter partition) {
+//        int lengthMinusOne = arg.getNumberOfPartitions() - 1;
+//
+//        int cut = MathUtils.nextInt(lengthMinusOne);
+//
+//        int leftValue = 0;  //At one time, these values could switch.
+//        int rightValue = 1;
+//
+//        for (int i = 0; i < cut + 1; i++)
+//            partition.setParameterValueQuietly(i, leftValue);
+//        for (int i = cut + 1; i < partition.getDimension(); i++)
+//            partition.setParameterValueQuietly(i, rightValue);
+//    }
 
     /* Draws a new partitioning.
       * With probability singlePartitionProbability, one bit is set;
@@ -1198,18 +1173,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 }
             }
 
-            double flipMean = -1;
-            if (xo.hasAttribute(FLIP_MEAN)) {
-                flipMean = xo.getDoubleAttribute(FLIP_MEAN);
-
-                if (flipMean < 0) {
-                    throw new XMLParseException(FLIP_MEAN + " must be greater than 0");
-                }
-                Logger.getLogger("dr.evomodel").info(ARG_EVENT_OPERATOR + " has a fixed " + FLIP_MEAN + " of " + flipMean);
-            } else {
-                Logger.getLogger("dr.evomodel").info(ARG_EVENT_OPERATOR + " will randomly flip all partitions");
-            }
-            
+            ARGPartitionLikelihood partitionLike = (ARGPartitionLikelihood)xo.getChild(ARGPartitionLikelihood.class);
             
             int tossSize = 0;
             if(xo.hasAttribute(ARGPartitioningOperator.TOSS_SIZE)){
@@ -1221,7 +1185,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
             return new ARGAddRemoveEventOperator(treeModel, weight, size,
                     mode, parameter1, parameter2, parameter3,
-                    belowRootProb, flipMean, tossSize);
+                    belowRootProb, partitionLike, tossSize);
         }
 
         public String getParserDescription() {

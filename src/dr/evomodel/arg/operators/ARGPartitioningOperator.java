@@ -220,6 +220,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newIntegerRule(WEIGHT),
+                AttributeRule.newIntegerRule(TOSS_SIZE),
                 new ElementRule(ARGModel.class)
         };
     };
@@ -228,7 +229,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         return "tossPartitioningOperator(" + partitioningParameters.getParameterName() + ")";
     }
 
-    private boolean singleFlip;
+    
 
 
 }

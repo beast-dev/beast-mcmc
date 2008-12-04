@@ -1,121 +1,138 @@
 package dr.evomodel.arg;
 
-import dr.evomodel.arg.operators.ARGAddRemoveEventOperator;
-import dr.inference.loggers.LogColumn;
-import dr.inference.model.AbstractModel;
+import dr.evomodel.arg.operators.ARGPartitioningOperator;
 import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.xml.*;
+import dr.math.MathUtils;
+import dr.xml.AbstractXMLObjectParser;
+import dr.xml.ElementRule;
+import dr.xml.XMLObject;
+import dr.xml.XMLObjectParser;
+import dr.xml.XMLParseException;
+import dr.xml.XMLSyntaxRule;
 
-import java.util.logging.Logger;
 
-public class UniformPartitionLikelihood extends AbstractModel implements Likelihood {
+public class UniformPartitionLikelihood extends ARGPartitionLikelihood implements Likelihood {
 
     public static final String UNIFORM_PARTITION_LIKELIHOOD = "uniformPartitionLikelihood";
-    private double logPartitionNumber; //Transformed initially for computational reasons
-    private ARGModel arg;
-
-    public UniformPartitionLikelihood(ARGModel arg) {
-        super("");
-        this.arg = arg;
-
-        addModel(arg);
-
-        if (arg.isRecombinationPartitionType()) {
-            logPartitionNumber = -Math.log(arg.getNumberOfPartitions() - 1);
-        } else {
-            logPartitionNumber = -(arg.getNumberOfPartitions() - 1) * ARGAddRemoveEventOperator.LOG_TWO;
-        }
+    private double logStateCount;
+    private boolean isRecombination;
+	
+    
+    public UniformPartitionLikelihood(String id, ARGModel arg){
+    	super(id,arg);
+    	
+    	isRecombination = arg.isRecombinationPartitionType();
+    	
+    	int numberOfPartitionsMinusOne = getNumberOfPartitionsMinusOne();
+    	
+    	if(arg.isRecombinationPartitionType()){
+    		//For example, if we have five partitions, we can have the following
+    		// 0 1 1 1 1
+    		// 0 0 1 1 1       <-- Equates to four possibilities
+    		// 0 0 0 1 1   
+    		// 0 0 0 0 1
+    		
+    		logStateCount = Math.log(numberOfPartitionsMinusOne);
+    	}else{
+    		//You basically choose a subset from all possible subset of the final four
+        	//there are 2^numberOfPartitionsMinusOne of these
+        	//
+        	//Except! you cannot choose the empty set.  
+        	
+    		
+        	double rValue = Math.pow(2.0,numberOfPartitionsMinusOne) - 1;
+        	
+        	logStateCount = Math.log(rValue);
+    	}
     }
+    
+    public double[] generatePartition(){
+    	if(isRecombination){
+    		return generateRecombinationPartition();
+    	}
+    	return generateReassortmentPartition();
+    }
+    
+    private double[] generateRecombinationPartition(){
+    	int numberOfPartitionsMinusOne = getNumberOfPartitionsMinusOne();
 
+        int cut = MathUtils.nextInt(numberOfPartitionsMinusOne);
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        int leftValue = 0;  //At one time, these values could switch.
+        int rightValue = 1;
 
-        public String getParserDescription() {
-            return "Provides a uniform prior for partitions";
+        double[] partition = new double[numberOfPartitionsMinusOne + 1];
+        
+        for (int i = 0; i < cut + 1; i++)
+            partition[i] = leftValue;
+        for (int i = cut + 1; i < partition.length; i++)
+            partition[i] = rightValue;
+        
+        return partition;
+    }
+    
+    private double arraySum(double[] x){
+    	double a = 0;
+    	for(double b : x)
+    		a += b;
+    	return a;
+    }
+    
+    private double[] generateReassortmentPartition(){
+    	int numberOfPartitions = getNumberOfPartitionsMinusOne() + 1;
+
+        double[] partition = new double[numberOfPartitions];
+
+        while (arraySum(partition) == 0) {
+            for (int i = 1; i < partition.length; i++) {
+                if (MathUtils.nextBoolean()) {
+                    partition[i] = 1.0;
+                } else {
+                    partition[i] = 0.0;
+                }
+            }
         }
+        
+        partition[0] = 0.0;       
+       
+        return partition;
+    }
+    
+    
+    public double getLogLikelihood(double[] partition){
+    	return -logStateCount;
+    }
+    
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
 
-        public Class getReturnType() {
-            return UniformPartitionLikelihood.class;
-        }
+		public String getParserDescription() {
+			return null;
+		}
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[]{
-                    new ElementRule(ARGModel.class),
-            };
-        }
+		public Class getReturnType() {
+			return UniformPartitionLikelihood.class;
+		}
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            Logger.getLogger("dr.evomodel").info("Creating " + UNIFORM_PARTITION_LIKELIHOOD);
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return new XMLSyntaxRule[]{
+				new ElementRule(ARGModel.class, false),	
+			};
+		}
 
-            return new UniformPartitionLikelihood((ARGModel) xo.getChild(ARGModel.class));
-        }
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+			ARGModel arg = (ARGModel)xo.getChild(ARGModel.class);
+			
+			String id = ""; 
+			if(xo.hasId())
+				id = xo.getId();
+			
+			return new UniformPartitionLikelihood(id,arg);
+		}
 
-        public String getParserName() {
-            return UNIFORM_PARTITION_LIKELIHOOD;
-        }
-
+		public String getParserName() {
+			return UNIFORM_PARTITION_LIKELIHOOD;
+		}
+    	
     };
-
-    public double getLogLikelihood() {
-        return logPartitionNumber * arg.getReassortmentNodeCount();
-    }
-
-    public Model getModel() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void makeDirty() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public LogColumn[] getColumns() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public String getId() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void setId(String id) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    protected void acceptState() {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    protected void restoreState() {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    protected void storeState() {
-        // TODO Auto-generated method stub
-
-    }
-
 
 }

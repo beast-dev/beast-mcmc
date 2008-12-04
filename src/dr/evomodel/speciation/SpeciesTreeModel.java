@@ -62,8 +62,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
     }
 
     SpeciesTreeModel(SpeciesBindings species, Parameter sppSplitPopulations,
-                     Parameter coalPointsPops, Parameter coalPointsIndicator,
-                     Tree startTree) {
+                     Parameter coalPointsPops, Parameter coalPointsIndicator, Tree startTree) {
         super(SPECIES_TREE);
 
         this.species = species;
@@ -76,7 +75,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
         addModel(species);
 
-        if (coalPointsPops != null) {
+        if( coalPointsPops != null ) {
             assert coalPointsIndicator != null;
 
             addParameter(coalPointsPops);
@@ -86,14 +85,14 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
             int start = 0;
             singleStartPoints = new int[pts.length];
-            for (int i = 0; i < pts.length; i++) {
+            for(int i = 0; i < pts.length; i++) {
                 singleStartPoints[i] = start;
                 start += pts[i].length;
             }
 
             final double[][] ptp = species.getPopTimesPair();
             pairStartPoints = new int[ptp.length];
-            for (int i = 0; i < ptp.length; i++) {
+            for(int i = 0; i < ptp.length; i++) {
                 pairStartPoints[i] = start;
                 start += ptp[i].length;
             }
@@ -112,7 +111,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         // fixed properties
         for (int k = 0; k < getExternalNodeCount(); ++k) {
             final NodeRef nodeRef = getExternalNode(k);
-            int n = (Integer) getNodeAttribute(nodeRef, spIndexAttrName);
+            final int n = (Integer) getNodeAttribute(nodeRef, spIndexAttrName);
             final NodeProperties np = new NodeProperties(n);
             props.put(nodeRef, np);
             np.spSet.set(n);
@@ -282,6 +281,10 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
             }
         }
 
+        if( args == null ) {
+             return nprop;
+        }
+
         final double cheight = nodeID != getRoot() ? getNodeHeight(getParent(nodeID)) : Double.MAX_VALUE;
 
         List<Points> allPoints = new ArrayList<Points>(5);
@@ -394,7 +397,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
         final double t0 = getNodeHeight(nodeID);
 
-        Points[] p = pointsList[nodeID.getNumber()];
+        Points[] p = pointsList != null ? pointsList[nodeID.getNumber()] : null;
         final int plen = p == null ? 0 : p.length;
 
         final boolean isRoot = nodeID == getRoot();
@@ -421,11 +424,12 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
             // per se but for use when analyzing the results.
 
             double h = -1;
-            for (SpeciesBindings.GeneTreeInfo t : species.getGeneTrees()) {
+            for(SpeciesBindings.GeneTreeInfo t : species.getGeneTrees()) {
                 h = Math.max(h, t.tree.getNodeHeight(t.tree.getRoot()));
             }
             xs[xs.length - 1] = h - getNodeHeight(nodeID);
-            ys[ys.length - 1] = ys[ys.length - 2];
+            // last value is for root branch end point
+            ys[ys.length - 1] = pointsList != null ? ys[ys.length - 2] : pops[pops.length-1];
         }
 
         nprop.demogf = new VDdemographicFunction(xs, ys, getUnits());
@@ -433,9 +437,16 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
     }
 
     private void setNodeProperties() {
-        Args args = new Args();
-        Points[][] perBranchPoints = new Points[getNodeCount()][];
-        getDemographicPoints(getRoot(), args, perBranchPoints);
+        Points[][] perBranchPoints = null;
+
+        if( coalPointsPops != null ) {
+          Args args = new Args();
+          perBranchPoints = new Points[getNodeCount()][];
+          getDemographicPoints(getRoot(), args, perBranchPoints);
+        } else {
+            // sets species info
+            getDemographicPoints(getRoot(),null, null);
+        }
 
         setDemographics(getRoot(), 0, -1, ((Parameter.Default) sppSplitPopulations).inspectParameterValues(), perBranchPoints);
     }
@@ -845,8 +856,9 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         return new Parameter.Default(dim, value);
     }
 
-    private static Parameter createSplitPopulationsParameter(SpeciesBindings spb, double value) {
-        final int dim = 3 * spb.nSpecies() - 2;
+    private static Parameter createSplitPopulationsParameter(SpeciesBindings spb, double value, boolean root) {
+        // one per species leaf (ns) + 2 per internal node (2*(ns-1)) + optionally one for the root
+        final int dim = 3 * spb.nSpecies() - 2 + (root ? 1 : 0);
         return new Parameter.Default(dim, value);
     }
 
@@ -854,25 +866,37 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             SpeciesBindings spb = (SpeciesBindings) xo.getChild(SpeciesBindings.class);
+
+            Parameter coalPointsPops = null;
+            Parameter coalPointsIndicators = null;
+            {
+                XMLObject cxo = (XMLObject) xo.getChild(COALESCENT_POINTS_POPULATIONS);
+                if( cxo != null ) {
+                    final double value = cxo.getAttribute(Attributable.VALUE, 1.0);
+                    coalPointsPops = createCoalPointsPopParameter(spb, cxo.getAttribute(Attributable.VALUE, value));
+                    replaceParameter(cxo, coalPointsPops);
+                    coalPointsPops.addBounds(
+                            new Parameter.DefaultBounds(Double.MAX_VALUE, 0, coalPointsPops.getDimension()));
+
+                    cxo = (XMLObject) xo.getChild(COALESCENT_POINTS_INDICATORS);
+                    if( cxo == null ) {
+                        throw new XMLParseException("Must have indicators");
+                    }
+                    coalPointsIndicators = new Parameter.Default(coalPointsPops.getDimension(), 0);
+                    replaceParameter(cxo, coalPointsIndicators);
+                }
+            }
+
             XMLObject cxo = (XMLObject) xo.getChild(SPP_SPLIT_POPULATIONS);
 
-            double value = cxo.getAttribute(Attributable.VALUE, 1.0);
-            Parameter sppSplitPopulations =
-                    createSplitPopulationsParameter(spb, cxo.getAttribute(Attributable.VALUE, value));
+            final double value = cxo.getAttribute(Attributable.VALUE, 1.0);
+            final Parameter sppSplitPopulations =
+                    createSplitPopulationsParameter(spb, cxo.getAttribute(Attributable.VALUE, value), coalPointsPops == null);
             replaceParameter(cxo, sppSplitPopulations);
-            sppSplitPopulations.addBounds(
-                    new Parameter.DefaultBounds(Double.MAX_VALUE, 0, sppSplitPopulations.getDimension()));
 
-            cxo = (XMLObject) xo.getChild(COALESCENT_POINTS_POPULATIONS);
-            value = cxo.getAttribute(Attributable.VALUE, 1.0);
-            Parameter coalPointsPops = createCoalPointsPopParameter(spb, cxo.getAttribute(Attributable.VALUE, value));
-            replaceParameter(cxo, coalPointsPops);
-            coalPointsPops.addBounds(
-                    new Parameter.DefaultBounds(Double.MAX_VALUE, 0, coalPointsPops.getDimension()));
-
-            cxo = (XMLObject) xo.getChild(COALESCENT_POINTS_INDICATORS);
-            Parameter coalPointsIndicators = new Parameter.Default(coalPointsPops.getDimension(), 0);
-            replaceParameter(cxo, coalPointsIndicators);
+            final Parameter.DefaultBounds bounds =
+                    new Parameter.DefaultBounds(Double.MAX_VALUE, 0, sppSplitPopulations.getDimension());
+            sppSplitPopulations.addBounds(bounds);
 
             Tree startTree = (Tree) xo.getChild(Tree.class);
 

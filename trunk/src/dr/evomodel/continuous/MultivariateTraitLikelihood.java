@@ -33,12 +33,13 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
     public static final String SET_TRAIT = "setOutcomes";
     public static final String MISSING = "missingIndicator";
     public static final String CACHE_BRANCHES = "cacheBranches";
-    public static final String IN_REAL_TIME = "inRealTime";
     public static final String REPORT_MULTIVARIATE = "reportAsMultivariate";
     public static final String DEFAULT_TRAIT_NAME = "trait";
     public static final String RANDOMIZE = "randomize";
     public static final String CHECK = "check";
-    public static final String TREE_LENGTH = "useTreeLength";
+    public static final String USE_TREE_LENGTH = "useTreeLength";
+    public static final String SCALE_BY_TIME = "scaleByTime";
+    public static final String SUBSTITUTIONS = "substitutions";
     public static final String SAMPLING_DENSITY = "samplingDensity";
 
     public MultivariateTraitLikelihood(String traitName,
@@ -47,6 +48,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
                                        CompoundParameter traitParameter,
                                        List<Integer> missingIndices,
                                        boolean cacheBranches,
+                                       boolean scaleByTime,
                                        boolean useTreeLength,
                                        BranchRateModel rateModel,
                                        Model samplingDensity,
@@ -80,6 +82,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 //			cachedLikelihoods = new HashMap<NodeRef, Double>();
 
 
+        this.scaleByTime = scaleByTime;
         this.useTreeLength = useTreeLength;
 
         StringBuffer sb = new StringBuffer("Creating multivariate diffusion model:\n");
@@ -103,10 +106,12 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
     public double getRescaledBranchLength(NodeRef node) {
 
         double length = treeModel.getBranchLength(node);
-        if (hasRateModel)
-            return length * rateModel.getBranchRate(treeModel, node);
-        return length / treeLength;
-
+        if (scaleByTime) {
+            if (hasRateModel)
+                return length * rateModel.getBranchRate(treeModel, node);
+            return length / treeLength;
+        }
+        return length;
     }
 
     // **************************************************************
@@ -123,7 +128,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
     public void recalculateTreeLength() {
 
-        if (hasRateModel)
+        if (!scaleByTime || hasRateModel)
             return;
 
         if (useTreeLength) {
@@ -362,8 +367,6 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
             boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, false);
 
-            boolean inSubstitutionTime = !xo.getAttribute(IN_REAL_TIME, true);
-
             BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
             List<Integer> missingIndices = null;
@@ -455,8 +458,13 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
             }
 
             boolean useTreeLength = false;
-            if (xo.hasAttribute(TREE_LENGTH) && xo.getBooleanAttribute(TREE_LENGTH)) {
+            if (xo.hasAttribute(USE_TREE_LENGTH) && xo.getBooleanAttribute(USE_TREE_LENGTH)) {
                 useTreeLength = true;
+            }
+
+            boolean scaleByTime = true;
+            if (xo.hasAttribute(SCALE_BY_TIME) && xo.getBooleanAttribute(SCALE_BY_TIME)) {
+                scaleByTime = true;
             }
 
             boolean reportAsMultivariate = false;
@@ -466,7 +474,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
             MultivariateTraitLikelihood like =
                     new MultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                             traitParameter, missingIndices, cacheBranches,
-                            useTreeLength, rateModel, samplingDensity, reportAsMultivariate);
+                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate);
 
             if (traits != null) {
                 like.randomize(traits);
@@ -508,13 +516,13 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
                 new ElementRule(TRAIT_PARAMETER, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }),
-                AttributeRule.newBooleanRule(IN_REAL_TIME, true),
                 new ElementRule(MultivariateDiffusionModel.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class, true),
                 AttributeRule.newDoubleArrayRule("cut", true),
                 AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),
-                AttributeRule.newBooleanRule(TREE_LENGTH, true),
+                AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
+                AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
                 new ElementRule(Parameter.class, true),
                 new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
@@ -552,6 +560,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
     private boolean reportAsMultivariate;
 
+    private boolean scaleByTime;
     private boolean useTreeLength;
 }
 

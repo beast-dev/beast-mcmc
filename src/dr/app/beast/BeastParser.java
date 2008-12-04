@@ -84,7 +84,7 @@ public class BeastParser extends XMLParser {
                 System.out.println();
                 System.out.println("Loading additional parsers:");
             }
-            InputStream stream = c.getResourceAsStream("release_parsers.properties");
+            final InputStream stream = c.getResourceAsStream(parsersFile);
             if (stream == null) {
                 throw new RuntimeException("Parsers file not found: " + parsersFile);
             }

@@ -35,8 +35,6 @@ import java.util.Properties;
 import java.io.*;
 import java.lang.reflect.Field;
 
-import sun.tools.java.ClassPath;
-
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut

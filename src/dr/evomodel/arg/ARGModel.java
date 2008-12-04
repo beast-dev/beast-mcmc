@@ -40,7 +40,7 @@ import java.util.logging.Logger;
  */
 public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
-
+	
     public static final String TREE_MODEL = "argTreeModel";
     public static final String ROOT_HEIGHT = "rootHeight";
     public static final String LEAF_HEIGHT = "leafHeight";
@@ -2759,6 +2759,12 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         public String getParserName() {
             return TREE_MODEL;
+        }
+        
+        public String[] getParserNames(){
+        	return new String[]{
+        		getParserName(), "argModel"	
+        	};
         }
 
         /**

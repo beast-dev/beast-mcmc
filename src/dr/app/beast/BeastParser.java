@@ -59,7 +59,22 @@ public class BeastParser extends XMLParser {
 
         // Try to find and load the additional 'core' parsers
         try {
-            loadProperties(this.getClass(), verbose);
+            Properties properties = new Properties();
+            properties.load(this.getClass().getResourceAsStream("beast.properties"));
+
+            // get the parsers file prefix from the beast.properties file
+            String parsers = properties.getProperty("parsers");
+
+            if (System.getProperty("parsers") != null) {
+                // If a system property has been set then allow this to override the default
+                // e.g. -Dparsers=development
+                parsers = properties.getProperty("parsers");
+            }
+
+            if (parsers != null) {
+                // load the parsers
+                loadProperties(this.getClass(), parsers +  "_parsers.properties", verbose);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -72,64 +87,57 @@ public class BeastParser extends XMLParser {
 //        }
     }
 
-    private void loadProperties(Class c, boolean verbose) throws IOException {
-        Properties properties = new Properties();
-        properties.load(c.getResourceAsStream("beast.properties"));
+    private void loadProperties(Class c, String parsersFile, boolean verbose) throws IOException {
 
-        String parsersFile = properties.getProperty("parsers");
+        if (verbose) {
+            System.out.println();
+            System.out.println("Loading additional parsers:");
+        }
+        final InputStream stream = c.getResourceAsStream(parsersFile);
+        if (stream == null) {
+            throw new RuntimeException("Parsers file not found: " + parsersFile);
+        }
+        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+        String line = reader.readLine();
+        while (line != null) {
 
-        if (parsersFile != null) {
-
-            if (verbose) {
-                System.out.println();
-                System.out.println("Loading additional parsers:");
-            }
-            final InputStream stream = c.getResourceAsStream(parsersFile);
-            if (stream == null) {
-                throw new RuntimeException("Parsers file not found: " + parsersFile);
-            }
-            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-            String line = reader.readLine();
-            while (line != null) {
-
-                if (line.trim().length() > 0 && !line.trim().startsWith("#")) {
-                    try {
-                        Class parser = Class.forName(line);
-                        if (XMLObjectParser.class.isAssignableFrom(parser)) {
-                            // if this class is an XMLObjectParser then create an instance
-                            addXMLObjectParser((XMLObjectParser)parser.newInstance());
-                            System.out.println("Loaded parser: " + parser.getName());
-                        } else {
-                            boolean parserFound = false;
-                            // otherwise look for a static member which is an instance of XMLObjectParser
-                            Field[] fields = parser.getDeclaredFields();
-                            for (Field field: fields) {
-                                if (XMLObjectParser.class.isAssignableFrom(field.getType())) {
-                                    try {
-                                        addXMLObjectParser((XMLObjectParser)field.get(null));
-                                        if (verbose) {
-                                            System.out.println("Loaded parser: " + parser.getName() + "." + field.getName());
-                                        }
-                                    } catch (IllegalArgumentException iae) {
-                                        System.err.println("Failed to install parser: " + iae.getMessage());
+            if (line.trim().length() > 0 && !line.trim().startsWith("#")) {
+                try {
+                    Class parser = Class.forName(line);
+                    if (XMLObjectParser.class.isAssignableFrom(parser)) {
+                        // if this class is an XMLObjectParser then create an instance
+                        addXMLObjectParser((XMLObjectParser)parser.newInstance());
+                        System.out.println("Loaded parser: " + parser.getName());
+                    } else {
+                        boolean parserFound = false;
+                        // otherwise look for a static member which is an instance of XMLObjectParser
+                        Field[] fields = parser.getDeclaredFields();
+                        for (Field field: fields) {
+                            if (XMLObjectParser.class.isAssignableFrom(field.getType())) {
+                                try {
+                                    addXMLObjectParser((XMLObjectParser)field.get(null));
+                                    if (verbose) {
+                                        System.out.println("Loaded parser: " + parser.getName() + "." + field.getName());
                                     }
-                                    parserFound = true;
+                                } catch (IllegalArgumentException iae) {
+                                    System.err.println("Failed to install parser: " + iae.getMessage());
                                 }
-                            }
-
-                            if (!parserFound) {
-                                throw new IllegalArgumentException(parser.getName() + " is not of type XMLObjectParser " +
-                                        "and doesn't contain any static members of this type");
+                                parserFound = true;
                             }
                         }
 
-                    } catch (Exception e) {
-                        System.err.println("Failed to load parser: " + e.getMessage());
+                        if (!parserFound) {
+                            throw new IllegalArgumentException(parser.getName() + " is not of type XMLObjectParser " +
+                                    "and doesn't contain any static members of this type");
+                        }
                     }
-                }
-                line = reader.readLine();
 
+                } catch (Exception e) {
+                    System.err.println("Failed to load parser: " + e.getMessage());
+                }
             }
+            line = reader.readLine();
+
         }
     }
 

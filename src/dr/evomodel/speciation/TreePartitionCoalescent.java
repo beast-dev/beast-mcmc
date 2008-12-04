@@ -70,7 +70,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         return logl;
     }
 
-    boolean verbose = false;
+    final boolean verbose = false;
 
     private double treeLogLikelihood(SpeciesBindings.GeneTreeInfo geneTree, NodeRef node, int[] info) {
         // number of lineages remaining at node
@@ -84,11 +84,13 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
 
         final SpeciesBindings.CoalInfo[] cList = geneTree.getCoalInfo();
 
-        if( verbose && spTree.isRoot(node) ) {
-            System.err.println("gtree:" + geneTree.tree.getId());
-            System.err.println("t0 " + t0);
-            for(int k = 0; k < cList.length; ++k) {
-                System.err.println(k + " " + cList[k].ctime + " " + cList[k].sinfo[0] + " " + cList[k].sinfo[1]);
+        if( verbose ) {
+            if( spTree.isRoot(node) ) {
+                System.err.println("gtree:" + geneTree.tree.getId());
+                System.err.println("t0 " + t0);
+                for(int k = 0; k < cList.length; ++k) {
+                    System.err.println(k + " " + cList[k].ctime + " " + cList[k].sinfo[0] + " " + cList[k].sinfo[1]);
+                }
             }
         }
 

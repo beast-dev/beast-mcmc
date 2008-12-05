@@ -98,12 +98,19 @@ public interface EmpiricalRateMatrix {
 		}
 		
 		public final void setEmpiricalFrequencies(double[]freqs, String aminoAcidOrder) {
-			
-			for (int i = 0; i < dataType.getStateCount(); i++) {
-			
+
+            double sum = 0.0;
+            for (int i = 0; i < dataType.getStateCount(); i++) {
 				int u = aminoAcidOrder.indexOf(dataType.getChar(i));
 				frequencies[i] = freqs[u];
-			}
-		}
+                sum += frequencies[i];
+            }
+
+            // normalize - we should probably detect large discrepancies but the empirical
+            // matrices have numerical rounding that cause small discrepancies.
+            for (int i = 0; i < dataType.getStateCount(); i++) {
+				frequencies[i] /= sum;
+            }
+        }
 	}
 }

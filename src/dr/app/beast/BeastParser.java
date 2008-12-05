@@ -339,6 +339,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.trace.MarginalLikelihoodAnalysis.PARSER);
 
 
+        addXMLObjectParser(dr.inference.model.ThreadedCompoundLikelihood.PARSER);
 
     }
 

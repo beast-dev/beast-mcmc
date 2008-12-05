@@ -1,5 +1,7 @@
 package dr.evomodel.newtreelikelihood;
 
+import dr.xml.XMLParseException;
+
 import java.util.logging.Logger;
 
 /**
@@ -43,7 +45,7 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
     }
 
     public boolean canHandleTipStates() {
-        return false;
+        return (stateCount == 4);
     }
 
     public void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount) {
@@ -153,7 +155,7 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
         public LikelihoodCore createLikelihoodCore(int[] configuration, AbstractTreeLikelihood treeLikelihood) {
             int stateCount = configuration[0];
             int paddedStateCount = stateCount;
-            int deviceNumber = 0;  // TODO Set in configuration
+            int deviceNumber = configuration[3];
             if (stateCount == 4)
                 paddedStateCount = 4;
             else if (stateCount <= 16)
@@ -173,6 +175,9 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
                     if (gpuInfo == null) // No GPU is present
                         return null;
                     Logger.getLogger("dr.evomodel.treelikelihood").info(gpuInfo.toString());
+                    if (deviceNumber < 0 || deviceNumber >= gpuInfo.numberDevices) {
+                        throw new RuntimeException("Cannot access GPU device #"+deviceNumber);
+                    }
                 }
                 if (!ThreadedGPULikelihoodCore.isCompatible(gpuInfo, configuration)) // GPU is not compatible
                     return null;

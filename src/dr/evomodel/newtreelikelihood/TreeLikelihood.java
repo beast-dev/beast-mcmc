@@ -52,6 +52,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
     public static final String TREE_LIKELIHOOD = "crazyTreeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
+    public static final String DEVICE_NUMBER = "deviceNumber";
 
     /**
      * Constructor.
@@ -60,7 +61,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                           TreeModel treeModel,
                           SiteModel siteModel,
                           BranchRateModel branchRateModel,
-                          boolean useAmbiguities
+                          boolean useAmbiguities,
+                          int deviceNumber
     ) {
 
         super(TREE_LIKELIHOOD, patternList, treeModel);
@@ -88,10 +90,11 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             int extNodeCount = treeModel.getExternalNodeCount();
 
-	        int[] configuration = new int[3];
+	        int[] configuration = new int[4];
 	        configuration[0] = stateCount;
 	        configuration[1] = patternCount;
 	        configuration[2] = siteModel.getCategoryCount(); // matrixCount
+            configuration[3] = deviceNumber;
 
             likelihoodCore = LikelihoodCoreFactory.loadLikelihoodCore(configuration, this);
 
@@ -388,6 +391,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
+            int deviceNumber = xo.getAttribute(DEVICE_NUMBER,0);
 
             PatternList patternList = (PatternList) xo.getChild(PatternList.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -399,7 +403,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     treeModel,
                     siteModel,
                     branchRateModel,
-                    useAmbiguities
+                    useAmbiguities,
+                    deviceNumber
             );
         }
 
@@ -421,6 +426,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
+                AttributeRule.newIntegerRule(DEVICE_NUMBER,true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(SiteModel.class),

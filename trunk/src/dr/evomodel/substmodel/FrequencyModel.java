@@ -69,7 +69,7 @@ public class FrequencyModel extends AbstractModel {
         double sum = getSumOfFrequencies(frequencyParameter);
 
         if (Math.abs(sum - 1.0) > 1e-8) {
-            throw new IllegalArgumentException("Frequencies do not sum to 1, the sum to " + sum);
+            throw new IllegalArgumentException("Frequencies do not sum to 1, they sum to " + sum);
         }
 
         this.frequencyParameter = frequencyParameter;
@@ -189,17 +189,25 @@ public class FrequencyModel extends AbstractModel {
             }
             sb.append("= {");
 
+            double sum = 0;
+            for (int j = 0; j < freqsParam.getDimension(); j++) {
+                sum += freqsParam.getParameterValue(j);
+            }
+
             if (xo.getAttribute(NORMALIZE, false)) {
-                double sum = 0;
-                for (int j = 0; j < freqsParam.getDimension(); j++)
-                    sum += freqsParam.getParameterValue(j);
                 for (int j = 0; j < freqsParam.getDimension(); j++) {
                     if (sum != 0)
                         freqsParam.setParameterValue(j, freqsParam.getParameterValue(j) / sum);
                     else
                         freqsParam.setParameterValue(j, 1.0 / freqsParam.getDimension());
                 }
+                sum = 1.0;
             }
+
+            if (Math.abs(sum - 1.0) > 1e-8) {
+                throw new XMLParseException("Frequencies do not sum to 1 (they sum to " + sum + ")");
+            }
+
 
             NumberFormat format = NumberFormat.getNumberInstance();
             format.setMaximumFractionDigits(5);
@@ -211,6 +219,8 @@ public class FrequencyModel extends AbstractModel {
             }
             sb.append("}");
             Logger.getLogger("dr.evomodel").info(sb.toString());
+
+
 
             return new FrequencyModel(dataType, freqsParam);
         }

@@ -25,21 +25,23 @@ import java.util.Arrays;
 public class TreeNodeSlide extends SimpleMCMCOperator {
     private static final String TREE_NODE_REHEIGHT = "nodeReHeight";
 
-    private SpeciesTreeModel tree;
-    private SpeciesBindings species;
+    private final SpeciesTreeModel tree;
+    private final SpeciesBindings species;
 
-    private int[] preOrderIndexBefore;
-    private int[] preOrderIndexAfter;
+    private final int[] preOrderIndexBefore;
+    private final int[] preOrderIndexAfter;
+	
+    private final boolean verbose = false;
 
-    private double range = 1.0;
+   // private double range = 1.0;
     private boolean outgroupOnly = false;
 
     //private boolean verbose = false;
 
-    public TreeNodeSlide(SpeciesTreeModel tree, SpeciesBindings species, double range, boolean outgroupOnly, double weight) {
+    public TreeNodeSlide(SpeciesTreeModel tree, SpeciesBindings species/*, double range*/, boolean outgroupOnly, double weight) {
         this.tree = tree;
         this.species = species;
-        this.range = range;
+      //  this.range = range;
         this.outgroupOnly = outgroupOnly;
 
         preOrderIndexBefore = new int[tree.getNodeCount()];
@@ -95,25 +97,12 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
            left.set(tree.speciesIndex(order[k]));
         }
 
-        for(int k = 2*which+2; k < 2*count; k += 2) {
+        for(int k = 2*(which+1); k < 2*count; k += 2) {
            right.set(tree.speciesIndex(order[k]));
         }
         
         final double limit = species.speciationUpperBound(left, right);
-
-        double amount = (MathUtils.nextDouble() - 0.5) * limit * range;
-        double h = tree.getNodeHeight(order[2*which+1]) + amount;
-        if( h < 0 ) {
-            h = -h;
-        } else if ( h > limit ) {
-            h = 2*limit - h;
-        }
-        final double newHeight = h; // MathUtils.nextDouble() * limit;   //h
-        assert 0 < newHeight && newHeight < limit;
-        
-//        if( verbose)  {
-//            System.out.println("limit" + limit + " newH " + newHeight);
-//        }
+        final double newHeight = MathUtils.nextDouble() * limit;
 
         tree.beginTreeEdit();
 
@@ -267,12 +256,12 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
             SpeciesTreeModel tree = (SpeciesTreeModel) xo.getChild(SpeciesTreeModel.class);
 
             final double weight = xo.getDoubleAttribute("weight");
-            final double range = xo.getAttribute("range", 1.0);
-            if( range <= 0 || range > 1.0 ) {
-                throw new XMLParseException("range out of range");
-            }
+//            final double range = xo.getAttribute("range", 1.0);
+//            if( range <= 0 || range > 1.0 ) {
+//                throw new XMLParseException("range out of range");
+//            }
             final boolean oo = xo.getAttribute("outgroup", false);
-            return new TreeNodeSlide(tree, species, range, oo, weight);
+            return new TreeNodeSlide(tree, species /*, range*/, oo, weight);
         }
 
         public String getParserDescription() {
@@ -286,7 +275,7 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
         public XMLSyntaxRule[] getSyntaxRules() {
             return new XMLSyntaxRule[]{
                     AttributeRule.newDoubleRule("weight"),
-                    AttributeRule.newDoubleRule("range", true),
+                   // AttributeRule.newDoubleRule("range", true),
                     AttributeRule.newBooleanRule("outgroup", true),
                     
                     new ElementRule(SpeciesBindings.class),

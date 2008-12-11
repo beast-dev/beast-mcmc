@@ -125,6 +125,7 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood {
 
 	public double getLogARGNumber(int i) {
 		if (i >= argNumber.size()) {
+			Logger.getLogger("dr.evomodel").warning("Calculating ARG count of size " + i + ".  This may take awhile");
 			argNumber.add(logNumberARGS(arg.getExternalNodeCount(), i));
 		}
 		return argNumber.get(i);
@@ -209,6 +210,8 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood {
 	}
 
 	public static double logNumberARGS(int start, int reassortments) {
+		
+		
 		if (reassortments == 0) {
 			double a = 0;
 			for (int i = start; i > 2; i--) {

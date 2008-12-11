@@ -96,7 +96,7 @@ public class PoissonPartitionLikelihood extends ARGPartitionLikelihood {
 			x[i] = 1;
 		}
 		
-		MathUtils.shuffle(x);
+		MathUtils.permute(x);
 		
 		if(x[0] == 1){
 			for(int i = 0; i < x.length; i++){

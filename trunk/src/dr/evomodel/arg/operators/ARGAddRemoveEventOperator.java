@@ -803,7 +803,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 		Logger.getLogger("dr.evomodel").severe("NOT IMPLENTED");
 	}
 	
-	private double arraySum(double[] n) {
+	public static double arraySum(double[] n) {
       double b = 0;
       for (double a : n)
           b += a;

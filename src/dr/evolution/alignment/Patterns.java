@@ -90,7 +90,7 @@ public class Patterns implements PatternList {
     /**
      * Constructor
      */
-    public Patterns(Alignment siteList, int from, int to, int every, int subSet, int subSetCount) {
+    public Patterns(SiteList siteList, int from, int to, int every, int subSet, int subSetCount) {
         addPatterns(siteList, from, to, every);
 
         if (subSetCount > 0) {

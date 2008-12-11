@@ -42,6 +42,8 @@ public class PatternsParser extends AbstractXMLObjectParser {
     public static final String FROM = "from";
     public static final String TO = "to";
     public static final String EVERY = "every";
+    public static final String SUB_SET = "subSet";
+    public static final String SUB_SET_COUNT = "subSetCount";
 
     public String getParserName() {
         return PATTERNS;
@@ -57,6 +59,8 @@ public class PatternsParser extends AbstractXMLObjectParser {
         int from = 0;
         int to = 0;
         int every = xo.getAttribute(EVERY, 1);
+        int subSet = 0;
+        int subSetCount = 0;
 
         if (xo.hasAttribute(FROM)) {
             from = xo.getIntegerAttribute(FROM) - 1;
@@ -72,6 +76,17 @@ public class PatternsParser extends AbstractXMLObjectParser {
 
         if (every <= 0) throw new XMLParseException("illegal 'every' attribute in patterns element");
 
+        if (xo.hasAttribute(SUB_SET)) {
+            subSet = xo.getIntegerAttribute(SUB_SET) - 1;
+            if (subSet < 0)
+                throw new XMLParseException("illegal 'subSet' attribute in patterns element");
+        }
+
+        if (xo.hasAttribute(SUB_SET_COUNT)) {
+            subSetCount = xo.getIntegerAttribute(SUB_SET_COUNT) - 1;
+            if (subSetCount < 0)
+                throw new XMLParseException("illegal 'subSetCount' attribute in patterns element");
+        }
 
         if (from > alignment.getSiteCount())
             throw new XMLParseException("illegal 'from' attribute in patterns element");
@@ -79,7 +94,7 @@ public class PatternsParser extends AbstractXMLObjectParser {
         if (to > alignment.getSiteCount())
             throw new XMLParseException("illegal 'to' attribute in patterns element");
 
-        return new Patterns(alignment, from, to, every);
+        return new Patterns(alignment, from, to, every, subSet, subSetCount);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

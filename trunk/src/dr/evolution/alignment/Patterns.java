@@ -87,12 +87,46 @@ public class Patterns implements PatternList {
         addPatterns(siteList, from, to, every);
     }
 
-	/**
-	 * Constructor
-	 */
-	public Patterns(PatternList patternList) {
-	    addPatterns(patternList);
-	}
+    /**
+     * Constructor
+     */
+    public Patterns(Alignment siteList, int from, int to, int every, int subSet, int subSetCount) {
+        addPatterns(siteList, from, to, every);
+
+        if (subSetCount > 0) {
+            // if we are using subSetCount then cut it down to only the subset we want...
+            int div = patternCount / subSetCount;
+            int rem = patternCount % subSetCount;
+
+            int start = 0;
+            for (int i = 0; i < subSet; i++) {
+                start += div + (i < rem ? 1 : 0);
+            }
+
+            int newPatternCount = div;
+            if (subSet < rem) {
+                newPatternCount ++;
+            }
+
+            int[][] newPatterns = new int[newPatternCount][];
+            double[] newWeights = new double[newPatternCount];
+            for (int i = 0; i < newPatternCount; i++) {
+                newPatterns[i] = patterns[start + i];
+                newWeights[i] = weights[start + i];
+            }
+            patterns = newPatterns;
+            weights = newWeights;
+
+            patternCount = newPatternCount;
+        }
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(PatternList patternList) {
+        addPatterns(patternList);
+    }
 
     /**
      * adds patterns to the list from a SiteList
@@ -126,11 +160,11 @@ public class Patterns implements PatternList {
         for (int i = from; i <= to; i += every) {
             int[] pattern = siteList.getSitePattern(i);
 
-	        // don't add patterns that are all gaps or all ambiguous
+            // don't add patterns that are all gaps or all ambiguous
             if (!isInvariant(pattern) ||
                     (	!isGapped(pattern) &&
-                    !isAmbiguous(pattern) &&
-                    !isUnknown(pattern) ) ) {
+                            !isAmbiguous(pattern) &&
+                            !isUnknown(pattern) ) ) {
 
                 addPattern(pattern, 1.0);
             }
@@ -138,40 +172,40 @@ public class Patterns implements PatternList {
 
     }
 
-	/**
-	 * adds patterns to the list from a SiteList
-	 */
-	public void addPatterns(PatternList patternList) {
+    /**
+     * adds patterns to the list from a SiteList
+     */
+    public void addPatterns(PatternList patternList) {
 
-	    if (patternList == null) {
-	        return;
-	    }
+        if (patternList == null) {
+            return;
+        }
 
-	    if (taxonList == null) {
-	        taxonList = patternList;
-	        patternLength = taxonList.getTaxonCount();
-	    }
+        if (taxonList == null) {
+            taxonList = patternList;
+            patternLength = taxonList.getTaxonCount();
+        }
 
-	    if (dataType == null) {
-	        dataType = patternList.getDataType();
-	    } else if (dataType != patternList.getDataType()) {
-	        throw new IllegalArgumentException("Patterns' existing DataType does not match that of added PatternList");
-	    }
+        if (dataType == null) {
+            dataType = patternList.getDataType();
+        } else if (dataType != patternList.getDataType()) {
+            throw new IllegalArgumentException("Patterns' existing DataType does not match that of added PatternList");
+        }
 
-	    for (int i = 0; i < patternList.getPatternCount(); i++) {
-	        int[] pattern = patternList.getPattern(i);
+        for (int i = 0; i < patternList.getPatternCount(); i++) {
+            int[] pattern = patternList.getPattern(i);
 
-		    // don't add patterns that are all gaps or all ambiguous
-	        if (!isInvariant(pattern) ||
-	                (	!isGapped(pattern) &&
-	                !isAmbiguous(pattern) &&
-	                !isUnknown(pattern) ) ) {
+            // don't add patterns that are all gaps or all ambiguous
+            if (!isInvariant(pattern) ||
+                    (	!isGapped(pattern) &&
+                            !isAmbiguous(pattern) &&
+                            !isUnknown(pattern) ) ) {
 
-	            addPattern(pattern, patternList.getPatternWeight(i));
-	        }
-	    }
+                addPattern(pattern, patternList.getPatternWeight(i));
+            }
+        }
 
-	}
+    }
 
     /**
      * adds a pattern to the pattern list with a default weight of 1

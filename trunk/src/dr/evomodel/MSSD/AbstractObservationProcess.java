@@ -5,6 +5,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.MutationDeathType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.LikelihoodCore;
@@ -59,10 +60,14 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         this.mu = mu;
         this.lam = lam;
         this.siteModel = siteModel;
-        this.branchRateModel = branchRateModel;
+        if (branchRateModel != null) {
+            this.branchRateModel = branchRateModel;
+        } else {
+            this.branchRateModel = new DefaultBranchRateModel();
+        }
         addModel(treeModel);
         addModel(siteModel);
-        addModel(branchRateModel);
+        addModel(this.branchRateModel);
         addParameter(mu);
         addParameter(lam);
 

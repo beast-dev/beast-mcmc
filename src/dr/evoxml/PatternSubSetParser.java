@@ -25,10 +25,7 @@
 
 package dr.evoxml;
 
-import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.alignment.SiteList;
+import dr.evolution.alignment.*;
 import dr.xml.*;
 
 /**
@@ -36,17 +33,14 @@ import dr.xml.*;
  * @author Andrew Rambaut
  * @version $Id: PatternsParser.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  */
-public class PatternsParser extends AbstractXMLObjectParser {
+public class PatternSubSetParser extends AbstractXMLObjectParser {
 
-    public static final String PATTERNS = "patterns";
-    public static final String FROM = "from";
-    public static final String TO = "to";
-    public static final String EVERY = "every";
+    public static final String PATTERNS_SUB_SET = "patternSubSet";
     public static final String SUB_SET = "subSet";
     public static final String SUB_SET_COUNT = "subSetCount";
 
     public String getParserName() {
-        return PATTERNS;
+        return PATTERNS_SUB_SET;
     }
 
     /**
@@ -54,27 +48,10 @@ public class PatternsParser extends AbstractXMLObjectParser {
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Alignment alignment = (Alignment) xo.getChild(Alignment.class);
+        SiteList patterns = (SiteList) xo.getChild(SiteList.class);
 
-        int from = 0;
-        int to = 0;
-        int every = xo.getAttribute(EVERY, 1);
         int subSet = 0;
         int subSetCount = 0;
-
-        if (xo.hasAttribute(FROM)) {
-            from = xo.getIntegerAttribute(FROM) - 1;
-            if (from < 0)
-                throw new XMLParseException("illegal 'from' attribute in patterns element");
-        }
-
-        if (xo.hasAttribute(TO)) {
-            to = xo.getIntegerAttribute(TO) - 1;
-            if (to < 0 || to < from)
-                throw new XMLParseException("illegal 'to' attribute in patterns element");
-        }
-
-        if (every <= 0) throw new XMLParseException("illegal 'every' attribute in patterns element");
 
         if (xo.hasAttribute(SUB_SET)) {
             subSet = xo.getIntegerAttribute(SUB_SET) - 1;
@@ -83,18 +60,12 @@ public class PatternsParser extends AbstractXMLObjectParser {
         }
 
         if (xo.hasAttribute(SUB_SET_COUNT)) {
-            subSetCount = xo.getIntegerAttribute(SUB_SET_COUNT) - 1;
+            subSetCount = xo.getIntegerAttribute(SUB_SET_COUNT);
             if (subSetCount < 0)
                 throw new XMLParseException("illegal 'subSetCount' attribute in patterns element");
         }
 
-        if (from > alignment.getSiteCount())
-            throw new XMLParseException("illegal 'from' attribute in patterns element");
-
-        if (to > alignment.getSiteCount())
-            throw new XMLParseException("illegal 'to' attribute in patterns element");
-
-        return new Patterns(alignment, from, to, every, subSet, subSetCount);
+        return new Patterns(patterns, 0, 0, 1, subSet, subSetCount);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -102,9 +73,8 @@ public class PatternsParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            AttributeRule.newIntegerRule(FROM, true, "The site position to start at, default is 1 (the first position)"),
-            AttributeRule.newIntegerRule(TO, true, "The site position to finish at, must be greater than <b>" + FROM + "</b>, default is length of given alignment"),
-            AttributeRule.newIntegerRule(EVERY, true, "Determines how many sites are selected. A value of 3 will select every third site starting from <b>" + FROM + "</b>, default is 1 (every site)"),
+            AttributeRule.newIntegerRule(SUB_SET, true, "Which subset of patterns to use (out of subSetCount)"),
+            AttributeRule.newIntegerRule(SUB_SET_COUNT, true, "The number of subsets"),
 
             new ElementRule(SiteList.class)
     };

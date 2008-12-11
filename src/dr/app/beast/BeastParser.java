@@ -159,6 +159,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.evoxml.GeneralDataTypeParser());
         addXMLObjectParser(new dr.evoxml.AlignmentParser());
         addXMLObjectParser(new dr.evoxml.SitePatternsParser());
+        addXMLObjectParser(new dr.evoxml.PatternSubSetParser());
         addXMLObjectParser(new dr.evoxml.AscertainedSitePatternsParser());
         addXMLObjectParser(new dr.evoxml.ConvertAlignmentParser());
         addXMLObjectParser(new dr.evoxml.MergePatternsParser());
@@ -255,7 +256,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.RateVarianceScaleOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.RateSampleOperator.PARSER);
 
-        // likelihoods, models and distributions        
+        // likelihoods, models and distributions
         addXMLObjectParser(dr.inference.model.CompoundParameter.PARSER);
         addXMLObjectParser(dr.inference.model.CompoundLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.BooleanLikelihood.PARSER);

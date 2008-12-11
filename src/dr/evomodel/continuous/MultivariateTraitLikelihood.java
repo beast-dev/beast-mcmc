@@ -90,7 +90,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
         sb.append("\tDiffusion process: " + diffusionModel.getId() + "\n");
         sb.append("\tTime scaling: " + (hasRateModel ? rateModel.getId() : "homogeneous") + "\n");
         if (!hasRateModel)
-            sb.append("\tTree normalization: " + (useTreeLength ? "length" : "height") + "\n");
+            sb.append("\tTree normalization: " + (scaleByTime ? (useTreeLength ? "length" : "height") : "off") + "\n");
         sb.append("\tPlease cite Suchard, Lemey and Rambaut (in preparation) if you publish results using this model.");
 
         Logger.getLogger("dr.evomodel").info(sb.toString());
@@ -457,15 +457,9 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
                 check = (Parameter) cxo.getChild(Parameter.class);
             }
 
-            boolean useTreeLength = false;
-            if (xo.hasAttribute(USE_TREE_LENGTH) && xo.getBooleanAttribute(USE_TREE_LENGTH)) {
-                useTreeLength = true;
-            }
+            boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, true);
 
-            boolean scaleByTime = true;
-            if (xo.hasAttribute(SCALE_BY_TIME) && xo.getBooleanAttribute(SCALE_BY_TIME)) {
-                scaleByTime = true;
-            }
+            boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, true);
 
             boolean reportAsMultivariate = false;
             if (xo.hasAttribute(REPORT_MULTIVARIATE) && xo.getBooleanAttribute(REPORT_MULTIVARIATE))

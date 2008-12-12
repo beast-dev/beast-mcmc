@@ -117,7 +117,6 @@ public class ARGUniformPrior extends ARGCoalescentLikelihood {
 		} else {
 			Logger.getLogger("dr.evomodel").info("Creating ARGUniformPrior by calculating arg counts");
 			for (int i = 0, n = arg.getExternalNodeCount(); i < initial; i++) {
-				Logger.getLogger("dr.evomodel").info(i + " reassortments");
 				argNumber.add(logNumberARGS(n, i));
 			}
 		}

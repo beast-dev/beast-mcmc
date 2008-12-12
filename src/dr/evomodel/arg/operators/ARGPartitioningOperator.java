@@ -18,17 +18,21 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
 
     public final static String OPERATOR_NAME = "argPartitionOperator";
     public static final String TOSS_SIZE = "tossSize";
+    public static final String TOSS_ALL = "tossAll";
 
+    private boolean tossAll;
     private boolean isRecombination;
     private int tossSize;
 
-    public ARGPartitioningOperator(ARGModel arg, int tossSize, int weight) {
+    public ARGPartitioningOperator(ARGModel arg, int tossSize, int weight, boolean tossAll) {
         super.setWeight(weight);
 
         this.arg = arg;
         this.partitioningParameters = arg.getPartitioningParameters();
         this.tossSize = tossSize;
         this.isRecombination = arg.isRecombinationPartitionType();
+        
+        this.tossAll = tossAll;
     }
 
     /**
@@ -47,15 +51,28 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         if (len == 0) {
             return 0;
         }
-
-        if (isRecombination) {
-            logq = doRecombination(partitioningParameters.getParameter(MathUtils.nextInt(len)));
-        } else {
-            logq = doReassortment(partitioningParameters.getParameter(MathUtils.nextInt(len)));
+        
+        if(tossAll){
+        	for(int i = 0 ; i < len; i++){
+        		logq += doFlip(i);
+            }	
+        }else{
+        	logq = doFlip(MathUtils.nextInt(len));
         }
+        
+        
 
         arg.fireModelChanged(new PartitionChangedEvent(partitioningParameters));
         return logq;
+    }
+    
+    private double doFlip(int i) throws OperatorFailedException {
+    	if (isRecombination) {
+            return doRecombination(partitioningParameters.getParameter(i));
+        } 
+        
+    	return doReassortment(partitioningParameters.getParameter(i));
+        
     }
 
 
@@ -194,11 +211,17 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
                     throw new XMLParseException("Toss size is incorrect");
                 }
             }
+            
+            boolean tossAll = false;
+            if(xo.hasAttribute(TOSS_ALL)){
+            	tossAll = xo.getBooleanAttribute(TOSS_ALL);
+            }
 
-            Logger.getLogger("dr.evomodel").info("Creating ARGPartitionOperator with " + TOSS_SIZE + " of " + tossSize);
+            Logger.getLogger("dr.evomodel").info("Creating ARGPartitionOperator: " + TOSS_SIZE + "=" + tossSize +
+            		" " + TOSS_ALL + "=" + tossAll);
 
 
-            return new ARGPartitioningOperator(arg, tossSize, weight);
+            return new ARGPartitioningOperator(arg, tossSize, weight, tossAll);
         }
 
         //************************************************************************

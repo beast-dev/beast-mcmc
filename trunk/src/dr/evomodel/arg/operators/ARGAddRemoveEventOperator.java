@@ -1207,7 +1207,10 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 AttributeRule.newBooleanRule(JOINT_PARTITIONING, true),
                 AttributeRule.newIntegerRule(ARGPartitioningOperator.TOSS_SIZE, true),
                 AttributeRule.newDoubleRule(ADD_PROBABILITY, true),
-                new ElementRule(ARGModel.class),
+                AttributeRule.newBooleanRule(AUTO_OPTIMIZE,true),
+                AttributeRule.newIntegerRule(WEIGHT,false),
+                new ElementRule(ARGModel.class,false),
+                new ElementRule(ARGPartitionLikelihood.class,false),
                 new ElementRule(INTERNAL_NODES,
                         new XMLSyntaxRule[]{
                                 new ElementRule(CompoundParameter.class)}),

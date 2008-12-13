@@ -244,6 +244,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newIntegerRule(WEIGHT),
                 AttributeRule.newIntegerRule(TOSS_SIZE,true),
+                AttributeRule.newBooleanRule(TOSS_ALL,true),
                 new ElementRule(ARGModel.class)
         };
     };

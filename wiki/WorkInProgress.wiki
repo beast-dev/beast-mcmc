@@ -31,6 +31,7 @@ Some notes on work and plans for future work on BEAST.
 	
 ==Parallelization==
   * Multi-threaded MCMCMC is implemented. Needs some tests to find some recommended settings and conditions where it is more efficient than running independent chains. Given the prevalence of 4 and 8 core machines, I suggest that there would be little to gain for taking this beyond multi-threading (i.e., MPI).
+  ** For a number of reasons, please benchmark an n-way MC^3 against n-way MC^3 with zero temperature difference.  The MC^3 w/ zero temp difference could improve a number of things, such as the number of trees in a 95% confidence interval, the burnin time of the hottest chain, the quality of estimates, etc. without the results really being attributabe to MC^3.  Also, there is a paper in which deltaT=0 is the optimal setting for MrBayes on some data sets.(BenRI)
   * Multi-threaded Likelihood evaluation is implemented - this uses threads to calculate the likelihood by partition of the alignment. Assessment required of performance.
   *  MPI threading. Marc has implemented this in his ARG branch. This is used for distributing large numbers of independent likelihood evaluations.
 

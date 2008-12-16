@@ -391,8 +391,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
-            int deviceNumber = xo.getAttribute(DEVICE_NUMBER,0);
-
+            int deviceNumber = xo.getAttribute(DEVICE_NUMBER,1) - 1;
+            
             PatternList patternList = (PatternList) xo.getChild(PatternList.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);

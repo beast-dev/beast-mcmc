@@ -466,6 +466,10 @@ public class ARGTree implements Tree {
 	public final String getNewick() {
 		return Tree.Utils.newick(this);
 	}
+	
+	public final String getNewickNoBranches(){
+		return Tree.Utils.newickNoLengths(this);
+	}
 
 	/**
 	 * @return a string containing a newick representation of the tree

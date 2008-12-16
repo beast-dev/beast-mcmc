@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.util.logging.Logger;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,6 +30,7 @@ public class ARGLogger extends MCLogger {
 	public static final String EXTENDED_NEWICK = "extendedNewick";
 	public static final String STRIPPED_NEWICK = "strippedNewick";
 	public static final String FULL_STRING = "fullString";
+	public static final String DISTINCT_TREES = "distinctTrees";
 	public static final String FORMAT = "format";
 
 	// The following were in MCLogger; where did they go?
@@ -53,11 +55,17 @@ public class ARGLogger extends MCLogger {
 
 	private ARGModel argModel;
 	private String formatType;
+	
+	private ARGDistinctTreeCountStatistic treeStat;
 
 	public ARGLogger(ARGModel argModel, LogFormatter formatter, int logEvery, String formatType) {
 		super(formatter, logEvery, false);
 		this.argModel = argModel;
 		this.formatType = formatType;
+		
+		if(formatType.equals(DISTINCT_TREES)){
+			treeStat = new ARGDistinctTreeCountStatistic(argModel);
+		}
 	}
 
 
@@ -100,6 +108,8 @@ public class ARGLogger extends MCLogger {
 				logLine(outputter.outputString(graphElement));
 			else if (formatType.equals(EXTENDED_NEWICK))
 				logLine(argModel.toExtendedNewick());
+			else if (formatType.equals(DISTINCT_TREES))
+				logLine(treeStat.getStatisticValue(0) + "\t" + treeStat.getTrees());
 			else
 				logLine(argModel.toStrippedNewick());
 		}
@@ -185,6 +195,8 @@ public class ARGLogger extends MCLogger {
 
 			LogFormatter formatter = new TabDelimitedFormatter(pw);
 
+			Logger.getLogger("dr.evomodel").info("Creating " + LOG_ARG + " of type " + argModelLoggerFormat);
+			
 			ARGLogger logger = new ARGLogger(argModel, formatter, logEvery, argModelLoggerFormat);
 
 //			TreeLogger logger = new TreeLogger(tree, branchRateModel, rateLabel,
@@ -206,7 +218,7 @@ public class ARGLogger extends MCLogger {
 		}
 
 		String[] validFormats = {DOT_FORMAT, EXTENDED_NEWICK,
-				COMPRESSED_STRING, FULL_STRING, STRIPPED_NEWICK};
+				COMPRESSED_STRING, FULL_STRING, STRIPPED_NEWICK, DISTINCT_TREES};
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 

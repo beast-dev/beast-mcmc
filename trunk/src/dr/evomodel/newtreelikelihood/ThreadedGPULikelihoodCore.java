@@ -22,7 +22,7 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
 
         StringBuffer sb = new StringBuffer();
         sb.append("Constructing GPU likelihood core: ");
-        sb.append("Instance #" + instanceNumber + " on device #" + deviceNumber + "\n");
+        sb.append("Instance #" + (instanceNumber+1) + " on device #" + (deviceNumber+1) + "\n");
         sb.append("\tGPU Name: " + gpuInfo.getName(deviceNumber) + "\n");
         sb.append("If you publish results using this core, please cite Suchard and Rambaut (in preparation)\n");
         Logger.getLogger("dr.evomodel.treelikelihood").info(sb.toString());
@@ -176,7 +176,7 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
                         return null;
                     Logger.getLogger("dr.evomodel.treelikelihood").info(gpuInfo.toString());
                     if (deviceNumber < 0 || deviceNumber >= gpuInfo.numberDevices) {
-                        throw new RuntimeException("Cannot access GPU device #"+deviceNumber);
+                        throw new RuntimeException("Cannot access GPU device #"+(deviceNumber+1));
                     }
                 }
                 if (!ThreadedGPULikelihoodCore.isCompatible(gpuInfo, configuration)) // GPU is not compatible

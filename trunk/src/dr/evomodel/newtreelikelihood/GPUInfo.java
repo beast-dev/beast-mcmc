@@ -45,7 +45,7 @@ public class GPUInfo {
 		StringBuffer bf = new StringBuffer();
 		bf.append("Total number of GPU devices: "+numberDevices+"\n");
 		for(int i=0; i<numberDevices; i++) {
-			bf.append("\t#"+i+":\t"+getName(i)+"\n");
+			bf.append("\t#"+(i+1)+":\t"+getName(i)+"\n");
 			bf.append("\t\tGlobal memory (MB) "+getMemorySize(i)+"\n");
 			bf.append("\t\tClock speed (GHz) "+getClockSpeed(i)+"\n");
 		}						

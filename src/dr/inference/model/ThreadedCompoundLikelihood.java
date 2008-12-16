@@ -30,17 +30,20 @@ import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A likelihood function which is simply the product of a set of likelihood functions.
  *
- * @author Alexei Drummond
+ * @author Marc Suchard
  * @author Andrew Rambaut
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
 public class ThreadedCompoundLikelihood implements Likelihood {
 
     public static final String THREADED_COMPOUND_LIKELIHOOD = "threadedCompoundLikelihood";
+    public static final String WEIGHT = "robustWeight";
 
     public ThreadedCompoundLikelihood() {
     }
@@ -76,7 +79,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
 
     public double getLogLikelihood() {
         double logLikelihood = 0.0;
-
+        
         if (threads == null) {
             // first call so setup a thread for each likelihood...
             threads = new LikelihoodThread[likelihoodCallers.size()];
@@ -101,7 +104,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
             logLikelihood += result;
         }
 
-        return logLikelihood;
+        return logLikelihood; // * weightFactor;
     }
 
     public void makeDirty() {
@@ -159,6 +162,10 @@ public class ThreadedCompoundLikelihood implements Likelihood {
 
     }
 
+    public void setWeightFactor(double w) { weightFactor = w; }
+    
+    public double getWeightFactor() { return weightFactor; }
+    
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
@@ -220,8 +227,11 @@ public class ThreadedCompoundLikelihood implements Likelihood {
                     throw new XMLParseException("An element (" + rogueElement + ") which is not a likelihood has been added to a " + THREADED_COMPOUND_LIKELIHOOD + " element");
                 }
             }
-
-
+            
+            double weight = xo.getAttribute(WEIGHT, 0.0);
+            if (weight < 0)
+            	throw new XMLParseException("Robust weight must be non-negative.");
+            compoundLikelihood.setWeightFactor(Math.exp(-weight));
 
             return compoundLikelihood;
         }
@@ -240,6 +250,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE),
+                AttributeRule.newDoubleRule(WEIGHT, true),
         };
 
         public Class getReturnType() {
@@ -253,6 +264,8 @@ public class ThreadedCompoundLikelihood implements Likelihood {
     private CompoundModel compoundModel = new CompoundModel("compoundModel");
 
     private List<LikelihoodCaller> likelihoodCallers = new ArrayList<LikelihoodCaller>();
+    
+    private double weightFactor = 1.0;
 
     class LikelihoodCaller {
 
@@ -273,8 +286,14 @@ public class ThreadedCompoundLikelihood implements Likelihood {
         }
 
         public void setCaller(LikelihoodCaller caller) {
-            this.result = Double.NaN;
-            this.caller = caller;
+            lock.lock();
+            resultAvailable = false;
+            try {
+            	this.caller = caller;
+            	condition.signal();
+            } finally {
+            	lock.unlock();
+            }
         }
 
         /**
@@ -282,26 +301,34 @@ public class ThreadedCompoundLikelihood implements Likelihood {
          */
         public void run() {
             while (true) {
-                if (caller != null) {
-                    synchronized (result) {
-                        result = caller.call();
-                        resultAvailable = true;
-                        caller = null;
-                    }
-                }
+            	lock.lock();
+            	try {
+            		while( caller == null)
+            			condition.await();
+                	result = caller.call(); // SLOW
+                     resultAvailable = true;
+                     caller = null;
+            	} catch (InterruptedException e){
+            		
+                 } finally {
+                    lock.unlock();
+                 }                
             }
         }
 
         public Double getResult() {
-            if (resultAvailable) {
-                resultAvailable = false;
-                return result;
-            }
-            return null;
+        	Double returnValue = null;
+        	if (!lock.isLocked() && resultAvailable)  { // thread is not busy and completed
+        		resultAvailable = false; // TODO need to lock before changing resultAvailable?
+        		returnValue = result;
+        	}        		        	
+        	return returnValue;
         }
 
         private LikelihoodCaller caller = null;
         private Double result = Double.NaN;
         private boolean resultAvailable = false;
+        private ReentrantLock lock = new ReentrantLock();
+        private Condition condition = lock.newCondition();    
     }
 }

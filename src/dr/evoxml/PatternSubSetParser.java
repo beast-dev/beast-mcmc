@@ -25,6 +25,8 @@
 
 package dr.evoxml;
 
+import java.util.logging.Logger;
+
 import dr.evolution.alignment.*;
 import dr.xml.*;
 
@@ -65,7 +67,14 @@ public class PatternSubSetParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal 'subSetCount' attribute in patterns element");
         }
 
-        return new Patterns(patterns, 0, 0, 1, subSet, subSetCount);
+        Patterns subPatterns = new Patterns(patterns, 0, 0, 1, subSet, subSetCount);
+        
+        if (xo.hasAttribute("id")) {
+            Logger.getLogger("dr.evoxml").info("Pattern subset '" + xo.getId() + "' created from '" + patterns.getId() +"' ("+(subSet+1)+"/"+subSetCount+")");
+            Logger.getLogger("dr.evoxml").info("  pattern count = " + subPatterns.getPatternCount());
+        }
+        
+        return subPatterns;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

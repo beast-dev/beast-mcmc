@@ -369,6 +369,8 @@ public class BeastMain {
         System.out.println();
 
         new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, strictXML);
+        
+        System.exit(0);
     }
 }
 

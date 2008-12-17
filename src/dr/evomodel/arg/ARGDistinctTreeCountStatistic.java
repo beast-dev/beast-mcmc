@@ -1,6 +1,7 @@
 package dr.evomodel.arg;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import dr.inference.model.Statistic;
 import dr.xml.AbstractXMLObjectParser;
@@ -46,9 +47,56 @@ public class ARGDistinctTreeCountStatistic extends Statistic.Abstract{
 		return listOfTrees.size();
 	}
 	
+	private class DistinctTreeCount implements Comparable<DistinctTreeCount>{
+		private final String tree;
+		private int count;
+		
+		public DistinctTreeCount(String tree, int count){
+			this.tree = tree;
+			this.count = count;
+		}
+		
+		public void increaseCount(){
+			count++;
+		}
+
+		public int compareTo(DistinctTreeCount o) {
+			if(this.tree.equals(o.tree)){
+				return 0;
+			}else if(this.count < o.count){
+				return 1;
+			}
+			return -1;
+		}
+		
+		public boolean equals(Object o){
+			try{
+				DistinctTreeCount dtc = (DistinctTreeCount)o;
+				
+				if(dtc.compareTo(this) == 0){
+					return true;
+				}
+				return false;
+			}catch(ClassCastException e){
+				return false;
+			}
+			
+		}
+		
+		public String toString(){
+			return tree + " " + count;
+		}
+		
+		
+		
+		
+	};
 	
-	public String getTrees(){
-		ArrayList<String> listOfTrees = new ArrayList<String>(numberOfPartitions/10);
+	
+	
+	public String getFullOutput(){
+		ArrayList<String> listOfTrees = new ArrayList<String>(numberOfPartitions);
+		ArrayList<Integer> numbers = new ArrayList<Integer>(numberOfPartitions);
 		
 		for(int i = 0; i < numberOfPartitions; i++){
 			ARGTree tree = new ARGTree(arg,i);
@@ -56,11 +104,22 @@ public class ARGDistinctTreeCountStatistic extends Statistic.Abstract{
 			String newick = tree.getNewickNoBranches();
 			if(!listOfTrees.contains(newick)){
 				listOfTrees.add(newick);
+				numbers.add(1);
+			}else{
+				int index = listOfTrees.indexOf(newick);
+				numbers.set(index, numbers.get(index) + 1);
 			}
 		}
 		
+		ArrayList<DistinctTreeCount> trees = new ArrayList<DistinctTreeCount>(numberOfPartitions);
 		
-		return listOfTrees.toString();
+		for(int i = 0; i < listOfTrees.size(); i++){
+			trees.add(new DistinctTreeCount(listOfTrees.get(i),numbers.get(i)));
+		}
+		
+		Collections.sort(trees);
+		
+		return trees.toString();
 	}
 	
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){

@@ -109,7 +109,7 @@ public class ARGLogger extends MCLogger {
 			else if (formatType.equals(EXTENDED_NEWICK))
 				logLine(argModel.toExtendedNewick());
 			else if (formatType.equals(DISTINCT_TREES))
-				logLine(treeStat.getStatisticValue(0) + "\t" + treeStat.getTrees());
+				logLine(treeStat.getStatisticValue(0) + "\t" + treeStat.getFullOutput());
 			else
 				logLine(argModel.toStrippedNewick());
 		}

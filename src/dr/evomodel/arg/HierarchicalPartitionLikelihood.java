@@ -1,12 +1,10 @@
 package dr.evomodel.arg;
 
-import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Parameter.ChangeType;
 import dr.math.MathUtils;
 import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLObjectParser;
@@ -25,6 +23,7 @@ public class HierarchicalPartitionLikelihood extends ARGPartitionLikelihood{
 		this.probabilities = probs;
 		
 		addParameter(probs);
+		addModel(arg);
 	}
 
 	public double[] generatePartition() {
@@ -60,6 +59,7 @@ public class HierarchicalPartitionLikelihood extends ARGPartitionLikelihood{
 			}
 		}
 		
+//		return 1;
 		
 		return logLike;
 	}
@@ -69,14 +69,15 @@ public class HierarchicalPartitionLikelihood extends ARGPartitionLikelihood{
 	}
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		// has no submodels
+		// i'm lazy
+
 	}
 
 	protected void handleParameterChangedEvent(Parameter parameter, int index,
 			ChangeType type) {
 		// I'm lazy, so I compute after each step :)
 	}
-
+	
 	protected void restoreState() {
 		//nothing to restore!
 	}
@@ -99,7 +100,7 @@ public class HierarchicalPartitionLikelihood extends ARGPartitionLikelihood{
 
 		public XMLSyntaxRule[] getSyntaxRules() {
 			return new XMLSyntaxRule[]{
-				AttributeRule.newDoubleRule(DistributionLikelihood.MEAN, false),
+				
 				new ElementRule(ARGModel.class,false),
 			};
 		}

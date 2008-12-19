@@ -62,8 +62,9 @@ public abstract class ARGPartitionLikelihood extends AbstractModel implements Li
 	}
 	
 	public Model getModel() {
-		return null;
+		return this;
 	}
+	
 	public void makeDirty() {
 		
 	}

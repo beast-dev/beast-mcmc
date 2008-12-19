@@ -2,12 +2,13 @@ package dr.evomodel.arg;
 
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
+import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 
-public abstract class ARGPartitionLikelihood implements Likelihood{
+public abstract class ARGPartitionLikelihood extends AbstractModel implements Likelihood{
 
-	private String id;
+	
 	private ARGModel arg;
 	
 	public abstract double[] generatePartition();
@@ -33,7 +34,8 @@ public abstract class ARGPartitionLikelihood implements Likelihood{
 	}
 	
 	public ARGPartitionLikelihood(String id, ARGModel arg){
-		setId(id);
+		super(id);
+		
 		
 		this.arg = arg;
 	}
@@ -57,15 +59,6 @@ public abstract class ARGPartitionLikelihood implements Likelihood{
 				
 			}
 		};
-	}
-	
-	public String getId() {
-		return id;
-	}
-	
-	public void setId(String id) {
-		this.id = id;
-		
 	}
 	
 	public Model getModel() {

@@ -3,6 +3,9 @@ package dr.evomodel.arg;
 
 import jebl.math.Binomial;
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Parameter.ChangeType;
 import dr.math.MathUtils;
 import dr.math.Poisson;
 import dr.math.distributions.PoissonDistribution;
@@ -156,6 +159,31 @@ public class PoissonPartitionLikelihood extends ARGPartitionLikelihood {
 		}
 		
 	};
+
+	protected void acceptState() {
+		//nothing to do
+	}
+
+	@Override
+	protected void handleModelChangedEvent(Model model, Object object, int index) {
+		//has no submodels
+	}
+
+	@Override
+	protected void handleParameterChangedEvent(Parameter parameter, int index,
+			ChangeType type) {
+		//has no parameters
+	}
+
+	@Override
+	protected void restoreState() {
+		//nothing to restore
+	}
+
+	@Override
+	protected void storeState() {
+		// nothing to store
+	}
 
 	
 	

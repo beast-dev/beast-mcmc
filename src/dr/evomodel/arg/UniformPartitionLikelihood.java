@@ -2,6 +2,9 @@ package dr.evomodel.arg;
 
 import dr.evomodel.arg.operators.ARGPartitioningOperator;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Parameter.ChangeType;
 import dr.math.MathUtils;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
@@ -71,7 +74,7 @@ public class UniformPartitionLikelihood extends ARGPartitionLikelihood implement
         return partition;
     }
     
-    private double arraySum(double[] x){
+    public static double arraySum(double[] x){
     	double a = 0;
     	for(double b : x)
     		a += b;
@@ -134,5 +137,27 @@ public class UniformPartitionLikelihood extends ARGPartitionLikelihood implement
 		}
     	
     };
+    
+    protected void acceptState() {
+		//nothing to do
+	}
+
+	
+	protected void handleModelChangedEvent(Model model, Object object, int index) {
+		//has no submodels
+	}
+
+	protected void handleParameterChangedEvent(Parameter parameter, int index,
+			ChangeType type) {
+		//has no parameters
+	}
+
+	protected void restoreState() {
+		//nothing to restore
+	}
+
+	protected void storeState() {
+		// nothing to store
+	}
 
 }

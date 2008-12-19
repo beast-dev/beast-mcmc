@@ -467,8 +467,8 @@ public class ARGTree implements Tree {
 		return Tree.Utils.newick(this);
 	}
 	
-	public final String getNewickNoBranches(){
-		return Tree.Utils.newickNoLengths(this);
+	public final String getUniqueNewick(){
+		return Tree.Utils.uniqueNewick(this,this.getRoot());
 	}
 
 	/**

@@ -37,13 +37,19 @@ public class ARGDistinctTreeCountStatistic extends Statistic.Abstract{
 		for(int i = 0; i < numberOfPartitions; i++){
 			ARGTree tree = new ARGTree(arg,i);
 			
-			String newick = tree.getNewickNoBranches();
+			String newick = tree.getUniqueNewick();
+			
+			
+			
 			if(!listOfTrees.contains(newick)){
 				listOfTrees.add(newick);
+				
 			}
 		}
 		
 		
+		
+			
 		return listOfTrees.size();
 	}
 	
@@ -101,7 +107,7 @@ public class ARGDistinctTreeCountStatistic extends Statistic.Abstract{
 		for(int i = 0; i < numberOfPartitions; i++){
 			ARGTree tree = new ARGTree(arg,i);
 			
-			String newick = tree.getNewickNoBranches();
+			String newick = tree.getUniqueNewick();
 			if(!listOfTrees.contains(newick)){
 				listOfTrees.add(newick);
 				numbers.add(1);

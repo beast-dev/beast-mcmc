@@ -740,6 +740,56 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         // }
 
     }
+    
+    public boolean isAncestral(){
+    	
+    	//zero everything first.
+    	for(int i = 0; i < getNodeCount(); i++){
+    		Node x = (Node)getNode(i);
+    		
+    		x.fullAncestralMaterial = false;
+    		x.hasSomeAncestralMaterial = false;
+    		
+    		if(x.ancestralMaterial == null){
+    			x.ancestralMaterial = new boolean[getNumberOfPartitions()];
+    		}
+    		
+    		for(int j = 0; j < x.ancestralMaterial.length; j++){
+    			x.ancestralMaterial[j] = false;
+    		}
+    		
+    	}
+    	
+    	//post order up with the external nodes
+    	 
+    	for(int i = 0 ; i < getExternalNodeCount(); i++){
+    		Node currentNode = (Node)getExternalNode(i);
+    		
+    		currentNode.fullAncestralMaterial = true;
+    		currentNode.hasSomeAncestralMaterial = true;
+    		
+    		for(int j = 0; j < currentNode.ancestralMaterial.length; j++){
+    			currentNode.ancestralMaterial[j] = true;
+    		}
+    	 	
+    		currentNode.leftParent.setAncestralMaterial(currentNode.ancestralMaterial);
+    	}
+    	
+    	
+    	
+    	//check that everything has some ancestral stuff.
+    	for(int i = 0, n = getNodeCount(); i < n; i++){
+    		Node currentNode = (Node)getNode(i);
+    		
+    		if(!currentNode.hasSomeAncestralMaterial){
+    			return false;
+    		}
+    	}
+    	
+    	
+    	return true;
+    }
+    
 
     public CompoundParameter getPartitioningParameters() {
         return partitioningParameters;
@@ -2619,7 +2669,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
      * @return a summary of the ARG model.
      */
     public String toARGSummary() {
-        NumberFormatter format = new NumberFormatter(4);
+    	NumberFormatter format = new NumberFormatter(4);
 
         String space = "   ";
 
@@ -2648,7 +2698,13 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             else a += " " + node.rightChild.number + space;
 
             a += format.formatDecimal(getNodeHeight(node), 4) + space;
-
+           
+            if(node.partitioning != null){
+            	for(int i = 0, n = getNumberOfPartitions(); i < n ; i++){
+            		a += node.partitioning.getParameterValue(i) + space;
+            	}
+            }
+            
             if (node.taxon == null) {
                 a += "internal" + space;
             } else {
@@ -3293,6 +3349,47 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     // Private inner classes
     // **************************************************************
     public class Node implements NodeRef {
+    	
+    	public boolean[] ancestralMaterial;
+    	public boolean fullAncestralMaterial;
+    	public boolean hasSomeAncestralMaterial;
+    	
+    	public void setAncestralMaterial(boolean[] childAncestralMaterial){
+    		if(fullAncestralMaterial){
+    			return;
+    		}
+    		
+    		fullAncestralMaterial = true;
+    		
+    		for(int i = 0; i < ancestralMaterial.length; i++){
+    			ancestralMaterial[i] = ancestralMaterial[i] || childAncestralMaterial[i];
+    			
+    			fullAncestralMaterial = fullAncestralMaterial && ancestralMaterial[i];
+    			hasSomeAncestralMaterial = hasSomeAncestralMaterial || ancestralMaterial[i];
+    		}
+    		
+    		if(bifurcation){
+    			if(this.leftParent != null)
+    				this.leftParent.setAncestralMaterial(ancestralMaterial);
+    		}else{
+    			boolean[] leftAncestralMaterial = new boolean[ancestralMaterial.length];
+    			boolean[] rightAncestralMaterial = new boolean[ancestralMaterial.length];
+    			
+    			System.arraycopy(ancestralMaterial, 0, leftAncestralMaterial, 0, leftAncestralMaterial.length);
+    			System.arraycopy(ancestralMaterial, 0, rightAncestralMaterial, 0, rightAncestralMaterial.length);
+    			
+    			for(int i = 0; i < ancestralMaterial.length; i++){
+    				if(partitioning.getParameterValue(i) == 0.0){
+    					rightAncestralMaterial[i] = false;
+    				}else{
+    					leftAncestralMaterial[i] = false;
+    				}
+    			}
+    			
+    			this.leftParent.setAncestralMaterial(leftAncestralMaterial);
+    			this.rightParent.setAncestralMaterial(rightAncestralMaterial);
+    		}
+    	}
 
         public Node leftParent, rightParent;
 

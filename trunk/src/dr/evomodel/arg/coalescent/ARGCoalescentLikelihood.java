@@ -16,6 +16,7 @@ public class ARGCoalescentLikelihood extends VeryOldCoalescentLikelihood {
 	public static final String POPULATION_SIZE = "populationSize";
 	public static final String ARG_MODEL = "argModel";
 	public static final String MAX_REASSORTMENTS = "maxReassortments";
+	public static final String ANCESTRAL_RESTRICTION = "ancestralRestriction";
 
 	public static final int RECOMBINATION = 3;
 
@@ -24,6 +25,7 @@ public class ARGCoalescentLikelihood extends VeryOldCoalescentLikelihood {
 	protected ARGModel arg;
 	private int taxaNumber;
 	protected int maxReassortments;
+	private boolean ancestralRestriction = false;
 
 	private ArrayList<CoalescentInterval> intervals;
 	private ArrayList<CoalescentInterval> storedIntervals;
@@ -39,12 +41,13 @@ public class ARGCoalescentLikelihood extends VeryOldCoalescentLikelihood {
 	}
 
 	public ARGCoalescentLikelihood(Parameter popSize, Parameter recomRate,
-	                               ARGModel arg, boolean setupIntervals, int maxReassort) {
+	                               ARGModel arg, boolean setupIntervals, int maxReassort, boolean ancestralRestriction) {
 		super(ARG_COALESCENT_MODEL);
 
 		this.popSize = popSize;
 		this.recomRate = recomRate;
 		this.arg = arg;
+		this.ancestralRestriction = ancestralRestriction;
 		addParameter(popSize);
 		addParameter(recomRate);
 
@@ -157,6 +160,7 @@ public class ARGCoalescentLikelihood extends VeryOldCoalescentLikelihood {
 				}
 			}
 		}
+		
 		return true;
 	}
 
@@ -168,12 +172,15 @@ public class ARGCoalescentLikelihood extends VeryOldCoalescentLikelihood {
 
 		likelihoodKnown = true;
 
-		if (arg.getReassortmentNodeCount() > maxReassortments)
+		if (arg.getReassortmentNodeCount() > maxReassortments){
 			logLikelihood = Double.NEGATIVE_INFINITY;
-		else
+		}else if(ancestralRestriction && !arg.isAncestral()){
+			logLikelihood = Double.NEGATIVE_INFINITY;
+		}else{
 			logLikelihood = calculateLogLikelihood(
 					popSize.getParameterValue(0),
 					recomRate.getParameterValue(0));
+		}
 
 
 		return logLikelihood;
@@ -184,7 +191,7 @@ public class ARGCoalescentLikelihood extends VeryOldCoalescentLikelihood {
 	}
 
 	private double calculateLogLikelihood(double pSize, double rRate) {
-
+		
 		double logLike = 0.0;
 		int numberOfTaxa = taxaNumber;
 
@@ -279,6 +286,7 @@ public class ARGCoalescentLikelihood extends VeryOldCoalescentLikelihood {
 						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
 				new ElementRule(ARG_MODEL,
 						new XMLSyntaxRule[]{new ElementRule(ARGModel.class)}),
+				AttributeRule.newBooleanRule(ANCESTRAL_RESTRICTION,true),
 		};
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -295,8 +303,12 @@ public class ARGCoalescentLikelihood extends VeryOldCoalescentLikelihood {
 			if (xo.hasAttribute(MAX_REASSORTMENTS)) {
 				maxreassort = xo.getIntegerAttribute(MAX_REASSORTMENTS);
 			}
+			
+			boolean ancestral = false;
+			if(xo.hasAttribute(ANCESTRAL_RESTRICTION))
+				ancestral = xo.getBooleanAttribute(ANCESTRAL_RESTRICTION);
 
-			return new ARGCoalescentLikelihood(pSize, rRate, argModel, false, maxreassort);
+			return new ARGCoalescentLikelihood(pSize, rRate, argModel, false, maxreassort, ancestral);
 		}
 
 

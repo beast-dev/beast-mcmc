@@ -107,7 +107,9 @@ public class BeastParser extends XMLParser {
                     if (XMLObjectParser.class.isAssignableFrom(parser)) {
                         // if this class is an XMLObjectParser then create an instance
                         addXMLObjectParser((XMLObjectParser)parser.newInstance());
-                        System.out.println("Loaded parser: " + parser.getName());
+                        if (verbose) {
+                            System.out.println("Loaded parser: " + parser.getName());
+                        }
                     } else {
                         boolean parserFound = false;
                         // otherwise look for a static member which is an instance of XMLObjectParser

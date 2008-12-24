@@ -54,7 +54,7 @@ public abstract class BranchingModel extends AbstractModel {
 		// no intermediates need to be recalculated...
 	}
 	
-	protected void handleParameterChangedEvent(Parameter parameter, int index) {
+	protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
 		// no intermediates need to be recalculated...
 	}
 	
@@ -69,4 +69,5 @@ public abstract class BranchingModel extends AbstractModel {
 	public org.w3c.dom.Element createElement(org.w3c.dom.Document document) {
 		throw new RuntimeException("Not implemented!");
 	}
+
 }

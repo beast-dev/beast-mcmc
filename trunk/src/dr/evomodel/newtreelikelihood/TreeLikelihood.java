@@ -105,6 +105,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (!likelihoodCore.canHandleTipStates()){
                 useAmbiguities = true;
             }
+            
+ //           dynamicRescaling = likelihoodCore.canHandleDynamicRescaling();
 
             likelihoodCore.initialize(nodeCount,
                     (useAmbiguities ? 0 : extNodeCount),
@@ -264,7 +266,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         likelihoodCore.updateMatrices(branchUpdateIndices, branchLengths, branchUpdateCount);
 
-        likelihoodCore.updatePartials(operations, dependencies, operationCount);
+        likelihoodCore.updatePartials(operations, dependencies, operationCount, false);
 
         nodeEvaluationCount += operationCount;
 
@@ -273,6 +275,23 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
             logL += patternLogLikelihoods[i] * patternWeights[i];
+        }
+        
+        // Attempt dynamic rescaling if over/under-flow
+        if (logL == Double.NaN || logL == Double.POSITIVE_INFINITY ) {
+        	
+        	System.err.print("Potential under/over-flow; going to attempt a partials rescaling.");
+        	updateAllNodes();
+        	traverse(treeModel, root, null);
+        	likelihoodCore.updatePartials(operations,dependencies, operationCount, true);
+        	
+            likelihoodCore.calculateLogLikelihoods(root.getNumber(), patternLogLikelihoods);
+
+            logL = 0.0;
+            for (int i = 0; i < patternCount; i++) {
+                logL += patternLogLikelihoods[i] * patternWeights[i];
+            }
+
         }
 
         //********************************************************************
@@ -288,7 +307,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         return logL;
     }
-
+    
     private double[] rates;
 
     private int[] branchUpdateIndices;
@@ -488,4 +507,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     public int getNodeEvaluationCount() {
         return nodeEvaluationCount;
     }
+    
+//    /***
+//     * Flag to specify if LikelihoodCore supports dynamic rescaling
+//     */
+//    private boolean dynamicRescaling = false;
 }

@@ -80,6 +80,10 @@ public class FloatGeneralLikelihoodCore implements LikelihoodCore {
     public boolean canHandleTipStates() {
         return false;
     }
+    
+    public boolean canHandleDynamicRescaling() {
+    	return true;
+    }
 
     /**
      * Initializes the likelihood core. Provides the information need to to
@@ -257,7 +261,11 @@ public class FloatGeneralLikelihoodCore implements LikelihoodCore {
             }
         }
     }
-
+    
+    public void updatePartials(int[] operations, int[] dependencies, int operationCount, boolean rescale) {
+    	updatePartials(operations, dependencies, operationCount);
+    }
+ 
     /**
      * Specify the updates to be made. This specifies which partials are to be
      * calculated and by giving the dependencies between the operations, they

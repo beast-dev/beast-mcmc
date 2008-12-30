@@ -32,6 +32,10 @@ public class NativeLikelihoodCore implements LikelihoodCore {
         return true;
     }
 
+    public boolean canHandleDynamicRescaling() {
+    	return true;
+    }
+    
     public native void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount);
 
     public void finalize() throws Throwable {
@@ -74,7 +78,11 @@ public class NativeLikelihoodCore implements LikelihoodCore {
      * A utility array to transfer category rates
      */
     private double[] rates = null;
-
+    
+    public void updatePartials(int[] operations, int[] dependencies, int operationCount, boolean rescale) {
+    	updatePartials(operations, dependencies, operationCount);
+    }
+ 
     protected native void updateCategoryRates(double[] rates);
 
     protected native void updateCategoryProportions(double[] proportions);

@@ -100,6 +100,10 @@ public class OTFPCGeneralLikelihoodCore implements LikelihoodCore {
         return true;
     }
 
+    public boolean canHandleDynamicRescaling() {
+    	return true;
+    }
+    
     /**
      * initializes partial likelihood arrays.
      *
@@ -283,7 +287,11 @@ public class OTFPCGeneralLikelihoodCore implements LikelihoodCore {
 //            if (DEBUG) System.exit(0);
         }
     }
-
+    
+    public void updatePartials(int[] operations, int[] dependencies, int operationCount, boolean rescale) {
+    	updatePartials(operations, dependencies, operationCount);
+    }
+ 
     /**
      * Specify the updates to be made. This specifies which partials are to be
      * calculated and by giving the dependencies between the operations, they

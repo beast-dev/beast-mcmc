@@ -40,6 +40,8 @@ public interface LikelihoodCore {
     boolean canHandleTipPartials();
 
     boolean canHandleTipStates();    
+    
+//    boolean canHandleDynamicRescaling();
 
     /**
      * Initializes the likelihood core. Provides the information need to to
@@ -111,8 +113,9 @@ public interface LikelihoodCore {
      *      is dependent on another. If these dependencies are not used then the
      *      operations can safely be done in order.
      * @param operationCount the number of operators
+     * @param rescale indicates if partials should be rescaled during peeling
      */
-    void updatePartials(int[] operations, int[] dependencies, int operationCount);
+    void updatePartials(int[] operations, int[] dependencies, int operationCount, boolean rescale);
 
     /**
      * Calculates pattern log likelihoods at a node.
@@ -131,5 +134,5 @@ public interface LikelihoodCore {
      * Restore the stored state
      */
     void restoreState();
-
+    
 }

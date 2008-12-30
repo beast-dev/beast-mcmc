@@ -36,6 +36,10 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
         freeNativeMemory(instanceNumber);
     }
 
+    public boolean canHandleDynamicRescaling() {
+    	return true;
+    }
+    
     private int stateCount;
     private int instanceNumber;
     private int deviceNumber;
@@ -80,8 +84,8 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
         updateMatrices(instanceNumber, branchUpdateIndices, branchLengths, branchUpdateCount);
     }
 
-    public void updatePartials(int[] operations, int[] dependencies, int operationCount) {
-        updatePartials(instanceNumber, operations, dependencies, operationCount);
+    public void updatePartials(int[] operations, int[] dependencies, int operationCount, boolean rescale) {
+        updatePartials(instanceNumber, operations, dependencies, operationCount, rescale);
     }
 
     public void calculateLogLikelihoods(int rootNodeIndex, double[] outLogLikelihoods) {
@@ -134,7 +138,7 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
 
     private native void updateMatrices(int instanceNumber, int[] branchUpdateIndices, double[] branchLengths, int branchUpdateCount);
 
-    private native void updatePartials(int instanceNumber, int[] operations, int[] dependencies, int operationCount);
+    private native void updatePartials(int instanceNumber, int[] operations, int[] dependencies, int operationCount, boolean rescale);
 
     private native void calculateLogLikelihoods(int instanceNumber, int rootNodeIndex, double[] outLogLikelihoods);
 

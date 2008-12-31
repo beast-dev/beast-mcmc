@@ -280,11 +280,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         // Attempt dynamic rescaling if over/under-flow
         if (logL == Double.NaN || logL == Double.POSITIVE_INFINITY ) {
         	
-        	System.err.print("Potential under/over-flow; going to attempt a partials rescaling.");
+        	System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
         	updateAllNodes();
+        	branchUpdateCount = 0;
+        	operationCount = 0;      	
         	traverse(treeModel, root, null);
-        	likelihoodCore.updatePartials(operations,dependencies, operationCount, true);
-        	
+        	likelihoodCore.updateMatrices(branchUpdateIndices, branchLengths, branchUpdateCount);
+        	likelihoodCore.updatePartials(operations,dependencies, operationCount, true);        	
             likelihoodCore.calculateLogLikelihoods(root.getNumber(), patternLogLikelihoods);
 
             logL = 0.0;

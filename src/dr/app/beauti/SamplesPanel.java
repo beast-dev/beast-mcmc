@@ -81,6 +81,8 @@ public class SamplesPanel extends BeautiPanel implements Exportable {
 
     double[] heights = null;
 
+    GuessDatesDialog guessDatesDialog = null;
+
     public SamplesPanel(BeautiFrame parent) {
 
         this.frame = parent;
@@ -270,144 +272,24 @@ public class SamplesPanel extends BeautiPanel implements Exportable {
 
     public void guessDates() {
 
-        OptionsPanel optionPanel = new OptionsPanel(12, 12);
-
-        optionPanel.addLabel("The date is given by a numerical field in the taxon label that is:");
-
-        final JRadioButton orderRadio = new JRadioButton("Defined by its order", true);
-        final JComboBox orderCombo = new JComboBox(new String[]{"first", "second", "third",
-                "fourth", "fourth from last",
-                "third from last", "second from last", "last"});
-
-        optionPanel.addComponents(orderRadio, orderCombo);
-        optionPanel.addSeparator();
-
-        final JRadioButton prefixRadio = new JRadioButton("Defined by a prefix", false);
-        final JTextField prefixText = new JTextField(16);
-        prefixText.setEnabled(false);
-        optionPanel.addComponents(prefixRadio, prefixText);
-        optionPanel.addSeparator();
-
-        final JCheckBox offsetCheck = new JCheckBox("Add the following value to each: ", false);
-        final RealNumberField offsetText = new RealNumberField();
-        offsetText.setValue(1900);
-        offsetText.setColumns(16);
-        offsetText.setEnabled(false);
-        offsetCheck.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                offsetText.setEnabled(offsetCheck.isSelected());
-            }
-        });
-        optionPanel.addComponents(offsetCheck, offsetText);
-
-        final JCheckBox unlessCheck = new JCheckBox("...unless less than:", false);
-        final RealNumberField unlessText = new RealNumberField();
-        Calendar calendar = GregorianCalendar.getInstance();
-
-        int year = calendar.get(Calendar.YEAR) - 1999;
-        unlessText.setValue(year);
-        unlessText.setColumns(16);
-        unlessText.setEnabled(false);
-        optionPanel.addComponents(unlessCheck, unlessText);
-
-        final RealNumberField offset2Text = new RealNumberField();
-        offset2Text.setValue(2000);
-        offset2Text.setColumns(16);
-        offset2Text.setEnabled(false);
-        optionPanel.addComponentWithLabel("...in which case add:", offset2Text);
-
-        unlessCheck.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                unlessText.setEnabled(unlessCheck.isSelected());
-                offset2Text.setEnabled(unlessCheck.isSelected());
-            }
-        });
-
-        ButtonGroup group = new ButtonGroup();
-        group.add(orderRadio);
-        group.add(prefixRadio);
-        ItemListener listener = new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                orderCombo.setEnabled(orderRadio.isSelected());
-                prefixText.setEnabled(prefixRadio.isSelected());
-            }
-        };
-        orderRadio.addItemListener(listener);
-        prefixRadio.addItemListener(listener);
-
-        JOptionPane optionPane = new JOptionPane(optionPanel,
-                JOptionPane.QUESTION_MESSAGE,
-                JOptionPane.OK_CANCEL_OPTION,
-                null,
-                null,
-                null);
-        optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
-
-        JDialog dialog = optionPane.createDialog(frame, "Guess Dates");
-//		dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-        dialog.setVisible(true);
-
-        if (optionPane.getValue() == null) {
-            return;
+        if (guessDatesDialog == null) {
+            guessDatesDialog = new GuessDatesDialog(frame);
         }
 
-        int value = (Integer) optionPane.getValue();
-        if (value == -1 || value == JOptionPane.CANCEL_OPTION) {
+        int result = guessDatesDialog.showDialog();
+
+        if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
             return;
         }
 
         DateGuesser guesser = options.dateGuesser;
 
         guesser.guessDates = true;
+        guessDatesDialog.setupGuesser(guesser);
 
         String warningMessage = null;
 
-        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-            java.util.Date origin = new java.util.Date(0);
-
-            double d = 0.0;
-
-            try {
-                if (orderRadio.isSelected()) {
-                    guesser.guessDateFromOrder = true;
-                    guesser.order = orderCombo.getSelectedIndex();
-                    guesser.fromLast = false;
-                    if (guesser.order > 3) {
-                        guesser.fromLast = true;
-                        guesser.order = 8 - guesser.order - 1;
-                    }
-
-                    d = guesser.guessDateFromOrder(options.taxonList.getTaxonId(i), guesser.order, guesser.fromLast);
-                } else {
-                    guesser.guessDateFromOrder = false;
-                    guesser.prefix = prefixText.getText();
-                    d = guesser.guessDateFromPrefix(options.taxonList.getTaxonId(i), guesser.prefix);
-                }
-
-            } catch (GuessDatesException gfe) {
-                warningMessage = gfe.getMessage();
-            }
-
-            guesser.offset = 0.0;
-            guesser.unlessLessThan = 0.0;
-            if (offsetCheck.isSelected()) {
-                guesser.offset = offsetText.getValue();
-                if (unlessCheck.isSelected()) {
-                    guesser.unlessLessThan = unlessText.getValue();
-                    guesser.offset2 = offset2Text.getValue();
-                    if (d < guesser.unlessLessThan) {
-                        d += guesser.offset2;
-                    } else {
-                        d += guesser.offset;
-                    }
-                } else {
-                    d += guesser.offset;
-                }
-            }
-
-            Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
-            options.taxonList.getTaxon(i).setAttribute("date", date);
-        }
+        guesser.guessDates(options.taxonList);
 
         if (warningMessage != null) {
             JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,

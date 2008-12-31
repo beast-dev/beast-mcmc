@@ -5,16 +5,26 @@ import dr.evolution.util.Date;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 /**
  * @author Andrew Rambaut
  */
 public class DateGuesser {
 
+    public enum GuessType {
+        ORDER,
+        PREFIX,
+        REGEX
+    }
+
     public boolean guessDates = false;
-    public boolean guessDateFromOrder = true;
+    public GuessType guessType = GuessType.ORDER;
     public boolean fromLast = false;
     public int order = 0;
     public String prefix;
+    public String regex;
     public double offset = 0.0;
     public double unlessLessThan = 0.0;
     public double offset2 = 0.0;
@@ -27,10 +37,18 @@ public class DateGuesser {
             double d = 0.0;
 
             try {
-                if (guessDateFromOrder) {
-                    d = guessDateFromOrder(taxonList.getTaxonId(i), order, fromLast);
-                } else {
-                    d = guessDateFromPrefix(taxonList.getTaxonId(i), prefix);
+                switch (guessType) {
+                    case ORDER:
+                        d = guessDateFromOrder(taxonList.getTaxonId(i), order, fromLast);
+                        break;
+                    case PREFIX:
+                        d = guessDateFromPrefix(taxonList.getTaxonId(i), prefix);
+                        break;
+                    case REGEX:
+                        d = guessDateFromRegex(taxonList.getTaxonId(i), regex);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("unknown GuessType");
                 }
 
             } catch (GuessDatesException gfe) {
@@ -147,6 +165,28 @@ public class DateGuesser {
 
         try {
             d = Double.parseDouble(field);
+        } catch (NumberFormatException nfe) {
+            throw new GuessDatesException("Badly formated date in taxon label, " + label);
+        }
+
+        return d;
+    }
+
+    public double guessDateFromRegex(String label, String regex) throws GuessDatesException {
+        double d;
+
+        try {
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(label);
+            if (!matcher.find()) {
+                throw new GuessDatesException("Regular expression doesn't find a match in taxon label, " + label);
+            }
+
+            if (matcher.groupCount() < 1) {
+                throw new GuessDatesException("Date group not defined in regular expression: use parentheses to surround the character group that gives the date");
+            }
+
+            d = Double.parseDouble(matcher.group(0));
         } catch (NumberFormatException nfe) {
             throw new GuessDatesException("Badly formated date in taxon label, " + label);
         }

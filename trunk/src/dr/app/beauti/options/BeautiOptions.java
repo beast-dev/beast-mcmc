@@ -834,7 +834,7 @@ public class BeautiOptions extends ModelOptions {
         dataElement.addContent(createChild("startingTreeType", startingTreeType.name()));
 
         dataElement.addContent(createChild("guessDates", guessDates));
-        dataElement.addContent(createChild("guessDateFromOrder", dateGuesser.guessDateFromOrder));
+        dataElement.addContent(createChild("guessType", dateGuesser.guessType.name()));
         dataElement.addContent(createChild("fromLast", dateGuesser.fromLast));
         dataElement.addContent(createChild("order", dateGuesser.order));
         dataElement.addContent(createChild("prefix", dateGuesser.prefix));

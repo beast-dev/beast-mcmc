@@ -1,5 +1,6 @@
 package dr.evomodel.arg;
 
+import dr.evomodel.arg.ARGModel.Node;
 import dr.evomodel.arg.operators.ARGAddRemoveEventOperator;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Statistic;
@@ -15,6 +16,7 @@ public class RecombinationPartitionStatistic extends Statistic.Abstract{
 	public final static String RECOMBINATION_PARTITION_STATISTIC = "partitionStatistic";
 	private int dimension;
 	private ARGModel arg;
+	private String[] taxaNames;
 	
 	public RecombinationPartitionStatistic(String id, ARGModel arg){
 		
@@ -22,7 +24,11 @@ public class RecombinationPartitionStatistic extends Statistic.Abstract{
 		
 		this.arg = arg;
 		
-		this.dimension = arg.getNumberOfPartitions() - 1;
+		this.dimension = arg.getExternalNodeCount();
+		taxaNames = new String[this.dimension];
+		for(int i = 0; i < taxaNames.length; i++){
+			taxaNames[i] = "" + ((Node)arg.getExternalNode(i)).taxon;
+		}
 	}
 	
 	
@@ -30,21 +36,22 @@ public class RecombinationPartitionStatistic extends Statistic.Abstract{
 		return dimension;
 	}
 
+	public String getDimensionName(int dim){
+		return "Taxa" + taxaNames[dim];
+	}
+	
 	public double getStatisticValue(int dim) {
 		
-		int number = 0;
+		Node x = (Node)arg.getExternalNode(dim);
 		
-		CompoundParameter x = arg.getPartitioningParameters();
+		assert x.taxon.toString().equals(taxaNames[dim]);
 		
-		for(int i = 0, n= arg.getReassortmentNodeCount() ; i < n; i++){
-			double[] z = x.getParameter(i).getParameterValues();
-			
-			if(ARGAddRemoveEventOperator.arraySum(z) == (double)(dimension - dim)){
-				number++;
-			}
+		boolean c = x.hasReassortmentAncestor();
+		
+		if(c){
+			return 1.0;
 		}
-		
-		return (double)number;
+		return 0.0;
 	}
 	
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){

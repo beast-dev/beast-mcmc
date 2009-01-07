@@ -31,7 +31,7 @@ public class ARGReassortmentTimingStatistic extends Statistic.Abstract{
 		super(name);
 		
 		
-		this.dimension = arg.getExternalNodeCount() + 4;
+		this.dimension = arg.getExternalNodeCount() + 1;
 		this.arg = arg;
 	}
 	
@@ -39,22 +39,32 @@ public class ARGReassortmentTimingStatistic extends Statistic.Abstract{
 		return dimension;
 	}
 	
-	public String getDimensionName(int dim) {
-		if(dim < dimension - 4){
-			return "Bifurcation" + (dim + 1);
-		}else if(dim == dimension - 4){
+	public String getDimensionName(int dim){
+		if(dim == 0){
+			return "Root";
+		}else if(dim == 1){
+			return "RootChild";
+		}else if(dim == 2){
+			return "ENParent";
+		}else if(dim == 3){
+			return "DNParent";
+		}else if(dim == 4){
+			return "DCParent";
+		}else if(dim == 5){
+			return "CCParent";
+		}else if(dim == 6){
+			return "FNParent";
+		}else if(dim == 7){
 			return "ReassortHeight";
-		}else if(dim == dimension - 3){
-			return "ReassortChildHeight";
-		}else if(dim == dimension - 2){
-			return "ReassortLeftParentHeight";
+		}else if(dim == 8){
+			return "CNParent";
+		}else if(dim == 9){
+			return "CCParentParent";
 		}
 		
-		
-		
-		return "ReassortRightParentHeight";
+		return "";
 	}
-
+	
 	public double getStatisticValue(int dim) {
 		String max = "((((((<(FC,FN)>,CN),CC),<(FC,FN)>),DC),((EC,EN),DN)),AN);";
 		
@@ -63,56 +73,92 @@ public class ARGReassortmentTimingStatistic extends Statistic.Abstract{
 			return Double.NaN;
 		}
 		
-		
-		
-		
-		if(dim < dimension - 4){
-			ArrayList<Double> reassortmentHeights = new ArrayList<Double>();
+		if(dim == 0){
+			return arg.getRootHeightParameter().getParameterValue(0);
+		}else if(dim == 1){
+			Node a = (Node)arg.getRoot();
 			
-			for(int i = 0; i < arg.getInternalNodeCount(); i++){
-				if(arg.isBifurcation(arg.getInternalNode(i)))
-					reassortmentHeights.add( ((Node)arg.getInternalNode(i)).getHeight() );
-			}
+			Node aLeft = a.leftChild;
+			Node aRight = a.rightChild;
 			
-			Collections.sort(reassortmentHeights);
+			return Math.max(aLeft.heightParameter.getParameterValue(0), aRight.heightParameter.getParameterValue(0));
+		}else if(dim == 2){
+			int value = 0;
+			Node a = (Node)arg.getExternalNode(0);
 			
-			return reassortmentHeights.get(dim);
-		}else if(dim == dimension - 4){
-			for(int i = 0; i < arg.getNodeCount(); i++){
-				Node x = (Node)arg.getNode(i);
-						
-				if(x.isReassortment()){
-					return (x.getHeight());
-				}
+			while(!a.taxon.toString().equals("EN")){
+				value++;
+				a = (Node)arg.getExternalNode(value);
 			}
-		}else if(dim == dimension - 3){
-			for(int i = 0; i < arg.getNodeCount(); i++){
-				Node x = (Node)arg.getNode(i);
-						
-				if(x.isReassortment()){
-					return (x.getChild(ARGModel.LEFT).getHeight());
-				}
+			return a.leftParent.heightParameter.getParameterValue(0);
+		}else if(dim == 3){
+			int value = 0;
+			Node a = (Node)arg.getExternalNode(0);
+			
+			while(!a.taxon.toString().equals("DN")){
+				value++;
+				a = (Node)arg.getExternalNode(value);
 			}
-		}else if(dim == dimension - 2){
-			for(int i = 0; i < arg.getNodeCount(); i++){
-				Node x = (Node)arg.getNode(i);
-						
-				if(x.isReassortment()){
-					return (x.getParent(ARGModel.LEFT).getHeight());
-				}
+			return a.leftParent.heightParameter.getParameterValue(0);
+		}else if(dim == 4){
+			int value = 0;
+			Node a = (Node)arg.getExternalNode(0);
+			
+			while(!a.taxon.toString().equals("DC")){
+				value++;
+				a = (Node)arg.getExternalNode(value);
 			}
+			return a.leftParent.heightParameter.getParameterValue(0);
+		}else if(dim == 5){
+			int value = 0;
+			Node a = (Node)arg.getExternalNode(0);
+			
+			while(!a.taxon.toString().equals("CC")){
+				value++;
+				a = (Node)arg.getExternalNode(value);
+			}
+			return a.leftParent.heightParameter.getParameterValue(0);
+		}else if(dim == 6){
+			int value = 0;
+			Node a = (Node)arg.getExternalNode(0);
+			
+			while(!a.taxon.toString().equals("FN")){
+				value++;
+				a = (Node)arg.getExternalNode(value);
+			}
+			return a.leftParent.heightParameter.getParameterValue(0);
+		}else if(dim == 7){
+			int value = 0;
+			Node a = (Node)arg.getExternalNode(0);
+			
+			while(!a.taxon.toString().equals("FN")){
+				value++;
+				a = (Node)arg.getExternalNode(value);
+			}
+			return a.leftParent.leftParent.heightParameter.getParameterValue(0);
+		}else if(dim == 8){
+			int value = 0;
+			Node a = (Node)arg.getExternalNode(0);
+			
+			while(!a.taxon.toString().equals("CN")){
+				value++;
+				a = (Node)arg.getExternalNode(value);
+			}
+			return a.leftParent.heightParameter.getParameterValue(0);
 		}
 		
-		double rValue = 0;
-		for(int i = 0; i < arg.getNodeCount(); i++){
-			Node x = (Node)arg.getNode(i);
-					
-			if(x.isReassortment()){
-				rValue = (x.getParent(ARGModel.RIGHT).getHeight());
-			}
+		int value = 0;
+		Node a = (Node)arg.getExternalNode(0);
+		
+		while(!a.taxon.toString().equals("CC")){
+			value++;
+			a = (Node)arg.getExternalNode(value);
 		}
-			
-		return rValue;
+		return a.leftParent.leftParent.heightParameter.getParameterValue(0);
+		
+		
+		
+		
 	}
 	
 	

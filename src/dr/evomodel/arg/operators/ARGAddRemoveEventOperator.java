@@ -124,11 +124,16 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         double logq = 0;
 
         try {
-            if (MathUtils.nextDouble() < 1.0 / (1 + Math.exp(-size))){
-            	logq = AddOperation() - size;
-            }else{
-                logq = RemoveOperation() + size;
-            }
+        	if(arg.getReassortmentNodeCount() < 3)
+        		logq = AddOperation();
+        	else
+        		logq = RemoveOperation();
+//        	
+//        	if (MathUtils.nextDouble() < 1.0 / (1 + Math.exp(-size))){
+//            	logq = AddOperation() - size;
+//            }else{
+//                logq = RemoveOperation() + size;
+//            }
         } catch (NoReassortmentEventException nree) {
             throw new OperatorFailedException("");
         }
@@ -197,55 +202,107 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 potentialReassortmentChildren.size());
 
         //3.  Choose your re-assortment location.
-        Node recNode = (Node) potentialReassortmentChildren.get(MathUtils
+        Node reassortChild = (Node) potentialReassortmentChildren.get(MathUtils
                 .nextInt(totalPotentialReassortmentChildren));
 
-        Node recParentL = recNode.leftParent;
-        Node recParentR = recNode.rightParent;
-        Node recParent = recParentL;
-
-        if (recParentL != recParentR) {
-            boolean[] tester = {arg.getNodeHeight(recParentL) > newReassortmentHeight,
-                    arg.getNodeHeight(recParentR) > newReassortmentHeight};
-
-            if (tester[0] && tester[1]) {
-                if (MathUtils.nextBoolean()) {
-                    recParent = recParentR;
-                }
-
-                logHastings += LOG_TWO;
-            } else if (tester[0]) {
-                recParent = recParentL;
-            } else {
-                recParent = recParentR;
-            }
+        Node reassortLeftParent = reassortChild.leftParent;
+        Node reassortRightParent = reassortChild.rightParent;
+        Node reassortSplitParent = reassortChild.leftParent;
+        
+        boolean splitReassortLeftParent = true;
+        
+        if(!reassortChild.bifurcation){
+        	 boolean[] tester = {arg.getNodeHeight(reassortLeftParent) > newReassortmentHeight,
+                     arg.getNodeHeight(reassortRightParent) > newReassortmentHeight};
+        	 
+        	 if(tester[0] && tester[1]){
+        		 if(MathUtils.nextBoolean()){
+        			 splitReassortLeftParent = false;
+        			 reassortSplitParent = reassortRightParent;
+        		 }
+        		 logHastings += LOG_TWO;
+        	 }else if(tester[0]){
+        		 //nothing to do, setup above
+        	 }else if(tester[1]){
+    			 splitReassortLeftParent = false;
+    			 reassortSplitParent = reassortRightParent;
+        	 }else{
+        		 assert false;
+        	 }
         }
+        
+        
+//        if (recParentL != recParentR) {
+//            boolean[] tester = {arg.getNodeHeight(recParentL) > newReassortmentHeight,
+//                    arg.getNodeHeight(recParentR) > newReassortmentHeight};
+//
+//            if (tester[0] && tester[1]) {
+//                if (MathUtils.nextBoolean()) {
+//                    recParent = recParentR;
+//                }
+//
+//                logHastings += LOG_TWO;
+//            } else if (tester[0]) {
+//                recParent = recParentL;
+//            } else {
+//                recParent = recParentR;
+//            }
+//        }
 
         //4. Choose your bifurcation location.
 
-        Node sisNode = (Node) potentialBifurcationChildren.get(MathUtils
+        Node bifurcationChild = (Node) potentialBifurcationChildren.get(MathUtils
                 .nextInt(potentialBifurcationChildren.size()));
 
 
-        Node sisParentL = sisNode.leftParent;
-        Node sisParentR = sisNode.rightParent;
-        Node sisParent = sisParentL;
+        Node bifurcationLeftParent = bifurcationChild.leftParent;
+        Node bifurcationRightParent = bifurcationChild.rightParent;
+        Node bifurcationSplitParent = bifurcationLeftParent;
 
-        if (sisParentL != sisParentR) {
-            boolean[] tester = {arg.getNodeHeight(sisParentL) > newBifurcationHeight,
-                    arg.getNodeHeight(sisParentR) > newBifurcationHeight};
+        boolean splitBifurcationLeftParent = true;
+        
+      if (!bifurcationChild.bifurcation) {
+    	  boolean[] tester = {arg.getNodeHeight(bifurcationLeftParent) > newBifurcationHeight,
+    			  arg.getNodeHeight(bifurcationRightParent) > newBifurcationHeight};
 
-            if (tester[0] && tester[1]) {
-                if (MathUtils.nextBoolean()) {
-                    sisParent = sisParentR;
-                }
-                logHastings += LOG_TWO;
-            } else if (tester[0]) {
-                sisParent = sisParentL;
-            } else {
-                sisParent = sisParentR;
-            }
-        }
+    	  if (tester[0] && tester[1]) {
+    		  if (MathUtils.nextBoolean()) {
+    			  splitBifurcationLeftParent = false;
+     			  bifurcationSplitParent = bifurcationRightParent;
+    		  }
+    		  logHastings += LOG_TWO;
+    	  } else if (tester[0]) {
+    		  //nothing to do
+    	  } else if (tester[1]){
+  			  splitBifurcationLeftParent = false;
+ 			  bifurcationSplitParent = bifurcationRightParent;
+    	  }else{
+    		  assert false;
+    	  }
+      }
+      
+      boolean attachNewReassortNewBifurcationThroughLeft = MathUtils.nextBoolean();
+      
+      //During the delete step, this guy gets cancelled out!
+//      logHastings += LOG_TWO;
+
+        
+        
+//        if (sisParentL != sisParentR) {
+//            boolean[] tester = {arg.getNodeHeight(sisParentL) > newBifurcationHeight,
+//                    arg.getNodeHeight(sisParentR) > newBifurcationHeight};
+//
+//            if (tester[0] && tester[1]) {
+//                if (MathUtils.nextBoolean()) {
+//                    sisParent = sisParentR;
+//                }
+//                logHastings += LOG_TWO;
+//            } else if (tester[0]) {
+//                sisParent = sisParentL;
+//            } else {
+//                sisParent = sisParentR;
+//            }
+//        }
 
         //5. Make the new nodes.
         //Note: The height stuff is taken care of below.
@@ -264,127 +321,418 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         
         adjustRandomPartitioning();
         
+        if(newBifurcationHeight < treeHeight){
+        	 
+             if(bifurcationChild == reassortChild){
+            	 if(bifurcationChild.bifurcation){
+            		 bifurcationChild.leftParent = bifurcationChild.rightParent = newReassortment;
+            		 newReassortment.leftChild = newReassortment.rightChild = bifurcationChild;
+            		 newReassortment.leftParent = newReassortment.rightParent = newBifurcation;
+            		 newBifurcation.leftChild = newBifurcation.rightChild = newReassortment;
+            		 newBifurcation.leftParent = newBifurcation.rightParent = bifurcationSplitParent;
+            		 
+            		 if(bifurcationSplitParent.bifurcation){
+            			 if(bifurcationSplitParent.leftChild == bifurcationChild){
+            				 bifurcationSplitParent.leftChild = newBifurcation;
+            			 }else{
+            				 bifurcationSplitParent.rightChild = newBifurcation;
+            			 }
+            		 }else{
+            			 bifurcationSplitParent.leftChild = bifurcationSplitParent.rightChild = newBifurcation;
+            		 }
+            		  
+            	 }else{
+            		 if(splitBifurcationLeftParent && splitReassortLeftParent){
+            			 bifurcationChild.leftParent = newReassortment;
+            			 newReassortment.leftChild = newReassortment.rightChild = bifurcationChild;
+            			 newReassortment.leftParent = newReassortment.rightParent = newBifurcation;
+            	         
+            			 newBifurcation.leftChild = newBifurcation.rightChild = newReassortment;
+            			 newBifurcation.leftParent = newBifurcation.rightParent = bifurcationSplitParent;
+            			 
+            			 if(bifurcationSplitParent.bifurcation){
+                			 if(bifurcationSplitParent.leftChild == bifurcationChild){
+                				 bifurcationSplitParent.leftChild = newBifurcation;
+                			 }else{
+                				 bifurcationSplitParent.rightChild = newBifurcation;
+                			 }
+                		 }else{
+                			 bifurcationSplitParent.leftChild = bifurcationSplitParent.rightChild = newBifurcation;
+                		 }
+            			 
+            		   
+            		 }else if(splitBifurcationLeftParent){
+            			 //bifurcation on left, reassortment on right
+            			 
+            			 bifurcationChild.leftParent = newBifurcation;
+            			 bifurcationChild.rightParent = newReassortment;
+            			 
+            			 newBifurcation.leftChild = bifurcationChild;
+            			 newBifurcation.rightChild = newReassortment;
+            			 newBifurcation.leftParent = newBifurcation.rightParent = bifurcationSplitParent;
+            			 
+            			 if(bifurcationSplitParent.bifurcation){
+            				 if(bifurcationSplitParent.leftChild == bifurcationChild){
+                				 bifurcationSplitParent.leftChild = newBifurcation;
+                			 }else{
+                				 bifurcationSplitParent.rightChild = newBifurcation;
+                			 }
+                		 }else{
+                			 bifurcationSplitParent.leftChild = bifurcationSplitParent.rightChild = newBifurcation;
+                		 }
+            			
+            			 newReassortment.leftChild = newReassortment.rightChild = bifurcationChild;
+                     	
+            			 if(attachNewReassortNewBifurcationThroughLeft){
+            				 newReassortment.leftParent = newBifurcation;
+            				 newReassortment.rightParent = reassortSplitParent;
+            			 }else{
+            				 newReassortment.rightParent = newBifurcation;
+            				 newReassortment.leftParent = reassortSplitParent;
+            			 }
+            			 
+            			 if(reassortSplitParent.bifurcation){
+            				 if(reassortSplitParent.leftChild == reassortChild){
+                				 reassortSplitParent.leftChild = newReassortment;
+                			 }else{
+                				 reassortSplitParent.rightChild = newReassortment;
+                			 }
+                		 }else{
+                			 reassortSplitParent.leftChild = reassortSplitParent.rightChild = newReassortment;
+                		 }
+            			
+            			
+            			 
+            		 }else if(splitReassortLeftParent){
+            			 //bifurcation on right, reassortment on left
+            			 
+            			 bifurcationChild.rightParent = newBifurcation;
+            			 bifurcationChild.leftParent = newReassortment;
+            			 
+            			 newBifurcation.leftChild = bifurcationChild;
+            			 newBifurcation.rightChild = newReassortment;
+            			 newBifurcation.leftParent = newBifurcation.rightParent = bifurcationSplitParent;
+            			 
+            			 if(bifurcationSplitParent.bifurcation){
+            				 if(bifurcationSplitParent.leftChild == bifurcationChild){
+                				 bifurcationSplitParent.leftChild = newBifurcation;
+                			 }else{
+                				 bifurcationSplitParent.rightChild = newBifurcation;
+                			 }
+                		 }else{
+                			 bifurcationSplitParent.leftChild = bifurcationSplitParent.rightChild = newBifurcation;
+                		 }
+            			
+            			 newReassortment.leftChild = newReassortment.rightChild = bifurcationChild;
+                     	
+            			 if(attachNewReassortNewBifurcationThroughLeft){
+            				 newReassortment.leftParent = newBifurcation;
+            				 newReassortment.rightParent = reassortSplitParent;
+            			 }else{
+            				 newReassortment.rightParent = newBifurcation;
+            				 newReassortment.leftParent = reassortSplitParent;
+            			 }
+            			 
+            			 if(reassortSplitParent.bifurcation){
+            				 if(reassortSplitParent.leftChild == reassortChild){
+                				 reassortSplitParent.leftChild = newReassortment;
+                			 }else{
+                				 reassortSplitParent.rightChild = newReassortment;
+                			 }
+                		 }else{
+                			 reassortSplitParent.leftChild = reassortSplitParent.rightChild = newReassortment;
+                		 }
+            			 
+            			 
+            			 
+            		 }else{
+            			 
+            			 bifurcationChild.rightParent = newReassortment;
+            			 newReassortment.leftChild = newReassortment.rightChild = bifurcationChild;
+            			 newReassortment.leftParent = newReassortment.rightParent = newBifurcation;
+            	         
+            			 newBifurcation.leftChild = newBifurcation.rightChild = newReassortment;
+            			 newBifurcation.leftParent = newBifurcation.rightParent = bifurcationSplitParent;
+            			 
+            			 if(bifurcationSplitParent.bifurcation){
+                			 if(bifurcationSplitParent.leftChild == bifurcationChild){
+                				 bifurcationSplitParent.leftChild = newBifurcation;
+                			 }else{
+                				 bifurcationSplitParent.rightChild = newBifurcation;
+                			 }
+                		 }else{
+                			 bifurcationSplitParent.leftChild = bifurcationSplitParent.rightChild = newBifurcation;
+                		 }
+            			 
+            			
+            		 }
+            	 }
+            	 
+             }else{
+            	
+            	 
+            	 
+            	 newReassortment.leftChild = newReassortment.rightChild = reassortChild;
+            	 newBifurcation.leftParent = newBifurcation.rightParent = bifurcationSplitParent;
+            	 newBifurcation.leftChild = newReassortment;
+            	 newBifurcation.rightChild = bifurcationChild;
+            	 
+            	 if(attachNewReassortNewBifurcationThroughLeft){
+            		 newReassortment.leftParent = newBifurcation;
+            		 newReassortment.rightParent = reassortSplitParent;
+            	 }else{
+            		 newReassortment.rightParent = newBifurcation;
+            		 newReassortment.leftParent = reassortSplitParent;
+            	 }
+            	 
+            	 if(reassortChild.bifurcation){
+            		 reassortChild.leftParent = reassortChild.rightParent = newReassortment;
+                 }else if(splitReassortLeftParent){
+                	 reassortChild.leftParent = newReassortment;
+                 }else{
+                	 reassortChild.rightParent = newReassortment;
+                 }
+            	 
+            	 if(reassortSplitParent.bifurcation){
+            		 if(reassortSplitParent.leftChild == reassortChild){
+            			 reassortSplitParent.leftChild = newReassortment;
+            		 }else{
+            			 reassortSplitParent.rightChild = newReassortment;
+            		 }
+            	 }else{
+            		 reassortSplitParent.leftChild = reassortSplitParent.rightChild = newReassortment;
+            	 }
+            	 
+            	 if(bifurcationChild.bifurcation){
+            		 bifurcationChild.leftParent = bifurcationChild.rightParent = newBifurcation;
+            	 }else if(splitBifurcationLeftParent){
+            		 bifurcationChild.leftParent = newBifurcation;
+            	 }else{
+            		 bifurcationChild.rightParent = newBifurcation;
+            	 }
+            	 
+            	 if(bifurcationSplitParent.bifurcation){
+            		 if(bifurcationSplitParent.leftChild == bifurcationChild){
+            			 bifurcationSplitParent.leftChild = newBifurcation;
+            		 }else{
+            			 bifurcationSplitParent.rightChild = newBifurcation; 
+            		 }
+            	 }else{
+            		 bifurcationSplitParent.leftChild = bifurcationSplitParent.rightChild = newBifurcation;
+            	 }
+            	 
+            	 
+            	 
+             }
+             
+             Parameter partition = new Parameter.Default(arg.getNumberOfPartitions());
+             drawRandomPartitioning(partition);
+
+             
+             newReassortment.partitioning = partition;
+             
+             newBifurcation.heightParameter = new Parameter.Default(newBifurcationHeight);
+             newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
+             newBifurcation.setupHeightBounds();
+             newReassortment.setupHeightBounds();
+             
+             
+             
+             arg.expandARGWithRecombinant(newBifurcation, newReassortment,
+                     internalNodeParameters,
+                     internalAndRootNodeParameters,
+                     nodeRates);
+             assert nodeCheck() : arg.toARGSummary();
+             
+        }else{
+        
+           assert newReassortmentHeight < treeHeight;
+          
+          
+           
+          //New bifurcation takes the place of the old root.
+          //Much easier to program.
+        	
+           newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
+         newReassortment.setupHeightBounds();
+
+         bifurcationChild = newBifurcation;
+         if (arg.isRoot(reassortSplitParent))
+             reassortSplitParent = newBifurcation;
+
+
+         Node root = (Node) arg.getRoot();
+         Node rootLeftChild = root.leftChild;
+         Node rootRightChild = root.rightChild;
+
+         arg.singleRemoveChild(root, rootLeftChild);
+         arg.singleRemoveChild(root, rootRightChild);
+         arg.singleAddChild(newBifurcation, rootLeftChild);
+         arg.singleAddChild(newBifurcation, rootRightChild);
+
+         if (reassortSplitParent.isBifurcation())
+             arg.singleRemoveChild(reassortSplitParent, reassortChild);
+         else
+             arg.doubleRemoveChild(reassortSplitParent, reassortChild);
+
+         arg.doubleAddChild(newReassortment, reassortChild);
+         arg.singleAddChild(root, newBifurcation);
+         
+         Parameter partitioning = new Parameter.Default(arg.getNumberOfPartitions());
+         drawRandomPartitioning(partitioning);
+         
+         
+         arg.addChildAsRecombinant(root, reassortSplitParent, newReassortment, partitioning);
+         
+         if(attachNewReassortNewBifurcationThroughLeft){
+        	 newReassortment.leftParent = root;
+        	 newReassortment.rightParent = reassortSplitParent;
+         }else{
+        	 newReassortment.leftParent = reassortSplitParent;
+        	 newReassortment.rightParent = root;
+         }
+         
+         newBifurcation.heightParameter = new Parameter.Default(root.getHeight());
+         
+         newBifurcation.setupHeightBounds();
+         root.heightParameter.setParameterValue(0, newBifurcationHeight);
+         
+         
+         arg.expandARGWithRecombinant(newBifurcation, newReassortment,
+                             internalNodeParameters, internalAndRootNodeParameters,
+                             nodeRates);
+         
+          assert nodeCheck();
+      
+
+        	
+        	
+        	
+        }
+        
+        
+        
 
         //6a. This is when we do not create a new root.
-        if (newBifurcationHeight < treeHeight) {
-            newBifurcation.heightParameter = new Parameter.Default(newBifurcationHeight);
-            newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
-            newBifurcation.setupHeightBounds();
-            newReassortment.setupHeightBounds();
-
-            if (sisParent.bifurcation)
-                arg.singleRemoveChild(sisParent, sisNode);
-            else
-                arg.doubleRemoveChild(sisParent, sisNode);
-            if (sisNode != recNode) {
-                if (recParent.bifurcation)
-                    arg.singleRemoveChild(recParent, recNode);
-                else
-                    arg.doubleRemoveChild(recParent, recNode);
-            }
-            if (sisParent.bifurcation)
-                arg.singleAddChild(sisParent, newBifurcation);
-            else
-                arg.doubleAddChild(sisParent, newBifurcation);
-            if (sisNode != recNode)
-                arg.singleAddChild(newBifurcation, sisNode);
-            arg.doubleAddChild(newReassortment, recNode);
-
-            Parameter partitioning = new Parameter.Default(arg.getNumberOfPartitions());
-            drawRandomPartitioning(partitioning);
-
-            if (sisNode != recNode) {
-                arg.addChildAsRecombinant(newBifurcation, recParent,
-                        newReassortment, partitioning);
-            } else {
-                arg.addChildAsRecombinant(newBifurcation, newBifurcation,
-                        newReassortment, partitioning);
-            }
-            arg.expandARGWithRecombinant(newBifurcation, newReassortment,
-                    internalNodeParameters,
-                    internalAndRootNodeParameters,
-                    nodeRates);
-            assert nodeCheck();
-
-            //6b. But here we do.
-        } else if (newReassortmentHeight < treeHeight) {
-
-            newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
-            newReassortment.setupHeightBounds();
-
-            sisNode = newBifurcation;
-            if (arg.isRoot(recParent))
-                recParent = newBifurcation;
-
-
-            Node root = (Node) arg.getRoot();
-            Node rootLeftChild = root.leftChild;
-            Node rootRightChild = root.rightChild;
-
-            arg.singleRemoveChild(root, rootLeftChild);
-            arg.singleRemoveChild(root, rootRightChild);
-            arg.singleAddChild(newBifurcation, rootLeftChild);
-            arg.singleAddChild(newBifurcation, rootRightChild);
-
-            if (recParent.isBifurcation())
-                arg.singleRemoveChild(recParent, recNode);
-            else
-                arg.doubleRemoveChild(recParent, recNode);
-
-            arg.doubleAddChild(newReassortment, recNode);
-            arg.singleAddChild(root, newBifurcation);
-
-            Parameter partitioning = new Parameter.Default(arg.getNumberOfPartitions());
-            drawRandomPartitioning(partitioning);
-
-
-            arg.addChildAsRecombinant(root, recParent, newReassortment, partitioning);
-
-            newBifurcation.heightParameter = new Parameter.Default(root.getHeight());
-
-            newBifurcation.setupHeightBounds();
-            root.heightParameter.setParameterValue(0, newBifurcationHeight);
-
-
-            arg.expandARGWithRecombinant(newBifurcation, newReassortment,
-                    internalNodeParameters, internalAndRootNodeParameters,
-                    nodeRates);
-
-            assert nodeCheck();
-
-        } else {
-
-            Node root = (Node) arg.getRoot();
-            Node rootLeftChild = root.leftChild;
-            Node rootRightChild = root.rightChild;
-
-            arg.singleRemoveChild(root, rootLeftChild);
-            arg.singleRemoveChild(root, rootRightChild);
-            arg.singleAddChild(newBifurcation, rootLeftChild);
-            arg.singleAddChild(newBifurcation, rootRightChild);
-
-            arg.doubleAddChild(newReassortment, newBifurcation);
-            arg.doubleAddChild(root, newReassortment);
-
-            Parameter partitioning = new Parameter.Default(arg.getNumberOfPartitions());
-            drawRandomPartitioning(partitioning);
-
-            newReassortment.partitioning = partitioning;
-
-            newBifurcation.heightParameter = new Parameter.Default(arg.getNodeHeight(root));
-            newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
-            root.heightParameter.setParameterValueQuietly(0, newBifurcationHeight);
-
-            newBifurcation.setupHeightBounds();
-            newReassortment.setupHeightBounds();
-
-            arg.expandARGWithRecombinant(newBifurcation, newReassortment,
-                    internalNodeParameters, internalAndRootNodeParameters,
-                    nodeRates);
-
-            assert nodeCheck();
-
-        }
+//        if (newBifurcationHeight < treeHeight) {
+//            newBifurcation.heightParameter = new Parameter.Default(newBifurcationHeight);
+//            newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
+//            newBifurcation.setupHeightBounds();
+//            newReassortment.setupHeightBounds();
+//
+//            if (sisParent.bifurcation)
+//                arg.singleRemoveChild(sisParent, bifurcationChild);
+//            else
+//                arg.doubleRemoveChild(sisParent, bifurcationChild);
+//            if (bifurcationChild != reassortChild) {
+//                if (recParent.bifurcation)
+//                    arg.singleRemoveChild(recParent, reassortChild);
+//                else
+//                    arg.doubleRemoveChild(recParent, reassortChild);
+//            }
+//            if (sisParent.bifurcation)
+//                arg.singleAddChild(sisParent, newBifurcation);
+//            else
+//                arg.doubleAddChild(sisParent, newBifurcation);
+//            if (bifurcationChild != reassortChild)
+//                arg.singleAddChild(newBifurcation, bifurcationChild);
+//            arg.doubleAddChild(newReassortment, reassortChild);
+//
+//            Parameter partitioning = new Parameter.Default(arg.getNumberOfPartitions());
+//            drawRandomPartitioning(partitioning);
+//
+//            if (bifurcationChild != reassortChild) {
+//                arg.addChildAsRecombinant(newBifurcation, recParent,
+//                        newReassortment, partitioning);
+//            } else {
+//                arg.addChildAsRecombinant(newBifurcation, newBifurcation,
+//                        newReassortment, partitioning);
+//            }
+//            arg.expandARGWithRecombinant(newBifurcation, newReassortment,
+//                    internalNodeParameters,
+//                    internalAndRootNodeParameters,
+//                    nodeRates);
+//            assert nodeCheck();
+//
+//            //6b. But here we do.
+//        } else if (newReassortmentHeight < treeHeight) {
+//
+//            newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
+//            newReassortment.setupHeightBounds();
+//
+//            bifurcationChild = newBifurcation;
+//            if (arg.isRoot(recParent))
+//                recParent = newBifurcation;
+//
+//
+//            Node root = (Node) arg.getRoot();
+//            Node rootLeftChild = root.leftChild;
+//            Node rootRightChild = root.rightChild;
+//
+//            arg.singleRemoveChild(root, rootLeftChild);
+//            arg.singleRemoveChild(root, rootRightChild);
+//            arg.singleAddChild(newBifurcation, rootLeftChild);
+//            arg.singleAddChild(newBifurcation, rootRightChild);
+//
+//            if (recParent.isBifurcation())
+//                arg.singleRemoveChild(recParent, reassortChild);
+//            else
+//                arg.doubleRemoveChild(recParent, reassortChild);
+//
+//            arg.doubleAddChild(newReassortment, reassortChild);
+//            arg.singleAddChild(root, newBifurcation);
+//
+//            Parameter partitioning = new Parameter.Default(arg.getNumberOfPartitions());
+//            drawRandomPartitioning(partitioning);
+//
+//
+//            arg.addChildAsRecombinant(root, recParent, newReassortment, partitioning);
+//
+//            newBifurcation.heightParameter = new Parameter.Default(root.getHeight());
+//
+//            newBifurcation.setupHeightBounds();
+//            root.heightParameter.setParameterValue(0, newBifurcationHeight);
+//
+//
+//            arg.expandARGWithRecombinant(newBifurcation, newReassortment,
+//                    internalNodeParameters, internalAndRootNodeParameters,
+//                    nodeRates);
+//
+//            assert nodeCheck();
+//
+//        } else {
+//
+//            Node root = (Node) arg.getRoot();
+//            Node rootLeftChild = root.leftChild;
+//            Node rootRightChild = root.rightChild;
+//
+//            arg.singleRemoveChild(root, rootLeftChild);
+//            arg.singleRemoveChild(root, rootRightChild);
+//            arg.singleAddChild(newBifurcation, rootLeftChild);
+//            arg.singleAddChild(newBifurcation, rootRightChild);
+//
+//            arg.doubleAddChild(newReassortment, newBifurcation);
+//            arg.doubleAddChild(root, newReassortment);
+//
+//            Parameter partitioning = new Parameter.Default(arg.getNumberOfPartitions());
+//            drawRandomPartitioning(partitioning);
+//
+//            newReassortment.partitioning = partitioning;
+//
+//            newBifurcation.heightParameter = new Parameter.Default(arg.getNodeHeight(root));
+//            newReassortment.heightParameter = new Parameter.Default(newReassortmentHeight);
+//            root.heightParameter.setParameterValueQuietly(0, newBifurcationHeight);
+//
+//            newBifurcation.setupHeightBounds();
+//            newReassortment.setupHeightBounds();
+//
+//            arg.expandARGWithRecombinant(newBifurcation, newReassortment,
+//                    internalNodeParameters, internalAndRootNodeParameters,
+//                    nodeRates);
+//
+//            assert nodeCheck();
+//
+//        }
 
         arg.pushTreeSizeChangedEvent();
 
@@ -415,7 +763,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         //You're done, return the hastings ratio!
 
 //		System.out.println(logHastings);
-
+        
         logHastings += getPartitionAddHastingsRatio(newReassortment.partitioning.getParameterValues());
 
         return logHastings;
@@ -519,13 +867,15 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         Node recParent = recNode.leftParent;
         Node recChild = recNode.leftChild;
 
-        Node attachChild = recNode.leftChild;
-        Node attachParent = null;
-
+        Node beforeReassortChild = recNode.leftChild;
+        Node beforeBifurcationChild = recNode.leftParent;
+        
 
         if (recNode.leftParent == recNode.rightParent) {
             if (!arg.isRoot(recNode.leftParent)) {
-                Node recGrandParent = recParent.leftParent;
+            	beforeBifurcationHeight = recParent.getHeight();
+            	
+            	Node recGrandParent = recParent.leftParent;
 
                 arg.doubleRemoveChild(recGrandParent, recParent);
                 arg.doubleRemoveChild(recNode, recChild);
@@ -534,147 +884,140 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 else
                     arg.doubleAddChild(recGrandParent, recChild);
                 doneSomething = true;
-                beforeBifurcationHeight = recParent.getHeight();
+               
+                beforeBifurcationChild = beforeReassortChild;
             } else {
+            	//You should never go here.
+            	
                 assert recChild.bifurcation;
                 assert false;
-                Node recChildLeft = recChild.leftChild;
-                Node recChildRight = recChild.rightChild;
-
-                arg.doubleRemoveChild(recParent, recNode);
-                arg.doubleRemoveChild(recNode, recChild);
-
-                arg.singleRemoveChild(recChild, recChildLeft);
-                arg.singleRemoveChild(recChild, recChildRight);
-
-                arg.singleAddChild(recParent, recChildLeft);
-                arg.singleAddChild(recParent, recChildRight);
-
-                recParent.setHeight(recChild.getHeight());
-
-                recParent = recChild;
-                doneSomething = true;
-                beforeBifurcationHeight = beforeTreeHeight;
             }
 
-            attachParent = recChild;
+            
         } else {
 
-            Node recParent1 = recNode.leftParent;
-            Node recParent2 = recNode.rightParent;
+            Node recDeleteParent = null;
+            Node recKeepParent = null;
 
-            if (recParent1.bifurcation && recParent2.bifurcation) {
+            
+            
+            if (recNode.leftParent.bifurcation && recNode.rightParent.bifurcation) {
                 if (MathUtils.nextBoolean()) {
-                    recParent1 = recNode.rightParent;
-                    recParent2 = recNode.leftParent;
+                    recDeleteParent = recNode.rightParent;
+                    recKeepParent = recNode.leftParent;
+                }else{
+                	recDeleteParent = recNode.leftParent;
+                    recKeepParent = recNode.rightParent;
                 }
-//				logHastings += LOG_TWO;
-            } else if (recParent2.bifurcation) {
-                recParent1 = recNode.rightParent;
-                recParent2 = recNode.leftParent;
+            } else if (recNode.rightParent.bifurcation) {
+                recDeleteParent = recNode.rightParent;
+                recKeepParent = recNode.leftParent;
+            }else{
+            	recDeleteParent = recNode.leftParent;
+            	recKeepParent = recNode.rightParent;
             }
 
-
-            attachParent = recParent1.leftChild;
-            if (attachParent == recNode) {
-                attachParent = recParent1.rightChild;
+            beforeBifurcationChild = recDeleteParent.leftChild;
+            if(beforeBifurcationChild == recNode){
+            	beforeBifurcationChild = recDeleteParent.rightChild;
             }
+            
+            beforeBifurcationHeight = recDeleteParent.getHeight();
+            
 
-            if (arg.isRoot(recParent1)) {
+            if (arg.isRoot(recDeleteParent)) {
 
-                Node oldRoot = (Node) arg.getOtherChild(recParent1, recNode);
+                Node oldRoot = (Node) arg.getOtherChild(recDeleteParent, recNode);
                 Node oldRootLeft = oldRoot.leftChild;
                 Node oldRootRight = oldRoot.rightChild;
 
-                if (oldRoot == recParent2) {
+                if (oldRoot == recKeepParent) {
 
-                    arg.singleRemoveChild(recParent1, recNode);
-                    arg.singleRemoveChild(recParent1, oldRoot);
+                    arg.singleRemoveChild(recDeleteParent, recNode);
+                    arg.singleRemoveChild(recDeleteParent, oldRoot);
                     arg.singleRemoveChild(oldRoot, oldRootLeft);
                     arg.singleRemoveChild(oldRoot, oldRootRight);
 
-                    arg.singleAddChild(recParent1, oldRootLeft);
-                    arg.singleAddChild(recParent1, oldRootRight);
+                    arg.singleAddChild(recDeleteParent, oldRootLeft);
+                    arg.singleAddChild(recDeleteParent, oldRootRight);
 
-                    arg.singleRemoveChild(recParent1, recNode);
+                    arg.singleRemoveChild(recDeleteParent, recNode);
                     arg.doubleRemoveChild(recNode, recChild);
 
-                    arg.singleAddChild(recParent1, recChild);
+                    arg.singleAddChild(recDeleteParent, recChild);
 
-                    recParent1.setHeight(oldRoot.getHeight());
+                    recDeleteParent.setHeight(oldRoot.getHeight());
 
-                    recParent1 = oldRoot;
+                    recDeleteParent = oldRoot;
 
                 } else {
-                    arg.singleRemoveChild(recParent1, recNode);
-                    arg.singleRemoveChild(recParent1, oldRoot);
+                    arg.singleRemoveChild(recDeleteParent, recNode);
+                    arg.singleRemoveChild(recDeleteParent, oldRoot);
                     arg.singleRemoveChild(oldRoot, oldRootLeft);
                     arg.singleRemoveChild(oldRoot, oldRootRight);
 
-                    arg.singleAddChild(recParent1, oldRootLeft);
-                    arg.singleAddChild(recParent1, oldRootRight);
+                    arg.singleAddChild(recDeleteParent, oldRootLeft);
+                    arg.singleAddChild(recDeleteParent, oldRootRight);
 
-                    if (recParent2.bifurcation)
-                        arg.singleRemoveChild(recParent2, recNode);
+                    if (recKeepParent.bifurcation)
+                        arg.singleRemoveChild(recKeepParent, recNode);
                     else
-                        arg.doubleRemoveChild(recParent2, recNode);
+                        arg.doubleRemoveChild(recKeepParent, recNode);
 
                     arg.doubleRemoveChild(recNode, recChild);
 
-                    if (recParent2.bifurcation)
-                        arg.singleAddChild(recParent2, recChild);
+                    if (recKeepParent.bifurcation)
+                        arg.singleAddChild(recKeepParent, recChild);
                     else
-                        arg.doubleAddChild(recParent2, recChild);
+                        arg.doubleAddChild(recKeepParent, recChild);
 
-                    recParent1.setHeight(oldRoot.getHeight());
-                    recParent1 = oldRoot;
+                    recDeleteParent.setHeight(oldRoot.getHeight());
+                    recDeleteParent = oldRoot;
 
                 }
-                beforeBifurcationHeight = beforeTreeHeight;
-                attachParent = (Node) arg.getRoot();
+                
+                
             } else {
-                Node recGrandParent = recParent1.leftParent;
+                Node recGrandParent = recDeleteParent.leftParent;
 
-                Node otherChild = recParent1.leftChild;
+                Node otherChild = recDeleteParent.leftChild;
                 if (otherChild == recNode)
-                    otherChild = recParent1.rightChild;
+                    otherChild = recDeleteParent.rightChild;
 
                 if (recGrandParent.bifurcation)
-                    arg.singleRemoveChild(recGrandParent, recParent1);
+                    arg.singleRemoveChild(recGrandParent, recDeleteParent);
                 else
-                    arg.doubleRemoveChild(recGrandParent, recParent1);
+                    arg.doubleRemoveChild(recGrandParent, recDeleteParent);
 
-                arg.singleRemoveChild(recParent1, otherChild);
-                if (recParent2.bifurcation)
-                    arg.singleRemoveChild(recParent2, recNode);
+                arg.singleRemoveChild(recDeleteParent, otherChild);
+                if (recKeepParent.bifurcation)
+                    arg.singleRemoveChild(recKeepParent, recNode);
                 else
-                    arg.doubleRemoveChild(recParent2, recNode);
+                    arg.doubleRemoveChild(recKeepParent, recNode);
                 arg.doubleRemoveChild(recNode, recChild);
                 if (otherChild != recChild) {
                     if (recGrandParent.bifurcation)
                         arg.singleAddChild(recGrandParent, otherChild);
                     else
                         arg.doubleAddChild(recGrandParent, otherChild);
-                    if (recParent2.bifurcation)
-                        arg.singleAddChild(recParent2, recChild);
+                    if (recKeepParent.bifurcation)
+                        arg.singleAddChild(recKeepParent, recChild);
                     else
-                        arg.doubleAddChild(recParent2, recChild);
+                        arg.doubleAddChild(recKeepParent, recChild);
                 } else {
                     if (recGrandParent.bifurcation)
                         arg.singleAddChildWithOneParent(recGrandParent, otherChild);
                     else
                         arg.doubleAddChildWithOneParent(recGrandParent, otherChild);
-                    if (recParent2.bifurcation)
-                        arg.singleAddChildWithOneParent(recParent2, recChild);
+                    if (recKeepParent.bifurcation)
+                        arg.singleAddChildWithOneParent(recKeepParent, recChild);
                     else
-                        arg.doubleAddChildWithOneParent(recParent2, recChild);
+                        arg.doubleAddChildWithOneParent(recKeepParent, recChild);
                 }
-
-                beforeBifurcationHeight = arg.getNodeHeight(recParent1);
             }
 
             doneSomething = true;
-            recParent = recParent1;
+            recParent = recDeleteParent;
         }
 
 
@@ -746,7 +1089,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 - 2.0 * Math.log(theta) + Math.log(1 - Math.exp(-2.0 * afterTreeHeight * theta));
 
 
-        assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
+        
 
         logHastings -= Math.log((double) findPotentialAttachmentPoints(beforeBifurcationHeight, null)
                 * findPotentialAttachmentPoints(beforeReassortmentHeight, null));
@@ -755,16 +1098,16 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         logHastings -= getPartitionAddHastingsRatio(removePartitioningValues);
 
 
-        if (attachChild.leftParent != attachChild.rightParent &&
-                arg.getNodeHeight(attachChild.leftParent) > beforeReassortmentHeight &&
-                arg.getNodeHeight(attachChild.rightParent) > beforeReassortmentHeight) {
+        if (!beforeBifurcationChild.bifurcation &&
+                arg.getNodeHeight(beforeBifurcationChild.leftParent) > beforeBifurcationHeight &&
+                arg.getNodeHeight(beforeBifurcationChild.rightParent) > beforeBifurcationHeight) {
             logHastings -= LOG_TWO;
 
         }
 
-        if (attachParent.leftParent != attachParent.rightParent &&
-                arg.getNodeHeight(attachParent.leftParent) > beforeBifurcationHeight &&
-                arg.getNodeHeight(attachParent.rightParent) > beforeBifurcationHeight) {
+        if (!beforeReassortChild.bifurcation &&
+                arg.getNodeHeight(beforeReassortChild.leftParent) > beforeReassortmentHeight &&
+                arg.getNodeHeight(beforeReassortChild.rightParent) > beforeReassortmentHeight) {
             logHastings -= LOG_TWO;
         }
         assert nodeCheck();

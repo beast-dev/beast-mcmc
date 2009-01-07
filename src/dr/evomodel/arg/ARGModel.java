@@ -3354,6 +3354,21 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     	public boolean fullAncestralMaterial;
     	public boolean hasSomeAncestralMaterial;
     	
+    	public boolean hasReassortmentAncestor(){
+    		Node a = this;
+    		
+    		while(a != null){
+    			if(!a.bifurcation){
+    				return true;
+    			}else{
+    				a = a.leftParent;
+    			}
+    		}
+    		
+    		
+    		return false;
+    	}
+    	
     	public void setAncestralMaterial(boolean[] childAncestralMaterial){
     		if(fullAncestralMaterial){
     			return;

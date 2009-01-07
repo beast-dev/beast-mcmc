@@ -124,16 +124,11 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         double logq = 0;
 
         try {
-        	if(arg.getReassortmentNodeCount() < 3)
-        		logq = AddOperation();
-        	else
-        		logq = RemoveOperation();
-//        	
-//        	if (MathUtils.nextDouble() < 1.0 / (1 + Math.exp(-size))){
-//            	logq = AddOperation() - size;
-//            }else{
-//                logq = RemoveOperation() + size;
-//            }
+        	if (MathUtils.nextDouble() < 1.0 / (1 + Math.exp(-size))){
+            	logq = AddOperation() - size;
+            }else{
+                logq = RemoveOperation() + size;
+            }
         } catch (NoReassortmentEventException nree) {
             throw new OperatorFailedException("");
         }

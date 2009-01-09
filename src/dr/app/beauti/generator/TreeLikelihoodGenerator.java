@@ -86,8 +86,15 @@ public class TreeLikelihoodGenerator extends Generator {
                             new Attribute.Default<String>("id", prefix + id),
                             new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(model))}
             );
-            writer.writeTag(SitePatternsParser.PATTERNS,
-                    new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
+
+            if (!options.samplePriorOnly) {
+                writer.writeTag(SitePatternsParser.PATTERNS,
+                        new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
+            } else {
+                // We just need to use the dummy alignment
+                writer.writeTag(SitePatternsParser.PATTERNS,
+                        new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
+            }
 
             writer.writeTag(TreeModel.TREE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
@@ -102,8 +109,14 @@ public class TreeLikelihoodGenerator extends Generator {
                             new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(model))
                     }
             );
-            writer.writeTag(SitePatternsParser.PATTERNS,
-                    new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
+            if (!options.samplePriorOnly) {
+                writer.writeTag(SitePatternsParser.PATTERNS,
+                        new Attribute[]{new Attribute.Default<String>("idref", prefix + "patterns")}, true);
+            } else {
+                // We just need to use the dummy alignment
+                writer.writeTag(SitePatternsParser.PATTERNS,
+                        new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
+            }
             writer.writeTag(TreeModel.TREE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,

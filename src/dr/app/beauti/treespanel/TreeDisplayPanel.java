@@ -26,22 +26,15 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.PanelUtils;
-import dr.app.beauti.options.*;
 import dr.app.tools.TemporalRooting;
 import dr.evolution.tree.Tree;
-import dr.gui.tree.*;
 import dr.gui.chart.*;
+import dr.gui.tree.JTreeDisplay;
+import dr.gui.tree.SquareTreePainter;
 import dr.stats.Regression;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
-import java.awt.event.*;
-
-import jebl.gui.trees.treeviewer.TreeViewer;
 
 /**
  * @author Andrew Rambaut

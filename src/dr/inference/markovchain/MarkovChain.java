@@ -27,6 +27,7 @@ package dr.inference.markovchain;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.operators.*;
 import dr.inference.prior.Prior;
 
@@ -120,7 +121,13 @@ public final class MarkovChain {
                 }
             }
 
-            throw new IllegalArgumentException("The initial likelihood is zero!");
+            String message = "The initial likelihood is zero";
+            if (likelihood instanceof CompoundLikelihood) {
+                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
+            } else {
+                message += "!";
+            }
+            throw new IllegalArgumentException(message);
         }
 
         pleaseStop = false;

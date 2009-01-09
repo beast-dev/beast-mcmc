@@ -173,19 +173,26 @@ public class BeastGenerator extends Generator {
             }
         }
 
-        int index = 1;
-        for (Alignment alignment : alignments) {
-            if (alignments.size() > 1) {
-                alignment.setId("alignment" + index);
-            } else alignment.setId("alignment");
-            writeAlignment(alignment, writer);
-            index += 1;
-        }
-
         partitionModelGenerator = new PartitionModelGenerator(options);
 
-        for (PartitionModel model : options.getActiveModels()) {
-            writePatternList(model, writer);
+        if (!options.samplePriorOnly) {
+            int index = 1;
+            for (Alignment alignment : alignments) {
+                if (alignments.size() > 1) {
+                    alignment.setId("alignment" + index);
+                } else alignment.setId("alignment");
+                writeAlignment(alignment, writer);
+                index += 1;
+            }
+
+            for (PartitionModel model : options.getActiveModels()) {
+                writePatternList(model, writer);
+            }
+
+        } else {
+            Alignment alignment = alignments.get(0);
+            alignment.setId("alignment");
+            writeAlignment(alignment, writer);
         }
 
         treePriorGenerator = new TreePriorGenerator(options);
@@ -405,8 +412,7 @@ public class BeastGenerator extends Generator {
             if (!options.samplePriorOnly) {
                 writer.writeText(alignment.getAlignedSequenceString(i));
             } else {
-                // 3 Ns written in case 3 codon positions selected...
-                writer.writeText("NNN");
+                writer.writeText("N");
             }
             writer.writeCloseTag("sequence");
         }

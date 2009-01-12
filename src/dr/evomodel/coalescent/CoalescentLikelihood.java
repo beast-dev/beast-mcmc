@@ -84,7 +84,8 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		DemographicFunction demoFunction = demoModel.getDemographicFunction();
 
-		double lnL =  Coalescent.calculateLogLikelihood(getIntervals(), demoFunction);
+		//double lnL =  Coalescent.calculateLogLikelihood(getIntervals(), demoFunction);
+        double lnL =  Coalescent.calculateLogLikelihood(getIntervals(), demoFunction, 1E-12);
 
 		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
 			Logger.getLogger("error").severe("CoalescentLikelihood is " + Double.toString(lnL));

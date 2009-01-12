@@ -93,15 +93,18 @@ public class Coalescent implements MultivariateFunction, Units {
                 // if value at end is many orders of magnitude different than mean over interval reject the interval
                 // This is protection against cases where ridiculous infitisimal
                 // population size at the end of a linear interval drive coalescent values to infinity.
-	            
-               //if( duration == 0.0 || demographicAtCoalPoint * (intervalArea/duration) > 1e-12 ) {
+
                 if( duration == 0.0 || demographicAtCoalPoint > 1e-12 * (duration/intervalArea) ) {
-                   logL -= Math.log(demographicAtCoalPoint);
+                // AR - this was causing some initial trees to fail. Kept the warning in but removed the exception.
+//                   logL -= Math.log(demographicAtCoalPoint);
                 } else {
                     // remove this at some stage
-                    System.err.println("Interval ignored: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
-                    return Double.NEGATIVE_INFINITY;
-               }
+                    System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
+//                    return Double.NEGATIVE_INFINITY;
+                }
+
+                logL -= Math.log(demographicAtCoalPoint);
+
             }
 
             startTime = finishTime;

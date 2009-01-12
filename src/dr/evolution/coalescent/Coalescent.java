@@ -69,6 +69,14 @@ public class Coalescent implements MultivariateFunction, Units {
      * given a demographic model.
      */
     public static double calculateLogLikelihood(IntervalList intervals, DemographicFunction demographicFunction) {
+        return calculateLogLikelihood(intervals, demographicFunction, 0.0);
+    }
+
+    /**
+     * Calculates the log likelihood of this set of coalescent intervals,
+     * given a demographic model.
+     */
+    public static double calculateLogLikelihood(IntervalList intervals, DemographicFunction demographicFunction, double threshold) {
 
         double logL = 0.0;
 
@@ -94,16 +102,13 @@ public class Coalescent implements MultivariateFunction, Units {
                 // This is protection against cases where ridiculous infitisimal
                 // population size at the end of a linear interval drive coalescent values to infinity.
 
-                if( duration == 0.0 || demographicAtCoalPoint > 1e-12 * (duration/intervalArea) ) {
-                // AR - this was causing some initial trees to fail. Kept the warning in but removed the exception.
-//                   logL -= Math.log(demographicAtCoalPoint);
+                if( duration == 0.0 || demographicAtCoalPoint > threshold * (duration/intervalArea) ) {
+                   logL -= Math.log(demographicAtCoalPoint);
                 } else {
                     // remove this at some stage
                     System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
-//                    return Double.NEGATIVE_INFINITY;
+                    return Double.NEGATIVE_INFINITY;
                 }
-
-                logL -= Math.log(demographicAtCoalPoint);
 
             }
 

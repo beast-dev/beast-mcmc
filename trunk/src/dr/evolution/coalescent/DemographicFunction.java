@@ -109,7 +109,15 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 	 */
 	DemographicFunction getCopy();
 
-	public abstract class Abstract implements DemographicFunction
+    /**
+     * A threshold for underflow on calculation of likelihood of internode intervals.
+     * Most demo functions could probably return 0.0 but (e.g.,) the Extended Skyline
+     * needs a non zero value to prevent a numerical problem. 
+     * @return
+     */
+    double getThreshold();
+
+    public abstract class Abstract implements DemographicFunction
 	{
        // private static final double LARGE_POSITIVE_NUMBER = 1.0e50;
 //        private static final double LARGE_NEGATIVE_NUMBER = -1.0e50;
@@ -134,6 +142,10 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
          */
         public double getLogDemographic(double t) {
             return Math.log(getDemographic(t));
+        }
+
+        public double getThreshold() {
+            return 0;
         }
 
         /**

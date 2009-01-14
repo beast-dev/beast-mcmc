@@ -424,6 +424,10 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         return null;
     }
 
+    public double getThreshold() {
+        return 1E-12;
+    }
+
     // not sure why we need this here
     public double value(double x) {
         return 1.0 / getDemographic(x);

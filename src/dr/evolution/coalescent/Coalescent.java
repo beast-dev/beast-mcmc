@@ -102,7 +102,8 @@ public class Coalescent implements MultivariateFunction, Units {
                 // This is protection against cases where ridiculous infitisimal
                 // population size at the end of a linear interval drive coalescent values to infinity.
 
-                if( duration == 0.0 || demographicAtCoalPoint > threshold * (duration/intervalArea) ) {
+                if( duration == 0.0 || demographicAtCoalPoint * (intervalArea/duration) >= threshold ) {
+//                if( duration == 0.0 || demographicAtCoalPoint >= threshold * (duration/intervalArea) ) {
                    logL -= Math.log(demographicAtCoalPoint);
                 } else {
                     // remove this at some stage

@@ -327,6 +327,9 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 
 	}
 
+	protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type){
+		likelihoodKnown = false;
+	}
 
 	protected void handleParameterChangedEvent(Parameter parameter, int index) {
 		likelihoodKnown = false;

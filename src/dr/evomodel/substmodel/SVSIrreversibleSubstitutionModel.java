@@ -47,4 +47,9 @@ public class SVSIrreversibleSubstitutionModel extends SVSGeneralSubstitutionMode
 	}
 
 	private FrequencyModel rootFreq;
+
+    public boolean validState() {
+        return true;
+    }
+    
 }

@@ -154,7 +154,13 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
                 for (int j = 0; j < patternCount; j++) {
 
                     System.arraycopy(rootPartials, j * stateCount, conditionalProbabilities, 0, stateCount);
-                    state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
+                    try { // TODO This is a hack, need to fix properly
+                        state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
+                    } catch (Error e) {
+                        System.err.println(e.toString());
+                        System.err.println("Please report error to Marc");
+                        state[j] = 0;
+                    }
                     reconstructedStates[nodeNum][j] = state[j];
                 }
 

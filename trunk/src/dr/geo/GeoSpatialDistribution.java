@@ -17,9 +17,14 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     public static final String FLAT_SPATIAL_DISTRIBUTION = "flatGeoSpatialPrior";
     public static final String DATA = "data";
     public static final String TYPE = "geoSpatial";
-
+    public static final String NODE_LABEL = "taxon";
 
     public GeoSpatialDistribution(SpatialTemporalPolygon region) {
+        this.region = region;
+    }
+
+    public GeoSpatialDistribution(String label, SpatialTemporalPolygon region) {
+        this.label = label;
         this.region = region;
     }
 
@@ -41,7 +46,10 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         return TYPE;
     }
 
+    public String getLabel() { return label; }
+
     protected SpatialTemporalPolygon region;
+    protected String label = null;
 
 
     public static XMLObjectParser FLAT_GEOSPATIAL_PRIOR_PARSER = new AbstractXMLObjectParser() {
@@ -52,9 +60,11 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+            String label = xo.getAttribute(NODE_LABEL,"");
+
             SpatialTemporalPolygon region = (SpatialTemporalPolygon) xo.getChild(SpatialTemporalPolygon.class);
 
-            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new GeoSpatialDistribution(region));
+            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new GeoSpatialDistribution(label,region));
 
             XMLObject cxo = (XMLObject) xo.getChild(DATA);
             for (int j = 0; j < cxo.getChildCount(); j++) {
@@ -71,6 +81,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newStringRule(NODE_LABEL,true),
                 new ElementRule(SpatialTemporalPolygon.class),
                 new ElementRule(DATA,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}

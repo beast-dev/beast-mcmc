@@ -269,12 +269,14 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
         DoubleMatrix2D eigenVInv = null;
 
+        updateMatrix = false;
+
         try {
             eigenVInv = alegbra.inverse(eigenV);
             wellConditioned = true;
         } catch (IllegalArgumentException e) {
             wellConditioned = false;
-            updateMatrix = false;
+//            updateMatrix = false;
 //            count++;
 //            if (count > 10000) {
 //                System.err.println("Too many ill-conditioned matrices");
@@ -330,7 +332,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
 //		printDebugSetupMatrix();
 //        wellConditioned = true;
-        updateMatrix = false;
+//        updateMatrix = false;
     }
 
     private void printDebugSetupMatrix() {

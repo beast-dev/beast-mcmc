@@ -36,6 +36,10 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         return rateIndicator;
     }
 
+    public boolean validState() {
+        return true;
+    }
+
     public boolean myIsValid() {
         boolean valid = true;
         //	setupMatrix();

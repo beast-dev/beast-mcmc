@@ -9,22 +9,28 @@ import dr.inference.model.Parameter;
  */
 public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implements BayesianStochasticSearchVariableSelection {
 
-	public SVSComplexSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel, Parameter parameter, Parameter indicators) {
-		super(name, dataType, rootFreqModel, parameter);
-		this.indicators = indicators;
-		addParameter(indicators);
-	}
+    public SVSComplexSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel, Parameter parameter, Parameter indicators) {
+        super(name, dataType, rootFreqModel, parameter);
+        this.indicators = indicators;
+        addParameter(indicators);
+    }
 
-	protected double[] getRates() {
-		double[] rates = infinitesimalRates.getParameterValues();
-		double[] indies = indicators.getParameterValues();
-		final int dim = rates.length;
-		for (int i = 0; i < dim; i++)
-			rates[i] *= indies[i];
-		return rates;
-	}
+    protected double[] getRates() {
+        double[] rates = infinitesimalRates.getParameterValues();
+        double[] indies = indicators.getParameterValues();
+        final int dim = rates.length;
+        for (int i = 0; i < dim; i++)
+            rates[i] *= indies[i];
+        return rates;
+    }
 
-    public Parameter getIndicators() { return indicators; }
+    public Parameter getIndicators() {
+        return indicators;
+    }
+
+    public boolean validState() {
+        return true;
+    }
 
     private Parameter indicators;
 

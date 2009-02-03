@@ -41,15 +41,17 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
         rateCount = stateCount * (stateCount - 1);
 
-        if (rateCount != infinitesimalRates.getDimension()) {
-            throw new RuntimeException("Dimension of '" + infinitesimalRates.getId() + "' ("
-                    + infinitesimalRates.getDimension() + ") must equal " + rateCount);
+        if (parameter != null) {
+            if (rateCount != infinitesimalRates.getDimension()) {
+                throw new RuntimeException("Dimension of '" + infinitesimalRates.getId() + "' ("
+                        + infinitesimalRates.getDimension() + ") must equal " + rateCount);
+            }
+            addParameter(infinitesimalRates);
         }
+
 
         stationaryDistribution = new double[stateCount];
         storedStationaryDistribution = new double[stateCount];
-
-        addParameter(infinitesimalRates);
 
         illConditionedProbabilities = new double[stateCount * stateCount];
         for (int i = 0; i < stateCount * stateCount; i++)
@@ -189,8 +191,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
                 for (j = 0; j < stateCount; j++) {
 //                    try {
-                        iexp[i][j] = expatcosbt * Ievc[i][j] + expatsinbt * Ievc[i2][j];
-                        iexp[i2][j] = expatcosbt * Ievc[i2][j] - expatsinbt * Ievc[i][j];
+                    iexp[i][j] = expatcosbt * Ievc[i][j] + expatsinbt * Ievc[i2][j];
+                    iexp[i2][j] = expatcosbt * Ievc[i2][j] - expatsinbt * Ievc[i][j];
 //                    } catch (Exception e) {
 //                        System.err.println("Exception: " + e.getMessage());
 //                        DoubleMatrix1D eigenVReal = eigenDecomp.getRealEigenvalues();
@@ -228,7 +230,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     }
 
     protected void computeStationaryDistribution() {
-        stationaryDistribution = freqModel.getFrequencies();       
+        stationaryDistribution = freqModel.getFrequencies();
     }
 
 
@@ -320,8 +322,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         normalization = subst;
 
 //        if (subst == Double.NaN || subst == Double.POSITIVE_INFINITY || subst == Double.NEGATIVE_INFINITY) {
-        if (subst == 0 ) {
-            System.err.println("subst = "+subst);
+        if (subst == 0) {
+            System.err.println("subst = " + subst);
             System.exit(-1);
         }
 
@@ -535,7 +537,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     private double[] illConditionedProbabilities;
 
     private static final double minProb = Property.DEFAULT.tolerance();
-//    private static final double minProb = 1E-20;
+    //    private static final double minProb = 1E-20;
     //    private static final double minProb = Property.ZERO.tolerance();
     private static final Algebra alegbra = new Algebra(minProb);
     EigenvalueDecomposition eigenDecomp;

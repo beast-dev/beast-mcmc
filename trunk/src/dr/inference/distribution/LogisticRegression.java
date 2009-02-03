@@ -3,12 +3,9 @@ package dr.inference.distribution;
 import dr.inference.model.Parameter;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Jan 2, 2007
- * Time: 2:43:23 PM
- * To change this template use File | Settings | File Templates.
+ * @author Marc A. Suchard
  */
+
 public class LogisticRegression extends GeneralizedLinearModel {
 
 

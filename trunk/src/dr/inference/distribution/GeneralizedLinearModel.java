@@ -1,6 +1,8 @@
 package dr.inference.distribution;
 
 import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
 import dr.math.MultivariateFunction;
 import dr.xml.*;
@@ -16,7 +18,7 @@ import java.util.List;
 public abstract class GeneralizedLinearModel extends AbstractModel implements Likelihood, MultivariateFunction {
 //		, RealFunctionOfSeveralVariablesWithGradient {
 
-    public static final String GLM_LIKELIHOOD = "glmLikelihood";
+    public static final String GLM_LIKELIHOOD = "glmModel";
 
     public static final String DEPENDENT_VARIABLES = "dependentVariables";
     public static final String INDEPENDENT_VARIABLES = "independentVariables";
@@ -25,6 +27,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
     public static final String SCALE_VARIABLES = "scaleVariables";
     public static final String LOGISTIC_REGRESSION = "logistic";
     public static final String NORMAL_REGRESSION = "normal";
+    public static final String LOG_LINEAR = "logLinear";
 //	public static final String RANDOM_EFFECTS = "randomEffects";
 
     protected Parameter dependentParam;
@@ -46,8 +49,11 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 //		this.independentParam = independentParam;
 //		this.designMatrix = designMatrix;
 //		addParameter(independentParam);
-        addParameter(dependentParam);
-        N = dependentParam.getDimension();
+        if (dependentParam != null) {
+            addParameter(dependentParam);
+            N = dependentParam.getDimension();
+        } else
+            N = 0;
     }
 
     public void addIndependentParameter(Parameter effect, DesignMatrix matrix) {
@@ -55,6 +61,9 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
             designMatrix = new ArrayList<double[][]>();
         if (independentParam == null)
             independentParam = new ArrayList<Parameter>();
+        if (N == 0) {
+            N = matrix.getRowDimension();
+        }
         designMatrix.add(matrix.getParameterAsMatrix());
         independentParam.add(effect);
         if (designMatrix.size() != independentParam.size())
@@ -233,7 +242,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        // todo store and restore Xbeta and Scale
+//        fireModelChanged();
     }
 
     protected void storeState() {
@@ -269,22 +278,43 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
     // Loggable IMPLEMENTATION
     // **************************************************************
 
-    /**
-     * @return the log columns.
-     */
+//    /**
+//     * @return the log columns.
+//     */
+//    public LogColumn[] getColumns() {
+//        return new dr.inference.loggers.LogColumn[]{
+//                new LikelihoodColumn(getId())
+//        };
+//    }
+//
+//    private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
+//        public LikelihoodColumn(String label) {
+//            super(label);
+//        }
+//
+//        public double getDoubleValue() {
+//            return getLogLikelihood();
+//        }
+//    }
+
     public LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[]{
-                new LikelihoodColumn(getId())
-        };
+        LogColumn[] output = new LogColumn[N];
+        for(int i=0; i<N; i++)
+            output[i] = new NumberArrayColumn(getId()+i,i);
+        return output;
     }
 
-    private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) {
+    private class NumberArrayColumn extends NumberColumn {
+
+        private int index;
+
+        public NumberArrayColumn(String label, int index) {
             super(label);
+            this.index = index;
         }
 
         public double getDoubleValue() {
-            return getLogLikelihood();
+            return getXBeta()[index];
         }
     }
 
@@ -309,7 +339,9 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             XMLObject cxo = (XMLObject) xo.getChild(DEPENDENT_VARIABLES);
-            Parameter dependentParam = (Parameter) cxo.getChild(Parameter.class);
+            Parameter dependentParam = null;
+            if (cxo != null)
+                dependentParam = (Parameter) cxo.getChild(Parameter.class);
 
             String family = xo.getStringAttribute(FAMILY);
             GeneralizedLinearModel glm;
@@ -317,6 +349,8 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
                 glm = new LogisticRegression(dependentParam);
             } else if (family.compareTo(NORMAL_REGRESSION) == 0) {
                 glm = new LinearRegression(dependentParam);
+            } else if (family.compareTo(LOG_LINEAR) == 0) {
+                glm = new LogLinearModel(dependentParam);
             } else
                 throw new XMLParseException("Family '" + family + "' is not currently implemented");
 
@@ -356,11 +390,20 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 
         private void checkDimensions(Parameter independentParam, Parameter dependentParam, DesignMatrix designMatrix)
                 throws XMLParseException {
+            if (dependentParam != null) {
             if ((dependentParam.getDimension() != designMatrix.getRowDimension()) ||
                     (independentParam.getDimension() != designMatrix.getColumnDimension()))
                 throw new XMLParseException(
                         "dim(" + dependentParam.getId() + ") != dim(" + designMatrix.getId() + " %*% " + independentParam.getId() + ")"
                 );
+            } else {
+               if (independentParam.getDimension() != designMatrix.getColumnDimension()) {
+                   throw new XMLParseException(
+                           "dim(" +independentParam.getId() + ") is incompatible with dim (" + designMatrix.getId() +")"
+                    );
+               }
+            }
+
         }
 
         //************************************************************************
@@ -374,7 +417,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(FAMILY),
                 new ElementRule(DEPENDENT_VARIABLES,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
                 new ElementRule(INDEPENDENT_VARIABLES,
                         new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, 1, 3),
 //				new ElementRule(BASIS_MATRIX,

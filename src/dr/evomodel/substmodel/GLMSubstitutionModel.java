@@ -28,18 +28,12 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
     }
 
     public double[] getRates() {
-//        double[] xBeta =  glm.getXBeta();
-//        for(int i=0; i<xBeta.length; i++)
-//            xBeta[i] = Math.exp(xBeta[i]);
-//        return xBeta;
         return glm.getXBeta();
     }
 
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-//        System.err.println("a model changed!");
         if (model == glm) {
-//            System.err.println("and is glm");
             updateMatrix = true;
             fireModelChanged();
         }
@@ -60,10 +54,6 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
 
             if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
 
-//            XMLObject cxo = (XMLObject) xo.getChild(RATES);
-//
-//            Parameter ratesParameter = (Parameter) cxo.getChild(Parameter.class);
-//
             int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
             GeneralizedLinearModel glm = (GeneralizedLinearModel) xo.getChild(GeneralizedLinearModel.class);

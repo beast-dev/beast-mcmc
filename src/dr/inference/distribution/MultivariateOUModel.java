@@ -403,7 +403,7 @@ public class MultivariateOUModel extends GeneralizedLinearModel implements Stati
                     Parameter independentParam = (Parameter) cxo.getChild(Parameter.class);
                     DesignMatrix designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
                     checkDimensions(independentParam, dependentParam, designMatrix);
-                    glm.addIndependentParameter(independentParam, designMatrix);
+                    glm.addIndependentParameter(independentParam, designMatrix, null);
                 }
             }
         }

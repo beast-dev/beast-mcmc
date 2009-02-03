@@ -16,7 +16,6 @@ import java.util.List;
  * @author Marc Suchard
  */
 public abstract class GeneralizedLinearModel extends AbstractModel implements Likelihood, MultivariateFunction {
-//		, RealFunctionOfSeveralVariablesWithGradient {
 
     public static final String GLM_LIKELIHOOD = "glmModel";
 
@@ -25,6 +24,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
     public static final String BASIS_MATRIX = "basis";
     public static final String FAMILY = "family";
     public static final String SCALE_VARIABLES = "scaleVariables";
+    public static final String INDICATOR = "indicator";
     public static final String LOGISTIC_REGRESSION = "logistic";
     public static final String NORMAL_REGRESSION = "normal";
     public static final String LOG_LINEAR = "logLinear";
@@ -32,6 +32,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 
     protected Parameter dependentParam;
     protected List<Parameter> independentParam;
+    protected List<Parameter> indParamDelta;
     protected List<double[][]> designMatrix; // fixed constants, access as double[][] to save overhead
 
     protected double[][] scaleDesignMatrix;
@@ -42,13 +43,10 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 
     protected List<Parameter> randomEffects;
 
-    public GeneralizedLinearModel(Parameter dependentParam) { //, Parameter independentParam,
-//	                              DesignMatrix designMatrix) {
+    public GeneralizedLinearModel(Parameter dependentParam) { 
         super(GLM_LIKELIHOOD);
         this.dependentParam = dependentParam;
-//		this.independentParam = independentParam;
-//		this.designMatrix = designMatrix;
-//		addParameter(independentParam);
+
         if (dependentParam != null) {
             addParameter(dependentParam);
             N = dependentParam.getDimension();
@@ -56,19 +54,26 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
             N = 0;
     }
 
-    public void addIndependentParameter(Parameter effect, DesignMatrix matrix) {
+    public void addIndependentParameter(Parameter effect, DesignMatrix matrix, Parameter delta) {
         if (designMatrix == null)
             designMatrix = new ArrayList<double[][]>();
         if (independentParam == null)
             independentParam = new ArrayList<Parameter>();
+        if (indParamDelta == null)
+            indParamDelta = new ArrayList<Parameter>();
+
         if (N == 0) {
             N = matrix.getRowDimension();
         }
         designMatrix.add(matrix.getParameterAsMatrix());
         independentParam.add(effect);
+        indParamDelta.add(delta);
+
         if (designMatrix.size() != independentParam.size())
             throw new RuntimeException("Independent variables and their design matrices are out of sync");
         addParameter(effect);
+        if(delta != null)
+            addParameter(delta);
         numIndependentVariables++;
         System.out.println("\tAdding independent predictors '" + effect.getStatisticName() + "' with design matrix '" + matrix.getStatisticName() + "'");
     }
@@ -83,10 +88,13 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
 
         for (int j = 0; j < numIndependentVariables; j++) {
             Parameter beta = independentParam.get(j);
+            Parameter delta = indParamDelta.get(j);
             double[][] X = designMatrix.get(j);
             final int K = beta.getDimension();
             for (int k = 0; k < K; k++) {
-                final double betaK = beta.getParameterValue(k);
+                double betaK = beta.getParameterValue(k);
+                if (delta != null)
+                    betaK *= delta.getParameterValue(k);
                 for (int i = 0; i < N; i++)
                     xBeta[i] += X[i][k] * betaK;
             }
@@ -109,10 +117,13 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
         double[] xBeta = new double[N];
 
         Parameter beta = independentParam.get(j);
+        Parameter delta = indParamDelta.get(j);
         double[][] X = designMatrix.get(j);
         final int K = beta.getDimension();
         for (int k = 0; k < K; k++) {
-            final double betaK = beta.getParameterValue(k);
+            double betaK = beta.getParameterValue(k);
+            if (delta != null)
+                betaK *= delta.getParameterValue(k);
             for (int i = 0; i < N; i++)
                 xBeta[i] += X[i][k] * betaK;
         }
@@ -383,7 +394,14 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
                     Parameter independentParam = (Parameter) cxo.getChild(Parameter.class);
                     DesignMatrix designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
                     checkDimensions(independentParam, dependentParam, designMatrix);
-                    glm.addIndependentParameter(independentParam, designMatrix);
+                    cxo = (XMLObject) cxo.getChild(INDICATOR);
+                    Parameter indicator = null;
+                    if (cxo != null) {
+                        indicator = (Parameter) cxo.getChild(Parameter.class);
+                        if (indicator.getDimension() != independentParam.getDimension())
+                            throw new XMLParseException("dim("+independentParam.getId() + ") != dim(" + indicator.getId() +")");
+                    }
+                    glm.addIndependentParameter(independentParam, designMatrix,indicator);
                 }
             }
         }

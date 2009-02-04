@@ -14,6 +14,8 @@ import dr.inference.loggers.Loggable;
 import dr.inference.loggers.MatrixEntryColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Likelihood;
+import dr.inference.prior.Prior;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
@@ -25,7 +27,7 @@ import dr.xml.*;
  * @author Marc Suchard
  */
 
-public class ComplexSubstitutionModel extends AbstractSubstitutionModel implements Loggable {
+public class ComplexSubstitutionModel extends AbstractSubstitutionModel implements  Likelihood {
 
     public static final String COMPLEX_SUBSTITUTION_MODEL = "complexSubstitutionModel";
     public static final String RATES = "rates";
@@ -53,9 +55,9 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         stationaryDistribution = new double[stateCount];
         storedStationaryDistribution = new double[stateCount];
 
-        illConditionedProbabilities = new double[stateCount * stateCount];
-        for (int i = 0; i < stateCount * stateCount; i++)
-            illConditionedProbabilities[i] = 1.0 / stateCount;
+//        illConditionedProbabilities = new double[stateCount * stateCount];
+//        for (int i = 0; i < stateCount * stateCount; i++)
+//            illConditionedProbabilities[i] = 1.0 / stateCount;
 
     }
 
@@ -63,6 +65,13 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         if (model == freqModel)
             return; // freqModel only affects the likelihood calculation at the tree root
         super.handleModelChangedEvent(model, object, index);
+    }
+
+    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+        // relativeRates changed
+        updateMatrix = true;
+//        System.err.println("Parameter "+parameter.getId()+" changed.");
+//        fireModelChanged();
     }
 
     protected void restoreState() {
@@ -84,7 +93,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         storedStationaryDistribution = stationaryDistribution;
         stationaryDistribution = tmp3;
 
-        normalization = storedNormalization;
+//        normalization = storedNormalization;
 
         // Inherited
         updateMatrix = storedUpdateMatrix;
@@ -107,7 +116,14 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     protected void storeState() {
 
         storedUpdateMatrix = updateMatrix;
+
+//        if(updateMatrix)
+//            System.err.println("Storing updatable state!");
+
         storedWellConditioned = wellConditioned;
+
+//        if(!wellConditioned)
+//            System.err.println("Storing ill-conditioned state!");
 
         //         storedEigenDecomp = eigenDecomp.
 
@@ -128,7 +144,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
         System.arraycopy(stationaryDistribution, 0, storedStationaryDistribution, 0, stateCount);
         System.arraycopy(EvalImag, 0, storedEvalImag, 0, stateCount);
-        storedNormalization = normalization;
+//        storedNormalization = normalization;
 
         // Inherited
         System.arraycopy(Eval, 0, storedEval, 0, stateCount);
@@ -153,6 +169,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
         if (!wellConditioned) {
             System.arraycopy(illConditionedProbabilities, 0, matrix, 0, stateCount * stateCount);
+            System.err.println("Ill conditioned and here?");
             return;
         }
 
@@ -276,8 +293,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         try {
             eigenVInv = alegbra.inverse(eigenV);
             wellConditioned = true;
+//            System.err.println("Well conditioned");
         } catch (IllegalArgumentException e) {
             wellConditioned = false;
+//            System.err.println("Not well conditioned");
 //            updateMatrix = false;
 //            count++;
 //            if (count > 10000) {
@@ -299,13 +318,12 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         Eval = eigenVReal.toArray();
         EvalImag = eigenVImag.toArray();
 
-        checkComplexSolutions();
+//        checkComplexSolutions();
 
         // Check for valid decomposition
         for (i = 0; i < stateCount; i++) {
             if (Eval[i] == Double.NaN || EvalImag[i] == Double.NaN) {
-                System.err.println("Got here");
-                wellConditioned = false;
+                 wellConditioned = false;
                 return;
             }
         }
@@ -532,7 +550,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
 //	private boolean normalizationAmat = false;
 
-    private boolean wellConditioned = true;
+    protected boolean wellConditioned = true;
     private boolean storedWellConditioned;
     private double[] illConditionedProbabilities;
 
@@ -544,4 +562,21 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     EigenvalueDecomposition storedEigenDecomp;
 
     private int count = 0;
+
+    public Model getModel() {
+        return this;
+    }
+
+    public double getLogLikelihood() {
+//        System.err.println("Checking prior");
+        if (updateMatrix)
+            setupMatrix();
+        if (wellConditioned)
+            return 0;
+        return Double.NEGATIVE_INFINITY;
+    }
+
+    public void makeDirty() {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
 }

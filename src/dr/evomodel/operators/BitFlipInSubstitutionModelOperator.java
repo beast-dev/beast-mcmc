@@ -77,8 +77,9 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
 
         final int value = (int) indicatorParameter.getParameterValue(pos);
 
-        double rand = //0.5 *
-                MathUtils.nextDouble();
+        double rand = 0;
+        if (rateParameter != null)
+            rand = MathUtils.nextDouble();
 
         double logq;
         if (value == 0) {
@@ -98,18 +99,19 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
             throw new RuntimeException("expected 1 or 0");
         }
 
-//	    final double scale = (scaleFactor + (rand * ((1.0/scaleFactor) - scaleFactor)));
-//      logq -= Math.log(scale);
-        final double scale = Math.exp((rand) * scaleFactor);
-        logq += Math.log(scale);
+        if (rateParameter != null) {
+            final double scale = Math.exp((rand) * scaleFactor);
+            logq += Math.log(scale);
 
-        final double oldValue = rateParameter.getParameterValue(0);
-        final double newValue = scale * oldValue;
+            final double oldValue = rateParameter.getParameterValue(0);
+            final double newValue = scale * oldValue;
 
-        rateParameter.setParameterValue(0, newValue);
+            rateParameter.setParameterValue(0, newValue);
+        }
 
-//        if (!model.myIsValid()) {
-//		    System.err.println("invalid model");
+//        System.err.println("Operator ISM");
+//        if (!model.validState()) {
+//            System.err.println("invalid model");
 //            throw new OperatorFailedException("Out of bounds");
 //        } //                  else System.err.println("valid");
 
@@ -228,7 +230,7 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-                new ElementRule(Parameter.class),
+                new ElementRule(Parameter.class,true),
                 new ElementRule(BayesianStochasticSearchVariableSelection.class)
         };
 

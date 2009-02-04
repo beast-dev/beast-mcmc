@@ -130,6 +130,10 @@ public class XMLParser {
             }
             if (verbose) System.out.println("  Restoring idref=" + idref);
 
+
+            if (e.getAttributes().getLength() > 1 || e.getChildNodes().getLength() > 1) {
+                throw new XMLParseException("Object with idref=" + idref + " must not have other content or attributes (or perhaps it was not intended to be a reference?).");
+            }
             return new Reference(restoredXMLObject);
         } else {
             int repeats = 1;

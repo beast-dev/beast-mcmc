@@ -378,6 +378,16 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 }
 
                 currentTraceLists.add(tl);
+            } else if (isFirst) {
+                // if the 'Combined' trace is selected but no other trace files, then add all traces
+                TraceList tl = traceLists.get(0);
+                Set<String> nameSet = new HashSet<String>();
+                for (int i = 0; i < tl.getTraceCount(); i++) {
+                    String traceName = tl.getTraceName(i);
+                    nameSet.add(traceName);
+                    commonTraceNames.add(traceName);
+                }
+                commonSet.addAll(nameSet);
             }
         }
         commonTraceNames.retainAll(commonSet);

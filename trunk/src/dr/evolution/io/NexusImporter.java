@@ -891,6 +891,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                                     // don't fail, ignore
                                 }
                                 c = c.substring(e);
+                            } else {
+                                c = c.substring(1);                                
                             }
                         }
                     }

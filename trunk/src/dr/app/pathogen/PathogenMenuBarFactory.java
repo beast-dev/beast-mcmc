@@ -38,12 +38,12 @@ public class PathogenMenuBarFactory extends DefaultMenuBarFactory {
 
 	public PathogenMenuBarFactory() {
 		if (org.virion.jam.mac.Utils.isMacOSX()) {
-			registerMenuFactory(new MacFileMenuFactory(true));
+			registerMenuFactory(new PathogenMacFileMenuFactory());
 			registerMenuFactory(new DefaultEditMenuFactory());
 			registerMenuFactory(new MacWindowMenuFactory());
 			registerMenuFactory(new MacHelpMenuFactory());
 		} else {
-			registerMenuFactory(new DefaultFileMenuFactory(true));
+			registerMenuFactory(new PathogenDefaultFileMenuFactory());
 			registerMenuFactory(new DefaultEditMenuFactory());
 			registerMenuFactory(new DefaultHelpMenuFactory());
 		}

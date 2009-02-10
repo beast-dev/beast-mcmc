@@ -115,7 +115,7 @@ public class DateGuesser {
 
             do {
                 // first find a part of a number
-                while (!Character.isDigit(c) && c != '.') {
+                while (!Character.isDigit(c)) {
                     i++;
                     if (i == label.length()) break;
                     c = label.charAt(i);

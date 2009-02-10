@@ -8,26 +8,23 @@
  */
 package dr.app.pathogen;
 
-import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.alignment.Alignment;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.evolution.util.Units;
+import dr.app.tools.NexusExporter;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
-import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import jebl.evolution.io.NewickExporter;
 
 /**
  * @author Andrew Rambaut
@@ -165,13 +162,78 @@ public class PathogenFrame extends DocumentFrame {
 
         setStatusMessage();
 
-        getExportAction().setEnabled(true);
+        getExportTreeAction().setEnabled(true);
+        getExportDataAction().setEnabled(true);
 
         return true;
     }
 
     protected boolean writeToFile(File file) throws IOException {
         return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    protected void doExportTree() {
+        FileDialog dialog = new FileDialog(this,
+                "Export Tree File...",
+                FileDialog.SAVE);
+
+        dialog.setVisible(true);
+        if (dialog.getFile() != null) {
+            File file = new File(dialog.getDirectory(), dialog.getFile());
+
+            PrintStream ps = null;
+            try {
+                ps = new PrintStream(file);
+                writeTreeFile(ps, false);
+                ps.close();
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Error writing tree file: " + ioe.getMessage(),
+                        "Export Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+        }
+    }
+
+    protected void writeTreeFile(PrintStream ps, boolean newickFormat) throws IOException {
+
+        Tree tree = treesPanel.getTreeAsViewed();
+
+//        if (newickFormat) {
+//            NewickExporter newickExporter = new NewickExporter(ps);
+//            newickExporter.exportTree(tree);
+//        } else {
+            NexusExporter nexusExporter = new NexusExporter(new PrintStream(ps));
+            nexusExporter.exportTree(tree);
+//        }
+    }
+
+//    protected void doExportGraphic() {
+//        ExportDialog export = new ExportDialog();
+//        export.showExportDialog( this, "Export view as ...", treeViewer.getContentPane(), "export" );
+//    }
+
+    protected void doExportData() {
+        FileDialog dialog = new FileDialog(this,
+                "Export Data File...",
+                FileDialog.SAVE);
+
+        dialog.setVisible(true);
+        if (dialog.getFile() != null) {
+            File file = new File(dialog.getDirectory(), dialog.getFile());
+
+            Writer writer = null;
+            try {
+                writer = new PrintWriter(file);
+                treesPanel.writeDataFile(writer);
+                writer.close();
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Error writing data file: " + ioe.getMessage(),
+                        "Export Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+        }
     }
 
     private void setStatusMessage() {
@@ -199,14 +261,33 @@ public class PathogenFrame extends DocumentFrame {
         return exportable;
     }
 
-    public Action getExportAction() {
-        return generateAction;
+    public Action getExportTreeAction() {
+        return exportTreeAction;
     }
 
-    protected AbstractAction generateAction = new AbstractAction("Export...") {
+//    public Action getExportGraphicAction() {
+//        return exportGraphicAction;
+//    }
+
+    public Action getExportDataAction() {
+        return exportDataAction;
+    }
+
+    protected AbstractAction exportTreeAction = new AbstractAction("Export Tree...") {
         public void actionPerformed(ActionEvent ae) {
-//            doGenerate();
+            doExportTree();
         }
     };
 
+//    protected AbstractAction exportGraphicAction = new AbstractAction("Export Graphic...") {
+//        public void actionPerformed(ActionEvent ae) {
+//            doExportGraphic();
+//        }
+//    };
+
+    protected AbstractAction exportDataAction = new AbstractAction("Export Data...") {
+        public void actionPerformed(ActionEvent ae) {
+            doExportData();
+        }
+    };
 }

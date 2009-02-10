@@ -34,6 +34,8 @@ import dr.stats.Regression;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.Writer;
+import java.io.PrintWriter;
 
 /**
  * @author Andrew Rambaut
@@ -43,6 +45,7 @@ import java.awt.*;
 public class TreeDisplayPanel extends JPanel {
 
     private Tree tree = null;
+    private Tree currentTree = null;
 
     PathogenFrame frame = null;
     JTabbedPane tabbedPane = new JTabbedPane();
@@ -52,6 +55,8 @@ public class TreeDisplayPanel extends JPanel {
     JChart rootToTipChart;
 
     private boolean bestFittingRoot;
+    private TemporalRooting temporalRooting = null;
+
 
     public TreeDisplayPanel(PathogenFrame parent) {
         super(new BorderLayout());
@@ -83,23 +88,48 @@ public class TreeDisplayPanel extends JPanel {
         setupPanel();
     }
 
+    public Tree getTreeAsViewed() {
+        return currentTree;
+    }
+
+    public void writeDataFile(Writer writer) {
+        PrintWriter pw = new PrintWriter(writer);
+        String labels[] = temporalRooting.getTipLabels(currentTree);
+        double yValues[] = temporalRooting.getRootToTipDistances(currentTree);
+
+        if (temporalRooting.isContemporaneous()) {
+            pw.println("tip\tdistance");
+            for (int i = 0; i < yValues.length; i++) {
+                pw.println(labels[i] + "\t" + "\t" + yValues[i]);
+            }
+        } else {
+            double xValues[] = temporalRooting.getTipDates(currentTree);
+            pw.println("tip\tdate\tdistance");
+            for (int i = 0; i < xValues.length; i++) {
+                pw.println(labels[i] + "\t" + xValues[i] + "\t" + yValues[i]);
+            }
+        }
+    }
+
     public void setupPanel() {
         if (tree != null) {
-            TemporalRooting temporalRooting = new TemporalRooting(tree);
-            Tree tree = this.tree;
+            if (temporalRooting == null) {
+                temporalRooting = new TemporalRooting(tree);
+            }
+            currentTree = this.tree;
             if (bestFittingRoot) {
-                tree = temporalRooting.findRoot(tree);
+                currentTree = temporalRooting.findRoot(tree);
             }
 
-            treePanel.setTree(tree);
+            treePanel.setTree(currentTree);
 
             if (temporalRooting.isContemporaneous()) {
-                double values[] = temporalRooting.getRootToTipDistances(tree);
+                double values[] = temporalRooting.getRootToTipDistances(currentTree);
 
                 rootToTipChart.removeAllPlots();
                 rootToTipChart.addPlot(new DensityPlot(values, 20));
             } else {
-                Regression r = temporalRooting.getRootToTipRegression(tree);
+                Regression r = temporalRooting.getRootToTipRegression(currentTree);
 
                 rootToTipChart.removeAllPlots();
                 rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
@@ -113,4 +143,5 @@ public class TreeDisplayPanel extends JPanel {
 
         repaint();
     }
+
 }

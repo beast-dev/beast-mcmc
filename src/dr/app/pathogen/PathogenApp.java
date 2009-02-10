@@ -71,7 +71,7 @@ public class PathogenApp extends MultiDocApplication {
 
             final String nameString = "Path-O-Gen";
             final String versionString = version.getVersionString();
-            String aboutString = "<html><center><p>Temporal Sampling Investigation<br>" +
+            String aboutString = "<html><center><p>Temporal Sampling Investigation Tool<br>" +
                     "Version " + versionString + ", " + version.getDateString() + "</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut</p>" +

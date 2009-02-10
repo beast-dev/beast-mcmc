@@ -41,6 +41,8 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.util.*;
+import java.io.Writer;
+import java.io.BufferedWriter;
 
 /**
  * @author Andrew Rambaut
@@ -152,6 +154,14 @@ public class TreesPanel extends JPanel {
 
     public JComponent getExportableComponent() {
         return treeDisplayPanel;
+    }
+
+    public Tree getTreeAsViewed() {
+        return treeDisplayPanel.getTreeAsViewed();
+    }
+
+    public void writeDataFile(Writer writer) {
+        treeDisplayPanel.writeDataFile(writer);
     }
 
     class TreesTableModel extends AbstractTableModel {

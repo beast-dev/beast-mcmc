@@ -101,7 +101,7 @@ public class TemporalRooting {
         return new Regression(dates, distances);
     }
 
-    private double[] getRootToTipDistances(Tree tree) {
+    public double[] getRootToTipDistances(Tree tree) {
 
         double[] d = new double[tree.getExternalNodeCount()];
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {

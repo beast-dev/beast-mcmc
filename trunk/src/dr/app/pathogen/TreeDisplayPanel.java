@@ -51,6 +51,8 @@ public class TreeDisplayPanel extends JPanel {
     JChartPanel rootToTipPanel;
     JChart rootToTipChart;
 
+    private boolean bestFittingRoot;
+
     public TreeDisplayPanel(PathogenFrame parent) {
         super(new BorderLayout());
 
@@ -76,16 +78,34 @@ public class TreeDisplayPanel extends JPanel {
         setupPanel();
     }
 
-    private void setupPanel() {
-        if (tree != null) {
-            treePanel.setTree(tree);
-            TemporalRooting temporalRooting = new TemporalRooting(tree);
-            Regression r = temporalRooting.getRootToTipRegression(tree);
+    public void setBestFittingRoot(boolean bestFittingRoot) {
+        this.bestFittingRoot = bestFittingRoot;
+        setupPanel();
+    }
 
-            rootToTipChart.removeAllPlots();
-            rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
-            rootToTipChart.addPlot(new RegressionPlot(r));
-            rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
+    public void setupPanel() {
+        if (tree != null) {
+            TemporalRooting temporalRooting = new TemporalRooting(tree);
+            Tree tree = this.tree;
+            if (bestFittingRoot) {
+                tree = temporalRooting.findRoot(tree);
+            }
+
+            treePanel.setTree(tree);
+
+            if (temporalRooting.isContemporaneous()) {
+                double values[] = temporalRooting.getRootToTipDistances(tree);
+
+                rootToTipChart.removeAllPlots();
+                rootToTipChart.addPlot(new DensityPlot(values, 20));
+            } else {
+                Regression r = temporalRooting.getRootToTipRegression(tree);
+
+                rootToTipChart.removeAllPlots();
+                rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
+                rootToTipChart.addPlot(new RegressionPlot(r));
+                rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
+            }
         } else {
             treePanel.setTree(null);
             rootToTipChart.removeAllPlots();

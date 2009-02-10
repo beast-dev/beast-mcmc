@@ -193,7 +193,7 @@ public class SamplesPanel extends JPanel implements Exportable {
         calculateHeights();
 
         dataTableModel.fireTableDataChanged();
-        frame.setDirty();
+        frame.timeScaleChanged();
     }
 
     private Date createDate(double timeValue, Units.Type units, boolean backwards, double origin) {

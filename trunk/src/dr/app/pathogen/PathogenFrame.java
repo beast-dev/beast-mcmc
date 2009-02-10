@@ -87,6 +87,9 @@ public class PathogenFrame extends DocumentFrame {
         setSize(new Dimension(1024, 768));
     }
 
+    public void timeScaleChanged() {
+        treesPanel.timeScaleChanged();
+    }
 
     protected boolean readFromFile(File file) throws IOException {
 

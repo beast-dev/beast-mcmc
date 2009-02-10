@@ -92,7 +92,7 @@ public class PathogenApp extends MultiDocApplication {
                 }
             });
             app.initialize();
-            app.doNew();
+            app.doOpen();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(new JFrame(), "Fatal exception: " + e,
                     "Please report this to the authors",

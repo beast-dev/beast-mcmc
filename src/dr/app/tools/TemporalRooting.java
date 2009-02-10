@@ -87,7 +87,7 @@ public class TemporalRooting {
 
     public Tree findRoot(Tree tree) {
 
-        double[] dates = getDates(tree);
+        double[] dates = getTipDates(tree);
         return findGlobalRoot(tree, dates);
     }
 
@@ -96,7 +96,7 @@ public class TemporalRooting {
         if (contemporaneous) {
             throw new IllegalArgumentException("Cannot do a root to tip regression on contemporaneous tips");
         }
-        double[] dates = getDates(tree);
+        double[] dates = getTipDates(tree);
         double[] distances = getRootToTipDistances(tree);
         return new Regression(dates, distances);
     }
@@ -111,7 +111,7 @@ public class TemporalRooting {
         return d;
     }
 
-    private double[] getDates(Tree tree) {
+    public double[] getTipDates(Tree tree) {
         double[] d = new double[tree.getExternalNodeCount()];
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef tip = tree.getExternalNode(i);
@@ -122,6 +122,15 @@ public class TemporalRooting {
             d[i] = date;
         }
         return d;
+    }
+
+    public String[] getTipLabels(Tree tree) {
+        String[] labels = new String[tree.getExternalNodeCount()];
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef tip = tree.getExternalNode(i);
+            labels[i] = tree.getNodeTaxon(tip).getId();
+        }
+        return labels;
     }
 
     private Tree findGlobalRoot(final Tree source, final double[] dates) {

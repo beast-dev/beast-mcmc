@@ -38,6 +38,8 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.util.*;
 
 /**
@@ -49,16 +51,11 @@ public class TreesPanel extends JPanel {
 
     private TreeDisplayPanel treeDisplayPanel;
 
-    private PathogenFrame frame = null;
-
-    private JScrollPane scrollPane = new JScrollPane();
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
 
     private java.util.List<Tree> trees = new ArrayList<Tree>();
     public TreesPanel(PathogenFrame parent, Collection<Tree> trees) {
-
-        this.frame = parent;
 
         treesTableModel = new TreesTableModel();
         treesTable = new JTable(treesTableModel);
@@ -67,8 +64,6 @@ public class TreesPanel extends JPanel {
         treesTable.getTableHeader().setResizingAllowed(false);
         treesTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-
-        final TableColumnModel model = treesTable.getColumnModel();
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(treesTable);
 
@@ -79,32 +74,37 @@ public class TreesPanel extends JPanel {
             }
         });
 
-        scrollPane = new JScrollPane(treesTable,
+        JScrollPane scrollPane = new JScrollPane(treesTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
 
-        JToolBar toolBar1 = new JToolBar();
-        toolBar1.setFloatable(false);
-        toolBar1.setOpaque(false);
-        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+//        JToolBar toolBar1 = new JToolBar();
+//        toolBar1.setFloatable(false);
+//        toolBar1.setOpaque(false);
+//        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        JPanel controlPanel1 = new JPanel(new BorderLayout(0, 0));
+        controlPanel1.setOpaque(false);
+        final JCheckBox rootingCheck = new JCheckBox("Best-fitting root");
+        controlPanel1.add(rootingCheck, BorderLayout.CENTER);
+
 
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
         panel1.add(scrollPane, BorderLayout.CENTER);
-//        panel1.add(controlPanel1, BorderLayout.SOUTH);
+        panel1.add(controlPanel1, BorderLayout.SOUTH);
 
         treeDisplayPanel = new TreeDisplayPanel(parent);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, treeDisplayPanel);
-        splitPane.setDividerLocation(180);
+        splitPane.setDividerLocation(160);
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
 
         JPanel panel2 = new JPanel(new BorderLayout(0, 0));
         panel2.setOpaque(false);
-        panel2.add(toolBar1, BorderLayout.NORTH);
+//        panel2.add(toolBar1, BorderLayout.NORTH);
         panel2.add(splitPane, BorderLayout.CENTER);
 
         setOpaque(false);
@@ -114,8 +114,18 @@ public class TreesPanel extends JPanel {
         add(panel2, BorderLayout.CENTER);
 
         setTrees(trees);
+
+        rootingCheck.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                treeDisplayPanel.setBestFittingRoot(rootingCheck.isSelected());
+            }
+        });
     }
 
+    public void timeScaleChanged() {
+        treeDisplayPanel.setupPanel();
+    }
+    
     private void selectionChanged() {
         int selRow = treesTable.getSelectedRow();
         if (selRow >= 0) {
@@ -129,6 +139,8 @@ public class TreesPanel extends JPanel {
         this.trees.addAll(trees);
 
         treesTableModel.fireTableDataChanged();
+
+        treesTable.getSelectionModel().setSelectionInterval(0,0);
 
         validate();
         repaint();

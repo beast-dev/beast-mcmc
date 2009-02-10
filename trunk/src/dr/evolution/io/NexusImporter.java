@@ -687,9 +687,10 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         do {
             String name = readToken(";");
-
-            Taxon taxon = new Taxon(name);
-            taxa.addTaxon(taxon);
+            if (name.trim().length() > 0) {
+                Taxon taxon = new Taxon(name);
+                taxa.addTaxon(taxon);
+            }
         } while (getLastDelimiter() != ';');
 
         if (taxa.getTaxonCount() != taxonCount) {
@@ -850,9 +851,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                         throw new BadFormatException("Missing tree definition in TREE command of TREES block");
                     }
 
-                     // tree special comments
-                     final String scomment = getLastMetaComment();
-                     clearLastMetaComment();
+                    // tree special comments
+                    final String scomment = getLastMetaComment();
+                    clearLastMetaComment();
 
                     FlexibleNode root = readInternalNode(translationList);
                     tree = new FlexibleTree(root, false, true);
@@ -884,8 +885,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                                 if( e < 0 ) e = c.length();
 
                                 try {
-                                  final Float value = new Float(c.substring(2, e));
-                                  tree.setAttribute("weight", value);
+                                    final Float value = new Float(c.substring(2, e));
+                                    tree.setAttribute("weight", value);
                                 } catch ( NumberFormatException ex) {
                                     // don't fail, ignore
                                 }

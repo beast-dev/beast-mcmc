@@ -112,11 +112,6 @@ public class PathogenFrame extends DocumentFrame {
 
                     } else if (block == NexusImporter.TREES_BLOCK) {
 
-                        // I guess there is no reason not to allow multiple trees blocks
-//                        if (trees.size() > 0) {
-//                            throw new NexusImporter.MissingBlockException("TREES block already defined");
-//                        }
-
                         Tree[] treeArray = importer.parseTreesBlock(taxa);
                         trees.addAll(Arrays.asList(treeArray));
 

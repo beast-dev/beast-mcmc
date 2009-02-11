@@ -62,7 +62,7 @@ public class PathogenApp extends MultiDocApplication {
 
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-            java.net.URL url = PathogenApp.class.getResource("images/beauti.png");
+            java.net.URL url = PathogenApp.class.getResource("images/pathogen.png");
             Icon icon = null;
 
             if (url != null) {

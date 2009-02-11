@@ -1,0 +1,82 @@
+<project name="Pathogen" default="all" basedir=".">
+    <description>
+        Build file for PATHOGEN release versions
+        $Id: build_pathogen.xml,v 1.5 2006/09/09 18:16:17 rambaut Exp $
+    </description>
+    <!-- set global properties for this build -->
+    <property name="src" location="src"/>
+    <property name="build" location="build"/>
+    <property name="lib" location="lib"/>
+    <property name="dist" location="dist"/>
+
+    <property environment="env"/>
+
+    <target name="init">
+        <!-- Create the time stamp -->
+        <tstamp/>
+        <!-- Create the build directory structure used by compile -->
+        <mkdir dir="${build}"/>
+        <mkdir dir="${dist}"/>
+    </target>
+
+    <target name="all"
+            depends="compile-all"
+            description="Build all run-time stuff">
+    </target>
+
+    <target name="compile-all"
+            depends="compile-basic">
+    </target>
+
+    <target name="compile-basic" depends="init">
+        <!-- Compile the java code from ${src} into ${build} -->
+        <javac source="1.5" srcdir="${src}" destdir="${build}"
+               classpath="${lib}/jebl.jar:${lib}/jdom.jar">
+            <include name="dr/app/pathogen/**"/>
+            <include name="dr/app/beauti/**"/>
+            <include name="dr/app/util/**"/>
+            <include name="dr/evolution/io/**"/>
+            <include name="dr/evolution/tree/**"/>
+            <include name="dr/evolution/util/**"/>
+            <include name="dr/gui/chart/**"/>
+            <include name="dr/gui/tree/**"/>
+            <include name="dr/matrix/**"/>
+            <include name="dr/stats/**"/>
+            <include name="dr/util/**"/>
+            <include name="org/virion/jam/**"/>
+        </javac>
+    </target>
+
+    <target name="dist" depends="compile-all" description="generate the distribution">
+        <!-- Create the distribution directory -->
+        <mkdir dir="${dist}"/>
+
+        <!-- Put everything in ${build} into the treestat.jar file -->
+        <jar jarfile="${dist}/pathogen.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Main-Class" value="dr.app.pathogen.PathogenApp"/>
+            </manifest>
+            <fileset dir="${build}">
+                <include name="dr/app/pathogen/**/*.class"/>
+                <include name="dr/app/beauti/**/*.class"/>
+                <include name="dr/app/util/**/*.class"/>
+                <include name="dr/evolution/io/**/*.class"/>
+                <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/util/**/*.class"/>
+                <include name="dr/gui/tree/**/*.class"/>
+                <include name="dr/matrix/**/*.class"/>
+                <include name="dr/stats/**/*.class"/>
+                <include name="dr/util/**/*.class"/>
+            </fileset>
+            <fileset dir="">
+                <include name="images/*.png"/>
+            </fileset>
+            <fileset dir="${src}">
+                <include name="dr/app/pathogen/**/*.png"/>
+                <include name="org/virion/jam/**/*.png"/>
+            </fileset>
+            <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
+        </jar>
+    </target>
+</project>

@@ -24,6 +24,7 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         super(name, dataType, rootFreqModel, null);
         this.glm = glm;
         addModel(glm);
+        testProbabilities = new double[stateCount*stateCount];
             
     }
 
@@ -39,6 +40,20 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         }
         else
             super.handleModelChangedEvent(model,object,index);       
+    }
+
+    public double getLogLikelihood() {
+        double logL = super.getLogLikelihood();
+        if (logL == 0) { // Also check that graph is connected
+            getTransitionProbabilities(1.0,testProbabilities);
+            for(int i=0; i<testProbabilities.length; i++) {
+                if (testProbabilities[i] == 0) {
+                    logL = Double.NEGATIVE_INFINITY;
+                    break;
+                }
+            }
+        }
+        return logL;
     }
 
 
@@ -103,5 +118,5 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
     };
 
     private GeneralizedLinearModel glm;
-
+    private double[] testProbabilities;    
 }

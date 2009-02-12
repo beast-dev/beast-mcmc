@@ -11,8 +11,11 @@ package dr.app.pathogen;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.FlexibleTree;
 import dr.evolution.util.TaxonList;
 import dr.app.tools.NexusExporter;
+import dr.app.tools.TemporalRooting;
+import dr.util.NumberFormatter;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
 
@@ -58,6 +61,7 @@ public class PathogenFrame extends DocumentFrame {
 
         getOpenAction().setEnabled(true);
         getSaveAction().setEnabled(false);
+        getSaveAsAction().setEnabled(false);
 
         getFindAction().setEnabled(false);
 
@@ -67,7 +71,7 @@ public class PathogenFrame extends DocumentFrame {
     public void initializeComponents() {
 
         samplesPanel = new SamplesPanel(this, taxa);
-        treesPanel = new TreesPanel(this, trees);
+        treesPanel = new TreesPanel(this, trees.get(0));
 
         tabbedPane.addTab("Sample Dates", samplesPanel);
         tabbedPane.addTab("Trees", treesPanel);
@@ -82,10 +86,13 @@ public class PathogenFrame extends DocumentFrame {
         getContentPane().add(panel, BorderLayout.CENTER);
 
         setSize(new Dimension(1024, 768));
+
+        setStatusMessage();
     }
 
     public void timeScaleChanged() {
         treesPanel.timeScaleChanged();
+        setStatusMessage();
     }
 
     protected boolean readFromFile(File file) throws IOException {
@@ -96,6 +103,8 @@ public class PathogenFrame extends DocumentFrame {
             NexusImporter importer = new NexusImporter(reader);
 
             boolean done = false;
+
+            int count = 0;
 
             while (!done) {
                 try {
@@ -113,7 +122,18 @@ public class PathogenFrame extends DocumentFrame {
                     } else if (block == NexusImporter.TREES_BLOCK) {
 
                         Tree[] treeArray = importer.parseTreesBlock(taxa);
-                        trees.addAll(Arrays.asList(treeArray));
+                        for (Tree tree : treeArray) {
+                            // get a rooted version of the tree to clone
+                            FlexibleTree binaryTree = new FlexibleTree(tree, true);
+                            binaryTree.resolveTree();
+
+                            String id = binaryTree.getId();
+                            if (id == null || id.trim().length() == 0) {
+                                count++;
+                                binaryTree.setId("tree_" + (count + 1));
+                            }
+                            trees.add(binaryTree);
+                        }
 
                         if (taxa == null && trees.size() > 0) {
                             taxa = trees.get(0);
@@ -148,19 +168,6 @@ public class PathogenFrame extends DocumentFrame {
             ex.printStackTrace();
             return false;
         }
-
-        int count = 0;
-        if (trees.size() > 0) {
-            for (Tree tree : trees) {
-                String id = tree.getId();
-                if (id == null || id.trim().length() == 0) {
-                    count++;
-                    tree.setId("tree_" + (count + 1));
-                }
-            }
-        }
-
-        setStatusMessage();
 
         getExportTreeAction().setEnabled(true);
         getExportDataAction().setEnabled(true);
@@ -237,14 +244,20 @@ public class PathogenFrame extends DocumentFrame {
     }
 
     private void setStatusMessage() {
-//        if (trees.size() > 0) {
-//            message += "Trees only : " + beautiOptions.trees.size() +
-//                    (beautiOptions.trees.size() > 1 ? " trees, " : " tree, ") +
-//                    beautiOptions.taxonList.getTaxonCount() + " taxa";
-//        } else {
-//            message += "Taxa only: " + beautiOptions.taxonList.getTaxonCount() + " taxa";
-//        }
-//        statusLabel.setText(message);
+        Tree tree = treesPanel.getTree();
+        if (tree != null) {
+            String message = "";
+            message += "Tree loaded, " + tree.getTaxonCount() + " taxa";
+
+            TemporalRooting tr = treesPanel.getTemporalRooting();
+            if (tr.isContemporaneous()) {
+                message += ", contemporaneous tips";
+            } else {
+                NumberFormatter nf = new NumberFormatter(3);
+                message += ", date tips with range " + nf.format(tr.getDateRange());
+            }
+            statusLabel.setText(message);
+        }
     }
 
     public JComponent getExportableComponent() {

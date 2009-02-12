@@ -34,14 +34,20 @@
                classpath="${lib}/jebl.jar:${lib}/jdom.jar">
             <include name="dr/app/pathogen/**"/>
             <include name="dr/app/beauti/**"/>
+            <include name="dr/app/tools/**"/>
             <include name="dr/app/util/**"/>
             <include name="dr/evolution/io/**"/>
+            <include name="dr/evolution/datatype/**"/>
+            <include name="dr/evolution/sequence/**"/>
+            <include name="dr/evolution/alignment/**"/>
             <include name="dr/evolution/tree/**"/>
             <include name="dr/evolution/util/**"/>
             <include name="dr/gui/chart/**"/>
             <include name="dr/gui/tree/**"/>
+            <include name="dr/gui/table/**"/>
             <include name="dr/matrix/**"/>
             <include name="dr/stats/**"/>
+            <include name="dr/math/**"/>
             <include name="dr/util/**"/>
             <include name="org/virion/jam/**"/>
         </javac>
@@ -60,13 +66,20 @@
             <fileset dir="${build}">
                 <include name="dr/app/pathogen/**/*.class"/>
                 <include name="dr/app/beauti/**/*.class"/>
+                <include name="dr/app/tools/**/*.class"/>
                 <include name="dr/app/util/**/*.class"/>
                 <include name="dr/evolution/io/**/*.class"/>
+                <include name="dr/evolution/datatype/**/*.class"/>
+                <include name="dr/evolution/sequence/**/*.class"/>
+                <include name="dr/evolution/alignment/**/*.class"/>
                 <include name="dr/evolution/tree/**/*.class"/>
                 <include name="dr/evolution/util/**/*.class"/>
+                <include name="dr/gui/chart/**/*.class"/>
                 <include name="dr/gui/tree/**/*.class"/>
+                <include name="dr/gui/table/**/*.class"/>
                 <include name="dr/matrix/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>
+                <include name="dr/math/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
             </fileset>
             <fileset dir="">
@@ -75,6 +88,7 @@
             <fileset dir="${src}">
                 <include name="dr/app/pathogen/**/*.png"/>
                 <include name="org/virion/jam/**/*.png"/>
+                <include name="dr/gui/table/**/*.png"/>
             </fileset>
             <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
         </jar>

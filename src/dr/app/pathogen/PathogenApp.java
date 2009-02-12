@@ -25,7 +25,6 @@
 
 package dr.app.pathogen;
 
-import dr.app.beast.BeastVersion;
 import dr.util.Version;
 import org.virion.jam.framework.*;
 import org.virion.jam.mac.Utils;
@@ -39,7 +38,19 @@ import java.awt.*;
  * @version $Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
  */
 public class PathogenApp extends MultiDocApplication {
-    private final static Version version = new BeastVersion();
+    private final static Version version = new Version() {
+        public String getVersionString() {
+            return "v1.0";
+        }
+
+        public String getDateString() {
+            return "2009";
+        }
+
+        public String getBuildString() {
+            return "Build r1412";
+        }
+    };
 
     public PathogenApp(String nameString, String aboutString, Icon icon,
                        String websiteURLString, String helpURLString) {
@@ -71,7 +82,7 @@ public class PathogenApp extends MultiDocApplication {
 
             final String nameString = "Path-O-Gen";
             final String versionString = version.getVersionString();
-            String aboutString = "<html><center><p>Temporal Sampling Investigation Tool<br>" +
+            String aboutString = "<html><center><p>Temporal Signal Investigation Tool<br>" +
                     "Version " + versionString + ", " + version.getDateString() + "</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut</p>" +

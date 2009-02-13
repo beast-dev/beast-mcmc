@@ -26,7 +26,7 @@
 package dr.app.pathogen;
 
 import dr.app.tools.TemporalRooting;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
 import dr.gui.chart.*;
 import dr.stats.DiscreteStatistics;
 import dr.stats.Regression;
@@ -45,6 +45,8 @@ import java.io.Writer;
 import java.text.DecimalFormat;
 
 import figtree.panel.FigTreePanel;
+import jebl.evolution.trees.RootedTree;
+import jebl.evolution.taxa.Taxon;
 
 /**
  * @author Andrew Rambaut
@@ -63,7 +65,7 @@ public class TreesPanel extends JPanel implements Exportable {
     JTabbedPane tabbedPane = new JTabbedPane();
     JTextArea textArea = new JTextArea();
 
-//    JTreeDisplay treePanel;
+    //    JTreeDisplay treePanel;
     FigTreePanel treePanel;
     JChartPanel rootToTipPanel;
     JChart rootToTipChart;
@@ -100,6 +102,7 @@ public class TreesPanel extends JPanel implements Exportable {
 
 
         treePanel = new FigTreePanel(FigTreePanel.Style.SIMPLE);
+        treePanel.setColourBy("residual");
         tabbedPane.add("Tree", treePanel);
 
         rootToTipChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
@@ -195,7 +198,7 @@ public class TreesPanel extends JPanel implements Exportable {
                 sb.append("User root");
             }
 
-            treePanel.setTree(Tree.Utils.asJeblTree(currentTree));
+            RootedTree jtree = Tree.Utils.asJeblTree(currentTree);
 
             if (temporalRooting.isContemporaneous()) {
                 double values[] = temporalRooting.getRootToTipDistances(currentTree);
@@ -211,13 +214,19 @@ public class TreesPanel extends JPanel implements Exportable {
                 sb.append(", variance: " + nf.format(DiscreteStatistics.variance(values)));
             } else {
                 Regression r = temporalRooting.getRootToTipRegression(currentTree);
+                double[] residuals = temporalRooting.getRootToTipResiduals(currentTree, r);
+                for (int i = 0; i < currentTree.getExternalNodeCount(); i++) {
+                    NodeRef tip = currentTree.getExternalNode(i);
+                    jtree.getNode(Taxon.getTaxon(
+                            currentTree.getNodeTaxon(tip).getId())).setAttribute("residual", residuals[i]);
+                }
 
                 rootToTipChart.removeAllPlots();
                 rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
                 rootToTipChart.addPlot(new RegressionPlot(r));
                 rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
                 rootToTipPanel.setXAxisTitle("root-to-tip divergence");
-             rootToTipPanel.setYAxisTitle("proportion");
+                rootToTipPanel.setYAxisTitle("proportion");
 
                 sb.append(", dated tips");
                 sb.append(", date range: " + nf.format(temporalRooting.getDateRange()));
@@ -226,6 +235,9 @@ public class TreesPanel extends JPanel implements Exportable {
                 sb.append(", corr. coeff: " + nf.format(r.getCorrelationCoefficient()));
                 sb.append(", R^2: " + nf.format(r.getRSquared()));
             }
+
+            treePanel.setTree(jtree);
+
         } else {
             treePanel.setTree(null);
             rootToTipChart.removeAllPlots();

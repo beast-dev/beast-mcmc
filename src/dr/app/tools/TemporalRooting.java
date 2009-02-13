@@ -117,6 +117,19 @@ public class TemporalRooting {
         return d;
     }
 
+    public double[] getRootToTipResiduals(Tree tree, Regression regression) {
+
+        double[] r = new double[tree.getExternalNodeCount()];
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef tip = tree.getExternalNode(i);
+            Double date = dates.get(tree.getNodeTaxon(tip).getId());
+            double d = getRootToTipDistance(tree, tip);
+
+            r[i] = regression.getResidual(date, d);
+        }
+        return r;
+    }
+
     public double[] getTipDates(Tree tree) {
         double[] d = new double[tree.getExternalNodeCount()];
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {

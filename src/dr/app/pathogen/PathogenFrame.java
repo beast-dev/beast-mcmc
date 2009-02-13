@@ -254,7 +254,7 @@ public class PathogenFrame extends DocumentFrame {
                 message += ", contemporaneous tips";
             } else {
                 NumberFormatter nf = new NumberFormatter(3);
-                message += ", date tips with range " + nf.format(tr.getDateRange());
+                message += ", dated tips with range " + nf.format(tr.getDateRange());
             }
             statusLabel.setText(message);
         }

@@ -35,7 +35,6 @@ import dr.util.Variate;
  * @author Andrew Rambaut
  */
 public class Regression {
-
     private Variate xData = null;
     private Variate yData = null;
 
@@ -161,6 +160,10 @@ public class Regression {
             calculateRegression();
         }
         return correlationCoefficient * correlationCoefficient;
+    }
+
+    public double getResidual(final double x, final double y) {
+        return y - ((gradient * x) + intercept);
     }
 
     public Variate getXData() {

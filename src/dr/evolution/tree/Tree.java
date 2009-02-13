@@ -1149,6 +1149,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             SimpleRootedTree jtree = new SimpleRootedTree();
 
             convertToJebl(tree, tree.getRoot(), jtree);
+            jtree.setHeight(jtree.getRootNode(), tree.getNodeHeight(tree.getRoot()));
             return jtree;
         }
 

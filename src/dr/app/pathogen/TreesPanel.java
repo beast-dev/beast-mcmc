@@ -25,39 +25,26 @@
 
 package dr.app.pathogen;
 
-import dr.evolution.tree.Tree;
-import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceList;
-import dr.app.tracer.traces.CombinedTraces;
 import dr.app.tools.TemporalRooting;
+import dr.evolution.tree.Tree;
+import dr.gui.chart.*;
 import dr.stats.DiscreteStatistics;
 import dr.stats.Regression;
-import dr.gui.chart.*;
-import dr.gui.tree.JTreeDisplay;
-import dr.gui.tree.SquareTreePainter;
 import dr.util.NumberFormatter;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
-import org.virion.jam.table.TableRenderer;
 import org.virion.jam.framework.Exportable;
+import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.util.*;
-import java.io.Writer;
-import java.io.BufferedWriter;
+import java.awt.event.ActionListener;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.text.DecimalFormat;
+
+import figtree.panel.FigTreePanel;
 
 /**
  * @author Andrew Rambaut
@@ -76,7 +63,8 @@ public class TreesPanel extends JPanel implements Exportable {
     JTabbedPane tabbedPane = new JTabbedPane();
     JTextArea textArea = new JTextArea();
 
-    JTreeDisplay treePanel;
+//    JTreeDisplay treePanel;
+    FigTreePanel treePanel;
     JChartPanel rootToTipPanel;
     JChart rootToTipChart;
 
@@ -111,7 +99,7 @@ public class TreesPanel extends JPanel implements Exportable {
         panel1.add(controlPanel1, BorderLayout.NORTH);
 
 
-        treePanel = new JTreeDisplay(new SquareTreePainter());
+        treePanel = new FigTreePanel(FigTreePanel.Style.SIMPLE);
         tabbedPane.add("Tree", treePanel);
 
         rootToTipChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
@@ -207,7 +195,7 @@ public class TreesPanel extends JPanel implements Exportable {
                 sb.append("User root");
             }
 
-            treePanel.setTree(currentTree);
+            treePanel.setTree(Tree.Utils.asJeblTree(currentTree));
 
             if (temporalRooting.isContemporaneous()) {
                 double values[] = temporalRooting.getRootToTipDistances(currentTree);
@@ -218,8 +206,9 @@ public class TreesPanel extends JPanel implements Exportable {
                 rootToTipPanel.setYAxisTitle("root-to-tip divergence");
                 sb.append(", contemporaneous tips");
                 sb.append(", mean root-tip distance: " + nf.format(DiscreteStatistics.mean(values)));
-                sb.append(", variance: " + nf.format(DiscreteStatistics.variance(values)));
+                sb.append(", coefficient of variation: " + nf.format(DiscreteStatistics.stdev(values) / DiscreteStatistics.mean(values)));
                 sb.append(", stdev: " + nf.format(DiscreteStatistics.stdev(values)));
+                sb.append(", variance: " + nf.format(DiscreteStatistics.variance(values)));
             } else {
                 Regression r = temporalRooting.getRootToTipRegression(currentTree);
 
@@ -256,7 +245,7 @@ public class TreesPanel extends JPanel implements Exportable {
     class StatisticsModel extends AbstractTableModel {
 
         String[] rowNamesDatedTips = {"Date range", "Slope (rate)", "X-Intercept (TMRCA)", "Correlation Coefficient", "R squared"};
-        String[] rowNamesContemporaneousTips = {"Mean root-tip", "Variance", "Stdev"};
+        String[] rowNamesContemporaneousTips = {"Mean root-tip", "Coefficient of variation", "Stdev", "Variance"};
 
         private DecimalFormat formatter = new DecimalFormat("0.####E0");
         private DecimalFormat formatter2 = new DecimalFormat("####0.####");
@@ -292,10 +281,13 @@ public class TreesPanel extends JPanel implements Exportable {
                         value =DiscreteStatistics.mean(values);
                         break;
                     case 1:
-                        value = DiscreteStatistics.variance(values);
+                        value = DiscreteStatistics.stdev(values) / DiscreteStatistics.mean(values);
                         break;
                     case 2:
                         value = DiscreteStatistics.stdev(values);
+                        break;
+                    case 3:
+                        value = DiscreteStatistics.variance(values);
                         break;
                 }
             } else {

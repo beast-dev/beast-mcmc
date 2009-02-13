@@ -3,20 +3,13 @@
  */
 package test.dr.evomodel.operators;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
@@ -24,7 +17,6 @@ import dr.evomodel.tree.TreeHeightStatistic;
 import dr.evomodel.tree.TreeLogger;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreelengthStatistic;
-import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.mcmc.MCMC;
@@ -34,6 +26,14 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.prior.Prior;
 import junit.framework.TestCase;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Sebastian Hoehna
@@ -107,7 +107,7 @@ public abstract class OperatorTest extends TestCase {
         Parameter b = new Parameter.Default("b", 2.0, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", 0.0, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, Units.Type.YEARS);
+        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, null, Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(treeModel, speciationModel, "yule.like");
 
         MCLogger[] loggers = new MCLogger[2];

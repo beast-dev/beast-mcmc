@@ -27,7 +27,6 @@ import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import test.dr.evomodel.operators.ExchangeOperatorTest;
 import test.dr.inference.TraceTest;
 
 import java.util.List;
@@ -94,7 +93,7 @@ public class YuleModelTest extends TraceTest {
         Parameter b = new Parameter.Default("b", 2.0, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", 0.0, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, Units.Type.YEARS);
+        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, null, Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(treeModel, speciationModel, "yule.like");
 
         ArrayLogFormatter formatter = new ArrayLogFormatter(false);

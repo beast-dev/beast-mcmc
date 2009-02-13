@@ -30,7 +30,7 @@ public class YuleModelParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evomodel").info("Using Yule prior on tree");
 
-        return new BirthDeathGernhard08Model(brParameter, deathParameter, units);
+        return new BirthDeathGernhard08Model(brParameter, deathParameter, null, units);
     }
 
     //************************************************************************
@@ -49,7 +49,7 @@ public class YuleModelParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             new ElementRule(BIRTH_RATE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             XMLUnits.SYNTAX_RULES[0]

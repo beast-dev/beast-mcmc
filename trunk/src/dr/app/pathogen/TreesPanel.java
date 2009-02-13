@@ -102,7 +102,6 @@ public class TreesPanel extends JPanel implements Exportable {
 
 
         treePanel = new FigTreePanel(FigTreePanel.Style.SIMPLE);
-        treePanel.setColourBy("residual");
         tabbedPane.add("Tree", treePanel);
 
         rootToTipChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
@@ -171,15 +170,18 @@ public class TreesPanel extends JPanel implements Exportable {
         double yValues[] = temporalRooting.getRootToTipDistances(currentTree);
 
         if (temporalRooting.isContemporaneous()) {
-            pw.println("tip\tdistance");
+            double meanY = DiscreteStatistics.mean(yValues);
+            pw.println("tip\tdistance\tdeviation");
             for (int i = 0; i < yValues.length; i++) {
-                pw.println(labels[i] + "\t" + "\t" + yValues[i]);
+                pw.println(labels[i] + "\t" + "\t" + yValues[i] + "\t" + (yValues[i] - meanY));
             }
         } else {
             double xValues[] = temporalRooting.getTipDates(currentTree);
-            pw.println("tip\tdate\tdistance");
+            Regression r = temporalRooting.getRootToTipRegression(currentTree);
+            double[] residuals = temporalRooting.getRootToTipResiduals(currentTree, r);
+            pw.println("tip\tdate\tdistance\tresidual");
             for (int i = 0; i < xValues.length; i++) {
-                pw.println(labels[i] + "\t" + xValues[i] + "\t" + yValues[i]);
+                pw.println(labels[i] + "\t" + xValues[i] + "\t" + yValues[i] + "\t" + residuals[i]);
             }
         }
     }
@@ -237,7 +239,8 @@ public class TreesPanel extends JPanel implements Exportable {
             }
 
             treePanel.setTree(jtree);
-
+            treePanel.setColourBy("residual");
+      
         } else {
             treePanel.setTree(null);
             rootToTipChart.removeAllPlots();

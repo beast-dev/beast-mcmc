@@ -163,7 +163,7 @@ public class Regression {
     }
 
     public double getResidual(final double x, final double y) {
-        return y - ((gradient * x) + intercept);
+        return y - ((getGradient() * x) + getIntercept());
     }
 
     public Variate getXData() {

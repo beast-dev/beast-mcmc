@@ -18,6 +18,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
     public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
     public static String BIRTHDIFF_RATE = "birthMinusDeathRate";
     public static String RELATIVE_DEATH_RATE = "relativeDeathRate";
+    public static String SAMPLE_RATE = "sampleRate";
 
     public static String BIRTHDIFF_RATE_PARAM_NAME = "birthDeath.BminusDRate";
     public static String RELATIVE_DEATH_RATE_PARAM_NAME = "birthDeath.DoverB";
@@ -32,10 +33,12 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
         Parameter birthParameter = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);
         Parameter deathParameter = (Parameter) xo.getElementFirstChild(RELATIVE_DEATH_RATE);
+        Parameter sampleParameter = xo.hasChildNamed(SAMPLE_RATE) ?
+                (Parameter) xo.getElementFirstChild(SAMPLE_RATE) : null;
 
         Logger.getLogger("dr.evomodel").info("Using Gernhard08 birth-death model on tree: Gernhard T (2008) J Theor Biol, In press");
 
-        return new BirthDeathGernhard08Model(birthParameter, deathParameter, units);
+        return new BirthDeathGernhard08Model(birthParameter, deathParameter, sampleParameter, units);
     }
 
     //************************************************************************
@@ -54,9 +57,10 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             new ElementRule(BIRTHDIFF_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(RELATIVE_DEATH_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(SAMPLE_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             XMLUnits.SYNTAX_RULES[0]
     };
 }

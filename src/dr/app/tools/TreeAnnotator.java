@@ -86,11 +86,11 @@ public class TreeAnnotator {
     }
 
     // Messages to stderr, output to stdout
-    private static PrintStream  progressStream = System.err;
+    private static final PrintStream  progressStream = System.err;
 
-    private String location1Attribute = "longLat1";
-    private String location2Attribute = "longLat2";
-    private String locationOutputAttribute = "location";
+    private final String location1Attribute = "longLat1";
+    private final String location2Attribute = "longLat2";
+    private final String locationOutputAttribute = "location";
 
     public TreeAnnotator(final int burnin,
                          HeightsSummary heightsOption,
@@ -148,6 +148,10 @@ public class TreeAnnotator {
             progressStream.println();
             progressStream.println();
 
+            if( totalTrees < 1 ) {
+               System.err.println("No trees");
+                return;
+            }
             if( totalTreesUsed <= 1 ) {
                if( burnin > 0 ) {
                  System.err.println("No trees to use: burnin too high");
@@ -343,8 +347,7 @@ public class TreeAnnotator {
 
         /**
          */
-        public CladeSystem() {
-        }
+        public CladeSystem() {}
 
         /**
          */
@@ -836,11 +839,11 @@ public class TreeAnnotator {
         // todo Move rEngine to outer class; create once.
         Rengine rEngine = null;
 
-        private final String[] rArgs = new String[]{"--no-save"};
+        private final String[] rArgs = {"--no-save"};
 
 //	    private int called = 0;
 
-        private final String[] rBootCommands = new String[]{
+        private final String[] rBootCommands = {
                 "library(MASS)",
                 "makeContour = function(var1, var2, prob=0.95, n=50, h=c(1,1)) {" +
                         "post1 = kde2d(var1, var2, n = n, h = h); " +
@@ -850,7 +853,7 @@ public class TreeAnnotator {
                         "c1 = cumsum(sz) * dx * dy; " +
                         "levels = sapply(prob, function(x) { approx(c1, sz, xout = 1 - x)$y }); " +
                         "line = contourLines(post1$x, post1$y, post1$z, level = levels); " +
-                        "return(line) }",
+                        "return(line) }"
         };
 
         private String makeRString(double[] values) {

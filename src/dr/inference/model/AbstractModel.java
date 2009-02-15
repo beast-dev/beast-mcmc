@@ -406,9 +406,9 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
 
     protected Model.ListenerHelper listenerHelper = new Model.ListenerHelper();
 
-    private ArrayList<Model> models = new ArrayList<Model>();
-    private ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-    private ArrayList<Statistic> statistics = new ArrayList<Statistic>();
+    private final ArrayList<Model> models = new ArrayList<Model>();
+    private final ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+    private final ArrayList<Statistic> statistics = new ArrayList<Statistic>();
 
-    private String name;
+    private final String name;
 }

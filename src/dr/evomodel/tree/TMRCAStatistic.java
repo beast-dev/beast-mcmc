@@ -116,7 +116,7 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(Tree.class),
                 new StringAttributeRule("name",
                         "A name for this statistic primarily for the purposes of logging", true),
@@ -128,6 +128,6 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
 
     private Tree tree = null;
     private Set<String> leafSet = null;
-    private boolean isRate;
+    private final boolean isRate;
 
 }

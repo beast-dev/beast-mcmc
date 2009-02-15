@@ -9,8 +9,8 @@ package dr.evolution.coalescent;
  *         Date: 19/11/2007
  */
 public class ScaledDemographic extends DemographicFunction.Abstract {
-    private double scale;
-    private DemographicFunction demo;
+    private final double scale;
+    private final DemographicFunction demo;
 
     public ScaledDemographic(DemographicFunction demo, double scale) {
         super(demo.getUnits());

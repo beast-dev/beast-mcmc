@@ -1,9 +1,7 @@
 package dr.inference.model;
 
 import dr.xml.*;
-import dr.evolution.datatype.DataType;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.inference.distribution.GeneralizedLinearModel;
+import dr.inference.operators.OperatorFailedException;
 
 /**
  * @author Marc A. Suchard
@@ -19,12 +17,22 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
         this.map = new int[parameter.getDimension()];
         for(int i=0; i<map.length; i++)
             map[i] = i;
-        int length = map.length;
+        length = map.length;
     }
 
     public void addMask(Parameter maskParameter) {
+        if (maskParameter.getDimension() != parameter.getDimension())
+            throw new RuntimeException("Masking parameter '"+maskParameter.getId()+"' dimension must equal base parameter '"+
+                    parameter.getId() +"' dimension");
+        this.maskParameter = maskParameter;
+        maskParameter.addParameterListener(this);
+        updateMask();
+    }
+
+    private void updateMask() {
         int index = 0;
         for(int i=0; i<maskParameter.getDimension(); i++) {
+            // TODO Add a threshold attribute for continuous value masking
             final int maskValue = (int) maskParameter.getParameterValue(i);
             if (maskValue == 1) {
                 map[index] = i;
@@ -35,6 +43,9 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
     }
 
     public int getDimension() {
+        if (length == 0)
+            throw new RuntimeException("Zero-dimensional parameter!");
+            // TODO Need non-fatal mechanism to check for zero-dimensional parameters
         return length;
     }
 
@@ -87,7 +98,13 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
     }
 
     public void parameterChangedEvent(Parameter parameter, int index, ChangeType type) {
-//       todo !!!
+        if (parameter == maskParameter) {
+            updateMask();
+        }
+        else {
+            System.err.println("Called by "+parameter.getId());
+            throw new RuntimeException("Not yet implemented.");
+        }
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -133,6 +150,7 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
     };
 
     private Parameter parameter;
+    private Parameter maskParameter;
     private int[] map;
     private int length;
 

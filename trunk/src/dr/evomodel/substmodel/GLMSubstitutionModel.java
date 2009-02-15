@@ -5,6 +5,8 @@ import dr.evoxml.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.inference.model.Model;
 import dr.inference.distribution.GeneralizedLinearModel;
+import dr.inference.distribution.LogLinearModel;
+import dr.inference.loggers.LogColumn;
 import dr.xml.*;
 
 /**
@@ -19,7 +21,7 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
     public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModel";
 
     public GLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
-                                GeneralizedLinearModel glm) {
+                                LogLinearModel glm) {
 
         super(name, dataType, rootFreqModel, null);
         this.glm = glm;
@@ -41,6 +43,11 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         else
             super.handleModelChangedEvent(model,object,index);       
     }
+
+    public LogColumn[] getColumns() {
+        return glm.getColumns();
+    }
+
 
     public double getLogLikelihood() {
         double logL = super.getLogLikelihood();
@@ -71,7 +78,7 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
 
             int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
-            GeneralizedLinearModel glm = (GeneralizedLinearModel) xo.getChild(GeneralizedLinearModel.class);
+            LogLinearModel glm = (LogLinearModel) xo.getChild(GeneralizedLinearModel.class);
 
             int length = glm.getXBeta().length;
 
@@ -117,6 +124,6 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
 
     };
 
-    private GeneralizedLinearModel glm;
+    private LogLinearModel glm;
     private double[] testProbabilities;    
 }

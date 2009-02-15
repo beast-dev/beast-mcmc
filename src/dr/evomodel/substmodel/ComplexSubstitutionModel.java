@@ -10,15 +10,16 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evoxml.DataTypeUtils;
 import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.Loggable;
 import dr.inference.loggers.MatrixEntryColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Likelihood;
-import dr.inference.prior.Prior;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
+import dr.math.MathUtils;
 import dr.xml.*;
+
+import java.util.logging.Logger;
 
 /**
  * <b>A general irreversible class for any
@@ -33,6 +34,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     public static final String RATES = "rates";
     public static final String ROOT_FREQUENCIES = "rootFrequencies";
     public static final String INDICATOR = "rateIndicator";
+    public static final String RANDOMIZE = "randomizeIndicator";
 
 
     public ComplexSubstitutionModel(String name, DataType dataType,
@@ -55,10 +57,6 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         stationaryDistribution = new double[stateCount];
         storedStationaryDistribution = new double[stateCount];
 
-//        illConditionedProbabilities = new double[stateCount * stateCount];
-//        for (int i = 0; i < stateCount * stateCount; i++)
-//            illConditionedProbabilities[i] = 1.0 / stateCount;
-
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -68,22 +66,15 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        // relativeRates changed
-        updateMatrix = true;
-//        System.err.println("Parameter "+parameter.getId()+" changed.");
-//        fireModelChanged();
+        if (!updateMatrix) {
+            updateMatrix = true;
+            fireModelChanged();
+        }
     }
 
     protected void restoreState() {
 
         // To restore all this stuff just swap the pointers...
-//		DoubleMatrix2D tmp = eigenD;
-//		eigenD = storedEigenD;
-//		storedEigenD = tmp;
-//
-//		tmp = eigenV;
-//		eigenV = storedEigenV;
-//		storedEigenV = tmp;
 
         double[] tmp3 = storedEvalImag;
         storedEvalImag = EvalImag;
@@ -122,26 +113,6 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
         storedWellConditioned = wellConditioned;
 
-//        if(!wellConditioned)
-//            System.err.println("Storing ill-conditioned state!");
-
-        //         storedEigenDecomp = eigenDecomp.
-
-
-//		if( storedEigenD == null )
-//				storedEigenD = new DenseDoubleMatrix2D(eigenD.rows(),eigenD.columns());
-//		if( storedEigenV == null )
-//				storedEigenV = new DenseDoubleMatrix2D(eigenV.rows(),eigenV.columns());
-//		storedEigenD.assign(eigenD);
-//		storedEigenV.assign(eigenV);
-        // todo assign values instead of allocating new object
-
-//		storedEigenD = eigenD.copy();
-//		storedEigenV = eigenV.copy();
-//		storedEigenVReal = eigenVReal.copy();
-//		storedEigenVImag = eigenVImag.copy();
-//
-
         System.arraycopy(stationaryDistribution, 0, storedStationaryDistribution, 0, stateCount);
         System.arraycopy(EvalImag, 0, storedEvalImag, 0, stateCount);
 //        storedNormalization = normalization;
@@ -152,7 +123,6 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             System.arraycopy(Ievc[i], 0, storedIevc[i], 0, stateCount);
             System.arraycopy(Evec[i], 0, storedEvec[i], 0, stateCount);
         }
-
     }
 
     public void getTransitionProbabilities(double distance, double[] matrix) {
@@ -167,11 +137,6 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             }
         }
 
-        if (!wellConditioned) {
-            System.arraycopy(illConditionedProbabilities, 0, matrix, 0, stateCount * stateCount);
-            System.err.println("Ill conditioned and here?");
-            return;
-        }
 
 // Eigenvalues and eigenvectors of a real matrix A.
 //
@@ -207,19 +172,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                 double expatsinbt = expat * Math.sin(distance * b);
 
                 for (j = 0; j < stateCount; j++) {
-//                    try {
                     iexp[i][j] = expatcosbt * Ievc[i][j] + expatsinbt * Ievc[i2][j];
                     iexp[i2][j] = expatcosbt * Ievc[i2][j] - expatsinbt * Ievc[i][j];
-//                    } catch (Exception e) {
-//                        System.err.println("Exception: " + e.getMessage());
-//                        DoubleMatrix1D eigenVReal = eigenDecomp.getRealEigenvalues();
-//                        DoubleMatrix1D eigenVImag = eigenDecomp.getImagEigenvalues();
-//                        System.err.println("Real = " + eigenVReal);
-//                        System.err.println(new Vector(Eval));
-//                        System.err.println("Imag = " + eigenVImag);
-//                        System.err.println(new Vector(EvalImag));
-//                        System.exit(-1);
-//                    }
                 }
                 i++; // processed two conjugate rows
             }
@@ -282,48 +236,27 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         DoubleMatrix2D eigenV = eigenDecomp.getV();
         DoubleMatrix1D eigenVReal = eigenDecomp.getRealEigenvalues();
         DoubleMatrix1D eigenVImag = eigenDecomp.getImagEigenvalues();
-
-
-        //
-
-        DoubleMatrix2D eigenVInv = null;
+        DoubleMatrix2D eigenVInv;
 
         updateMatrix = false;
 
         try {
             eigenVInv = alegbra.inverse(eigenV);
             wellConditioned = true;
-//            System.err.println("Well conditioned");
         } catch (IllegalArgumentException e) {
             wellConditioned = false;
-//            System.err.println("Not well conditioned");
-//            updateMatrix = false;
-//            count++;
-//            if (count > 10000) {
-//                System.err.println("Too many ill-conditioned matrices");
-//                 System.exit(-1);
-//            }
-
-//            Eval[0] = 42;
-//            System.err.println("bad");
             return;
-//            throw e;
         }
-
-//              System.err.println("good");
-        // fill AbstractSubstitutionModel parameters
 
         Ievc = eigenVInv.toArray();
         Evec = eigenV.toArray();
         Eval = eigenVReal.toArray();
         EvalImag = eigenVImag.toArray();
 
-//        checkComplexSolutions();
-
         // Check for valid decomposition
         for (i = 0; i < stateCount; i++) {
             if (Eval[i] == Double.NaN || EvalImag[i] == Double.NaN) {
-                 wellConditioned = false;
+                wellConditioned = false;
                 return;
             }
         }
@@ -337,29 +270,19 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         for (i = 0; i < stateCount; i++)
             subst += -amat[i][i] * stationaryDistribution[i];
 
-        normalization = subst;
-
-//        if (subst == Double.NaN || subst == Double.POSITIVE_INFINITY || subst == Double.NEGATIVE_INFINITY) {
-        if (subst == 0) {
-            System.err.println("subst = " + subst);
-            System.exit(-1);
-        }
+//        normalization = subst;
 
         for (i = 0; i < stateCount; i++) {
             Eval[i] /= subst;
             EvalImag[i] /= subst;
         }
-
-//		printDebugSetupMatrix();
-//        wellConditioned = true;
-//        updateMatrix = false;
     }
 
     private void printDebugSetupMatrix() {
         System.out.println("Normalized infinitesimal rate matrix:");
         System.out.println(new Matrix(amat));
         System.out.println(new Matrix(amat).toStringOctave());
-        System.out.println("Normalization = " + normalization);
+//        System.out.println("Normalization = " + normalization);
         System.out.println("Values in setupMatrix():");
 //		System.out.println(eigenV);
 //		System.out.println(eigenVInv);
@@ -486,11 +409,31 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                     throw new XMLParseException("Rate parameter dimension must match indicator parameter dimension");
             }
 
-            if (indicators == null)
-                return new ComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter);
-            else
-                return new SVSComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter, indicators);
+            StringBuffer sb = new StringBuffer()
+                        .append("Constructing a complex substitution model using\n")
+                        .append("\tRate parameters: "+ratesParameter.getId()+"\n")
+                        .append("\tRoot frequency model: "+rootFreq.getId()+"\n");
 
+            ComplexSubstitutionModel model;
+
+            if (indicators == null)
+                model = new ComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter);
+            else {
+
+                boolean randomize = xo.getAttribute(RANDOMIZE,false);
+                if (randomize) {
+                    for(int i=0; i<indicators.getDimension(); i++)
+                        indicators.setParameterValue(i,
+                                (MathUtils.nextDouble() < 0.5) ? 0.0 : 1.0);
+                }            
+                model = new SVSComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter, indicators);
+                sb.append("\tBSSVS indicators: "+indicators.getId()+"\n");
+            }
+
+            sb.append("Please cite Lemey, Rambaut, Drummond and Suchard (in preparation)\n");
+
+            Logger.getLogger("dr.evomodel.substmodel").info(sb.toString());
+            return model;
         }
 
         //************************************************************************
@@ -515,6 +458,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                                 DataType.getRegisteredDataTypeNames(), false),
                         new ElementRule(DataType.class)
                 ),
+                AttributeRule.newBooleanRule(RANDOMIZE,true),
                 new ElementRule(ROOT_FREQUENCIES, FrequencyModel.class),
                 new ElementRule(RATES,
                         new XMLSyntaxRule[]{
@@ -528,31 +472,18 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
     };
 
-//	private DoubleMatrix2D eigenD;
-    //	private DoubleMatrix2D storedEigenD;
-//	private DoubleMatrix2D eigenV;
-//	private DoubleMatrix2D eigenVInv;
-//	private DoubleMatrix2D storedEigenV;
-    //	private DoubleMatrix2D storedEigenVInv;
-//	private DoubleMatrix1D eigenVReal;
-//	private DoubleMatrix1D eigenVImag;
-//	private DoubleMatrix1D storedEigenVReal;
-//	private DoubleMatrix1D storedEigenVImag;
-
     private boolean isComplex = false;
     private double[] stationaryDistribution = null;
     private double[] storedStationaryDistribution;
-    private Double normalization;
-    private Double storedNormalization;
+//    private Double normalization;
+//    private Double storedNormalization;
 
     protected double[] EvalImag;
     protected double[] storedEvalImag;
 
-//	private boolean normalizationAmat = false;
-
     protected boolean wellConditioned = true;
     private boolean storedWellConditioned;
-    private double[] illConditionedProbabilities;
+//    private double[] illConditionedProbabilities;
 
     private static final double minProb = Property.DEFAULT.tolerance();
     //    private static final double minProb = 1E-20;
@@ -561,14 +492,11 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     EigenvalueDecomposition eigenDecomp;
     EigenvalueDecomposition storedEigenDecomp;
 
-    private int count = 0;
-
     public Model getModel() {
         return this;
     }
 
     public double getLogLikelihood() {
-//        System.err.println("Checking prior");
         if (updateMatrix)
             setupMatrix();
         if (wellConditioned)
@@ -577,6 +505,6 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     }
 
     public void makeDirty() {
-        //To change body of implemented methods use File | Settings | File Templates.
+
     }
 }

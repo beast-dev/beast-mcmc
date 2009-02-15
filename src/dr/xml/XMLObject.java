@@ -567,7 +567,7 @@ public class XMLObject {
     // Private instance variables
     //*********************************************************************
 
-    private Vector<Object> children = new Vector<Object>();
+    private final Vector<Object> children = new Vector<Object>();
     private Element element = null;
 
     private Object nativeObject;

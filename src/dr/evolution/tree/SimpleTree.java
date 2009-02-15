@@ -484,7 +484,7 @@ public class SimpleTree implements MutableTree {
         }
     }
 
-    private ArrayList<MutableTreeListener> mutableTreeListeners = new ArrayList<MutableTreeListener>();
+    private final ArrayList<MutableTreeListener> mutableTreeListeners = new ArrayList<MutableTreeListener>();
 
     public void addMutableTaxonListListener(MutableTaxonListListener listener) {
         mutableTaxonListListeners.add(listener);
@@ -496,7 +496,7 @@ public class SimpleTree implements MutableTree {
         }
     }
 
-    private ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
+    private final ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
 
     /**
      * @return a string containing a newick representation of the tree

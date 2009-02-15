@@ -43,9 +43,9 @@ import java.util.*;
  */
 public class Defects {
 
-    private ArrayList defects = new ArrayList();
-    private Set defectiveSequences = new HashSet();
-    private Set defectiveSites = new HashSet();
+    private final ArrayList<Defect> defects = new ArrayList<Defect>();
+    private final Set defectiveSequences = new HashSet();
+    private final Set defectiveSites = new HashSet();
     int sequenceCount = 0;
     static final int STOP = -1;
     static final int INDEL = -2;
@@ -96,8 +96,8 @@ public class Defects {
 
     private void addDefect(int code, int sequence, int site) {
         defects.add(new Defect(code, sequence, site));
-        defectiveSequences.add(new Integer(sequence));
-        defectiveSites.add(new Integer(site));
+        defectiveSequences.add(sequence);
+        defectiveSites.add(site);
     }
 
     public int getDefectiveSequenceCount() {
@@ -110,9 +110,8 @@ public class Defects {
 
     public int getDefectiveSites(int sequence) {
         int count = 0;
-        for (int i = 0; i < defects.size(); i++) {
-            Defect defect = (Defect)defects.get(i);
-            if (defect.getSequence() == sequence) {
+        for( Defect defect : defects ) {
+            if( defect.getSequence() == sequence ) {
                 count += 1;
             }
         }
@@ -121,9 +120,8 @@ public class Defects {
 
     public int getStopSites(int sequence) {
         int count = 0;
-        for (int i = 0; i < defects.size(); i++) {
-            Defect defect = (Defect)defects.get(i);
-            if (defect.getSequence() == sequence && defect.isStop()) {
+        for( Defect defect : defects ) {
+            if( defect.getSequence() == sequence && defect.isStop() ) {
                 count += 1;
             }
         }
@@ -132,9 +130,8 @@ public class Defects {
 
     public int getDefectiveSequences(int site) {
         int count = 0;
-        for (int i = 0; i < defects.size(); i++) {
-            Defect defect = (Defect)defects.get(i);
-            if (defect.getSequence() == site) {
+        for(Defect defect : defects) {
+            if( defect.getSequence() == site ) {
                 count += 1;
             }
         }
@@ -150,9 +147,8 @@ public class Defects {
 
     public int getStopCodonCount() {
         int count = 0;
-        for (int i = 0; i < defects.size(); i++) {
-            Defect defect = (Defect)defects.get(i);
-            if (defect.isStop()) {
+        for( Defect defect : defects ) {
+            if( defect.isStop() ) {
                 count += 1;
             }
         }
@@ -205,7 +201,7 @@ public class Defects {
         TreeSet set = new TreeSet();
         for (int i = 0; i < sequenceCount; i++) {
             if (getDefectiveSites(i) == defectCount) {
-                set.add(new Integer(i));
+                set.add(i);
             }
         }
         return set;
@@ -219,7 +215,7 @@ public class Defects {
         TreeSet set = new TreeSet();
         for (int i = 0; i < sequenceCount; i++) {
             if (getStopSites(i) == stopCount) {
-                set.add(new Integer(i));
+                set.add(i);
             }
         }
         return set;
@@ -410,9 +406,9 @@ public class Defects {
         //}
         for (int d = 1; d <= maxDefects; d++) {
             Set seqs = defects.getSequences(d);
-            for (Iterator i = seqs.iterator(); i.hasNext();) {
-                Integer index = (Integer)i.next();
-                String name = alignment.getTaxonId(index.intValue());
+            for(Object seq : seqs) {
+                Integer index = (Integer) seq;
+                String name = alignment.getTaxonId(index);
                 System.out.println(d + "  " + name);
             }
 
@@ -426,7 +422,7 @@ public class Defects {
             System.out.println(i+"\t" + defects.getSequenceCount(i) + "\t" + probTerm*sequenceCount);
 
             // compute probability of n from prob. of n-1
-            probTerm *= (double)mean / (i+1);
+            probTerm *= mean / (i+1);
         }
 
         System.out.println("Stops\tSequences\texpected");
@@ -436,7 +432,7 @@ public class Defects {
             System.out.println(i+"\t" + defects.getStopSequenceCount(i) + "\t" + probTerm*sequenceCount);
 
             // compute probability of n from prob. of n-1
-            probTerm *= (double)meanS / (i+1);
+            probTerm *= meanS / (i+1);
         }
 
         System.out.println("stop-codon sequences:");
@@ -444,7 +440,7 @@ public class Defects {
             Set seqs = defects.getSequencesByStopCount(d);
             for (Iterator i = seqs.iterator(); i.hasNext();) {
                 Integer index = (Integer)i.next();
-                String name = alignment.getTaxonId(index.intValue());
+                String name = alignment.getTaxonId(index);
                 System.out.println(d + "  " + name);
             }
 

@@ -226,7 +226,7 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),

@@ -120,11 +120,13 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModel implements L
 
             final double a = Math.exp(-lam * dt);
             final double d = (vals[k+1] - vals[k] * a);
-            ll +=  (d*d) / (1-a*a);
+
+            final double c = 1 - a * a;
+            ll +=  (d*d / c) - 0.5 * Math.log(c);
         }
 
         final double f2 =  (2*lam) / (sigma*sigma);
-        ll = tps.length * logNormalCoef + ll*f2/-2;
+        ll = tps.length * (logNormalCoef - Math.log(sigma)) + ll*f2/-2;
 
         if( popMeanPrior != null ) {
             ll += popMeanPrior.logPdf(popMean);

@@ -393,7 +393,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 throw new IllegalArgumentException("No leaf nodes selected");
             }
 
-            NodeRef[] mrca = new NodeRef[]{null};
+            NodeRef[] mrca = {null};
             getCommonAncestorNode(tree, tree.getRoot(), leafNodes, cardinality, mrca);
 
             return mrca[0];
@@ -473,9 +473,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 throw new IllegalArgumentException("No leaf nodes selected");
             }
 
-            int[] matchCount = new int[]{0};
-            int[] leafCount = new int[]{0};
-            boolean[] isMono = new boolean[]{false};
+            int[] matchCount = {0};
+            int[] leafCount = {0};
+            boolean[] isMono = {false};
             isMonophyletic(tree, tree.getRoot(), leafNodes, ignore, cardinality, matchCount, leafCount, isMono);
 
             return isMono[0];
@@ -593,7 +593,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          */
         public static int getParsimonySteps(Tree tree, Set leafStates) {
 
-            int[] score = new int[]{0};
+            int[] score = {0};
             getParsimonySteps(tree, tree.getRoot(), leafStates, score);
             return score[0];
         }

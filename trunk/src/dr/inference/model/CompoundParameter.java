@@ -262,9 +262,11 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
-        };
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
+            };
+        }
 
         public Class getReturnType() {
             return CompoundParameter.class;
@@ -306,10 +308,10 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
         }
     }
 
-    private List<Parameter> uniqueParameters = new ArrayList<Parameter>();
+    private final List<Parameter> uniqueParameters = new ArrayList<Parameter>();
 
-    private ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-    private ArrayList<Integer> pindex = new ArrayList<Integer>();
+    private final ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+    private final ArrayList<Integer> pindex = new ArrayList<Integer>();
     private IntersectionBounds bounds = null;
     private int dimension;
     private String name;

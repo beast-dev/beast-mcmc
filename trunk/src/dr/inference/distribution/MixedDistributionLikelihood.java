@@ -114,7 +114,7 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
             Statistic data = (Statistic)((XMLObject)xo.getChild(DATA)).getChild(Statistic.class);
             Statistic indicators = (Statistic)((XMLObject)xo.getChild(INDICATORS)).getChild(Statistic.class);
 
-            ParametricDistributionModel[] models = new ParametricDistributionModel[] {model0, model1};
+            ParametricDistributionModel[] models = {model0, model1};
 
             return new MixedDistributionLikelihood(models, data, indicators);
         }
@@ -125,7 +125,7 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
 
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private final XMLSyntaxRule[] rules = {
             new ElementRule(DISTRIBUTION0,
                 new XMLSyntaxRule[] { new ElementRule(ParametricDistributionModel.class) }),
             new ElementRule(DISTRIBUTION1,
@@ -141,9 +141,9 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
         public Class getReturnType() { return Likelihood.class; }
     };
 
-    private ParametricDistributionModel[] distributions;
-    private Statistic data;
-    private Statistic indicators;
+    private final ParametricDistributionModel[] distributions;
+    private final Statistic data;
+    private final Statistic indicators;
     private boolean impliedOne = false;
 
     public Model[] getUniqueModels() {

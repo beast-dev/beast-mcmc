@@ -105,7 +105,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(LOG_EVERY),
             new StringAttributeRule(FILE_NAME,
                     "The name of the file to send log output to. " +

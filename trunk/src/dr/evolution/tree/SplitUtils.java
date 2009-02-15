@@ -63,7 +63,6 @@ public class SplitUtils
 			}
 		}
 
-
 		return splitSystem;
 	}
 
@@ -77,9 +76,7 @@ public class SplitUtils
 	 */
 	public static SplitSystem getSplits(Tree tree)
 	{
-		TaxonList taxonList = tree;
-
-		return getSplits(taxonList, tree);
+        return getSplits(tree, tree);
 	}
 
 
@@ -87,9 +84,10 @@ public class SplitUtils
 	/**
 	 * get split for branch associated with internal node
 	 *
-	 * @param idGroup order of labels
+	 * @param taxonList
+     * @param tree
 	 * @param internalNode Node
-	 * @param boolean[] split
+	 * @param split
 	 */
 	public static void getSplit(TaxonList taxonList, Tree tree, NodeRef internalNode, boolean[] split)
 	{
@@ -112,14 +110,11 @@ public class SplitUtils
 		}
 
 		// standardize split (i.e. first index is alway true)
-		if (split[0] == false)
+		if ( !split[0] )
 		{
 			for (int i = 0; i < split.length; i++)
 			{
-				if (split[i] == false)
-					split[i] = true;
-				else
-					split[i] = false;
+                split[i] = !split[i];
 			}
 		}
 	}
@@ -135,8 +130,7 @@ public class SplitUtils
 	public static boolean isSame(boolean[] s1, boolean[] s2)
 	{
 		boolean reverse;
-		if (s1[0] == s2[0]) reverse = false;
-		else reverse = true;
+        reverse = s1[0] != s2[0];
 
 		if (s1.length != s2.length)
 			throw new IllegalArgumentException("Splits must be of the same length!");

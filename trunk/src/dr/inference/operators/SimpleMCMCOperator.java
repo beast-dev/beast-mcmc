@@ -177,7 +177,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private boolean operateAllowed = true;
     private double targetAcceptanceProb = 0.234;
 
-    private double[] spanDeviation = {Double.MAX_VALUE, -Double.MAX_VALUE};
+    private final double[] spanDeviation = {Double.MAX_VALUE, -Double.MAX_VALUE};
     private int spanCount = 0;
 }
 

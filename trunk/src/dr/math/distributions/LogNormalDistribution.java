@@ -92,7 +92,7 @@ public class LogNormalDistribution implements Distribution {
         return pdfFunction;
     }
 
-    private UnivariateFunction pdfFunction = new UnivariateFunction() {
+    private final UnivariateFunction pdfFunction = new UnivariateFunction() {
         public final double evaluate(double x) {
             return pdf(x);
         }

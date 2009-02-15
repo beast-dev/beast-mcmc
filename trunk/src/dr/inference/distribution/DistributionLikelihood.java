@@ -46,6 +46,11 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
     public static final String DISTRIBUTION = "distribution";
     public static final String DATA = "data";
+    public static final String FROM = "from";
+    public static final String TO = "to";
+
+    private int from = -1;
+    private int to = Integer.MAX_VALUE;
 
     public DistributionLikelihood(Distribution distribution) {
         super(null);
@@ -69,6 +74,11 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         return distribution;
     }
 
+    public void setRange(int from, int to) {
+        this.from = from;
+        this.to = to;
+    }
+
     // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
@@ -83,7 +93,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         double logL = 0.0;
 
         for (Statistic statistic : dataList) {
-            for (int j = 0; j < statistic.getDimension(); j++) {
+            for (int j = Math.max(0, from); j < Math.min(statistic.getDimension(), to); j++) {
 
                 double value = statistic.getStatisticValue(j) - offset;
                 if (offset > 0.0 && value < 0.0) {
@@ -121,19 +131,30 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(DISTRIBUTION);
+            final XMLObject cxo = (XMLObject) xo.getChild(DISTRIBUTION);
             ParametricDistributionModel model = (ParametricDistributionModel) cxo.getChild(ParametricDistributionModel.class);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(model);
 
-            cxo = (XMLObject) xo.getChild(DATA);
+            XMLObject cxo1 = (XMLObject) xo.getChild(DATA);
+            final int from = cxo1.getAttribute(FROM, -1);
+            int to = cxo1.getAttribute(TO, -1);
+            if( from >= 0 || to >= 0 ) {
+                if( to < 0 ) {
+                    to = Integer.MAX_VALUE;
+                }
+                if( !( from >= 0 && to >= 0 && from < to) ) {
+                    throw new XMLParseException("ill formed from-to");
+                }
+                likelihood.setRange(from, to);
+            }
 
-            for (int j = 0; j < cxo.getChildCount(); j++) {
-                if (cxo.getChild(j) instanceof Statistic) {
+            for(int j = 0; j < cxo1.getChildCount(); j++) {
+                if( cxo1.getChild(j) instanceof Statistic ) {
 
-                    likelihood.addData((Statistic) cxo.getChild(j));
+                    likelihood.addData((Statistic) cxo1.getChild(j));
                 } else {
-                    throw new XMLParseException("illegal element in " + cxo.getName() + " element");
+                    throw new XMLParseException("illegal element in " + cxo1.getName() + " element");
                 }
             }
 
@@ -151,7 +172,11 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(DISTRIBUTION,
                         new XMLSyntaxRule[]{new ElementRule(ParametricDistributionModel.class)}),
-                new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)})
+                new ElementRule(DATA, new XMLSyntaxRule[]{
+                        AttributeRule.newIntegerRule(FROM, true),
+                        AttributeRule.newIntegerRule(TO, true),
+                        new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+                })
         };
 
         public String getParserDescription() {

@@ -83,6 +83,9 @@
         <state code="K"/>
         <ambiguity code="?" states="ABCDEFGHIJK"/>
     </generalDataType>
+	                 <
+
+
 
     <alignment id="locations">
         <dataType idref="geography"/>

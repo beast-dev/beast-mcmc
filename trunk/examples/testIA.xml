@@ -106,6 +106,12 @@
 		<log id="restrictedGrowth" logEvery="1000" fileName="testGrowth.log">
 			<inhibitionLikelihood idref="traitLikelihood"/>
 		</log>
+		<logTree id="logTree" logEvery="1000" nexusFormat="true" fileName="testIATrees.log">
+			<treeModel idref="treeModel"/>
+			<logAllTraits>
+				<treeModel idref="treeModel"/>
+			</logAllTraits>
+		</logTree>
 	</mcmc>
 
 	<traceAnalysis fileName="testIA.log"/>

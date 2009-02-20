@@ -25,11 +25,11 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evolution.datatype.Codons;
-import dr.evolution.datatype.GeneticCode;
+import dr.evolution.datatype.*;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.xml.*;
+import jebl.evolution.sequences.NucleotideState;
 
 /**
  * Yang model of codon evolution
@@ -44,25 +44,25 @@ public class YangCodonModel extends AbstractCodonModel
 	public static final String YANG_CODON_MODEL = "yangCodonModel";
 	public static final String OMEGA = "omega";
 	public static final String KAPPA = "kappa";
-	
+
 	/** kappa */
 	protected Parameter kappaParameter;
-	
+
 	/** omega */
 	protected Parameter omegaParameter;
-	
+
 	protected byte[] rateMap;
-	
+
 	/**
 	 * Constructor
 	 */
 	public YangCodonModel(Codons codonDataType,
-							Parameter omegaParameter, 
-							Parameter kappaParameter, 
+							Parameter omegaParameter,
+							Parameter kappaParameter,
 							FrequencyModel freqModel)
 	{
 		super(YANG_CODON_MODEL, codonDataType, freqModel);
-		
+
 		this.omegaParameter = omegaParameter;
 		addParameter(omegaParameter);
 		omegaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
@@ -77,29 +77,29 @@ public class YangCodonModel extends AbstractCodonModel
 
         addStatistic(synonymousRateStatistic);
 	}
-	
+
 	/**
 	 * set kappa
 	 */
-	public void setKappa(double kappa) { 
-		kappaParameter.setParameterValue(0, kappa); 
+	public void setKappa(double kappa) {
+		kappaParameter.setParameterValue(0, kappa);
 		updateMatrix = true;
 	}
-	
+
 	/**
 	 * @return kappa
 	 */
 	public double getKappa() { return kappaParameter.getParameterValue(0); }
-	
+
 	/**
 	 * set dN/dS
 	 */
 	public void setOmega(double omega) {
-		omegaParameter.setParameterValue(0, omega); 
+		omegaParameter.setParameterValue(0, omega);
 		updateMatrix = true;
 	}
-	
-	
+
+
 	/**
 	 * @return dN/dS
 	 */
@@ -131,12 +131,12 @@ public class YangCodonModel extends AbstractCodonModel
 				case 4: relativeRates[i] = omega; break;		// non-synonymous transversion
 			}
 		}
-		
-	
+
+
 	}
-	
+
 	/**
-	 * Construct a map of the rate classes in the rate matrix using the current 
+	 * Construct a map of the rate classes in the rate matrix using the current
 	 * genetic code. Classes:
 	 *		0: codon changes in more than one codon position (or stop codons)
 	 *		1: synonymous transition
@@ -150,35 +150,35 @@ public class YangCodonModel extends AbstractCodonModel
 		byte rateClass;
 		int[] codon;
 		int cs1, cs2, aa1, aa2;
-		
+
 		int i = 0;
-		
+
 		rateMap = new byte[rateCount];
 
 		for (u = 0; u < stateCount; u++) {
-			
+
 			codon = codonDataType.getTripletStates(u);
 			i1 = codon[0];
 			j1 = codon[1];
 			k1 = codon[2];
-			
+
 			cs1 = codonDataType.getState(i1, j1, k1);
 			aa1 = geneticCode.getAminoAcidState(codonDataType.getCanonicalState(cs1));
 
 			for (v = u + 1; v < stateCount; v++) {
-			
+
 				codon = codonDataType.getTripletStates(v);
 				i2 = codon[0];
 				j2 = codon[1];
 				k2 = codon[2];
-			
+
 				cs2 = codonDataType.getState(i2, j2, k2);
 				aa2 = geneticCode.getAminoAcidState(codonDataType.getCanonicalState(cs2));
 
 				rateClass = -1;
 				if (i1 != i2) {
 					if ( (i1 == 0 && i2 == 2) || (i1 == 2 && i2 == 0) || // A <-> G
-						 (i1 == 1 && i2 == 3) || (i1 == 3 && i2 == 1) ) { // C <-> T 
+						 (i1 == 1 && i2 == 3) || (i1 == 3 && i2 == 1) ) { // C <-> T
 						rateClass = 1; // Transition at position 1
 					} else {
 						rateClass = 2; // Transversion at position 1
@@ -192,7 +192,7 @@ public class YangCodonModel extends AbstractCodonModel
 						} else {
 							rateClass = 2; // Transversion
 						}
-					} else 
+					} else
 						rateClass = 0; // Codon changes at more than one position
 				}
 				if (k1 != k2) {
@@ -203,36 +203,141 @@ public class YangCodonModel extends AbstractCodonModel
 						} else {
 							rateClass = 2; // Transversion
 						}
-					} else 
+					} else
 						rateClass = 0; // Codon changes at more than one position
 				}
-				 					 
+
 	 			if (rateClass != 0) {
 					if (aa1 != aa2) {
 						rateClass += 2; // Is a non-synonymous change
 					}
 				}
-				
+
 				rateMap[i] = rateClass;
 				i++;
 			}
-			
+
 		}
 	}
-	
+
+    public void printRateMap()
+    {
+        int u, v, i1, j1, k1, i2, j2, k2;
+        byte rateClass;
+        int[] codon;
+        int cs1, cs2, aa1, aa2;
+
+        System.out.print("\t");
+        for (v = 0; v < stateCount; v++) {
+            codon = codonDataType.getTripletStates(v);
+            i2 = codon[0];
+            j2 = codon[1];
+            k2 = codon[2];
+
+            System.out.print("\t" + Nucleotides.INSTANCE.getChar(i2));
+            System.out.print(Nucleotides.INSTANCE.getChar(j2));
+            System.out.print(Nucleotides.INSTANCE.getChar(k2));
+        }
+        System.out.println();
+
+        System.out.print("\t");
+        for (v = 0; v < stateCount; v++) {
+            codon = codonDataType.getTripletStates(v);
+            i2 = codon[0];
+            j2 = codon[1];
+            k2 = codon[2];
+
+            cs2 = codonDataType.getState(i2, j2, k2);
+            aa2 = geneticCode.getAminoAcidState(codonDataType.getCanonicalState(cs2));
+            System.out.print("\t" + AminoAcids.INSTANCE.getChar(aa2));
+        }
+        System.out.println();
+
+        for (u = 0; u < stateCount; u++) {
+
+            codon = codonDataType.getTripletStates(u);
+            i1 = codon[0];
+            j1 = codon[1];
+            k1 = codon[2];
+
+            System.out.print(Nucleotides.INSTANCE.getChar(i1));
+            System.out.print(Nucleotides.INSTANCE.getChar(j1));
+            System.out.print(Nucleotides.INSTANCE.getChar(k1));
+
+            cs1 = codonDataType.getState(i1, j1, k1);
+            aa1 = geneticCode.getAminoAcidState(codonDataType.getCanonicalState(cs1));
+
+            System.out.print("\t" + AminoAcids.INSTANCE.getChar(aa1));
+
+            for (v = 0; v < stateCount; v++) {
+
+                codon = codonDataType.getTripletStates(v);
+                i2 = codon[0];
+                j2 = codon[1];
+                k2 = codon[2];
+
+                cs2 = codonDataType.getState(i2, j2, k2);
+                aa2 = geneticCode.getAminoAcidState(codonDataType.getCanonicalState(cs2));
+
+                rateClass = -1;
+                if (i1 != i2) {
+                    if ( (i1 == 0 && i2 == 2) || (i1 == 2 && i2 == 0) || // A <-> G
+                         (i1 == 1 && i2 == 3) || (i1 == 3 && i2 == 1) ) { // C <-> T
+                        rateClass = 1; // Transition at position 1
+                    } else {
+                        rateClass = 2; // Transversion at position 1
+                    }
+                }
+                if (j1 != j2) {
+                    if (rateClass == -1) {
+                        if ( (j1 == 0 && j2 == 2) || (j1 == 2 && j2 == 0) || // A <-> G
+                             (j1 == 1 && j2 == 3) || (j1 == 3 && j2 == 1) ) { // C <-> T
+                            rateClass = 1; // Transition
+                        } else {
+                            rateClass = 2; // Transversion
+                        }
+                    } else
+                        rateClass = 0; // Codon changes at more than one position
+                }
+                if (k1 != k2) {
+                    if (rateClass == -1) {
+                        if ( (k1 == 0 && k2 == 2) || (k1 == 2 && k2 == 0) || // A <-> G
+                             (k1 == 1 && k2 == 3) || (k1 == 3 && k2 == 1) ) { // C <-> T
+                            rateClass = 1; // Transition
+                        } else {
+                            rateClass = 2; // Transversion
+                        }
+                    } else
+                        rateClass = 0; // Codon changes at more than one position
+                }
+
+                 if (rateClass != 0) {
+                    if (aa1 != aa2) {
+                        rateClass += 2; // Is a non-synonymous change
+                    }
+                }
+
+                System.out.print("\t" + rateClass);
+
+            }
+            System.out.println();
+
+        }
+    }
+
 	// *****************************************************************
 	// Interface ModelComponent
 	// *****************************************************************
-		
+
 	/**
-	 * Reads a the model from an XMLObject. 
+	 * Reads a the model from an XMLObject.
 	 */
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
+
 		public String getParserName() { return YANG_CODON_MODEL; }
-		
+
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-							
+
 			Codons codons = Codons.UNIVERSAL;
 			if (xo.hasAttribute(GeneticCode.GENETIC_CODE)) {
 				String codeStr = xo.getStringAttribute(GeneticCode.GENETIC_CODE);
@@ -270,24 +375,28 @@ public class YangCodonModel extends AbstractCodonModel
 			Parameter omegaParam = (Parameter)xo.getElementFirstChild(OMEGA);
 			Parameter kappaParam = (Parameter)xo.getElementFirstChild(KAPPA);
 			FrequencyModel freqModel = (FrequencyModel)xo.getChild(FrequencyModel.class);
-			return new YangCodonModel(codons, omegaParam, kappaParam, freqModel);			
+			YangCodonModel codonModel = new YangCodonModel(codons, omegaParam, kappaParam, freqModel);
+
+//            codonModel.printRateMap();
+
+            return codonModel;
 		}
-		
+
 		//************************************************************************
 		// AbstractXMLObjectParser implementation
 		//************************************************************************
-		
+
 		public String getParserDescription() {
 			return "This element represents the Yang model of codon evolution.";
 		}
-		
+
 		public Class getReturnType() { return YangCodonModel.class; }
-		
+
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
+
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 			new StringAttributeRule(GeneticCode.GENETIC_CODE,
-				"The genetic code to use", 
+				"The genetic code to use",
 				new String[] {
 					GeneticCode.UNIVERSAL.getName(),
 					GeneticCode.VERTEBRATE_MT.getName(),
@@ -303,27 +412,27 @@ public class YangCodonModel extends AbstractCodonModel
 					GeneticCode.FLATWORM_MT.getName(),
 					GeneticCode.BLEPHARISMA_NUC.getName(),
 					GeneticCode.NO_STOPS.getName()}, true),
-			new ElementRule(OMEGA, 
+			new ElementRule(OMEGA,
 				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-			new ElementRule(KAPPA, 
+			new ElementRule(KAPPA,
 				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
 			new ElementRule(FrequencyModel.class)
 		};
 	};
-	
-	
+
+
     // **************************************************************
     // XHTMLable IMPLEMENTATION
     // **************************************************************
 
 	public String toXHTML() {
 		StringBuffer buffer = new StringBuffer();
-		
+
 		buffer.append("<em>Yang Codon Model</em> kappa = ");
 		buffer.append(getKappa());
 		buffer.append(", omega = ");
 		buffer.append(getOmega());
-		
+
 		return buffer.toString();
 	}
 

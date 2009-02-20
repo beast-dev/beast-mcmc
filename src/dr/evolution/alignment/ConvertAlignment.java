@@ -80,7 +80,7 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 	}
 
 	/**
-	 * Sets the CodonTable of this alignment. 
+	 * Sets the CodonTable of this alignment.
 	 */
 	public void setCodonTable(CodonTable codonTable) {
 		this.codonTable = codonTable;
@@ -92,12 +92,12 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 	public void setAlignment(Alignment alignment) {
 		if (dataType == null)
 			dataType = alignment.getDataType();
-			
+
 		this.alignment = alignment;
-		
+
 		int newType = dataType.getType();
 		int originalType = alignment.getDataType().getType();
-		
+
 		if (originalType == DataType.NUCLEOTIDES) {
 			if (newType != DataType.CODONS && newType != DataType.AMINO_ACIDS) {
 				throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
@@ -108,7 +108,7 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 			}
 		} else {
 			throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
-		}		
+		}
 	}
 
     // **************************************************************
@@ -144,16 +144,16 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 	public String getUnalignedSequenceString(int sequenceIndex) {
 		StringBuffer unaligned = new StringBuffer();
 		for (int i = 0, n = getSiteCount(); i < n; i++) {
-			
+
 			int state = getState(sequenceIndex, i);
 			if (!dataType.isGapState(state)) {
 				unaligned.append(dataType.getChar(state));
 			}
 		}
-		
+
 		return unaligned.toString();
 	}
-	
+
     // **************************************************************
     // PatternList IMPLEMENTATION
     // **************************************************************
@@ -164,7 +164,7 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 	public DataType getDataType() {
 		return dataType;
 	}
-	
+
     // **************************************************************
     // SiteList IMPLEMENTATION
     // **************************************************************
@@ -174,36 +174,36 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 	 */
 	public int getSiteCount() {
 		if (alignment == null) throw new RuntimeException("ConvertionAlignment has no alignment");
-		
+
 		int originalType = alignment.getDataType().getType();
 		int count = alignment.getSiteCount();
-		
+
 		if (originalType == DataType.NUCLEOTIDES) {
 			count /= 3;
-		}		
-		
+		}
+
 		return count;
 	}
 
-	/** 
-	 * Gets the pattern of site as an array of state numbers (one per sequence) 
+	/**
+	 * Gets the pattern of site as an array of state numbers (one per sequence)
 	 * @return the site pattern at siteIndex
 	 */
 	public int[] getSitePattern(int siteIndex) {
 		if (alignment == null) throw new RuntimeException("ConvertionAlignment has no alignment");
-		
+
 		int i, n = getSequenceCount();
-		
+
 		int[] pattern = new int[n];
-		
+
 		for (i = 0; i < n; i++) {
-			pattern[i] = getState(i, siteIndex);	
+			pattern[i] = getState(i, siteIndex);
 		}
-		
+
 		return pattern;
 	}
 
-	/** 
+	/**
 	 * Gets the pattern index at a particular site
 	 * @return the patternIndex
 	 */
@@ -211,8 +211,8 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 		return siteIndex;
 	}
 
-	/** 
-	 * @return the sequence state at (taxon, site) 
+	/**
+	 * @return the sequence state at (taxon, site)
 	 */
 	public int getState(int taxonIndex, int siteIndex) {
 		if (alignment == null) throw new RuntimeException("ConvertionAlignment has no alignment");
@@ -221,23 +221,23 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 		int originalType = alignment.getDataType().getType();
 
 		int state = 0;
-		
+
 		if (originalType == DataType.NUCLEOTIDES) {
 			int siteIndex3 = siteIndex * 3;
 			int state1 = alignment.getState(taxonIndex, siteIndex3);
 			int state2 = alignment.getState(taxonIndex, siteIndex3 + 1);
 			int state3 = alignment.getState(taxonIndex, siteIndex3 + 2);
-			
+
 			if (newType == DataType.CODONS) {
-				state = Codons.UNIVERSAL.getState(state1, state2, state3);
+				state = ((Codons)dataType).getState(state1, state2, state3);
 			} else { // newType == DataType.AMINO_ACIDS
-				state = codonTable.getAminoAcidState(Codons.UNIVERSAL.getCanonicalState(Codons.UNIVERSAL.getState(state1, state2, state3)));
+				state = codonTable.getAminoAcidState(((Codons)dataType).getCanonicalState(((Codons)dataType).getState(state1, state2, state3)));
 			}
-			
+
 		} else if (originalType == DataType.CODONS) {
 			state = codonTable.getAminoAcidState(alignment.getState(taxonIndex, siteIndex));
-		}	
-			
+		}
+
 		return state;
 	}
 
@@ -281,7 +281,7 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
 		return alignment.getSequenceAttribute(index, name);
 	}
-	
+
     // **************************************************************
     // TaxonList IMPLEMENTATION
     // **************************************************************
@@ -317,7 +317,7 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
 		return alignment.getTaxonIndex(id);
 	}
-	
+
 	/**
 	 * returns the index of the given taxon.
 	 */
@@ -325,7 +325,7 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
 		return alignment.getTaxonIndex(taxon);
 	}
-	
+
 	/**
 	 * @return an object representing the named attributed for the given taxon.
 	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
@@ -344,25 +344,25 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 		xhtml += ", no. sites = ";
 		xhtml += getSiteCount();
 		xhtml += "</p>";
-		
+
 		xhtml += "<pre>";
-		
+
 		int length, maxLength = 0;
 		for (int i =0; i < getTaxonCount(); i++) {
 			length = getTaxonId(i).length();
 			if (length > maxLength)
 				maxLength = length;
 		}
-		
+
 		int count, state;
 		int type = dataType.getType();
-		
+
 		for (int i = 0; i < getTaxonCount(); i++) {
 			length = getTaxonId(i).length();
 			xhtml += getTaxonId(i);
 			for (int j = length; j <= maxLength; j++)
 				xhtml += " ";
-				
+
 			count = getSiteCount();
 			for (int j = 0; j < count; j++) {
 				state = getState(i, j);

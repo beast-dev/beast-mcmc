@@ -1114,7 +1114,7 @@
 
 
 
-    <convert id="codonAlignment" dataType="codon" geneticCode="vertebrateMitochondrial">
+    <convert id="codonAlignment" dataType="codon" geneticCode="universal">
         <alignment idref="alignment1"/>
     </convert>
 
@@ -1144,17 +1144,17 @@
         Newick Tree: <tree idref="treeML"/>
     </report>
 
-     <yangCodonModel id="yang" geneticCode="vertebrateMitochondrial">
+     <yangCodonModel id="yang" geneticCode="universal">
         <omega>
             <parameter id="omega" value="1.414"/>
         </omega>
         <kappa>
             <parameter id="kappa" value="1.234567"/>
         </kappa>
-        <frequencyModel id="freqmodel" dataType="codon-vertebrateMitochondrial">
+        <frequencyModel id="freqmodel" dataType="codon-universal">
             <alignment idref="codonAlignment"/>
             <frequencies>
-                <parameter id="codonfrequencies" dimension="60"/>
+                <parameter id="codonfrequencies" dimension="61"/>
             </frequencies>
         </frequencyModel>
     </yangCodonModel>

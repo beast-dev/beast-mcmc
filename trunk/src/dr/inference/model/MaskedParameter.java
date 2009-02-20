@@ -11,6 +11,7 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
 
     public static final String MASKED_PARAMETER = "maskedParameter";
     public static final String MASKING = "mask";
+    public static final String COMPLEMENT = "complement";
 
     public MaskedParameter(Parameter parameter) {
         this.parameter = parameter;
@@ -20,12 +21,16 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
         length = map.length;
     }
 
-    public void addMask(Parameter maskParameter) {
+    public void addMask(Parameter maskParameter, boolean ones) {
         if (maskParameter.getDimension() != parameter.getDimension())
             throw new RuntimeException("Masking parameter '"+maskParameter.getId()+"' dimension must equal base parameter '"+
                     parameter.getId() +"' dimension");
         this.maskParameter = maskParameter;
         maskParameter.addParameterListener(this);
+        if (ones)
+            equalValue = 1;
+        else
+            equalValue = 0;
         updateMask();
     }
 
@@ -34,7 +39,7 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
         for(int i=0; i<maskParameter.getDimension(); i++) {
             // TODO Add a threshold attribute for continuous value masking
             final int maskValue = (int) maskParameter.getParameterValue(i);
-            if (maskValue == 1) {
+            if (maskValue == equalValue) {
                 map[index] = i;
                 index++;
             }
@@ -70,7 +75,7 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
     }
 
     public void setParameterValue(int dim, double value) {
-        parameter.setParameterValueQuietly(map[dim],value);
+        parameter.setParameterValue(map[dim],value);
     }
 
     public void setParameterValueQuietly(int dim, double value) {
@@ -78,7 +83,9 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
     }
 
     public String getParameterName() {
-        return "masked" + parameter.getParameterName();
+        if (getId() == null)
+            return "masked" + parameter.getParameterName();
+        return getId();
     }
 
     public void addBounds(Bounds bounds) {
@@ -119,7 +126,8 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
                 throw new XMLParseException("dim(" + parameter.getId() + ") != dim(" + mask.getId() + ")");
 
             MaskedParameter maskedParameter = new MaskedParameter(parameter);
-            maskedParameter.addMask(mask);
+            boolean ones = ! xo.getAttribute(COMPLEMENT,false);
+            maskedParameter.addMask(mask, ones);
 
             return maskedParameter;
         }
@@ -134,6 +142,7 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
                         new XMLSyntaxRule[] {
                                 new ElementRule(Parameter.class)
                         }),
+                AttributeRule.newBooleanRule(COMPLEMENT,true),
         };
 
         public String getParserDescription() {
@@ -153,5 +162,6 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
     private Parameter maskParameter;
     private int[] map;
     private int length;
+    private int equalValue;
 
 }

@@ -15,6 +15,7 @@ public class SpatialTemporalPolygon {
 
     public static final String POLYGON = "polygon";
     public static final String CLOSED = "closed";
+    public static final String FILL_VALUE = "fillValue";
 
     public SpatialTemporalPolygon(double[] x, double[] y, double[] z, double[] t, boolean closed) {
         if (closed) {
@@ -33,6 +34,14 @@ public class SpatialTemporalPolygon {
 
         planarInZ = isPlanarInZ();
 
+    }
+
+    public void setFillValue(double value) {
+        fillValue = value;
+    }
+
+    public double getFillValue() {
+        return fillValue;
     }
 
     private boolean isPlanarInZ() {
@@ -58,8 +67,6 @@ public class SpatialTemporalPolygon {
 
     public boolean contains2DPoint(double inX, double inY) {
 
-//        System.err.print("contains (" + inX + "," + inY + ") = ");
-
         if (!planarInZ)
             throw new RuntimeException("Only 2D polygons are currently implemented");
         boolean contains = false;
@@ -74,7 +81,6 @@ public class SpatialTemporalPolygon {
                 contains = !contains;
         }
 
-//        System.err.println(contains);
         return contains;
     }
 
@@ -93,7 +99,11 @@ public class SpatialTemporalPolygon {
             if ((!closed && coordinates.length < 3) ||
                     (closed && coordinates.length < 4))
                 throw new XMLParseException("Insufficient points in polygon '" + xo.getId() + "' to define a polygon in 2D");
-            return new SpatialTemporalPolygon(coordinates.x, coordinates.y, coordinates.z, null, closed);
+
+            SpatialTemporalPolygon polygon = new SpatialTemporalPolygon(coordinates.x, coordinates.y, coordinates.z, null, closed);
+            polygon.setFillValue(xo.getAttribute(FILL_VALUE,0.0));
+            
+            return polygon;
         }
 
         //************************************************************************
@@ -115,6 +125,7 @@ public class SpatialTemporalPolygon {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(KMLCoordinates.class),
                 AttributeRule.newBooleanRule(CLOSED, true),
+                AttributeRule.newDoubleRule(FILL_VALUE,true),
         };
     };
 
@@ -125,5 +136,6 @@ public class SpatialTemporalPolygon {
 
     protected int length;
     private boolean planarInZ;
+    private double fillValue;
 
 }

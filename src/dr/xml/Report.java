@@ -25,7 +25,13 @@
 
 package dr.xml;
 
+import dr.evomodelxml.LoggerParser;
+
 import java.util.ArrayList;
+import java.io.PrintStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 
 /**
@@ -33,25 +39,32 @@ import java.util.ArrayList;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @author Marc A. Suchard
  * @version $Id: Report.java,v 1.15 2005/05/24 20:26:01 rambaut Exp $
  */
 public class Report {
 
     public static final String REPORT = "report";
+    public static final String FILENAME = "fileName";
 
     protected String title = "";
     protected ArrayList<Object> objects = new ArrayList<Object>();
+    private PrintWriter writer;
 
     public void createReport() {
-        System.out.println(getTitle());
-        System.out.println();
+        writer.println(getTitle());
+        writer.println();
 
         for (Object object : objects) {
             final String item = object.toString();
-            System.out.print(item.trim());
-            System.out.print(" ");
+            writer.print(item.trim());
+            writer.print(" ");
         }
-        System.out.println();
+        writer.println();
+    }
+
+    public void setOutput(PrintWriter writer) {
+        this.writer = writer;
     }
 
     /**
@@ -102,6 +115,7 @@ public class Report {
                 report.add(child);
             }
 
+            report.setOutput(LoggerParser.getLogFile(xo, getParserName()));
             report.createReport();
 
             return report;
@@ -122,7 +136,8 @@ public class Report {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new StringAttributeRule("type", "The format of the report", new String[]{"TEXT", "XHTML"}, true),
                 new StringAttributeRule("title", "The title of the report", "Report", true),
-                new ElementRule(Object.class, "An arbitrary mixture of text and elements to report", 1, Integer.MAX_VALUE)
+                new ElementRule(Object.class, "An arbitrary mixture of text and elements to report", 1, Integer.MAX_VALUE),
+                AttributeRule.newStringRule(FILENAME,true),
         };
 
         public Class getReturnType() {

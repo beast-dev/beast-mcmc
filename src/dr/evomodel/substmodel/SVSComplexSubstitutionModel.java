@@ -25,6 +25,12 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
         return rates;
     }
 
+    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+        if (parameter == infinitesimalRates && indicators.getParameterValue(index) == 0)
+            return;  // ignore, does not affect likelihood
+        super.handleParameterChangedEvent(parameter, index, type);
+    }
+
     public Parameter getIndicators() {
         return indicators;
     }
@@ -34,7 +40,7 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
         if (logL == 0) { // Also check that graph is connected
             getTransitionProbabilities(1.0,testProbabilities);
             for(int i=0; i<testProbabilities.length; i++) {
-                if (testProbabilities[i] == 0) {
+                if (testProbabilities[i] <= 0) {
                     logL = Double.NEGATIVE_INFINITY;
                     break;
                 }

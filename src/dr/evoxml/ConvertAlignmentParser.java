@@ -55,7 +55,7 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
 
 	    GeneticCode geneticCode = GeneticCode.UNIVERSAL;
 	    if (dataType instanceof Codons) {
-		    ((Codons)dataType).getGeneticCode();
+		    geneticCode = ((Codons)dataType).getGeneticCode();
 	    }
 
         ConvertAlignment convert = new ConvertAlignment(dataType, geneticCode, alignment);

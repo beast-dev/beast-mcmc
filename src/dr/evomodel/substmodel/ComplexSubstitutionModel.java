@@ -35,6 +35,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     public static final String ROOT_FREQUENCIES = "rootFrequencies";
     public static final String INDICATOR = "rateIndicator";
     public static final String RANDOMIZE = "randomizeIndicator";
+    public static final String NORMALIZATION = "normalize";
 
 
     public ComplexSubstitutionModel(String name, DataType dataType,
@@ -66,10 +67,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     }
 
     protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        if (!updateMatrix) {
+//        if (!updateMatrix) {
             updateMatrix = true;
-            fireModelChanged();
-        }
+//            fireModelChanged();
+//        }
     }
 
     protected void restoreState() {
@@ -238,11 +239,11 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         DoubleMatrix1D eigenVImag = eigenDecomp.getImagEigenvalues();
         DoubleMatrix2D eigenVInv;
 
-        updateMatrix = false;
+//        updateMatrix = false;
 
         try {
             eigenVInv = alegbra.inverse(eigenV);
-            wellConditioned = true;
+//            wellConditioned = true;
         } catch (IllegalArgumentException e) {
             wellConditioned = false;
             return;
@@ -261,20 +262,24 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             }
         }
 
+        updateMatrix = false;
+        wellConditioned = true;
         // compute normalization and rescale eigenvalues
 
         computeStationaryDistribution();
 
-        double subst = 0.0;
+        if (doNormalization) {
+             double subst = 0.0;
 
-        for (i = 0; i < stateCount; i++)
-            subst += -amat[i][i] * stationaryDistribution[i];
+            for (i = 0; i < stateCount; i++)
+                subst += -amat[i][i] * stationaryDistribution[i];
 
 //        normalization = subst;
 
-        for (i = 0; i < stateCount; i++) {
-            Eval[i] /= subst;
-            EvalImag[i] /= subst;
+            for (i = 0; i < stateCount; i++) {
+                Eval[i] /= subst;
+                EvalImag[i] /= subst;
+            }
         }
     }
 
@@ -430,6 +435,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                 sb.append("\tBSSVS indicators: "+indicators.getId()+"\n");
             }
 
+            boolean doNormalization = xo.getAttribute(NORMALIZATION,true);
+            model.setNormalization(doNormalization);
+            sb.append("\tNormalized: "+doNormalization+"\n");
+            
             sb.append("Please cite Lemey, Rambaut, Drummond and Suchard (in preparation)\n");
 
             Logger.getLogger("dr.evomodel.substmodel").info(sb.toString());
@@ -468,6 +477,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class)
                         }),
+                AttributeRule.newBooleanRule(NORMALIZATION,true),
         };
 
     };
@@ -475,6 +485,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     private boolean isComplex = false;
     private double[] stationaryDistribution = null;
     private double[] storedStationaryDistribution;
+
+    protected boolean doNormalization = true;
 //    private Double normalization;
 //    private Double storedNormalization;
 
@@ -503,6 +515,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             return 0;
         return Double.NEGATIVE_INFINITY;
     }
+
+    public void setNormalization(boolean doNormalization) {
+         this.doNormalization = doNormalization;
+     }
 
     public void makeDirty() {
 

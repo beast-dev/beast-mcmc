@@ -1,4 +1,4 @@
-package dr.evolution.geo;
+package dr.geo;
 
 /**
  * @author Alexei Drummond

@@ -46,8 +46,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -82,6 +81,7 @@ public class BayesianSkylineDialog {
     private RealNumberField minTimeField;
     private RealNumberField maxTimeField;
     private JComboBox changeTypeCombo = new JComboBox(new String[]{"Stepwise (Constant)", "Linear Change", "Exponential Change"});
+    private JCheckBox ratePlotCheck;
     private String rootHeightTrace = "None selected";
 
     private RealNumberField ageOfYoungestField = new RealNumberField();
@@ -101,6 +101,8 @@ public class BayesianSkylineDialog {
         binCountField = new WholeNumberField(2, 2000);
         binCountField.setValue(100);
         binCountField.setColumns(4);
+
+        ratePlotCheck = new JCheckBox("Plot growth rate");
 
         manualRangeCheckBox = new JCheckBox("Use manual range for bins:");
 
@@ -290,6 +292,17 @@ public class BayesianSkylineDialog {
 
         optionPanel.addComponentWithLabel("Bayesian skyline variant: ", changeTypeCombo);
 
+        optionPanel.addComponent(ratePlotCheck);
+        changeTypeCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(final ItemEvent itemEvent) {
+                if (changeTypeCombo.getSelectedItem().equals("Exponential Change")) {
+                    ratePlotCheck.setEnabled(true);
+                } else {
+                    ratePlotCheck.setEnabled(false);
+                }
+            }
+        });
+
         optionPanel.addSeparator();
 
         optionPanel.addLabel("Select the traces to use for the arguments:");
@@ -467,6 +480,7 @@ public class BayesianSkylineDialog {
         private int current = 0;
         private boolean isLinearOrExponential;
         private boolean isExponential;
+        private boolean isRatePlot;
 
         public AnalyseBayesianSkylineTask(TraceList traceList, File treeFile, int firstPopSize, int popSizeCount,
                                           int firstGroupSize, int groupSizeCount,
@@ -484,6 +498,7 @@ public class BayesianSkylineDialog {
 
             isLinearOrExponential = changeTypeCombo.getSelectedIndex() > 0;
             isExponential = changeTypeCombo.getSelectedIndex() > 1;
+            isRatePlot = ratePlotCheck.isSelected();
             ageOfYoungest = ageOfYoungestField.getValue();
 
             lengthOfTask = traceList.getStateCount() + binCount;
@@ -706,8 +721,13 @@ public class BayesianSkylineDialog {
                                     if (isExponential) {
                                         double p1 = Math.log(getPopSize(index, state));
                                         double p2 = Math.log(getPopSize(index + 1, state));
-                                        double popsize = p1 + ((p2 - p1) * t);
-                                        bins[k].add(Math.exp(popsize));
+                                        if (isRatePlot) {
+                                           double rate = (p2 - p1) / (groupTimes[state][index] - lastGroupTime);
+                                            bins[k].add(Math.exp(rate));
+                                        } else {
+                                            double popsize = p1 + ((p2 - p1) * t);
+                                            bins[k].add(Math.exp(popsize));
+                                        }
                                     } else {
                                         double p1 = getPopSize(index, state);
                                         double p2 = getPopSize(index + 1, state);

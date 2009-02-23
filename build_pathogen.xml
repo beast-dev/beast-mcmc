@@ -31,7 +31,7 @@
     <target name="compile-basic" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
         <javac source="1.5" srcdir="${src}" destdir="${build}"
-               classpath="${lib}/jebl.jar:${lib}/jdom.jar">
+               classpath="${lib}/jebl.jar:${lib}/jam.jar:${lib}/jdom.jar:${lib}/figtreepanel.jar:${lib}/jri.jar">
             <include name="dr/app/pathogen/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/tools/**"/>
@@ -91,6 +91,8 @@
                 <include name="dr/gui/table/**/*.png"/>
             </fileset>
             <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/jam.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/figtreepanel.jar"/>
         </jar>
     </target>
 </project>

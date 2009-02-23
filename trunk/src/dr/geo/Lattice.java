@@ -1,4 +1,4 @@
-package dr.evolution.geo;
+package dr.geo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -130,6 +130,19 @@ public class Lattice extends JComponent {
         return attempts;
     }
 
+
+    public int sum() {
+        int sum = 0;
+        for (int i = 0; i < lattice.length; i++) {
+            for (int j = 0; j < lattice.length; j++) {
+
+                sum += lattice[i][j];
+            }
+        }
+        return sum;
+    }
+
+
     int getNeighbourSum(int i, int j) {
 
         int sum = 0;
@@ -212,5 +225,4 @@ public class Lattice extends JComponent {
         frame.setVisible(true);
 
     }
-
 }

@@ -24,7 +24,7 @@ public class GreatCircleDistances {
 
     double[][] distances;
 
-    public GreatCircleDistances(Taxa taxa) {
+    public GreatCircleDistances(Taxa taxa, String attributeName) {
 
         distances = new double[taxa.getTaxonCount()][taxa.getTaxonCount()];
 
@@ -32,7 +32,7 @@ public class GreatCircleDistances {
 
             Taxon taxon = taxa.getTaxon(i);
 
-            String attr = (String)taxon.getAttribute("location");
+            String attr = (String)taxon.getAttribute(attributeName);
             String[] loc = attr.split(" ");
             double latitude = Double.parseDouble(loc[0]);
             double longitude = Double.parseDouble(loc[1]);
@@ -43,7 +43,7 @@ public class GreatCircleDistances {
 
             for (int j = i+1; j < taxa.getTaxonCount(); j++) {
                 Taxon taxon2 = taxa.getTaxon(j);
-                attr = (String)taxon2.getAttribute("location");
+                attr = (String)taxon2.getAttribute(attributeName);
                 String[] loc2 = attr.split(" ");
                 latitude = Double.parseDouble(loc2[0]);
                 longitude = Double.parseDouble(loc2[1]);
@@ -98,7 +98,7 @@ public class GreatCircleDistances {
 
         System.out.println("Found " + taxa.getTaxonCount() + " taxa");
 
-        GreatCircleDistances distances = new GreatCircleDistances(taxa);
+        GreatCircleDistances distances = new GreatCircleDistances(taxa, "location");
 
         Statistic statistic = distances.getDistanceStatistic(true);
 

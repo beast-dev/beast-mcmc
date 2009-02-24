@@ -332,22 +332,45 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
     public static void main(String[] arg) {
 
-        Parameter rates = new Parameter.Default(new double[]{5.0, 1.0, 1.0, 0.1, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
+//        Parameter rates = new Parameter.Default(new double[]{5.0, 1.0, 1.0, 0.1, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
 //		Parameter rates = new Parameter.Default(new double[] {5.0, 1.0, 1.0, 1.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
 //		Parameter rates = new Parameter.Default(new double[] {1.0, 1.0});
 
+
+        Parameter rates = new Parameter.Default(159600,1.0);
+
+
+        DataType dataType = new DataType() {
+
+            public String getDescription() {
+                return null;
+            }
+
+            public int getType() {
+                return 0;
+            }
+
+            public int getStateCount() {
+                return 400;
+            }
+        };
+
+        FrequencyModel freqModel = new FrequencyModel(dataType, new Parameter.Default(400, 1.0/400.0));
+
         ComplexSubstitutionModel substModel = new ComplexSubstitutionModel("test",
 //				TwoStates.INSTANCE,
-                Nucleotides.INSTANCE,
-                null,
-                rates);
+                  dataType,
+                  freqModel,
+                  rates);
 
+        long start = System.currentTimeMillis();
         double[] finiteTimeProbs = new double[substModel.getDataType().getStateCount() * substModel.getDataType().getStateCount()];
         double time = 1.0;
         substModel.getTransitionProbabilities(time, finiteTimeProbs);
-
-        System.out.println("Results:");
-        System.out.println(new Vector(finiteTimeProbs));
+        long end = System.currentTimeMillis();
+        System.out.println("Time: "+(end-start));
+//        System.out.println("Results:");
+//        System.out.println(new Vector(finiteTimeProbs));
 
 //		System.out.println("COLT value:");
 //		 This should work, matches 'octave' results

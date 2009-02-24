@@ -61,7 +61,7 @@ public class Report {
             writer.print(" ");
         }
         writer.println();
-        writer.close();
+        writer.flush();
     }
 
     public void setOutput(PrintWriter writer) {

@@ -107,17 +107,21 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 //            if (inSubstitutionTime)
 //                time *= treeModel.getNodeRate(node);
 
-            double sqrtTime = Math.sqrt(time);
+            if (time > 0) {
 
-            double[] delta = new double[dim];
+                double sqrtTime = Math.sqrt(time);
 
-            for (int i = 0; i < dim; i++)
-                delta[i] = (childTrait[i] - parentTrait[i]) / sqrtTime;
+                double[] delta = new double[dim];
 
-            for (int i = 0; i < dim; i++) {            // symmetric matrix,
-                for (int j = i; j < dim; j++)
-                    S[j][i] = S[i][j] += delta[i] * delta[j];
+                for (int i = 0; i < dim; i++)
+                    delta[i] = (childTrait[i] - parentTrait[i]) / sqrtTime;
+
+                for (int i = 0; i < dim; i++) {            // symmetric matrix,
+                    for (int j = i; j < dim; j++)
+                        S[j][i] = S[i][j] += delta[i] * delta[j];
+                }
             }
+            numberObservations++;
         }
         // recurse down tree
         for (int i = 0; i < treeModel.getChildCount(node); i++)
@@ -135,6 +139,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         double[][] S = new double[dim][dim];
         SymmetricMatrix S2 = null;
         SymmetricMatrix inverseS2 = null;
+        numberObservations = 0;
         incrementsOuterProduct(S, treeModel.getRoot(), treeLength);
 
         try {

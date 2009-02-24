@@ -61,6 +61,19 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
      */
     public double getLogLikelihood(double[] start, double[] stop, double time) {
 
+        if (time == 0) {
+            boolean equal = true;
+            for(int i=0; i<start.length; i++) {
+                if( start[i] != stop[i] ) {
+                    equal = false;
+                    break;
+                }
+            }
+            if (equal)
+                return 0.0;
+            return Double.NEGATIVE_INFINITY;                  
+        }
+
         double logDet = Math.log(determinatePrecisionMatrix);
         return MultivariateNormalDistribution.logPdf(stop, start,
                 diffusionPrecisionMatrix, logDet, time);

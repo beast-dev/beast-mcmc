@@ -2,6 +2,7 @@
 package dr.app.seqgen;
 
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.datatype.DataType;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -105,6 +106,8 @@ public class SequenceSimulator {
 
     	
     	SimpleAlignment alignment = new SimpleAlignment();
+          alignment.setDataType(m_siteModel.getFrequencyModel().getDataType());
+
     	traverse(root, seq, category, alignment);
     	
     	

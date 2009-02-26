@@ -72,6 +72,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
         if (designMatrix.size() != independentParam.size())
             throw new RuntimeException("Independent variables and their design matrices are out of sync");
         addParameter(effect);
+        addParameter(matrix);
         if(delta != null)
             addParameter(delta);
         numIndependentVariables++;

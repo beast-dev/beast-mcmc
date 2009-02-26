@@ -10,6 +10,8 @@ import org.w3c.dom.Element;
 public class DesignMatrix extends MatrixParameter {
     public static final String DESIGN_MATRIX = "designMatrix";
     public static final String ADD_INTERCEPT = "addIntercept";
+    public static final String FORM = "form";
+    public static final String DIMENSION = "dimension";
 
     public DesignMatrix(String name) {
         super(name);
@@ -39,7 +41,21 @@ public class DesignMatrix extends MatrixParameter {
             DesignMatrix designMatrix = new DesignMatrix(DESIGN_MATRIX);
             boolean addIntercept = xo.getAttribute(ADD_INTERCEPT, false);
 
+
             int dim = 0;
+
+            if (xo.hasAttribute(FORM)) {
+                String type = (String) xo.getStringAttribute(FORM);
+                if (type.compareTo("J") == 0) {
+                dim = xo.getAttribute(DIMENSION,1);
+                System.err.println("dim = "+dim);
+                for(int i=0; i<dim; i++) {
+                    Parameter parameter = new Parameter.Default(dim);
+                    designMatrix.addParameter(parameter);
+                }
+                } else
+                    throw new XMLParseException("Unknown designMatrix form.");
+            } else {
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Parameter parameter = (Parameter) xo.getChild(i);
@@ -48,6 +64,7 @@ public class DesignMatrix extends MatrixParameter {
                     dim = parameter.getDimension();
                 else if (dim != parameter.getDimension())
                     throw new XMLParseException("All parameters must have the same dimension to construct a rectangular design matrix");
+            }
             }
 
             if (addIntercept) {
@@ -72,8 +89,10 @@ public class DesignMatrix extends MatrixParameter {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
-                AttributeRule.newBooleanRule(ADD_INTERCEPT, true)
+                AttributeRule.newBooleanRule(ADD_INTERCEPT, true),
+                new ElementRule(Parameter.class, 0, Integer.MAX_VALUE), // TODO or have the following                            
+                AttributeRule.newStringRule(FORM,true),     // TODO Should have to include both FORM and DIMENSION at the same time
+                AttributeRule.newIntegerRule(DIMENSION,true)
         };
 
         public Class getReturnType() {

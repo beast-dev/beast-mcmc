@@ -53,7 +53,6 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     protected int stateCount;
     protected int rateCount;
 
-    protected boolean eigenInitialised = false;
     protected boolean updateMatrix = true;
     protected boolean storedUpdateMatrix = true;
 
@@ -86,12 +85,12 @@ public abstract class BaseSubstitutionModel extends AbstractModel
             checkFrequencies();
         }
 
+        q = new double[stateCount][stateCount];
+
         updateMatrix = true;
     }
 
     private void setStateCount(int stateCount) {
-        eigenInitialised = false;
-
         this.stateCount = stateCount;
         rateCount = ((stateCount - 1) * stateCount) / 2;
 
@@ -124,12 +123,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
         System.arraycopy(relativeRates, 0, storedRelativeRates, 0, rateCount);
 
-        System.arraycopy(Eval, 0, storedEval, 0, stateCount);
-        for (int i = 0; i < stateCount; i++) {
-            System.arraycopy(Ievc[i], 0, storedIevc[i], 0, stateCount);
-            System.arraycopy(Evec[i], 0, storedEvec[i], 0, stateCount);
-        }
-
+        storedEigenDecomposition = eigenDecomposition.copy();
     }
 
     /**
@@ -144,17 +138,9 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         storedRelativeRates = relativeRates;
         relativeRates = tmp1;
 
-        tmp1 = storedEval;
-        storedEval = Eval;
-        Eval = tmp1;
-
-        double[][] tmp2 = storedIevc;
-        storedIevc = Ievc;
-        Ievc = tmp2;
-
-        tmp2 = storedEvec;
-        storedEvec = Evec;
-        Evec = tmp2;
+        EigenDecomposition tmp = storedEigenDecomposition;
+        storedEigenDecomposition = eigenDecomposition;
+        eigenDecomposition = storedEigenDecomposition;
 
     }
 
@@ -187,18 +173,13 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     public void getTransitionProbabilities(double distance, double[] matrix) {
         double temp;
 
-        // this must be synchronized to avoid being called simultaneously by
-        // two different likelihood threads - AJD
-        synchronized (this) {
-            if (updateMatrix) {
-                setupMatrix();
-            }
-        }
+        EigenDecomposition eigen = getEigenDecomposition();
 
-        double[][] Evec = eigenSystem.getEigenVectors();
+        double[][] Evec = eigen.getEigenVectors();
 //        if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(Evec[0]));
-        double[][] Ievc = eigenSystem.getInverseEigenVectors();
+        double[][] Ievc = eigen.getInverseEigenVectors();
 //        if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(Ievc[0]));
+        double[] Eval = eigen.getEigenValues();
 
         // implemented a pool of iexp matrices to support multiple threads
         // without creating a new matrix each call. - AJD
@@ -229,45 +210,19 @@ public abstract class BaseSubstitutionModel extends AbstractModel
      *
      * @return the array
      */
-    public double[][] getEigenVectors() {
+    public EigenDecomposition getEigenDecomposition() {
         synchronized (this) {
             if (updateMatrix) {
                 setupMatrix();
             }
         }
-        return Evec;
-    }
-
-    /**
-     * This function returns the inverse Eigen vectors.
-     *
-     * @return the array
-     */
-    public double[][] getInverseEigenVectors() {
-        synchronized (this) {
-            if (updateMatrix) {
-                setupMatrix();
-            }
-        }
-        return Ievc;
-    }
-
-    /**
-     * This function returns the Eigen values.
-     */
-    public double[] getEigenValues() {
-        synchronized (this) {
-            if (updateMatrix) {
-                setupMatrix();
-            }
-        }
-        return Eval;
+        return eigenDecomposition;
     }
 
     /**
      * setup substitution matrix
      */
-    protected void setupMatrix() {
+    private void setupMatrix() {
         setupRelativeRates(relativeRates);
 
         int k = 0;
@@ -282,11 +237,13 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         makeValid(q, stateCount);
         normalize(q, freqModel.getFrequencies());
 
+        eigenDecomposition = eigenSystem.decomposeMatrix(q);
+
         updateMatrix = false;
     }
 
     // Make it a valid rate matrix (make sum of rows = 0)
-    void makeValid(double[][] matrix, int dimension) {
+    private void makeValid(double[][] matrix, int dimension) {
         for (int i = 0; i < dimension; i++) {
             double sum = 0.0;
             for (int j = 0; j < dimension; j++) {
@@ -303,7 +260,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
      * @param matrix the matrix to normalize to one expected substitution
      * @param pi     the equilibrium distribution of states
      */
-    void normalize(double[][] matrix, double[] pi) {
+    private void normalize(double[][] matrix, double[] pi) {
         double subst = 0.0;
         int dimension = pi.length;
 
@@ -355,32 +312,10 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         }
     }
 
-    /**
-     * allocate memory for the Eigen routines
-     */
-    protected void initialiseEigen() {
 
-        Eval = new double[stateCount];
-        Evec = new double[stateCount][stateCount];
-        Ievc = new double[stateCount][stateCount];
-
-        storedEval = new double[stateCount];
-        storedEvec = new double[stateCount][stateCount];
-        storedIevc = new double[stateCount][stateCount];
-
-        q = new double[stateCount][stateCount];
-
-    }
-
-    double q[][];
-
-    // Eigenvalues, eigenvectors, and inverse eigenvectors
-    protected double[] Eval;
-    protected double[] storedEval;
-    protected double[][] Evec;
-    protected double[][] storedEvec;
-    protected double[][] Ievc;
-    protected double[][] storedIevc;
+    private final double q[][];
+    private EigenDecomposition eigenDecomposition;
+    private EigenDecomposition storedEigenDecomposition;
 
 
 }

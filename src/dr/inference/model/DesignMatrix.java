@@ -11,7 +11,8 @@ public class DesignMatrix extends MatrixParameter {
     public static final String DESIGN_MATRIX = "designMatrix";
     public static final String ADD_INTERCEPT = "addIntercept";
     public static final String FORM = "form";
-    public static final String DIMENSION = "dimension";
+    public static final String ROW_DIMENSION = "rowDimension";
+    public static final String COL_DIMENSION = "colDimension";
 
     public DesignMatrix(String name) {
         super(name);
@@ -47,12 +48,12 @@ public class DesignMatrix extends MatrixParameter {
             if (xo.hasAttribute(FORM)) {
                 String type = (String) xo.getStringAttribute(FORM);
                 if (type.compareTo("J") == 0) {
-                dim = xo.getAttribute(DIMENSION,1);
-                System.err.println("dim = "+dim);
-                for(int i=0; i<dim; i++) {
-                    Parameter parameter = new Parameter.Default(dim);
-                    designMatrix.addParameter(parameter);
-                }
+                   int rowDim = xo.getAttribute(ROW_DIMENSION,1);
+                    int colDim = xo.getAttribute(COL_DIMENSION,1);
+                    for(int i=0; i<colDim; i++) {
+                        Parameter parameter = new Parameter.Default(rowDim);
+                        designMatrix.addParameter(parameter);
+                    }
                 } else
                     throw new XMLParseException("Unknown designMatrix form.");
             } else {
@@ -92,7 +93,8 @@ public class DesignMatrix extends MatrixParameter {
                 AttributeRule.newBooleanRule(ADD_INTERCEPT, true),
                 new ElementRule(Parameter.class, 0, Integer.MAX_VALUE), // TODO or have the following                            
                 AttributeRule.newStringRule(FORM,true),     // TODO Should have to include both FORM and DIMENSION at the same time
-                AttributeRule.newIntegerRule(DIMENSION,true)
+                AttributeRule.newIntegerRule(COL_DIMENSION,true),
+                AttributeRule.newIntegerRule(ROW_DIMENSION,true),
         };
 
         public Class getReturnType() {

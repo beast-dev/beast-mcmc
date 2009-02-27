@@ -50,20 +50,9 @@ public interface SubstitutionModel extends Model {
      * This function returns the Eigen vectors.
      * @return the array
      */
-    double[][] getEigenVectors();
+    EigenDecomposition getEigenDecomposition();
 
     /**
-     * This function returns the inverse Eigen vectors.
-     * @return the array
-     */
-    double[][] getInverseEigenVectors();
-
-    /**
-     * This function returns the Eigen values.
-     * @return the Eigen values
-     */
-    double[] getEigenValues();
-
     /**
      * get the state frequencies
      *

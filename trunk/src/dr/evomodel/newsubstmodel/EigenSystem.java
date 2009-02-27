@@ -34,23 +34,5 @@ public interface EigenSystem {
      * Set the instantaneous rate matrix
      * @param matrix
      */
-    void decomposeMatrix(double[][] matrix);
-
-    /**
-     * This function returns the Eigen vectors.
-     * @return the array
-     */
-    double[][] getEigenVectors();
-
-    /**
-     * This function returns the inverse Eigen vectors.
-     * @return the array
-     */
-    double[][] getInverseEigenVectors();
-
-    /**
-     * This function returns the Eigen values.
-     * @return the Eigen values
-     */
-    double[] getEigenValues();
+    EigenDecomposition decomposeMatrix(double[][] matrix);
 }

@@ -44,10 +44,7 @@ public class DefaultEigenSystem implements EigenSystem {
 
         this.stateCount = stateCount;
 
-        Eval = new double[stateCount];
-        Evec = new double[stateCount][stateCount];
-        Ievc = new double[stateCount][stateCount];
-
+        // some temporary values...
         ordr = new int[stateCount];
         evali = new double[stateCount];
     }
@@ -55,45 +52,25 @@ public class DefaultEigenSystem implements EigenSystem {
     /**
      * set instantaneous rate matrix
      */
-    public void decomposeMatrix(double[][] qMatrix) {
+    public EigenDecomposition decomposeMatrix(double[][] qMatrix) {
+
+        Eval = new double[stateCount];
+        Evec = new double[stateCount][stateCount];
+        Ievc = new double[stateCount][stateCount];
 
         // compute eigenvalues and eigenvectors
         elmhes(qMatrix, ordr, stateCount);
         eltran(qMatrix, Evec, ordr, stateCount);
         hqr2(stateCount, 1, stateCount, qMatrix, Evec, Eval, evali);
         luinverse(Evec, Ievc, stateCount);
-    }
 
-    /**
-     * This function returns the Eigen vectors.
-     * @return the array
-     */
-    public double[][] getEigenVectors() {
-        return Evec;
-    }
-
-    /**
-     * This function returns the inverse Eigen vectors.
-     * @return the array
-     */
-    public double[][] getInverseEigenVectors() {
-        return Ievc;
-    }
-
-    /**
-     * This function returns the Eigen values.
-     */
-    public double[] getEigenValues() {
-        return Eval;
+        return new EigenDecomposition(Evec, Ievc, Eval);
     }
 
     // Eigenvalues, eigenvectors, and inverse eigenvectors
     private double[] Eval;
-    private double[] storedEval;
     private double[][] Evec;
-    private double[][] storedEvec;
     private double[][] Ievc;
-    private double[][] storedIevc;
 
     private int[] ordr;
     private double[] evali;

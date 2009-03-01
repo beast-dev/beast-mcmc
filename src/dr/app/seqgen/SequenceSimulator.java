@@ -15,6 +15,7 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HKY;
+import dr.evomodel.substmodel.SubstitutionEpochModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.xml.AbstractXMLObjectParser;
@@ -158,6 +159,13 @@ public class SequenceSimulator {
         }
 
         double branchLength = m_siteModel.getRateForCategory(rateCategory) * branchTime;
+
+        // TODO Hack until SiteRateModel issue is resolved
+        if (m_siteModel.getSubstitutionModel() instanceof SubstitutionEpochModel) {
+            ((SubstitutionEpochModel)m_siteModel.getSubstitutionModel()).getTransitionProbabilities(tree.getNodeHeight(node),
+                    tree.getNodeHeight(parent),branchLength, probs);
+            return;
+        }
         m_siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probs);
     } // getTransitionProbabilities
 

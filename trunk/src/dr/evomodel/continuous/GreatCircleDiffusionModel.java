@@ -1,9 +1,8 @@
 package dr.evomodel.continuous;
 
-import dr.xml.*;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
 import dr.evolution.continuous.SphericalPolarCoordinates;
+import dr.inference.model.Parameter;
+import dr.xml.*;
 
 /**
  * @author Marc A. Suchard
@@ -29,11 +28,11 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
     }
 
     public GreatCircleDiffusionModel(Parameter precision) {
-        this(precision,null);
+        this(precision, null);
     }
 
-    public double getLogLikelihood(double[] start, double[] stop, double time) {
-
+    protected double calculateDensity(double[] start, double[] stop, double time) {
+ 
         SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(start[0], start[1]);
         SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(stop[0],  stop[1] );
 
@@ -47,7 +46,7 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
     }
 
     protected void calculatePrecisionInfo() {
-    }    
+    }
 
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

@@ -74,6 +74,10 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
             return Double.NEGATIVE_INFINITY;                  
         }
 
+        return calculateDensity(start, stop, time);        
+    }
+
+    protected double calculateDensity(double[] start, double[] stop, double time) {
         double logDet = Math.log(determinatePrecisionMatrix);
         return MultivariateNormalDistribution.logPdf(stop, start,
                 diffusionPrecisionMatrix, logDet, time);

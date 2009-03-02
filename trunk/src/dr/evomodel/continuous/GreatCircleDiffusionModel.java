@@ -13,17 +13,24 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
 
     public static final String DIFFUSION_PROCESS = "greatCircleDiffusionModel";
     public static final String DIFFUSION_CONSTANT = "precision";
+    public static final String COEFFICIENT = "diffusionCoefficient";
 //    public static final String BIAS = "mu";
 //    public static final String PRECISION_TREE_ATTRIBUTE = "precision";
 
     public static final double LOG2PI = Math.log(2*Math.PI);
 
-    public GreatCircleDiffusionModel(Parameter precision) {
+    public GreatCircleDiffusionModel(Parameter precision, Parameter coefficient) {
         super();
         this.precision = precision;
         addParameter(precision);
+        this.coefficient = coefficient;
+        if (coefficient != null)
+            addParameter(coefficient);
     }
 
+    public GreatCircleDiffusionModel(Parameter precision) {
+        this(precision,null);
+    }
 
     public double getLogLikelihood(double[] start, double[] stop, double time) {
 
@@ -32,8 +39,11 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
 
         double distance = coord1.distance(coord2);
 
-        double prec = precision.getParameterValue(0);
-        return 0.5 * (Math.log(prec) - LOG2PI - distance * distance * prec);
+        double inverseVariance = precision.getParameterValue(0) / time;
+        if (coefficient == null)
+            return 0.5 * (Math.log(inverseVariance) - LOG2PI - distance * distance * inverseVariance);
+        double coef = - coefficient.getParameterValue(0);
+        return 0.5 * (coef * Math.log(inverseVariance) - LOG2PI - distance * distance * Math.pow(inverseVariance,coef));
     }
 
     protected void calculatePrecisionInfo() {
@@ -48,10 +58,12 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
 
          public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-//             XMLObject cxo = (XMLObject) xo.getChild(DIFFUSION_CONSTANT);
              Parameter diffusionParam = (Parameter) xo.getChild(Parameter.class);
+             Parameter coefficient = null;
+             if (xo.hasChildNamed(COEFFICIENT))
+                coefficient = (Parameter) ((XMLObject)xo.getChild(COEFFICIENT)).getChild(Parameter.class);
 
-             return new GreatCircleDiffusionModel(diffusionParam);
+             return new GreatCircleDiffusionModel(diffusionParam, coefficient);
          }
 
          //************************************************************************
@@ -68,8 +80,8 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
 
          private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                  new ElementRule(Parameter.class),
-//                 new ElementRule(DIFFUSION_CONSTANT,
-//                         new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
+                 new ElementRule(COEFFICIENT,
+                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
          };
 
          public Class getReturnType() {
@@ -78,6 +90,6 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
      };
 
     private Parameter precision;
-
+    private Parameter coefficient;
 
 }

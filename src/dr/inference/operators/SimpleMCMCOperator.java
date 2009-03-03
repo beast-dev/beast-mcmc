@@ -25,30 +25,33 @@
 
 package dr.inference.operators;
 
+import dr.inference.model.Likelihood;
+import dr.inference.prior.Prior;
+
 public abstract class SimpleMCMCOperator implements MCMCOperator {
 
     public double getTargetAcceptanceProbability() {
-        return targetAcceptanceProb;
+	return targetAcceptanceProb;
     }
 
     public void setTargetAcceptanceProbability(double tap) {
-        targetAcceptanceProb = tap;
+	targetAcceptanceProb = tap;
     }
 
     public double getMinimumAcceptanceLevel() {
-        return 0.05;
+	return 0.05;
     }
 
     public double getMaximumAcceptanceLevel() {
-        return 0.50;
+	return 0.50;
     }
 
     public double getMinimumGoodAcceptanceLevel() {
-        return 0.10;
+	return 0.10;
     }
 
     public double getMaximumGoodAcceptanceLevel() {
-        return 0.40;
+	return 0.40;
     }
 
     public abstract String getOperatorName();
@@ -57,115 +60,144 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
      * @return the weight of this operator.
      */
     public final double getWeight() {
-        return weight;
+	return weight;
     }
 
     /**
      * Sets the weight of this operator.
      */
     public final void setWeight(double w) {
-        if (w > 0) {
-            weight = w;
-        } else throw new IllegalArgumentException("Weight must be a positive real, but tried to set weight to " + w);
+	if (w > 0) {
+	    weight = w;
+	} else
+	    throw new IllegalArgumentException(
+		    "Weight must be a positive real, but tried to set weight to "
+			    + w);
     }
 
-    public final void accept(double deviation) {
-        lastDeviation = deviation;
+    public void accept(double deviation) {
+	lastDeviation = deviation;
 
-        if (!operateAllowed) {
-            operateAllowed = true;
-            accepted += 1;
-            sumDeviation += deviation;
+	if (!operateAllowed) {
+	    operateAllowed = true;
+	    accepted += 1;
+	    sumDeviation += deviation;
 
-            spanDeviation[0] = Math.min(spanDeviation[0], deviation);
-            spanDeviation[1] = Math.max(spanDeviation[1], deviation);
-            spanCount += 1;
-        } else {
-            throw new RuntimeException("Accept/reject methods called twice without operate called in between!");
-        }
+	    spanDeviation[0] = Math.min(spanDeviation[0], deviation);
+	    spanDeviation[1] = Math.max(spanDeviation[1], deviation);
+	    spanCount += 1;
+	} else {
+	    throw new RuntimeException(
+		    "Accept/reject methods called twice without operate called in between!");
+	}
     }
 
     public void reject() {
-        if (!operateAllowed) {
-            operateAllowed = true;
-            rejected += 1;
-        } else {
-            throw new RuntimeException("Accept/reject methods called twice without operate called in between!");
-        }
+	if (!operateAllowed) {
+	    operateAllowed = true;
+	    rejected += 1;
+	} else {
+	    throw new RuntimeException(
+		    "Accept/reject methods called twice without operate called in between!");
+	}
     }
 
     public void reset() {
-        operateAllowed = true;
-        accepted = 0;
-        rejected = 0;
-        lastDeviation = 0.0;
-        sumDeviation = 0.0;
+	operateAllowed = true;
+	accepted = 0;
+	rejected = 0;
+	lastDeviation = 0.0;
+	sumDeviation = 0.0;
     }
 
     public final int getAccepted() {
-        return accepted;
+	return accepted;
     }
 
     public final void setAccepted(int accepted) {
-        this.accepted = accepted;
+	this.accepted = accepted;
     }
 
     public final int getRejected() {
-        return rejected;
+	return rejected;
     }
 
     public final void setRejected(int rejected) {
-        this.rejected = rejected;
+	this.rejected = rejected;
     }
 
     public final double getMeanDeviation() {
-        return sumDeviation / accepted;
+	return sumDeviation / accepted;
     }
 
     public final double getDeviation() {
-        return lastDeviation;
+	return lastDeviation;
     }
 
     public final double getSumDeviation() {
-        return sumDeviation;
+	return sumDeviation;
     }
 
     public final void setSumDeviation(double sumDeviation) {
-        this.sumDeviation = sumDeviation;
+	this.sumDeviation = sumDeviation;
     }
 
     public double getSpan(boolean reset) {
-        double span = 0;
-        if (spanDeviation[1] > spanDeviation[0] && spanCount > 2000) {
-            span = spanDeviation[1] - spanDeviation[0];
+	double span = 0;
+	if (spanDeviation[1] > spanDeviation[0] && spanCount > 2000) {
+	    span = spanDeviation[1] - spanDeviation[0];
 
-            if (reset) {
-                spanDeviation[0] = Double.MAX_VALUE;
-                spanDeviation[1] = -Double.MAX_VALUE;
-                spanCount = 0;
-            }
-        }
-        return span;
+	    if (reset) {
+		spanDeviation[0] = Double.MAX_VALUE;
+		spanDeviation[1] = -Double.MAX_VALUE;
+		spanCount = 0;
+	    }
+	}
+	return span;
     }
 
     public final double operate() throws OperatorFailedException {
-        if (operateAllowed) {
-            operateAllowed = false;
-            return doOperation();
-        } else {
-            throw new RuntimeException("Operate called twice without accept/reject in between!");
-        }
+	if (operateAllowed) {
+	    operateAllowed = false;
+	    return doOperation();
+	} else {
+	    throw new RuntimeException(
+		    "Operate called twice without accept/reject in between!");
+	}
+    }
+
+    public final double operate(Prior prior, Likelihood likelihood)
+	    throws OperatorFailedException {
+	if (operateAllowed) {
+	    operateAllowed = false;
+	    return doOperation(prior, likelihood);
+	} else
+	    throw new RuntimeException(
+		    "Operate called twice without accept/reject in between!");
     }
 
     public final double getAcceptanceProbability() {
-        return (double) accepted / (double) (accepted + rejected);
+	return (double) accepted / (double) (accepted + rejected);
     }
 
     /**
      * Called by operate(), does the actual operation.
-     *
+     * 
      * @return the hastings ratio
-     * @throws OperatorFailedException if operator fails and should be rejected
+     * @throws OperatorFailedException
+     *             if operator fails and should be rejected
+     */
+    public double doOperation(Prior prior, Likelihood likelihood)
+	    throws OperatorFailedException {
+	return 0.0;
+    }
+
+    /**
+     * Called by operate(), does the actual operation.
+     * 
+     * @return the hastings ratio
+     * @throws OperatorFailedException
+     *             if operator fails and should be rejected
      */
     public abstract double doOperation() throws OperatorFailedException;
 
@@ -177,7 +209,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private boolean operateAllowed = true;
     private double targetAcceptanceProb = 0.234;
 
-    private final double[] spanDeviation = {Double.MAX_VALUE, -Double.MAX_VALUE};
+    private final double[] spanDeviation = { Double.MAX_VALUE,
+	    -Double.MAX_VALUE };
     private int spanCount = 0;
 }
-

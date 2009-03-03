@@ -8,11 +8,14 @@ import java.util.List;
 
 import dr.evolution.tree.ConditionalCladeFrequency;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.SimpleTree;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.MutableTree.InvalidTreeException;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Likelihood;
+import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
-import dr.inference.prior.Prior;
+import dr.inference.operators.OperatorSchedule;
+import dr.inference.operators.SimpleMCMCOperator;
+import dr.inference.operators.SimpleOperatorSchedule;
 import dr.math.MathUtils;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
@@ -25,363 +28,348 @@ import dr.xml.XMLSyntaxRule;
 /**
  * @author Sebastian Hoehna
  * 
- * This class implements a subtree swap operator. The first subtree is chosen
- * randomly and the second one is chosen according to the importance of the new
- * tree. The importance are calculated by the multiplied clade probabilities.
+ *         This class implements a subtree swap operator. The first subtree is
+ *         chosen randomly and the second one is chosen according to the
+ *         importance of the new tree. The importance are calculated by the
+ *         multiplied clade probabilities.
  * 
  */
 public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 
-	public static final String IMPORTANCE_SUBTREE_SWAP = "ImportanceSubtreeSwap";
+    public static final String IMPORTANCE_SUBTREE_SWAP = "ImportanceSubtreeSwap";
 
-	public final int SAMPLE_EVERY = 10;
-	
-	private TreeModel tree;
+    public final int SAMPLE_EVERY = 10;
 
-	private int samples;
-	
-	private int sampleCount = 0;
+    private TreeModel tree;
 
-	private boolean burnin = false;
+    private int samples;
 
-	private ConditionalCladeFrequency probabilityEstimater;
+    private int sampleCount = 0;
 
-	/**
+    private boolean burnin = false;
+
+    private ConditionalCladeFrequency probabilityEstimater;
+
+    private OperatorSchedule schedule;
+
+    /**
 	 * 
 	 */
-	public ImportanceSubtreeSwap(TreeModel tree, double weight, int samples, int epsilon) {
-		this.tree = tree;
-		setWeight(weight);
-		this.samples = samples;
-		sampleCount = 0;
-		probabilityEstimater = new ConditionalCladeFrequency(tree, epsilon);
-	}
-	
-	/**
+    public ImportanceSubtreeSwap(TreeModel tree, double weight, int samples,
+	    int epsilon) {
+	this.tree = tree;
+	setWeight(weight);
+	this.samples = samples;
+	sampleCount = 0;
+	probabilityEstimater = new ConditionalCladeFrequency(tree, epsilon);
+	schedule = getOperatorSchedule(tree);
+    }
+
+    /**
 	 * 
 	 */
-	public ImportanceSubtreeSwap(TreeModel tree, double weight, int samples) {
-		this.tree = tree;
-		setWeight(weight);
-		this.samples = samples;
-		sampleCount = 0;
-		probabilityEstimater = new ConditionalCladeFrequency(tree, 1.0);
+    public ImportanceSubtreeSwap(TreeModel tree, double weight, int samples) {
+	this.tree = tree;
+	setWeight(weight);
+	this.samples = samples;
+	sampleCount = 0;
+	double epsilon = 1 - Math.pow(0.5, 1.0 / samples);
+	probabilityEstimater = new ConditionalCladeFrequency(tree, epsilon);
+	schedule = getOperatorSchedule(tree);
+    }
+
+    private OperatorSchedule getOperatorSchedule(TreeModel treeModel) {
+
+	ExchangeOperator narrowExchange = new ExchangeOperator(
+		ExchangeOperator.NARROW, treeModel, 10);
+	ExchangeOperator wideExchange = new ExchangeOperator(
+		ExchangeOperator.WIDE, treeModel, 3);
+	SubtreeSlideOperator subtreeSlide = new SubtreeSlideOperator(treeModel,
+		10.0, 1.0, true, false, false, false, CoercionMode.COERCION_ON);
+	NNI nni = new NNI(treeModel, 10.0);
+	WilsonBalding wilsonBalding = new WilsonBalding(treeModel, 3.0);
+	FNPR fnpr = new FNPR(treeModel, 5.0);
+
+	OperatorSchedule schedule = new SimpleOperatorSchedule();
+	schedule.addOperator(narrowExchange);
+	schedule.addOperator(wideExchange);
+	schedule.addOperator(subtreeSlide);
+	schedule.addOperator(nni);
+	schedule.addOperator(wilsonBalding);
+	schedule.addOperator(fnpr);
+
+	return schedule;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
+     */
+    @Override
+    public double doOperation() throws OperatorFailedException {
+	if (!burnin) {
+	    if (sampleCount < samples * SAMPLE_EVERY) {
+		sampleCount++;
+		if (sampleCount % SAMPLE_EVERY == 0) {
+		    probabilityEstimater.addTree(tree);
+		}
+		setAccepted(0);
+		setRejected(0);
+		setTransitions(0);
+
+		return doUnguidedOperation();
+
+	    } else {
+		return importanceExchange();
+	    }
+	} else {
+
+	    return doUnguidedOperation();
+
 	}
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
-	 */
-	@Override
-	public double doOperation() throws OperatorFailedException {
-		if (!burnin) {
-			if (sampleCount < samples * SAMPLE_EVERY) {
-				sampleCount++;
-				if (sampleCount % SAMPLE_EVERY == 0){
-					probabilityEstimater.addTree(tree);					
-				}
-				setAccepted(0);
-				setRejected(0);
-				setTransitions(0);
-				
-				return wideExchange();
-				
-			} else {
-				return importanceExchange();
-			}
-		} else {
-			
-			return wideExchange();
-			
-		 }
-	}
+    private double doUnguidedOperation() throws OperatorFailedException {
+	int index = schedule.getNextOperatorIndex();
+	SimpleMCMCOperator operator = (SimpleMCMCOperator) schedule
+		.getOperator(index);
 
-	private double wideExchange() throws OperatorFailedException {
-		final int nodeCount = tree.getNodeCount();
-		final NodeRef root = tree.getRoot();
+	return operator.doOperation();
+    }
 
-		NodeRef i;
+    /**
+     * WARNING: Assumes strictly bifurcating tree.
+     * 
+     * @throws InvalidTreeException
+     */
+    private double importanceExchange() throws OperatorFailedException {
 
-		do {
-			i = tree.getNode(MathUtils.nextInt(nodeCount));
-		} while (root == i);
+	final int nodeCount = tree.getNodeCount();
+	final NodeRef root = tree.getRoot();
 
-		NodeRef j;
-		do {
-			j = tree.getNode(MathUtils.nextInt(nodeCount));
-		} while (j == i || j == root);
+	NodeRef i;
+	int indexI;
+	int indexJ;
 
-		final NodeRef iP = tree.getParent(i);
-		final NodeRef jP = tree.getParent(j);
+	do {
+	    indexI = MathUtils.nextInt(nodeCount);
+	    i = tree.getNode(indexI);
+	} while (root == i
+		|| (tree.getParent(i) == root && tree.getNodeHeight(i) > tree
+			.getNodeHeight(getOtherChild(tree, tree.getParent(i), i))));
+
+	List<Integer> secondNodeIndices = new ArrayList<Integer>();
+	List<Double> probabilities = new ArrayList<Double>();
+	NodeRef j, iP, jP;
+	iP = tree.getParent(i);
+	double sum = 0.0;
+	double backward = calculateTreeProbability(tree);
+	int offset = (int) -backward;
+	backward = Math.exp(backward + offset);
+
+	tree.beginTreeEdit();
+	for (int n = 0; n < nodeCount; n++) {
+	    j = tree.getNode(n);
+	    if (j != root) {
+		jP = tree.getParent(j);
 
 		if ((iP != jP) && (i != jP) && (j != iP)
-				&& (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
-				&& (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
-			exchangeNodes(tree, i, j, iP, jP);
-			return 0.0;
-		}
+			&& (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
+			&& (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
+		    secondNodeIndices.add(n);
 
-		return 0.0;
+		    swap(tree, tree.getNode(indexI), tree.getNode(n));
+		    double prob = Math.exp(calculateTreeProbability(tree)
+			    + offset);
+		    probabilities.add(prob);
+		    swap(tree, tree.getNode(indexI), tree.getNode(n));
+		    sum += prob;
+
+		}
+	    }
 	}
 
-	private double importanceExchange()
-			throws OperatorFailedException {
-		final int nodeCount = tree.getNodeCount();
-		final NodeRef root = tree.getRoot();
+	double ran = Math.random() * sum;
+	int index = 0;
+	while (ran > 0.0) {
+	    ran -= probabilities.get(index);
+	    index++;
+	}
+	index--;
 
-		NodeRef i;
-		int indexI;
-		int indexJ;
-		
-		do {
-			indexI = MathUtils.nextInt(nodeCount);
-			i = tree.getNode(indexI);
-		} while (root == i
-				|| (tree.getParent(i) == root && tree.getNodeHeight(i) > tree
-						.getNodeHeight(getOtherChild(tree, tree.getParent(i), i))));
+	j = tree.getNode(secondNodeIndices.get(index));
+	jP = tree.getParent(j);
 
-		List<Integer> secondNodeIndices = new ArrayList<Integer>();
-		List<Double> probabilities = new ArrayList<Double>();
-		NodeRef j, iP, jP;
-		iP = tree.getParent(i);
-		double sum = 0.0;
-		SimpleTree originalTree = new SimpleTree(tree);
-		double backward = calculateTreeProbability(originalTree);
-		int offset = (int) -backward;
-		backward = Math.exp(backward + offset);
-		SimpleTree clone;
-		for (int n = 0; n < nodeCount; n++) {
-			j = tree.getNode(n);
-			if (j != root) {
-				jP = tree.getParent(j);
+	// *******************************************
+	// assuming we would have chosen j first
+	double sumForward2 = 0.0;
+	NodeRef k, kP;
+	indexJ = secondNodeIndices.get(index);
+	for (int n = 0; n < nodeCount; n++) {
+	    k = tree.getNode(n);
+	    if (k != root) {
+		kP = tree.getParent(k);
 
-				if ((iP != jP) && (i != jP) && (j != iP)
-						&& (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
-						&& (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
-					secondNodeIndices.add(n);
-					clone = (SimpleTree) originalTree.getCopy();
+		if ((jP != kP) && (j != kP) && (k != jP)
+			&& (tree.getNodeHeight(k) < tree.getNodeHeight(jP))
+			&& (tree.getNodeHeight(j) < tree.getNodeHeight(kP))) {
 
-					swap(clone, clone.getNode(indexI), clone
-							.getNode(n));
-					double prob = Math.exp(calculateTreeProbability(clone)
-							+ offset);
-					probabilities.add(prob);
-					sum += prob;
-
-				}
-			}
+		    swap(tree, tree.getNode(indexJ), tree.getNode(n));
+		    double prob = Math.exp(calculateTreeProbability(tree)
+			    + offset);
+		    sumForward2 += prob;
+		    swap(tree, tree.getNode(indexJ), tree.getNode(n));
 		}
+	    }
+	}
 
-		double ran = Math.random() * sum;
-		int index = 0;
-		while (ran > 0.0) {
-			ran -= probabilities.get(index);
-			index++;
-		}
-		index--;
+	swap(tree, i, j);
+	double forward = probabilities.get(index);
 
-		j = tree.getNode(secondNodeIndices.get(index));
+	iP = tree.getParent(i);
+	double sumBackward = 0.0;
+	for (int n = 0; n < nodeCount; n++) {
+	    j = tree.getNode(n);
+	    if (j != root) {
 		jP = tree.getParent(j);
 
-		// *******************************************
-		// assuming we would have chosen j first
-		double sumForward2 = 0.0;
-		NodeRef k, kP;
-		indexJ = secondNodeIndices.get(index);
-		for (int n = 0; n < nodeCount; n++) {
-			k = tree.getNode(n);
-			if (k != root) {
-				kP = tree.getParent(k);
+		if ((iP != jP) && (i != jP) && (j != iP)
+			&& (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
+			&& (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
 
-				if ((jP != kP) && (j != kP) && (k != jP)
-						&& (tree.getNodeHeight(k) < tree.getNodeHeight(jP))
-						&& (tree.getNodeHeight(j) < tree.getNodeHeight(kP))) {
-					clone = (SimpleTree) originalTree.getCopy();
+		    swap(tree, tree.getNode(indexI), tree.getNode(n));
+		    double prob = Math.exp(calculateTreeProbability(tree)
+			    + offset);
+		    sumBackward += prob;
+		    swap(tree, tree.getNode(indexI), tree.getNode(n));
 
-					swap(clone, clone.getNode(indexJ), clone
-							.getNode(n));
-					double prob = Math.exp(calculateTreeProbability(clone)
-							+ offset);
-					sumForward2 += prob;
-
-				}
-			}
 		}
-
-		exchangeNodes(tree, i, j, iP, jP);
-		double forward = probabilities.get(index);
-
-		iP = tree.getParent(i);
-		double sumBackward = 0.0;
-		for (int n = 0; n < nodeCount; n++) {
-			j = tree.getNode(n);
-			if (j != root) {
-				jP = tree.getParent(j);
-
-				if ((iP != jP) && (i != jP) && (j != iP)
-						&& (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
-						&& (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
-					clone = (SimpleTree) originalTree.getCopy();
-
-					swap(clone, clone.getNode(indexI), clone
-							.getNode(n));
-					double prob = Math.exp(calculateTreeProbability(clone)
-							+ offset);
-					sumBackward += prob;
-
-				}
-			}
-		}
-
-		// *******************************************
-		// assuming we would have chosen j first
-		double sumBackward2 = 0.0;
-		j = tree.getNode(secondNodeIndices.get(index));
-		jP = tree.getParent(j);
-		for (int n = 0; n < nodeCount; n++) {
-			k = tree.getNode(n);
-			if (k != root) {
-				kP = tree.getParent(k);
-
-				if ((jP != kP) && (j != kP) && (k != jP)
-						&& (tree.getNodeHeight(k) < tree.getNodeHeight(jP))
-						&& (tree.getNodeHeight(j) < tree.getNodeHeight(kP))) {
-					clone = (SimpleTree) originalTree.getCopy();
-
-					swap(clone, clone.getNode(indexJ), clone
-							.getNode(n));
-					double prob = Math.exp(calculateTreeProbability(clone)
-							+ offset);
-					sumBackward2 += prob;
-
-				}
-			}
-		}
-
-		double forwardProb = (forward / sum) + (forward / sumForward2);
-		double backwardProb = (backward / sumBackward)
-				+ (backward / sumBackward2);
-
-		double hastingsRatio = Math.log(backwardProb / forwardProb);
-
-		// throw new OperatorFailedException(
-		// "Couldn't find valid wide move on this tree!");
-
-		return hastingsRatio;
+	    }
 	}
 
-	/* exchange subtrees whose root are i and j */
-	private SimpleTree swap(SimpleTree tree, NodeRef i, NodeRef j)
-			throws OperatorFailedException {
+	// *******************************************
+	// assuming we would have chosen j first
+	double sumBackward2 = 0.0;
+	j = tree.getNode(secondNodeIndices.get(index));
+	jP = tree.getParent(j);
+	for (int n = 0; n < nodeCount; n++) {
+	    k = tree.getNode(n);
+	    if (k != root) {
+		kP = tree.getParent(k);
 
-		NodeRef iP = tree.getParent(i);
-		NodeRef jP = tree.getParent(j);
+		if ((jP != kP) && (j != kP) && (k != jP)
+			&& (tree.getNodeHeight(k) < tree.getNodeHeight(jP))
+			&& (tree.getNodeHeight(j) < tree.getNodeHeight(kP))) {
 
-		tree.beginTreeEdit();
-		tree.removeChild(iP, i);
-		tree.removeChild(jP, j);
-		tree.addChild(jP, i);
-		tree.addChild(iP, j);
-		tree.endTreeEdit();
-
-		return tree;
+		    swap(tree, tree.getNode(indexJ), tree.getNode(n));
+		    double prob = Math.exp(calculateTreeProbability(tree)
+			    + offset);
+		    sumBackward2 += prob;
+		    swap(tree, tree.getNode(indexJ), tree.getNode(n));
+		}
+	    }
 	}
 
-	private double calculateTreeProbability(SimpleTree tree) {
-		// return calculateTreeProbabilityMult(tree);
-//		return calculateTreeProbabilityLog(tree);
-		return probabilityEstimater.getTreeProbability(tree);
-//		return 0.0;
+	try {
+	    tree.endTreeEdit();
+	} catch (InvalidTreeException e) {
+	    throw new OperatorFailedException(e.getMessage());
 	}
 
-	public void setBurnin(boolean burnin) {
-		this.burnin = burnin;
+	double forwardProb = (forward / sum) + (forward / sumForward2);
+	double backwardProb = (backward / sumBackward)
+		+ (backward / sumBackward2);
+
+	double hastingsRatio = Math.log(backwardProb / forwardProb);
+
+	// throw new OperatorFailedException(
+	// "Couldn't find valid wide move on this tree!");
+
+	return hastingsRatio;
+    }
+
+    /* exchange subtrees whose root are i and j */
+    private void swap(TreeModel tree, NodeRef i, NodeRef j)
+	    throws OperatorFailedException {
+
+	NodeRef iP = tree.getParent(i);
+	NodeRef jP = tree.getParent(j);
+
+	tree.removeChild(iP, i);
+	tree.removeChild(jP, j);
+	tree.addChild(jP, i);
+	tree.addChild(iP, j);
+    }
+
+    private double calculateTreeProbability(Tree tree) {
+	// return calculateTreeProbabilityMult(tree);
+	// return calculateTreeProbabilityLog(tree);
+	return probabilityEstimater.getTreeProbability(tree);
+	// return 0.0;
+    }
+
+    public void setBurnin(boolean burnin) {
+	this.burnin = burnin;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see dr.inference.operators.SimpleMCMCOperator#getOperatorName()
+     */
+    @Override
+    public String getOperatorName() {
+	return IMPORTANCE_SUBTREE_SWAP;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see dr.inference.operators.MCMCOperator#getPerformanceSuggestion()
+     */
+    public String getPerformanceSuggestion() {
+	// TODO Auto-generated method stub
+	return "";
+    }
+
+    public static XMLObjectParser IMPORTANCE_SUBTREE_SWAP_PARSER = new AbstractXMLObjectParser() {
+
+	public String getParserName() {
+	    return IMPORTANCE_SUBTREE_SWAP;
 	}
 
-	protected double evaluate(Likelihood likelihood, Prior prior) {
+	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		double logPosterior = 0.0;
+	    TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+	    double weight = xo.getDoubleAttribute("weight");
+	    int samples = xo.getIntegerAttribute("samples");
 
-		if (prior != null) {
-			final double logPrior = prior.getLogPrior(likelihood.getModel());
-
-			if (logPrior == Double.NEGATIVE_INFINITY) {
-				return Double.NEGATIVE_INFINITY;
-			}
-
-			logPosterior += logPrior;
-		}
-
-		final double logLikelihood = likelihood.getLogLikelihood();
-
-		if (Double.isNaN(logLikelihood)) {
-			return Double.NEGATIVE_INFINITY;
-		}
-		// System.err.println("** " + logPosterior + " + " + logLikelihood + " =
-		// " + (logPosterior + logLikelihood));
-		logPosterior += logLikelihood;
-
-		return logPosterior;
+	    return new ImportanceSubtreeSwap(treeModel, weight, samples);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see dr.inference.operators.SimpleMCMCOperator#getOperatorName()
-	 */
-	@Override
-	public String getOperatorName() {
-		return IMPORTANCE_SUBTREE_SWAP;
+	// ************************************************************************
+	// AbstractXMLObjectParser implementation
+	// ************************************************************************
+
+	public String getParserDescription() {
+	    return "This element represents a importance guided subtree swap operator. "
+		    + "This operator swaps a random subtree with a second subtree guided by an importance distribution.";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see dr.inference.operators.MCMCOperator#getPerformanceSuggestion()
-	 */
-	public String getPerformanceSuggestion() {
-		// TODO Auto-generated method stub
-		return "";
+	public Class getReturnType() {
+	    return ImportanceSubtreeSwap.class;
 	}
 
-	public static XMLObjectParser IMPORTANCE_SUBTREE_SWAP_PARSER = new AbstractXMLObjectParser() {
+	public XMLSyntaxRule[] getSyntaxRules() {
+	    return rules;
+	}
 
-		public String getParserName() {
-			return IMPORTANCE_SUBTREE_SWAP;
-		}
+	private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		AttributeRule.newDoubleRule("weight"),
+		AttributeRule.newIntegerRule("samples"),
+		new ElementRule(TreeModel.class) };
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-			double weight = xo.getDoubleAttribute("weight");
-			int samples = xo.getIntegerAttribute("samples");
-
-			return new ImportanceSubtreeSwap(treeModel, weight, samples);
-		}
-
-		// ************************************************************************
-		// AbstractXMLObjectParser implementation
-		// ************************************************************************
-
-		public String getParserDescription() {
-			return "This element represents a importance guided subtree swap operator. "
-					+ "This operator swaps a random subtree with a second subtree guided by an importance distribution.";
-		}
-
-		public Class getReturnType() {
-			return ImportanceSubtreeSwap.class;
-		}
-
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
-
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-				AttributeRule.newDoubleRule("weight"),
-				AttributeRule.newIntegerRule("samples"),
-				new ElementRule(TreeModel.class) };
-
-	};
+    };
 
 }

@@ -179,13 +179,14 @@ public class ConvergenceLogger extends MCLogger {
 
 			if (state % (logEvery * 10) == 0) {
 				double distance = getMaxCladeDistance();
-				String summary = getSummary();
+//				String summary = getSummary();
 				try {
 					if (bwDistances == null) {
 						bwDistances = new BufferedWriter(new FileWriter(
 								outputFilename, true));
 					}
-					bwDistances.append((state) + "\t" + distance + "\t" + summary);
+//					bwDistances.append((state) + "\t" + distance + "\t" + summary);
+					bwDistances.append((state) + "\t" + distance);
 					bwDistances.newLine();
 					bwDistances.flush();
 				} catch (IOException e) {
@@ -240,58 +241,58 @@ public class ConvergenceLogger extends MCLogger {
 		return getMaxDeviation();
 	}
 	
-	private String getSummary() {
-		double maxDev = 0;
-		double expected = 0;
-		double achieved = 0;
-		BitSet maxDevClade = null;
-
-		Set<BitSet> keys = null;
-		if (referenceCladeFrequencies.size() < cladeOccurences.size()) {
-			keys = cladeOccurences.keySet();
-		} else {
-			keys = referenceCladeFrequencies.keySet();
-		}
-
-		double count = Math.max(referenceCladeFrequencies
-				.size(), cladeOccurences.size());
-		Iterator<BitSet> it = keys.iterator();
-		for (int i = 0; i < count; i++) {
-			BitSet k = it.next();
-			double r = 0.0;
-			if (referenceCladeFrequencies.containsKey(k)) {
-				r = referenceCladeFrequencies.get(k);
-			}
-			double o = 0.0;
-			if (cladeOccurences.containsKey(k)) {
-				o = cladeOccurences.get(k);
-			}
-			double tmp = Math.abs(r - ((o * 100.0) / (double) trees));
-			if (tmp > maxDev){
-				expected = r;
-				achieved = ((o * 100.0) / (double) trees);
-				maxDev = tmp;
-				maxDevClade = k;
-			}
-		}
-		
-		String summary = "(";
-		int oldIndex = 0;
-		for (int i=0; i<maxDevClade.cardinality(); i++){
-			int index = maxDevClade.nextSetBit(oldIndex);
-			oldIndex = index+1;
-			summary += taxonArray[index];
-			
-			if (i+1 < maxDevClade.cardinality()){
-				summary += ",";
-			}
-		}
-		expected = ((int)(expected * 100))/100.0;
-		achieved = ((int)(achieved * 100))/100.0;
-		summary += ") - expected: " + expected + " achieved: " + achieved;
-
-		return summary;
-	}
+//	private String getSummary() {
+//		double maxDev = 0;
+//		double expected = 0;
+//		double achieved = 0;
+//		BitSet maxDevClade = null;
+//
+//		Set<BitSet> keys = null;
+//		if (referenceCladeFrequencies.size() < cladeOccurences.size()) {
+//			keys = cladeOccurences.keySet();
+//		} else {
+//			keys = referenceCladeFrequencies.keySet();
+//		}
+//
+//		double count = Math.max(referenceCladeFrequencies
+//				.size(), cladeOccurences.size());
+//		Iterator<BitSet> it = keys.iterator();
+//		for (int i = 0; i < count; i++) {
+//			BitSet k = it.next();
+//			double r = 0.0;
+//			if (referenceCladeFrequencies.containsKey(k)) {
+//				r = referenceCladeFrequencies.get(k);
+//			}
+//			double o = 0.0;
+//			if (cladeOccurences.containsKey(k)) {
+//				o = cladeOccurences.get(k);
+//			}
+//			double tmp = Math.abs(r - ((o * 100.0) / (double) trees));
+//			if (tmp > maxDev){
+//				expected = r;
+//				achieved = ((o * 100.0) / (double) trees);
+//				maxDev = tmp;
+//				maxDevClade = k;
+//			}
+//		}
+//		
+//		String summary = "(";
+//		int oldIndex = 0;
+//		for (int i=0; i<maxDevClade.cardinality(); i++){
+//			int index = maxDevClade.nextSetBit(oldIndex);
+//			oldIndex = index+1;
+//			summary += taxonArray[index];
+//			
+//			if (i+1 < maxDevClade.cardinality()){
+//				summary += ",";
+//			}
+//		}
+//		expected = ((int)(expected * 100))/100.0;
+//		achieved = ((int)(achieved * 100))/100.0;
+//		summary += ") - expected: " + expected + " achieved: " + achieved;
+//
+//		return summary;
+//	}
 
 	private double getMaxDeviation() {
 		double[] deviation = getDeviations();

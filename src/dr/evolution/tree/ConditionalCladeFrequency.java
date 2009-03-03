@@ -16,27 +16,22 @@ import dr.evomodel.tree.TreeTrace;
 import dr.math.MathUtils;
 
 /**
- * @author shhn001
+ * @author Sebastian Hoehna
  * 
  * This class calculates the conditional clade probabilities for a set of trees.
  * It can be used to estimate the marginal posterior for a given tree. 
  *
  */
-/**
- * @author Sebastian Hoehna
- * 
- */
-public class ConditionalCladeFrequency {
+public class ConditionalCladeFrequency extends
+		AbstractCladeImportanceDistribution {
 
 	private double EPSILON;
 
 	private long samples = 0;
 
-	private HashMap<Clade, Double> cladeProbabilities;
+	private HashMap<BitSet, Clade> cladeProbabilities;
 
-	private HashMap<Clade, HashMap<Clade, Double>> cladeCoProbabilities;
-
-	private HashMap<String, Integer> taxonMap;
+	private HashMap<BitSet, HashMap<BitSet, Clade>> cladeCoProbabilities;
 
 	private TreeTrace[] traces;
 
@@ -50,15 +45,11 @@ public class ConditionalCladeFrequency {
 	public ConditionalCladeFrequency(Tree tree, double epsilon) {
 
 		// initializing global variables
-		cladeProbabilities = new HashMap<Clade, Double>();
-		cladeCoProbabilities = new HashMap<Clade, HashMap<Clade, Double>>();
+		cladeProbabilities = new HashMap<BitSet, Clade>();
+		cladeCoProbabilities = new HashMap<BitSet, HashMap<BitSet, Clade>>();
 
 		// setting global variables
 		EPSILON = epsilon;
-
-		// extract the taxon
-		taxonMap = getTaxonMap(tree);
-
 	}
 
 	/**
@@ -76,8 +67,8 @@ public class ConditionalCladeFrequency {
 			int burnIn, boolean verbose) {
 
 		// initializing global variables
-		cladeProbabilities = new HashMap<Clade, Double>();
-		cladeCoProbabilities = new HashMap<Clade, HashMap<Clade, Double>>();
+		cladeProbabilities = new HashMap<BitSet, Clade>();
+		cladeCoProbabilities = new HashMap<BitSet, HashMap<BitSet, Clade>>();
 
 		// setting global variables
 		EPSILON = epsilon;
@@ -120,7 +111,7 @@ public class ConditionalCladeFrequency {
 
 		// get first tree to extract the taxon
 		Tree tree = getTree(0);
-		taxonMap = getTaxonMap(tree);
+		// taxonMap = getTaxonMap(tree);
 
 		// read every tree from the trace
 		for (TreeTrace trace : traces) {
@@ -190,8 +181,59 @@ public class ConditionalCladeFrequency {
 	 *            - the tree to be analyzed
 	 * @return estimated posterior probability in log
 	 */
-	public double getTreeProbability(SimpleTree tree) {
-		return calculateTreeProbabilityLog(tree);
+	public double getTreeProbability(Tree tree) {
+		double prob = 0.0;
+
+		List<Clade> clades = new ArrayList<Clade>();
+		List<Clade> parentClades = new ArrayList<Clade>();
+		// get clades contained in the tree
+		getNonComplementaryClades(tree, tree.getRoot(), parentClades, clades);
+
+		int size = clades.size();
+		// for every clade multiply its conditional clade probability to the
+		// tree probability
+		for (int i = 0; i < size; i++) {
+			Clade c = clades.get(i);
+
+			// get the bits of the clade
+			Clade parent = parentClades.get(i);
+
+			// set the occurrences to epsilon
+			double tmp = EPSILON;
+			double parentOccurrences = 0.0;
+			BitSet parentBits = parent.getBits();
+			if (cladeProbabilities.containsKey(parentBits)) {
+				// if we observed this clade in the trace, add the
+				// occurrences
+				// to epsilon
+				parentOccurrences += cladeProbabilities.get(parentBits)
+						.getSampleCount();
+			}
+
+			if (cladeCoProbabilities.containsKey(parentBits)) {
+				// if we observed the parent clade
+				HashMap<BitSet, Clade> conditionalProbs = cladeCoProbabilities
+						.get(parentBits);
+
+				BitSet bits = c.getBits();
+				if (conditionalProbs.containsKey(bits)) {
+					// if we observed this conditional clade in the trace,
+					// add
+					// the occurrences to epsilon
+					tmp += conditionalProbs.get(bits).getSampleCount();
+				}
+			}
+			// add epsilon for each clade
+			final double splits = Math.pow(2, parent.getSize() - 1) - 1;
+			parentOccurrences += EPSILON * splits;
+
+			// multiply the conditional clade probability to the tree
+			// probability
+			prob += Math.log(tmp / parentOccurrences);
+
+		}
+
+		return prob;
 	}
 
 	/**
@@ -202,46 +244,58 @@ public class ConditionalCladeFrequency {
 	 *            - the tree to be analyzed
 	 * @return estimated posterior probability in log
 	 */
-	private double calculateTreeProbabilityLog(SimpleTree tree) {
+	public double getTreeProbability(Tree tree,
+			HashMap<String, Integer> taxonMap) {
 		double prob = 0.0;
 
 		List<Clade> clades = new ArrayList<Clade>();
+		List<Clade> parentClades = new ArrayList<Clade>();
 		// get clades contained in the tree
-		getNonComplementaryClades(taxonMap, tree, (SimpleNode) tree.getRoot(),
-				clades, null, true);
-		List<Clade> parent_clades = new ArrayList<Clade>();
-		// get clades contained in the tree
-		getClades(taxonMap, tree, (SimpleNode) tree.getRoot(), parent_clades,
-				null);
+		getNonComplementaryClades(tree, tree.getRoot(), parentClades, clades,
+				taxonMap);
 
+		int size = clades.size();
 		// for every clade multiply its conditional clade probability to the
 		// tree probability
-		for (Clade c : clades) {
+		for (int i = 0; i < size; i++) {
+			Clade c = clades.get(i);
+
 			// get the bits of the clade
-			Clade parent = getParentClade(parent_clades, c);
+			Clade parent = parentClades.get(i);
 
 			// set the occurrences to epsilon
 			double tmp = EPSILON;
-			double parentOccurrences = EPSILON;
-			if (cladeProbabilities.containsKey(parent)) {
-				// if we observed this clade in the trace, add the occurrences
+			double parentOccurrences = 0.0;
+			BitSet parentBits = parent.getBits();
+			if (cladeProbabilities.containsKey(parentBits)) {
+				// if we observed this clade in the trace, add the
+				// occurrences
 				// to epsilon
-				parentOccurrences += cladeProbabilities.get(parent);
+				parentOccurrences += cladeProbabilities.get(parentBits)
+						.getSampleCount();
 			}
 
-			if (cladeCoProbabilities.containsKey(parent)) {
+			if (cladeCoProbabilities.containsKey(parentBits)) {
 				// if we observed the parent clade
-				HashMap<Clade, Double> conditionalProbs = cladeCoProbabilities
-						.get(parent);
-				if (conditionalProbs.containsKey(c)) {
-					// if we observed this conditional clade in the trace, add
+				HashMap<BitSet, Clade> conditionalProbs = cladeCoProbabilities
+						.get(parentBits);
+
+				BitSet bits = c.getBits();
+				if (conditionalProbs.containsKey(bits)) {
+					// if we observed this conditional clade in the trace,
+					// add
 					// the occurrences to epsilon
-					tmp += conditionalProbs.get(c);
+					tmp += conditionalProbs.get(bits).getSampleCount();
 				}
 			}
+			// add epsilon for each clade
+			final double splits = Math.pow(2, parent.getSize() - 1) - 1;
+			parentOccurrences += EPSILON * splits;
+
 			// multiply the conditional clade probability to the tree
 			// probability
 			prob += Math.log(tmp / parentOccurrences);
+
 		}
 
 		return prob;
@@ -258,15 +312,22 @@ public class ConditionalCladeFrequency {
 
 		double prob = 0;
 
-		if (cladeCoProbabilities.containsKey(parent)) {
-			HashMap<Clade, Double> childClades = cladeCoProbabilities
-					.get(parent);
-			double noChildClades = childClades.size();
+		if (cladeCoProbabilities.containsKey(parent.getBits())) {
+			HashMap<BitSet, Clade> childClades = cladeCoProbabilities
+					.get(parent.getBits());
+			double noChildClades = 0.0;
 
 			double sum = 0.0;
-			Set<Clade> keys = childClades.keySet();
-			for (Clade child : keys) {
-				sum += childClades.get(child);
+			Set<BitSet> keys = childClades.keySet();
+			for (BitSet child : keys) {
+				Clade tmp = childClades.get(child);
+				if (parent.getSize() > tmp.getSize() + 1) {
+					sum += (tmp.getSampleCount() + EPSILON) / 2.0;
+					noChildClades += 0.5;
+				} else {
+					sum += (tmp.getSampleCount() + EPSILON);
+					noChildClades += 1.0;
+				}
 			}
 
 			// add epsilon for each not observed clade
@@ -274,11 +335,16 @@ public class ConditionalCladeFrequency {
 
 			// roulette wheel
 			double randomNumber = Math.random() * sum;
-			for (Clade child : keys) {
-				randomNumber -= childClades.get(child);
+			for (BitSet child : keys) {
+				Clade tmp = childClades.get(child);
+				if (parent.getSize() > tmp.getSize() + 1) {
+					randomNumber -= (tmp.getSampleCount() + EPSILON) / 2.0;
+				} else {
+					randomNumber -= (tmp.getSampleCount() + EPSILON);
+				}
 				if (randomNumber < 0) {
-					children[0] = child;
-					prob = childClades.get(child) / sum;
+					children[0] = tmp;
+					prob = (tmp.getSampleCount() + EPSILON) / sum;
 					break;
 				}
 			}
@@ -287,7 +353,7 @@ public class ConditionalCladeFrequency {
 				// randomNumber /= EPSILON;
 				prob = EPSILON / sum;
 				BitSet newChild;
-				Clade randomClade, inverseRandomClade;
+				BitSet inverseBits;
 				do {
 					do {
 						newChild = (BitSet) parent.getBits().clone();
@@ -300,18 +366,28 @@ public class ConditionalCladeFrequency {
 						} while (index > -1);
 					} while (newChild.cardinality() == 0
 							|| newChild.cardinality() == parent.getSize());
-					randomClade = new Clade(newChild, 0.0);
-					BitSet inverseBits = (BitSet) newChild.clone();
+					inverseBits = (BitSet) newChild.clone();
 					inverseBits.xor(parent.getBits());
-					inverseRandomClade = new Clade(inverseBits, 0.0);
-				} while (childClades.containsKey(randomClade)
-						|| childClades.containsKey(inverseRandomClade));
+				} while (childClades.containsKey(newChild)
+						|| childClades.containsKey(inverseBits));
 
+				Clade randomClade = new Clade(newChild, 0.9999 * parent
+						.getHeight());
 				children[0] = randomClade;
+
+				BitSet secondChild = (BitSet) children[0].getBits().clone();
+				secondChild.xor(parent.getBits());
+				children[1] = new Clade(secondChild, 0.9999 * parent
+						.getHeight());
+			} else {
+				BitSet secondChild = (BitSet) children[0].getBits().clone();
+				secondChild.xor(parent.getBits());
+				children[1] = childClades.get(secondChild);
+				if (children[1] == null) {
+					children[1] = new Clade(secondChild, 0.9999 * parent
+							.getHeight());
+				}
 			}
-			BitSet secondChild = (BitSet) children[0].getBits().clone();
-			secondChild.xor(parent.getBits());
-			children[1] = new Clade(secondChild, 0.0);
 
 		} else {
 			prob = 1.0 / splits;
@@ -328,11 +404,15 @@ public class ConditionalCladeFrequency {
 				} while (index > -1);
 			} while (newChild.cardinality() == 0
 					|| newChild.cardinality() == parent.getSize());
-			Clade randomClade = new Clade(newChild, 0.0);
+			Clade randomClade = new Clade(newChild, 0.9999 * parent.getHeight());
+			// randomClade.addSample();
+			randomClade.addHeight(0.9999 * parent.getHeight());
 			children[0] = randomClade;
 			BitSet secondChild = (BitSet) children[0].getBits().clone();
 			secondChild.xor(parent.getBits());
-			children[1] = new Clade(secondChild, 0.0);
+			children[1] = new Clade(secondChild, 0.9999 * parent.getHeight());
+			// children[1].addSample();
+			randomClade.addHeight(0.9999 * parent.getHeight());
 		}
 
 		return Math.log(prob);
@@ -374,231 +454,136 @@ public class ConditionalCladeFrequency {
 		samples++;
 
 		List<Clade> clades = new ArrayList<Clade>();
-		SimpleTree sTree = new SimpleTree(tree);
-		// get all clades contained in the tree
-		getClades(taxonMap, sTree, (SimpleNode) sTree.getRoot(), clades, null);
+		List<Clade> parentClades = new ArrayList<Clade>();
+		// get clades contained in the tree
+		getClades(tree, tree.getRoot(), parentClades, clades);
+		// add the clade containing all taxa as well so that it get counted
+		clades.add(parentClades.get(parentClades.size() - 1));
+		parentClades.add(clades.get(clades.size() - 1));
 
-		// increment the occurrences of the clade and the conditional clade
-		for (Clade c : clades) {
+		int size = clades.size();
+		// for every clade multiply its conditional clade probability to the
+		// tree probability
+		for (int i = 0; i < size; i++) {
+			Clade c = clades.get(i);
 
-			// find the parent clade
-			Clade parentClade = getParentClade(clades, c);
+			// get the bits of the clade
+			Clade parent = parentClades.get(i);
 
-			Double frequency = 1.0;
-			Double coFrequency = 1.0;
-			HashMap<Clade, Double> coFreqs;
+			HashMap<BitSet, Clade> coFreqs;
 			// increment the clade occurrences
-			if (cladeProbabilities.containsKey(c)) {
-				frequency += cladeProbabilities.get(c);
+			if (cladeProbabilities.containsKey(c.getBits())) {
+				Clade tmp = cladeProbabilities.get(c.getBits());
+				// tmp.addSample();
+				tmp.addHeight(c.getHeight());
+				// add the amount to the current occurences
+				// frequency += cladeProbabilities.get(c);
+			} else {
+				// just to set the first value of the height value list
+				// c.addSample();
+				c.addHeight(c.getHeight());
+				cladeProbabilities.put(c.getBits(), c);
 			}
-			cladeProbabilities.put(c, frequency);
 
 			// increment the conditional clade occurrences
-			if (!parentClade.equals(c)) {
-				if (cladeCoProbabilities.containsKey(parentClade)) {
-					coFreqs = cladeCoProbabilities.get(parentClade);
+			if (!parent.equals(c)) {
+				if (cladeCoProbabilities.containsKey(parent.getBits())) {
+					coFreqs = cladeCoProbabilities.get(parent.getBits());
 				} else {
 					// if it's the first time we observe the parent then we need
 					// a new list for its conditional clades
-					coFreqs = new HashMap<Clade, Double>();
-					cladeCoProbabilities.put(parentClade, coFreqs);
+					coFreqs = new HashMap<BitSet, Clade>();
+					cladeCoProbabilities.put(parent.getBits(), coFreqs);
 				}
 
 				// add the previous observed occurrences for this conditional
 				// clade
-				if (coFreqs.containsKey(c)) {
-					coFrequency += coFreqs.get(c);
-				}
-				coFreqs.put(c, coFrequency);
-			}
-		}
-	}
-
-	/**
-	 * 
-	 * Finds the parent of a given clade in a list of clades. The parent is the
-	 * direct parent and not the grandparent or so.
-	 * 
-	 * @param clades
-	 *            - list of clades in which we are searching the parent
-	 * @param child
-	 *            - the child of whom we are searching the parent
-	 * @return the parent clade if found, otherwise itself
-	 */
-	private Clade getParentClade(List<Clade> clades, Clade child) {
-		Clade parent = null;
-
-		// look in all clades of the list which contains the child and has the
-		// minimum cardinality (least taxa) -> that's the parent :-)
-		for (int i = 0; i < clades.size(); i++) {
-			Clade tmp = clades.get(i);
-			if (!child.equals(tmp) && containsClade(tmp, child)) {
-				if (parent == null || parent.getSize() > tmp.getSize()) {
-					parent = tmp;
+				if (coFreqs.containsKey(c.getBits())) {
+					Clade tmp = coFreqs.get(c.getBits());
+					tmp.addHeight(c.getHeight());
+					// coFrequency += coFreqs.get(c.getBits());
+				} else {
+					// TODO check this code, especially if the cloning is needed
+					// and not just the clade could be added
+					Clade tmp = new Clade((BitSet) c.getBits().clone(), c
+							.getHeight());
+					tmp.addHeight(c.getHeight());
+					coFreqs.put(c.getBits(), tmp);
 				}
 			}
 		}
-		// if there isn't a parent, then you probably asked for the whole tree
-		if (parent == null) {
-			parent = child;
-		}
-
-		return parent;
 	}
 
 	/**
 	 * 
-	 * Checks if clade i contains clade j.
+	 * increments the number of occurrences for all conditional clades
 	 * 
-	 * @param i
-	 *            - the parent clade
-	 * @param j
-	 *            - the child clade
-	 * @return true, if i contains j
-	 */
-	private boolean containsClade(Clade i, Clade j) {
-		BitSet tmpI = (BitSet) i.getBits().clone();
-		BitSet tmpJ = (BitSet) j.getBits().clone();
-
-		// just set the bits which are either in j but not in i or in i but not
-		// in j
-		tmpI.xor(tmpJ);
-		int numberOfBitsInEither = tmpI.cardinality();
-		// which bits are just in i
-		tmpI.and(i.getBits());
-		int numberIfBitJustInContaining = tmpI.cardinality();
-
-		// if the number of bits just in i is equal to the number of bits just
-		// in one of i or j
-		// then i contains j
-		return numberOfBitsInEither == numberIfBitJustInContaining;
-	}
-
-	/**
-	 * 
-	 * Creates a list with all clades of the tree
-	 * 
-	 * @param taxonMap
-	 *            - the lookup map for the taxon representing an index
 	 * @param tree
-	 *            - the tree from which the clades are extracted
-	 * @param node
-	 *            - the starting node. All clades below starting at this branch
-	 *            are added
-	 * @param clades
-	 *            - the list in which the clades are stored
-	 * @param bits
-	 *            - a bit set to which the current bits of the clades are added
+	 *            - the tree to be added
 	 */
-	private void getClades(HashMap<String, Integer> taxonMap, SimpleTree tree,
-			SimpleNode node, List<Clade> clades, BitSet bits) {
+	public void addTree(Tree tree, HashMap<String, Integer> taxonMap) {
 
-		// create a new bit set for this clade
-		BitSet bits2 = new BitSet();
+		samples++;
 
-		// check if the node is external
-		if (tree.isExternal(node)) {
+		List<Clade> clades = new ArrayList<Clade>();
+		List<Clade> parentClades = new ArrayList<Clade>();
+		// get clades contained in the tree
+		getClades(tree, tree.getRoot(), parentClades, clades, taxonMap);
+		// add the clade containing all taxa as well so that it get counted
+		clades.add(parentClades.get(parentClades.size() - 1));
+		parentClades.add(clades.get(clades.size() - 1));
 
-			// if so, the only taxon in the clade is I
-			int index = taxonMap.get(node.getTaxon().getId());
-			bits2.set(index);
+		int size = clades.size();
+		// for every clade multiply its conditional clade probability to the
+		// tree probability
+		for (int i = 0; i < size; i++) {
+			Clade c = clades.get(i);
 
-		} else {
+			// get the bits of the clade
+			Clade parent = parentClades.get(i);
 
-			// otherwise, call all children and add its taxon together to one
-			// clade
-			for (int i = 0; i < tree.getChildCount(node); i++) {
-				SimpleNode child = (SimpleNode) tree.getChild(node, i);
-				getClades(taxonMap, tree, child, clades, bits2);
+			HashMap<BitSet, Clade> coFreqs;
+			// increment the clade occurrences
+			if (cladeProbabilities.containsKey(c.getBits())) {
+				Clade tmp = cladeProbabilities.get(c.getBits());
+				// tmp.addSample();
+				tmp.addHeight(c.getHeight());
+				// add the amount to the current occurences
+				// frequency += cladeProbabilities.get(c);
+			} else {
+				// just to set the first value of the height value list
+				// c.addSample();
+				c.addHeight(c.getHeight());
+				cladeProbabilities.put(c.getBits(), c);
 			}
-			// add my bit set to the list
-			clades.add(new Clade(bits2, tree.getNodeHeight(node)));
-		}
 
-		// add my bit set to the bit set I was given
-		// this is needed for adding all children clades together
-		if (bits != null) {
-			bits.or(bits2);
-		}
-	}
+			// increment the conditional clade occurrences
+			if (!parent.equals(c)) {
+				if (cladeCoProbabilities.containsKey(parent.getBits())) {
+					coFreqs = cladeCoProbabilities.get(parent.getBits());
+				} else {
+					// if it's the first time we observe the parent then we need
+					// a new list for its conditional clades
+					coFreqs = new HashMap<BitSet, Clade>();
+					cladeCoProbabilities.put(parent.getBits(), coFreqs);
+				}
 
-	/**
-	 * 
-	 * creates a list with all clades but just the non-complementary ones.
-	 * ((A,B),(C,D)) just {A,B,C,D} and {A,B} are inserted. {A,B} is
-	 * complementary to {C,D}
-	 * 
-	 * @param taxonMap
-	 *            - the lookup map for the taxon representing an index
-	 * @param tree
-	 *            - the tree from which the clades are extracted
-	 * @param node
-	 *            - the starting node. All clades below starting at this branch
-	 *            are added
-	 * @param clades
-	 *            - the list in which the clades are stored
-	 * @param bits
-	 *            - a bit set to which the current bits of the clades are added
-	 * @param add
-	 *            - if this clade starting at the given node should be added
-	 */
-	private void getNonComplementaryClades(HashMap<String, Integer> taxonMap,
-			SimpleTree tree, SimpleNode node, List<Clade> clades, BitSet bits,
-			boolean add) {
-
-		// create a new bit set for this clade
-		BitSet bits2 = new BitSet();
-
-		// check if the node is external
-		if (tree.isExternal(node)) {
-
-			// if so, the only taxon in the clade is I
-			int index = taxonMap.get(node.getTaxon().getId());
-			bits2.set(index);
-
-		} else {
-
-			// otherwise, call all children and add its taxon together to one
-			// clade
-			for (int i = 0; i < tree.getChildCount(node); i++) {
-				SimpleNode child = (SimpleNode) tree.getChild(node, i);
-				// add just my first child to the list
-				// the second child is complementary to the first
-				getNonComplementaryClades(taxonMap, tree, child, clades, bits2,
-						i == 0);
-			}
-			if (add) {
-				clades.add(new Clade(bits2, tree.getNodeHeight(node)));
+				// add the previous observed occurrences for this conditional
+				// clade
+				if (coFreqs.containsKey(c.getBits())) {
+					Clade tmp = coFreqs.get(c.getBits());
+					tmp.addHeight(c.getHeight());
+					// coFrequency += coFreqs.get(c.getBits());
+				} else {
+					// TODO check this code, especially if the cloning is needed
+					// and not just the clade could be added
+					Clade tmp = new Clade((BitSet) c.getBits().clone(), c
+							.getHeight());
+					tmp.addHeight(c.getHeight());
+					coFreqs.put(c.getBits(), tmp);
+				}
 			}
 		}
-
-		// add my bit set to the bit set I was given
-		// this is needed for adding all children clades together
-		if (bits != null) {
-			bits.or(bits2);
-		}
-	}
-
-	/**
-	 * 
-	 * @return a mapping between the taxon and indices
-	 */
-	private HashMap<String, Integer> getTaxonMap(Tree tree) {
-		HashMap<String, Integer> tm = new HashMap<String, Integer>();
-
-		for (int i = 0; i < tree.getTaxonCount(); i++) {
-			tm.put(tree.getTaxon(i).getId(), new Integer(i));
-		}
-
-		return tm;
-	}
-
-	/**
-	 * 
-	 * @return a mapping between the taxon and indices
-	 */
-	public HashMap<String, Integer> getTaxonMap() {
-		return taxonMap;
 	}
 
 	/**

@@ -471,6 +471,21 @@ public class TreeModel extends AbstractModel implements MutableTree {
         }
         treeChangedEvents.clear();
     }
+    
+    public void endTreeEditUnsafe() throws MutableTree.InvalidTreeException {
+        if (!inEdit) throw new RuntimeException("Not in edit transaction mode!");
+
+        inEdit = false;
+
+        if (root != oldRoot) {
+            swapParameterObjects(oldRoot, root);
+        }
+
+        for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
+            listenerHelper.fireModelChanged(this, treeChangedEvent);
+        }
+        treeChangedEvents.clear();
+    }
 
     public void setNodeHeight(NodeRef n, double height) {
         ((Node) n).setHeight(height);

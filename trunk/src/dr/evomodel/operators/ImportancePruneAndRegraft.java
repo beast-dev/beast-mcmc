@@ -7,12 +7,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dr.evolution.tree.ConditionalCladeFrequency;
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.SimpleNode;
-import dr.evolution.tree.SimpleTree;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.MutableTree.InvalidTreeException;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.OperatorSchedule;
+import dr.inference.operators.SimpleMCMCOperator;
+import dr.inference.operators.SimpleOperatorSchedule;
 import dr.math.MathUtils;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
@@ -23,343 +26,279 @@ import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
 /**
- * @author shhn001
- *
+ * @author Sebastian Hoehna
+ * 
  */
 public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 
-	public static final String IMPORTANCE_PRUNE_AND_REGRAFT = "ImportancePruneAndRegraft";
+    public static final String IMPORTANCE_PRUNE_AND_REGRAFT = "ImportancePruneAndRegraft";
 
-	public final int SAMPLE_EVERY = 10;
-	
-	private TreeModel tree;
+    public final int SAMPLE_EVERY = 10;
 
-	private int samples;
+    private TreeModel tree;
 
-	private int sampleCount;
+    private int samples;
 
-	private boolean burnin = false;
-	
-	private ConditionalCladeFrequency probabilityEstimater;
+    private int sampleCount;
 
-	/**
+    private boolean burnin = false;
+
+    private ConditionalCladeFrequency probabilityEstimater;
+
+    private OperatorSchedule schedule;
+
+    /**
 	 * 
 	 */
-	public ImportancePruneAndRegraft(TreeModel tree, double weight, int samples, int epsilon) {
-		this.tree = tree;
-		setWeight(weight);
-		this.samples = samples;
-		sampleCount = 0;
-		probabilityEstimater = new ConditionalCladeFrequency(tree, epsilon);
-	}
-	
-	/**
+    public ImportancePruneAndRegraft(TreeModel tree, double weight,
+	    int samples, int epsilon) {
+	this.tree = tree;
+	setWeight(weight);
+	this.samples = samples;
+	sampleCount = 0;
+	probabilityEstimater = new ConditionalCladeFrequency(tree, epsilon);
+	schedule = getOperatorSchedule(tree);
+    }
+
+    /**
 	 * 
 	 */
-	public ImportancePruneAndRegraft(TreeModel tree, double weight, int samples) {
-		this.tree = tree;
-		setWeight(weight);
-		this.samples = samples;
-		sampleCount = 0;
-		probabilityEstimater = new ConditionalCladeFrequency(tree, 1.0);
-	}
+    public ImportancePruneAndRegraft(TreeModel tree, double weight, int samples) {
+	this.tree = tree;
+	setWeight(weight);
+	this.samples = samples;
+	sampleCount = 0;
+	// double epsilon = 1 - Math.pow(0.5, samples);
+	double epsilon = 1 - Math.pow(0.5, 1.0 / samples);
+	// double epsilon = 1;
+	probabilityEstimater = new ConditionalCladeFrequency(tree, epsilon);
+	schedule = getOperatorSchedule(tree);
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
-	 */
-	@Override
-	public double doOperation() throws OperatorFailedException {
-		if (!burnin) {
-			if (sampleCount < samples * SAMPLE_EVERY) {
-				sampleCount++;
-				if (sampleCount % SAMPLE_EVERY == 0){
-					probabilityEstimater.addTree(tree);					
-				}
-				setAccepted(0);
-				setRejected(0);
-				setTransitions(0);
-				
-				return fixedNodePruneAndRegraft();
-				
-			} else {
-				return importancePruneAndRegraft();
-			}
-		} else {
-			
-			return fixedNodePruneAndRegraft();
-			
-		 }
-	}
+    private OperatorSchedule getOperatorSchedule(TreeModel treeModel) {
 
-	private double fixedNodePruneAndRegraft() throws OperatorFailedException {
-		NodeRef iGrandfather, iBrother;
-	      double heightFather;
-	      final int tipCount = tree.getExternalNodeCount();
+	ExchangeOperator narrowExchange = new ExchangeOperator(
+		ExchangeOperator.NARROW, treeModel, 10);
+	ExchangeOperator wideExchange = new ExchangeOperator(
+		ExchangeOperator.WIDE, treeModel, 3);
+	SubtreeSlideOperator subtreeSlide = new SubtreeSlideOperator(treeModel,
+		10.0, 1.0, true, false, false, false, CoercionMode.COERCION_ON);
+	NNI nni = new NNI(treeModel, 10.0);
+	WilsonBalding wilsonBalding = new WilsonBalding(treeModel, 3.0);
+	FNPR fnpr = new FNPR(treeModel, 5.0);
 
-	      final int nNodes = tree.getNodeCount();
-	      final NodeRef root = tree.getRoot();
+	OperatorSchedule schedule = new SimpleOperatorSchedule();
+	schedule.addOperator(narrowExchange);
+	schedule.addOperator(wideExchange);
+	schedule.addOperator(subtreeSlide);
+	schedule.addOperator(nni);
+	schedule.addOperator(wilsonBalding);
+	schedule.addOperator(fnpr);
 
-	      NodeRef i;
+	return schedule;
+    }
 
-	      int MAX_TRIES = 1000;
-
-	      for (int tries = 0; tries < MAX_TRIES; ++tries) {
-	         // get a random node whose father is not the root - otherwise
-	         // the operation is not possible
-	         do {
-	            i = tree.getNode(MathUtils.nextInt(nNodes));
-	         } while (root == i || tree.getParent(i) == root);
-
-	         // int childIndex = (MathUtils.nextDouble() >= 0.5 ? 1 : 0);
-	         // int otherChildIndex = 1 - childIndex;
-	         // NodeRef iOtherChild = tree.getChild(i, otherChildIndex);
-
-	         NodeRef iFather = tree.getParent(i);
-	         iGrandfather = tree.getParent(iFather);
-	         iBrother = getOtherChild(tree, iFather, i);
-	         heightFather = tree.getNodeHeight(iFather);
-
-	         // NodeRef newChild = getRandomNode(possibleChilds, iFather);
-	         NodeRef newChild = tree.getNode(MathUtils.nextInt(nNodes));
-
-	         if (tree.getNodeHeight(newChild) < heightFather
-	               && root != newChild
-	               && tree.getNodeHeight(tree.getParent(newChild)) > heightFather
-	               && newChild != iFather
-	               && tree.getParent(newChild) != iFather) {
-	            NodeRef newGrandfather = tree.getParent(newChild);
-
-	            tree.beginTreeEdit();
-
-	            // prune
-	            tree.removeChild(iFather, iBrother);
-	            tree.removeChild(iGrandfather, iFather);
-	            tree.addChild(iGrandfather, iBrother);
-
-	            // reattach
-	            tree.removeChild(newGrandfather, newChild);
-	            tree.addChild(iFather, newChild);
-	            tree.addChild(newGrandfather, iFather);
-
-	            // ****************************************************
-
-	            try {
-	               tree.endTreeEdit();
-	            } catch (MutableTree.InvalidTreeException ite) {
-	               throw new OperatorFailedException(ite.toString());
-	            }
-
-	            tree.pushTreeChangedEvent(i);
-	            tree.pushTreeChangedEvent(iBrother);
-
-	            assert tree.getExternalNodeCount() == tipCount;
-	            
-	            return 0.0;
-	         }
-	      }
-
-	      throw new OperatorFailedException("Couldn't find valid SPR move on this tree!");
-	}
-
-	private double importancePruneAndRegraft()
-			throws OperatorFailedException {
-		tree.storeModelState();
-		
-		final int nodeCount = tree.getNodeCount();
-		final NodeRef root = tree.getRoot();		
-
-		NodeRef i;
-		int indexI;
-
-		do {
-			indexI = MathUtils.nextInt(nodeCount);
-			i = tree.getNode(indexI);
-		} while (root == i || tree.getParent(i) == root);
-
-		List<Integer> secondNodeIndices = new ArrayList<Integer>();
-		List<Double> probabilities = new ArrayList<Double>();
-		NodeRef j, iP, jP;
-		iP = tree.getParent(i);
-		double sum = 0.0;
-				
-		SimpleTree originalTree = new SimpleTree(tree);
-		double backwardLikelihood = calculateTreeProbability(originalTree);
-		int offset = (int) -backwardLikelihood;
-		double backward = Math.exp(backwardLikelihood + offset);
-		NodeRef oldBrother;
-		oldBrother = getOtherChild(tree, iP, i);
-		SimpleTree clone;
-		for (int n = 0; n < nodeCount; n++) {
-			j = tree.getNode(n);
-			if (j != root) {
-				jP = tree.getParent(j);
-
-				if (j == oldBrother){					
-//					secondNodeIndices.add(n);
-//					probabilities.add(backward);
-//					sum += backward;
-				} else if ((i != j) && (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
-						&& (tree.getNodeHeight(iP) < tree.getNodeHeight(jP))) {
-					secondNodeIndices.add(n);
-					clone = (SimpleTree) originalTree.getCopy();
-
-					SimpleNode sI = (SimpleNode)clone.getNode(indexI);
-					SimpleNode sIP = (SimpleNode)clone.getParent(sI);
-					SimpleNode sJ = (SimpleNode)clone.getNode(n);
-					SimpleNode sJP = (SimpleNode)clone.getParent(sJ);
-					pruneAndRegraft(clone, sI, sIP, sJ, sJP);
-					double prob = Math.exp(calculateTreeProbability(clone)
-							+ offset);
-					probabilities.add(prob);
-					sum += prob;
-
-				}
-			}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
+     */
+    @Override
+    public double doOperation() throws OperatorFailedException {
+	if (!burnin) {
+	    if (sampleCount < samples * SAMPLE_EVERY) {
+		sampleCount++;
+		if (sampleCount % SAMPLE_EVERY == 0) {
+		    probabilityEstimater.addTree(tree);
 		}
+		setAccepted(0);
+		setRejected(0);
+		setTransitions(0);
 
-		double ran = Math.random() * sum;
-		int index = 0;
-		while (ran > 0.0) {
-			ran -= probabilities.get(index);
-			index++;
-		}
-		index--;
+		return doUnguidedOperation();
 
-		j = tree.getNode(secondNodeIndices.get(index));
+	    } else {
+		return importancePruneAndRegraft();
+	    }
+	} else {
+
+	    return doUnguidedOperation();
+
+	}
+    }
+
+    private double doUnguidedOperation() throws OperatorFailedException {
+	int index = schedule.getNextOperatorIndex();
+	SimpleMCMCOperator operator = (SimpleMCMCOperator) schedule
+		.getOperator(index);
+
+	return operator.doOperation();
+    }
+
+    private double importancePruneAndRegraft() throws OperatorFailedException {
+	final int nodeCount = tree.getNodeCount();
+	final NodeRef root = tree.getRoot();
+
+	NodeRef i;
+
+	do {
+	    int indexI = MathUtils.nextInt(nodeCount);
+	    i = tree.getNode(indexI);
+	} while (root == i || tree.getParent(i) == root);
+
+	List<Integer> secondNodeIndices = new ArrayList<Integer>();
+	List<Double> probabilities = new ArrayList<Double>();
+	NodeRef j, iP, jP;
+	iP = tree.getParent(i);
+	double iParentHeight = tree.getNodeHeight(iP);
+	double sum = 0.0;
+	double backwardLikelihood = calculateTreeProbability(tree);
+	int offset = (int) -backwardLikelihood;
+	double backward = Math.exp(backwardLikelihood + offset);
+	final NodeRef oldBrother = getOtherChild(tree, iP, i);
+	final NodeRef oldGrandfather = tree.getParent(iP);
+
+	tree.beginTreeEdit();
+	for (int n = 0; n < nodeCount; n++) {
+	    j = tree.getNode(n);
+	    if (j != root) {
 		jP = tree.getParent(j);
 
-		if (iP != jP){
-			pruneAndRegraft(tree, i, iP, j, jP);
+		if ((iP != jP)
+			&& (tree.getNodeHeight(j) < iParentHeight && iParentHeight < tree
+				.getNodeHeight(jP))) {
+		    secondNodeIndices.add(n);
+
+		    pruneAndRegraft(tree, i, iP, j, jP);
+		    double prob = Math.exp(calculateTreeProbability(tree)
+			    + offset);
+		    probabilities.add(prob);
+		    sum += prob;
+
+		    pruneAndRegraft(tree, i, iP, oldBrother, oldGrandfather);
 		}
-		double forward = probabilities.get(index);		
-
-		double forwardProb = (forward / sum);
-		double backwardProb = (backward / (sum - forward + backward));
-		double hastingsRatio = Math.log(backwardProb / forwardProb);
-
-		return hastingsRatio;
-	}
-	
-	private void pruneAndRegraft(TreeModel tree, NodeRef i, NodeRef iP, NodeRef j, NodeRef jP) throws OperatorFailedException{
-		tree.beginTreeEdit();
-
-		// the grandfather
-		NodeRef iG = tree.getParent(iP);
-		// the brother
-		NodeRef iB = getOtherChild(tree, iP, i);
-        // prune
-        tree.removeChild(iP, iB);
-        tree.removeChild(iG, iP);
-        tree.addChild(iG, iB);
-
-        // reattach
-        tree.removeChild(jP, j);
-        tree.addChild(iP, j);
-        tree.addChild(jP, iP);
-
-        // ****************************************************
-
-        try {
-           tree.endTreeEdit();
-        } catch (MutableTree.InvalidTreeException ite) {
-           throw new OperatorFailedException(ite.toString());
-        }
-
-        tree.pushTreeChangedEvent(i);
-	}
-	
-	private void pruneAndRegraft(SimpleTree tree, SimpleNode i, SimpleNode iP, SimpleNode j, SimpleNode jP) throws OperatorFailedException{
-		tree.beginTreeEdit();
-
-		// the grandfather
-		NodeRef iG = tree.getParent(iP);
-		// the brother
-		NodeRef iB = getOtherChild(tree, iP, i);
-        // prune
-        tree.removeChild(iP, iB);
-        tree.removeChild(iG, iP);
-        tree.addChild(iG, iB);
-
-        // reattach
-        tree.removeChild(jP, j);
-        tree.addChild(iP, j);
-        tree.addChild(jP, iP);
-
-        // ****************************************************
-
-        tree.endTreeEdit();
-	}
-	
-	private double calculateTreeProbability(SimpleTree tree) {
-		// return calculateTreeProbabilityMult(tree);
-//		return calculateTreeProbabilityLog(tree);
-		return probabilityEstimater.getTreeProbability(tree);
-//		return 0;
+	    }
 	}
 
-	public void setBurnin(boolean burnin) {
-		this.burnin = burnin;
+	double ran = Math.random() * sum;
+	int index = 0;
+	while (ran > 0.0) {
+	    ran -= probabilities.get(index);
+	    index++;
+	}
+	index--;
+
+	j = tree.getNode(secondNodeIndices.get(index));
+	jP = tree.getParent(j);
+
+	if (iP != jP) {
+	    pruneAndRegraft(tree, i, iP, j, jP);
+	    tree.pushTreeChangedEvent(i);
+	}
+	try {
+	    tree.endTreeEdit();
+	} catch (InvalidTreeException e) {
+	    throw new OperatorFailedException(e.getMessage());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see dr.inference.operators.SimpleMCMCOperator#getOperatorName()
-	 */
-	@Override
-	public String getOperatorName() {
-		return IMPORTANCE_PRUNE_AND_REGRAFT;
+	double forward = probabilities.get(index);
+
+	// tree.pushTreeChangedEvent(jP);
+	// tree.pushTreeChangedEvent(oldGrandfather);
+	tree.pushTreeChangedEvent(i);
+
+	double forwardProb = (forward / sum);
+	double backwardProb = (backward / (sum - forward + backward));
+	double hastingsRatio = Math.log(backwardProb / forwardProb);
+
+	return hastingsRatio;
+    }
+
+    private void pruneAndRegraft(TreeModel tree, NodeRef i, NodeRef iP,
+	    NodeRef j, NodeRef jP) throws OperatorFailedException {
+	// tree.beginTreeEdit();
+
+	// the grandfather
+	NodeRef iG = tree.getParent(iP);
+	// the brother
+	NodeRef iB = getOtherChild(tree, iP, i);
+	// prune
+	tree.removeChild(iP, iB);
+	tree.removeChild(iG, iP);
+	tree.addChild(iG, iB);
+
+	// reattach
+	tree.removeChild(jP, j);
+	tree.addChild(iP, j);
+	tree.addChild(jP, iP);
+
+    }
+
+    private double calculateTreeProbability(Tree tree) {
+	return probabilityEstimater.getTreeProbability(tree);
+    }
+
+    public void setBurnin(boolean burnin) {
+	this.burnin = burnin;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see dr.inference.operators.SimpleMCMCOperator#getOperatorName()
+     */
+    @Override
+    public String getOperatorName() {
+	return IMPORTANCE_PRUNE_AND_REGRAFT;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see dr.inference.operators.MCMCOperator#getPerformanceSuggestion()
+     */
+    public String getPerformanceSuggestion() {
+	// TODO Auto-generated method stub
+	return "";
+    }
+
+    public static XMLObjectParser IMPORTANCE_PRUNE_AND_REGRAFT_PARSER = new AbstractXMLObjectParser() {
+
+	public String getParserName() {
+	    return IMPORTANCE_PRUNE_AND_REGRAFT;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see dr.inference.operators.MCMCOperator#getPerformanceSuggestion()
-	 */
-	public String getPerformanceSuggestion() {
-		// TODO Auto-generated method stub
-		return "";
+	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+	    TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+	    double weight = xo.getDoubleAttribute("weight");
+	    int samples = xo.getIntegerAttribute("samples");
+
+	    return new ImportancePruneAndRegraft(treeModel, weight, samples);
 	}
 
-	public static XMLObjectParser IMPORTANCE_PRUNE_AND_REGRAFT_PARSER = new AbstractXMLObjectParser() {
+	// ************************************************************************
+	// AbstractXMLObjectParser implementation
+	// ************************************************************************
 
-		public String getParserName() {
-			return IMPORTANCE_PRUNE_AND_REGRAFT;
-		}
+	public String getParserDescription() {
+	    return "This element represents a importance guided prune and regraft operator. "
+		    + "This operator prunes a random subtree and regrafts it below a node chosen by an importance distribution.";
+	}
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+	public Class getReturnType() {
+	    return ImportancePruneAndRegraft.class;
+	}
 
-			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-			double weight = xo.getDoubleAttribute("weight");
-			int samples = xo.getIntegerAttribute("samples");
+	public XMLSyntaxRule[] getSyntaxRules() {
+	    return rules;
+	}
 
-			return new ImportancePruneAndRegraft(treeModel, weight, samples);
-		}
+	private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		AttributeRule.newDoubleRule("weight"),
+		AttributeRule.newIntegerRule("samples"),
+		new ElementRule(TreeModel.class) };
 
-		// ************************************************************************
-		// AbstractXMLObjectParser implementation
-		// ************************************************************************
+    };
 
-		public String getParserDescription() {
-			return "This element represents a importance guided prune and regraft operator. "
-					+ "This operator prunes a random subtree and regrafts it below a node chosen by an importance distribution.";
-		}
-
-		public Class getReturnType() {
-			return ImportancePruneAndRegraft.class;
-		}
-
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
-
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-				AttributeRule.newDoubleRule("weight"),
-				AttributeRule.newIntegerRule("samples"),
-				new ElementRule(TreeModel.class) };
-
-	};
-	
 }

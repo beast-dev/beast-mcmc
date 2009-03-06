@@ -3,25 +3,15 @@
  */
 package dr.evomodel.operators;
 
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
-
 import dr.evolution.tree.Clade;
 import dr.evolution.tree.ConditionalCladeFrequency;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.MutableTree.InvalidTreeException;
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.OperatorFailedException;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLObjectParser;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
+
+import java.util.*;
 
 /**
  * @author Sebastian Hoehna
@@ -155,8 +145,8 @@ public class CCPImportanceDistributionOperator extends
 		}
 		else {
 			String name = tree.getTaxonId(node.getNumber());
-			Integer i = probabilityEstimater.getTaxonMap().get(name);
-			externalNodes.put(i, node);
+			//Integer i = probabilityEstimater.getTaxonMap().get(name);
+			//externalNodes.put(i, node);
 		}
 	}
 

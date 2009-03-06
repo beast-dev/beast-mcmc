@@ -77,7 +77,7 @@ public class GibbsSubtreeSwapTest  extends OperatorTest{
 
             try {
                 TreeModel treeModel = new TreeModel("treeModel", tree5);
-                GibbsSubtreeSwap operator = new GibbsSubtreeSwap(treeModel, 1.0);
+                GibbsSubtreeSwap operator = new GibbsSubtreeSwap(treeModel, false, 1.0);
                 double hr = operator.operate(null, null);
 
                 String tree = Tree.Utils.newickNoLengths(treeModel);
@@ -108,7 +108,7 @@ public class GibbsSubtreeSwapTest  extends OperatorTest{
 	        Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
 	        Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
 
-	        GibbsSubtreeSwap operator = new GibbsSubtreeSwap(treeModel, 1.0);
+	        GibbsSubtreeSwap operator = new GibbsSubtreeSwap(treeModel, false, 1.0);
 	        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
 	        UniformOperator uniformOperator = new UniformOperator(internalHeights, 1.0);
 

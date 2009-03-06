@@ -80,10 +80,11 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
 
         Set<Double> tipDates = new HashSet<Double>();
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            tipDates.add(tree.getNodeHeight(tree.getExternalNode(i)));
+            double h = tree.getNodeHeight(tree.getExternalNode(i));
+            tipDates.add(h);
         }
 
-        k = tipDates.size() - 1 + tree.getInternalNodeCount() - 1;
+        k = tipDates.size() - 1  + tree.getInternalNodeCount() - 1;
         Logger.getLogger("dr.evomodel").info("Uniform Root Prior, Intervals = " + (k + 1));
 
         logFactorialK = logFactorial(k);
@@ -190,15 +191,13 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
 
         } else {
             // the Alekseyenko & Suchard variant
-
             double logLike = logFactorialK - (double) k * Math.log(rootHeight);
 
             assert !Double.isInfinite(logLike) && !Double.isNaN(logLike);
-
-
             return logLike;
         }
     }
+
 
     private double logFactorial(int n) {
         double rValue = 0;

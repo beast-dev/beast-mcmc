@@ -26,11 +26,17 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.coalescent.Intervals;
+import dr.evolution.coalescent.TreeIntervals;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.Set;
+import java.util.HashSet;
+import java.util.logging.Logger;
 
 /**
  * A prior for the tree that is uniform on the rootHeight, taking care of the metric factors
@@ -39,6 +45,10 @@ import dr.xml.*;
  * See Nicholls, G. & R.D. Gray (2004) for details.
  *
  * @author Alexei Drummond
+ * @author Andrew Rambaut
+ * @author Alexander Alekseyenko
+ * @author Marc Suchard
+ *
  * @version $Id: UniformRootPrior.java,v 1.10 2005/05/24 20:25:58 rambaut Exp $
  */
 public class UniformRootPrior extends AbstractModel implements Likelihood {
@@ -48,7 +58,37 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
     public static final String UNIFORM_ROOT_PRIOR = "uniformRootPrior";
     public static final String MAX_ROOT_HEIGHT = "maxRootHeight";
 
+    private int k;
+    private double logFactorialK;
+
     private double maxRootHeight;
+    private boolean isNicholls;
+
+    public UniformRootPrior(Tree tree) {
+        this(UNIFORM_ROOT_PRIOR, tree);
+    }
+
+    private UniformRootPrior(String name, Tree tree) {
+
+        super(name);
+
+        this.tree = tree;
+        this.isNicholls = false;
+        if (tree instanceof TreeModel) {
+            addModel((TreeModel) tree);
+        }
+
+        Set<Double> tipDates = new HashSet<Double>();
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            tipDates.add(tree.getNodeHeight(tree.getExternalNode(i)));
+        }
+
+        k = tipDates.size() - 1 + tree.getInternalNodeCount() - 1;
+        Logger.getLogger("dr.evomodel").info("Uniform Root Prior, Intervals = " + (k + 1));
+
+        logFactorialK = logFactorial(k);
+
+    }
 
     public UniformRootPrior(Tree tree, double maxRootHeight) {
         this(UNIFORM_ROOT_PRIOR, tree, maxRootHeight);
@@ -60,6 +100,7 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
 
         this.tree = tree;
         this.maxRootHeight = maxRootHeight;
+        isNicholls = true;
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
         }
@@ -135,21 +176,39 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
         likelihoodKnown = false;
     }
 
-    /**
-     * Calculates the log likelihood of this set of coalescent intervals,
-     * given a demographic model.
-     */
     public double calculateLogLikelihood() {
 
         double rootHeight = tree.getNodeHeight(tree.getRoot());
-        int nodeCount = tree.getExternalNodeCount();
 
-        if (rootHeight < 0 || rootHeight > (0.999 * maxRootHeight)) return Double.NEGATIVE_INFINITY;
+        if (isNicholls) {
+            int nodeCount = tree.getExternalNodeCount();
 
-        // from Nicholls, G. & R.D. Gray (2004)
-        //return 0.0;
-        return rootHeight * (2 - nodeCount) - Math.log(maxRootHeight - rootHeight);
+            if (rootHeight < 0 || rootHeight > (0.999 * maxRootHeight)) return Double.NEGATIVE_INFINITY;
+
+            // from Nicholls, G. & R.D. Gray (2004)
+            return rootHeight * (2 - nodeCount) - Math.log(maxRootHeight - rootHeight);
+
+        } else {
+            // the Alekseyenko & Suchard variant
+
+            double logLike = logFactorialK - (double) k * Math.log(rootHeight);
+
+            assert !Double.isInfinite(logLike) && !Double.isNaN(logLike);
+
+
+            return logLike;
+        }
     }
+
+    private double logFactorial(int n) {
+        double rValue = 0;
+
+        for (int i = n; i > 0; i--) {
+            rValue += Math.log(i);
+        }
+        return rValue;
+    }
+
 
     // **************************************************************
     // Loggable IMPLEMENTATION
@@ -194,10 +253,16 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double maxRootHeight = xo.getDoubleAttribute(MAX_ROOT_HEIGHT);
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            return new UniformRootPrior(treeModel, maxRootHeight);
+            if (xo.hasAttribute(MAX_ROOT_HEIGHT)) {
+                // the Nicholls & Gray variant
+                double maxRootHeight = xo.getDoubleAttribute(MAX_ROOT_HEIGHT);
+                return new UniformRootPrior(treeModel, maxRootHeight);
+            } else {
+                // the Alekseyenko & Suchard variant
+                return new UniformRootPrior(treeModel);
+            }
         }
 
         //************************************************************************
@@ -217,7 +282,7 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(MAX_ROOT_HEIGHT),
+                AttributeRule.newDoubleRule(MAX_ROOT_HEIGHT, true),
                 new ElementRule(TreeModel.class)
         };
     };

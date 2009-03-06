@@ -47,15 +47,15 @@ public class TemporalRooting {
     private boolean useTargetRate = false;
     private double targetRate = 0.0;
     private double dateMin;
-     private double dateMax;
+    private double dateMax;
 
     public TemporalRooting(TaxonList taxa) {
         this.taxa = taxa;
 
         dates = new HashMap<String, Double>();
 
-         dateMin = Double.MAX_VALUE;
-         dateMax = -Double.MAX_VALUE;
+        dateMin = Double.MAX_VALUE;
+        dateMax = -Double.MAX_VALUE;
 
         for (int i = 0; i < taxa.getTaxonCount(); i++) {
             Taxon taxon = taxa.getTaxon(i);
@@ -77,7 +77,7 @@ public class TemporalRooting {
             // probably contemporaneous tips
             contemporaneous = true;
         }
-     }
+    }
 
     public void setTargetRate(double targetRate) {
         this.targetRate = targetRate;

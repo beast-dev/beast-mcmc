@@ -172,6 +172,208 @@ public class KernelDensityEstimator2D {
                 Math.pow(in.length, -0.2);
     }
 
+//    public double[][] constructContour(double height)
+//    {
+//
+//        if (height <= minHeight || height >= maxHeight) {
+//            return false;
+//        }
+//
+//        double z1, z2, z3, z4;
+//        double x1, x2, y1, y2;
+//        double[] topX = new double[1];
+//        double[] rightY = new double[1];
+//        double[] bottomX = new double[1];
+//        double[] leftY = new double[1];
+//        double[] middleX = new double[1];
+//        double[] middleY = new double[1];
+//        boolean top, right, bottom, left, middle;
+//
+//        int count;
+//        for (int x = 1; x < columnCount; x++) {
+//            x1 = mXScale->getVal(x-1);
+//            x2 = mXScale->getVal(x);
+//
+//            for (int y = 1; y < rowCount; y++) {
+//                y1=mYScale->getVal(y-1);
+//                y2=mYScale->getVal(y);
+//
+//                z1=mSurface->getElement(y-1, x-1);
+//                z2=mSurface->getElement(y-1, x);
+//                z3=mSurface->getElement(y, x);
+//                z4=mSurface->getElement(y, x-1);
+//
+//                count = 0;
+//                if (top = intersectSide(height, x1, z4, x2, z3, topX)) {
+//                    count++;
+//                }
+//
+//                if (left = intersectSide(height, y1, z1, y2, z4, leftY)) {
+//                    count++;
+//                }
+//
+//                if (middle = intersectSide(height, y1, z1, y2, z3, middleY)) {
+//                    intersectSide(height, x1, z1, x2, z3, middleX);
+//                    count++;
+//                }
+//
+//                if (count==1) {
+//                    throw new RuntimeException("error constructing contour");
+//                }
+//
+//                if (top) {
+//                    tmpXData->add(topX);
+//                    tmpYData->add(y2);
+//                }
+//                if (left) {
+//                    tmpXData->add(x1);
+//                    tmpYData->add(leftY);
+//                }
+//                if (middle) {
+//                    tmpXData->add(middleX);
+//                    tmpYData->add(middleY);
+//                }
+//
+//                count = 0;
+//                if (bottom = intersectSide(height, x1, z1, x2, z2, bottomX)) {
+//                    count++;
+//                }
+//
+//                if (right = intersectSide(height, y1, z2, y2, z3, rightY)) {
+//                    count++;
+//                }
+//
+//                if (middle) {
+//                    count++;
+//                }
+//
+//                if (count==1) {
+//                    throw new RuntimeException("error constructing contour");
+//                }
+//
+//                if (bottom) {
+//                    tmpXData->add(bottomX);
+//                    tmpYData->add(y1);
+//                }
+//                if (right) {
+//                    tmpXData->add(x2);
+//                    tmpYData->add(rightY);
+//                }
+//                if (middle) {
+//                    tmpXData->add(middleX);
+//                    tmpYData->add(middleY);
+//                }
+//            }
+//        }
+//
+//        connectContour(tmpXData, tmpYData, outXData, outYData);
+//
+//        return true;
+//    }
+//
+//    void connectContour(MEDataColumn *inXData, MEDataColumn *inYData, MEDataColumn *outXData, MEDataColumn *outYData)
+//    {
+//        // Find a segment that is not connected to another
+//        boolean foundEnd, foundMatch;
+//        int i, j, n=inXData->getN();
+//
+//        i=0;
+//        foundEnd=false;
+//        while (!foundEnd && i<n) {
+//            j=i+2;
+//            foundMatch=false;
+//            while (!foundMatch && j<n) {
+//                if (inXData->getVal(i)==inXData->getVal(j) &&
+//                        inYData->getVal(i)==inYData->getVal(j))
+//                    foundMatch=true;
+//
+//                j+=2;
+//            }
+//            if (!foundMatch)
+//                foundEnd=true;
+//            else
+//                i+=2;
+//        }
+//
+//        // If foundEnd is false then the contour is closed - start anywhere (i.e. at 0)
+//        if (!foundEnd) {
+//            i=0;
+//            do {
+//                outXData->add(inXData->getVal(i));
+//                outYData->add(inYData->getVal(i));
+//
+//                j=0;
+//                foundMatch=false;
+//                while (!foundMatch && j<n) {
+//                    if (j!=i) {
+//                        if (inXData->getVal(i)==inXData->getVal(j) &&
+//                                inYData->getVal(i)==inYData->getVal(j))
+//                            foundMatch=true;
+//                    }
+//                    j+=2;
+//                }
+//
+//                ThrowIf(!foundMatch);
+//
+//                i=j;
+//            } while (i!=0);
+//
+//            outXData->add(inXData->getVal(0));
+//            outYData->add(inYData->getVal(0));
+//
+//        } else {
+//            foundEnd=false;
+//            do {
+//                outXData->add(inXData->getVal(i));
+//                outYData->add(inYData->getVal(i));
+//
+//                j=0;
+//                foundMatch=false;
+//                while (!foundMatch && j<n) {
+//                    if (j!=i) {
+//                        if (inXData->getVal(i)==inXData->getVal(j) &&
+//                                inYData->getVal(i)==inYData->getVal(j))
+//                            foundMatch=true;
+//                    }
+//                    j+=2;
+//                }
+//
+//                if (foundMatch) {
+//                    i=j;
+//                } else {
+//                    outXData->add(inXData->getVal(i+1));
+//                    outYData->add(inYData->getVal(i+1));
+//
+//                    foundEnd=true;
+//                }
+//            } while (!foundEnd);
+//        }
+//    }
+
+    private boolean intersectSide(double z0, double u1, double z1, double u2, double z2, double []v)
+    {
+        double du, dz, ddz;
+
+        if (z1<z2 && z0>z1 && z0<z2) {
+            du = u2 - u1;
+            dz = z2 - z1;
+            ddz = z0 - z1;
+            v[0] = u1 + ((du * ddz) / dz);
+//		v=u1 + (((u2 - u1) * (z0 - z1)) / (z2 - z1));
+            return true;
+        } else if (z2<z1 && z0>z2 && z0<z1) {
+            du = u2 - u1;
+            dz = z1 - z2;
+            ddz = z0 - z2;
+            v[0] = u2 - ((du * ddz) / dz);
+//		v=u1 + (((u2 - u1) * (z0 - z2)) / (z1 - z2));
+            return true;
+        }
+
+        return false;
+    }
+
+
     public static void main(String[] arg) {
 
         double[] x = {3.4, 1.2, 5.6, 2.2, 3.1};

@@ -293,9 +293,10 @@ public class BayesianSkylineDialog {
         optionPanel.addComponentWithLabel("Bayesian skyline variant: ", changeTypeCombo);
 
         optionPanel.addComponent(ratePlotCheck);
+        ratePlotCheck.setEnabled(false);
         changeTypeCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(final ItemEvent itemEvent) {
-                if (changeTypeCombo.getSelectedItem().equals("Exponential Change")) {
+                if (changeTypeCombo.getSelectedIndex() > 0) { // not piecewise constant
                     ratePlotCheck.setEnabled(true);
                 } else {
                     ratePlotCheck.setEnabled(false);
@@ -708,7 +709,7 @@ public class BayesianSkylineDialog {
                         for (state = 0; state < stateCount; state++) {
 
                             if (isLinearOrExponential) {
-                                double lastGroupTime = 0.0;
+                                double lastGroupTime = 0.0;                                                 
 
                                 int index = 0;
                                 while (index < groupTimes[state].length && groupTimes[state][index] < height) {
@@ -719,20 +720,25 @@ public class BayesianSkylineDialog {
                                 if (index < groupTimes[state].length - 1) {
                                     double t = (height - lastGroupTime) / (groupTimes[state][index] - lastGroupTime);
                                     if (isExponential) {
-                                        double p1 = Math.log(getPopSize(index, state));
-                                        double p2 = Math.log(getPopSize(index + 1, state));
-                                        if (isRatePlot) {
-                                           double rate = (p2 - p1) / (groupTimes[state][index] - lastGroupTime);
-                                            bins[k].add(Math.exp(rate));
-                                        } else {
-                                            double popsize = p1 + ((p2 - p1) * t);
-                                            bins[k].add(Math.exp(popsize));
-                                        }
+//                                        double p1 = Math.log(getPopSize(index, state));
+//                                        double p2 = Math.log(getPopSize(index + 1, state));
+//                                        if (isRatePlot) {
+//                                            double rate = (p2 - p1) / (groupTimes[state][index] - lastGroupTime);
+//                                            bins[k].add(Math.exp(rate));
+//                                        } else {
+//                                            double popsize = p1 + ((p2 - p1) * t);
+//                                            bins[k].add(Math.exp(popsize));
+//                                        }
                                     } else {
                                         double p1 = getPopSize(index, state);
                                         double p2 = getPopSize(index + 1, state);
-                                        double popsize = p1 + ((p2 - p1) * t);
-                                        bins[k].add(popsize);
+                                        if (isRatePlot) {
+                                            double rate = (Math.log(p1) - Math.log(p2)) / (groupTimes[state][index] - lastGroupTime);
+                                            bins[k].add(rate);
+                                        } else {
+                                            double popsize = p1 + ((p2 - p1) * t);
+                                            bins[k].add(popsize);
+                                        }
                                     }
                                 }
                             } else {

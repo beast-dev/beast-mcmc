@@ -6,6 +6,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.arg.ARGModel.Node;
+import dr.inference.model.Parameter;
 import dr.util.Attributable;
 
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ public class ARGTree implements Tree {
 	protected int taxaCount;
 
 	private Node initialRoot;
+	
+	private int partition = -9;
 
 	/**
 	 * Constructor to represent complete ARG as a tree
@@ -81,18 +84,16 @@ public class ARGTree implements Tree {
 	}
 
 	public ARGTree(ARGModel arg, int partition) {
-//		System.err.println("ARG->Tree\n"+arg.toGraphString());
+		
+		this.partition = partition;
+		
+
 		nodeList = new ArrayList<Node>();
 		Node node = arg.new Node(((Node) arg.getRoot()), partition, nodeList);
 		initialRoot = node;
-		//.findPartitionTreeRoot(partition), partition);
-		// this.root = root
-		//System.err.println("Building tree: "+arg.toString());
-		//System.exit(-1);
-		//Node save = node;
 
-//		arg.checkBranchSanity();
-
+		
+		
 		int i = 0;
 		int j = arg.externalNodeCount;
 
@@ -208,10 +209,13 @@ public class ARGTree implements Tree {
 	 * @return the rate parameter associated with this node.
 	 */
 	public final double getNodeRate(NodeRef node) {
+		
+		
 		if (!hasRates) {
 			return 1.0;
 		}
-		return ((Node) node).getRate();
+				
+		return ((Node) node).getRate(partition);
 	}
 
 	public Object getNodeAttribute(NodeRef node, String name) {
@@ -817,6 +821,9 @@ public class ARGTree implements Tree {
 	 */
 	protected int internalNodeCount;
 
+	
+	
+	
 	/**
 	 * holds the units of the trees branches.
 	 */

@@ -68,7 +68,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     public static final String RIGHT_CHILD = "rightChild";
     public static final String NODE_HEIGHT = "nodeHeight";
     public static final String IS_REASSORTMENT = "true";
-    public static final String NUM_PARTITIONS = "numbersOfPartitions";
+    public static final String NUM_PARTITIONS = "numberOfPartitions";
     public static final String GRAPH_SIZE = "size=\"6,6\"";
     public static final String DOT_EDGE_DEF = "edge[style=\"setlinewidth(2)\",arrowhead=none]";
     public static final String DOT_NODE_DEF = "node[shape=plaintext,width=auto,fontname=Helvitica,fontsize=10]";
@@ -1392,11 +1392,13 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
      * @param node
      * @return the rate parameter associated with this node.
      */
-    public final double getNodeRate(NodeRef node) {
+    public final double getNodeRate(NodeRef nodeRef, int partition) {
         if (!hasRates) {
             return 1.0;
         }
-        return ((Node) node).getRate();
+      
+        
+        return 0.0;
     }
 
     public Object getNodeAttribute(NodeRef node, String name) {
@@ -2811,338 +2813,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         throw new RuntimeException("Not implemented yet");
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return TREE_MODEL;
-        }
-        
-        public String[] getParserNames(){
-        	return new String[]{
-        		getParserName(), "argModel"	
-        	};
-        }
-
-        /**
-         * @return a tree object based on the XML element it was passed.
-         */
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Tree tree = (Tree) xo.getChild(Tree.class);
-            ARGModel treeModel = new ARGModel(tree);
-
-            Logger.getLogger("dr.evomodel").info(
-                    "Creating the tree model, '" + xo.getId() + "'");
-
-            if (xo.hasAttribute(PARTITION_TYPE)) {
-                treeModel.partitionType = xo.getStringAttribute(PARTITION_TYPE);
-
-                if (!treeModel.partitionType.equals(REASSORTMENT_PARTITION) &&
-                        !treeModel.partitionType.equals(RECOMBINATION_PARTITION)) {
-                    throw new XMLParseException("Must use either correct partition type");
-                }
-            }
-
-            Logger.getLogger("dr.evomodel").info(
-                    xo.getId() + " has partition type: " + treeModel.partitionType);
-
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                if (xo.getChild(i) instanceof XMLObject) {
-
-                    XMLObject cxo = (XMLObject) xo.getChild(i);
-
-                    if (cxo.getName().equals(ROOT_HEIGHT)) {
-
-                        replaceParameter(cxo, treeModel
-                                .getRootHeightParameter());
-
-                    } else if (cxo.getName().equals(LEAF_HEIGHT)) {
-
-                        String taxonName;
-                        if (cxo.hasAttribute(TAXON)) {
-                            taxonName = cxo.getStringAttribute(TAXON);
-                        } else {
-                            throw new XMLParseException(
-                                    "taxa element missing from leafHeight element in treeModel element");
-                        }
-
-                        int index = treeModel.getTaxonIndex(taxonName);
-                        if (index == -1) {
-                            throw new XMLParseException(
-                                    "taxon "
-                                            + taxonName
-                                            + " not found for leafHeight element in treeModel element");
-                        }
-                        NodeRef node = treeModel.getExternalNode(index);
-                        replaceParameter(cxo, treeModel
-                                .getLeafHeightParameter(node));
-
-                    } else if (cxo.getName().equals(NODE_HEIGHTS)) {
-
-                        boolean rootNode = false;
-                        boolean internalNodes = false;
-                        boolean leafNodes = false;
-
-                        if (cxo.hasAttribute(ROOT_NODE)) {
-                            rootNode = cxo.getBooleanAttribute(ROOT_NODE);
-                        }
-
-                        if (cxo.hasAttribute(INTERNAL_NODES)) {
-                            internalNodes = cxo
-                                    .getBooleanAttribute(INTERNAL_NODES);
-                        }
-
-                        if (cxo.hasAttribute(LEAF_NODES)) {
-                            leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
-                        }
-
-                        if (!rootNode && !internalNodes && !leafNodes) {
-                            throw new XMLParseException(
-                                    "one or more of root, internal or leaf nodes must be selected for the nodeHeights element");
-                        }
-
-                        replaceParameter(cxo, treeModel
-                                .createNodeHeightsParameter(rootNode,
-                                internalNodes, leafNodes));
-
-                    } else if (cxo.getName().equals(NODE_RATES)) {
-
-                        boolean rootNode = false;
-                        boolean internalNodes = false;
-                        boolean leafNodes = false;
-
-                        if (cxo.hasAttribute(ROOT_NODE)) {
-                            rootNode = cxo.getBooleanAttribute(ROOT_NODE);
-                        }
-
-                        if (cxo.hasAttribute(INTERNAL_NODES)) {
-                            internalNodes = cxo
-                                    .getBooleanAttribute(INTERNAL_NODES);
-                        }
-
-                        if (cxo.hasAttribute(LEAF_NODES)) {
-                            leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
-                        }
-
-                        // if (rootNode) {
-                        // throw new XMLParseException("root node does not have
-                        // a rate parameter");
-                        // }
-
-                        if (!rootNode && !internalNodes && !leafNodes) {
-                            throw new XMLParseException(
-                                    "one or more of root, internal or leaf nodes must be selected for the nodeRates element");
-                        }
-
-                        replaceParameter(cxo, treeModel
-                                .createNodeRatesParameter(rootNode,
-                                internalNodes, leafNodes));
-
-                    } else if (cxo.getName().equals(NODE_TRAITS)) {
-
-                        boolean rootNode = false;
-                        boolean internalNodes = false;
-                        boolean leafNodes = false;
-
-                        if (cxo.hasAttribute(ROOT_NODE)) {
-                            rootNode = cxo.getBooleanAttribute(ROOT_NODE);
-                        }
-
-                        if (cxo.hasAttribute(INTERNAL_NODES)) {
-                            internalNodes = cxo
-                                    .getBooleanAttribute(INTERNAL_NODES);
-                        }
-
-                        if (cxo.hasAttribute(LEAF_NODES)) {
-                            leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
-                        }
-
-                        if (!rootNode && !internalNodes && !leafNodes) {
-                            throw new XMLParseException(
-                                    "one or more of root, internal or leaf nodes must be selected for the nodeTraits element");
-                        }
-
-                        replaceParameter(cxo, treeModel
-                                .createNodeTraitsParameter(rootNode,
-                                internalNodes, leafNodes));
-
-                    } else {
-                        throw new XMLParseException("illegal child element in "
-                                + getParserName() + ": " + cxo.getName());
-                    }
-
-                } else if (xo.getChild(i) instanceof Tree) {
-                    // do nothing - already handled
-                } else {
-                    throw new XMLParseException("illegal child element in  "
-                            + getParserName() + ": " + xo.getChildName(i) + " "
-                            + xo.getChild(i));
-                }
-            }
-
-
-            treeModel.setupHeightBounds();
-
-            Logger.getLogger("dr.evomodel").info(
-                    "  initial tree topology = "
-                            + Tree.Utils.uniqueNewick(treeModel, treeModel
-                            .getRoot()));
-            return treeModel;
-        }
-
-        // ************************************************************************
-        // AbstractXMLObjectParser implementation
-        // ************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents a model of the tree. The tree model includes and attributes of the nodes "
-                    + "including the age (or <i>height</i>) and the rate of evolution at each node in the tree.";
-        }
-
-        public String getExample() {
-            return "<!-- the tree model as special sockets for attaching parameters to various aspects of the tree     -->\n"
-                    + "<!-- The treeModel below shows the standard setup with a parameter associated with the root height -->\n"
-                    + "<!-- a parameter associated with the internal node heights (minus the root height) and             -->\n"
-                    + "<!-- a parameter associates with all the internal node heights                                     -->\n"
-                    + "<!-- Notice that these parameters are overlapping                                                  -->\n"
-                    + "<!-- The parameters are subsequently used in operators to propose changes to the tree node heights -->\n"
-                    + "<treeModel id=\"treeModel1\">\n"
-                    + "	<tree idref=\"startingTree\"/>\n"
-                    + "	<rootHeight>\n"
-                    + "		<parameter id=\"treeModel1.rootHeight\"/>\n"
-                    + "	</rootHeight>\n"
-                    + "	<nodeHeights internalNodes=\"true\" rootNode=\"false\">\n"
-                    + "		<parameter id=\"treeModel1.internalNodeHeights\"/>\n"
-                    + "	</nodeHeights>\n"
-                    + "	<nodeHeights internalNodes=\"true\" rootNode=\"true\">\n"
-                    + "		<parameter id=\"treeModel1.allInternalNodeHeights\"/>\n"
-                    + "	</nodeHeights>\n" + "</treeModel>";
-
-        }
-
-        public Class getReturnType() {
-            return ARGModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private String[] partitionFormats = {REASSORTMENT_PARTITION, RECOMBINATION_PARTITION};
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new StringAttributeRule(PARTITION_TYPE, "Describes the partition structure of the model",
-                        partitionFormats, true),
-                new ElementRule(Tree.class),
-                new ElementRule(
-                        ROOT_HEIGHT,
-                        Parameter.class,
-                        "A parameter definition with id only (cannot be a reference!)",
-                        false),
-                new ElementRule(
-                        NODE_HEIGHTS,
-                        new XMLSyntaxRule[]{
-                                AttributeRule
-                                        .newBooleanRule(ROOT_NODE, true,
-                                        "If true the root height is included in the parameter"),
-                                AttributeRule
-                                        .newBooleanRule(
-                                        INTERNAL_NODES,
-                                        true,
-                                        "If true the internal node heights (minus the root) are included in the parameter"),
-                                new ElementRule(Parameter.class,
-                                        "A parameter definition with id only (cannot be a reference!)")},
-                        1, Integer.MAX_VALUE)};
-
-        public Parameter oldGetParameter(XMLObject xo) throws XMLParseException {
-            //		public Parameter getParameter(XMLObject xo) throws XMLParseException {
-
-
-            int paramCount = 0;
-            Parameter param = null;
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                if (xo.getChild(i) instanceof Parameter) {
-                    param = (Parameter) xo.getChild(i);
-                    paramCount += 1;
-                }
-            }
-
-            if (paramCount == 0) {
-                throw new XMLParseException(
-                        "no parameter element in treeModel " + xo.getName()
-                                + " element");
-            } else if (paramCount > 1) {
-                throw new XMLParseException(
-                        "More than one parameter element in treeModel "
-                                + xo.getName() + " element");
-            }
-
-            return param;
-        }
-
-        // todo check to make sure that Andrew's static routine works with this old code
-        public void oldReplaceParameter(XMLObject xo, Parameter newParam)
-//		public void replaceParameter(XMLObject xo, Parameter newParam)
-
-                throws XMLParseException {
-
-            for (int i = 0; i < xo.getChildCount(); i++) {
-
-                if (xo.getChild(i) instanceof Parameter) {
-
-                    XMLObject rxo = null;
-                    Object obj = xo.getRawChild(i);
-
-                    if (obj instanceof Reference) {
-                        rxo = ((Reference) obj).getReferenceObject();
-                    } else if (obj instanceof XMLObject) {
-                        rxo = (XMLObject) obj;
-                    } else {
-                        throw new XMLParseException(
-                                "object reference not available");
-                    }
-
-                    if (rxo.getChildCount() > 0) {
-                        throw new XMLParseException(
-                                "No child elements allowed in parameter element.");
-                    }
-
-                    if (rxo.hasAttribute(XMLParser.IDREF)) {
-                        throw new XMLParseException("References to "
-                                + xo.getName()
-                                + " parameters are not allowed in treeModel.");
-                    }
-
-                    if (rxo.hasAttribute(ParameterParser.VALUE)) {
-                        throw new XMLParseException("Parameters in "
-                                + xo.getName()
-                                + " have values set automatically.");
-                    }
-
-                    if (rxo.hasAttribute(ParameterParser.UPPER)) {
-                        throw new XMLParseException("Parameters in "
-                                + xo.getName()
-                                + " have bounds set automatically.");
-                    }
-
-                    if (rxo.hasAttribute(ParameterParser.LOWER)) {
-                        throw new XMLParseException("Parameters in "
-                                + xo.getName()
-                                + " have bounds set automatically.");
-                    }
-
-                    if (rxo.hasAttribute(XMLParser.ID)) {
-
-                        newParam.setId(rxo.getStringAttribute(XMLParser.ID));
-                    }
-
-                    rxo.setNativeObject(newParam);
-
-                    return;
-                }
-            }
-        }
-    };
+    
 
     // ***********************************************************************
     // Private methods
@@ -3226,7 +2897,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
      *         be called by the XMLParser
      */
     public Parameter createNodeRatesParameter(boolean rootNode,
-                                              boolean internalNodes, boolean leafNodes) {
+                                              boolean internalNodes, boolean leafNodes, int numberPartitions) {
 
         if (!rootNode && !internalNodes && !leafNodes) {
             throw new IllegalArgumentException(
@@ -3239,7 +2910,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         for (int i = externalNodeCount; i < nodeCount; i++) {
             Node node = nodes.get(i);
-            node.createRateParameter();
+            node.createRateParameter(numberPartitions);
             if ((rootNode && node == root) || (internalNodes && node != root)) {
                 parameter.addParameter(node.rateParameter);
             }
@@ -3247,7 +2918,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         for (int i = 0; i < externalNodeCount; i++) {
             Node node = nodes.get(i);
-            node.createRateParameter();
+            node.createRateParameter(numberPartitions);
             if (leafNodes) {
                 parameter.addParameter(node.rateParameter);
             }
@@ -3305,8 +2976,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         double trait1 = 0.0, trait2 = 0.0;
 
         if (hasRates) {
-            rate1 = n1.getRate();
-            rate2 = n2.getRate();
+        	System.exit(-1);
+        	
+            rate1 = n1.getRate(0);
+            rate2 = n2.getRate(0);
         }
 
         if (hasTraits) {
@@ -3405,6 +3078,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     			this.rightParent.setAncestralMaterial(rightAncestralMaterial);
     		}
     	}
+    	
+    	public NodeRef mirrorNode;
 
         public Node leftParent, rightParent;
 
@@ -3414,8 +3089,11 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         public Parameter heightParameter;
 
+        //First half of the rate parameter represent the rates
+        //Second half represents 0-1 indicators
+        
         public Parameter rateParameter = null;
-
+       
         public Parameter traitParameter = null;
 
         public Taxon taxon = null;
@@ -3587,6 +3265,9 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             // number = nodes.size();
             taxon = node.taxon;
             bifurcation = true;
+            
+            mirrorNode = node;
+            
             // System.err.println("Examinging "+number);
             if (node.isExternal())
                 nodes.add(this);
@@ -3872,10 +3553,20 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         public final void setupHeightBounds() {
             heightParameter.addBounds(new NodeHeightBounds(heightParameter));
         }
+        
+        
 
-        public final void createRateParameter() {
+        public final void createRateParameter(int numberPartitions) {
             if (rateParameter == null) {
-                rateParameter = new Parameter.Default(1.0);
+            	
+            	double[] startingRateValues = new double[numberPartitions];
+            	
+            	for(int i = 0; i < startingRateValues.length; i++){
+            		startingRateValues[i] = 1.0;
+            	}
+            	
+            	rateParameter = new Parameter.Default(startingRateValues);
+            	                
                 if (isRoot()) {
                     rateParameter.setId("root.rate");
                 } else if (isExternal()) {
@@ -3884,7 +3575,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                     rateParameter.setId("node" + getNumber() + ".rate");
                 }
                 rateParameter.addBounds(new Parameter.DefaultBounds(
-                        Double.POSITIVE_INFINITY, 0.0, 1));
+                        Double.POSITIVE_INFINITY, 0, startingRateValues.length));
                 addParameter(rateParameter);
             }
         }
@@ -3910,8 +3601,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             return heightParameter.getParameterValue(0);
         }
 
-        public final double getRate() {
-            return rateParameter.getParameterValue(0);
+        public final double getRate(int partition) {
+            
+        	
+            return rateParameter.getParameterValue(partition);
         }
 
         public final double getTrait() {
@@ -4524,6 +4217,357 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         private Parameter nodeHeightParameter = null;
     }
+
+	public double getNodeRate(NodeRef node) {
+		if(true)
+			throw new RuntimeException("This should not be called");
+		
+		return 0;
+	}
+	
+	///////////////////////////////////////////////////////////////////////
+	//PARSER
+	///////////////////////////////////////////////////////////////////////
+	
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return TREE_MODEL;
+        }
+        
+        public String[] getParserNames(){
+        	return new String[]{
+        		getParserName(), "argModel"	
+        	};
+        }
+
+        /**
+         * @return a tree object based on the XML element it was passed.
+         */
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            Tree tree = (Tree) xo.getChild(Tree.class);
+            ARGModel treeModel = new ARGModel(tree);
+
+            Logger.getLogger("dr.evomodel").info("Creating the tree model, '" + xo.getId() + "'");
+
+            if (xo.hasAttribute(PARTITION_TYPE)) {
+                treeModel.partitionType = xo.getStringAttribute(PARTITION_TYPE);
+
+                if (!treeModel.partitionType.equals(REASSORTMENT_PARTITION) &&
+                        !treeModel.partitionType.equals(RECOMBINATION_PARTITION)) {
+                    throw new XMLParseException("Must use either correct partition type");
+                }
+            }
+            
+            int numberPartitions = 1;
+            
+            if(xo.hasAttribute(NUM_PARTITIONS)){
+            	numberPartitions = xo.getIntegerAttribute(NUM_PARTITIONS);
+            }
+            
+
+            Logger.getLogger("dr.evomodel").info(
+                    xo.getId() + " has partition type: " + treeModel.partitionType);
+
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                if (xo.getChild(i) instanceof XMLObject) {
+
+                    XMLObject cxo = (XMLObject) xo.getChild(i);
+
+                    if (cxo.getName().equals(ROOT_HEIGHT)) {
+
+                        replaceParameter(cxo, treeModel
+                                .getRootHeightParameter());
+
+                    } else if (cxo.getName().equals(LEAF_HEIGHT)) {
+
+                        String taxonName;
+                        if (cxo.hasAttribute(TAXON)) {
+                            taxonName = cxo.getStringAttribute(TAXON);
+                        } else {
+                            throw new XMLParseException(
+                                    "taxa element missing from leafHeight element in treeModel element");
+                        }
+
+                        int index = treeModel.getTaxonIndex(taxonName);
+                        if (index == -1) {
+                            throw new XMLParseException(
+                                    "taxon "
+                                            + taxonName
+                                            + " not found for leafHeight element in treeModel element");
+                        }
+                        NodeRef node = treeModel.getExternalNode(index);
+                        replaceParameter(cxo, treeModel
+                                .getLeafHeightParameter(node));
+
+                    } else if (cxo.getName().equals(NODE_HEIGHTS)) {
+
+                        boolean rootNode = false;
+                        boolean internalNodes = false;
+                        boolean leafNodes = false;
+
+                        if (cxo.hasAttribute(ROOT_NODE)) {
+                            rootNode = cxo.getBooleanAttribute(ROOT_NODE);
+                        }
+
+                        if (cxo.hasAttribute(INTERNAL_NODES)) {
+                            internalNodes = cxo
+                                    .getBooleanAttribute(INTERNAL_NODES);
+                        }
+
+                        if (cxo.hasAttribute(LEAF_NODES)) {
+                            leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
+                        }
+
+                        if (!rootNode && !internalNodes && !leafNodes) {
+                            throw new XMLParseException(
+                                    "one or more of root, internal or leaf nodes must be " +
+                                    "selected for the nodeHeights element");
+                        }
+
+                        replaceParameter(cxo, treeModel
+                                .createNodeHeightsParameter(rootNode,
+                                internalNodes, leafNodes));
+
+                    } else if (cxo.getName().equals(NODE_RATES)) {
+
+                        boolean rootNode = false;
+                        boolean internalNodes = false;
+                        boolean leafNodes = false;
+
+                        if (cxo.hasAttribute(ROOT_NODE)) {
+                            rootNode = cxo.getBooleanAttribute(ROOT_NODE);
+                        }
+
+                        if (cxo.hasAttribute(INTERNAL_NODES)) {
+                            internalNodes = cxo
+                                    .getBooleanAttribute(INTERNAL_NODES);
+                        }
+
+                        if (cxo.hasAttribute(LEAF_NODES)) {
+                            leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
+                        }
+
+                        // if (rootNode) {
+                        // throw new XMLParseException("root node does not have
+                        // a rate parameter");
+                        // }
+
+                        if (!rootNode && !internalNodes && !leafNodes) {
+                            throw new XMLParseException(
+                                    "one or more of root, internal or leaf nodes must be selected for the nodeRates element");
+                        }
+
+                        replaceParameter(cxo, treeModel
+                                .createNodeRatesParameter(rootNode,
+                                internalNodes, leafNodes,numberPartitions));
+
+                    } else if (cxo.getName().equals(NODE_TRAITS)) {
+
+                        boolean rootNode = false;
+                        boolean internalNodes = false;
+                        boolean leafNodes = false;
+
+                        if (cxo.hasAttribute(ROOT_NODE)) {
+                            rootNode = cxo.getBooleanAttribute(ROOT_NODE);
+                        }
+
+                        if (cxo.hasAttribute(INTERNAL_NODES)) {
+                            internalNodes = cxo
+                                    .getBooleanAttribute(INTERNAL_NODES);
+                        }
+
+                        if (cxo.hasAttribute(LEAF_NODES)) {
+                            leafNodes = cxo.getBooleanAttribute(LEAF_NODES);
+                        }
+
+                        if (!rootNode && !internalNodes && !leafNodes) {
+                            throw new XMLParseException(
+                                    "one or more of root, internal or leaf nodes must be selected for the nodeTraits element");
+                        }
+
+                        replaceParameter(cxo, treeModel
+                                .createNodeTraitsParameter(rootNode,
+                                internalNodes, leafNodes));
+
+                    } else {
+                        throw new XMLParseException("illegal child element in "
+                                + getParserName() + ": " + cxo.getName());
+                    }
+
+                } else if (xo.getChild(i) instanceof Tree) {
+                    // do nothing - already handled
+                } else {
+                    throw new XMLParseException("illegal child element in  "
+                            + getParserName() + ": " + xo.getChildName(i) + " "
+                            + xo.getChild(i));
+                }
+            }
+
+
+            treeModel.setupHeightBounds();
+
+            Logger.getLogger("dr.evomodel").info(
+                    "  initial tree topology = "
+                            + Tree.Utils.uniqueNewick(treeModel, treeModel
+                            .getRoot()));
+            return treeModel;
+        }
+
+        // ************************************************************************
+        // AbstractXMLObjectParser implementation
+        // ************************************************************************
+
+        public String getParserDescription() {
+            return "This element represents a model of the tree. The tree model includes and attributes of the nodes "
+                    + "including the age (or <i>height</i>) and the rate of evolution at each node in the tree.";
+        }
+
+        public String getExample() {
+            return "<!-- the tree model as special sockets for attaching parameters to various aspects of the tree     -->\n"
+                    + "<!-- The treeModel below shows the standard setup with a parameter associated with the root height -->\n"
+                    + "<!-- a parameter associated with the internal node heights (minus the root height) and             -->\n"
+                    + "<!-- a parameter associates with all the internal node heights                                     -->\n"
+                    + "<!-- Notice that these parameters are overlapping                                                  -->\n"
+                    + "<!-- The parameters are subsequently used in operators to propose changes to the tree node heights -->\n"
+                    + "<treeModel id=\"treeModel1\">\n"
+                    + "	<tree idref=\"startingTree\"/>\n"
+                    + "	<rootHeight>\n"
+                    + "		<parameter id=\"treeModel1.rootHeight\"/>\n"
+                    + "	</rootHeight>\n"
+                    + "	<nodeHeights internalNodes=\"true\" rootNode=\"false\">\n"
+                    + "		<parameter id=\"treeModel1.internalNodeHeights\"/>\n"
+                    + "	</nodeHeights>\n"
+                    + "	<nodeHeights internalNodes=\"true\" rootNode=\"true\">\n"
+                    + "		<parameter id=\"treeModel1.allInternalNodeHeights\"/>\n"
+                    + "	</nodeHeights>\n" + "</treeModel>";
+
+        }
+
+        public Class getReturnType() {
+            return ARGModel.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private String[] partitionFormats = {REASSORTMENT_PARTITION, RECOMBINATION_PARTITION};
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new StringAttributeRule(PARTITION_TYPE, "Describes the partition structure of the model",
+                        partitionFormats, true),
+                new ElementRule(Tree.class),
+                new ElementRule(
+                        ROOT_HEIGHT,
+                        Parameter.class,
+                        "A parameter definition with id only (cannot be a reference!)",
+                        false),
+                new ElementRule(
+                        NODE_HEIGHTS,
+                        new XMLSyntaxRule[]{
+                                AttributeRule
+                                        .newBooleanRule(ROOT_NODE, true,
+                                        "If true the root height is included in the parameter"),
+                                AttributeRule
+                                        .newBooleanRule(
+                                        INTERNAL_NODES,
+                                        true,
+                                        "If true the internal node heights (minus the root) are included in the parameter"),
+                                new ElementRule(Parameter.class,
+                                        "A parameter definition with id only (cannot be a reference!)")},
+                        1, Integer.MAX_VALUE)};
+
+        public Parameter oldGetParameter(XMLObject xo) throws XMLParseException {
+            //		public Parameter getParameter(XMLObject xo) throws XMLParseException {
+
+
+            int paramCount = 0;
+            Parameter param = null;
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                if (xo.getChild(i) instanceof Parameter) {
+                    param = (Parameter) xo.getChild(i);
+                    paramCount += 1;
+                }
+            }
+
+            if (paramCount == 0) {
+                throw new XMLParseException(
+                        "no parameter element in treeModel " + xo.getName()
+                                + " element");
+            } else if (paramCount > 1) {
+                throw new XMLParseException(
+                        "More than one parameter element in treeModel "
+                                + xo.getName() + " element");
+            }
+
+            return param;
+        }
+
+        // todo check to make sure that Andrew's static routine works with this old code
+        public void oldReplaceParameter(XMLObject xo, Parameter newParam)
+//		public void replaceParameter(XMLObject xo, Parameter newParam)
+
+                throws XMLParseException {
+
+            for (int i = 0; i < xo.getChildCount(); i++) {
+
+                if (xo.getChild(i) instanceof Parameter) {
+
+                    XMLObject rxo = null;
+                    Object obj = xo.getRawChild(i);
+
+                    if (obj instanceof Reference) {
+                        rxo = ((Reference) obj).getReferenceObject();
+                    } else if (obj instanceof XMLObject) {
+                        rxo = (XMLObject) obj;
+                    } else {
+                        throw new XMLParseException(
+                                "object reference not available");
+                    }
+
+                    if (rxo.getChildCount() > 0) {
+                        throw new XMLParseException(
+                                "No child elements allowed in parameter element.");
+                    }
+
+                    if (rxo.hasAttribute(XMLParser.IDREF)) {
+                        throw new XMLParseException("References to "
+                                + xo.getName()
+                                + " parameters are not allowed in treeModel.");
+                    }
+
+                    if (rxo.hasAttribute(ParameterParser.VALUE)) {
+                        throw new XMLParseException("Parameters in "
+                                + xo.getName()
+                                + " have values set automatically.");
+                    }
+
+                    if (rxo.hasAttribute(ParameterParser.UPPER)) {
+                        throw new XMLParseException("Parameters in "
+                                + xo.getName()
+                                + " have bounds set automatically.");
+                    }
+
+                    if (rxo.hasAttribute(ParameterParser.LOWER)) {
+                        throw new XMLParseException("Parameters in "
+                                + xo.getName()
+                                + " have bounds set automatically.");
+                    }
+
+                    if (rxo.hasAttribute(XMLParser.ID)) {
+
+                        newParam.setId(rxo.getStringAttribute(XMLParser.ID));
+                    }
+
+                    rxo.setNativeObject(newParam);
+
+                    return;
+                }
+            }
+        }
+    };
 
 
 }

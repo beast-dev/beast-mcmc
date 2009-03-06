@@ -15,6 +15,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGTree;
+import dr.evomodel.arg.ARGModel.Node;
 import dr.evomodel.arg.operators.ARGPartitioningOperator;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
@@ -56,7 +57,7 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 		super(ARG_LIKELIHOOD, patternList, treeModel);
 
 		partition = treeModel.addLikelihoodCalculator(this);
-
+		
 		this.storePartials = storePartials;
 		this.useAmbiguities = useAmbiguities;
 
@@ -361,13 +362,15 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 //        System.err.println(nodeNum);
 
 		NodeRef parent = tree.getParent(node);
+		
+		
 
 		// First update the transition probability matrix(ices) for this branch
 		if (parent != null && updateNode[nodeNum]) {
 
 
 			double branchRate = branchRateModel.getBranchRate(tree, node);
-
+						
 			// Get the operational time of the branch
 			double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
 			if (branchTime < 0.0) {

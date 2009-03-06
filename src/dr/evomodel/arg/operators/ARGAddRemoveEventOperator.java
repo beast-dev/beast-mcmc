@@ -14,6 +14,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGPartitionLikelihood;
+import dr.evomodel.arg.ARGRatePrior;
 import dr.evomodel.arg.ARGModel.Node;
 import dr.evomodel.arg.operators.ARGPartitioningOperator.PartitionChangedEvent;
 import dr.inference.model.CompoundParameter;
@@ -58,6 +59,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
     private double probBelowRoot = 0.9; //Transformed in constructor for computational efficiency
 
     private ARGPartitionLikelihood partLike;
+    private ARGRatePrior ratePrior;
     
    
     //	private int mode = CoercableMCMCOperator.COERCION_OFF;
@@ -73,7 +75,8 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                                      CompoundParameter param2,
                                      CompoundParameter param3,
                                      double belowRootProbability, 
-                                     ARGPartitionLikelihood partLike, 
+                                     ARGPartitionLikelihood partLike,
+                                     ARGRatePrior ratePrior,
                                      int tossSize) {
         super(mode);
         this.arg = arg;
@@ -83,6 +86,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         this.nodeRates = param3;
 
         this.partLike = partLike;
+        this.ratePrior = ratePrior;
         
 //        this.isRecombination = arg.isRecombinationPartitionType();
 ////		this.mode = mode;
@@ -304,11 +308,23 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
         Node newReassortment = arg.new Node();
         newReassortment.bifurcation = false;
-        newReassortment.rateParameter = new Parameter.Default(1.0);
+       
+        newReassortment.rateParameter = new Parameter.Default(ratePrior.generateValues());
+        
+        newReassortment.rateParameter.addBounds(new Parameter.DefaultBounds(
+                Double.POSITIVE_INFINITY, 0, arg.getNumberOfPartitions()));
+        
         newReassortment.number = arg.getNodeCount() + 1;
 
+
+        
         Node newBifurcation = arg.new Node();
-        newBifurcation.rateParameter = new Parameter.Default(1.0);
+                
+        newBifurcation.rateParameter = new Parameter.Default(ratePrior.generateValues());
+        
+        newBifurcation.rateParameter.addBounds(new Parameter.DefaultBounds(
+                Double.POSITIVE_INFINITY, 0, arg.getNumberOfPartitions()));
+        
         newBifurcation.number = arg.getNodeCount();
 
         //6. Begin editing the tree.
@@ -1528,11 +1544,12 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             		Logger.getLogger("dr.evomodel").info(ARG_EVENT_OPERATOR + " is joint with " + ARGPartitioningOperator.OPERATOR_NAME);
             }
             
+            ARGRatePrior ratePrior = (ARGRatePrior)xo.getChild(ARGRatePrior.class);
 
 
             return new ARGAddRemoveEventOperator(treeModel, weight, size,
                     mode, parameter1, parameter2, parameter3,
-                    belowRootProb, partitionLike, tossSize);
+                    belowRootProb, partitionLike, ratePrior, tossSize);
         }
 
         public String getParserDescription() {

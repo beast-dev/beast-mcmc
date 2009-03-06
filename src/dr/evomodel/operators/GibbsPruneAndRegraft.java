@@ -3,9 +3,6 @@
  */
 package dr.evomodel.operators;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -14,13 +11,10 @@ import dr.inference.model.Likelihood;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.prior.Prior;
 import dr.math.MathUtils;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLObjectParser;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Sebastian Hoehna
@@ -32,7 +26,7 @@ public class GibbsPruneAndRegraft extends SimpleGibbsOperator {
 
     private int MAX_DISTANCE = 10;
 
-    private TreeModel tree;
+    private final TreeModel tree;
 
     private int[] distances;
 
@@ -149,7 +143,7 @@ public class GibbsPruneAndRegraft extends SimpleGibbsOperator {
 
 	double forwardProb = (forward / sum);
 	double backwardProb = (backward / (sum - forward + backward));
-	double hastingsRatio = Math.log(backwardProb / forwardProb);
+	final double hastingsRatio = Math.log(backwardProb / forwardProb);
 
 	return hastingsRatio;
     }
@@ -271,9 +265,9 @@ public class GibbsPruneAndRegraft extends SimpleGibbsOperator {
 	// tree.pushTreeChangedEvent(oldGrandfather);
 	tree.pushTreeChangedEvent(i);
 
-	double forwardProb = (forward / sum);
-	double backwardProb = (backward / (sumBackward));
-	double hastingsRatio = Math.log(backwardProb / forwardProb);
+	final double forwardProb = (forward / sum);
+	final double backwardProb = (backward / (sumBackward));
+	final double hastingsRatio = Math.log(backwardProb / forwardProb);
 
 	return hastingsRatio;
     }
@@ -410,10 +404,12 @@ public class GibbsPruneAndRegraft extends SimpleGibbsOperator {
 	    return rules;
 	}
 
-	private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-		AttributeRule.newDoubleRule("weight"),
-		AttributeRule.newBooleanRule("pruned"),
-		new ElementRule(TreeModel.class) };
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    AttributeRule.newDoubleRule("weight"),
+                    AttributeRule.newBooleanRule("pruned"),
+                    new ElementRule(TreeModel.class)};
+        }
 
     };
 }

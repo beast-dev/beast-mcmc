@@ -174,12 +174,13 @@ public class SimpleNode implements NodeRef, Attributable {
 	 */
 	public SimpleNode getChild(int n)
 	{
-		if (n < child.length){
+        assert 0 <= n && n < child.length;
+		//if (n < child.length){
 			return child[n];
-		}
-		else {
-			return null;
-		}
+		//}
+		//else {
+		//	return null;
+		//}
 	}
 	
 	public boolean hasChild(SimpleNode node) { 

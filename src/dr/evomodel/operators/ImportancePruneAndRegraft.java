@@ -3,27 +3,17 @@
  */
 package dr.evomodel.operators;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import dr.evolution.tree.ConditionalCladeFrequency;
+import dr.evolution.tree.MutableTree.InvalidTreeException;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.MutableTree.InvalidTreeException;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.OperatorSchedule;
-import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.SimpleOperatorSchedule;
+import dr.inference.operators.*;
 import dr.math.MathUtils;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLObjectParser;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Sebastian Hoehna
@@ -35,17 +25,17 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 
     public final int SAMPLE_EVERY = 10;
 
-    private TreeModel tree;
+    private final TreeModel tree;
 
-    private int samples;
+    private final int samples;
 
     private int sampleCount;
 
     private boolean burnin = false;
 
-    private ConditionalCladeFrequency probabilityEstimater;
+    private final ConditionalCladeFrequency probabilityEstimater;
 
-    private OperatorSchedule schedule;
+    private final OperatorSchedule schedule;
 
     /**
 	 * 
@@ -209,7 +199,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 
 	double forwardProb = (forward / sum);
 	double backwardProb = (backward / (sum - forward + backward));
-	double hastingsRatio = Math.log(backwardProb / forwardProb);
+	final double hastingsRatio = Math.log(backwardProb / forwardProb);
 
 	return hastingsRatio;
     }
@@ -294,7 +284,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 	    return rules;
 	}
 
-	private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+	private final XMLSyntaxRule[] rules = {
 		AttributeRule.newDoubleRule("weight"),
 		AttributeRule.newIntegerRule("samples"),
 		new ElementRule(TreeModel.class) };

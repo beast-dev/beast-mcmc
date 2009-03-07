@@ -309,18 +309,25 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         Node newReassortment = arg.new Node();
         newReassortment.bifurcation = false;
        
-        newReassortment.rateParameter = new Parameter.Default(ratePrior.generateValues());
+        double[] reassortmentValues = ratePrior.generateValues();
+        
+        //logHastings += ratePrior.getAddHastingsRatio(reassortmentValues);
+        
+        newReassortment.rateParameter = new Parameter.Default(reassortmentValues);
         
         newReassortment.rateParameter.addBounds(new Parameter.DefaultBounds(
-                Double.POSITIVE_INFINITY, 0, arg.getNumberOfPartitions()));
+                5.0, 0, arg.getNumberOfPartitions()));
         
         newReassortment.number = arg.getNodeCount() + 1;
 
 
         
         Node newBifurcation = arg.new Node();
+        
+        double[] bifurcationValues = ratePrior.generateValues();
+        //logHastings += ratePrior.getAddHastingsRatio(bifurcationValues);
                 
-        newBifurcation.rateParameter = new Parameter.Default(ratePrior.generateValues());
+        newBifurcation.rateParameter = new Parameter.Default(bifurcationValues);
         
         newBifurcation.rateParameter.addBounds(new Parameter.DefaultBounds(
                 Double.POSITIVE_INFINITY, 0, arg.getNumberOfPartitions()));
@@ -1039,7 +1046,10 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             recParent = recDeleteParent;
         }
 
+        double[] rateValues1 = recParent.rateParameter.getParameterValues();
+        logHastings -= ratePrior.getAddHastingsRatio(rateValues1); 
 
+        
         if (doneSomething) {
             try {
                 arg.contractARGWithRecombinant(recParent, recNode,
@@ -1575,6 +1585,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 AttributeRule.newIntegerRule(WEIGHT,false),
                 new ElementRule(ARGModel.class,false),
                 new ElementRule(ARGPartitionLikelihood.class,false),
+                new ElementRule(ARGRatePrior.class,false),
                 new ElementRule(INTERNAL_NODES,
                         new XMLSyntaxRule[]{
                                 new ElementRule(CompoundParameter.class)}),

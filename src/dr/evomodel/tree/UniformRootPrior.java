@@ -58,7 +58,7 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
     public static final String UNIFORM_ROOT_PRIOR = "uniformRootPrior";
     public static final String MAX_ROOT_HEIGHT = "maxRootHeight";
 
-    private int k;
+    private int k = 0;
     private double logFactorialK;
 
     private double maxRootHeight;
@@ -78,16 +78,23 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
             addModel((TreeModel) tree);
         }
 
+        maxRootHeight = 0.0;
         Set<Double> tipDates = new HashSet<Double>();
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             double h = tree.getNodeHeight(tree.getExternalNode(i));
+            if (h > maxRootHeight) {
+                maxRootHeight = h;
+            }
             tipDates.add(h);
         }
 
-        k = tipDates.size() - 1  + tree.getInternalNodeCount() - 1;
-        Logger.getLogger("dr.evomodel").info("Uniform Root Prior, Intervals = " + (k + 1));
+        if (tipDates.size() == 1) {
+            // the tips are contemporaneous so these are constant...
+            k = tree.getInternalNodeCount() - 1;
+            Logger.getLogger("dr.evomodel").info("Uniform Root Prior, Intervals = " + (k + 1));
 
-        logFactorialK = logFactorial(k);
+            logFactorialK = logFactorial(k);
+        }
 
     }
 
@@ -191,7 +198,23 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
 
         } else {
             // the Alekseyenko & Suchard variant
-            double logLike = logFactorialK - (double) k * Math.log(rootHeight);
+            double logLike;
+
+            if (k > 0) {
+                // the tips are contemporaneous
+                 logLike = logFactorialK - (double) k * Math.log(rootHeight);
+
+            } else {
+                int k1 = -1; // the root will always be > maxRootHeight
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    double h = tree.getNodeHeight(tree.getInternalNode(i));
+                    if (h > maxRootHeight) {
+                        k1++;
+                    }
+                }
+
+                logLike = logFactorial(k1) - (double) k1 * Math.log(rootHeight -  maxRootHeight);
+            }
 
             assert !Double.isInfinite(logLike) && !Double.isNaN(logLike);
             return logLike;

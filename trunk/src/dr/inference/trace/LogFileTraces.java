@@ -176,6 +176,10 @@ public class LogFileTraces extends AbstractTraceList {
         // Read through to first token
         StringTokenizer tokens = reader.tokenizeLine();
 
+        if (tokens == null) {
+            throw new TraceException("Trace file is empty.");
+        }
+        
         // read over empty lines
         while (!tokens.hasMoreTokens()) {
             tokens = reader.tokenizeLine();

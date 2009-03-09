@@ -119,14 +119,7 @@ public class BeastMC3 {
 
             Logger.getLogger("dr.apps.beast").info("Parsing XML file: " + fileName);
 
-            ObjectStore store = parser.parse(fileReader, false);
-            for (Object id : store.getIdSet()) {
-                Object obj = store.getObjectById(id);
-                if (obj instanceof MCMC) {
-                    chains[0] = (MCMC) obj;
-                    break;
-                }
-            }
+            chains[0] = (MCMC)parser.parse(fileReader, MCMC.class);
             if (chains[0] == null) {
                 throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
             }
@@ -140,14 +133,7 @@ public class BeastMC3 {
                 messageHandler.setLevel(Level.OFF);
                 parser = new BeastParser(new String[] {fileName}, verbose, strictXML);
 
-                store = parser.parse(fileReader, false);
-                for (Object id : store.getIdSet()) {
-                    Object obj = store.getObjectById(id);
-                    if (obj instanceof MCMC) {
-                        chains[i] = (MCMC) obj;
-                        break;
-                    }
-                }
+                chains[i] = (MCMC)parser.parse(fileReader, MCMC.class);
                 if (chains[i] == null) {
                     throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
                 }

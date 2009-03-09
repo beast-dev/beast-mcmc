@@ -73,6 +73,9 @@ public class TraceAnalysis {
         File file = new File(fileName);
 
         LogFileTraces traces = new LogFileTraces(fileName, file);
+        if (traces == null) {
+            throw new TraceException("Trace file is empty.");
+        }
         traces.loadTraces();
         traces.setBurnIn(burnin);
 

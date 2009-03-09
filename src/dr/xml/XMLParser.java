@@ -91,6 +91,40 @@ public class XMLParser {
         store.put(name, xo);
     }
 
+    /**
+     * An alternative parser that parses until it finds an object of the given
+     * class and then returns it.
+     * @param reader  the reader
+     * @param target the target class
+     * @return
+     * @throws java.io.IOException
+     * @throws org.xml.sax.SAXException
+     * @throws dr.xml.XMLParseException
+     * @throws javax.xml.parsers.ParserConfigurationException
+     */
+    public Object parse(Reader reader, Class target)
+            throws java.io.IOException,
+            org.xml.sax.SAXException,
+            dr.xml.XMLParseException,
+            javax.xml.parsers.ParserConfigurationException {
+
+        InputSource in = new InputSource(reader);
+        javax.xml.parsers.DocumentBuilderFactory documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+
+        javax.xml.parsers.DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+        Document document = documentBuilder.parse(in);
+
+        Element e = document.getDocumentElement();
+        if (e.getTagName().equals("beast")) {
+
+            concurrent = false;
+            return convert(e, target, false, true);
+
+        } else {
+            throw new dr.xml.XMLParseException("Unknown root document element, " + e.getTagName());
+        }
+    }
+
     public ObjectStore parse(Reader reader, boolean run)
             throws java.io.IOException,
             org.xml.sax.SAXException,
@@ -107,7 +141,7 @@ public class XMLParser {
         if (e.getTagName().equals("beast")) {
 
             concurrent = false;
-            root = (XMLObject) convert(e, run, true);
+            root = (XMLObject) convert(e, null, run, true);
 
         } else {
             throw new dr.xml.XMLParseException("Unknown root document element, " + e.getTagName());
@@ -120,7 +154,7 @@ public class XMLParser {
         return root;
     }
 
-    private Object convert(Element e, boolean run, boolean doParse) throws XMLParseException {
+    private Object convert(Element e, Class target, boolean run, boolean doParse) throws XMLParseException {
 
         if (e.hasAttribute(IDREF)) {
             String idref = e.getAttribute(IDREF);
@@ -164,7 +198,16 @@ public class XMLParser {
 
                         // don't parse elements that may be legal here with global parsers
                         final boolean parseIt = parser == null || !parser.isAllowed(tag);
-                        xo.addChild(convert(element, run, parseIt));
+                        Object xoc = convert(element, target, run, parseIt);
+                        xo.addChild(xoc);
+
+                        if (target != null && xoc instanceof XMLObject) {
+                            Object obj = ((XMLObject)xoc).getNativeObject();
+                            if (obj != null && target.isInstance(obj) ) {
+                                return obj;
+                            }
+                        }
+
                     } else if (child instanceof Text) {
                         // just add text as a child of type String object
                         String text = ((Text) child).getData().trim();

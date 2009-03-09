@@ -60,43 +60,46 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
             }
 
             file = new File(parent, name);
-            fileName = file.getName();
+            if (file.exists()) {
+                fileName = file.getName();
 
-            // leaving the burnin attribute off will result in 10% being used
-            int burnin = xo.getAttribute(BURN_IN, -1);
+                // leaving the burnin attribute off will result in 10% being used
+                int burnin = xo.getAttribute(BURN_IN, -1);
 
-            TraceList traces = TraceAnalysis.report(fileName, burnin, null);
-            for (int x = 0; x < xo.getChildCount(); x++) {
-                XMLObject child = (XMLObject) xo.getChild(x);
-                String statName = child.getStringAttribute(Attribute.NAME);
-                double expectation = child.getDoubleAttribute(Attribute.VALUE);
-                NumberFormatter formatter = new NumberFormatter(6);
-                formatter.setPadding(true);
-                formatter.setFieldWidth(14);
+                TraceList traces = TraceAnalysis.report(fileName, burnin, null);
+                for (int x = 0; x < xo.getChildCount(); x++) {
+                    XMLObject child = (XMLObject) xo.getChild(x);
+                    String statName = child.getStringAttribute(Attribute.NAME);
+                    double expectation = child.getDoubleAttribute(Attribute.VALUE);
+                    NumberFormatter formatter = new NumberFormatter(6);
+                    formatter.setPadding(true);
+                    formatter.setFieldWidth(14);
 
-                for (int i = 0; i < traces.getTraceCount(); i++) {
-                    TraceDistribution distribution = traces.getDistributionStatistics(i);
-                    TraceCorrelation corr = traces.getCorrelationStatistics(i);
-                    if (traces.getTraceName(i).equals(statName)) {
-                        double estimate = distribution.getMean();
-                        double error = corr.getStdErrorOfMean();
+                    for (int i = 0; i < traces.getTraceCount(); i++) {
+                        TraceDistribution distribution = traces.getDistributionStatistics(i);
+                        TraceCorrelation corr = traces.getCorrelationStatistics(i);
+                        if (traces.getTraceName(i).equals(statName)) {
+                            double estimate = distribution.getMean();
+                            double error = corr.getStdErrorOfMean();
 
-                        System.out.println("E[" + statName + "]=" + formatter.format(expectation));
+                            System.out.println("E[" + statName + "]=" + formatter.format(expectation));
 
-                        if (expectation > (estimate - (2 * error)) && expectation < (estimate + (2 * error))) {
-                            System.out.println("OK:       " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
-                        } else {
-                            System.out.print("WARNING: " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
+                            if (expectation > (estimate - (2 * error)) && expectation < (estimate + (2 * error))) {
+                                System.out.println("OK:       " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
+                            } else {
+                                System.out.print("WARNING: " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
+                            }
+
                         }
-
                     }
                 }
+
+                System.out.println();
+                System.out.flush();
+                return traces;
+            } else {
+                throw new XMLParseException("Log file, " + parent + name + " does not exist.");
             }
-
-            System.out.println();
-            System.out.flush();
-            return traces;
-
         } catch (FileNotFoundException fnfe) {
             throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
         } catch (java.io.IOException ioe) {

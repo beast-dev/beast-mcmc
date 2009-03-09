@@ -129,7 +129,13 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             double weight = xo.getDoubleAttribute(WEIGHT);
-            int windowSize = xo.getIntegerAttribute(WINDOW_SIZE);
+
+            double d = xo.getDoubleAttribute(WINDOW_SIZE);
+            if (d != Math.floor(d)) {
+                throw new XMLParseException("The window size of a randomWalkIntegerOperator should be an integer");
+            }
+
+            int windowSize = (int)d;
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
             if (xo.hasChildNamed(UPDATE_INDEX)) {

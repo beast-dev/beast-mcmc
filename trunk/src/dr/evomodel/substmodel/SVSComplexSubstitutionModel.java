@@ -39,8 +39,8 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
         double logL = super.getLogLikelihood();
         if (logL == 0) { // Also check that graph is connected
             getTransitionProbabilities(1.0,testProbabilities);
-            for(int i=0; i<testProbabilities.length; i++) {
-                if (testProbabilities[i] <= 0) {
+            for(double value : testProbabilities) {
+                if (value <= 0 || Double.isInfinite(value) || Double.isNaN(value)) {
                     logL = Double.NEGATIVE_INFINITY;
                     break;
                 }

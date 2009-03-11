@@ -1,5 +1,7 @@
 package dr.evomodel.arg;
 
+import java.util.ArrayList;
+
 import dr.evomodel.arg.ARGModel.Node;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
@@ -27,7 +29,6 @@ public class ARGRatePrior extends AbstractModel implements Likelihood{
 	private Parameter logNormalSigma;
 	
 	
-	
 	public ARGRatePrior(String name,ARGModel arg, Parameter sigma) {
 		super(name);
 		
@@ -44,30 +45,30 @@ public class ARGRatePrior extends AbstractModel implements Likelihood{
 		double[] values = new double[arg.getNumberOfPartitions()];
 		
 		double sigma = logNormalSigma.getParameterValue(0);
-		double oneOverSigma = 1.0/sigma; 
+				
+		double oneOverSigma = 1.0/sigma;
 		
 		for(int i = 0; i < values.length; i++){
-			values[i] = MathUtils.nextGamma(sigma,oneOverSigma);
-			
+			values[i] = MathUtils.nextGamma(oneOverSigma,oneOverSigma);
 		}
-				
+		
+		
+							
 		return values;
 	}
 
 	public double getLogLikelihood() {
-								
 		return calculateLogLikelihood();
 	}
 	
-	
-	
 	public double getAddHastingsRatio(double[] values){
-		return calculateLogLikelihood(values);		
+		return -calculateLogLikelihood(values);
 	}
+	
 	
 	private double calculateLogLikelihood(double[] values){
 		double logLike = 0;
-		
+				
 		double sigma = logNormalSigma.getParameterValue(0);
 		double oneOverSigma = 1.0/sigma;
 		
@@ -75,16 +76,17 @@ public class ARGRatePrior extends AbstractModel implements Likelihood{
 			logLike += GammaDistribution.logPdf(d, oneOverSigma, sigma);
 		}
 		
-		
 		return logLike;
 	}
 		
 	private double calculateLogLikelihood(){
 		double logLike = 0;
+				
 		
 		for(int i = 0, n = arg.getNodeCount(); i < n; i++){
-			if(!arg.isRoot(arg.getNode(i)) && arg.isBifurcation(arg.getNode(i))){
-				Node x = (Node)arg.getNode(i);
+			Node x = (Node)arg.getNode(i);
+						
+			if(!x.isRoot() && x.isBifurcation()){
 				
 				double[] values = x.rateParameter.getParameterValues();
 			
@@ -172,5 +174,6 @@ public class ARGRatePrior extends AbstractModel implements Likelihood{
 		}
 		
 	};
-
+	
+	
 }

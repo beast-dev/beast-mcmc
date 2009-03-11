@@ -310,13 +310,14 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         newReassortment.bifurcation = false;
        
         double[] reassortmentValues = ratePrior.generateValues();
+              
         
-        //logHastings += ratePrior.getAddHastingsRatio(reassortmentValues);
+//        logHastings += ratePrior.getAddHastingsRatio(reassortmentValues);
         
         newReassortment.rateParameter = new Parameter.Default(reassortmentValues);
         
         newReassortment.rateParameter.addBounds(new Parameter.DefaultBounds(
-                5.0, 0, arg.getNumberOfPartitions()));
+        		Double.POSITIVE_INFINITY, 0, arg.getNumberOfPartitions()));
         
         newReassortment.number = arg.getNodeCount() + 1;
 
@@ -325,12 +326,12 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         Node newBifurcation = arg.new Node();
         
         double[] bifurcationValues = ratePrior.generateValues();
-        //logHastings += ratePrior.getAddHastingsRatio(bifurcationValues);
+        logHastings += ratePrior.getAddHastingsRatio(bifurcationValues);
                 
         newBifurcation.rateParameter = new Parameter.Default(bifurcationValues);
         
         newBifurcation.rateParameter.addBounds(new Parameter.DefaultBounds(
-                Double.POSITIVE_INFINITY, 0, arg.getNumberOfPartitions()));
+        		Double.POSITIVE_INFINITY, 0, arg.getNumberOfPartitions()));
         
         newBifurcation.number = arg.getNodeCount();
 
@@ -557,11 +558,16 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
              newReassortment.setupHeightBounds();
              
              
-             
-             arg.expandARGWithRecombinant(newBifurcation, newReassortment,
+             arg.expandARG(newBifurcation, newReassortment,
                      internalNodeParameters,
                      internalAndRootNodeParameters,
                      nodeRates);
+             
+             
+//             arg.expandARGWithRecombinant(newBifurcation, newReassortment,
+//                     internalNodeParameters,
+//                     internalAndRootNodeParameters,
+//                     nodeRates);
              assert nodeCheck() : arg.toARGSummary();
              
         }else{
@@ -618,9 +624,16 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
          root.heightParameter.setParameterValue(0, newBifurcationHeight);
          
          
-         arg.expandARGWithRecombinant(newBifurcation, newReassortment,
-                             internalNodeParameters, internalAndRootNodeParameters,
-                             nodeRates);
+         arg.expandARG(newBifurcation, newReassortment,
+                 internalNodeParameters,
+                 internalAndRootNodeParameters,
+                 nodeRates);
+         
+         
+//         arg.expandARGWithRecombinant(newBifurcation, newReassortment,
+//                 internalNodeParameters,
+//                 internalAndRootNodeParameters,
+//                 nodeRates);
          
           assert nodeCheck();
       
@@ -1046,14 +1059,18 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             recParent = recDeleteParent;
         }
 
-        double[] rateValues1 = recParent.rateParameter.getParameterValues();
-        logHastings -= ratePrior.getAddHastingsRatio(rateValues1); 
+        double[] rateValues = recParent.rateParameter.getParameterValues();
+        logHastings -= ratePrior.getAddHastingsRatio(rateValues); 
 
+        
         
         if (doneSomething) {
             try {
-                arg.contractARGWithRecombinant(recParent, recNode,
+            	arg.contractARG(recParent, recNode,
                         internalNodeParameters, internalAndRootNodeParameters, nodeRates);
+            	
+//                arg.contractARGWithRecombinant(recParent, recNode,
+//                        internalNodeParameters, internalAndRootNodeParameters, nodeRates);
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 System.err.println(e);
@@ -1078,13 +1095,8 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         	
         adjustRandomPartitioning();
         	
-        
-        
-        
 
         arg.pushTreeSizeChangedEvent();
-        
-       
        
         
         try {
@@ -1142,8 +1154,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 //        }
         assert nodeCheck();
         assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
-
-
+                
         return logHastings;
     }
 

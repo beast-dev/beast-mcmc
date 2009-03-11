@@ -39,14 +39,14 @@ import java.util.HashSet;
 import java.util.logging.Logger;
 
 /**
- * A prior for the tree that is uniform on the rootHeight, taking care of the metric factors
- * that appear from the internal nodes below the root.
- * <p/>
- * See Nicholls, G. & R.D. Gray (2004) for details.
+ * Two priors for the tree that are relatively non-informative on the internal node heights given the root height.
+ * The first further assumes that the root height is truncated uniform, see Nicholls, G. & R.D. Gray (2004) for details.
+ * The second allows any marginal specification over the root height given that it is larger than the oldest
+ * sampling time (Bloomquist and Suchard, unpublished).
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @author Alexander Alekseyenko
+ * @author Erik Bloomquist
  * @author Marc Suchard
  *
  * @version $Id: UniformRootPrior.java,v 1.10 2005/05/24 20:25:58 rambaut Exp $
@@ -197,7 +197,12 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
             return rootHeight * (2 - nodeCount) - Math.log(maxRootHeight - rootHeight);
 
         } else {
-            // the Alekseyenko & Suchard variant
+            // the Bloomquist & Suchard variant
+            // Let the sampling times and rootHeight specify the boundaries between a fixed number of intervals.
+            // Internal node heights are equally likely to fall in any of these intervals and uniformly distributed
+            // in an interval before sorting (i.e. the intercoalescent times in an interval form a scaled Dirchelet(1,1,\ldots,1)
+            // This is a conditional density on the rootHeight, so it is possible to specify a marginal distribution
+            // on the rootHeight given it is greater than the oldest sampling time.
             double logLike;
 
             if (k > 0) {
@@ -282,7 +287,7 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
                 double maxRootHeight = xo.getDoubleAttribute(MAX_ROOT_HEIGHT);
                 return new UniformRootPrior(treeModel, maxRootHeight);
             } else {
-                // the Alekseyenko & Suchard variant
+                // the Bloomquist & Suchard variant
                 return new UniformRootPrior(treeModel);
             }
         }

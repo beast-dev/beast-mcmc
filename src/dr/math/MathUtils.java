@@ -193,6 +193,9 @@ public class MathUtils {
 			return random.nextGaussian();
 		}
 	}
+	
+	//Mean = alpha / lambda
+	//Variance = alpha / (lambda*lambda)
 
 	public static double nextGamma(double alpha, double lambda) {
 		synchronized (random) {

@@ -1946,7 +1946,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                 removeParameter(addedParameters[2]);
                 removeParameter(addedParameters[3]);
                 storedNodeRates.removeParameter(addedParameters[2]);
-                storedNodeRates.removeParameter(addedParameters[3]);
+//                storedNodeRates.removeParameter(addedParameters[3]);
             }
         }
         if (addedPartitioningParameter != null) {
@@ -1965,7 +1965,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             addParameter(removedParameters[2]);
             addParameter(removedParameters[3]);
             storedNodeRates.addParameter(removedParameters[2]);
-            storedNodeRates.addParameter(removedParameters[3]);
+//            storedNodeRates.addParameter(removedParameters[3]);
 
         }
 
@@ -2010,6 +2010,47 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 																 * }
 																 */
 
+    public void expandARG(Node newbie1, Node newbie2,
+            CompoundParameter internalNodeParameters,
+            CompoundParameter internalAndRootNodeParameters,
+            CompoundParameter nodeRates){
+    	
+    	 addParameter(newbie1.heightParameter);
+         addParameter(newbie2.heightParameter);
+         addParameter(newbie2.partitioning);
+
+         addParameter(newbie1.rateParameter);
+         addParameter(newbie2.rateParameter);
+        
+         addedParameters = new Parameter[4];
+         addedParameters[0] = newbie1.heightParameter;
+         addedParameters[1] = newbie2.heightParameter;
+         addedParameters[2] = newbie1.rateParameter;
+         addedParameters[3] = newbie2.rateParameter;
+         addedPartitioningParameter = newbie2.partitioning;
+
+         storedInternalNodeHeights = internalNodeParameters;
+         storedInternalNodeHeights.addParameter(newbie1.heightParameter);
+         storedInternalNodeHeights.addParameter(newbie2.heightParameter);
+
+         storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
+         storedInternalAndRootNodeHeights.addParameter(newbie1.heightParameter);
+         storedInternalAndRootNodeHeights.addParameter(newbie2.heightParameter);
+
+         storedNodeRates = nodeRates;
+         storedNodeRates.addParameter(newbie1.rateParameter);
+//         storedNodeRates.addParameter(newbie2.rateParameter);
+
+
+         partitioningParameters.addParameter(newbie2.partitioning);
+         nodes.add(newbie1);
+         nodes.add(newbie2);
+         internalNodeCount += 2;
+
+         pushTreeSizeChangedEvent();
+    	
+    }
+    
     public void expandARGWithRecombinant(Node newbie1, Node newbie2,
                                          CompoundParameter internalNodeParameters,
                                          CompoundParameter internalAndRootNodeParameters,
@@ -2123,6 +2164,53 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
     }
 
+    
+    public void contractARG(Node oldie1, Node oldie2,
+            CompoundParameter internalNodeParameters,
+            CompoundParameter internalAndRootNodeParameters,
+            CompoundParameter nodeRates) {
+
+    	removeParameter(oldie1.heightParameter);
+    	removeParameter(oldie2.heightParameter);
+    	removeParameter(oldie2.partitioning);
+
+
+    	removeParameter(oldie1.rateParameter);
+    	removeParameter(oldie2.rateParameter);
+
+
+    	removedParameters = new Parameter[4];
+    	removedParameters[0] = oldie1.heightParameter;
+    	removedParameters[1] = oldie2.heightParameter;
+    	removedParameters[2] = oldie1.rateParameter;
+    	removedParameters[3] = oldie2.rateParameter;
+
+
+    	partitioningParameters.removeParameter(oldie2.partitioning);
+    	removedPartitioningParameter = oldie2.partitioning;
+    	storedInternalNodeHeights = internalNodeParameters;
+    	storedInternalNodeHeights.removeParameter(oldie1.heightParameter);
+    	storedInternalNodeHeights.removeParameter(oldie2.heightParameter);
+
+
+    	storedInternalAndRootNodeHeights = internalAndRootNodeParameters;
+    	storedInternalAndRootNodeHeights.removeParameter(oldie1.heightParameter);
+    	storedInternalAndRootNodeHeights.removeParameter(oldie2.heightParameter);
+
+
+    	storedNodeRates = nodeRates;
+    	storedNodeRates.removeParameter(oldie1.rateParameter);
+//    	storedNodeRates.removeParameter(oldie2.rateParameter);
+
+    	nodes.remove(oldie1);
+    	nodes.remove(oldie2);
+
+    	internalNodeCount -= 2;
+    	pushTreeSizeChangedEvent();
+}
+    
+    
+    
     /**
      * Cleans up the arg model after a deletion event.
      *

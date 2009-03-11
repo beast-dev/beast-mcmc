@@ -161,16 +161,16 @@ public class ARGAddRemoveOperatorTest extends TraceTest {
         CompoundParameter rootHeight = (CompoundParameter) arg.createNodeHeightsParameter(true, false, false);
         CompoundParameter internalHeights = (CompoundParameter) arg.createNodeHeightsParameter(false, true, false);
         CompoundParameter allInternalNodeHeights = (CompoundParameter) arg.createNodeHeightsParameter(true, true, false);
-        CompoundParameter rates = (CompoundParameter) arg.createNodeRatesParameter(false, true, true);
+//        CompoundParameter rates = (CompoundParameter) arg.createNodeRatesParameter(false, true, true);
 
-        ARGAddRemoveEventOperator operator1 = new ARGAddRemoveEventOperator(arg, 5, 0.5,
-                CoercionMode.COERCION_ON, internalHeights, allInternalNodeHeights, rates, 0.9, null,-1);
+//        ARGAddRemoveEventOperator operator1 = new ARGAddRemoveEventOperator(arg, 5, 0.5,
+//                CoercionMode.COERCION_ON, internalHeights, allInternalNodeHeights, rates, 0.9, null,-1);
 
         ScaleOperator operator2 = new ScaleOperator(rootHeight, 0.75, CoercionMode.COERCION_ON, 5);
         ScaleOperator operator3 = new ScaleOperator(internalHeights, 0.75, CoercionMode.COERCION_ON, 10);
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();
-        schedule.addOperator(operator1);
+//        schedule.addOperator(operator1);
         schedule.addOperator(operator2);
         schedule.addOperator(operator3);
 

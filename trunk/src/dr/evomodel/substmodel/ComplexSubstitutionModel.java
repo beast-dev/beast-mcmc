@@ -36,6 +36,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     public static final String INDICATOR = "rateIndicator";
     public static final String RANDOMIZE = "randomizeIndicator";
     public static final String NORMALIZATION = "normalize";
+    public static final String MAX_CONDITION_NUMBER = "maxConditionNumber";
 
 
     public ComplexSubstitutionModel(String name, DataType dataType,
@@ -239,6 +240,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         DoubleMatrix1D eigenVImag = eigenDecomp.getImagEigenvalues();
         DoubleMatrix2D eigenVInv;
 
+        if (alegbra.cond(eigenV) > maxConditionNumber) {
+            wellConditioned = false;
+            return;
+        }        
 //        updateMatrix = false;
 
         try {
@@ -256,7 +261,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
         // Check for valid decomposition
         for (i = 0; i < stateCount; i++) {
-            if (Eval[i] == Double.NaN || EvalImag[i] == Double.NaN) {
+            if (Double.isNaN(Eval[i]) || Double.isNaN(EvalImag[i]) ||
+                Double.isInfinite(Eval[i]) || Double.isInfinite(EvalImag[i])) {
                 wellConditioned = false;
                 return;
             }
@@ -380,6 +386,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
     }
 
+    public void setMaxConditionNumber(double max) {
+        maxConditionNumber = max;
+    }
+
     private static DoubleMatrix2D blockDiagonalExponential(double distance, DoubleMatrix2D mat) {
         for (int i = 0; i < mat.rows(); i++) {
             if ((i + 1) < mat.rows() && mat.getQuick(i, i + 1) != 0) {
@@ -461,6 +471,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             boolean doNormalization = xo.getAttribute(NORMALIZATION,true);
             model.setNormalization(doNormalization);
             sb.append("\tNormalized: "+doNormalization+"\n");
+
+            double maxConditionNumber = xo.getAttribute(MAX_CONDITION_NUMBER,1000);
+            model.setMaxConditionNumber(maxConditionNumber);
+            sb.append("\tMax. condition number: "+maxConditionNumber+"\n");
             
             sb.append("Please cite Lemey, Rambaut, Drummond and Suchard (in preparation)\n");
 
@@ -501,6 +515,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                                 new ElementRule(Parameter.class)
                         }),
                 AttributeRule.newBooleanRule(NORMALIZATION,true),
+                AttributeRule.newDoubleRule(MAX_CONDITION_NUMBER,true),
         };
 
     };
@@ -526,6 +541,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     private static final Algebra alegbra = new Algebra(minProb);
     EigenvalueDecomposition eigenDecomp;
     EigenvalueDecomposition storedEigenDecomp;
+
+    private double maxConditionNumber = 1000;
 
     public Model getModel() {
         return this;

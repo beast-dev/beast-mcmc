@@ -38,9 +38,15 @@ import dr.xml.*;
 public class BitFlipOperator extends SimpleMCMCOperator {
 
     public static final String BIT_FLIP_OPERATOR = "bitFlipOperator";
+    public static final String BITS = "bits";
 
     public BitFlipOperator(Parameter parameter, double weight) {
+       this(parameter,weight,1);
+    }
+
+    public BitFlipOperator(Parameter parameter, double weight, int bits) {
         this.parameter = parameter;
+        this.bits = bits;
         setWeight(weight);
     }
 
@@ -133,6 +139,7 @@ public class BitFlipOperator extends SimpleMCMCOperator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
+                AttributeRule.newIntegerRule(BITS,true),
                 new ElementRule(Parameter.class)
         };
 
@@ -140,4 +147,5 @@ public class BitFlipOperator extends SimpleMCMCOperator {
     // Private instance variables
 
     private Parameter parameter = null;
+    private int bits;
 }

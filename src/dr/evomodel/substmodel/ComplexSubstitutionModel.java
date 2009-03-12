@@ -37,6 +37,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     public static final String RANDOMIZE = "randomizeIndicator";
     public static final String NORMALIZATION = "normalize";
     public static final String MAX_CONDITION_NUMBER = "maxConditionNumber";
+    public static final String CONNECTED = "mustBeConnected";
 
 
     public ComplexSubstitutionModel(String name, DataType dataType,
@@ -459,13 +460,17 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             else {
 
                 boolean randomize = xo.getAttribute(RANDOMIZE,false);
+                boolean connected = xo.getAttribute(CONNECTED,false);
+                model = new SVSComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter, indicators,connected);
                 if (randomize) {
+                    do {
                     for(int i=0; i<indicators.getDimension(); i++)
                         indicators.setParameterValue(i,
                                 (MathUtils.nextDouble() < 0.5) ? 0.0 : 1.0);
-                }            
-                model = new SVSComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter, indicators);
+                    } while(!((SVSComplexSubstitutionModel)model).isStronglyConnected());
+                }
                 sb.append("\tBSSVS indicators: "+indicators.getId()+"\n");
+                sb.append("\tGraph must be connected: "+connected+"\n");
             }
 
             boolean doNormalization = xo.getAttribute(NORMALIZATION,true);
@@ -516,6 +521,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                         }),
                 AttributeRule.newBooleanRule(NORMALIZATION,true),
                 AttributeRule.newDoubleRule(MAX_CONDITION_NUMBER,true),
+                AttributeRule.newBooleanRule(CONNECTED,true),
         };
 
     };

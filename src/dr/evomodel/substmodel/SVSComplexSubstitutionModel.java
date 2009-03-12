@@ -12,10 +12,12 @@ import cern.colt.bitvector.BitVector;
  */
 public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implements BayesianStochasticSearchVariableSelection {
 
-    public SVSComplexSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel, Parameter parameter, Parameter indicators) {
+    public SVSComplexSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
+                                       Parameter parameter, Parameter indicators, boolean considerConnectedness) {
         super(name, dataType, rootFreqModel, parameter);
         this.indicators = indicators;
         addParameter(indicators);
+        this.considerConnectedness = considerConnectedness;
     }
 
     protected double[] getRates() {
@@ -39,7 +41,7 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
 
      public double getLogLikelihood() {
         double logL = super.getLogLikelihood();
-        if (logL == 0 && !isConnected()) { // Also check that graph is connected
+        if (logL == 0 && considerConnectedness && !isStronglyConnected()) { // Also check that graph is connected
             logL = Double.NEGATIVE_INFINITY;
         }
         return logL;
@@ -64,10 +66,19 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
         }
     }
 
-    private boolean isConnected() {
+    /* Determines if the graph is strongly connected, such that there exists
+     * a directed path from any vertex to any other vertex
+     *
+     */
+    public boolean isStronglyConnected() {
         BitVector visited = new BitVector(stateCount);
-        depthFirstSearch(0,visited);
-        return visited.cardinality() == stateCount;
+        boolean connected = true;
+        for(int i=0; i<stateCount && connected; i++) {
+            visited.clear();
+            depthFirstSearch(i,visited);
+            connected = visited.cardinality() == stateCount;
+        }
+        return connected;
     }
 
     public boolean validState() {
@@ -102,7 +113,7 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
         SVSComplexSubstitutionModel substModel = new SVSComplexSubstitutionModel("test",
                   dataType,
                   freqModel,
-                  ratesP,indicatorsP);
+                  ratesP,indicatorsP,true);
         double logL = substModel.getLogLikelihood();
         System.out.println("Prior = "+logL);
         if( !Double.isInfinite(logL) ) {
@@ -114,5 +125,6 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
     }
     
     private Parameter indicators;
+    private boolean considerConnectedness = false;
 
 }

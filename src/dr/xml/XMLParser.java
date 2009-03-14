@@ -45,8 +45,8 @@ public class XMLParser {
 
     public XMLParser(boolean strictXML) {
         this.strictXML = strictXML;
-        addXMLObjectParser(new ArrayParser());
-        addXMLObjectParser(Report.PARSER);
+        addXMLObjectParser(new ArrayParser(), false);
+        addXMLObjectParser(Report.PARSER, false);
     }
 
     public XMLParser(boolean verbose, boolean strictXML) {
@@ -55,17 +55,27 @@ public class XMLParser {
     }
 
     public void addXMLObjectParser(XMLObjectParser parser) {
+        addXMLObjectParser(parser, false);
+    }
+    
+    public boolean addXMLObjectParser(XMLObjectParser parser, boolean canReplace) {
 
+        boolean replaced = false;
         String[] parserNames = parser.getParserNames();
 
         for (String parserName : parserNames) {
             XMLObjectParser oldParser = parserStore.get(parserName);
             if (oldParser != null) {
-                throw new IllegalArgumentException("New parser (" + parser.getParserName() + ") cannot replace existing parser (" + oldParser.getParserName() + ")");
+                if (!canReplace) {
+                    throw new IllegalArgumentException("New parser (" + parser.getParserName() + ") cannot replace existing parser (" + oldParser.getParserName() + ")");
+                } else {
+                    replaced = true;
+                }
             }
-
             parserStore.put(parserName, parser);
         }
+
+        return replaced;
     }
 
     public Iterator getParserNames() {
@@ -104,9 +114,9 @@ public class XMLParser {
      */
     public Object parse(Reader reader, Class target)
             throws java.io.IOException,
-            org.xml.sax.SAXException,
-            dr.xml.XMLParseException,
-            javax.xml.parsers.ParserConfigurationException {
+                   org.xml.sax.SAXException,
+                   dr.xml.XMLParseException,
+                   javax.xml.parsers.ParserConfigurationException {
 
         InputSource in = new InputSource(reader);
         javax.xml.parsers.DocumentBuilderFactory documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
@@ -127,9 +137,9 @@ public class XMLParser {
 
     public ObjectStore parse(Reader reader, boolean run)
             throws java.io.IOException,
-            org.xml.sax.SAXException,
-            dr.xml.XMLParseException,
-            javax.xml.parsers.ParserConfigurationException {
+                   org.xml.sax.SAXException,
+                   dr.xml.XMLParseException,
+                   javax.xml.parsers.ParserConfigurationException {
 
         InputSource in = new InputSource(reader);
         javax.xml.parsers.DocumentBuilderFactory documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
@@ -258,14 +268,14 @@ public class XMLParser {
                         waitForThread((Thread) thread1);
                     }
                 } else if (obj instanceof Runnable && !concurrent) {
-	                if (obj instanceof MCMC && !((MCMC)obj).getSpawnable()) {		                
-	                    ((MCMC)obj).run();		               
-	                } else {
+                    if (obj instanceof MCMC && !((MCMC)obj).getSpawnable()) {
+                        ((MCMC)obj).run();
+                    } else {
                         Thread thread = new Thread((Runnable) obj);
                         thread.start();
                         threads.add(thread);
                         waitForThread(thread);
-	                }
+                    }
                 }
                 threads.removeAllElements();
             }
@@ -393,7 +403,7 @@ public class XMLParser {
                     return MONTHS;
                 case YEARS:
                     return YEARS;
-                    // Mutations has been replaced with substitutions...
+                // Mutations has been replaced with substitutions...
                 case SUBSTITUTIONS:
                     return SUBSTITUTIONS;
                 default:
@@ -457,4 +467,4 @@ public class XMLParser {
     }
 }
 
-   
+

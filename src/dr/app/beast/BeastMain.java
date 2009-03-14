@@ -38,7 +38,7 @@ import org.virion.jam.util.IconUtils;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Iterator;
+import java.util.*;
 import java.util.logging.*;
 
 public class BeastMain {
@@ -61,7 +61,9 @@ public class BeastMain {
         }
     }
 
-    public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, boolean verbose, boolean strictXML) {
+    public BeastMain(File inputFile, BeastConsoleApp consoleApp,
+                     int maxErrorCount, boolean verbose, boolean strictXML,
+                     List<String> additionalParsers) {
 
         if (inputFile == null) {
             System.err.println();
@@ -76,7 +78,7 @@ public class BeastMain {
 
             FileReader fileReader = new FileReader(inputFile);
 
-            XMLParser parser = new BeastParser(new String[]{fileName}, verbose, strictXML);
+            XMLParser parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, strictXML);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -251,6 +253,7 @@ public class BeastMain {
                         // new Arguments.Option("logops", "hack: log ops to stderr"),
                         new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
                                 "in number of states."),
+                        new Arguments.Option("vector", "use vector processing hardware if available."),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -271,11 +274,17 @@ public class BeastMain {
             System.exit(0);
         }
 
+        List<String> additionalParsers = new ArrayList<String>();
+
         final boolean verbose = arguments.hasOption("verbose");
         final boolean strictXML = arguments.hasOption("strict");
         final boolean window = arguments.hasOption("window");
         final boolean working = arguments.hasOption("working");
 
+        if (arguments.hasOption("vector")) {
+            additionalParsers.add("vector");
+        }
+        
         // (HACK)
         //MCMC.logOps =  arguments.hasOption("logops");
         MCMC.ontheflyFreq = arguments.hasOption("otfops") ? arguments.getIntegerOption("otfops") : 0;
@@ -314,7 +323,7 @@ public class BeastMain {
 
             String nameString = "BEAST " + version.getVersionString();
             String aboutString = "<html><center><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
-                    "Version " + version.getVersionString() + ", 2002-2008</p>" +
+                    "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
                     "<p>by<br>" +
                     "Alexei J. Drummond and Andrew Rambaut</p>" +
                     "<p>Department of Computer Science, University of Auckland<br>" +
@@ -368,8 +377,8 @@ public class BeastMain {
         System.out.println("Random number seed: " + seed);
         System.out.println();
 
-        new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, strictXML);
-        
+        new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, strictXML, additionalParsers);
+
         System.exit(0);
     }
 }

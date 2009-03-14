@@ -30,8 +30,7 @@ import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
 
-import java.util.Iterator;
-import java.util.Properties;
+import java.util.*;
 import java.io.*;
 import java.lang.reflect.Field;
 
@@ -42,7 +41,7 @@ import java.lang.reflect.Field;
  */
 public class BeastParser extends XMLParser {
 
-    public BeastParser(String[] args, boolean verbose, boolean strictXML) {
+    public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean strictXML) {
         super(strictXML);
 
         setup(args);
@@ -75,6 +74,12 @@ public class BeastParser extends XMLParser {
                 // load the parsers
                 loadProperties(this.getClass(), parsers +  "_parsers.properties", verbose);
             }
+
+            if (additionalParsers != null) {
+                for (String addParsers : additionalParsers) {
+                    loadProperties(this.getClass(), addParsers +  "_parsers.properties", verbose);
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -91,7 +96,7 @@ public class BeastParser extends XMLParser {
 
         if (verbose) {
             System.out.println();
-            System.out.println("Loading additional parsers:");
+            System.out.println("Loading additional parsers (" + parsersFile + "):");
         }
         final InputStream stream = c.getResourceAsStream(parsersFile);
         if (stream == null) {
@@ -103,12 +108,15 @@ public class BeastParser extends XMLParser {
 
             if (line.trim().length() > 0 && !line.trim().startsWith("#")) {
                 try {
+                    if (line.contains("Vector")) {
+                        System.out.println("");
+                    }
                     Class parser = Class.forName(line);
                     if (XMLObjectParser.class.isAssignableFrom(parser)) {
                         // if this class is an XMLObjectParser then create an instance
-                        addXMLObjectParser((XMLObjectParser)parser.newInstance());
+                        boolean replaced = addXMLObjectParser((XMLObjectParser)parser.newInstance(), true);
                         if (verbose) {
-                            System.out.println("Loaded parser: " + parser.getName());
+                            System.out.println((replaced ? "Replaced" : "Loaded") + " parser: " + parser.getName());
                         }
                     } else {
                         boolean parserFound = false;
@@ -117,9 +125,9 @@ public class BeastParser extends XMLParser {
                         for (Field field: fields) {
                             if (XMLObjectParser.class.isAssignableFrom(field.getType())) {
                                 try {
-                                    addXMLObjectParser((XMLObjectParser)field.get(null));
+                                    boolean replaced = addXMLObjectParser((XMLObjectParser)field.get(null), true);
                                     if (verbose) {
-                                        System.out.println("Loaded parser: " + parser.getName() + "." + field.getName());
+                                        System.out.println((replaced ? "Replaced" : "Loaded") + " parser: " + parser.getName() + "." + field.getName());
                                     }
                                 } catch (IllegalArgumentException iae) {
                                     System.err.println("Failed to install parser: " + iae.getMessage());
@@ -251,7 +259,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.ImportancePruneAndRegraft.IMPORTANCE_PRUNE_AND_REGRAFT_PARSER);
         addXMLObjectParser(dr.evomodel.operators.ImportanceSubtreeSwap.IMPORTANCE_SUBTREE_SWAP_PARSER);
         addXMLObjectParser(dr.evomodel.operators.GibbsSubtreeSwap.GIBBS_SUBTREE_SWAP_PARSER);
-        addXMLObjectParser(dr.evomodel.operators.GibbsPruneAndRegraft.GIBBS_PRUNE_AND_REGRAFT_PARSER);        
+        addXMLObjectParser(dr.evomodel.operators.GibbsPruneAndRegraft.GIBBS_PRUNE_AND_REGRAFT_PARSER);
         addXMLObjectParser(dr.evomodel.operators.RateExchangeOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TreeBitMoveOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TreeBitRandomWalkOperator.PARSER);

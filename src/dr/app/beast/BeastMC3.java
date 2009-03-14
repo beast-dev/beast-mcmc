@@ -106,7 +106,7 @@ public class BeastMC3 {
 
             FileReader fileReader = new FileReader(inputFile);
 
-	        XMLParser parser = new BeastParser(new String[] {fileName}, verbose, strictXML);
+	        XMLParser parser = new BeastParser(new String[] {fileName}, null, verbose, strictXML);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -131,7 +131,7 @@ public class BeastMC3 {
                 fileReader = new FileReader(inputFile);
 
                 messageHandler.setLevel(Level.OFF);
-                parser = new BeastParser(new String[] {fileName}, verbose, strictXML);
+                parser = new BeastParser(new String[] {fileName}, null, verbose, strictXML);
 
                 chains[i] = (MCMC)parser.parse(fileReader, MCMC.class);
                 if (chains[i] == null) {

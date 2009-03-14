@@ -50,7 +50,7 @@ import java.util.logging.Logger;
 
 public class TreeLikelihood extends AbstractTreeLikelihood {
 
-    public static final String TREE_LIKELIHOOD = "crazyTreeLikelihood";
+    public static final String TREE_LIKELIHOOD = "treeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String DEVICE_NUMBER = "deviceNumber";
 
@@ -70,7 +70,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         try {
             final Logger logger = Logger.getLogger("dr.evomodel");
 
-            logger.info("Crazy new TreeLikelihood");
+            logger.info("Using Vector (GPU) TreeLikelihood");
 
             this.siteModel = siteModel;
             addModel(siteModel);
@@ -105,7 +105,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (!likelihoodCore.canHandleTipStates()){
                 useAmbiguities = true;
             }
-            
+
  //           dynamicRescaling = likelihoodCore.canHandleDynamicRescaling();
 
             likelihoodCore.initialize(nodeCount,
@@ -276,17 +276,17 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         for (int i = 0; i < patternCount; i++) {
             logL += patternLogLikelihoods[i] * patternWeights[i];
         }
-        
+
         // Attempt dynamic rescaling if over/under-flow
         if (logL == Double.NaN || logL == Double.POSITIVE_INFINITY ) {
-        	
+
         	System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
         	updateAllNodes();
         	branchUpdateCount = 0;
-        	operationCount = 0;      	
+        	operationCount = 0;
         	traverse(treeModel, root, null);
         	likelihoodCore.updateMatrices(branchUpdateIndices, branchLengths, branchUpdateCount);
-        	likelihoodCore.updatePartials(operations,dependencies, operationCount, true);        	
+        	likelihoodCore.updatePartials(operations,dependencies, operationCount, true);
             likelihoodCore.calculateLogLikelihoods(root.getNumber(), patternLogLikelihoods);
 
             logL = 0.0;
@@ -309,7 +309,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         return logL;
     }
-    
+
     private double[] rates;
 
     private int[] branchUpdateIndices;
@@ -401,19 +401,28 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
 
     /**
-     * The XML parser
+     * The default XML parser - this one has the same name as dr.evomodel.treelikelihod/TreeLikelihood
+     * so will override that if loaded.
      */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static TreeLikelihoodParser PARSER = new TreeLikelihoodParser(TREE_LIKELIHOOD);
+
+    static class TreeLikelihoodParser extends AbstractXMLObjectParser {
+
+        private final String parserName;
+
+        TreeLikelihoodParser(final String parserName) {
+            this.parserName = parserName;
+        }
 
         public String getParserName() {
-            return TREE_LIKELIHOOD;
+            return parserName;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
             int deviceNumber = xo.getAttribute(DEVICE_NUMBER,1) - 1;
-            
+
             PatternList patternList = (PatternList) xo.getChild(PatternList.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
@@ -509,7 +518,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     public int getNodeEvaluationCount() {
         return nodeEvaluationCount;
     }
-    
+
 //    /***
 //     * Flag to specify if LikelihoodCore supports dynamic rescaling
 //     */

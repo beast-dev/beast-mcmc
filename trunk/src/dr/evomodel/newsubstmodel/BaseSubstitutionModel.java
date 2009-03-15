@@ -140,7 +140,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
         EigenDecomposition tmp = storedEigenDecomposition;
         storedEigenDecomposition = eigenDecomposition;
-        eigenDecomposition = storedEigenDecomposition;
+        eigenDecomposition = tmp;
 
     }
 
@@ -170,7 +170,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
      * @param distance the expected number of substitutions
      * @param matrix   an array to store the matrix
      */
-    public void getTransitionProbabilities(double distance, double[] matrix) {
+     public void getTransitionProbabilities(double distance, double[] matrix) {
         double temp;
 
         EigenDecomposition eigen = getEigenDecomposition();
@@ -314,7 +314,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
 
     private final double q[][];
-    private EigenDecomposition eigenDecomposition;
+    protected EigenDecomposition eigenDecomposition;
     private EigenDecomposition storedEigenDecomposition;
 
 

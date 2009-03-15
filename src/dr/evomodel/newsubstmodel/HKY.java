@@ -25,11 +25,11 @@
 
 package dr.evomodel.newsubstmodel;
 
-import dr.app.beauti.options.NucModelType;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
+import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.Vector;
 
 
 /**
@@ -37,7 +37,7 @@ import dr.evolution.datatype.Nucleotides;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: HKY.java,v 1.42 2005/09/23 13:17:59 rambaut Exp $
+ * @author Marc A. Suchard
  */
 public class HKY extends BaseSubstitutionModel {
 
@@ -129,6 +129,80 @@ public class HKY extends BaseSubstitutionModel {
         rates[5] = 1.0;
     }
 
+    public EigenDecomposition getEigenDecomposition() {
+
+        if (eigenDecomposition == null) {
+            double[][] evec = new double[4][4];
+            double[][] ivec = new double[4][4];
+            double[] eval = new double[4];
+            eigenDecomposition = new EigenDecomposition(evec, ivec, eval);
+
+            ivec[2][1] =  1; // left eigenvectors 3 = (0,1,0,-1); 4 = (1,0,-1,0)
+            ivec[2][3] = -1;
+
+            ivec[3][0] =  1;
+            ivec[3][2] = -1;
+
+            evec[0][0] =  1; // right eigenvector 1 = (1,1,1,1)'
+            evec[1][0] =  1;
+            evec[2][0] =  1;
+            evec[3][0] =  1;
+
+        }
+
+        if (updateMatrix) {
+
+            double[][] evec = eigenDecomposition.getEigenVectors();
+            double[][] ivec = eigenDecomposition.getInverseEigenVectors();
+            double[] pi = freqModel.getFrequencies();
+            double piR = pi[0] + pi[2];
+            double piY = pi[1] + pi[3];
+
+            // left eigenvector #1
+            ivec[0][0] = pi[0]; // or, evec[0] = pi;
+            ivec[0][1] = pi[1];
+            ivec[0][2] = pi[2];
+            ivec[0][3] = pi[3];
+
+            // left eigenvector #2
+            ivec[1][0] =  pi[0]*piY;
+            ivec[1][1] = -pi[1]*piR;
+            ivec[1][2] =  pi[2]*piY;
+            ivec[1][3] = -pi[3]*piR;
+
+            // right eigenvector #2
+            evec[0][1] =  1.0/piR;
+            evec[1][1] = -1.0/piY;
+            evec[2][1] =  1.0/piR;
+            evec[3][1] = -1.0/piY;
+
+            // right eigenvector #3
+            evec[1][2] =  pi[3]/piY;
+            evec[3][2] = -pi[1]/piY;
+
+            // right eigenvector #4
+            evec[0][3] =  pi[2]/piR;
+            evec[2][3] = -pi[0]/piR;
+
+            // eigenvectors
+            double[] eval = eigenDecomposition.getEigenValues();
+            final double kappa = getKappa();
+
+            final double beta = -1.0 / (2.0 * (piR * piY + kappa * (pi[0] * pi[2] + pi[1] * pi[3])));
+            final double A_R  =  1.0 + piR * (kappa - 1);
+            final double A_Y  =  1.0 + piY * (kappa - 1);
+
+            eval[1] = beta;
+            eval[2] = beta*A_Y;
+            eval[3] = beta*A_R;
+
+            updateMatrix = false;
+
+        }
+
+        return eigenDecomposition;
+    }
+
     //
     // Private stuff
     //
@@ -148,4 +222,35 @@ public class HKY extends BaseSubstitutionModel {
         }
 
     };
+
+    public static void main(String[] args) {
+        double kappa = 2.0;
+        double[] pi = new double[]{0.15,0.30,0.20,0.35};
+        double time = 0.1;
+
+        FrequencyModel freqModel= new FrequencyModel(Nucleotides.INSTANCE, pi);
+        HKY hky = new HKY(kappa,freqModel);
+
+        EigenDecomposition decomp = hky.getEigenDecomposition();
+        Matrix evec = new Matrix(decomp.getEigenVectors());
+        Matrix ivec = new Matrix(decomp.getInverseEigenVectors());
+        System.out.println("Evec =\n"+evec);
+        System.out.println("Ivec =\n"+ivec);
+
+        Vector eval = new Vector(decomp.getEigenValues());
+        System.out.println("Eval = "+eval);
+
+        double[] probs = new double[16];
+        hky.getTransitionProbabilities(time,probs);
+        System.out.println("new probs = "+new Vector(probs));
+
+        // check against old implementation
+        dr.evomodel.substmodel.FrequencyModel oldFreq = new dr.evomodel.substmodel.FrequencyModel(Nucleotides.INSTANCE,pi);
+        dr.evomodel.substmodel.HKY oldHKY = new dr.evomodel.substmodel.HKY(kappa,oldFreq);
+        oldHKY.setKappa(kappa);
+
+        oldHKY.getTransitionProbabilities(time,probs);
+        System.out.println("old probs = "+new Vector(probs));
+
+    }
 }

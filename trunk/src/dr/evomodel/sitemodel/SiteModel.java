@@ -76,6 +76,12 @@ public interface SiteModel extends Model {
 	 */
 	double getRateForCategory(int category);
 
+    /**
+     * Get an array of the rates for all categories.
+     * @return an array of rates.
+     */
+    double[] getCategoryRates();
+
 	/**
 	 * Get the expected proportion of sites in this category.
 	 * @param category the category number
@@ -84,8 +90,8 @@ public interface SiteModel extends Model {
 	double getProportionForCategory(int category);
 
 	/**
-	 * Get an array of the expected proportion of sites in this category.
-	 * @return an array of the proportion.
+	 * Get an array of the expected proportion of sites for all categories.
+	 * @return an array of proportions.
 	 */
 	double[] getCategoryProportions();
 

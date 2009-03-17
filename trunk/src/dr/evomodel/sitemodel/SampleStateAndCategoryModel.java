@@ -129,6 +129,10 @@ public class SampleStateAndCategoryModel extends AbstractModel
         throw new RuntimeException("getRateForCategory not available in this siteModel");
     }
 
+    public double[] getCategoryRates() {
+        throw new RuntimeException("getCategoryRates not available in this siteModel");
+    }
+
     public double getSubstitutionsForCategory(int category, double time) {
         throw new RuntimeException("getSubstitutionsForCategory not available in this siteModel");
     }

@@ -11,7 +11,7 @@ import java.util.List;
  *
  */
 public class LikelihoodCoreFactory {
-	
+
 	public static final boolean useFloats = false;
 
 	public static LikelihoodCore loadLikelihoodCore(int[] configuration, AbstractTreeLikelihood treeLikelihood) {
@@ -24,14 +24,14 @@ public class LikelihoodCoreFactory {
 		}
 
 		for(LikelihoodCoreLoader loader: coreRegistry) {
-//            System.out.print("Attempting to load core: " + loader.getLibraryName());
+            System.out.print("Attempting to load core: " + loader.getLibraryName());
             LikelihoodCore core = loader.createLikelihoodCore(configuration, treeLikelihood);
 			if (core != null) {
-//                System.out.println(" - SUCCESS");
+                System.out.println(" - SUCCESS");
 
 				return core;
             }
-//            System.out.println(" - FAILED");
+            System.out.println(" - FAILED");
 		}
 
 		// No libraries/processes available
@@ -39,7 +39,7 @@ public class LikelihoodCoreFactory {
 		int stateCount = configuration[0];
 		if (useFloats)
 			return new FloatGeneralLikelihoodCore(stateCount);
-		else 
+		else
 			return new GeneralLikelihoodCore(stateCount);
 	}
 

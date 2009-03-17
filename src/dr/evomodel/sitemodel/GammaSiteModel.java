@@ -218,6 +218,24 @@ public class GammaSiteModel extends AbstractModel
         return categoryRates[category] * mu;
     }
 
+    public double[] getCategoryRates() {
+        synchronized (this) {
+            if (!ratesKnown) {
+                calculateCategoryRates();
+            }
+        }
+        double[] rates = new double[categoryRates.length];
+        double mu = 1.0;
+        if (muParameter != null) {
+            mu = muParameter.getParameterValue(0);
+        }
+        for (int i = 0; i < rates.length; i++) {
+            rates[i] = categoryRates[i] * mu;
+        }
+
+        return rates;
+    }
+
     public void getTransitionProbabilities(double substitutions, double[] matrix) {
         substitutionModel.getTransitionProbabilities(substitutions, matrix);
     }

@@ -129,6 +129,10 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
         throw new IllegalArgumentException("Integrating across categories");
     }
 
+    public double[] getCategoryRates() {
+        throw new RuntimeException("getCategoryRates not available in this siteModel");
+    }
+
     public double getRateForCategory(int category) {
         throw new RuntimeException("getRateForCategory not available in this siteModel");
     }

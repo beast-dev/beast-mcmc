@@ -1,7 +1,5 @@
 package dr.evomodel.newtreelikelihood;
 
-import dr.xml.XMLParseException;
-
 import java.util.logging.Logger;
 
 /**
@@ -39,7 +37,7 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
     public boolean canHandleDynamicRescaling() {
     	return true;
     }
-    
+
     private int stateCount;
     private int instanceNumber;
     private int deviceNumber;
@@ -55,7 +53,7 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
     public void initialize(int nodeCount, int stateTipCount, int patternCount, int matrixCount) {
         initialize(instanceNumber, deviceNumber, nodeCount, stateTipCount, patternCount, matrixCount, stateCount);
     }
-  
+
     public void setTipPartials(int tipIndex, double[] partials) {
         setTipPartials(instanceNumber, tipIndex, partials);
     }
@@ -113,7 +111,7 @@ public class ThreadedGPULikelihoodCore extends NativeLikelihoodCore {
     private static GPUInfo gpuInfo = null;
 
     private static int instanceCounter = 0;
-    
+
     /**
      * GPU-specific native interface *
      */

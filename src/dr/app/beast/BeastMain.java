@@ -254,6 +254,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
                                 "in number of states."),
                         new Arguments.Option("vector", "use vector processing hardware if available."),
+                        new Arguments.Option("beagle", "use beagle library if available."),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -284,7 +285,11 @@ public class BeastMain {
         if (arguments.hasOption("vector")) {
             additionalParsers.add("vector");
         }
-        
+
+        if (arguments.hasOption("beagle")) {
+            additionalParsers.add("beagle");
+        }
+
         // (HACK)
         //MCMC.logOps =  arguments.hasOption("logops");
         MCMC.ontheflyFreq = arguments.hasOption("otfops") ? arguments.getIntegerOption("otfops") : 0;

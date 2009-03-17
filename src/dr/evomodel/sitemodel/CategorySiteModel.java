@@ -144,6 +144,24 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
         return categoryRates[category] * mu;
     }
 
+    public double[] getCategoryRates() {
+        synchronized (this) {
+            if (!ratesKnown) {
+                calculateCategoryRates();
+            }
+        }
+        double[] rates = new double[categoryRates.length];
+        double mu = 1.0;
+        if (muParameter != null) {
+            mu = muParameter.getParameterValue(0);
+        }
+        for (int i = 0; i < rates.length; i++) {
+            rates[i] = categoryRates[i] * mu;
+        }
+
+        return rates;
+    }
+
     public void getTransitionProbabilities(double substitutions, double[] matrix) {
         substitutionModel.getTransitionProbabilities(substitutions, matrix);
     }
@@ -165,15 +183,6 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
      */
     public double[] getCategoryProportions() {
         throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Get an array of the expected proportion of sites in this category.
-     *
-     * @return an array of the proportion.
-     */
-    public double[] getCategoryRates() {
-        return categoryRates;
     }
 
     /**

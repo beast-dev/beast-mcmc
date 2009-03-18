@@ -3,6 +3,7 @@ package dr.evomodel.beagle.parsers;
 import dr.xml.*;
 import dr.inference.model.Parameter;
 import dr.evomodel.beagle.sitemodel.GammaSiteRateModel;
+import dr.evomodel.beagle.substmodel.SubstitutionModel;
 
 import java.util.logging.Logger;
 
@@ -11,9 +12,10 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @version $Id$
  */
-public class GammaSiteModelParser {
+public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     public static final String SITE_MODEL = "siteModel";
+    public static final String SUBSTITUTION_MODEL = "substitutionModel";
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String GAMMA_SHAPE = "gammaShape";
@@ -27,6 +29,8 @@ public class GammaSiteModelParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String msg = "";
+
+        SubstitutionModel substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
 
         Parameter muParam = null;
         if (xo.hasChildNamed(SUBSTITUTION_RATE)) {
@@ -61,8 +65,12 @@ public class GammaSiteModelParser {
             Logger.getLogger("dr.evomodel").info("Creating site model.");
         }
 
-        return new GammaSiteRateModel(SITE_MODEL, muParam, shapeParam, catCount, invarParam);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, shapeParam, catCount, invarParam);
 
+        // set this to pass it along to the TreeLikelihoodParser...
+        siteRateModel.setSubstitutionModel(substitutionModel);
+
+        return siteRateModel;
     }
 
     //************************************************************************
@@ -82,6 +90,9 @@ public class GammaSiteModelParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
+                    new ElementRule(SubstitutionModel.class)
+            }),
             new XORRule(
                     new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)

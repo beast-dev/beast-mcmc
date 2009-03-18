@@ -6,6 +6,10 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.beagle.treelikelihood.BeagleTreeLikelihood;
+import dr.evomodel.beagle.sitemodel.SiteRateModel;
+import dr.evomodel.beagle.sitemodel.BranchSiteModel;
+import dr.evomodel.beagle.sitemodel.HomogenousBranchSiteModel;
+import dr.evomodel.beagle.sitemodel.GammaSiteRateModel;
 import dr.inference.model.Likelihood;
 
 /**
@@ -30,13 +34,19 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
+        GammaSiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
+
+        BranchSiteModel branchSiteModel = new HomogenousBranchSiteModel(
+                siteRateModel.getSubstitutionModel(),
+                siteRateModel.getSubstitutionModel().getFrequencyModel());
+
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
         return new BeagleTreeLikelihood(
                 patternList,
                 treeModel,
-                siteModel,
+                branchSiteModel,
+                siteRateModel,
                 branchRateModel,
                 useAmbiguities,
                 deviceNumber
@@ -64,7 +74,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(DEVICE_NUMBER,true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
-            new ElementRule(SiteModel.class),
+            new ElementRule(GammaSiteRateModel.class),
             new ElementRule(BranchRateModel.class, true)
     };
 };

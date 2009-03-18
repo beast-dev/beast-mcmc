@@ -374,8 +374,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         return logL;
     }
 
-    private double[] rates;
-
     private int[] branchUpdateIndices;
     private double[] branchLengths;
     private int branchUpdateCount;

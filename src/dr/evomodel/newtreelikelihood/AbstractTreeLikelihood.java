@@ -69,55 +69,6 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 
     }
 
-    /**
-     * Sets the partials from a sequence in an alignment.
-     */
-    protected final void setPartials(LikelihoodCore likelihoodCore,
-                                     PatternList patternList,
-                                     int sequenceIndex,
-                                     int nodeIndex) {
-        double[] partials = new double[patternCount * stateCount];
-
-        boolean[] stateSet;
-
-        int v = 0;
-        for (int i = 0; i < patternCount; i++) {
-
-            int state = patternList.getPatternState(sequenceIndex, i);
-            stateSet = dataType.getStateSet(state);
-
-            for (int j = 0; j < stateCount; j++) {
-                if (stateSet[j]) {
-                    partials[v] = 1.0;
-                } else {
-                    partials[v] = 0.0;
-                }
-                v++;
-            }
-        }
-
-        likelihoodCore.setTipPartials(nodeIndex, partials);
-    }
-
-    /**
-     * Sets the partials from a sequence in an alignment.
-     */
-    protected final void setStates(LikelihoodCore likelihoodCore,
-                                   PatternList patternList,
-                                   int sequenceIndex,
-                                   int nodeIndex) {
-        int i;
-
-        int[] states = new int[patternCount];
-
-        for (i = 0; i < patternCount; i++) {
-
-            states[i] = patternList.getPatternState(sequenceIndex, i);
-        }
-
-        likelihoodCore.setTipStates(nodeIndex, states);
-    }
-
 
     /**
      * Set update flag for a node and its children

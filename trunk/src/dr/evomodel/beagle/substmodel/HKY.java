@@ -23,13 +23,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.newsubstmodel;
+package dr.evomodel.beagle.substmodel;
 
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.evolution.datatype.Nucleotides;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
+import dr.xml.*;
+
+import java.util.logging.Logger;
 
 
 /**

@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.sitemodel;
+package dr.evomodel.beagle.sitemodel;
 
 import dr.inference.model.Model;
 

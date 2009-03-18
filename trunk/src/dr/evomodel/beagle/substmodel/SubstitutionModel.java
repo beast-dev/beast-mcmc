@@ -23,10 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.newsubstmodel;
+package dr.evomodel.beagle.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Model;
+import dr.evomodel.beagle.substmodel.EigenDecomposition;
+import dr.evomodel.beagle.substmodel.FrequencyModel;
 
 /**
  * <b>model of sequence substitution (rate matrix)</b>.

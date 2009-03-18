@@ -2,6 +2,7 @@ package dr.evomodel.newtreelikelihood;
 
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.beagle.treelikelihood.AbstractTreeLikelihood;
 
 import java.util.logging.Logger;
 

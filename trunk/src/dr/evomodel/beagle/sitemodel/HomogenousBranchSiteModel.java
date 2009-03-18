@@ -1,8 +1,8 @@
-package dr.evomodel.newtreelikelihood;
+package dr.evomodel.beagle.sitemodel;
 
-import dr.evomodel.newsubstmodel.EigenDecomposition;
-import dr.evomodel.newsubstmodel.SubstitutionModel;
-import dr.evomodel.newsubstmodel.FrequencyModel;
+import dr.evomodel.beagle.substmodel.EigenDecomposition;
+import dr.evomodel.beagle.substmodel.SubstitutionModel;
+import dr.evomodel.beagle.substmodel.FrequencyModel;
 
 /**
  * @author Andrew Rambaut

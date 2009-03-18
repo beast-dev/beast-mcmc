@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.sitemodel;
+package dr.evomodel.beagle.sitemodel;
 
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -40,42 +40,34 @@ import java.util.logging.Logger;
  * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
-public class GammaSiteRateModel extends AbstractModel
-        implements SiteRateModel {
+public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
 
-    public static final String SITE_RATE_MODEL = "siteRateModel";
-    public static final String SUBSTITUTION_RATE = "substitutionRate";
-    public static final String RELATIVE_RATE = "relativeRate";
-    public static final String GAMMA_SHAPE = "gammaShape";
-    public static final String GAMMA_CATEGORIES = "gammaCategories";
-    public static final String PROPORTION_INVARIANT = "proportionInvariant";
-
-    public GammaSiteRateModel() {
-        this(
+    public GammaSiteRateModel(String name) {
+        this(   name,
                 null,
                 null,
                 0,
                 null);
     }
 
-    public GammaSiteRateModel(double alpha, int categoryCount) {
-        this(
+    public GammaSiteRateModel(String name, double alpha, int categoryCount) {
+        this(   name,
                 null,
                 new Parameter.Default(alpha),
                 categoryCount,
                 null);
     }
 
-    public GammaSiteRateModel(double pInvar) {
-        this(
+    public GammaSiteRateModel(String name, double pInvar) {
+        this(   name,
                 null,
                 null,
                 0,
                 new Parameter.Default(pInvar));
     }
 
-    public GammaSiteRateModel(double alpha, int categoryCount, double pInvar) {
-        this(
+    public GammaSiteRateModel(String name, double alpha, int categoryCount, double pInvar) {
+        this(   name,
                 null,
                 new Parameter.Default(alpha),
                 categoryCount,
@@ -87,11 +79,12 @@ public class GammaSiteRateModel extends AbstractModel
      * invarParameter (or both) can be null to turn off that feature.
      */
     public GammaSiteRateModel(
+            String name,
             Parameter muParameter,
             Parameter shapeParameter, int gammaCategoryCount,
             Parameter invarParameter) {
 
-        super(SITE_RATE_MODEL);
+        super(name);
 
         this.muParameter = muParameter;
         if (muParameter != null) {
@@ -309,88 +302,6 @@ public class GammaSiteRateModel extends AbstractModel
 
     protected void acceptState() {
     } // no additional state needs accepting
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SITE_RATE_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            String msg = "";
-
-            Parameter muParam = null;
-            if (xo.hasChildNamed(SUBSTITUTION_RATE)) {
-                muParam = (Parameter) xo.getElementFirstChild(SUBSTITUTION_RATE);
-
-                msg += "\n  with initial substitution rate = " + muParam.getParameterValue(0);
-            } else if (xo.hasChildNamed(RELATIVE_RATE)) {
-                muParam = (Parameter) xo.getElementFirstChild(RELATIVE_RATE);
-
-                msg += "\n  with initial relative rate = " + muParam.getParameterValue(0);
-            }
-
-            Parameter shapeParam = null;
-            int catCount = 4;
-            if (xo.hasChildNamed(GAMMA_SHAPE)) {
-                XMLObject cxo = (XMLObject) xo.getChild(GAMMA_SHAPE);
-                catCount = cxo.getIntegerAttribute(GAMMA_CATEGORIES);
-                shapeParam = (Parameter) cxo.getChild(Parameter.class);
-
-                msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
-            }
-
-            Parameter invarParam = null;
-            if (xo.hasChildNamed(PROPORTION_INVARIANT)) {
-                invarParam = (Parameter) xo.getElementFirstChild(PROPORTION_INVARIANT);
-                msg += "\n  initial proportion of invariant sites = " + invarParam.getParameterValue(0);
-            }
-
-            if (msg.length() > 0) {
-                Logger.getLogger("dr.evomodel").info("Creating site model: " + msg);
-            } else {
-                Logger.getLogger("dr.evomodel").info("Creating site model.");
-            }
-
-            return new GammaSiteRateModel(muParam, shapeParam, catCount, invarParam);
-
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A SiteModel that has a gamma distributed rates across sites";
-        }
-
-        public Class getReturnType() {
-            return GammaSiteRateModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new XORRule(
-                        new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class)
-                        }),
-                        new ElementRule(RELATIVE_RATE, new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class)
-                        }), true
-                ),
-                new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[]{
-                        AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
-                        new ElementRule(Parameter.class)
-                }, true),
-                new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }, true)
-        };
-    };
 
     /**
      * mutation rate parameter

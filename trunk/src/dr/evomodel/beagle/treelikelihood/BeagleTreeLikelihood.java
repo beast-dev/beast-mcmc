@@ -36,9 +36,10 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.beagle.parsers.TreeLikelihoodParser;
-import dr.inference.model.Likelihood;
+import dr.evomodel.beagle.sitemodel.SiteRateModel;
+import dr.evomodel.beagle.sitemodel.BranchSiteModel;
+import dr.evomodel.beagle.substmodel.EigenDecomposition;
 import dr.inference.model.Model;
-import dr.xml.*;
 
 import java.util.logging.Logger;
 import java.util.Map;
@@ -62,7 +63,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      */
     public BeagleTreeLikelihood(PatternList patternList,
                           TreeModel treeModel,
-                          SiteModel siteModel,
+                          BranchSiteModel branchSiteModel,
+                          SiteRateModel siteRateModel,
                           BranchRateModel branchRateModel,
                           boolean useAmbiguities,
                           int deviceNumber
@@ -75,11 +77,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             logger.info("Using BEAGLE TreeLikelihood");
 
-            this.siteModel = siteModel;
-            addModel(siteModel);
+            this.siteRateModel = siteRateModel;
+            addModel(this.siteRateModel);
 
-            this.frequencyModel = siteModel.getFrequencyModel();
-            addModel(frequencyModel);
+            this.branchSiteModel = branchSiteModel;
+            addModel(branchSiteModel);
 
 			if (branchRateModel != null) {
 				this.branchRateModel = branchRateModel;
@@ -89,7 +91,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 			}
 			addModel(this.branchRateModel);
 
-            this.categoryCount = siteModel.getCategoryCount();
+            this.categoryCount = this.siteRateModel.getCategoryCount();
 
             int extNodeCount = treeModel.getExternalNodeCount();
 
@@ -233,7 +235,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 				updateNode(treeModel.getNode(index));
 			}
 
-        } else if (model == frequencyModel) {
+        } else if (model == branchSiteModel) {
 
             updateSubstitutionModel = true;
             updateAllNodes();
@@ -308,18 +310,19 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         traverse(treeModel, root, null);
 
         if (updateSubstitutionModel) {
-            SubstitutionModel substModel = siteModel.getSubstitutionModel();
-            beagle.setStateFrequencies(substModel.getFrequencyModel().getFrequencies());
+            // we are currently assuming a homogenous model...
+            EigenDecomposition ed = branchSiteModel.getEigenDecomposition(0, 0);
+            beagle.setStateFrequencies(branchSiteModel.getStateFrequencies(0));
             beagle.setEigenDecomposition(
                     0, // we are only dealing with a single matrix over all categories
-                    substModel.getEigenVectors(),
-                    substModel.getInverseEigenVectors(),
-                    substModel.getEigenValues());
+                    ed.getEigenVectors(),
+                    ed.getInverseEigenVectors(),
+                    ed.getEigenValues());
         }
 
         if (updateSiteModel) {
-            beagle.setCategoryRates(siteModel.getCategoryRates());
-            beagle.setCategoryRates(siteModel.getCategoryProportions());
+            beagle.setCategoryRates(this.siteRateModel.getCategoryRates());
+            beagle.setCategoryProportions(this.siteRateModel.getCategoryProportions());
         }
 
         int k = 0;
@@ -463,15 +466,14 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     // **************************************************************
 
     /**
-     * the frequency model for these sites
+     * the branch-site model for these sites
      */
-    protected final FrequencyModel frequencyModel;
+    protected final BranchSiteModel branchSiteModel;
 
     /**
      * the site model for these sites
      */
-    protected final SiteModel siteModel;
-
+    protected final SiteRateModel siteRateModel;
 	/**
 	 * the branch rate model
 	 */

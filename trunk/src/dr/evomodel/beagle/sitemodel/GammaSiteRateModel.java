@@ -30,6 +30,8 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
+import dr.evomodel.beagle.substmodel.SubstitutionModel;
+import dr.evomodel.beagle.substmodel.FrequencyModel;
 
 import java.util.logging.Logger;
 
@@ -325,4 +327,19 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
     private double[] categoryRates;
 
     private double[] categoryProportions;
+
+
+
+    // This is here solely to allow the GammaSiteModelParser to pass on the substitution model to the
+    // HomogenousBranchSiteModel so that the XML will be compatible with older BEAST versions. To be removed
+    // at some point.
+    public SubstitutionModel getSubstitutionModel() {
+        return substitutionModel;
+    }
+
+    public void setSubstitutionModel(SubstitutionModel substitutionModel) {
+        this.substitutionModel = substitutionModel;
+    }
+
+    private SubstitutionModel substitutionModel;
 }

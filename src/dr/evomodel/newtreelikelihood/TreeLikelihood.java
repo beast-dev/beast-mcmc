@@ -34,6 +34,7 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.beagle.treelikelihood.AbstractTreeLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.xml.*;

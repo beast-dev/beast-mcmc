@@ -217,6 +217,117 @@ public class HKY extends AbstractNucleotideModel {
     protected void setupRelativeRates() {
     }
 
+    /**
+     * This function returns the Eigen vectors.
+     *
+     * @return the array
+     */
+    public double[][] getEigenVectors() {
+        synchronized (this) {
+            if (updateMatrix) {
+                setupEigenSystem();
+            }
+        }
+        return Evec;
+    }
+
+    /**
+     * This function returns the inverse Eigen vectors.
+     *
+     * @return the array
+     */
+    public double[][] getInverseEigenVectors() {
+        synchronized (this) {
+            if (updateMatrix) {
+                setupEigenSystem();
+            }
+        }
+        return Ievc;
+    }
+
+    /**
+     * This function returns the Eigen values.
+     */
+    public double[] getEigenValues() {
+        synchronized (this) {
+            if (updateMatrix) {
+                setupEigenSystem();
+            }
+        }
+        return Eval;
+    }
+
+    /**
+     * setup substitution matrix
+     */
+    protected void setupEigenSystem() {
+        if (!eigenInitialised)
+            initialiseEigen();
+
+        final double kappa = getKappa();
+
+        // left eigenvector #1
+        Ievc[0][0] = freqA; // or, evec[0] = pi;
+        Ievc[0][1] = freqC;
+        Ievc[0][2] = freqG;
+        Ievc[0][3] = freqT;
+
+        // left eigenvector #2
+        Ievc[1][0] =  freqA * freqY;
+        Ievc[1][1] = -freqC * freqR;
+        Ievc[1][2] =  freqG * freqY;
+        Ievc[1][3] = -freqT * freqR;
+
+        Ievc[2][1] =  1; // left eigenvectors 3 = (0,1,0,-1); 4 = (1,0,-1,0)
+        Ievc[2][3] = -1;
+
+        Ievc[3][0] =  1;
+        Ievc[3][2] = -1;
+
+        Evec[0][0] =  1; // right eigenvector 1 = (1,1,1,1)'
+        Evec[1][0] =  1;
+        Evec[2][0] =  1;
+        Evec[3][0] =  1;
+
+        // right eigenvector #2
+        Evec[0][1] =  1.0/freqR;
+        Evec[1][1] = -1.0/freqY;
+        Evec[2][1] =  1.0/freqR;
+        Evec[3][1] = -1.0/freqY;
+
+        // right eigenvector #3
+        Evec[1][2] =  freqT / freqY;
+        Evec[3][2] = -freqC / freqY;
+
+        // right eigenvector #4
+        Evec[0][3] =  freqG / freqR;
+        Evec[2][3] = -freqA / freqR;
+
+        // eigenvectors
+        beta = -1.0 / (2.0 * (freqR * freqY + kappa * (freqA * freqG + freqC * freqT)));
+
+        A_R = 1.0 + freqR * (kappa - 1);
+        A_Y = 1.0 + freqY * (kappa - 1);
+
+        Eval[1] = beta;
+        Eval[2] = beta*A_Y;
+        Eval[3] = beta*A_R;
+
+        updateMatrix = false;
+    }
+
+    /**
+     * allocate memory for the Eigen routines
+     */
+    protected void initialiseEigen() {
+
+        Eval = new double[stateCount];
+        Evec = new double[stateCount][stateCount];
+        Ievc = new double[stateCount][stateCount];
+
+        eigenInitialised = true;
+        updateMatrix = true;
+    }
     // *****************************************************************
     // Interface Model
     // *****************************************************************

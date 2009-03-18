@@ -3,6 +3,8 @@
  */
 package dr.evomodel.newtreelikelihood;
 
+import dr.evomodel.beagle.treelikelihood.AbstractTreeLikelihood;
+
 import java.util.ArrayList;
 import java.util.List;
 

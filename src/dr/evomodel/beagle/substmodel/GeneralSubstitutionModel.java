@@ -23,11 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.newsubstmodel;
+package dr.evomodel.beagle.substmodel;
 
 import dr.evolution.datatype.*;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+import dr.evomodel.beagle.substmodel.SubstitutionModel;
 
 /**
  * <b>A general model of sequence substitution</b>. A general reversible class for any

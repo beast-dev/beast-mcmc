@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.newtreelikelihood;
+package dr.evomodel.beagle.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;

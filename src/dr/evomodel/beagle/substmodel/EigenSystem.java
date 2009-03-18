@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.newsubstmodel;
+package dr.evomodel.beagle.substmodel;
 
 /**
  * @author Andrew Rambaut

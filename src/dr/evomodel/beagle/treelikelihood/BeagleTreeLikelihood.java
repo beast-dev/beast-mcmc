@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.newtreelikelihood;
+package dr.evomodel.beagle.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
@@ -35,6 +35,7 @@ import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.beagle.parsers.TreeLikelihoodParser;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.xml.*;
@@ -56,10 +57,6 @@ import beagle.Beagle;
 
 public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
-    public static final String TREE_LIKELIHOOD = "treeLikelihood";
-    public static final String USE_AMBIGUITIES = "useAmbiguities";
-    public static final String DEVICE_NUMBER = "deviceNumber";
-
     /**
      * Constructor.
      */
@@ -71,7 +68,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                           int deviceNumber
     ) {
 
-        super(TREE_LIKELIHOOD, patternList, treeModel);
+        super(TreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
 
         try {
             final Logger logger = Logger.getLogger("dr.evomodel");
@@ -460,71 +457,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         return update;
 
     }
-
-
-    /**
-     * The default XML parser - this one has the same name as dr.evomodel.treelikelihod/TreeLikelihood
-     * so will override that if loaded.
-     */
-    public static TreeLikelihoodParser PARSER = new TreeLikelihoodParser(TREE_LIKELIHOOD);
-
-    static class TreeLikelihoodParser extends AbstractXMLObjectParser {
-
-        private final String parserName;
-
-        TreeLikelihoodParser(final String parserName) {
-            this.parserName = parserName;
-        }
-
-        public String getParserName() {
-            return parserName;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
-            int deviceNumber = xo.getAttribute(DEVICE_NUMBER,1) - 1;
-
-            PatternList patternList = (PatternList) xo.getChild(PatternList.class);
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
-            BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-
-            return new BeagleTreeLikelihood(
-                    patternList,
-                    treeModel,
-                    siteModel,
-                    branchRateModel,
-                    useAmbiguities,
-                    deviceNumber
-            );
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents the likelihood of a patternlist on a tree given the site model.";
-        }
-
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-                AttributeRule.newIntegerRule(DEVICE_NUMBER,true),
-                new ElementRule(PatternList.class),
-                new ElementRule(TreeModel.class),
-                new ElementRule(SiteModel.class),
-                new ElementRule(BranchRateModel.class, true)
-        };
-    };
 
     // **************************************************************
     // INSTANCE VARIABLES

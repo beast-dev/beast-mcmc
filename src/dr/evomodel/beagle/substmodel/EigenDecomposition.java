@@ -1,6 +1,4 @@
-package dr.evomodel.newsubstmodel;
-
-import java.util.Arrays;
+package dr.evomodel.beagle.substmodel;
 
 /**
  * @author Andrew Rambaut

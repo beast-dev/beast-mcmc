@@ -33,6 +33,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 /**
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
@@ -41,7 +42,7 @@ import dr.inference.model.Parameter;
  * @version $Id: AbstractTreeLikelihood.java,v 1.16 2005/06/07 16:27:39 alexei Exp $
  */
 
-public abstract class AbstractTreeLikelihood extends AbstractModel implements Likelihood {
+public abstract class AbstractTreeLikelihood extends AbstractModel implements Likelihood, Reportable {
 
     public AbstractTreeLikelihood(String name, PatternList patternList,
                                   TreeModel treeModel) {
@@ -206,7 +207,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModel implements Li
 
     protected abstract double calculateLogLikelihood();
 
-    public String toString() {
+    public String getReport() {
         if (hasInitialized) {
             return getClass().getName() + "(" + getLogLikelihood() + ")";
         } else {

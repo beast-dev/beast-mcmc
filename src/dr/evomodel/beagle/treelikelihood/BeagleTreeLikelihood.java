@@ -240,7 +240,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             updateSubstitutionModel = true;
             updateAllNodes();
 
-        } else if (model instanceof SiteModel) {
+        } else if (model == siteRateModel) {
 
             updateSubstitutionModel = true;
             updateSiteModel = true;
@@ -325,10 +325,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             beagle.setCategoryProportions(this.siteRateModel.getCategoryProportions());
         }
 
-        int k = 0;
-        for (int branchIndex : branchUpdateIndices) {
-            beagle.calculateProbabilityTransitionMatrices(branchIndex, branchLengths[k]);
-            k++;
+        for (int i = 0; i < branchUpdateCount; i++) {
+            beagle.calculateProbabilityTransitionMatrices(branchUpdateIndices[i], branchLengths[i]);
         }
 
         beagle.calculatePartials(operations,dependencies, operationCount);

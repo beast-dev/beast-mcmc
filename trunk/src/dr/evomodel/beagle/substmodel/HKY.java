@@ -227,8 +227,12 @@ public class HKY extends BaseSubstitutionModel {
     };
 
     public static void main(String[] args) {
-        double kappa = 2.0;
-        double[] pi = new double[]{0.15,0.30,0.20,0.35};
+//        double kappa = 2.0;
+//        double[] pi = new double[]{0.15,0.30,0.20,0.35};
+//        double time = 0.1;
+
+        double kappa = 1.0;
+        double[] pi = new double[]{0.25,0.25,0.25,0.25};
         double time = 0.1;
 
         FrequencyModel freqModel= new FrequencyModel(Nucleotides.INSTANCE, pi);

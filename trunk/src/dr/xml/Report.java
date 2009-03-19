@@ -56,7 +56,13 @@ public class Report {
         writer.println();
 
         for (Object object : objects) {
-            final String item = object.toString();
+            final String item;
+
+            if (object instanceof Reportable) {
+                item = ((Reportable)object).getReport();
+            } else {
+                item = object.toString();
+            }
             writer.print(item.trim());
             writer.print(" ");
         }

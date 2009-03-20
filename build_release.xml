@@ -31,7 +31,7 @@
     <target name="compile-basic" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
         <javac source="1.5" srcdir="${src}" destdir="${build}"
-               classpath="${lib}/jebl.jar:${lib}/jdom.jar:${lib}/commons-math-1.2.jar:${lib}/mtj.jar:lib/colt.jar:lib/itext-1.4.5.jar:lib/junit-4.4.jar:lib/JRI.jar:${lib}/mpj.jar">
+               classpath="${lib}/jebl.jar:${lib}/jdom.jar:${lib}/beagle.jar:${lib}/commons-math-1.2.jar:${lib}/mtj.jar:lib/colt.jar:lib/itext-1.4.5.jar:lib/junit-4.4.jar:lib/JRI.jar:${lib}/mpj.jar">
             <include name="dr/app/beast/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/oldbeauti/**"/>
@@ -97,6 +97,7 @@
             </fileset>
             <zipgroupfileset dir="${lib}" includes="jebl.jar"/>
             <zipgroupfileset dir="${lib}" includes="jdom.jar"/>
+            <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="commons-math-1.2.jar"/>
             <zipgroupfileset dir="${lib}" includes="mtj.jar"/>
             <zipgroupfileset dir="${lib}"

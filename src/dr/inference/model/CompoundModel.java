@@ -66,7 +66,7 @@ public class CompoundModel implements Model {
 
     public void addModelListener(ModelListener listener) {
         // add listener to all models comprizing this compund model - a change in any one of them
-        // menas the compund model changed
+        // means the compund model changed
 
         listeners.add(listener);
         for( Model m : models ) {

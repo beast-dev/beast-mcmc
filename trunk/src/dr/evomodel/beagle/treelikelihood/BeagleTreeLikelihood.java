@@ -325,9 +325,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             beagle.setCategoryProportions(this.siteRateModel.getCategoryProportions());
         }
 
-        for (int i = 0; i < branchUpdateCount; i++) {
-            beagle.calculateProbabilityTransitionMatrices(branchUpdateIndices[i], branchLengths[i]);
-        }
+        beagle.calculateProbabilityTransitionMatrices(branchUpdateIndices, branchLengths, branchUpdateCount);
 
         beagle.calculatePartials(operations,dependencies, operationCount);
 

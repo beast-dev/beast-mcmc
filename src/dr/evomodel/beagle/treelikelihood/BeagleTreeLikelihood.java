@@ -25,28 +25,24 @@
 
 package dr.evomodel.beagle.treelikelihood;
 
+import beagle.Beagle;
+import beagle.BeagleFactory;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.beagle.parsers.TreeLikelihoodParser;
+import dr.evomodel.beagle.sitemodel.BranchSiteModel;
+import dr.evomodel.beagle.sitemodel.SiteRateModel;
+import dr.evomodel.beagle.substmodel.EigenDecomposition;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.beagle.parsers.TreeLikelihoodParser;
-import dr.evomodel.beagle.sitemodel.SiteRateModel;
-import dr.evomodel.beagle.sitemodel.BranchSiteModel;
-import dr.evomodel.beagle.substmodel.EigenDecomposition;
 import dr.inference.model.Model;
 
-import java.util.logging.Logger;
-import java.util.Map;
 import java.util.HashMap;
-
-import beagle.BeagleFactory;
-import beagle.Beagle;
+import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * TreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.

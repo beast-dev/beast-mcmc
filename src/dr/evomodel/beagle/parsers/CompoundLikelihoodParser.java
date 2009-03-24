@@ -1,9 +1,6 @@
 package dr.evomodel.beagle.parsers;
 
-import dr.inference.model.Parameter;
-import dr.inference.model.Likelihood;
-import dr.inference.model.CompoundModel;
-import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.*;
 import dr.xml.*;
 import dr.evomodel.beagle.substmodel.FrequencyModel;
 import dr.evomodel.beagle.substmodel.HKY;
@@ -17,6 +14,7 @@ import java.util.List;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Marc Suchard
  */
 public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
 
@@ -28,15 +26,8 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-        int threads = 0;
-        for (int i = 0; i < xo.getChildCount(); i++) {
-            if (xo.getChild(i) instanceof Likelihood) {
-                threads ++;
-            }
-        }
-
-        CompoundLikelihood compoundLikelihood = new CompoundLikelihood(threads);
+   
+        ThreadedCompoundLikelihood compoundLikelihood = new ThreadedCompoundLikelihood();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             if (xo.getChild(i) instanceof Likelihood) {
@@ -49,8 +40,7 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
-        Logger.getLogger("dr.evomodel").info("Multithreaded Likelihood, using " + threads + " threads.");
-
+        Logger.getLogger("dr.evomodel").info("Multithreaded Likelihood, using " + compoundLikelihood.getLikelihoodCount() + " threads.");
 
         return compoundLikelihood;
     }

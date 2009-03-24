@@ -93,6 +93,7 @@
             <fileset dir="${src}">
                 <include name="dr/**/*.png"/>
                 <include name="org/virion/jam/**/*.png"/>
+		<include name="dr/**/*.properties"/>
             </fileset>
             <zipgroupfileset dir="${lib}" includes="jebl.jar"/>
             <zipgroupfileset dir="${lib}" includes="jdom.jar"/>

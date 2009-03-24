@@ -11,17 +11,18 @@ import dr.evomodel.beagle.sitemodel.BranchSiteModel;
 import dr.evomodel.beagle.sitemodel.HomogenousBranchSiteModel;
 import dr.evomodel.beagle.sitemodel.GammaSiteRateModel;
 import dr.inference.model.Likelihood;
+import beagle.BeagleFactory;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @author Marc Suchard
  * @version $Id$
  */
 public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String TREE_LIKELIHOOD = "treeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
-    public static final String DEVICE_NUMBER = "deviceNumber";
 
     public String getParserName() {
         return TREE_LIKELIHOOD;
@@ -30,7 +31,8 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
-        int deviceNumber = xo.getAttribute(DEVICE_NUMBER,1) - 1;
+        int deviceNumber = xo.getAttribute(BeagleFactory.DEVICE_NUMBER,1) - 1;
+        boolean preferSinglePrecision = xo.getAttribute(BeagleFactory.PREFER_SINGLE_PRECISION,false);
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -49,7 +51,8 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                 siteRateModel,
                 branchRateModel,
                 useAmbiguities,
-                deviceNumber
+                deviceNumber,
+                preferSinglePrecision
         );
     }
 
@@ -71,7 +74,8 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-            AttributeRule.newIntegerRule(DEVICE_NUMBER,true),
+            AttributeRule.newIntegerRule(BeagleFactory.DEVICE_NUMBER,true),
+            AttributeRule.newBooleanRule(BeagleFactory.PREFER_SINGLE_PRECISION, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),

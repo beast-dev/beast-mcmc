@@ -35,7 +35,9 @@ import java.util.ArrayList;
 public class PiecewiseExponentialPopulation extends DemographicFunction.Abstract {
 
     /**
-     * Construct demographic model with default settings
+     * Construct demographic model with default settings.
+     * In this parametization there is a population size at present and a vector of
+     * growth rates.
      */
     public PiecewiseExponentialPopulation(double[] intervals, double N0, double[] lambdas, Type units) {
         super(units);
@@ -46,9 +48,29 @@ public class PiecewiseExponentialPopulation extends DemographicFunction.Abstract
             throw new IllegalArgumentException();
         }
 
-        this.N0 = N0;
+        this.thetas = new double[] { N0 };
         this.intervals = intervals;
         this.lambdas = lambdas;
+
+    }
+
+    /**
+     * Construct demographic model with default settings
+     * In this parametization there is a vector of population sizes and an ancestral
+     * growth rate.
+     */
+    public PiecewiseExponentialPopulation(double[] intervals, double[] thetas, double lambda, Type units) {
+        super(units);
+        if (thetas == null || intervals == null) {
+            throw new IllegalArgumentException();
+        }
+        if (thetas.length != intervals.length + 1) {
+            throw new IllegalArgumentException();
+        }
+
+        this.thetas = thetas;
+        this.intervals = intervals;
+        this.lambdas = new double[] { lambda };
 
     }
 
@@ -57,17 +79,44 @@ public class PiecewiseExponentialPopulation extends DemographicFunction.Abstract
     // **************************************************************
 
     public double getDemographic(double t) {
-        int epoch = 0;
-        double t1 = t;
-        double N1 = N0;
-        double dt = getEpochDuration(epoch);
-        while (t1 > dt) {
-            N1 = N1 * Math.exp(-lambdas[epoch] * dt);
-            t1 -= dt;
-            epoch ++;
-            dt = getEpochDuration(epoch);
+        if (thetas.length == 1) {
+            int epoch = 0;
+            double t1 = t;
+            double N1 = thetas[0];
+            double dt = getEpochDuration(epoch);
+            while (t1 > dt) {
+                N1 = N1 * Math.exp(-lambdas[epoch] * dt);
+                t1 -= dt;
+                epoch ++;
+                dt = getEpochDuration(epoch);
+            }
+            return N1 * Math.exp(-lambdas[epoch] * t1);
+        } else {
+            int epoch = 0;
+            double t1 = t;
+            double N1 = thetas[0];
+            double dt = getEpochDuration(epoch);
+            while (t1 > dt) {
+                epoch ++;
+                N1 = thetas[epoch];
+                t1 -= dt;
+                dt = getEpochDuration(epoch);
+            }
+            double r;
+            if (epoch + 1 >= thetas.length) {
+                r = lambdas[0];
+            } else {
+                double N2 = thetas[epoch + 1];
+                if (N1 < N2) {
+                    r = -(Math.log(N2) - Math.log(N1)) / dt;
+                } else if (N1 > N2) {
+                    r = (Math.log(N1) - Math.log(N2)) / dt;
+                } else {
+                    r = 0.0;
+                }
+            }
+            return N1 * Math.exp(-r * t1);
         }
-        return N1 * Math.exp(-lambdas[epoch] * t1);
     }
 
     /**
@@ -101,30 +150,37 @@ public class PiecewiseExponentialPopulation extends DemographicFunction.Abstract
     }
 
     public String getArgumentName(int i) {
-        if (i == 0) {
-            return "N0";
+        if (i < thetas.length) {
+            return "theta" + i;
         }
-        return "theta" + i;
+        return "lambda" + (i - thetas.length);
     }
 
     public double getArgument(int i) {
-        if (i == 0) {
-            return N0;
+        if (i < thetas.length) {
+            return thetas[i];
         }
-        return lambdas[i - 1];
+        return lambdas[i - thetas.length];
     }
 
     public void setArgument(int i, double value) {
-        if (i == 0) {
-            N0 = value;
+        if (i < thetas.length) {
+            thetas[i] = value;
         } else {
-            lambdas[i - 1] = value;
+            lambdas[i - thetas.length] = value;
         }
     }
 
     public DemographicFunction getCopy() {
-        PiecewiseExponentialPopulation df = new PiecewiseExponentialPopulation(new double[intervals.length], N0, new double[lambdas.length], getUnits());
+        PiecewiseExponentialPopulation df;
+
+        if (thetas.length == 1) {
+            df = new PiecewiseExponentialPopulation(new double[intervals.length], thetas[0], new double[lambdas.length], getUnits());
+        } else {
+            df = new PiecewiseExponentialPopulation(new double[intervals.length], new double[thetas.length], lambdas[0], getUnits());
+        }
         System.arraycopy(intervals, 0, df.intervals, 0, intervals.length);
+        System.arraycopy(thetas, 0, df.thetas, 0, thetas.length);
         System.arraycopy(lambdas, 0, df.lambdas, 0, lambdas.length);
 
         return df;
@@ -154,6 +210,10 @@ public class PiecewiseExponentialPopulation extends DemographicFunction.Abstract
         return relativeTime / getEpochDemographic(epoch);
     }
 
+    public int getEpochCount() {
+        return intervals.length + 1;
+    }
+
     /**
      * @return the duration of the specified epoch (in whatever units this demographic model is specified in).
      */
@@ -177,15 +237,57 @@ public class PiecewiseExponentialPopulation extends DemographicFunction.Abstract
      * @return the pop size of a given epoch.
      */
     public final double getEpochDemographic(int epoch) {
-        if (epoch < 0 || epoch >= lambdas.length) {
+        if (epoch < 0 || epoch > intervals.length) {
             throw new IllegalArgumentException();
         }
-        return lambdas[epoch];
+
+        if (thetas.length == 1) {
+            int ep = 0;
+            double N1 = thetas[0];
+            double dt = getEpochDuration(ep);
+            while (epoch > ep) {
+                N1 = N1 * Math.exp(-lambdas[ep] * dt);
+                ep ++;
+                dt = getEpochDuration(ep);
+            }
+            return N1;
+        } else {
+            return thetas[epoch];
+        }
+    }
+
+    /**
+     * @return the pop size of a given epoch.
+     */
+    public final double getEpochGrowthRate(int epoch) {
+        if (epoch < 0 || epoch > intervals.length) {
+            throw new IllegalArgumentException();
+        }
+        if (thetas.length == 1) {
+            return lambdas[epoch];
+        } else {
+            if (epoch >= thetas.length - 1) {
+                return lambdas[0];
+            } else {
+                double N1 = thetas[epoch];
+                double N2 = thetas[epoch + 1];
+                double dt = getEpochDuration(epoch);
+                if (N1 < N2) {
+                    return -Math.log(N2 - N1) / dt;
+                } else if (N1 > N2) {
+                    return Math.log(N1 - N2) / dt;
+                } else {
+                    return 0.0;
+                }
+            }
+        }
     }
 
     public String toString() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(N0);
+        for (int i = 0; i < thetas.length; i++) {
+            buffer.append("\t").append(thetas[i]);
+        }
         for (int i = 0; i < lambdas.length; i++) {
             buffer.append("\t").append(lambdas[i]);
         }
@@ -193,6 +295,7 @@ public class PiecewiseExponentialPopulation extends DemographicFunction.Abstract
     }
 
     double[] intervals;
+    double[] thetas;
     double[] lambdas;
-    double N0;
+
 }

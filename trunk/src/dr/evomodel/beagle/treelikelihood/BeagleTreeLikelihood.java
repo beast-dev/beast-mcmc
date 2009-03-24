@@ -49,6 +49,7 @@ import java.util.logging.Logger;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @author Marc Suchard
  * @version $Id: TreeLikelihood.java,v 1.31 2006/08/30 16:02:42 rambaut Exp $
  */
 
@@ -63,7 +64,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                           SiteRateModel siteRateModel,
                           BranchRateModel branchRateModel,
                           boolean useAmbiguities,
-                          int deviceNumber
+                          int deviceNumber,
+                          boolean preferSinglePrecision
     ) {
 
         super(TreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
@@ -91,10 +93,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             int extNodeCount = treeModel.getExternalNodeCount();
 
-	        Map<String, Object> configuration = new HashMap<String, Object>();
-	        configuration.put(BeagleFactory.STATE_COUNT, stateCount);
-            configuration.put(BeagleFactory.SINGLE_PRECISION, false);
-            configuration.put(BeagleFactory.INSTANCE_NUMBER, deviceNumber);
+	  Map<String, Object> configuration = new HashMap<String, Object>();
+	  configuration.put(BeagleFactory.STATE_COUNT, stateCount);
+            configuration.put(BeagleFactory.PREFER_SINGLE_PRECISION, preferSinglePrecision);
+            configuration.put(BeagleFactory.DEVICE_NUMBER, deviceNumber);
 
             beagle = BeagleFactory.loadBeagleInstance(configuration);
 

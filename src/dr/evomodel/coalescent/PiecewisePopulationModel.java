@@ -29,6 +29,7 @@ import dr.evolution.coalescent.*;
 import dr.evoxml.XMLUnits;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 import dr.xml.*;
 
 /**
@@ -58,9 +59,11 @@ public class PiecewisePopulationModel extends DemographicModel
 
         super(name);
 
-        if (N0Parameter.getDimension() != (epochLengths.length + 1)) {
+        this.epochCount = epochLengths.length + 1;
+
+        if (N0Parameter.getDimension() != epochCount) {
             throw new IllegalArgumentException(
-                    "epochSize parameter must have one less components than the number of epochs: (" + (epochLengths.length + 1) +
+                    "epochSize parameter must have the same dimensions as the number of epochs: (" + epochCount +
                             ") but instead has " + N0Parameter.getDimension() + "!"
             );
         }
@@ -89,12 +92,7 @@ public class PiecewisePopulationModel extends DemographicModel
 
         super(name);
 
-        if (growthRatesParameter.getDimension() != (epochLengths.length + 1)) {
-            throw new IllegalArgumentException(
-                    "epochSize parameter must have one less components than the number of epochs: (" + (epochLengths.length + 1) +
-                            ") but instead has " + N0Parameter.getDimension() + "!"
-            );
-        }
+        this.epochCount = epochLengths.length + 1;
 
         this.N0Parameter = N0Parameter;
         this.growthRatesParameter = growthRatesParameter;
@@ -106,17 +104,39 @@ public class PiecewisePopulationModel extends DemographicModel
 
         setUnits(units);
 
-        piecewiseFunction = new PiecewiseExponentialPopulation(epochLengths,
-                N0Parameter.getParameterValue(0),
-                new double[growthRatesParameter.getDimension()], units);
+        int popSizeCount = N0Parameter.getDimension();
+        int growthRateCount = growthRatesParameter.getDimension();
+
+        if (popSizeCount == epochCount && growthRateCount == 1) {
+            piecewiseFunction = new PiecewiseExponentialPopulation(epochLengths,
+                    new double[N0Parameter.getDimension()], 
+                    growthRatesParameter.getParameterValue(0),
+                    units);
+        } else if (popSizeCount == 1 && growthRateCount == epochCount) {
+            piecewiseFunction = new PiecewiseExponentialPopulation(epochLengths,
+                    N0Parameter.getParameterValue(0),
+                    new double[growthRatesParameter.getDimension()], units);
+        } else {
+            if (growthRatesParameter.getDimension() != epochCount) {
+                throw new IllegalArgumentException(
+                        "growthRate parameter must have the same dimension as the number of epochs: (" + epochCount +
+                                ") but instead has " + N0Parameter.getDimension() + "!"
+                );
+            }
+        }
+
+
+        addStatistic(new GrowthRateStatistic());
     }
 
     public DemographicFunction getDemographicFunction() {
         if (growthRatesParameter != null) {
             // exponential growth
-            piecewiseFunction.setArgument(0, N0Parameter.getParameterValue(0));
+            for (int i = 0; i < N0Parameter.getDimension(); i++) {
+                piecewiseFunction.setArgument(i, N0Parameter.getParameterValue(i));
+            }
             for (int i = 0; i < growthRatesParameter.getDimension(); i++) {
-                piecewiseFunction.setArgument(i + 1, growthRatesParameter.getParameterValue(i));
+                piecewiseFunction.setArgument(i + N0Parameter.getDimension(), growthRatesParameter.getParameterValue(i));
             }
         } else {
             // constant or linear growth
@@ -147,6 +167,22 @@ public class PiecewisePopulationModel extends DemographicModel
     protected void storeState() {} // no additional state needs storing
     protected void restoreState() {} // no additional state needs restoring
     protected void acceptState() {} // no additional state needs accepting
+
+    public class GrowthRateStatistic extends Statistic.Abstract {
+
+        public GrowthRateStatistic() {
+            super("growthRate");
+        }
+
+        public int getDimension() {
+            return ((PiecewiseExponentialPopulation)piecewiseFunction).getEpochCount();
+        }
+
+        public double getStatisticValue(int i) {
+            return ((PiecewiseExponentialPopulation)piecewiseFunction).getEpochGrowthRate(i);
+        }
+
+    }
 
     /**
      * Parses an element from an DOM document into a PiecewisePopulation.
@@ -216,4 +252,6 @@ public class PiecewisePopulationModel extends DemographicModel
     private Parameter N0Parameter;
     private Parameter growthRatesParameter;
     private DemographicFunction piecewiseFunction = null;
+
+    private final int epochCount;
 }

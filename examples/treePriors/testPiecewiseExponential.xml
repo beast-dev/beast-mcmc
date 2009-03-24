@@ -167,12 +167,24 @@
         </nodeHeights>
     </treeModel>
 
+    <!--
     <piecewisePopulation id="piecewise">
         <populationSize>
             <parameter id="piecewise.popSize" dimension="1" value="380.0" lower="0.0" upper="38000.0"/>
         </populationSize>
         <growthRates>
             <parameter id="piecewise.growth" dimension="4" value="0.0" lower="-10.0" upper="10.0"/>
+        </growthRates>
+        <epochWidths widths="20.0 20.0 20.0" />
+    </piecewisePopulation>
+    -->
+
+    <piecewisePopulation id="piecewise">
+        <populationSize>
+            <parameter id="piecewise.popSize" dimension="4" value="380.0" lower="0.0" upper="38000.0"/>
+        </populationSize>
+        <growthRates>
+            <parameter id="piecewise.growth" dimension="1" value="0.0" lower="-10" upper="10"/>
         </growthRates>
         <epochWidths widths="20.0 20.0 20.0" />
     </piecewisePopulation>
@@ -246,7 +258,7 @@
         <scaleOperator scaleFactor="0.75" weight="6">
             <parameter idref="piecewise.popSize"/>
         </scaleOperator>
-        <randomWalkOperator windowSize="0.01" weight="15">
+		<randomWalkOperator windowSize="0.01" weight="15">
             <parameter idref="piecewise.growth"/>
         </randomWalkOperator>
         <scaleOperator scaleFactor="0.75" weight="3">
@@ -299,6 +311,7 @@
             <parameter idref="clock.rate"/>
             <parameter idref="piecewise.popSize"/>
             <parameter idref="piecewise.growth"/>
+            <statistic id="growthRate" name="growthRate"><piecewisePopulation idref="piecewise"/></statistic>
             <parameter idref="hky.kappa"/>
             <parameter idref="treeModel.rootHeight"/>
             <treeLikelihood idref="treeLikelihood"/>

@@ -42,11 +42,11 @@ import dr.inference.model.Parameter;
  */
 public class DiscretizedBranchRates extends AbstractModel implements BranchRateModel {
 
-    private ParametricDistributionModel distributionModel;
-    private TreeModel tree;
+    private final ParametricDistributionModel distributionModel;
+    private final TreeModel tree;
 
     // The rate categories of each branch
-    private Parameter rateCategoryParameter;
+    private final Parameter rateCategoryParameter;
 
     // the index of the root node.
     private int rootNodeNumber;

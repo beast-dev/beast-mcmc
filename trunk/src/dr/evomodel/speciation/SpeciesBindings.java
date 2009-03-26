@@ -40,7 +40,7 @@ public class SpeciesBindings extends AbstractModel {
     private boolean dirty_sg;
     private final boolean verbose = false;
 
-    private SpeciesBindings(SPinfo[] species, TreeModel[] geneTrees) {
+    private SpeciesBindings(SPinfo[] species, TreeModel[] geneTrees, double[] popFactors) {
         super(null);
 
         this.species = species;
@@ -61,7 +61,7 @@ public class SpeciesBindings extends AbstractModel {
         for(int i = 0; i < geneTrees.length; i++) {
             final TreeModel t = geneTrees[i];
             addModel(t);
-            this.geneTrees[i] = new GeneTreeInfo(t);
+            this.geneTrees[i] = new GeneTreeInfo(t, popFactors[i]);
         }
 
         for(GeneTreeInfo gt : this.geneTrees) {
@@ -148,13 +148,14 @@ public class SpeciesBindings extends AbstractModel {
         return tot;
     }
 
+    // length of points must be right
     void getAllCoalPoints(int spIndex, double[] points) {
 
         int k = 0;
-        for(GeneTreeInfo t : geneTrees) {
-            int k1 = t.nLineages(spIndex) - 1;
+        for( GeneTreeInfo t : geneTrees ) {
+            final int totCoalEvents = t.nLineages(spIndex) - 1;
             int savek = k;
-            for(CoalInfo ci : t.getCoalInfo()) {
+            for( CoalInfo ci : t.getCoalInfo() ) {
 //               if( ci == null ) {
 //                assert ci != null;
 //            }
@@ -163,10 +164,10 @@ public class SpeciesBindings extends AbstractModel {
                     ++k;
                 }
             }
-            if( !(k1 >= 0 && savek + k1 == k) || (k1 < 0 && savek == k) ) {
-                System.err.println(k1);
+            if( !(totCoalEvents >= 0 && savek + totCoalEvents == k) || (totCoalEvents < 0 && savek == k) ) {
+                System.err.println(totCoalEvents);
             }
-            assert (k1 >= 0 && savek + k1 == k) || (k1 < 0 && savek == k);
+            assert (totCoalEvents >= 0 && savek + totCoalEvents == k) || (totCoalEvents < 0 && savek == k);
         }
         assert k == points.length;
         HeapSort.sort(points);
@@ -284,9 +285,11 @@ public class SpeciesBindings extends AbstractModel {
         private CoalInfo[] savedcList;
         private boolean dirty;
         private boolean wasBacked;
+        private double popFactor;
 
-        GeneTreeInfo(TreeModel tree) {
+        GeneTreeInfo(TreeModel tree, double popFactor) {
             this.tree = tree;
+            this.popFactor = popFactor;
 
             lineagesCount = new int[species.length];
             Arrays.fill(lineagesCount, 0);
@@ -359,6 +362,10 @@ public class SpeciesBindings extends AbstractModel {
 
             wasBacked = false;
         }
+
+        public double popFactor() {
+            return popFactor;
+        }
     }
 
     public GeneTreeInfo[] getGeneTrees() {
@@ -403,6 +410,8 @@ public class SpeciesBindings extends AbstractModel {
         }
     }
 
+    public static final String PLOIDY = "ploidy";
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
@@ -419,24 +428,40 @@ public class SpeciesBindings extends AbstractModel {
                 }
             }
 
-            XMLObject xogt = (XMLObject) xo.getChild(GENE_TREES);
-            TreeModel[] trees = new TreeModel[xogt.getChildCount()];
+            final XMLObject xogt = (XMLObject) xo.getChild(GENE_TREES);
+            final int nTrees = xogt.getChildCount();
+            final TreeModel[] trees = new TreeModel[nTrees];
+            double[] popFactors = new double[nTrees];
+
             for(int nt = 0; nt < trees.length; ++nt) {
-                trees[nt] = (TreeModel) xogt.getChild(nt);
+                Object child = xogt.getChild(nt);
+                if( ! (child instanceof TreeModel) ) {
+                    child = xogt.getChild(TreeModel.class);
+                    popFactors[nt] = xogt.getDoubleAttribute(PLOIDY) ;
+                } else {
+                    popFactors[nt] = -1;
+                }
+                trees[nt] = (TreeModel) child;
             }
 
             try {
-                return new SpeciesBindings(sp.toArray(new SPinfo[sp.size()]), trees);
+                return new SpeciesBindings(sp.toArray(new SPinfo[sp.size()]), trees, popFactors);
             } catch( Error e ) {
                 throw new XMLParseException(e.getMessage());
             }
         }
 
+        ElementRule treeWithPloidy = new ElementRule("tree",
+                                new XMLSyntaxRule[]{AttributeRule.newDoubleRule(PLOIDY),
+                                new ElementRule(TreeModel.class)});
+        XMLSyntaxRule[] someTree = {new OrRule(new ElementRule(TreeModel.class), treeWithPloidy)};
+
         public XMLSyntaxRule[] getSyntaxRules() {
             return new XMLSyntaxRule[]{
                     new ElementRule(SPinfo.class, 2, Integer.MAX_VALUE),
+                   // new ElementRule(GENE_TREES, someTree,  1, Integer.MAX_VALUE )
                     new ElementRule(GENE_TREES,
-                            new XMLSyntaxRule[]{new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE)}),
+                            new  XMLSyntaxRule[]{new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE) } ) ,
             };
         }
 

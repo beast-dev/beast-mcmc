@@ -106,15 +106,15 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
 
         tree.beginTreeEdit();
 
-        setPreorderIndices(tree, preOrderIndexBefore);
+        tree.setPreorderIndices(preOrderIndexBefore);
 
         tree.setNodeHeight(order[2*which+1], newHeight);
 
         mauReconstruct(tree, order, swapped);
 
-        // restore preorder of pops -
+        // restore pre-order of pops -
         {
-            setPreorderIndices(tree, preOrderIndexAfter);
+            tree.setPreorderIndices(preOrderIndexAfter);
 
             double[] splitPopValues = null;
 
@@ -159,19 +159,26 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
 //        }
 //    }
 
-    static private void setPreorderIndices(SpeciesTreeModel tree, int[] indices) {
-        setPreorderIndices(tree, tree.getRoot(), 0, indices);
-    }
+//    static private void setPreorderIndices(SpeciesTreeModel tree, int[] indices) {
+//        setPreorderIndices(tree, tree.getRoot(), 0, indices);
+//    }
+//
+//    static private int setPreorderIndices(SpeciesTreeModel tree, NodeRef node, int loc, int[] indices) {
+//        if( ! tree.isExternal(node) ) {
+//            int l = setPreorderIndices(tree, tree.getChild(node, 0), loc, indices);
+//            indices[node.getNumber()] = l;
+//            loc = setPreorderIndices(tree, tree.getChild(node, 1), l+1, indices);
+//        }
+//        return loc;
+//    }
 
-    static private int setPreorderIndices(SpeciesTreeModel tree, NodeRef node, int loc, int[] indices) {
-        if( ! tree.isExternal(node) ) {
-            int l = setPreorderIndices(tree, tree.getChild(node, 0), loc, indices);
-            indices[node.getNumber()] = l;
-            loc = setPreorderIndices(tree, tree.getChild(node, 1), l+1, indices);
-        }
-        return loc;
-    }
-
+    /**
+     * Obtain an ordering of tree tips from randomly swaping the children order in internal nodes.
+     *
+     * @param tree    tree to create order from
+     * @param order   Nodes in their random order (only odd indices are filled)
+     * @param wasSwapped  true if internal node was swapped
+     */
     static private void mauCanonical(Tree tree, NodeRef[] order, boolean[] wasSwapped) {
         mauCanonicalSub(tree, tree.getRoot(), 0, order, wasSwapped);
     }

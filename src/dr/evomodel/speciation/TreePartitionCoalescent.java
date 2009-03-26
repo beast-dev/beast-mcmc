@@ -1,6 +1,7 @@
 package dr.evomodel.speciation;
 
 import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.ScaledDemographic;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
@@ -63,21 +64,21 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
 
         double logl = 0;
         int[] info = {0, 0};
-        for(SpeciesBindings.GeneTreeInfo geneTree : species.getGeneTrees()) {
-            logl += treeLogLikelihood(geneTree, spTree.getRoot(), info);
+        for( SpeciesBindings.GeneTreeInfo geneTree : species.getGeneTrees() ) {
+            logl += treeLogLikelihood(geneTree, spTree.getRoot(), info, geneTree.popFactor());
         }
 
         return logl;
     }
 
-    final boolean verbose = false;
+    private final boolean verbose = false;
 
-    private double treeLogLikelihood(SpeciesBindings.GeneTreeInfo geneTree, NodeRef node, int[] info) {
+    private double treeLogLikelihood(SpeciesBindings.GeneTreeInfo geneTree, NodeRef node, int[] info, double popFactor) {
         // number of lineages remaining at node
         int nLineages;
         // location in coalescent list (optimization)
         int indexInClist = 0;
-        // accumulated log-liklihood in brach from node to it's parent
+        // accumulated log-likelihood inBranchh from node to it's parent
         double like = 0;
 
         final double t0 = spTree.getNodeHeight(node);
@@ -103,7 +104,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
             nLineages = 0;
             for(int nc = 0; nc < 2; ++nc) {
                 final NodeRef child = spTree.getChild(node, nc);
-                like += treeLogLikelihood(geneTree, child, info);
+                like += treeLogLikelihood(geneTree, child, info, popFactor);
                 nLineages += info[0];
                 indexInClist = Math.max(indexInClist, info[1]);
             }
@@ -131,7 +132,18 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
 
         // demographic function across branch
         DemographicFunction demog = spTree.getNodeDemographic(node);
+        if( popFactor > 0 ) {
+            demog = new ScaledDemographic(demog, popFactor);
+        }
 
+        if(false) {
+            final double duration = isRoot ? cList[cList.length - 1].ctime - t0 : stopTime;
+            double demographicAtCoalPoint = demog.getDemographic(duration);
+            double intervalArea = demog.getIntegral(0, duration);
+            if( demographicAtCoalPoint < 1e-12 * (duration/intervalArea) ) {
+               return Double.NEGATIVE_INFINITY;
+            }
+        }
         // Species sharing this branch
         FixedBitSet subspeciesSet = spTree.spSet(node);
 
@@ -158,7 +170,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
                 final int nLineageOver2 = (nLineages * (nLineages - 1)) / 2;
                 like -= nLineageOver2 * interval;
 
-                double pop = demog.getDemographic(time);
+                final double pop = demog.getDemographic(time);
                 like -= Math.log(pop);
 
                 --nLineages;
@@ -197,7 +209,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
     }
 
     private boolean nonEmptyIntersection(FixedBitSet[] sinfo, FixedBitSet subspeciesSet) {
-        for(FixedBitSet nodeSpSet : sinfo) {
+        for( FixedBitSet nodeSpSet : sinfo ) {
             if( nodeSpSet.intersectCardinality(subspeciesSet) == 0 ) {
                 return false;
             }

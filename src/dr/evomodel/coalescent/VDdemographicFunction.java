@@ -459,5 +459,9 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         }
         return sb.toString();
     }
+
+    public double naturalLimit() {
+        return times[times.length-2];
+    }
 }
 

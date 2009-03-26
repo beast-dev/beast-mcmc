@@ -1,17 +1,15 @@
 package dr.evomodel.beagle.parsers;
 
-import dr.xml.*;
-import dr.evolution.alignment.PatternList;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.beagle.treelikelihood.BeagleTreeLikelihood;
-import dr.evomodel.beagle.sitemodel.SiteRateModel;
-import dr.evomodel.beagle.sitemodel.BranchSiteModel;
-import dr.evomodel.beagle.sitemodel.HomogenousBranchSiteModel;
-import dr.evomodel.beagle.sitemodel.GammaSiteRateModel;
-import dr.inference.model.Likelihood;
 import beagle.BeagleFactory;
+import dr.evolution.alignment.PatternList;
+import dr.evomodel.beagle.sitemodel.BranchSiteModel;
+import dr.evomodel.beagle.sitemodel.GammaSiteRateModel;
+import dr.evomodel.beagle.sitemodel.HomogenousBranchSiteModel;
+import dr.evomodel.beagle.treelikelihood.BeagleTreeLikelihood;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Likelihood;
+import dr.xml.*;
 
 /**
  * @author Andrew Rambaut
@@ -72,7 +70,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             AttributeRule.newIntegerRule(BeagleFactory.DEVICE_NUMBER,true),
             AttributeRule.newBooleanRule(BeagleFactory.PREFER_SINGLE_PRECISION, true),

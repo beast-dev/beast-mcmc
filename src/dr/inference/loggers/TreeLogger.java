@@ -3,17 +3,6 @@
  */
 package dr.inference.loggers;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-
 import dr.evolution.tree.Tree;
 import dr.evomodelxml.LoggerParser;
 import dr.xml.AttributeRule;
@@ -22,6 +11,9 @@ import dr.xml.XMLObject;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
+
+import java.io.*;
+import java.util.*;
 
 /**
  * @author shhn001
@@ -204,9 +196,8 @@ public class TreeLogger extends MCLogger {
 		 */
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			String outputFile = xo
-			.getStringAttribute(OUTPUT_FILE_NAME);
-			
+			String outputFile = xo.getStringAttribute(OUTPUT_FILE_NAME);
+
 			int checkEvery = 1;
 			if (xo.hasAttribute(CHECK_EVERY)) {
 				checkEvery = xo.getIntegerAttribute(CHECK_EVERY);
@@ -229,7 +220,7 @@ public class TreeLogger extends MCLogger {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 				new StringAttributeRule(OUTPUT_FILE_NAME,
 						"name of a tree log file", "ds.trees"),
 				AttributeRule.newIntegerRule(CHECK_EVERY, true), };

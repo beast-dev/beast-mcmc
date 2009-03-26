@@ -118,7 +118,7 @@ public class TreeLoggerParser extends LoggerParser {
         }
 
         // logEvery of zero only displays at the end
-        final int logEvery = xo.getAttribute(LOG_EVERY, 1);
+        final int logEvery = xo.getAttribute(LOG_EVERY, 0);
 
         // decimal places
         final int dp = xo.getAttribute(DECIMAL_PLACES, -1);
@@ -144,11 +144,11 @@ public class TreeLoggerParser extends LoggerParser {
         // sees the numbers anyway as any software loading the nexus files does the translation - JH
         final boolean mapNames = xo.getAttribute(MAP_NAMES, true);
 
+        final TreeLogger.LogUpon condition = logEvery == 0 ? (TreeLogger.LogUpon)xo.getChild(TreeLogger.LogUpon.class) : null;
 
-        TreeLogger logger =
-                new TreeLogger(tree, branchRateProvider,
-                        treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
-                        formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format);
+        TreeLogger logger = new TreeLogger(tree, branchRateProvider,
+                treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
+                formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition);
 
         if (title != null) {
             logger.setTitle(title);
@@ -164,8 +164,8 @@ public class TreeLoggerParser extends LoggerParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            AttributeRule.newIntegerRule(LOG_EVERY),
+    private final XMLSyntaxRule[] rules = {
+            AttributeRule.newIntegerRule(LOG_EVERY, true),
             new StringAttributeRule(FILE_NAME,
                     "The name of the file to send log output to. " +
                             "If no file name is specified then log is sent to standard output", true),
@@ -183,6 +183,7 @@ public class TreeLoggerParser extends LoggerParser {
             new ElementRule(TreeAttributeProvider.class, 0, Integer.MAX_VALUE),
             new ElementRule(NodeAttributeProvider.class, 0, Integer.MAX_VALUE),
             new ElementRule(BranchAttributeProvider.class, 0, Integer.MAX_VALUE),
+            new ElementRule(TreeLogger.LogUpon.class, true),
             AttributeRule.newBooleanRule(MAP_NAMES, true),
             AttributeRule.newIntegerRule(DECIMAL_PLACES, true)
     };

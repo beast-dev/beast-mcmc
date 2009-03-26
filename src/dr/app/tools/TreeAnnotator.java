@@ -771,41 +771,44 @@ public class TreeAnnotator {
             String mode = null;
             int maxCount = 0;
             int totalCount = 0;
+            int countInMode = 1;
 
             for (String key : values.keySet()) {
                 int thisCount = values.get(key);
                 if (thisCount == maxCount) {
                     // I hope this is the intention
                     mode = mode.concat("+" + key);
+                    countInMode++;
                 } else if (thisCount > maxCount) {
                     mode = key;
                     maxCount = thisCount;
+                    countInMode = 1;
                 }
                 totalCount += thisCount;
             }
-            double freq = (double) maxCount / (double) totalCount;
+            double freq = (double) maxCount / (double) totalCount * countInMode;
             tree.setNodeAttribute(node, label, mode);
             tree.setNodeAttribute(node, label + ".prob", freq);
         }
 
         private void annotateFrequencyAttribute(MutableTree tree, NodeRef node, String label, HashMap<String, Integer> values) {
-            String mode = null;
-            int maxCount = 0;
-            int totalCount = 0;
-
+            double totalCount = 0;         
+            Set keySet = values.keySet();
+            int length = keySet.size();
+            String[] name = new String[length];
+            Double[] freq = new Double[length];
+            int index = 0;
             for (String key : values.keySet()) {
-                int thisCount = values.get(key);
-                if (thisCount == maxCount)
-                    mode = mode.concat("+" + key);
-                else if (thisCount > maxCount) {
-                    mode = key;
-                    maxCount = thisCount;
-                }
-                totalCount += thisCount;
+                name[index] = key;
+                freq[index] = new Double(values.get(key));
+                totalCount += freq[index];
+                index++;
             }
-            double freq = (double) maxCount / (double) totalCount;
-            tree.setNodeAttribute(node, label, mode);
-            tree.setNodeAttribute(node, label + ".prob", freq);
+            for (int i=0; i<length; i++)
+                freq[i] /= totalCount;
+
+            tree.setNodeAttribute(node, label + ".set", name);
+            tree.setNodeAttribute(node, label + ".set.prob", freq);           
         }
 
         private void annotateRangeAttribute(MutableTree tree, NodeRef node, String label, double[] values) {

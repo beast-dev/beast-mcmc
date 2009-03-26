@@ -307,13 +307,15 @@ public class TN93 extends AbstractNucleotideModel {
 
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                new ElementRule(FREQUENCIES,
-                        new XMLSyntaxRule[] { new ElementRule(FrequencyModel.class) }),
-                new ElementRule(KAPPA1,
-                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-                new ElementRule(KAPPA2,
-                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) })
-        };
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    new ElementRule(FREQUENCIES,
+                            new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}),
+                    new ElementRule(KAPPA1,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new ElementRule(KAPPA2,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+            };
+        }
     };
 }

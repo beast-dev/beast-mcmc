@@ -226,7 +226,7 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
         }
     }
 
-	private ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
+	private final ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
 
 	ArrayList<Taxon> taxa = new ArrayList<Taxon>();
 	//ArrayList listeners = new ArrayList();

@@ -4,15 +4,13 @@ import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.Tree;
-import dr.evomodel.coalescent.VDdemographicFunction;
-import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.LoggerParser;
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceException;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 import dr.util.TabularData;
 import dr.xml.*;
-import dr.inference.trace.TraceException;
-import dr.inference.trace.LogFileTraces;
 
 import java.io.File;
 import java.io.FileReader;
@@ -300,7 +298,7 @@ public class EBSPAnalysis extends TabularData {
         return "";
     }
 
-    // should be local to PARSER, but this makes them non-accesible from the outside in Java.
+    // should be local to PARSER, but this makes them non-accessible from the outside in Java.
 
     public static final String VD_ANALYSIS = "VDAnalysis";
     public static final String FILE_NAME = "fileName";
@@ -336,7 +334,7 @@ public class EBSPAnalysis extends TabularData {
             try {
 
                 // 10% is brun-in default
-                double burnin = xo.getAttribute(BURN_IN, 0.1);
+                final double burnin = xo.getAttribute(BURN_IN, 0.1);
                 if (burnin < 0)
                     throw new XMLParseException("burnIn should be either between 0 and 1 or a positive number");
 

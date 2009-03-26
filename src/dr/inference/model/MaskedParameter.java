@@ -1,7 +1,6 @@
 package dr.inference.model;
 
 import dr.xml.*;
-import dr.inference.operators.OperatorFailedException;
 
 /**
  * @author Marc A. Suchard
@@ -136,7 +135,7 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(Parameter.class),
                 new ElementRule(MASKING,
                         new XMLSyntaxRule[] {
@@ -158,10 +157,9 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
         }
     };
 
-    private Parameter parameter;
+    private final Parameter parameter;
     private Parameter maskParameter;
-    private int[] map;
+    private final int[] map;
     private int length;
     private int equalValue;
-
 }

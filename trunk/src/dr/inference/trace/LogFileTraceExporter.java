@@ -17,8 +17,8 @@ import java.io.IOException;
  *         Date: 25/10/2007
  */
 public class LogFileTraceExporter extends TabularData {
-    private LogFileTraces analysis;
-    private String[] rows = {"mean", "median", "hpdLower", "hpdUpper", "ESS"};
+    private final LogFileTraces analysis;
+    private final String[] rows = {"mean", "median", "hpdLower", "hpdUpper", "ESS"};
     TraceDistribution[] distributions;
 
     public LogFileTraceExporter(File file, int burnin) throws TraceException, IOException {
@@ -110,7 +110,7 @@ public class LogFileTraceExporter extends TabularData {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FILENAME, false, "trace log."),
                 AttributeRule.newIntegerRule(BURN_IN, true,
                         "The number of states (not sampled states, but actual states) that are discarded from the" +

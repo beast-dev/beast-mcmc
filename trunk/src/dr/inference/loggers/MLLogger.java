@@ -44,7 +44,7 @@ public class MLLogger extends MCLogger {
     public static final String LOG_ML = "logML";
     public static final String LIKELIHOOD = "ml";
 
-    private Likelihood likelihood;
+    private final Likelihood likelihood;
     private double bestLikelihood;
     private int bestState;
     private String[] bestValues = null;
@@ -198,7 +198,7 @@ public class MLLogger extends MCLogger {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule(LOG_EVERY, true),
                 new ElementRule(LIKELIHOOD,
                         new XMLSyntaxRule[]{new ElementRule(Likelihood.class)}),

@@ -163,7 +163,7 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class),
                 AttributeRule.newBooleanRule("internal"),

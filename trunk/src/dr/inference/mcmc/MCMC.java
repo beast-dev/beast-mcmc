@@ -199,7 +199,7 @@ public class MCMC implements Runnable, Identifiable {
         int step = 0;
     }
 
-    private MarkovChainListener chainListener = new MarkovChainListener() {
+    private final MarkovChainListener chainListener = new MarkovChainListener() {
 
         // MarkovChainListener interface *******************************************
         // for receiving messages from subordinate MarkovChain
@@ -507,7 +507,7 @@ public class MCMC implements Runnable, Identifiable {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule(CHAIN_LENGTH),
                 AttributeRule.newBooleanRule(COERCION, true),
                 AttributeRule.newIntegerRule(PRE_BURNIN, true),
@@ -532,12 +532,13 @@ public class MCMC implements Runnable, Identifiable {
     // PRIVATE TRANSIENTS
 
     //private FileLogger operatorLogger = null;
-    private boolean isAdapting = true, stopping = false;
+    private final boolean isAdapting = true;
+    private boolean stopping = false;
     private boolean showOperatorAnalysis = true;
-    private dr.util.Timer timer = new dr.util.Timer();
+    private final dr.util.Timer timer = new dr.util.Timer();
     private int currentState = 0;
     //private int stepsPerReport = 1000;
-    private NumberFormatter formatter = new NumberFormatter(8);
+    private final NumberFormatter formatter = new NumberFormatter(8);
 
     /**
      * this markov chain does most of the work.

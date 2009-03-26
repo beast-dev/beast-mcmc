@@ -137,7 +137,7 @@ public class BitFlipOperator extends SimpleMCMCOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newIntegerRule(BITS,true),
                 new ElementRule(Parameter.class)

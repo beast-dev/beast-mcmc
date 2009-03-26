@@ -52,22 +52,27 @@ public class TreeLogger extends MCLogger {
     private boolean nexusFormat = false;
     public boolean usingRates = false;
     public boolean substitutions = false;
-    private Map<String, Integer> idMap = new HashMap<String, Integer>();
-    private List<String> taxaIds = new ArrayList<String>();
+    private final Map<String, Integer> idMap = new HashMap<String, Integer>();
+    private final List<String> taxaIds = new ArrayList<String>();
     private boolean mapNames = true;
 
     private NumberFormat format;
+    private LogUpon condition = null;
+
+    public interface LogUpon {
+       boolean logNow(int state);
+    }
 
     public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
                       boolean sortTranslationTable, boolean mapNames) {
 
-        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, null);
+        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, null, null);
     }
 
     public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
                       boolean sortTranslationTable, boolean mapNames, NumberFormat format) {
 
-        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format);
+        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, null);
     }
 
     public TreeLogger(Tree tree, BranchRateController branchRateProvider,
@@ -75,9 +80,12 @@ public class TreeLogger extends MCLogger {
                       NodeAttributeProvider[] nodeAttributeProviders,
                       BranchAttributeProvider[] branchAttributeProviders,
                       LogFormatter formatter, int logEvery, boolean nexusFormat,
-                      boolean sortTranslationTable, boolean mapNames, NumberFormat format) {
+                      boolean sortTranslationTable, boolean mapNames, NumberFormat format,
+                      TreeLogger.LogUpon condition) {
 
         super(formatter, logEvery, false);
+
+        this.condition = condition;
 
         this.nexusFormat = nexusFormat;
         // if not NEXUS, can't map names
@@ -155,7 +163,10 @@ public class TreeLogger extends MCLogger {
 
     public void log(int state) {
 
-        if (logEvery <= 0 || ((state % logEvery) == 0)) {
+        final boolean doIt = condition != null ? condition.logNow(state) :
+                    (logEvery < 0 || ((state % logEvery) == 0));
+
+        if ( doIt ) {
             StringBuffer buffer = new StringBuffer("tree STATE_");
             buffer.append(state);
             if (treeAttributeProviders != null) {
@@ -193,10 +204,7 @@ public class TreeLogger extends MCLogger {
     }
 
     public void stopLogging() {
-
         logLine("End;");
         super.stopLogging();
     }
-
-
 }

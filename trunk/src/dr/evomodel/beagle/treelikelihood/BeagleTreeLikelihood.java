@@ -325,7 +325,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         beagle.calculateProbabilityTransitionMatrices(branchUpdateIndices, branchLengths, branchUpdateCount);
 
-        beagle.calculatePartials(operations,dependencies, operationCount);
+        beagle.calculatePartials(operations,dependencies, operationCount,false);
 
         nodeEvaluationCount += operationCount;
 
@@ -344,7 +344,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         	branchUpdateCount = 0;
         	operationCount = 0;
         	traverse(treeModel, root, null);
-        	beagle.calculatePartials(operations,dependencies, operationCount);
+        	beagle.calculatePartials(operations,dependencies, operationCount,true);
             beagle.calculateLogLikelihoods(root.getNumber(), patternLogLikelihoods);
 
             logL = 0.0;

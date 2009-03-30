@@ -161,7 +161,7 @@ public class ReciprocalRateDistributionModel extends AbstractModel implements Pa
         if (x - offset <= 0.0) return Double.NEGATIVE_INFINITY;
         //return NormalDistribution.logPdf(Math.log(x - offset), getM(), getStDev()) - Math.log(x - offset);
         //return NormalDistribution.logPdf((1.0/(x - offset)), getM(), getStDev()) - (1.0/(x - offset));
-        return NormalDistribution.logPdf((1.0/(x - offset)), getM(), getStDev()) - (Math.log/(x - offset));
+        return NormalDistribution.logPdf((1.0/(x - offset)), getM(), getStDev()) - (Math.log(x - offset));
     }
 
     public double cdf(double x) {

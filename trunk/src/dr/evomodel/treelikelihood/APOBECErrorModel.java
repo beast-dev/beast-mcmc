@@ -12,8 +12,9 @@ import java.util.logging.Logger;
  */
 public class APOBECErrorModel extends TipPartialsModel {
     public enum APOBECType {
-        h3G("h3G"),
-        h3F("h3F");
+        ALL("all"),
+        H3G("h3G"),
+        H3F("h3F");
 
 
         APOBECType(String label) {
@@ -56,19 +57,20 @@ public class APOBECErrorModel extends TipPartialsModel {
             for (int j = 0; j < patternCount; j++) {
                 double pMutated = 0.0;
 
-                if (j < patternCount - 1 && states[j] == 2) { // is an G
+                if (j < patternCount - 1 && states[j] == 0) { // is an A
                     nextState = states[j+1];
 
-                    if ((type == APOBECType.h3G && nextState == 2) ||
-                            (type == APOBECType.h3F && nextState == 0)) {
+                    if (    (type == APOBECType.ALL) ||
+                            (type == APOBECType.H3G && nextState == 2) || // is a G
+                            (type == APOBECType.H3F && nextState == 0)) { // is an A
                         pMutated = rate;
                     }
                 }
                 switch (states[j]) {
                     case 0: // is an A
-                        partials[k] = 1.0;
+                        partials[k] = 1.0 - pMutated;
                         partials[k + 1] = 0.0;
-                        partials[k + 2] = 0.0;
+                        partials[k + 2] = pMutated;
                         partials[k + 3] = 0.0;
                         break;
                     case 1: // is an C
@@ -78,9 +80,9 @@ public class APOBECErrorModel extends TipPartialsModel {
                         partials[k + 3] = 0.0;
                         break;
                     case 2: // is an G
-                        partials[k] = pMutated;
+                        partials[k] = 0.0;
                         partials[k + 1] = 0.0;
-                        partials[k + 2] = 1.0 - pMutated;
+                        partials[k + 2] = 1.0;
                         partials[k + 3] = 0.0;
                         break;
                     case 3: // is an T
@@ -145,11 +147,13 @@ public class APOBECErrorModel extends TipPartialsModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            APOBECType type = APOBECType.h3G;
+            APOBECType type = APOBECType.H3G;
 
             if (xo.hasAttribute("type")) {
-                if (xo.getStringAttribute("type").equalsIgnoreCase("h3F")) {
-                    type = APOBECType.h3F;
+                if (xo.getStringAttribute("type").equalsIgnoreCase("all")) {
+                    type = APOBECType.ALL;
+                } else if (xo.getStringAttribute("type").equalsIgnoreCase("h3F")) {
+                    type = APOBECType.H3F;
                 } else if (!xo.getStringAttribute("type").equalsIgnoreCase("h3G")) {
                     throw new XMLParseException("unrecognized option for attribute, 'type': " + xo.getStringAttribute("type"));
                 }

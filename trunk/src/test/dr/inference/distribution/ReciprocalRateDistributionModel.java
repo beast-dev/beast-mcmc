@@ -160,7 +160,8 @@ public class ReciprocalRateDistributionModel extends AbstractModel implements Pa
     public double logPdf(double x) {
         if (x - offset <= 0.0) return Double.NEGATIVE_INFINITY;
         //return NormalDistribution.logPdf(Math.log(x - offset), getM(), getStDev()) - Math.log(x - offset);
-        return NormalDistribution.logPdf((1.0/(x - offset)), getM(), getStDev()) - (1.0/(x - offset));
+        //return NormalDistribution.logPdf((1.0/(x - offset)), getM(), getStDev()) - (1.0/(x - offset));
+        return NormalDistribution.logPdf((1.0/(x - offset)), getM(), getStDev()) - (Math.log/(x - offset));
     }
 
     public double cdf(double x) {
@@ -178,6 +179,7 @@ public class ReciprocalRateDistributionModel extends AbstractModel implements Pa
      */
     public double mean() {
         return Math.exp(getM() + (getStDev() * getStDev() / 2)) + offset;
+        //return Math.exp(getM() + (getStDev() * getStDev() / 2)) + offset;
     }
 
     /**
@@ -188,6 +190,7 @@ public class ReciprocalRateDistributionModel extends AbstractModel implements Pa
         S2 *= S2;
 
         return Math.exp(S2 + 2 * getM()) * (Math.exp(S2) - 1);
+        //return S2;
     }
 
     public final UnivariateFunction getProbabilityDensityFunction() {
@@ -196,9 +199,9 @@ public class ReciprocalRateDistributionModel extends AbstractModel implements Pa
 
     private final UnivariateFunction pdfFunction = new UnivariateFunction() {
         public final double evaluate(double x) {
-            //return pdf(Math.log(x));
+            return pdf(Math.log(x));
             //return pdf(x);
-            return pdf(1.0/x);
+            //return pdf(1.0/x);
         }
 
         public final double getLowerBound() {

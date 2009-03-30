@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 public class APOBECErrorModel extends TipPartialsModel {
     public enum APOBECType {
         ALL("all"),
+        BOTH("both"),
         H3G("h3G"),
         H3F("h3F");
 
@@ -55,23 +56,26 @@ public class APOBECErrorModel extends TipPartialsModel {
             int k = 0;
             int nextState;
             for (int j = 0; j < patternCount; j++) {
-                double pMutated = 0.0;
 
-                if (j < patternCount - 1 && states[j] == 0) { // is an A
-                    nextState = states[j+1];
-
-                    if (    (type == APOBECType.ALL) ||
-                            (type == APOBECType.H3G && nextState == 2) || // is a G
-                            (type == APOBECType.H3F && nextState == 0)) { // is an A
-                        pMutated = rate;
-                    }
-                }
                 switch (states[j]) {
                     case 0: // is an A
+                        double pMutated = 0.0;
+                        if (j < patternCount - 1) {
+                            nextState = states[j+1];
+
+                            if (    (type == APOBECType.ALL) ||
+                                    (type == APOBECType.H3G && nextState == 2) || // is a G
+                                    (type == APOBECType.H3F && nextState == 0) || // is an A
+                                    (type == APOBECType.BOTH && (nextState == 2 || nextState == 0))
+                                    ) {
+                                pMutated = rate;
+                            }
+                        }
                         partials[k] = 1.0 - pMutated;
                         partials[k + 1] = 0.0;
                         partials[k + 2] = pMutated;
                         partials[k + 3] = 0.0;
+
                         break;
                     case 1: // is an C
                         partials[k] = 0.0;
@@ -152,6 +156,8 @@ public class APOBECErrorModel extends TipPartialsModel {
             if (xo.hasAttribute("type")) {
                 if (xo.getStringAttribute("type").equalsIgnoreCase("all")) {
                     type = APOBECType.ALL;
+                } else if (xo.getStringAttribute("type").equalsIgnoreCase("both")) {
+                    type = APOBECType.BOTH;
                 } else if (xo.getStringAttribute("type").equalsIgnoreCase("h3F")) {
                     type = APOBECType.H3F;
                 } else if (!xo.getStringAttribute("type").equalsIgnoreCase("h3G")) {
@@ -183,7 +189,7 @@ public class APOBECErrorModel extends TipPartialsModel {
 
         public String getParserDescription() {
             return
-                    "This element returns a model that allows for post-mortem DNA damage.";
+                    "This element returns a model that allows for APOBEC-type RNA editing.";
         }
 
         public Class getReturnType() { return APOBECErrorModel.class; }

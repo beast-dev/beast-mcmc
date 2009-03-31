@@ -199,11 +199,19 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
 
     public void modelChangedEvent(Model model, Object object, int index) {
         super.modelChangedEvent(model, object, index);
-        final SpeciesBindings.GeneTreeInfo[] trees = species.getGeneTrees();
-        for(int i = 0; i < species.getGeneTrees().length; i++) {
-            if( trees[i].tree == model ) {
-                checkCompatibility = true;
-                compatibleCheckRequited[i] = true;
+
+        if( model == spTree && object == spTree && index != -1 ) {
+            // Species tree scaling
+            checkCompatibility = true;
+            Arrays.fill(compatibleCheckRequited, true);
+        } else {
+
+            final SpeciesBindings.GeneTreeInfo[] trees = species.getGeneTrees();
+            for(int i = 0; i < species.getGeneTrees().length; i++) {
+                if( trees[i].tree == model ) {
+                    checkCompatibility = true;
+                    compatibleCheckRequited[i] = true;
+                }
             }
         }
     }

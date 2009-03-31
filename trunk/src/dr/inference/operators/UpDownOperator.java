@@ -26,17 +26,9 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
-import dr.inference.prior.ContinuousVariablePrior;
 import dr.math.MathUtils;
 import dr.xml.*;
 
-/**
- * A generic operator for use with a single-dimension parameter.
- *
- * @author Alexei Drummond
- * @author Andrew Rambaut
- * @version $Id: UpDownOperator.java,v 1.25 2005/06/14 10:40:34 rambaut Exp $
- */
 public class UpDownOperator extends AbstractCoercableOperator {
 
     public static final String UP_DOWN_OPERATOR = "upDownOperator";
@@ -45,7 +37,7 @@ public class UpDownOperator extends AbstractCoercableOperator {
 
     public static final String SCALE_FACTOR = "scaleFactor";
 
-    public UpDownOperator(Parameter upParameter, Parameter downParameter,
+    public UpDownOperator(Scalable[] upParameter, Scalable[] downParameter,
                           double scale, double weight, CoercionMode mode) {
 
         super(mode);
@@ -56,21 +48,23 @@ public class UpDownOperator extends AbstractCoercableOperator {
         setWeight(weight);
     }
 
-    public final int getPriorType() {
-        return prior.getPriorType();
-    }
+//    public final int getPriorType() {
+//        return prior.getPriorType();
+//    }
 
     public final double getScaleFactor() {
         return scaleFactor;
     }
 
-    public final void setPriorType(int type) {
-        prior.setPriorType(type);
-    }
+//    public final void setPriorType(int type) {
+//        prior.setPriorType(type);
+//    }
 
     public final void setScaleFactor(double sf) {
-        if ((sf > 0.0) && (sf < 1.0)) scaleFactor = sf;
-        else throw new IllegalArgumentException("minimum scale must be between 0 and 1");
+        if ((sf > 0.0) && (sf < 1.0))
+            scaleFactor = sf;
+        else
+            throw new IllegalArgumentException("scale must be between 0 and 1");
     }
 
     /**
@@ -78,38 +72,22 @@ public class UpDownOperator extends AbstractCoercableOperator {
      */
     public final double doOperation() throws OperatorFailedException {
 
-        int goingUp = (upParameter == null) ? 0 : upParameter.getDimension();
-        int goingDown = (downParameter == null) ? 0 : downParameter.getDimension();
+        final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
+        int goingUp = 0, goingDown = 0;
 
-        double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
-
-        double logq = (goingUp - goingDown - 2) * Math.log(scale);
-
-        if (upParameter != null) {
-            for (int i = 0; i < upParameter.getDimension(); i++) {
-                upParameter.setParameterValue(i, upParameter.getParameterValue(i) * scale);
-            }
-            for (int i = 0; i < upParameter.getDimension(); i++) {
-                if (upParameter.getParameterValue(i) < upParameter.getBounds().getLowerLimit(i) ||
-                        upParameter.getParameterValue(i) > upParameter.getBounds().getUpperLimit(i)) {
-                    throw new OperatorFailedException("proposed value outside boundaries");
-                }
+        if( upParameter != null ) {
+            for( Scalable up : upParameter ) {
+                goingUp += up.scale(scale);
             }
         }
 
-        if (downParameter != null) {
-            for (int i = 0; i < downParameter.getDimension(); i++) {
-                downParameter.setParameterValue(i, downParameter.getParameterValue(i) / scale);
-            }
-            for (int i = 0; i < downParameter.getDimension(); i++) {
-                if (downParameter.getParameterValue(i) < downParameter.getBounds().getLowerLimit(i) ||
-                        downParameter.getParameterValue(i) > downParameter.getBounds().getUpperLimit(i)) {
-                    throw new OperatorFailedException("proposed value outside boundaries");
-                }
+        if( downParameter != null ) {
+            for( Scalable dn : downParameter ) {
+                goingDown += dn.scale(1.0 / scale);
             }
         }
 
-        return logq;
+        return (goingUp - goingDown - 2) * Math.log(scale);
     }
 
     public final String getPerformanceSuggestion() {
@@ -127,8 +105,21 @@ public class UpDownOperator extends AbstractCoercableOperator {
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {
-        return (upParameter != null ? "up:" + upParameter.getParameterName() : "") +
-                (downParameter != null ? " down:" + downParameter.getParameterName() : "");
+        String name = "";
+        if( upParameter != null ) {
+            name = "up:";
+            for( Scalable up : upParameter ) {
+                name = name + up.getName() + " ";
+            }
+        }
+
+        if( downParameter != null ) {
+            name += "down:";
+            for( Scalable dn : downParameter ) {
+                name = name + dn.getName() + " ";
+            }
+        }
+        return name;
     }
 
     public double getCoercableParameter() {
@@ -174,17 +165,26 @@ public class UpDownOperator extends AbstractCoercableOperator {
             return UP_DOWN_OPERATOR;
         }
 
+        private Scalable[] getArgs(final XMLObject list) {
+            Scalable[] args = new Scalable[list.getChildCount()];
+            for(int k = 0; k < list.getChildCount(); ++k) {
+                final Object child = list.getChild(k);
+                args[k] = (child instanceof Parameter) ? new Scalable.Default((Parameter) child) : (Scalable) child;
+            }
+            return args;
+        }
+
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
             final double weight = xo.getDoubleAttribute(WEIGHT);
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            final CoercionMode mode = CoercionMode.parseMode(xo);
 
-            Parameter param1 = (Parameter) xo.getElementFirstChild(UP);
-            Parameter param2 = (Parameter) xo.getElementFirstChild(DOWN);
+            final Scalable[] upArgs = getArgs((XMLObject) xo.getChild(UP));
+            final Scalable[] dnArgs = getArgs((XMLObject) xo.getChild(DOWN));
 
-            return new UpDownOperator(param1, param2, scaleFactor, weight, mode);
+            return new UpDownOperator(upArgs, dnArgs, scaleFactor, weight, mode);
         }
 
         public String getParserDescription() {
@@ -201,21 +201,210 @@ public class UpDownOperator extends AbstractCoercableOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+                // Allow an arbitrary number of Parameters or Scalables in up or down
                 new ElementRule(UP,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                        new XMLSyntaxRule[]{new ElementRule(Scalable.class, true), new ElementRule(Parameter.class, true)},
+                        1, Integer.MAX_VALUE),
                 new ElementRule(DOWN,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+                         new XMLSyntaxRule[]{new ElementRule(Scalable.class, true), new ElementRule(Parameter.class, true)},
+                        1, Integer.MAX_VALUE),
         };
     };
 
     //PRIVATE STUFF
 
-    private Parameter upParameter = null;
-    private Parameter downParameter = null;
-    private ContinuousVariablePrior prior = new ContinuousVariablePrior();
-    private double scaleFactor = 0.5;
+    private Scalable[] upParameter = null;
+    private Scalable[] downParameter = null;
+    //private final ContinuousVariablePrior prior = new ContinuousVariablePrior();
+    private double scaleFactor;
 }
+
+// The old implementation for reference and until the new one is tested :)
+
+//
+//public class UpDownOperator extends AbstractCoercableOperator {
+//
+//    public static final String UP_DOWN_OPERATOR = "upDownOperator";
+//    public static final String UP = "up";
+//    public static final String DOWN = "down";
+//
+//    public static final String SCALE_FACTOR = "scaleFactor";
+//
+//    public UpDownOperator(Parameter upParameter, Parameter downParameter,
+//                          double scale, double weight, CoercionMode mode) {
+//
+//        super(mode);
+//
+//        this.upParameter = upParameter;
+//        this.downParameter = downParameter;
+//        this.scaleFactor = scale;
+//        setWeight(weight);
+//    }
+//
+//    public final int getPriorType() {
+//        return prior.getPriorType();
+//    }
+//
+//    public final double getScaleFactor() {
+//        return scaleFactor;
+//    }
+//
+//    public final void setPriorType(int type) {
+//        prior.setPriorType(type);
+//    }
+//
+//    public final void setScaleFactor(double sf) {
+//        if ((sf > 0.0) && (sf < 1.0)) scaleFactor = sf;
+//        else throw new IllegalArgumentException("minimum scale must be between 0 and 1");
+//    }
+//
+//    /**
+//     * change the parameter and return the hastings ratio.
+//     */
+//    public final double doOperation() throws OperatorFailedException {
+//
+//        final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
+//
+//        if( upParameter != null ) {
+//            for(int i = 0; i < upParameter.getDimension(); i++) {
+//                upParameter.setParameterValue(i, upParameter.getParameterValue(i) * scale);
+//            }
+//            for(int i = 0; i < upParameter.getDimension(); i++) {
+//                if( upParameter.getParameterValue(i) < upParameter.getBounds().getLowerLimit(i) ||
+//                        upParameter.getParameterValue(i) > upParameter.getBounds().getUpperLimit(i) ) {
+//                    throw new OperatorFailedException("proposed value outside boundaries");
+//                }
+//            }
+//        }
+//
+//        if( downParameter != null ) {
+//            for(int i = 0; i < downParameter.getDimension(); i++) {
+//                downParameter.setParameterValue(i, downParameter.getParameterValue(i) / scale);
+//            }
+//            for(int i = 0; i < downParameter.getDimension(); i++) {
+//                if( downParameter.getParameterValue(i) < downParameter.getBounds().getLowerLimit(i) ||
+//                        downParameter.getParameterValue(i) > downParameter.getBounds().getUpperLimit(i) ) {
+//                    throw new OperatorFailedException("proposed value outside boundaries");
+//                }
+//            }
+//        }
+//
+//        final int goingUp = (upParameter == null) ? 0 : upParameter.getDimension();
+//        final int goingDown = (downParameter == null) ? 0 : downParameter.getDimension();
+//
+//        final double logq = (goingUp - goingDown - 2) * Math.log(scale);
+//
+//        return logq;
+//    }
+//
+//    public final String getPerformanceSuggestion() {
+//
+//        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+//        double targetProb = getTargetAcceptanceProbability();
+//        double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
+//        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
+//        if (prob < getMinimumGoodAcceptanceLevel()) {
+//            return "Try setting scaleFactor to about " + formatter.format(sf);
+//        } else if (prob > getMaximumGoodAcceptanceLevel()) {
+//            return "Try setting scaleFactor to about " + formatter.format(sf);
+//        } else return "";
+//    }
+//
+//    //MCMCOperator INTERFACE
+//    public final String getOperatorName() {
+//        return (upParameter != null ? "up:" + upParameter.getParameterName() : "") +
+//                (downParameter != null ? " down:" + downParameter.getParameterName() : "");
+//    }
+//
+//    public double getCoercableParameter() {
+//        return Math.log(1.0 / scaleFactor - 1.0) / Math.log(10);
+//    }
+//
+//    public void setCoercableParameter(double value) {
+//        scaleFactor = 1.0 / (Math.pow(10.0, value) + 1.0);
+//    }
+//
+//    public double getRawParameter() {
+//        return scaleFactor;
+//    }
+//
+//    public double getTargetAcceptanceProbability() {
+//        return 0.234;
+//    }
+//
+//    // Since this operator invariably modifies at least 2 parameters it
+//    // should allow lower acceptance probabilities
+//    // as it is known that optimal acceptance levels are inversely
+//    // proportional to the number of dimensions operated on
+//    // AD 16/3/2004
+//    public double getMinimumAcceptanceLevel() {
+//        return 0.05;
+//    }
+//
+//    public double getMaximumAcceptanceLevel() {
+//        return 0.3;
+//    }
+//
+//    public double getMinimumGoodAcceptanceLevel() {
+//        return 0.10;
+//    }
+//
+//    public double getMaximumGoodAcceptanceLevel() {
+//        return 0.20;
+//    }
+//
+//    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+//
+//        public String getParserName() {
+//            return UP_DOWN_OPERATOR;
+//        }
+//
+//        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+//
+//            final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+//
+//            final double weight = xo.getDoubleAttribute(WEIGHT);
+//            CoercionMode mode = CoercionMode.parseMode(xo);
+//
+//            Parameter param1 = (Parameter) xo.getElementFirstChild(UP);
+//            Parameter param2 = (Parameter) xo.getElementFirstChild(DOWN);
+//
+//            return new UpDownOperator(param1, param2, scaleFactor, weight, mode);
+//        }
+//
+//        public String getParserDescription() {
+//            return "This element represents an operator that scales two parameters in different directions. " +
+//                    "Each operation involves selecting a scale uniformly at random between scaleFactor and 1/scaleFactor. " +
+//                    "The up parameter is multipled by this scale and the down parameter is divided by this scale.";
+//        }
+//
+//        public Class getReturnType() {
+//            return UpDownOperator.class;
+//        }
+//
+//        public XMLSyntaxRule[] getSyntaxRules() {
+//            return rules;
+//        }
+//
+//        private final XMLSyntaxRule[] rules = {
+//                AttributeRule.newDoubleRule(SCALE_FACTOR),
+//                AttributeRule.newDoubleRule(WEIGHT),
+//                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+//                new ElementRule(UP,
+//                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+//                new ElementRule(DOWN,
+//                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+//        };
+//    };
+//
+//    //PRIVATE STUFF
+//
+//    private Parameter upParameter = null;
+//    private Parameter downParameter = null;
+//    private final ContinuousVariablePrior prior = new ContinuousVariablePrior();
+//    private double scaleFactor = 0.5;
+//}

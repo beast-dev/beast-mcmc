@@ -9,6 +9,7 @@ import dr.evomodel.tree.TreeLogger;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.operators.Scalable;
 import dr.util.Attributable;
 import dr.util.HeapSort;
 import dr.xml.*;
@@ -22,7 +23,7 @@ import java.util.*;
  * @author joseph
  *         Date: 24/05/2008
  */
-public class SpeciesTreeModel extends AbstractModel implements MutableTree, NodeAttributeProvider, TreeLogger.LogUpon {
+public class SpeciesTreeModel extends AbstractModel implements MutableTree, NodeAttributeProvider, TreeLogger.LogUpon, Scalable {
     public static final String SPECIES_TREE = "speciesTree";
 
     private static final String SPP_SPLIT_POPULATIONS = "sppSplitPopulations";
@@ -861,6 +862,24 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         return loc;
     }
 
+    public String getName() {
+        return getModelName();
+    }
+
+    public int scale(double scaleFactor) {
+        assert scaleFactor > 0;
+
+        storeState();
+        beginTreeEdit();
+        final int count = getInternalNodeCount();
+        for(int i = 0; i < count; ++i) {
+            final NodeRef n = getInternalNode(i);
+            setNodeHeight(n, getNodeHeight(n) * scaleFactor);
+        }
+        endTreeEdit();
+        fireModelChanged(this, 1);
+        return count;
+    }
     private final boolean verbose = false;
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -885,24 +904,24 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
     }
 
     protected void restoreState() {
-        if (verbose) System.out.println(" SPtree: restore (" + treeChanged + "," + anyChange + ")");
+        if( verbose ) System.out.println(" SPtree: restore (" + treeChanged + "," + anyChange + ")");
 
-        if (treeChanged) {
+        if( treeChanged ) {
             //
             spTree.beginTreeEdit();
 
-            for (int k = 0; k < getInternalNodeCount(); ++k) {
+            for(int k = 0; k < getInternalNodeCount(); ++k) {
                 final NodeRef node = getInternalNode(k);
                 final int index = node.getNumber();
                 final double h = heights[index];
-                if (getNodeHeight(node) != h) {
+                if( getNodeHeight(node) != h ) {
                     setNodeHeight(node, h);
                 }
-                for (int nc = 0; nc < 2; ++nc) {
+                for(int nc = 0; nc < 2; ++nc) {
                     final NodeRef child = getChild(node, nc);
 
                     final NodeRef child1 = children[2 * index + nc];
-                    if (child != child1) {
+                    if( child != child1 ) {
                         replaceChild(node, child, child1);
                     }
                     assert getParent(child1) == node;
@@ -910,11 +929,11 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
             }
             setRoot(children[children.length - 1]);
 
-            if (verbose) System.out.println("  restored to: " + spTree);
+            if( verbose ) System.out.println("  restored to: " + spTree);
 
             spTree.endTreeEdit();
         }
-        if (treeChanged || anyChange) {
+        if( treeChanged || anyChange ) {
             setNodeProperties();
         }
         treeChanged = false;
@@ -1229,8 +1248,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
             final double value = cxo.getAttribute(Attributable.VALUE, 1.0);
             final boolean nonConstRootPopulation = coalPointsPops == null && !cr;
-            final Parameter sppSplitPopulations =
-                    createSplitPopulationsParameter(spb, cxo.getAttribute(Attributable.VALUE, value), nonConstRootPopulation);
+            final Parameter sppSplitPopulations = createSplitPopulationsParameter(spb, value, nonConstRootPopulation);
             replaceParameter(cxo, sppSplitPopulations);
 
             final Parameter.DefaultBounds bounds =

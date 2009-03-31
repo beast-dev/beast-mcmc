@@ -23,7 +23,7 @@ public class PoissonDistribution implements Distribution {
     public double logPdf(double x) {
 
         double pdf = distribution.probability(x);
-        if (pdf == 0) { // bad estimate
+        if (pdf == 0 || Double.isNaN(pdf)) { // bad estimate
             final double mean = mean();
             return x * Math.log(mean) - Poisson.gammln(x + 1) - mean;
         }

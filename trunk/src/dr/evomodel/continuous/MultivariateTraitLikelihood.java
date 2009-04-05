@@ -106,11 +106,11 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
     public double getRescaledBranchLength(NodeRef node) {
 
         double length = treeModel.getBranchLength(node);
-        if (scaleByTime) {
+//         if (scaleByTime) {
             if (hasRateModel)
                 return length * rateModel.getBranchRate(treeModel, node);
-            return length / treeLength;
-        }
+//            return length / treeLength;
+//        }
         return length;
     }
 
@@ -256,6 +256,11 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
                 System.err.println("parent trait value = " + new Vector(parentTrait));
                 System.err.println("child trait value = " + new Vector(childTrait));
                 System.err.println("precision matrix = " + new Matrix(diffusionModel.getPrecisionmatrix()));
+                if (diffusionModel.getPrecisionParameter() instanceof CompoundSymmetricMatrix) {
+                    CompoundSymmetricMatrix csMatrix = (CompoundSymmetricMatrix)diffusionModel.getPrecisionParameter();
+                    System.err.println("diagonals = "+new Vector(csMatrix.getDiagonals()));
+                    System.err.println("off diagonal = "+csMatrix.getOffDiagonal());
+                }
             }
 //				if (cachedLikelihoods != null) {
 //					cachedLikelihoods.put(node, logL);
@@ -515,8 +520,8 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
                 new ElementRule(BranchRateModel.class, true),
                 AttributeRule.newDoubleArrayRule("cut", true),
                 AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),
-                AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
-                AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
+//                AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
+//                AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
                 new ElementRule(Parameter.class, true),
                 new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)

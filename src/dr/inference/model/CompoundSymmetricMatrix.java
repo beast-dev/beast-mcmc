@@ -29,11 +29,22 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
         this.asCorrelation = asCorrelation;
     }
 
+
+
+    public double[] getDiagonals() {
+        return diagonalParameter.getParameterValues();
+    }
+
+    public double getOffDiagonal() {
+        return offDiagonalParameter.getParameterValue(0);
+    }
+
     public double getParameterValue(int row, int col) {
         if (row != col) {
-            if (asCorrelation)
-                return offDiagonalParameter.getParameterValue(0) *
+            if (asCorrelation) {
+                 return offDiagonalParameter.getParameterValue(0) *
                         Math.sqrt(diagonalParameter.getParameterValue(row) * diagonalParameter.getParameterValue(col));
+            }
             return offDiagonalParameter.getParameterValue(0);
         }
         return diagonalParameter.getParameterValue(row);
@@ -42,11 +53,10 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
     public double[][] getParameterAsMatrix() {
         final int I = dim;
         double[][] parameterAsMatrix = new double[I][I];
-        final double offDiagonal = offDiagonalParameter.getParameterValue(0);
         for (int i = 0; i < I; i++) {
-            parameterAsMatrix[i][i] = diagonalParameter.getParameterValue(i);
+            parameterAsMatrix[i][i] = getParameterValue(i,i);
             for (int j = i + 1; j < I; j++) {
-                parameterAsMatrix[j][i] = parameterAsMatrix[i][j] = offDiagonal;
+                parameterAsMatrix[j][i] = parameterAsMatrix[i][j] = getParameterValue(i,j);
             }
         }
         return parameterAsMatrix;

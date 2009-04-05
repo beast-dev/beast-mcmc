@@ -6,6 +6,10 @@ import dr.xml.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author Marc A. Suchard
@@ -33,7 +37,7 @@ public class PathSamplingAnalysis {
 
     private void calculate() {
 
-// TODO R code to translate
+//  R code from Alex Alekseyenko
 //
 //  psMLE = function(likelihood, pathParameter){
 //      y=tapply(likelihood,pathParameter,mean)
@@ -42,13 +46,50 @@ public class PathSamplingAnalysis {
 //      x = as.double(names(y))
 //      widths = (x[2:L] - x[1:(L-1)])
 //      sum(widths*midpoints)
-//  }        
+//  }
+
+//        List<Double> meanLogLikelihood = new ArrayList<Double>();
+//        List<Double> theta = new ArrayList<Double>();
+
+        Map<Double, List<Double>> map = new HashMap<Double,List<Double>>();
+        List<Double> orderedTheta = new ArrayList<Double>();
+
+        for(int i=0; i<logLikelihoodSample.length; i++) {
+            if( !map.containsKey(thetaSample[i])) {
+                map.put(thetaSample[i], new ArrayList<Double>());
+                orderedTheta.add(thetaSample[i]);
+            }
+            map.get(thetaSample[i]).add(logLikelihoodSample[i]);
+        }
+        List<Double> meanLogLikelihood = new ArrayList<Double>();
+         for(double t : orderedTheta) {
+            double totalMean = 0;
+            int lengthMean = 0;
+            List<Double> values = map.get(t);
+            for(double v: values) {
+                totalMean += v;
+                lengthMean++;
+            }
+            meanLogLikelihood.add(totalMean/lengthMean);
+        }
+//        System.err.println("classes = "+map.keySet().size());
+//        System.exit(-1);
+
         logBayesFactor = 0;
+        for(int i=0; i<meanLogLikelihood.size()-1; i++)
+                logBayesFactor += (meanLogLikelihood.get(i+1) + meanLogLikelihood.get(i)) / 2.0 *
+                                  (orderedTheta.get(i+1) - orderedTheta.get(i));
+
         logBayesFactorCalculated = true;
     }
 
     public String toString() {
-        return String.valueOf(getLogBayesFactor());
+        StringBuffer sb = new StringBuffer();
+        sb.append("log Bayes factor from ");
+        sb.append(logLikelihoodName);
+        sb.append(" = ");
+        sb.append(String.valueOf(getLogBayesFactor()));
+        return sb.toString();
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -92,16 +133,18 @@ public class PathSamplingAnalysis {
                     System.out.println("WARNING: Burn-in larger than total number of states - using to 10%");
                 }
 
+                burnin = 0;
+
                 traces.setBurnIn(burnin);
 
                 int traceIndexLikelihood = -1;
                 int traceIndexTheta = -1;
                 for (int i = 0; i < traces.getTraceCount(); i++) {
                     String traceName = traces.getTraceName(i);
-                    if (traceName.equals(likelihoodName)) {
+                    if (traceName.trim().equals(likelihoodName)) {
                         traceIndexLikelihood = i;
                     }
-                    if (traceName.equals(thetaName)) {
+                    if (traceName.trim().equals(thetaName)) {
                         traceIndexTheta = i;
                     }
                 }

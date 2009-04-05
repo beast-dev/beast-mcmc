@@ -15,9 +15,9 @@ public class MarkovModulatedGY94CodonModel extends GY94CodonModel {
 
     public MarkovModulatedGY94CodonModel(
             HiddenCodons codonDataType,
+            Parameter switchingRates,            
             Parameter omegaParameter,
             Parameter kappaParameter,
-            Parameter switchingRates,
             FrequencyModel freqModel) {
 
         super(codonDataType, omegaParameter, kappaParameter, freqModel);
@@ -25,6 +25,9 @@ public class MarkovModulatedGY94CodonModel extends GY94CodonModel {
         this.hiddenClassCount = codonDataType.getHiddenClassCount();
         this.switchingRates = switchingRates;
 
+        // Subclassed constructors fill relativeRates with 1
+        for(int i=0; i<relativeRates.length; i++)
+            relativeRates[i] = 0.0;
     }
 
     protected void setupRelativeRates(double[] relativeRates) {
@@ -63,9 +66,6 @@ public class MarkovModulatedGY94CodonModel extends GY94CodonModel {
             }
         }
 
-//        System.err.println("rr = "+new Vector(relativeRates));
-//        System.exit(-1);
-        // Add the switching class rates
         double[] freqs = freqModel.getFrequencies();
         int rateIndex = 0;
         for (int g = 0; g < hiddenClassCount; g++) {
@@ -73,17 +73,12 @@ public class MarkovModulatedGY94CodonModel extends GY94CodonModel {
                 for (int i = 0; i < stateCount; i++) {
                     int d = getIndex(g * stateCount + i, h * stateCount + i, this.stateCount);
                     // correct for the fact that setupMatrix post-multiplies these rates
-//                    relativeRates[d] = rates[rateIndex] / freqs[i];
+                    relativeRates[d] = rates[rateIndex] / freqs[i];
                 }
                 rateIndex++;
             }
         }
     }
-
-//    public void setupRelativeRates() {
-//        for (int i = 0; i < relativeRates.length; i++)
-//            relativeRates[i] = 1.0;
-//    }
 
     // Mapping: Matrix[i][j] = Compressed vector[i*(S - 3/2) - i^2 / 2 + j - 1]
     private static int getIndex(int i, int j, int S) {
@@ -100,18 +95,21 @@ public class MarkovModulatedGY94CodonModel extends GY94CodonModel {
 
     public static void main(String[] args) {
         GY94CodonModel codonModel = new GY94CodonModel(Codons.UNIVERSAL,
-                new Parameter.Default(1.0), new Parameter.Default(1.0),
+                new Parameter.Default(1.0), new Parameter.Default(2.0),
                 new FrequencyModel(Codons.UNIVERSAL, new Parameter.Default(61,1.0/61.0)));
         EigenDecomposition ed1 = codonModel.getEigenDecomposition();
-//        double[][] q = codonModel.getQ();
-//        System.err.println("matrixQ = \n"+ new Matrix(q));
-
+        double[][] q = codonModel.getQ();
+           
+//        System.err.println("matrixQ = \n"+codonModel.printQ());// new Matrix(q));
+        FrequencyModel freqModel = new FrequencyModel(HiddenCodons.UNIVERSAL_HIDDEN_2, new Parameter.Default(122,1.0/122.0));
+        System.err.println("freq = "+new Vector(freqModel.getFrequencies()));
+//        System.exit(-1);
         MarkovModulatedGY94CodonModel mmCodonModel = new MarkovModulatedGY94CodonModel(HiddenCodons.UNIVERSAL_HIDDEN_2,
-                new Parameter.Default(2,1.0), new Parameter.Default(2,1.0),
-                new Parameter.Default(2.0),
-                new FrequencyModel(HiddenCodons.UNIVERSAL_HIDDEN_2, new Parameter.Default(122,1.0/122.0)));
-        EigenDecomposition ed2 = mmCodonModel.getEigenDecomposition();                
-
+                new Parameter.Default(2,5.0), new Parameter.Default(2,1.0),
+                new Parameter.Default(2.0), freqModel
+                );
+        EigenDecomposition ed2 = mmCodonModel.getEigenDecomposition();
+        System.err.println("matrixQ = \n"+mmCodonModel.printQ());// new Matrix(q));
     }
 
     private int hiddenClassCount;

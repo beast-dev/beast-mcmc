@@ -117,10 +117,11 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         for (int step = 0; step < pathSteps; step++) {
             double p = 1.0 - (((double) step) / pathSteps);
             int cl = (int) (20.0 * chainLength / ((19.0 * p) + 1));
-            logger.setLogEvery(cl / logCount);
+//            logger.setLogEvery(cl / logCount);
             burnin = (int) (0.1 * cl);
 
             pathLikelihood.setPathParameter(pathParameter);
+            reportIteration(pathParameter,cl);
             mc.chain(cl + burnin, false, 0, false);
             if (step == 0) {
                 pathParameter /= 4;
@@ -132,10 +133,15 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         }
 
         int cl = 20 * chainLength;
-        logger.setLogEvery(cl / logCount);
+//        logger.setLogEvery(cl / logCount);
         burnin = (int) (0.1 * cl);
         pathLikelihood.setPathParameter(0.0);
+        reportIteration(pathParameter,cl);
         mc.chain(cl + burnin, false, 0, false);
+    }
+
+    private void reportIteration(double pathParameter, int cl) {
+        System.out.println("Attempting theta = "+pathParameter+" for "+cl+" iterations.");
     }
 
     public void geometricIntegration() {
@@ -144,7 +150,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         for (int step = 0; step < pathSteps; step++) {
             double p = 1.0 - (((double) step) / pathSteps);
             int cl = (int) (20.0 * chainLength / ((19.0 * p) + 1));
-            logger.setLogEvery(cl / logCount);
+//            logger.setLogEvery(cl / logCount);
             burnin = (int) (0.1 * cl);
 
             pathLikelihood.setPathParameter(pathParameter);
@@ -154,7 +160,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         }
 
         int cl = 20 * chainLength;
-        logger.setLogEvery(cl / logCount);
+//        logger.setLogEvery(cl / logCount);
         burnin = (int) (0.1 * cl);
         pathLikelihood.setPathParameter(0.0);
         mc.chain(cl + burnin, false, 0, false);

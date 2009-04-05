@@ -30,11 +30,14 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.evomodel.beagle.substmodel.SubstitutionModel;
+import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.Vector;
 
 /**
  * An abstract base class for substitution models.
  *
  * @author Andrew Rambaut
+ * @author Marc Suchard
  * @author Alexei Drummond
  * @version $Id: AbstractSubstitutionModel.java,v 1.41 2005/05/24 20:25:58 rambaut Exp $
  */
@@ -235,6 +238,15 @@ public abstract class BaseSubstitutionModel extends AbstractModel
                 k += 1;
             }
         }
+
+         if (savedQ == null) {
+            savedQ = new double[stateCount][stateCount];
+         }
+         for(int i=0; i<stateCount; i++) {
+            for(int j=0; j<stateCount; j++)
+                savedQ[i][j] = q[i][j];
+         }
+
         makeValid(q, stateCount);
         normalize(q, freqModel.getFrequencies());
 
@@ -242,6 +254,25 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
         updateMatrix = false;
     }
+
+    static String format = "%2.1e";
+        
+    public String printQ() {
+
+         StringBuffer sb = new StringBuffer();
+        for(int i=0; i<stateCount; i++) {
+            if (i>0)
+                sb.append(String.format(format,savedQ[i][0]));
+            for(int j=1; j<stateCount; j++) {
+                sb.append("\t");
+                if (j != i)
+                    sb.append(String.format(format,savedQ[i][j]));
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+
 
     // Make it a valid rate matrix (make sum of rows = 0)
     private void makeValid(double[][] matrix, int dimension) {
@@ -253,6 +284,9 @@ public abstract class BaseSubstitutionModel extends AbstractModel
             }
             matrix[i][i] = -sum;
         }
+//        if(i == 0) {
+//     ;
+//        }
     }
 
     /**
@@ -312,9 +346,11 @@ public abstract class BaseSubstitutionModel extends AbstractModel
             }
         }
     }
-
+           
+    public double[][] getQ() { return savedQ; }
 
     private final double q[][];
+    private double savedQ[][];
     protected EigenDecomposition eigenDecomposition;
     private EigenDecomposition storedEigenDecomposition;
 

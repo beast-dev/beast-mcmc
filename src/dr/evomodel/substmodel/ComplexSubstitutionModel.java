@@ -223,11 +223,16 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
         double[] rates = getRates();
 
-        // Set the instantaneous rate matrix
+        // Copy uppper triangle in row-order form
         for (i = 0; i < stateCount; i++) {
-            for (j = 0; j < stateCount; j++) {
-                if (i != j)
-                    amat[i][j] = rates[k++];
+            for (j = i+1; j < stateCount; j++) {
+                amat[i][j] = rates[k++];
+            }
+        }
+        // Copy lower triangle in column-order form (transposed)
+        for (j = 0; j< stateCount; j++) {
+            for (i = j+1; i < stateCount; i++) {
+                amat[i][j] = rates[k++];
             }
         }
 
@@ -244,7 +249,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         if (alegbra.cond(eigenV) > maxConditionNumber) {
             wellConditioned = false;
             return;
-        }        
+        }
 //        updateMatrix = false;
 
         try {

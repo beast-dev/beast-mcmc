@@ -4,6 +4,7 @@ import dr.app.beast.BeastVersion;
 import dr.inference.loggers.*;
 import dr.math.MathUtils;
 import dr.util.Identifiable;
+import dr.util.Property;
 import dr.xml.*;
 
 import java.io.File;
@@ -50,9 +51,9 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
         String fileName = null;
         if (xo.hasAttribute(FILE_NAME)) {
-        	fileName = xo.getStringAttribute(FILE_NAME);
+            fileName = xo.getStringAttribute(FILE_NAME);
         }
-        
+
         final PrintWriter pw = getLogFile(xo, getParserName());
 
         final LogFormatter formatter = new TabDelimitedFormatter(pw);
@@ -88,6 +89,8 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
                 logger.addColumn(new LogColumn.Default(((Identifiable) child).getId(), child));
 
+            } else if (child instanceof Property) {
+                logger.addColumn(new LogColumn.Default(((Property) child).getAttributeName(), child));
             } else {
 
                 logger.addColumn(new LogColumn.Default(child.getClass().toString(), child));

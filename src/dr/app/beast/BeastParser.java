@@ -183,6 +183,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.evoxml.TaxonParser());
         addXMLObjectParser(new dr.evoxml.TaxaParser());
         addXMLObjectParser(new dr.evoxml.DateParser());
+        addXMLObjectParser(new dr.evoxml.LocationParser());
         addXMLObjectParser(new dr.evoxml.DistanceMatrixParser());
         addXMLObjectParser(new dr.evoxml.HiddenNucleotideParser());
         addXMLObjectParser(dr.evolution.util.RandomTaxaSample.PARSER);

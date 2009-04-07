@@ -42,7 +42,6 @@ import java.util.logging.Logger;
 public class AttributePatternsParser extends AbstractXMLObjectParser {
 
     public static final String ATTRIBUTE_PATTERNS = "attributePatterns";
-    public static final String TAXON_LIST = "taxonList";
     public static final String ATTRIBUTE = "attribute";
 
     public String getParserName() { return ATTRIBUTE_PATTERNS; }
@@ -50,7 +49,7 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String attributeName = xo.getStringAttribute(ATTRIBUTE);
-        TaxonList taxa = (TaxonList)xo.getElementFirstChild(TAXON_LIST);
+        TaxonList taxa = (TaxonList)xo.getChild(TaxonList.class);
         DataType dataType = DataTypeUtils.getDataType(xo);
 
         if (dataType == null) {
@@ -63,13 +62,21 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
 
         for (int i = 0; i < taxa.getTaxonCount(); i++) {
             Taxon taxon = taxa.getTaxon(i);
-            String value = taxon.getAttribute(attributeName).toString();
+            Object value = taxon.getAttribute(attributeName);
 
-            pattern[i] = dataType.getState(value.charAt(0));
+            if (value != null) {
+                int state = dataType.getState(value.toString());
+                if (state < 0) {
+                    throw new XMLParseException("State for attribute, " + attributeName + ", in taxon, " + taxon.getId() + ", is unknown: " + value.toString());
+                }
+                pattern[i] = state;
+            } else {
+                pattern[i] = dataType.getUnknownState();                
+            }
         }
 
         patterns.addPattern(pattern);
-        
+
         if (xo.hasAttribute("id")) {
 		    Logger.getLogger("dr.evoxml").info("Read attribute patterns, '" + xo.getId() + "' for attribute, "+ attributeName);
 	    } else {
@@ -94,7 +101,7 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
                 new ElementRule(DataType.class)
                 ),
             AttributeRule.newStringRule(ATTRIBUTE),
-            new ElementRule(TAXON_LIST, TaxonList.class, "The taxon set")
+            new ElementRule(TaxonList.class, "The taxon set")
     };
 
     public String getParserDescription() {

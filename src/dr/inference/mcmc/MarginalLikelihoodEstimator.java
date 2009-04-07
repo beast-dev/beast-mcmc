@@ -45,7 +45,7 @@ import dr.xml.*;
  */
 public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
-    public MarginalLikelihoodEstimator(String id, int chainLength, int pathSteps,
+    public MarginalLikelihoodEstimator(String id, int chainLength, int burninLength, int pathSteps,
                                        boolean linear, boolean lacing,
                                        PathLikelihood pathLikelihood,
                                        OperatorSchedule schedule,
@@ -56,6 +56,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         this.pathSteps = pathSteps;
         this.linear = linear;
         this.lacing = lacing;
+        this.burninLength = burninLength;
 
         MCMCCriterion criterion = new MCMCCriterion();
 
@@ -71,27 +72,36 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     }
 
     public void linearIntegration() {
-        burnin = (int) (0.1 * chainLength);
+        if (burninLength == -1)
+            burnin = (int) (0.1 * chainLength);
+        else
+            burnin = burninLength;
         mc.setCurrentLength(0);
         for (int step = 0; step < pathSteps; step++) {
             pathLikelihood.setPathParameter(pathParameter);
+            reportIteration(pathParameter, chainLength, burnin);
             mc.chain(chainLength + burnin, false, 0, false);
             pathParameter -= pathDelta;
 
         }
 
         pathLikelihood.setPathParameter(0.0);
-        ;
+        reportIteration(pathParameter, chainLength, burnin);
         mc.chain(chainLength + burnin, false, 0, false);
     }
 
     public void linearShoeLacing() {
-        burnin = (int) (0.1 * chainLength);
+        if (burninLength == -1) {
+            burnin = (int) (0.1 * chainLength);
+        } else {
+            burnin = burninLength;
+        }
         mc.setCurrentLength(0);
         if (pathSteps % 2 == 0) //Works only for odd number of steps
             pathSteps += 1;
-        for (int step = 0; step < pathSteps; step++) {
+        for (int step = 0; step < pathSteps - 1; step++) {
             pathLikelihood.setPathParameter(pathParameter);
+            reportIteration(pathParameter, chainLength, burnin);
             mc.chain(chainLength + burnin, false, 0, false);
             if (step == 0)
                 pathParameter -= 2 * pathDelta;
@@ -104,6 +114,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         }
 
         pathLikelihood.setPathParameter(0.0);
+        reportIteration(pathParameter, chainLength, burnin);
         mc.chain(chainLength + burnin, false, 0, false);
 
     }
@@ -118,10 +129,13 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             double p = 1.0 - (((double) step) / pathSteps);
             int cl = (int) (20.0 * chainLength / ((19.0 * p) + 1));
 //            logger.setLogEvery(cl / logCount);
-            burnin = (int) (0.1 * cl);
+            if (burninLength == -1)
+                burnin = (int) (0.1 * cl);
+            else
+                burnin = burninLength;
 
             pathLikelihood.setPathParameter(pathParameter);
-            reportIteration(pathParameter,cl);
+            reportIteration(pathParameter, cl, burnin);
             mc.chain(cl + burnin, false, 0, false);
             if (step == 0) {
                 pathParameter /= 4;
@@ -134,14 +148,17 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
         int cl = 20 * chainLength;
 //        logger.setLogEvery(cl / logCount);
-        burnin = (int) (0.1 * cl);
+        if (burninLength == -1)
+            burnin = (int) (0.1 * cl);
+        else
+            burnin = burninLength;
         pathLikelihood.setPathParameter(0.0);
-        reportIteration(pathParameter,cl);
+        reportIteration(pathParameter, cl, burnin);
         mc.chain(cl + burnin, false, 0, false);
     }
 
-    private void reportIteration(double pathParameter, int cl) {
-        System.out.println("Attempting theta = "+pathParameter+" for "+cl+" iterations.");
+    private void reportIteration(double pathParameter, int cl, int burn) {
+        System.out.println("Attempting theta = " + pathParameter + " for " + cl + " iterations + " + burn + " burnin.");
     }
 
     public void geometricIntegration() {
@@ -151,9 +168,12 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             double p = 1.0 - (((double) step) / pathSteps);
             int cl = (int) (20.0 * chainLength / ((19.0 * p) + 1));
 //            logger.setLogEvery(cl / logCount);
-            burnin = (int) (0.1 * cl);
+            if (burninLength == -1)
+                burnin = (int) (0.1 * cl);
+            else burnin = burninLength;
 
             pathLikelihood.setPathParameter(pathParameter);
+            reportIteration(pathParameter, cl, burnin);
             mc.chain(cl + burnin, false, 0, false);
             pathParameter /= 2;
 
@@ -161,8 +181,12 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
         int cl = 20 * chainLength;
 //        logger.setLogEvery(cl / logCount);
-        burnin = (int) (0.1 * cl);
+        if (burninLength == -1)
+            burnin = (int) (0.1 * cl);
+        else
+            burnin = burninLength;
         pathLikelihood.setPathParameter(0.0);
+        reportIteration(pathParameter, cl, burnin);
         mc.chain(cl + burnin, false, 0, false);
     }
 
@@ -256,14 +280,19 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
             int chainLength = xo.getIntegerAttribute(CHAIN_LENGTH);
             int pathSteps = xo.getIntegerAttribute(PATH_STEPS);
+            int burninLength = -1;
+            if (xo.hasAttribute(BURNIN)) {
+                burninLength = xo.getIntegerAttribute(BURNIN);
+            }
             boolean linear = true;
             boolean lacing = false;
 
             if (!xo.getAttribute(LINEAR, true))
                 linear = false;
 
-            if (xo.getAttribute(LACING, false))
+            if (xo.getAttribute(LACING, true))
                 lacing = true;
+
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Object child = xo.getChild(i);
@@ -276,7 +305,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                     "\n  pathSteps=" + pathSteps);
 
             MarginalLikelihoodEstimator mle = new MarginalLikelihoodEstimator(MARGINAL_LIKELIHOOD_ESTIMATOR, chainLength,
-                    pathSteps, linear, lacing, pathLikelihood, mcmc.getOperatorSchedule(), logger);
+                    burninLength, pathSteps, linear, lacing, pathLikelihood, mcmc.getOperatorSchedule(), logger);
 
             if (!xo.getAttribute(SPAWN, true))
                 mle.setSpawnable(false);
@@ -303,6 +332,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newIntegerRule(CHAIN_LENGTH),
                 AttributeRule.newIntegerRule(PATH_STEPS),
+                AttributeRule.newIntegerRule(BURNIN, true),
                 AttributeRule.newBooleanRule(LINEAR, true),
                 AttributeRule.newBooleanRule(LACING, true),
                 AttributeRule.newBooleanRule(SPAWN, true),
@@ -334,6 +364,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     private int chainLength;
 
     private int burnin;
+    private int burninLength;
     private int pathSteps;
     private boolean linear;
     private boolean lacing;
@@ -350,4 +381,5 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     public static final String LINEAR = "linear";
     public static final String LACING = "lacing";
     public static final String SPAWN = "spawn";
+    public static final String BURNIN = "burnin";
 }

@@ -109,6 +109,9 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 //         if (scaleByTime) {
             if (hasRateModel)
                 return length * rateModel.getBranchRate(treeModel, node);
+
+            if (scaleByTime)
+                return length / treeModel.getNodeHeight(treeModel.getRoot());
 //            return length / treeLength;
 //        }
         return length;
@@ -462,9 +465,9 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
                 check = (Parameter) cxo.getChild(Parameter.class);
             }
 
-            boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, true);
+            boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
 
-            boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, true);
+            boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
 
             boolean reportAsMultivariate = false;
             if (xo.hasAttribute(REPORT_MULTIVARIATE) && xo.getBooleanAttribute(REPORT_MULTIVARIATE))
@@ -521,7 +524,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
                 AttributeRule.newDoubleArrayRule("cut", true),
                 AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),
 //                AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
-//                AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
+                AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
                 new ElementRule(Parameter.class, true),
                 new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)

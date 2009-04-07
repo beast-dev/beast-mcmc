@@ -154,20 +154,20 @@ public class Coevolve {
         DataType dataType = alignment.getDataType();
         int stateCount = dataType.getStateCount();
 
-        char[] stateChars = new char[stateCount*stateCount];
-        for (int i = 0; i < Math.min(10, stateChars.length); i++) { stateChars[i] = (char)('0' + i); }
+        String[] stateChars = new String[stateCount*stateCount];
+        for (int i = 0; i < Math.min(10, stateChars.length); i++) { stateChars[i] = String.valueOf((char)('0' + i)); }
         if (stateCount > 10) {
-            for (int i = 10; i < stateChars.length; i++) { stateChars[i] = (char)('A' + i-10); }
+            for (int i = 10; i < stateChars.length; i++) { stateChars[i] = String.valueOf((char)('A' + i-10)); }
         }
 
         GeneralDataType newDataType = new GeneralDataType(stateChars);
-        int[] ambiguities = new int[stateChars.length];
-        for (int i = 0; i < ambiguities.length; i++) {
-            ambiguities[i] = i;
-        }
-
-        // question mark for unknown states
-        newDataType.addAmbiguity('?', ambiguities);
+//        int[] ambiguities = new int[stateChars.length];
+//        for (int i = 0; i < ambiguities.length; i++) {
+//            ambiguities[i] = i;
+//        }
+//
+//        // question mark for unknown states
+//        newDataType.addAmbiguity("?", ambiguities);
 
         return newDataType;
     }

@@ -59,13 +59,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * Constructor.
      */
     public BeagleTreeLikelihood(PatternList patternList,
-                          TreeModel treeModel,
-                          BranchSiteModel branchSiteModel,
-                          SiteRateModel siteRateModel,
-                          BranchRateModel branchRateModel,
-                          boolean useAmbiguities,
-                          int deviceNumber,
-                          boolean preferSinglePrecision
+                                TreeModel treeModel,
+                                BranchSiteModel branchSiteModel,
+                                SiteRateModel siteRateModel,
+                                BranchRateModel branchRateModel,
+                                boolean useAmbiguities,
+                                int deviceNumber,
+                                boolean preferSinglePrecision
     ) {
 
         super(TreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
@@ -81,20 +81,20 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             this.branchSiteModel = branchSiteModel;
             addModel(branchSiteModel);
 
-			if (branchRateModel != null) {
-				this.branchRateModel = branchRateModel;
-				logger.info("Branch rate model used: " + branchRateModel.getModelName());
-			} else {
-				this.branchRateModel = new DefaultBranchRateModel();
-			}
-			addModel(this.branchRateModel);
+            if (branchRateModel != null) {
+                this.branchRateModel = branchRateModel;
+                logger.info("Branch rate model used: " + branchRateModel.getModelName());
+            } else {
+                this.branchRateModel = new DefaultBranchRateModel();
+            }
+            addModel(this.branchRateModel);
 
             this.categoryCount = this.siteRateModel.getCategoryCount();
 
             int extNodeCount = treeModel.getExternalNodeCount();
 
-	  Map<String, Object> configuration = new HashMap<String, Object>();
-	  configuration.put(BeagleFactory.STATE_COUNT, stateCount);
+            Map<String, Object> configuration = new HashMap<String, Object>();
+            configuration.put(BeagleFactory.STATE_COUNT, stateCount);
             configuration.put(BeagleFactory.PREFER_SINGLE_PRECISION, preferSinglePrecision);
             configuration.put(BeagleFactory.DEVICE_NUMBER, deviceNumber);
 
@@ -108,7 +108,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 useAmbiguities = true;
             }
 
- //           dynamicRescaling = likelihoodCore.canHandleDynamicRescaling();
+            //           dynamicRescaling = likelihoodCore.canHandleDynamicRescaling();
 
             beagle.initialize(
                     nodeCount,
@@ -226,12 +226,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 }
             }
 
-		} else if (model == branchRateModel) {
-			if (index == -1) {
-				updateAllNodes();
-			} else {
-				updateNode(treeModel.getNode(index));
-			}
+        } else if (model == branchRateModel) {
+            if (index == -1) {
+                updateAllNodes();
+            } else {
+                updateNode(treeModel.getNode(index));
+            }
 
         } else if (model == branchSiteModel) {
 
@@ -298,7 +298,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         if (operations == null) {
             operations = new int[nodeCount * 3];
-            dependencies = new int[nodeCount * 2];
+            dependencies = new int[nodeCount];
         }
 
         branchUpdateCount = 0;
@@ -339,12 +339,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         // Attempt dynamic rescaling if over/under-flow
         if (logL == Double.NaN || logL == Double.POSITIVE_INFINITY ) {
 
-        	System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
-        	updateAllNodes();
-        	branchUpdateCount = 0;
-        	operationCount = 0;
-        	traverse(treeModel, root, null);
-        	beagle.calculatePartials(operations,dependencies, operationCount,true);
+            System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
+            updateAllNodes();
+            branchUpdateCount = 0;
+            operationCount = 0;
+            traverse(treeModel, root, null);
+            beagle.calculatePartials(operations,dependencies, operationCount,true);
             beagle.calculateLogLikelihoods(root.getNumber(), patternLogLikelihoods);
 
             logL = 0.0;
@@ -387,10 +387,14 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         NodeRef parent = tree.getParent(node);
 
+        if (operatorNumber != null) {
+            operatorNumber[0] = -1;
+        }
+
         // First update the transition probability matrix(ices) for this branch
         if (parent != null && updateNode[nodeNum]) {
 
-			final double branchRate = branchRateModel.getBranchRate(tree, node);
+            final double branchRate = branchRateModel.getBranchRate(tree, node);
 
             // Get the operational time of the branch
             final double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
@@ -426,23 +430,17 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 operations[x + 1] = child2.getNumber(); // source node 2
                 operations[x + 2] = nodeNum; // destination node
 
-                int y = operationCount * 3;
-                dependencies[y] = -1; // dependent ancestor
-                dependencies[y + 1] = 0; // isDependent?
-
-                // if one of the child nodes have an update then set the dependency
-                // element to this operation.
-                if (op1[0] != -1) {
-                    dependencies[op1[0] * 3] = operationCount;
-                    dependencies[y + 1] = 1; // isDependent?
+                if (op1[0] >= 0) {
+                    dependencies[op1[0]] = operationCount;
                 }
-                if (op2[0] != -1) {
-                    dependencies[op2[0] * 3] = operationCount;
-                    dependencies[y + 1] = 1; // isDependent?
+                if (op2[0] >= 0) {
+                    dependencies[op2[0]] = operationCount;
                 }
 
                 if (operatorNumber != null) {
-                    dependencies[y] = operationCount;
+                    operatorNumber[0] = operationCount;
+                } else {
+                    dependencies[operationCount] = -1;
                 }
 
                 operationCount ++;
@@ -468,10 +466,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * the site model for these sites
      */
     protected final SiteRateModel siteRateModel;
-	/**
-	 * the branch rate model
-	 */
-	protected final BranchRateModel branchRateModel;
+    /**
+     * the branch rate model
+     */
+    protected final BranchRateModel branchRateModel;
 
     /**
      * the pattern likelihoods

@@ -54,12 +54,20 @@ public class GY94CodonModel extends BaseSubstitutionModel
 	/**
 	 * Constructor
 	 */
+
+       public GY94CodonModel(Codons codonDataType, Parameter omegaParameter, Parameter kappaParameter,
+                             FrequencyModel freqModel) {
+              this(codonDataType, omegaParameter, kappaParameter, freqModel,
+                      new DefaultEigenSystem(codonDataType.getStateCount()));
+
+          }
+                    
 	public GY94CodonModel(Codons codonDataType,
 							Parameter omegaParameter,
 							Parameter kappaParameter,
-							FrequencyModel freqModel)
+							FrequencyModel freqModel, EigenSystem eigenSystem)
 	{
-		super("GY94", codonDataType, freqModel);
+		super("GY94", codonDataType, freqModel, eigenSystem);
 
         this.codonDataType = codonDataType;
         this.geneticCode = codonDataType.getGeneticCode();

@@ -28,6 +28,8 @@ package dr.evoxml;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
 import dr.xml.*;
+import dr.util.Attribute;
+import dr.util.Identifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,21 +76,16 @@ public class GeneralDataTypeParser extends AbstractXMLObjectParser {
                 XMLObject cxo = (XMLObject)xo.getChild(i);
 
                 if (cxo.getName().equals(STATE)) {
-
-                    String code = cxo.getStringAttribute(CODE);
-
-                    if (code.length() != 1) {
-                        throw new XMLParseException("State codes in " + getParserName() + " element must be exactly one character");
-                    }
-
-                    states.add(code);
+                    states.add(cxo.getStringAttribute(CODE));
                 } else if (cxo.getName().equals(ALIAS)) {
                     // Do nothing just now
                 } else if (cxo.getName().equals(AMBIGUITY)) {
                     // Do nothing just now
                 } else {
-                    throw new XMLParseException("illegal element in " + getParserName() + " element");
+                    throw new XMLParseException("illegal element, " + cxo.getName() + ", in " + getParserName() + " element");
                 }
+            } else if (xo.getChild(i) instanceof Identifiable)  {
+                states.add(((Identifiable)xo.getChild(i)).getId());
             } else {
                 throw new XMLParseException("illegal element in " + getParserName() + " element");
             }
@@ -100,69 +97,55 @@ public class GeneralDataTypeParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Less than two state elements defined in " + getParserName() + " element");
         }
 
-        char[] stateArray = new char[states.size()];
-        for (int i = 0; i < states.size(); i++) {
-            stateArray[i] = states.get(i).charAt(0);
-        }
-
-        String stateLookUp = new String(stateArray);
-
-        GeneralDataType dataType = new GeneralDataType(stateArray);
+        GeneralDataType dataType = new GeneralDataType(states);
 
         for (int i =0; i < xo.getChildCount(); i++) {
             if (xo.getChild(i) instanceof XMLObject) {
                 XMLObject cxo = (XMLObject)xo.getChild(i);
-
-                if (cxo.getName().equals(STATE)) {
-                    // Already dealt with
-                } else if (cxo.getName().equals(ALIAS)) {
+                if (cxo.getName().equals(ALIAS)) {
 
                     String alias = cxo.getStringAttribute(CODE);
-                    if (alias.length() != 1) {
-                        throw new XMLParseException("State alias codes in " + getParserName() + " element must be exactly one character");
-                    }
+//                    if (alias.length() != 1) {
+//                        throw new XMLParseException("State alias codes in " + getParserName() + " element must be exactly one character");
+//                    }
 
                     String state = cxo.getStringAttribute(STATE);
-                    if (state.length() != 1) {
-                        throw new XMLParseException("State codes in " + getParserName() + " element must be exactly one character");
-                    }
+//                    if (state.length() != 1) {
+//                        throw new XMLParseException("State codes in " + getParserName() + " element must be exactly one character");
+//                    }
 
-                    char stateChar = state.charAt(0);
-                    int stateNo = stateLookUp.indexOf(stateChar);
-                    if (stateNo < 0) {
-                        throw new XMLParseException("State code " + stateChar + " not found in " + getParserName() + " element");
+                    try {
+                        dataType.addAlias(alias, state);
+                    } catch (IllegalArgumentException iae) {
+                        throw new XMLParseException(iae.getMessage() + "in " + getParserName() + " element");
                     }
-                    dataType.addAlias(alias.charAt(0), stateNo);
 
                 } else if (cxo.getName().equals(AMBIGUITY)) {
 
                     String code = cxo.getStringAttribute(CODE);
-                    if (code.length() != 1) {
-                        throw new XMLParseException("State ambiguity codes in " + getParserName() + " element must be exactly one character");
-                    }
+//                    if (code.length() != 1) {
+//                        throw new XMLParseException("State ambiguity codes in " + getParserName() + " element must be exactly one character");
+//                    }
 
-                    String ambiguities = cxo.getStringAttribute(STATES);
-                    if (ambiguities.length() < 2) {
-                        throw new XMLParseException("States for ambiguity code in " + getParserName() + " element are not ambiguous");
-                    }
-
-                    int[] ambiguousStates = new int[ambiguities.length()];
-                    for (int j = 0; j < ambiguities.length(); j++) {
-                        char stateChar = ambiguities.charAt(j);
-                        int stateNo = stateLookUp.indexOf(stateChar);
-                        if (stateNo < 0) {
-                            throw new XMLParseException("State code " + stateChar + " not found in " + getParserName() + " element");
+                    String[] ambiguities = cxo.getStringArrayAttribute(STATES);
+                    if (ambiguities.length == 1) {
+                        String codes = ambiguities[0];
+                        if (codes.length() < 2) {
+                            throw new XMLParseException("States for ambiguity code in " + getParserName() + " element are not ambiguous");
                         }
-                        ambiguousStates[j] = stateNo;
+                        ambiguities = new String[codes.length()];
+                        for (int j = 0; j < codes.length(); j++) {
+                            ambiguities[j] = String.valueOf(codes.charAt(j));
+                        }
                     }
 
-                    dataType.addAmbiguity(code.charAt(0), ambiguousStates);
+                    try {
+                        dataType.addAmbiguity(code, ambiguities);
+                    } catch (IllegalArgumentException iae) {
+                        throw new XMLParseException(iae.getMessage() + "in " + getParserName() + " element");
+                    }
 
-                } else {
-                    throw new XMLParseException("illegal element in " + getParserName() + " element");
                 }
-            } else {
-                throw new XMLParseException("illegal element in " + getParserName() + " element");
             }
         }
 
@@ -197,8 +180,9 @@ public class GeneralDataTypeParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-        new ContentRule("<state code=\"X\"/>"),
-        new ContentRule("<alias code=\"Y\" state=\"X\"/>"),
-        new ContentRule("<ambiguity code=\"Z\" states=\"XY\"/>")
+            new ElementRule(Identifiable.class, 0, Integer.MAX_VALUE),
+            new ContentRule("<state code=\"X\"/>"),
+            new ContentRule("<alias code=\"Y\" state=\"X\"/>"),
+            new ContentRule("<ambiguity code=\"Z\" states=\"XY\"/>")
     };
 }

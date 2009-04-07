@@ -63,6 +63,24 @@ public class Taxon implements Attributable, Identifiable, Comparable {
 		return null;
 	}
 
+
+    /**
+     * Sets a location for this taxon.
+     */
+    public void setLocation(Location location) {
+        setAttribute("location", location);
+    }
+
+    /**
+     * @return a location for this taxon.
+     */
+    public Location getLocation() {
+        Object location = getAttribute("location");
+        if (location != null && location instanceof Location) {
+            return (Location)location;
+        }
+        return null;
+    }
     // **************************************************************
     // Attributable IMPLEMENTATION
     // **************************************************************

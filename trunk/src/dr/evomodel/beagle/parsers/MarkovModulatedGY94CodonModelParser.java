@@ -5,6 +5,7 @@ import dr.evolution.datatype.HiddenCodons;
 import dr.evolution.datatype.GeneticCode;
 import dr.evomodel.beagle.substmodel.FrequencyModel;
 import dr.evomodel.beagle.substmodel.MarkovModulatedGY94CodonModel;
+import dr.evomodel.beagle.substmodel.ColtEigenSystem;
 import dr.evoxml.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -35,7 +36,8 @@ public class MarkovModulatedGY94CodonModelParser extends GY94CodonModelParser {
         Parameter kappaParam = (Parameter) xo.getElementFirstChild(KAPPA);
         Parameter switchingParam = (Parameter) xo.getElementFirstChild(SWITCHING_RATES);
         FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
-        return new MarkovModulatedGY94CodonModel(codons, switchingParam, omegaParam, kappaParam, freqModel);
+        return new MarkovModulatedGY94CodonModel(codons, switchingParam, omegaParam, kappaParam, freqModel,
+                new ColtEigenSystem());
     }
 
     public String getParserDescription() {

@@ -15,12 +15,23 @@ public class MarkovModulatedGY94CodonModel extends GY94CodonModel {
 
     public MarkovModulatedGY94CodonModel(
             HiddenCodons codonDataType,
-            Parameter switchingRates,            
+            Parameter switchingRates,
             Parameter omegaParameter,
             Parameter kappaParameter,
             FrequencyModel freqModel) {
+        this(codonDataType, switchingRates, omegaParameter, kappaParameter, freqModel,
+                new DefaultEigenSystem(codonDataType.getStateCount()));
+    }
 
-        super(codonDataType, omegaParameter, kappaParameter, freqModel);
+    public MarkovModulatedGY94CodonModel(
+            HiddenCodons codonDataType,
+            Parameter switchingRates,            
+            Parameter omegaParameter,
+            Parameter kappaParameter,
+            FrequencyModel freqModel,
+            EigenSystem eigenSystem) {
+
+        super(codonDataType, omegaParameter, kappaParameter, freqModel, eigenSystem);
 
         this.hiddenClassCount = codonDataType.getHiddenClassCount();
         this.switchingRates = switchingRates;
@@ -111,6 +122,11 @@ public class MarkovModulatedGY94CodonModel extends GY94CodonModel {
         EigenDecomposition ed2 = mmCodonModel.getEigenDecomposition();
         System.err.println("matrixQ = \n"+mmCodonModel.printQ());// new Matrix(q));
     }
+
+    protected double getMINFDIFF() { return 1.0E-10; }
+
+    protected double getMINFREQ()  { return 1.0E-02; }
+
 
     private int hiddenClassCount;
     private Parameter switchingRates;

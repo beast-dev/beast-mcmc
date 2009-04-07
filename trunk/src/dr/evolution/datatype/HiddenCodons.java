@@ -3,7 +3,7 @@ package dr.evolution.datatype;
 /**
  * @author Marc A. Suchard
  */
-public class HiddenCodons extends Codons {
+public class HiddenCodons extends Codons implements HiddenDataType {
 		
 	public static final String DESCRIPTION = "hiddenCodon";
 

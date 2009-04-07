@@ -317,11 +317,13 @@ public abstract class BaseSubstitutionModel extends AbstractModel
      */
     private void checkFrequencies() {
         // required frequency difference
-        double MINFDIFF = 1.0E-10;
+        double MINFDIFF = getMINFDIFF();
 
         // lower limit on frequency
-        double MINFREQ = 1.0E-10;
+        double MINFREQ = getMINFREQ();
 
+
+        System.err.println("diff = "+MINFDIFF+" freq = "+MINFREQ);
         int maxi = 0;
         double sum = 0.0;
         double maxfreq = 0.0;
@@ -346,6 +348,10 @@ public abstract class BaseSubstitutionModel extends AbstractModel
             }
         }
     }
+
+    protected double getMINFDIFF() { return 1.0E-10; }
+
+    protected double getMINFREQ()  { return 1.0E-10; }
            
     public double[][] getQ() { return savedQ; }
 
@@ -353,6 +359,5 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     private double savedQ[][];
     protected EigenDecomposition eigenDecomposition;
     private EigenDecomposition storedEigenDecomposition;
-
 
 }

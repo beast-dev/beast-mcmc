@@ -181,6 +181,17 @@ public abstract class DataType
     /**
      * Get state corresponding to a character
      *
+     * @param code state code
+     *
+     * @return state
+     */
+    public int getState(String code) {
+        return getState(code.charAt(0));
+    }
+
+    /**
+     * Get state corresponding to a character
+     *
      * @param c character
      *
      * @return state

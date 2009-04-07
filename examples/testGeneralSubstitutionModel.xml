@@ -92,13 +92,12 @@
 		</frequencies>
 	</frequencyModel>
 
-	<generalSubstitutionModel id="generalSubst" name="generalSubst">
-		<dataType idref="general"/>
+	<generalSubstitutionModel id="generalSubst">
 		<frequencies>
 			<frequencyModel idref="frequencies"/>
 		</frequencies>
 		<rates relativeTo="5">
-			<parameter id="rates" dimension="5"/>
+			<parameter id="rates" dimension="5" value="1.0"/>
 		</rates>
 	</generalSubstitutionModel>
 

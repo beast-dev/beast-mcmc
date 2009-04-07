@@ -27,6 +27,8 @@ package dr.evolution.datatype;
 
 import dr.util.Identifiable;
 
+import java.util.*;
+
 /**
  * Implements a general DataType for any number of states
  *
@@ -46,20 +48,35 @@ public class GeneralDataType extends DataType implements Identifiable {
      *
      * @param stateCodes the codes of the states
      */
-    public GeneralDataType(char[] stateCodes) {
-        this.stateCount = stateCodes.length;
-
-        for (int i = 0; i < 128; i++) stateNumbers[i] = -1;
-
-        states = new State[stateCount];
-
-        for (int i = 0; i < stateCount; i++) {
-            stateNumbers[(int) stateCodes[i]] = i;
-            states[i] = new State(i, stateCodes[i]);
+    public GeneralDataType(final String[] stateCodes) {
+        for (int i = 0; i < stateCodes.length; i++) {
+            State state = new State(i, stateCodes[i]);
+            states.add(state);
+            stateMap.put(stateCodes[i], state);
         }
+        stateCount = states.size();
 
         this.ambiguousStateCount = 0;
 
+    }
+
+    /**
+     * Unlike the other standard data types, this general one has a public
+     * constructor so multiple instances can be created.
+     *
+     * @param stateCodes the codes of the states
+     */
+    public GeneralDataType(final Collection<String> stateCodes) {
+        int i = 0;
+        for (String code : stateCodes) {
+            State state = new State(i, code);
+            states.add(state);
+            stateMap.put(code, state);
+            i++;
+        }
+        stateCount = states.size();
+
+        this.ambiguousStateCount = 0;
     }
 
     /**
@@ -67,43 +84,66 @@ public class GeneralDataType extends DataType implements Identifiable {
      * Note that all this does is put an extra entry in the stateNumbers
      * array.
      *
-     * @param code  a character that represents the state
-     * @param state the state number
+     * @param alias a string that represents the state
+     * @param code the state number
      */
-    public void addAlias(char code, int state) {
-        stateNumbers[(int) code] = state;
+    public void addAlias(String alias, String code) {
+        State state =stateMap.get(code);
+        if (state == null) {
+            throw new IllegalArgumentException("DataType doesn't contain the state, " + code);
+        }
+        stateMap.put(alias, state);
     }
 
     /**
-     * Add an alias (a state code that represents a particular state).
+     * Add an ambiguity (a state code that represents multiple states).
      *
-     * @param code            a character that represents the state
-     * @param ambiguousStates the set of states that this char code refers to.
+     * @param code            a string that represents the state
+     * @param ambiguousStates the set of states that this code refers to.
      */
-    public void addAmbiguity(char code, int[] ambiguousStates) {
+    public void addAmbiguity(String code, String[] ambiguousStates) {
+
         int n = ambiguousStateCount + stateCount;
 
+        int[] indices = new int[ambiguousStates.length];
+        int i = 0;
+        for (String stateCode : ambiguousStates) {
+            State state =stateMap.get(stateCode);
+            if (state == null) {
+                throw new IllegalArgumentException("DataType doesn't contain the state, " + stateCode);
+            }
+            indices[i] = state.number;
+            i++;
+        }
+        State state = new State(n, code, indices);
+        states.add(state);
         ambiguousStateCount++;
-        stateNumbers[(int) code] = n;
 
-        State[] newStates = new State[n + 1];
-
-        System.arraycopy(states, 0, newStates, 0, n);
-        newStates[n] = new State(n, code, ambiguousStates);
-        states = newStates;
+        stateMap.put(code, state);
     }
 
     /**
-     * Get state corresponding to a character
+     * Get state corresponding to a code
      *
-     * @param c character
+     * @param code string code
      * @return state
      */
-    public int getState(char c) {
-
-        return stateNumbers[(int) c];
+    public int getState(String code) {
+        if (!stateMap.containsKey(code)) {
+            return -1;
+        }
+        return stateMap.get(code).number;
     }
 
+    /**
+     * Override this function to cast to string codes...
+     * @param c character
+     *
+     * @return
+     */
+    public int getState(char c) {
+        return getState(String.valueOf(c));
+    }
     /**
      * Get state corresponding to an unknown
      *
@@ -126,11 +166,10 @@ public class GeneralDataType extends DataType implements Identifiable {
      * Get character corresponding to a given state
      *
      * @param state state
-     *              <p/>
-     *              return corresponding character
+     * @return corresponding code
      */
-    public char getChar(int state) {
-        return states[state].code;
+    public String getCode(int state) {
+        return states.get(state).code;
     }
 
     /**
@@ -139,7 +178,7 @@ public class GeneralDataType extends DataType implements Identifiable {
      */
     public int[] getStates(int state) {
 
-        return states[state].ambiguities;
+        return states.get(state).ambiguities;
     }
 
     /**
@@ -147,12 +186,17 @@ public class GeneralDataType extends DataType implements Identifiable {
      */
     public boolean[] getStateSet(int state) {
 
+        if (state >= states.size()) {
+            throw new IllegalArgumentException("invalid state index");
+        }
+        State s = states.get(state);
+
         boolean[] stateSet = new boolean[stateCount];
         for (int i = 0; i < stateCount; i++)
             stateSet[i] = false;
 
-        for (int i = 0, n = states[state].ambiguities.length; i < n; i++) {
-            stateSet[states[state].ambiguities[i]] = true;
+        for (int i = 0, n = s.ambiguities.length; i < n; i++) {
+            stateSet[s.ambiguities[i]] = true;
         }
 
         return stateSet;
@@ -194,26 +238,26 @@ public class GeneralDataType extends DataType implements Identifiable {
         return id;
     }
 
-    private int[] stateNumbers = new int[128];
-    private State[] states;
+    private List<State> states = new ArrayList<State>();
+    private Map<String, State> stateMap = new TreeMap<String, State>();
 
     private class State {
         int number;
-        char code;
+        String code;
 
         int[] ambiguities;
 
-        State(int number, char code) {
+        State(int number, String code) {
             this.number = number;
             this.code = code;
             this.ambiguities = new int[]{number};
         }
 
-        State(int number, char code, int[] ambiguities) {
+        State(int number, String code, int[] ambiguities) {
             this.number = number;
 			this.code = code;
 			this.ambiguities = ambiguities;
 		}
 	}
-	
+
 }

@@ -25,8 +25,7 @@
 
 package dr.evoxml;
 
-import dr.evolution.util.Date;
-import dr.evolution.util.Taxon;
+import dr.evolution.util.*;
 import dr.util.Attribute;
 import dr.util.Identifiable;
 import dr.xml.*;
@@ -52,6 +51,8 @@ public class TaxonParser extends AbstractXMLObjectParser {
 
             if (child instanceof Date) {
                 taxon.setDate((Date)child);
+            } else if (child instanceof Location) {
+                    taxon.setLocation((Location)child);
             } else if (child instanceof Attribute) {
                 final Attribute attr = (Attribute)child;
                 taxon.setAttribute(attr.getAttributeName(), attr.getAttributeValue());
@@ -76,7 +77,8 @@ public class TaxonParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
             new StringAttributeRule(Identifiable.ID, "A unique identifier for this taxon"),
             new ElementRule(dr.util.Attribute.Default.class, true),
-            new ElementRule(dr.evolution.util.Date.class, true)
+            new ElementRule(dr.evolution.util.Date.class, true),
+            new ElementRule(dr.evolution.util.Location.class, true)
     };
 
 }

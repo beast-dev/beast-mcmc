@@ -1,0 +1,245 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: testML.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the ML engine -->
+
+<beast>
+
+	<!-- The list of taxa analyse (can also include dates/ages).                 -->
+	<!-- ntax=6                                                                  -->
+	<taxa id="taxa">
+		<taxon id="human"/>
+		<taxon id="chimp"/>
+		<taxon id="bonobo"/>
+		<taxon id="gorilla"/>
+		<taxon id="orangutan"/>
+		<taxon id="siamang"/>
+	</taxa>
+
+	<alignment id="alignment1" dataType="nucleotide">
+		<sequence>
+			<taxon idref="human"/>
+			AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGGAGCTTAAACCCCCTTATTTCTACTAGGACTATGAGAATCGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTATACCCTTCCCGTACTAAGAAATTTAGGTTAAATACAGACCAAGAGCCTTCAAAGCCCTCAGTAAGTTG-CAATACTTAATTTCTGTAAGGACTGCAAAACCCCACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGACCAATGGGACTTAAACCCACAAACACTTAGTTAACAGCTAAGCACCCTAATCAAC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAA-TCACCTCGGAGCTTGGTAAAAAGAGGCCTAACCCCTGTCTTTAGATTTACAGTCCAATGCTTCA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCCAAAGCTGGTTTCAAGCCAACCCCATGGCCTCCATGACTTTTTCAAAAGGTATTAGAAAAACCATTTCATAACTTTGTCAAAGTTAAATTATAGGCT-AAATCCTATATATCTTA-CACTGTAAAGCTAACTTAGCATTAACCTTTTAAGTTAAAGATTAAGAGAACCAACACCTCTTTACAGTGA
+		</sequence>
+		<sequence>
+			<taxon idref="chimp"/>
+			AGAAATATGTCTGATAAAAGAATTACTTTGATAGAGTAAATAATAGGAGTTCAAATCCCCTTATTTCTACTAGGACTATAAGAATCGAACTCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTACACCCTTCCCGTACTAAGAAATTTAGGTTAAGCACAGACCAAGAGCCTTCAAAGCCCTCAGCAAGTTA-CAATACTTAATTTCTGTAAGGACTGCAAAACCCCACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGATTAATGGGACTTAAACCCACAAACATTTAGTTAACAGCTAAACACCCTAATCAAC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAA-TCACCTCAGAGCTTGGTAAAAAGAGGCTTAACCCCTGTCTTTAGATTTACAGTCCAATGCTTCA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCTAAAGCTGGTTTCAAGCCAACCCCATGACCTCCATGACTTTTTCAAAAGATATTAGAAAAACTATTTCATAACTTTGTCAAAGTTAAATTACAGGTT-AACCCCCGTATATCTTA-CACTGTAAAGCTAACCTAGCATTAACCTTTTAAGTTAAAGATTAAGAGGACCGACACCTCTTTACAGTGA
+		</sequence>
+		<sequence>
+			<taxon idref="bonobo"/>
+			AGAAATATGTCTGATAAAAGAATTACTTTGATAGAGTAAATAATAGGAGTTTAAATCCCCTTATTTCTACTAGGACTATGAGAGTCGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTATACCCTTCCCGTACTAAGAAATTTAGGTTAAACACAGACCAAGAGCCTTCAAAGCTCTCAGTAAGTTA-CAATACTTAATTTCTGTAAGGACTGCAAAACCCCACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGATTAATGGGACTTAAACCCACAAACATTTAGTTAACAGCTAAACACCCTAATCAGC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTTGAATTTGCAATTCAATATGAAAA-TCACCTCAGAGCTTGGTAAAAAGAGGCTTAACCCCTGTCTTTAGATTTACAGTCCAATGCTTCA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCTAAAGCTGGTTTCAAGCCAACCCCATGACCCCCATGACTTTTTCAAAAGATATTAGAAAAACTATTTCATAACTTTGTCAAAGTTAAATTACAGGTT-AAACCCCGTATATCTTA-CACTGTAAAGCTAACCTAGCATTAACCTTTTAAGTTAAAGATTAAGAGGACCAACACCTCTTTACAGTGA
+		</sequence>
+		<sequence>
+			<taxon idref="gorilla"/>
+			AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGAGGTTTAAACCCCCTTATTTCTACTAGGACTATGAGAATTGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTGTCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTCACATCCTTCCCGTACTAAGAAATTTAGGTTAAACATAGACCAAGAGCCTTCAAAGCCCTTAGTAAGTTA-CAACACTTAATTTCTGTAAGGACTGCAAAACCCTACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGATCAATGGGACTCAAACCCACAAACATTTAGTTAACAGCTAAACACCCTAGTCAAC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAT-TCACCTCGGAGCTTGGTAAAAAGAGGCCCAGCCTCTGTCTTTAGATTTACAGTCCAATGCCTTA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCCAAAGCTGGTTTCAAGCCAACCCCATGACCTTCATGACTTTTTCAAAAGATATTAGAAAAACTATTTCATAACTTTGTCAAGGTTAAATTACGGGTT-AAACCCCGTATATCTTA-CACTGTAAAGCTAACCTAGCGTTAACCTTTTAAGTTAAAGATTAAGAGTATCGGCACCTCTTTGCAGTGA
+		</sequence>
+		<sequence>
+			<taxon idref="orangutan"/>
+			AGAAATATGTCTGACAAAAGAGTTACTTTGATAGAGTAAAAAATAGAGGTCTAAATCCCCTTATTTCTACTAGGACTATGGGAATTGAACCCACCCCTGAGAATCCAAAATTCTCCGTGCCACCCATCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTACACCCTTCCCGTACTAAGAAATTTAGGTTA--CACAGACCAAGAGCCTTCAAAGCCCTCAGCAAGTCA-CAGCACTTAATTTCTGTAAGGACTGCAAAACCCCACTTTGCATCAACTGAGCGCAAATCAGCCACTTTAATTAAGCTAAGCCCTCCTAGACCGATGGGACTTAAACCCACAAACATTTAGTTAACAGCTAAACACCCTAGTCAAT-TGGCTTCAGTCCAAAGCCCCGGCAGGCCTTAAAGCTGCTCCTTCGAATTTGCAATTCAACATGACAA-TCACCTCAGGGCTTGGTAAAAAGAGGTCTGACCCCTGTTCTTAGATTTACAGCCTAATGCCTTAACTCGGCCATTTTACCGCAAAAAAGGAAGGAATCGAACCTCCTAAAGCTGGTTTCAAGCCAACCCCATAACCCCCATGACTTTTTCAAAAGGTACTAGAAAAACCATTTCGTAACTTTGTCAAAGTTAAATTACAGGTC-AGACCCTGTGTATCTTA-CATTGCAAAGCTAACCTAGCATTAACCTTTTAAGTTAAAGACTAAGAGAACCAGCCTCTCTTTGCAATGA
+		</sequence>
+		<sequence>
+			<taxon idref="siamang"/>
+			AGAAATACGTCTGACGAAAGAGTTACTTTGATAGAGTAAATAACAGGGGTTTAAATCCCCTTATTTCTACTAGAACCATAGGAGTCGAACCCATCCTTGAGAATCCAAAACTCTCCGTGCCACCCGTCGCACCCTGTTCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTATACCCTTCCCATACTAAGAAATTTAGGTTAAACACAGACCAAGAGCCTTCAAAGCCCTCAGTAAGTTAACAAAACTTAATTTCTGCAAGGGCTGCAAAACCCTACTTTGCATCAACCGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGATCGATGGGACTTAAACCCATAAAAATTTAGTTAACAGCTAAACACCCTAAACAACCTGGCTTCAATCTAAAGCCCCGGCAGA-GTTGAAGCTGCTTCTTTGAACTTGCAATTCAACGTGAAAAATCACTTCGGAGCTTGGCAAAAAGAGGTTTCACCTCTGTCCTTAGATTTACAGTCTAATGCTTTA-CTCAGCCACTTTACCACAAAAAAGGAAGGAATCGAACCCTCTAAAACCGGTTTCAAGCCAGCCCCATAACCTTTATGACTTTTTCAAAAGATATTAGAAAAACTATTTCATAACTTTGTCAAAGTTAAATCACAGGTCCAAACCCCGTATATCTTATCACTGTAGAGCTAGACCAGCATTAACCTTTTAAGTTAAAGACTAAGAGAACTACCGCCTCTTTACAGTGA
+		</sequence>
+	</alignment>
+
+	<alignment id="alignment2" dataType="nucleotide">
+		<sequence>
+			<taxon idref="human"/>
+			AT
+		</sequence>
+		<sequence>
+			<taxon idref="chimp"/>
+			GT
+		</sequence>
+		<sequence>
+			<taxon idref="bonobo"/>
+			GT
+		</sequence>
+		<sequence>
+			<taxon idref="gorilla"/>
+			GT
+		</sequence>
+		<sequence>
+			<taxon idref="orangutan"/>
+			CT
+		</sequence>
+		<sequence>
+			<taxon idref="siamang"/>
+			CC
+		</sequence>
+	</alignment>
+
+	<alignment id="alignment3" dataType="nucleotide">
+		<sequence>
+			<taxon idref="human"/>
+			G
+		</sequence>
+		<sequence>
+			<taxon idref="chimp"/>
+			G
+		</sequence>
+		<sequence>
+			<taxon idref="bonobo"/>
+			G
+		</sequence>
+		<sequence>
+			<taxon idref="gorilla"/>
+			G
+		</sequence>
+		<sequence>
+			<taxon idref="orangutan"/>
+			C
+		</sequence>
+		<sequence>
+			<taxon idref="siamang"/>
+			C
+		</sequence>
+	</alignment>
+
+
+	<!-- patterns not be reconstructed -->
+	<patterns id="patterns1" from="1">
+		<alignment idref="alignment1"/>
+	</patterns>
+
+	<!-- first set to be reconstructed -->
+	<patterns id="patterns2" from="1">
+		<alignment idref="alignment2"/>
+	</patterns>
+
+	<!-- second set to be reconstructed -->
+	<patterns id="patterns3" from="1">
+		<alignment idref="alignment3"/>
+	</patterns>
+
+
+	<!--<newick id="startingTree">-->
+	<!--(human:0.3,(chimp:0.1,bonobo:0.1):0.2);-->
+	<!--</newick>-->
+
+	<constantSize id="initialDemo" units="substitutions">
+		<populationSize>
+			<parameter id="initialDemo.popSize" value="0.0001"/>
+		</populationSize>
+	</constantSize>
+
+	<!-- Generate a random starting tree under the coalescent process            -->
+	<coalescentTree id="startingTree">
+		<taxa idref="taxa"/>
+		<constantSize idref="initialDemo"/>
+	</coalescentTree>
+
+	<treeModel id="treeModel">
+		<coalescentTree idref="startingTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
+	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
+	<hkyModel id="hky">
+		<frequencies>
+			<frequencyModel dataType="nucleotide">
+				<!--<alignment idref="alignment"/>-->
+				<frequencies>
+					<parameter id="hky.frequencies" value="0.1 0.3 0.2 0.4"/>
+				</frequencies>
+			</frequencyModel>
+		</frequencies>
+		<kappa>
+			<parameter id="hky.kappa" value="1.0" lower="0.0" upper="5.0"/>
+		</kappa>
+	</hkyModel>
+
+	<!-- site model                                                              -->
+	<siteModel id="siteModel">
+		<substitutionModel>
+			<hkyModel idref="hky"/>
+		</substitutionModel>
+		<mutationRate>
+			<parameter id="siteModel.mu" value="1.0" lower="0.0"/>
+		</mutationRate>
+	</siteModel>
+
+	<treeLikelihood id="treeLikelihood1">
+		<patterns idref="patterns1"/>
+		<treeModel idref="treeModel"/>
+		<siteModel idref="siteModel"/>
+	</treeLikelihood>
+
+	<ancestralTreeLikelihood id="treeLikelihood2" tagName="trait1">
+		<patterns idref="patterns2"/>
+		<treeModel idref="treeModel"/>
+		<siteModel idref="siteModel"/>
+		<hkyModel idref="hky"/>
+	</ancestralTreeLikelihood>
+
+	<ancestralTreeLikelihood id="treeLikelihood3" tagName="trait2">
+		<patterns idref="patterns3"/>
+		<treeModel idref="treeModel"/>
+		<siteModel idref="siteModel"/>
+		<hkyModel idref="hky"/>
+	</ancestralTreeLikelihood>
+
+	<operators id="operators">
+		<scaleOperator scaleFactor="0.5" weight="1">
+			<parameter idref="hky.kappa"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.5" weight="1">
+			<parameter idref="treeModel.rootHeight"/>
+		</scaleOperator>
+		<uniformOperator weight="10">
+			<parameter idref="treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<subtreeSlide weight="5" gaussian="true" size="1.0">
+			<treeModel idref="treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="1">
+			<treeModel idref="treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="1">
+			<treeModel idref="treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="1">
+			<treeModel idref="treeModel"/>
+		</wilsonBalding>
+	</operators>
+
+	<mcmc id="mcmc" chainLength="10000">
+		<likelihood id="likelihood">
+			<treeLikelihood idref="treeLikelihood1"/>
+			<treeLikelihood idref="treeLikelihood2"/>
+			<treeLikelihood idref="treeLikelihood3"/>
+		</likelihood>
+		<operators idref="operators"/>
+		<log logEvery="100">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood"/>
+			</column>
+			<column label="Root Height" sf="6" width="12">
+				<parameter idref="treeModel.rootHeight"/>
+			</column>
+			<column label="Kappa" sf="6" width="12">
+				<parameter idref="hky.kappa"/>
+			</column>
+		</log>
+		<logTree logEvery="100" nexusFormat="true" fileName="ancestor.trees">
+			<treeModel idref="treeModel"/>
+			<ancestralTreeLikelihood idref="treeLikelihood2"/>
+			<ancestralTreeLikelihood idref="treeLikelihood3"/>
+		</logTree>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc"/>
+		</property>
+	</report>
+
+</beast>

@@ -14,8 +14,8 @@ public class APOBECErrorModel extends TipPartialsModel {
     public enum APOBECType {
         ALL("all"),
         BOTH("both"),
-        H3G("h3G"),
-        H3F("h3F");
+        HA3G("hA3G"),
+        HA3F("hA3F");
 
 
         APOBECType(String label) {
@@ -64,8 +64,8 @@ public class APOBECErrorModel extends TipPartialsModel {
                             nextState = states[j+1];
 
                             if (    (type == APOBECType.ALL) ||
-                                    (type == APOBECType.H3G && nextState == 2) || // is a G
-                                    (type == APOBECType.H3F && nextState == 0) || // is an A
+                                    (type == APOBECType.HA3G && nextState == 2) || // is a G
+                                    (type == APOBECType.HA3F && nextState == 0) || // is an A
                                     (type == APOBECType.BOTH && (nextState == 2 || nextState == 0))
                                     ) {
                                 pMutated = rate;
@@ -151,16 +151,16 @@ public class APOBECErrorModel extends TipPartialsModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            APOBECType type = APOBECType.H3G;
+            APOBECType type = APOBECType.HA3G;
 
             if (xo.hasAttribute("type")) {
                 if (xo.getStringAttribute("type").equalsIgnoreCase("all")) {
                     type = APOBECType.ALL;
                 } else if (xo.getStringAttribute("type").equalsIgnoreCase("both")) {
                     type = APOBECType.BOTH;
-                } else if (xo.getStringAttribute("type").equalsIgnoreCase("h3F")) {
-                    type = APOBECType.H3F;
-                } else if (!xo.getStringAttribute("type").equalsIgnoreCase("h3G")) {
+                } else if (xo.getStringAttribute("type").equalsIgnoreCase("hA3F")) {
+                    type = APOBECType.HA3F;
+                } else if (!xo.getStringAttribute("type").equalsIgnoreCase("hA3G")) {
                     throw new XMLParseException("unrecognized option for attribute, 'type': " + xo.getStringAttribute("type"));
                 }
             }

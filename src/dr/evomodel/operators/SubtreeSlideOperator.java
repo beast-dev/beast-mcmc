@@ -55,15 +55,23 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
     private TreeModel tree = null;
     private double size = 1.0;
     private boolean gaussian = false;
-    private boolean swapInRandomRate;
-    private boolean swapInRandomTrait;
-    private boolean scaledDirichletBranches;
+    private final boolean swapInRandomRate;
+    private final boolean swapInRandomTrait;
+    private final boolean scaledDirichletBranches;
     private CoercionMode mode = CoercionMode.DEFAULT;
 
     public SubtreeSlideOperator(TreeModel tree, double weight, double size, boolean gaussian,
                                 boolean swapRates, boolean swapTraits, boolean scaleDirichletBranches, CoercionMode mode) {
         this.tree = tree;
         setWeight(weight);
+
+        if( size == 0.0 ) {
+            double b = 0.0;
+            for(int k = 0; k < tree.getNodeCount(); ++k) {
+                b += tree.getBranchLength(tree.getNode(k));
+            }
+            size = b / (2 * tree.getNodeCount());
+        }
 
         this.size = size;
         this.gaussian = gaussian;
@@ -381,12 +389,12 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
             }
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            double weight = xo.getDoubleAttribute("weight");
+            final double weight = xo.getDoubleAttribute("weight");
 
-            double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
+            final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
-            double size = xo.getDoubleAttribute("size");
-            boolean gaussian = xo.getBooleanAttribute("gaussian");
+            final double size = xo.getAttribute("size", 0.0);
+            final boolean gaussian = xo.getBooleanAttribute("gaussian");
             SubtreeSlideOperator operator = new SubtreeSlideOperator(treeModel, weight, size, gaussian,
                     swapRates, swapTraits, scaledDirichletBranches, mode);
             operator.setTargetAcceptanceProbability(targetAcceptance);
@@ -406,9 +414,10 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
-                AttributeRule.newDoubleRule("size"),
+                // Make size optional. If not given or equals zero, size is set to half of average tree branch length.
+                AttributeRule.newDoubleRule("size", true),
                 AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true),
                 AttributeRule.newBooleanRule("gaussian"),
                 AttributeRule.newBooleanRule(SWAP_RATES, true),

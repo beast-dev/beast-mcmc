@@ -117,10 +117,10 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	}
 
 	public double getOptimizationTransform(double d) {
-		if (optimizationSchedule == OperatorSchedule.LOG_SCHEDULE)
-			return Math.log(d);
-		if (optimizationSchedule == OperatorSchedule.SQRT_SCHEDULE)
-			return Math.sqrt(d);
+        switch( optimizationSchedule ) {
+            case LOG_SCHEDULE:  return Math.log(d);
+            case SQRT_SCHEDULE: return Math.sqrt(d);
+        }
 		return d;
 	}
 
@@ -201,7 +201,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 				AttributeRule.newBooleanRule(SEQUENTIAL, true),
 				new ElementRule(MCMCOperator.class, 1, Integer.MAX_VALUE),
 				AttributeRule.newStringRule(OPTIMIZATION_SCHEDULE, true)

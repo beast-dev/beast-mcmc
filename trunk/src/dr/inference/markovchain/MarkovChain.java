@@ -62,30 +62,30 @@ public final class MarkovChain {
     private final int fullEvaluationCount;
 
     public MarkovChain(Prior prior, Likelihood likelihood,
-	    OperatorSchedule schedule, Acceptor acceptor,
-	    int fullEvaluationCount, boolean useCoercion) {
-	currentLength = 0;
-	this.prior = prior;
-	this.likelihood = likelihood;
-	this.schedule = schedule;
-	this.acceptor = acceptor;
-	this.useCoercion = useCoercion;
+                       OperatorSchedule schedule, Acceptor acceptor,
+                       int fullEvaluationCount, boolean useCoercion) {
+        currentLength = 0;
+        this.prior = prior;
+        this.likelihood = likelihood;
+        this.schedule = schedule;
+        this.acceptor = acceptor;
+        this.useCoercion = useCoercion;
 
-	this.fullEvaluationCount = fullEvaluationCount;
+        this.fullEvaluationCount = fullEvaluationCount;
 
-	currentScore = evaluate(likelihood, prior);
+        currentScore = evaluate(likelihood, prior);
     }
 
     /**
      * Resets the markov chain
      */
     public void reset() {
-	currentLength = 0;
+        currentLength = 0;
 
-	// reset operator acceptance levels
-	for (int i = 0; i < schedule.getOperatorCount(); i++) {
-	    schedule.getOperator(i).reset();
-	}
+        // reset operator acceptance levels
+        for(int i = 0; i < schedule.getOperatorCount(); i++) {
+            schedule.getOperator(i).reset();
+        }
     }
 
     /**
@@ -98,403 +98,397 @@ public final class MarkovChain {
      *            Hack to log likelihood change with operators to stdout
      */
     public int chain(int length, boolean disableCoerce,
-	    int onTheFlyOperatorWeights, boolean logOps) {
-	boolean verbose = false;
+                     int onTheFlyOperatorWeights, boolean logOps) {
+        boolean verbose = false;
 
-	currentScore = evaluate(likelihood, prior);
+        currentScore = evaluate(likelihood, prior);
 
-	int currentState = currentLength;
+        int currentState = currentLength;
 
-	final Model currentModel = likelihood.getModel();
+        final Model currentModel = likelihood.getModel();
 
-	if (currentState == 0) {
-	    initialScore = currentScore;
-	    bestScore = currentScore;
-	    fireBestModel(currentState, currentModel);
-	}
+        if( currentState == 0 ) {
+            initialScore = currentScore;
+            bestScore = currentScore;
+            fireBestModel(currentState, currentModel);
+        }
 
-	if (currentScore == Double.NEGATIVE_INFINITY) {
+        if( currentScore == Double.NEGATIVE_INFINITY ) {
 
-	    // identify which component of the score is zero...
-	    if (prior != null) {
-		double logPrior = prior.getLogPrior(likelihood.getModel());
+            // identify which component of the score is zero...
+            if( prior != null ) {
+                double logPrior = prior.getLogPrior(likelihood.getModel());
 
-		if (logPrior == Double.NEGATIVE_INFINITY) {
-		    throw new IllegalArgumentException(
-			    "The initial model is invalid because one of the priors has zero probability.");
-		}
-	    }
+                if( logPrior == Double.NEGATIVE_INFINITY ) {
+                    throw new IllegalArgumentException(
+                            "The initial model is invalid because one of the priors has zero probability.");
+                }
+            }
 
-	    String message = "The initial likelihood is zero";
-	    if (likelihood instanceof CompoundLikelihood) {
-		message += ": "
-			+ ((CompoundLikelihood) likelihood).getDiagnosis();
-	    } else {
-		message += "!";
-	    }
-	    throw new IllegalArgumentException(message);
-	}
+            String message = "The initial likelihood is zero";
+            if( likelihood instanceof CompoundLikelihood ) {
+                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
+            } else {
+                message += "!";
+            }
+            throw new IllegalArgumentException(message);
+        }
 
-	pleaseStop = false;
-	isStopped = false;
+        pleaseStop = false;
+        isStopped = false;
 
-	int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights
-		: 0;
+        int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights
+                : 0;
 
-	double[] logr = { 0.0 };
+        double[] logr = {0.0};
 
-	while (!pleaseStop && (currentState < (currentLength + length))) {
+        while( !pleaseStop && (currentState < (currentLength + length)) ) {
 
-	    // periodically log states
-	    fireCurrentModel(currentState, currentModel);
+            // periodically log states
+            fireCurrentModel(currentState, currentModel);
 
-	    if (pleaseStop) {
-		isStopped = true;
-		break;
-	    }
+            if( pleaseStop ) {
+                isStopped = true;
+                break;
+            }
 
-	    // Get the operator
-	    final int op = schedule.getNextOperatorIndex();
-	    final MCMCOperator mcmcOperator = schedule.getOperator(op);
+            // Get the operator
+            final int op = schedule.getNextOperatorIndex();
+            final MCMCOperator mcmcOperator = schedule.getOperator(op);
 
-	    final double oldScore = currentScore;
-	    // not used and why must it be a "compund like"?
-	    // String oldMessage =
-	    // ((CompoundLikelihood)likelihood).getDiagnosis();
+            final double oldScore = currentScore;
+            // not used and why must it be a "compund like"?
+            // String oldMessage =
+            // ((CompoundLikelihood)likelihood).getDiagnosis();
 
-	    // assert Profiler.startProfile("Store");
+            // assert Profiler.startProfile("Store");
 
-	    // The current model is stored here in case the proposal fails
-	    if (currentModel != null) {
-		currentModel.storeModelState();
-	    }
+            // The current model is stored here in case the proposal fails
+            if( currentModel != null ) {
+                currentModel.storeModelState();
+            }
 
-	    // assert Profiler.stopProfile("Store");
+            // assert Profiler.stopProfile("Store");
 
-	    boolean operatorSucceeded = true;
-	    double hastingsRatio = 1.0;
-	    boolean accept = false;
+            boolean operatorSucceeded = true;
+            double hastingsRatio = 1.0;
+            boolean accept = false;
 
-	    logr[0] = -Double.MAX_VALUE;
+            logr[0] = -Double.MAX_VALUE;
 
-	    try {
-		// The new model is proposed
-		// assert Profiler.startProfile("Operate");
+            try {
+                // The new model is proposed
+                // assert Profiler.startProfile("Operate");
 
-		if (verbose)
-		    System.out.println("\n&& Operator: "
-			    + mcmcOperator.getOperatorName());
+                if( verbose ) {
+                    System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
+                }
 
-		if (mcmcOperator instanceof SimpleGibbsOperator) {
-		    hastingsRatio = ((SimpleGibbsOperator) mcmcOperator)
-			    .operate(prior, likelihood);
-		} else if (mcmcOperator instanceof AbstractImportanceDistributionOperator) {
-		    hastingsRatio = ((AbstractImportanceDistributionOperator) mcmcOperator)
-			    .operate(prior, likelihood);
+                if( mcmcOperator instanceof SimpleGibbsOperator ) {
+                    hastingsRatio = ((SimpleGibbsOperator) mcmcOperator).operate(prior, likelihood);
+                } else if( mcmcOperator instanceof AbstractImportanceDistributionOperator ) {
+                    hastingsRatio = ((AbstractImportanceDistributionOperator) mcmcOperator).operate(prior, likelihood);
 
-		} else {
-		    hastingsRatio = mcmcOperator.operate();
-		}
+                } else {
+                    hastingsRatio = mcmcOperator.operate();
+                }
 
-		// assert Profiler.stopProfile("Operate");
-	    } catch (OperatorFailedException e) {
-		operatorSucceeded = false;
-	    }
+                // assert Profiler.stopProfile("Operate");
+            } catch( OperatorFailedException e ) {
+                operatorSucceeded = false;
+            }
 
-	    double score = 0.0;
-	    double deviation = 0.0;
+            double score = 0.0;
+            double deviation = 0.0;
 
-	    if (operatorSucceeded) {
+            if( operatorSucceeded ) {
 
-		// The new model is proposed
-		// assert Profiler.startProfile("Evaluate");
+                // The new model is proposed
+                // assert Profiler.startProfile("Evaluate");
 
-		if (verbose)
-		    System.out.println("** Evaluate");
+                if( verbose ) {
+                    System.out.println("** Evaluate");
+                }
 
-		// The new model is evaluated
-		score = evaluate(likelihood, prior);
+                // The new model is evaluated
+                score = evaluate(likelihood, prior);
 
-		// assert Profiler.stopProfile("Evaluate");
+                // assert Profiler.stopProfile("Evaluate");
 
-		if (score > bestScore) {
-		    bestScore = score;
-		    fireBestModel(currentState, currentModel);
-		}
+                if( score > bestScore ) {
+                    bestScore = score;
+                    fireBestModel(currentState, currentModel);
+                }
 
-		// accept = mcmcOperator instanceof GibbsOperator ||
-		// acceptor.accept(oldScore, score, hastingsRatio, logr);
-		if (mcmcOperator instanceof SimpleGibbsOperator) {
-		    accept = acceptor.accept(oldScore, score, hastingsRatio,
-			    logr);
-		} else {
-		    accept = mcmcOperator instanceof GibbsOperator
-			    || acceptor.accept(oldScore, score, hastingsRatio,
-				    logr);
-		}
+                // accept = mcmcOperator instanceof GibbsOperator ||
+                // acceptor.accept(oldScore, score, hastingsRatio, logr);
+                if( mcmcOperator instanceof SimpleGibbsOperator ) {
+                    accept = acceptor.accept(oldScore, score, hastingsRatio, logr);
+                } else {
+                    accept = mcmcOperator instanceof GibbsOperator
+                            || acceptor.accept(oldScore, score, hastingsRatio, logr);
+                }
 
-		deviation = score - oldScore;
-	    }
+                deviation = score - oldScore;
+            }
 
-	    // The new model is accepted or rejected
-	    if (accept) {
-		if (verbose)
-		    System.out.println("** Move accepted: new score = " + score
-			    + ", old score = " + oldScore);
+            // The new model is accepted or rejected
+            if( accept ) {
+                if( verbose ) {
+                    System.out.println("** Move accepted: new score = " + score
+                            + ", old score = " + oldScore);
+                }
 
-		if (logOps)
-		    System.err.println("##" + (score - currentScore) + " "
-			    + mcmcOperator.getOperatorName());
+                if( logOps ) {
+                    System.err.println("##" + (score - currentScore) + " "
+                            + mcmcOperator.getOperatorName());
+                }
 
-		mcmcOperator.accept(deviation);
-		currentModel.acceptModelState();
-		currentScore = score;
+                mcmcOperator.accept(deviation);
+                currentModel.acceptModelState();
+                currentScore = score;
 
-		if (otfcounter > 0) {
-		    --otfcounter;
-		    if (otfcounter == 0) {
-			adjustOpWeights(currentState);
-			otfcounter = onTheFlyOperatorWeights;
-		    }
-		}
-	    } else {
-		if (verbose)
-		    System.out.println("** Move rejected: new score = " + score
-			    + ", old score = " + oldScore);
+                if( otfcounter > 0 ) {
+                    --otfcounter;
+                    if( otfcounter == 0 ) {
+                        adjustOpWeights(currentState);
+                        otfcounter = onTheFlyOperatorWeights;
+                    }
+                }
+            } else {
+                if( verbose ) {
+                    System.out.println("** Move rejected: new score = " + score
+                            + ", old score = " + oldScore);
+                }
 
-		mcmcOperator.reject();
+                mcmcOperator.reject();
 
-		// assert Profiler.startProfile("Restore");
+                // assert Profiler.startProfile("Restore");
 
-		currentModel.restoreModelState();
+                currentModel.restoreModelState();
 
-		// Sebastian: can't tell why but somehow the likelihood is
-		// screwed up if the tree needs to be restored
-		// the only way to get around this problem was ->
-		likelihood.makeDirty();
+                // Sebastian: can't tell why but somehow the likelihood is
+                // screwed up if the tree needs to be restored
+                // the only way to get around this problem was ->
+                likelihood.makeDirty();
 
-		// assert Profiler.stopProfile("Restore");
+                // assert Profiler.stopProfile("Restore");
 
-		// This is a test that the state is correctly restored. The
-		// restored
-		// state is fully evaluated and the likelihood compared with
-		// that before
-		// the operation was made.
-		if (currentState < fullEvaluationCount) {
-		    likelihood.makeDirty();
-		    final double testScore = evaluate(likelihood, prior);
+                // This is a test that the state is correctly restored. The
+                // restored
+                // state is fully evaluated and the likelihood compared with
+                // that before
+                // the operation was made.
+                if( currentState < fullEvaluationCount ) {
+                    likelihood.makeDirty();
+                    final double testScore = evaluate(likelihood, prior);
 
-		    if (Math.abs(testScore - oldScore) > 1e-6) {
-			Logger.getLogger("error").severe(
-				"State was not correctly restored after reject step.\n"
-					+ "Likelihood before: " + oldScore
-					+ " Likelihood after: " + testScore
-					+ "\n" + "Operator: " + mcmcOperator
-					+ " " + mcmcOperator.getOperatorName());
-		    }
-		}
-	    }
+                    if( Math.abs(testScore - oldScore) > 1e-6 ) {
+                        Logger.getLogger("error").severe(
+                                "State was not correctly restored after reject step.\n"
+                                        + "Likelihood before: " + oldScore
+                                        + " Likelihood after: " + testScore
+                                        + "\n" + "Operator: " + mcmcOperator
+                                        + " " + mcmcOperator.getOperatorName());
+                    }
+                }
+            }
 
-	    if (!disableCoerce && mcmcOperator instanceof CoercableMCMCOperator) {
-		coerceAcceptanceProbability(
-			(CoercableMCMCOperator) mcmcOperator, logr[0]);
-	    }
+            if( !disableCoerce && mcmcOperator instanceof CoercableMCMCOperator ) {
+                coerceAcceptanceProbability((CoercableMCMCOperator) mcmcOperator, logr[0]);
+            }
 
-	    currentState += 1;
-	}
+            currentState += 1;
+        }
 
-	currentLength = currentState;
+        currentLength = currentState;
 
-	fireFinished(currentLength);
+        fireFinished(currentLength);
 
-	// Profiler.report();
+        // Profiler.report();
 
-	return currentLength;
+        return currentLength;
     }
 
     private void adjustOpWeights(int currentState) {
-	final int count = schedule.getOperatorCount();
-	double[] s = new double[count];
-	final double factor = 100;
-	final double limitSpan = 1000;
-	System.err.println("start cycle " + currentState);
+        final int count = schedule.getOperatorCount();
+        double[] s = new double[count];
+        final double factor = 100;
+        final double limitSpan = 1000;
+        System.err.println("start cycle " + currentState);
 
-	double sHas = 0.0/* , sNot = 0.0 */, nHas = 0.0;
-	for (int no = 0; no < count; ++no) {
-	    final MCMCOperator op = schedule.getOperator(no);
-	    final double v = op.getSpan(true);
+        double sHas = 0.0/* , sNot = 0.0 */, nHas = 0.0;
+        for(int no = 0; no < count; ++no) {
+            final MCMCOperator op = schedule.getOperator(no);
+            final double v = op.getSpan(true);
 
-	    if (v == 0) {
-		// sNot += op.getWeight();
-		s[no] = 0;
-	    } else {
-		sHas += op.getWeight();
-		s[no] = Math.max(factor * Math.min(v, limitSpan), 1);
-		nHas += s[no];
-	    }
-	}
+            if( v == 0 ) {
+                // sNot += op.getWeight();
+                s[no] = 0;
+            } else {
+                sHas += op.getWeight();
+                s[no] = Math.max(factor * Math.min(v, limitSpan), 1);
+                nHas += s[no];
+            }
+        }
 
-	// for(int no = 0; no < count; ++no) {
-	// final MCMCOperator op = schedule.getOperator(no);
-	// final double v = op.getSpan(false);
-	// if( v == 0 ) {
-	// System.err.println(op.getOperatorName() + " blocks");
-	// return;
-	// }
-	// }
+        // for(int no = 0; no < count; ++no) {
+        // final MCMCOperator op = schedule.getOperator(no);
+        // final double v = op.getSpan(false);
+        // if( v == 0 ) {
+        // System.err.println(op.getOperatorName() + " blocks");
+        // return;
+        // }
+        // }
 
-	// keep sum of changed parts unchanged
-	final double scaleHas = sHas / nHas;
+        // keep sum of changed parts unchanged
+        final double scaleHas = sHas / nHas;
 
-	for (int no = 0; no < count; ++no) {
-	    final MCMCOperator op = schedule.getOperator(no);
-	    if (s[no] > 0) {
-		final double val = s[no] * scaleHas;
-		op.setWeight(val);
-		System.err.println("set " + op.getOperatorName() + " " + val);
-	    } else {
-		System.err.println("** " + op.getOperatorName() + " = "
-			+ op.getWeight());
-	    }
-	}
-	schedule.operatorsHasBeenUpdated();
+        for(int no = 0; no < count; ++no) {
+            final MCMCOperator op = schedule.getOperator(no);
+            if( s[no] > 0 ) {
+                final double val = s[no] * scaleHas;
+                op.setWeight(val);
+                System.err.println("set " + op.getOperatorName() + " " + val);
+            } else {
+                System.err.println("** " + op.getOperatorName() + " = "
+                        + op.getWeight());
+            }
+        }
+        schedule.operatorsHasBeenUpdated();
     }
 
     public Prior getPrior() {
-	return prior;
+        return prior;
     }
 
     public Likelihood getLikelihood() {
-	return likelihood;
+        return likelihood;
     }
 
     public Model getModel() {
-	return likelihood.getModel();
+        return likelihood.getModel();
     }
 
     public OperatorSchedule getSchedule() {
-	return schedule;
+        return schedule;
     }
 
     public Acceptor getAcceptor() {
-	return acceptor;
+        return acceptor;
     }
 
     public double getInitialScore() {
-	return initialScore;
+        return initialScore;
     }
 
     public double getBestScore() {
-	return bestScore;
+        return bestScore;
     }
 
     public int getCurrentLength() {
-	return currentLength;
+        return currentLength;
     }
 
     public void setCurrentLength(int currentLength) {
-	this.currentLength = currentLength;
+        this.currentLength = currentLength;
     }
 
     public double getCurrentScore() {
-	return currentScore;
+        return currentScore;
     }
 
     public void pleaseStop() {
-	pleaseStop = true;
+        pleaseStop = true;
     }
 
     public boolean isStopped() {
-	return isStopped;
+        return isStopped;
     }
 
     private double evaluate(Likelihood likelihood, Prior prior) {
 
-	double logPosterior = 0.0;
+        double logPosterior = 0.0;
 
-	if (prior != null) {
-	    final double logPrior = prior.getLogPrior(likelihood.getModel());
+        if( prior != null ) {
+            final double logPrior = prior.getLogPrior(likelihood.getModel());
 
-	    if (logPrior == Double.NEGATIVE_INFINITY) {
-		return Double.NEGATIVE_INFINITY;
-	    }
+            if( logPrior == Double.NEGATIVE_INFINITY ) {
+                return Double.NEGATIVE_INFINITY;
+            }
 
-	    logPosterior += logPrior;
-	}
+            logPosterior += logPrior;
+        }
 
-	final double logLikelihood = likelihood.getLogLikelihood();
+        final double logLikelihood = likelihood.getLogLikelihood();
 
-	if (Double.isNaN(logLikelihood)) {
-	    return Double.NEGATIVE_INFINITY;
-	}
-	// System.err.println("** " + logPosterior + " + " + logLikelihood +
-	// " = " + (logPosterior + logLikelihood));
-	logPosterior += logLikelihood;
+        if( Double.isNaN(logLikelihood) ) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        // System.err.println("** " + logPosterior + " + " + logLikelihood +
+        // " = " + (logPosterior + logLikelihood));
+        logPosterior += logLikelihood;
 
-	return logPosterior;
+        return logPosterior;
     }
 
     /**
      * Updates the proposal parameter, based on the target acceptance
      * probability This method relies on the proposal parameter being a
      * decreasing function of acceptance probability.
-     * 
-     * @param op
+     *
+     * @param op   The operator
      * @param logr
      */
-    private void coerceAcceptanceProbability(CoercableMCMCOperator op,
-	    double logr) {
+    private void coerceAcceptanceProbability(CoercableMCMCOperator op, double logr) {
 
-	if (isCoercable(op)) {
-	    double p = op.getCoercableParameter();
+        if( isCoercable(op) ) {
+            final double p = op.getCoercableParameter();
 
-	    double i = schedule.getOptimizationTransform(MCMCOperator.Utils
-		    .getOperationCount(op));
+            final double i = schedule.getOptimizationTransform(MCMCOperator.Utils.getOperationCount(op));
 
-	    double target = op.getTargetAcceptanceProbability();
+            final double target = op.getTargetAcceptanceProbability();
 
-	    double newp = p + ((1.0 / (i + 1.0)) * (Math.exp(logr) - target));
+            final double newp = p + ((1.0 / (i + 1.0)) * (Math.exp(logr) - target));
 
-	    if (newp > -Double.MAX_VALUE && newp < Double.MAX_VALUE) {
-		op.setCoercableParameter(newp);
-	    } else {
-
-	    }
-	}
+            if( newp > -Double.MAX_VALUE && newp < Double.MAX_VALUE ) {
+                op.setCoercableParameter(newp);
+            }
+        }
     }
 
     private boolean isCoercable(CoercableMCMCOperator op) {
 
-	return op.getMode() == CoercionMode.COERCION_ON
-		|| (op.getMode() != CoercionMode.COERCION_OFF && useCoercion);
+        return op.getMode() == CoercionMode.COERCION_ON
+                || (op.getMode() != CoercionMode.COERCION_OFF && useCoercion);
     }
 
     public void addMarkovChainListener(MarkovChainListener listener) {
-	listeners.add(listener);
+        listeners.add(listener);
     }
 
     public void removeMarkovChainListener(MarkovChainListener listener) {
-	listeners.remove(listener);
+        listeners.remove(listener);
     }
 
     public void fireBestModel(int state, Model bestModel) {
 
-	for (MarkovChainListener listener : listeners) {
-	    listener.bestState(state, bestModel);
-	}
+        for(MarkovChainListener listener : listeners) {
+            listener.bestState(state, bestModel);
+        }
     }
 
     public void fireCurrentModel(int state, Model currentModel) {
-	for (MarkovChainListener listener : listeners) {
-	    listener.currentState(state, currentModel);
-	}
+        for(MarkovChainListener listener : listeners) {
+            listener.currentState(state, currentModel);
+        }
     }
 
     public void fireFinished(int chainLength) {
 
-	for (MarkovChainListener listener : listeners) {
-	    listener.finished(chainLength);
-	}
+        for(MarkovChainListener listener : listeners) {
+            listener.finished(chainLength);
+        }
     }
 
     private final ArrayList<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();

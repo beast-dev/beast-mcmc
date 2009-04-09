@@ -64,6 +64,7 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
     private boolean isNicholls;
 
     Set<Double> tipDates = new TreeSet<Double>();
+    List<Double> reversedTipDateList = new ArrayList<Double>();
     Map<Double, Integer> intervals = new TreeMap<Double, Integer>();
 
     public UniformRootPrior(Tree tree) {
@@ -91,6 +92,9 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
             Logger.getLogger("dr.evomodel").info("Uniform Root Prior, Intervals = " + (k + 1));
 
             logFactorialK = logFactorial(k);
+        } else {
+            reversedTipDateList.addAll(tipDates);
+            Collections.reverse(reversedTipDateList);
         }
 
     }
@@ -224,9 +228,10 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
                 traverse(tree, tree.getRoot());
 
                 logLike = 0.0;
-                for (Double date : intervals.keySet()) {
+                int k = 0;
+                for (Double date : reversedTipDateList) {
                     double s = rootHeight - date;
-                    int k = intervals.get(date);
+                    k += intervals.get(date);
 
                     logLike += logFactorial(k) - (double) k * Math.log(s);
                 }

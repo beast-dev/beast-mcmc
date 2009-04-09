@@ -76,9 +76,9 @@ public class DeltaExchangeOperator extends AbstractCoercableOperator {
         // get two dimensions
         final int dim = parameter.getDimension();
         final int dim1 = MathUtils.nextInt(dim);
-        int dim2 = MathUtils.nextInt(parameter.getDimension());
+        int dim2 = dim1;
         while (dim1 == dim2) {
-            dim2 = MathUtils.nextInt(parameter.getDimension());
+            dim2 = MathUtils.nextInt(dim);
         }
 
         double scalar1 = parameter.getParameterValue(dim1);
@@ -219,7 +219,7 @@ public class DeltaExchangeOperator extends AbstractCoercableOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(DELTA),
                 AttributeRule.newIntegerArrayRule(PARAMETER_WEIGHTS, true),
                 AttributeRule.newDoubleRule(WEIGHT),
@@ -232,7 +232,7 @@ public class DeltaExchangeOperator extends AbstractCoercableOperator {
     // Private instance variables
 
     private Parameter parameter = null;
-    private int[] parameterWeights;
+    private final int[] parameterWeights;
     private double delta = 0.02;
     private boolean isIntegerOperator = false;
 }

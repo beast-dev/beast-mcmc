@@ -44,19 +44,17 @@ public class NumberFormatter {
     private int sf;
     private double upperCutoff;
     private double[] cutoffTable;
-    private DecimalFormat decimalFormat = new DecimalFormat();
+    private final DecimalFormat decimalFormat = new DecimalFormat();
     private DecimalFormat scientificFormat = null;
     private boolean isPadding = false;
     private int fieldWidth;
 
 
     public NumberFormatter(int sf) {
-
         setSignificantFigures(sf);
     }
 
     public NumberFormatter(int sf, int fieldWidth) {
-
         setSignificantFigures(sf);
         setPadding(true);
         setFieldWidth(fieldWidth);

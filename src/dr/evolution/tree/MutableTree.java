@@ -159,23 +159,23 @@ public interface MutableTree extends Tree, MutableTaxonList {
 		 * Following this method call there will be no negative branches, but some node heights may
 		 * have changed
 		 */
-		private static void correctHeightsForTips(MutableTree tree, NodeRef node) {
+        private static void correctHeightsForTips(MutableTree tree, NodeRef node) {
 
-			if (!tree.isExternal(node)) {
-				// pre-order recursion
-				for (int i = 0; i < tree.getChildCount(node); i++) {
-					correctHeightsForTips(tree, tree.getChild(node, i));
-				}
-			}
+            if( !tree.isExternal(node) ) {
+                // pre-order recursion
+                for(int i = 0; i < tree.getChildCount(node); i++) {
+                    correctHeightsForTips(tree, tree.getChild(node, i));
+                }
+            }
 
-			if (!tree.isRoot(node)) {
-				double parentHeight = tree.getNodeHeight(tree.getParent(node));
+            if( !tree.isRoot(node) ) {
+                final double parentHeight = tree.getNodeHeight(tree.getParent(node));
 
-				if (parentHeight <= tree.getNodeHeight(node)) {
+                if( parentHeight <= tree.getNodeHeight(node) ) {
                     // set the parent height to be slightly above this node's height
-                    tree.setNodeHeight(tree.getParent(node), tree.getNodeHeight(node) + (tree.getNodeHeight(tree.getRoot())* 0.05));
-				}
-			}
-		}
+                    tree.setNodeHeight(tree.getParent(node), tree.getNodeHeight(node) + (tree.getNodeHeight(tree.getRoot()) * 0.05));
+                }
+            }
+        }
 	}
 }

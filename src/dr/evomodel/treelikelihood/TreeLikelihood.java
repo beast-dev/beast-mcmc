@@ -165,7 +165,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                                 ", is not found in patternList, " + patternList.getId());
                     }
 
-                    tipPartialsModel.setStates(patternList, index, i);
+                    tipPartialsModel.setStates(patternList, index, i, id);
                     likelihoodCore.createNodePartials(i);
                 }
 

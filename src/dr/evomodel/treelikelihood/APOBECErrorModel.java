@@ -2,6 +2,7 @@ package dr.evomodel.treelikelihood;
 
 import dr.evolution.util.TaxonList;
 import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -45,6 +46,7 @@ public class APOBECErrorModel extends TipPartialsModel {
         this.hypermuationIndicatorParameter = hypermuationIndicatorParameter;
         addParameter(this.hypermuationIndicatorParameter);
 
+        addStatistic(new TaxonHypermutatedStatistic());
     }
 
     public void getTipPartials(int nodeIndex, double[] partials) {
@@ -141,6 +143,26 @@ public class APOBECErrorModel extends TipPartialsModel {
                 }
                 k += stateCount;
             }
+        }
+
+    }
+
+    public class TaxonHypermutatedStatistic extends Statistic.Abstract {
+
+        public TaxonHypermutatedStatistic() {
+            super("hypermutated");
+        }
+
+        public int getDimension() {
+            return hypermuationIndicatorParameter.getDimension();
+        }
+
+        public String getDimensionName(int dim) {
+            return taxonMap.get(dim);
+        }
+
+        public double getStatisticValue(int i) {
+            return hypermuationIndicatorParameter.getParameterValue(i);
         }
 
     }

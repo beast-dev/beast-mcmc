@@ -832,7 +832,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
             throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
         }
 
-        CompoundParameter parameter = new CompoundParameter("nodeHeights");
+        CompoundParameter parameter = new CompoundParameter("nodeHeights(" + getId() + ")");
 
         for (int i = externalNodeCount; i < nodeCount; i++) {
             if ((rootNode && nodes[i] == root) || (internalNodes && nodes[i] != root)) {
@@ -867,7 +867,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
             throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
         }
 
-        CompoundParameter parameter = new CompoundParameter("nodeRates");
+        CompoundParameter parameter = new CompoundParameter("nodeRates(" + getId() + ")");
 
         hasRates = true;
 

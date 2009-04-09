@@ -41,14 +41,6 @@ import java.util.Set;
 
 /**
  * Forms a base class for a number of coalescent likelihood calculators.
- * <p/>
- * This was the former 'CoalescentLikelihood' which, as of BEAST v1.4.x was replaced as the
- * standard coalescent likelihood by 'NewCoalescentLikelihood'. As this class is used as a base
- * by a number of other classes (i.e., BayesianSkylineLikelihood), I have made this class abstract
- * and removed the parser.
- * <p/>
- * NewCoalescentLikelihood is now CoalesecentLikelihood (it's parser was installed as the default
- * 'coalescentLikelihood' anyway).
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

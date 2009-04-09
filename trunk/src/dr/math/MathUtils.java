@@ -276,6 +276,16 @@ public class MathUtils {
 		}
 	}
 
+    /**
+     *
+     * @param low
+     * @param high
+     * @return  uniform between low and high
+     */
+    public static double uniform(double low, double high) {
+        return low + nextDouble() * (high - low);
+    }
+
 	/**
 	 * Shuffles an array.
 	 */
@@ -306,7 +316,7 @@ public class MathUtils {
 	}
 
 
-	public static final int[] sampleIndicesWithReplacement(int length) {
+	public static int[] sampleIndicesWithReplacement(int length) {
 		synchronized (random) {
 			int[] result = new int[length];
 			for (int i = 0; i < length; i++)
@@ -318,7 +328,7 @@ public class MathUtils {
 	/**
 	 * Permutes an array.
 	 */
-	public static final void permute(int[] array) {
+	public static void permute(int[] array) {
 		synchronized (random) {
 			random.permute(array);
 		}
@@ -336,10 +346,8 @@ public class MathUtils {
 	}
 
 
-	 public static double logHyperSphereVolume(int dimension, double radius){
-	    	return dimension*(0.5723649429247001 + Math.log(radius))+
-			 - GammaFunction.lnGamma(dimension/2.0 + 1.0);
-	    }
-
-
+    public static double logHyperSphereVolume(int dimension, double radius) {
+        return dimension * (0.5723649429247001 + Math.log(radius)) +
+                -GammaFunction.lnGamma(dimension / 2.0 + 1.0);
+    }
 }

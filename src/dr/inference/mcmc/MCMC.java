@@ -263,26 +263,28 @@ public class MCMC implements Runnable, Identifiable {
     private void showOperatorAnalysis(PrintStream out) {
         out.println();
         out.println("Operator analysis");
-        out.println(
-                formatter.formatToFieldWidth("Operator", 50) +
-                        formatter.formatToFieldWidth("", 8) +
-                        formatter.formatToFieldWidth("Pr(accept)", 11) +
-                        " Performance suggestion");
-        for (int i = 0; i < schedule.getOperatorCount(); i++) {
+        out.println(formatter.formatToFieldWidth("Operator", 50) +
+                formatter.formatToFieldWidth("", 8) +
+                formatter.formatToFieldWidth("Pr(accept)", 11) +
+                " Performance suggestion");
+
+        for(int i = 0; i < schedule.getOperatorCount(); i++) {
 
             final MCMCOperator op = schedule.getOperator(i);
-            if (op instanceof JointOperator) {
+            if( op instanceof JointOperator ) {
                 JointOperator jointOp = (JointOperator) op;
-                for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++)
+                for(int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
                     out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
                             + formattedParameterString(jointOp.getSubOperator(k))
                             + formattedProbString(jointOp)
                             + formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)));
-            } else
+                }
+            } else {
                 out.println(formattedOperatorName(op.getOperatorName())
                         + formattedParameterString(op)
                         + formattedProbString(op)
                         + formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)));
+            }
 
         }
         out.println();

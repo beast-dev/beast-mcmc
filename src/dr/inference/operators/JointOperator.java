@@ -16,11 +16,11 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
     public static final String WEIGHT = "weight";
     public static final String TARGET_ACCEPTANCE = "targetAcceptance";
 
-    private ArrayList<SimpleMCMCOperator> operatorList;
-    private ArrayList<Integer> operatorToOptimizeList;
+    private final ArrayList<SimpleMCMCOperator> operatorList;
+    private final ArrayList<Integer> operatorToOptimizeList;
 
     private int currentOptimizedOperator;
-    private double targetProbability;
+    private final double targetProbability;
 
     public JointOperator(double weight, double targetProb) {
 
@@ -29,7 +29,6 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
         targetProbability = targetProb;
 
         setWeight(weight);
-
     }
 
     public void addOperator(SimpleMCMCOperator operation) {
@@ -194,9 +193,10 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double weight = xo.getDoubleAttribute(WEIGHT);
+            final double weight = xo.getDoubleAttribute(WEIGHT);
 
-            double targetProb = xo.getAttribute(TARGET_ACCEPTANCE, 0.2);
+            final double targetProb = xo.getAttribute(TARGET_ACCEPTANCE, 0.2);
+
             if (targetProb <= 0.0 || targetProb >= 1.0)
                 throw new RuntimeException("Target acceptance probability must be between 0.0 and 1.0");
 
@@ -204,7 +204,6 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 operator.addOperator((SimpleMCMCOperator) xo.getChild(i));
-
             }
 
             return operator;
@@ -226,12 +225,11 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(SimpleMCMCOperator.class, 1, Integer.MAX_VALUE),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true)
         };
-
     };
 }
 

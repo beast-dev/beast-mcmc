@@ -602,7 +602,7 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 				AttributeRule.newIntegerRule("weight"),
 				AttributeRule.newDoubleRule("size"),
 				AttributeRule.newBooleanRule("gaussian"),

@@ -87,13 +87,15 @@ public class UniformOperator extends SimpleMCMCOperator {
     }
 
     public String getPerformanceSuggestion() {
-        if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-            return "";
-        } else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-            return "";
-        } else {
-            return "";
-        }
+        return "";
+//        final double acceptance = Utils.getAcceptanceProbability(this);
+//        if ( acceptance < getMinimumAcceptanceLevel()) {
+//            return "";
+//        } else if ( acceptance > getMaximumAcceptanceLevel() ) {
+//            return "";
+//        } else {
+//            return "";
+//        }
     }
 
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
@@ -127,7 +129,7 @@ public class UniformOperator extends SimpleMCMCOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(Parameter.class)
         };

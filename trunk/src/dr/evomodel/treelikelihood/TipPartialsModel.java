@@ -7,6 +7,9 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
+import java.util.Map;
+import java.util.HashMap;
+
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -50,7 +53,7 @@ public abstract class TipPartialsModel extends AbstractModel {
         states = new int[extNodeCount][];
     }
 
-    public final void setStates(PatternList patternList, int sequenceIndex, int nodeIndex) {
+    public final void setStates(PatternList patternList, int sequenceIndex, int nodeIndex, String taxonId) {
         if (patternCount == 0) {
             patternCount = patternList.getPatternCount();
             stateCount = patternList.getDataType().getStateCount();
@@ -62,6 +65,8 @@ public abstract class TipPartialsModel extends AbstractModel {
         for (int i = 0; i < patternCount; i++) {
             this.states[nodeIndex][i] = patternList.getPatternState(sequenceIndex, i);
         }
+
+        taxonMap.put(nodeIndex, taxonId);
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -113,4 +118,6 @@ public abstract class TipPartialsModel extends AbstractModel {
     protected TaxonList excludeTaxa;
 
     protected Tree tree;
+
+    protected Map<Integer, String> taxonMap = new HashMap<Integer, String>();
 }

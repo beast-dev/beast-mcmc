@@ -26,16 +26,14 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.Tree;
-import dr.evolution.coalescent.Intervals;
-import dr.evolution.coalescent.TreeIntervals;
+import dr.evolution.tree.NodeRef;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -62,7 +60,11 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
     private double logFactorialK;
 
     private double maxRootHeight;
+
     private boolean isNicholls;
+
+    Set<Double> tipDates = new TreeSet<Double>();
+    Map<Double, Integer> intervals = new TreeMap<Double, Integer>();
 
     public UniformRootPrior(Tree tree) {
         this(UNIFORM_ROOT_PRIOR, tree);
@@ -78,13 +80,8 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
             addModel((TreeModel) tree);
         }
 
-        maxRootHeight = 0.0;
-        Set<Double> tipDates = new HashSet<Double>();
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             double h = tree.getNodeHeight(tree.getExternalNode(i));
-            if (h > maxRootHeight) {
-                maxRootHeight = h;
-            }
             tipDates.add(h);
         }
 
@@ -207,18 +204,32 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
 
             if (k > 0) {
                 // the tips are contemporaneous
-                 logLike = logFactorialK - (double) k * Math.log(rootHeight);
+                logLike = logFactorialK - (double) k * Math.log(rootHeight);
 
             } else {
-                int k1 = -1; // the root will always be > maxRootHeight
-                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                    double h = tree.getNodeHeight(tree.getInternalNode(i));
-                    if (h > maxRootHeight) {
-                        k1++;
-                    }
+//                int k1 = -1; // the root will always be > maxRootHeight
+//                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+//                    double h = tree.getNodeHeight(tree.getInternalNode(i));
+//                    if (h > maxTipHeight) {
+//                        k1++;
+//                    }
+//                }
+//
+//                logLike = logFactorial(k1) - (double) k1 * Math.log(rootHeight - maxTipHeight);
+                intervals.clear();
+                for (Double date : tipDates) {
+                    intervals.put(date, 0);
                 }
 
-                logLike = logFactorial(k1) - (double) k1 * Math.log(rootHeight -  maxRootHeight);
+                traverse(tree, tree.getRoot());
+
+                logLike = 0.0;
+                for (Double date : intervals.keySet()) {
+                    double s = rootHeight - date;
+                    int k = intervals.get(date);
+
+                    logLike += logFactorial(k) - (double) k * Math.log(s);
+                }
             }
 
             assert !Double.isInfinite(logLike) && !Double.isNaN(logLike);
@@ -228,6 +239,10 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
 
 
     private double logFactorial(int n) {
+        if (n == 0) {
+            return 0;
+        }
+
         double rValue = 0;
 
         for (int i = n; i > 0; i--) {
@@ -236,6 +251,26 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
         return rValue;
     }
 
+
+    private Double traverse(Tree tree, NodeRef node) {
+        Double date;
+        if (tree.isExternal(node)) {
+            date = tree.getNodeHeight(node);
+            if (!intervals.keySet().contains(date)) {
+                throw new RuntimeException("Tip date not found");
+            }
+
+        } else {
+            Double date1 = traverse(tree, tree.getChild(node, 0));
+            Double date2 = traverse(tree, tree.getChild(node, 1));
+            date = (date1 > date2 ? date1 : date2);
+            if (!tree.isRoot(node)) {
+                intervals.put(date, intervals.get(date) + 1);
+            }
+        }
+
+        return date;
+    }
 
     // **************************************************************
     // Loggable IMPLEMENTATION

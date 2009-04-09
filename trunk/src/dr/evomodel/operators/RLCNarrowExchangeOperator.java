@@ -48,7 +48,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
 
     private static final int MAX_TRIES = 10000;
 
-    private TreeModel tree;
+    private final TreeModel tree;
 
     public RLCNarrowExchangeOperator(TreeModel tree, double weight) {
         this.tree = tree;
@@ -140,11 +140,11 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
         NodeRef b = nodes.get(MathUtils.nextInt(nodes.size()));
 
         //swap traits in these two nodes
-        double changedA = (Double) ((TreeModel) tree).getNodeTrait(a, "trait");
-        double changedB = (Double) ((TreeModel) tree).getNodeTrait(a, "trait");
+        double changedA = tree.getNodeTrait(a, "trait");
+        double changedB = tree.getNodeTrait(a, "trait");
 
-        ((TreeModel) tree).setNodeTrait(a, "trait", changedB);
-        ((TreeModel) tree).setNodeTrait(b, "trait", changedA);
+        tree.setNodeTrait(a, "trait", changedB);
+        tree.setNodeTrait(b, "trait", changedA);
     }
 
     public double getMinimumAcceptanceLevel() {
@@ -196,7 +196,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
                 new ElementRule(TreeModel.class)
         };

@@ -56,6 +56,49 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public static final String TAXON = "taxon";
     public static final String NAME = "name";
 
+    public TreeModelParser() {
+        rules = new XMLSyntaxRule[]{
+                new ElementRule(Tree.class),
+                new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
+                new ElementRule(NODE_HEIGHTS,
+                        new XMLSyntaxRule[]{
+                                AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root height is included in the parameter"),
+                                AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node heights (minus the root) are included in the parameter"),
+                                new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
+                        }, 1, Integer.MAX_VALUE),
+                new ElementRule(LEAF_HEIGHT,
+                        new XMLSyntaxRule[]{
+                                AttributeRule.newStringRule(TAXON, false, "The name of the taxon for the leaf"),
+                                new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
+                        }, 0, Integer.MAX_VALUE),
+                new ElementRule(NODE_TRAITS,
+                        new XMLSyntaxRule[]{
+                                AttributeRule.newStringRule(NAME, false, "The name of the trait attribute in the taxa"),
+                                AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root trait is included in the parameter"),
+                                AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node traits (minus the root) are included in the parameter"),
+                                AttributeRule.newBooleanRule(LEAF_NODES, true, "If true the leaf node traits are included in the parameter"),
+                                AttributeRule.newIntegerRule(MULTIVARIATE_TRAIT, true, "The number of dimensions (if multivariate)"),
+                                AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
+                                AttributeRule.newBooleanRule(FIRE_TREE_EVENTS, true, "Whether to fire tree events if the traits change"),
+                                new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
+                        }, 0, Integer.MAX_VALUE),
+                new ElementRule(NODE_RATES,
+                        new XMLSyntaxRule[]{
+                                AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root rate is included in the parameter"),
+                                AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node rate (minus the root) are included in the parameter"),
+                                AttributeRule.newBooleanRule(LEAF_NODES, true, "If true the leaf node rate are included in the parameter"),
+                                AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
+                                new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
+                        }, 0, Integer.MAX_VALUE),
+                new ElementRule(LEAF_TRAIT,
+                        new XMLSyntaxRule[]{
+                                AttributeRule.newStringRule(TAXON, false, "The name of the taxon for the leaf"),
+                                AttributeRule.newStringRule(NAME, false, "The name of the trait attribute in the taxa"),
+                                new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
+                        }, 0, Integer.MAX_VALUE)
+        };
+    }
+
     public String getParserName() {
         return TreeModel.TREE_MODEL;
     }
@@ -66,7 +109,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Tree tree = (Tree) xo.getChild(Tree.class);
-        TreeModel treeModel = new TreeModel(tree);
+        TreeModel treeModel = new TreeModel(xo.getId(), tree);
 
         Logger.getLogger("dr.evomodel").info("Creating the tree model, '" + xo.getId() + "'");
 
@@ -227,44 +270,5 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(Tree.class),
-            new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
-            new ElementRule(NODE_HEIGHTS,
-                    new XMLSyntaxRule[]{
-                            AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root height is included in the parameter"),
-                            AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node heights (minus the root) are included in the parameter"),
-                            new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                    }, 1, Integer.MAX_VALUE),
-            new ElementRule(LEAF_HEIGHT,
-                    new XMLSyntaxRule[]{
-                            AttributeRule.newStringRule(TAXON, false, "The name of the taxon for the leaf"),
-                            new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                    }, 0, Integer.MAX_VALUE),
-            new ElementRule(NODE_TRAITS,
-                    new XMLSyntaxRule[]{
-                            AttributeRule.newStringRule(NAME, false, "The name of the trait attribute in the taxa"),
-                            AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root trait is included in the parameter"),
-                            AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node traits (minus the root) are included in the parameter"),
-                            AttributeRule.newBooleanRule(LEAF_NODES, true, "If true the leaf node traits are included in the parameter"),
-                            AttributeRule.newIntegerRule(MULTIVARIATE_TRAIT, true, "The number of dimensions (if multivariate)"),
-                            AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
-                            AttributeRule.newBooleanRule(FIRE_TREE_EVENTS, true, "Whether to fire tree events if the traits change"),
-                            new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                    }, 0, Integer.MAX_VALUE),
-            new ElementRule(NODE_RATES,
-                    new XMLSyntaxRule[]{
-                            AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root rate is included in the parameter"),
-                            AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node rate (minus the root) are included in the parameter"),
-                            AttributeRule.newBooleanRule(LEAF_NODES, true, "If true the leaf node rate are included in the parameter"),
-                            AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
-                            new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                    }, 0, Integer.MAX_VALUE),
-            new ElementRule(LEAF_TRAIT,
-                    new XMLSyntaxRule[]{
-                            AttributeRule.newStringRule(TAXON, false, "The name of the taxon for the leaf"),
-                            AttributeRule.newStringRule(NAME, false, "The name of the trait attribute in the taxa"),
-                            new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                    }, 0, Integer.MAX_VALUE)
-    };
+    private final XMLSyntaxRule[] rules;
 }

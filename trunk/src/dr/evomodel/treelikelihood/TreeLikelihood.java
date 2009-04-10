@@ -25,8 +25,7 @@
 
 package dr.evomodel.treelikelihood;
 
-import dr.evolution.alignment.AscertainedSitePatterns;
-import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -36,8 +35,7 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -202,6 +200,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
+
+        addStatistic(new SiteLikelihoodsStatistic());
     }
 
     public final LikelihoodCore getLikelihoodCore() {
@@ -530,6 +530,36 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * use getRootPartials() instead).
      */
     private double[] rootPartials = null;
+
+    public class SiteLikelihoodsStatistic extends Statistic.Abstract {
+
+        public SiteLikelihoodsStatistic() {
+            super("siteLikelihoods");
+        }
+
+        public int getDimension() {
+            if (patternList instanceof SitePatterns) {
+                return ((SitePatterns)patternList).getSiteCount();
+            } else {
+                return patternList.getPatternCount();
+            }
+        }
+
+        public String getDimensionName(int dim) {
+            return ""+dim;
+        }
+
+        public double getStatisticValue(int i) {
+
+            if (patternList instanceof SitePatterns) {
+                int index = ((SitePatterns)patternList).getPatternIndex(i);
+                return patternLogLikelihoods[index] / patternWeights[index];
+            } else {
+                return patternList.getPatternCount();
+            }
+        }
+
+    }
 
     /**
      * The XML parser

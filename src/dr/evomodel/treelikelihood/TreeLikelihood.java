@@ -546,14 +546,18 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         }
 
         public String getDimensionName(int dim) {
-            return ""+dim;
+            return getTreeModel().getId() + "site-" + dim;
         }
 
         public double getStatisticValue(int i) {
 
             if (patternList instanceof SitePatterns) {
                 int index = ((SitePatterns)patternList).getPatternIndex(i);
-                return patternLogLikelihoods[index] / patternWeights[index];
+                if( index >= 0 ) {
+                         return patternLogLikelihoods[index] / patternWeights[index];
+                } else {
+                    return 0.0;
+                }
             } else {
                 return patternList.getPatternCount();
             }
@@ -610,7 +614,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
                 AttributeRule.newBooleanRule(ALLOW_MISSING_TAXA, true),
                 AttributeRule.newBooleanRule(STORE_PARTIALS, true),

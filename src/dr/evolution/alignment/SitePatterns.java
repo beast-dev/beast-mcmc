@@ -202,7 +202,6 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         invariantCount = 0;
         int[] pattern;
 
-
         int site = 0;
 
         for (int i = from; i <= to; i += every) {
@@ -214,10 +213,12 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
                             !isUnknown(pattern))) {
 
                 sitePatternIndices[site] = addPattern(pattern);
-                site++;
-            }
-        }
 
+            }  else {
+              sitePatternIndices[site] = -1;
+            }
+            site++;
+        }
     }
 
     /**
@@ -347,7 +348,8 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      * @return the site pattern at siteIndex
      */
     public int[] getSitePattern(int siteIndex) {
-        return patterns[sitePatternIndices[siteIndex]];
+        final int sitePatternIndice = sitePatternIndices[siteIndex];
+        return sitePatternIndice >= 0 ? patterns[sitePatternIndice] : null;
     }
 
     /**
@@ -363,7 +365,9 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      * @return the sequence state at (taxon, site)
      */
     public int getState(int taxonIndex, int siteIndex) {
-        return patterns[sitePatternIndices[siteIndex]][taxonIndex];
+        final int sitePatternIndice = sitePatternIndices[siteIndex];
+        // is that right?
+        return sitePatternIndice >= 0 ? patterns[sitePatternIndice][taxonIndex] : getDataType().getGapState();
     }
 
     // **************************************************************

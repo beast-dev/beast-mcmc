@@ -8,13 +8,13 @@ import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
-public class SubStatistic extends Statistic.Abstract{
+public class SubStatistic extends Statistic.Abstract {
 
 	public static final String SUB_STATISTIC = "subStatistic";
 	public static final String DIMENSION = "dimension";
 	
-	private int[] dimensions;
-	private Statistic statistic;
+	private final int[] dimensions;
+	private final Statistic statistic;
 	
 	public SubStatistic(String name, int[] dimensions, Statistic stat){
 		super(name);
@@ -29,7 +29,11 @@ public class SubStatistic extends Statistic.Abstract{
 	public double getStatisticValue(int dim) {
 		return statistic.getStatisticValue(dimensions[dim]);
 	}
-	
+
+    public String getDimensionName(int dim) {
+      return statistic.getDimensionName(dimensions[dim]);
+    }
+    
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
@@ -38,30 +42,25 @@ public class SubStatistic extends Statistic.Abstract{
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        	
-            String name = ""; 
-            if(xo.hasAttribute(NAME))
-            	name = xo.getAttribute(NAME, xo.getId());
+            final String name = xo.getAttribute(NAME, xo.getId());
+
+            final Statistic stat = (Statistic) xo.getChild(Statistic.class);
             
+            final int[] values = xo.getIntegerArrayAttribute(DIMENSION);
             
-            Statistic stat = (Statistic) xo.getChild(Statistic.class);
-            
-            int[] values = xo.getIntegerArrayAttribute(DIMENSION);
-            
-            if(values.length == 0){
+            if( values.length == 0 ){
             	throw new XMLParseException("Must specify at least one dimension");
             }
             
-            int dim = stat.getDimension();
+            final int dim = stat.getDimension();
             
-            for(int value : values){
-            	if(value >= dim || value < 0){
+            for( int value : values ) {
+            	if( value >= dim || value < 0 ) {
             		throw new XMLParseException("Dimension " + value + " is not a valid dimension.");
             	}
             }
-            
-            
-            return new SubStatistic(name,values,stat);
+
+            return new SubStatistic(name, values, stat);
         }
 
         //************************************************************************
@@ -82,9 +81,5 @@ public class SubStatistic extends Statistic.Abstract{
             		new ElementRule(Statistic.class),
             };
         }
-
-        
-
     };
-
 }

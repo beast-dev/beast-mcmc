@@ -40,7 +40,7 @@ import java.util.logging.Logger;
  * A concrete markov chain. This is final as the only things that should need
  * overriding are in the delegates (prior, likelihood, schedule and acceptor).
  * The design of this class is to be fairly immutable as far as settings goes.
- * 
+ *
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @version $Id: MarkovChain.java,v 1.10 2006/06/21 13:34:42 rambaut Exp $
@@ -90,7 +90,7 @@ public final class MarkovChain {
 
     /**
      * Run the chain for a given number of states.
-     * 
+     *
      * @param length
      *            number of states to run the chain.
      * @param onTheFlyOperatorWeights
@@ -215,6 +215,23 @@ public final class MarkovChain {
 
                 // assert Profiler.stopProfile("Evaluate");
 
+                // This is a test that the state is correctly restored. The
+                // restored state is fully evaluated and the likelihood compared with
+                // that before the operation was made.
+                if( currentState < fullEvaluationCount ) {
+                    likelihood.makeDirty();
+                    final double testScore = evaluate(likelihood, prior);
+
+                    if( Math.abs(testScore - score) > 1e-6 ) {
+                        Logger.getLogger("error").severe(
+                                "State was not correctly calculated after an operator move.\n"
+                                        + "Likelihood evaluation: " + score
+                                        + "\nFull Likelihood evaluation: " + testScore
+                                        + "\n" + "Operator: " + mcmcOperator
+                                        + " " + mcmcOperator.getOperatorName());
+                    }
+                }
+
                 if( score > bestScore ) {
                     bestScore = score;
                     fireBestModel(currentState, currentModel);
@@ -270,15 +287,16 @@ public final class MarkovChain {
                 // Sebastian: can't tell why but somehow the likelihood is
                 // screwed up if the tree needs to be restored
                 // the only way to get around this problem was ->
-                likelihood.makeDirty();
+                // likelihood.makeDirty();
+                // Comment by AR 12/04/2009 -  this problem was indicative of an
+                // error elsewhere any by adding this line a major efficiency saving
+                // was lost.
 
                 // assert Profiler.stopProfile("Restore");
 
                 // This is a test that the state is correctly restored. The
-                // restored
-                // state is fully evaluated and the likelihood compared with
-                // that before
-                // the operation was made.
+                // restored state is fully evaluated and the likelihood compared with
+                // that before the operation was made.
                 if( currentState < fullEvaluationCount ) {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood, prior);

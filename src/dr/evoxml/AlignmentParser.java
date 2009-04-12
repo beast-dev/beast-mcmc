@@ -118,7 +118,7 @@ public class AlignmentParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             new XORRule(
                     new StringAttributeRule(
                             DataType.DATA_TYPE,

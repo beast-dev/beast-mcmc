@@ -574,7 +574,7 @@ model {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 				new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
 						new ElementRule(Parameter.class)
 				}),

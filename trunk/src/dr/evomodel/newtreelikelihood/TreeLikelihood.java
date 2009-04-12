@@ -402,11 +402,11 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final int[] op1 = new int[] { -1 };
+            final int[] op1 = { -1 };
             final boolean update1 = traverse(tree, child1, op1);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final int[] op2 = new int[] { -1 };
+            final int[] op2 = { -1 };
             final boolean update2 = traverse(tree, child2, op2);
 
             // If either child node was updated then update this node too
@@ -501,7 +501,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
                 AttributeRule.newIntegerRule(DEVICE_NUMBER,true),
                 new ElementRule(PatternList.class),
@@ -509,7 +509,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 new ElementRule(SiteModel.class),
                 new ElementRule(BranchRateModel.class, true)
         };
-    };
+    }
 
     // **************************************************************
     // INSTANCE VARIABLES

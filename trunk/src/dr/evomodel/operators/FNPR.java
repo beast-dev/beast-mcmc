@@ -182,10 +182,9 @@ public class FNPR extends AbstractTreeOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
                 new ElementRule(TreeModel.class)};
 
     };
-
 }

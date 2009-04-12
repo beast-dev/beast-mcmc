@@ -56,9 +56,9 @@ public class ColouredExchangeOperator extends SimpleMCMCOperator {
     private static final int MAX_TRIES = 10000;
 
     private int mode = NARROW;
-    private TreeModel tree;
+    private final TreeModel tree;
 
-    private ColourSamplerModel colouringModel;
+    private final ColourSamplerModel colouringModel;
 
     public ColouredExchangeOperator(int mode, TreeModel tree, ColourSamplerModel colouringModel, double weight) {
         this.mode = mode;
@@ -170,7 +170,9 @@ public class ColouredExchangeOperator extends SimpleMCMCOperator {
         //Eupdate
         if (tries < MAX_TRIES) {
             eupdate(i, j, iP, jP);
-        } else throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
+        } else {
+            throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
+        }
     }
 
     public int getMode() {
@@ -252,7 +254,7 @@ public class ColouredExchangeOperator extends SimpleMCMCOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
                 new ElementRule(TreeModel.class),
                 new ElementRule(ColourSamplerModel.class),
@@ -292,7 +294,7 @@ public class ColouredExchangeOperator extends SimpleMCMCOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
                 new ElementRule(ColourSamplerModel.class),
                 new ElementRule(TreeModel.class)

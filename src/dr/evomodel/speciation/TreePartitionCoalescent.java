@@ -44,16 +44,33 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         checkCompatibility = false;
     }
 
+    // override this for efficiency, otherwise the overriden makeDirty, which results in additional overhead is called
+    public void modelRestored(Model model) {
+        super.makeDirty();
+    }
+
+    // Upon a direct "make dirty" enable all compatibility checks, since the last call to calculateLogLikelihood may have
+    // found a non compatible tree and returned -inf. This case is not explicitly saved.
+    public void makeDirty() {
+        super.makeDirty(); 
+        checkCompatibility = true;
+        for(int i = 0; i < species.getGeneTrees().length; i++) {
+            compatibleCheckRequited[i] = true;
+        }
+    }
+
     protected double calculateLogLikelihood() {
         if( checkCompatibility ) {
             boolean compatibility = true;
 
             for(int i = 0; i < compatibleCheckRequited.length; ++i) {
                 if( compatibleCheckRequited[i] ) {
+
                     if( !spTree.isCompatible(species.getGeneTrees()[i]) ) {
                         compatibility = false;
                     }
                     compatibleCheckRequited[i] = false;
+                    //System.out.println("check compatibility:" + species.getGeneTrees()[i].tree.getId() + " - " + compatibility );
                 }
             }
             if( !compatibility ) {
@@ -136,14 +153,14 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
             demog = new ScaledDemographic(demog, popFactor);
         }
 
-        if(false) {
-            final double duration = isRoot ? cList[cList.length - 1].ctime - t0 : stopTime;
-            double demographicAtCoalPoint = demog.getDemographic(duration);
-            double intervalArea = demog.getIntegral(0, duration);
-            if( demographicAtCoalPoint < 1e-12 * (duration/intervalArea) ) {
-               return Double.NEGATIVE_INFINITY;
-            }
-        }
+//        if(false) {
+//            final double duration = isRoot ? cList[cList.length - 1].ctime - t0 : stopTime;
+//            double demographicAtCoalPoint = demog.getDemographic(duration);
+//            double intervalArea = demog.getIntegral(0, duration);
+//            if( demographicAtCoalPoint < 1e-12 * (duration/intervalArea) ) {
+//               return Double.NEGATIVE_INFINITY;
+//            }
+//        }
         // Species sharing this branch
         FixedBitSet subspeciesSet = spTree.spSet(node);
 
@@ -153,7 +170,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         }
 
         while( nLineages > 1 ) {
-            assert indexInClist < cList.length;
+            assert ( indexInClist < cList.length );
 
             final double nextT = cList[indexInClist].ctime;
 
@@ -198,12 +215,16 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
     }
 
     public void modelChangedEvent(Model model, Object object, int index) {
-        super.modelChangedEvent(model, object, index);
-
-        if( model == spTree && object == spTree && index != -1 ) {
+        //super.modelChangedEvent(model, object, index);
+        // not the above for efficiency, otherwise the overriden makeDirty, which results in additional overhead is called.
+        super.makeDirty();
+        
+        if( model == spTree ) {
+          if( object == spTree && index != -1 ) {
             // Species tree scaling
             checkCompatibility = true;
             Arrays.fill(compatibleCheckRequited, true);
+          }
         } else {
 
             final SpeciesBindings.GeneTreeInfo[] trees = species.getGeneTrees();
@@ -211,6 +232,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
                 if( trees[i].tree == model ) {
                     checkCompatibility = true;
                     compatibleCheckRequited[i] = true;
+                    break;
                 }
             }
         }

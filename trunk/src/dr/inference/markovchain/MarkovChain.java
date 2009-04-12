@@ -47,6 +47,8 @@ import java.util.logging.Logger;
  */
 public final class MarkovChain {
 
+    private final static boolean DEBUG = false;
+
     private final OperatorSchedule schedule;
     private final Acceptor acceptor;
     private final Prior prior;
@@ -94,12 +96,9 @@ public final class MarkovChain {
      * @param length
      *            number of states to run the chain.
      * @param onTheFlyOperatorWeights
-     * @param logOps
-     *            Hack to log likelihood change with operators to stdout
      */
     public int chain(int length, boolean disableCoerce,
-                     int onTheFlyOperatorWeights, boolean logOps) {
-        boolean verbose = false;
+                     int onTheFlyOperatorWeights) {
 
         currentScore = evaluate(likelihood, prior);
 
@@ -180,7 +179,7 @@ public final class MarkovChain {
                 // The new model is proposed
                 // assert Profiler.startProfile("Operate");
 
-                if( verbose ) {
+                if( DEBUG ) {
                     System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
                 }
 
@@ -206,7 +205,7 @@ public final class MarkovChain {
                 // The new model is proposed
                 // assert Profiler.startProfile("Evaluate");
 
-                if( verbose ) {
+                if( DEBUG ) {
                     System.out.println("** Evaluate");
                 }
 
@@ -246,19 +245,23 @@ public final class MarkovChain {
                             || acceptor.accept(oldScore, score, hastingsRatio, logr);
                 }
 
+                // @todo Comment by AR.
+                // In the above SimpleGibbsOperator implements GibbsOperator so why the seperate clause?
+                // This would suggest that SimpleGibbsOperator is not always accepted? Would suggest it
+                // wasn't a Gibbs operator. Also this means that all SimpleGibbsOperator are dealt with
+                // this way. We should probably clean up the API for these - doing instanceof isn't
+                // very flexible. Could return an infinite hastings ratio or have an isGibbs() on all
+                // operators to do away with GibbsOperator interface.
+
+
                 deviation = score - oldScore;
             }
 
             // The new model is accepted or rejected
             if( accept ) {
-                if( verbose ) {
+                if( DEBUG ) {
                     System.out.println("** Move accepted: new score = " + score
                             + ", old score = " + oldScore);
-                }
-
-                if( logOps ) {
-                    System.err.println("##" + (score - currentScore) + " "
-                            + mcmcOperator.getOperatorName());
                 }
 
                 mcmcOperator.accept(deviation);
@@ -273,7 +276,7 @@ public final class MarkovChain {
                     }
                 }
             } else {
-                if( verbose ) {
+                if( DEBUG ) {
                     System.out.println("** Move rejected: new score = " + score
                             + ", old score = " + oldScore);
                 }

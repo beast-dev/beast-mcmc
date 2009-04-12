@@ -5,11 +5,13 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.coalescent.VDdemographicFunction;
+import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.tree.TreeLogger;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.operators.Scalable;
+import dr.inference.operators.OperatorFailedException;
 import dr.util.Attributable;
 import dr.util.HeapSort;
 import dr.xml.*;
@@ -136,6 +138,24 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         }
 
         nodePropsReady = false;
+
+        // crappy way to pass a result back from compatibleUninformedSpeciesTree.
+        // check is using isCompatible(), which requires completion of construction.
+        boolean check = spTree.getAttribute("check") != null;
+        spTree.setAttribute("check", null);
+        
+        while( check ) {
+            // Start tree had branch info, keep it when compatible, decrease height by 1% until
+            // compatible otherwise.
+            check = false;
+            for( SpeciesBindings.GeneTreeInfo t : species.getGeneTrees() ) {
+                if( ! isCompatible(t) ) {
+                    SimpleTree.Utils.scaleNodeHeights(spTree, 0.99);
+                    check = true;
+                    break;
+                }
+            }
+        }
     }
 
     // Is gene tree compatible with species tree
@@ -785,7 +805,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
     private SimpleTree compatibleUninformedSpeciesTree(Tree startTree) {
         double rootHeight = Double.MAX_VALUE;
 
-        for (SpeciesBindings.GeneTreeInfo t : species.getGeneTrees()) {
+        for( SpeciesBindings.GeneTreeInfo t : species.getGeneTrees() ) {
             rootHeight = Math.min(rootHeight, t.getCoalInfo()[0].ctime);
         }
 
@@ -795,28 +815,34 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
             // Allow start tree to be very basic basic - may be not fully resolved and no
             // branch lengths
 
-            if (startTree.getExternalNodeCount() != spp.length) {
+            if( startTree.getExternalNodeCount() != spp.length ) {
                 throw new Error("Start tree error - different number of tips");
             }
 
             final FlexibleTree tree = new FlexibleTree(startTree);
             tree.resolveTree();
-            if (tree.getRootHeight() <= 0.0) {
+            final double treeHeight = tree.getRootHeight();
+            if( treeHeight <= 0 ) {
                 tree.setRootHeight(1.0);
+                Utils.correctHeightsForTips(tree);
+                SimpleTree.Utils.scaleNodeHeights(tree, rootHeight / tree.getRootHeight());
             }
-            Utils.correctHeightsForTips(tree);
-            SimpleTree.Utils.scaleNodeHeights(tree, rootHeight / tree.getRootHeight());
 
             SimpleTree sTree = new SimpleTree(tree);
-            for (int ns = 0; ns < spp.length; ns++) {
+            for(int ns = 0; ns < spp.length; ns++) {
                 SpeciesBindings.SPinfo sp = spp[ns];
                 final int i = sTree.getTaxonIndex(sp.name);
-                if (i < 0) {
+                if( i < 0 ) {
                     throw new Error(sp.name + " is not present in the start tree");
                 }
                 final SimpleNode node = sTree.getExternalNode(i);
                 node.setAttribute(spIndexAttrName, ns);
             }
+
+            if( treeHeight > 0 ) {
+                sTree.setAttribute("check", new Double(rootHeight));
+            }
+
             return sTree;
         }
 
@@ -826,7 +852,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
         List<SimpleNode> subs = new ArrayList<SimpleNode>(spp.length);
 
-        for (int ns = 0; ns < spp.length; ns++) {
+        for(int ns = 0; ns < spp.length; ns++) {
             SpeciesBindings.SPinfo sp = spp[ns];
             final SimpleNode node = new SimpleNode();
             node.setTaxon(new Taxon(sp.name));
@@ -835,7 +861,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
             node.setAttribute(spIndexAttrName, ns);
         }
 
-        while (subs.size() > 1) {
+        while( subs.size() > 1 ) {
             final SimpleNode node = new SimpleNode();
             int i = 0, j = 1;
             node.addChild(subs.get(i));
@@ -866,20 +892,35 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         return getModelName();
     }
 
-    public int scale(double scaleFactor) {
-        assert scaleFactor > 0;
+    static private TreeNodeSlide internalTreeOP = null;
 
-        storeState();
-        beginTreeEdit();
-        final int count = getInternalNodeCount();
-        for(int i = 0; i < count; ++i) {
-            final NodeRef n = getInternalNode(i);
-            setNodeHeight(n, getNodeHeight(n) * scaleFactor);
+    public int scale(double scaleFactor, int nDims) throws OperatorFailedException {
+        assert scaleFactor > 0;
+        if( nDims <= 0 ) {
+            storeState();  // just checks assert really
+            beginTreeEdit();
+            final int count = getInternalNodeCount();
+            for(int i = 0; i < count; ++i) {
+                final NodeRef n = getInternalNode(i);
+                setNodeHeight(n, getNodeHeight(n) * scaleFactor);
+            }
+            endTreeEdit();
+            fireModelChanged(this, 1);
+            return count;
+        } else {
+            if (nDims != 1) {
+               throw new OperatorFailedException("not implemented for count != 1");
+            }
+            if( internalTreeOP == null ) {
+                internalTreeOP = new TreeNodeSlide(this, species, 1);
+            }
+
+            internalTreeOP.operateOneNode(scaleFactor);
+            fireModelChanged(this, 1);
+            return nDims;
         }
-        endTreeEdit();
-        fireModelChanged(this, 1);
-        return count;
     }
+
     private final boolean verbose = false;
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {

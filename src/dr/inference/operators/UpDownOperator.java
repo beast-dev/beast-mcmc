@@ -41,11 +41,11 @@ public class UpDownOperator extends AbstractCoercableOperator {
                           double scale, double weight, CoercionMode mode) {
 
         super(mode);
+        setWeight(weight);
 
         this.upParameter = upParameter;
         this.downParameter = downParameter;
         this.scaleFactor = scale;
-        setWeight(weight);
     }
 
 //    public final int getPriorType() {
@@ -77,13 +77,13 @@ public class UpDownOperator extends AbstractCoercableOperator {
 
         if( upParameter != null ) {
             for( Scalable up : upParameter ) {
-                goingUp += up.scale(scale);
+                goingUp += up.scale(scale, -1);
             }
         }
 
         if( downParameter != null ) {
             for( Scalable dn : downParameter ) {
-                goingDown += dn.scale(1.0 / scale);
+                goingDown += dn.scale(1.0 / scale, -1);
             }
         }
 
@@ -165,11 +165,30 @@ public class UpDownOperator extends AbstractCoercableOperator {
             return UP_DOWN_OPERATOR;
         }
 
-        private Scalable[] getArgs(final XMLObject list) {
+        private Scalable[] getArgs(final XMLObject list) throws XMLParseException {
             Scalable[] args = new Scalable[list.getChildCount()];
             for(int k = 0; k < list.getChildCount(); ++k) {
                 final Object child = list.getChild(k);
-                args[k] = (child instanceof Parameter) ? new Scalable.Default((Parameter) child) : (Scalable) child;
+                if( child instanceof Parameter ) {
+                   args[k] = new Scalable.Default((Parameter) child); 
+                } else if( child instanceof Scalable ) {
+                    args[k] = (Scalable) child;
+                } else {
+                    XMLObject xo = (XMLObject)child;
+                    int count = xo.getIntegerAttribute("count");
+                    final Scalable s = (Scalable) xo.getChild(Scalable.class);
+                    args[k] = new Scalable() {
+
+                        public int scale(double factor, int nDims) throws OperatorFailedException {
+                            return s.scale(factor, 1);
+                        }
+
+                        public String getName() {
+                            return s.getName() + "(1)";
+                        }
+                    };
+                }
+
             }
             return args;
         }
@@ -179,6 +198,7 @@ public class UpDownOperator extends AbstractCoercableOperator {
             final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
             final double weight = xo.getDoubleAttribute(WEIGHT);
+
             final CoercionMode mode = CoercionMode.parseMode(xo);
 
             final Scalable[] upArgs = getArgs((XMLObject) xo.getChild(UP));
@@ -201,17 +221,24 @@ public class UpDownOperator extends AbstractCoercableOperator {
             return rules;
         }
 
+        private final XMLSyntaxRule[] ee = {
+                new ElementRule(Scalable.class, true),
+                new ElementRule(Parameter.class, true),
+                new ElementRule("scale", new XMLSyntaxRule[]{
+                        AttributeRule.newIntegerRule("count"),
+                        new ElementRule(Scalable.class),
+                }, true),
+        };
+        
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+                AttributeRule.newIntegerArrayRule("count", true),
+
                 // Allow an arbitrary number of Parameters or Scalables in up or down
-                new ElementRule(UP,
-                        new XMLSyntaxRule[]{new ElementRule(Scalable.class, true), new ElementRule(Parameter.class, true)},
-                        1, Integer.MAX_VALUE),
-                new ElementRule(DOWN,
-                         new XMLSyntaxRule[]{new ElementRule(Scalable.class, true), new ElementRule(Parameter.class, true)},
-                        1, Integer.MAX_VALUE),
+                new ElementRule(UP, ee, 1, Integer.MAX_VALUE),
+                new ElementRule(DOWN, ee, 1, Integer.MAX_VALUE),
         };
     };
 

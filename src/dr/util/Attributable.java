@@ -88,7 +88,7 @@ public interface Attributable {
 		// INSTANCE VARIABLE
 		// **************************************************************
 		
-		private HashMap attributes = new HashMap();
+		private final HashMap<String, Object> attributes = new HashMap<String, Object>();
 	}
 }
 

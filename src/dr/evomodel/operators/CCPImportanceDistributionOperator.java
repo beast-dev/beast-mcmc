@@ -28,13 +28,13 @@ public class CCPImportanceDistributionOperator extends
 
 	private int sampleCount;
 
-	private ConditionalCladeFrequency probabilityEstimater;
+	private final ConditionalCladeFrequency probabilityEstimater;
 
 	private Queue<NodeRef> internalNodes;
 
 	private Map<Integer, NodeRef> externalNodes;
 
-	private boolean burnin = false;
+	private final boolean burnin = false;
 
 	/**
 	 * 
@@ -298,7 +298,7 @@ public class CCPImportanceDistributionOperator extends
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 				AttributeRule.newDoubleRule("weight"),
 				AttributeRule.newIntegerRule("samples"),
 				AttributeRule.newIntegerRule("sampleEvery", true),

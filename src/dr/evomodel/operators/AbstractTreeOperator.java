@@ -16,7 +16,7 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
 	/**
      * @return the number of transitions since last call to reset().
      */
-    public int getTransitions(){
+    public int getTransitions() {
     	return transitions;
     }
 
@@ -24,20 +24,20 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
      * Set the number of transitions since last call to reset(). This is used
      * to restore the state of the operator
      *
-     * @param rejected number of rejections
+     * @param transitions number of transition
      */
-    public void setTransitions(int transitions){
+    public void setTransitions(int transitions) {
     	this.transitions = transitions;
     }
     
     public double getTransistionProbability() {
-        int accepted = getAccepted();
-        int rejected = getRejected();
-        int transition = getTransitions();
+        final int accepted = getAccepted();
+        final int rejected = getRejected();
+        final int transition = getTransitions();
         return (double) transition / (double) (accepted + rejected);
     }
 
-	/* exchange subtrees whose root are i and j */
+	/* exchange sub-trees whose root are i and j */
 	protected void exchangeNodes(TreeModel tree, NodeRef i, NodeRef j,
 	                             NodeRef iP, NodeRef jP) throws OperatorFailedException {
 
@@ -65,12 +65,11 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
 	 * @param child  the child that you want the sister of
 	 * @return the other child of the given parent.
 	 */
-	protected NodeRef getOtherChild(Tree tree, NodeRef parent, NodeRef child) {
-
-	    if (tree.getChild(parent, 0) == child) {
-	        return tree.getChild(parent, 1);
-	    } else {
-	        return tree.getChild(parent, 0);
-	    }
-	}
+    protected NodeRef getOtherChild(Tree tree, NodeRef parent, NodeRef child) {
+        if( tree.getChild(parent, 0) == child ) {
+            return tree.getChild(parent, 1);
+        } else {
+            return tree.getChild(parent, 0);
+        }
+    }
 }

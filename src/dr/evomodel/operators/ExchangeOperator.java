@@ -25,10 +25,8 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -94,7 +92,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
         final int nNodes = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 
-        NodeRef i = tree.getNode(MathUtils.nextInt(nNodes));
+        NodeRef i = root;
 
         while( root == i || tree.getParent(i) == root ) {
             i = tree.getNode(MathUtils.nextInt(nNodes));
@@ -106,20 +104,19 @@ public class ExchangeOperator extends AbstractTreeOperator {
         if( iUncle == iParent ) {
             iUncle = tree.getChild(iGrandParent, 1);
         }
+        assert iUncle == getOtherChild(tree, iGrandParent, iParent);
 
         assert tree.getNodeHeight(i) < tree.getNodeHeight(iGrandParent);
 
         if( tree.getNodeHeight(iUncle) < tree.getNodeHeight(iParent) ) {
             eupdate(i, iUncle, iParent, iGrandParent);
 
-//            tree.pushTreeChangedEvent(iParent);
-//            tree.pushTreeChangedEvent(iGrandParent);
-            return;
+            // eupdate generates the events
+            //tree.pushTreeChangedEvent(iParent);
+            //tree.pushTreeChangedEvent(iGrandParent);
+        } else {
+          throw new OperatorFailedException("Couldn't find valid narrow move on this tree!!");
         }
-        // System.out.println("tries = " + tries);
-
-        throw new OperatorFailedException(
-                "Couldn't find valid narrow move on this tree!!");
     }
 
     /**
@@ -136,7 +133,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
             i = tree.getNode(MathUtils.nextInt(nodeCount));
         }
 
-        NodeRef j = i; // tree.getNode(MathUtils.nextInt(nodeCount));
+        NodeRef j = i;
         while( j == i || j == root ) {
             j = tree.getNode(MathUtils.nextInt(nodeCount));
         }
@@ -152,8 +149,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
             return;
         }
 
-        throw new OperatorFailedException(
-                "Couldn't find valid wide move on this tree!");
+        throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
     }
 
     /**
@@ -230,8 +226,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
             }
         }
 
-        throw new OperatorFailedException(
-                "Couldn't find valid wide move on this tree!");
+        throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
     }
 
     /* why not use Arrays.asList(a).indexOf(n) ? */
@@ -248,8 +243,8 @@ public class ExchangeOperator extends AbstractTreeOperator {
     private double getWinningChance(int index) {
 
         double sum = 0;
-        for(int i = 0; i < distances.length; i++) {
-            sum += (1.0 / distances[i]);
+        for( double distance : distances ) {
+            sum += (1.0 / distance);
         }
 
         return (1.0 / distances[index]) / sum;
@@ -267,8 +262,8 @@ public class ExchangeOperator extends AbstractTreeOperator {
 
         calcDistances(nodes, ref);
         double sum = 0;
-        for(int i = 0; i < distances.length; i++) {
-            sum += 1.0 / distances[i];
+        for( double distance : distances ) {
+            sum += 1.0 / distance;
         }
 
         double randomValue = MathUtils.nextDouble() * sum;
@@ -307,21 +302,21 @@ public class ExchangeOperator extends AbstractTreeOperator {
                 + tree.getId() + ")";
     }
 
-    /* exchange subtrees whose root are i and j */
-    private void eupdate(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP)
-            throws OperatorFailedException {
-
-        tree.beginTreeEdit();
-        tree.removeChild(iP, i);
-        tree.removeChild(jP, j);
-        tree.addChild(jP, i);
-        tree.addChild(iP, j);
-
-        try {
-            tree.endTreeEdit();
-        } catch( MutableTree.InvalidTreeException ite ) {
-            throw new OperatorFailedException(ite.toString());
-        }
+    /* exchange sub-trees whose root are i and j */
+    private void eupdate(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP) throws OperatorFailedException {
+        exchangeNodes(tree, i, j, iP, jP);
+//        tree.beginTreeEdit();
+//
+//        tree.removeChild(iP, i);
+//        tree.removeChild(jP, j);
+//        tree.addChild(jP, i);
+//        tree.addChild(iP, j);
+//
+//        try {
+//            tree.endTreeEdit();
+//        } catch( MutableTree.InvalidTreeException ite ) {
+//            throw new OperatorFailedException(ite.toString());
+//        }
     }
 
     public double getMinimumAcceptanceLevel() {
@@ -341,13 +336,15 @@ public class ExchangeOperator extends AbstractTreeOperator {
     }
 
     public String getPerformanceSuggestion() {
-        if( MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel() ) {
-            return "";
-        } else if( MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel() ) {
-            return "";
-        } else {
-            return "";
-        }
+        return "";
+
+//        if( MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel() ) {
+//            return "";
+//        } else if( MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel() ) {
+//            return "";
+//        } else {
+//            return "";
+//        }
     }
 
     public static XMLObjectParser NARROW_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
@@ -358,7 +355,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             final double weight = xo.getDoubleAttribute("weight");
             return new ExchangeOperator(NARROW, treeModel, weight);
         }
@@ -394,8 +391,8 @@ public class ExchangeOperator extends AbstractTreeOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            double weight = xo.getDoubleAttribute("weight");
+            final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            final double weight = xo.getDoubleAttribute("weight");
 
             return new ExchangeOperator(WIDE, treeModel, weight);
         }
@@ -422,7 +419,6 @@ public class ExchangeOperator extends AbstractTreeOperator {
                     AttributeRule.newDoubleRule("weight"),
                     new ElementRule(TreeModel.class)};
         }
-
     };
 
     public static XMLObjectParser INTERMEDIATE_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
@@ -433,8 +429,8 @@ public class ExchangeOperator extends AbstractTreeOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            double weight = xo.getDoubleAttribute("weight");
+            final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            final double weight = xo.getDoubleAttribute("weight");
 
             return new ExchangeOperator(INTERMEDIATE, treeModel, weight);
         }
@@ -459,6 +455,5 @@ public class ExchangeOperator extends AbstractTreeOperator {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
                 new ElementRule(TreeModel.class)};
-
     };
 }

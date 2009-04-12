@@ -25,10 +25,12 @@
 
 package dr.evoxml;
 
-import java.util.logging.Logger;
-
-import dr.evolution.alignment.*;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.SiteList;
 import dr.xml.*;
+
+import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond
@@ -81,7 +83,7 @@ public class PatternSubSetParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(SUB_SET, true, "Which subset of patterns to use (out of subSetCount)"),
             AttributeRule.newIntegerRule(SUB_SET_COUNT, true, "The number of subsets"),
 

@@ -3,17 +3,13 @@
  */
 package dr.evolution.tree;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-
 import dr.evolution.io.Importer;
 import dr.evomodel.tree.TreeTrace;
 import dr.math.MathUtils;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.util.*;
 
 /**
  * @author Sebastian Hoehna
@@ -153,10 +149,7 @@ public class ConditionalCladeFrequency extends
 	/**
 	 * 
 	 * Creates the report. The estimated posterior of the given tree is printed.
-	 * 
-	 * @param minCladeProbability
-	 *            clades with at least this posterior probability will be
-	 *            included in report.
+	 *
 	 * @throws IOException
 	 *             if general I/O error occurs
 	 */
@@ -165,12 +158,10 @@ public class ConditionalCladeFrequency extends
 		System.err.println("making report");
 
 		SimpleTree sTree = new SimpleTree(tree);
-		System.out
-				.println("Estimated marginal posterior by condiational clade frequencies:");
+		System.out.println("Estimated marginal posterior by condiational clade frequencies:");
 		System.out.println(getTreeProbability(sTree));
 
 		System.out.flush();
-
 	}
 
 	/**
@@ -505,8 +496,7 @@ public class ConditionalCladeFrequency extends
 				} else {
 					// TODO check this code, especially if the cloning is needed
 					// and not just the clade could be added
-					Clade tmp = new Clade((BitSet) c.getBits().clone(), c
-							.getHeight());
+					Clade tmp = new Clade((BitSet) c.getBits().clone(), c.getHeight());
 					tmp.addHeight(c.getHeight());
 					coFreqs.put(c.getBits(), tmp);
 				}

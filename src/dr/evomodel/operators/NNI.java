@@ -85,7 +85,7 @@ public class NNI extends AbstractTreeOperator {
         // double prForward = 1 / (heightGrandfather - minHeightFather);
         // double prBackward = 1 / (heightGrandfather - minHeightReverse);
         // hastings ratio = backward Prob / forward Prob
-        double hastingsRatio = Math.log((heightGrandfather - minHeightFather) / (heightGrandfather - minHeightReverse));
+        final double hastingsRatio = Math.log((heightGrandfather - minHeightFather) / (heightGrandfather - minHeightReverse));
         // now change the nodes
         exchangeNodes(tree, i, iUncle, iParent, iGrandParent);
 

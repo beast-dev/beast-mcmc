@@ -17,11 +17,12 @@ public interface Scalable {
     /**
      *
      * @param factor  scaling factor
+     * @param nDims
      * @return  Number of dimentions.
      *
      * @throws OperatorFailedException
      */
-    int scale(double factor) throws OperatorFailedException;
+    int scale(double factor, int nDims) throws OperatorFailedException;
 
     /**
      *
@@ -36,10 +37,11 @@ public interface Scalable {
             this.parameter = p;
         }
 
-        public int scale(double factor) throws OperatorFailedException {
+        public int scale(double factor, int nDims) throws OperatorFailedException {
+            assert nDims <= 0;
             final int dimension = parameter.getDimension();
 
-            for(int i = 0; i < dimension; i++) {
+            for(int i = 0; i < dimension; ++i) {
                 parameter.setParameterValue(i, parameter.getParameterValue(i) * factor);
             }
 

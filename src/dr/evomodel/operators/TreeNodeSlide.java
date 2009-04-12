@@ -34,15 +34,14 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
     private final boolean verbose = false;
 
    // private double range = 1.0;
-    private boolean outgroupOnly = false;
+  //  private boolean outgroupOnly = false;
 
     //private boolean verbose = false;
 
-    public TreeNodeSlide(SpeciesTreeModel tree, SpeciesBindings species/*, double range*/, boolean outgroupOnly, double weight) {
+    public TreeNodeSlide(SpeciesTreeModel tree, SpeciesBindings species /*, boolean outgroupOnly*/, double weight) {
         this.tree = tree;
         this.species = species;
-      //  this.range = range;
-        this.outgroupOnly = outgroupOnly;
+    //    this.outgroupOnly = outgroupOnly;
 
         preOrderIndexBefore = new int[tree.getNodeCount()];
         Arrays.fill(preOrderIndexBefore,  -1);
@@ -62,6 +61,11 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
     }
 
     public double doOperation() throws OperatorFailedException {
+        operateOneNode(0.0);
+        return 0;
+    }
+
+    public void operateOneNode(final double factor) throws OperatorFailedException {
 
 //            #print "operate: tree", ut.treerep(t)
      //   if( verbose)  System.out.println("  Mau at start: " + tree.getSimpleTree());
@@ -75,13 +79,13 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
 
         // internal node to change
         int which = MathUtils.nextInt(count - 1);
-        if( outgroupOnly ) {
-           if( order[1] == tree.getRoot() ) {
-               which = 0;
-           } else if( order[2*count - 3] == tree.getRoot() ) {
-               which = count - 2;
-           }
-        }
+//        if( outgroupOnly ) {
+//           if( order[1] == tree.getRoot() ) {
+//               which = 0;
+//           } else if( order[2*count - 3] == tree.getRoot() ) {
+//               which = count - 2;
+//           }
+//        }
 //        if( verbose)  {
 //            System.out.print("order:");
 //            for(int k = 0 ; k < 2*count; k += 2) {
@@ -100,9 +104,15 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
         for(int k = 2*(which+1); k < 2*count; k += 2) {
            right.set(tree.speciesIndex(order[k]));
         }
-        
-        final double limit = species.speciationUpperBound(left, right);
-        final double newHeight = MathUtils.nextDouble() * limit;
+
+        double newHeight;
+
+        if( factor > 0 ) {
+          newHeight = tree.getNodeHeight(order[2*which+1]) * factor;
+        } else {
+          final double limit = species.speciationUpperBound(left, right);
+          newHeight = MathUtils.nextDouble() * limit;
+        }
 
         tree.beginTreeEdit();
 
@@ -141,8 +151,6 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
        // }
 
         tree.endTreeEdit();
-
-        return 0;
     }
 
 //    static private void treeMixup(Tree tree, NodeRef node) {
@@ -226,7 +234,6 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
             }
         }
 
-
         final NodeRef root = order[2 * rootIndex + 1];
         
         final NodeRef lchild = tree.getChild(root, 0);
@@ -267,8 +274,8 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
 //            if( range <= 0 || range > 1.0 ) {
 //                throw new XMLParseException("range out of range");
 //            }
-            final boolean oo = xo.getAttribute("outgroup", false);
-            return new TreeNodeSlide(tree, species /*, range*/, oo, weight);
+            //final boolean oo = xo.getAttribute("outgroup", false);
+            return new TreeNodeSlide(tree, species /*, range*//*, oo*/, weight);
         }
 
         public String getParserDescription() {
@@ -283,7 +290,7 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
             return new XMLSyntaxRule[]{
                     AttributeRule.newDoubleRule("weight"),
                    // AttributeRule.newDoubleRule("range", true),
-                    AttributeRule.newBooleanRule("outgroup", true),
+                  //  AttributeRule.newBooleanRule("outgroup", true),
                     
                     new ElementRule(SpeciesBindings.class),
                     new ElementRule(SpeciesTreeModel.class)

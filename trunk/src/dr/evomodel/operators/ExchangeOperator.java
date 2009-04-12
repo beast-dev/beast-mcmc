@@ -112,8 +112,8 @@ public class ExchangeOperator extends AbstractTreeOperator {
         if( tree.getNodeHeight(iUncle) < tree.getNodeHeight(iParent) ) {
             eupdate(i, iUncle, iParent, iGrandParent);
 
-            tree.pushTreeChangedEvent(iParent);
-            tree.pushTreeChangedEvent(iGrandParent);
+//            tree.pushTreeChangedEvent(iParent);
+//            tree.pushTreeChangedEvent(iGrandParent);
             return;
         }
         // System.out.println("tries = " + tries);

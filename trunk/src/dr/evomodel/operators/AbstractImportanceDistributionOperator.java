@@ -1,18 +1,14 @@
 /**
- * 
+ *
  */
 package dr.evomodel.operators;
 
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
-import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.OperatorSchedule;
-import dr.inference.operators.ScaleOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.inference.operators.SimpleOperatorSchedule;
-import dr.inference.operators.UniformOperator;
 
 /**
  * @author Sebastian Hoehna
@@ -21,27 +17,27 @@ import dr.inference.operators.UniformOperator;
 public abstract class AbstractImportanceDistributionOperator extends SimpleMCMCOperator {
 
 	private int transitions = 0;
-	
+
 	private OperatorSchedule schedule;
-	
+
 	protected TreeModel tree;
-	
+
 
 	/**
-	 * 
+	 *
 	 */
 	public AbstractImportanceDistributionOperator(TreeModel tree) {
 		super();
-		
+
 		this.tree = tree;
-		
+
 		init();
 	}
-	
+
 	private void init(){
 		schedule = getOperatorSchedule(tree);
 	}
-	
+
 	private OperatorSchedule getOperatorSchedule(TreeModel treeModel) {
 
         ExchangeOperator narrowExchange = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 10);
@@ -61,14 +57,14 @@ public abstract class AbstractImportanceDistributionOperator extends SimpleMCMCO
 
         return schedule;
     }
-	
+
 	protected double doUnguidedOperation() throws OperatorFailedException{
 		int index = schedule.getNextOperatorIndex();
 		SimpleMCMCOperator operator = (SimpleMCMCOperator) schedule.getOperator(index);
-		
+
 		return operator.doOperation();
 	}
-	
+
 	/**
      * @return the number of transitions since last call to reset().
      */
@@ -85,14 +81,14 @@ public abstract class AbstractImportanceDistributionOperator extends SimpleMCMCO
     public void setTransitions(int transitions) {
     	this.transitions = transitions;
     }
-    
+
     public double getTransistionProbability() {
-        int accepted = getAccepted();
-        int rejected = getRejected();
+        int accepted = getAcceptCount();
+        int rejected = getRejectCount();
         int transition = getTransitions();
         return (double) transition / (double) (accepted + rejected);
     }
-    
+
     public double getMinimumAcceptanceLevel() {
         return 0.50;
     }

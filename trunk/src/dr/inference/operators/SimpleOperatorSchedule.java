@@ -128,6 +128,16 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		optimizationSchedule = schedule;
 	}
 
+    public int getMinimumOperatorCount() {
+        int minCount = Integer.MAX_VALUE;
+        for (MCMCOperator op : operators) {
+            if (op.getCount() < minCount) {
+                minCount = op.getCount();
+            }
+        }
+        return minCount;
+    }
+
 	// **************************************************************
 	// Loggable IMPLEMENTATION
 	// **************************************************************
@@ -175,7 +185,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 			if (xo.hasAttribute(OPTIMIZATION_SCHEDULE)) {
 				String type = xo.getStringAttribute(OPTIMIZATION_SCHEDULE);
                 Logger.getLogger("dr.inference").info("Optimization Schedule: " + type);
-                 
+
                 if (type.equals(OperatorSchedule.LOG_STRING))
 					schedule.setOptimizationSchedule(OperatorSchedule.LOG_SCHEDULE);
 				else if (type.equals(OperatorSchedule.SQRT_STRING))

@@ -151,20 +151,24 @@ public class FixedColouredOperator implements CoercableMCMCOperator {
         innerOperator.reset();
     }
 
-    public final int getAccepted() {
-        return innerOperator.getAccepted();
+    public final int getCount() {
+        return innerOperator.getCount();
     }
 
-    public final void setAccepted(int accepted) {
-        innerOperator.setAccepted(accepted);
+    public final int getAcceptCount() {
+        return innerOperator.getAcceptCount();
     }
 
-    public final int getRejected() {
-        return innerOperator.getRejected();
+    public final void setAcceptCount(int accepted) {
+        innerOperator.setAcceptCount(accepted);
     }
 
-    public final void setRejected(int rejected) {
-        innerOperator.setRejected(rejected);
+    public final int getRejectCount() {
+        return innerOperator.getRejectCount();
+    }
+
+    public final void setRejectCount(int rejected) {
+        innerOperator.setRejectCount(rejected);
     }
 
     public final double getMeanDeviation() {

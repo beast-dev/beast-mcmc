@@ -81,7 +81,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
 
         if( !operateAllowed ) {
             operateAllowed = true;
-            accepted += 1;
+            acceptCount += 1;
             sumDeviation += deviation;
 
             spanDeviation[0] = Math.min(spanDeviation[0], deviation);
@@ -96,7 +96,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     public void reject() {
         if( !operateAllowed ) {
             operateAllowed = true;
-            rejected += 1;
+            rejectCount += 1;
         } else {
             throw new RuntimeException(
                     "Accept/reject methods called twice without operate called in between!");
@@ -105,30 +105,34 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
 
     public void reset() {
         operateAllowed = true;
-        accepted = 0;
-        rejected = 0;
+        acceptCount = 0;
+        rejectCount = 0;
         lastDeviation = 0.0;
         sumDeviation = 0.0;
     }
 
-    public final int getAccepted() {
-        return accepted;
+    public final int getCount() {
+        return acceptCount + rejectCount;
     }
 
-    public final void setAccepted(int accepted) {
-        this.accepted = accepted;
+    public final int getAcceptCount() {
+        return acceptCount;
     }
 
-    public final int getRejected() {
-        return rejected;
+    public final void setAcceptCount(int acceptCount) {
+        this.acceptCount = acceptCount;
     }
 
-    public final void setRejected(int rejected) {
-        this.rejected = rejected;
+    public final int getRejectCount() {
+        return rejectCount;
+    }
+
+    public final void setRejectCount(int rejectCount) {
+        this.rejectCount = rejectCount;
     }
 
     public final double getMeanDeviation() {
-        return sumDeviation / accepted;
+        return sumDeviation / acceptCount;
     }
 
     public final double getDeviation() {
@@ -179,7 +183,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     }
 
     public final double getAcceptanceProbability() {
-        return (double) accepted / (double) (accepted + rejected);
+        return (double) acceptCount / (double) (acceptCount + rejectCount);
     }
 
     /**
@@ -202,8 +206,8 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     public abstract double doOperation() throws OperatorFailedException;
 
     private double weight = 1.0;
-    private int accepted = 0;
-    private int rejected = 0;
+    private int acceptCount = 0;
+    private int rejectCount = 0;
     private double sumDeviation = 0.0;
     private double lastDeviation = 0.0;
     private boolean operateAllowed = true;

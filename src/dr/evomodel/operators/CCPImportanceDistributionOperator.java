@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package dr.evomodel.operators;
 
@@ -15,7 +15,7 @@ import java.util.*;
 
 /**
  * @author Sebastian Hoehna
- * 
+ *
  */
 public class CCPImportanceDistributionOperator extends
 		AbstractImportanceDistributionOperator {
@@ -37,7 +37,7 @@ public class CCPImportanceDistributionOperator extends
 	private final boolean burnin = false;
 
 	/**
-	 * 
+	 *
 	 */
 	public CCPImportanceDistributionOperator(TreeModel tree, double weight,
 			int samples, int sampleEvery, double epsilon) {
@@ -52,7 +52,7 @@ public class CCPImportanceDistributionOperator extends
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public CCPImportanceDistributionOperator(TreeModel tree, double weight) {
 		super(tree);
@@ -74,7 +74,7 @@ public class CCPImportanceDistributionOperator extends
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see dr.inference.operators.AbstractImportanceSampler#doOperation()
 	 */
 	@Override
@@ -85,8 +85,8 @@ public class CCPImportanceDistributionOperator extends
 				if (sampleCount % sampleEvery == 0) {
 					probabilityEstimater.addTree(tree);
 				}
-				setAccepted(0);
-				setRejected(0);
+				setAcceptCount(0);
+				setRejectCount(0);
 				setTransitions(0);
 
 				return doUnguidedOperation();
@@ -119,10 +119,10 @@ public class CCPImportanceDistributionOperator extends
 			throw new OperatorFailedException(e.getMessage());
 		}
 
-		// TODO 
+		// TODO
 		// calculate the probability of the current tree!!!
 		// Hr = backward / forward
-		
+
 		return prob;
 	}
 
@@ -135,7 +135,7 @@ public class CCPImportanceDistributionOperator extends
 			}
 		}
 	}
-	
+
 	private void fillExternalNodes(NodeRef node) {
 		if (!tree.isExternal(node)) {
 			int childCount = tree.getChildCount(node);
@@ -231,7 +231,7 @@ public class CCPImportanceDistributionOperator extends
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see dr.inference.operators.AbstractImportanceSampler#getOperatorName()
 	 */
 	@Override
@@ -241,7 +241,7 @@ public class CCPImportanceDistributionOperator extends
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * dr.inference.operators.AbstractImportanceSampler#getPerformanceSuggestion
 	 * ()

@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package dr.evomodel.operators;
 
@@ -91,7 +91,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
      */
     @Override
@@ -102,8 +102,8 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
                 if( sampleCount % SAMPLE_EVERY == 0 ) {
                     probabilityEstimater.addTree(tree);
                 }
-                setAccepted(0);
-                setRejected(0);
+                setAcceptCount(0);
+                setRejectCount(0);
                 setTransitions(0);
 
                 return doUnguidedOperation();
@@ -301,7 +301,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see dr.inference.operators.SimpleMCMCOperator#getOperatorName()
      */
     @Override
@@ -311,7 +311,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see dr.inference.operators.MCMCOperator#getPerformanceSuggestion()
      */
     public String getPerformanceSuggestion() {

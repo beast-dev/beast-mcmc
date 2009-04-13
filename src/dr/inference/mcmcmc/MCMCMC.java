@@ -255,13 +255,13 @@ public class MCMCMC implements Runnable {
                 MCMCOperator operator1 = schedule1.getOperator(i);
                 MCMCOperator operator2 = schedule2.getOperator(i);
 
-                int tmp = operator1.getAccepted();
-                operator1.setAccepted(operator2.getAccepted());
-                operator2.setAccepted(tmp);
+                int tmp = operator1.getAcceptCount();
+                operator1.setAcceptCount(operator2.getAcceptCount());
+                operator2.setAcceptCount(tmp);
 
-                tmp = operator1.getRejected();
-                operator1.setRejected(operator2.getRejected());
-                operator2.setRejected(tmp);
+                tmp = operator1.getRejectCount();
+                operator1.setRejectCount(operator2.getRejectCount());
+                operator2.setRejectCount(tmp);
 
                 double tmp2 = operator1.getSumDeviation();
                 operator1.setSumDeviation(operator2.getSumDeviation());

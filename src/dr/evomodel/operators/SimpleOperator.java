@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package dr.evomodel.operators;
 
@@ -12,7 +12,7 @@ import dr.inference.operators.MCMCOperator;
 public abstract class SimpleOperator implements MCMCOperator {
 
 	/**
-	 * 
+	 *
 	 */
 	public SimpleOperator() {
 		// TODO Auto-generated constructor stub
@@ -61,19 +61,23 @@ public abstract class SimpleOperator implements MCMCOperator {
         sumDeviation = 0.0;
     }
 
-    public final int getAccepted() {
+    public final int getCount() {
+        return accepted + rejected;
+    }
+
+    public final int getAcceptCount() {
         return accepted;
     }
 
-    public final void setAccepted(int accepted) {
+    public final void setAcceptCount(int accepted) {
         this.accepted = accepted;
     }
 
-    public final int getRejected() {
+    public final int getRejectCount() {
         return rejected;
     }
 
-    public final void setRejected(int rejected) {
+    public final void setRejectCount(int rejected) {
         this.rejected = rejected;
     }
 
@@ -96,7 +100,7 @@ public abstract class SimpleOperator implements MCMCOperator {
     public final double getAcceptanceProbability() {
         return (double) accepted / (double) (accepted + rejected);
     }
-    
+
     public double getSpan(boolean reset) {
         double span = 0;
         if( spanDeviation[1] > spanDeviation[0] && spanCount > 20 ) {

@@ -80,14 +80,14 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         for (int step = 0; step < pathSteps; step++) {
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, chainLength, burnin);
-            mc.chain(chainLength + burnin, false, 0, false);
+            mc.chain(chainLength + burnin, false, 0);
             pathParameter -= pathDelta;
 
         }
 
         pathLikelihood.setPathParameter(0.0);
         reportIteration(pathParameter, chainLength, burnin);
-        mc.chain(chainLength + burnin, false, 0, false);
+        mc.chain(chainLength + burnin, false, 0);
     }
 
     public void linearShoeLacing() {
@@ -102,7 +102,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         for (int step = 0; step < pathSteps - 1; step++) {
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, chainLength, burnin);
-            mc.chain(chainLength + burnin, false, 0, false);
+            mc.chain(chainLength + burnin, false, 0);
             if (step == 0)
                 pathParameter -= 2 * pathDelta;
             else if (step % 2 == 0) {
@@ -115,7 +115,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
         pathLikelihood.setPathParameter(0.0);
         reportIteration(pathParameter, chainLength, burnin);
-        mc.chain(chainLength + burnin, false, 0, false);
+        mc.chain(chainLength + burnin, false, 0);
 
     }
 
@@ -136,7 +136,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, cl, burnin);
-            mc.chain(cl + burnin, false, 0, false);
+            mc.chain(cl + burnin, false, 0);
             if (step == 0) {
                 pathParameter /= 4;
             } else if (step % 2 == 0) {
@@ -154,7 +154,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             burnin = burninLength;
         pathLikelihood.setPathParameter(0.0);
         reportIteration(pathParameter, cl, burnin);
-        mc.chain(cl + burnin, false, 0, false);
+        mc.chain(cl + burnin, false, 0);
     }
 
     private void reportIteration(double pathParameter, int cl, int burn) {
@@ -174,7 +174,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, cl, burnin);
-            mc.chain(cl + burnin, false, 0, false);
+            mc.chain(cl + burnin, false, 0);
             pathParameter /= 2;
 
         }
@@ -187,7 +187,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             burnin = burninLength;
         pathLikelihood.setPathParameter(0.0);
         reportIteration(pathParameter, cl, burnin);
-        mc.chain(cl + burnin, false, 0, false);
+        mc.chain(cl + burnin, false, 0);
     }
 
     public void run() {

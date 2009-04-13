@@ -36,7 +36,7 @@ public interface MCMCOperator {
 
     public static final String WEIGHT = "weight";
 
-// This attribute is now called AUTO_OPTIMIZE and is in CoercableMCMCOperator	
+// This attribute is now called AUTO_OPTIMIZE and is in CoercableMCMCOperator
 //	public static final String ADAPT = "adapt";
 
     /**
@@ -65,30 +65,35 @@ public interface MCMCOperator {
     void reset();
 
     /**
+     * @return the total number of operations since last call to reset().
+     */
+    int getCount();
+
+    /**
      * @return the number of acceptances since last call to reset().
      */
-    int getAccepted();
+    int getAcceptCount();
 
     /**
      * Set the number of acceptances since last call to reset(). This is used
      * to restore the state of the operator
      *
-     * @param accepted number of acceptances
+     * @param acceptCount number of acceptances
      */
-    void setAccepted(int accepted);
+    void setAcceptCount(int acceptCount);
 
     /**
      * @return the number of rejections since last call to reset().
      */
-    int getRejected();
+    int getRejectCount();
 
     /**
      * Set the number of rejections since last call to reset(). This is used
      * to restore the state of the operator
      *
-     * @param rejected number of rejections
+     * @param rejectCount number of rejections
      */
-    void setRejected(int rejected);
+    void setRejectCount(int rejectCount);
 
     /**
      * @return the mean deviation in log posterior per accepted operations.
@@ -154,13 +159,13 @@ public interface MCMCOperator {
     class Utils {
 
         public static double getAcceptanceProbability(MCMCOperator op) {
-            int accepted = op.getAccepted();
-            int rejected = op.getRejected();
+            int accepted = op.getAcceptCount();
+            int rejected = op.getRejectCount();
             return (double) accepted / (double) (accepted + rejected);
         }
 
         public static int getOperationCount(MCMCOperator op) {
-            return op.getAccepted() + op.getRejected();
+            return op.getAcceptCount() + op.getRejectCount();
         }
     }
 

@@ -89,7 +89,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
      */
     @Override
@@ -100,8 +100,8 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
                 if( sampleCount % SAMPLE_EVERY == 0 ) {
                     probabilityEstimater.addTree(tree);
                 }
-                setAccepted(0);
-                setRejected(0);
+                setAcceptCount(0);
+                setRejectCount(0);
                 setTransitions(0);
 
                 return doUnguidedOperation();
@@ -232,7 +232,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see dr.inference.operators.SimpleMCMCOperator#getOperatorName()
      */
     @Override
@@ -242,7 +242,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see dr.inference.operators.MCMCOperator#getPerformanceSuggestion()
      */
     public String getPerformanceSuggestion() {

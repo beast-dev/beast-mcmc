@@ -45,7 +45,7 @@ public class MCMCMCRunner extends Thread {
 	public void run() {
         int i = 0;
         while (i < totalLength) {
-            markovChain.chain(length, disableCoerce, 0, false);
+            markovChain.chain(length, disableCoerce, 0);
 
             i += length;
 

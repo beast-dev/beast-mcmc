@@ -62,6 +62,7 @@ public final class MarkovChain {
     private boolean useCoercion = true;
 
     private final int fullEvaluationCount;
+    private final int minOperatorCountForFullEvaluation = 1;
 
     public MarkovChain(Prior prior, Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
@@ -141,6 +142,9 @@ public final class MarkovChain {
 
         double[] logr = {0.0};
 
+        boolean usingFullEvaluation = true;
+        boolean fullEvaluationError = false;
+
         while( !pleaseStop && (currentState < (currentLength + length)) ) {
 
             // periodically log states
@@ -214,10 +218,10 @@ public final class MarkovChain {
 
                 // assert Profiler.stopProfile("Evaluate");
 
-                // This is a test that the state is correctly restored. The
-                // restored state is fully evaluated and the likelihood compared with
-                // that before the operation was made.
-                if( currentState < fullEvaluationCount ) {
+                if (usingFullEvaluation) {
+                    // This is a test that the state is correctly restored. The
+                    // restored state is fully evaluated and the likelihood compared with
+                    // that before the operation was made.
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood, prior);
 
@@ -228,6 +232,7 @@ public final class MarkovChain {
                                         + "\nFull Likelihood evaluation: " + testScore
                                         + "\n" + "Operator: " + mcmcOperator
                                         + " " + mcmcOperator.getOperatorName());
+                        fullEvaluationError = true;
                     }
                 }
 
@@ -287,20 +292,12 @@ public final class MarkovChain {
 
                 currentModel.restoreModelState();
 
-                // Sebastian: can't tell why but somehow the likelihood is
-                // screwed up if the tree needs to be restored
-                // the only way to get around this problem was ->
-                // likelihood.makeDirty();
-                // Comment by AR 12/04/2009 -  this problem was indicative of an
-                // error elsewhere any by adding this line a major efficiency saving
-                // was lost.
-
                 // assert Profiler.stopProfile("Restore");
 
-                // This is a test that the state is correctly restored. The
-                // restored state is fully evaluated and the likelihood compared with
-                // that before the operation was made.
                 if( currentState < fullEvaluationCount ) {
+                    // This is a test that the state is correctly restored. The
+                    // restored state is fully evaluated and the likelihood compared with
+                    // that before the operation was made.
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood, prior);
 
@@ -311,12 +308,32 @@ public final class MarkovChain {
                                         + " Likelihood after: " + testScore
                                         + "\n" + "Operator: " + mcmcOperator
                                         + " " + mcmcOperator.getOperatorName());
+                        fullEvaluationError = true;
                     }
+
                 }
             }
 
             if( !disableCoerce && mcmcOperator instanceof CoercableMCMCOperator ) {
                 coerceAcceptanceProbability((CoercableMCMCOperator) mcmcOperator, logr[0]);
+            }
+
+            if (usingFullEvaluation &&
+                    schedule.getMinimumOperatorCount() >= minOperatorCountForFullEvaluation &&
+                    currentState >= fullEvaluationCount ) {
+                // full evaluation is only switched off when each operator has done a
+                // minimum number of operations (currently 1) and fullEvalationCount
+                // operations in total.
+
+                usingFullEvaluation = false;
+                if (fullEvaluationError) {
+                    // If there has been an error then stop with an error
+                    throw new RuntimeException(
+                            "One or more evaluation errors occured during the test phase of this\n" +
+                                    "run. These errors imply critical errors which may produce incorrect\n" +
+                                    "results.");
+
+                }
             }
 
             currentState += 1;

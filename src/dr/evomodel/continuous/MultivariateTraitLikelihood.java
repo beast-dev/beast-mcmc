@@ -88,9 +88,18 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
         StringBuffer sb = new StringBuffer("Creating multivariate diffusion model:\n");
         sb.append("\tTrait: " + traitName + "\n");
         sb.append("\tDiffusion process: " + diffusionModel.getId() + "\n");
-        sb.append("\tTime scaling: " + (hasRateModel ? rateModel.getId() : "homogeneous") + "\n");
-        if (!hasRateModel)
-            sb.append("\tTree normalization: " + (scaleByTime ? (useTreeLength ? "length" : "height") : "off") + "\n");
+        sb.append("\tHeterogenity model: " + (hasRateModel ? rateModel.getId() : "homogeneous") + "\n");
+//        if (!hasRateModel) {
+        sb.append("\tTree normalization: " + (scaleByTime ? (useTreeLength ? "length" : "height") : "off") + "\n");
+        if (scaleByTime) {
+            recalculateTreeLength();
+            if (useTreeLength) {
+                sb.append("\tInitial tree length: " + treeLength + "\n");
+            } else {
+                sb.append("\tInitial tree height: " + treeLength + "\n");
+            }
+//            }
+        }
         sb.append("\tPlease cite Suchard, Lemey and Rambaut (in preparation) if you publish results using this model.");
 
         Logger.getLogger("dr.evomodel").info(sb.toString());
@@ -106,14 +115,13 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
     public double getRescaledBranchLength(NodeRef node) {
 
         double length = treeModel.getBranchLength(node);
-//         if (scaleByTime) {
-            if (hasRateModel)
-                return length * rateModel.getBranchRate(treeModel, node);
 
-            if (scaleByTime)
-                return length / treeModel.getNodeHeight(treeModel.getRoot());
-//            return length / treeLength;
-//        }
+        if (hasRateModel)
+            length *= rateModel.getBranchRate(treeModel, node);
+
+        if (scaleByTime)
+            return length / treeLength;
+
         return length;
     }
 
@@ -131,7 +139,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
 
     public void recalculateTreeLength() {
 
-        if (!scaleByTime || hasRateModel)
+        if (!scaleByTime)
             return;
 
         if (useTreeLength) {
@@ -139,7 +147,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
             for (int i = 0; i < treeModel.getNodeCount(); i++) {
                 NodeRef node = treeModel.getNode(i);
                 if (!treeModel.isRoot(node))
-                    treeLength += treeModel.getNodeHeight(node);
+                    treeLength += treeModel.getBranchLength(node); // Bug was here
             }
         } else { // Normalizing by tree height.
             treeLength = treeModel.getNodeHeight(treeModel.getRoot());
@@ -260,9 +268,9 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
                 System.err.println("child trait value = " + new Vector(childTrait));
                 System.err.println("precision matrix = " + new Matrix(diffusionModel.getPrecisionmatrix()));
                 if (diffusionModel.getPrecisionParameter() instanceof CompoundSymmetricMatrix) {
-                    CompoundSymmetricMatrix csMatrix = (CompoundSymmetricMatrix)diffusionModel.getPrecisionParameter();
-                    System.err.println("diagonals = "+new Vector(csMatrix.getDiagonals()));
-                    System.err.println("off diagonal = "+csMatrix.getOffDiagonal());
+                    CompoundSymmetricMatrix csMatrix = (CompoundSymmetricMatrix) diffusionModel.getPrecisionParameter();
+                    System.err.println("diagonals = " + new Vector(csMatrix.getDiagonals()));
+                    System.err.println("off diagonal = " + csMatrix.getOffDiagonal());
                 }
             }
 //				if (cachedLikelihoods != null) {
@@ -523,7 +531,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
                 new ElementRule(BranchRateModel.class, true),
                 AttributeRule.newDoubleArrayRule("cut", true),
                 AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),
-//                AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
+                AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
                 AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
                 new ElementRule(Parameter.class, true),
                 new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{

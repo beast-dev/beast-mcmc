@@ -21,7 +21,7 @@ import java.util.List;
  * @author Sebastian Hoehna
  * 
  */
-public class GibbsSubtreeSwap extends SimpleGibbsOperator {
+public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
 
     public static final String GIBBS_SUBTREE_SWAP = "GibbsSubtreeSwap";
 

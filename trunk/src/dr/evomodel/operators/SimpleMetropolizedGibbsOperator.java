@@ -16,13 +16,13 @@ import dr.inference.prior.Prior;
  * @author Sebastian Hoehna
  * 
  */
-public abstract class SimpleGibbsOperator extends SimpleOperator implements
+public abstract class SimpleMetropolizedGibbsOperator extends SimpleOperator implements
 		GibbsOperator {
 
 	/**
 	 * 
 	 */
-	public SimpleGibbsOperator() {
+	public SimpleMetropolizedGibbsOperator() {
 		// TODO Auto-generated constructor stub
 	}
 
@@ -82,7 +82,7 @@ public abstract class SimpleGibbsOperator extends SimpleOperator implements
 	 * @see dr.inference.operators.MCMCOperator#getMinimumAcceptanceLevel()
 	 */
 	public final double getMinimumAcceptanceLevel() {
-		return 1.0;
+		return 0.005;
 	}
 
 	/*
@@ -91,7 +91,7 @@ public abstract class SimpleGibbsOperator extends SimpleOperator implements
 	 * @see dr.inference.operators.MCMCOperator#getMinimumGoodAcceptanceLevel()
 	 */
 	public final double getMinimumGoodAcceptanceLevel() {
-		return 1.0;
+		return 0.01;
 	}
 
 	/*

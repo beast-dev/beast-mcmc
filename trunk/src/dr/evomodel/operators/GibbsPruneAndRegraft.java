@@ -20,7 +20,7 @@ import java.util.List;
  * @author Sebastian Hoehna
  * 
  */
-public class GibbsPruneAndRegraft extends SimpleGibbsOperator {
+public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 
     public static final String GIBBS_PRUNE_AND_REGRAFT = "GibbsPruneAndRegraft";
 

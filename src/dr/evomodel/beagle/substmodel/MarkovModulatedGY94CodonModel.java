@@ -35,11 +35,21 @@ public class MarkovModulatedGY94CodonModel extends GY94CodonModel {
 
         this.hiddenClassCount = codonDataType.getHiddenClassCount();
         this.switchingRates = switchingRates;
+        addParameter(switchingRates);
 
         // Subclassed constructors fill relativeRates with 1
         for(int i=0; i<relativeRates.length; i++)
             relativeRates[i] = 0.0;
     }
+
+//    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+//         // relativeRates changed
+//        System.err.println("parameter "+parameter.getId()+" index = "+index+" changed");
+//         updateMatrix = true;
+//         ratesChanged();
+////        fireModelChanged();
+//     }
+
 
     protected void setupRelativeRates(double[] relativeRates) {
         double kappa = getKappa();
@@ -125,7 +135,7 @@ public class MarkovModulatedGY94CodonModel extends GY94CodonModel {
 
     protected double getMINFDIFF() { return 1.0E-10; }
 
-    protected double getMINFREQ()  { return 1.0E-02; }
+    protected double getMINFREQ()  { return 1.0E-10; }
 
 
     private int hiddenClassCount;

@@ -37,7 +37,7 @@ public class DefaultEigenSystem implements EigenSystem {
 
     private final int stateCount;
 
-    DefaultEigenSystem(int stateCount) {
+    public DefaultEigenSystem(int stateCount) {
 
         this.stateCount = stateCount;
 

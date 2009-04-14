@@ -38,6 +38,7 @@ import java.util.logging.Logger;
  *
  * @author Andrew Rambaut
  * @author Alex Alekseyenko
+ * @author Marc Suchard
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
 public class PathLikelihood implements Likelihood {
@@ -45,6 +46,8 @@ public class PathLikelihood implements Likelihood {
     public static final String PATH_LIKELIHOOD = "pathLikelihood";
     public static final String PRIOR = "prior";
     public static final String LIKELIHOOD = "likelihood";
+    public static final String PATH_PARAMETER = "theta";
+    public static final String DIFFERENCE = "delta";
 
     public PathLikelihood(Likelihood source, Likelihood destination) {
         this.source = source;
@@ -63,64 +66,78 @@ public class PathLikelihood implements Likelihood {
     }
 
     // **************************************************************
-	// Likelihood IMPLEMENTATION
-	// **************************************************************
+    // Likelihood IMPLEMENTATION
+    // **************************************************************
 
-	public Model getModel() {
-		return compoundModel;
-	}
+    public Model getModel() {
+        return compoundModel;
+    }
 
-	public double getLogLikelihood() {
+    public double getLogLikelihood() {
         return (source.getLogLikelihood() * pathParameter) + (destination.getLogLikelihood() * (1.0 - pathParameter));
-	}
+    }
 
-	public void makeDirty() {
+    public void makeDirty() {
         source.makeDirty();
         destination.makeDirty();
     }
 
-	public String toString() {
+    public String toString() {
 
-		return Double.toString(getLogLikelihood());
+        return Double.toString(getLogLikelihood());
 
-	}
+    }
 
-	// **************************************************************
-	// Loggable IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // Loggable IMPLEMENTATION
+    // **************************************************************
 
 	/**
 	 * @return the log columns.
 	 */
-	public dr.inference.loggers.LogColumn[] getColumns() {
-		return new dr.inference.loggers.LogColumn[]{
-				new LikelihoodColumn(getId())
-		};
-	}
+    public dr.inference.loggers.LogColumn[] getColumns() {
+        return new dr.inference.loggers.LogColumn[] {
+                new DeltaLogLikelihoodColumn(getId() + "." + DIFFERENCE),
+                new ThetaColumn(getId() + "." + PATH_PARAMETER)
+        };
+    }
 
-	private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-		public LikelihoodColumn(String label) {
-			super(label);
-		}
+    private class DeltaLogLikelihoodColumn extends dr.inference.loggers.NumberColumn {
 
-		public double getDoubleValue() {
-			return getLogLikelihood();
-		}
-	}
+        public DeltaLogLikelihoodColumn(String label) {
+            super(label);
+        }
 
-	// **************************************************************
-	// Identifiable IMPLEMENTATION
-	// **************************************************************
+        public double getDoubleValue() {
+            return source.getLogLikelihood() - destination.getLogLikelihood();
+        }
+    }
 
-	private String id = null;
+    private class ThetaColumn extends dr.inference.loggers.NumberColumn {
 
-	public void setId(String id) {
-		this.id = id;
-	}
+        public ThetaColumn(String label) {
+            super(label);
+        }
 
-	public String getId() {
-		return id;
-	}
+        public double getDoubleValue() {
+            return pathParameter;
+        }
+
+    }
+
+    // **************************************************************
+    // Identifiable IMPLEMENTATION
+    // **************************************************************
+
+    private String id = null;
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -160,7 +177,7 @@ public class PathLikelihood implements Likelihood {
         }
     };
 
-	private final Likelihood source;
+    private final Likelihood source;
     private final Likelihood destination;
 
     private double pathParameter;

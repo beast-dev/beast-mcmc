@@ -14,7 +14,7 @@ public class ColtEigenSystem implements EigenSystem {
        
     public EigenDecomposition decomposeMatrix(double[][] matrix) {
 
-        System.err.println("length = "+matrix.length + ","+matrix[0].length);
+//        System.err.println("length = "+matrix.length + ","+matrix[0].length);
 
         EigenvalueDecomposition eigenDecomp = new EigenvalueDecomposition(new DenseDoubleMatrix2D(matrix));
 

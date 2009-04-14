@@ -3,9 +3,7 @@ package dr.evomodel.beagle.parsers;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.HiddenCodons;
 import dr.evolution.datatype.GeneticCode;
-import dr.evomodel.beagle.substmodel.FrequencyModel;
-import dr.evomodel.beagle.substmodel.MarkovModulatedGY94CodonModel;
-import dr.evomodel.beagle.substmodel.ColtEigenSystem;
+import dr.evomodel.beagle.substmodel.*;
 import dr.evoxml.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -18,6 +16,7 @@ public class MarkovModulatedGY94CodonModelParser extends GY94CodonModelParser {
     public static final String MARKOV_MODULATED_YANG_MODEL = "markovModulatedYangCodonModel";
     public static final String HIDDEN_COUNT = "hiddenCount";
     public static final String SWITCHING_RATES = "switchingRates";
+    public static final String DIAGONALIZATION = "diagonalization";
 
     public String getParserName() {
         return MARKOV_MODULATED_YANG_MODEL;
@@ -36,8 +35,14 @@ public class MarkovModulatedGY94CodonModelParser extends GY94CodonModelParser {
         Parameter kappaParam = (Parameter) xo.getElementFirstChild(KAPPA);
         Parameter switchingParam = (Parameter) xo.getElementFirstChild(SWITCHING_RATES);
         FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
-        return new MarkovModulatedGY94CodonModel(codons, switchingParam, omegaParam, kappaParam, freqModel,
-                new ColtEigenSystem());
+
+        EigenSystem eigenSystem;
+        if (xo.getAttribute(DIAGONALIZATION,"default").compareToIgnoreCase("colt") == 0)
+            eigenSystem = new ColtEigenSystem();
+        else
+            eigenSystem = new DefaultEigenSystem(dataType.getStateCount());
+
+        return new MarkovModulatedGY94CodonModel(codons, switchingParam, omegaParam, kappaParam, freqModel,eigenSystem);
     }
 
     public String getParserDescription() {
@@ -62,7 +67,8 @@ public class MarkovModulatedGY94CodonModelParser extends GY94CodonModelParser {
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(SWITCHING_RATES,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(FrequencyModel.class)
+            new ElementRule(FrequencyModel.class),
+            AttributeRule.newStringRule(DIAGONALIZATION),
     };
 
 }

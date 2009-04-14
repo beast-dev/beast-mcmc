@@ -241,24 +241,8 @@ public final class MarkovChain {
                     fireBestModel(currentState, currentModel);
                 }
 
-                // accept = mcmcOperator instanceof GibbsOperator ||
-                // acceptor.accept(oldScore, score, hastingsRatio, logr);
-                if( mcmcOperator instanceof SimpleMetropolizedGibbsOperator ) {
-                    accept = acceptor.accept(oldScore, score, hastingsRatio, logr);
-                } else {
-                    accept = mcmcOperator instanceof GibbsOperator
-                            || acceptor.accept(oldScore, score, hastingsRatio, logr);
-                }
-
-                // @todo Comment by AR.
-                // In the above SimpleGibbsOperator implements GibbsOperator so why the seperate clause?
-                // This would suggest that SimpleGibbsOperator is not always accepted? Would suggest it
-                // wasn't a Gibbs operator. Also this means that all SimpleGibbsOperator are dealt with
-                // this way. We should probably clean up the API for these - doing instanceof isn't
-                // very flexible. Could return an infinite hastings ratio or have an isGibbs() on all
-                // operators to do away with GibbsOperator interface.
-
-
+                accept = mcmcOperator instanceof GibbsOperator || acceptor.accept(oldScore, score, hastingsRatio, logr);
+                
                 deviation = score - oldScore;
             }
 

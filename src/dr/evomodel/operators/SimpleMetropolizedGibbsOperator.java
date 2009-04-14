@@ -7,7 +7,6 @@ import java.util.logging.Logger;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.prior.Prior;
@@ -16,8 +15,7 @@ import dr.inference.prior.Prior;
  * @author Sebastian Hoehna
  * 
  */
-public abstract class SimpleMetropolizedGibbsOperator extends SimpleOperator implements
-		GibbsOperator {
+public abstract class SimpleMetropolizedGibbsOperator extends SimpleOperator {
 
 	/**
 	 * 

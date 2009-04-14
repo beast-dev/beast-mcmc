@@ -26,7 +26,7 @@
 package dr.inference.markovchain;
 
 import dr.evomodel.operators.AbstractImportanceDistributionOperator;
-import dr.evomodel.operators.SimpleGibbsOperator;
+import dr.evomodel.operators.SimpleMetropolizedGibbsOperator;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.CompoundLikelihood;
@@ -187,8 +187,8 @@ public final class MarkovChain {
                     System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
                 }
 
-                if( mcmcOperator instanceof SimpleGibbsOperator ) {
-                    hastingsRatio = ((SimpleGibbsOperator) mcmcOperator).operate(prior, likelihood);
+                if( mcmcOperator instanceof SimpleMetropolizedGibbsOperator ) {
+                    hastingsRatio = ((SimpleMetropolizedGibbsOperator) mcmcOperator).operate(prior, likelihood);
                 } else if( mcmcOperator instanceof AbstractImportanceDistributionOperator ) {
                     hastingsRatio = ((AbstractImportanceDistributionOperator) mcmcOperator).operate(prior, likelihood);
 
@@ -243,7 +243,7 @@ public final class MarkovChain {
 
                 // accept = mcmcOperator instanceof GibbsOperator ||
                 // acceptor.accept(oldScore, score, hastingsRatio, logr);
-                if( mcmcOperator instanceof SimpleGibbsOperator ) {
+                if( mcmcOperator instanceof SimpleMetropolizedGibbsOperator ) {
                     accept = acceptor.accept(oldScore, score, hastingsRatio, logr);
                 } else {
                     accept = mcmcOperator instanceof GibbsOperator

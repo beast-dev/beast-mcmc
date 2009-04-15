@@ -1,6 +1,7 @@
-package dr.evomodel.substmodel;
+package test.dr.evomodel.substmodel;
 
 import dr.evolution.datatype.HiddenNucleotides;
+import dr.evomodel.substmodel.*;
 import dr.inference.model.Parameter;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -66,7 +67,7 @@ public class CovarionHKYTest extends TestCase {
 
         model.setupMatrix();
 
-        System.out.println(SubstitutionModelUtils.toString(model.q, dataType, 2));
+        System.out.println(SubstitutionModelUtils.toString(model.getQ(), dataType, 2));
 
         double[] matrix = new double[64];
         double[] pi = model.getFrequencyModel().getFrequencies();

@@ -1,7 +1,8 @@
-package dr.evomodel.substmodel;
+package test.dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.TwoStateCovarion;
+import dr.evomodel.substmodel.*;
 import dr.inference.model.Parameter;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -87,12 +88,12 @@ public class TwoStateCovarionModelTest extends TestCase {
 
         model.setupMatrix();
 
-        assertEquals(alpha.getParameterValue(0), model.relativeRates[0], 1e-8);
-        assertEquals(switchingRate.getParameterValue(0), model.relativeRates[1], 1e-8);
-        assertEquals(0.0, model.relativeRates[2], 1e-8);
-        assertEquals(0.0, model.relativeRates[3], 1e-8);
-        assertEquals(switchingRate.getParameterValue(0), model.relativeRates[4], 1e-8);
-        assertEquals(1.0, model.relativeRates[5], 1e-8);
+        assertEquals(alpha.getParameterValue(0), model.getRelativeRates()[0], 1e-8);
+        assertEquals(switchingRate.getParameterValue(0), model.getRelativeRates()[1], 1e-8);
+        assertEquals(0.0, model.getRelativeRates()[2], 1e-8);
+        assertEquals(0.0, model.getRelativeRates()[3], 1e-8);
+        assertEquals(switchingRate.getParameterValue(0), model.getRelativeRates()[4], 1e-8);
+        assertEquals(1.0, model.getRelativeRates()[5], 1e-8);
     }
 
     public void testNormalize() {
@@ -108,12 +109,12 @@ public class TwoStateCovarionModelTest extends TestCase {
             for (int j = 0; j < stateCount; j++) {
                 int diff = Math.abs(i - j);
                 if (diff != 2 && diff != 0) {
-                    totalRate += model.q[i][j] * pi[i];
+                    totalRate += model.getQ()[i][j] * pi[i];
                 }
             }
         }
 
-        System.out.println(SubstitutionModelUtils.toString(model.q, dataType, 2));
+        System.out.println(SubstitutionModelUtils.toString(model.getQ(), dataType, 2));
 
         assertEquals(1.0, totalRate, 1e-8);
     }

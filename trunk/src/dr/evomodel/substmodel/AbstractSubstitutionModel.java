@@ -52,7 +52,12 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
 
     protected FrequencyModel freqModel;
     protected double[] relativeRates;
-    protected double[] storedRelativeRates;
+    
+    public double[] getRelativeRates() {
+		return relativeRates;
+	}
+
+	protected double[] storedRelativeRates;
 
     protected int stateCount;
     protected int rateCount;
@@ -264,7 +269,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
     /**
      * setup substitution matrix
      */
-    protected void setupMatrix() {
+    public void setupMatrix() {
         setupRelativeRates();
 
         if (!eigenInitialised)
@@ -403,9 +408,13 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
     private int[] ordr;
     private double[] evali;
     double amat[][];
-    double q[][];
+    private double q[][];
 
-    protected synchronized double[][] popiexp() {
+    public double[][] getQ() {
+		return q;
+	}
+
+	protected synchronized double[][] popiexp() {
 
         if (iexpPool.size() == 0) {
             iexpPool.add(new double[stateCount][stateCount]);

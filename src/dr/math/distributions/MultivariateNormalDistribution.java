@@ -73,24 +73,25 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         for (int i = 0; i < dim; i++)
             SSE += tmp[i] * delta[i];
 
-        return dim * logNormalize + 0.5 * (logDet - Math.log(scale) - SSE / scale);   // There was an error here.
+        return dim * logNormalize + 0.5 * (logDet - dim*Math.log(scale) - SSE / scale);   // There was an error here.
         // Variance = (scale * Precision^{-1})
 
     }
 
     /* Equal precision, independent dimensions */
-    public static final double logPdf(double[] x, double[] mean, double precision, double scale) {
-
-        final int dim = x.length;
-
-        double SSE = 0;
-        for (int i = 0; i < dim; i++) {
-            double delta = x[i] - mean[i];
-            SSE += delta * delta;
-        }
-
-        return dim * logNormalize + 0.5 * (dim * Math.log(precision) - Math.log(scale) - SSE * precision / scale);
-    }
+//    public static final double logPdf(double[] x, double[] mean, double precision, double scale) {
+//
+//        final int dim = x.length;
+//
+//        double SSE = 0;
+//        for (int i = 0; i < dim; i++) {
+//            double delta = x[i] - mean[i];
+//            SSE += delta * delta;
+//        }
+//
+//        return dim * logNormalize + 0.5 * (dim * Math.log(precision) - Math.log(scale) - SSE * precision / scale);
+//        // TODO May not be correct
+//    }
 
     public double[] nextMultivariateNormal() {
         return nextMultivariateNormalPrecision(mean, precision);
@@ -131,6 +132,15 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
             }
         }
         return x;
+    }
+
+    public static void main(String[] args) {
+        double[] start = new double[] {1, 2};
+        double[] stop  = new double[] {0, 0};
+        double[][] precision = new double[][] { {2,0.5},{0.5,1} };
+        double scale = 0.2;
+        System.err.println("logPDF = "+ logPdf(start, stop, precision, Math.log(calculatePrecisionMatrixDeterminate(precision)), scale));
+
     }
 
     public static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);

@@ -204,7 +204,7 @@ public class HKY extends AbstractNucleotideModel {
     /**
      * setup substitution matrix
      */
-    protected void setupMatrix() {
+    public void setupMatrix() {
         final double kappa = getKappa();
         beta = -1.0 / (2.0 * (freqR * freqY + kappa * (freqA * freqG + freqC * freqT)));
 

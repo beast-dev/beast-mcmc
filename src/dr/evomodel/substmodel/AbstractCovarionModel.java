@@ -185,7 +185,7 @@ public abstract class AbstractCovarionModel extends AbstractModel
     /**
      * setup substitution matrix
      */
-    protected void setupMatrix() {
+    public void setupMatrix() {
         setupUnnormalizedQMatrix();
 
         if (!eigenInitialised)
@@ -284,9 +284,13 @@ public abstract class AbstractCovarionModel extends AbstractModel
     private int[] ordr;
     private double[] evali;
     double amat[][];
-    double q[][];
+    private double q[][];
 
-    private synchronized double[][] popiexp() {
+    public double[][] getQ() {
+		return q;
+	}
+
+	private synchronized double[][] popiexp() {
 
         if (iexpPool.size() == 0) {
             iexpPool.add(new double[stateCount][stateCount]);

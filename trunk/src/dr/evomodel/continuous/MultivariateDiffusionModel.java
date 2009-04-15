@@ -84,6 +84,19 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     }
 
 
+    public static void main(String[] args) {
+        double[] start = new double[]{1, 2};
+        double[] stop = new double[]{0, 0};
+        double[][] precision = new double[][]{{2, 0.5}, {0.5, 1}};
+        double scale = 0.2;
+        MatrixParameter precMatrix = new MatrixParameter("Hello");
+        precMatrix.addParameter(new Parameter.Default(precision[0]));
+        precMatrix.addParameter(new Parameter.Default(precision[1]));
+        MultivariateDiffusionModel model = new MultivariateDiffusionModel(precMatrix);
+        System.err.println("logPDF = " + model.calculateDensity(start, stop, scale));
+        System.err.println("Should be -19.948");
+    }
+
     protected void calculatePrecisionInfo() {
         diffusionPrecisionMatrix = diffusionPrecisionMatrixParameter.getParameterAsMatrix();
         determinatePrecisionMatrix =

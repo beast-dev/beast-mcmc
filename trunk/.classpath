@@ -12,5 +12,8 @@
 	<classpathentry kind="lib" path="lib/junit-4.4.jar"/>
 	<classpathentry kind="lib" path="lib/mpj.jar"/>
 	<classpathentry kind="lib" path="lib/options.jar"/>
+	<classpathentry kind="lib" path="lib/beagle.jar"/>
+	<classpathentry kind="lib" path="lib/figtreepanel.jar"/>
+	<classpathentry kind="lib" path="lib/jam.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

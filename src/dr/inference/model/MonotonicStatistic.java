@@ -11,20 +11,27 @@ import java.util.ArrayList;
  * @author Marc Suchard
  */
 
-public class MonotonicLikelihood extends BooleanLikelihood {
+public class MonotonicStatistic extends BooleanStatistic {
 
-    public static final String MONOTONIC_LIKELIHOOD = "monotonicLikelihood";
-    public static final String DATA = "data";
+    public static final String MONOTONIC_STATISTIC = "monotonicStatistic";
     public static final String STRICTLY = "strictlyMonotic";
     public static final String ORDER = "order";
 
-    public MonotonicLikelihood(boolean strict, boolean increasing) {
-        super();
+    public MonotonicStatistic(boolean strict, boolean increasing) {
+        super(MONOTONIC_STATISTIC);
         this.strict = strict;
         this.increasing = increasing;
     }
 
-    public boolean getBooleanState() {
+    public int getDimension() {
+        return 1;
+    }
+
+    public void addStatistic(Statistic stat) {
+        dataList.add(stat);
+    }
+
+    public boolean getBoolean(int dim) {
 
         double currentValue;
         if (increasing)
@@ -38,16 +45,16 @@ public class MonotonicLikelihood extends BooleanLikelihood {
                 if (strict) {
                     if( (increasing  && newValue <= currentValue) ||
                         (!increasing && newValue >= currentValue) )
-                        return true;
+                        return false;
                 } else { // not strict
                     if( (increasing  && newValue < currentValue) ||
                         (!increasing && newValue > currentValue) )
-                        return true;
+                        return false;
                 }
                 currentValue = newValue;
             }
         }
-        return false;
+        return true;
     }
 
     /**
@@ -56,20 +63,27 @@ public class MonotonicLikelihood extends BooleanLikelihood {
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return MONOTONIC_LIKELIHOOD;
+            return MONOTONIC_STATISTIC;
         }
 
-        public Object parseXMLObject(XMLObject xo) {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            BooleanLikelihood likelihood = new BooleanLikelihood();
+            boolean increasing = true;
+            String order = xo.getAttribute(ORDER, "increasing");
+            if (order.compareToIgnoreCase("decreasing") == 0)
+                increasing = false;
 
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                if (xo.getChild(i) instanceof BooleanStatistic) {
-                    likelihood.addData((BooleanStatistic) xo.getChild(i));
+            boolean strictly = xo.getAttribute(STRICTLY, false);
+
+            MonotonicStatistic monotonicStatistic = new MonotonicStatistic(strictly, increasing);
+
+            for(int i=0; i<xo.getChildCount(); i++) {
+                if (xo.getChild(i) instanceof Statistic) {
+                    monotonicStatistic.addStatistic((Statistic)xo.getChild(i));
                 }
             }
 
-            return likelihood;
+            return monotonicStatistic;
         }
 
         //************************************************************************
@@ -81,7 +95,7 @@ public class MonotonicLikelihood extends BooleanLikelihood {
         }
 
         public Class getReturnType() {
-            return MonotonicLikelihood.class;
+            return MonotonicStatistic.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -89,6 +103,8 @@ public class MonotonicLikelihood extends BooleanLikelihood {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newStringRule(ORDER, true),
+                AttributeRule.newBooleanRule(STRICTLY,true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 
@@ -96,5 +112,7 @@ public class MonotonicLikelihood extends BooleanLikelihood {
 
     private boolean strict;
     private boolean increasing;
+    protected ArrayList<Statistic> dataList = new ArrayList<Statistic>();
+
 }
 

@@ -212,7 +212,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         return infinitesimalRates.getParameterValues();
     }
 
-    protected void setupMatrix() {
+    public void setupMatrix() {
 
         if (!eigenInitialised) {
             initialiseEigen();

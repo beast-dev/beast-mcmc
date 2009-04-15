@@ -243,7 +243,7 @@ public class TN93 extends AbstractNucleotideModel {
     /**
      * setup substitution matrix
      */
-    protected void setupMatrix()
+    public void setupMatrix()
     { }
 
      protected void setupRelativeRates() { }

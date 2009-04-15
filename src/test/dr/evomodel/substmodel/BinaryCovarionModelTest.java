@@ -1,5 +1,6 @@
-package dr.evomodel.substmodel;
+package test.dr.evomodel.substmodel;
 
+import dr.evomodel.substmodel.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.TwoStateCovarion;
 import dr.evolution.datatype.TwoStates;
@@ -23,7 +24,8 @@ public class BinaryCovarionModelTest extends TestCase {
         super(name);
     }
 
-    public void setUp() throws Exception {
+    @Override
+	public void setUp() throws Exception {
         super.setUp();
 
         frequencies = new Parameter.Default(new double[]{0.5, 0.5});
@@ -32,10 +34,11 @@ public class BinaryCovarionModelTest extends TestCase {
         switchingRate = new Parameter.Default(1.0);
 
         model = new BinaryCovarionModel(TwoStateCovarion.INSTANCE, frequencies, hiddenFrequencies, alpha, switchingRate);
-        dataType = model.dataType;
+        dataType = model.getDataType();
     }
 
-    public void tearDown() throws Exception {
+    @Override
+	public void tearDown() throws Exception {
         super.tearDown();
     }
 
@@ -52,7 +55,7 @@ public class BinaryCovarionModelTest extends TestCase {
         double[] pi = model.getFrequencyModel().getFrequencies();
 
         try {
-            Matrix m = new Matrix(model.q);
+            Matrix m = new Matrix(model.getQ());
             Vector p = new Vector(pi);
             Vector y = m.product(p);
 
@@ -185,7 +188,7 @@ public class BinaryCovarionModelTest extends TestCase {
         double[] pi = model.getFrequencyModel().getFrequencies();
         System.out.println(pi[0] + " " + pi[1] + " " + pi[2] + " " + pi[3]);
 
-        System.out.println(SubstitutionModelUtils.toString(model.q, dataType, 2));
+        System.out.println(SubstitutionModelUtils.toString(model.getQ(), dataType, 2));
 
         int index = 0;
         for (double distance = 0.01; distance <= 1.005; distance += 0.01) {

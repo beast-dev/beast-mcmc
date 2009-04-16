@@ -27,7 +27,7 @@ import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import test.dr.inference.TraceTest;
+import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ import java.util.List;
  * @version 1.0
  * @since <pre>08/26/2007</pre>
  */
-public class YuleModelTest extends TraceTest {
+public class YuleModelTest extends TraceCorrelationAssert {
 
     static final String TL = "TL";
     static final String TREE_HEIGHT = "rootHeight";

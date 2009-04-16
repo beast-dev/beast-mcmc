@@ -36,7 +36,7 @@ public class CartogramDiffusionModel extends MultivariateDiffusionModel {
         addParameter(precision);
     }
 
-    protected double calculateDensity(double[] start, double[] stop, double time) {
+    protected double calculateLogDensity(double[] start, double[] stop, double time) {
 
         Point2D realStart = new Point2D.Double(start[0],start[1]);
         Point2D realStop  = new Point2D.Double(stop[0], stop[1]);

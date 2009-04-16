@@ -31,7 +31,7 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
         this(precision, null);
     }
 
-    protected double calculateDensity(double[] start, double[] stop, double time) {
+    protected double calculateLogDensity(double[] start, double[] stop, double time) {
  
         SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(start[0], start[1]);
         SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(stop[0],  stop[1] );

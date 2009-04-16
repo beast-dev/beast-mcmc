@@ -79,19 +79,18 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     }
 
     /* Equal precision, independent dimensions */
-//    public static final double logPdf(double[] x, double[] mean, double precision, double scale) {
-//
-//        final int dim = x.length;
-//
-//        double SSE = 0;
-//        for (int i = 0; i < dim; i++) {
-//            double delta = x[i] - mean[i];
-//            SSE += delta * delta;
-//        }
-//
-//        return dim * logNormalize + 0.5 * (dim * Math.log(precision) - Math.log(scale) - SSE * precision / scale);
-//        // TODO May not be correct
-//    }
+    public static final double logPdf(double[] x, double[] mean, double precision, double scale) {
+
+        final int dim = x.length;
+
+        double SSE = 0;
+        for (int i = 0; i < dim; i++) {
+            double delta = x[i] - mean[i];
+            SSE += delta * delta;
+        }
+
+        return dim * logNormalize + 0.5 * (dim * (Math.log(precision) - Math.log(scale)) - SSE * precision / scale);
+    }
 
     public double[] nextMultivariateNormal() {
         return nextMultivariateNormalPrecision(mean, precision);
@@ -114,7 +113,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         try {
             cholesky = (new CholeskyDecomposition(variance)).getL();
         } catch (IllegalDimension illegalDimension) {
-            // todo - check for square variance matrix before here
+            throw new RuntimeException("Attempted Cholesky decomposition on non-square matrix");
         }
 
         double[] x = new double[dim];
@@ -126,8 +125,8 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
             epsilon[i] = MathUtils.nextGaussian();
 
         for (int i = 0; i < dim; i++) {
-            for (int j = i; j < dim; j++) {
-                x[i] += cholesky[j][i] * epsilon[j];
+            for (int j = 0; j <= i; j++) {
+                x[i] += cholesky[i][j] * epsilon[j];
                 // caution: decomposition returns lower triangular
             }
         }
@@ -140,7 +139,16 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         double[][] precision = new double[][] { {2,0.5},{0.5,1} };
         double scale = 0.2;
         System.err.println("logPDF = "+ logPdf(start, stop, precision, Math.log(calculatePrecisionMatrixDeterminate(precision)), scale));
+        System.err.println("Should = -19.94863");
 
+        System.err.println("logPDF = "+logPdf(start,stop,2,0.2));
+        System.err.println("Should = -24.53529");
+
+        System.err.println("Random draws: ");
+        for(int i=0; i<10000; i++) {
+            double[] draw = nextMultivariateNormalPrecision(start,precision);
+            System.out.println(draw[0]+" "+draw[1]);
+        }
     }
 
     public static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);

@@ -1,4 +1,4 @@
-package test.dr.inference;
+package test.dr.inference.trace;
 
 import dr.inference.trace.TraceCorrelation;
 import junit.framework.TestCase;
@@ -6,9 +6,9 @@ import junit.framework.TestCase;
 /**
  * @author Alexei Drummond
  */
-public class TraceTest extends TestCase {
+public class TraceCorrelationAssert extends TestCase {
 
-    public TraceTest(String name) {
+    public TraceCorrelationAssert(String name) {
         super(name);
     }
 

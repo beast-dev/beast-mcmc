@@ -74,10 +74,10 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
             return Double.NEGATIVE_INFINITY;                  
         }
 
-        return calculateDensity(start, stop, time);        
+        return calculateLogDensity(start, stop, time);
     }
 
-    protected double calculateDensity(double[] start, double[] stop, double time) {
+    protected double calculateLogDensity(double[] start, double[] stop, double time) {
         double logDet = Math.log(determinatePrecisionMatrix);
         return MultivariateNormalDistribution.logPdf(stop, start,
                 diffusionPrecisionMatrix, logDet, time);
@@ -93,7 +93,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         precMatrix.addParameter(new Parameter.Default(precision[0]));
         precMatrix.addParameter(new Parameter.Default(precision[1]));
         MultivariateDiffusionModel model = new MultivariateDiffusionModel(precMatrix);
-        System.err.println("logPDF = " + model.calculateDensity(start, stop, scale));
+        System.err.println("logPDF = " + model.calculateLogDensity(start, stop, scale));
         System.err.println("Should be -19.948");
     }
 

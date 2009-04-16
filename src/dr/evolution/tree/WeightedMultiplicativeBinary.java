@@ -378,6 +378,26 @@ public class WeightedMultiplicativeBinary extends AbstractCladeImportanceDistrib
 			return prob;
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see dr.evolution.tree.AbstractCladeImportanceDistribution#getChanceForNodeHeights(dr.evomodel.tree.TreeModel, dr.inference.model.Likelihood, dr.inference.prior.Prior)
+	 */
+	@Override
+	public double getChanceForNodeHeights(TreeModel tree,
+			Likelihood likelihood, Prior prior) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see dr.evolution.tree.AbstractCladeImportanceDistribution#setNodeHeights(dr.evomodel.tree.TreeModel, dr.inference.model.Likelihood, dr.inference.prior.Prior)
+	 */
+	@Override
+	public double setNodeHeights(TreeModel tree, Likelihood likelihood,
+			Prior prior) {
+		// TODO Auto-generated method stub
+		return 0;
+	}	
 
 	/**
 	 * 

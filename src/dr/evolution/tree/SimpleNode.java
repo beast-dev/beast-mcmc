@@ -175,12 +175,8 @@ public class SimpleNode implements NodeRef, Attributable {
 	public SimpleNode getChild(int n)
 	{
         assert 0 <= n && n < child.length;
-		//if (n < child.length){
-			return child[n];
-		//}
-		//else {
-		//	return null;
-		//}
+		
+		return child[n];
 	}
 	
 	public boolean hasChild(SimpleNode node) { 

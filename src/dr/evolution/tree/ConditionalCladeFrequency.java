@@ -4,7 +4,10 @@
 package dr.evolution.tree;
 
 import dr.evolution.io.Importer;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeTrace;
+import dr.inference.model.Likelihood;
+import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 
 import java.io.IOException;
@@ -408,6 +411,42 @@ public class ConditionalCladeFrequency extends
 
 		return Math.log(prob);
 
+	}
+	
+	public double getChanceForNodeHeights(TreeModel tree,
+			Likelihood likelihood, Prior prior) {
+		double prob = 0.0;
+		NodeRef node = tree.getRoot();
+		Clade currentClade = getClade(tree, node);
+
+		int childcount = tree.getChildCount(node);
+		for (int i = 0; i < childcount; i++) {
+			NodeRef child = tree.getChild(node, i);
+			if (!tree.isExternal(child)) {
+//				prob += getChanceForNodeheights(tree, child, currentClade,
+//						likelihood, prior);
+			}
+		}
+
+		return prob;
+	}
+	
+	public double setNodeHeights(TreeModel tree, Likelihood likelihood,
+			Prior prior) {
+		double prob = 0.0;
+		NodeRef node = tree.getRoot();
+		Clade currentClade = getClade(tree, node);
+
+		int childcount = tree.getChildCount(node);
+		for (int i = 0; i < childcount; i++) {
+			NodeRef child = tree.getChild(node, i);
+			if (!tree.isExternal(child)) {
+//				prob += setNodeHeights(tree, child, currentClade, likelihood,
+//						prior);
+			}
+		}
+
+		return prob;
 	}
 
 	/**

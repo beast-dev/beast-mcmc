@@ -7,8 +7,12 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Likelihood;
+import dr.inference.prior.Prior;
+
 /**
- * @author Sebastian Hoehna
+ * @author shhn001
  * 
  */
 public abstract class AbstractCladeImportanceDistribution implements
@@ -546,5 +550,11 @@ public abstract class AbstractCladeImportanceDistribution implements
 	 * .Clade, dr.evolution.tree.Clade[])
 	 */
 	public abstract double splitClade(Clade parent, Clade[] children);
+
+	public abstract double setNodeHeights(TreeModel tree,
+			Likelihood likelihood, Prior prior);
+
+	public abstract double getChanceForNodeHeights(TreeModel tree,
+			Likelihood likelihood, Prior prior);
 
 }

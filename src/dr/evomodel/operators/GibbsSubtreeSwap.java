@@ -423,9 +423,6 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
             throw new OperatorFailedException(ite.toString());
         }
 
-        // tree.pushTreeChangedEvent(i);
-        // tree.pushTreeChangedEvent(j);
-
         return tree;
     }
 

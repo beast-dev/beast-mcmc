@@ -7,7 +7,7 @@ import dr.evomodel.arg.ARGLogger;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGReassortmentNodeCountStatistic;
 import dr.evomodel.arg.coalescent.ARGUniformPrior;
-import dr.evomodel.arg.operators.ARGAddRemoveEventOperator;
+//import dr.evomodel.arg.operators.ARGAddRemoveEventOperator;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -26,7 +26,7 @@ import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
 import dr.math.distributions.GammaDistribution;
 import dr.math.distributions.PoissonDistribution;
-import test.dr.inference.TraceTest;
+import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -37,7 +37,7 @@ import java.util.List;
  * @author Marc Suchard
  */
 
-public class ARGAddRemoveOperatorTest extends TraceTest {
+public class ARGAddRemoveOperatorTest extends TraceCorrelationAssert {
 
     public ARGAddRemoveOperatorTest(String name) {
         super(name);
@@ -160,7 +160,7 @@ public class ARGAddRemoveOperatorTest extends TraceTest {
 
         CompoundParameter rootHeight = (CompoundParameter) arg.createNodeHeightsParameter(true, false, false);
         CompoundParameter internalHeights = (CompoundParameter) arg.createNodeHeightsParameter(false, true, false);
-        CompoundParameter allInternalNodeHeights = (CompoundParameter) arg.createNodeHeightsParameter(true, true, false);
+        //CompoundParameter allInternalNodeHeights = (CompoundParameter) arg.createNodeHeightsParameter(true, true, false);
 //        CompoundParameter rates = (CompoundParameter) arg.createNodeRatesParameter(false, true, true);
 
 //        ARGAddRemoveEventOperator operator1 = new ARGAddRemoveEventOperator(arg, 5, 0.5,

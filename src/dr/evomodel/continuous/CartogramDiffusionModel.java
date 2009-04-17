@@ -1,6 +1,5 @@
 package dr.evomodel.continuous;
 
-import dr.evolution.continuous.SphericalPolarCoordinates;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 import dr.geo.cartogram.CartogramMapping;
@@ -8,6 +7,7 @@ import dr.geo.cartogram.CartogramMapping;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class CartogramDiffusionModel extends MultivariateDiffusionModel {
 
-    public static final String DIFFUSION_PROCESS = "carogramDiffusionModel";
+    public static final String DIFFUSION_PROCESS = "cartogramDiffusionModel";
     public static final String FILENAME = "cartogramFileName";
 
     public static final String BOUNDING_BOX = "boundingBox";
@@ -27,13 +27,19 @@ public class CartogramDiffusionModel extends MultivariateDiffusionModel {
     public static final String XSIZE = "xGridSize";
     public static final String YSIZE = "yGridSize";
 
-    public static final double LOG2PI = Math.log(2*Math.PI);
-
-    public CartogramDiffusionModel(CartogramMapping mapping, Parameter precision) {
+    public CartogramDiffusionModel(String name, CartogramMapping mapping, Parameter precision) {
         super();
         this.mapping = mapping;
         this.precision = precision;
         addParameter(precision);
+        setId(name);
+
+        Logger.getLogger("dr.evomodel.continuous").info(
+            "Constructing cartogram diffusion model '"+ getId() +"': \n" +
+            "\tMapping  : " + mapping.toString() + "\n" +
+            "\tPrecision: " + precision.getId() + "\n" +
+            "\tIf you use this model, please reference: Lemey, Drummond and Suchard (in preparation)\n"
+        );
     }
 
     protected double calculateLogDensity(double[] start, double[] stop, double time) {
@@ -48,8 +54,13 @@ public class CartogramDiffusionModel extends MultivariateDiffusionModel {
             return Double.NEGATIVE_INFINITY;
 
         double distance = mappedStop.distance(mappedStart); // Euclidean distance in mapped space
+//        double distance = realStart.distance(realStop); // Euclidean distance in real space
+
         double inverseVariance = precision.getParameterValue(0) / time;
-        return 0.5 * (Math.log(inverseVariance) - LOG2PI - distance * distance * inverseVariance);
+        // TODO Check!  
+        // I believe this is a 2D (not 1D) Normal diffusion approx; hence the precision is squared
+        // in the normalization constant
+        return - LOG2PI + Math.log(inverseVariance) - 0.5*(distance * distance * inverseVariance);
     }
 
     protected void calculatePrecisionInfo() {
@@ -82,16 +93,22 @@ public class CartogramDiffusionModel extends MultivariateDiffusionModel {
              if (xGridSize <= 1 || yGridSize <= 1)
                 throw new XMLParseException("Strictly positive grid sizes required");
 
+             String fileName = xo.getStringAttribute(FILENAME);
+
+             Logger.getLogger("dr.evomodel.continuous").info(
+                "Loading cartogram file: " + fileName +"\n"
+             );
+
              CartogramMapping mapping = new CartogramMapping(xGridSize, yGridSize, boundingBox);
              try {
-                 mapping.readCartogramOutput(FILENAME);
+                 mapping.readCartogramOutput(fileName);
              } catch (IOException e) {
                  throw new XMLParseException(e.getMessage());
              }
 
              Parameter diffusionParam = (Parameter) xo.getChild(Parameter.class);
 
-             return new CartogramDiffusionModel(mapping, diffusionParam);
+             return new CartogramDiffusionModel(xo.getId(),mapping, diffusionParam);
          }
 
          //************************************************************************

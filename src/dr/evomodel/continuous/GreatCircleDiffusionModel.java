@@ -16,8 +16,6 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
 //    public static final String BIAS = "mu";
 //    public static final String PRECISION_TREE_ATTRIBUTE = "precision";
 
-    public static final double LOG2PI = Math.log(2*Math.PI);
-
     public GreatCircleDiffusionModel(Parameter precision, Parameter coefficient) {
         super();
         this.precision = precision;
@@ -39,10 +37,13 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
         double distance = coord1.distance(coord2);
 
         double inverseVariance = precision.getParameterValue(0) / time;
+        // TODO Check!
+        // I believe this is a 2D (not 1D) Normal diffusion approx; hence the precision is squared (compared to 1D) 
+        // in the normalization constant
         if (coefficient == null)
-            return 0.5 * (Math.log(inverseVariance) - LOG2PI - distance * distance * inverseVariance);
+            return - LOG2PI + Math.log(inverseVariance) - 0.5 * (distance * distance * inverseVariance);
         double coef = - coefficient.getParameterValue(0);
-        return 0.5 * (coef * Math.log(inverseVariance) - LOG2PI - distance * distance * Math.pow(inverseVariance,coef));
+        return - LOG2PI + coef * Math.log(inverseVariance)  - 0.5 * (distance * distance * Math.pow(inverseVariance,coef));
     }
 
     protected void calculatePrecisionInfo() {

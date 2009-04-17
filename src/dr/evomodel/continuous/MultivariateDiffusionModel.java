@@ -23,6 +23,8 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     public static final String BIAS = "mu";
     public static final String PRECISION_TREE_ATTRIBUTE = "precision";
 
+    public static final double LOG2PI = Math.log(2*Math.PI);
+
     /**
      * Construct a diffusion model.
      */

@@ -206,6 +206,9 @@
             <batchtest fork="yes" todir="${report}">
                 <fileset dir="${src}"> 
                 	<!-- <include name="test/dr/evomodel/**/*Test.java" /> -->
+                	<!-- <include name="test/dr/evomodel/operators/**/*Test.java" />  -->
+                	<include name="test/dr/evomodel/operators/**/FNPRTest.java" />
+                	<include name="test/dr/evomodel/operators/**/NNITest.java" />
                 	<include name="test/dr/evomodel/speciation/**/*Test.java" />
                 	<include name="test/dr/inference/**/*Test.java"/>
                </fileset>

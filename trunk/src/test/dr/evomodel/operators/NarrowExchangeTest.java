@@ -3,17 +3,15 @@
  */
 package test.dr.evomodel.operators;
 
-import static org.junit.Assert.*;
-
+//import static org.junit.Assert.*;
 import java.io.IOException;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.tree.Tree;
 import dr.evomodel.operators.ExchangeOperator;
-import dr.evomodel.operators.NNI;
+//import dr.evomodel.operators.NNI;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
@@ -27,7 +25,7 @@ import dr.inference.operators.UniformOperator;
  * @author shhn001
  *
  */
-public class NarrowExchangeTest  extends OperatorTest{
+public class NarrowExchangeTest  extends OperatorAssert{
     
 	public static Test suite() {
         return new TestSuite(NarrowExchangeTest.class);

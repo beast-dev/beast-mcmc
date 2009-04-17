@@ -26,7 +26,7 @@ import dr.inference.operators.UniformOperator;
  * @author shhn001
  *
  */
-public class FNPRTest extends OperatorTest{
+public class FNPRTest extends OperatorAssert{
 
     public static Test suite() {
         return new TestSuite(FNPRTest.class);

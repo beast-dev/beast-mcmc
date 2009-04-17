@@ -8,12 +8,12 @@ import java.io.IOException;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import dr.evolution.io.NewickImporter;
+//import dr.evolution.io.NewickImporter;
 import dr.evolution.io.Importer.ImportException;
-import dr.evolution.tree.FlexibleTree;
+//import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evomodel.operators.GibbsSubtreeSwap;
-import dr.evomodel.operators.ImportanceSubtreeSwap;
+//import dr.evomodel.operators.ImportanceSubtreeSwap;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
@@ -28,7 +28,7 @@ import dr.inference.operators.UniformOperator;
  * @author Sebastian Hoehna
  *
  */
-public class GibbsSubtreeSwapTest  extends OperatorTest{
+public class GibbsSubtreeSwapTest  extends OperatorAssert{
 
 
 	public static Test suite() {

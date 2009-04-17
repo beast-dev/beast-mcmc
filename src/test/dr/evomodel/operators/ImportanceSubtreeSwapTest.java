@@ -27,7 +27,7 @@ import dr.inference.operators.UniformOperator;
  * @author shhn001
  *
  */
-public class ImportanceSubtreeSwapTest extends OperatorTest{
+public class ImportanceSubtreeSwapTest extends OperatorAssert{
 
 
 	public static Test suite() {

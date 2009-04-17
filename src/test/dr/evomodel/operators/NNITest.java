@@ -25,7 +25,7 @@ import dr.inference.operators.UniformOperator;
  * @author Sebastian Hoehna
  *
  */
-public class NNITest extends OperatorTest{
+public class NNITest extends OperatorAssert{
     
 	public static Test suite() {
         return new TestSuite(NNITest.class);

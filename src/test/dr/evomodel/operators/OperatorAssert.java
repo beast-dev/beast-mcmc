@@ -39,7 +39,7 @@ import java.util.Set;
  * @author Sebastian Hoehna
  *
  */
-public abstract class OperatorTest extends TestCase {
+public abstract class OperatorAssert extends TestCase {
 
 	static final String TL = "TL";
     static final String TREE_HEIGHT = CoalescentSimulator.ROOT_HEIGHT;

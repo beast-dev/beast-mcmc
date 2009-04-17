@@ -67,6 +67,12 @@ public class CartogramMapping {
 
     }
 
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("grid: [x="+gridXSize+",y="+gridYSize+"], boundingBox: "+boundingBox.toString());
+        return sb.toString();
+    }
+
     public Point2D map(Point2D inPt) {
 
         if (!boundingBox.contains(inPt))

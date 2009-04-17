@@ -53,8 +53,6 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
     public static final String PRIOR = "prior";
     public static final String TRAIT_MODEL = "traitModel";
 
-    //	private Parameter outcomeParam;
-    //	private Parameter meanParam;
     private MultivariateTraitLikelihood traitModel;
     private MatrixParameter precisionParam;
     private WishartDistribution priorDistribution;
@@ -63,9 +61,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
     private TreeModel treeModel;
     private int dim;
     private int numberObservations;
-    private boolean inSubstitutionTime = false;
     private String traitName;
-//	private int weight;
 
     public PrecisionMatrixGibbsOperator(
             MultivariateTraitLikelihood traitModel,
@@ -84,7 +80,6 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         this.treeModel = traitModel.getTreeModel();
         traitName = traitModel.getTraitName();
         dim = precisionParam.getRowDimension(); // assumed to be square
-        numberObservations = treeModel.getNodeCount() - 1; // do not count the root
 
     }
 
@@ -93,19 +88,14 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         return 1;
     }
 
-    private void incrementsOuterProduct(double[][] S, NodeRef node, double treeLength) {
+    private void incrementsOuterProduct(double[][] S, NodeRef node) {
 
         if (!treeModel.isRoot(node)) {
+
             NodeRef parent = treeModel.getParent(node);
             double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
-            // todo fix trait name
             double[] childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
-//            double time = treeModel.getBranchLength(node);
             double time = traitModel.getRescaledBranchLength(node);
-//            time /= treeLength;
-
-//            if (inSubstitutionTime)
-//                time *= treeModel.getNodeRate(node);
 
             if (time > 0) {
 
@@ -120,27 +110,24 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                     for (int j = i; j < dim; j++)
                         S[j][i] = S[i][j] += delta[i] * delta[j];
                 }
-            }
-            numberObservations++;
+                numberObservations++;
+            } 
         }
         // recurse down tree
         for (int i = 0; i < treeModel.getChildCount(node); i++)
-            incrementsOuterProduct(S, treeModel.getChild(node, i), treeLength);
+            incrementsOuterProduct(S, treeModel.getChild(node, i));
     }
 
 
     public double doOperation() throws OperatorFailedException {
 
-//        double treeLength = Tree.Utils.getTreeLength(treeModel,treeModel.getRoot());
-        double treeLength = treeModel.getNodeHeight(treeModel.getRoot());
-
         // calculate sum-of-the-weighted-squares matrix over tree
 
         double[][] S = new double[dim][dim];
-        SymmetricMatrix S2 = null;
+        SymmetricMatrix S2;
         SymmetricMatrix inverseS2 = null;
         numberObservations = 0;
-        incrementsOuterProduct(S, treeModel.getRoot(), treeLength);
+        incrementsOuterProduct(S, treeModel.getRoot());
 
         try {
             S2 = new SymmetricMatrix(S);
@@ -155,8 +142,6 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         int df = priorDf + numberObservations;
 
         double[][] draw = WishartDistribution.nextWishart(df, inverseS2.toComponents());
-
-//        System.err.println("df = "+df+" delta = "+inverseS2.component(0,0));
 
         for (int i = 0; i < dim; i++) {
             Parameter column = precisionParam.getParameter(i);
@@ -187,7 +172,6 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             MultivariateTraitLikelihood traitModel = (MultivariateTraitLikelihood) xo.getChild(MultivariateTraitLikelihood.class);
-            TreeModel treeModel = traitModel.getTreeModel();
 
             MatrixParameter precMatrix = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
 
@@ -224,10 +208,8 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
-//				new ElementRule(TreeModel.class),
                 new ElementRule(MultivariateTraitLikelihood.class),
                 new ElementRule(MultivariateDistributionLikelihood.class),
-//				new ElementRule(MatrixParameter.class)
         };
 
     };

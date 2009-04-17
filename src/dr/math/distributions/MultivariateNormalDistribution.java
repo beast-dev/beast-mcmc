@@ -1,10 +1,7 @@
 package dr.math.distributions;
 
 import dr.math.MathUtils;
-import dr.math.matrixAlgebra.CholeskyDecomposition;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.*;
 
 /**
  * @author Marc Suchard
@@ -36,7 +33,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         return mean;
     }
 
-    public static final double calculatePrecisionMatrixDeterminate(double[][] precision) {
+    public static double calculatePrecisionMatrixDeterminate(double[][] precision) {
         try {
             return new Matrix(precision).determinant();
         } catch (IllegalDimension e) {
@@ -48,7 +45,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         return logPdf(x, mean, precision, logDet, 1.0);
     }
 
-    public static final double logPdf(double[] x, double[] mean, double[][] precision,
+    public static double logPdf(double[] x, double[] mean, double[][] precision,
                                       double logDet, double scale) {
 
         if (logDet == Double.NEGATIVE_INFINITY)
@@ -79,7 +76,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     }
 
     /* Equal precision, independent dimensions */
-    public static final double logPdf(double[] x, double[] mean, double precision, double scale) {
+    public static double logPdf(double[] x, double[] mean, double precision, double scale) {
 
         final int dim = x.length;
 
@@ -108,7 +105,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
         int dim = mean.length;
 
-        double[][] cholesky = null;
+        double[][] cholesky;
 
         try {
             cholesky = (new CholeskyDecomposition(variance)).getL();
@@ -117,8 +114,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         }
 
         double[] x = new double[dim];
-        for (int i = 0; i < dim; i++)
-            x[i] = mean[i];
+        System.arraycopy(mean,0,x,0,dim);
 
         double[] epsilon = new double[dim];
         for (int i = 0; i < dim; i++)
@@ -139,16 +135,41 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         double[][] precision = new double[][] { {2,0.5},{0.5,1} };
         double scale = 0.2;
         System.err.println("logPDF = "+ logPdf(start, stop, precision, Math.log(calculatePrecisionMatrixDeterminate(precision)), scale));
-        System.err.println("Should = -19.94863");
+        System.err.println("Should = -19.94863\n");
 
         System.err.println("logPDF = "+logPdf(start,stop,2,0.2));
-        System.err.println("Should = -24.53529");
+        System.err.println("Should = -24.53529\n");
 
         System.err.println("Random draws: ");
-        for(int i=0; i<10000; i++) {
+        int length = 10000;
+        double[] mean = new double[2];
+        double[] SS   = new double[2];
+        double[] var  = new double[2];
+        double ZZ = 0;
+        for(int i=0; i<length; i++) {
             double[] draw = nextMultivariateNormalPrecision(start,precision);
-            System.out.println(draw[0]+" "+draw[1]);
+            for(int j=0; j<2; j++) {
+                mean[j] += draw[j];
+                SS[j] += draw[j]*draw[j];
+            }
+            ZZ += draw[0]*draw[1];
         }
+
+        for(int j=0; j<2; j++) {
+            mean[j] /= length;
+            SS[j] /= length;
+            var[j] = SS[j] - mean[j]*mean[j];
+        }
+        ZZ /= length;
+        ZZ -= mean[0]*mean[1];
+
+        System.err.println("Mean: "+new Vector(mean));
+        System.err.println("TRUE: [ 1 2 ]\n");
+        System.err.println("MVar: "+new Vector(var));
+        System.err.println("TRUE: [ 0.571 1.14 ]\n");
+        System.err.println("Covv: "+ZZ);
+        System.err.println("TRUE: -0.286");
+
     }
 
     public static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);

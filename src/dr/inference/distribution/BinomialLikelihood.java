@@ -25,10 +25,7 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.Binomial;
 import dr.xml.*;
 import org.w3c.dom.Document;
@@ -42,7 +39,7 @@ import org.w3c.dom.Element;
  * @version $Id: BinomialLikelihood.java,v 1.5 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class BinomialLikelihood extends AbstractModel implements Likelihood {
+public class BinomialLikelihood extends AbstractModelLikelihood {
 
     public static final String BINOMIAL_LIKELIHOOD = "binomialLikelihood";
 
@@ -190,7 +187,7 @@ public class BinomialLikelihood extends AbstractModel implements Likelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(TRIALS,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(PROPORTION,

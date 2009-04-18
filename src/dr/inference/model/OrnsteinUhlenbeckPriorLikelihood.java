@@ -21,7 +21,7 @@ import dr.xml.*;
 
 // It should be a model since it may be the only user of parameter sigma
 
-public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModel implements Likelihood {
+public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
     private final Parameter mean;
     private final Parameter sigma;
     private final Parameter lambda;

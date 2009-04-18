@@ -7,16 +7,14 @@ import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.linalg.EigenvalueDecomposition;
 import cern.colt.matrix.linalg.Property;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
 import dr.evoxml.DataTypeUtils;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.MatrixEntryColumn;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.Likelihood;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.Vector;
 import dr.math.MathUtils;
+import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -508,7 +506,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new XORRule(
                         new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
                                 DataType.getRegisteredDataTypeNames(), false),
@@ -565,6 +563,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         if (wellConditioned)
             return 0;
         return Double.NEGATIVE_INFINITY;
+    }
+
+    public String prettyName() {
+         return Abstract.getPrettyName(this);
     }
 
     public void setNormalization(boolean doNormalization) {

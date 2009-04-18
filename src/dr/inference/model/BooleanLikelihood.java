@@ -124,10 +124,9 @@ public class BooleanLikelihood extends Likelihood.Abstract {
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 			new ElementRule(BooleanStatistic.class, 1, Integer.MAX_VALUE )
 		};
-
 	};
 }
 

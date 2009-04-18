@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  */
 
 
-public class InhibitionAssayLikelihood extends AbstractModel implements Likelihood, NodeAttributeProvider {
+public class InhibitionAssayLikelihood extends AbstractModelLikelihood implements NodeAttributeProvider {
 
     public static final String TRAIT_LIKELIHOOD = "inhibitionLikelihood";
     public static final String TRAIT_NAME = "traitName";
@@ -308,7 +308,7 @@ Parameter precision) {
                 attributeLabel[0] = traitName;
             else {
                 for (int i = 1; i <= trait.length; i++)
-                    attributeLabel[i - 1] = new String(traitName + i);
+                    attributeLabel[i - 1] = traitName + i;
             }
         }
         return attributeLabel;
@@ -326,7 +326,7 @@ Parameter precision) {
 //		sb.append("}");
         String[] value = new String[trait.length];
         for (int i = 0; i < trait.length; i++)
-            value[i] = new Double(trait[i]).toString();
+            value[i] = Double.toString(trait[i]);
 
 //		return new String[] {sb.toString()};  //To change body of implemented methods use File | Settings | File Templates.
         return value;
@@ -509,7 +509,7 @@ Parameter precision) {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
 //				new StringAttributeRule(TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
 //				AttributeRule.newBooleanRule(IN_REAL_TIME, true),
 //				new ElementRule(MultivariateDiffusionModel.class),
@@ -583,9 +583,9 @@ Parameter precision) {
 
     private TreeModel treeModel = null;
     private MatrixParameter dataParameter = null;
-    private Parameter precision = null;
+    private final Parameter precision = null;
 
-    private int N;
+    private final int N;
 
 
     MultivariateDiffusionModel diffusionModel = null;
@@ -597,13 +597,13 @@ Parameter precision) {
     ArrayList dataList = new ArrayList();
 
     private double logLikelihood;
-    private double maxLogLikelihood = Double.NEGATIVE_INFINITY;
+    private final double maxLogLikelihood = Double.NEGATIVE_INFINITY;
     private double storedLogLikelihood;
     private boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
 
     //	private double[] cachedLikelihoods = null;
-    private HashMap<NodeRef, Double> cachedLikelihoods = null;
+    private final HashMap<NodeRef, Double> cachedLikelihoods = null;
 
     private double treeLength;
     private double storedTreeLength;

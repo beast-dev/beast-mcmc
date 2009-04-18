@@ -77,6 +77,14 @@ public class JeffreysPriorLikelihood extends Likelihood.Abstract {
 	}
 
 
+     public String prettyName() {
+         String s = "Jeffreys" + "(";
+         for (Statistic statistic : dataList) {
+             s = s + statistic.getStatisticName() + ",";
+         }
+         return s.substring(0, s.length()-1) + ")";
+     }
+
 	/**
 	 * Reads a distribution likelihood from a DOM Document element.
 	 */

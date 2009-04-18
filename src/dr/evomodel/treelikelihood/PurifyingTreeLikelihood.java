@@ -288,7 +288,7 @@ public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
      * Traverse the tree calculating partial likelihoods.
      * @return whether the partials for this node were recalculated.
      */
-    private final double calculateNodeRates(TreeModel tree, NodeRef node, double mu, double p, double lambda) {
+    private double calculateNodeRates(TreeModel tree, NodeRef node, double mu, double p, double lambda) {
 
         NodeRef parent = tree.getParent(node);
 
@@ -344,7 +344,7 @@ public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
      * Traverse the tree calculating partial likelihoods.
      * @return whether the partials for this node were recalculated.
      */
-    private final boolean traverse(Tree tree, NodeRef node) {
+    private boolean traverse(Tree tree, NodeRef node) {
 
         boolean update = false;
 
@@ -454,14 +454,12 @@ public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
 
             boolean useAveraging = xo.getBooleanAttribute(AVERAGE);
 
-            PurifyingTreeLikelihood treeLikelihood = null;
+
             try {
-                treeLikelihood = new PurifyingTreeLikelihood(patternList, treeModel, siteModel, proportionParam, lambdaParam, false, useAveraging);
+                return new PurifyingTreeLikelihood(patternList, treeModel, siteModel, proportionParam, lambdaParam, false, useAveraging);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
-
-            return treeLikelihood;
         }
 
         //************************************************************************
@@ -476,7 +474,7 @@ public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
 
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(AVERAGE, false),
                 new ElementRule(PROPORTION, new XMLSyntaxRule[] {
                         new ElementRule(Parameter.class)

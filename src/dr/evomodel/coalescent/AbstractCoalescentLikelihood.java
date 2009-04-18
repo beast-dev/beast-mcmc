@@ -46,7 +46,7 @@ import java.util.Set;
  * @author Alexei Drummond
  * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
-public abstract class AbstractCoalescentLikelihood extends AbstractModel implements Likelihood, Units {
+public abstract class AbstractCoalescentLikelihood extends AbstractModelLikelihood implements Units {
 
     // PUBLIC STUFF
 

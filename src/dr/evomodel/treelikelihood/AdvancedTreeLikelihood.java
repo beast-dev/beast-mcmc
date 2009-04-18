@@ -554,7 +554,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
                 // AttributeRule.newBooleanRule(STORE_PARTIALS, true),
                 AttributeRule.newBooleanRule(USE_SCALING, true),
@@ -630,7 +630,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
      */
     protected BranchRateModel branchRateModel = null;
 
-    private boolean storePartials = false;
+    private final boolean storePartials = false;
 
 
     /**

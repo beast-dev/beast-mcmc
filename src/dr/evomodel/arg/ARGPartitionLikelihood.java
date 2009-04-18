@@ -2,14 +2,13 @@ package dr.evomodel.arg;
 
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
+import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 
-public abstract class ARGPartitionLikelihood extends AbstractModel implements Likelihood{
+public abstract class ARGPartitionLikelihood extends AbstractModelLikelihood {
 
 	
-	private ARGModel arg;
+	private final ARGModel arg;
 	
 	public abstract double[] generatePartition();
 	public abstract double getLogLikelihood(double[] partition);
@@ -68,5 +67,4 @@ public abstract class ARGPartitionLikelihood extends AbstractModel implements Li
 	public void makeDirty() {
 		
 	}
-	
 }

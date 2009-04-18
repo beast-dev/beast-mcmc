@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  */
 
 
-public class MultivariateTraitLikelihood extends AbstractModel implements Likelihood, NodeAttributeProvider {
+public class MultivariateTraitLikelihood extends AbstractModelLikelihood implements NodeAttributeProvider {
 
     public static final String TRAIT_LIKELIHOOD = "multivariateTraitLikelihood";
     public static final String TRAIT_NAME = "traitName";
@@ -71,7 +71,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
         }
 
         if (samplingDensity != null) {
-            this.samplingDensity = samplingDensity;
+            Model samplingDensity1 = samplingDensity;
             addModel(samplingDensity);
         }
         addParameter(traitParameter);
@@ -521,7 +521,7 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
                 new ElementRule(TRAIT_PARAMETER, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
@@ -563,14 +563,13 @@ public class MultivariateTraitLikelihood extends AbstractModel implements Likeli
     private boolean storedLikelihoodKnown = false;
     private BranchRateModel rateModel = null;
     private boolean hasRateModel = false;
-    private Model samplingDensity;
 
     private double treeLength;
     private double storedTreeLength;
 
-    private boolean reportAsMultivariate;
+    private final boolean reportAsMultivariate;
 
-    private boolean scaleByTime;
-    private boolean useTreeLength;
+    private final boolean scaleByTime;
+    private final boolean useTreeLength;
 }
 

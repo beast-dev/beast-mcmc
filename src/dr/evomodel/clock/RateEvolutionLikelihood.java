@@ -4,10 +4,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 
 import java.util.logging.Logger;
 
@@ -18,7 +15,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @author Michael Defoin Platel
  */
-public abstract class RateEvolutionLikelihood extends AbstractModel implements BranchRateModel, Likelihood {
+public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood implements BranchRateModel {
 
     public static final String RATES = "rates";
     public static final String EPISODIC = "episodic";
@@ -172,7 +169,6 @@ public abstract class RateEvolutionLikelihood extends AbstractModel implements B
     public String toString() {
         return Double.toString(getLogLikelihood());
     }
-
 
     abstract double branchRateSample(double parentRate, double time);
 

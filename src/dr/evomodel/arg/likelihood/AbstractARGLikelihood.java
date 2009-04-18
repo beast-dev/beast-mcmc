@@ -14,10 +14,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.treelikelihood.LikelihoodCore;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.ParallelLikelihood;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 
 /**
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
@@ -26,7 +23,7 @@ import dr.inference.model.Parameter;
  * @version $Id: AbstractARGLikelihood.java,v 1.1 2006/10/10 22:57:55 msuchard Exp $
  */
 
-public abstract class AbstractARGLikelihood extends AbstractModel implements ParallelLikelihood {
+public abstract class AbstractARGLikelihood extends AbstractModelLikelihood implements ParallelLikelihood {
 
     public AbstractARGLikelihood(String name, PatternList patternList,
                                  ARGModel treeModel) {

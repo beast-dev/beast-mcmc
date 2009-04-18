@@ -55,7 +55,7 @@ import java.util.ArrayList;
  * @author Alexei Drummond
  * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
-public class OldAbstractCoalescentLikelihood extends AbstractModel implements Likelihood, Units {
+public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood implements  Units {
 
     // PUBLIC STUFF
 
@@ -658,7 +658,6 @@ public class OldAbstractCoalescentLikelihood extends AbstractModel implements Li
 
     public String toString() {
         return Double.toString(getLogLikelihood());
-
     }
 
     // **************************************************************

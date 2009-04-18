@@ -27,8 +27,7 @@ package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
+import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -45,7 +44,7 @@ import java.util.ArrayList;
  * @version $Id: TraitLikelihood.java,v 1.7 2004/11/25 12:19:56 rambaut Exp $
  */
 
-public class TraitLikelihood extends AbstractModel implements Likelihood {
+public class TraitLikelihood extends AbstractModelLikelihood {
 
     public static final String TRAIT_LIKELIHOOD = "traitLikelihood";
     public static final String TRAIT_NAME = "traitName";
@@ -151,7 +150,7 @@ public class TraitLikelihood extends AbstractModel implements Likelihood {
             Double childTrait = (Double) treeModel.getNodeAttribute(node, traitName);
 
             double time = treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(node);
-            logL = diffusionModel.getLogLikelihood(parentTrait.doubleValue(), childTrait.doubleValue(), time);
+            logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
         }
         int childCount = treeModel.getChildCount(node);
         for (int i = 0; i < childCount; i++) {
@@ -230,7 +229,7 @@ public class TraitLikelihood extends AbstractModel implements Likelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
                 AttributeRule.newBooleanRule(JEFFERYS_PRIOR),
                 new ElementRule(DiffusionModel.class),

@@ -27,7 +27,7 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
+import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -41,7 +41,7 @@ import dr.xml.*;
  * @author Andrew Rambaut
  * @version $Id: BranchingLikelihood.java,v 1.4 2004/12/14 21:00:58 alexei Exp $
  */
-public class BranchingLikelihood extends AbstractModel implements Likelihood {
+public class BranchingLikelihood extends AbstractModelLikelihood {
 
     // PUBLIC STUFF
 
@@ -185,7 +185,7 @@ public class BranchingLikelihood extends AbstractModel implements Likelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(MODEL, new XMLSyntaxRule[]{
                         new ElementRule(BranchingModel.class)
                 }),

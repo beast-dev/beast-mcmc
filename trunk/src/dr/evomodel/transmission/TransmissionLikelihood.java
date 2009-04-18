@@ -35,8 +35,7 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
+import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -51,7 +50,7 @@ import dr.xml.*;
  * @author Alexei Drummond
  * @version $Id: TransmissionLikelihood.java,v 1.13 2005/06/15 17:20:54 rambaut Exp $
  */
-public class TransmissionLikelihood extends AbstractModel implements Likelihood, Units {
+public class TransmissionLikelihood extends AbstractModelLikelihood implements Units {
 
     // PUBLIC STUFF
 
@@ -505,20 +504,22 @@ public class TransmissionLikelihood extends AbstractModel implements Likelihood,
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(SOURCE_PATIENT, DemographicModel.class,
-                        "This describes the demographic process for the source donor patient."),
-                new ElementRule(TransmissionDemographicModel.class,
-                        "This describes the demographic process for the recipient patients."),
-                new XORRule(
-                        new ElementRule("hostTree",
-                                new XMLSyntaxRule[]{new ElementRule(Tree.class)}),
-                        new ElementRule(TransmissionHistoryModel.class,
-                                "This describes the transmission history of the patients.")
-                ),
-                new ElementRule("parasiteTree",
-                        new XMLSyntaxRule[]{new ElementRule(Tree.class)})
-        };
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    new ElementRule(SOURCE_PATIENT, DemographicModel.class,
+                            "This describes the demographic process for the source donor patient."),
+                    new ElementRule(TransmissionDemographicModel.class,
+                            "This describes the demographic process for the recipient patients."),
+                    new XORRule(
+                            new ElementRule("hostTree",
+                                    new XMLSyntaxRule[]{new ElementRule(Tree.class)}),
+                            new ElementRule(TransmissionHistoryModel.class,
+                                    "This describes the transmission history of the patients.")
+                    ),
+                    new ElementRule("parasiteTree",
+                            new XMLSyntaxRule[]{new ElementRule(Tree.class)})
+            };
+        }
     };
 
     class IncompatibleException extends Exception {

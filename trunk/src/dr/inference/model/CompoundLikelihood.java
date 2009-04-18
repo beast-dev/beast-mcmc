@@ -86,28 +86,29 @@ public class CompoundLikelihood implements Likelihood {
 		return compoundModel;
 	}
 
+    static int DEBUG = 0;
+
 	public double getLogLikelihood() {
 		double logLikelihood = 0.0;
 
 		if (pool == null) {
 			// Single threaded
 
-			//System.err.println("mixed of " + likelihoods.size());
 			for (Likelihood likelihood : likelihoods) {
-				double l = likelihood.getLogLikelihood();
-
+			   final double l = likelihood.getLogLikelihood();
 				// if the likelihood is zero then short cut the rest of the likelihoods
 				// This means that expensive likelihoods such as TreeLikelihoods should
 				// be put after cheap ones such as BooleanLikelihoods
-				if (l == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
+				if( l == Double.NEGATIVE_INFINITY )
+                    return Double.NEGATIVE_INFINITY;
 				logLikelihood += l;
 			}
 		} else {
 			try {
+                
 				List<Future<Double>> results = pool.invokeAll(likelihoodCallers);
 
 				for (Future<Double> result : results) {
-
 					double logL = result.get();
 					logLikelihood += logL;
 				}
@@ -119,63 +120,66 @@ public class CompoundLikelihood implements Likelihood {
 			}
 		}
 
+        if( DEBUG > 0 ) {
+            int t = DEBUG; DEBUG = 0;
+            System.err.println(getId() + ": " + getDiagnosis() + " = " + logLikelihood);
+            DEBUG = t;
+        }
 		return logLikelihood;
 	}
 
-	public void makeDirty() {
+    public void makeDirty() {
+        for( Likelihood likelihood : likelihoods ) {
+            likelihood.makeDirty();
+        }
+    }
 
-		for (Likelihood likelihood : likelihoods) {
-			likelihood.makeDirty();
-		}
-	}
+    public String getDiagnosis() {
+        String message = "";
+        boolean first = true;
 
-	public String getDiagnosis() {
-		String message = "";
-		boolean first = true;
+        final NumberFormatter nf = new NumberFormatter(6);
 
-		for (Likelihood lik : likelihoods) {
+        for( Likelihood lik : likelihoods ) {
 
-			if (!first) {
-				message += ", ";
-			} else {
-				first = false;
-			}
+            if( !first ) {
+                message += ", ";
+            } else {
+                first = false;
+            }
 
-			String id = lik.getId();
-			if (id == null || id.trim().length() == 0) {
-				String[] parts = lik.getClass().getName().split("\\.");
-				id = parts[parts.length - 1];
-			}
+            message += lik.prettyName() + "=";
 
-			message += id + "=";
+            if( lik instanceof CompoundLikelihood ) {
+                final String d = ((CompoundLikelihood) lik).getDiagnosis();
+                if( d != null && d.length() > 0 ) {
+                    message += "(" + d + ")";
+                }
+            } else {
 
+                final double logLikelihood = lik.getLogLikelihood();
+                if( logLikelihood == Double.NEGATIVE_INFINITY ) {
+                    message += "-Inf";
+                } else if( Double.isNaN(logLikelihood) ) {
+                    message += "NaN";
+                } else {
+                    message += nf.formatDecimal(logLikelihood, 4);
+                }
+            }
+        }
 
-			if (lik instanceof CompoundLikelihood) {
-				String d = ((CompoundLikelihood) lik).getDiagnosis();
-				if (d != null && d.length() > 0) {
-					message += "(" + d + ")";
-				}
-			} else {
-
-				if (lik.getLogLikelihood() == Double.NEGATIVE_INFINITY) {
-					message += "-Inf";
-				} else if (Double.isNaN(lik.getLogLikelihood())) {
-					message += "NaN";
-				} else {
-					NumberFormatter nf = new NumberFormatter(6);
-					message += nf.formatDecimal(lik.getLogLikelihood(), 4);
-				}
-			}
-		}
-
-		return message;
-	}
+        return message;
+    }
 
 	public String toString() {
-
-		return Double.toString(getLogLikelihood());
-
+        return getId();
+        // really bad for debugging
+		//return Double.toString(getLogLikelihood());
 	}
+
+    public String prettyName() {
+        return Abstract.getPrettyName(this);
+    }
 
 	// **************************************************************
 	// Loggable IMPLEMENTATION

@@ -27,10 +27,7 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.*;
@@ -49,7 +46,7 @@ import java.util.logging.Logger;
  *
  * @version $Id: UniformRootPrior.java,v 1.10 2005/05/24 20:25:58 rambaut Exp $
  */
-public class UniformRootPrior extends AbstractModel implements Likelihood {
+public class UniformRootPrior extends AbstractModelLikelihood {
 
     // PUBLIC STUFF
 
@@ -348,7 +345,7 @@ public class UniformRootPrior extends AbstractModel implements Likelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(MAX_ROOT_HEIGHT, true),
                 new ElementRule(TreeModel.class)
         };

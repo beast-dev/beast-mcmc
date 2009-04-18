@@ -53,11 +53,11 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
     public static final String NODE_PRIOR = "nodePrior";
     public static final String NODE_LABEL = "taxon";
 
-    private TreeModel treeModel;
-    private MatrixParameter precisionMatrixParameter;
-    private MultivariateTraitLikelihood traitModel;
-    private int dim;
-    private String traitName;
+    private final TreeModel treeModel;
+    private final MatrixParameter precisionMatrixParameter;
+    private final MultivariateTraitLikelihood traitModel;
+    private final int dim;
+    private final String traitName;
 
     private Map<NodeRef, GeoSpatialDistribution> nodePrior;
     private boolean onlyInternalNodes = true;
@@ -208,7 +208,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(INTERNAL_ONLY, true),
                 new ElementRule(MultivariateTraitLikelihood.class),

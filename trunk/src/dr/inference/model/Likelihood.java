@@ -56,6 +56,11 @@ public interface Likelihood extends Loggable, Identifiable {
 	 */
 	void makeDirty();
 
+    /**
+     * @return  A detailed name of likelihood for debugging.
+     */
+    String prettyName();
+
 	/**
 	 * A simple abstract base class for likelihood functions
 	 */
@@ -114,7 +119,28 @@ public interface Likelihood extends Loggable, Identifiable {
             return getClass().getName() + "(" + logLikelihood + ")";
 		}
 
-	    // **************************************************************
+        static public String getPrettyName(Likelihood l) {
+            final Model m = l.getModel();
+            String s = l.getClass().getName();  
+            String[] parts = s.split("\\.");
+            s = parts[parts.length - 1];
+            if( m != null ) {
+                return s + "(" + m.getModelName() + ";";
+            }
+            return s;
+        }
+
+        public String prettyName() {
+            return getPrettyName(this);
+//            final Model m = getModel();
+//            final String s = getClass().getName();
+//            if( m != null ) {
+//                return s + "(" + m.getModelName() + ";";
+//            }
+//            return s;
+        }
+
+        // **************************************************************
 	    // Loggable IMPLEMENTATION
 	    // **************************************************************
 

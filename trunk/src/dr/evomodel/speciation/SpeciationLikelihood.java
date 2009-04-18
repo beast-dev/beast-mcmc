@@ -30,10 +30,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.HashSet;
@@ -49,7 +46,7 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @version $Id: SpeciationLikelihood.java,v 1.10 2005/05/18 09:51:11 rambaut Exp $
  */
-public class SpeciationLikelihood extends AbstractModel implements Likelihood, Units {
+public class SpeciationLikelihood extends AbstractModelLikelihood implements Units {
 
     // PUBLIC STUFF
 

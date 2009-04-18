@@ -30,7 +30,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
     public static final String DATA = "data";
 
-    private MultivariateDistribution distribution;
+    private final MultivariateDistribution distribution;
 
     public MultivariateDistributionLikelihood(MultivariateDistribution distribution) {
         super(null);
@@ -41,9 +41,10 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         dataList.add(data);
     }
 
-    public String toString() {
-        return getId() + "(" + calculateLogLikelihood() + ")";
-    }
+    // This is really bad for debugging
+//    public String toString() {
+//        return getId() + "(" + calculateLogLikelihood() + ")";
+//    }
 
     protected ArrayList<Parameter> dataList = new ArrayList<Parameter>();
 
@@ -95,7 +96,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(COUNTS,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
         };
@@ -143,7 +144,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(DF),
                 new ElementRule(SCALE_MATRIX,
                         new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
@@ -207,15 +208,17 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newBooleanRule(NON_INFORMATIVE,true),
-                AttributeRule.newIntegerRule(DF,true),
-                new ElementRule(SCALE_MATRIX,
-                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)},true),
-                new ElementRule(DATA,
-                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class,1,Integer.MAX_VALUE)}
-                        )
-        };
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    AttributeRule.newBooleanRule(NON_INFORMATIVE, true),
+                    AttributeRule.newIntegerRule(DF, true),
+                    new ElementRule(SCALE_MATRIX,
+                            new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
+                    new ElementRule(DATA,
+                            new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class, 1, Integer.MAX_VALUE)}
+                    )
+            };
+        }
 
         public String getParserDescription() {
             return "Calculates the likelihood of some data under a Wishart distribution.";
@@ -268,7 +271,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(MVN_MEAN,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(MVN_PRECISION,
@@ -354,7 +357,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
 
                 new XORRule(
                         new ElementRule(MVGAMMA_SHAPE,

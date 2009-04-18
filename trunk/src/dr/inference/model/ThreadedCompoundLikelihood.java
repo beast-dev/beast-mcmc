@@ -114,6 +114,10 @@ public class ThreadedCompoundLikelihood implements Likelihood {
         }
     }
 
+    public String prettyName() {
+        return Abstract.getPrettyName(this);
+    }
+
     public String getDiagnosis() {
         String message = "";
         boolean first = true;
@@ -248,7 +252,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE),
                 AttributeRule.newDoubleRule(WEIGHT, true),
         };
@@ -260,10 +264,10 @@ public class ThreadedCompoundLikelihood implements Likelihood {
 
     private LikelihoodThread[] threads;
 
-    private ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
-    private CompoundModel compoundModel = new CompoundModel("compoundModel");
+    private final ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
+    private final CompoundModel compoundModel = new CompoundModel("compoundModel");
 
-    private List<LikelihoodCaller> likelihoodCallers = new ArrayList<LikelihoodCaller>();
+    private final List<LikelihoodCaller> likelihoodCallers = new ArrayList<LikelihoodCaller>();
     
     private double weightFactor = 1.0;
 
@@ -328,7 +332,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
         private LikelihoodCaller caller = null;
         private Double result = Double.NaN;
         private boolean resultAvailable = false;
-        private ReentrantLock lock = new ReentrantLock();
-        private Condition condition = lock.newCondition();    
+        private final ReentrantLock lock = new ReentrantLock();
+        private final Condition condition = lock.newCondition();
     }
 }

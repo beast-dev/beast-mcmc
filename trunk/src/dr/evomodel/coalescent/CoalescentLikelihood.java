@@ -48,7 +48,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public final class CoalescentLikelihood extends AbstractCoalescentLikelihood implements Likelihood, Units {
+public final class CoalescentLikelihood extends AbstractCoalescentLikelihood implements Units {
 
 	// PUBLIC STUFF
 

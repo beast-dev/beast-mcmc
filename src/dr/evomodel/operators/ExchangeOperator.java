@@ -109,9 +109,9 @@ public class ExchangeOperator extends AbstractTreeOperator {
         assert tree.getNodeHeight(i) < tree.getNodeHeight(iGrandParent);
 
         if( tree.getNodeHeight(iUncle) < tree.getNodeHeight(iParent) ) {
-            eupdate(i, iUncle, iParent, iGrandParent);
+            exchangeNodes(tree, i, iUncle, iParent, iGrandParent);
 
-            // eupdate generates the events
+            // exchangeNodes generates the events
             //tree.pushTreeChangedEvent(iParent);
             //tree.pushTreeChangedEvent(iGrandParent);
         } else {
@@ -144,7 +144,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
         if( (iP != jP) && (i != jP) && (j != iP)
                 && (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
                 && (tree.getNodeHeight(i) < tree.getNodeHeight(jP)) ) {
-            eupdate(i, j, iP, jP);
+            exchangeNodes(tree, i, j, iP, jP);
             // System.out.println("tries = " + tries+1);
             return;
         }
@@ -298,25 +298,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
     }
 
     public String getOperatorName() {
-        return ((mode == NARROW) ? "Narrow" : "Wide") + " Exchange" + "("
-                + tree.getId() + ")";
-    }
-
-    /* exchange sub-trees whose root are i and j */
-    private void eupdate(NodeRef i, NodeRef j, NodeRef iP, NodeRef jP) throws OperatorFailedException {
-        exchangeNodes(tree, i, j, iP, jP);
-//        tree.beginTreeEdit();
-//
-//        tree.removeChild(iP, i);
-//        tree.removeChild(jP, j);
-//        tree.addChild(jP, i);
-//        tree.addChild(iP, j);
-//
-//        try {
-//            tree.endTreeEdit();
-//        } catch( MutableTree.InvalidTreeException ite ) {
-//            throw new OperatorFailedException(ite.toString());
-//        }
+        return ((mode == NARROW) ? "Narrow" : "Wide") + " Exchange" + "(" + tree.getId() + ")";
     }
 
     public double getMinimumAcceptanceLevel() {

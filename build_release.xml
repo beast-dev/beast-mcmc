@@ -51,6 +51,7 @@
             <include name="dr/stats/**"/>
             <include name="dr/util/**"/>
             <include name="dr/xml/**"/>
+	    <include name="dr/geo/**"/>
             <include name="org/virion/jam/**"/>
         </javac>
     </target>
@@ -85,6 +86,7 @@
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
                 <include name="dr/xml/**/*.class"/>
+		<include name="dr/geo/**/*.class"/>
                 <include name="org/virion/jam/**/*.class"/>
             </fileset>
             <fileset dir="">
@@ -147,6 +149,7 @@
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
                 <include name="dr/xml/**/*.class"/>
+		<include name="dr/geo/**/*.class"/>
                 <include name="org/virion/jam/**/*.class"/>
             </fileset>
             <fileset dir="">

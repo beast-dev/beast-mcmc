@@ -72,8 +72,9 @@ public class PatternSubSetParser extends AbstractXMLObjectParser {
         Patterns subPatterns = new Patterns(patterns, 0, 0, 1, subSet, subSetCount);
         
         if (xo.hasAttribute("id")) {
-            Logger.getLogger("dr.evoxml").info("Pattern subset '" + xo.getId() + "' created from '" + patterns.getId() +"' ("+(subSet+1)+"/"+subSetCount+")");
-            Logger.getLogger("dr.evoxml").info("  pattern count = " + subPatterns.getPatternCount());
+            final Logger logger = Logger.getLogger("dr.evoxml");
+            logger.info("Pattern subset '" + xo.getId() + "' created from '" + patterns.getId() +"' ("+(subSet+1)+"/"+subSetCount+")");
+            logger.info("  pattern count = " + subPatterns.getPatternCount());
         }
         
         return subPatterns;

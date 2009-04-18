@@ -59,7 +59,15 @@ public class TreeLogger extends MCLogger {
     private NumberFormat format;
     private LogUpon condition = null;
 
+    /**
+     * Interface to indicate when to log a tree
+     */
     public interface LogUpon {
+        /**
+         *
+         * @param state
+         * @return  True if log tree of this state.
+         */
        boolean logNow(int state);
     }
 

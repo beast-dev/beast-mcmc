@@ -90,14 +90,15 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         if (to == -1) t = alignment.getSiteCount();
 
         if (xo.hasAttribute("id")) {
-            Logger.getLogger("dr.evoxml").info("Site patterns '" + xo.getId() + "' created from positions " +
+            final Logger logger = Logger.getLogger("dr.evoxml");
+            logger.info("Site patterns '" + xo.getId() + "' created from positions " +
                     Integer.toString(f) + "-" + Integer.toString(t) +
                     " of alignment '" + alignment.getId() + "'");
 
             if (every > 1) {
-                Logger.getLogger("dr.evoxml").info("  only using every " + every + " site");
+                logger.info("  only using every " + every + " site");
             }
-            Logger.getLogger("dr.evoxml").info("  pattern count = " + patterns.getPatternCount());
+            logger.info("  pattern count = " + patterns.getPatternCount());
         }
 
         return patterns;

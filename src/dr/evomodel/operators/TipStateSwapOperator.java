@@ -1,7 +1,6 @@
 package dr.evomodel.operators;
 
 import dr.evomodel.treelikelihood.AbstractLikelihoodCore;
-import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
@@ -24,8 +23,8 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 		states2 = new int[patternCount];
 	}
 
-	private int[] states1;
-	private int[] states2;
+	private final int[] states1;
+	private final int[] states2;
 	private int index1;
 	private int index2;
 
@@ -106,7 +105,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 	            return rules;
 	        }
 
-	        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+	        private final XMLSyntaxRule[] rules = {
 	                AttributeRule.newDoubleRule("weight"),
 			        new ElementRule(TreeLikelihood.class),
 	        };
@@ -116,5 +115,5 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 
 
 
-	private TreeLikelihood treeLikelihood;
+	private final TreeLikelihood treeLikelihood;
 }

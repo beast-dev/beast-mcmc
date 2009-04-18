@@ -16,32 +16,25 @@ import java.awt.*;
  */
 public class TracePanel extends javax.swing.JPanel implements Exportable {
 
-    private JTabbedPane tabbedPane = new JTabbedPane();
-    private JFrame parent = null;
+    private final JTabbedPane tabbedPane = new JTabbedPane();
 
-    private SummaryStatisticsPanel summaryPanel;
-    private DensityPanel densityPanel;
-    private CorrelationPanel correlationPanel;
-    private RawTracePanel tracePanel;
-
-    Icon traceIcon = null;
-    Icon frequencyIcon = null;
-    Icon densityIcon = null;
-    Icon summaryIcon = null;
-    Icon correlationIcon = null;
+    private final SummaryStatisticsPanel summaryPanel;
+    private final DensityPanel densityPanel;
+    private final CorrelationPanel correlationPanel;
+    private final RawTracePanel tracePanel;
 
     /**
      * Creates new form TracePanel
      */
     public TracePanel(JFrame parent) {
 
-        this.parent = parent;
+        //JFrame parent1 = parent;
 
-        traceIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/trace-small-icon.gif"));
-        frequencyIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/frequency-small-icon.gif"));
-        densityIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/density-small-icon.gif"));
-        summaryIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/summary-small-icon.png"));
-        correlationIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/correlation-small-icon.gif"));
+        Icon traceIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/trace-small-icon.gif"));
+        Icon frequencyIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/frequency-small-icon.gif"));
+        Icon densityIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/density-small-icon.gif"));
+        Icon summaryIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/summary-small-icon.png"));
+        Icon correlationIcon = new ImageIcon(IconUtils.getImage(TracePanel.class, "images/correlation-small-icon.gif"));
 
         summaryPanel = new SummaryStatisticsPanel(parent);
         densityPanel = new DensityPanel(parent);
@@ -108,9 +101,4 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
 
         return exportable;
     }
-
-    //************************************************************************
-    // private methods
-    //************************************************************************
-
 }

@@ -107,5 +107,5 @@ public class Trace {
 
 	private double[] values = new double[INITIAL_SIZE];
 	private int valueCount = 0;
-	private String name;
+	private final String name;
 }

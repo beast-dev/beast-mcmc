@@ -15,7 +15,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGTree;
-import dr.evomodel.arg.ARGModel.Node;
 import dr.evomodel.arg.operators.ARGPartitioningOperator;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;

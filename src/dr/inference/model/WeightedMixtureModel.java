@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class WeightedMixtureModel extends AbstractModel implements Likelihood {
+public class WeightedMixtureModel extends AbstractModelLikelihood {
 
     public static final String MIXTURE_MODEL = "mixtureModel";
     public static final String MIXTURE_WEIGHTS = "weights";
@@ -116,14 +116,14 @@ public class WeightedMixtureModel extends AbstractModel implements Likelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
 //			new ElementRule(TreeLikelihood.class,2,2),
 //			new ElementRule(Parameter.class)
         };
     };
 
 
-    private Parameter mixtureWeights;
+    private final Parameter mixtureWeights;
     List<Likelihood> likelihoodList;
 
 

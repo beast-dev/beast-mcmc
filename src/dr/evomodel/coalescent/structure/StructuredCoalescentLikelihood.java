@@ -42,7 +42,7 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @version $Id: StructuredCoalescentLikelihood.java,v 1.20 2006/09/11 09:33:01 gerton Exp $
  */
-public class StructuredCoalescentLikelihood extends AbstractModel implements Likelihood {
+public class StructuredCoalescentLikelihood extends AbstractModelLikelihood {
 
     // PUBLIC STUFF
 
@@ -185,7 +185,7 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
     // Private and protected stuff
     // ****************************************************************
 
-    private Statistic migrationWaitingTimesStatistic = new Statistic.Abstract() {
+    private final Statistic migrationWaitingTimesStatistic = new Statistic.Abstract() {
 
         public String getStatisticName() {
             return "migrationWaitingTimes";
@@ -202,7 +202,7 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
 
     };
 
-    private Statistic coalescentWaitingTimeStatistic = new Statistic.Abstract() {
+    private final Statistic coalescentWaitingTimeStatistic = new Statistic.Abstract() {
 
         public String getStatisticName() {
             return "coalescentWaitingTime";
@@ -265,7 +265,7 @@ public class StructuredCoalescentLikelihood extends AbstractModel implements Lik
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(TreeModel.class, "The tree."),
                 new ElementRule(ColourSamplerModel.class, "The colour sampler model."),
                 new ElementRule(MigrationModel.class, "The migration model."),

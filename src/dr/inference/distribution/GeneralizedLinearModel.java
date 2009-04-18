@@ -1,7 +1,6 @@
 package dr.inference.distribution;
 
 import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
 import dr.math.MultivariateFunction;
@@ -15,7 +14,7 @@ import java.util.List;
 /**
  * @author Marc Suchard
  */
-public abstract class GeneralizedLinearModel extends AbstractModel implements Likelihood, MultivariateFunction {
+public abstract class GeneralizedLinearModel extends AbstractModelLikelihood implements MultivariateFunction {
 
     public static final String GLM_LIKELIHOOD = "glmModel";
 
@@ -277,7 +276,6 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
         return calculateLogLikelihood();
     }
 
-
     @Override
     public String toString() {
         return super.toString() + ": " + getLogLikelihood();
@@ -433,7 +431,7 @@ public abstract class GeneralizedLinearModel extends AbstractModel implements Li
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FAMILY),
                 new ElementRule(DEPENDENT_VARIABLES,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),

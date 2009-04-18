@@ -1,32 +1,23 @@
 package dr.evomodel.arg;
 
-import java.util.ArrayList;
-
 import dr.evomodel.arg.ARGModel.Node;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
+import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Parameter.ChangeType;
 import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
-import dr.math.distributions.LogNormalDistribution;
-import dr.math.distributions.NormalDistribution;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.XMLObject;
-import dr.xml.XMLObjectParser;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
-public class ARGRatePrior extends AbstractModel implements Likelihood{
+public class ARGRatePrior extends AbstractModelLikelihood {
 
 	public static final String ARG_RATE_PRIOR = "argRatePrior";
 	public static final String SIGMA = "sigma";
 	
-	private ARGModel arg;
-	private Parameter logNormalSigma;
+	private final ARGModel arg;
+	private final Parameter logNormalSigma;
 	
 	
 	public ARGRatePrior(String name,ARGModel arg, Parameter sigma) {

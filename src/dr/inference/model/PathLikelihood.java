@@ -25,13 +25,7 @@
 
 package dr.inference.model;
 
-import dr.util.NumberFormatter;
 import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.logging.Logger;
 
 /**
  * A likelihood function which is simply the product of a set of likelihood functions.
@@ -139,6 +133,10 @@ public class PathLikelihood implements Likelihood {
         return id;
     }
 
+     public String prettyName() {
+         return Abstract.getPrettyName(this);
+     }
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
@@ -165,7 +163,7 @@ public class PathLikelihood implements Likelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule("source",
                         new XMLSyntaxRule[]{new ElementRule(Likelihood.class)}),
                 new ElementRule("destination",
@@ -182,5 +180,5 @@ public class PathLikelihood implements Likelihood {
 
     private double pathParameter;
 
-    private CompoundModel compoundModel = new CompoundModel("compoundModel");
+    private final CompoundModel compoundModel = new CompoundModel("compoundModel");
 }

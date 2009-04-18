@@ -2,7 +2,7 @@ package dr.evomodel.MSSD;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
+import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  * Date: Aug 22, 2008
  * Time: 3:26:57 PM
  */
-public class CTMCScalePrior extends AbstractModel implements Likelihood {
+public class CTMCScalePrior extends AbstractModelLikelihood {
     Parameter ctmcScale;
     TreeModel treeModel;
 
@@ -65,7 +65,7 @@ public class CTMCScalePrior extends AbstractModel implements Likelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(TreeModel.class),
                 new ElementRule(SCALEPARAMETER, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
         };

@@ -25,8 +25,7 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
+import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.distributions.GammaDistribution;
@@ -43,7 +42,7 @@ import org.w3c.dom.Element;
  * @version $Id: ExponentialMarkovModel.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class ExponentialMarkovModel extends AbstractModel implements Likelihood {
+public class ExponentialMarkovModel extends AbstractModelLikelihood {
 
     public static final String EXPONENTIAL_MARKOV_MODEL = "exponentialMarkovLikelihood";
     public static final String CHAIN_PARAMETER = "chainParameter";
@@ -144,7 +143,7 @@ public class ExponentialMarkovModel extends AbstractModel implements Likelihood 
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(JEFFREYS, true),
                 AttributeRule.newBooleanRule(REVERSE, true),
                 new ElementRule(CHAIN_PARAMETER, Parameter.class)

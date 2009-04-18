@@ -38,7 +38,7 @@ import dr.xml.*;
  * @author Alexei Drummond
  * @version $Id: TKF91Likelihood.java,v 1.17 2005/06/20 07:24:25 rambaut Exp $
  */
-public class TKF91Likelihood extends AbstractModel implements Likelihood {
+public class TKF91Likelihood extends AbstractModelLikelihood {
 
     public static final String TKF91_LIKELIHOOD = "tkf91Likelihood";
     public static final String TKF91_LENGTH_DIST = "lengthDistribution";
@@ -246,7 +246,7 @@ public class TKF91Likelihood extends AbstractModel implements Likelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(TreeModel.class),
                 new ElementRule(Alignment.class),
                 new ElementRule(GammaSiteModel.class),
@@ -254,10 +254,10 @@ public class TKF91Likelihood extends AbstractModel implements Likelihood {
         };
     };
 
-    private TreeModel treeModel;
+    private final TreeModel treeModel;
     private Alignment alignment;
     //private Alignment storedAlignment;
-    private GammaSiteModel siteModel;
-    private TKF91Model tkfModel;
+    private final GammaSiteModel siteModel;
+    private final TKF91Model tkfModel;
     private dr.evomodel.indel.HomologyRecursion recursion = null;
 }

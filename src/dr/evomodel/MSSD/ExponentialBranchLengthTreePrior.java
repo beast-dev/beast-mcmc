@@ -2,7 +2,7 @@ package dr.evomodel.MSSD;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
+import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -19,7 +19,7 @@ import dr.xml.*;
  * Date: Mar 14, 2008
  * Time: 12:47:07 PM
  */
-public class ExponentialBranchLengthTreePrior extends AbstractModel implements Likelihood {
+public class ExponentialBranchLengthTreePrior extends AbstractModelLikelihood {
 
     TreeModel treeModel;
 

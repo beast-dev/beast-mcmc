@@ -6,7 +6,7 @@ import dr.xml.*;
 /**
  * @author Marc Suchard
  */
-public class DummyModel extends AbstractModel implements Likelihood {
+public class DummyModel extends AbstractModelLikelihood {
 
     public static final String DUMMY_MODEL = "dummyModel";
 

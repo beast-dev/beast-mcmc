@@ -29,10 +29,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.Reportable;
 
 /**
@@ -42,7 +39,7 @@ import dr.xml.Reportable;
  * @version $Id: AbstractTreeLikelihood.java,v 1.16 2005/06/07 16:27:39 alexei Exp $
  */
 
-public abstract class AbstractTreeLikelihood extends AbstractModel implements Likelihood, Reportable {
+public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood implements Reportable {
 
     public AbstractTreeLikelihood(String name, PatternList patternList,
                                   TreeModel treeModel) {

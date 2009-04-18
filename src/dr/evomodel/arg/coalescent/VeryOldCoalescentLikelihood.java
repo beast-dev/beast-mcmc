@@ -49,7 +49,7 @@ import java.util.ArrayList;
  * @author Alexei Drummond
  * @version $Id: VeryOldCoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
-public class VeryOldCoalescentLikelihood extends AbstractModel implements Likelihood, Units {
+public class VeryOldCoalescentLikelihood extends AbstractModelLikelihood implements Units {
 
     // PUBLIC STUFF
 

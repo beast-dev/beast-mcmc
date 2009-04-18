@@ -27,8 +27,6 @@ package dr.gui.chart;
 
 import dr.util.NumberFormatter;
 
-import java.text.DecimalFormat;
-
 /**
  * Axis.java
  *
@@ -423,6 +421,12 @@ public interface Axis {
             double minValue = minData;
             double maxValue = maxData;
 
+            if( Double.isInfinite(minValue) || Double.isNaN(minValue) ||
+                    Double.isInfinite(maxValue) || Double.isNaN(maxValue)) {
+                // I am not sure which exception is appropriate here.
+                throw new RuntimeException("Bad values in trace file, can't calibrate");
+            }
+            
             if (minAxisFlag==AT_ZERO ) {
                 minValue = 0;
             } else if (minAxisFlag == AT_VALUE) {

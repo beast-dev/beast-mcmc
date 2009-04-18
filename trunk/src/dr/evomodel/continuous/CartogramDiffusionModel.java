@@ -54,13 +54,10 @@ public class CartogramDiffusionModel extends MultivariateDiffusionModel {
             return Double.NEGATIVE_INFINITY;
 
         double distance = mappedStop.distance(mappedStart); // Euclidean distance in mapped space
-//        double distance = realStart.distance(realStop); // Euclidean distance in real space
-
         double inverseVariance = precision.getParameterValue(0) / time;
-        // TODO Check!  
         // I believe this is a 2D (not 1D) Normal diffusion approx; hence the precision is squared
         // in the normalization constant
-        return - LOG2PI + Math.log(inverseVariance) - 0.5*(distance * distance * inverseVariance);
+        return -LOG2PI + Math.log(inverseVariance) - 0.5*(distance * distance * inverseVariance);
     }
 
     protected void calculatePrecisionInfo() {
@@ -93,17 +90,20 @@ public class CartogramDiffusionModel extends MultivariateDiffusionModel {
              if (xGridSize <= 1 || yGridSize <= 1)
                 throw new XMLParseException("Strictly positive grid sizes required");
 
-             String fileName = xo.getStringAttribute(FILENAME);
+             CartogramMapping mapping = new CartogramMapping(xGridSize, yGridSize, boundingBox);
+
+             String fileName = xo.getAttribute(FILENAME,"NONE");
 
              Logger.getLogger("dr.evomodel.continuous").info(
-                "Loading cartogram file: " + fileName +"\n"
-             );
+                    "Loading cartogram file: "+fileName+"\n");
 
-             CartogramMapping mapping = new CartogramMapping(xGridSize, yGridSize, boundingBox);
-             try {
-                 mapping.readCartogramOutput(fileName);
-             } catch (IOException e) {
-                 throw new XMLParseException(e.getMessage());
+             if (xo.hasAttribute(FILENAME)) {
+                 
+                try {
+                    mapping.readCartogramOutput(fileName);
+                } catch (IOException e) {
+                    throw new XMLParseException(e.getMessage());
+                }
              }
 
              Parameter diffusionParam = (Parameter) xo.getChild(Parameter.class);
@@ -125,7 +125,7 @@ public class CartogramDiffusionModel extends MultivariateDiffusionModel {
 
          private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                  new ElementRule(Parameter.class),
-                 AttributeRule.newStringRule(FILENAME),
+                 AttributeRule.newStringRule(FILENAME,true),
                  AttributeRule.newIntegerRule(XSIZE),
                  AttributeRule.newIntegerRule(YSIZE),
                  new ElementRule(BOUNDING_BOX, new XMLSyntaxRule[]{

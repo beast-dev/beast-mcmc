@@ -49,9 +49,9 @@ public class AlignmentParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        SimpleAlignment alignment = new SimpleAlignment();
+        final SimpleAlignment alignment = new SimpleAlignment();
 
-        DataType dataType = DataTypeUtils.getDataType(xo);
+        final DataType dataType = DataTypeUtils.getDataType(xo);
 
         if (dataType == null) {
             throw new XMLParseException("dataType attribute expected for alignment element");
@@ -61,10 +61,9 @@ public class AlignmentParser extends AbstractXMLObjectParser {
 
         for (int i = 0; i < xo.getChildCount(); i++) {
 
-            Object child = xo.getChild(i);
+            final Object child = xo.getChild(i);
             if (child instanceof Sequence) {
-                Sequence seq = (Sequence) child;
-                alignment.addSequence(seq);
+                alignment.addSequence((Sequence) child);
             } else if (child instanceof DataType) {
                 // already dealt with
             } else {
@@ -72,17 +71,12 @@ public class AlignmentParser extends AbstractXMLObjectParser {
             }
         }
 
-        if (xo.hasAttribute("id")) {
-            Logger.getLogger("dr.evoxml").info("Read alignment, '" + xo.getId() + "':" +
-                    "\n  Sequences = " + alignment.getSequenceCount() +
-                    "\n      Sites = " + alignment.getSiteCount() +
-                    "\n   Datatype = " + alignment.getDataType().getDescription());
-        } else {
-            Logger.getLogger("dr.evoxml").info("Read alignment:" +
-                    "\n  Sequences = " + alignment.getSequenceCount() +
-                    "\n      Sites = " + alignment.getSiteCount() +
-                    "\n   Datatype = " + alignment.getDataType().getDescription());
-        }
+        final Logger logger = Logger.getLogger("dr.evoxml");
+        logger.info("Read alignment" + (xo.hasAttribute("id") ? ", ':" + xo.getId() : ":") +
+                "\n  Sequences = " + alignment.getSequenceCount() +
+                "\n      Sites = " + alignment.getSiteCount() +
+                "\n   Datatype = " + alignment.getDataType().getDescription());
+
         return alignment;
     }
 

@@ -160,9 +160,6 @@ public final class MarkovChain {
             final MCMCOperator mcmcOperator = schedule.getOperator(op);
 
             final double oldScore = currentScore;
-            // not used and why must it be a "compund like"?
-            // String oldMessage =
-            // ((CompoundLikelihood)likelihood).getDiagnosis();
 
             // assert Profiler.startProfile("Store");
 
@@ -191,7 +188,6 @@ public final class MarkovChain {
                     hastingsRatio = ((SimpleMetropolizedGibbsOperator) mcmcOperator).operate(prior, likelihood);
                 } else if( mcmcOperator instanceof AbstractImportanceDistributionOperator ) {
                     hastingsRatio = ((AbstractImportanceDistributionOperator) mcmcOperator).operate(prior, likelihood);
-
                 } else {
                     hastingsRatio = mcmcOperator.operate();
                 }
@@ -278,7 +274,7 @@ public final class MarkovChain {
 
                 // assert Profiler.stopProfile("Restore");
 
-                if( currentState < fullEvaluationCount ) {
+                if( usingFullEvaluation ) {
                     // This is a test that the state is correctly restored. The
                     // restored state is fully evaluated and the likelihood compared with
                     // that before the operation was made.

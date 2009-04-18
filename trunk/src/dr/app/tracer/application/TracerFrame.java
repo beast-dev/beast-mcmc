@@ -49,11 +49,11 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private JLabel progressLabel;
     private JProgressBar progressBar;
 
-    private java.util.List<LogFileTraces> traceLists = new ArrayList<LogFileTraces>();
-    private java.util.List<TraceList> currentTraceLists = new ArrayList<TraceList>();
+    private final java.util.List<LogFileTraces> traceLists = new ArrayList<LogFileTraces>();
+    private final java.util.List<TraceList> currentTraceLists = new ArrayList<TraceList>();
     private CombinedTraces combinedTraces = null;
 
-    private java.util.List<String> commonTraceNames = new ArrayList<String>();
+    private final java.util.List<String> commonTraceNames = new ArrayList<String>();
     private boolean homogenousTraceFiles = true;
 
     private int dividerLocation = -1;
@@ -85,6 +85,11 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         getZoomWindowAction().setEnabled(false);
 
+        AbstractAction importAction = new AbstractAction("Import Trace File...") {
+            public void actionPerformed(ActionEvent ae) {
+                doImport();
+            }
+        };
         setImportAction(importAction);
         setExportAction(exportDataAction);
 
@@ -416,8 +421,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         java.util.List<String> selectedTraces = new ArrayList<String>();
-        for (int i = 0; i < selRows.length; i++) {
-            selectedTraces.add(commonTraceNames.get(selRows[i]));
+        for( int selRow : selRows ) {
+            selectedTraces.add(commonTraceNames.get(selRow));
         }
 
         if (currentTraceLists.size() == 0 || isIncomplete) {
@@ -453,7 +458,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     class AnalyseTraceTask extends LongTask {
 
         class AnalysisStack<T> {
-            private java.util.List<T> jobs = new ArrayList<T>();
+            private final java.util.List<T> jobs = new ArrayList<T>();
 
             public synchronized void add(T job) {
                 jobs.add(job);
@@ -472,7 +477,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
         }
 
-        private AnalysisStack<TraceList> analysisStack = new AnalysisStack<TraceList>();
+        private final AnalysisStack<TraceList> analysisStack = new AnalysisStack<TraceList>();
 
         public AnalyseTraceTask() {
         }
@@ -628,14 +633,13 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
 
     public final void doImport() {
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = new JFileChooser(openDefaultDirectory);
         chooser.setMultiSelectionEnabled(true);
         //chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-        int returnVal = chooser.showOpenDialog(this);
+        final int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = chooser.getSelectedFiles();
             LogFileTraces[] traces = new LogFileTraces[files.length];
-
 
             for (int i = 0; i < files.length; i++) {
                 traces[i] = new LogFileTraces(files[i].getName(), files[i]);
@@ -661,12 +665,28 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     }
 
+    private File openDefaultDirectory = null;
+    private void setDefaultDir(File file) {
+        final String s = file.getAbsolutePath();
+        String p = s.substring(0, s.length() - file.getName().length());
+        openDefaultDirectory = new File(p);
+        if( ! openDefaultDirectory.isDirectory() ) {
+            openDefaultDirectory = null;
+        }
+    }
+
     protected void processTraces(final LogFileTraces[] tracesArray) {
 
         final JFrame frame = this;
+
+        // set default dir to directory of last file
+        setDefaultDir(tracesArray[tracesArray.length-1].getFile());
+
         if (tracesArray.length == 1) {
             try {
                 final LogFileTraces traces = tracesArray[0];
+
+
                 final String fileName = traces.getName();
                 final ProgressMonitorInputStream in = new ProgressMonitorInputStream(
                         this,
@@ -1056,8 +1076,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     class StatisticTableModel extends AbstractTableModel {
         final String[] columnNames = {"Statistic", "Mean", "ESS"};
 
-        private DecimalFormat formatter = new DecimalFormat("0.###E0");
-        private DecimalFormat formatter2 = new DecimalFormat("####0.###");
+        private final DecimalFormat formatter = new DecimalFormat("0.###E0");
+        private final DecimalFormat formatter2 = new DecimalFormat("####0.###");
 
         public int getColumnCount() {
             return columnNames.length;
@@ -1165,82 +1185,75 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return bayesFactorsAction;
     }
 
-    private AbstractAction demographicAction = new AbstractAction(AnalysisMenuFactory.DEMOGRAPHIC_RECONSTRUCTION) {
+    private final AbstractAction demographicAction = new AbstractAction(AnalysisMenuFactory.DEMOGRAPHIC_RECONSTRUCTION) {
         public void actionPerformed(ActionEvent ae) {
             doDemographic(false);
         }
     };
 
-    private AbstractAction bayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.BAYESIAN_SKYLINE_RECONSTRUCTION) {
+    private final AbstractAction bayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.BAYESIAN_SKYLINE_RECONSTRUCTION) {
         public void actionPerformed(ActionEvent ae) {
             doBayesianSkyline(false);
         }
     };
 
-    private AbstractAction lineagesThroughTimeAction = new AbstractAction(AnalysisMenuFactory.LINEAGES_THROUGH_TIME) {
+    private final AbstractAction lineagesThroughTimeAction = new AbstractAction(AnalysisMenuFactory.LINEAGES_THROUGH_TIME) {
         public void actionPerformed(ActionEvent ae) {
             doLineagesThroughTime(false);
         }
     };
 
-    private AbstractAction traitThroughTimeAction = new AbstractAction(AnalysisMenuFactory.TRAIT_THROUGH_TIME) {
+    private final AbstractAction traitThroughTimeAction = new AbstractAction(AnalysisMenuFactory.TRAIT_THROUGH_TIME) {
         public void actionPerformed(ActionEvent ae) {
             doTraitThroughTime(false);
         }
     };
 
-    private AbstractAction createTemporalAnalysisAction = new AbstractAction(AnalysisMenuFactory.CREATE_TEMPORAL_ANALYSIS) {
+    private final AbstractAction createTemporalAnalysisAction = new AbstractAction(AnalysisMenuFactory.CREATE_TEMPORAL_ANALYSIS) {
         public void actionPerformed(ActionEvent ae) {
             doCreateTemporalAnalysis();
         }
     };
 
-    private AbstractAction addDemographicAction = new AbstractAction(AnalysisMenuFactory.ADD_DEMOGRAPHIC_RECONSTRUCTION) {
+    private final AbstractAction addDemographicAction = new AbstractAction(AnalysisMenuFactory.ADD_DEMOGRAPHIC_RECONSTRUCTION) {
         public void actionPerformed(ActionEvent ae) {
             doDemographic(true);
         }
     };
 
-    private AbstractAction addBayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.ADD_BAYESIAN_SKYLINE_RECONSTRUCTION) {
+    private final AbstractAction addBayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.ADD_BAYESIAN_SKYLINE_RECONSTRUCTION) {
         public void actionPerformed(ActionEvent ae) {
             doBayesianSkyline(true);
         }
     };
 
-    private AbstractAction addTimeDensity = new AbstractAction(AnalysisMenuFactory.ADD_TIME_DENSITY) {
+    private final AbstractAction addTimeDensity = new AbstractAction(AnalysisMenuFactory.ADD_TIME_DENSITY) {
         public void actionPerformed(ActionEvent ae) {
             doAddTimeDensity();
         }
     };
 
-    private AbstractAction bayesFactorsAction = new AbstractAction(AnalysisMenuFactory.CALCULATE_BAYES_FACTORS) {
+    private final AbstractAction bayesFactorsAction = new AbstractAction(AnalysisMenuFactory.CALCULATE_BAYES_FACTORS) {
         public void actionPerformed(ActionEvent ae) {
             doCalculateBayesFactors();
         }
     };
 
-    private AbstractAction removeTraceAction = new AbstractAction() {
+    private final AbstractAction removeTraceAction = new AbstractAction() {
         public void actionPerformed(ActionEvent ae) {
             removeTraceList();
         }
     };
 
-    private AbstractAction importAction = new AbstractAction("Import Trace File...") {
-        public void actionPerformed(ActionEvent ae) {
-            doImport();
-        }
-    };
-
-    private AbstractAction exportDataAction = new AbstractAction("Export Data...") {
+    private final AbstractAction exportDataAction = new AbstractAction("Export Data...") {
         public void actionPerformed(ActionEvent ae) {
             doExportData();
         }
     };
 
-    private AbstractAction exportPDFAction = new AbstractAction("Export PDF...") {
+    private final AbstractAction exportPDFAction = new AbstractAction("Export PDF...") {
         public void actionPerformed(ActionEvent ae) {
             doExportPDF();
         }
     };
-
 }

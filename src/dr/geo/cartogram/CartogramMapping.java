@@ -64,7 +64,7 @@ public class CartogramMapping {
             }
         }
         reader.close();
-
+        loaded = true;
     }
 
     public String toString() {
@@ -77,6 +77,9 @@ public class CartogramMapping {
 
         if (!boundingBox.contains(inPt))
             return null;
+
+        if (!loaded)
+            return inPt;
 
         final double offsetX = (inPt.getX() - boundingBox.getMinX()) / dX;
         final double offsetY = (inPt.getY() - boundingBox.getMinY()) / dY;
@@ -155,4 +158,5 @@ public class CartogramMapping {
     private int gridXSize, gridYSize;
     private double dX, dY;
     private Point2D[][] gridPt;
+    private boolean loaded = false;
 }

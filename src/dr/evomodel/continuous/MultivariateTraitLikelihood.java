@@ -429,11 +429,6 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
     /**
      * @return the log columns.
      */
-    public dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[]{
-                new LikelihoodColumn(getId())
-        };
-    }
 
     private String[] attributeLabel = null;
 
@@ -467,17 +462,6 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
         }
         return value;
     }
-
-    private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) {
-            super(label);
-        }
-
-        public double getDoubleValue() {
-            return getLogLikelihood();
-        }
-    }
-
 
     public void randomize(Parameter trait) {
         diffusionModel.randomize(trait);

@@ -1389,7 +1389,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     }
 
     /**
-     * @param node
+     * @param nodeRef
      * @return the rate parameter associated with this node.
      */
     public final double getNodeRate(NodeRef nodeRef, int partition) {

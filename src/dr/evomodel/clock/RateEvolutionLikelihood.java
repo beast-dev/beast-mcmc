@@ -182,29 +182,6 @@ public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood im
 
     }
 
-    // **************************************************************
-    // Loggable IMPLEMENTATION
-    // **************************************************************
-
-    /**
-     * @return the log columns.
-     */
-    public dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[]{
-                new RateEvolutionLikelihood.LikelihoodColumn(getId())
-        };
-    }
-
-    private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) {
-            super(label);
-        }
-
-        public double getDoubleValue() {
-            return getLogLikelihood();
-        }
-    }
-
     public double getBranchRate(Tree tree, NodeRef node) {
 
         if (!ratesKnown) {

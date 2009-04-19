@@ -148,27 +148,4 @@ public class RandomWalkModel extends AbstractModelLikelihood {
 
     public void makeDirty() {
     }
-
-    // **************************************************************
-    // Loggable IMPLEMENTATION
-    // **************************************************************
-
-    /**
-     * @return the log columns.
-     */
-    public dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[]{
-                new LikelihoodColumn(getId())
-        };
-    }
-
-    private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) {
-            super(label);
-        }
-
-        public double getDoubleValue() {
-            return getLogLikelihood();
-        }
-    }
 }

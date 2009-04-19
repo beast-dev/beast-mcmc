@@ -42,10 +42,10 @@ public class RandomWalkModel extends AbstractModelLikelihood {
         } else
             data.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, lower, data.getDimension()));
 
-        Logger.getLogger("dr.inference").info("Setting up a first-order random walk:\n");
-        Logger.getLogger("dr.inference").info("\tData parameter: " + data.getId() + "\n");
-        Logger.getLogger("dr.inference").info("\tOn scale: " + (logScale ? "log" : "real") + "\n");
-        Logger.getLogger("dr.inference").info("\tDistribution: " + distribution.getId() + "\n");
+        Logger.getLogger("dr.inference").info("Setting up a first-order random walk:");
+        Logger.getLogger("dr.inference").info("\tData parameter: " + data.getId());
+        Logger.getLogger("dr.inference").info("\tOn scale: " + (logScale ? "log" : "real"));
+        Logger.getLogger("dr.inference").info("\tDistribution: " + distribution.getId());
         Logger.getLogger("dr.inference").info("\tIf you publish results using this model, please cite Suchard and Lemey (in preparation)\n");
     }
 

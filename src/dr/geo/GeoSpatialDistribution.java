@@ -6,6 +6,9 @@ import dr.inference.model.Parameter;
 import dr.math.distributions.MultivariateDistribution;
 import dr.xml.*;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
@@ -18,6 +21,8 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     public static final String DATA = "data";
     public static final String TYPE = "geoSpatial";
     public static final String NODE_LABEL = "taxon";
+
+    public static final int dimPoint = 2; // Assumes 2D points only
 
     public GeoSpatialDistribution(SpatialTemporalPolygon region) {
         this.region = region;
@@ -62,18 +67,42 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
 
             String label = xo.getAttribute(NODE_LABEL,"");
 
-            SpatialTemporalPolygon region = (SpatialTemporalPolygon) xo.getChild(SpatialTemporalPolygon.class);
+            List<GeoSpatialDistribution> geoSpatialDistributions = new ArrayList<GeoSpatialDistribution>();
+            for(int i=0; i<xo.getChildCount(); i++) {
+                if (xo.getChild(i) instanceof SpatialTemporalPolygon) {
+                    SpatialTemporalPolygon region = (SpatialTemporalPolygon) xo.getChild(i);
+                    geoSpatialDistributions.add(
+                            new GeoSpatialDistribution(label,region)
+                    );
+                }
+            }
 
-            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new GeoSpatialDistribution(label,region));
-
+            List<Parameter> parameters = new ArrayList<Parameter>();
             XMLObject cxo = (XMLObject) xo.getChild(DATA);
             for (int j = 0; j < cxo.getChildCount(); j++) {
                 Parameter spatialParameter = (Parameter) cxo.getChild(j);
-                if (spatialParameter.getDimension() != 2)
-                    throw new RuntimeException("Spatial priors currently only work in 2D");
-                likelihood.addData(spatialParameter);
+                parameters.add(spatialParameter);
             }
-            return likelihood;
+
+            if (geoSpatialDistributions.size() == 1) {
+                MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(geoSpatialDistributions.get(0));
+                for(Parameter spatialParameter : parameters) {
+                    if (spatialParameter.getDimension() != dimPoint)
+                        throw new XMLParseException("Spatial priors currently only work in "+dimPoint+"D");
+                    likelihood.addData(spatialParameter);
+                }
+                return likelihood;
+            }
+
+            if (parameters.size() == 1) {
+                Parameter parameter = parameters.get(0);
+                if (parameter.getDimension() % dimPoint != 0)
+                    throw new XMLParseException("Spatial priors currently only work in "+dimPoint+"D");
+                return new GeoSpatialCollectionModel(xo.getId(),parameter,geoSpatialDistributions);
+            }
+
+            throw new XMLParseException("Multiple separate parameters and multiple regions not yet implemented");
+
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -82,7 +111,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(NODE_LABEL,true),
-                new ElementRule(SpatialTemporalPolygon.class),
+                new ElementRule(SpatialTemporalPolygon.class,1,Integer.MAX_VALUE),
                 new ElementRule(DATA,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}
                 )

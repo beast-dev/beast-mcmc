@@ -633,29 +633,6 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
         return true;
     }
 
-    // **************************************************************
-    // Loggable IMPLEMENTATION
-    // **************************************************************
-
-    /**
-     * @return the log columns.
-     */
-    public final dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[]{
-                new LikelihoodColumn(getId())
-        };
-    }
-
-    private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) {
-            super(label);
-        }
-
-        public double getDoubleValue() {
-            return getLogLikelihood();
-        }
-    }
-
     public String toString() {
         return Double.toString(getLogLikelihood());
     }

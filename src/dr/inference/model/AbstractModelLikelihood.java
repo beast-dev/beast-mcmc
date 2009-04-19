@@ -1,5 +1,8 @@
 package dr.inference.model;
 
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.NumberColumn;
+
 /**
  * @author joseph
  *         Date: 16/04/2009
@@ -20,23 +23,13 @@ public abstract class AbstractModelLikelihood extends AbstractModel implements L
     // Loggable IMPLEMENTATION
     // **************************************************************
 
-    /**
-     * @return the log columns.
-     */
-    public dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[]{
-                new LikelihoodColumn(getId())
+    public LogColumn[] getColumns() {
+        return new LogColumn[]{
+                new NumberColumn(getId()) {
+                    public double getDoubleValue() {
+                        return getLogLikelihood();
+                    }
+                }
         };
     }
-
-    protected class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) {
-            super(label);
-        }
-
-        public double getDoubleValue() {
-            return getLogLikelihood();
-        }
-    }
-
 }

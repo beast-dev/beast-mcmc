@@ -68,7 +68,7 @@ public interface OperatorSchedule {
     /**
      * @return the minimum number of times an operator has been called
      */
-    int getMinimumOperatorCount();
+    int getMinimumAcceptAndRejectCount();
 
     final int DEFAULT_SCHEDULE = 0;
     final int LOG_SCHEDULE = 1;

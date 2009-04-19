@@ -128,10 +128,10 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		optimizationSchedule = schedule;
 	}
 
-    public int getMinimumOperatorCount() {
+    public int getMinimumAcceptAndRejectCount() {
         int minCount = Integer.MAX_VALUE;
-        for (MCMCOperator op : operators) {
-            if (op.getCount() < minCount) {
+        for( MCMCOperator op : operators ) {
+            if( op.getAcceptCount() < minCount || op.getRejectCount() < minCount ) {
                 minCount = op.getCount();
             }
         }
@@ -154,7 +154,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		return columns;
 	}
 
-	private class OperatorColumn extends NumberColumn {
+    private class OperatorColumn extends NumberColumn {
 		private MCMCOperator op;
 
 		public OperatorColumn(String label, MCMCOperator op) {

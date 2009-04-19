@@ -5,6 +5,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.sitemodel.SiteModel;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
@@ -78,10 +79,14 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
 
         this.reportAsMultivariate = reportAsMultivariate;
 
-//		if (cacheBranches)
-//			cachedLikelihoods = new HashMap<NodeRef, Double>();
-
-
+        this.cacheBranches = cacheBranches;
+        if (cacheBranches) {
+            cachedLogLikelihoods = new double[treeModel.getNodeCount()];
+            storedCachedLogLikelihood = new double[treeModel.getNodeCount()];
+            validLogLikelihoods = new boolean[treeModel.getNodeCount()];
+            storedValidLogLikelihoods = new boolean[treeModel.getNodeCount()];            
+        }
+		
         this.scaleByTime = scaleByTime;
         this.useTreeLength = useTreeLength;
 
@@ -131,9 +136,93 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
+        if (!cacheBranches) {
+            likelihoodKnown = false;
+            if (model == treeModel)
+                recalculateTreeLength();
+            return;
+        }
+
+        if (model == diffusionModel) {
+            updateAllNodes();
+        }
+
+        // fireTreeEvents sends two events here when a node trait is changed,
+        // ignoring object instance Parameter case
+
+        else if (model == treeModel) {
+            if (object instanceof TreeModel.TreeChangedEvent) {
+                TreeModel.TreeChangedEvent event = (TreeModel.TreeChangedEvent) object;
+                if (event.isHeightChanged()) {
+                    recalculateTreeLength();
+//                    if (cacheBranches) {
+                    if (useTreeLength || (scaleByTime && treeModel.isRoot(event.getNode())))
+                        updateAllNodes();
+                    else {
+                        updateNodeAndChildren(event.getNode());
+                    }
+//                    } else {
+//                        likelihoodKnown = false; // recompute everything
+//                    }
+                } else if (event.isNodeParameterChanged()) {
+//                    System.err.println("catch model tree event  parameter = "+event.getParameter().getId());
+//                    System.exit(-1);
+//                    if (cacheBranches) {
+                    updateNodeAndChildren(event.getNode());
+//                    } else {
+//                        likelihoodKnown = false; // recompute everything
+//                    }
+                } else if (event.isNodeChanged()) {
+//                    if (cacheBranches)
+                    recalculateTreeLength();
+                    if (useTreeLength || (scaleByTime && treeModel.isRoot(event.getNode())))
+                        updateAllNodes();
+                    else {
+                        updateNodeAndChildren(event.getNode());
+                    }
+//                    else
+//                        likelihoodKnown = false; // recompute everything
+                } else {
+                    throw new RuntimeException("Unexpected TreeModel TreeChangedEvent occuring in MultivariateTraitLikelihood");
+                }
+            } else if (object instanceof Parameter) {
+                // Ignoring                
+            } else {
+                throw new RuntimeException("Unexpected TreeModel event occuring in MultivariateTraitLikelihood");
+            }
+        } else if (model == rateModel) {
+            if (index == -1) {
+//                if (cacheBranches)
+                updateAllNodes();
+//                else
+//                    likelihoodKnown = false; // recompute everything
+            } else {
+//                if (cacheBranches)
+                updateNode(treeModel.getNode(index));
+//                else
+                likelihoodKnown = false; // recompute everything
+            }
+        } else {
+            throw new RuntimeException("Unknown componentChangedEvent");
+        }
+    }
+
+    private void updateAllNodes() {
+        for(int i=0; i<treeModel.getNodeCount(); i++)
+            validLogLikelihoods[i] = false;
         likelihoodKnown = false;
-        if (model == treeModel)
-            recalculateTreeLength();
+    }
+
+    private void updateNode(NodeRef node) {
+        validLogLikelihoods[node.getNumber()] = false;
+        likelihoodKnown = false;
+    }
+
+    private void updateNodeAndChildren(NodeRef node) {
+        validLogLikelihoods[node.getNumber()] = false;
+        for(int i=0; i<treeModel.getChildCount(node); i++)
+            validLogLikelihoods[treeModel.getChild(node,i).getNumber()] = false;
+        likelihoodKnown = false;
     }
 
 
@@ -161,8 +250,10 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
 
     protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
 
-        likelihoodKnown = false;
-
+        // All parameter changes are handled first by the treeModel
+        if (!cacheBranches)
+            likelihoodKnown = false;
+        
     }
 
     // **************************************************************
@@ -176,6 +267,11 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
         storedTreeLength = treeLength;
+
+        if (cacheBranches) {
+            System.arraycopy(cachedLogLikelihoods,0,storedCachedLogLikelihood,0,treeModel.getNodeCount());
+            System.arraycopy(validLogLikelihoods,0,storedValidLogLikelihoods,0,treeModel.getNodeCount());
+        }
     }
 
     /**
@@ -185,6 +281,15 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
         treeLength = storedTreeLength;
+
+        if (cacheBranches) {
+            double[] tmp = storedCachedLogLikelihood;
+            storedCachedLogLikelihood = cachedLogLikelihoods;
+            cachedLogLikelihoods = tmp;
+            boolean[] tmp2 = storedValidLogLikelihoods;
+            storedValidLogLikelihoods = validLogLikelihoods;
+            validLogLikelihoods = tmp2;
+        }
     }
 
     protected void acceptState() {
@@ -225,6 +330,8 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
 
     public void makeDirty() {
         likelihoodKnown = false;
+        if (cacheBranches)
+            updateAllNodes();
     }
 
     /**
@@ -234,7 +341,12 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
      */
     public double calculateLogLikelihood() {
 
-        double logLikelihood = traitLogLikelihood(null, treeModel.getRoot());
+        double logLikelihood;
+
+        if (!cacheBranches)
+            logLikelihood = traitLogLikelihood(null, treeModel.getRoot());
+        else
+            logLikelihood = traitCachedLogLikelihood(null, treeModel.getRoot());
         if (logLikelihood > maxLogLikelihood) {
             maxLogLikelihood = logLikelihood;
         }
@@ -245,21 +357,43 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
         return maxLogLikelihood;
     }
 
+    private double traitCachedLogLikelihood(double[] parentTrait, NodeRef node) {
+
+        double logL = 0.0;
+        double[] childTrait = null;
+        final int nodeNumber = node.getNumber();
+
+        if (!treeModel.isRoot(node)) {
+
+            if (!validLogLikelihoods[nodeNumber]) { // recompute
+
+                childTrait = treeModel.getMultivariateNodeTrait(node,traitName);
+                double time = getRescaledBranchLength(node);
+                if (parentTrait == null)
+                    parentTrait = treeModel.getMultivariateNodeTrait(treeModel.getParent(node),traitName);
+                logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
+                cachedLogLikelihoods[nodeNumber] = logL;
+                validLogLikelihoods[nodeNumber] = true;
+            } else
+                logL = cachedLogLikelihoods[nodeNumber];            
+        }
+
+        int childCount = treeModel.getChildCount(node);
+        for (int i = 0; i < childCount; i++) {
+            logL += traitCachedLogLikelihood(childTrait, treeModel.getChild(node, i));
+        }
+
+        return logL;
+    }
+
     private double traitLogLikelihood(double[] parentTrait, NodeRef node) {
 
         double logL = 0.0;
         double[] childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
 
         if (parentTrait != null) {
+
             double time = getRescaledBranchLength(node);
-
-//			if (inSubstitutionTime) {
-//				time *= treeModel.getNodeRate(node);
-//			}
-
-//			if (cachedLikelihoods != null && cachedLikelihoods.containsKey(node)) {
-//				logL = cachedLikelihoods.get(node);
-//			} else {
             logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
             if (new Double(logL).isNaN()) {
                 System.err.println("MultivariateTraitLikelihood: likelihood is undefined");
@@ -273,10 +407,6 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
                     System.err.println("off diagonal = " + csMatrix.getOffDiagonal());
                 }
             }
-//				if (cachedLikelihoods != null) {
-//					cachedLikelihoods.put(node, logL);
-//				}
-//			}
         }
         int childCount = treeModel.getChildCount(node);
         for (int i = 0; i < childCount; i++) {
@@ -571,5 +701,11 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
 
     private final boolean scaleByTime;
     private final boolean useTreeLength;
+
+    private boolean cacheBranches;
+    private double[] cachedLogLikelihoods;
+    private double[] storedCachedLogLikelihood;
+    private boolean[] validLogLikelihoods;
+    private boolean[] storedValidLogLikelihoods;
 }
 

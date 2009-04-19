@@ -133,7 +133,7 @@ public class PathSamplingAnalysis {
                     System.out.println("WARNING: Burn-in larger than total number of states - using to 10%");
                 }
 
-                burnin = 0;
+//                burnin = 0;
 
                 traces.setBurnIn(burnin);
 

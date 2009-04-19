@@ -115,29 +115,6 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
         // DO NOTHING
     }
 
-    // **************************************************************
-    // Loggable IMPLEMENTATION
-    // **************************************************************
-
-    /**
-     * @return the log columns.
-     */
-    public dr.inference.loggers.LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[]{
-                new LikelihoodColumn(getId())
-        };
-    }
-
-    private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
-        public LikelihoodColumn(String label) {
-            super(label);
-        }
-
-        public double getDoubleValue() {
-            return getLogLikelihood();
-        }
-    }
-
     /**
      * @return the binomial likelihood of obtaining the gicen count in the given number of trials,
      *         when the log of the probability is logP.

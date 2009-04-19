@@ -137,8 +137,7 @@ public final class MarkovChain {
         pleaseStop = false;
         isStopped = false;
 
-        int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights
-                : 0;
+        int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights : 0;
 
         double[] logr = {0.0};
 
@@ -159,7 +158,7 @@ public final class MarkovChain {
             final int op = schedule.getNextOperatorIndex();
             final MCMCOperator mcmcOperator = schedule.getOperator(op);
 
-            final double oldScore = currentScore;
+            double oldScore = currentScore;
 
             // assert Profiler.startProfile("Store");
 
@@ -238,7 +237,7 @@ public final class MarkovChain {
                 }
 
                 accept = mcmcOperator instanceof GibbsOperator || acceptor.accept(oldScore, score, hastingsRatio, logr);
-                
+
                 deviation = score - oldScore;
             }
 
@@ -260,6 +259,8 @@ public final class MarkovChain {
                         otfcounter = onTheFlyOperatorWeights;
                     }
                 }
+
+                oldScore = score; // for the usingFullEvaluation test
             } else {
                 if( DEBUG ) {
                     System.out.println("** Move rejected: new score = " + score
@@ -271,26 +272,24 @@ public final class MarkovChain {
                 // assert Profiler.startProfile("Restore");
 
                 currentModel.restoreModelState();
+            }
+            // assert Profiler.stopProfile("Restore");
 
-                // assert Profiler.stopProfile("Restore");
+            if( usingFullEvaluation ) {
+                // This is a test that the state is correctly restored. The
+                // restored state is fully evaluated and the likelihood compared with
+                // that before the operation was made.
+                likelihood.makeDirty();
+                final double testScore = evaluate(likelihood, prior);
 
-                if( usingFullEvaluation ) {
-                    // This is a test that the state is correctly restored. The
-                    // restored state is fully evaluated and the likelihood compared with
-                    // that before the operation was made.
-                    likelihood.makeDirty();
-                    final double testScore = evaluate(likelihood, prior);
-
-                    if( Math.abs(testScore - oldScore) > 1e-6 ) {
-                        Logger.getLogger("error").severe(
-                                "State was not correctly restored after reject step.\n"
-                                        + "Likelihood before: " + oldScore
-                                        + " Likelihood after: " + testScore
-                                        + "\n" + "Operator: " + mcmcOperator
-                                        + " " + mcmcOperator.getOperatorName());
-                        fullEvaluationError = true;
-                    }
-
+                if( Math.abs(testScore - oldScore) > 1e-6 ) {
+                    final Logger logger = Logger.getLogger("error");
+                    logger.severe("State was not correctly restored after reject step.\n"
+                            + "Likelihood before: " + oldScore
+                            + " Likelihood after: " + testScore
+                            + "\n" + "Operator: " + mcmcOperator
+                            + " " + mcmcOperator.getOperatorName());
+                    fullEvaluationError = true;
                 }
             }
 
@@ -299,7 +298,7 @@ public final class MarkovChain {
             }
 
             if (usingFullEvaluation &&
-                    schedule.getMinimumOperatorCount() >= minOperatorCountForFullEvaluation &&
+                    schedule.getMinimumAcceptAndRejectCount() >= minOperatorCountForFullEvaluation &&
                     currentState >= fullEvaluationCount ) {
                 // full evaluation is only switched off when each operator has done a
                 // minimum number of operations (currently 1) and fullEvalationCount

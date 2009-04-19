@@ -54,7 +54,7 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
     }
 
     public LogColumn[] getColumns() {
-        return new LogColumn[0];  //To change body of implemented methods use File | Settings | File Templates.
+        return new LogColumn[0];
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -97,7 +97,7 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
             double sum = 0;
             for (int i = 0; i < p.getDimension(); i++)
                 sum += p.getParameterValue(i);
-            return (sum == 1.0 ? true : false);
+            return (sum == 1.0);
         }
 
         //************************************************************************

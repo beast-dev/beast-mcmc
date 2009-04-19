@@ -1,8 +1,6 @@
 package dr.evomodel.arg;
 
 import dr.evomodel.arg.ARGModel.Node;
-import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.NumberColumn;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -97,16 +95,6 @@ public class ARGRatePrior extends AbstractModelLikelihood {
 
 	public void makeDirty() {
 		
-	}
-
-	public LogColumn[] getColumns() {
-		return new LogColumn[]{
-				new NumberColumn(getId()){
-					public double getDoubleValue() {
-						return getLogLikelihood();
-					}
-				}
-			};
 	}
 
 	public String getId() {

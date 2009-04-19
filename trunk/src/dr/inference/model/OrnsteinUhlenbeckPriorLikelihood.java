@@ -2,7 +2,6 @@ package dr.inference.model;
 
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.inference.distribution.ParametricDistributionModel;
-import dr.inference.loggers.LogColumn;
 import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
@@ -314,15 +313,5 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
     }
 
     protected void acceptState() {
-    }
-
-    public LogColumn[] getColumns() {
-        return new dr.inference.loggers.LogColumn[] {
-                new dr.inference.loggers.NumberColumn(getId()) {
-                    public double getDoubleValue() {
-                        return getLogLikelihood();
-                    }
-                }
-        };
     }
 }

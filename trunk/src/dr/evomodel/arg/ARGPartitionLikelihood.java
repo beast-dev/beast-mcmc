@@ -1,7 +1,5 @@
 package dr.evomodel.arg;
 
-import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.NumberColumn;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 
@@ -45,19 +43,6 @@ public abstract class ARGPartitionLikelihood extends AbstractModelLikelihood {
 	
 	public int getReassortmentNodeCount(){
 		return arg.getReassortmentNodeCount();
-	}
-	
-	
-	public LogColumn[] getColumns() {
-		return new LogColumn[]{
-			new NumberColumn(getId()){
-				
-				public double getDoubleValue() {
-					return getLogLikelihood();
-				}
-				
-			}
-		};
 	}
 	
 	public Model getModel() {

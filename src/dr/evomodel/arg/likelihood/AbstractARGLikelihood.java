@@ -16,6 +16,9 @@ import dr.evomodel.arg.ARGModel;
 import dr.evomodel.treelikelihood.LikelihoodCore;
 import dr.inference.model.*;
 
+import java.util.Set;
+import java.util.HashSet;
+
 /**
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
  *
@@ -120,6 +123,18 @@ public abstract class AbstractARGLikelihood extends AbstractModelLikelihood impl
         likelihoodKnown = false;
     }
 
+    protected Set<NodeRef> lazyUpdates = new HashSet<NodeRef>();
+
+//    protected void lazyUpdateNodeAndChildren(NodeRef argNode) {
+//        lazyUpdates.add(argNode);
+//    }
+//
+//    protected void clearLazyUpdateNodeAndChild() {
+//        lazyUpdates.clear();
+//    }
+//
+//    protected Set<NodeRef> 
+
     /**
      * Set update flag for a node and its children
      */
@@ -183,8 +198,6 @@ public abstract class AbstractARGLikelihood extends AbstractModelLikelihood impl
     // **************************************************************
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        //System.err.println("hi");
-        //System.exit(-1);
         likelihoodKnown = false;
     }
 

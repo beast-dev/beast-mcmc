@@ -46,37 +46,37 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
     public final double doOperation() throws OperatorFailedException {
         double logq = 0;
 
-        int len = partitioningParameters.getNumberOfParameters();
+        final int len = partitioningParameters.getNumberOfParameters();
 
         if (len == 0) {
             return 0;
         }
-        
+
+        boolean[] updatePartition = new boolean[arg.getNumberOfPartitions()];
+
         if(tossAll){
         	for(int i = 0 ; i < len; i++){
-        		logq += doFlip(i);
+        		logq += doFlip(i,updatePartition);
             }	
         }else{
-        	logq = doFlip(MathUtils.nextInt(len));
+        	logq = doFlip(MathUtils.nextInt(len),updatePartition);
         }
-        
-        
 
-        arg.fireModelChanged(new PartitionChangedEvent(partitioningParameters));
+        arg.fireModelChanged(new PartitionChangedEvent(partitioningParameters, updatePartition));
         return logq;
     }
     
-    private double doFlip(int i) throws OperatorFailedException {
+    private double doFlip(int i, boolean[] updatePartition) throws OperatorFailedException {
     	if (isRecombination) {
-            return doRecombination(partitioningParameters.getParameter(i));
+            return doRecombination(partitioningParameters.getParameter(i),updatePartition);
         } 
         
-    	return doReassortment(partitioningParameters.getParameter(i));
+    	return doReassortment(partitioningParameters.getParameter(i),updatePartition);
         
     }
 
 
-    private double doRecombination(Parameter partition) throws OperatorFailedException {
+    private double doRecombination(Parameter partition, boolean[] updatePartition) throws OperatorFailedException {
 
         assert checkValidRecombinationPartition(partition);
 
@@ -93,8 +93,10 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         if (MathUtils.nextBoolean()) {
             //Move break right 1
             partition.setParameterValueQuietly(currentBreakLocation, 0.0);
+            updatePartition[currentBreakLocation] = true;
         } else {
             partition.setParameterValueQuietly(currentBreakLocation - 1, 1.0);
+            updatePartition[currentBreakLocation-1] = true;
         }
 
         if (!checkValidRecombinationPartition(partition)) {
@@ -107,14 +109,15 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
 
     public static boolean checkValidRecombinationPartition(Parameter partition) {
         int l = partition.getDimension();
-        if ((partition.getParameterValue(0) == 0 && partition.getParameterValue(l - 1) == 1))
-            return true;
-
-        return false;
+//        if ((partition.getParameterValue(0) == 0 && partition.getParameterValue(l - 1) == 1))
+//            return true;
+//
+//        return false;
+        return (partition.getParameterValue(0) == 0 && partition.getParameterValue(l - 1) == 1);
     }
 
 
-    private double doReassortment(Parameter partition) throws OperatorFailedException {
+    private double doReassortment(Parameter partition, boolean[] updatePartition) throws OperatorFailedException {
 
         assert checkValidReassortmentPartition(partition);
 
@@ -134,6 +137,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
             } else {
                 partition.setParameterValueQuietly(a, 0);
             }
+            updatePartition[a] = true;            
         }
         
         
@@ -155,10 +159,11 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
         for (double b : a)
             sum += b;
 
-        if (sum == 0 || sum == a.length)
-            return false;
-
-        return true;
+//        if (sum == 0 || sum == a.length)
+//            return false;
+//
+//        return true;
+        return !(sum == 0 || sum == a.length);
 
     }
 
@@ -168,19 +173,24 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
     }
 
     public String getPerformanceSuggestion() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     public class PartitionChangedEvent {
         Parameter partitioning;
+        boolean[] updatePartition;
 
-        public PartitionChangedEvent(Parameter partitioning) {
+        public PartitionChangedEvent(Parameter partitioning, boolean[] updatePartition) {
             this.partitioning = partitioning;
+            this.updatePartition = updatePartition;
         }
 
         public Parameter getParameter() {
             return partitioning;
+        }
+
+        public boolean[] getUpdatedPartitions() {
+            return updatePartition;
         }
     }
 

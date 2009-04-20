@@ -1,4 +1,4 @@
-package test.dr.inference.distribution;
+package dr.inference.distribution;
 
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Parameter;

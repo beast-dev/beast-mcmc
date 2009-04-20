@@ -7,6 +7,8 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.inference.model.*;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.NumberColumn;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
@@ -328,10 +330,41 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
         return logLikelihood;
     }
 
+    public final double getLogDataLikelihood() {
+        double logLikelihood = 0;
+        for(int i=0; i<treeModel.getExternalNodeCount(); i++) {
+            NodeRef tip = treeModel.getExternalNode(i); // TODO Do not include integrated tips; how to check???
+
+            if (cacheBranches && validLogLikelihoods[tip.getNumber()])
+                logLikelihood += cachedLogLikelihoods[tip.getNumber()];
+            else {
+                NodeRef parent = treeModel.getParent(tip);
+
+                double[] tipTrait = treeModel.getMultivariateNodeTrait(tip,traitName);
+                double[] parentTrait = treeModel.getMultivariateNodeTrait(parent,traitName);
+                double time = getRescaledBranchLength(tip);
+
+                logLikelihood += diffusionModel.getLogLikelihood(parentTrait,tipTrait,time);
+            }
+        }
+        return logLikelihood;
+    }
+
     public void makeDirty() {
         likelihoodKnown = false;
         if (cacheBranches)
             updateAllNodes();
+    }
+
+    public LogColumn[] getColumns() {
+        return new LogColumn[]{
+                new LikelihoodColumn(getId()+".joint"),
+                new NumberColumn(getId()+".data") {
+                    public double getDoubleValue() {
+                        return getLogDataLikelihood();
+                    }
+                }
+        };
     }
 
     /**

@@ -25,11 +25,17 @@ public abstract class AbstractModelLikelihood extends AbstractModel implements L
 
     public LogColumn[] getColumns() {
         return new LogColumn[]{
-                new NumberColumn(getId()) {
-                    public double getDoubleValue() {
-                        return getLogLikelihood();
-                    }
-                }
+                new LikelihoodColumn(getId())
         };
+    }
+
+    protected class LikelihoodColumn extends NumberColumn {
+        public LikelihoodColumn(String label) {
+            super(label);
+        }
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
     }
 }

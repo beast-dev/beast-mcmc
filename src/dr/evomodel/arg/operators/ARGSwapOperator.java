@@ -154,7 +154,9 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 
 		assert nodeCheck() : swap + " " + before + " " + arg.toARGSummary();
 
-		arg.pushTreeChangedEvent();
+//		arg.pushTreeChangedEvent();
+                    arg.pushTreeChangedEvent(swap.gp);
+                    arg.pushTreeChangedEvent(swap.p);
 
 		try {
 			arg.endTreeEdit();
@@ -185,16 +187,17 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 		}
 
 		public boolean isValid() {
-			if (arg.getNodeHeight(pb) < arg.getNodeHeight(p))
-				return true;
-			return false;
+//			if (arg.getNodeHeight(pb) < arg.getNodeHeight(p))
+//				return true;
+//			return false;
+                        return (arg.getNodeHeight(pb) < arg.getNodeHeight(p));
 		}
 
 		public String toString() {
-			return "Child: " + ((Node) c).toString() +
-					", Parent: " + ((Node) p).toString() +
-					", G-parent: " + ((Node) gp).toString() +
-					", P-brother: " + ((Node) pb).toString();
+			return "Child: " + c.toString() +
+					", Parent: " + p.toString() +
+					", G-parent: " + gp.toString() +
+					", P-brother: " + pb.toString();
 		}
 
 	}
@@ -335,7 +338,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 
 		Node swapNode = (Node) possibleNodes.get(MathUtils.nextInt(possibleNodes.size()));
 
-		Node swapParent = null;
+		Node swapParent;
 
 		arg.beginTreeEdit();
 

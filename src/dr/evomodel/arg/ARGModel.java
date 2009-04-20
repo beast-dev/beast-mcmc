@@ -1032,7 +1032,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     }
 
     public void pushTreeSizeChangedEvent() {
-        pushTreeChangedEvent(new TreeChangedEvent(this));
+        pushTreeChangedEvent(new TreeChangedEvent());
     }
 
     /**
@@ -1098,7 +1098,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         return maxNumberOfPartitions;
     }
 
-    protected List treeChangedEvents = new ArrayList();
+    protected List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
 
     public class TreeChangedEvent {
 
@@ -1108,16 +1108,16 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         int index;
 
-        boolean size = false;
+//        boolean size = false;
 
         public TreeChangedEvent() {
             this(null, null, -1);
         }
 
-        public TreeChangedEvent(ARGModel arg) {
-            this(null, null, -1);
-            size = true;
-        }
+//        public TreeChangedEvent(ARGModel arg) {
+//            this(null, null, -1);
+//            size = true;
+//        }
 
         public TreeChangedEvent(Node node) {
             this(node, null, -1);
@@ -1141,8 +1141,12 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             return parameter;
         }
 
-        public boolean isSizeChanged() {
-            return size;
+//        public boolean isSizeChanged() {
+//            return size;
+//        }
+
+        public boolean isTreeChanged() {
+            return parameter == null;
         }
 
         public boolean isNodeChanged() {

@@ -82,7 +82,7 @@ public class ContinuousEpochBranchRateModel extends RateEpochBranchRateModel {
 			// Add that last rate segment
 			rate += rateParameters[i].getParameterValue(0) * (height1 - lastHeight);
 
-			return rate / normalization;
+			return rate / normalization / (height1 - height0);
 		}
 		throw new IllegalArgumentException("root node doesn't have a rate!");
 	}

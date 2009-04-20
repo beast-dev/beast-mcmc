@@ -96,7 +96,6 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
         sb.append("\tTrait: " + traitName + "\n");
         sb.append("\tDiffusion process: " + diffusionModel.getId() + "\n");
         sb.append("\tHeterogenity model: " + (hasRateModel ? rateModel.getId() : "homogeneous") + "\n");
-//        if (!hasRateModel) {
         sb.append("\tTree normalization: " + (scaleByTime ? (useTreeLength ? "length" : "height") : "off") + "\n");
         if (scaleByTime) {
             recalculateTreeLength();
@@ -105,7 +104,6 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
             } else {
                 sb.append("\tInitial tree height: " + treeLength + "\n");
             }
-//            }
         }
         sb.append("\tPlease cite Suchard, Lemey and Rambaut (in preparation) if you publish results using this model.");
 
@@ -157,33 +155,20 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
                 TreeModel.TreeChangedEvent event = (TreeModel.TreeChangedEvent) object;
                 if (event.isHeightChanged()) {
                     recalculateTreeLength();
-//                    if (cacheBranches) {
                     if (useTreeLength || (scaleByTime && treeModel.isRoot(event.getNode())))
                         updateAllNodes();
                     else {
                         updateNodeAndChildren(event.getNode());
                     }
-//                    } else {
-//                        likelihoodKnown = false; // recompute everything
-//                    }
                 } else if (event.isNodeParameterChanged()) {
-//                    System.err.println("catch model tree event  parameter = "+event.getParameter().getId());
-//                    System.exit(-1);
-//                    if (cacheBranches) {
                     updateNodeAndChildren(event.getNode());
-//                    } else {
-//                        likelihoodKnown = false; // recompute everything
-//                    }
                 } else if (event.isNodeChanged()) {
-//                    if (cacheBranches)
                     recalculateTreeLength();
                     if (useTreeLength || (scaleByTime && treeModel.isRoot(event.getNode())))
                         updateAllNodes();
                     else {
                         updateNodeAndChildren(event.getNode());
                     }
-//                    else
-//                        likelihoodKnown = false; // recompute everything
                 } else {
                     throw new RuntimeException("Unexpected TreeModel TreeChangedEvent occuring in MultivariateTraitLikelihood");
                 }
@@ -194,15 +179,12 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
             }
         } else if (model == rateModel) {
             if (index == -1) {
-//                if (cacheBranches)
                 updateAllNodes();
-//                else
-//                    likelihoodKnown = false; // recompute everything
             } else {
-//                if (cacheBranches)
-                updateNode(treeModel.getNode(index));
-//                else
-                likelihoodKnown = false; // recompute everything
+                if (((Parameter)object).getDimension() == 2*(treeModel.getNodeCount()-1))
+                    updateNode(treeModel.getNode(index)); // This is a branch specific update
+                else
+                    updateAllNodes(); // Probably an epoch model
             }
         } else {
             throw new RuntimeException("Unknown componentChangedEvent");
@@ -458,10 +440,6 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
-
-    /**
-     * @return the log columns.
-     */
 
     private String[] attributeLabel = null;
 

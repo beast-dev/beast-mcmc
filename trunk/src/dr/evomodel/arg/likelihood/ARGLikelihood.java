@@ -96,7 +96,7 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 				} else if (patternList.getDataType() instanceof dr.evolution.datatype.Codons) {
 					Logger.getLogger("dr.evomodel").info("TreeLikelihood using Java codon likelihood core");
 //					likelihoodCore = new CodonLikelihoodCore(patternList.getStateCount());
-					useAmbiguities = true;
+					this.useAmbiguities = true;
 					throw new RuntimeException("Still need to merge codon likelihood core");
 				} else {
 					if (patternList.getDataType() instanceof dr.evolution.datatype.HiddenNucleotides &&
@@ -166,49 +166,78 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 	// ModelListener IMPLEMENTATION
 	// **************************************************************
 
-	/**
-	 * Handles model changed events from the submodels.
-	 */
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		// System.err.println("yoyo");
-		if (model == treeModel) {
-			if (object instanceof ARGModel.TreeChangedEvent) {
+    private NodeRef findCorrespondingNode(NodeRef argNode) {
+        return tree.getMapping().get(argNode);
 
-				//      if (((ARGModel.TreeChangedEvent)object).isNodeChanged()) {
+//        if (outNode == null) {
+//            System.err.println("corresponding node not found??");
+//            System.exit(-1);
+//        }
 
-				//          updateNodeAndChildren(((ARGModel.TreeChangedEvent)object).getNode());
+//        return outNode;
+    }
 
-				//      } else {
-				updateAllNodes();
+    /**
+     * Handles model changed events from the submodels.
+     */
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
 
-				//      }
-			}
-			if (object instanceof ARGPartitioningOperator.PartitionChangedEvent) {
-				ARGPartitioningOperator.PartitionChangedEvent event =
-						(ARGPartitioningOperator.PartitionChangedEvent) object;
-				Parameter partitioning = event.getParameter();
-				// todo update only nodes below node of partitioning;
-				updateAllNodes();
-			}
+        if (model == treeModel) {
+            if (object instanceof ARGModel.TreeChangedEvent) {
+                ARGModel.TreeChangedEvent event = (ARGModel.TreeChangedEvent) object;
+                if (event.isNodeChanged()) {
+                    // If a node event occurs the node and its two child nodes
+                    // are flagged for updating (this will result in everything
+                    // above being updated as well. Node events occur when a node
+                    // is added to a branch, removed from a branch or its height or
+                    // rate changes.
 
-		} else if (model == branchRateModel) {
-			updateAllNodes();
+                    NodeRef node = findCorrespondingNode(event.getNode());
+                    if (node != null) { // Could have no impact on this partition
+                        if (event.isHeightChanged() || event.isRateChanged()) // only reconstruct tree if topology change
+                            updateNodeAndChildren(node);
+                        else {
+                            reconstructTree = true;
+//                            lazyUpdates.add(event.getNode());
+//                            lazyUpdates.add(treeModel.getChild(event.getNode(),0,partition));
+//                            lazyUpdates.add(treeModel.getChild(event.getNode(),1,partition)); // TODO These are wrong; why?
+                              updateAllNodes();  // TODO Need better mapping
+                        }
+                    }
+                } else if (event.isTreeChanged()) {
+                    // Full tree events result in a complete updating of the tree likelihood
+                    // These include adding and removing nodes
+                    // TODO ARG rearrangements still call this; should only be called by sizeChange
+                    reconstructTree = true;
+                    updateAllNodes();
+                } else {
+                    // Other event types are ignored (probably trait changes).
+                    throw new RuntimeException("Another tree event has occured (possibly a trait change).");
+                }
+            } else if (object instanceof ARGPartitioningOperator.PartitionChangedEvent) {
+	      final boolean[] updatePartition = ((ARGPartitioningOperator.PartitionChangedEvent) object).getUpdatedPartitions();
+                if (updatePartition[partition]) {
+                    reconstructTree = true;
+                    updateAllNodes(); // TODO Probably does not affect entire tree; fix
+                }
+            } else if (object instanceof Parameter) {
+                // ignore, most of these are handled in isNodeChanged()
+            } else
+                throw new RuntimeException("Unexpected ARGModel update "+object.getClass());
 
-		} else if (model == frequencyModel) {
+        } else if (model == branchRateModel) {
+            // TODO Only update affected branches
+            updateAllNodes();
+        } else if (model == frequencyModel) {
+            updateAllNodes();
+        } else if (model instanceof SiteModel) {
+            updateAllNodes();
+        } else {
+            throw new RuntimeException("Unknown componentChangedEvent");
+        }
 
-			updateAllNodes();
-
-		} else if (model instanceof SiteModel) {
-
-			updateAllNodes();
-
-		} else {
-
-			throw new RuntimeException("Unknown componentChangedEvent");
-		}
-
-		super.handleModelChangedEvent(model, object, index);
-	}
+        super.handleModelChangedEvent(model, object, index);
+    }
 
 	// **************************************************************
 	// Model IMPLEMENTATION
@@ -217,29 +246,28 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 	/**
 	 * Stores the additional state other than model components
 	 */
-	protected void storeState() {
+          protected void storeState() {
 
-		if (storePartials) {
-			likelihoodCore.storeState();
-		}
-		super.storeState();
-
-	}
+              if (storePartials) {
+                  likelihoodCore.storeState();
+              }
+              super.storeState();
+          }
 
 	/**
 	 * Restore the additional stored state
 	 */
-	protected void restoreState() {
+          protected void restoreState() {
 
-//        if (storePartials) {
-		//           likelihoodCore.restoreState();
-		//       } else {
-		updateAllNodes();
-		//      }
+              if (storePartials) {
+                  likelihoodCore.restoreState();
+              } else {
+                  updateAllNodes();
+              }
+              reconstructTree = true; // currently the tree is not cached, because the ARG that generates it is cached
 
-		super.restoreState();
-
-	}
+              super.restoreState();
+          }
 
 	// **************************************************************
 	// Likelihood IMPLEMENTATION
@@ -251,55 +279,22 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 	 * @return the log likelihood.
 	 */
 	protected double calculateLogLikelihood() {
-//	    sendState(0);
-//	    System.exit(0);
-//	    System.err.println("here");
 
-//        ARGTree argTree = new ARGTree(treeModel, 0);
-//        ARGModel tree = treeModel;
-
-		ARGTree tree = new ARGTree(treeModel, partition);
-//        ARGModel argTree = treeModel;
-
+              if (reconstructTree) {
+                  oldTree = tree;
+                  tree = new ARGTree(treeModel, partition);
+//                  if (!lazyUpdates.isEmpty()) { // TODO Fix mapping: old ARGTree <-> ARGModel <-> new ARGTree
+//                      for(NodeRef argNode : lazyUpdates) {
+//                          NodeRef treeNode = tree.getMapping().get(argNode);
+//                          updateNode[treeNode.getNumber()] = true;
+//                      }
+//                      lazyUpdates.clear();
+//                  }
+                  reconstructTree = false;
+              }
+              
 		NodeRef root = tree.getRoot();
-//        NodeRef argRoot = argTree.getRoot();
 
-		/*      final int K = argTree.getNodeCount();
-				final int J = tree.getNodeCount();
-				System.err.printf("%2d %2d",K,J);
-				for(int i=0; i<J; i++)
-				  System.err.printf(" : %5.3f %5.3f",
-						argTree.getNodeHeight(argTree.getNode(i)),
-						tree.getNodeHeight(tree.getNode(i))
-				 );
-				System.err.println();
-				System.err.println(argTree.toGraphString());
-				System.err.println(tree.toGraphString());*/
-//        System.err.println(treeModel.toString())    ;
-//        Tree test = new ARGTree(treeModel,partition);
-
-//        System.err.println(Tree.Utils.newick(test));
-
-		final int I = tree.getExternalNodeCount();
-
-		// todo Figure out how to cache mapping between nodes[] and setPartials/setStates internals
-
-		for (int i = 0; i < I; i++) {
-			// Find the id of tip i in the patternList
-			String id = tree.getTaxonId(i);
-			int index = patternList.getTaxonIndex(id);
-
-			if (useAmbiguities) {
-				setPartials(likelihoodCore, patternList, categoryCount, index, i);
-			} else {
-				setStates(likelihoodCore, patternList, index, i);
-			}
-		}
-
-		/*       System.err.println("ARG:\n"+treeModel.toGraphString());
-			  System.err.println("Calc for:"+Tree.Utils.uniqueNewick(tree, root));
-
-			  System.err.println("Starting tree likelihood");*/
 		if (rootPartials == null) {
 			rootPartials = new double[patternCount * stateCount];
 		}
@@ -334,17 +329,6 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 			logL += patternLogLikelihoods[i] * patternWeights[i];
 		}
 
-		/*      if (Double.isNaN(logL)) {
-
-					System.err.println("ARG:\n"+treeModel.toGraphString());
-					System.err.println("ARG Tree:\n"+tree.toGraphString());
-					System.err.println("likelihood for partition = "+this.partition);
-					throw new RuntimeException("Likelihood NaN");
-				}*/
-
-//		likelihoodCore.checkScaling();
-//System.err.println(logL);
-//        System.err.println("Finished tree likelihood.");
 		return logL;
 	}
 
@@ -353,7 +337,7 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 	 *
 	 * @return whether the partials for this node were recalculated.
 	 */
-	private final boolean traverse(Tree tree, NodeRef node) {
+	private boolean traverse(Tree tree, NodeRef node) {
 
 		boolean update = false;
 
@@ -559,4 +543,8 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 	protected LikelihoodCore likelihoodCore;
 
 	private boolean useAmbiguities;
+
+    private boolean reconstructTree = true;
+    private ARGTree tree;
+    private ARGTree oldTree;
 }

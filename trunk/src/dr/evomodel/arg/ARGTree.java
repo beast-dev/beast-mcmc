@@ -6,11 +6,12 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.arg.ARGModel.Node;
-import dr.inference.model.Parameter;
 import dr.util.Attributable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.HashMap;
 
 public class ARGTree implements Tree {
 
@@ -20,6 +21,11 @@ public class ARGTree implements Tree {
 	protected int taxaCount;
 
 	private Node initialRoot;
+
+    private ARGModel argModel;
+    private Map<NodeRef,NodeRef> mapNodesARGToTree;
+
+    public Map<NodeRef,NodeRef> getMapping() { return mapNodesARGToTree; }
 	
 	private int partition = -9;
 
@@ -28,11 +34,11 @@ public class ARGTree implements Tree {
 	 *
 	 * @param arg
 	 */
-	public ARGTree(ARGModel arg) {
-		root = arg.new Node((Node) arg.getRoot());
-//		  root = arg.new Node( (Node)arg.getRoot() );
-		// int cnt = countReassortmentNodes(root);
-	}
+//	public ARGTree(ARGModel arg) {
+//              this.argModel = arg;
+//              mapNodesARGToTree = new HashMap<Node,Node>(arg.getNodeCount());
+//              root = arg.new Node((Node) arg.getRoot());
+//	}
 
 
 	/**
@@ -46,16 +52,10 @@ public class ARGTree implements Tree {
 
 	public boolean wasRootTrimmed() {
 		return (root != initialRoot);
-//		return false;
 	}
 
 
 	public String toGraphString() {
-		//if( true )
-		//	  return null;
-//		  int number = 1;
-//		  for( Node node : nodeList )
-//			  node.number = number++;
 		StringBuffer sb = new StringBuffer();
 		for (Node node : nodes) {
 			sb.append(node.number);
@@ -84,6 +84,8 @@ public class ARGTree implements Tree {
 	}
 
 	public ARGTree(ARGModel arg, int partition) {
+              this.argModel = arg;
+              mapNodesARGToTree = new HashMap<NodeRef,NodeRef>(arg.getNodeCount());
 		
 		this.partition = partition;
 		
@@ -94,7 +96,7 @@ public class ARGTree implements Tree {
 
 		
 		
-		int i = 0;
+//		int i = 0;
 		int j = arg.externalNodeCount;
 
 		//root = node;
@@ -124,24 +126,21 @@ public class ARGTree implements Tree {
 
 		do {
 			node = (Node) Tree.Utils.postorderSuccessor(this, node);
-			//System.err.println("Ordering: "+Tree.Utils.uniqueNewick(this, node));
 			if (node.isExternal()) {
-				node.number = i;
-
-				nodes[i] = node;
-				// storedNodes[i] = new Node();
-				// storedNodes[i].taxon = node.taxon;
-				// storedNodes[i].number = i;
-
-				i++;
+//				node.number = i;
+//				nodes[i] = node;
+//				i++;
+                                  // keep same order as ARG, so do not need to reload tipStates/Partials
+                                  nodes[node.number] = node;
+                                  mapNodesARGToTree.put(node.mirrorNode,node);
 			} else {
+                                  // Reorder in new post-order succession
 				node.number = j;
 
 				nodes[j] = node;
-				// storedNodes[j] = new Node();
-				// storedNodes[j].number = j;
-
 				j++;
+                                  mapNodesARGToTree.put(node.mirrorNode,node);
+
 			}
 		} while (node != root);
 
@@ -180,7 +179,7 @@ public class ARGTree implements Tree {
 	 *         tree.
 	 */
 	public final int getNodeCount() {
-		return nodeCount;
+		return nodeCount;               
 	}
 
 	public final boolean hasNodeHeights() {
@@ -486,309 +485,7 @@ public class ARGTree implements Tree {
 		throw new UnsupportedOperationException("please don't call this function");
 	}
 
-	// **************************************************************
-	// Private inner classes
-	// **************************************************************
-//
-//    public class Node implements NodeRef {
-//
-//        public Node parent;
-//        public Node leftChild, rightChild;
-//        public int number;
-//        public Parameter heightParameter;
-//        public Parameter rateParameter = null;
-//        public Parameter traitParameter = null;
-//        public Taxon taxon = null;
-//        
-//        public BitSet partitionSet = null;
-//        public Node dupSister = null;
-//        public Node linkSister = null;
-//        public Node dupParent = null;
-//        
-//        public Node leftParent;
-//        public Node rightParent;
-//        
-//        public int leftPartition;
-//        public int rightPartition;
-//        
-//
-//        public Node() {
-//            parent = null;
-//            leftChild = rightChild = null;
-//            heightParameter = null;
-//            number = 0;
-//            taxon = null;
-//        }
-//
-//        private boolean doesBifurcate(int partition) {
-//        	if( leftChild.parent != null ) {
-//        		if( rightChild.parent != null )
-//        			return true;
-//        		if( (rightChild.leftParent == this) ||
-//        			(rightChild.rightParent == this) )
-//        			return true;
-//        	}
-//        	if( rightChild.parent != null ) {
-//        		if( (leftChild.leftParent == this) ||
-//        			(leftChild.rightParent == this) )
-//        			return true;
-//        	}
-//        	return false;
-//        }
-//        
-//        private boolean isRecombinantParent(Node parent) {
-//        	if( leftParent == parent || rightParent == parent )
-//        		return true;
-//        	return false;
-//        }
-//        
 
-//        private boolean isBifurcatingOrExternal(int partition) {
-//        	// TODO protect against null errors at tips
-//        	if( isExternal() )
-//        		return true;
-//        	if( leftChild.leftParent == leftChild.rightParent && rightChild.parent !=null ) // standard case
-//        		return true;
-//        	if( leftChild.parent !=null &&
-//        			(	(rightChild.leftParent == this && rightChild.leftPartition == partition) ||
-//        				(rightChild.rightParent == this && rightChild.rightPartition == partition)
-//        			) ) return true;
-//        	if( rightChild.parent !=null &&
-//        			(	(leftChild.leftParent == this && leftChild.leftPartition == partition) ||
-//        				(leftChild.rightParent == this && leftChild.rightPartition == partition)
-//        			) ) return true;
-//        	return false;
-//        }
-//        
-//        private Node straightDescendent(int partition) {
-//        	// TODO protect against two direct children
-//        	if( leftChild.parent != null )
-//        		return leftChild;
-//        	else {
-//        		if( (leftChild.leftParent == this && leftChild.leftPartition == partition ) ||
-//        			(leftChild.rightParent == this && leftChild.rightPartition == partition) )
-//        			return leftChild;
-//        	}
-//        	if( rightChild.parent != null )
-//        		return rightChild;
-//        	else {
-//        		if( (rightChild.leftParent == this && rightChild.leftPartition == partition) ||
-//        		    (rightChild.rightParent == this && rightChild.rightPartition == partition) )
-//        			return rightChild;
-//        	}
-//        	throw new IllegalArgumentException("No straight descendent found.");
-//        }
-//        
-//        /** constructor used to clone a node and all children for a particular partition */
-//        public Node(Node node, int partition) {
-//        	parent = leftParent = rightParent = null;
-//        	leftChild = rightChild = null;
-//        	heightParameter = node.heightParameter;
-//        	taxon = node.taxon;
-//        	//boolean tip = true;
-//        	Node lc = node.leftChild;
-//        	Node rc = node.rightChild;
-//         	if( lc != null ) {
-//        		// LeftChild exists.  
-//        		// Does lc bifurcate or do we skip for this partition
-//        		if( lc.isBifurcatingOrExternal(partition) ) {
-//        			addChild(new Node(lc, partition));
-//        			//System.err.println(Tree.Utils.newick(lc)+" is bifurcating with P = "+partition);
-//        		} else {
-//        			addChild(new Node(lc.straightDescendent(partition),partition));
-//        			//System.err.println(lc.straightDescendent(partition)+" is descendent.");
-//        		}
-//         	}
-//        	if( rc != null ) {
-//           		// RightChild exists.  
-//        		// Does rc bifurcate or do we skip for this partition
-//        		if( rc.isBifurcatingOrExternal(partition) ) {
-//        			addChild(new Node(rc, partition));
-//        			//System.err.println(rc.toString()+" is bifurcating with P = "+partition);
-//        		} else {
-//        			addChild(new Node(rc.straightDescendent(partition),partition));
-//        			//System.err.println(rc.straightDescendent(partition)+" is descendent.");
-//        		}
-//         	}
-//  		
-//        }
-//        
-//        
-//        /** constructor used to clone a subtree without duplicating height parameters
-//         * 
-//         *
-//         */
-//        public Node(Tree tree, Node node, int[] bits) {
-//        	parent = null;
-//        	leftChild = rightChild = null;
-//        	heightParameter = node.heightParameter;
-//        	linkSister = node;
-//        	linkSister.linkSister = this;
-//        	//for(int i=0; i < tree.getChildCount())
-//        	boolean tip = true;
-//        	if( node.leftChild != null ) {
-//        		addChild(new Node(tree, node.leftChild, bits));
-//        		tip = false;
-//        	}
-//        	if( node.rightChild != null ) {
-//        		addChild(new Node(tree, node.rightChild, bits));
-//        		tip = false;
-//        	}
-//        	if( tip ) {
-//        		taxon = node.taxon;
-//        		partitionSet = new BitSet();
-//        		int len = bits.length;
-//        		for(int i=0; i<len; i++) 
-//        			partitionSet.set(bits[i]);
-//        	}
-//        }
-//        
-//        public final void setDupParent(Node parent) {
-//        	this.dupParent = parent;
-//        	if( leftChild != null )
-//        		leftChild.setDupParent(parent);
-//        	if( rightChild != null )
-//        		rightChild.setDupParent(parent);
-//        }
-//        
-//        public final void clearLinkSister() {
-//        	this.linkSister = null;
-//        	if( leftChild != null )
-//        		leftChild.clearLinkSister();
-//        	if( rightChild != null )
-//        		rightChild.clearLinkSister();
-//        }
-//        
-//        public final void clearDupParent() {
-//        	this.dupParent = null;
-//        	if( leftChild != null )
-//        		leftChild.clearDupParent();
-//        	if( rightChild != null )
-//        		rightChild.clearDupParent();
-//        }
-//        
-//    
-//        public final double getHeight() { return heightParameter.getParameterValue(0); }
-//        public final double getRate() { return rateParameter.getParameterValue(0); }
-//        public final double getTrait() { return traitParameter.getParameterValue(0); }
-//
-//        public final void setHeight(double height) { heightParameter.setParameterValue(0, height); }
-//        public final void setRate(double rate) {
-//            //System.out.println("Rate set for parameter " + rateParameter.getParameterName());
-//            rateParameter.setParameterValue(0, rate);
-//        }
-//        public final void setTrait(double trait) {
-//            //System.out.println("Trait set for parameter " + traitParameter.getParameterName());
-//            traitParameter.setParameterValue(0, trait);
-//        }
-//
-//        public int getNumber() { return number; }
-//
-//        /**
-//         * Returns the number of children this node has.
-//         */
-//        public final int getChildCount() {
-//            int n = 0;
-//            if (leftChild != null) n++;
-//            if (rightChild != null) n++;
-//            return n;
-//        }
-//
-//        public Node getChild(int n) {
-//            if (n == 0) return leftChild;
-//            if (n == 1) return rightChild;
-//            throw new IllegalArgumentException("TreeModel.Nodes can only have 2 children");
-//        }
-//
-//        public boolean hasChild(Node node) {
-//            return (leftChild == node || rightChild == node);
-//        }
-//
-//        /**
-//         * add new child node
-//         *
-//         * @param node new child node
-//         */
-//        public void addChild(Node node)
-//        {
-//            if (leftChild == null) {
-//                leftChild = node;
-//            } else if (rightChild == null) {
-//                rightChild = node;
-//            } else {
-//                throw new IllegalArgumentException("TreeModel.Nodes can only have 2 children");
-//            }
-//            node.parent = this;
-//        }
-//        
-//        public void addChildRecombinant(Node node, int partition) {
-//        	if (leftChild == null) {
-//        		leftChild = node;
-//        	} else if (rightChild == null) {
-//        		rightChild = node;
-//        	} else {
-//        		throw new IllegalArgumentException("Nodes can only have 2 children.");
-//        	}
-//        	node.parent = null;
-//        	if (node.leftParent == null) {
-//        		node.leftParent = this;
-//        		node.leftPartition = partition;
-//        	} else if (node.rightParent == null) {
-//        		node.rightParent = this;
-//        		node.rightPartition = partition;
-//        	} else {
-//        		throw new IllegalArgumentException("Recombinant nodes can only have 2 parents.");
-//        	}
-//        }
-//
-//        /**
-//         * remove child
-//         *
-//         * @param node child to be removed
-//         */
-//        public Node removeChild(Node node)
-//        {
-//            if (leftChild == node) {
-//                leftChild = null;
-//            } else if (rightChild == node) {
-//                rightChild = null;
-//            } else {
-//                throw new IllegalArgumentException("Unknown child node");
-//            }
-//            node.parent = null;
-//            return node;
-//        }
-//
-//        /**
-//         * remove child
-//         *
-//         * @param n number of child to be removed
-//         */
-//        public Node removeChild(int n)
-//        {
-//            Node node;
-//            if (n == 0) {
-//                node = leftChild;
-//                leftChild = null;
-//            } else if (n == 1) {
-//                node = rightChild;
-//                rightChild = null;
-//            } else {
-//                throw new IllegalArgumentException("TreeModel.Nodes can only have 2 children");
-//            }
-//            node.parent = null;
-//            return node;
-//        }
-//
-//        public boolean hasChildren() { return (leftChild != null || rightChild != null); }
-//        public boolean isExternal()	{ return !hasChildren(); }
-//        public boolean isRoot() { return (parent == null); }
-//
-//        public String toString() { return taxon.getId(); }
-//    }
-//
-//    
-//    
 	// ***********************************************************************
 	// Private members
 	// ***********************************************************************

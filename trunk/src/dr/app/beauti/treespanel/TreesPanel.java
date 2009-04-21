@@ -401,7 +401,8 @@ public class TreesPanel extends BeautiPanel {
         options.multiLoci = extendedBayesianSkylineCombo.getSelectedIndex() == 1;
 
 		options.skyrideSmoothing = gmrfBayesianSkyrideCombo.getSelectedIndex();
-        options.skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
+        // the taxon list may not exist yet... this should be set when generating...
+//        options.skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
 
 		options.startingTreeType = (StartingTreeType) startingTreeCombo.getSelectedItem();
 		options.userStartingTree = getSelectedUserTree();

@@ -736,7 +736,7 @@ public class BeastGenerator extends Generator {
                 ScaleOperator.SCALE_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<Double>("scaleFactor", operator.tuning),
-                        new Attribute.Default<Double>("weight", operator.weight),
+                        getWeightAttribute(operator.weight)
                 });
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
@@ -747,7 +747,7 @@ public class BeastGenerator extends Generator {
                 ScaleOperator.SCALE_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<Double>("scaleFactor", operator.tuning),
-                        new Attribute.Default<Double>("weight", operator.weight),
+                        getWeightAttribute(operator.weight),
                         new Attribute.Default<String>("scaleAllIndependently", indepedently ? "true" : "false")
                 });
         writeParameter1Ref(writer, operator);
@@ -759,7 +759,7 @@ public class BeastGenerator extends Generator {
                 "randomWalkOperator",
                 new Attribute[]{
                         new Attribute.Default<Double>("windowSize", operator.tuning),
-                        new Attribute.Default<Double>("weight", operator.weight)
+                        getWeightAttribute(operator.weight)
                 });
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag("randomWalkOperator");
@@ -770,7 +770,7 @@ public class BeastGenerator extends Generator {
                 "randomWalkOperator",
                 new Attribute[]{
                         new Attribute.Default<Double>("windowSize", operator.tuning),
-                        new Attribute.Default<Double>("weight", operator.weight),
+                        getWeightAttribute(operator.weight),
                         new Attribute.Default<String>("boundaryCondition", 
                                 (reflecting ? "reflecting" : "absorbing"))
                 });
@@ -787,7 +787,7 @@ public class BeastGenerator extends Generator {
                 "randomWalkIntegerOperator",
                 new Attribute[]{
                         new Attribute.Default<Integer>("windowSize", windowSize),
-                        new Attribute.Default<Double>("weight", operator.weight)
+                        getWeightAttribute(operator.weight)
                 });
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag("randomWalkIntegerOperator");
@@ -799,7 +799,7 @@ public class BeastGenerator extends Generator {
                 new Attribute[]{
                         new Attribute.Default<Double>("scaleFactor", operator.tuning),
                         new Attribute.Default<String>("scaleAll", "true"),
-                        new Attribute.Default<Double>("weight", operator.weight),
+                        getWeightAttribute(operator.weight)
                 });
 
         if (operator.parameter2 == null) {
@@ -818,7 +818,7 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag(UpDownOperator.UP_DOWN_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<Double>("scaleFactor", operator.tuning),
-                        new Attribute.Default<Double>("weight", operator.weight),
+                        getWeightAttribute(operator.weight)
                 }
         );
 
@@ -837,7 +837,7 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag(CenteredScaleOperator.CENTERED_SCALE,
                 new Attribute[]{
                         new Attribute.Default<Double>(CenteredScaleOperator.SCALE_FACTOR, operator.tuning),
-                        new Attribute.Default<Double>("weight", operator.weight),
+                        getWeightAttribute(operator.weight)
                 }
         );
         writeParameter1Ref(writer, operator);
@@ -860,7 +860,7 @@ public class BeastGenerator extends Generator {
                         new Attribute[]{
                                 new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
                                 new Attribute.Default<String>(DeltaExchangeOperator.PARAMETER_WEIGHTS, pw),
-                                new Attribute.Default<Double>("weight", operator.weight),
+                                getWeightAttribute(operator.weight)
                         }
                 );
             }
@@ -868,7 +868,7 @@ public class BeastGenerator extends Generator {
             writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
                     new Attribute[]{
                             new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
-                            new Attribute.Default<Double>("weight", operator.weight),
+                            getWeightAttribute(operator.weight)
                     }
             );
         }
@@ -882,7 +882,7 @@ public class BeastGenerator extends Generator {
                 new Attribute[]{
                         new Attribute.Default<String>(DeltaExchangeOperator.DELTA, Integer.toString((int) operator.tuning)),
                         new Attribute.Default<String>("integer", "true"),
-                        new Attribute.Default<Double>("weight", operator.weight),
+                        getWeightAttribute(operator.weight),
                         new Attribute.Default<String>("autoOptimize", "false")
                 }
         );
@@ -894,7 +894,7 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag(SwapOperator.SWAP_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<String>("size", Integer.toString((int) operator.tuning)),
-                        new Attribute.Default<Double>("weight", operator.weight),
+                        getWeightAttribute(operator.weight),
                         new Attribute.Default<String>("autoOptimize", "false")
                 }
         );
@@ -904,55 +904,49 @@ public class BeastGenerator extends Generator {
 
     private void writeBitFlipOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(BitFlipOperator.BIT_FLIP_OPERATOR,
-                new Attribute[]{
-                        new Attribute.Default<Double>("weight", operator.weight),
-                }
-        );
+                getWeightAttribute(operator.weight));
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag(BitFlipOperator.BIT_FLIP_OPERATOR);
     }
 
     private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR,
-                new Attribute[]{
-                        new Attribute.Default<Double>("weight", operator.weight),
-                }
-        );
+                        getWeightAttribute(operator.weight));
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
         writer.writeCloseTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR);
     }
 
     private void writeUniformOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag("uniformOperator",
-                new Attribute.Default<Double>("weight", operator.weight));
+                getWeightAttribute(operator.weight));
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag("uniformOperator");
     }
 
     private void writeIntegerUniformOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag("uniformIntegerOperator",
-                new Attribute.Default<Double>("weight", operator.weight));
+                getWeightAttribute(operator.weight));
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag("uniformIntegerOperator");
     }
 
     private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperator.NARROW_EXCHANGE,
-                new Attribute.Default<Double>("weight", operator.weight));
+                getWeightAttribute(operator.weight));
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
         writer.writeCloseTag(ExchangeOperator.NARROW_EXCHANGE);
     }
 
     private void writeWideExchangeOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperator.WIDE_EXCHANGE,
-                new Attribute.Default<Double>("weight", operator.weight));
+                getWeightAttribute(operator.weight));
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
         writer.writeCloseTag(ExchangeOperator.WIDE_EXCHANGE);
     }
 
     private void writeWilsonBaldingOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(WilsonBalding.WILSON_BALDING,
-                new Attribute.Default<Double>("weight", operator.weight));
+                getWeightAttribute(operator.weight));
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
         // not supported anymore. probably never worked. (todo) get it out of GUI too
 //        if (options.nodeHeightPrior == TreePrior.CONSTANT) {
@@ -963,7 +957,7 @@ public class BeastGenerator extends Generator {
 
     private void writeSampleNonActiveOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR,
-                new Attribute.Default<Double>("weight", operator.weight));
+                getWeightAttribute(operator.weight));
 
         writer.writeOpenTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
         writeParameterRefByName(writer, operator.getName());
@@ -985,7 +979,7 @@ public class BeastGenerator extends Generator {
                 GMRFSkyrideBlockUpdateOperator.BLOCK_UPDATE_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperator.SCALE_FACTOR, operator.tuning),
-                        new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperator.WEIGHT, operator.weight),
+                        getWeightAttribute(operator.weight)
                 }
         );
         writer.writeTag(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,
@@ -998,7 +992,7 @@ public class BeastGenerator extends Generator {
                 ScaleOperator.SCALE_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<Double>("scaleFactor", operator.tuning),
-                        new Attribute.Default<Double>("weight", operator.weight),
+                        getWeightAttribute(operator.weight)
                 });
         writeParameter1Ref(writer, operator);
         writer.writeOpenTag(ScaleOperator.INDICATORS, new Attribute.Default<String>(ScaleOperator.PICKONEPROB, "1.0"));
@@ -1012,13 +1006,20 @@ public class BeastGenerator extends Generator {
                 new Attribute[]{
                         new Attribute.Default<Double>("size", operator.tuning),
                         new Attribute.Default<String>("gaussian", "true"),
-                        new Attribute.Default<Double>("weight", operator.weight)
+                        getWeightAttribute(operator.weight)
                 }
         );
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
         writer.writeCloseTag(SubtreeSlideOperator.SUBTREE_SLIDE);
     }
 
+    private Attribute getWeightAttribute(double weight) {
+        if (weight == (int)weight) {
+            return new Attribute.Default<Integer>("weight", (int)weight);
+        } else {
+            return new Attribute.Default<Double>("weight", weight);
+        }
+    }
     /**
      * Write the timer report block.
      *
@@ -1564,7 +1565,7 @@ public class BeastGenerator extends Generator {
         if (options.hasData()) {
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
         }
-        
+
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
 
         treePriorGenerator.writeLikelihoodLog(writer);

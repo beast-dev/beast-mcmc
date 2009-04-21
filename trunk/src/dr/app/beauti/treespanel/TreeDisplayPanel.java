@@ -50,8 +50,8 @@ public class TreeDisplayPanel extends JPanel {
 
     JTreeDisplay treePanel;
     JTreeDisplay scaledTreePanel;
-    JChartPanel rootToTipPanel;
-    JChart rootToTipChart;
+//    JChartPanel rootToTipPanel;
+//    JChart rootToTipChart;
 
     public TreeDisplayPanel(BeautiFrame parent) {
         super(new BorderLayout());
@@ -62,11 +62,11 @@ public class TreeDisplayPanel extends JPanel {
 
         tabbedPane.add("Tree", treePanel);
 
-        rootToTipChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
-        rootToTipPanel = new JChartPanel(rootToTipChart, "", "time", "divergence");
-        rootToTipPanel.setOpaque(false);
+//        rootToTipChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
+//        rootToTipPanel = new JChartPanel(rootToTipChart, "", "time", "divergence");
+//        rootToTipPanel.setOpaque(false);
 
-        tabbedPane.add("Root-to-tip", rootToTipPanel);
+//        tabbedPane.add("Root-to-tip", rootToTipPanel);
 
         scaledTreePanel = new JTreeDisplay(new SquareTreePainter());
         tabbedPane.add("Re-scaled tree", scaledTreePanel);
@@ -87,15 +87,15 @@ public class TreeDisplayPanel extends JPanel {
             TemporalRooting temporalRooting = new TemporalRooting(tree);
             Regression r = temporalRooting.getRootToTipRegression(tree);
 
-            rootToTipChart.removeAllPlots();
-            rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
-            rootToTipChart.addPlot(new RegressionPlot(r));
-            rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
+//            rootToTipChart.removeAllPlots();
+//            rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
+//            rootToTipChart.addPlot(new RegressionPlot(r));
+//            rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
 
             scaledTreePanel.setTree(temporalRooting.adjustTreeToConstraints(tree, null));
         } else {
             treePanel.setTree(null);
-            rootToTipChart.removeAllPlots();
+//            rootToTipChart.removeAllPlots();
             scaledTreePanel.setTree(null);
         }
 

@@ -48,7 +48,7 @@ import java.awt.event.ActionEvent;
  * @author Alexei Drummond
  * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
-public class LocationsPanel extends BeautiPanel implements Exportable {
+public class TraitsPanel extends BeautiPanel implements Exportable {
 
     /**
      *
@@ -72,7 +72,7 @@ public class LocationsPanel extends BeautiPanel implements Exportable {
 
     GuessDatesDialog guessDatesDialog = null;
 
-    public LocationsPanel(BeautiFrame parent) {
+    public TraitsPanel(BeautiFrame parent) {
 
         this.frame = parent;
 

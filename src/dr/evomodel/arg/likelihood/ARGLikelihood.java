@@ -27,6 +27,7 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.logging.Logger;
+import java.util.*;
 
 /**
  * ARGLikelihood - implements a Likelihood Function for sequences on an ancestral recombination graph.
@@ -166,48 +167,46 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 	// ModelListener IMPLEMENTATION
 	// **************************************************************
 
-    private NodeRef findCorrespondingNode(NodeRef argNode) {
-        return tree.getMapping().get(argNode);
 
-//        if (outNode == null) {
-//            System.err.println("corresponding node not found??");
-//            System.exit(-1);
-//        }
-
-//        return outNode;
-    }
+    private static final boolean NO_CACHING = false;
 
     /**
      * Handles model changed events from the submodels.
      */
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
+        if (NO_CACHING) {
+            reconstructTree = true;
+            updateAllNodes();
+        }
+
         if (model == treeModel) {
             if (object instanceof ARGModel.TreeChangedEvent) {
                 ARGModel.TreeChangedEvent event = (ARGModel.TreeChangedEvent) object;
-                if (event.isNodeChanged()) {
+                if (event.isSizeChanged() ) {
+                    updateAllNodes(); // TODO Update only affected portion of tree
+                    reconstructTree = true;
+                } else if (event.isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes
                     // are flagged for updating (this will result in everything
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
 
-                    NodeRef node = findCorrespondingNode(event.getNode());
-                    if (node != null) { // Could have no impact on this partition
-                        if (event.isHeightChanged() || event.isRateChanged()) // only reconstruct tree if topology change
-                            updateNodeAndChildren(node);
-                        else {
+                    NodeRef treeNode = mapARGNodesToTreeNodes.get(event.getNode());
+                    if ( treeNode != null ) {                        
+                        if (event.isHeightChanged() || event.isRateChanged()) {
+                            updateNodeAndChildren(treeNode);
+                        } else {
                             reconstructTree = true;
-//                            lazyUpdates.add(event.getNode());
-//                            lazyUpdates.add(treeModel.getChild(event.getNode(),0,partition));
-//                            lazyUpdates.add(treeModel.getChild(event.getNode(),1,partition)); // TODO These are wrong; why?
-                              updateAllNodes();  // TODO Need better mapping
+//                            updateNodeAndChildren(treeNode); // TODO This doesn't work with sizeChange; why???
+                            updateAllNodes();
                         }
-                    }
+                    } 
                 } else if (event.isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // These include adding and removing nodes
-                    // TODO ARG rearrangements still call this; should only be called by sizeChange
+                    // TODO ARG rearrangements still call this; they should not      
                     reconstructTree = true;
                     updateAllNodes();
                 } else {
@@ -265,9 +264,67 @@ public class ARGLikelihood extends AbstractARGLikelihood {
                   updateAllNodes();
               }
               reconstructTree = true; // currently the tree is not cached, because the ARG that generates it is cached
-
               super.restoreState();
           }
+
+        private int getUnusedInt(Map<NodeRef,Integer> inMap) {
+            Collection<Integer> intSet = inMap.values();
+            int i = tree.getExternalNodeCount();
+            while( intSet.contains(i) )
+                i++;
+            return i;
+        }
+
+
+    private Set<NodeRef> unsetNodes = null;
+
+        private void reconstructTree() {
+            
+            oldTree = tree;
+            oldMapARGNodesToInts = mapARGNodesToInts;
+
+            tree = new ARGTree(treeModel, partition);            
+            reconstructTree = false;
+            mapARGNodesToInts = new HashMap<NodeRef,Integer>(tree.getInternalNodeCount());
+            mapARGNodesToTreeNodes = tree.getMapping();
+
+            if (oldTree == null) {
+                 // First initialization
+                for(int i=0; i<tree.getInternalNodeCount(); i++) {
+                    NodeRef node = tree.getInternalNode(i);
+                    mapARGNodesToInts.put(treeModel.getMirrorNode(node),node.getNumber());
+                }
+            } else {
+
+                // Need to renumber
+                if (unsetNodes == null)
+                    unsetNodes = new HashSet<NodeRef>();
+                else
+                    unsetNodes.clear();
+
+                // Copy over numbers for nodes that still exist in tree
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    NodeRef newNode = tree.getInternalNode(i);
+                    NodeRef argNode = treeModel.getMirrorNode(newNode);
+
+                    if (oldMapARGNodesToInts.containsKey(argNode)) { // was in old tree
+
+                        int oldNumber = oldMapARGNodesToInts.get(argNode);
+                        treeModel.setNodeNumber(newNode,oldNumber);
+                        mapARGNodesToInts.put(argNode,oldNumber);
+                    } else  // was not in old tree
+                        unsetNodes.add(newNode);
+                }
+
+                // Set unused numbers for nodes that are new and mark for update
+                for (NodeRef node : unsetNodes) {
+                    int newNumber = getUnusedInt(mapARGNodesToInts);
+                    treeModel.setNodeNumber(node,newNumber);
+                    mapARGNodesToInts.put(node,newNumber);
+                    updateNode[newNumber] = true;
+                }
+            }
+        }
 
 	// **************************************************************
 	// Likelihood IMPLEMENTATION
@@ -281,16 +338,7 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 	protected double calculateLogLikelihood() {
 
               if (reconstructTree) {
-                  oldTree = tree;
-                  tree = new ARGTree(treeModel, partition);
-//                  if (!lazyUpdates.isEmpty()) { // TODO Fix mapping: old ARGTree <-> ARGModel <-> new ARGTree
-//                      for(NodeRef argNode : lazyUpdates) {
-//                          NodeRef treeNode = tree.getMapping().get(argNode);
-//                          updateNode[treeNode.getNumber()] = true;
-//                      }
-//                      lazyUpdates.clear();
-//                  }
-                  reconstructTree = false;
+                  reconstructTree();
               }
               
 		NodeRef root = tree.getRoot();
@@ -545,6 +593,11 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 	private boolean useAmbiguities;
 
     private boolean reconstructTree = true;
-    private ARGTree tree;
+    private ARGTree tree = null;
     private ARGTree oldTree;
+
+    private Map<NodeRef,Integer> mapARGNodesToInts = null;
+    private Map<NodeRef,Integer> oldMapARGNodesToInts;
+
+    private Map<NodeRef,NodeRef> mapARGNodesToTreeNodes = null;
 }

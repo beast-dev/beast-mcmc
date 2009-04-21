@@ -20,6 +20,7 @@ import java.util.logging.Logger;
  * satisfies irreducibility.
  *
  * @author ebloomqu
+ * @author Marc A. Suchard
  */
 public class ARGSwapOperator extends SimpleMCMCOperator {
 
@@ -154,7 +155,6 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 
 		assert nodeCheck() : swap + " " + before + " " + arg.toARGSummary();
 
-//		arg.pushTreeChangedEvent();
                     arg.pushTreeChangedEvent(swap.gp);
                     arg.pushTreeChangedEvent(swap.p);
 
@@ -310,7 +310,9 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 			}
 		}
 
-		arg.pushTreeChangedEvent();
+              arg.pushTreeChangedEvent(); // TODO Send only changed nodes
+//              arg.pushTreeChangedEvent(startNode);
+//              arg.pushTreeChangedEvent(swapNodeParent);
 
 		assert nodeCheck();
 
@@ -454,7 +456,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 
 		}
 
-		arg.pushTreeChangedEvent();
+		arg.pushTreeChangedEvent();  // TODO Limit tree hit
 
 		try {
 			arg.endTreeEdit();

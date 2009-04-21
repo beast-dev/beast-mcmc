@@ -8,10 +8,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.arg.ARGModel.Node;
 import dr.util.Attributable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 public class ARGTree implements Tree {
 
@@ -22,10 +19,14 @@ public class ARGTree implements Tree {
 
 	private Node initialRoot;
 
-    private ARGModel argModel;
-    private Map<NodeRef,NodeRef> mapNodesARGToTree;
+    public ARGModel argModel;
+//    private Map<NodeRef,Integer> mapARGNodesToInts;
 
-    public Map<NodeRef,NodeRef> getMapping() { return mapNodesARGToTree; }
+    private Map<NodeRef,NodeRef> mapARGNodesToTreeNodes;
+
+//    public Map<NodeRef,Integer> getMappingInts() { return mapARGNodesToInts; }
+
+//    public Map<ARGModel.Node, NodeRef> getMappingNodes() { return mapARGNodesToTreeNodes; }
 	
 	private int partition = -9;
 
@@ -48,7 +49,7 @@ public class ARGTree implements Tree {
 	 * @param partition
 	 */
 
-	ArrayList<Node> nodeList;
+//	ArrayList<Node> nodeList;
 
 	public boolean wasRootTrimmed() {
 		return (root != initialRoot);
@@ -85,69 +86,52 @@ public class ARGTree implements Tree {
 
 	public ARGTree(ARGModel arg, int partition) {
               this.argModel = arg;
-              mapNodesARGToTree = new HashMap<NodeRef,NodeRef>(arg.getNodeCount());
-		
-		this.partition = partition;
-		
+              mapARGNodesToTreeNodes = new HashMap<NodeRef,NodeRef>(arg.getNodeCount());
 
-		nodeList = new ArrayList<Node>();
-		Node node = arg.new Node(((Node) arg.getRoot()), partition, nodeList);
+		this.partition = partition;
+		ARGModel.Node node = arg.new Node(((Node) arg.getRoot()), partition);
 		initialRoot = node;
 
-		
-		
-//		int i = 0;
 		int j = arg.externalNodeCount;
-
-		//root = node;
-		//System.err.println("Null rights 1 = "+checkForNullRights(node));
-//		System.err.println("ARG->TREE1\n"+this.toGraphString());
 		node.stripOutDeadEnds();
-//		System.err.println("ARG->TREE2\n"+this.toGraphString());
 		root = node.stripOutSingleChildNodes(node);
-//		System.err.println("root == node? "+(root == node));
 		node = root;
-		//System.err.println("Null rights 2 - "+checkForNullRights(node));
-//		System.err.println("ARG->TREE3\n"+this.toGraphString());
-		//root = node;
-		//if( save != root ) {
-		//	System.err.println("Rerooted: "+Tree.Utils.uniqueNewick(this, node));
-		//	System.exit(-1);
-		//}
-
-		//Tree.Utils.uniqueNewick(this, root));
-		//	System.exit(-1);
-//		System.err.println("root.number = "+root.number);
 		nodeCount = 2 * j - 1;
 		externalNodeCount = j;
 		internalNodeCount = j - 1;
 		nodes = new Node[nodeCount];
 
-
 		do {
 			node = (Node) Tree.Utils.postorderSuccessor(this, node);
 			if (node.isExternal()) {
-//				node.number = i;
-//				nodes[i] = node;
-//				i++;
                                   // keep same order as ARG, so do not need to reload tipStates/Partials
                                   nodes[node.number] = node;
-                                  mapNodesARGToTree.put(node.mirrorNode,node);
+                                  mapARGNodesToTreeNodes.put(node.mirrorNode,node);
 			} else {
                                   // Reorder in new post-order succession
-				node.number = j;
-
+			
 				nodes[j] = node;
+                                        node.number = j;
 				j++;
-                                  mapNodesARGToTree.put(node.mirrorNode,node);
-
+                                  mapARGNodesToTreeNodes.put(node.mirrorNode, node);
 			}
 		} while (node != root);
-
-//		System.err.println("After: "+this.toString());
-		//System.err.println("Finished post-order on ARGTree");
 	}
 
+
+    public Map<NodeRef,NodeRef> getMapping() {
+        return mapARGNodesToTreeNodes;
+    }
+
+//    public Map<NodeRef,Integer> getMapARGNodesToInts() {
+//        // Only need to map internal nodes
+//        Map<NodeRef,Integer> map = new HashMap<NodeRef,Integer>(getInternalNodeCount());
+//        for(int i=0; i<getInternalNodeCount(); i++) {
+//            ARGModel.Node node = (ARGModel.Node) getInternalNode(i);
+//            map.put(node.mirrorNode,node.number);
+//        }
+//        return map;
+//    }
 	public boolean checkForNullRights(Node node) {
 		return node.checkForNullRights();
 	}

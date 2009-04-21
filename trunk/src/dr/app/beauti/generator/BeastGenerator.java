@@ -155,12 +155,19 @@ public class BeastGenerator extends Generator {
         writer.writeComment("      http://beast.bio.ed.ac.uk/");
         writer.writeOpenTag("beast");
         writer.writeText("");
+
+        // this gives any added implementations of the 'Component' interface a
+        // chance to generate XML at this point in the BEAST file.
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.BEFORE_TAXA, writer);
+
         writeTaxa(writer, options.taxonList);
 
         List<Taxa> taxonSets = options.taxonSets;
         if (taxonSets != null && taxonSets.size() > 0) {
             writeTaxonSets(writer, taxonSets);
         }
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
 
         List<DataPartition> dataPartitions = options.dataPartitions;
 
@@ -183,77 +190,97 @@ public class BeastGenerator extends Generator {
                 } else alignment.setId("alignment");
                 writeAlignment(alignment, writer);
                 index += 1;
+                writer.writeText("");
             }
+
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
 
             for (PartitionModel model : options.getActiveModels()) {
                 writePatternList(model, writer);
+                writer.writeText("");
             }
 
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
         } else {
             Alignment alignment = alignments.get(0);
             alignment.setId("alignment");
             writeAlignment(alignment, writer);
+            writer.writeText("");
+
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
         }
 
         treePriorGenerator = new TreePriorGenerator(options);
 
-        writer.writeText("");
         treePriorGenerator.writeTreePriorModel(writer);
-
         writer.writeText("");
+
         new InitialTreeGenerator(options).writeStartingTree(writer);
         writer.writeText("");
+
         new TreeModelGenerator(options).writeTreeModel(writer);
         writer.writeText("");
-        treePriorGenerator.writeTreePrior(writer);
 
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
+
+        treePriorGenerator.writeTreePrior(writer);
         writer.writeText("");
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
+
         new BranchRatesModelGenerator(options).writeBranchRatesModel(writer);
+        writer.writeText("");
 
         for (PartitionModel partitionModel : options.getActiveModels()) {
-            writer.writeText("");
             partitionModelGenerator.writeSubstitutionModel(partitionModel, writer);
+            writer.writeText("");
         }
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SUBSTITUTION_MODEL, writer);
 
         boolean writeMuParameters = options.getTotalActivePartitionCount() > 1;
 
         for (PartitionModel partitionModel : options.getActiveModels()) {
-            writer.writeText("");
             partitionModelGenerator.writeSiteModel(partitionModel, writeMuParameters, writer);
+            writer.writeText("");
         }
 
         if (writeMuParameters) {
-            writer.writeText("");
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>("id", "allMus")});
             for (PartitionModel partitionModel : options.getActiveModels()) {
                 partitionModelGenerator.writeMuParameterRefs(partitionModel, writer);
             }
             writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+            writer.writeText("");
         }
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
 
         treeLikelihoodGenerator = new TreeLikelihoodGenerator(options);
 
-        if (options.errorModelType != ErrorType.NO_ERROR) {
-            writer.writeText("");
-            treeLikelihoodGenerator.writeErrorModel(writer);
-        }
-
         for (PartitionModel model : options.getActiveModels()) {
-            writer.writeText("");
             treeLikelihoodGenerator.writeTreeLikelihood(model, writer);
+            writer.writeText("");
         }
 
-        writer.writeText("");
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
 
         if (taxonSets != null && taxonSets.size() > 0) {
             writeTMRCAStatistics(writer);
         }
 
-        ArrayList<Operator> operators = options.selectOperators();
+        List<Operator> operators = options.selectOperators();
         writeOperatorSchedule(operators, writer);
         writer.writeText("");
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_OPERATORS, writer);
+
         writeMCMC(writer);
         writer.writeText("");
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_MCMC, writer);
+
         writeTimerReport(writer);
         writer.writeText("");
         if (options.performTraceAnalysis) {
@@ -314,6 +341,8 @@ public class BeastGenerator extends Generator {
                 writer.writeTag(dr.evolution.util.Date.DATE, attributes, true);
                 writer.writeCloseTag("taxon");
             }
+
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TAXON, taxon, writer);
         }
 
         writer.writeCloseTag("taxa");
@@ -585,7 +614,7 @@ public class BeastGenerator extends Generator {
      * @param operators the list of operators
      * @param writer    the writer
      */
-    public void writeOperatorSchedule(ArrayList<Operator> operators, XMLWriter writer) {
+    public void writeOperatorSchedule(List<Operator> operators, XMLWriter writer) {
         Attribute[] operatorAttributes;
 //		switch (options.coolingSchedule) {
 //			case SimpleOperatorSchedule.LOG_SCHEDULE:
@@ -622,6 +651,11 @@ public class BeastGenerator extends Generator {
                 break;
             case RANDOM_WALK:
                 writeRandomWalkOperator(operator, writer);
+            case RANDOM_WALK_ABSORBING:
+                writeRandomWalkOperator(operator, false, writer);
+                break;
+            case RANDOM_WALK_REFLECTING:
+                writeRandomWalkOperator(operator, true, writer);
                 break;
             case INTEGER_RANDOM_WALK:
                 writeIntegerRandomWalkOperator(operator, writer);
@@ -679,6 +713,9 @@ public class BeastGenerator extends Generator {
                 break;
             case GMRF_GIBBS_OPERATOR:
                 writeGMRFGibbsOperator(operator, writer);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown operator type");
         }
     }
 
@@ -718,12 +755,24 @@ public class BeastGenerator extends Generator {
     }
 
     private void writeRandomWalkOperator(Operator operator, XMLWriter writer) {
-
         writer.writeOpenTag(
                 "randomWalkOperator",
                 new Attribute[]{
                         new Attribute.Default<Double>("windowSize", operator.tuning),
                         new Attribute.Default<Double>("weight", operator.weight)
+                });
+        writeParameter1Ref(writer, operator);
+        writer.writeCloseTag("randomWalkOperator");
+    }
+
+    private void writeRandomWalkOperator(Operator operator, boolean reflecting, XMLWriter writer) {
+        writer.writeOpenTag(
+                "randomWalkOperator",
+                new Attribute[]{
+                        new Attribute.Default<Double>("windowSize", operator.tuning),
+                        new Attribute.Default<Double>("weight", operator.weight),
+                        new Attribute.Default<String>("boundaryCondition", 
+                                (reflecting ? "reflecting" : "absorbing"))
                 });
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag("randomWalkOperator");
@@ -1069,6 +1118,9 @@ public class BeastGenerator extends Generator {
 
             writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
         }
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);
+
         writer.writeCloseTag(CompoundLikelihood.PRIOR);
 
         if (options.hasData()) {
@@ -1081,6 +1133,8 @@ public class BeastGenerator extends Generator {
                 writer.writeTag(ACLikelihood.AC_LIKELIHOOD,
                         new Attribute.Default<String>("idref", "branchRates"), true);
             }
+
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_LIKELIHOOD, writer);
 
             writer.writeCloseTag(CompoundLikelihood.LIKELIHOOD);
 
@@ -1097,7 +1151,12 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.echoEvery + "")
                 });
         writeScreenLog(writer);
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_SCREEN_LOG, writer);
+
         writer.writeCloseTag(LoggerParser.LOG);
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SCREEN_LOG, writer);
 
         // write log to file
         if (options.logFileName == null) {
@@ -1110,7 +1169,10 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(LoggerParser.FILE_NAME, options.logFileName)
                 });
         writeLog(writer);
+
         writer.writeCloseTag(LoggerParser.LOG);
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_FILE_LOG, writer);
 
         // write tree log to file
         if (options.treeFileName == null) {
@@ -1156,6 +1218,9 @@ public class BeastGenerator extends Generator {
             // we have data...
             writer.writeTag("posterior", new Attribute.Default<String>("idref", "posterior"), true);
         }
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREES_LOG, writer);
+
         writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
 
 //        if (mapTreeLog) {
@@ -1215,6 +1280,8 @@ public class BeastGenerator extends Generator {
 
             writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
         }
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREES_LOG, writer);
 
         writer.writeCloseTag("mcmc");
     }
@@ -1438,21 +1505,10 @@ public class BeastGenerator extends Generator {
             writer.writeTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>("idref", "likelihood"), true);
         }
 
-        // As of v1.4.2, always write the rate parameter even if fixed...
-        //if (!fixedSubstitutionRate) {
         if (options.clockType == ClockType.STRICT_CLOCK) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "clock.rate"), true);
         } else {
             writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "meanRate"), true);
-        }
-        //}
-
-        if (options.errorModelType != ErrorType.NO_ERROR) {
-            if (options.errorModelType == ErrorType.AGE_ALL || options.errorModelType == ErrorType.AGE_TRANSITIONS) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "errorModel.ageRate"), true);
-            } else {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "errorModel.baseRate"), true);
-            }
         }
 
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "treeModel.rootHeight"), true);
@@ -1503,24 +1559,13 @@ public class BeastGenerator extends Generator {
                 throw new IllegalArgumentException("Unknown clock model");
         }
 
-        /*if (options.clockType != ClockType.STRICT_CLOCK) {
-            if (options.clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "uced.mean"), true);
-            } else if (options.clockType == ClockType.UNCORRELATED_LOGNORMAL) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.mean"), true);
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.stdev"), true);
-            }
-            writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "coefficientOfVariation"), true);
-            writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>("idref", "covariance"), true);
-
-            if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
-                writer.writeTag("sumStatistic", new Attribute.Default<String>("idref", "rateChanges"), true);
-            }
-        }*/
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
         if (options.hasData()) {
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
         }
+        
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
 
         treePriorGenerator.writeLikelihoodLog(writer);
     }
@@ -1532,4 +1577,5 @@ public class BeastGenerator extends Generator {
     private boolean hasCodonOrUserPartitions() {
         return (options.getActiveModels().size() > 1 || options.getActiveModels().get(0).getCodonPartitionCount() > 1);
     }
+
 }

@@ -1,9 +1,9 @@
-package dr.app.beauti.options;
+package dr.app.beauti.components;
 
 /**
  * @author Alexei Drummond
  */
-public enum ErrorType {
+public enum SequenceErrorType {
 
     NO_ERROR("Off"),
     AGE_TRANSITIONS("Age-dependent: Transistions only"),
@@ -11,7 +11,7 @@ public enum ErrorType {
     BASE_TRANSITIONS("Age-independent: Transistions only"),
     BASE_ALL("Age-independent: All substitutions");
 
-    ErrorType(String displayName) {
+    SequenceErrorType(String displayName) {
         this.displayName = displayName;
     }
 

@@ -26,12 +26,11 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.priorsPanel.PriorType;
+import dr.app.beauti.components.SequenceErrorModelComponent;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.*;
 import dr.evolution.util.Date;
-import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
-import dr.evolution.util.Units;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.BirthDeathModelParser;
 import dr.inference.operators.OperatorSchedule;
@@ -50,6 +49,7 @@ import java.util.*;
 public class BeautiOptions extends ModelOptions {
 
     public BeautiOptions() {
+
         double demoWeights = 3.0;
         double branchWeights = 30.0;
         double treeWeights = 15.0;
@@ -85,9 +85,6 @@ public class BeautiOptions extends ModelOptions {
             p.gammaAlpha = 1;
             p.gammaBeta = 0.0001;
         }
-
-        createParameter("errorModel.ageRate", "age dependent sequence error rate", SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("errorModel.baseRate", "base sequence error rate", SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.POSITIVE_INFINITY);
 
         createScaleParameter("constant.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
@@ -175,9 +172,6 @@ public class BeautiOptions extends ModelOptions {
                 "Changes partition relative rates relative to each other maintaining their mean", "allMus",
                 OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
 
-        createScaleOperator("errorModel.ageRate", rateWeights);
-        createScaleOperator("errorModel.baseRate", rateWeights);
-
         createScaleOperator("clock.rate", rateWeights);
         createScaleOperator("uced.mean", rateWeights);
         createScaleOperator("ucld.mean", rateWeights);
@@ -240,6 +234,78 @@ public class BeautiOptions extends ModelOptions {
                 OperatorType.WILSON_BALDING, -1, demoWeights);
     }
 
+    /**
+     * resets the options to the initial conditions
+     */
+    public void reset() {
+        fileNameStem = "untitled";
+        logFileName = null;
+        treeFileName = null;
+        mapTreeLog = false;
+        mapTreeFileName = null;
+        substTreeLog = false;
+        substTreeFileName = null;
+
+        // Data options
+        dataType = null;
+        dataReset = true;
+
+        taxonList = null;
+
+        locations.clear();
+
+        taxonSets.clear();
+        taxonSetsMono.clear();
+        dataPartitions.clear();
+        trees.clear();
+
+        meanDistance = 1.0;
+        datesUnits = YEARS;
+        datesDirection = FORWARDS;
+        maximumTipHeight = 0.0;
+        translation = 0;
+        startingTreeType = StartingTreeType.RANDOM;
+        userStartingTree = null;
+
+        models.clear();
+
+        fixedSubstitutionRate = true;
+        meanSubstitutionRate = 1.0;
+        unlinkPartitionRates = true;
+
+        nodeHeightPrior = TreePrior.CONSTANT;
+        parameterization = GROWTH_RATE;
+        skylineGroupCount = 10;
+        skylineModel = CONSTANT_SKYLINE;
+        skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
+        skyrideIntervalCount = 1;
+        extendedSkylineModel = VariableDemographicModel.LINEAR;
+        multiLoci = false;
+        birthDeathSamplingProportion = 1.0;
+        fixedTree = false;
+
+        units = Units.Type.SUBSTITUTIONS;
+        clockType = ClockType.STRICT_CLOCK;
+
+        // Operator schedule options
+        coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
+
+        // MCMC options
+        chainLength = 10000000;
+        logEvery = 1000;
+        echoEvery = 1000;
+        burnIn = 100000;
+        fileName = null;
+        autoOptimize = true;
+        performTraceAnalysis = false;
+        generateCSV = true;  // until/if a button
+        samplePriorOnly = false;
+
+        localClockRateChangesStatistic = null;
+        localClockRatesStatistic = null;
+
+    }
+
     public void addPartitionModel(PartitionModel model) {
 
         if (!models.contains(model)) {
@@ -290,7 +356,12 @@ public class BeautiOptions extends ModelOptions {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
         selectParameters(parameters);
+
+        selectComponentParameters(this, parameters);
+
         selectStatistics(parameters);
+
+        selectComponentStatistics(this, parameters);
 
         boolean multiplePartitions = getTotalActivePartitionCount() > 1;
 
@@ -461,11 +532,13 @@ public class BeautiOptions extends ModelOptions {
      *
      * @return the operator list
      */
-    public ArrayList<Operator> selectOperators() {
+    public List<Operator> selectOperators() {
 
         ArrayList<Operator> ops = new ArrayList<Operator>();
 
         selectOperators(ops);
+
+        selectComponentOperators(this, ops);
 
         boolean multiplePartitions = getTotalActivePartitionCount() > 1;
 
@@ -514,7 +587,7 @@ public class BeautiOptions extends ModelOptions {
      *
      * @param params the parameter list
      */
-    private void selectParameters(ArrayList<Parameter> params) {
+    private void selectParameters(List<Parameter> params) {
 
         if (hasData()) {
 
@@ -572,11 +645,6 @@ public class BeautiOptions extends ModelOptions {
 
             rateParam.isFixed = fixed;
 
-            if (errorModelType == ErrorType.AGE_ALL || errorModelType == ErrorType.AGE_TRANSITIONS) {
-                params.add(getParameter("errorModel.ageRate"));
-            } else if (errorModelType == ErrorType.BASE_ALL || errorModelType == ErrorType.BASE_TRANSITIONS) {
-                params.add(getParameter("errorModel.baseRate"));
-            }
         }
 
         if (nodeHeightPrior == TreePrior.CONSTANT) {
@@ -622,7 +690,7 @@ public class BeautiOptions extends ModelOptions {
         params.add(getParameter("treeModel.rootHeight"));
     }
 
-    private void selectStatistics(ArrayList<Parameter> params) {
+    private void selectStatistics(List<Parameter> params) {
 
         if (taxonSets != null) {
             for (Taxa taxonSet : taxonSets) {
@@ -661,6 +729,7 @@ public class BeautiOptions extends ModelOptions {
             params.add(getParameter("coefficientOfVariation"));
             params.add(getParameter("covariance"));
         }
+
     }
 
     /**
@@ -668,7 +737,7 @@ public class BeautiOptions extends ModelOptions {
      *
      * @param ops the operator list
      */
-    private void selectOperators(ArrayList<Operator> ops) {
+    private void selectOperators(List<Operator> ops) {
 
         if (hasData()) {
 
@@ -751,12 +820,6 @@ public class BeautiOptions extends ModelOptions {
                         throw new IllegalArgumentException("Unknown clock model");
                 }
             }
-
-            if (errorModelType == ErrorType.AGE_ALL || errorModelType == ErrorType.AGE_TRANSITIONS) {
-                ops.add(getOperator("errorModel.ageRate"));
-            } else if (errorModelType == ErrorType.BASE_ALL || errorModelType == ErrorType.BASE_TRANSITIONS) {
-                ops.add(getOperator("errorModel.baseRate"));
-            }
         }
 
         if (nodeHeightPrior == TreePrior.CONSTANT) {
@@ -811,6 +874,7 @@ public class BeautiOptions extends ModelOptions {
             ops.add(getOperator("wideExchange"));
             ops.add(getOperator("wilsonBalding"));
         }
+
     }
 
     /**
@@ -1205,6 +1269,8 @@ public class BeautiOptions extends ModelOptions {
     public TaxonList taxonList = null;
     public DateGuesser dateGuesser = new DateGuesser();
 
+    public List<Location> locations = new ArrayList<Location>();
+
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
     public List<DataPartition> dataPartitions = new ArrayList<DataPartition>();
@@ -1237,7 +1303,6 @@ public class BeautiOptions extends ModelOptions {
 
     public Units.Type units = Units.Type.SUBSTITUTIONS;
     public ClockType clockType = ClockType.STRICT_CLOCK;
-    public ErrorType errorModelType = ErrorType.NO_ERROR;
 
     // Operator schedule options
     public int coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;

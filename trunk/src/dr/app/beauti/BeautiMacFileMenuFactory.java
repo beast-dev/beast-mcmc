@@ -62,15 +62,15 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
             menu.add(item);
 
-            menu.addSeparator();
-
-            item = new JMenuItem(((BeautiFrame)frame).getOpenAction());
-            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
-            menu.add(item);
-
-            item = new JMenuItem(frame.getSaveAsAction());
-            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
-            menu.add(item);
+//            menu.addSeparator();
+//
+//            item = new JMenuItem(((BeautiFrame)frame).getOpenAction());
+//            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
+//            menu.add(item);
+//
+//            item = new JMenuItem(frame.getSaveAsAction());
+//            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
+//            menu.add(item);
 
             menu.addSeparator();
 
@@ -87,17 +87,17 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
             item.setEnabled(false);
             menu.add(item);
 
-            menu.addSeparator();
-
-            item = new JMenuItem("Apply Template...");
-            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
-            item.setEnabled(false);
-            menu.add(item);
-
-            item = new JMenuItem("Save Template As...");
-            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
-            item.setEnabled(false);
-            menu.add(item);
+//            menu.addSeparator();
+//
+//            item = new JMenuItem("Apply Template...");
+//            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
+//            item.setEnabled(false);
+//            menu.add(item);
+//
+//            item = new JMenuItem("Save Template As...");
+//            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
+//            item.setEnabled(false);
+//            menu.add(item);
 
             menu.addSeparator();
 

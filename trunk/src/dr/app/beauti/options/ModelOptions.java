@@ -1,9 +1,10 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.priorsPanel.PriorType;
+import dr.app.beauti.generator.ComponentGenerator;
 import dr.evolution.util.TaxonList;
 
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * @author Alexei Drummond
@@ -42,61 +43,60 @@ public class ModelOptions {
     public static final int LOG_VAR_SCALE = 9;
 
 
-    protected void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
+    public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
         operators.put(parameterName, new Operator(parameterName, "", parameter, type, tuning, weight));
     }
 
-    protected void createOperator(String key, String name, String description, String parameterName, OperatorType type, double tuning, double weight) {
+    public void createOperator(String key, String name, String description, String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
         operators.put(key, new Operator(name, description, parameter, type, tuning, weight));
     }
 
-    protected void createOperator(String key, String name, String description, String parameterName1, String parameterName2, OperatorType type, double tuning, double weight) {
+    public void createOperator(String key, String name, String description, String parameterName1, String parameterName2, OperatorType type, double tuning, double weight) {
         Parameter parameter1 = getParameter(parameterName1);
         Parameter parameter2 = getParameter(parameterName2);
         operators.put(key, new Operator(name, description, parameter1, parameter2, type, tuning, weight));
     }
 
-    protected void createScaleOperator(String parameterName, double weight) {
+    public void createScaleOperator(String parameterName, double weight) {
         Parameter parameter = getParameter(parameterName);
         operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE, 0.75, weight));
     }
 
-    protected void createScaleAllOperator(String parameterName, double weight) {
+    public void createScaleAllOperator(String parameterName, double weight) {
         Parameter parameter = getParameter(parameterName);
         operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE_ALL, 0.75, weight));
     }
 
-
-    protected Parameter createParameter(String name, String description) {
+    public Parameter createParameter(String name, String description) {
         final Parameter parameter = new Parameter(name, description);
         parameters.put(name, parameter);
         return parameter;
     }
 
-    protected Parameter createParameter(String name, String description, int scale, double value, double lower, double upper) {
+    public Parameter createParameter(String name, String description, int scale, double value, double lower, double upper) {
         final Parameter parameter = new Parameter(name, description, scale, value, lower, upper);
         parameters.put(name, parameter);
         return parameter;
     }
 
-    protected void createParameter(String name, String description, boolean isNodeHeight, double value, double lower, double upper) {
+    public void createParameter(String name, String description, boolean isNodeHeight, double value, double lower, double upper) {
         parameters.put(name, new Parameter(name, description, isNodeHeight, value, lower, upper));
     }
 
-    protected void createScaleParameter(String name, String description, int scale, double value, double lower, double upper) {
+    public void createScaleParameter(String name, String description, int scale, double value, double lower, double upper) {
         Parameter p = createParameter(name, description, scale, value, lower, upper);
         p.priorType = PriorType.JEFFREYS_PRIOR;
     }
 
-    protected Parameter createStatistic(String name, String description, boolean isDiscrete) {
+    public Parameter createStatistic(String name, String description, boolean isDiscrete) {
         final Parameter parameter = new Parameter(name, description, isDiscrete);
         parameters.put(name, parameter);
         return parameter;
     }
 
-    protected void createStatistic(String name, String description, double lower, double upper) {
+    public void createStatistic(String name, String description, double lower, double upper) {
         parameters.put(name, new Parameter(name, description, lower, upper));
     }
 
@@ -122,7 +122,7 @@ public class ModelOptions {
         return parameter;
     }
 
-    Operator getOperator(String name) {
+    public Operator getOperator(String name) {
         Operator operator = operators.get(name);
         if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
         return operator;
@@ -131,4 +131,40 @@ public class ModelOptions {
     HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();
     HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
     HashMap<String, Operator> operators = new HashMap<String, Operator>();
+
+    public void addComponent(ComponentOptions component) {
+        components.add(component);
+        component.createParameters(this);
+    }
+
+    public ComponentOptions getComponentOptions(Class<?> theClass) {
+        for (ComponentOptions component : components) {
+            if (theClass.isAssignableFrom(component.getClass())) {
+                return component;
+            }
+        }
+
+        return null;
+    }
+
+    protected void selectComponentParameters(ModelOptions options, List<Parameter> params) {
+        for (ComponentOptions component : components) {
+            component.selectParameters(options, params);
+        }
+    }
+
+    protected void selectComponentStatistics(ModelOptions options, List<Parameter> stats) {
+        for (ComponentOptions component : components) {
+            component.selectStatistics(options, stats);
+        }
+    }
+
+    protected void selectComponentOperators(ModelOptions options, List<Operator> ops) {
+        for (ComponentOptions component : components) {
+            component.selectOperators(options, ops);
+        }
+    }
+
+    private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
+
 }

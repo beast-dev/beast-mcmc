@@ -47,7 +47,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     public static final String NORMAL_DISTRIBUTION_MODEL = "logNormalDistributionModel";
     public static final String MEAN = "mean";
     public static final String STDEV = "stdev";
-    public static final String PRECISION = "prec";
+    public static final String PRECISION = "precision";
     public static final String OFFSET = "offset";
     public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
 

@@ -200,7 +200,7 @@
                 <path refid="classpath"/>
             	<path location="${build}"/>
             </classpath>
-            
+        	
             <formatter type="xml"/>
             
             <batchtest fork="yes" todir="${report}">
@@ -225,7 +225,7 @@
     <target name="junitreport">
         <junitreport todir="${report}">
             <fileset dir="${report}" includes="*.xml"/>
-            <report todir="${report}"/>
+            <report format="frames" todir="${report}"/>
         </junitreport>
     	<echo message="JUnit test report finished." />
     </target>

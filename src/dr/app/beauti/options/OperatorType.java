@@ -7,6 +7,8 @@ public enum OperatorType {
 
     SCALE("scale"),
     RANDOM_WALK("randomWalk"),
+    RANDOM_WALK_ABSORBING("randomWalkAbsorbing"),
+    RANDOM_WALK_REFLECTING("randomWalkReflecting"),
     INTEGER_RANDOM_WALK("integerRandomWalk"),
     UP_DOWN("upDown"),
     SCALE_ALL("scaleAll"),

@@ -121,6 +121,8 @@ public class TreeModelGenerator extends Generator {
             writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
         }*/
 
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_MODEL, writer);
+        
         writer.writeCloseTag(TreeModel.TREE_MODEL);
 
         if (options.clockType == ClockType.AUTOCORRELATED_LOGNORMAL) {

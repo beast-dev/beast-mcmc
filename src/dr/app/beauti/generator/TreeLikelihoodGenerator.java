@@ -8,7 +8,6 @@ import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
-import dr.evomodel.treelikelihood.SequenceErrorModel;
 import dr.evomodel.clock.ACLikelihood;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evoxml.SitePatternsParser;
@@ -22,33 +21,6 @@ public class TreeLikelihoodGenerator extends Generator {
 
     public TreeLikelihoodGenerator(BeautiOptions options) {
         super(options);
-    }
-
-    public void writeErrorModel(XMLWriter writer) {
-        String errorType = (options.errorModelType == ErrorType.AGE_TRANSITIONS ||
-                options.errorModelType == ErrorType.BASE_TRANSITIONS ?
-                "transitions" : "all");
-
-
-        writer.writeOpenTag(
-                SequenceErrorModel.SEQUENCE_ERROR_MODEL,
-                new Attribute[]{
-                        new Attribute.Default<String>("id", "errorModel"),
-                        new Attribute.Default<String>("type", errorType)
-                }
-        );
-
-        if (options.errorModelType == ErrorType.AGE_TRANSITIONS ||
-                options.errorModelType == ErrorType.AGE_ALL) {
-            writeParameter(SequenceErrorModel.AGE_RELATED_RATE, "errorModel.ageRate", 1, writer);
-        } else if (options.errorModelType == ErrorType.BASE_TRANSITIONS ||
-                options.errorModelType == ErrorType.BASE_ALL) {
-            writeParameter(SequenceErrorModel.BASE_ERROR_RATE, "errorModel.baseRate", 1, writer);
-        } else {
-            throw new IllegalArgumentException("Unknown error type");
-        }
-
-        writer.writeCloseTag(SequenceErrorModel.SEQUENCE_ERROR_MODEL);
     }
 
     /**
@@ -152,10 +124,7 @@ public class TreeLikelihoodGenerator extends Generator {
                     new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
         }*/
 
-        if (options.errorModelType != ErrorType.NO_ERROR) {
-            writer.writeTag(SequenceErrorModel.SEQUENCE_ERROR_MODEL,
-                    new Attribute[]{new Attribute.Default<String>("idref", "errorModel")}, true);
-        }
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, writer);
 
         writer.writeCloseTag(TreeLikelihood.TREE_LIKELIHOOD);
     }

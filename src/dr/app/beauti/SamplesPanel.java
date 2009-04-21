@@ -425,7 +425,7 @@ public class SamplesPanel extends BeautiPanel implements Exportable {
         }
 
         public boolean isCellEditable(int row, int col) {
-            if (col == 0) return true;
+            if (col == 0) return false;
             if (col == 1) {
                 Date date = options.taxonList.getTaxon(row).getDate();
                 return (date != null);

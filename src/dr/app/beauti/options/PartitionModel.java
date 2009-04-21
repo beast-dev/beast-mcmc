@@ -483,7 +483,7 @@ public class PartitionModel extends ModelOptions {
         return parameter;
     }
 
-    Operator getOperator(String name) {
+    public Operator getOperator(String name) {
 
         Operator operator = operators.get(name);
 

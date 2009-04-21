@@ -55,7 +55,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
     JCheckBox autoOptimizeCheck = null;
 
-    public ArrayList operators = new ArrayList();
+    public java.util.List<Operator> operators = new ArrayList<Operator>();
 
     BeautiFrame frame = null;
 

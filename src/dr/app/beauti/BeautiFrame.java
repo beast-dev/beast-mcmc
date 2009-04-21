@@ -9,12 +9,12 @@
 package dr.app.beauti;
 
 import dr.app.beauti.generator.BeastGenerator;
+import dr.app.beauti.generator.Generator;
 import dr.app.beauti.modelsPanel.ModelsPanel;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.DataPartition;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
+import dr.app.beauti.components.SequenceErrorModelComponent;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.io.Importer;
@@ -25,16 +25,21 @@ import dr.evolution.util.Units;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
+import org.jdom.JDOMException;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
+import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
+import java.text.NumberFormat;
+
+import figtree.treeviewer.annotations.AnnotationDefinition;
+import jebl.evolution.taxa.Taxon;
 
 /**
  * @author Andrew Rambaut
@@ -48,14 +53,15 @@ public class BeautiFrame extends DocumentFrame {
      */
     private static final long serialVersionUID = 2114148696789612509L;
 
-    private BeautiOptions beautiOptions = new BeautiOptions();
-    private BeastGenerator generator = new BeastGenerator(beautiOptions);
+    private final BeautiOptions beautiOptions;
+    private final BeastGenerator generator;
 
     private JTabbedPane tabbedPane = new JTabbedPane();
     private JLabel statusLabel = new JLabel("No data loaded");
 
     private DataPanel dataPanel;
     private SamplesPanel samplesPanel;
+    private LocationsPanel locationsPanel;
     private TaxaPanel taxaPanel;
     private ModelsPanel modelsPanel;
     private TreesPanel treesPanel;
@@ -82,12 +88,21 @@ public class BeautiFrame extends DocumentFrame {
         getFindAction().setEnabled(false);
 
         getZoomWindowAction().setEnabled(false);
+
+        beautiOptions = new BeautiOptions();
+        generator = new BeastGenerator(beautiOptions);
+
+        // install components:
+        SequenceErrorModelComponent comp1 = new SequenceErrorModelComponent(beautiOptions);
+        beautiOptions.addComponent(comp1);
+        generator.addComponent(comp1);
     }
 
     public void initializeComponents() {
 
         dataPanel = new DataPanel(this, getImportAction(), getDeleteAction());
         samplesPanel = new SamplesPanel(this);
+        locationsPanel = new LocationsPanel(this);
         taxaPanel = new TaxaPanel(this);
         modelsPanel = new ModelsPanel(this, getDeleteAction());
         treesPanel = new TreesPanel(this);
@@ -97,6 +112,7 @@ public class BeautiFrame extends DocumentFrame {
 
         tabbedPane.addTab("Data Partitions", dataPanel);
         tabbedPane.addTab("Sample Dates", samplesPanel);
+        tabbedPane.addTab("Locations", locationsPanel);
         tabbedPane.addTab("Taxon Sets", taxaPanel);
         tabbedPane.addTab("Models", modelsPanel);
         tabbedPane.addTab("Trees", treesPanel);
@@ -147,6 +163,7 @@ public class BeautiFrame extends DocumentFrame {
     private void setAllOptions() {
         dataPanel.setOptions(beautiOptions);
         samplesPanel.setOptions(beautiOptions);
+        locationsPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
         modelsPanel.setOptions(beautiOptions);
         treesPanel.setOptions(beautiOptions);
@@ -161,6 +178,7 @@ public class BeautiFrame extends DocumentFrame {
     private void getAllOptions() {
         dataPanel.getOptions(beautiOptions);
         samplesPanel.getOptions(beautiOptions);
+        locationsPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
         modelsPanel.getOptions(beautiOptions);
         treesPanel.getOptions(beautiOptions);
@@ -168,23 +186,6 @@ public class BeautiFrame extends DocumentFrame {
         operatorsPanel.getOptions(beautiOptions);
         mcmcPanel.getOptions(beautiOptions);
     }
-
-    // These functions are called when controls in the different panels
-    // are changed. The minimum they do is call setDirty, but they may
-    // tell other panels to update from the options.
-    //
-    // AR 26/11/08 - have attempted to make this more robust. When you switch
-    // to a new tab 'getOptions' is called on the previously select panel, then 'getAllOptions' is
-    // called. The individual panels should now just call 'setDirty' directly when something changes.
-
-
-//    public final void dataChanged() {
-//        setDirty();
-//    }
-//
-//    public final void samplingTimesChanged() {
-//        setDirty();
-//    }
 
     public final void dataSelectionChanged(boolean isSelected) {
         if (isSelected) {
@@ -201,31 +202,6 @@ public class BeautiFrame extends DocumentFrame {
             getDeleteAction().setEnabled(false);
         }
     }
-
-//    public void taxonSetsChanged() {
-//        setDirty();
-//    }
-//
-//    public final void modelChanged() {
-//        setDirty();
-//    }
-//
-//    public final void treePriorsChanged() {
-//        setDirty();
-//    }
-//
-//    public final void priorsChanged() {
-//        setDirty();
-//    }
-//
-//    public final void operatorsChanged() {
-//        setDirty();
-//    }
-//
-//    public final void mcmcChanged() {
-//        setDirty();
-//    }
-
 
     public void doDelete() {
         if (tabbedPane.getSelectedComponent() == dataPanel) {
@@ -271,7 +247,7 @@ public class BeautiFrame extends DocumentFrame {
                         "Unable to open file",
                         JOptionPane.ERROR_MESSAGE);
             } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Unable to read template file: " + ioe,
+                JOptionPane.showMessageDialog(this, "Unable to read template file: " + ioe.getMessage(),
                         "Unable to read file",
                         JOptionPane.ERROR_MESSAGE);
             }
@@ -279,39 +255,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     protected boolean readFromFile(File file) throws IOException {
-//        try {
-//            SAXBuilder parser = new SAXBuilder();
-//            Document doc = parser.build(file);
-//            beautiOptions.parse(doc);
-//
-//            if (beautiOptions.guessDates) {
-//                beautiOptions.guessDates();
-//            }
-//
-//            dataPanel.setOptions(beautiOptions);
-//            samplesPanel.setOptions(beautiOptions);
-//            taxaPanel.setOptions(beautiOptions);
-//            modelsPanel.setOptions(beautiOptions);
-//            priorsPanel.setOptions(beautiOptions);
-//            operatorsPanel.setOptions(beautiOptions);
-//            mcmcPanel.setOptions(beautiOptions);
-//
-//            getExportAction().setEnabled(beautiOptions.hasData());
-//            getSaveAction().setEnabled(beautiOptions.hasData());
-//            getSaveAsAction().setEnabled(beautiOptions.hasData());
-//
-//        } catch (dr.xml.XMLParseException xpe) {
-//            JOptionPane.showMessageDialog(this, "Error reading file: This may not be a BEAUti file",
-//                    "Error reading file",
-//                    JOptionPane.ERROR_MESSAGE);
-//            return false;
-//        } catch (JDOMException e) {
-//            JOptionPane.showMessageDialog(this, "Unable to open file: This may not be a BEAUti file",
-//                    "Unable to open file",
-//                    JOptionPane.ERROR_MESSAGE);
-//            return false;
-//        }
-        return true;
+        return false;
     }
 
     public String getDefaultFileName() {
@@ -319,24 +263,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     protected boolean writeToFile(File file) throws IOException {
-//        dataPanel.getOptions(beautiOptions);
-//        samplesPanel.getOptions(beautiOptions);
-//        taxaPanel.getOptions(beautiOptions);
-//        modelsPanel.getOptions(beautiOptions);
-//        priorsPanel.getOptions(beautiOptions);
-//        operatorsPanel.getOptions(beautiOptions);
-//        mcmcPanel.getOptions(beautiOptions);
-//
-//        Document doc = beautiOptions.create(true);
-//
-//        FileWriter fw = new FileWriter(file);
-//
-//        XMLOutputter outputter = new XMLOutputter(org.jdom.output.Format.getPrettyFormat());
-//
-//        outputter.output(doc, fw);
-//
-//        fw.close();
-        return true;
+        return false;
     }
 
     public final void doImport() {
@@ -358,7 +285,7 @@ public class BeautiFrame extends DocumentFrame {
                         "Unable to open file",
                         JOptionPane.ERROR_MESSAGE);
             } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe,
+                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
                         "Unable to read file",
                         JOptionPane.ERROR_MESSAGE);
             }
@@ -368,6 +295,69 @@ public class BeautiFrame extends DocumentFrame {
 
     protected void importFromFile(File file) throws IOException {
 
+        Reader reader = null;
+
+        reader = new FileReader(file);
+
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        String line = bufferedReader.readLine();
+        while (line != null && line.length() == 0) {
+            line = bufferedReader.readLine();
+        }
+
+        if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
+            // is a NEXUS file
+            importNexusFile(file);
+        } else {
+            // assume it is a BEAST XML file and see if that works...
+            importBEASTFile(file);
+        }
+
+        setStatusMessage();
+
+        setAllOptions();
+
+        // @Todo templates are not implemented yet...
+//        getOpenAction().setEnabled(true);
+//        getSaveAction().setEnabled(true);
+        getExportAction().setEnabled(true);
+    }
+
+    protected void importBEASTFile(File file) throws IOException {
+
+
+        try {
+            FileReader reader = new FileReader(file);
+
+            BeastImporter importer = new BeastImporter(reader);
+
+            java.util.List<TaxonList> taxonLists = new ArrayList<TaxonList>();
+            java.util.List<Alignment> alignments = new ArrayList<Alignment>();
+
+            importer.importBEAST(taxonLists, alignments);
+
+            TaxonList taxa = taxonLists.get(0);
+
+            for (Alignment alignment : alignments) {
+                setData(taxa, alignment, null,  null, null, file.getName());
+            }
+        } catch (JDOMException e) {
+            JOptionPane.showMessageDialog(this,
+                    "Unable to import file: " + e.getMessage(),
+                    "Unable to import file",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        } catch (Importer.ImportException e) {
+            JOptionPane.showMessageDialog(this,
+                    "Unable to import file: " + e.getMessage(),
+                    "Unable to import file",
+                    JOptionPane.WARNING_MESSAGE);
+        }
+
+    }
+
+    protected void importNexusFile(File file) throws IOException {
+
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
         java.util.List<Tree> trees = new ArrayList<Tree>();
@@ -376,6 +366,7 @@ public class BeautiFrame extends DocumentFrame {
 
         try {
             FileReader reader = new FileReader(file);
+
 
             NexusApplicationImporter importer = new NexusApplicationImporter(reader);
 
@@ -487,8 +478,19 @@ public class BeautiFrame extends DocumentFrame {
             return;
         }
 
-        String fileNameStem = dr.app.util.Utils.trimExtensions(file.getName(),
-                new String[]{"NEX", "NEXUS", "TRE", "TREE"});
+        setData(taxa, alignment, trees,  model, charSets, file.getName());
+    }
+
+    private void setData(
+            TaxonList taxa,
+            Alignment alignment,
+            java.util.List<Tree> trees,
+            PartitionModel model,
+            java.util.List<NexusApplicationImporter.CharSet> charSets,
+            String fileName)
+    {
+        String fileNameStem = dr.app.util.Utils.trimExtensions(fileName,
+                new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML"});
 
         if (beautiOptions.taxonList == null) {
             // This is the first partition to be loaded...
@@ -524,7 +526,6 @@ public class BeautiFrame extends DocumentFrame {
 
 
             beautiOptions.fileNameStem = fileNameStem;
-
         } else {
             // This is an additional partition so check it uses the same taxa
 
@@ -548,18 +549,9 @@ public class BeautiFrame extends DocumentFrame {
             }
         }
 
-        addAlignment(alignment, charSets, model, file.getName(), fileNameStem);
+        addAlignment(alignment, charSets, model, fileName, fileNameStem);
 
         addTrees(trees);
-
-        setStatusMessage();
-
-        setAllOptions();
-
-        // @Todo templates are not implemented yet...
-//        getOpenAction().setEnabled(true);
-//        getSaveAction().setEnabled(true);
-        getExportAction().setEnabled(true);
     }
 
     private void addAlignment(Alignment alignment, java.util.List<NexusApplicationImporter.CharSet> charSets,
@@ -567,7 +559,7 @@ public class BeautiFrame extends DocumentFrame {
                               String fileName, String fileNameStem) {
         if (alignment != null) {
             java.util.List<DataPartition> partitions = new ArrayList<DataPartition>();
-            if (charSets.size() > 0) {
+            if (charSets != null && charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
                     partitions.add(new DataPartition(charSet.getName(), fileName,
                             alignment, charSet.getFromSite(), charSet.getToSite(), charSet.getEvery()));
@@ -597,7 +589,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     private void addTrees(java.util.List<Tree> trees) {
-        if (trees.size() > 0) {
+        if (trees != null && trees.size() > 0) {
             for (Tree tree : trees) {
                 String id = tree.getId();
                 if (id == null || id.trim().length() == 0) {
@@ -616,6 +608,125 @@ public class BeautiFrame extends DocumentFrame {
                 beautiOptions.trees.add(tree);
             }
         }
+    }
+
+    public final void importTraits() {
+
+        FileDialog dialog = new FileDialog(this,
+                "Import Traits File...",
+                FileDialog.LOAD);
+
+        dialog.setVisible(true);
+        if (dialog.getFile() != null) {
+            File file = new File(dialog.getDirectory(), dialog.getFile());
+
+            try {
+                Map<String, java.util.List<Object>> traits = importTraitsFromFile(file);
+
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
+                        "Unable to read file",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+    }
+
+    protected Map<String, java.util.List<Object>> importTraitsFromFile(File file) throws IOException {
+
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+
+        java.util.List<String> taxa = new ArrayList<String>();
+
+        String line = reader.readLine();
+        String[] labels = line.split("\t");
+        Map<String, java.util.List<String>> columns = new HashMap<String, java.util.List<String>>();
+        for (int i = 1; i < labels.length; i++) {
+            columns.put(labels[i], new ArrayList<String>());
+        }
+
+        line = reader.readLine();
+        while (line != null) {
+            String[] values = line.split("\t");
+
+            if (values.length > 0) {
+                taxa.add(values[0]);
+                for (int i = 1; i < values.length; i++) {
+                    if (i < labels.length) {
+                        java.util.List<String> column = columns.get(labels[i]);
+                        column.add(values[i]);
+                    }
+                }
+            }
+            line = reader.readLine();
+        }
+
+        Map<String, java.util.List<Object>> traits = new TreeMap<String, java.util.List<Object>>();
+
+        NumberFormat nf = NumberFormat.getInstance();
+
+        for (int i = 1; i < labels.length; i++) {
+            java.util.List<String> column = columns.get(labels[i]);
+
+            boolean isInteger = true;
+            boolean isNumber = true;
+            boolean isBoolean = true;
+
+            for (String valueString : column) {
+                if (!valueString.equalsIgnoreCase("TRUE") && !valueString.equalsIgnoreCase("FALSE")) {
+                    isBoolean = false;
+                    try {
+                        double number = Double.parseDouble(valueString);
+                        if (Math.round(number) != number) {
+                            isInteger = false;
+                        }
+                    } catch (NumberFormatException pe) {
+                        isInteger = false;
+                        isNumber = false;
+                    }
+                }
+            }
+
+            Map<Taxon, Object> values = new HashMap<Taxon, Object>();
+            AnnotationDefinition ad;
+            int j = 0;
+            for (String valueString : column) {
+                Taxon taxon = Taxon.getTaxon(taxa.get(j));
+                if (isBoolean) {
+                    values.put(taxon, new Boolean(valueString));
+                } else if (isInteger) {
+                    values.put(taxon, new Integer(valueString));
+                } else if (isNumber) {
+                    values.put(taxon, new Double(valueString));
+                } else {
+                    values.put(taxon, valueString);
+                }
+                j++;
+            }
+
+            Set<Object> valueSet = new HashSet<Object>(values.values());
+
+            if (isBoolean) {
+                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.BOOLEAN );
+            } else if (isInteger) {
+                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.INTEGER );
+            } else if (isNumber) {
+                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.REAL );
+            } else {
+                String[] valueArray = new String[valueSet.size()];
+                valueSet.toArray(valueArray);
+                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.STRING);
+//ad.setOptions(valueArray);
+            }
+
+            //traits.put(ad, values);
+        }
+
+        return traits;
     }
 
     private void setStatusMessage() {

@@ -39,7 +39,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -170,7 +169,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
             partitionsToRemove.add(options.dataPartitions.get(row));
         }
 
+        // @todo would probably be a good idea to check if the user wants to remove the last partition
         options.dataPartitions.removeAll(partitionsToRemove);
+        if (options.dataPartitions.size() == 0) {
+            // all data partitions removed so reset the taxa
+            options.reset();
+        }
         dataTableModel.fireTableDataChanged();
 
         fireDataChanged();
@@ -341,36 +345,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             return buffer.toString();
         }
-    }
-
-    public class ComboBoxRenderer extends JComboBox implements TableCellRenderer {
-        public ComboBoxRenderer() {
-            super();
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                                                       boolean isSelected, boolean hasFocus,
-                                                       int row, int column) {
-
-            if (isSelected) {
-                this.setForeground(table.getSelectionForeground());
-                this.setBackground(table.getSelectionBackground());
-            } else {
-                this.setForeground(table.getForeground());
-                this.setBackground(table.getBackground());
-            }
-
-            if (value != null) {
-                removeAllItems();
-                addItem(value);
-            }
-            return this;
-        }
-
-        public void revalidate() {
-        }
-
     }
 
     public class UnlinkModelsAction extends AbstractAction {

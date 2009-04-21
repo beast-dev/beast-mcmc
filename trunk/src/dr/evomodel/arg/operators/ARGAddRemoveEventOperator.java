@@ -767,7 +767,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 //
 //        }
 
-        arg.pushTreeSizeChangedEvent();
+        arg.pushTreeSizeIncreasedEvent();
 
         try {
             arg.endTreeEdit();
@@ -1096,7 +1096,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         adjustRandomPartitioning();
         	
 
-        arg.pushTreeSizeChangedEvent();
+        arg.pushTreeSizeDecreasedEvent();
        
         
         try {

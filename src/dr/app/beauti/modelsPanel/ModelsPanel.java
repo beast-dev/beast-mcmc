@@ -62,6 +62,8 @@ import java.util.logging.Logger;
  */
 public class ModelsPanel extends BeautiPanel implements Exportable {
 
+    public final static boolean DEBUG = false;
+
     private static final long serialVersionUID = 2778103564318492601L;
 
     JScrollPane scrollPane = new JScrollPane();
@@ -210,7 +212,9 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
     public void setOptions(BeautiOptions options) {
 
-        Logger.getLogger("dr.app.beauti").info("ModelsPanel.setOptions");
+        if (DEBUG) {
+            Logger.getLogger("dr.app.beauti").info("ModelsPanel.setOptions");
+        }
 
         this.options = options;
 

@@ -9,12 +9,12 @@
 package dr.app.beauti;
 
 import dr.app.beauti.generator.BeastGenerator;
-import dr.app.beauti.generator.Generator;
 import dr.app.beauti.modelsPanel.ModelsPanel;
 import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.components.SequenceErrorModelComponent;
+import dr.app.beauti.components.TipDateSamplingComponent;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.io.Importer;
@@ -32,7 +32,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
-import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.*;
@@ -60,8 +59,8 @@ public class BeautiFrame extends DocumentFrame {
     private JLabel statusLabel = new JLabel("No data loaded");
 
     private DataPanel dataPanel;
-    private SamplesPanel samplesPanel;
-    private LocationsPanel locationsPanel;
+    private TipDatesPanel tipDatesPanel;
+    private TraitsPanel traitsPanel;
     private TaxaPanel taxaPanel;
     private ModelsPanel modelsPanel;
     private TreesPanel treesPanel;
@@ -96,13 +95,17 @@ public class BeautiFrame extends DocumentFrame {
         SequenceErrorModelComponent comp1 = new SequenceErrorModelComponent(beautiOptions);
         beautiOptions.addComponent(comp1);
         generator.addComponent(comp1);
+
+        TipDateSamplingComponent comp2 = new TipDateSamplingComponent(beautiOptions);
+        beautiOptions.addComponent(comp2);
+        generator.addComponent(comp2);
     }
 
     public void initializeComponents() {
 
         dataPanel = new DataPanel(this, getImportAction(), getDeleteAction());
-        samplesPanel = new SamplesPanel(this);
-        locationsPanel = new LocationsPanel(this);
+        tipDatesPanel = new TipDatesPanel(this);
+        traitsPanel = new TraitsPanel(this);
         taxaPanel = new TaxaPanel(this);
         modelsPanel = new ModelsPanel(this, getDeleteAction());
         treesPanel = new TreesPanel(this);
@@ -111,9 +114,9 @@ public class BeautiFrame extends DocumentFrame {
         mcmcPanel = new MCMCPanel(this);
 
         tabbedPane.addTab("Data Partitions", dataPanel);
-        tabbedPane.addTab("Sample Dates", samplesPanel);
-        tabbedPane.addTab("Locations", locationsPanel);
         tabbedPane.addTab("Taxon Sets", taxaPanel);
+        tabbedPane.addTab("Tip Dates", tipDatesPanel);
+        tabbedPane.addTab("Traits", traitsPanel);
         tabbedPane.addTab("Models", modelsPanel);
         tabbedPane.addTab("Trees", treesPanel);
         tabbedPane.addTab("Priors", priorsPanel);
@@ -162,8 +165,8 @@ public class BeautiFrame extends DocumentFrame {
      */
     private void setAllOptions() {
         dataPanel.setOptions(beautiOptions);
-        samplesPanel.setOptions(beautiOptions);
-        locationsPanel.setOptions(beautiOptions);
+        tipDatesPanel.setOptions(beautiOptions);
+        traitsPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
         modelsPanel.setOptions(beautiOptions);
         treesPanel.setOptions(beautiOptions);
@@ -177,8 +180,8 @@ public class BeautiFrame extends DocumentFrame {
      */
     private void getAllOptions() {
         dataPanel.getOptions(beautiOptions);
-        samplesPanel.getOptions(beautiOptions);
-        locationsPanel.getOptions(beautiOptions);
+        tipDatesPanel.getOptions(beautiOptions);
+        traitsPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
         modelsPanel.getOptions(beautiOptions);
         treesPanel.getOptions(beautiOptions);

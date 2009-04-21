@@ -27,20 +27,17 @@ package dr.app.beauti;
 
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DateGuesser;
-import dr.evolution.util.Date;
-import dr.evolution.util.TimeScale;
-import dr.evolution.util.Units;
+import dr.app.beauti.components.*;
+import dr.evolution.util.*;
 import dr.gui.table.DateCellEditor;
 import dr.gui.table.TableSorter;
-import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 import org.virion.jam.table.TableRenderer;
+import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
@@ -49,15 +46,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
-public class SamplesPanel extends BeautiPanel implements Exportable {
+public class TipDatesPanel extends BeautiPanel implements Exportable {
 
     /**
      *
@@ -70,10 +65,13 @@ public class SamplesPanel extends BeautiPanel implements Exportable {
     ClearDatesAction clearDatesAction = new ClearDatesAction();
     GuessDatesAction guessDatesAction = new GuessDatesAction();
 
-    JCheckBox usingSamplingDates  = new JCheckBox("Use sampling dates");
+    JCheckBox usingTipDates = new JCheckBox("Use tip dates");
 
     JComboBox unitsCombo = new JComboBox(new String[]{"Years", "Months", "Days"});
     JComboBox directionCombo = new JComboBox(new String[]{"Since some time in the past", "Before the present"});
+
+    JComboBox tipDateSamplingCombo = new JComboBox(TipDateSamplingType.values());
+    JComboBox tipDateTaxonSetCombo = new JComboBox();
 
     BeautiFrame frame = null;
 
@@ -83,7 +81,7 @@ public class SamplesPanel extends BeautiPanel implements Exportable {
 
     GuessDatesDialog guessDatesDialog = null;
 
-    public SamplesPanel(BeautiFrame parent) {
+    public TipDatesPanel(BeautiFrame parent) {
 
         this.frame = parent;
 
@@ -149,11 +147,45 @@ public class SamplesPanel extends BeautiPanel implements Exportable {
         panel1.add(toolBar1, "North");
         panel1.add(scrollPane, "Center");
 
+        JToolBar toolBar2 = new JToolBar();
+        toolBar2.setFloatable(false);
+        toolBar2.setOpaque(false);
+
+        toolBar2.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+
+        PanelUtils.setupComponent(tipDateSamplingCombo);
+        tipDateSamplingCombo.setToolTipText("<html>Select whether to allow sampling<br>" +
+                "of all or individual tip dates.</html>");
+
+//        substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
+//        substitutionRateField.setEnabled(true);
+
+        final JLabel tipDateSamplingLabel = new JLabel("Tip date sampling:");
+        toolBar2.add(tipDateSamplingLabel);
+        toolBar2.add(tipDateSamplingCombo);
+
+        final JLabel tipDateTaxonSetLabel = new JLabel("Apply to taxon set:");
+        toolBar2.add(tipDateTaxonSetLabel);
+        toolBar2.add(tipDateTaxonSetCombo);
+
+
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
-        add(usingSamplingDates, "North");
-        add(panel1, "Center");
+        add(usingTipDates, BorderLayout.NORTH);
+        add(panel1, BorderLayout.CENTER);
+        add(toolBar2, BorderLayout.SOUTH);
+
+        tipDateSamplingCombo.addItemListener(
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                        boolean samplingOn = tipDateSamplingCombo.getSelectedItem() != TipDateSamplingType.NO_SAMPLING;
+                        tipDateTaxonSetLabel.setEnabled(samplingOn);
+                        tipDateTaxonSetCombo.setEnabled(samplingOn);
+                        fireModelsChanged();
+                    }
+                }
+        );
 
         clearDatesAction.setEnabled(false);
         guessDatesAction.setEnabled(false);
@@ -162,10 +194,14 @@ public class SamplesPanel extends BeautiPanel implements Exportable {
         unitsCombo.setEnabled(false);
         scrollPane.setEnabled(false);
         dataTable.setEnabled(false);
+        tipDateSamplingLabel.setEnabled(false);
+        tipDateSamplingCombo.setEnabled(false);
+        tipDateTaxonSetLabel.setEnabled(false);
+        tipDateTaxonSetCombo.setEnabled(false);
 
-        usingSamplingDates.addItemListener(new ItemListener() {
+        usingTipDates.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                boolean enabled = usingSamplingDates.isSelected();
+                boolean enabled = usingTipDates.isSelected();
                 clearDatesAction.setEnabled(enabled);
                 guessDatesAction.setEnabled(enabled);
                 unitsLabel.setEnabled(enabled);
@@ -173,6 +209,8 @@ public class SamplesPanel extends BeautiPanel implements Exportable {
                 directionCombo.setEnabled(enabled);
                 scrollPane.setEnabled(enabled);
                 dataTable.setEnabled(enabled);
+                tipDateSamplingCombo.setEnabled(enabled);
+                tipDateSamplingLabel.setEnabled(enabled);
             }
         });
 
@@ -235,6 +273,12 @@ public class SamplesPanel extends BeautiPanel implements Exportable {
         calculateHeights();
 
         dataTableModel.fireTableDataChanged();
+
+        tipDateTaxonSetCombo.removeAllItems();
+        tipDateTaxonSetCombo.addItem("All taxa");
+        for (TaxonList taxa : options.taxonSets) {
+            tipDateTaxonSetCombo.addItem(taxa);
+        }
     }
 
     private void setupTable() {
@@ -244,6 +288,18 @@ public class SamplesPanel extends BeautiPanel implements Exportable {
     public void getOptions(BeautiOptions options) {
         options.datesUnits = unitsCombo.getSelectedIndex();
         options.datesDirection = directionCombo.getSelectedIndex();
+
+        TipDateSamplingComponent comp = (TipDateSamplingComponent)options.getComponentOptions(TipDateSamplingComponent.class);
+        comp.tipDateSamplingType = (TipDateSamplingType) tipDateSamplingCombo.getSelectedItem();
+        if (tipDateTaxonSetCombo.getSelectedItem() instanceof TaxonList) {
+            comp.tipDateSamplingTaxonSet = (TaxonList) tipDateTaxonSetCombo.getSelectedItem();
+        } else {
+            comp.tipDateSamplingTaxonSet = null;
+        }
+    }
+
+    private void fireModelsChanged() {
+        frame.setDirty();
     }
 
     public JComponent getExportableComponent() {
@@ -357,9 +413,11 @@ public class SamplesPanel extends BeautiPanel implements Exportable {
             double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
 
             for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                Date date = options.taxonList.getTaxon(i).getDate();
+                Taxon taxon = options.taxonList.getTaxon(i);
+                Date date = taxon.getDate();
                 if (date != null) {
                     heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
+                    taxon.setAttribute("height", heights[i]);
                     if (heights[i] > options.maximumTipHeight) options.maximumTipHeight = heights[i];
                 }
             }

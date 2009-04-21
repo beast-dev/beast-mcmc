@@ -6,8 +6,8 @@ package dr.app.beauti.components;
 public enum TipDateSamplingType {
 
     NO_SAMPLING("Off"),
-    SAMPLE_SET("Sampling a set of tip dates"),
-    SAMPLE_ALL("Sampling all tip dates");
+    SAMPLE_INDIVIDUALLY("Sampling with individual priors"),
+    SAMPLE_JOINT("Sampling with joint priors");
 
     TipDateSamplingType(String displayName) {
         this.displayName = displayName;

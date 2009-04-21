@@ -278,7 +278,6 @@ public class BeautiOptions extends ModelOptions {
         skylineGroupCount = 10;
         skylineModel = CONSTANT_SKYLINE;
         skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
-        skyrideIntervalCount = 1;
         extendedSkylineModel = VariableDemographicModel.LINEAR;
         multiLoci = false;
         birthDeathSamplingProportion = 1.0;
@@ -699,7 +698,6 @@ public class BeautiOptions extends ModelOptions {
                     statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
                     statistics.put(taxonSet, statistic);
                 }
-                System.err.println("Adding statistic " + statistic.getName());
                 params.add(statistic);
             }
         } else {
@@ -1295,7 +1293,9 @@ public class BeautiOptions extends ModelOptions {
     public int skylineGroupCount = 10;
     public int skylineModel = CONSTANT_SKYLINE;
     public int skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
-    public int skyrideIntervalCount = 1;
+    // AR - this seems to be set to taxonCount - 1 so we don't need to
+    // have a settable variable...
+    // public int skyrideIntervalCount = 1;
     public String extendedSkylineModel = VariableDemographicModel.LINEAR;
     public boolean multiLoci = false;
     public double birthDeathSamplingProportion = 1.0;

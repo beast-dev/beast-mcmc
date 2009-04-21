@@ -214,5 +214,5 @@ public abstract class Generator {
         components.add(componentGenerator);
     }
 
-    private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
+    private static final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
 }

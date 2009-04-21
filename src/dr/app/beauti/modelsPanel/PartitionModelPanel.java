@@ -123,8 +123,10 @@ public class PartitionModelPanel extends OptionsPanel {
      */
     private void setupComponents() {
 
-        String modelName = (model == null) ? "null" : model.getName();
-        Logger.getLogger("dr.app.beauti").info("ModelsPanel.setModelOptions(" + modelName + ")");
+        if (ModelsPanel.DEBUG) {
+            String modelName = (model == null) ? "null" : model.getName();
+            Logger.getLogger("dr.app.beauti").info("ModelsPanel.setModelOptions(" + modelName + ")");
+        }
 
         if (model == null) {
             return;
@@ -248,7 +250,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
         if (BeautiApp.advanced) {
             addSeparator();
-            addComponent(dolloCheck);   
+            addComponent(dolloCheck);
         }
 
         setupComponents();

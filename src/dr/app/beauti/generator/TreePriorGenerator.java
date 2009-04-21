@@ -367,12 +367,13 @@ public class TreePriorGenerator extends Generator {
 					}
 			);
 
+            int skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
 			writer.writeOpenTag(GMRFSkyrideLikelihood.POPULATION_PARAMETER);
-			writeParameter("skyride.popSize", options.skyrideIntervalCount, writer);
+			writeParameter("skyride.popSize", skyrideIntervalCount, writer);
 			writer.writeCloseTag(GMRFSkyrideLikelihood.POPULATION_PARAMETER);
 
 			writer.writeOpenTag(GMRFSkyrideLikelihood.GROUP_SIZES);
-			writeParameter("skyride.groupSize", options.skyrideIntervalCount, writer);
+			writeParameter("skyride.groupSize", skyrideIntervalCount, writer);
 			writer.writeCloseTag(GMRFSkyrideLikelihood.GROUP_SIZES);
 
 			writer.writeOpenTag(GMRFSkyrideLikelihood.PRECISION_PARAMETER);

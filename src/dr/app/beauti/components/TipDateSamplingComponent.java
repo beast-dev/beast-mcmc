@@ -6,8 +6,12 @@ import dr.app.beauti.options.*;
 import dr.evomodel.treelikelihood.SequenceErrorModel;
 import dr.util.Attribute;
 import dr.inference.model.ParameterParser;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.loggers.Columns;
+import dr.evolution.util.*;
+import dr.evolution.util.Date;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -27,9 +31,10 @@ public class TipDateSamplingComponent extends BaseComponentGenerator implements 
 
         switch (point) {
             case IN_TREE_MODEL:
-            case IN_MCMC_PRIOR:
             case IN_FILE_LOG_PARAMETERS:
                 return true;
+            case IN_MCMC_PRIOR:
+                return tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT;
             default:
                 return false;
         }
@@ -37,12 +42,46 @@ public class TipDateSamplingComponent extends BaseComponentGenerator implements 
 
     protected void generate(final InsertionPoint point, final Object item, final XMLWriter writer) {
         switch (point) {
-            case IN_TREE_MODEL:
-                break;
+            case IN_TREE_MODEL: {
+                if (tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY) {
+                    TaxonList taxa = getTaxonSet();
+                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                        Taxon taxon = taxa.getTaxon(i);
+                        writer.writeOpenTag("leafHeight",
+                                new Attribute[]{
+                                        new Attribute.Default<String>("taxon", taxon.getId()),
+                                }
+                        );
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "age(" + taxon.getId() + ")"), true);
+                        writer.writeCloseTag("leafHeight");
+                    }
+                } else if (tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
+//                    writer.writeOpenTag("nodeHeights",
+//                            new Attribute[]{
+//                                    new Attribute.Default<Boolean>("external", taxon.getId()),
+//                            }
+//                    );
+//                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "age(" + taxon.getId() + ")"), true);
+//                    writer.writeCloseTag("leafHeight");
+                }
+            } break;
             case IN_MCMC_PRIOR:
+                if (tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY) {
+                    // nothing to do - indivual parameter priors are written automatically
+                } else if (tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
+
+                }
                 break;
             case IN_FILE_LOG_PARAMETERS:
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "treeModel.tipDates"), true);
+                if (tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY) {
+                    TaxonList taxa = getTaxonSet();
+                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                        Taxon taxon = taxa.getTaxon(i);
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "age(" + taxon.getId() + ")"), true);
+                    }
+                } else if (tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "treeModel.tipDates"), true);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
@@ -61,24 +100,65 @@ public class TipDateSamplingComponent extends BaseComponentGenerator implements 
     }
 
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {
-        if (tipDateSamplingType == TipDateSamplingType.SAMPLE_ALL) {
-            params.add(modelOptions.getParameter("errorModel.ageRate"));
-        } else if (tipDateSamplingType == TipDateSamplingType.SAMPLE_SET) {
-            params.add(modelOptions.getParameter("errorModel.baseRate"));
+        if (tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY) {
+            TaxonList taxa = getTaxonSet();
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                Taxon taxon = taxa.getTaxon(i);
+                Parameter parameter = tipDateParameters.get(taxon);
+                double height = 0.0;
+                if (taxon.getAttribute("height") != null) {
+                    height = (Double)taxon.getAttribute("height");
+                }
+                if (parameter == null) {
+                    parameter = new Parameter("age(" + taxon.getId() + ")", 
+                            "sampled age of taxon, " + taxon.getId(),
+                            ModelOptions.TIME_SCALE,
+                            height,
+                            0.0, Double.POSITIVE_INFINITY);
+                    parameter.priorEdited = true;
+                    tipDateParameters.put(taxon, parameter);
+                }
+                params.add(parameter);
+            }
+        } else if (tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
+            params.add(modelOptions.getParameter("treeModel.tipDates"));
         }
     }
 
     public void selectStatistics(final ModelOptions modelOptions, final List<Parameter> stats) {
-        // no statistics required
+        // no statistics
     }
 
     public void selectOperators(final ModelOptions modelOptions, final List<Operator> ops) {
-        if (tipDateSamplingType == TipDateSamplingType.SAMPLE_ALL) {
-            ops.add(modelOptions.getOperator("errorModel.ageRate"));
-        } else if (tipDateSamplingType == TipDateSamplingType.SAMPLE_SET) {
-            ops.add(modelOptions.getOperator("errorModel.baseRate"));
+        if (tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY) {
+            TaxonList taxa = getTaxonSet();
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                Taxon taxon = taxa.getTaxon(i);
+                Operator operator = tipDateOperators.get(taxon);
+                if (operator == null) {
+                    Parameter parameter = tipDateParameters.get(taxon);
+                    operator = new Operator("age(" + taxon.getId() + ")", "", parameter, OperatorType.SCALE, 0.75, 1.0);                    
+                    tipDateOperators.put(taxon, operator);
+                }
+                ops.add(operator);
+            }
+        } else if (tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
+            ops.add(modelOptions.getOperator("treeModel.tipDates"));
         }
     }
 
+    private TaxonList getTaxonSet() {
+        TaxonList taxa = options.taxonList;
+
+        if (tipDateSamplingTaxonSet != null) {
+            taxa = tipDateSamplingTaxonSet;
+        }
+        return taxa;
+    }
+
     public TipDateSamplingType tipDateSamplingType = TipDateSamplingType.NO_SAMPLING;
+    public TaxonList tipDateSamplingTaxonSet = null;
+
+    private Map<Taxon, Parameter> tipDateParameters = new HashMap<Taxon, Parameter>();
+    private Map<Taxon, Operator> tipDateOperators = new HashMap<Taxon, Operator>();
 }

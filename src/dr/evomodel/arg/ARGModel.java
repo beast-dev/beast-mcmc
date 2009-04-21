@@ -94,8 +94,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     protected boolean inEdit = false;
 
     protected Node root = null;
-    protected ArrayList<Node> nodes = null;
-    protected ArrayList<Node> storedNodes = null;
+    public ArrayList<Node> nodes = null;
+    public ArrayList<Node> storedNodes = null;
     protected Parameter[] addedParameters = null;
     protected Parameter[] removedParameters = null;
     protected Parameter addedPartitioningParameter = null;
@@ -1032,7 +1032,15 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     }
 
     public void pushTreeSizeChangedEvent() {
-        pushTreeChangedEvent(new TreeChangedEvent());
+        throw new RuntimeException("No longer supported; use updated operators");
+    }
+
+    public void pushTreeSizeIncreasedEvent() {
+        pushTreeChangedEvent(new TreeChangedEvent(+1));
+    }
+
+    public void pushTreeSizeDecreasedEvent() {
+        pushTreeChangedEvent(new TreeChangedEvent(-1));
     }
 
     /**
@@ -1108,7 +1116,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         int index;
 
-//        boolean size = false;
+        int size = 0;
 
         public TreeChangedEvent() {
             this(null, null, -1);
@@ -1129,6 +1137,11 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             this.index = index;
         }
 
+        public TreeChangedEvent(int sizeChanged) {
+            this(null, null, -1);
+            size = sizeChanged;
+        }
+
         public int getIndex() {
             return index;
         }
@@ -1141,9 +1154,13 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             return parameter;
         }
 
-//        public boolean isSizeChanged() {
-//            return size;
-//        }
+        public int getSize() {
+            return size;
+        }
+
+        public boolean isSizeChanged() {
+            return !(size == 0);
+        }
 
         public boolean isTreeChanged() {
             return parameter == null;
@@ -1368,6 +1385,16 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
     public final boolean hasNodeHeights() {
         return true;
+    }
+
+    public NodeRef getMirrorNode(NodeRef node) {
+
+//        for(Node argNode: nodes) {
+//            if (((Node)node).mirrorNode == argNode)
+//                System.err.println("Found (in getMirrorNode)");
+//        }
+
+        return ((Node) node).mirrorNode;
     }
 
     public final double getNodeHeight(NodeRef node) {
@@ -1866,6 +1893,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         ((Node) n).setTrait(value);
     }
 
+    public void setNodeNumber(NodeRef node, int n) {
+        ((Node) node).setNumber(n);
+    }
+
     public void setBranchLength(NodeRef node, double length) {
         throw new UnsupportedOperationException(
                 "ARGModel cannot have branch lengths set");
@@ -2051,7 +2082,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
          nodes.add(newbie2);
          internalNodeCount += 2;
 
-         pushTreeSizeChangedEvent();
+//         pushTreeSizeIncreasedEvent();
     	
     }
     
@@ -2100,7 +2131,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         nodes.add(newbie2);
         internalNodeCount += 2;
         // sanityNodeCheck(internalNodeParameters);
-        pushTreeSizeChangedEvent();
+//        pushTreeSizeIncreasedEvent();
 
         // System.err.println("done expand");
 
@@ -2163,7 +2194,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         internalNodeCount -= 2;
 
         this.setRoot(newRoot);
-        pushTreeSizeChangedEvent();
+//        pushTreeSizeDecreasedEvent();
 
 
     }
@@ -2210,7 +2241,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     	nodes.remove(oldie2);
 
     	internalNodeCount -= 2;
-    	pushTreeSizeChangedEvent();
+//    	pushTreeSizeDecreasedEvent();
 }
     
     
@@ -2267,7 +2298,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         nodes.remove(oldie2);
 
         internalNodeCount -= 2;
-        pushTreeSizeChangedEvent();
+//        pushTreeSizeDecreasedEvent();
     }
 
     public boolean argStoreCheck() {
@@ -2308,6 +2339,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             node1.taxon = node0.taxon;
             node1.bifurcation = node0.bifurcation;
             node1.number = node0.number;
+            node1.myHashCode = node0.myHashCode;
             // node1.partitionSet = (BitSet)node0.partitionSet.clone();
             // if (node0.leftPartition != null) {
             // node1.leftPartition = (BitSet) node0.leftPartition.clone();
@@ -3114,14 +3146,14 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     // Private inner classes
     // **************************************************************
     public class Node implements NodeRef {
-    	
+
     	public boolean[] ancestralMaterial;
     	public boolean fullAncestralMaterial;
     	public boolean hasSomeAncestralMaterial;
-    	
+
     	public boolean hasReassortmentAncestor(){
     		Node a = this;
-    		
+
     		while(a != null){
     			if(!a.bifurcation){
     				return true;
@@ -3129,35 +3161,35 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     				a = a.leftParent;
     			}
     		}
-    		
-    		
+
+
     		return false;
     	}
-    	
+
     	public void setAncestralMaterial(boolean[] childAncestralMaterial){
     		if(fullAncestralMaterial){
     			return;
     		}
-    		
+
     		fullAncestralMaterial = true;
-    		
+
     		for(int i = 0; i < ancestralMaterial.length; i++){
     			ancestralMaterial[i] = ancestralMaterial[i] || childAncestralMaterial[i];
-    			
+
     			fullAncestralMaterial = fullAncestralMaterial && ancestralMaterial[i];
     			hasSomeAncestralMaterial = hasSomeAncestralMaterial || ancestralMaterial[i];
     		}
-    		
+
     		if(bifurcation){
     			if(this.leftParent != null)
     				this.leftParent.setAncestralMaterial(ancestralMaterial);
     		}else{
     			boolean[] leftAncestralMaterial = new boolean[ancestralMaterial.length];
     			boolean[] rightAncestralMaterial = new boolean[ancestralMaterial.length];
-    			
+
     			System.arraycopy(ancestralMaterial, 0, leftAncestralMaterial, 0, leftAncestralMaterial.length);
     			System.arraycopy(ancestralMaterial, 0, rightAncestralMaterial, 0, rightAncestralMaterial.length);
-    			
+
     			for(int i = 0; i < ancestralMaterial.length; i++){
     				if(partitioning.getParameterValue(i) == 0.0){
     					rightAncestralMaterial[i] = false;
@@ -3165,13 +3197,28 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     					leftAncestralMaterial[i] = false;
     				}
     			}
-    			
+
     			this.leftParent.setAncestralMaterial(leftAncestralMaterial);
     			this.rightParent.setAncestralMaterial(rightAncestralMaterial);
     		}
     	}
-    	
-    	public NodeRef mirrorNode;
+
+
+        public int myHashCode = 0;
+
+        public int hashCode() {
+            if (myHashCode == 0) {
+                myHashCode = super.hashCode();
+            }
+            return myHashCode;
+        }
+
+        public boolean equals(Object o) {
+            return hashCode() == o.hashCode();
+        }
+
+
+        public NodeRef mirrorNode;
 
         public Node leftParent, rightParent;
 
@@ -3183,9 +3230,9 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         //First half of the rate parameter represent the rates
         //Second half represents 0-1 indicators
-        
+
         public Parameter rateParameter = null;
-       
+
         public Parameter traitParameter = null;
 
         public Taxon taxon = null;
@@ -3335,7 +3382,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         // }
         // }
 
-        public Node(Node inode, int partition, ArrayList<Node> nodes) {
+        public Node(Node inode, int partition) { //, ArrayList<Node> nodes) {
             leftParent = rightParent = null;
             leftChild = rightChild = null;
             Node node = inode;
@@ -3343,61 +3390,32 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                 node = node.leftChild.leftChild;
                 // System.err.println("Does this do anything?");
             }
-            // else
-            // node = inode;
-            // if( node.bifurcation ) {
-            // leftPartition = node.leftPartition;
-            // rightPartition = node.rightPartition;
-            // leftPartition = rightPartition = null;
             heightParameter = node.heightParameter;
             number = node.number;
-            // rightParent = leftParent = inode.leftParent;
-            // rightParent = inode;
-            // nodes.add(this);
-            // number = nodes.size();
             taxon = node.taxon;
             bifurcation = true;
-            
+
             mirrorNode = node;
-            
-            // System.err.println("Examinging "+number);
+
             if (node.isExternal())
-                nodes.add(this);
+//                nodes.add(this);
+                return;
             else {
                 Node left, right;
                 left = node.getChild(0, partition);
                 right = node.getChild(1, partition);
                 if (left != null || right != null) {
                     if (left != null) {
-                        // leftChild = new Node(left,partition,nodes);
-                        // this.leftChild
-                        // System.err.println("Adding
-                        // "+number+"->"+left.number);
-                        singleAddChild(new Node(left, partition, nodes));
+                        singleAddChild(new Node(left, partition));
                     }
-                    // }}
-                    // f( node.rightChild != null ) {
-                    // Node right = node.getChild(1,partition);
                     if (right != null) {
-                        // System.err.println("Adding
-                        // "+number+"->"+right.number);
-                        singleAddChild(new Node(right, partition, nodes));
-                        // rightChild = new Node(right,partition,nodes);
+                        singleAddChild(new Node(right, partition));
                     }
-                    // rightParent = leftParent = inode.leftParent;
-                    nodes.add(this);
+//                  nodes.add(this);
                 }
             }
         }
 
-        /*
-           * public void setPartitionRecursively(int partition) { if (leftChild !=
-           * null) { if (leftPartition != null) leftPartition.set(partition);
-           * leftChild.setPartitionRecursively(partition); } if (rightChild !=
-           * null) { if (leftPartition != null) rightPartition.set(partition);
-           * rightChild.setPartitionRecursively(partition); }
-           *  }
-           */
         public void setPartitionRecursively(int partition) {
             boolean onLeft = MathUtils.nextBoolean();
             if (leftChild != null) {
@@ -3416,188 +3434,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             }
 
         }
-
-        /*
-           * public Node findPartitionTreeRoot(int partition) { if
-           * (leftPartition.get(partition) && rightPartition.get(partition))
-           * return this; if (leftPartition.get(partition)) return
-           * leftChild.findPartitionTreeRoot(partition); if
-           * (rightPartition.get(partition)) return
-           * rightChild.findPartitionTreeRoot(partition); throw new
-           * IllegalArgumentException("Partition " + partition + " never found in " +
-           * this.toString()); }
-           */
-
-        // private boolean doesBifurcate(int partition) {
-        // if( leftChild.parent != null ) {
-        // if( rightChild.parent != null )
-        // return true;
-        // if( (rightChild.leftParent == this) ||
-        // (rightChild.rightParent == this) )
-        // return true;
-        // }
-        // if( rightChild.parent != null ) {
-        // if( (leftChild.leftParent == this) ||
-        // (leftChild.rightParent == this) )
-        // return true;
-        // }
-        // return false;
-        // }
-        //
-        // private boolean isRecombinantParent(Node parent) {
-        // if( leftParent == parent || rightParent == parent )
-        // return true;
-        // return false;
-        // }
-        //
-        // public boolean isBifurcatingOrExternal(int partition) {
-        // // TODO protect against null errors at tips
-        // if( isExternal() )
-        // return true;
-        // if( leftChild.parent !=null && rightChild.parent !=null ) // standard
-        // case
-        // return true;
-        // if( leftChild.parent !=null &&
-        // ( (rightChild.leftParent == this && rightChild.leftPartition ==
-        // partition) ||
-        // (rightChild.rightParent == this && rightChild.rightPartition ==
-        // partition)
-        // ) ) return true;
-        // if( rightChild.parent !=null &&
-        // ( (leftChild.leftParent == this && leftChild.leftPartition ==
-        // partition) ||
-        // (leftChild.rightParent == this && leftChild.rightPartition ==
-        // partition)
-        // ) ) return true;
-        // return false;
-        // }
-        //
-        // public Node straightDescendent(int partition) {
-        // // TODO protect against two direct children
-        // if( leftChild.parent != null )
-        // return leftChild;
-        // else {
-        // if( (leftChild.leftParent == this && leftChild.leftPartition ==
-        // partition ) ||
-        // (leftChild.rightParent == this && leftChild.rightPartition ==
-        // partition) )
-        // return leftChild;
-        // }
-        // if( rightChild.parent != null )
-        // return rightChild;
-        // else {
-        // if( (rightChild.leftParent == this && rightChild.leftPartition ==
-        // partition) ||
-        // (rightChild.rightParent == this && rightChild.rightPartition ==
-        // partition) )
-        // return rightChild;
-        // }
-        // throw new IllegalArgumentException("No straight descendent found.");
-        // }
-        //
-        // /** constructor used to clone a node and all children for a
-        // particular partition */
-        // public Node(Node n, int partition) {
-        // Node node = n;
-        // parent = leftParent = rightParent = null;
-        // leftChild = rightChild = null;
-        // if( !node.isBifurcatingOrExternal(partition) )
-        // node = node.straightDescendent(partition);
-        // heightParameter = node.heightParameter;
-        // taxon = node.taxon;
-        // //boolean tip = true;
-        // Node lc = node.leftChild;
-        // Node rc = node.rightChild;
-        // if( lc != null ) {
-        // // LeftChild exists.
-        // // Does lc bifurcate or do we skip for this partition
-        // // if( lc.isBifurcatingOrExternal(partition) ) {
-        // addChild(new Node(lc, partition));
-        // //System.err.println(Tree.Utils.newick(lc)+" is bifurcating with P =
-        // "+partition);
-        // // } else {
-        // // addChild(new Node(lc.straightDescendent(partition),partition));
-        // //System.err.println(lc.straightDescendent(partition)+" is
-        // descendent.");
-        // // }
-        // }
-        // if( rc != null ) {
-        // // RightChild exists.
-        // // Does rc bifurcate or do we skip for this partition
-        // // if( rc.isBifurcatingOrExternal(partition) ) {
-        // addChild(new Node(rc, partition));
-        // //System.err.println(rc.toString()+" is bifurcating with P =
-        // "+partition);
-        // // } else {
-        // // addChild(new Node(rc.straightDescendent(partition),partition));
-        // //System.err.println(rc.straightDescendent(partition)+" is
-        // descendent.");
-        // // }
-        // }
-        //
-        // }
-        //
-        //
-        // /** constructor used to clone a subtree without duplicating height
-        // parameters
-        // *
-        // *
-        // */
-        // public Node(Tree tree, Node node, int[] bits) {
-        // parent = null;
-        // leftChild = rightChild = null;
-        // heightParameter = node.heightParameter;
-        // linkSister = node;
-        // linkSister.linkSister = this;
-        // //for(int i=0; i < tree.getChildCount())
-        // boolean tip = true;
-        // if( node.leftChild != null ) {
-        // addChild(new Node(tree, node.leftChild, bits));
-        // tip = false;
-        // }
-        // if( node.rightChild != null ) {
-        // addChild(new Node(tree, node.rightChild, bits));
-        // tip = false;
-        // }
-        // if( tip ) {
-        // taxon = node.taxon;
-        // partitionSet = new BitSet();
-        // int len = bits.length;
-        // for(int i=0; i<len; i++)
-        // partitionSet.set(bits[i]);
-        // }
-        // }
-        //
-        // public final void setDupParent(Node parent) {
-        // this.dupParent = parent;
-        // if( leftChild != null )
-        // leftChild.setDupParent(parent);
-        // if( rightChild != null )
-        // rightChild.setDupParent(parent);
-        // }
-        //
-        // public final void clearLinkSister() {
-        // this.linkSister = null;
-        // if( leftChild != null )
-        // leftChild.clearLinkSister();
-        // if( rightChild != null )
-        // rightChild.clearLinkSister();
-        // }
-        //
-        // public final void clearDupParent() {
-        // this.dupParent = null;
-        // if( leftChild != null )
-        // leftChild.clearDupParent();
-        // if( rightChild != null )
-        // rightChild.clearDupParent();
-        // }
-        //
-        /*
-           * public final void recursiveSetPartition(int partition) {
-           * leftPartition.set(partition); rightPartition.set(partition); if
-           * (leftChild != null) leftChild.recursiveSetPartition(partition); if
-           * (rightChild != null) rightChild.recursiveSetPartition(partition); }
-           */
 
         public void stripOutDeadEnds() {
             if (leftChild != null)
@@ -3645,20 +3481,20 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         public final void setupHeightBounds() {
             heightParameter.addBounds(new NodeHeightBounds(heightParameter));
         }
-        
-        
+
+
 
         public final void createRateParameter(int numberPartitions) {
             if (rateParameter == null) {
-            	
+
             	double[] startingRateValues = new double[numberPartitions];
-            	
+
             	for(int i = 0; i < startingRateValues.length; i++){
             		startingRateValues[i] = 1.0;
             	}
-            	
+
             	rateParameter = new Parameter.Default(startingRateValues);
-            	                
+
                 if (isRoot()) {
                     rateParameter.setId("root.rate");
                 } else if (isExternal()) {
@@ -3694,8 +3530,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         }
 
         public final double getRate(int partition) {
-            
-        	
+
+
             return rateParameter.getParameterValue(partition);
         }
 
@@ -3721,6 +3557,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         public int getNumber() {
             return number;
+        }
+
+        public void setNumber(int n) {
+            number = n;
         }
 
         /**
@@ -3753,70 +3593,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                     "ARGModel.Nodes can only have up to 2 children");
         }
 
-        // private Node getChild(int n, int partition) {
-        // //if( isExternal() )
-        // // return null;
-        // if (n == 0) { // Handle left side
-        // Node left = leftChild;
-        // if( left.isExternal() )
-        // return left;
-        // Node grandLeft = left.leftChild;
-        // Node grandRight = left.rightChild;
-        // boolean grandLeftValid = false;
-        // boolean grandRightValid = true;
-        // if( (grandLeft.leftParent == left &&
-        // grandLeft.partitionSet.get(partition)) ||
-        // (grandLeft.rightParent == left &&
-        // !grandLeft.partitionSet.get(partition)) )
-        // grandLeftValid = true;
-        // if( (grandRight.leftParent == left &&
-        // grandRight.partitionSet.get(partition)) ||
-        // (grandRight.rightParent == left &&
-        // !grandRight.partitionSet.get(partition)) )
-        // grandRightValid = true;
-        // if( grandLeftValid && grandRightValid )
-        // return left;
-        // if( grandLeftValid )
-        // return grandLeft;
-        // else
-        // return grandRight;
-        // }
-        // if (n == 1) { // Handle right side
-        // Node right = rightChild;
-        // if( right.isExternal() )
-        // return right;
-        // Node grandLeft = right.leftChild;
-        // Node grandRight = right.rightChild;
-        // boolean grandLeftValid = false;
-        // boolean grandRightValid = true;
-        // if( (grandLeft.leftParent == right &&
-        // grandLeft.partitionSet.get(partition)) ||
-        // (grandLeft.rightParent == right &&
-        // !grandLeft.partitionSet.get(partition)) )
-        // grandLeftValid = true;
-        // if( (grandRight.leftParent == right &&
-        // grandRight.partitionSet.get(partition)) ||
-        // (grandRight.rightParent == right &&
-        // !grandRight.partitionSet.get(partition)) )
-        // grandRightValid = true;
-        // if( grandLeftValid && grandRightValid )
-        // return right;
-        // if( grandLeftValid )
-        // return grandLeft;
-        // else
-        // return grandRight;
-        // }
-        // throw new IllegalArgumentException("ARGModel.Nodes can only have 2
-        // children");
-        // }
-        //
-
-        /*
-           * private boolean isRecombinantLinkedToMe(Node node, int partition) {
-           * if (node.leftParent == this && node.leftPartition.get(partition))
-           * return true; if (node.rightParent == this &&
-           * node.rightPartition.get(partition)) return true; return false; }
-           */
 
         private boolean isBifurcationDoublyLinked() {
             return bifurcation && (leftChild == rightChild)
@@ -3826,30 +3602,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         private boolean recombinantIsLinked(Node parent, int partition) {
             boolean left = leftParent == parent;
             boolean right = rightParent == parent;
-            // System.err.println("Testing links on "+number);
-            // if( left && right ) {
-            // System.err.println("Doubly linked recombinant.");
-            // if( side == 0 ) {
-            // System.err.println("Going left");
-            // return true;
-            // }
-            // else {
-            // System.err.println("Not going right");
-            // return false;
-            // }
-            // // return false;
-            // }
-
-            /*
-                * if (leftPartition == null) { System.err.println("no left
-                * Partition"); //System.exit(-1); } if (rightPartition == null) {
-                * System.err.println("no right Partition"); //System.exit(-1); } if
-                * (left && leftPartition.get(partition)) return true; if (right &&
-                * rightPartition.get(partition)) return true;
-                *
-                * return false;
-                */
-
             final double partitionSide = partitioning
                     .getParameterValue(partition);
             if (left && partitionSide == 0)
@@ -3931,53 +3683,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             }
             return child;
         }
-
-        // if( child.isExternal() )
-        // return child;
-        // //if( left.isReassortment() )
-        // //while( left.isReassortment() )
-        // // left = left.leftChild; // Just pass through
-        // //if( left.isExternal() )
-        // // return left;
-        // //if( left.isReassortment() )
-        // // ;
-        // Node grandLeft = child.leftChild.findNextTreeNode(child.leftChild,
-        // partition);
-        // Node grandRight = child.rightChild;
-        // boolean grandLeftValid = false;
-        // boolean grandRightValid = false;
-        // while( ! (grandLeftValid || grandRightValid) ) {
-        //
-        // }
-        // left.leftPartition.get(partition);
-        // boolean grandRightValid = left.rightPartition.get(partition);
-        // if( grandLeftValid && grandRightValid )
-        // return left;
-        // if( grandLeftValid )
-        // return left.leftChild;
-        // if( grandRightValid )
-        // return left.rightChild;
-        // throw new IllegalArgumentException("Partition not found");
-        // }
-        // if (n == 1) { // Handle right side
-        // if( !rightPartition.get(partition) )
-        // throw new IllegalArgumentException("Partition not found");
-        // Node right = rightChild;
-        // if( right.isExternal() )
-        // return right;
-        // boolean grandLeftValid = right.leftPartition.get(partition);
-        // boolean grandRightValid = right.rightPartition.get(partition);
-        // if( grandLeftValid && grandRightValid )
-        // return right;
-        // if( grandLeftValid )
-        // return right.leftChild;
-        // if( grandRightValid )
-        // return right.rightChild;
-        // throw new IllegalArgumentException("Partition not found");
-        // }
-        // throw new IllegalArgumentException("ARGModel.Nodes can only have 2
-        // children");
-        // }
 
         public Node getParent(int n) {
             if (n == 0)

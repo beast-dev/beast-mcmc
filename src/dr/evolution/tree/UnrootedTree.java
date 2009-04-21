@@ -258,6 +258,8 @@ public interface UnrootedTree {
 
 			public int getNumber() { return number;}
 
+                              public void setNumber(int n) { number = n; }
+
 			int number;
 		}
 

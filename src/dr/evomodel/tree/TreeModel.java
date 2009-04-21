@@ -1145,6 +1145,10 @@ public class TreeModel extends AbstractModel implements MutableTree {
             return number;
         }
 
+        public void setNumber(int n) {
+            number = n;
+        }
+
         /**
          * Returns the number of children this node has.
          */

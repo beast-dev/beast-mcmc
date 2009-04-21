@@ -121,19 +121,7 @@ public abstract class AbstractARGLikelihood extends AbstractModelLikelihood impl
             updateNode[child.getNumber()] = true;
         }
         likelihoodKnown = false;
-    }
-
-    protected Set<NodeRef> lazyUpdates = new HashSet<NodeRef>();
-
-//    protected void lazyUpdateNodeAndChildren(NodeRef argNode) {
-//        lazyUpdates.add(argNode);
-//    }
-//
-//    protected void clearLazyUpdateNodeAndChild() {
-//        lazyUpdates.clear();
-//    }
-//
-//    protected Set<NodeRef> 
+    }   
 
     /**
      * Set update flag for a node and its children

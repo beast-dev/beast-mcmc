@@ -677,8 +677,6 @@ public class BeautiFrame extends DocumentFrame {
             line = reader.readLine();
         }
 
-        Map<String, Map<String, Object>> traits = new TreeMap<String, Map<String, Object>>();
-
         for (int i = 1; i < labels.length; i++) {
             java.util.List<String> column = columns.get(labels[i]);
 
@@ -714,6 +712,17 @@ public class BeautiFrame extends DocumentFrame {
                     taxon.setAttribute(labels[i], valueString);
                 }
                 j++;
+            }
+
+            beautiOptions.traits.add(labels[i]);
+            if (isBoolean) {
+                beautiOptions.traitTypes.put(labels[i], Boolean.class);
+            } else if (isInteger) {
+                beautiOptions.traitTypes.put(labels[i], Integer.class);
+            } else if (isNumber) {
+                beautiOptions.traitTypes.put(labels[i], Double.class);
+            } else {
+                beautiOptions.traitTypes.put(labels[i], String.class);
             }
         }
 

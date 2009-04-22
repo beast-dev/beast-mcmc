@@ -55,8 +55,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
      */
     private static final long serialVersionUID = 5283922195494563924L;
 
-    JTable locationTable = null;
-    LocationTableModel locationTableModel = null;
+    JTable traitsTable = null;
+    TraitsTableModel traitsTableModel = null;
 
     JTable dataTable = null;
     DataTableModel dataTableModel = null;
@@ -76,16 +76,16 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         this.frame = parent;
 
-        locationTableModel = new LocationTableModel();
-        TableSorter sorter = new TableSorter(locationTableModel);
-        locationTable = new JTable(sorter);
-        sorter.setTableHeader(locationTable.getTableHeader());
+        traitsTableModel = new TraitsTableModel();
+        TableSorter sorter = new TableSorter(traitsTableModel);
+        traitsTable = new JTable(sorter);
+        sorter.setTableHeader(traitsTable.getTableHeader());
 
-        locationTable.getColumnModel().getColumn(0).setCellRenderer(
+        traitsTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        locationTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+        traitsTable.getColumnModel().getColumn(0).setPreferredWidth(80);
 
-        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(locationTable);
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(traitsTable);
 
 
         dataTableModel = new DataTableModel();
@@ -114,7 +114,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             }
         });
 
-        JScrollPane scrollPane1 = new JScrollPane(locationTable,
+        JScrollPane scrollPane1 = new JScrollPane(traitsTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane1.setOpaque(false);
@@ -138,10 +138,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //        toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
 
         ActionPanel actionPanel1 = new ActionPanel(false);
-        actionPanel1.setAddAction(addLocationAction);
-        actionPanel1.setRemoveAction(removeLocationAction);
+        actionPanel1.setAddAction(addTraitAction);
+        actionPanel1.setRemoveAction(removeTraitAction);
 
-        removeLocationAction.setEnabled(false);
+        removeTraitAction.setEnabled(false);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
@@ -282,29 +282,29 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    AbstractAction addLocationAction = new AbstractAction() {
+    AbstractAction addTraitAction = new AbstractAction() {
         public void actionPerformed(ActionEvent ae) {
             addLocation();
         }
     };
 
 
-    AbstractAction removeLocationAction = new AbstractAction() {
+    AbstractAction removeTraitAction = new AbstractAction() {
         public void actionPerformed(ActionEvent ae) {
             removeLocation();
         }
     };
 
 
-    class LocationTableModel extends AbstractTableModel {
+    class TraitsTableModel extends AbstractTableModel {
 
         /**
          *
          */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Location"};
+        String[] columnNames = {"Trait", "Type"};
 
-        public LocationTableModel() {
+        public TraitsTableModel() {
         }
 
         public int getColumnCount() {
@@ -313,22 +313,26 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            if (options.locations == null) return 0;
+            if (options.traits == null) return 0;
 
-            return options.locations.size();
+            return options.traits.size();
         }
 
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return options.locations.get(row);
+                    return options.traits.get(row);
+                case 1:
+                    return options.traitTypes.get(options.traits.get(row));
             }
             return null;
         }
 
         public void setValueAt(Object aValue, int row, int col) {
             if (col == 0) {
-                options.locations.get(row).setId(aValue.toString());
+                options.traits.set(row, aValue.toString());
+            } else if (col == 1) {
+                options.traitTypes.put(options.traits.get(row), aValue.getClass());
             }
         }
 
@@ -374,7 +378,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
          *
          */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "Location"};
+        String[] columnNames = {"Taxon", "Value"};
 
         public DataTableModel() {
         }

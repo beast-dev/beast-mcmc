@@ -252,7 +252,7 @@ public class BeautiOptions extends ModelOptions {
 
         taxonList = null;
 
-        locations.clear();
+        traits.clear();
 
         taxonSets.clear();
         taxonSetsMono.clear();
@@ -1267,7 +1267,8 @@ public class BeautiOptions extends ModelOptions {
     public TaxonList taxonList = null;
     public DateGuesser dateGuesser = new DateGuesser();
 
-    public List<Location> locations = new ArrayList<Location>();
+    public List<String> traits = new ArrayList<String>();
+    public Map<String, Class> traitTypes = new HashMap<String, Class>();
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();

@@ -7,6 +7,7 @@ import org.virion.jam.framework.MenuFactory;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.ActionEvent;
 
 /**
  * @author rambaut
@@ -36,6 +37,10 @@ public class BeautiDefaultFileMenuFactory implements MenuFactory {
 
         item = new JMenuItem(frame.getImportAction());
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+        menu.add(item);
+
+        item = new JMenuItem(((BeautiFrame)frame).getImportTraitsAction());
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK + ActionEvent.ALT_MASK));
         menu.add(item);
 
 //        menu.addSeparator();

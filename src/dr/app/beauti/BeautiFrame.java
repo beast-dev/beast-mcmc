@@ -37,7 +37,6 @@ import java.io.*;
 import java.util.*;
 import java.text.NumberFormat;
 
-import figtree.treeviewer.annotations.AnnotationDefinition;
 import jebl.evolution.taxa.Taxon;
 
 /**
@@ -695,7 +694,7 @@ public class BeautiFrame extends DocumentFrame {
             }
 
             Map<Taxon, Object> values = new HashMap<Taxon, Object>();
-            AnnotationDefinition ad;
+//            AnnotationDefinition ad;
             int j = 0;
             for (String valueString : column) {
                 Taxon taxon = Taxon.getTaxon(taxa.get(j));
@@ -713,18 +712,18 @@ public class BeautiFrame extends DocumentFrame {
 
             Set<Object> valueSet = new HashSet<Object>(values.values());
 
-            if (isBoolean) {
-                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.BOOLEAN );
-            } else if (isInteger) {
-                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.INTEGER );
-            } else if (isNumber) {
-                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.REAL );
-            } else {
-                String[] valueArray = new String[valueSet.size()];
-                valueSet.toArray(valueArray);
-                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.STRING);
-//ad.setOptions(valueArray);
-            }
+//            if (isBoolean) {
+//                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.BOOLEAN );
+//            } else if (isInteger) {
+//                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.INTEGER );
+//            } else if (isNumber) {
+//                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.REAL );
+//            } else {
+//                String[] valueArray = new String[valueSet.size()];
+//                valueSet.toArray(valueArray);
+//                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.STRING);
+//                ad.setOptions(valueArray);
+//            }
 
             //traits.put(ad, values);
         }

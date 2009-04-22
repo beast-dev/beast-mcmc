@@ -210,7 +210,7 @@ public abstract class Generator {
         }
     }
 
-    public void addComponent(ComponentGenerator componentGenerator) {
+    public static void addComponent(ComponentGenerator componentGenerator) {
         components.add(componentGenerator);
     }
 

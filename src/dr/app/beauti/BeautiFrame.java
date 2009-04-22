@@ -20,8 +20,7 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
-import dr.evolution.util.Units;
+import dr.evolution.util.*;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
@@ -35,9 +34,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.*;
+import java.util.Date;
 import java.text.NumberFormat;
-
-import jebl.evolution.taxa.Taxon;
 
 /**
  * @author Andrew Rambaut
@@ -161,14 +159,14 @@ public class BeautiFrame extends DocumentFrame {
         setSize(new java.awt.Dimension(1024, 768));
     }
 
-    
+
     public void changeTabs() {
     	// remove tipDatesPanel with tipSpeciesPanel
-    	tabbedPane.removeTabAt(2);     	
+    	tabbedPane.removeTabAt(2);
     	tabbedPane.insertTab("Tip Species", null, tipSpeciesPanel, "replace Tip Dates", 2);
     	currentPanel = (BeautiPanel)tabbedPane.getSelectedComponent();
     }
-    
+
     /**
      * set all the options for all panels
      */
@@ -624,7 +622,7 @@ public class BeautiFrame extends DocumentFrame {
         }
     }
 
-    public final void importTraits() {
+    public final void doImportTraits() {
 
         FileDialog dialog = new FileDialog(this,
                 "Import Traits File...",
@@ -635,7 +633,7 @@ public class BeautiFrame extends DocumentFrame {
             File file = new File(dialog.getDirectory(), dialog.getFile());
 
             try {
-                Map<String, java.util.List<Object>> traits = importTraitsFromFile(file);
+                importTraitsFromFile(file);
 
             } catch (FileNotFoundException fnfe) {
                 JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
@@ -650,7 +648,7 @@ public class BeautiFrame extends DocumentFrame {
 
     }
 
-    protected Map<String, java.util.List<Object>> importTraitsFromFile(File file) throws IOException {
+    protected void importTraitsFromFile(File file) throws IOException {
 
         BufferedReader reader = new BufferedReader(new FileReader(file));
 
@@ -679,9 +677,7 @@ public class BeautiFrame extends DocumentFrame {
             line = reader.readLine();
         }
 
-        Map<String, java.util.List<Object>> traits = new TreeMap<String, java.util.List<Object>>();
-
-        NumberFormat nf = NumberFormat.getInstance();
+        Map<String, Map<String, Object>> traits = new TreeMap<String, Map<String, Object>>();
 
         for (int i = 1; i < labels.length; i++) {
             java.util.List<String> column = columns.get(labels[i]);
@@ -705,42 +701,22 @@ public class BeautiFrame extends DocumentFrame {
                 }
             }
 
-            Map<Taxon, Object> values = new HashMap<Taxon, Object>();
-//            AnnotationDefinition ad;
             int j = 0;
             for (String valueString : column) {
-                Taxon taxon = Taxon.getTaxon(taxa.get(j));
+                Taxon taxon = beautiOptions.taxonList.getTaxon(beautiOptions.taxonList.getTaxonIndex(taxa.get(j)));
                 if (isBoolean) {
-                    values.put(taxon, new Boolean(valueString));
+                    taxon.setAttribute(labels[i], new Boolean(valueString));
                 } else if (isInteger) {
-                    values.put(taxon, new Integer(valueString));
+                    taxon.setAttribute(labels[i], new Integer(valueString));
                 } else if (isNumber) {
-                    values.put(taxon, new Double(valueString));
+                    taxon.setAttribute(labels[i], new Double(valueString));
                 } else {
-                    values.put(taxon, valueString);
+                    taxon.setAttribute(labels[i], valueString);
                 }
                 j++;
             }
-
-            Set<Object> valueSet = new HashSet<Object>(values.values());
-
-//            if (isBoolean) {
-//                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.BOOLEAN );
-//            } else if (isInteger) {
-//                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.INTEGER );
-//            } else if (isNumber) {
-//                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.REAL );
-//            } else {
-//                String[] valueArray = new String[valueSet.size()];
-//                valueSet.toArray(valueArray);
-//                ad = new AnnotationDefinition(labels[i], AnnotationDefinition.Type.STRING);
-//                ad.setOptions(valueArray);
-//            }
-
-            //traits.put(ad, values);
         }
 
-        return traits;
     }
 
     private void setStatusMessage() {
@@ -879,14 +855,26 @@ public class BeautiFrame extends DocumentFrame {
     };
 
     public Action getImportAction() {
-        return importNexusAction;
+        return importAlignmentAction;
     }
 
-    protected AbstractAction importNexusAction = new AbstractAction("Import NEXUS...") {
+    protected AbstractAction importAlignmentAction = new AbstractAction("Import Aligment...") {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {
             doImport();
+        }
+    };
+
+    public Action getImportTraitsAction() {
+        return importTraitsAction;
+    }
+
+    protected AbstractAction importTraitsAction = new AbstractAction("Import Traits...") {
+        private static final long serialVersionUID = 3217702096314745005L;
+
+        public void actionPerformed(java.awt.event.ActionEvent ae) {
+            doImportTraits();
         }
     };
 

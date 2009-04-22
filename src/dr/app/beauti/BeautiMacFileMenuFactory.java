@@ -62,6 +62,10 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
             menu.add(item);
 
+            item = new JMenuItem(((BeautiFrame)frame).getImportTraitsAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK + ActionEvent.ALT_MASK));
+            menu.add(item);
+
 //            menu.addSeparator();
 //
 //            item = new JMenuItem(((BeautiFrame)frame).getOpenAction());
@@ -82,8 +86,13 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
             // At present the only situation where this may happen is in Mac OS X when no windows
             // are open and the menubar is created by the hidden frame.
 
-            item = new JMenuItem("Import NEXUS...");
+            item = new JMenuItem("Import Alignment...");
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+            item = new JMenuItem("Import Traits...");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK + ActionEvent.ALT_MASK));
             item.setEnabled(false);
             menu.add(item);
 

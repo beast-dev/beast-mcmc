@@ -42,6 +42,9 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -58,6 +61,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     UnlinkModelsAction unlinkModelsAction = new UnlinkModelsAction();
     LinkModelsAction linkModelAction = new LinkModelsAction();
+    MapTaxaToSpeciesAction mapTaxaToSpeciesAction = new MapTaxaToSpeciesAction();
 
     SelectModelDialog selectModelDialog = null;
 
@@ -109,6 +113,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
+        button = new JButton(mapTaxaToSpeciesAction);
+        unlinkModelsAction.setEnabled(true);
+        PanelUtils.setupComponent(button);
+        toolBar1.add(button);
+        
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(importDataAction);
         actionPanel1.setRemoveAction(removeDataAction);
@@ -180,6 +189,37 @@ public class DataPanel extends BeautiPanel implements Exportable {
         fireDataChanged();
     }
 
+    private void mapTaxaToSpecies() {
+        
+    	FileDialog dialog = new FileDialog(this.frame, "Import Mapping File...", FileDialog.LOAD);
+
+        dialog.setVisible(true);
+        if (dialog.getFile() != null) {
+            File file = new File(dialog.getDirectory(), dialog.getFile());
+
+            try {                
+            	loadMappingFile (file);
+            	
+            	//frame.changeTabs();// can be added, if required in future 
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe,
+                        "Unable to read file",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }  	
+    	
+    }
+    
+    protected void loadMappingFile (File file) throws IOException {
+    	
+    	
+    	
+    }
+    
     private void unlinkModels() {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
@@ -344,6 +384,17 @@ public class DataPanel extends BeautiPanel implements Exportable {
             }
 
             return buffer.toString();
+        }
+    }
+   
+    public class MapTaxaToSpeciesAction extends AbstractAction {
+        public MapTaxaToSpeciesAction() {
+            super("Map Taxa To Species");
+            setToolTipText("Load the mapping file and trigger the function");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+        	mapTaxaToSpecies();
         }
     }
 

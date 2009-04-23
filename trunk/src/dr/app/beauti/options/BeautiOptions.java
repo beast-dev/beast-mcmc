@@ -247,6 +247,7 @@ public class BeautiOptions extends ModelOptions {
         substTreeFileName = null;
 
         // Data options
+        allowDiffTaxa = false;
         dataType = null;
         dataReset = true;
 
@@ -1261,10 +1262,12 @@ public class BeautiOptions extends ModelOptions {
     public String substTreeFileName = null;
 
     // Data options
+    public boolean allowDiffTaxa = false;
     public DataType dataType = null;
     public boolean dataReset = true;
 
     public TaxonList taxonList = null;
+    public List<TaxonList> multiTaxaList = new ArrayList<TaxonList>();
     public DateGuesser dateGuesser = new DateGuesser();
 
     public List<String> traits = new ArrayList<String>();

@@ -262,7 +262,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
                     precParam = new Parameter.Default(cxo.getDoubleChild(0));
                 }
 
-                return new LogNormalDistributionModel(meanParam, precParam, offset, false);
+                return new LogNormalDistributionModel(meanParam, precParam, offset, meanInRealSpace, false);
             } else {
 
                 cxo = (XMLObject) xo.getChild(STDEV);

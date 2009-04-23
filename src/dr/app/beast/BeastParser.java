@@ -264,6 +264,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.RateExchangeOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TreeBitMoveOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TreeBitRandomWalkOperator.PARSER);
+  //      addXMLObjectParser(dr.evomodel.operators.TreeUniform.PARSSR);
+  //      addXMLObjectParser(dr.evomodel.operators.INS.INS_PARSER);
 
         // rate operators
         addXMLObjectParser(dr.evomodel.operators.RateScaleOperator.PARSER);
@@ -294,6 +296,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.POISSON_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.LOG_NORMAL_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.GAMMA_PRIOR_PARSER);
+  //      addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.INVGAMMA_PRIOR_PARSER);
 
         addXMLObjectParser(dr.inference.distribution.BinomialLikelihood.PARSER);
 
@@ -333,6 +336,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.operators.RandomWalkIntegerOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.RandomWalkOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.ScaleOperator.PARSER);
+        addXMLObjectParser(dr.inference.operators.LogRandomWalkOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.UniformOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.UniformIntegerOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.UpDownOperator.PARSER);
@@ -344,6 +348,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.operators.BitMoveOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.BitSwapOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.JointOperator.PARSER);
+   //     addXMLObjectParser(dr.inference.operators.TeamOperator.PARSER);
 
         // trace analysis
         addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());

@@ -103,11 +103,13 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
             rate += rateParameters[i].getParameterValue(0) * (height1 - lastHeight);
 
             // normalize the rate for the branch length
-            rate = rate / (height1 - height0);
-
-            return rate;
+            return normalizeRate(rate / (height1 - height0));
         }
         throw new IllegalArgumentException("root node doesn't have a rate!");
+    }
+
+    protected double normalizeRate(double rate) {
+        return rate;
     }
 
     public String getBranchAttributeLabel() {

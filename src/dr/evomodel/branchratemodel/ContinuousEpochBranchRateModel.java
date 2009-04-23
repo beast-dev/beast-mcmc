@@ -29,18 +29,16 @@ public class ContinuousEpochBranchRateModel extends RateEpochBranchRateModel {
 
 	private void normalize() {
 		normalization = 0.0;
-		double nextTime;
-		double thisRate;
 		double startTime = 0.0;
-		for (int j = 0; j < timeParameters.length; j++) {
-			nextTime = timeParameters[j].getParameterValue(0);
-			thisRate = rateParameters[j].getParameterValue(0);
-			normalization += (nextTime - startTime) * thisRate;
+                    double endTime = rootHeight.getParameterValue(0);
+                    int j = 0;
+                    while( j < timeParameters.length && endTime > timeParameters[j].getParameterValue(0)) {
+			final double nextTime = timeParameters[j].getParameterValue(0);
+			normalization += (nextTime - startTime) * rateParameters[j].getParameterValue(0);
 			startTime = nextTime;
+                        j++;
 		}
-		nextTime = rootHeight.getParameterValue(0);
-		thisRate = rateParameters[timeParameters.length].getParameterValue(0);
-		normalization += (nextTime - startTime) * thisRate;
+		normalization += (endTime - startTime) * rateParameters[j].getParameterValue(0);
 	}
 
 	protected void storeState() {
@@ -51,41 +49,11 @@ public class ContinuousEpochBranchRateModel extends RateEpochBranchRateModel {
 		normalization = savedNormalization;
 	}
 
-	public double getBranchRate(Tree tree, NodeRef node) {
-
-		if (!normalizationKnown)
-			normalize();
-
-		NodeRef parent = tree.getParent(node);
-
-		if (parent != null) {
-			double height0 = tree.getNodeHeight(node);
-			double height1 = tree.getNodeHeight(parent);
-			int i = 0;
-
-			double rate = 0.0;
-			double lastHeight = height0;
-
-			// First find the epoch which contains the node height
-			while (i < timeParameters.length && height0 > timeParameters[i].getParameterValue(0)) {
-				i++;
-			}
-
-			// Now walk up the branch until we reach the last epoch or the height of the parent
-			while (i < timeParameters.length && height1 > timeParameters[i].getParameterValue(0)) {
-				// add the rate for that epoch multiplied by the time spent at that rate
-				rate += rateParameters[i].getParameterValue(0) * (timeParameters[i].getParameterValue(0) - lastHeight);
-				lastHeight = timeParameters[i].getParameterValue(0);
-				i++;
-			}
-
-			// Add that last rate segment
-			rate += rateParameters[i].getParameterValue(0) * (height1 - lastHeight);
-
-			return rate / normalization / (height1 - height0);
-		}
-		throw new IllegalArgumentException("root node doesn't have a rate!");
-	}
+          protected double normalizeRate(double rate) {
+              if (!normalizationKnown)
+                normalize();             
+            return rate / normalization;
+          }
 
 	private Parameter rootHeight;
 	private double normalization;
